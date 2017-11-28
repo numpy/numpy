@@ -22,10 +22,6 @@ import os
 import sys
 import re
 import types
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from numpy.compat import open_latin1
 
@@ -94,14 +90,14 @@ class FCompiler(CCompiler):
     """
 
     # These are the environment variables and distutils keys used.
-    # Each configuration descripition is
+    # Each configuration description is
     # (<hook name>, <environment variable>, <key in distutils.cfg>, <convert>)
     # The hook names are handled by the self._environment_hook method.
     #  - names starting with 'self.' call methods in this class
     #  - names starting with 'exe.' return the key in the executables dict
     #  - names like 'flags.YYY' return self.get_flag_YYY()
     # convert is either None or a function to convert a string to the
-    # appropiate type used.
+    # appropriate type used.
 
     distutils_vars = EnvironmentConfig(
         distutils_section='config_fc',
@@ -287,7 +283,7 @@ class FCompiler(CCompiler):
 
     def find_executables(self):
         """Go through the self.executables dictionary, and attempt to
-        find and assign appropiate executables.
+        find and assign appropriate executables.
 
         Executable names are looked for in the environment (environment
         variables, the distutils.cfg, and command line), the 0th-element of
@@ -297,7 +293,7 @@ class FCompiler(CCompiler):
         or the Fortran 90 compiler executable is used, unless overridden
         by an environment setting.
 
-        Subclasses should call this if overriden.
+        Subclasses should call this if overridden.
         """
         assert self._is_customised
         exe_cache = self._exe_cache
@@ -433,6 +429,7 @@ class FCompiler(CCompiler):
         if version is None:
             raise CompilerNotFound()
         return version
+
 
     ############################################################
 
@@ -701,6 +698,38 @@ class FCompiler(CCompiler):
         else:
             return hook_name()
 
+    def can_ccompiler_link(self, ccompiler):
+        """
+        Check if the given C compiler can link objects produced by
+        this compiler.
+        """
+        return True
+
+    def wrap_unlinkable_objects(self, objects, output_dir, extra_dll_dir):
+        """
+        Convert a set of object files that are not compatible with the default
+        linker, to a file that is compatible.
+
+        Parameters
+        ----------
+        objects : list
+            List of object files to include.
+        output_dir : str
+            Output directory to place generated object files.
+        extra_dll_dir : str
+            Output directory to place extra DLL files that need to be
+            included on Windows.
+
+        Returns
+        -------
+        converted_objects : list of str
+             List of converted object files.
+             Note that the number of output files is not necessarily
+             the same as inputs.
+
+        """
+        raise NotImplementedError()
+
     ## class FCompiler
 
 _default_compilers = (
@@ -709,7 +738,7 @@ _default_compilers = (
                'intelvem', 'intelem')),
     ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
     ('linux.*', ('gnu95', 'intel', 'lahey', 'pg', 'absoft', 'nag', 'vast', 'compaq',
-                'intele', 'intelem', 'gnu', 'g95', 'pathf95')),
+                 'intele', 'intelem', 'gnu', 'g95', 'pathf95', 'nagfor')),
     ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
     ('sunos.*', ('sun', 'gnu', 'gnu95', 'g95')),
     ('irix.*', ('mips', 'gnu', 'gnu95',)),

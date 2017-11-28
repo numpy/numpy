@@ -6,7 +6,7 @@
 /*
  * On Mac OS X, because there is only one configuration stage for all the archs
  * in universal builds, any macro which depends on the arch needs to be
- * harcoded
+ * hardcoded
  */
 #ifdef __APPLE__
     #undef NPY_SIZEOF_LONG
@@ -33,5 +33,8 @@
 #define NPY_1_9_API_VERSION 0x00000008
 #define NPY_1_10_API_VERSION 0x00000008
 #define NPY_1_11_API_VERSION 0x00000008
+#define NPY_1_12_API_VERSION 0x00000008
+#define NPY_1_13_API_VERSION 0x00000008
+#define NPY_1_14_API_VERSION 0x00000008
 
 #endif

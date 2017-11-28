@@ -3,7 +3,7 @@
 Indexing
 ========
 
-.. sectionauthor:: adapted from "Guide to Numpy" by Travis E. Oliphant
+.. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
 .. currentmodule:: numpy
 
@@ -36,8 +36,8 @@ objects, the :const:`Ellipsis` object, or the :const:`newaxis` object,
 but not for integer arrays or other embedded sequences.
 
 .. index::
-   triple: ndarray; special methods; getslice
-   triple: ndarray; special methods; setslice
+   triple: ndarray; special methods; getitem
+   triple: ndarray; special methods; setitem
    single: ellipsis
    single: newaxis
 
@@ -85,7 +85,7 @@ concepts to remember include:
 - Assume *n* is the number of elements in the dimension being
   sliced. Then, if *i* is not given it defaults to 0 for *k > 0* and
   *n - 1* for *k < 0* . If *j* is not given it defaults to *n* for *k > 0*
-  and -1 for *k < 0* . If *k* is not given it defaults to 1. Note that
+  and *-n-1* for *k < 0* . If *k* is not given it defaults to 1. Note that
   ``::`` is the same as ``:`` and means select all indices along this
   axis.
 
@@ -170,8 +170,8 @@ concepts to remember include:
 
 .. data:: newaxis
 
-   The :const:`newaxis` object can be used in all slicing operations to 
-   create an axis of length one. :const: :const:`newaxis` is an alias for
+   The :const:`newaxis` object can be used in all slicing operations to
+   create an axis of length one. :const:`newaxis` is an alias for
    'None', and 'None' can be used in place of this with the same result.
 
 
@@ -431,7 +431,7 @@ also supports boolean arrays and will work without any surprises.
     ...            [ 9, 10, 11]])
     >>> rows = (x.sum(-1) % 2) == 0
     >>> rows
-    array([False,  True, False,  True], dtype=bool)
+    array([False,  True, False,  True])
     >>> columns = [0, 2]
     >>> x[np.ix_(rows, columns)]
     array([[ 3,  5],
@@ -503,7 +503,7 @@ dictionary-like.
 Indexing ``x['field-name']`` returns a new :term:`view` to the array,
 which is of the same shape as *x* (except when the field is a
 sub-array) but of data type ``x.dtype['field-name']`` and contains
-only the part of the data in the specified field. Also 
+only the part of the data in the specified field. Also
 :ref:`record array <arrays.classes.rec>` scalars can be "indexed" this way.
 
 Indexing into a structured array can also be done with a list of field names,

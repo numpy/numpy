@@ -1,4 +1,4 @@
-.. sectionauthor:: adapted from "Guide to Numpy" by Travis E. Oliphant
+.. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
 .. _ufuncs:
 
@@ -17,13 +17,16 @@ operates on :class:`ndarrays <ndarray>` in an element-by-element fashion,
 supporting :ref:`array broadcasting <ufuncs.broadcasting>`, :ref:`type
 casting <ufuncs.casting>`, and several other standard features. That
 is, a ufunc is a ":term:`vectorized`" wrapper for a function that
-takes a fixed number of scalar inputs and produces a fixed number of
-scalar outputs.
+takes a fixed number of specific inputs and produces a fixed number of
+specific outputs.
 
-In Numpy, universal functions are instances of the
+In NumPy, universal functions are instances of the
 :class:`numpy.ufunc` class. Many of the built-in functions are
-implemented in compiled C code, but :class:`ufunc` instances can also
-be produced using the :func:`frompyfunc` factory function.
+implemented in compiled C code. The basic ufuncs operate on scalars, but
+there is also a generalized kind for which the basic elements are sub-arrays
+(vectors, matrices, etc.), and broadcasting is done over other dimensions.
+One can also produce custom :class:`ufunc` instances using the
+:func:`frompyfunc` factory function.
 
 
 .. _ufuncs.broadcasting:
@@ -34,7 +37,9 @@ Broadcasting
 .. index:: broadcasting
 
 Each universal function takes array inputs and produces array outputs
-by performing the core function element-wise on the inputs. Standard
+by performing the core function element-wise on the inputs (where an
+element is generally a scalar, but can be a vector or higher-order
+sub-array for generalized ufuncs). Standard
 broadcasting rules are applied so that inputs not sharing exactly the
 same shapes can still be usefully operated on. Broadcasting can be
 understood by four rules:
@@ -102,25 +107,29 @@ Output type determination
 
 The output of the ufunc (and its methods) is not necessarily an
 :class:`ndarray`, if all input arguments are not :class:`ndarrays <ndarray>`.
+Indeed, if any input defines an :obj:`~class.__array_ufunc__` method,
+control will be passed completely to that function, i.e., the ufunc is
+`overridden <ufuncs.overrides>`_.
 
-All output arrays will be passed to the :obj:`__array_prepare__` and
-:obj:`__array_wrap__` methods of the input (besides
+If none of the inputs overrides the ufunc, then
+all output arrays will be passed to the :obj:`~class.__array_prepare__` and
+:obj:`~class.__array_wrap__` methods of the input (besides
 :class:`ndarrays <ndarray>`, and scalars) that defines it **and** has
-the highest :obj:`__array_priority__` of any other input to the
-universal function. The default :obj:`__array_priority__` of the
-ndarray is 0.0, and the default :obj:`__array_priority__` of a subtype
-is 1.0. Matrices have :obj:`__array_priority__` equal to 10.0.
+the highest :obj:`~class.__array_priority__` of any other input to the
+universal function. The default :obj:`~class.__array_priority__` of the
+ndarray is 0.0, and the default :obj:`~class.__array_priority__` of a subtype
+is 1.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
 
 All ufuncs can also take output arguments. If necessary, output will
 be cast to the data-type(s) of the provided output array(s). If a class
-with an :obj:`__array__` method is used for the output, results will be
-written to the object returned by :obj:`__array__`. Then, if the class
-also has an :obj:`__array_prepare__` method, it is called so metadata
+with an :obj:`~class.__array__` method is used for the output, results will be
+written to the object returned by :obj:`~class.__array__`. Then, if the class
+also has an :obj:`~class.__array_prepare__` method, it is called so metadata
 may be determined based on the context of the ufunc (the context
 consisting of the ufunc itself, the arguments passed to the ufunc, and
 the ufunc domain.) The array object returned by
-:obj:`__array_prepare__` is passed to the ufunc for computation.
-Finally, if the class also has an :obj:`__array_wrap__` method, the returned
+:obj:`~class.__array_prepare__` is passed to the ufunc for computation.
+Finally, if the class also has an :obj:`~class.__array_wrap__` method, the returned
 :class:`ndarray` result will be passed to that method just before
 passing control back to the caller.
 
@@ -177,7 +186,7 @@ Casting Rules
 .. note::
 
    In NumPy 1.6.0, a type promotion API was created to encapsulate the
-   mechansim for determining output types. See the functions
+   mechanism for determining output types. See the functions
    :func:`result_type`, :func:`promote_types`, and
    :func:`min_scalar_type` for more details.
 
@@ -275,6 +284,8 @@ whether the precision of the scalar constant will cause upcasting on
 your large (small precision) array.
 
 
+.. _ufuncs.overrides:
+
 Overriding Ufunc behavior
 =========================
 
@@ -285,6 +296,8 @@ them by defining certain special methods.  For details, see
 
 :class:`ufunc`
 ==============
+
+.. _ufuncs.kwargs:
 
 Optional keyword arguments
 --------------------------
@@ -303,7 +316,7 @@ advanced usage and will not typically be used.
     parameter. Keyword 'out' arguments are incompatible with positional
     ones.
 
-    ..versionadded:: 1.10
+    .. versionadded:: 1.10
 
     The 'out' keyword argument is expected to be a tuple with one entry per
     output (which can be `None` for arrays to be allocated by the ufunc).
@@ -320,7 +333,8 @@ advanced usage and will not typically be used.
 
     Accepts a boolean array which is broadcast together with the operands.
     Values of True indicate to calculate the ufunc at that position, values
-    of False indicate to leave the value in the output alone.
+    of False indicate to leave the value in the output alone. This argument
+    cannot be used for generalized ufuncs as those take non-scalar input.
 
 *casting*
 
@@ -373,7 +387,9 @@ advanced usage and will not typically be used.
     search and choose a particular loop. A list of available signatures is
     provided by the **types** attribute of the ufunc object. For backwards
     compatibility this argument can also be provided as *sig*, although
-    the long form is preferred.
+    the long form is preferred. Note that this should not be confused with
+    the generalized ufunc signature that is stored in the **signature**
+    attribute of the of the ufunc object.
 
 *extobj*
 
@@ -415,19 +431,24 @@ possess. None of the attributes can be set.
    ufunc.ntypes
    ufunc.types
    ufunc.identity
+   ufunc.signature
+
+.. _ufuncs.methods:
 
 Methods
 -------
 
-All ufuncs have four methods. However, these methods only make sense on
+All ufuncs have four methods. However, these methods only make sense on scalar
 ufuncs that take two input arguments and return one output argument.
 Attempting to call these methods on other ufuncs will cause a
-:exc:`ValueError`. The reduce-like methods all take an *axis* keyword
-and a *dtype* keyword, and the arrays must all have dimension >= 1.
+:exc:`ValueError`. The reduce-like methods all take an *axis* keyword, a *dtype*
+keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
 The *axis* keyword specifies the axis of the array over which the reduction
-will take place and may be negative, but must be an integer. The
-*dtype* keyword allows you to manage a very common problem that arises
-when naively using :ref:`{op}.reduce <ufunc.reduce>`. Sometimes you may
+will take place (with negative values counting backwards). Generally, it is an
+integer, though for :meth:`ufunc.reduce`, it can also be a tuple of `int` to
+reduce over several axes at once, or `None`, to reduce over all axes.
+The *dtype* keyword allows you to manage a very common problem that arises
+when naively using :meth:`ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
 elements, but the result does not fit into the data type of the
 array. This commonly happens if you have an array of single-byte
@@ -439,7 +460,10 @@ mostly up to you. There is one exception: if no *dtype* is given for a
 reduction on the "add" or "multiply" operations, then if the input type is
 an integer (or Boolean) data-type and smaller than the size of the
 :class:`int_` data type, it will be internally upcast to the :class:`int_`
-(or :class:`uint`) data-type.
+(or :class:`uint`) data-type. Finally, the *out* keyword allows you to provide
+an output array (for single-output ufuncs, which are currently the only ones
+supported; for future extension, however, a tuple with a single argument
+can be passed in). If *out* is given, the *dtype* argument is ignored.
 
 Ufuncs also have a fifth method that allows in place operations to be
 performed using fancy indexing. No buffering is used on the dimensions where
@@ -480,7 +504,7 @@ is called internally when ``a + b`` is written and *a* or *b* is an
 call in order to use the optional output argument(s) to place the
 output(s) in an object (or objects) of your choice.
 
-Recall that each ufunc operates element-by-element. Therefore, each
+Recall that each ufunc operates element-by-element. Therefore, each scalar
 ufunc will be described as if acting on a set of scalar inputs to
 return a set of scalar outputs.
 
@@ -503,13 +527,17 @@ Math operations
     true_divide
     floor_divide
     negative
+    positive
     power
     remainder
     mod
     fmod
+    divmod
     absolute
+    fabs
     rint
     sign
+    heaviside
     conj
     exp
     exp2
@@ -520,8 +548,8 @@ Math operations
     log1p
     sqrt
     square
+    cbrt
     reciprocal
-    ones_like
 
 .. tip::
 
@@ -649,14 +677,15 @@ single operation.
 
 .. autosummary::
 
-    isreal
-    iscomplex
     isfinite
     isinf
     isnan
+    isnat
+    fabs
     signbit
     copysign
     nextafter
+    spacing
     modf
     ldexp
     frexp

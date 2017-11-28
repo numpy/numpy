@@ -5,22 +5,20 @@ from .common import Benchmark, get_squares_
 import numpy as np
 
 
-ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin',
-          'arcsinh', 'arctan', 'arctan2', 'arctanh', 'bitwise_and',
-          'bitwise_not', 'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil',
-          'conj', 'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad',
-          'degrees', 'divide', 'equal', 'exp', 'exp2', 'expm1',
-          'fabs', 'floor', 'floor_divide', 'fmax', 'fmin', 'fmod',
-          'frexp', 'greater', 'greater_equal', 'hypot', 'invert',
-          'isfinite', 'isinf', 'isnan', 'ldexp', 'left_shift', 'less',
-          'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
-          'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'maximum', 'minimum', 'mod', 'modf',
-          'multiply', 'negative', 'nextafter', 'not_equal', 'power',
-          'rad2deg', 'radians', 'reciprocal', 'remainder',
-          'right_shift', 'rint', 'sign', 'signbit', 'sin', 'sinh',
-          'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-          'true_divide', 'trunc']
+ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
+          'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_not',
+          'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj', 'conjugate',
+          'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide', 'divmod',
+          'equal', 'exp', 'exp2', 'expm1', 'fabs', 'float_power', 'floor',
+          'floor_divide', 'fmax', 'fmin', 'fmod', 'frexp', 'greater',
+          'greater_equal', 'heaviside', 'hypot', 'invert', 'isfinite', 'isinf',
+          'isnan', 'isnat', 'ldexp', 'left_shift', 'less', 'less_equal', 'log',
+          'log10', 'log1p', 'log2', 'logaddexp', 'logaddexp2', 'logical_and',
+          'logical_not', 'logical_or', 'logical_xor', 'maximum', 'minimum',
+          'mod', 'modf', 'multiply', 'negative', 'nextafter', 'not_equal',
+          'positive', 'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
+          'right_shift', 'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing',
+          'sqrt', 'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
@@ -62,13 +60,10 @@ class UFunc(Benchmark):
 
 class Custom(Benchmark):
     def setup(self):
-        self.b = np.ones(20000, dtype=np.bool)
+        self.b = np.ones(20000, dtype=bool)
 
     def time_nonzero(self):
         np.nonzero(self.b)
-
-    def time_count_nonzero(self):
-        np.count_nonzero(self.b)
 
     def time_not_bool(self):
         (~self.b)
@@ -78,6 +73,45 @@ class Custom(Benchmark):
 
     def time_or_bool(self):
         (self.b | self.b)
+
+
+class CustomInplace(Benchmark):
+    def setup(self):
+        self.c = np.ones(500000, dtype=np.int8)
+        self.i = np.ones(150000, dtype=np.int32)
+        self.f = np.zeros(150000, dtype=np.float32)
+        self.d = np.zeros(75000, dtype=np.float64)
+        # fault memory
+        self.f *= 1.
+        self.d *= 1.
+
+    def time_char_or(self):
+        np.bitwise_or(self.c, 0, out=self.c)
+        np.bitwise_or(0, self.c, out=self.c)
+
+    def time_char_or_temp(self):
+        0 | self.c | 0
+
+    def time_int_or(self):
+        np.bitwise_or(self.i, 0, out=self.i)
+        np.bitwise_or(0, self.i, out=self.i)
+
+    def time_int_or_temp(self):
+        0 | self.i | 0
+
+    def time_float_add(self):
+        np.add(self.f, 1., out=self.f)
+        np.add(1., self.f, out=self.f)
+
+    def time_float_add_temp(self):
+        1. + self.f + 1.
+
+    def time_double_add(self):
+        np.add(self.d, 1., out=self.d)
+        np.add(1., self.d, out=self.d)
+
+    def time_double_add_temp(self):
+        1. + self.d + 1.
 
 
 class CustomScalar(Benchmark):

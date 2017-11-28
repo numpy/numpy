@@ -87,22 +87,25 @@
  * combine with NPY_GCC_OPT_3 to allow autovectorization
  * should only be used where its worthwhile to avoid code bloat
  */
+#define BASE_UNARY_LOOP(tin, tout, op) \
+    UNARY_LOOP { \
+        const tin in = *(tin *)ip1; \
+        tout * out = (tout *)op1; \
+        op; \
+    }
 #define UNARY_LOOP_FAST(tin, tout, op) \
     do { \
     /* condition allows compiler to optimize the generic macro */ \
     if (IS_UNARY_CONT(tin, tout)) { \
-        UNARY_LOOP { \
-            const tin in = *(tin *)ip1; \
-            tout * out = (tout *)op1; \
-            op; \
+        if (args[0] == args[1]) { \
+            BASE_UNARY_LOOP(tin, tout, op) \
+        } \
+        else { \
+            BASE_UNARY_LOOP(tin, tout, op) \
         } \
     } \
     else { \
-        UNARY_LOOP { \
-            const tin in = *(tin *)ip1; \
-            tout * out = (tout *)op1; \
-            op; \
-        } \
+        BASE_UNARY_LOOP(tin, tout, op) \
     } \
     } \
     while (0)
@@ -128,40 +131,83 @@
  * combine with NPY_GCC_OPT_3 to allow autovectorization
  * should only be used where its worthwhile to avoid code bloat
  */
+#define BASE_BINARY_LOOP(tin, tout, op) \
+    BINARY_LOOP { \
+        const tin in1 = *(tin *)ip1; \
+        const tin in2 = *(tin *)ip2; \
+        tout * out = (tout *)op1; \
+        op; \
+    }
+/*
+ * unfortunately gcc 6/7 regressed and we need to give it additional hints to
+ * vectorize inplace operations (PR80198)
+ * must only be used after op1 == ip1 or ip2 has been checked
+ * TODO: using ivdep might allow other compilers to vectorize too
+ */
+#if __GNUC__ >= 6
+#define IVDEP_LOOP _Pragma("GCC ivdep")
+#else
+#define IVDEP_LOOP
+#endif
+#define BASE_BINARY_LOOP_INP(tin, tout, op) \
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    IVDEP_LOOP \
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) { \
+        const tin in1 = *(tin *)ip1; \
+        const tin in2 = *(tin *)ip2; \
+        tout * out = (tout *)op1; \
+        op; \
+    }
+#define BASE_BINARY_LOOP_S(tin, tout, cin, cinp, vin, vinp, op) \
+    const tin cin = *(tin *)cinp; \
+    BINARY_LOOP { \
+        const tin vin = *(tin *)vinp; \
+        tout * out = (tout *)op1; \
+        op; \
+    }
+/* PR80198 again, scalar works without the pragma */
+#define BASE_BINARY_LOOP_S_INP(tin, tout, cin, cinp, vin, vinp, op) \
+    const tin cin = *(tin *)cinp; \
+    BINARY_LOOP { \
+        const tin vin = *(tin *)vinp; \
+        tout * out = (tout *)vinp; \
+        op; \
+    }
 #define BINARY_LOOP_FAST(tin, tout, op) \
     do { \
     /* condition allows compiler to optimize the generic macro */ \
     if (IS_BINARY_CONT(tin, tout)) { \
-        BINARY_LOOP { \
-            const tin in1 = *(tin *)ip1; \
-            const tin in2 = *(tin *)ip2; \
-            tout * out = (tout *)op1; \
-            op; \
+        if (args[2] == args[0]) { \
+            BASE_BINARY_LOOP_INP(tin, tout, op) \
+        } \
+        else if (args[2] == args[1]) { \
+            BASE_BINARY_LOOP_INP(tin, tout, op) \
+        } \
+        else { \
+            BASE_BINARY_LOOP(tin, tout, op) \
         } \
     } \
     else if (IS_BINARY_CONT_S1(tin, tout)) { \
-        const tin in1 = *(tin *)args[0]; \
-        BINARY_LOOP { \
-            const tin in2 = *(tin *)ip2; \
-            tout * out = (tout *)op1; \
-            op; \
+        if (args[1] == args[2]) { \
+            BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
+        } \
+        else { \
+            BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
         } \
     } \
     else if (IS_BINARY_CONT_S2(tin, tout)) { \
-        const tin in2 = *(tin *)args[1]; \
-        BINARY_LOOP { \
-            const tin in1 = *(tin *)ip1; \
-            tout * out = (tout *)op1; \
-            op; \
+        if (args[0] == args[2]) { \
+            BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
         } \
+        else { \
+            BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
+        }\
     } \
     else { \
-        BINARY_LOOP { \
-            const tin in1 = *(tin *)ip1; \
-            const tin in2 = *(tin *)ip2; \
-            tout * out = (tout *)op1; \
-            op; \
-        } \
+        BASE_BINARY_LOOP(tin, tout, op) \
     } \
     } \
     while (0)
@@ -772,6 +818,7 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #ftype = npy_float, npy_float, npy_float, npy_float, npy_double, npy_double,
  *          npy_double, npy_double, npy_double, npy_double#
+ * #SIGNED = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
@@ -786,51 +833,77 @@ NPY_NO_EXPORT void
     }
 }
 
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_square(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in * in);
-}
-
 NPY_NO_EXPORT void
-@TYPE@_reciprocal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP_FAST(@type@, @type@, *out = 1.0 / in);
-}
-
-NPY_NO_EXPORT void
-@TYPE@_conjugate(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = in);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = -in);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_logical_not(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, npy_bool, *out = !in);
-}
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_invert(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = ~in);
+    UNARY_LOOP_FAST(@type@, @type@, *out = +in);
 }
 
 /**begin repeat1
+ * #isa = , _avx2#
+ * #ISA = , AVX2#
+ * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX2#
+ * #ATTR = , NPY_GCC_TARGET_AVX2#
+ */
+
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_square@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = in * in);
+}
+#endif
+
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_reciprocal@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = 1.0 / in);
+}
+#endif
+
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_conjugate@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = in);
+}
+#endif
+
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_negative@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = -in);
+}
+#endif
+
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_logical_not@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, npy_bool, *out = !in);
+}
+#endif
+
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_invert@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(@type@, @type@, *out = ~in);
+}
+#endif
+
+/**begin repeat2
  * Arithmetic
  * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
  *          left_shift, right_shift#
  * #OP = +, -,*, &, |, ^, <<, >>#
  */
 
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_@kind@@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
         BINARY_REDUCE_LOOP(@type@) {
@@ -842,17 +915,19 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
         BINARY_LOOP_FAST(@type@, @type@, *out = in1 @OP@ in2);
     }
 }
+#endif
 
-/**end repeat1**/
+/**end repeat2**/
 
-/**begin repeat1
+/**begin repeat2
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
  *         logical_and, logical_or#
  * #OP =  ==, !=, >, >=, <, <=, &&, ||#
  */
 
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_@kind@@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     /*
      * gcc vectorization of this is not good (PR60575) but manual integer
@@ -860,11 +935,13 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
      */
     BINARY_LOOP_FAST(@type@, npy_bool, *out = in1 @OP@ in2);
 }
+#endif
 
-/**end repeat1**/
+/**end repeat2**/
 
-NPY_NO_EXPORT void
-@TYPE@_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_logical_xor@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
         const int t1 = !!*(@type@ *)ip1;
@@ -872,6 +949,9 @@ NPY_NO_EXPORT void
         *((npy_bool *)op1) = (t1 != t2);
     }
 }
+#endif
+
+/**end repeat1**/
 
 /**begin repeat1
  * #kind = maximum, minimum#
@@ -900,22 +980,42 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 
 NPY_NO_EXPORT void
-@TYPE@_true_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const double in1 = (double)(*(@type@ *)ip1);
-        const double in2 = (double)(*(@type@ *)ip2);
-        *((double *)op1) = in1/in2;
-    }
-}
-
-NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const @ftype@ in1 = (@ftype@)*(@type@ *)ip1;
-        const @ftype@ in2 = (@ftype@)*(@type@ *)ip2;
-        *((@type@ *)op1) = (@type@) pow(in1, in2);
+        @type@ in1 = *(@type@ *)ip1;
+        @type@ in2 = *(@type@ *)ip2;
+        @type@ out;
+
+#if @SIGNED@
+        if (in2 < 0) {
+            NPY_ALLOW_C_API_DEF
+            NPY_ALLOW_C_API;
+            PyErr_SetString(PyExc_ValueError,
+                    "Integers to negative integer powers are not allowed.");
+            NPY_DISABLE_C_API;
+            return;
+        }
+#endif
+        if (in2 == 0) {
+            *((@type@ *)op1) = 1;
+            continue;
+        }
+        if (in1 == 1) {
+            *((@type@ *)op1) = 1;
+            continue;
+        }
+
+        out = in2 & 1 ? in1 : 1;
+        in2 >>= 1;
+        while (in2 > 0) {
+            in1 *= in1;
+            if (in2 & 1) {
+                out *= in1;
+            }
+            in2 >>= 1;
+        }
+        *((@type@ *) op1) = out;
     }
 }
 
@@ -1004,6 +1104,34 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        /* see FIXME note for divide above */
+        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
+            npy_set_floatstatus_divbyzero();
+            *((@type@ *)op1) = 0;
+            *((@type@ *)op2) = 0;
+        }
+        else {
+            /* handle mixed case the way Python does */
+            const @type@ quo = in1 / in2;
+            const @type@ rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((@type@ *)op1) = quo;
+                *((@type@ *)op2) = rem;
+            }
+            else {
+                *((@type@ *)op1) = quo - 1;
+                *((@type@ *)op2) = rem + in2;
+            }
+        }
+    }
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -1058,6 +1186,24 @@ NPY_NO_EXPORT void
     }
 }
 
+NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            *((@type@ *)op1) = 0;
+            *((@type@ *)op2) = 0;
+        }
+        else {
+            *((@type@ *)op1)= in1/in2;
+            *((@type@ *)op2) = in1 % in2;
+        }
+    }
+}
+
 /**end repeat**/
 
 /*
@@ -1077,6 +1223,15 @@ TIMEDELTA_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY
         else {
             *((npy_timedelta *)op1) = -in1;
         }
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        *((npy_timedelta *)op1) = +in1;
     }
 }
 
@@ -1109,6 +1264,15 @@ TIMEDELTA_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
  */
 
 NPY_NO_EXPORT void
+@TYPE@_isnat(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((npy_bool *)op1) = (in1 == NPY_DATETIME_NAT);
+    }
+}
+
+NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
@@ -1117,19 +1281,63 @@ NPY_NO_EXPORT void
 }
 
 /**begin repeat1
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
- * #OP =  ==, !=, >, >=, <, <=#
+ * #kind = equal, greater, greater_equal, less, less_equal#
+ * #OP =  ==, >, >=, <, <=#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
+    npy_bool give_future_warning = 0;
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1) = in1 @OP@ in2;
+        const npy_bool res = in1 @OP@ in2;
+        *((npy_bool *)op1) = res;
+
+        if ((in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) && res) {
+            give_future_warning = 1;
+        }
+    }
+    if (give_future_warning) {
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API;
+        /* 2016-01-18, 1.11 */
+        if (DEPRECATE_FUTUREWARNING(
+                "In the future, 'NAT @OP@ x' and 'x @OP@ NAT' "
+                "will always be False.") < 0) {
+            /* nothing to do, we return anyway */
+        }
+        NPY_DISABLE_C_API;
     }
 }
 /**end repeat1**/
+
+NPY_NO_EXPORT void
+@TYPE@_not_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    npy_bool give_future_warning = 0;
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((npy_bool *)op1) = in1 != in2;
+
+        if (in1 == NPY_DATETIME_NAT && in2 == NPY_DATETIME_NAT) {
+            give_future_warning = 1;
+        }
+    }
+    if (give_future_warning) {
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API;
+        /* 2016-01-18, 1.11 */
+        if (DEPRECATE_FUTUREWARNING(
+                "In the future, NAT != NAT will be True "
+                "rather than False.") < 0) {
+            /* nothing to do, we return anyway */
+        }
+        NPY_DISABLE_C_API;
+    }
+}
+
 
 /**begin repeat1
  * #kind = maximum, minimum#
@@ -1415,13 +1623,13 @@ NPY_NO_EXPORT void
  * when updating also update similar complex floats summation
  */
 static @type@
-pairwise_sum_@TYPE@(@dtype@ *a, npy_uintp n, npy_intp stride)
+pairwise_sum_@TYPE@(char *a, npy_uintp n, npy_intp stride)
 {
     if (n < 8) {
         npy_intp i;
         @type@ res = 0.;
         for (i = 0; i < n; i++) {
-            res += @trf@(a[i * stride]);
+            res += @trf@(*((@dtype@*)(a + i * stride)));
         }
         return res;
     }
@@ -1434,26 +1642,26 @@ pairwise_sum_@TYPE@(@dtype@ *a, npy_uintp n, npy_intp stride)
          * 8 times unroll reduces blocksize to 16 and allows vectorization with
          * avx without changing summation ordering
          */
-        r[0] = @trf@(a[0 * stride]);
-        r[1] = @trf@(a[1 * stride]);
-        r[2] = @trf@(a[2 * stride]);
-        r[3] = @trf@(a[3 * stride]);
-        r[4] = @trf@(a[4 * stride]);
-        r[5] = @trf@(a[5 * stride]);
-        r[6] = @trf@(a[6 * stride]);
-        r[7] = @trf@(a[7 * stride]);
+        r[0] = @trf@(*((@dtype@ *)(a + 0 * stride)));
+        r[1] = @trf@(*((@dtype@ *)(a + 1 * stride)));
+        r[2] = @trf@(*((@dtype@ *)(a + 2 * stride)));
+        r[3] = @trf@(*((@dtype@ *)(a + 3 * stride)));
+        r[4] = @trf@(*((@dtype@ *)(a + 4 * stride)));
+        r[5] = @trf@(*((@dtype@ *)(a + 5 * stride)));
+        r[6] = @trf@(*((@dtype@ *)(a + 6 * stride)));
+        r[7] = @trf@(*((@dtype@ *)(a + 7 * stride)));
 
         for (i = 8; i < n - (n % 8); i += 8) {
             /* small blocksizes seems to mess with hardware prefetch */
-            NPY_PREFETCH(&a[(i + 512 / sizeof(a[0])) * stride], 0, 3);
-            r[0] += @trf@(a[(i + 0) * stride]);
-            r[1] += @trf@(a[(i + 1) * stride]);
-            r[2] += @trf@(a[(i + 2) * stride]);
-            r[3] += @trf@(a[(i + 3) * stride]);
-            r[4] += @trf@(a[(i + 4) * stride]);
-            r[5] += @trf@(a[(i + 5) * stride]);
-            r[6] += @trf@(a[(i + 6) * stride]);
-            r[7] += @trf@(a[(i + 7) * stride]);
+            NPY_PREFETCH(a + (i + 512 / sizeof(@dtype@)) * stride, 0, 3);
+            r[0] += @trf@(*((@dtype@ *)(a + (i + 0) * stride)));
+            r[1] += @trf@(*((@dtype@ *)(a + (i + 1) * stride)));
+            r[2] += @trf@(*((@dtype@ *)(a + (i + 2) * stride)));
+            r[3] += @trf@(*((@dtype@ *)(a + (i + 3) * stride)));
+            r[4] += @trf@(*((@dtype@ *)(a + (i + 4) * stride)));
+            r[5] += @trf@(*((@dtype@ *)(a + (i + 5) * stride)));
+            r[6] += @trf@(*((@dtype@ *)(a + (i + 6) * stride)));
+            r[7] += @trf@(*((@dtype@ *)(a + (i + 7) * stride)));
         }
 
         /* accumulate now to avoid stack spills for single peel loop */
@@ -1462,7 +1670,7 @@ pairwise_sum_@TYPE@(@dtype@ *a, npy_uintp n, npy_intp stride)
 
         /* do non multiple of 8 rest */
         for (; i < n; i++) {
-            res += @trf@(a[i * stride]);
+            res += @trf@(*((@dtype@ *)(a + i * stride)));
         }
         return res;
     }
@@ -1499,8 +1707,7 @@ NPY_NO_EXPORT void
         @type@ * iop1 = (@type@ *)args[0];
         npy_intp n = dimensions[0];
 
-        *iop1 @OP@= pairwise_sum_@TYPE@((@type@ *)args[1], n,
-                                        steps[1] / (npy_intp)sizeof(@type@));
+        *iop1 @OP@= pairwise_sum_@TYPE@(args[1], n, steps[1]);
 #else
         BINARY_REDUCE_LOOP(@type@) {
             io1 @OP@= *(@type@ *)ip2;
@@ -1568,6 +1775,7 @@ NPY_NO_EXPORT void
             *((npy_bool *)op1) = @func@(in1) != 0;
         }
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
@@ -1649,6 +1857,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
         }
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
@@ -1658,7 +1867,8 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((@type@ *)op1) = npy_floor@c@(in1/in2);
+        @type@ mod;
+        *((@type@ *)op1) = npy_divmod@c@(in1, in2, &mod);
     }
 }
 
@@ -1668,8 +1878,17 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        const @type@ div = in1/in2;
-        *((@type@ *)op1) = in2*(div - npy_floor@c@(div));
+        npy_divmod@c@(in1, in2, (@type@ *)op1);
+    }
+}
+
+NPY_NO_EXPORT void
+@TYPE@_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = npy_divmod@c@(in1, in2, (@type@ *)op2);
     }
 }
 
@@ -1728,6 +1947,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = tmp + 0;
         }
     }
+    npy_clear_floatstatus();
 }
 
 NPY_NO_EXPORT void
@@ -1738,6 +1958,15 @@ NPY_NO_EXPORT void
             const @type@ in1 = *(@type@ *)ip1;
             *((@type@ *)op1) = -in1;
         }
+    }
+}
+
+NPY_NO_EXPORT void
+@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((@type@ *)op1) = +in1;
     }
 }
 
@@ -1835,8 +2064,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 #if @PW@
         npy_intp n = dimensions[0];
 
-        io1 @OP@= pairwise_sum_HALF((npy_half *)args[1], n,
-                                    steps[1] / (npy_intp)sizeof(npy_half));
+        io1 @OP@= pairwise_sum_HALF(args[1], n, steps[1]);
 #else
         BINARY_REDUCE_LOOP_INNER {
             io1 @OP@= npy_half_to_float(*(npy_half *)ip2);
@@ -1905,6 +2133,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_bool *)op1) = @func@(in1) != 0;
     }
+    npy_clear_floatstatus();
 }
 /**end repeat**/
 
@@ -1966,6 +2195,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in2 = *(npy_half *)ip2;
         *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in2)) ? in1 : in2;
     }
+    npy_clear_floatstatus();
 }
 /**end repeat**/
 
@@ -1973,9 +2203,10 @@ NPY_NO_EXPORT void
 HALF_floor_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        const float in2 = npy_half_to_float(*(npy_half *)ip2);
-        *((npy_half *)op1) = npy_float_to_half(npy_floorf(in1/in2));
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        npy_half mod;
+        *((npy_half *)op1) = npy_half_divmod(in1, in2, &mod);
     }
 }
 
@@ -1983,15 +2214,19 @@ NPY_NO_EXPORT void
 HALF_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        const float in2 = npy_half_to_float(*(npy_half *)ip2);
-        const float res = npy_fmodf(in1,in2);
-        if (res && ((in2 < 0) != (res < 0))) {
-            *((npy_half *)op1) = npy_float_to_half(res + in2);
-        }
-        else {
-            *((npy_half *)op1) = npy_float_to_half(res);
-        }
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        npy_half_divmod(in1, in2, (npy_half *)op1);
+    }
+}
+
+NPY_NO_EXPORT void
+HALF_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_half in1 = *(npy_half *)ip1;
+        const npy_half in2 = *(npy_half *)ip2;
+        *((npy_half *)op1) = npy_half_divmod(in1, in2, (npy_half *)op2);
     }
 }
 
@@ -2045,6 +2280,15 @@ HALF_negative(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_half *)op1) = in1^0x8000u;
+    }
+}
+
+NPY_NO_EXPORT void
+HALF_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const npy_half in1 = *(npy_half *)ip1;
+        *((npy_half *)op1) = +in1;
     }
 }
 
@@ -2151,7 +2395,7 @@ HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 
 /* similar to pairwise sum of real floats */
 static void
-pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
+pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, char * a, npy_uintp n,
                     npy_intp stride)
 {
     assert(n % 2 == 0);
@@ -2160,8 +2404,8 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
         *rr = 0.;
         *ri = 0.;
         for (i = 0; i < n; i += 2) {
-            *rr += a[i * stride + 0];
-            *ri += a[i * stride + 1];
+            *rr += *((@ftype@ *)(a + i * stride + 0));
+            *ri += *((@ftype@ *)(a + i * stride + sizeof(@ftype@)));
         }
         return;
     }
@@ -2174,26 +2418,26 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
          * 8 times unroll reduces blocksize to 16 and allows vectorization with
          * avx without changing summation ordering
          */
-        r[0] = a[0 * stride];
-        r[1] = a[0 * stride + 1];
-        r[2] = a[2 * stride];
-        r[3] = a[2 * stride + 1];
-        r[4] = a[4 * stride];
-        r[5] = a[4 * stride + 1];
-        r[6] = a[6 * stride];
-        r[7] = a[6 * stride + 1];
+        r[0] = *((@ftype@ *)(a + 0 * stride));
+        r[1] = *((@ftype@ *)(a + 0 * stride + sizeof(@ftype@)));
+        r[2] = *((@ftype@ *)(a + 2 * stride));
+        r[3] = *((@ftype@ *)(a + 2 * stride + sizeof(@ftype@)));
+        r[4] = *((@ftype@ *)(a + 4 * stride));
+        r[5] = *((@ftype@ *)(a + 4 * stride + sizeof(@ftype@)));
+        r[6] = *((@ftype@ *)(a + 6 * stride));
+        r[7] = *((@ftype@ *)(a + 6 * stride + sizeof(@ftype@)));
 
         for (i = 8; i < n - (n % 8); i += 8) {
             /* small blocksizes seems to mess with hardware prefetch */
-            NPY_PREFETCH(&a[(i + 512 / sizeof(a[0])) * stride], 0, 3);
-            r[0] += a[(i + 0) * stride];
-            r[1] += a[(i + 0) * stride + 1];
-            r[2] += a[(i + 2) * stride];
-            r[3] += a[(i + 2) * stride + 1];
-            r[4] += a[(i + 4) * stride];
-            r[5] += a[(i + 4) * stride + 1];
-            r[6] += a[(i + 6) * stride];
-            r[7] += a[(i + 6) * stride + 1];
+            NPY_PREFETCH(a + (i + 512 / sizeof(@ftype@)) * stride, 0, 3);
+            r[0] += *((@ftype@ *)(a + (i + 0) * stride));
+            r[1] += *((@ftype@ *)(a + (i + 0) * stride + sizeof(@ftype@)));
+            r[2] += *((@ftype@ *)(a + (i + 2) * stride));
+            r[3] += *((@ftype@ *)(a + (i + 2) * stride + sizeof(@ftype@)));
+            r[4] += *((@ftype@ *)(a + (i + 4) * stride));
+            r[5] += *((@ftype@ *)(a + (i + 4) * stride + sizeof(@ftype@)));
+            r[6] += *((@ftype@ *)(a + (i + 6) * stride));
+            r[7] += *((@ftype@ *)(a + (i + 6) * stride + sizeof(@ftype@)));
         }
 
         /* accumulate now to avoid stack spills for single peel loop */
@@ -2202,8 +2446,8 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, @ftype@ * a, npy_uintp n,
 
         /* do non multiple of 8 rest */
         for (; i < n; i+=2) {
-            *rr += a[i * stride + 0];
-            *ri += a[i * stride + 1];
+            *rr += *((@ftype@ *)(a + i * stride + 0));
+            *ri += *((@ftype@ *)(a + i * stride + sizeof(@ftype@)));
         }
         return;
     }
@@ -2235,8 +2479,7 @@ NPY_NO_EXPORT void
         @ftype@ * oi = ((@ftype@ *)args[0]) + 1;
         @ftype@ rr, ri;
 
-        pairwise_sum_@TYPE@(&rr, &ri, (@ftype@ *)args[1], n * 2,
-                            steps[1] / (npy_intp)sizeof(@ftype@) / 2);
+        pairwise_sum_@TYPE@(&rr, &ri, args[1], n * 2, steps[1] / 2);
         *or @OP@= rr;
         *oi @OP@= ri;
         return;
@@ -2392,6 +2635,7 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         *((npy_bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
@@ -2500,6 +2744,7 @@ NPY_NO_EXPORT void
             ((@ftype@ *)op1)[1] = in2i;
         }
     }
+    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
@@ -2561,61 +2806,19 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         in2 = in2 ? in2 : Py_None;
 
         /*
-         * Do not use RichCompareBool because it includes an identity check
-         * (for == and !=).
-         * This is wrong for elementwise behaviour, since it means
+         * Do not use RichCompareBool because it includes an identity check for
+         * == and !=. This is wrong for elementwise behaviour, since it means
          * that NaN can be equal to NaN and an array is equal to itself.
          */
         ret_obj = PyObject_RichCompare(in1, in2, Py_@OP@);
         if (ret_obj == NULL) {
-#if @identity@ != -1
-            if (in1 == in2) {
-                /* 2014-01-26, 1.9 */
-                PyErr_Clear();
-                if (DEPRECATE("numpy @kind@ will not check object identity "
-                              "in the future. The comparison error will "
-                              "be raised.") < 0) {
-                    return;
-                }
-                *((npy_bool *)op1) = @identity@;
-                continue;
-            }
-#endif
             return;
         }
         ret = PyObject_IsTrue(ret_obj);
         Py_DECREF(ret_obj);
         if (ret == -1) {
-#if @identity@ != -1
-            if (in1 == in2) {
-                /* 2014-01-26, 1.9 */
-                PyErr_Clear();
-                if (DEPRECATE("numpy @kind@ will not check object identity "
-                              "in the future. The error trying to get the "
-                              "boolean value of the comparison result will "
-                              "be raised.") < 0) {
-                    return;
-                }
-                *((npy_bool *)op1) = @identity@;
-                continue;
-            }
-#endif
             return;
         }
-#if @identity@ != -1
-        if ((in1 == in2) && ((npy_bool)ret != @identity@)) {
-            /* 2014-01-26, 1.9 */
-            if (DEPRECATE_FUTUREWARNING(
-                        "numpy @kind@ will not check object identity "
-                        "in the future. The comparison did not return the "
-                        "same result as suggested by the identity (`is`)) "
-                        "and will change.") < 0) {
-                return;
-            }
-            *((npy_bool *)op1) = @identity@;
-            continue;
-        }
-#endif
         *((npy_bool *)op1) = (npy_bool)ret;
     }
 }

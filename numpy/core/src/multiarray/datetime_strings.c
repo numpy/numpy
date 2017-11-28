@@ -484,7 +484,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->hour = 10 * (substr[0] - '0') + (substr[1] - '0');
 
-        if (out->hour < 0 || out->hour >= 24) {
+        if (out->hour >= 24) {
             PyErr_Format(PyExc_ValueError,
                         "Hours out of range in datetime string \"%s\"", str);
             goto error;
@@ -515,7 +515,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->min = 10 * (substr[0] - '0') + (substr[1] - '0');
 
-        if (out->hour < 0 || out->min >= 60) {
+        if (out->min >= 60) {
             PyErr_Format(PyExc_ValueError,
                         "Minutes out of range in datetime string \"%s\"", str);
             goto error;
@@ -546,7 +546,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     if (sublen >= 2 && isdigit(substr[0]) && isdigit(substr[1])) {
         out->sec = 10 * (substr[0] - '0') + (substr[1] - '0');
 
-        if (out->sec < 0 || out->sec >= 60) {
+        if (out->sec >= 60) {
             PyErr_Format(PyExc_ValueError,
                         "Seconds out of range in datetime string \"%s\"", str);
             goto error;
@@ -885,15 +885,16 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  *  string was too short).
  */
 NPY_NO_EXPORT int
-make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
+make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
                     int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
                     NPY_CASTING casting)
 {
     npy_datetimestruct dts_local;
     int timezone_offset = 0;
 
-    char *substr = outstr, sublen = outlen;
-    int tmplen;
+    char *substr = outstr;
+    npy_intp sublen = outlen;
+    npy_intp tmplen;
 
     /* Handle NaT, and treat a datetime with generic units as NaT */
     if (dts->year == NPY_DATETIME_NAT || base == NPY_FR_GENERIC) {
@@ -1321,7 +1322,7 @@ add_time_zone:
 string_too_short:
     PyErr_Format(PyExc_RuntimeError,
                 "The string provided for NumPy ISO datetime formatting "
-                "was too short, with length %d",
+                "was too short, with length %"NPY_INTP_FMT,
                 outlen);
     return -1;
 }
@@ -1364,8 +1365,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     /* Claim a reference to timezone for later */
     Py_XINCREF(timezone_obj);
 
-    op[0] = (PyArrayObject *)PyArray_FromAny(arr_in,
-                                    NULL, 0, 0, 0, NULL);
+    op[0] = (PyArrayObject *)PyArray_FROM_O(arr_in);
     if (op[0] == NULL) {
         goto fail;
     }

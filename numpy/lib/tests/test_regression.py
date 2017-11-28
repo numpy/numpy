@@ -5,22 +5,19 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises
+    run_module_suite, assert_, assert_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises, _assert_valid_refcount,
     )
-from numpy.testing.utils import _assert_valid_refcount
 from numpy.compat import unicode
 
-rlevel = 1
 
-
-class TestRegression(TestCase):
-    def test_poly1d(self, level=rlevel):
+class TestRegression(object):
+    def test_poly1d(self):
         # Ticket #28
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
                      np.poly1d([-1, 1]))
 
-    def test_cov_parameters(self, level=rlevel):
+    def test_cov_parameters(self):
         # Ticket #91
         x = np.random.random((3, 3))
         y = x.copy()
@@ -28,57 +25,57 @@ class TestRegression(TestCase):
         np.cov(y, rowvar=0)
         assert_array_equal(x, y)
 
-    def test_mem_digitize(self, level=rlevel):
+    def test_mem_digitize(self):
         # Ticket #95
         for i in range(100):
             np.digitize([1, 2, 3, 4], [1, 3])
             np.digitize([0, 1, 2, 3, 4], [1, 3])
 
-    def test_unique_zero_sized(self, level=rlevel):
+    def test_unique_zero_sized(self):
         # Ticket #205
         assert_array_equal([], np.unique(np.array([])))
 
-    def test_mem_vectorise(self, level=rlevel):
+    def test_mem_vectorise(self):
         # Ticket #325
         vt = np.vectorize(lambda *args: args)
         vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1, 1, 2)))
         vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1,
            1, 2)), np.zeros((2, 2)))
 
-    def test_mgrid_single_element(self, level=rlevel):
+    def test_mgrid_single_element(self):
         # Ticket #339
         assert_array_equal(np.mgrid[0:0:1j], [0])
         assert_array_equal(np.mgrid[0:0], [])
 
-    def test_refcount_vectorize(self, level=rlevel):
+    def test_refcount_vectorize(self):
         # Ticket #378
         def p(x, y):
             return 123
         v = np.vectorize(p)
         _assert_valid_refcount(v)
 
-    def test_poly1d_nan_roots(self, level=rlevel):
+    def test_poly1d_nan_roots(self):
         # Ticket #396
         p = np.poly1d([np.nan, np.nan, 1], r=0)
-        self.assertRaises(np.linalg.LinAlgError, getattr, p, "r")
+        assert_raises(np.linalg.LinAlgError, getattr, p, "r")
 
-    def test_mem_polymul(self, level=rlevel):
+    def test_mem_polymul(self):
         # Ticket #448
         np.polymul([], [1.])
 
-    def test_mem_string_concat(self, level=rlevel):
+    def test_mem_string_concat(self):
         # Ticket #469
         x = np.array([])
         np.append(x, 'asdasd\tasdasd')
 
-    def test_poly_div(self, level=rlevel):
+    def test_poly_div(self):
         # Ticket #553
         u = np.poly1d([1, 2, 3])
         v = np.poly1d([1, 2, 3, 4, 5])
         q, r = np.polydiv(u, v)
         assert_equal(q*v + r, u)
 
-    def test_poly_eq(self, level=rlevel):
+    def test_poly_eq(self):
         # Ticket #554
         x = np.poly1d([1, 2, 3])
         y = np.poly1d([3, 4])
@@ -109,13 +106,13 @@ class TestRegression(TestCase):
     def test_polydiv_type(self):
         # Make polydiv work for complex types
         msg = "Wrong type, should be complex"
-        x = np.ones(3, dtype=np.complex)
+        x = np.ones(3, dtype=complex)
         q, r = np.polydiv(x, x)
-        assert_(q.dtype == np.complex, msg)
+        assert_(q.dtype == complex, msg)
         msg = "Wrong type, should be float"
-        x = np.ones(3, dtype=np.int)
+        x = np.ones(3, dtype=int)
         q, r = np.polydiv(x, x)
-        assert_(q.dtype == np.float, msg)
+        assert_(q.dtype == float, msg)
 
     def test_histogramdd_too_many_bins(self):
         # Ticket 928.
@@ -124,22 +121,22 @@ class TestRegression(TestCase):
     def test_polyint_type(self):
         # Ticket #944
         msg = "Wrong type, should be complex"
-        x = np.ones(3, dtype=np.complex)
-        assert_(np.polyint(x).dtype == np.complex, msg)
+        x = np.ones(3, dtype=complex)
+        assert_(np.polyint(x).dtype == complex, msg)
         msg = "Wrong type, should be float"
-        x = np.ones(3, dtype=np.int)
-        assert_(np.polyint(x).dtype == np.float, msg)
+        x = np.ones(3, dtype=int)
+        assert_(np.polyint(x).dtype == float, msg)
 
     def test_ndenumerate_crash(self):
         # Ticket 1140
         # Shouldn't crash:
         list(np.ndenumerate(np.array([[]])))
 
-    def test_asfarray_none(self, level=rlevel):
+    def test_asfarray_none(self):
         # Test for changeset r5065
         assert_array_equal(np.array([np.nan]), np.asfarray([None]))
 
-    def test_large_fancy_indexing(self, level=rlevel):
+    def test_large_fancy_indexing(self):
         # Large enough to fail on 64-bit.
         nbits = np.dtype(np.intp).itemsize * 8
         thesize = int((2**nbits)**(1.0/5.0)+1)
@@ -156,15 +153,15 @@ class TestRegression(TestCase):
             i = np.random.randint(0, n, size=thesize)
             a[np.ix_(i, i, i, i, i)]
 
-        self.assertRaises(ValueError, dp)
-        self.assertRaises(ValueError, dp2)
+        assert_raises(ValueError, dp)
+        assert_raises(ValueError, dp2)
 
-    def test_void_coercion(self, level=rlevel):
+    def test_void_coercion(self):
         dt = np.dtype([('a', 'f4'), ('b', 'i4')])
         x = np.zeros((1,), dt)
         assert_(np.r_[x, x].dtype == dt)
 
-    def test_who_with_0dim_array(self, level=rlevel):
+    def test_who_with_0dim_array(self):
         # ticket #1243
         import os
         import sys
@@ -174,7 +171,7 @@ class TestRegression(TestCase):
         try:
             try:
                 np.who({'foo': np.array(1)})
-            except:
+            except Exception:
                 raise AssertionError("ticket #1243")
         finally:
             sys.stdout.close()
@@ -206,7 +203,7 @@ class TestRegression(TestCase):
         dlist = [np.float64, np.int32, np.int32]
         try:
             append_fields(base, names, data, dlist)
-        except:
+        except Exception:
             raise AssertionError()
 
     def test_loadtxt_fields_subarrays(self):
@@ -235,10 +232,10 @@ class TestRegression(TestCase):
 
     def test_nansum_with_boolean(self):
         # gh-2978
-        a = np.zeros(2, dtype=np.bool)
+        a = np.zeros(2, dtype=bool)
         try:
             np.nansum(a)
-        except:
+        except Exception:
             raise AssertionError()
 
     def test_py3_compat(self):

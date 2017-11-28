@@ -5,8 +5,8 @@ import sys, os, re
 
 # Check Sphinx version
 import sphinx
-if sphinx.__version__ < "1.0.1":
-    raise RuntimeError("Sphinx 1.0.1 or newer required")
+if sphinx.__version__ < "1.2.1":
+    raise RuntimeError("Sphinx 1.2.1 or newer required")
 
 needs_sphinx = '1.0'
 
@@ -19,10 +19,17 @@ needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
+extensions = ['sphinx.ext.autodoc', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
+              'sphinx.ext.graphviz',
               'matplotlib.sphinxext.plot_directive']
+
+if sphinx.__version__ >= "1.4":
+    extensions.append('sphinx.ext.imgmath')
+    imgmath_image_format = 'svg'
+else:
+    extensions.append('sphinx.ext.pngmath')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -32,7 +39,7 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2009, The Scipy community'
+copyright = '2008-2017, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -122,9 +129,12 @@ html_file_suffix = '.html'
 
 htmlhelp_basename = 'numpy'
 
-pngmath_use_preview = True
-pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+if 'sphinx.ext.pngmath' in extensions:
+    pngmath_use_preview = True
+    pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # -----------------------------------------------------------------------------
 # LaTeX output
@@ -189,7 +199,7 @@ latex_use_modindex = False
 # -----------------------------------------------------------------------------
 
 texinfo_documents = [
-  ("contents", 'numpy', 'Numpy Documentation', _stdauthor, 'Numpy',
+  ("contents", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
    "NumPy: array processing for numbers, strings, records, and objects.",
    'Programming',
    1),
@@ -199,11 +209,15 @@ texinfo_documents = [
 # -----------------------------------------------------------------------------
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
-intersphinx_mapping = {'http://docs.python.org/dev': None}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/dev', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'matplotlib': ('http://matplotlib.org', None)
+}
 
 
 # -----------------------------------------------------------------------------
-# Numpy extensions
+# NumPy extensions
 # -----------------------------------------------------------------------------
 
 # If we want to do a phantom import from an XML file for all autodocs
@@ -301,19 +315,19 @@ def linkcode_resolve(domain, info):
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
-        except:
+        except Exception:
             return None
 
     try:
         fn = inspect.getsourcefile(obj)
-    except:
+    except Exception:
         fn = None
     if not fn:
         return None
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except:
+    except Exception:
         lineno = None
 
     if lineno:

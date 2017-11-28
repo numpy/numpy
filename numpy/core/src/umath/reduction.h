@@ -137,6 +137,7 @@ typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
  * data        : Data which is passed to assign_identity and the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
+ * errormask   : forwarded from _get_bufsize_errmask
  */
 NPY_NO_EXPORT PyArrayObject *
 PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
@@ -149,6 +150,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                       int subok,
                       PyArray_AssignReduceIdentityFunc *assign_identity,
                       PyArray_ReduceLoopFunc *loop,
-                      void *data, npy_intp buffersize, const char *funcname);
+                      void *data, npy_intp buffersize, const char *funcname,
+                      int errormask);
 
 #endif

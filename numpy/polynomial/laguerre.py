@@ -62,6 +62,7 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -697,15 +698,12 @@ def lagder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
@@ -719,7 +717,7 @@ def lagder(c, m=1, scl=1, axis=0):
                 c[j - 1] += c[j]
             der[0] = -c[1]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -772,8 +770,8 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 0``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
-        ``np.isscalar(scl) == False``.
+        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -784,7 +782,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.
     Why is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`.  Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a` - perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
@@ -820,17 +818,18 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt):
         n = len(c)
@@ -846,7 +845,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j + 1] = -c[j]
             tmp[0] += k[i] - lagval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -988,12 +987,12 @@ def lagval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = lagval(x, c)
@@ -1007,7 +1006,7 @@ def laggrid2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1048,7 +1047,7 @@ def laggrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = lagval(x, c)
@@ -1101,12 +1100,12 @@ def lagval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = lagval(x, c)
@@ -1165,7 +1164,7 @@ def laggrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = lagval(x, c)
@@ -1233,7 +1232,7 @@ def lagvander(x, deg):
         v[1] = 1 - x
         for i in range(2, ideg + 1):
             v[i] = (v[i-1]*(2*i - 1 - x) - v[i-2]*(i - 1))/i
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def lagvander2d(x, y, deg):
@@ -1242,7 +1241,7 @@ def lagvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = L_i(x) * L_j(y),
+    .. math:: V[..., (deg[1] + 1)*i + j] = L_i(x) * L_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1283,7 +1282,7 @@ def lagvander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1347,7 +1346,7 @@ def lagvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1387,8 +1386,11 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         y-coordinates of the sample points. Several data sets of sample
         points sharing the same x-coordinates can be fitted at once by
         passing in a 2D-array that contains one dataset per column.
-    deg : int
-        Degree of the fitting polynomial
+    deg : int or 1-D array_like
+        Degree(s) of the fitting polynomials. If `deg` is a single integer
+        all terms up to and including the `deg`'th term are included in the
+        fit. For NumPy versions >= 1.11.0 a list of integers specifying the
+        degrees of the terms to include may be used instead.
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1485,12 +1487,14 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     array([ 0.96971004,  2.00193749,  3.00288744])
 
     """
-    order = int(deg) + 1
     x = np.asarray(x) + 0.0
     y = np.asarray(y) + 0.0
+    deg = np.asarray(deg)
 
     # check arguments.
-    if deg < 0:
+    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int or non-empty 1-D array of int")
+    if deg.min() < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         raise TypeError("expected 1D vector for x")
@@ -1501,8 +1505,18 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
 
+    if deg.ndim == 0:
+        lmax = deg
+        order = lmax + 1
+        van = lagvander(x, lmax)
+    else:
+        deg = np.sort(deg)
+        lmax = deg[-1]
+        order = len(deg)
+        van = lagvander(x, lmax)[:, deg]
+
     # set up the least squares matrices in transposed form
-    lhs = lagvander(x, deg).T
+    lhs = van.T
     rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1530,10 +1544,19 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
     c = (c.T/scl).T
 
+    # Expand c to include non-fitted coefficients which are set to zero
+    if deg.ndim > 0:
+        if c.ndim == 2:
+            cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
+        else:
+            cc = np.zeros(lmax+1, dtype=c.dtype)
+        cc[deg] = c
+        c = cc
+
     # warn on rank reduction
     if rank != order and not full:
         msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, pu.RankWarning)
+        warnings.warn(msg, pu.RankWarning, stacklevel=2)
 
     if full:
         return c, [resids, rank, s, rcond]
@@ -1563,7 +1586,7 @@ def lagcompanion(c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy
@@ -1650,8 +1673,8 @@ def laggauss(deg):
 
     Computes the sample points and weights for Gauss-Laguerre quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree :math:`2*deg - 1` or less over the interval :math:`[0, \inf]`
-    with the weight function :math:`f(x) = \exp(-x)`.
+    degree :math:`2*deg - 1` or less over the interval :math:`[0, \\inf]`
+    with the weight function :math:`f(x) = \\exp(-x)`.
 
     Parameters
     ----------
@@ -1668,7 +1691,7 @@ def laggauss(deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     The results have only been tested up to degree 100 higher degrees may
     be problematic. The weights are determined by using the fact that
@@ -1712,7 +1735,7 @@ def lagweight(x):
     """Weight function of the Laguerre polynomials.
 
     The weight function is :math:`exp(-x)` and the interval of integration
-    is :math:`[0, \inf]`. The Laguerre polynomials are orthogonal, but not
+    is :math:`[0, \\inf]`. The Laguerre polynomials are orthogonal, but not
     normalized, with respect to this weight function.
 
     Parameters
@@ -1728,7 +1751,7 @@ def lagweight(x):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     w = np.exp(-x)

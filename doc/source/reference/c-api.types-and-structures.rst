@@ -6,7 +6,7 @@ Python Types and C-Structures
 
 Several new types are defined in the C-code. Most of these are
 accessible from Python, but a few are not exposed due to their limited
-use. Every new Python type has an associated :c:type:`PyObject *` with an
+use. Every new Python type has an associated :c:type:`PyObject *<PyObject>` with an
 internal structure that includes a pointer to a "method table" that
 defines how the new object behaves in Python. When you receive a
 Python object into C code, you always get a pointer to a
@@ -60,7 +60,7 @@ hierarchy of actual Python types.
 PyArray_Type
 ------------
 
-.. c:var: PyArray_Type
+.. c:var:: PyArray_Type
 
    The Python type of the ndarray is :c:data:`PyArray_Type`. In C, every
    ndarray is a pointer to a :c:type:`PyArrayObject` structure. The ob_type
@@ -133,10 +133,11 @@ PyArray_Type
     is related to this array. There are two use cases: 1) If this array
     does not own its own memory, then base points to the Python object
     that owns it (perhaps another array object), 2) If this array has
-    the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag set, then this array is
-    a working copy of a "misbehaved" array. As soon as this array is
-    deleted, the array pointed to by base will be updated with the
-    contents of this array.
+    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or 
+    :c:data:NPY_ARRAY_WRITEBACKIFCOPY`: flag set, then this array is
+    a working copy of a "misbehaved" array. When 
+    ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to by base
+    will be updated with the contents of this array.
 
 .. c:member:: PyArray_Descr *PyArrayObject.descr
 
@@ -153,8 +154,8 @@ PyArray_Type
     Flags indicating how the memory pointed to by data is to be
     interpreted. Possible flags are :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_F_CONTIGUOUS`, :c:data:`NPY_ARRAY_OWNDATA`,
-    :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`, and
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
+    :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`,
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, and :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
 
 .. c:member:: PyObject *PyArrayObject.weakreflist
 
@@ -165,7 +166,7 @@ PyArray_Type
 PyArrayDescr_Type
 -----------------
 
-.. c:var: PyArrayDescr_Type
+.. c:var:: PyArrayDescr_Type
 
    The :c:data:`PyArrayDescr_Type` is the built-in type of the
    data-type-descriptor objects used to describe how the bytes comprising
@@ -218,8 +219,8 @@ PyArrayDescr_Type
     interface typestring notation). A 'b' represents Boolean, a 'i'
     represents signed integer, a 'u' represents unsigned integer, 'f'
     represents floating point, 'c' represents complex floating point, 'S'
-    represents 8-bit character string, 'U' represents 32-bit/character
-    unicode string, and 'V' repesents arbitrary.
+    represents 8-bit zero-terminated bytes, 'U' represents 32-bit/character
+    unicode string, and 'V' represents arbitrary.
 
 .. c:member:: char PyArray_Descr.type
 
@@ -237,55 +238,55 @@ PyArrayDescr_Type
     array like behavior. Each bit in this member is a flag which are named
     as:
 
-    .. c:var: NPY_ITEM_REFCOUNT
+    .. c:var:: NPY_ITEM_REFCOUNT
 
-    .. c:var: NPY_ITEM_HASOBJECT
+    .. c:var:: NPY_ITEM_HASOBJECT
 
         Indicates that items of this data-type must be reference
         counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
 
-    .. c:var: NPY_LIST_PICKLE
+    .. c:var:: NPY_LIST_PICKLE
 
         Indicates arrays of this data-type must be converted to a list
         before pickling.
 
-    .. c:var: NPY_ITEM_IS_POINTER
+    .. c:var:: NPY_ITEM_IS_POINTER
 
         Indicates the item is a pointer to some other data-type
 
-    .. c:var: NPY_NEEDS_INIT
+    .. c:var:: NPY_NEEDS_INIT
 
         Indicates memory for this data-type must be initialized (set
         to 0) on creation.
 
-    .. c:var: NPY_NEEDS_PYAPI
+    .. c:var:: NPY_NEEDS_PYAPI
 
         Indicates this data-type requires the Python C-API during
         access (so don't give up the GIL if array access is going to
         be needed).
 
-    .. c:var: NPY_USE_GETITEM
+    .. c:var:: NPY_USE_GETITEM
 
         On array access use the ``f->getitem`` function pointer
         instead of the standard conversion to an array scalar. Must
         use if you don't define an array scalar to go along with
         the data-type.
 
-    .. c:var: NPY_USE_SETITEM
+    .. c:var:: NPY_USE_SETITEM
 
         When creating a 0-d array from an array scalar use
         ``f->setitem`` instead of the standard copy from an array
         scalar. Must use if you don't define an array scalar to go
         along with the data-type.
 
-    .. c:var: NPY_FROM_FIELDS
+    .. c:var:: NPY_FROM_FIELDS
 
         The bits that are inherited for the parent data-type if these
         bits are set in any field of the data-type. Currently (
         :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
         :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
 
-    .. c:var: NPY_OBJECT_DTYPE_FLAGS
+    .. c:var:: NPY_OBJECT_DTYPE_FLAGS
 
         Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
         \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
@@ -300,7 +301,7 @@ PyArrayDescr_Type
     .. c:function:: PyDataType_REFCHK(PyArray_Descr *dtype)
 
         Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
- 	:c:data:`NPY_ITEM_REFCOUNT`).
+        :c:data:`NPY_ITEM_REFCOUNT`).
 
 .. c:member:: int PyArray_Descr.type_num
 
@@ -420,7 +421,8 @@ PyArrayDescr_Type
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
 
-    .. c:member:: void cast(void *from, void *to, npy_intp n, void *fromarr, void *toarr)
+    .. c:member:: void cast( \
+            void *from, void *to, npy_intp n, void *fromarr, void *toarr)
 
         An array of function pointers to cast from the current type to
         all of the other builtin types. Each function casts a
@@ -446,7 +448,9 @@ PyArrayDescr_Type
         a zero is returned, otherwise, a negative one is returned (and
         a Python error set).
 
-    .. c:member:: void copyswapn(void *dest, npy_intp dstride, void *src, npy_intp sstride, npy_intp n, int swap, void *arr)
+    .. c:member:: void copyswapn( \
+            void *dest, npy_intp dstride, void *src, npy_intp sstride, \
+            npy_intp n, int swap, void *arr)
 
     .. c:member:: void copyswap(void *dest, void *src, int swap, void *arr)
 
@@ -472,7 +476,8 @@ PyArrayDescr_Type
         ``d2``, and -1 if * ``d1`` < * ``d2``. The array object ``arr`` is
         used to retrieve itemsize and field information for flexible arrays.
 
-    .. c:member:: int argmax(void* data, npy_intp n, npy_intp* max_ind, void* arr)
+    .. c:member:: int argmax( \
+            void* data, npy_intp n, npy_intp* max_ind, void* arr)
 
         A pointer to a function that retrieves the index of the
         largest of ``n`` elements in ``arr`` beginning at the element
@@ -481,7 +486,9 @@ PyArrayDescr_Type
         always 0. The index of the largest element is returned in
         ``max_ind``.
 
-    .. c:member:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, npy_intp n, void* arr)
+    .. c:member:: void dotfunc( \
+            void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, \
+            npy_intp n, void* arr)
 
         A pointer to a function that multiplies two ``n`` -length
         sequences together, adds them, and places the result in
@@ -531,7 +538,8 @@ PyArrayDescr_Type
         computed by repeatedly adding this computed delta. The data
         buffer must be well-behaved.
 
-    .. c:member:: void fillwithscalar(void* buffer, npy_intp length, void* value, void* arr)
+    .. c:member:: void fillwithscalar( \
+            void* buffer, npy_intp length, void* value, void* arr)
 
         A pointer to a function that fills a contiguous ``buffer`` of
         the given ``length`` with a single scalar ``value`` whose
@@ -542,11 +550,12 @@ PyArrayDescr_Type
 
         An array of function pointers to a particular sorting
         algorithms. A particular sorting algorithm is obtained using a
-        key (so far :c:data:`NPY_QUICKSORT`, :data`NPY_HEAPSORT`, and
-        :c:data:`NPY_MERGESORT` are defined). These sorts are done
+        key (so far :c:data:`NPY_QUICKSORT`, :c:data:`NPY_HEAPSORT`,
+        and :c:data:`NPY_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
-    .. c:member:: int argsort(void* start, npy_intp* result, npy_intp length, void *arr)
+    .. c:member:: int argsort( \
+            void* start, npy_intp* result, npy_intp length, void *arr)
 
         An array of function pointers to sorting algorithms for this
         data type. The same sorting algorithms as for sort are
@@ -584,7 +593,8 @@ PyArrayDescr_Type
         can be cast to safely (this usually means without losing
         precision).
 
-    .. c:member:: void fastclip(void *in, npy_intp n_in, void *min, void *max, void *out)
+    .. c:member:: void fastclip( \
+            void *in, npy_intp n_in, void *min, void *max, void *out)
 
         A function that reads ``n_in`` items from ``in``, and writes to
         ``out`` the read value if it is within the limits pointed to by
@@ -592,7 +602,8 @@ PyArrayDescr_Type
         memory segments must be contiguous and behaved, and either
         ``min`` or ``max`` may be ``NULL``, but not both.
 
-    .. c:member:: void fastputmask(void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
+    .. c:member:: void fastputmask( \
+            void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
 
         A function that takes a pointer ``in`` to an array of ``n_in``
         items, a pointer ``mask`` to an array of ``n_in`` boolean
@@ -601,7 +612,10 @@ PyArrayDescr_Type
         in ``mask`` is non-zero, tiling ``vals`` as needed if
         ``nv < n_in``. All arrays must be contiguous and behaved.
 
-    .. c:member:: void fasttake(void *dest, void *src, npy_intp *indarray, npy_intp nindarray, npy_intp n_outer, npy_intp m_middle, npy_intp nelem, NPY_CLIPMODE clipmode)
+    .. c:member:: void fasttake( \
+            void *dest, void *src, npy_intp *indarray, npy_intp nindarray, \
+            npy_intp n_outer, npy_intp m_middle, npy_intp nelem, \
+            NPY_CLIPMODE clipmode)
 
         A function that takes a pointer ``src`` to a C contiguous,
         behaved segment, interpreted as a 3-dimensional array of shape
@@ -617,7 +631,8 @@ PyArrayDescr_Type
         indices smaller than 0 or larger than ``nindarray`` will be
         handled.
 
-    .. c:member:: int argmin(void* data, npy_intp n, npy_intp* min_ind, void* arr)
+    .. c:member:: int argmin( \
+            void* data, npy_intp n, npy_intp* min_ind, void* arr)
 
         A pointer to a function that retrieves the index of the
         smallest of ``n`` elements in ``arr`` beginning at the element
@@ -648,7 +663,7 @@ for methods (tp_methods) and properties (tp_getset). The
 PyUFunc_Type
 ------------
 
-.. c:var: PyUFunc_Type
+.. c:var:: PyUFunc_Type
 
    The ufunc object is implemented by creation of the
    :c:data:`PyUFunc_Type`. It is a very simple type that implements only
@@ -711,9 +726,10 @@ PyUFunc_Type
 
    .. c:member:: int PyUFuncObject.identity
 
-       Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`, or
-       :c:data:`PyUFunc_None` to indicate the identity for this operation.
-       It is only used for a reduce-like call on an empty array.
+       Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
+       :c:data:`PyUFunc_None` or :c:data:`PyUFunc_AllOnes` to indicate
+       the identity for this operation. It is only used for a
+       reduce-like call on an empty array.
 
    .. c:member:: void PyUFuncObject.functions(char** args, npy_intp* dims,
       npy_intp* steps, void* extradata)
@@ -745,8 +761,8 @@ PyUFunc_Type
    .. c:member:: int PyUFuncObject.ntypes
 
        The number of supported data types for the ufunc. This number
-       specifies how many different 1-d loops (of the builtin data types) are
-       available.
+       specifies how many different 1-d loops (of the builtin data
+       types) are available.
 
    .. c:member:: char *PyUFuncObject.name
 
@@ -755,7 +771,7 @@ PyUFunc_Type
 
    .. c:member:: char *PyUFuncObject.types
 
-       An array of *nargs* :math:`\times` *ntypes* 8-bit type_numbers
+       An array of :math:`nargs \times ntypes` 8-bit type_numbers
        which contains the type signature for the function for each of
        the supported (builtin) data types. For each of the *ntypes*
        functions, the corresponding set of type numbers in this array
@@ -771,9 +787,9 @@ PyUFunc_Type
 
    .. c:member:: void *PyUFuncObject.ptr
 
-       Any dynamically allocated memory. Currently, this is used for dynamic
-       ufuncs created from a python function to store room for the types,
-       data, and name members.
+       Any dynamically allocated memory. Currently, this is used for
+       dynamic ufuncs created from a python function to store room for
+       the types, data, and name members.
 
    .. c:member:: PyObject *PyUFuncObject.obj
 
@@ -782,10 +798,11 @@ PyUFunc_Type
 
    .. c:member:: PyObject *PyUFuncObject.userloops
 
-       A dictionary of user-defined 1-d vector loops (stored as CObject ptrs)
-       for user-defined types. A loop may be registered by the user for any
-       user-defined type. It is retrieved by type number. User defined type
-       numbers are always larger than :c:data:`NPY_USERDEF`.
+       A dictionary of user-defined 1-d vector loops (stored as CObject
+       ptrs) for user-defined types. A loop may be registered by the
+       user for any user-defined type. It is retrieved by type number.
+       User defined type numbers are always larger than
+       :c:data:`NPY_USERDEF`.
 
 
    .. c:member:: npy_uint32 PyUFuncObject.op_flags
@@ -799,16 +816,17 @@ PyUFunc_Type
 PyArrayIter_Type
 ----------------
 
-.. c:var: PyArrayIter_Type
+.. c:var:: PyArrayIter_Type
 
-   This is an iterator object that makes it easy to loop over an N-dimensional
-   array. It is the object returned from the flat attribute of an
-   ndarray. It is also used extensively throughout the implementation
-   internals to loop over an N-dimensional array. The tp_as_mapping
-   interface is implemented so that the iterator object can be indexed
-   (using 1-d indexing), and a few methods are implemented through the
-   tp_methods table. This object implements the next method and can be
-   used anywhere an iterator can be used in Python.
+   This is an iterator object that makes it easy to loop over an
+   N-dimensional array. It is the object returned from the flat
+   attribute of an ndarray. It is also used extensively throughout the
+   implementation internals to loop over an N-dimensional array. The
+   tp_as_mapping interface is implemented so that the iterator object
+   can be indexed (using 1-d indexing), and a few methods are
+   implemented through the tp_methods table. This object implements the
+   next method and can be used anywhere an iterator can be used in
+   Python.
 
 .. c:type:: PyArrayIterObject
 
@@ -871,8 +889,8 @@ PyArrayIter_Type
    .. c:member:: npy_intp *PyArrayIterObject.backstrides
 
        How many bytes needed to jump from the end of a dimension back
-       to its beginning. Note that *backstrides* [k]= *strides* [k]*d
-       *ims_m1* [k], but it is stored here as an optimization.
+       to its beginning. Note that ``backstrides[k] == strides[k] *
+       dims_m1[k]``, but it is stored here as an optimization.
 
    .. c:member:: npy_intp *PyArrayIterObject.factors
 
@@ -900,15 +918,15 @@ How to use an array iterator on a C-level is explained more fully in
 later sections. Typically, you do not need to concern yourself with
 the internal structure of the iterator object, and merely interact
 with it through the use of the macros :c:func:`PyArray_ITER_NEXT` (it),
-:c:func:`PyArray_ITER_GOTO` (it, dest), or :c:func:`PyArray_ITER_GOTO1D` (it,
-index). All of these macros require the argument *it* to be a
+:c:func:`PyArray_ITER_GOTO` (it, dest), or :c:func:`PyArray_ITER_GOTO1D`
+(it, index). All of these macros require the argument *it* to be a
 :c:type:`PyArrayIterObject *`.
 
 
 PyArrayMultiIter_Type
 ---------------------
 
-.. c:var: PyArrayMultiIter_Type
+.. c:var:: PyArrayMultiIter_Type
 
    This type provides an iterator that encapsulates the concept of
    broadcasting. It allows :math:`N` arrays to be broadcast together
@@ -938,8 +956,8 @@ PyArrayMultiIter_Type
 
    .. c:macro: PyArrayMultiIterObject.PyObject_HEAD
 
-       Needed at the start of every Python object (holds reference count and
-       type identification).
+       Needed at the start of every Python object (holds reference count
+       and type identification).
 
    .. c:member:: int PyArrayMultiIterObject.numiter
 
@@ -963,17 +981,17 @@ PyArrayMultiIter_Type
 
    .. c:member:: PyArrayIterObject **PyArrayMultiIterObject.iters
 
-       An array of iterator objects that holds the iterators for the arrays
-       to be broadcast together. On return, the iterators are adjusted for
-       broadcasting.
+       An array of iterator objects that holds the iterators for the
+       arrays to be broadcast together. On return, the iterators are
+       adjusted for broadcasting.
 
 PyArrayNeighborhoodIter_Type
 ----------------------------
 
-.. c:var: PyArrayNeighborhoodIter_Type
+.. c:var:: PyArrayNeighborhoodIter_Type
 
-   This is an iterator object that makes it easy to loop over an N-dimensional
-   neighborhood.
+   This is an iterator object that makes it easy to loop over an
+   N-dimensional neighborhood.
 
 .. c:type:: PyArrayNeighborhoodIterObject
 
@@ -984,7 +1002,7 @@ PyArrayNeighborhoodIter_Type
 PyArrayFlags_Type
 -----------------
 
-.. c:var: PyArrayFlags_Type
+.. c:var:: PyArrayFlags_Type
 
    When the flags attribute is retrieved from Python, a special
    builtin object of this type is constructed. This special type makes
@@ -1003,8 +1021,8 @@ are :c:data:`Py{TYPE}ArrType_Type` where ``{TYPE}`` can be
 
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
-    **Half**, **Float**, **Double**, **LongDouble**, **CFloat**, **CDouble**,
-    **CLongDouble**, **String**, **Unicode**, **Void**, and
+    **Half**, **Float**, **Double**, **LongDouble**, **CFloat**,
+    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, and
     **Object**.
 
 These type names are part of the C-API and can therefore be created in
@@ -1012,9 +1030,9 @@ extension C-code. There is also a :c:data:`PyIntpArrType_Type` and a
 :c:data:`PyUIntpArrType_Type` that are simple substitutes for one of the
 integer types that can hold a pointer on the platform. The structure
 of these scalar objects is not exposed to C-code. The function
-:c:func:`PyArray_ScalarAsCtype` (..) can be used to extract the C-type value
-from the array scalar and the function :c:func:`PyArray_Scalar` (...) can be
-used to construct an array scalar from a C-value.
+:c:func:`PyArray_ScalarAsCtype` (..) can be used to extract the C-type
+value from the array scalar and the function :c:func:`PyArray_Scalar`
+(...) can be used to construct an array scalar from a C-value.
 
 
 Other C-Structures
@@ -1032,8 +1050,8 @@ PyArray_Dims
 
 .. c:type:: PyArray_Dims
 
-   This structure is very useful when shape and/or strides information is
-   supposed to be interpreted. The structure is:
+   This structure is very useful when shape and/or strides information
+   is supposed to be interpreted. The structure is:
 
    .. code-block:: c
 
@@ -1046,8 +1064,8 @@ PyArray_Dims
 
    .. c:member:: npy_intp *PyArray_Dims.ptr
 
-       A pointer to a list of (:c:type:`npy_intp`) integers which usually
-       represent array shape or array strides.
+       A pointer to a list of (:c:type:`npy_intp`) integers which
+       usually represent array shape or array strides.
 
    .. c:member:: int PyArray_Dims.len
 
@@ -1223,7 +1241,7 @@ for completeness and assistance in understanding the code.
    to define a 1-d loop for a ufunc for every defined signature of a
    user-defined data-type.
 
-.. c:var: PyArrayMapIter_Type
+.. c:var:: PyArrayMapIter_Type
 
    Advanced indexing is handled with this Python type. It is simply a
    loose wrapper around the C-structure containing the variables

@@ -10,6 +10,7 @@ from distutils.errors import DistutilsExecError, CompileError
 from distutils.unixccompiler import *
 from numpy.distutils.ccompiler import replace_method
 from numpy.distutils.compat import get_exception
+from numpy.distutils.misc_util import _commandline_dep_string
 
 if sys.version_info[0] < 3:
     from . import log
@@ -44,12 +45,24 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
             self.linker_so = llink_s.split() + opt.split()
 
     display = '%s: %s' % (os.path.basename(self.compiler_so[0]), src)
+
+    # gcc style automatic dependencies, outputs a makefile (-MF) that lists
+    # all headers needed by a c file as a side effect of compilation (-MMD)
+    if getattr(self, '_auto_depends', False):
+        deps = ['-MMD', '-MF', obj + '.d']
+    else:
+        deps = []
+
     try:
-        self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
+        self.spawn(self.compiler_so + cc_args + [src, '-o', obj] + deps +
                    extra_postargs, display = display)
     except DistutilsExecError:
         msg = str(get_exception())
         raise CompileError(msg)
+
+    # add commandline flags to dependency file
+    with open(obj + '.d', 'a') as f:
+        f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
 
 replace_method(UnixCCompiler, '_compile', UnixCCompiler__compile)
 

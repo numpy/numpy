@@ -10,7 +10,7 @@ objects.
 
 All ``fortran`` type object have attribute ``_cpointer`` that contains
 CObject referring to the C pointer of the corresponding Fortran/C
-function or variable in C level. Such CObjects can be used as an
+function or variable in C level. Such CObjects can be used as a
 callback argument of F2PY generated functions to bypass Python C/API
 layer of calling Python functions from Fortran or C when the
 computational part of such functions is implemented in C or Fortran
@@ -66,7 +66,7 @@ String arguments
 
 F2PY generated wrapper functions accept (almost) any Python object as
 a string argument, ``str`` is applied for non-string objects.
-Exceptions are Numpy arrays that must have type code ``'c'`` or
+Exceptions are NumPy arrays that must have type code ``'c'`` or
 ``'1'`` when used as string arguments.
 
 A string can have arbitrary length when using it as a string argument
@@ -95,7 +95,7 @@ Array arguments
 ================
 
 In general, array arguments of F2PY generated wrapper functions accept
-arbitrary sequences that can be transformed to Numpy array objects.
+arbitrary sequences that can be transformed to NumPy array objects.
 An exception is ``intent(inout)`` array arguments that always must be
 proper-contiguous and have proper type, otherwise an exception is
 raised. Another exception is ``intent(inplace)`` array arguments that
@@ -103,13 +103,13 @@ attributes will be changed in-situ if the argument has different type
 than expected (see ``intent(inplace)`` attribute for more
 information).
 
-In general, if a Numpy array is proper-contiguous and has a proper
+In general, if a NumPy array is proper-contiguous and has a proper
 type then it is directly passed to wrapped Fortran/C function.
 Otherwise, an element-wise copy of an input array is made and the
 copy, being proper-contiguous and with proper type, is used as an
 array argument.
 
-There are two types of proper-contiguous Numpy arrays:
+There are two types of proper-contiguous NumPy arrays:
 
 * Fortran-contiguous arrays when data is stored column-wise,
   i.e. indexing of data as stored in memory starts from the lowest
@@ -120,7 +120,7 @@ There are two types of proper-contiguous Numpy arrays:
 
 For one-dimensional arrays these notions coincide.
 
-For example, an 2x2 array ``A`` is Fortran-contiguous if its elements
+For example, a 2x2 array ``A`` is Fortran-contiguous if its elements
 are stored in memory in the following order::
 
   A[0,0] A[1,0] A[0,1] A[1,1]
@@ -130,7 +130,7 @@ and C-contiguous if the order is as follows::
   A[0,0] A[0,1] A[1,0] A[1,1]
 
 To test whether an array is C-contiguous, use ``.iscontiguous()``
-method of Numpy arrays.  To test for Fortran contiguity, all
+method of NumPy arrays.  To test for Fortran contiguity, all
 F2PY generated extension modules provide a function
 ``has_column_major_storage(<array>)``. This function is equivalent to
 ``<array>.flags.f_contiguous`` but more efficient.
@@ -279,7 +279,7 @@ but the following Python function
      ...
      return y_1,...,y_l
 
-is provided by an user, and in addition,
+is provided by a user, and in addition,
 
 ::
 
@@ -313,7 +313,7 @@ with the current extension module, but not to other extension modules
 (this restriction is due to how Python imports shared libraries).  In
 Python, the F2PY wrappers to ``common`` blocks are ``fortran`` type
 objects that have (dynamic) attributes related to data members of
-common blocks. When accessed, these attributes return as Numpy array
+common blocks. When accessed, these attributes return as NumPy array
 objects (multidimensional arrays are Fortran-contiguous) that
 directly link to data members in common blocks. Data members can be
 changed by direct assignment or by in-place changes to the

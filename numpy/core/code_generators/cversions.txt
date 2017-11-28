@@ -22,7 +22,7 @@
 
 # Version 9 (NumPy 1.8) Added interface for partition functions,
 # PyArray_NEW_ZEROED, commented out as the hash changed in
-# Numpy 1.9 due to annotation.
+# NumPy 1.9.0 due to annotation.
 #0x00000009 = 327bd114df09c2eb7a0bcc6901e2a3ed
 
 # Version 9 (NumPy 1.9) Added function annotations.
@@ -31,4 +31,13 @@
 0x00000009 = 982c4ebb6e7e4c194bf46b1535b4ef1b
 
 # Version 10 (NumPy 1.10) Added PyArray_CheckAnyScalarExact
+# Version 10 (NumPy 1.11) No change.
+# Version 10 (NumPy 1.12) No change.
 0x0000000a = 9b8bce614655d3eb02acddcb508203cb
+
+# Version 11 (NumPy 1.13) Added PyArray_MapIterArrayCopyIfOverlap
+0x0000000b = edb1ba83730c650fd9bc5772a919cda7
+
+# Version 12 (NumPy 1.14) Added PyArray_ResolveWritebackIfCopy,
+# PyArray_SetWritebackIfCopyBase and deprecated PyArray_SetUpdateIfCopyBase.
+0x0000000c = a1bc756c5782853ec2e3616cf66869d8

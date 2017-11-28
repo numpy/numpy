@@ -6,9 +6,14 @@
  * endian.h
  */
 
-#ifdef NPY_HAVE_ENDIAN_H
+#if defined(NPY_HAVE_ENDIAN_H) || defined(NPY_HAVE_SYS_ENDIAN_H)
     /* Use endian.h if available */
+
+    #if defined(NPY_HAVE_ENDIAN_H)
     #include <endian.h>
+    #elif defined(NPY_HAVE_SYS_ENDIAN_H)
+    #include <sys/endian.h>
+    #endif
 
     #if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && defined(LITTLE_ENDIAN)
         #define NPY_BYTE_ORDER    BYTE_ORDER
@@ -40,7 +45,8 @@
             || defined(NPY_CPU_AARCH64) \
             || defined(NPY_CPU_SH_LE)   \
             || defined(NPY_CPU_MIPSEL)  \
-            || defined(NPY_CPU_PPC64LE)
+            || defined(NPY_CPU_PPC64LE) \
+            || defined(NPY_CPU_ARCEL)
         #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN
     #elif defined(NPY_CPU_PPC)          \
             || defined(NPY_CPU_SPARC)   \
@@ -51,7 +57,8 @@
             || defined(NPY_CPU_SH_BE)   \
             || defined(NPY_CPU_MIPSEB)  \
             || defined(NPY_CPU_OR1K)    \
-            || defined(NPY_CPU_M68K)
+            || defined(NPY_CPU_M68K)    \
+            || defined(NPY_CPU_ARCEB)
         #define NPY_BYTE_ORDER NPY_BIG_ENDIAN
     #else
         #error Unknown CPU: can not set endianness

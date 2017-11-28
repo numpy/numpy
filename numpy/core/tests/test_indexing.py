@@ -9,19 +9,26 @@ import numpy as np
 from numpy.core.multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_warns
+    run_module_suite, assert_, assert_equal, assert_raises,
+    assert_array_equal, assert_warns, dec, HAS_REFCOUNT, suppress_warnings,
 )
 
 
 try:
-    cdll = np.ctypeslib.load_library('multiarray', np.core.multiarray.__file__)
+    cdll = None
+    if hasattr(sys, 'gettotalrefcount'):
+        try:
+            cdll = np.ctypeslib.load_library('multiarray_d', np.core.multiarray.__file__)
+        except OSError:
+            pass
+    if cdll is None:
+        cdll = np.ctypeslib.load_library('multiarray', np.core.multiarray.__file__)
     _HAS_CTYPE = True
 except ImportError:
     _HAS_CTYPE = False
 
 
-class TestIndexing(TestCase):
+class TestIndexing(object):
     def test_index_no_floats(self):
         a = np.array([[[5]]])
 
@@ -52,38 +59,38 @@ class TestIndexing(TestCase):
         a = np.array([[5]])
 
         # start as float.
-        assert_raises(IndexError, lambda: a[0.0:])
-        assert_raises(IndexError, lambda: a[0:, 0.0:2])
-        assert_raises(IndexError, lambda: a[0.0::2, :0])
-        assert_raises(IndexError, lambda: a[0.0:1:2,:])
-        assert_raises(IndexError, lambda: a[:, 0.0:])
+        assert_raises(TypeError, lambda: a[0.0:])
+        assert_raises(TypeError, lambda: a[0:, 0.0:2])
+        assert_raises(TypeError, lambda: a[0.0::2, :0])
+        assert_raises(TypeError, lambda: a[0.0:1:2,:])
+        assert_raises(TypeError, lambda: a[:, 0.0:])
         # stop as float.
-        assert_raises(IndexError, lambda: a[:0.0])
-        assert_raises(IndexError, lambda: a[:0, 1:2.0])
-        assert_raises(IndexError, lambda: a[:0.0:2, :0])
-        assert_raises(IndexError, lambda: a[:0.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4.0:2])
+        assert_raises(TypeError, lambda: a[:0.0])
+        assert_raises(TypeError, lambda: a[:0, 1:2.0])
+        assert_raises(TypeError, lambda: a[:0.0:2, :0])
+        assert_raises(TypeError, lambda: a[:0.0,:])
+        assert_raises(TypeError, lambda: a[:, 0:4.0:2])
         # step as float.
-        assert_raises(IndexError, lambda: a[::1.0])
-        assert_raises(IndexError, lambda: a[0:, :2:2.0])
-        assert_raises(IndexError, lambda: a[1::4.0, :0])
-        assert_raises(IndexError, lambda: a[::5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0:4:2.0])
+        assert_raises(TypeError, lambda: a[::1.0])
+        assert_raises(TypeError, lambda: a[0:, :2:2.0])
+        assert_raises(TypeError, lambda: a[1::4.0, :0])
+        assert_raises(TypeError, lambda: a[::5.0,:])
+        assert_raises(TypeError, lambda: a[:, 0:4:2.0])
         # mixed.
-        assert_raises(IndexError, lambda: a[1.0:2:2.0])
-        assert_raises(IndexError, lambda: a[1.0::2.0])
-        assert_raises(IndexError, lambda: a[0:, :2.0:2.0])
-        assert_raises(IndexError, lambda: a[1.0:1:4.0, :0])
-        assert_raises(IndexError, lambda: a[1.0:5.0:5.0,:])
-        assert_raises(IndexError, lambda: a[:, 0.4:4.0:2.0])
+        assert_raises(TypeError, lambda: a[1.0:2:2.0])
+        assert_raises(TypeError, lambda: a[1.0::2.0])
+        assert_raises(TypeError, lambda: a[0:, :2.0:2.0])
+        assert_raises(TypeError, lambda: a[1.0:1:4.0, :0])
+        assert_raises(TypeError, lambda: a[1.0:5.0:5.0,:])
+        assert_raises(TypeError, lambda: a[:, 0.4:4.0:2.0])
         # should still get the DeprecationWarning if step = 0.
-        assert_raises(IndexError, lambda: a[::0.0])
+        assert_raises(TypeError, lambda: a[::0.0])
 
     def test_index_no_array_to_index(self):
         # No non-scalar arrays.
         a = np.array([[[1]]])
 
-        assert_raises(IndexError, lambda: a[a:a:a])
+        assert_raises(TypeError, lambda: a[a:a:a])
 
     def test_none_index(self):
         # `None` index adds newaxis
@@ -98,6 +105,12 @@ class TestIndexing(TestCase):
         assert_(a[()].base is a)
         a = np.array(0)
         assert_(isinstance(a[()], np.int_))
+
+    def test_void_scalar_empty_tuple(self):
+        s = np.zeros((), dtype='V4')
+        assert_equal(s[()].dtype, s.dtype)
+        assert_equal(s[()], s)
+        assert_equal(type(s[...]), np.ndarray)
 
     def test_same_kind_index_casting(self):
         # Indexes should be cast with same-kind and not safe, even if that
@@ -134,10 +147,10 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__getitem__, b)
 
     def test_ellipsis_index(self):
-        # Ellipsis index does not create a view
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]])
+        assert_(a[...] is not a)
         assert_equal(a[...], a)
         # `a[...]` was `a` in numpy <1.9.
         assert_(a[...].base is a)
@@ -177,19 +190,23 @@ class TestIndexing(TestCase):
                       [4, 5, 6],
                       [7, 8, 9]])
 
-        # Python boolean converts to integer
-        # These are being deprecated (and test in test_deprecations)
-        #assert_equal(a[True], a[1])
-        #assert_equal(a[False], a[0])
+        assert_equal(a[np.array(True)], a[None])
+        assert_equal(a[np.array(False)], a[None][0:0])
 
-        # Same with NumPy boolean scalar
-        # Before DEPRECATE, this is an error (as always, but telling about
-        # future change):
-        assert_raises(IndexError, a.__getitem__, np.array(True))
-        assert_raises(IndexError, a.__getitem__, np.array(False))
-        # After DEPRECATE, this behaviour can be enabled:
-        #assert_equal(a[np.array(True)], a[None])
-        #assert_equal(a[np.array(False), a[None][0:0]])
+    def test_boolean_shape_mismatch(self):
+        arr = np.ones((5, 4, 3))
+
+        index = np.array([True])
+        assert_raises(IndexError, arr.__getitem__, index)
+
+        index = np.array([False] * 6)
+        assert_raises(IndexError, arr.__getitem__, index)
+
+        index = np.zeros((4, 4), dtype=bool)
+        assert_raises(IndexError, arr.__getitem__, index)
+
+        assert_raises(IndexError, arr.__getitem__, (slice(None), index))
+
 
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
@@ -212,6 +229,20 @@ class TestIndexing(TestCase):
         assert_raises(ValueError, f, a, [])
         assert_raises(ValueError, f, a, [1, 2, 3])
         assert_raises(ValueError, f, a[:1], [1, 2, 3])
+
+    def test_boolean_assignment_needs_api(self):
+        # See also gh-7666
+        # This caused a segfault on Python 2 due to the GIL not being
+        # held when the iterator does not need it, but the transfer function
+        # does
+        arr = np.zeros(1000)
+        indx = np.zeros(1000, dtype=bool)
+        indx[:100] = True
+        arr[indx] = np.ones(100, dtype=object)
+
+        expected = np.zeros(1000)
+        expected[:100] = 1
+        assert_array_equal(arr, expected)
 
     def test_boolean_indexing_twodim(self):
         # Indexing a 2-dimensional array with
@@ -275,7 +306,7 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
 
     def test_scalar_array_bool(self):
-        # Numpy bools can be used as boolean index (python ones as of yet not)
+        # NumPy bools can be used as boolean index (python ones as of yet not)
         a = np.array(1)
         assert_equal(a[np.bool_(True)], a[np.array(True)])
         assert_equal(a[np.bool_(False)], a[np.array(False)])
@@ -390,7 +421,8 @@ class TestIndexing(TestCase):
     def test_small_regressions(self):
         # Reference count of intp for index checks
         a = np.array([0])
-        refcount = sys.getrefcount(np.dtype(np.intp))
+        if HAS_REFCOUNT:
+            refcount = sys.getrefcount(np.dtype(np.intp))
         # item setting always checks indices in separate function:
         a[np.array([0], dtype=np.intp)] = 1
         a[np.array([0], dtype=np.uint8)] = 1
@@ -399,7 +431,8 @@ class TestIndexing(TestCase):
         assert_raises(IndexError, a.__setitem__,
                       np.array([1], dtype=np.uint8), 1)
 
-        assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
+        if HAS_REFCOUNT:
+            assert_equal(sys.getrefcount(np.dtype(np.intp)), refcount)
 
     def test_unaligned(self):
         v = (np.zeros(64, dtype=np.int8) + ord('a'))[1:-7]
@@ -474,8 +507,17 @@ class TestIndexing(TestCase):
         zind = np.zeros(4, dtype=np.intp)
         assert_array_equal(x2[ind, zind], x2[ind.copy(), zind])
 
+    def test_indexing_array_negative_strides(self):
+        # From gh-8264,
+        # core dumps if negative strides are used in iteration
+        arro = np.zeros((4, 4))
+        arr = arro[::-1, ::-1]
 
-class TestFieldIndexing(TestCase):
+        slices = [slice(None), [0, 1, 2, 3]]
+        arr[slices] = 10
+        assert_array_equal(arr, 10.)
+
+class TestFieldIndexing(object):
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it
         # is 0-d.
@@ -484,7 +526,7 @@ class TestFieldIndexing(TestCase):
         assert_(isinstance(a[['a']], np.ndarray))
 
 
-class TestBroadcastedAssignments(TestCase):
+class TestBroadcastedAssignments(object):
     def assign(self, a, ind, val):
         a[ind] = val
         return a
@@ -502,31 +544,22 @@ class TestBroadcastedAssignments(TestCase):
     def test_prepend_not_one(self):
         assign = self.assign
         s_ = np.s_
-
         a = np.zeros(5)
 
         # Too large and not only ones.
         assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
-
-        with warnings.catch_warnings():
-            # Will be a ValueError as well.
-            warnings.simplefilter("error", DeprecationWarning)
-            assert_raises(DeprecationWarning, assign, a, s_[[1, 2, 3],],
-                          np.ones((2, 1)))
-            assert_raises(DeprecationWarning, assign, a, s_[[[1], [2]],],
-                          np.ones((2,2,1)))
+        assert_raises(ValueError, assign, a, s_[[1, 2, 3],], np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2,2,1)))
 
     def test_simple_broadcasting_errors(self):
         assign = self.assign
         s_ = np.s_
-
         a = np.zeros((5, 1))
+
         assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 2)))
         assert_raises(ValueError, assign, a, s_[...], np.zeros((5, 0)))
-
         assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 2)))
         assert_raises(ValueError, assign, a, s_[:, [0]], np.zeros((5, 0)))
-
         assert_raises(ValueError, assign, a, s_[[0], :], np.zeros((2, 1)))
 
     def test_index_is_larger(self):
@@ -544,7 +577,7 @@ class TestBroadcastedAssignments(TestCase):
         assert_((a[::-1] == v).all())
 
 
-class TestSubclasses(TestCase):
+class TestSubclasses(object):
     def test_basic(self):
         class SubClass(np.ndarray):
             pass
@@ -589,7 +622,56 @@ class TestSubclasses(TestCase):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-class TestFancingIndexingCast(TestCase):
+    @dec.skipif(not HAS_REFCOUNT)
+    def test_slice_decref_getsetslice(self):
+        # See gh-10066, a temporary slice object should be discarted.
+        # This test is only really interesting on Python 2 since
+        # it goes through `__set/getslice__` here and can probably be
+        # removed. Use 0:7 to make sure it is never None:7.
+        class KeepIndexObject(np.ndarray):
+            def __getitem__(self, indx):
+                self.indx = indx
+                if indx == slice(0, 7):
+                    raise ValueError
+
+            def __setitem__(self, indx, val):
+                self.indx = indx
+                if indx == slice(0, 4):
+                    raise ValueError
+
+        k = np.array([1]).view(KeepIndexObject)
+        k[0:5]
+        assert_equal(k.indx, slice(0, 5))
+        assert_equal(sys.getrefcount(k.indx), 2)
+        try:
+            k[0:7]
+            raise AssertionError
+        except ValueError:
+            # The exception holds a reference to the slice so clear on Py2
+            if hasattr(sys, 'exc_clear'):
+                with suppress_warnings() as sup:
+                    sup.filter(DeprecationWarning)
+                    sys.exc_clear()
+        assert_equal(k.indx, slice(0, 7))
+        assert_equal(sys.getrefcount(k.indx), 2)
+
+        k[0:3] = 6
+        assert_equal(k.indx, slice(0, 3))
+        assert_equal(sys.getrefcount(k.indx), 2)
+        try:
+            k[0:4] = 2
+            raise AssertionError
+        except ValueError:
+            # The exception holds a reference to the slice so clear on Py2
+            if hasattr(sys, 'exc_clear'):
+                with suppress_warnings() as sup:
+                    sup.filter(DeprecationWarning)
+                    sys.exc_clear()
+        assert_equal(k.indx, slice(0, 4))
+        assert_equal(sys.getrefcount(k.indx), 2)
+
+
+class TestFancyIndexingCast(object):
     def test_boolean_index_cast_assign(self):
         # Setup the boolean index and float arrays.
         shape = (8, 63)
@@ -611,7 +693,7 @@ class TestFancingIndexingCast(TestCase):
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
-class TestFancyIndexingEquivalence(TestCase):
+class TestFancyIndexingEquivalence(object):
     def test_object_assign(self):
         # Check that the field and object special case using copyto is active.
         # The right hand side cannot be converted to an array here.
@@ -659,30 +741,35 @@ class TestFancyIndexingEquivalence(TestCase):
         assert_array_equal(a, b[0])
 
 
-class TestMultiIndexingAutomated(TestCase):
+class TestMultiIndexingAutomated(object):
     """
-     These test use code to mimic the C-Code indexing for selection.
+    These tests use code to mimic the C-Code indexing for selection.
 
-     NOTE: * This still lacks tests for complex item setting.
-           * If you change behavior of indexing, you might want to modify
-             these tests to try more combinations.
-           * Behavior was written to match numpy version 1.8. (though a
-             first version matched 1.7.)
-           * Only tuple indices are supported by the mimicking code.
-             (and tested as of writing this)
-           * Error types should match most of the time as long as there
-             is only one error. For multiple errors, what gets raised
-             will usually not be the same one. They are *not* tested.
+    NOTE:
+
+        * This still lacks tests for complex item setting.
+        * If you change behavior of indexing, you might want to modify
+          these tests to try more combinations.
+        * Behavior was written to match numpy version 1.8. (though a
+          first version matched 1.7.)
+        * Only tuple indices are supported by the mimicking code.
+          (and tested as of writing this)
+        * Error types should match most of the time as long as there
+          is only one error. For multiple errors, what gets raised
+          will usually not be the same one. They are *not* tested.
+
+    Update 2016-11-30: It is probably not worth maintaining this test
+    indefinitely and it can be dropped if maintenance becomes a burden.
+
     """
 
-    def setUp(self):
+    def setup(self):
         self.a = np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
         self.b = np.empty((3, 0, 5, 6))
         self.complex_indices = ['skip', Ellipsis,
             0,
             # Boolean indices, up to 3-d for some special cases of eating up
             # dimensions, also need to test all False
-            np.array(False),
             np.array([True, False, False]),
             np.array([[True, False], [False, True]]),
             np.array([[[False, False], [False, False]]]),
@@ -815,7 +902,7 @@ class TestMultiIndexingAutomated(TestCase):
                 try:
                     flat_indx = np.ravel_multi_index(np.nonzero(indx),
                                     arr.shape[ax:ax+indx.ndim], mode='raise')
-                except:
+                except Exception:
                     error_unless_broadcast_to_empty = True
                     # fill with 0s instead, and raise error later
                     flat_indx = np.array([0]*indx.sum(), dtype=np.intp)
@@ -914,7 +1001,7 @@ class TestMultiIndexingAutomated(TestCase):
                         try:
                             mi = np.ravel_multi_index(indx[1:], orig_slice,
                                                       mode='raise')
-                        except:
+                        except Exception:
                             # This happens with 0-sized orig_slice (sometimes?)
                             # here it is a ValueError, but indexing gives a:
                             raise IndexError('invalid index into 0-sized')
@@ -950,11 +1037,13 @@ class TestMultiIndexingAutomated(TestCase):
         # Test item getting
         try:
             mimic_get, no_copy = self._get_multi_index(arr, index)
-        except Exception:
-            prev_refcount = sys.getrefcount(arr)
+        except Exception as e:
+            if HAS_REFCOUNT:
+                prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)
-            assert_equal(prev_refcount, sys.getrefcount(arr))
+            if HAS_REFCOUNT:
+                assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
         self._compare_index_result(arr, index, mimic_get, no_copy)
@@ -972,11 +1061,13 @@ class TestMultiIndexingAutomated(TestCase):
         """
         try:
             mimic_get, no_copy = self._get_multi_index(arr, (index,))
-        except Exception:
-            prev_refcount = sys.getrefcount(arr)
+        except Exception as e:
+            if HAS_REFCOUNT:
+                prev_refcount = sys.getrefcount(arr)
             assert_raises(Exception, arr.__getitem__, index)
             assert_raises(Exception, arr.__setitem__, index, 0)
-            assert_equal(prev_refcount, sys.getrefcount(arr))
+            if HAS_REFCOUNT:
+                assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
         self._compare_index_result(arr, index, mimic_get, no_copy)
@@ -992,11 +1083,12 @@ class TestMultiIndexingAutomated(TestCase):
         if indexed_arr.size != 0 and indexed_arr.ndim != 0:
             assert_(np.may_share_memory(indexed_arr, arr) == no_copy)
             # Check reference count of the original array
-            if no_copy:
-                # refcount increases by one:
-                assert_equal(sys.getrefcount(arr), 3)
-            else:
-                assert_equal(sys.getrefcount(arr), 2)
+            if HAS_REFCOUNT:
+                if no_copy:
+                    # refcount increases by one:
+                    assert_equal(sys.getrefcount(arr), 3)
+                else:
+                    assert_equal(sys.getrefcount(arr), 2)
 
         # Test non-broadcast setitem:
         b = arr.copy()
@@ -1066,7 +1158,7 @@ class TestMultiIndexingAutomated(TestCase):
             for index in self.complex_indices:
                 self._check_single_index(a, index)
 
-class TestFloatNonIntegerArgument(TestCase):
+class TestFloatNonIntegerArgument(object):
     """
     These test that ``TypeError`` is raised when you try to use
     non-integers as arguments to for indexing and slicing e.g. ``a[0.0:5]``
@@ -1105,7 +1197,7 @@ class TestFloatNonIntegerArgument(TestCase):
         assert_raises(TypeError, np.take, a, [0], np.float64(1.))
 
     def test_non_integer_sequence_multiplication(self):
-        # Numpy scalar sequence multiply should not work with non-integers
+        # NumPy scalar sequence multiply should not work with non-integers
         def mult(a, b):
             return a * b
 
@@ -1121,11 +1213,9 @@ class TestFloatNonIntegerArgument(TestCase):
         assert_raises(TypeError, np.min, d, (.2, 1.2))
 
 
-class TestBooleanArgumentErrors(TestCase):
-    """Using a boolean as integer argument/indexing is an error.
-
-    """
-    def test_bool_as_int_argument(self):
+class TestBooleanIndexing(object):
+    # Using a boolean as integer argument/indexing is an error.
+    def test_bool_as_int_argument_errors(self):
         a = np.array([[[1]]])
 
         assert_raises(TypeError, np.reshape, a, (True, -1))
@@ -1133,13 +1223,18 @@ class TestBooleanArgumentErrors(TestCase):
         # Note that operator.index(np.array(True)) does not work, a boolean
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))
+        assert_warns(DeprecationWarning, operator.index, np.True_)
         assert_raises(TypeError, np.take, args=(a, [0], False))
-        assert_raises(IndexError, lambda: a[False:True:True])
-        assert_raises(IndexError, lambda: a[False, 0])
-        assert_raises(IndexError, lambda: a[False, 0, 0])
+
+    def test_boolean_indexing_weirdness(self):
+        # Weird boolean indexing things
+        a = np.ones((2, 3, 4))
+        a[False, True, ...].shape == (0, 2, 3, 4)
+        a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
+        assert_raises(IndexError, lambda: a[False, [0, 1], ...])
 
 
-class TestArrayToIndexDeprecation(TestCase):
+class TestArrayToIndexDeprecation(object):
     """Creating an an index from array not 0-D is an error.
 
     """
@@ -1152,7 +1247,7 @@ class TestArrayToIndexDeprecation(TestCase):
         assert_raises(TypeError, np.take, a, [0], a)
 
 
-class TestNonIntegerArrayLike(TestCase):
+class TestNonIntegerArrayLike(object):
     """Tests that array_likes only valid if can safely cast to integer.
 
     For instance, lists give IndexError when they cannot be safely cast to
@@ -1169,7 +1264,7 @@ class TestNonIntegerArrayLike(TestCase):
         a.__getitem__([])
 
 
-class TestMultipleEllipsisError(TestCase):
+class TestMultipleEllipsisError(object):
     """An index can only have a single ellipsis.
 
     """
@@ -1180,7 +1275,7 @@ class TestMultipleEllipsisError(TestCase):
         assert_raises(IndexError, a.__getitem__, ((Ellipsis,) * 3,))
 
 
-class TestCApiAccess(TestCase):
+class TestCApiAccess(object):
     def test_getitem(self):
         subscript = functools.partial(array_indexing, 0)
 

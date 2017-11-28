@@ -36,6 +36,7 @@ Misc Functions
 --------------
 - `polyfromroots` -- create a polynomial with specified roots.
 - `polyroots` -- find the roots of a polynomial.
+- `polyvalfromroots` -- evalute a polynomial at given points from roots.
 - `polyvander` -- Vandermonde-like matrix for powers.
 - `polyvander2d` -- Vandermonde-like matrix for 2D power series.
 - `polyvander3d` -- Vandermonde-like matrix for 3D power series.
@@ -58,13 +59,14 @@ from __future__ import division, absolute_import, print_function
 __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
-    'polyder', 'polyint', 'polyfromroots', 'polyvander', 'polyfit',
-    'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
+    'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
+    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
     'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d']
 
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -539,15 +541,12 @@ def polyder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
@@ -559,7 +558,7 @@ def polyder(c, m=1, scl=1, axis=0):
             for j in range(n, 0, -1):
                 der[j - 1] = j*c[j]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -609,7 +608,8 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 1``, ``len(k) > m``.
+        If ``m < 1``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -620,7 +620,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.  Why
     is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`. Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a` - perhaps not what one would have first thought.
 
     Examples
@@ -655,18 +655,19 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
     k = list(k) + [0]*(cnt - len(k))
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -680,7 +681,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j + 1] = c[j]/(j + 1)
             tmp[0] += k[i] - polyval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -780,6 +781,94 @@ def polyval(x, c, tensor=True):
     return c0
 
 
+def polyvalfromroots(x, r, tensor=True):
+    """
+    Evaluate a polynomial specified by its roots at points x.
+
+    If `r` is of length `N`, this function returns the value
+
+    .. math:: p(x) = \\prod_{n=1}^{N} (x - r_n)
+
+    The parameter `x` is converted to an array only if it is a tuple or a
+    list, otherwise it is treated as a scalar. In either case, either `x`
+    or its elements must support multiplication and addition both with
+    themselves and with the elements of `r`.
+
+    If `r` is a 1-D array, then `p(x)` will have the same shape as `x`.  If `r`
+    is multidimensional, then the shape of the result depends on the value of
+    `tensor`. If `tensor is ``True`` the shape will be r.shape[1:] + x.shape;
+    that is, each polynomial is evaluated at every value of `x`. If `tensor` is
+    ``False``, the shape will be r.shape[1:]; that is, each polynomial is
+    evaluated only for the corresponding broadcast value of `x`. Note that
+    scalars have shape (,).
+
+    .. versionadded:: 1.12
+
+    Parameters
+    ----------
+    x : array_like, compatible object
+        If `x` is a list or tuple, it is converted to an ndarray, otherwise
+        it is left unchanged and treated as a scalar. In either case, `x`
+        or its elements must support addition and multiplication with
+        with themselves and with the elements of `r`.
+    r : array_like
+        Array of roots. If `r` is multidimensional the first index is the
+        root index, while the remaining indices enumerate multiple
+        polynomials. For instance, in the two dimensional case the roots
+        of each polynomial may be thought of as stored in the columns of `r`.
+    tensor : boolean, optional
+        If True, the shape of the roots array is extended with ones on the
+        right, one for each dimension of `x`. Scalars have dimension 0 for this
+        action. The result is that every column of coefficients in `r` is
+        evaluated for every element of `x`. If False, `x` is broadcast over the
+        columns of `r` for the evaluation.  This keyword is useful when `r` is
+        multidimensional. The default value is True.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The shape of the returned array is described above.
+
+    See Also
+    --------
+    polyroots, polyfromroots, polyval
+
+    Examples
+    --------
+    >>> from numpy.polynomial.polynomial import polyvalfromroots
+    >>> polyvalfromroots(1, [1,2,3])
+    0.0
+    >>> a = np.arange(4).reshape(2,2)
+    >>> a
+    array([[0, 1],
+           [2, 3]])
+    >>> polyvalfromroots(a, [-1, 0, 1])
+    array([[ -0.,   0.],
+           [  6.,  24.]])
+    >>> r = np.arange(-2, 2).reshape(2,2) # multidimensional coefficients
+    >>> r # each column of r defines one polynomial
+    array([[-2, -1],
+           [ 0,  1]])
+    >>> b = [-2, 1]
+    >>> polyvalfromroots(b, r, tensor=True)
+    array([[-0.,  3.],
+           [ 3., 0.]])
+    >>> polyvalfromroots(b, r, tensor=False)
+    array([-0.,  0.])
+    """
+    r = np.array(r, ndmin=1, copy=0)
+    if r.dtype.char in '?bBhHiIlLqQpP':
+        r = r.astype(np.double)
+    if isinstance(x, (tuple, list)):
+        x = np.asarray(x)
+    if isinstance(x, np.ndarray):
+        if tensor:
+            r = r.reshape(r.shape + (1,)*x.ndim)
+        elif x.ndim >= r.ndim:
+            raise ValueError("x.ndim must be < r.ndim when tensor == False")
+    return np.prod(x - r, axis=0)
+
+
 def polyval2d(x, y, c):
     """
     Evaluate a 2-D polynomial at points (x, y).
@@ -829,7 +918,7 @@ def polyval2d(x, y, c):
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = polyval(x, c)
@@ -942,7 +1031,7 @@ def polyval3d(x, y, z, c):
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = polyval(x, c)
@@ -1063,7 +1152,7 @@ def polyvander(x, deg):
         v[1] = x
         for i in range(2, ideg + 1):
             v[i] = v[i-1]*x
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def polyvander2d(x, y, deg):
@@ -1072,7 +1161,7 @@ def polyvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = x^i * y^j,
+    .. math:: V[..., (deg[1] + 1)*i + j] = x^i * y^j,
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the powers of
@@ -1217,8 +1306,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         sharing the same x-coordinates can be (independently) fit with one
         call to `polyfit` by passing in for `y` a 2-D array that contains
         one data set per column.
-    deg : int
-        Degree of the polynomial(s) to be fit.
+    deg : int or 1-D array_like
+        Degree(s) of the fitting polynomials. If `deg` is a single integer
+        all terms up to and including the `deg`'th term are included in the
+        fit. For NumPy versions >= 1.11.0 a list of integers specifying the
+        degrees of the terms to include may be used instead.
     rcond : float, optional
         Relative condition number of the fit.  Singular values smaller
         than `rcond`, relative to the largest singular value, will be
@@ -1332,12 +1424,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     0.50443316,  0.28853036]), 1.1324274851176597e-014]
 
     """
-    order = int(deg) + 1
     x = np.asarray(x) + 0.0
     y = np.asarray(y) + 0.0
+    deg = np.asarray(deg)
 
     # check arguments.
-    if deg < 0:
+    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int or non-empty 1-D array of int")
+    if deg.min() < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1:
         raise TypeError("expected 1D vector for x")
@@ -1348,8 +1442,18 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
 
+    if deg.ndim == 0:
+        lmax = deg
+        order = lmax + 1
+        van = polyvander(x, lmax)
+    else:
+        deg = np.sort(deg)
+        lmax = deg[-1]
+        order = len(deg)
+        van = polyvander(x, lmax)[:, deg]
+
     # set up the least squares matrices in transposed form
-    lhs = polyvander(x, deg).T
+    lhs = van.T
     rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1377,10 +1481,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
     c = (c.T/scl).T
 
+    # Expand c to include non-fitted coefficients which are set to zero
+    if deg.ndim == 1:
+        if c.ndim == 2:
+            cc = np.zeros((lmax + 1, c.shape[1]), dtype=c.dtype)
+        else:
+            cc = np.zeros(lmax + 1, dtype=c.dtype)
+        cc[deg] = c
+        c = cc
+
     # warn on rank reduction
     if rank != order and not full:
         msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, pu.RankWarning)
+        warnings.warn(msg, pu.RankWarning, stacklevel=2)
 
     if full:
         return c, [resids, rank, s, rcond]

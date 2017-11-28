@@ -243,7 +243,7 @@ class MaskedRecords(MaskedArray, object):
             except IndexError:
                 # Couldn't find a mask: use the default (nomask)
                 pass
-            hasmasked = _mask.view((np.bool, (len(_mask.dtype) or 1))).any()
+            hasmasked = _mask.view((bool, (len(_mask.dtype) or 1))).any()
         if (obj.shape or hasmasked):
             obj = obj.view(MaskedArray)
             obj._baseclass = ndarray
@@ -276,7 +276,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             # Is attr a generic attribute ?
             ret = object.__setattr__(self, attr, val)
-        except:
+        except Exception:
             # Not a generic attribute: exit if it's not a valid field
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             optinfo = ndarray.__getattribute__(self, '_optinfo') or {}
@@ -294,7 +294,7 @@ class MaskedRecords(MaskedArray, object):
                 # internal attribute.
                 try:
                     object.__delattr__(self, attr)
-                except:
+                except Exception:
                     return ret
         # Let's try to set the field
         try:
@@ -625,7 +625,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         maskrecordlength = len(mask.dtype)
         if maskrecordlength:
             mrec._mask.flat = mask
-        elif len(mask.shape) == 2:
+        elif mask.ndim == 2:
             mrec._mask.flat = [tuple(m) for m in mask]
         else:
             mrec.__setmask__(mask)
@@ -646,21 +646,21 @@ def _guessvartypes(arr):
     """
     vartypes = []
     arr = np.asarray(arr)
-    if len(arr.shape) == 2:
+    if arr.ndim == 2:
         arr = arr[0]
-    elif len(arr.shape) > 2:
+    elif arr.ndim > 2:
         raise ValueError("The array should be 2D at most!")
     # Start the conversion loop.
     for f in arr:
         try:
             int(f)
-        except ValueError:
+        except (ValueError, TypeError):
             try:
                 float(f)
-            except ValueError:
+            except (ValueError, TypeError):
                 try:
                     complex(f)
-                except ValueError:
+                except (ValueError, TypeError):
                     vartypes.append(arr.dtype)
                 else:
                     vartypes.append(np.dtype(complex))
@@ -743,7 +743,7 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
         if len(vartypes) != nfields:
             msg = "Attempting to %i dtypes for %i fields!"
             msg += " Reverting to default."
-            warnings.warn(msg % (len(vartypes), nfields))
+            warnings.warn(msg % (len(vartypes), nfields), stacklevel=2)
             vartypes = _guessvartypes(_variables[0])
 
     # Construct the descriptor.
@@ -776,7 +776,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     # Create a new empty recarray
     newdtype = np.dtype(_data.dtype.descr + [(newfieldname, newfield.dtype)])
     newdata = recarray(_data.shape, newdtype)
-    # Add the exisintg field
+    # Add the existing field
     [newdata.setfield(_data.getfield(*f), *f)
          for f in _data.dtype.fields.values()]
     # Add the new field

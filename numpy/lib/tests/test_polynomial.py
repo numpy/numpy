@@ -80,14 +80,38 @@ poly1d([ 2.])
 '''
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, rundocs
+    run_module_suite, assert_, assert_equal, assert_array_equal,
+    assert_almost_equal, assert_array_almost_equal, assert_raises, rundocs
     )
 
 
-class TestDocs(TestCase):
+class TestDocs(object):
     def test_doctests(self):
         return rundocs()
+
+    def test_poly(self):
+        assert_array_almost_equal(np.poly([3, -np.sqrt(2), np.sqrt(2)]),
+                                  [1, -3, -2, 6])
+
+        # From matlab docs
+        A = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+        assert_array_almost_equal(np.poly(A), [1, -6, -72, -27])
+
+        # Should produce real output for perfect conjugates
+        assert_(np.isrealobj(np.poly([+1.082j, +2.613j, -2.613j, -1.082j])))
+        assert_(np.isrealobj(np.poly([0+1j, -0+-1j, 1+2j,
+                                      1-2j, 1.+3.5j, 1-3.5j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j, 1+3j, 1-3.j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 2j, -2j])))
+        assert_(np.isrealobj(np.poly([1j, -1j])))
+        assert_(np.isrealobj(np.poly([1, -1])))
+
+        assert_(np.iscomplexobj(np.poly([1j, -1.0000001j])))
+
+        np.random.seed(42)
+        a = np.random.randn(100) + 1j*np.random.randn(100)
+        assert_(np.isrealobj(np.poly(np.concatenate((a, np.conjugate(a))))))
 
     def test_roots(self):
         assert_array_equal(np.roots([1, 0, 0]), [0, 0])
@@ -110,6 +134,12 @@ class TestDocs(TestCase):
         y = np.polyval(c, x)
         err = [1, -1, 1, -1, 1, -1, 1]
         weights = np.arange(8, 1, -1)**2/7.0
+
+        # Check exception when too few points for variance estimate. Note that
+        # the Bayesian estimate requires the number of data points to exceed
+        # degree + 3.
+        assert_raises(ValueError, np.polyfit,
+                      [0, 1, 3], [0, 1, 3], deg=0, cov=True)
 
         # check 1D case
         m, cov = np.polyfit(x, y+err, 2, cov=True)
@@ -182,6 +212,29 @@ class TestDocs(TestCase):
         """
         v = np.arange(1, 21)
         assert_almost_equal(np.poly(v), np.poly(np.diag(v)))
+
+    def test_poly_eq(self):
+        p = np.poly1d([1, 2, 3])
+        p2 = np.poly1d([1, 2, 4])
+        assert_equal(p == None, False)
+        assert_equal(p != None, True)
+        assert_equal(p == p, True)
+        assert_equal(p == p2, False)
+        assert_equal(p != p2, True)
+
+    def test_poly_coeffs_immutable(self):
+        """ Coefficients should not be modifiable """
+        p = np.poly1d([1, 2, 3])
+
+        try:
+            # despite throwing an exception, this used to change state
+            p.coeffs += 1
+        except Exception:
+            pass
+        assert_equal(p.coeffs, [1, 2, 3])
+
+        p.coeffs[2] += 10
+        assert_equal(p.coeffs, [1, 2, 3])
 
 
 if __name__ == "__main__":

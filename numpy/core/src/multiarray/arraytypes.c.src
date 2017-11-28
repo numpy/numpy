@@ -6,6 +6,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
@@ -18,6 +19,7 @@
 #include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
+#include "lowlevel_strided_loops.h"
 #include "usertypes.h"
 #include "_datetime.h"
 #include "arrayobject.h"
@@ -32,6 +34,17 @@
 #include "cblasfuncs.h"
 #include "npy_cblas.h"
 #include <limits.h>
+#include <assert.h>
+
+/* check for sequences, but ignore the types numpy considers scalars */
+static NPY_INLINE npy_bool
+PySequence_NoString_Check(PyObject *op) {
+    return
+        PySequence_Check(op) &&
+        !PyString_Check(op) &&
+        !PyUnicode_Check(op) &&
+        !PyArray_IsZeroDim(op);
+}
 
 /*
  *****************************************************************************
@@ -67,6 +80,26 @@ static PyObject *
 MyPyFloat_FromHalf(npy_half h)
 {
     return PyFloat_FromDouble(npy_half_to_double(h));
+}
+
+/* Handle case of assigning from an array scalar in setitem */
+static int
+convert_to_scalar_and_retry(PyObject *op, void *ov, void *vap,
+                      int (*setitem)(PyObject *op, void *ov, void *vap))
+{
+    PyObject *temp;
+
+    assert(PyArray_IsZeroDim(op));
+    temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
+                                      (PyArrayObject *)op);
+    if (temp == NULL) {
+        return -1;
+    }
+    else {
+        int res = setitem(temp, ov, vap);
+        Py_DECREF(temp);
+        return res;
+    }
 }
 
 
@@ -180,7 +213,7 @@ static PyObject *
         return @func1@((@type1@)t1);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&t1, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&t1, ip, PyArray_ISBYTESWAPPED(ap), ap);
         return @func1@((@type1@)t1);
     }
 }
@@ -200,8 +233,7 @@ static int
     if (PyErr_Occurred()) {
         PyObject *type, *value, *traceback;
         PyErr_Fetch(&type, &value, &traceback);
-        if (PySequence_Check(op) && !PyString_Check(op) &&
-                                    !PyUnicode_Check(op)) {
+        if (PySequence_NoString_Check(op)) {
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence.");
             Py_DECREF(type);
@@ -216,7 +248,8 @@ static int
     if (ap == NULL || PyArray_ISBEHAVED(ap))
         *((@type@ *)ov)=temp;
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
     }
     return 0;
 }
@@ -242,7 +275,7 @@ static PyObject *
     else {
         int size = sizeof(@type@);
 
-        npy_bool swap = !PyArray_ISNOTSWAPPED(ap);
+        npy_bool swap = PyArray_ISBYTESWAPPED(ap);
         copy_and_swap(&t1, ip, size, 1, 0, swap);
         copy_and_swap(&t2, ip + size, size, 1, 0, swap);
         return PyComplex_FromDoubles((double)t1, (double)t2);
@@ -265,44 +298,37 @@ static int
 {
     PyArrayObject *ap = vap;
     Py_complex oop;
-    PyObject *op2;
     @type@ temp;
     int rsize;
+
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, @NAME@_setitem);
+    }
 
     if (PyArray_IsScalar(op, @kind@)){
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
     else {
-        if (PyArray_Check(op) && (PyArray_NDIM((PyArrayObject *)op) == 0)) {
-            op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
-                                    PyArray_BYTES((PyArrayObject *)op),
-                                    (PyArrayObject *)op);
-        }
-        else {
-            op2 = op;
-            Py_INCREF(op);
-        }
-        if (op2 == Py_None) {
+        if (op == Py_None) {
             oop.real = NPY_NAN;
             oop.imag = NPY_NAN;
         }
         else {
-            oop = PyComplex_AsCComplex (op2);
-        }
-        Py_DECREF(op2);
-        if (PyErr_Occurred()) {
-            return -1;
+            oop = PyComplex_AsCComplex (op);
+            if (PyErr_Occurred()) {
+                return -1;
+            }
         }
         temp.real = (@ftype@) oop.real;
         temp.imag = (@ftype@) oop.imag;
     }
 
     memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
-    if (!PyArray_ISNOTSWAPPED(ap)) {
+    if (PyArray_ISBYTESWAPPED(ap)) {
         byte_swap_vector(ov, 2, sizeof(@ftype@));
     }
     rsize = sizeof(@ftype@);
-    copy_and_swap(ov, &temp, rsize, 2, rsize, !PyArray_ISNOTSWAPPED(ap));
+    copy_and_swap(ov, &temp, rsize, 2, rsize, PyArray_ISBYTESWAPPED(ap));
     return 0;
 }
 
@@ -330,18 +356,28 @@ string_to_long_double(PyObject*op)
     if (s) {
         errno = 0;
         temp = NumPyOS_ascii_strtold(s, &end);
-        if (end==s || *end) {
-            PyErr_Format(PyExc_ValueError,
-                         "invalid literal for long double: %s",
-                         s);
-            Py_XDECREF(b);
-            return 0;
+        if (errno == ERANGE) {
+           if (PyErr_Warn(PyExc_RuntimeWarning,
+                   "overflow encountered in conversion from string") < 0) {
+               Py_XDECREF(b);
+               return 0;
+           }
+           /* strtold returns INFINITY of the correct sign. */
         }
         else if (errno) {
             PyErr_Format(PyExc_ValueError,
                          "invalid literal for long double: %s (%s)",
                          s,
                          strerror(errno));
+            Py_XDECREF(b);
+            return 0;
+        }
+
+        /* Extra characters at the end of the string, or nothing parsed */
+        if (end == s || *end) {
+            PyErr_Format(PyExc_ValueError,
+                         "invalid literal for long double: %s",
+                         s);
             Py_XDECREF(b);
             return 0;
         }
@@ -373,6 +409,10 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     /* ensure alignment */
     npy_longdouble temp;
 
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, LONGDOUBLE_setitem);
+    }
+
     if (PyArray_IsScalar(op, LongDouble)) {
         temp = ((PyLongDoubleScalarObject *)op)->obval;
     }
@@ -391,7 +431,7 @@ LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
     }
     else {
         copy_and_swap(ov, &temp, PyArray_DESCR(ap)->elsize, 1, 0,
-                !PyArray_ISNOTSWAPPED(ap));
+                      PyArray_ISBYTESWAPPED(ap));
     }
     return 0;
 }
@@ -408,7 +448,7 @@ UNICODE_getitem(void *ip, void *vap)
 {
     PyArrayObject *ap = vap;
     Py_ssize_t size = PyArray_ITEMSIZE(ap);
-    int swap = !PyArray_ISNOTSWAPPED(ap);
+    int swap = PyArray_ISBYTESWAPPED(ap);
     int align = !PyArray_ISALIGNED(ap);
 
     return (PyObject *)PyUnicode_FromUCS4(ip, size, swap, align);
@@ -425,15 +465,14 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     char *buffer;
 #endif
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
-            PySequence_Check(op) && PySequence_Size(op) > 0) {
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, UNICODE_setitem);
+    }
+
+    if (PySequence_NoString_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
         return -1;
-    }
-    /* Sequence_Size might have returned an error */
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
     }
 #if defined(NPY_PY3K)
     if (PyBytes_Check(op)) {
@@ -482,7 +521,7 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
     if (PyArray_DESCR(ap)->elsize > datalen) {
         memset((char*)ov + datalen, 0, (PyArray_DESCR(ap)->elsize - datalen));
     }
-    if (!PyArray_ISNOTSWAPPED(ap)) {
+    if (PyArray_ISBYTESWAPPED(ap)) {
         byte_swap_vector(ov, PyArray_DESCR(ap)->elsize >> 2, 4);
     }
     Py_DECREF(temp);
@@ -517,24 +556,13 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
     Py_ssize_t len;
     PyObject *temp = NULL;
 
-    /* Handle case of assigning from an array scalar */
-    if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
-        temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
-                                (PyArrayObject *)op);
-        if (temp == NULL) {
-            return -1;
-        }
-        else {
-            int res = STRING_setitem(temp, ov, ap);
-            Py_DECREF(temp);
-            return res;
-        }
+    if (PyArray_IsZeroDim(op)) {
+        return convert_to_scalar_and_retry(op, ov, vap, STRING_setitem);
     }
 
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op)
-            && PySequence_Check(op) && PySequence_Size(op) != 0) {
+    if (PySequence_NoString_Check(op)) {
         PyErr_SetString(PyExc_ValueError,
-                "cannot set an array element with a sequence");
+                "setting an array element with a sequence");
         return -1;
     }
 #if defined(NPY_PY3K)
@@ -575,7 +603,7 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
     }
     memcpy(ov, ptr, PyArray_MIN(PyArray_DESCR(ap)->elsize,len));
     /*
-     * If string lenth is smaller than room in array
+     * If string length is smaller than room in array
      * Then fill the rest of the element size with NULL
      */
     if (PyArray_DESCR(ap)->elsize > len) {
@@ -667,7 +695,7 @@ VOID_getitem(void *input, void *vap)
             else {
                 PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
-            PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
+            PyTuple_SET_ITEM(ret, i, PyArray_GETITEM(ap, ip+offset));
             ((PyArrayObject_fields *)ap)->flags = savedflags;
         }
         ((PyArrayObject_fields *)ap)->descr = descr;
@@ -680,7 +708,7 @@ VOID_getitem(void *input, void *vap)
         PyArrayObject *ret;
 
         if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
             return NULL;
@@ -689,7 +717,7 @@ VOID_getitem(void *input, void *vap)
         ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                 descr->subarray->base, shape.len, shape.ptr,
                 NULL, ip, PyArray_FLAGS(ap)&(~NPY_ARRAY_F_CONTIGUOUS), NULL);
-        PyDimMem_FREE(shape.ptr);
+        npy_free_cache_dim_obj(shape);
         if (!ret) {
             return NULL;
         }
@@ -701,6 +729,21 @@ VOID_getitem(void *input, void *vap)
         PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
         return (PyObject *)ret;
     }
+
+    /* 2017-11-26, 1.14 */
+    if (DEPRECATE_FUTUREWARNING(
+            "the `.item()` method of unstructured void types will return an "
+            "immutable `bytes` object in the near future, the same as "
+            "returned by `bytes(void_obj)`, instead of the mutable memoryview "
+            "or integer array returned in numpy 1.13.") < 0) {
+        return NULL;
+    }
+    /*
+     * In the future all the code below will be replaced by
+     *
+     *       For unstructured void types like V4, return a bytes object (copy).
+     *     return PyBytes_FromStringAndSize(PyArray_DATA(ap), descr->elsize);
+     */
 
     if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
             || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
@@ -754,71 +797,178 @@ VOID_getitem(void *input, void *vap)
 
 NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
 
+/* Given a structured PyArrayObject arr, index i and structured datatype descr,
+ * modify the dtype of arr to contain a single field corresponding to the ith
+ * field of descr, recompute the alignment flag, and return the offset of the
+ * field (in offset_p). This is useful in preparation for calling copyswap on
+ * individual fields of a numpy structure, in VOID_setitem.  Compare to inner
+ * loops in VOID_getitem and VOID_nonzero.
+ *
+ * WARNING: Clobbers arr's dtype and alignment flag.
+ */
+NPY_NO_EXPORT int
+_setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
+            npy_intp *offset_p)
+{
+    PyObject *key;
+    PyObject *tup;
+    PyArray_Descr *new;
+    npy_intp offset;
+
+    key = PyTuple_GET_ITEM(descr->names, i);
+    tup = PyDict_GetItem(descr->fields, key);
+    if (_unpack_field(tup, &new, &offset) < 0) {
+        return -1;
+    }
+
+    ((PyArrayObject_fields *)(arr))->descr = new;
+    if ((new->alignment > 1) && ((offset % new->alignment) != 0)) {
+        PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
+    }
+    else {
+        PyArray_ENABLEFLAGS(arr, NPY_ARRAY_ALIGNED);
+    }
+
+    *offset_p = offset;
+    return 0;
+}
+
+/* Helper function for VOID_setitem, which uses the copyswap or casting code to
+ * copy structured datatypes between numpy arrays or scalars.
+ */
+static int
+_copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
+                              PyArray_Descr *srcdescr, char *srcdata){
+    PyArrayObject_fields dummy_struct;
+    PyArrayObject *dummy = (PyArrayObject *)&dummy_struct;
+    npy_int names_size = PyTuple_GET_SIZE(dstdescr->names);
+    npy_intp offset;
+    npy_int i;
+    int ret;
+
+    /* Fast path if dtypes are equal */
+    if (PyArray_EquivTypes(srcdescr, dstdescr)) {
+        for (i = 0; i < names_size; i++) {
+            /* neither line can ever fail, in principle */
+            if (_setup_field(i, dstdescr, dummy, &offset)) {
+                return -1;
+            }
+            PyArray_DESCR(dummy)->f->copyswap(dstdata + offset,
+                                              srcdata + offset, 0, dummy);
+        }
+        return 0;
+    }
+
+    /* Slow path */
+    ret = PyArray_CastRawArrays(1, srcdata, dstdata, 0, 0,
+                                srcdescr, dstdescr, 0);
+    if (ret != NPY_SUCCEED) {
+        return -1;
+    }
+    return 0;
+}
+
 static int
 VOID_setitem(PyObject *op, void *input, void *vap)
 {
     char *ip = input;
     PyArrayObject *ap = vap;
     PyArray_Descr *descr;
+    int flags;
     int itemsize=PyArray_DESCR(ap)->elsize;
     int res;
 
     descr = PyArray_DESCR(ap);
-    if (descr->names && PyTuple_Check(op)) {
-        PyObject *key;
-        PyObject *names;
-        int i, n;
-        PyObject *tup;
-        int savedflags;
+    flags = PyArray_FLAGS(ap);
+    if (PyDataType_HASFIELDS(descr)) {
+        PyObject *errmsg;
+        npy_int i;
+        npy_intp offset;
+        int failed = 0;
 
-        res = 0;
-        /* get the names from the fields dictionary*/
-        names = descr->names;
-        n = PyTuple_GET_SIZE(names);
-        if (PyTuple_GET_SIZE(op) != n) {
-            PyErr_SetString(PyExc_ValueError,
-                    "size of tuple must match number of fields.");
-            return -1;
-        }
-        savedflags = PyArray_FLAGS(ap);
-        for (i = 0; i < n; i++) {
-            PyArray_Descr *new;
-            npy_intp offset;
-            key = PyTuple_GET_ITEM(names, i);
-            tup = PyDict_GetItem(descr->fields, key);
-            if (_unpack_field(tup, &new, &offset) < 0) {
-                ((PyArrayObject_fields *)ap)->descr = descr;
+        /* If op is 0d-ndarray or numpy scalar, directly get dtype & data ptr */
+        if (PyArray_Check(op)) {
+            PyArrayObject *oparr = (PyArrayObject *)op;
+            if (PyArray_SIZE(oparr) != 1) {
+                PyErr_SetString(PyExc_ValueError,
+                        "setting an array element with a sequence.");
                 return -1;
             }
-            /*
-             * TODO: temporarily modifying the array like this
-             *       is bad coding style, should be changed.
-             */
-            ((PyArrayObject_fields *)ap)->descr = new;
-            /* remember to update alignment flags */
-            if ((new->alignment > 1)
-                    && ((((npy_intp)(ip+offset)) % new->alignment) != 0)) {
-                PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
+            return _copy_and_return_void_setitem(descr, ip,
+                                    PyArray_DESCR(oparr), PyArray_DATA(oparr));
+        }
+        else if (PyArray_IsScalar(op, Void)) {
+            PyArray_Descr *srcdescr = ((PyVoidScalarObject *)op)->descr;
+            char *srcdata = ((PyVoidScalarObject *)op)->obval;
+            return _copy_and_return_void_setitem(descr, ip, srcdescr, srcdata);
+        }
+        else if (PyTuple_Check(op)) {
+            /* if it's a tuple, copy field-by-field to ap, */
+            npy_intp names_size = PyTuple_GET_SIZE(descr->names);
+
+            if (names_size != PyTuple_Size(op)) {
+                errmsg = PyUString_FromFormat(
+                        "could not assign tuple of length %zd to structure "
+                        "with %" NPY_INTP_FMT " fields.", 
+                        PyTuple_Size(op), names_size);
+                PyErr_SetObject(PyExc_ValueError, errmsg);
+                Py_DECREF(errmsg);
+                return -1;
             }
-            else {
-                PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
-            }
-            res = new->f->setitem(PyTuple_GET_ITEM(op, i), ip+offset, ap);
-            ((PyArrayObject_fields *)ap)->flags = savedflags;
-            if (res < 0) {
-                break;
+
+            for (i = 0; i < names_size; i++) {
+                PyObject *item;
+
+                /* temporarily make ap have only this field */
+                if (_setup_field(i, descr, ap, &offset) == -1) {
+                    failed = 1;
+                    break;
+                }
+                item = PyTuple_GetItem(op, i);
+                if (item == NULL) {
+                    failed = 1;
+                    break;
+                }
+                /* use setitem to set this field */
+                if (PyArray_SETITEM(ap, ip + offset, item) < 0) {
+                    failed = 1;
+                    break;
+                }
             }
         }
-        ((PyArrayObject_fields *)ap)->descr = descr;
-        return res;
-    }
+        else {
+            /* Otherwise must be non-void scalar. Try to assign to each field */
+            npy_intp names_size = PyTuple_GET_SIZE(descr->names);
 
-    if (descr->subarray) {
+            for (i = 0; i < names_size; i++) {
+                /* temporarily make ap have only this field */
+                if (_setup_field(i, descr, ap, &offset) == -1) {
+                    failed = 1;
+                    break;
+                }
+                /* use setitem to set this field */
+                if (PyArray_SETITEM(ap, ip + offset, op) < 0) {
+                    failed = 1;
+                    break;
+                }
+            }
+        }
+
+        /* reset clobbered attributes */
+        ((PyArrayObject_fields *)(ap))->descr = descr;
+        ((PyArrayObject_fields *)(ap))->flags = flags;
+
+        if (failed) {
+            return -1;
+        }
+        return 0;
+    }
+    else if (PyDataType_HASSUBARRAY(descr)) {
         /* copy into an array of the same basic type */
         PyArray_Dims shape = {NULL, -1};
         PyArrayObject *ret;
         if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
             return -1;
@@ -827,7 +977,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
         ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                         descr->subarray->base, shape.len, shape.ptr,
                         NULL, ip, PyArray_FLAGS(ap), NULL);
-        PyDimMem_FREE(shape.ptr);
+        npy_free_cache_dim_obj(shape);
         if (!ret) {
             return -1;
         }
@@ -842,19 +992,17 @@ VOID_setitem(PyObject *op, void *input, void *vap)
         return res;
     }
 
-    /* Default is to use buffer interface to set item */
+    /*
+     * Fall through case - non-structured void datatype. This is a very
+     * undiscerning case: It interprets any object as a buffer
+     * and reads as many bytes as possible, padding with 0.
+     */
     {
         const void *buffer;
         Py_ssize_t buflen;
-        if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
-                || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Setting void-array with object members using buffer.");
-            return -1;
-        }
         res = PyObject_AsReadBuffer(op, &buffer, &buflen);
         if (res == -1) {
-            goto fail;
+            return -1;
         }
         memcpy(ip, buffer, PyArray_MIN(buflen, itemsize));
         if (itemsize > buflen) {
@@ -862,9 +1010,6 @@ VOID_setitem(PyObject *op, void *input, void *vap)
         }
     }
     return 0;
-
-fail:
-    return -1;
 }
 
 static PyObject *
@@ -884,7 +1029,7 @@ DATETIME_getitem(void *ip, void *vap)
         dt = *((npy_datetime *)ip);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&dt, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&dt, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
     return convert_datetime_to_pyobject(dt, meta);
@@ -908,7 +1053,7 @@ TIMEDELTA_getitem(void *ip, void *vap)
         td = *((npy_timedelta *)ip);
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(&td, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&td, ip, PyArray_ISBYTESWAPPED(ap), ap);
     }
 
     return convert_timedelta_to_pyobject(td, meta);
@@ -939,8 +1084,8 @@ DATETIME_setitem(PyObject *op, void *ov, void *vap)
         *((npy_datetime *)ov)=temp;
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp,
-                !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
     }
 
     return 0;
@@ -971,7 +1116,8 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
         *((npy_timedelta *)ov)=temp;
     }
     else {
-        PyArray_DESCR(ap)->f->copyswap(ov, &temp, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
     }
 
     return 0;
@@ -1440,12 +1586,12 @@ static void
     PyArrayObject *aip = vaip;
 
     npy_intp i;
-    PyObject *temp = NULL, *new;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem(ip, aip);
+        PyObject *new;
+        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             return;
         }
@@ -1500,12 +1646,11 @@ static void
     PyArrayObject *aip = vaip;
 
     npy_intp i;
-    PyObject *temp = NULL;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
     for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
-        temp = @from@_getitem(ip, aip);
+        PyObject *temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             return;
         }
@@ -1553,7 +1698,7 @@ static void
     int skip = 1;
     int oskip = PyArray_DESCR(aop)->elsize;
     for (i = 0; i < n; i++, ip += skip, op += oskip) {
-        temp = @from@_getitem(ip, aip);
+        temp = PyArray_Scalar(ip, PyArray_DESCR(aip), (PyObject *)aip);
         if (temp == NULL) {
             Py_INCREF(Py_False);
             temp = Py_False;
@@ -1778,6 +1923,30 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
  */
 
 
+static NPY_INLINE void
+_basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
+             npy_intp n, int elsize) {
+    if (src == NULL) {
+        return;
+    }
+    if (sstride == elsize && dstride == elsize) {
+        memcpy(dst, src, n*elsize);
+    }
+    else {
+        _unaligned_strided_byte_copy(dst, dstride, src, sstride,
+                n, elsize);
+    }
+}
+
+static NPY_INLINE void
+_basic_copy(void *dst, void *src, int elsize) {
+    if (src == NULL) {
+        return;
+    }
+    memcpy(dst, src, elsize);
+}
+
+
 /**begin repeat
  *
  * #fname = SHORT, USHORT, INT, UINT,
@@ -1797,15 +1966,8 @@ static void
 @fname@_copyswapn (void *dst, npy_intp dstride, void *src, npy_intp sstride,
                    npy_intp n, int swap, void *NPY_UNUSED(arr))
 {
-    if (src != NULL) {
-        if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
-            memcpy(dst, src, n*sizeof(@type@));
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride,
-                    n, sizeof(@type@));
-        }
-    }
+    /* copy first if needed */
+    _basic_copyn(dst, dstride, src, sstride, n, sizeof(@type@));
     if (swap) {
         _strided_byte_swap(dst, dstride, n, sizeof(@type@));
     }
@@ -1814,11 +1976,9 @@ static void
 static void
 @fname@_copyswap (void *dst, void *src, int swap, void *NPY_UNUSED(arr))
 {
+    /* copy first if needed */
+    _basic_copy(dst, src, sizeof(@type@));
 
-    if (src != NULL) {
-        /* copy first if needed */
-        memcpy(dst, src, sizeof(@type@));
-    }
     if (swap) {
         char *a, *b, c;
 
@@ -1890,15 +2050,8 @@ static void
 @fname@_copyswapn (void *dst, npy_intp dstride, void *src, npy_intp sstride,
         npy_intp n, int NPY_UNUSED(swap), void *NPY_UNUSED(arr))
 {
-    if (src != NULL) {
-        if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
-            memcpy(dst, src, n*sizeof(@type@));
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride,
-                    n, sizeof(@type@));
-        }
-    }
+    /* copy first if needed */
+    _basic_copyn(dst, dstride, src, sstride, n, sizeof(@type@));
     /* ignore swap */
 }
 
@@ -1906,10 +2059,8 @@ static void
 @fname@_copyswap (void *dst, void *src, int NPY_UNUSED(swap),
         void *NPY_UNUSED(arr))
 {
-    if (src != NULL) {
-        /* copy first if needed */
-        memcpy(dst, src, sizeof(@type@));
-    }
+    /* copy first if needed */
+    _basic_copy(dst, src, sizeof(@type@));
     /* ignore swap */
 }
 
@@ -1927,17 +2078,8 @@ static void
 @fname@_copyswapn (void *dst, npy_intp dstride, void *src, npy_intp sstride,
         npy_intp n, int swap, void *NPY_UNUSED(arr))
 {
-
-    if (src != NULL) {
-        /* copy first if needed */
-        if (sstride == sizeof(@type@) && dstride == sizeof(@type@)) {
-            memcpy(dst, src, n*sizeof(@type@));
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride, n,
-                    sizeof(@type@));
-        }
-    }
+    /* copy first if needed */
+    _basic_copyn(dst, dstride, src, sstride, n, sizeof(@type@));
 
     if (swap) {
         _strided_byte_swap(dst, dstride, n, NPY_SIZEOF_@fsize@);
@@ -1949,8 +2091,8 @@ static void
 static void
 @fname@_copyswap (void *dst, void *src, int swap, void *NPY_UNUSED(arr))
 {
-    if (src != NULL) /* copy first if needed */
-        memcpy(dst, src, sizeof(@type@));
+    /* copy first if needed */
+    _basic_copy(dst, src, sizeof(@type@));
 
     if (swap) {
         char *a, *b, c;
@@ -2119,17 +2261,10 @@ static void
 STRING_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                   npy_intp n, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
-    if (src != NULL && arr != NULL) {
-        int itemsize = PyArray_DESCR(arr)->elsize;
-
-        if (dstride == itemsize && sstride == itemsize) {
-            memcpy(dst, src, itemsize * n);
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src, sstride, n,
-                    itemsize);
-        }
+    if (arr == NULL) {
+        return;
     }
+    _basic_copyn(dst, dstride, src, sstride, n, PyArray_DESCR(arr)->elsize);
     return;
 }
 
@@ -2198,9 +2333,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-    if (src != NULL) {
-        memcpy(dst, src, PyArray_DESCR(arr)->elsize * n);
-    }
+    _basic_copyn(dst, dstride, src, sstride, n, PyArray_DESCR(arr)->elsize);
     return;
 }
 
@@ -2257,9 +2390,9 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-    if (src != NULL) {
-        memcpy(dst, src, PyArray_DESCR(arr)->elsize);
-    }
+
+    /* copy first if needed */
+    _basic_copy(dst, src, PyArray_DESCR(arr)->elsize);
     return;
 }
 
@@ -2274,31 +2407,21 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         return;
     }
     itemsize = PyArray_DESCR(arr)->elsize;
-    if (src != NULL) {
-        if (dstride == itemsize && sstride == itemsize) {
-            memcpy(dst, src, n * itemsize);
-        }
-        else {
-            _unaligned_strided_byte_copy(dst, dstride, src,
-                    sstride, n, itemsize);
-        }
-    }
+    _basic_copyn(dst, dstride, src, sstride, n, itemsize);
 
-    n *= itemsize;
     if (swap) {
-        char *a, *b, c;
+        int i;
+        char *_dst;
+        itemsize = itemsize / 4;
 
-        /* n is the number of unicode characters to swap */
-        n >>= 2;
-        for (a = (char *)dst; n > 0; n--) {
-            b = a + 3;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            a += 2;
+        while (n > 0) {
+            _dst = dst;
+            for (i=0; i < itemsize; i++) {
+                npy_bswap4_unaligned(_dst);
+                _dst += 4;
+            }
+            dst += dstride;
+            --n;
         }
     }
 }
@@ -2307,9 +2430,11 @@ UNICODE_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 static void
 STRING_copyswap(char *dst, char *src, int NPY_UNUSED(swap), PyArrayObject *arr)
 {
-    if (src != NULL && arr != NULL) {
-        memcpy(dst, src, PyArray_DESCR(arr)->elsize);
+    if (arr == NULL) {
+        return;
     }
+    /* copy first if needed */
+    _basic_copy(dst, src, PyArray_DESCR(arr)->elsize);
 }
 
 static void
@@ -2321,22 +2446,17 @@ UNICODE_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         return;
     }
     itemsize = PyArray_DESCR(arr)->elsize;
-    if (src != NULL) {
-        memcpy(dst, src, itemsize);
-    }
+    _basic_copy(dst, src, itemsize);
 
     if (swap) {
-        char *a, *b, c;
-        itemsize >>= 2;
-        for (a = (char *)dst; itemsize>0; itemsize--) {
-            b = a + 3;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            c = *a;
-            *a++ = *b;
-            *b-- = c;
-            a += 2;
+        int i;
+        char *_dst;
+        itemsize = itemsize / 4;
+
+        _dst = dst;
+        for (i=0; i < itemsize; i++) {
+            npy_bswap4_unaligned(_dst);
+            _dst += 4;
         }
     }
 }
@@ -2380,7 +2500,8 @@ static npy_bool
          */
         @type@ tmp;
 #if @isfloat@
-        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
 #else
         memcpy(&tmp, ip, sizeof(@type@));
 #endif
@@ -2403,7 +2524,8 @@ static npy_bool
     }
     else {
         @type@ tmp;
-        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, !PyArray_ISNOTSWAPPED(ap), ap);
+        PyArray_DESCR(ap)->f->copyswap(&tmp, ip, PyArray_ISBYTESWAPPED(ap),
+                                       ap);
         return (npy_bool) ((tmp.real != 0) || (tmp.imag != 0));
     }
 }
@@ -2465,13 +2587,13 @@ UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
     npy_bool seen_null = NPY_FALSE;
     char *buffer = NULL;
 
-    if ((!PyArray_ISNOTSWAPPED(ap)) || (!PyArray_ISALIGNED(ap))) {
+    if (PyArray_ISBYTESWAPPED(ap) || !PyArray_ISALIGNED(ap)) {
         buffer = PyArray_malloc(PyArray_DESCR(ap)->elsize);
         if (buffer == NULL) {
             return nonz;
         }
         memcpy(buffer, ip, PyArray_DESCR(ap)->elsize);
-        if (!PyArray_ISNOTSWAPPED(ap)) {
+        if (PyArray_ISBYTESWAPPED(ap)) {
             byte_swap_vector(buffer, len, 4);
         }
         ip = (npy_ucs4 *)buffer;
@@ -2750,6 +2872,15 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
      * the alignment of pointers, so it doesn't need to be handled
      * here.
      */
+
+    int ret;
+    /*
+     * work around gh-3879, we cannot abort an in-progress quicksort
+     * so at least do not raise again
+     */
+    if (PyErr_Occurred()) {
+        return 0;
+    }
     if ((*ip1 == NULL) || (*ip2 == NULL)) {
         if (ip1 == ip2) {
             return 1;
@@ -2760,7 +2891,12 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
         return 1;
     }
 
-    if (PyObject_RichCompareBool(*ip1, *ip2, Py_LT) == 1) {
+    ret = PyObject_RichCompareBool(*ip1, *ip2, Py_LT);
+    if (ret < 0) {
+        /* error occurred, avoid the next call to PyObject_RichCompareBool */ 
+        return 0;
+    }
+    if (ret == 1) {
         return -1;
     }
     else if (PyObject_RichCompareBool(*ip1, *ip2, Py_GT) == 1) {
@@ -3763,6 +3899,13 @@ static void
         }
     }
     else {
+        /*
+         * Visual Studio 2015 loop vectorizer handles NaN in an unexpected
+         * manner, see: https://github.com/numpy/numpy/issues/7601
+         */
+        #if (_MSC_VER == 1900)
+        #pragma loop( no_vector )
+        #endif
         for (i = 0; i < ni; i++) {
             if (@lt@(in[i], min_val)) {
                 out[i]   = min_val;
@@ -4415,6 +4558,17 @@ PyArray_DescrFromType(int type)
         return NULL;
     }
     else if ((type == NPY_CHAR) || (type == NPY_CHARLTR)) {
+        if (type == NPY_CHAR) {
+            /*
+             * warning added 2017-04-25, 1.13
+             * deprecated in 1.7
+             * */
+            if (DEPRECATE("The NPY_CHAR type_num is deprecated. "
+                          "Please port your code to use "
+                          "NPY_STRING instead.") < 0) {
+                return NULL;
+            }
+        }
         ret = PyArray_DescrNew(_builtin_descrs[NPY_STRING]);
         if (ret == NULL) {
             return NULL;
@@ -4614,6 +4768,15 @@ set_typeinfo(PyObject *dict)
       */
 
     @name@_Descr.fields = Py_None;
+
+    /**end repeat**/
+
+
+    /**begin repeat
+      * #name = STRING, UNICODE, VOID#
+      */
+
+    PyDataType_MAKEUNSIZED(&@name@_Descr);
 
     /**end repeat**/
 

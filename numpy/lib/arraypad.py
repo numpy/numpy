@@ -1030,43 +1030,20 @@ def _normalize_shape(ndarray, shape, cast_to_int=True):
         return ((None, None), ) * ndims
 
     # Convert any input `info` to a NumPy array
-    arr = np.asarray(shape)
+    shape_arr = np.asarray(shape)
 
-    # Switch based on what input looks like
-    if arr.ndim <= 1:
-        if arr.shape == () or arr.shape == (1,):
-            # Single scalar input
-            #   Create new array of ones, multiply by the scalar
-            arr = np.ones((ndims, 2), dtype=ndarray.dtype) * arr
-        elif arr.shape == (2,):
-            # Apply padding (before, after) each axis
-            #   Create new axis 0, repeat along it for every axis
-            arr = arr[np.newaxis, :].repeat(ndims, axis=0)
-        else:
-            fmt = "Unable to create correctly shaped tuple from %s"
-            raise ValueError(fmt % (shape,))
-
-    elif arr.ndim == 2:
-        if arr.shape[1] == 1 and arr.shape[0] == ndims:
-            # Padded before and after by the same amount
-            arr = arr.repeat(2, axis=1)
-        elif arr.shape[0] == ndims:
-            # Input correctly formatted, pass it on as `arr`
-            arr = shape
-        else:
-            fmt = "Unable to create correctly shaped tuple from %s"
-            raise ValueError(fmt % (shape,))
-
-    else:
+    try:
+        shape_arr = np.broadcast_to(shape_arr, (ndims, 2))
+    except ValueError:
         fmt = "Unable to create correctly shaped tuple from %s"
         raise ValueError(fmt % (shape,))
 
     # Cast if necessary
     if cast_to_int is True:
-        arr = np.round(arr).astype(int)
+        shape_arr = np.round(shape_arr).astype(int)
 
     # Convert list of lists to tuple of tuples
-    return tuple(tuple(axis) for axis in arr.tolist())
+    return tuple(tuple(axis) for axis in shape_arr.tolist())
 
 
 def _validate_lengths(narray, number_elements):
@@ -1231,7 +1208,7 @@ def pad(array, pad_width, mode, **kwargs):
     length to the vector argument with padded values replaced. It has the
     following signature::
 
-        padding_func(vector, iaxis_pad_width, iaxis, **kwargs)
+        padding_func(vector, iaxis_pad_width, iaxis, kwargs)
 
     where
 
@@ -1245,32 +1222,32 @@ def pad(array, pad_width, mode, **kwargs):
             the end of vector.
         iaxis : int
             The axis currently being calculated.
-        kwargs : misc
+        kwargs : dict
             Any keyword arguments the function requires.
 
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad(a, (2,3), 'constant', constant_values=(4, 6))
+    >>> np.pad(a, (2,3), 'constant', constant_values=(4, 6))
     array([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
 
-    >>> np.lib.pad(a, (2, 3), 'edge')
+    >>> np.pad(a, (2, 3), 'edge')
     array([1, 1, 1, 2, 3, 4, 5, 5, 5, 5])
 
-    >>> np.lib.pad(a, (2, 3), 'linear_ramp', end_values=(5, -4))
+    >>> np.pad(a, (2, 3), 'linear_ramp', end_values=(5, -4))
     array([ 5,  3,  1,  2,  3,  4,  5,  2, -1, -4])
 
-    >>> np.lib.pad(a, (2,), 'maximum')
+    >>> np.pad(a, (2,), 'maximum')
     array([5, 5, 1, 2, 3, 4, 5, 5, 5])
 
-    >>> np.lib.pad(a, (2,), 'mean')
+    >>> np.pad(a, (2,), 'mean')
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
-    >>> np.lib.pad(a, (2,), 'median')
+    >>> np.pad(a, (2,), 'median')
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
     >>> a = [[1, 2], [3, 4]]
-    >>> np.lib.pad(a, ((3, 2), (2, 3)), 'minimum')
+    >>> np.pad(a, ((3, 2), (2, 3)), 'minimum')
     array([[1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
@@ -1280,36 +1257,42 @@ def pad(array, pad_width, mode, **kwargs):
            [1, 1, 1, 2, 1, 1, 1]])
 
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad(a, (2, 3), 'reflect')
+    >>> np.pad(a, (2, 3), 'reflect')
     array([3, 2, 1, 2, 3, 4, 5, 4, 3, 2])
 
-    >>> np.lib.pad(a, (2, 3), 'reflect', reflect_type='odd')
+    >>> np.pad(a, (2, 3), 'reflect', reflect_type='odd')
     array([-1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
-    >>> np.lib.pad(a, (2, 3), 'symmetric')
+    >>> np.pad(a, (2, 3), 'symmetric')
     array([2, 1, 1, 2, 3, 4, 5, 5, 4, 3])
 
-    >>> np.lib.pad(a, (2, 3), 'symmetric', reflect_type='odd')
+    >>> np.pad(a, (2, 3), 'symmetric', reflect_type='odd')
     array([0, 1, 1, 2, 3, 4, 5, 5, 6, 7])
 
-    >>> np.lib.pad(a, (2, 3), 'wrap')
+    >>> np.pad(a, (2, 3), 'wrap')
     array([4, 5, 1, 2, 3, 4, 5, 1, 2, 3])
 
-    >>> def padwithtens(vector, pad_width, iaxis, kwargs):
-    ...     vector[:pad_width[0]] = 10
-    ...     vector[-pad_width[1]:] = 10
+    >>> def pad_with(vector, pad_width, iaxis, kwargs):
+    ...     pad_value = kwargs.get('padder', 10)
+    ...     vector[:pad_width[0]] = pad_value
+    ...     vector[-pad_width[1]:] = pad_value
     ...     return vector
-
     >>> a = np.arange(6)
     >>> a = a.reshape((2, 3))
-
-    >>> np.lib.pad(a, 2, padwithtens)
+    >>> np.pad(a, 2, pad_with)
     array([[10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10,  0,  1,  2, 10, 10],
            [10, 10,  3,  4,  5, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10]])
+    >>> np.pad(a, 2, pad_with, padder=100)
+    array([[100, 100, 100, 100, 100, 100, 100],
+           [100, 100, 100, 100, 100, 100, 100],
+           [100, 100,   0,   1,   2, 100, 100],
+           [100, 100,   3,   4,   5, 100, 100],
+           [100, 100, 100, 100, 100, 100, 100],
+           [100, 100, 100, 100, 100, 100, 100]])
     """
     if not np.asarray(pad_width).dtype.kind == 'i':
         raise TypeError('`pad_width` must be of integral type.')
@@ -1337,7 +1320,7 @@ def pad(array, pad_width, mode, **kwargs):
         'reflect_type': 'even',
         }
 
-    if isinstance(mode, str):
+    if isinstance(mode, np.compat.basestring):
         # Make sure have allowed kwargs appropriate for mode
         for key in kwargs:
             if key not in allowedkwargs[mode]:
@@ -1361,7 +1344,7 @@ def pad(array, pad_width, mode, **kwargs):
         function = mode
 
         # Create a new padded array
-        rank = list(range(len(narray.shape)))
+        rank = list(range(narray.ndim))
         total_dim_increase = [np.sum(pad_width[i]) for i in rank]
         offset_slices = [slice(pad_width[i][0],
                                pad_width[i][0] + narray.shape[i])
@@ -1430,6 +1413,14 @@ def pad(array, pad_width, mode, **kwargs):
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
+            if narray.shape[axis] == 0:
+                # Axes with non-zero padding cannot be empty.
+                if pad_before > 0 or pad_after > 0:
+                    raise ValueError("There aren't any elements to reflect"
+                                     " in axis {} of `array`".format(axis))
+                # Skip zero padding on empty axes.
+                continue
+
             # Recursive padding along any axis where `pad_amt` is too large
             # for indexing tricks. We can only safely pad the original axis
             # length, to keep the period of the reflections consistent.

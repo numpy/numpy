@@ -308,22 +308,21 @@ def is_free_format(file):
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
     result = 0
-    f = open(file, 'r')
-    line = f.readline()
-    n = 15  # the number of non-comment lines to scan for hints
-    if _has_f_header(line):
-        n = 0
-    elif _has_f90_header(line):
-        n = 0
-        result = 1
-    while n > 0 and line:
-        if line[0] != '!' and line.strip():
-            n -= 1
-            if (line[0] != '\t' and _free_f90_start(line[:5])) or line[-2:-1] == '&':
-                result = 1
-                break
+    with open(file, 'r') as f:
         line = f.readline()
-    f.close()
+        n = 15  # the number of non-comment lines to scan for hints
+        if _has_f_header(line):
+            n = 0
+        elif _has_f90_header(line):
+            n = 0
+            result = 1
+        while n > 0 and line:
+            if line[0] != '!' and line.strip():
+                n -= 1
+                if (line[0] != '\t' and _free_f90_start(line[:5])) or line[-2:-1] == '&':
+                    result = 1
+                    break
+            line = f.readline()
     return result
 
 
@@ -549,16 +548,16 @@ beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))' + \
     r'\s*(?P<this>(\b(%s)\b))' + \
     r'\s*(?P<after>%s)\s*\Z'
 ##
-fortrantypes = 'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
+fortrantypes = r'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
 typespattern = re.compile(
     beforethisafter % ('', fortrantypes, fortrantypes, '.*'), re.I), 'type'
 typespattern4implicit = re.compile(beforethisafter % (
     '', fortrantypes + '|static|automatic|undefined', fortrantypes + '|static|automatic|undefined', '.*'), re.I)
 #
 functionpattern = re.compile(beforethisafter % (
-    '([a-z]+[\w\s(=*+-/)]*?|)', 'function', 'function', '.*'), re.I), 'begin'
+    r'([a-z]+[\w\s(=*+-/)]*?|)', 'function', 'function', '.*'), re.I), 'begin'
 subroutinepattern = re.compile(beforethisafter % (
-    '[a-z\s]*?', 'subroutine', 'subroutine', '.*'), re.I), 'begin'
+    r'[a-z\s]*?', 'subroutine', 'subroutine', '.*'), re.I), 'begin'
 # modulepattern=re.compile(beforethisafter%('[a-z\s]*?','module','module','.*'),re.I),'begin'
 #
 groupbegins77 = r'program|block\s*data'
@@ -570,11 +569,11 @@ beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
 groupends = r'end|endprogram|endblockdata|endmodule|endpythonmodule|endinterface'
 endpattern = re.compile(
-    beforethisafter % ('', groupends, groupends, '[\w\s]*'), re.I), 'end'
+    beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
 # endifs='end\s*(if|do|where|select|while|forall)'
-endifs = '(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
+endifs = r'(end\s*(if|do|where|select|while|forall))|(module\s*procedure)'
 endifpattern = re.compile(
-    beforethisafter % ('[\w]*?', endifs, endifs, '[\w\s]*'), re.I), 'endif'
+    beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
 #
 implicitpattern = re.compile(
     beforethisafter % ('', 'implicit', 'implicit', '.*'), re.I), 'implicit'
@@ -593,9 +592,9 @@ privatepattern = re.compile(
 intrisicpattern = re.compile(
     beforethisafter % ('', 'intrisic', 'intrisic', '.*'), re.I), 'intrisic'
 intentpattern = re.compile(beforethisafter % (
-    '', 'intent|depend|note|check', 'intent|depend|note|check', '\s*\(.*?\).*'), re.I), 'intent'
+    '', 'intent|depend|note|check', 'intent|depend|note|check', r'\s*\(.*?\).*'), re.I), 'intent'
 parameterpattern = re.compile(
-    beforethisafter % ('', 'parameter', 'parameter', '\s*\(.*'), re.I), 'parameter'
+    beforethisafter % ('', 'parameter', 'parameter', r'\s*\(.*'), re.I), 'parameter'
 datapattern = re.compile(
     beforethisafter % ('', 'data', 'data', '.*'), re.I), 'data'
 callpattern = re.compile(
@@ -635,7 +634,7 @@ def crackline(line, reset=0):
     """
     reset=-1  --- initialize
     reset=0   --- crack the line
-    reset=1   --- final check if mismatch of blocks occured
+    reset=1   --- final check if mismatch of blocks occurred
 
     Cracked data is saved in grouplist[0].
     """
@@ -1036,13 +1035,13 @@ def analyzeline(m, case, line):
             try:
                 del groupcache[groupcounter]['vars'][name][
                     groupcache[groupcounter]['vars'][name]['attrspec'].index('external')]
-            except:
+            except Exception:
                 pass
         if block in ['function', 'subroutine']:  # set global attributes
             try:
                 groupcache[groupcounter]['vars'][name] = appenddecl(
                     groupcache[groupcounter]['vars'][name], groupcache[groupcounter - 2]['vars'][''])
-            except:
+            except Exception:
                 pass
             if case == 'callfun':  # return type
                 if result and result in groupcache[groupcounter]['vars']:
@@ -1052,7 +1051,7 @@ def analyzeline(m, case, line):
             # if groupcounter>1: # name is interfaced
             try:
                 groupcache[groupcounter - 2]['interfaced'].append(name)
-            except:
+            except Exception:
                 pass
         if block == 'function':
             t = typespattern[0].match(m.group('before') + ' ' + name)
@@ -1174,7 +1173,7 @@ def analyzeline(m, case, line):
         for e in markoutercomma(ll).split('@,@'):
             try:
                 k, initexpr = [x.strip() for x in e.split('=')]
-            except:
+            except Exception:
                 outmess(
                     'analyzeline: could not extract name,expr in parameter statement "%s" of "%s"\n' % (e, ll))
                 continue
@@ -1251,7 +1250,7 @@ def analyzeline(m, case, line):
                     if '-' in r:
                         try:
                             begc, endc = [x.strip() for x in r.split('-')]
-                        except:
+                        except Exception:
                             outmess(
                                 'analyzeline: expected "<char>-<char>" instead of "%s" in range list of implicit statement\n' % r)
                             continue
@@ -1790,7 +1789,7 @@ def setmesstext(block):
 
     try:
         filepositiontext = 'In: %s:%s\n' % (block['from'], block['name'])
-    except:
+    except Exception:
         pass
 
 
@@ -2013,7 +2012,7 @@ def analyzecommon(block):
                 if m.group('dims'):
                     dims = [x.strip()
                             for x in markoutercomma(m.group('dims')).split('@,@')]
-                n = m.group('name').strip()
+                n = rmbadname1(m.group('name').strip())
                 if n in block['vars']:
                     if 'attrspec' in block['vars'][n]:
                         block['vars'][n]['attrspec'].append(
@@ -2108,7 +2107,7 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
     try:
         c = int(myeval(e, {}, {}))
         return 0, c, None
-    except:
+    except Exception:
         pass
     if getlincoef_re_1.match(e):
         return 1, 0, e
@@ -2150,7 +2149,7 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
                 c2 = myeval(ee, {}, {})
                 if (a * 0.5 + b == c and a * 1.5 + b == c2):
                     return a, b, x
-            except:
+            except Exception:
                 pass
             break
     return None, None, None
@@ -2162,11 +2161,11 @@ def getarrlen(dl, args, star='*'):
     edl = []
     try:
         edl.append(myeval(dl[0], {}, {}))
-    except:
+    except Exception:
         edl.append(dl[0])
     try:
         edl.append(myeval(dl[1], {}, {}))
-    except:
+    except Exception:
         edl.append(dl[1])
     if isinstance(edl[0], int):
         p1 = 1 - edl[0]
@@ -2186,7 +2185,7 @@ def getarrlen(dl, args, star='*'):
         d = '%s-(%s)+1' % (dl[1], dl[0])
     try:
         return repr(myeval(d, {}, {})), None, None
-    except:
+    except Exception:
         pass
     d1, d2 = getlincoef(dl[0], args), getlincoef(dl[1], args)
     if None not in [d1[0], d2[0]]:
@@ -2392,7 +2391,8 @@ def _selected_real_kind_func(p, r=0, radix=0):
         return 4
     if p < 16:
         return 8
-    if platform.machine().lower().startswith('power'):
+    machine = platform.machine().lower()
+    if machine.startswith('power') or machine.startswith('ppc64'):
         if p <= 20:
             return 16
     else:
@@ -2433,18 +2433,48 @@ def get_parameters(vars, global_params={}):
                     v = v.replace(*repl)
             v = kind_re.sub(r'kind("\1")', v)
             v = selected_int_kind_re.sub(r'selected_int_kind(\1)', v)
-            if isinteger(vars[n]) and not selected_kind_re.match(v):
-                v = v.split('_')[0]
+
+            # We need to act according to the data.
+            # The easy case is if the data has a kind-specifier,
+            # then we may easily remove those specifiers.
+            # However, it may be that the user uses other specifiers...(!)
+            is_replaced = False
+            if 'kindselector' in vars[n]:
+                if 'kind' in vars[n]['kindselector']:
+                    orig_v_len = len(v)
+                    v = v.replace('_' + vars[n]['kindselector']['kind'], '')
+                    # Again, this will be true if even a single specifier
+                    # has been replaced, see comment above.
+                    is_replaced = len(v) < orig_v_len
+                    
+            if not is_replaced:
+                if not selected_kind_re.match(v):
+                    v_ = v.split('_')
+                    # In case there are additive parameters
+                    if len(v_) > 1: 
+                        v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
+
+            # Currently this will not work for complex numbers.
+            # There is missing code for extracting a complex number,
+            # which may be defined in either of these:
+            #  a) (Re, Im)
+            #  b) cmplx(Re, Im)
+            #  c) dcmplx(Re, Im)
+            #  d) cmplx(Re, Im, <prec>)
+
             if isdouble(vars[n]):
                 tt = list(v)
                 for m in real16pattern.finditer(v):
                     tt[m.start():m.end()] = list(
                         v[m.start():m.end()].lower().replace('d', 'e'))
                 v = ''.join(tt)
-            if iscomplex(vars[n]):
+
+            elif iscomplex(vars[n]):
+                # FIXME complex numbers may also have exponents
                 if v[0] == '(' and v[-1] == ')':
                     # FIXME, unused l looks like potential bug
                     l = markoutercomma(v[1:-1]).split('@,@')
+
             try:
                 params[n] = eval(v, g_params, params)
             except Exception as msg:
@@ -2548,7 +2578,7 @@ def analyzevars(block):
                 l = vars[n]['charselector']['len']
                 try:
                     l = str(eval(l, {}, params))
-                except:
+                except Exception:
                     pass
                 vars[n]['charselector']['len'] = l
 
@@ -2557,7 +2587,7 @@ def analyzevars(block):
                 l = vars[n]['kindselector']['kind']
                 try:
                     l = str(eval(l, {}, params))
-                except:
+                except Exception:
                     pass
                 vars[n]['kindselector']['kind'] = l
 
@@ -2788,7 +2818,7 @@ def analyzevars(block):
                                 try:
                                     kindselect['kind'] = eval(
                                         kindselect['kind'], {}, params)
-                                except:
+                                except Exception:
                                     pass
                             vars[n]['kindselector'] = kindselect
                         if charselect:
@@ -2899,9 +2929,9 @@ def analyzeargs(block):
     return block
 
 determineexprtype_re_1 = re.compile(r'\A\(.+?[,].+?\)\Z', re.I)
-determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(P<name>[\w]+)|)\Z', re.I)
+determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>[\w]+)|)\Z', re.I)
 determineexprtype_re_3 = re.compile(
-    r'\A[+-]?[\d.]+[\d+-de.]*(_(P<name>[\w]+)|)\Z', re.I)
+    r'\A[+-]?[\d.]+[\d+\-de.]*(_(?P<name>[\w]+)|)\Z', re.I)
 determineexprtype_re_4 = re.compile(r'\A\(.*\)\Z', re.I)
 determineexprtype_re_5 = re.compile(r'\A(?P<name>\w+)\s*\(.*?\)\s*\Z', re.I)
 
@@ -3199,7 +3229,7 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 try:
                     v = eval(v)
                     v = '(%s,%s)' % (v.real, v.imag)
-                except:
+                except Exception:
                     pass
             vardef = '%s :: %s=%s' % (vardef, a, v)
         else:
@@ -3304,8 +3334,7 @@ if __name__ == "__main__":
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)
-        f = open(pyffilename, 'w')
-        f.write(pyf)
-        f.close()
+        with open(pyffilename, 'w') as f: 
+            f.write(pyf)
     if showblocklist:
         show(postlist)

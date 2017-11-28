@@ -11,7 +11,7 @@
   by
 
   Travis Oliphant,  oliphant@ee.byu.edu
-  Brigham Young Univeristy
+  Brigham Young University
 
 
 maintainer email:  oliphant.travis@ieee.org
@@ -52,6 +52,10 @@ maintainer email:  oliphant.travis@ieee.org
 #include "array_assign.h"
 #include "alloc.h"
 #include "mem_overlap.h"
+#include "numpyos.h"
+#include "strfuncs.h"
+
+#include "binop_override.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -72,7 +76,7 @@ PyArray_Size(PyObject *op)
  * Precondition: 'arr' is a copy of 'base' (though possibly with different
  * strides, ordering, etc.). This function sets the UPDATEIFCOPY flag and the
  * ->base pointer on 'arr', so that when 'arr' is destructed, it will copy any
- * changes back to 'base'.
+ * changes back to 'base'. DEPRECATED, use PyArray_SetWritebackIfCopyBase
  *
  * Steals a reference to 'base'.
  *
@@ -81,22 +85,64 @@ PyArray_Size(PyObject *op)
 NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
+    int ret;
+#ifdef PYPY_VERSION
+  #ifndef DEPRECATE_UPDATEIFCOPY
+    #define DEPRECATE_UPDATEIFCOPY
+  #endif
+#endif
+
+#ifdef DEPRECATE_UPDATEIFCOPY 
+    /* TODO: enable this once a solution for UPDATEIFCOPY
+     *  and nditer are resolved, also pending the fix for GH7054
+     */
+    /* 2017-Nov-10 1.14 */
+    if (DEPRECATE("PyArray_SetUpdateIfCopyBase is deprecated, use "
+              "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
+              "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
+              "i.e. before the last call to Py_DECREF. If cleaning up from an "
+              "error, PyArray_DiscardWritebackIfCopy may be called instead to "
+              "throw away the scratch buffer.") < 0)
+        return -1;
+#endif
+    ret = PyArray_SetWritebackIfCopyBase(arr, base);
+    if (ret >=0) {
+        PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+        PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
+    }
+    return ret;
+}
+
+/*NUMPY_API
+ *
+ * Precondition: 'arr' is a copy of 'base' (though possibly with different
+ * strides, ordering, etc.). This function sets the WRITEBACKIFCOPY flag and the
+ * ->base pointer on 'arr', call PyArray_ResolveWritebackIfCopy to copy any
+ * changes back to 'base' before deallocating the array.
+ *
+ * Steals a reference to 'base'.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_SetWritebackIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
+{
     if (base == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                  "Cannot UPDATEIFCOPY to NULL array");
+                  "Cannot WRITEBACKIFCOPY to NULL array");
         return -1;
     }
     if (PyArray_BASE(arr) != NULL) {
         PyErr_SetString(PyExc_ValueError,
-                  "Cannot set array with existing base to UPDATEIFCOPY");
+                  "Cannot set array with existing base to WRITEBACKIFCOPY");
         goto fail;
     }
-    if (PyArray_FailUnlessWriteable(base, "UPDATEIFCOPY base") < 0) {
+    if (PyArray_FailUnlessWriteable(base, "WRITEBACKIFCOPY base") < 0) {
         goto fail;
     }
 
     /*
-     * Any writes to 'arr' will magicaly turn into writes to 'base', so we
+     * Any writes to 'arr' will magically turn into writes to 'base', so we
      * should warn if necessary.
      */
     if (PyArray_FLAGS(base) & NPY_ARRAY_WARN_ON_WRITE) {
@@ -108,7 +154,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
      * references.
      */
     ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
-    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
     PyArray_CLEARFLAGS(base, NPY_ARRAY_WRITEABLE);
 
     return 0;
@@ -276,8 +322,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 if (PyArray_SIZE(dest) == 1) {
                     Py_DECREF(dtype);
                     Py_DECREF(src_object);
-                    ret = PyArray_DESCR(dest)->f->setitem(src_object,
-                                                PyArray_DATA(dest), dest);
+                    ret = PyArray_SETITEM(dest, PyArray_DATA(dest), src_object);
                     return ret;
                 }
                 else {
@@ -288,8 +333,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                         Py_DECREF(src_object);
                         return -1;
                     }
-                    if (PyArray_DESCR(src)->f->setitem(src_object,
-                                                PyArray_DATA(src), src) < 0) {
+                    if (PyArray_SETITEM(src, PyArray_DATA(src), src_object) < 0) {
                         Py_DECREF(src_object);
                         Py_DECREF(src);
                         return -1;
@@ -368,6 +412,54 @@ PyArray_TypeNumFromName(char *str)
     return NPY_NOTYPE;
 }
 
+/*NUMPY_API
+ *
+ * If WRITEBACKIFCOPY and self has data, reset the base WRITEABLE flag,
+ * copy the local data to base, release the local data, and set flags
+ * appropriately. Return 0 if not relevant, 1 if success, < 0 on failure
+ */
+NPY_NO_EXPORT int
+PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
+{
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
+    if (fa && fa->base) {
+        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) || (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
+            /*
+             * UPDATEIFCOPY or WRITEBACKIFCOPY means that fa->base's data
+             * should be updated with the contents
+             * of self.
+             * fa->base->flags is not WRITEABLE to protect the relationship
+             * unlock it.
+             */
+            int retval = 0;
+            PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
+                                                    NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
+            retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
+            if (retval < 0) {
+                /* this should never happen, how did the two copies of data
+                 * get out of sync?
+                 */
+                return retval;
+            }
+            if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
+                /* Free internal references if an Object array */
+                if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
+                    Py_INCREF(self); /*hold on to self */
+                    PyArray_XDECREF(self);
+                    Py_DECREF(self); 
+                }
+                npy_free_cache(fa->data, PyArray_NBYTES(self));
+                fa->data = NULL;
+                PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
+            }
+            return 1;
+        }
+    }
+    return 0;
+ }
+
 /*********************** end C-API functions **********************/
 
 /* array object functions */
@@ -383,26 +475,51 @@ array_dealloc(PyArrayObject *self)
         PyObject_ClearWeakRefs((PyObject *)self);
     }
     if (fa->base) {
-        /*
-         * UPDATEIFCOPY means that base points to an
-         * array that should be updated with the contents
-         * of this array upon destruction.
-         * fa->base->flags must have been WRITEABLE
-         * (checked previously) and it was locked here
-         * thus, unlock it.
-         */
-        if (fa->flags & NPY_ARRAY_UPDATEIFCOPY) {
-            PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
-                                                    NPY_ARRAY_WRITEABLE);
-            Py_INCREF(self); /* hold on to self in next call */
-            if (PyArray_CopyAnyInto((PyArrayObject *)fa->base, self) < 0) {
+        int retval;
+        if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
+        {
+            char * msg = "WRITEBACKIFCOPY requires a call to "
+                "PyArray_ResolveWritebackIfCopy or "
+                "PyArray_DiscardWritebackIfCopy before array_dealloc is "
+                "called.";
+            /* 2017-Nov-10 1.14 */
+            if (DEPRECATE(msg) < 0) {
+                /* dealloc must not raise an error, best effort try to write
+                   to stderr and clear the error
+                */
+                PyObject * s;
+#if PY_MAJOR_VERSION < 3
+                s = PyString_FromString(msg);
+#else
+                s = PyUnicode_FromString(msg);
+#endif
+                if (s) {
+                    PyErr_WriteUnraisable(s);
+                    Py_DECREF(s);
+                }
+                else {
+                    PyErr_WriteUnraisable(Py_None);
+                }
+            }
+            retval = PyArray_ResolveWritebackIfCopy(self);
+            if (retval < 0)
+            {
                 PyErr_Print();
                 PyErr_Clear();
             }
-            /*
-             * Don't need to DECREF -- because we are deleting
-             *self already...
-             */
+        }
+        if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
+            /* DEPRECATED, remove once the flag is removed */
+            Py_INCREF(self); /* hold on to self in next call  since if
+                              * refcount == 0 it will recurse back into 
+                              *array_dealloc
+                              */
+            retval = PyArray_ResolveWritebackIfCopy(self);
+            if (retval < 0)
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
         }
         /*
          * In any case base is pointing to something that we need
@@ -428,93 +545,6 @@ array_dealloc(PyArrayObject *self)
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
     Py_DECREF(fa->descr);
     Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-/*
- * Extend string. On failure, returns NULL and leaves *strp alone.
- * XXX we do this in multiple places; time for a string library?
- */
-static char *
-extend(char **strp, Py_ssize_t n, Py_ssize_t *maxp)
-{
-    char *str = *strp;
-    Py_ssize_t new_cap;
-
-    if (n >= *maxp - 16) {
-        new_cap = *maxp * 2;
-
-        if (new_cap <= *maxp) {     /* overflow */
-            return NULL;
-        }
-        str = PyArray_realloc(*strp, new_cap);
-        if (str != NULL) {
-            *strp = str;
-            *maxp = new_cap;
-        }
-    }
-    return str;
-}
-
-static int
-dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
-          npy_intp *dimensions, npy_intp *strides, PyArrayObject* self)
-{
-    PyArray_Descr *descr=PyArray_DESCR(self);
-    PyObject *op = NULL, *sp = NULL;
-    char *ostring;
-    npy_intp i, N, ret = 0;
-
-#define CHECK_MEMORY do {                           \
-        if (extend(string, *n, max_n) == NULL) {    \
-            ret = -1;                               \
-            goto end;                               \
-        }                                           \
-    } while (0)
-
-    if (nd == 0) {
-        if ((op = descr->f->getitem(data, self)) == NULL) {
-            return -1;
-        }
-        sp = PyObject_Repr(op);
-        if (sp == NULL) {
-            ret = -1;
-            goto end;
-        }
-        ostring = PyString_AsString(sp);
-        N = PyString_Size(sp)*sizeof(char);
-        *n += N;
-        CHECK_MEMORY;
-        memmove(*string + (*n - N), ostring, N);
-    }
-    else {
-        CHECK_MEMORY;
-        (*string)[*n] = '[';
-        *n += 1;
-        for (i = 0; i < dimensions[0]; i++) {
-            if (dump_data(string, n, max_n,
-                          data + (*strides)*i,
-                          nd - 1, dimensions + 1,
-                          strides + 1, self) < 0) {
-                return -1;
-            }
-            CHECK_MEMORY;
-            if (i < dimensions[0] - 1) {
-                (*string)[*n] = ',';
-                (*string)[*n+1] = ' ';
-                *n += 2;
-            }
-        }
-        CHECK_MEMORY;
-        (*string)[*n] = ']';
-        *n += 1;
-    }
-
-#undef CHECK_MEMORY
-
-end:
-    Py_XDECREF(op);
-    Py_XDECREF(sp);
-    return ret;
 }
 
 /*NUMPY_API
@@ -567,6 +597,8 @@ PyArray_DebugPrint(PyArrayObject *obj)
         printf(" NPY_WRITEABLE");
     if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
         printf(" NPY_UPDATEIFCOPY");
+    if (fobj->flags & NPY_ARRAY_WRITEBACKIFCOPY)
+        printf(" NPY_WRITEBACKIFCOPY");
     printf("\n");
 
     if (fobj->base != NULL && PyArray_Check(fobj->base)) {
@@ -579,72 +611,6 @@ PyArray_DebugPrint(PyArrayObject *obj)
     fflush(stdout);
 }
 
-static PyObject *
-array_repr_builtin(PyArrayObject *self, int repr)
-{
-    PyObject *ret;
-    char *string;
-    /* max_n initial value is arbitrary, dump_data will extend it */
-    Py_ssize_t n = 0, max_n = PyArray_NBYTES(self) * 4 + 7;
-
-    if ((string = PyArray_malloc(max_n)) == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    if (dump_data(&string, &n, &max_n, PyArray_DATA(self),
-                  PyArray_NDIM(self), PyArray_DIMS(self),
-                  PyArray_STRIDES(self), self) < 0) {
-        PyArray_free(string);
-        return NULL;
-    }
-
-    if (repr) {
-        if (PyArray_ISEXTENDED(self)) {
-            ret = PyUString_FromFormat("array(%s, '%c%d')",
-                                       string,
-                                       PyArray_DESCR(self)->type,
-                                       PyArray_DESCR(self)->elsize);
-        }
-        else {
-            ret = PyUString_FromFormat("array(%s, '%c')",
-                                       string,
-                                       PyArray_DESCR(self)->type);
-        }
-    }
-    else {
-        ret = PyUString_FromStringAndSize(string, n);
-    }
-
-    PyArray_free(string);
-    return ret;
-}
-
-static PyObject *PyArray_StrFunction = NULL;
-static PyObject *PyArray_ReprFunction = NULL;
-
-/*NUMPY_API
- * Set the array print function to be a Python function.
- */
-NPY_NO_EXPORT void
-PyArray_SetStringFunction(PyObject *op, int repr)
-{
-    if (repr) {
-        /* Dispose of previous callback */
-        Py_XDECREF(PyArray_ReprFunction);
-        /* Add a reference to new callback */
-        Py_XINCREF(op);
-        /* Remember new callback */
-        PyArray_ReprFunction = op;
-    }
-    else {
-        /* Dispose of previous callback */
-        Py_XDECREF(PyArray_StrFunction);
-        /* Add a reference to new callback */
-        Py_XINCREF(op);
-        /* Remember new callback */
-        PyArray_StrFunction = op;
-    }
-}
 
 /*NUMPY_API
  * This function is scheduled to be removed
@@ -655,41 +621,6 @@ NPY_NO_EXPORT void
 PyArray_SetDatetimeParseFunction(PyObject *op)
 {
 }
-
-
-static PyObject *
-array_repr(PyArrayObject *self)
-{
-    PyObject *s, *arglist;
-
-    if (PyArray_ReprFunction == NULL) {
-        s = array_repr_builtin(self, 1);
-    }
-    else {
-        arglist = Py_BuildValue("(O)", self);
-        s = PyEval_CallObject(PyArray_ReprFunction, arglist);
-        Py_DECREF(arglist);
-    }
-    return s;
-}
-
-static PyObject *
-array_str(PyArrayObject *self)
-{
-    PyObject *s, *arglist;
-
-    if (PyArray_StrFunction == NULL) {
-        s = array_repr_builtin(self, 0);
-    }
-    else {
-        arglist = Py_BuildValue("(O)", self);
-        s = PyEval_CallObject(PyArray_StrFunction, arglist);
-        Py_DECREF(arglist);
-    }
-    return s;
-}
-
-
 
 /*NUMPY_API
  */
@@ -880,18 +811,13 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
 
 #define SMALL_STRING 2048
 
-#if defined(isspace)
-#undef isspace
-#define isspace(c)  ((c==' ')||(c=='\t')||(c=='\n')||(c=='\r')||(c=='\v')||(c=='\f'))
-#endif
-
 static void _rstripw(char *s, int n)
 {
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         int c = s[i];
 
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
@@ -905,7 +831,7 @@ static void _unistripw(npy_ucs4 *s, int n)
     int i;
     for (i = n - 1; i >= 1; i--) { /* Never strip to length 0. */
         npy_ucs4 c = s[i];
-        if (!c || isspace(c)) {
+        if (!c || NumPyOS_ascii_isspace((int)c)) {
             s[i] = 0;
         }
         else {
@@ -1087,7 +1013,7 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 {
     PyArrayObject *result;
     PyArrayMultiIterObject *mit;
-    int val;
+    int val, cast = 0;
 
     /* Cast arrays to a common type */
     if (PyArray_TYPE(self) != PyArray_DESCR(other)->type_num) {
@@ -1099,9 +1025,13 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
 #else
+        cast = 1;
+#endif  /* define(NPY_PY3K) */
+    }
+    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
         PyObject *new;
         if (PyArray_TYPE(self) == NPY_STRING &&
-            PyArray_DESCR(other)->type_num == NPY_UNICODE) {
+                PyArray_DESCR(other)->type_num == NPY_UNICODE) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(other));
             unicode->elsize = PyArray_DESCR(self)->elsize << 2;
             new = PyArray_FromAny((PyObject *)self, unicode,
@@ -1112,10 +1042,17 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
             Py_INCREF(other);
             self = (PyArrayObject *)new;
         }
-        else if (PyArray_TYPE(self) == NPY_UNICODE &&
-                 PyArray_DESCR(other)->type_num == NPY_STRING) {
+        else if ((PyArray_TYPE(self) == NPY_UNICODE) &&
+                 ((PyArray_DESCR(other)->type_num == NPY_STRING) ||
+                 (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)))) {
             PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
-            unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+
+            if (PyArray_DESCR(other)->type_num == NPY_STRING) {
+                unicode->elsize = PyArray_DESCR(other)->elsize << 2;
+            }
+            else {
+                unicode->elsize = PyArray_DESCR(other)->elsize;
+            }
             new = PyArray_FromAny((PyObject *)other, unicode,
                                   0, 0, 0, NULL);
             if (new == NULL) {
@@ -1130,7 +1067,6 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                             "in comparison");
             return NULL;
         }
-#endif
     }
     else {
         Py_INCREF(self);
@@ -1329,35 +1265,15 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 
     switch (cmp_op) {
     case Py_LT:
-        if (needs_right_binop_forward(obj_self, other, "__gt__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            /* See discussion in number.c */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.less);
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
+        result = PyArray_GenericBinaryFunction(self, other, n_ops.less);
         break;
     case Py_LE:
-        if (needs_right_binop_forward(obj_self, other, "__ge__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-        result = PyArray_GenericBinaryFunction(self, other,
-                n_ops.less_equal);
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
+        result = PyArray_GenericBinaryFunction(self, other, n_ops.less_equal);
         break;
     case Py_EQ:
-        if (other == Py_None) {
-            /* 2013-07-25, 1.7 */
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_False);
-            return Py_False;
-        }
-
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1366,8 +1282,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
-            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
-                                                           NULL);
+            array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
@@ -1406,11 +1321,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        if (needs_right_binop_forward(obj_self, other, "__eq__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
         result = PyArray_GenericBinaryFunction(self,
                 (PyObject *)other,
                 n_ops.equal);
@@ -1436,16 +1346,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         break;
     case Py_NE:
-        if (other == Py_None) {
-            /* 2013-07-25, 1.8 */
-            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
-                    "an elementwise object comparison in the future.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(Py_True);
-            return Py_True;
-        }
-
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         /*
          * The ufunc does not support void/structured types, so these
          * need to be handled specifically. Only a few cases are supported.
@@ -1454,8 +1355,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
-            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
-                                                           NULL);
+            array_other = (PyArrayObject *)PyArray_FROM_O(other);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
@@ -1494,11 +1394,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        if (needs_right_binop_forward(obj_self, other, "__ne__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
         result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
                 n_ops.not_equal);
         if (result == NULL) {
@@ -1518,20 +1413,12 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         break;
     case Py_GT:
-        if (needs_right_binop_forward(obj_self, other, "__lt__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(self, other,
                 n_ops.greater);
         break;
     case Py_GE:
-        if (needs_right_binop_forward(obj_self, other, "__le__", 0) &&
-                Py_TYPE(obj_self)->tp_richcompare != Py_TYPE(other)->tp_richcompare) {
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
+        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
         result = PyArray_GenericBinaryFunction(self, other,
                 n_ops.greater_equal);
         break;
@@ -1634,7 +1521,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
      * strides, and swapped info For now, let's just use this to create an
      * empty, contiguous array of a specific type and shape.
      */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&:ndarray",
                                      kwlist, PyArray_IntpConverter,
                                      &dims,
                                      PyArray_DescrConverter,
@@ -1656,11 +1543,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     }
 
     itemsize = descr->elsize;
-    if (itemsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "data-type with unspecified variable length");
-        goto fail;
-    }
 
     if (strides.ptr != NULL) {
         npy_intp nb, off;
@@ -1694,10 +1576,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     if (buffer.ptr == NULL) {
         ret = (PyArrayObject *)
-            PyArray_NewFromDescr(subtype, descr,
-                                 (int)dims.len,
-                                 dims.ptr,
-                                 strides.ptr, NULL, is_f_order, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     (int)dims.len,
+                                     dims.ptr,
+                                     strides.ptr, NULL, is_f_order, NULL,
+                                     0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1730,11 +1613,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)\
-            PyArray_NewFromDescr(subtype, descr,
-                                 dims.len, dims.ptr,
-                                 strides.ptr,
-                                 offset + (char *)buffer.ptr,
-                                 buffer.flags, NULL);
+            PyArray_NewFromDescr_int(subtype, descr,
+                                     dims.len, dims.ptr,
+                                     strides.ptr,
+                                     offset + (char *)buffer.ptr,
+                                     buffer.flags, NULL, 0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1748,14 +1631,14 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
     }
 
-    PyDimMem_FREE(dims.ptr);
-    PyDimMem_FREE(strides.ptr);
+    npy_free_cache_dim_obj(dims);
+    npy_free_cache_dim_obj(strides);
     return (PyObject *)ret;
 
  fail:
     Py_XDECREF(descr);
-    PyDimMem_FREE(dims.ptr);
-    PyDimMem_FREE(strides.ptr);
+    npy_free_cache_dim_obj(dims);
+    npy_free_cache_dim_obj(strides);
     return NULL;
 }
 

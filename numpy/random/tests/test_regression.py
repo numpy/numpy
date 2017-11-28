@@ -1,14 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from numpy.testing import (TestCase, run_module_suite, assert_,
-                           assert_array_equal, assert_raises)
+from numpy.testing import (
+    run_module_suite, assert_, assert_array_equal, assert_raises,
+    )
 from numpy import random
 from numpy.compat import long
 import numpy as np
 
 
-class TestRegression(TestCase):
+class TestRegression(object):
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -54,15 +55,6 @@ class TestRegression(TestCase):
         np.random.seed(1234)
         b = np.random.permutation(long(12))
         assert_array_equal(a, b)
-
-    def test_randint_range(self):
-        # Test for ticket #1690
-        lmax = np.iinfo('l').max
-        lmin = np.iinfo('l').min
-        try:
-            random.randint(lmin, lmax)
-        except:
-            raise AssertionError
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
@@ -112,6 +104,35 @@ class TestRegression(TestCase):
             c = np.random.choice(a, p=probs)
             assert_(c in a)
             assert_raises(ValueError, np.random.choice, a, p=probs*0.9)
+
+    def test_shuffle_of_array_of_different_length_strings(self):
+        # Test that permuting an array of different length strings
+        # will not cause a segfault on garbage collection
+        # Tests gh-7710
+        np.random.seed(1234)
+
+        a = np.array(['a', 'a' * 1000])
+
+        for _ in range(100):
+            np.random.shuffle(a)
+
+        # Force Garbage Collection - should not segfault.
+        import gc
+        gc.collect()
+
+    def test_shuffle_of_array_of_objects(self):
+        # Test that permuting an array of objects will not cause
+        # a segfault on garbage collection.
+        # See gh-7719
+        np.random.seed(1234)
+        a = np.array([np.arange(1), np.arange(4)])
+
+        for _ in range(1000):
+            np.random.shuffle(a)
+
+        # Force Garbage Collection - should not segfault.
+        import gc
+        gc.collect()
 
 if __name__ == "__main__":
     run_module_suite()

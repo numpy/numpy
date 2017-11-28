@@ -19,7 +19,7 @@ This section will not cover means of replicating, joining, or otherwise
 expanding or mutating existing arrays. Nor will it cover creating object
 arrays or structured arrays. Both of those are covered in their own sections.
 
-Converting Python array_like Objects to Numpy Arrays
+Converting Python array_like Objects to NumPy Arrays
 ====================================================
 
 In general, numerical data arranged in an array-like structure in Python can
@@ -38,10 +38,10 @@ Examples: ::
      and types
  >>> x = np.array([[ 1.+0.j, 2.+0.j], [ 0.+0.j, 0.+0.j], [ 1.+1.j, 3.+0.j]])
 
-Intrinsic Numpy Array Creation
+Intrinsic NumPy Array Creation
 ==============================
 
-Numpy has built-in functions for creating arrays from scratch:
+NumPy has built-in functions for creating arrays from scratch:
 
 zeros(shape) will create an array filled with 0 values with the specified
 shape. The default dtype is float64.
@@ -58,7 +58,7 @@ examples will be given here: ::
 
  >>> np.arange(10)
  array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
- >>> np.arange(2, 10, dtype=np.float)
+ >>> np.arange(2, 10, dtype=float)
  array([ 2., 3., 4., 5., 6., 7., 8., 9.])
  >>> np.arange(2, 3, 0.1)
  array([ 2. , 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9])
@@ -103,8 +103,8 @@ may be others for which it is possible to read and convert to numpy arrays so
 check the last section as well)
 ::
 
- HDF5: PyTables
- FITS: PyFITS
+ HDF5: h5py
+ FITS: Astropy
 
 Examples of formats that cannot be read directly but for which it is not hard to
 convert are those formats supported by libraries like PIL (able to read and

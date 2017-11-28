@@ -18,6 +18,7 @@
 #include "getset.h"
 #include "arrayobject.h"
 #include "mem_overlap.h"
+#include "alloc.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -65,12 +66,12 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     }
 
     /* Free old dimensions and strides */
-    PyDimMem_FREE(PyArray_DIMS(self));
+    npy_free_cache_dim_array(self);
     nd = PyArray_NDIM(ret);
     ((PyArrayObject_fields *)self)->nd = nd;
     if (nd > 0) {
         /* create new dimensions and strides */
-        ((PyArrayObject_fields *)self)->dimensions = PyDimMem_NEW(3*nd);
+        ((PyArrayObject_fields *)self)->dimensions = npy_alloc_cache_dim(3*nd);
         if (PyArray_DIMS(self) == NULL) {
             Py_DECREF(ret);
             PyErr_SetString(PyExc_MemoryError,"");
@@ -158,11 +159,11 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     memcpy(PyArray_STRIDES(self), newstrides.ptr, sizeof(npy_intp)*newstrides.len);
     PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS |
                               NPY_ARRAY_ALIGNED);
-    PyDimMem_FREE(newstrides.ptr);
+    npy_free_cache_dim_obj(newstrides);
     return 0;
 
  fail:
-    PyDimMem_FREE(newstrides.ptr);
+    npy_free_cache_dim_obj(newstrides);
     return -1;
 }
 
@@ -321,16 +322,20 @@ array_data_get(PyArrayObject *self)
 #endif
 }
 
-/*
- * TODO: Given view semantics, I think this function is a really
- *       bad idea, and should be removed!
- */
 static int
 array_data_set(PyArrayObject *self, PyObject *op)
 {
     void *buf;
     Py_ssize_t buf_len;
     int writeable=1;
+
+    /* 2016-19-02, 1.12 */
+    int ret = DEPRECATE("Assigning the 'data' attribute is an "
+                        "inherently unsafe operation and will "
+                        "be removed in the future.");
+    if (ret < 0) {
+        return -1;
+    }
 
     if (op == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -360,9 +365,11 @@ array_data_set(PyArrayObject *self, PyObject *op)
         PyDataMem_FREE(PyArray_DATA(self));
     }
     if (PyArray_BASE(self)) {
-        if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
+        if ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) ||
+            (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY)) {
             PyArray_ENABLEFLAGS((PyArrayObject *)PyArray_BASE(self),
                                                 NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
         }
         Py_DECREF(PyArray_BASE(self));
@@ -425,19 +432,13 @@ array_nbytes_get(PyArrayObject *self)
  * Also needing change: strides, itemsize
  *
  * Either itemsize is exactly the same or the array is single-segment
- * (contiguous or fortran) with compatibile dimensions The shape and strides
+ * (contiguous or fortran) with compatible dimensions The shape and strides
  * will be adjusted in that case as well.
  */
 static int
 array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
-    npy_intp newdim;
-    int i;
-    char *msg = "new type not compatible with array.";
-    PyObject *safe;
-    static PyObject *checkfunc = NULL;
-
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -454,91 +455,107 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
+        static PyObject *checkfunc = NULL;
+        PyObject *safe;
+
         npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
         if (checkfunc == NULL) {
-            return -1;
+            goto fail;
         }
 
         safe = PyObject_CallFunction(checkfunc, "OO",
                                      PyArray_DESCR(self), newtype);
         if (safe == NULL) {
-            Py_DECREF(newtype);
-            return -1;
+            goto fail;
         }
         Py_DECREF(safe);
     }
 
-    if (newtype->elsize == 0) {
-        /* Allow a void view */
-        if (newtype->type_num == NPY_VOID) {
-            PyArray_DESCR_REPLACE(newtype);
-            if (newtype == NULL) {
-                return -1;
+    /*
+     * Viewing as an unsized void implies a void dtype matching the size of the
+     * current dtype.
+     */
+    if (newtype->type_num == NPY_VOID &&
+            PyDataType_ISUNSIZED(newtype) &&
+            newtype->elsize != PyArray_DESCR(self)->elsize) {
+        PyArray_DESCR_REPLACE(newtype);
+        if (newtype == NULL) {
+            return -1;
+        }
+        newtype->elsize = PyArray_DESCR(self)->elsize;
+    }
+
+    /* Changing the size of the dtype results in a shape change */
+    if (newtype->elsize != PyArray_DESCR(self)->elsize) {
+        int axis;
+        npy_intp newdim;
+
+        /* forbidden cases */
+        if (PyArray_NDIM(self) == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype of a 0d array is only supported "
+                    "if the itemsize is unchanged");
+            goto fail;
+        }
+        else if (PyDataType_HASSUBARRAY(newtype)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Changing the dtype to a subarray type is only supported "
+                    "if the total itemsize is unchanged");
+            goto fail;
+        }
+
+        /* determine which axis to resize */
+        if (PyArray_IS_C_CONTIGUOUS(self)) {
+            axis = PyArray_NDIM(self) - 1;
+        }
+        else if (PyArray_IS_F_CONTIGUOUS(self)) {
+            /* 2015-11-27 1.11.0, gh-6747 */
+            if (DEPRECATE(
+                        "Changing the shape of an F-contiguous array by "
+                        "descriptor assignment is deprecated. To maintain the "
+                        "Fortran contiguity of a multidimensional Fortran "
+                        "array, use 'a.T.view(...).T' instead") < 0) {
+                goto fail;
             }
-            newtype->elsize = PyArray_DESCR(self)->elsize;
+            axis = 0;
         }
-        /* But no other flexible types */
         else {
-            PyErr_SetString(PyExc_TypeError,
-                    "data-type must not be 0-sized");
-            Py_DECREF(newtype);
-            return -1;
-        }
-    }
-
-
-    if ((newtype->elsize != PyArray_DESCR(self)->elsize) &&
-            (PyArray_NDIM(self) == 0 ||
-             !PyArray_ISONESEGMENT(self) ||
-             PyDataType_HASSUBARRAY(newtype))) {
-        goto fail;
-    }
-
-    /* Deprecate not C contiguous and a dimension changes */
-    if (newtype->elsize != PyArray_DESCR(self)->elsize &&
-            !PyArray_IS_C_CONTIGUOUS(self)) {
-        /* 11/27/2015 1.11.0 */
-        if (DEPRECATE("Changing the shape of non-C contiguous array by\n"
-                      "descriptor assignment is deprecated. To maintain\n"
-                      "the Fortran contiguity of a multidimensional Fortran\n"
-                      "array, use 'a.T.view(...).T' instead") < 0) {
-            return -1;
-        }
-    }
-
-    if (PyArray_IS_C_CONTIGUOUS(self)) {
-        i = PyArray_NDIM(self) - 1;
-    }
-    else {
-        i = 0;
-    }
-    if (newtype->elsize < PyArray_DESCR(self)->elsize) {
-        /*
-         * if it is compatible increase the size of the
-         * dimension at end (or at the front for NPY_ARRAY_F_CONTIGUOUS)
-         */
-        if (PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
+            /* Don't mention the deprecated F-contiguous support */
+            PyErr_SetString(PyExc_ValueError,
+                    "To change to a dtype of a different size, the array must "
+                    "be C-contiguous");
             goto fail;
         }
-        newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
-        PyArray_DIMS(self)[i] *= newdim;
-        PyArray_STRIDES(self)[i] = newtype->elsize;
-    }
-    else if (newtype->elsize > PyArray_DESCR(self)->elsize) {
-        /*
-         * Determine if last (or first if NPY_ARRAY_F_CONTIGUOUS) dimension
-         * is compatible
-         */
-        newdim = PyArray_DIMS(self)[i] * PyArray_DESCR(self)->elsize;
-        if ((newdim % newtype->elsize) != 0) {
-            goto fail;
+
+        if (newtype->elsize < PyArray_DESCR(self)->elsize) {
+            /* if it is compatible, increase the size of the relevant axis */
+            if (newtype->elsize == 0 ||
+                    PyArray_DESCR(self)->elsize % newtype->elsize != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a smaller dtype, its size must be a "
+                        "divisor of the size of original dtype");
+                goto fail;
+            }
+            newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
+            PyArray_DIMS(self)[axis] *= newdim;
+            PyArray_STRIDES(self)[axis] = newtype->elsize;
         }
-        PyArray_DIMS(self)[i] = newdim / newtype->elsize;
-        PyArray_STRIDES(self)[i] = newtype->elsize;
+        else if (newtype->elsize > PyArray_DESCR(self)->elsize) {
+            /* if it is compatible, decrease the size of the relevant axis */
+            newdim = PyArray_DIMS(self)[axis] * PyArray_DESCR(self)->elsize;
+            if ((newdim % newtype->elsize) != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "When changing to a larger dtype, its size must be a "
+                        "divisor of the total size in bytes of the last axis "
+                        "of the array.");
+                goto fail;
+            }
+            PyArray_DIMS(self)[axis] = newdim / newtype->elsize;
+            PyArray_STRIDES(self)[axis] = newtype->elsize;
+        }
     }
 
-    /* fall through -- adjust type*/
-    Py_DECREF(PyArray_DESCR(self));
+    /* Viewing as a subarray increases the number of dimensions */
     if (PyDataType_HASSUBARRAY(newtype)) {
         /*
          * create new array object from data and update
@@ -556,7 +573,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         if (temp == NULL) {
             return -1;
         }
-        PyDimMem_FREE(PyArray_DIMS(self));
+        npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->dimensions = PyArray_DIMS(temp);
         ((PyArrayObject_fields *)self)->nd = PyArray_NDIM(temp);
         ((PyArrayObject_fields *)self)->strides = PyArray_STRIDES(temp);
@@ -568,12 +585,12 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         Py_DECREF(temp);
     }
 
+    Py_DECREF(PyArray_DESCR(self));
     ((PyArrayObject_fields *)self)->descr = newtype;
     PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
     return 0;
 
  fail:
-    PyErr_SetString(PyExc_ValueError, msg);
     Py_DECREF(newtype);
     return -1;
 }
@@ -599,7 +616,7 @@ array_struct_get(PyArrayObject *self)
     inter->itemsize = PyArray_DESCR(self)->elsize;
     inter->flags = PyArray_FLAGS(self);
     /* reset unused flags */
-    inter->flags &= ~(NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_OWNDATA);
+    inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_UPDATEIFCOPY |NPY_ARRAY_OWNDATA);
     if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NPY_ARRAY_NOTSWAPPED;
     /*
      * Copy shape and strides over since these can be reset
@@ -751,7 +768,7 @@ array_real_set(PyArrayObject *self, PyObject *val)
         Py_INCREF(self);
         ret = self;
     }
-    new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
+    new = (PyArrayObject *)PyArray_FROM_O(val);
     if (new == NULL) {
         Py_DECREF(ret);
         return -1;
@@ -812,7 +829,7 @@ array_imag_set(PyArrayObject *self, PyObject *val)
         if (ret == NULL) {
             return -1;
         }
-        new = (PyArrayObject *)PyArray_FromAny(val, NULL, 0, 0, 0, NULL);
+        new = (PyArrayObject *)PyArray_FROM_O(val);
         if (new == NULL) {
             Py_DECREF(ret);
             return -1;

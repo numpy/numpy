@@ -1,17 +1,38 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
-import operator
-import warnings
 import collections
-from numpy.core import multiarray
+import itertools
+import operator
+import sys
+import warnings
+import numbers
+
+import numpy as np
+from . import multiarray
+from .multiarray import (
+    _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
+    BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
+    WRAP, arange, array, broadcast, can_cast, compare_chararrays,
+    concatenate, copyto, count_nonzero, dot, dtype, empty,
+    empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
+    inner, int_asbuffer, lexsort, matmul, may_share_memory,
+    min_scalar_type, ndarray, nditer, nested_iters, promote_types,
+    putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
+    zeros, normalize_axis_index)
+if sys.version_info[0] < 3:
+    from .multiarray import newbuffer, getbuffer
+
 from . import umath
-from .umath import (invert, sin, UFUNC_BUFSIZE_DEFAULT, ERR_IGNORE,
-                    ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG,
-                    ERR_DEFAULT, PINF, NAN)
+from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
+                    ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
+                    ERR_LOG, ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ._internal import TooHardError
+from ._internal import TooHardError, AxisError
+
+bitwise_not = invert
+ufunc = type(sin)
+newaxis = None
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -26,27 +47,23 @@ loads = pickle.loads
 
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
-    'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
-    'dtype', 'fromstring', 'fromfile', 'frombuffer', 'int_asbuffer',
-    'where', 'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose',
-    'lexsort', 'set_numeric_ops', 'can_cast', 'promote_types',
-    'min_scalar_type', 'result_type', 'asarray', 'asanyarray',
-    'ascontiguousarray', 'asfortranarray', 'isfortran', 'empty_like',
-    'zeros_like', 'ones_like', 'correlate', 'convolve', 'inner', 'dot',
-    'einsum', 'outer', 'vdot', 'alterdot', 'restoredot', 'roll',
-    'rollaxis', 'moveaxis', 'cross', 'tensordot', 'array2string',
-    'get_printoptions', 'set_printoptions', 'array_repr', 'array_str',
-    'set_string_function', 'little_endian', 'require', 'fromiter',
-    'array_equal', 'array_equiv', 'indices', 'fromfunction', 'isclose', 'load',
-    'loads', 'isscalar', 'binary_repr', 'base_repr', 'ones', 'identity',
-    'allclose', 'compare_chararrays', 'putmask', 'seterr', 'geterr',
-    'setbufsize', 'getbufsize', 'seterrcall', 'geterrcall', 'errstate',
-    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN', 'False_',
-    'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE',
-    'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like', 'matmul',
-    'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT',
-    'TooHardError',
-    ]
+    'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
+    'fromstring', 'fromfile', 'frombuffer', 'int_asbuffer', 'where',
+    'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
+    'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
+    'result_type', 'asarray', 'asanyarray', 'ascontiguousarray',
+    'asfortranarray', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
+    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
+    'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian', 'require',
+    'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
+    'isclose', 'load', 'loads', 'isscalar', 'binary_repr', 'base_repr', 'ones',
+    'identity', 'allclose', 'compare_chararrays', 'putmask', 'seterr',
+    'geterr', 'setbufsize', 'getbufsize', 'seterrcall', 'geterrcall',
+    'errstate', 'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
+    'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
+    'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
+    'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError' ]
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -61,26 +78,6 @@ class ComplexWarning(RuntimeWarning):
 
     """
     pass
-
-bitwise_not = invert
-
-CLIP = multiarray.CLIP
-WRAP = multiarray.WRAP
-RAISE = multiarray.RAISE
-MAXDIMS = multiarray.MAXDIMS
-ALLOW_THREADS = multiarray.ALLOW_THREADS
-BUFSIZE = multiarray.BUFSIZE
-MAY_SHARE_BOUNDS = multiarray.MAY_SHARE_BOUNDS
-MAY_SHARE_EXACT = multiarray.MAY_SHARE_EXACT
-
-ndarray = multiarray.ndarray
-flatiter = multiarray.flatiter
-nditer = multiarray.nditer
-nested_iters = multiarray.nested_iters
-broadcast = multiarray.broadcast
-dtype = multiarray.dtype
-copyto = multiarray.copyto
-ufunc = type(sin)
 
 
 def zeros_like(a, dtype=None, order='K', subok=True):
@@ -132,7 +129,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     array([[0, 0, 0],
            [0, 0, 0]])
 
-    >>> y = np.arange(3, dtype=np.float)
+    >>> y = np.arange(3, dtype=float)
     >>> y
     array([ 0.,  1.,  2.])
     >>> np.zeros_like(y)
@@ -144,6 +141,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     z = zeros(1, dtype=res.dtype)
     multiarray.copyto(res, z, casting='unsafe')
     return res
+
 
 def ones(shape, dtype=None, order='C'):
     """
@@ -174,7 +172,7 @@ def ones(shape, dtype=None, order='C'):
     >>> np.ones(5)
     array([ 1.,  1.,  1.,  1.,  1.])
 
-    >>> np.ones((5,), dtype=np.int)
+    >>> np.ones((5,), dtype=int)
     array([1, 1, 1, 1, 1])
 
     >>> np.ones((2, 1))
@@ -190,6 +188,7 @@ def ones(shape, dtype=None, order='C'):
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
+
 
 def ones_like(a, dtype=None, order='K', subok=True):
     """
@@ -240,7 +239,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     array([[1, 1, 1],
            [1, 1, 1]])
 
-    >>> y = np.arange(3, dtype=np.float)
+    >>> y = np.arange(3, dtype=float)
     >>> y
     array([ 0.,  1.,  2.])
     >>> np.ones_like(y)
@@ -250,6 +249,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
     multiarray.copyto(res, 1, casting='unsafe')
     return res
+
 
 def full(shape, fill_value, dtype=None, order='C'):
     """
@@ -262,9 +262,8 @@ def full(shape, fill_value, dtype=None, order='C'):
     fill_value : scalar
         Fill value.
     dtype : data-type, optional
-        The desired data-type for the array, e.g., `np.int8`.  Default
-        is `float`, but will change to `np.array(fill_value).dtype` in a
-        future release.
+        The desired data-type for the array  The default, `None`, means
+         `np.array(fill_value).dtype`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
@@ -289,18 +288,17 @@ def full(shape, fill_value, dtype=None, order='C'):
     >>> np.full((2, 2), np.inf)
     array([[ inf,  inf],
            [ inf,  inf]])
-    >>> np.full((2, 2), 10, dtype=np.int)
+    >>> np.full((2, 2), 10)
     array([[10, 10],
            [10, 10]])
 
     """
+    if dtype is None:
+        dtype = array(fill_value).dtype
     a = empty(shape, dtype, order)
-    if dtype is None and array(fill_value).dtype != a.dtype:
-        warnings.warn(
-            "in the future, full({0}, {1!r}) will return an array of {2!r}".
-            format(shape, fill_value, array(fill_value).dtype), FutureWarning)
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
+
 
 def full_like(a, fill_value, dtype=None, order='K', subok=True):
     """
@@ -342,7 +340,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
 
     Examples
     --------
-    >>> x = np.arange(6, dtype=np.int)
+    >>> x = np.arange(6, dtype=int)
     >>> np.full_like(x, 1)
     array([1, 1, 1, 1, 1, 1])
     >>> np.full_like(x, 0.1)
@@ -361,54 +359,66 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
     multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 
+def count_nonzero(a, axis=None):
+    """
+    Counts the number of non-zero values in the array ``a``.
 
-def extend_all(module):
-    adict = {}
-    for a in __all__:
-        adict[a] = 1
-    try:
-        mall = getattr(module, '__all__')
-    except AttributeError:
-        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
-    for a in mall:
-        if a not in adict:
-            __all__.append(a)
+    The word "non-zero" is in reference to the Python 2.x
+    built-in method ``__nonzero__()`` (renamed ``__bool__()``
+    in Python 3.x) of Python objects that tests an object's
+    "truthfulness". For example, any number is considered
+    truthful if it is nonzero, whereas any string is considered
+    truthful if it is not the empty string. Thus, this function
+    (recursively) counts how many elements in ``a`` (and in
+    sub-arrays thereof) have their ``__nonzero__()`` or ``__bool__()``
+    method evaluated to ``True``.
 
-newaxis = None
+    Parameters
+    ----------
+    a : array_like
+        The array for which to count non-zeros.
+    axis : int or tuple, optional
+        Axis or tuple of axes along which to count non-zeros.
+        Default is None, meaning that non-zeros will be counted
+        along a flattened version of ``a``.
 
+        .. versionadded:: 1.12.0
 
-arange = multiarray.arange
-array = multiarray.array
-zeros = multiarray.zeros
-count_nonzero = multiarray.count_nonzero
-empty = multiarray.empty
-empty_like = multiarray.empty_like
-fromstring = multiarray.fromstring
-fromiter = multiarray.fromiter
-fromfile = multiarray.fromfile
-frombuffer = multiarray.frombuffer
-shares_memory = multiarray.shares_memory
-may_share_memory = multiarray.may_share_memory
-if sys.version_info[0] < 3:
-    newbuffer = multiarray.newbuffer
-    getbuffer = multiarray.getbuffer
-int_asbuffer = multiarray.int_asbuffer
-where = multiarray.where
-concatenate = multiarray.concatenate
-fastCopyAndTranspose = multiarray._fastCopyAndTranspose
-set_numeric_ops = multiarray.set_numeric_ops
-can_cast = multiarray.can_cast
-promote_types = multiarray.promote_types
-min_scalar_type = multiarray.min_scalar_type
-result_type = multiarray.result_type
-lexsort = multiarray.lexsort
-compare_chararrays = multiarray.compare_chararrays
-putmask = multiarray.putmask
-einsum = multiarray.einsum
-dot = multiarray.dot
-inner = multiarray.inner
-vdot = multiarray.vdot
-matmul = multiarray.matmul
+    Returns
+    -------
+    count : int or array of int
+        Number of non-zero values in the array along a given axis.
+        Otherwise, the total number of non-zero values in the array
+        is returned.
+
+    See Also
+    --------
+    nonzero : Return the coordinates of all the non-zero values.
+
+    Examples
+    --------
+    >>> np.count_nonzero(np.eye(4))
+    4
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
+    5
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=0)
+    array([1, 1, 1, 1, 1])
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=1)
+    array([2, 3])
+
+    """
+    if axis is None:
+        return multiarray.count_nonzero(a)
+
+    a = asanyarray(a)
+
+    # TODO: this works around .astype(bool) not working properly (gh-9847)
+    if np.issubdtype(a.dtype, np.character):
+        a_bool = a != a.dtype.type()
+    else:
+        a_bool = a.astype(np.bool_, copy=False)
+
+    return a_bool.sum(axis=axis, dtype=np.intp)
 
 
 def asarray(a, dtype=None, order=None):
@@ -431,8 +441,8 @@ def asarray(a, dtype=None, order=None):
     -------
     out : ndarray
         Array interpretation of `a`.  No copy is performed if the input
-        is already an ndarray.  If `a` is a subclass of ndarray, a base
-        class ndarray is returned.
+        is already an ndarray with matching dtype and order.  If `a` is a
+        subclass of ndarray, a base class ndarray is returned.
 
     See Also
     --------
@@ -480,6 +490,7 @@ def asarray(a, dtype=None, order=None):
 
     """
     return array(a, dtype, copy=False, order=order)
+
 
 def asanyarray(a, dtype=None, order=None):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
@@ -532,6 +543,7 @@ def asanyarray(a, dtype=None, order=None):
     """
     return array(a, dtype, copy=False, order=order, subok=True)
 
+
 def ascontiguousarray(a, dtype=None):
     """
     Return a contiguous array in memory (C order).
@@ -568,6 +580,7 @@ def ascontiguousarray(a, dtype=None):
     """
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
+
 def asfortranarray(a, dtype=None):
     """
     Return an array laid out in Fortran order in memory.
@@ -603,6 +616,7 @@ def asfortranarray(a, dtype=None):
 
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
+
 
 def require(a, dtype=None, requirements=None):
     """
@@ -652,6 +666,7 @@ def require(a, dtype=None, requirements=None):
       OWNDATA : False
       WRITEABLE : True
       ALIGNED : True
+      WRITEBACKIFCOPY : False
       UPDATEIFCOPY : False
 
     >>> y = np.require(x, dtype=np.float32, requirements=['A', 'O', 'W', 'F'])
@@ -661,6 +676,7 @@ def require(a, dtype=None, requirements=None):
       OWNDATA : True
       WRITEABLE : True
       ALIGNED : True
+      WRITEBACKIFCOPY : False
       UPDATEIFCOPY : False
 
     """
@@ -699,13 +715,14 @@ def require(a, dtype=None, requirements=None):
             break
     return arr
 
+
 def isfortran(a):
     """
     Returns True if the array is Fortran contiguous but *not* C contiguous.
 
     This function is obsolete and, because of changes due to relaxed stride
     checking, its return value for the same array may differ for versions
-    of Numpy >= 1.10 and previous versions. If you only want to check if an
+    of NumPy >= 1.10.0 and previous versions. If you only want to check if an
     array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
 
     Parameters
@@ -760,6 +777,7 @@ def isfortran(a):
     """
     return a.flags.fnc
 
+
 def argwhere(a):
     """
     Find the indices of array elements that are non-zero, grouped by element.
@@ -783,7 +801,7 @@ def argwhere(a):
     ``np.argwhere(a)`` is the same as ``np.transpose(np.nonzero(a))``.
 
     The output of ``argwhere`` is not suitable for indexing arrays.
-    For this purpose use ``where(a)`` instead.
+    For this purpose use ``nonzero(a)`` instead.
 
     Examples
     --------
@@ -799,6 +817,7 @@ def argwhere(a):
 
     """
     return transpose(nonzero(a))
+
 
 def flatnonzero(a):
     """
@@ -839,14 +858,17 @@ def flatnonzero(a):
     """
     return a.ravel().nonzero()[0]
 
+
 _mode_from_name_dict = {'v': 0,
                         's': 1,
                         'f': 2}
+
 
 def _mode_from_name(mode):
     if isinstance(mode, basestring):
         return _mode_from_name_dict[mode.lower()[0]]
     return mode
+
 
 def correlate(a, v, mode='valid'):
     """
@@ -915,7 +937,8 @@ def correlate(a, v, mode='valid'):
     mode = _mode_from_name(mode)
     return multiarray.correlate2(a, v, mode)
 
-def convolve(a,v,mode='full'):
+
+def convolve(a, v, mode='full'):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -1012,6 +1035,7 @@ def convolve(a,v,mode='full'):
     mode = _mode_from_name(mode)
     return multiarray.correlate(a, v[::-1], mode)
 
+
 def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
@@ -1045,7 +1069,10 @@ def outer(a, b, out=None):
 
     See also
     --------
-    inner, einsum
+    inner
+    einsum : ``einsum('i,j->ij', a.ravel(), b.ravel())`` is the equivalent.
+    ufunc.outer : A generalization to N dimensions and other operations.
+                  ``np.multiply.outer(a.ravel(), b.ravel())`` is the equivalent.
 
     References
     ----------
@@ -1093,60 +1120,6 @@ def outer(a, b, out=None):
     return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
 
 
-def alterdot():
-    """
-    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
-
-    Typically, as a user of Numpy, you do not explicitly call this
-    function. If Numpy is built with an accelerated BLAS, this function is
-    automatically called when Numpy is imported.
-
-    When Numpy is built with an accelerated BLAS like ATLAS, these
-    functions are replaced to make use of the faster implementations.  The
-    faster implementations only affect float32, float64, complex64, and
-    complex128 arrays. Furthermore, the BLAS API only includes
-    matrix-matrix, matrix-vector, and vector-vector products. Products of
-    arrays with larger dimensionalities use the built in functions and are
-    not accelerated.
-
-    .. note:: Deprecated in Numpy 1.10
-              The cblas functions have been integrated into the multarray
-              module and alterdot now longer does anything. It will be
-              removed in Numpy 1.11.0.
-
-    See Also
-    --------
-    restoredot : `restoredot` undoes the effects of `alterdot`.
-
-    """
-    # 2014-08-13, 1.10
-    warnings.warn("alterdot no longer does anything.", DeprecationWarning)
-
-
-def restoredot():
-    """
-    Restore `dot`, `vdot`, and `innerproduct` to the default non-BLAS
-    implementations.
-
-    Typically, the user will only need to call this when troubleshooting
-    and installation problem, reproducing the conditions of a build without
-    an accelerated BLAS, or when being very careful about benchmarking
-    linear algebra operations.
-
-    .. note:: Deprecated in Numpy 1.10
-              The cblas functions have been integrated into the multarray
-              module and restoredot now longer does anything. It will be
-              removed in Numpy 1.11.0.
-
-    See Also
-    --------
-    alterdot : `restoredot` undoes the effects of `alterdot`.
-
-    """
-    # 2014-08-13, 1.10
-    warnings.warn("restoredot no longer does anything.", DeprecationWarning)
-
-
 def tensordot(a, b, axes=2):
     """
     Compute tensor dot product along specified axes for arrays >= 1-D.
@@ -1180,9 +1153,9 @@ def tensordot(a, b, axes=2):
     Notes
     -----
     Three common use cases are:
-        ``axes = 0`` : tensor product $a\otimes b$
-        ``axes = 1`` : tensor dot product $a\cdot b$
-        ``axes = 2`` : (default) tensor double contraction $a:b$
+        * ``axes = 0`` : tensor product :math:`a\\otimes b`
+        * ``axes = 1`` : tensor dot product :math:`a\\cdot b`
+        * ``axes = 2`` : (default) tensor double contraction :math:`a:b`
 
     When `axes` is integer_like, the sequence for evaluation will be: first
     the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and
@@ -1220,7 +1193,7 @@ def tensordot(a, b, axes=2):
            [ True,  True],
            [ True,  True],
            [ True,  True],
-           [ True,  True]], dtype=bool)
+           [ True,  True]])
 
     An extended example taking advantage of the overloading of + and \\*:
 
@@ -1271,7 +1244,7 @@ def tensordot(a, b, axes=2):
     """
     try:
         iter(axes)
-    except:
+    except Exception:
         axes_a = list(range(-axes, 0))
         axes_b = list(range(0, axes))
     else:
@@ -1291,9 +1264,9 @@ def tensordot(a, b, axes=2):
 
     a, b = asarray(a), asarray(b)
     as_ = a.shape
-    nda = len(a.shape)
+    nda = a.ndim
     bs = b.shape
-    ndb = len(b.shape)
+    ndb = b.ndim
     equal = True
     if na != nb:
         equal = False
@@ -1316,7 +1289,7 @@ def tensordot(a, b, axes=2):
     N2 = 1
     for axis in axes_a:
         N2 *= as_[axis]
-    newshape_a = (-1, N2)
+    newshape_a = (int(multiply.reduce([as_[ax] for ax in notin])), N2)
     olda = [as_[axis] for axis in notin]
 
     notin = [k for k in range(ndb) if k not in axes_b]
@@ -1324,13 +1297,14 @@ def tensordot(a, b, axes=2):
     N2 = 1
     for axis in axes_b:
         N2 *= bs[axis]
-    newshape_b = (N2, -1)
+    newshape_b = (N2, int(multiply.reduce([bs[ax] for ax in notin])))
     oldb = [bs[axis] for axis in notin]
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
     bt = b.transpose(newaxes_b).reshape(newshape_b)
     res = dot(at, bt)
     return res.reshape(olda + oldb)
+
 
 def roll(a, shift, axis=None):
     """
@@ -1343,11 +1317,15 @@ def roll(a, shift, axis=None):
     ----------
     a : array_like
         Input array.
-    shift : int
-        The number of places by which elements are shifted.
-    axis : int, optional
-        The axis along which elements are shifted.  By default, the array
-        is flattened before shifting, after which the original
+    shift : int or tuple of ints
+        The number of places by which elements are shifted.  If a tuple,
+        then `axis` must be a tuple of the same size, and each of the
+        given axes is shifted by the corresponding number.  If an int
+        while `axis` is a tuple of ints, then the same value is used for
+        all given axes.
+    axis : int or tuple of ints, optional
+        Axis or axes along which elements are shifted.  By default, the
+        array is flattened before shifting, after which the original
         shape is restored.
 
     Returns
@@ -1359,6 +1337,12 @@ def roll(a, shift, axis=None):
     --------
     rollaxis : Roll the specified axis backwards, until it lies in a
                given position.
+
+    Notes
+    -----
+    .. versionadded:: 1.12.0
+
+    Supports rolling over multiple dimensions simultaneously.
 
     Examples
     --------
@@ -1383,27 +1367,41 @@ def roll(a, shift, axis=None):
     """
     a = asanyarray(a)
     if axis is None:
-        n = a.size
-        reshape = True
+        return roll(a.ravel(), shift, 0).reshape(a.shape)
+
     else:
-        try:
-            n = a.shape[axis]
-        except IndexError:
-            raise ValueError('axis must be >= 0 and < %d' % a.ndim)
-        reshape = False
-    if n == 0:
-        return a
-    shift %= n
-    indexes = concatenate((arange(n - shift, n), arange(n - shift)))
-    res = a.take(indexes, axis)
-    if reshape:
-        res = res.reshape(a.shape)
-    return res
+        axis = normalize_axis_tuple(axis, a.ndim, allow_duplicate=True)
+        broadcasted = broadcast(shift, axis)
+        if broadcasted.ndim > 1:
+            raise ValueError(
+                "'shift' and 'axis' should be scalars or 1D sequences")
+        shifts = {ax: 0 for ax in range(a.ndim)}
+        for sh, ax in broadcasted:
+            shifts[ax] += sh
+
+        rolls = [((slice(None), slice(None)),)] * a.ndim
+        for ax, offset in shifts.items():
+            offset %= a.shape[ax] or 1  # If `a` is empty, nothing matters.
+            if offset:
+                # (original, result), (original, result)
+                rolls[ax] = ((slice(None, -offset), slice(offset, None)),
+                             (slice(-offset, None), slice(None, offset)))
+
+        result = empty_like(a)
+        for indices in itertools.product(*rolls):
+            arr_index, res_index = zip(*indices)
+            result[res_index] = a[arr_index]
+
+        return result
 
 
 def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
+
+    This function continues to be supported for backward compatibility, but you
+    should prefer `moveaxis`. The `moveaxis` function was added in NumPy
+    1.11.
 
     Parameters
     ----------
@@ -1419,8 +1417,8 @@ def rollaxis(a, axis, start=0):
     Returns
     -------
     res : ndarray
-        For Numpy >= 1.10 a view of `a` is always returned. For earlier
-        Numpy versions a view of `a` is returned only if the order of the
+        For NumPy >= 1.10.0 a view of `a` is always returned. For earlier
+        NumPy versions a view of `a` is returned only if the order of the
         axes is changed, otherwise the input array is returned.
 
     See Also
@@ -1441,16 +1439,13 @@ def rollaxis(a, axis, start=0):
 
     """
     n = a.ndim
-    if axis < 0:
-        axis += n
+    axis = normalize_axis_index(axis, n)
     if start < 0:
         start += n
-    msg = 'rollaxis: %s (%d) must be >=0 and < %d'
-    if not (0 <= axis < n):
-        raise ValueError(msg % ('axis', axis, n))
+    msg = "'%s' arg requires %d <= %s < %d, but %d was passed in"
     if not (0 <= start < n + 1):
-        raise ValueError(msg % ('start', start, n + 1))
-    if (axis < start):
+        raise AxisError(msg % ('start', -n, 'start', n + 1, start))
+    if axis < start:
         # it's been removed
         start -= 1
     if axis == start:
@@ -1461,17 +1456,59 @@ def rollaxis(a, axis, start=0):
     return a.transpose(axes)
 
 
-def _validate_axis(axis, ndim, argname):
+def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
+    """
+    Normalizes an axis argument into a tuple of non-negative integer axes.
+
+    This handles shorthands such as ``1`` and converts them to ``(1,)``,
+    as well as performing the handling of negative indices covered by
+    `normalize_axis_index`.
+
+    By default, this forbids axes from being specified multiple times.
+
+    Used internally by multi-axis-checking logic.
+
+    .. versionadded:: 1.13.0
+
+    Parameters
+    ----------
+    axis : int, iterable of int
+        The un-normalized index or indices of the axis.
+    ndim : int
+        The number of dimensions of the array that `axis` should be normalized
+        against.
+    argname : str, optional
+        A prefix to put before the error message, typically the name of the
+        argument.
+    allow_duplicate : bool, optional
+        If False, the default, disallow an axis from being specified twice.
+
+    Returns
+    -------
+    normalized_axes : tuple of int
+        The normalized axis index, such that `0 <= normalized_axis < ndim`
+
+    Raises
+    ------
+    AxisError
+        If any axis provided is out of range
+    ValueError
+        If an axis is repeated
+
+    See also
+    --------
+    normalize_axis_index : normalizing a single scalar axis
+    """
     try:
         axis = [operator.index(axis)]
     except TypeError:
-        axis = list(axis)
-    axis = [a + ndim if a < 0 else a for a in axis]
-    if not builtins.all(0 <= a < ndim for a in axis):
-        raise ValueError('invalid axis for this array in `%s` argument' %
-                         argname)
-    if len(set(axis)) != len(axis):
-        raise ValueError('repeated axis in `%s` argument' % argname)
+        axis = tuple(axis)
+    axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
+    if not allow_duplicate and len(set(axis)) != len(axis):
+        if argname:
+            raise ValueError('repeated axis in `{}` argument'.format(argname))
+        else:
+            raise ValueError('repeated axis')
     return axis
 
 
@@ -1481,7 +1518,7 @@ def moveaxis(a, source, destination):
 
     Other axes remain in their original order.
 
-    .. versionadded::1.11.0
+    .. versionadded:: 1.11.0
 
     Parameters
     ----------
@@ -1516,7 +1553,7 @@ def moveaxis(a, source, destination):
 
     >>> np.transpose(x).shape
     (5, 4, 3)
-    >>> np.swapaxis(x, 0, -1).shape
+    >>> np.swapaxes(x, 0, -1).shape
     (5, 4, 3)
     >>> np.moveaxis(x, [0, 1], [-1, -2]).shape
     (5, 4, 3)
@@ -1531,8 +1568,8 @@ def moveaxis(a, source, destination):
         a = asarray(a)
         transpose = a.transpose
 
-    source = _validate_axis(source, a.ndim, 'source')
-    destination = _validate_axis(destination, a.ndim, 'destination')
+    source = normalize_axis_tuple(source, a.ndim, 'source')
+    destination = normalize_axis_tuple(destination, a.ndim, 'destination')
     if len(source) != len(destination):
         raise ValueError('`source` and `destination` arguments must have '
                          'the same number of elements')
@@ -1548,7 +1585,8 @@ def moveaxis(a, source, destination):
 
 # fix hack in scipy which imports this function
 def _move_axis_to_0(a, axis):
-    return rollaxis(a, axis, 0)
+    return moveaxis(a, axis, 0)
+
 
 def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     """
@@ -1668,14 +1706,12 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     a = asarray(a)
     b = asarray(b)
     # Check axisa and axisb are within bounds
-    axis_msg = "'axis{0}' out of bounds"
-    if axisa < -a.ndim or axisa >= a.ndim:
-        raise ValueError(axis_msg.format('a'))
-    if axisb < -b.ndim or axisb >= b.ndim:
-        raise ValueError(axis_msg.format('b'))
+    axisa = normalize_axis_index(axisa, a.ndim, msg_prefix='axisa')
+    axisb = normalize_axis_index(axisb, b.ndim, msg_prefix='axisb')
+
     # Move working axis to the end of the shape
-    a = rollaxis(a, axisa, a.ndim)
-    b = rollaxis(b, axisb, b.ndim)
+    a = moveaxis(a, axisa, -1)
+    b = moveaxis(b, axisb, -1)
     msg = ("incompatible dimensions for cross product\n"
            "(dimension must be 2 or 3)")
     if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
@@ -1686,8 +1722,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     if a.shape[-1] == 3 or b.shape[-1] == 3:
         shape += (3,)
         # Check axisc is within bounds
-        if axisc < -len(shape) or axisc >= len(shape):
-            raise ValueError(axis_msg.format('c'))
+        axisc = normalize_axis_index(axisc, len(shape), msg_prefix='axisc')
     dtype = promote_types(a.dtype, b.dtype)
     cp = empty(shape, dtype)
 
@@ -1747,188 +1782,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
             multiply(a0, b1, out=cp2)
             cp2 -= a1 * b0
 
-    # This works because we are moving the last axis
-    return rollaxis(cp, -1, axisc)
-
-#Use numarray's printing function
-from .arrayprint import array2string, get_printoptions, set_printoptions
-
-_typelessdata = [int_, float_, complex_]
-if issubclass(intc, int):
-    _typelessdata.append(intc)
-
-if issubclass(longlong, int):
-    _typelessdata.append(longlong)
-
-def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
-    """
-    Return the string representation of an array.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-    max_line_width : int, optional
-        The maximum number of columns the string should span. Newline
-        characters split the string appropriately after array elements.
-    precision : int, optional
-        Floating point precision. Default is the current printing precision
-        (usually 8), which can be altered using `set_printoptions`.
-    suppress_small : bool, optional
-        Represent very small numbers as zero, default is False. Very small
-        is defined by `precision`, if the precision is 8 then
-        numbers smaller than 5e-9 are represented as zero.
-
-    Returns
-    -------
-    string : str
-      The string representation of an array.
-
-    See Also
-    --------
-    array_str, array2string, set_printoptions
-
-    Examples
-    --------
-    >>> np.array_repr(np.array([1,2]))
-    'array([1, 2])'
-    >>> np.array_repr(np.ma.array([0.]))
-    'MaskedArray([ 0.])'
-    >>> np.array_repr(np.array([], np.int32))
-    'array([], dtype=int32)'
-
-    >>> x = np.array([1e-6, 4e-7, 2, 3])
-    >>> np.array_repr(x, precision=6, suppress_small=True)
-    'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
-
-    """
-    if arr.size > 0 or arr.shape == (0,):
-        lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', "array(")
-    else:  # show zero-length shape unless it is (0,)
-        lst = "[], shape=%s" % (repr(arr.shape),)
-
-    if arr.__class__ is not ndarray:
-        cName = arr.__class__.__name__
-    else:
-        cName = "array"
-
-    skipdtype = (arr.dtype.type in _typelessdata) and arr.size > 0
-
-    if skipdtype:
-        return "%s(%s)" % (cName, lst)
-    else:
-        typename = arr.dtype.name
-        # Quote typename in the output if it is "complex".
-        if typename and not (typename[0].isalpha() and typename.isalnum()):
-            typename = "'%s'" % typename
-
-        lf = ''
-        if issubclass(arr.dtype.type, flexible):
-            if arr.dtype.names:
-                typename = "%s" % str(arr.dtype)
-            else:
-                typename = "'%s'" % str(arr.dtype)
-            lf = '\n'+' '*len("array(")
-        return cName + "(%s, %sdtype=%s)" % (lst, lf, typename)
-
-def array_str(a, max_line_width=None, precision=None, suppress_small=None):
-    """
-    Return a string representation of the data in an array.
-
-    The data in the array is returned as a single string.  This function is
-    similar to `array_repr`, the difference being that `array_repr` also
-    returns information on the kind of array and its data type.
-
-    Parameters
-    ----------
-    a : ndarray
-        Input array.
-    max_line_width : int, optional
-        Inserts newlines if text is longer than `max_line_width`.  The
-        default is, indirectly, 75.
-    precision : int, optional
-        Floating point precision.  Default is the current printing precision
-        (usually 8), which can be altered using `set_printoptions`.
-    suppress_small : bool, optional
-        Represent numbers "very close" to zero as zero; default is False.
-        Very close is defined by precision: if the precision is 8, e.g.,
-        numbers smaller (in absolute value) than 5e-9 are represented as
-        zero.
-
-    See Also
-    --------
-    array2string, array_repr, set_printoptions
-
-    Examples
-    --------
-    >>> np.array_str(np.arange(3))
-    '[0 1 2]'
-
-    """
-    return array2string(a, max_line_width, precision, suppress_small, ' ', "", str)
-
-def set_string_function(f, repr=True):
-    """
-    Set a Python function to be used when pretty printing arrays.
-
-    Parameters
-    ----------
-    f : function or None
-        Function to be used to pretty print arrays. The function should expect
-        a single array argument and return a string of the representation of
-        the array. If None, the function is reset to the default NumPy function
-        to print arrays.
-    repr : bool, optional
-        If True (default), the function for pretty printing (``__repr__``)
-        is set, if False the function that returns the default string
-        representation (``__str__``) is set.
-
-    See Also
-    --------
-    set_printoptions, get_printoptions
-
-    Examples
-    --------
-    >>> def pprint(arr):
-    ...     return 'HA! - What are you going to do now?'
-    ...
-    >>> np.set_string_function(pprint)
-    >>> a = np.arange(10)
-    >>> a
-    HA! - What are you going to do now?
-    >>> print(a)
-    [0 1 2 3 4 5 6 7 8 9]
-
-    We can reset the function to the default:
-
-    >>> np.set_string_function(None)
-    >>> a
-    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-    `repr` affects either pretty printing or normal string representation.
-    Note that ``__repr__`` is still affected by setting ``__str__``
-    because the width of each array element in the returned string becomes
-    equal to the length of the result of ``__str__()``.
-
-    >>> x = np.arange(4)
-    >>> np.set_string_function(lambda x:'random', repr=False)
-    >>> x.__str__()
-    'random'
-    >>> x.__repr__()
-    'array([     0,      1,      2,      3])'
-
-    """
-    if f is None:
-        if repr:
-            return multiarray.set_string_function(array_repr, 1)
-        else:
-            return multiarray.set_string_function(array_str, 0)
-    else:
-        return multiarray.set_string_function(f, repr)
-
-set_string_function(array_str, 0)
-set_string_function(array_repr, 1)
+    return moveaxis(cp, -1, axisc)
 
 little_endian = (sys.byteorder == 'little')
 
@@ -1995,16 +1849,14 @@ def indices(dimensions, dtype=int):
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
-    if N == 0:
-        return array([], dtype=dtype)
+    shape = (1,)*N
     res = empty((N,)+dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
-        tmp = arange(dim, dtype=dtype)
-        tmp.shape = (1,)*i + (dim,)+(1,)*(N-i-1)
-        newdim = dimensions[:i] + (1,) + dimensions[i+1:]
-        val = zeros(newdim, dtype)
-        add(tmp, val, res[i])
+        res[i] = arange(dim, dtype=dtype).reshape(
+            shape[:i] + (dim,) + shape[i+1:]
+        )
     return res
+
 
 def fromfunction(function, shape, **kwargs):
     """
@@ -2019,8 +1871,8 @@ def fromfunction(function, shape, **kwargs):
         The function is called with N parameters, where N is the rank of
         `shape`.  Each parameter represents the coordinates of the array
         varying along a specific axis.  For example, if `shape`
-        were ``(2, 2)``, then the parameters in turn be (0, 0), (0, 1),
-        (1, 0), (1, 1).
+        were ``(2, 2)``, then the parameters would be
+        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
     shape : (N,) tuple of ints
         Shape of the output array, which also determines the shape of
         the coordinate arrays passed to `function`.
@@ -2049,7 +1901,7 @@ def fromfunction(function, shape, **kwargs):
     >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
     array([[ True, False, False],
            [False,  True, False],
-           [False, False,  True]], dtype=bool)
+           [False, False,  True]])
 
     >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=int)
     array([[0, 1, 2],
@@ -2059,7 +1911,8 @@ def fromfunction(function, shape, **kwargs):
     """
     dtype = kwargs.pop('dtype', float)
     args = indices(shape, dtype=dtype)
-    return function(*args,**kwargs)
+    return function(*args, **kwargs)
+
 
 def isscalar(num):
     """
@@ -2083,37 +1936,23 @@ def isscalar(num):
     False
     >>> np.isscalar(False)
     True
+    >>> np.isscalar('numpy')
+    True
+
+    NumPy supports PEP 3141 numbers:
+
+    >>> from fractions import Fraction
+    >>> isscalar(Fraction(5, 17))
+    True
+    >>> from numbers import Number
+    >>> isscalar(Number())
+    True
 
     """
-    if isinstance(num, generic):
-        return True
-    else:
-        return type(num) in ScalarType
+    return (isinstance(num, generic)
+            or type(num) in ScalarType
+            or isinstance(num, numbers.Number))
 
-_lkup = {
-    '0':'0000',
-    '1':'0001',
-    '2':'0010',
-    '3':'0011',
-    '4':'0100',
-    '5':'0101',
-    '6':'0110',
-    '7':'0111',
-    '8':'1000',
-    '9':'1001',
-    'a':'1010',
-    'b':'1011',
-    'c':'1100',
-    'd':'1101',
-    'e':'1110',
-    'f':'1111',
-    'A':'1010',
-    'B':'1011',
-    'C':'1100',
-    'D':'1101',
-    'E':'1110',
-    'F':'1111',
-    'L':''}
 
 def binary_repr(num, width=None):
     """
@@ -2134,8 +1973,18 @@ def binary_repr(num, width=None):
     num : int
         Only an integer decimal number can be used.
     width : int, optional
-        The length of the returned string if `num` is positive, the length of
-        the two's complement if `num` is negative.
+        The length of the returned string if `num` is positive, or the length
+        of the two's complement if `num` is negative, provided that `width` is
+        at least a sufficient number of bits for `num` to be represented in the
+        designated form.
+
+        If the `width` value is insufficient, it will be ignored, and `num` will
+        be returned in binary (`num` > 0) or two's complement (`num` < 0) form
+        with its width equal to the minimum number of bits needed to represent
+        the number in the designated form. This behavior is deprecated and will
+        later raise an error.
+
+        .. deprecated:: 1.12.0
 
     Returns
     -------
@@ -2146,6 +1995,7 @@ def binary_repr(num, width=None):
     --------
     base_repr: Return a string representation of a number in the given base
                system.
+    bin: Python's built-in binary representation generator of an integer.
 
     Notes
     -----
@@ -2169,27 +2019,50 @@ def binary_repr(num, width=None):
     The two's complement is returned when the input number is negative and
     width is specified:
 
-    >>> np.binary_repr(-3, width=4)
-    '1101'
+    >>> np.binary_repr(-3, width=3)
+    '101'
+    >>> np.binary_repr(-3, width=5)
+    '11101'
 
     """
-    # ' <-- unbreak Emacs fontification
-    sign = ''
-    if num < 0:
+    def warn_if_insufficient(width, binwdith):
+        if width is not None and width < binwidth:
+            warnings.warn(
+                "Insufficient bit width provided. This behavior "
+                "will raise an error in the future.", DeprecationWarning,
+                stacklevel=3)
+
+    if num == 0:
+        return '0' * (width or 1)
+
+    elif num > 0:
+        binary = bin(num)[2:]
+        binwidth = len(binary)
+        outwidth = (binwidth if width is None
+                    else max(binwidth, width))
+        warn_if_insufficient(width, binwidth)
+        return binary.zfill(outwidth)
+
+    else:
         if width is None:
-            sign = '-'
-            num = -num
+            return '-' + bin(-num)[2:]
+
         else:
-            # replace num with its 2-complement
-            num = 2**width + num
-    elif num == 0:
-        return '0'*(width or 1)
-    ostr = hex(num)
-    bin = ''.join([_lkup[ch] for ch in ostr[2:]])
-    bin = bin.lstrip('0')
-    if width is not None:
-        bin = bin.zfill(width)
-    return sign + bin
+            poswidth = len(bin(-num)[2:])
+
+            # See gh-8679: remove extra digit
+            # for numbers at boundaries.
+            if 2**(poswidth - 1) == -num:
+                poswidth -= 1
+
+            twocomp = 2**(poswidth + 1) + num
+            binary = bin(twocomp)[2:]
+            binwidth = len(binary)
+
+            outwidth = max(binwidth, width)
+            warn_if_insufficient(width, binwidth)
+            return '1' * (outwidth - binwidth) + binary
+
 
 def base_repr(number, base=2, padding=0):
     """
@@ -2198,7 +2071,7 @@ def base_repr(number, base=2, padding=0):
     Parameters
     ----------
     number : int
-        The value to convert. Only positive values are handled.
+        The value to convert. Positive and negative values are handled.
     base : int, optional
         Convert `number` to the `base` number system. The valid range is 2-36,
         the default value is 2.
@@ -2232,6 +2105,8 @@ def base_repr(number, base=2, padding=0):
     digits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if base > len(digits):
         raise ValueError("Bases greater than 36 not handled in base_repr.")
+    elif base < 2:
+        raise ValueError("Bases less than 2 not handled in base_repr.")
 
     num = abs(number)
     res = []
@@ -2263,8 +2138,10 @@ def load(file):
         file = open(file, "rb")
     return pickle.load(file)
 
+
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
+
 
 def _maketup(descr, val):
     dt = dtype(descr)
@@ -2275,6 +2152,7 @@ def _maketup(descr, val):
     else:
         res = [_maketup(fields[name][0], val) for name in dt.names]
         return tuple(res)
+
 
 def identity(n, dtype=None):
     """
@@ -2306,6 +2184,7 @@ def identity(n, dtype=None):
     """
     from numpy import eye
     return eye(n, dtype=dtype)
+
 
 def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
@@ -2342,7 +2221,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     See Also
     --------
-    isclose, all, any
+    isclose, all, any, equal
 
     Notes
     -----
@@ -2352,8 +2231,13 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
 
     The above equation is not symmetric in `a` and `b`, so that
-    `allclose(a, b)` might be different from `allclose(b, a)` in
+    ``allclose(a, b)`` might be different from ``allclose(b, a)`` in
     some rare cases.
+
+    The comparison of `a` and `b` uses standard broadcasting, which
+    means that `a` and `b` need not have the same shape in order for
+    ``allclose(a, b)`` to evaluate to True.  The same is true for
+    `equal` but not `array_equal`.
 
     Examples
     --------
@@ -2371,6 +2255,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
     return bool(res)
+
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
@@ -2433,13 +2318,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     def within_tol(x, y, atol, rtol):
         with errstate(invalid='ignore'):
-            result = less_equal(abs(x-y), atol + rtol * abs(y))
-        if isscalar(a) and isscalar(b):
-            result = bool(result)
-        return result
+            return less_equal(abs(x-y), atol + rtol * abs(y))
 
-    x = array(a, copy=False, subok=True, ndmin=1)
-    y = array(b, copy=False, subok=True, ndmin=1)
+    x = asanyarray(a)
+    y = asanyarray(b)
 
     # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
     # This will cause casting of x later. Also, make sure to allow subclasses
@@ -2466,12 +2348,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         if equal_nan:
             # Make NaN == NaN
             both_nan = isnan(x) & isnan(y)
+
+            # Needed to treat masked arrays correctly. = True would not work.
             cond[both_nan] = both_nan[both_nan]
 
-        if isscalar(a) and isscalar(b):
-            return bool(cond)
-        else:
-            return cond
+        return cond[()]  # Flatten 0d arrays to scalars
+
 
 def array_equal(a1, a2):
     """
@@ -2508,11 +2390,12 @@ def array_equal(a1, a2):
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
-    except:
+    except Exception:
         return False
     if a1.shape != a2.shape:
         return False
     return bool(asarray(a1 == a2).all())
+
 
 def array_equiv(a1, a2):
     """
@@ -2551,11 +2434,11 @@ def array_equiv(a1, a2):
     """
     try:
         a1, a2 = asarray(a1), asarray(a2)
-    except:
+    except Exception:
         return False
     try:
         multiarray.broadcast(a1, a2)
-    except:
+    except Exception:
         return False
 
     return bool(asarray(a1 == a2).all())
@@ -2572,6 +2455,7 @@ _errdict_rev = {}
 for key in _errdict.keys():
     _errdict_rev[_errdict[key]] = key
 del key
+
 
 def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     """
@@ -2723,6 +2607,7 @@ def geterr():
     res['invalid'] = _errdict_rev[val]
     return res
 
+
 def setbufsize(size):
     """
     Set the size of the buffer used in ufuncs.
@@ -2746,6 +2631,7 @@ def setbufsize(size):
     umath.seterrobj(pyvals)
     return old
 
+
 def getbufsize():
     """
     Return the size of the buffer used in ufuncs.
@@ -2757,6 +2643,7 @@ def getbufsize():
 
     """
     return umath.geterrobj()[0]
+
 
 def seterrcall(func):
     """
@@ -2849,6 +2736,7 @@ def seterrcall(func):
     umath.seterrobj(pyvals)
     return old
 
+
 def geterrcall():
     """
     Return the current callback function used on floating-point errors.
@@ -2893,9 +2781,11 @@ def geterrcall():
     """
     return umath.geterrobj()[2]
 
+
 class _unspecified(object):
     pass
 _Unspecified = _unspecified()
+
 
 class errstate(object):
     """
@@ -2979,6 +2869,7 @@ def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT, None]
     umath.seterrobj(defval)
 
+
 # set the default values
 _setdef()
 
@@ -2987,10 +2878,26 @@ nan = NaN = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 
+
+def extend_all(module):
+    adict = {}
+    for a in __all__:
+        adict[a] = 1
+    try:
+        mall = getattr(module, '__all__')
+    except AttributeError:
+        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
+    for a in mall:
+        if a not in adict:
+            __all__.append(a)
+
 from .umath import *
 from .numerictypes import *
 from . import fromnumeric
 from .fromnumeric import *
+from . import arrayprint
+from .arrayprint import *
 extend_all(fromnumeric)
 extend_all(umath)
 extend_all(numerictypes)
+extend_all(arrayprint)

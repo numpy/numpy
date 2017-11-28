@@ -1,15 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import pickle
-import warnings
 
 import numpy
 import numpy as np
 import datetime
-from numpy.compat import asbytes
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, dec
+    run_module_suite, assert_, assert_equal, assert_raises,
+    assert_warns, dec, suppress_warnings
 )
 
 # Use pytz to test out various time zones if available
@@ -20,7 +18,7 @@ except ImportError:
     _has_pytz = False
 
 
-class TestDateTime(TestCase):
+class TestDateTime(object):
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
@@ -129,10 +127,11 @@ class TestDateTime(TestCase):
         # regression tests for GH6452
         assert_equal(np.datetime64('NaT'),
                      np.datetime64('2000') + np.timedelta64('NaT'))
-        # nb. we may want to make NaT != NaT true in the future; this test
-        # verifies the existing behavior (and that it should not warn)
-        assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
-        assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
+        # nb. we may want to make NaT != NaT true in the future
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning, ".*NAT ==")
+            assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
+            assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
 
     def test_datetime_scalar_construction(self):
         # Construct with different units
@@ -519,31 +518,38 @@ class TestDateTime(TestCase):
     def test_datetime_string_conversion(self):
         a = ['2011-03-16', '1920-01-01', '2013-05-19']
         str_a = np.array(a, dtype='S')
+        uni_a = np.array(a, dtype='U')
         dt_a = np.array(a, dtype='M')
-        str_b = np.empty_like(str_a)
-        dt_b = np.empty_like(dt_a)
 
         # String to datetime
         assert_equal(dt_a, str_a.astype('M'))
         assert_equal(dt_a.dtype, str_a.astype('M').dtype)
+        dt_b = np.empty_like(dt_a)
         dt_b[...] = str_a
         assert_equal(dt_a, dt_b)
+
         # Datetime to string
         assert_equal(str_a, dt_a.astype('S0'))
+        str_b = np.empty_like(str_a)
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 
-        # Convert the 'S' to 'U'
-        str_a = str_a.astype('U')
-        str_b = str_b.astype('U')
-
         # Unicode to datetime
-        assert_equal(dt_a, str_a.astype('M'))
-        assert_equal(dt_a.dtype, str_a.astype('M').dtype)
-        dt_b[...] = str_a
+        assert_equal(dt_a, uni_a.astype('M'))
+        assert_equal(dt_a.dtype, uni_a.astype('M').dtype)
+        dt_b = np.empty_like(dt_a)
+        dt_b[...] = uni_a
         assert_equal(dt_a, dt_b)
+
         # Datetime to unicode
-        assert_equal(str_a, dt_a.astype('U'))
+        assert_equal(uni_a, dt_a.astype('U'))
+        uni_b = np.empty_like(uni_a)
+        uni_b[...] = dt_a
+        assert_equal(uni_a, uni_b)
+
+        # Datetime to long string - gh-9712
+        assert_equal(str_a, dt_a.astype((np.string_, 128)))
+        str_b = np.empty(str_a.shape, dtype=(np.string_, 128))
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 
@@ -572,6 +578,12 @@ class TestDateTime(TestCase):
         a = np.array([-1, 'NaT', 1234567], dtype='m')
         assert_equal(str(a), "[     -1   'NaT' 1234567]")
 
+        # Test with other byteorder:
+        a = np.array([-1, 'NaT', 1234567], dtype='>m')
+        assert_equal(str(a), "[     -1   'NaT' 1234567]")
+        a = np.array([-1, 'NaT', 1234567], dtype='<m')
+        assert_equal(str(a), "[     -1   'NaT' 1234567]")
+
     def test_pickle(self):
         # Check that pickle roundtripping works
         dt = np.dtype('M8[7D]')
@@ -580,18 +592,18 @@ class TestDateTime(TestCase):
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
 
         # Check that loading pickles from 1.6 works
-        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
-              "(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'D'\np6\n" + \
-              "I7\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('<M8[7D]'))
-        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
-              "(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'W'\np6\n" + \
-              "I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('<M8[W]'))
-        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
-              "(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n" + \
-              "I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('>M8[us]'))
+        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'D'\np6\n" + \
+              b"I7\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(pkl), np.dtype('<M8[7D]'))
+        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'W'\np6\n" + \
+              b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(pkl), np.dtype('<M8[W]'))
+        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              b"(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n" + \
+              b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(pkl), np.dtype('>M8[us]'))
 
     def test_setstate(self):
         "Verify that datetime dtype __setstate__ can handle bad arguments"
@@ -788,6 +800,12 @@ class TestDateTime(TestCase):
             assert_equal((-tdb).dtype, tda.dtype)
             assert_equal(np.negative(tdb), tda)
             assert_equal(np.negative(tdb).dtype, tda.dtype)
+
+            # positive ufunc
+            assert_equal(np.positive(tda), tda)
+            assert_equal(np.positive(tda).dtype, tda.dtype)
+            assert_equal(np.positive(tdb), tdb)
+            assert_equal(np.positive(tdb).dtype, tdb.dtype)
 
             # absolute ufunc
             assert_equal(np.absolute(tdb), tda)
@@ -989,8 +1007,8 @@ class TestDateTime(TestCase):
             assert_raises(TypeError, np.multiply, 1.5, dta)
 
         # NaTs
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning, "invalid value encountered in multiply")
             nat = np.timedelta64('NaT')
             def check(a, b, res):
                 assert_equal(a * b, res)
@@ -1053,8 +1071,8 @@ class TestDateTime(TestCase):
             assert_raises(TypeError, np.divide, 1.5, dta)
 
         # NaTs
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=RuntimeWarning)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning,  r".*encountered in true\_divide")
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
@@ -1085,6 +1103,54 @@ class TestDateTime(TestCase):
         assert_equal(np.less_equal(a, b), [1, 0, 1, 0, 1])
         assert_equal(np.greater(a, b), [0, 1, 0, 1, 0])
         assert_equal(np.greater_equal(a, b), [1, 1, 0, 1, 0])
+
+    def test_datetime_compare_nat(self):
+        dt_nat = np.datetime64('NaT', 'D')
+        dt_other = np.datetime64('2000-01-01')
+        td_nat = np.timedelta64('NaT', 'h')
+        td_other = np.timedelta64(1, 'h')
+
+        with suppress_warnings() as sup:
+            # The assert warns contexts will again see the warning:
+            sup.filter(FutureWarning, ".*NAT")
+
+            for op in [np.equal, np.less, np.less_equal,
+                       np.greater, np.greater_equal]:
+                if op(dt_nat, dt_nat):
+                    assert_warns(FutureWarning, op, dt_nat, dt_nat)
+                if op(dt_nat, dt_other):
+                    assert_warns(FutureWarning, op, dt_nat, dt_other)
+                if op(dt_other, dt_nat):
+                    assert_warns(FutureWarning, op, dt_other, dt_nat)
+                if op(td_nat, td_nat):
+                    assert_warns(FutureWarning, op, td_nat, td_nat)
+                if op(td_nat, td_other):
+                    assert_warns(FutureWarning, op, td_nat, td_other)
+                if op(td_other, td_nat):
+                    assert_warns(FutureWarning, op, td_other, td_nat)
+
+            assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
+            assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
+
+        with suppress_warnings() as sup:
+            sup.record(FutureWarning)
+            assert_(np.not_equal(dt_nat, dt_other))
+            assert_(np.not_equal(dt_other, dt_nat))
+            assert_(np.not_equal(td_nat, td_other))
+            assert_(np.not_equal(td_other, td_nat))
+            assert_equal(len(sup.log), 0)
+
+    def test_datetime_futurewarning_once_nat(self):
+        # Test that the futurewarning is only given once per inner loop
+        arr1 = np.array(['NaT', 'NaT', '2000-01-01'] * 2, dtype='M8[s]')
+        arr2 = np.array(['NaT', '2000-01-01', 'NaT'] * 2, dtype='M8[s]')
+        # All except less, because for less it can't be wrong (NaT is min)
+        for op in [np.equal, np.less, np.less_equal,
+                   np.greater, np.greater_equal]:
+            with suppress_warnings() as sup:
+                rec = sup.record(FutureWarning, ".*NAT")
+                op(arr1, arr2)
+                assert_(len(rec) == 1, "failed for {}".format(op))
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
@@ -1180,10 +1246,10 @@ class TestDateTime(TestCase):
 
     def test_divisor_conversion_fs(self):
         assert_(np.dtype('M8[fs/100]') == np.dtype('M8[10as]'))
-        self.assertRaises(ValueError, lambda: np.dtype('M8[3fs/10000]'))
+        assert_raises(ValueError, lambda: np.dtype('M8[3fs/10000]'))
 
     def test_divisor_conversion_as(self):
-        self.assertRaises(ValueError, lambda: np.dtype('M8[as/10]'))
+        assert_raises(ValueError, lambda: np.dtype('M8[as/10]'))
 
     def test_string_parser_variants(self):
         # Allow space instead of 'T' between date and time
@@ -1871,7 +1937,36 @@ class TestDateTime(TestCase):
         a = np.datetime64('2038-01-20T13:21:14')
         assert_equal(str(a), '2038-01-20T13:21:14')
 
-class TestDateTimeData(TestCase):
+    def test_isnat(self):
+        assert_(np.isnat(np.datetime64('NaT', 'ms')))
+        assert_(np.isnat(np.datetime64('NaT', 'ns')))
+        assert_(not np.isnat(np.datetime64('2038-01-19T03:14:07')))
+
+        assert_(np.isnat(np.timedelta64('NaT', "ms")))
+        assert_(not np.isnat(np.timedelta64(34, "ms")))
+
+        res = np.array([False, False, True])
+        for unit in ['Y', 'M', 'W', 'D',
+                     'h', 'm', 's', 'ms', 'us',
+                     'ns', 'ps', 'fs', 'as']:
+            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
+            assert_equal(np.isnat(arr), res)
+
+    def test_isnat_error(self):
+        # Test that only datetime dtype arrays are accepted
+        for t in np.typecodes["All"]:
+            if t in np.typecodes["Datetime"]:
+                continue
+            assert_raises(TypeError, np.isnat, np.zeros(10, t))
+
+
+class TestDateTimeData(object):
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)

@@ -1,7 +1,7 @@
 .. _numpy-for-matlab-users:
 
 ======================
-Numpy for Matlab users
+NumPy for Matlab users
 ======================
 
 Introduction
@@ -31,7 +31,7 @@ Some Key Differences
        these arrays are designed to act more or less like matrix operations
        in linear algebra.
      - In NumPy the basic type is a multidimensional ``array``.  Operations
-       on these arrays in all dimensionalities including 2D are elementwise
+       on these arrays in all dimensionalities including 2D are element-wise
        operations.  However, there is a special ``matrix`` type for doing
        linear algebra, which is just a subclass of the ``array`` class.
        Operations on matrix-class arrays are linear algebra operations.
@@ -63,7 +63,7 @@ Some Key Differences
 'array' or 'matrix'? Which should I use?
 ========================================
 
-Numpy provides, in addition to ``np.ndarray``, an additional matrix type
+NumPy provides, in addition to ``np.ndarray``, an additional matrix type
 that you may see used in some existing code. Which one to use?
 
 Short answer
@@ -77,14 +77,15 @@ Short answer
    linear algebra operations.
 -  You can have standard vectors or row/column vectors if you like.
 
-The only disadvantage of using the array type is that you will have to
-use ``dot`` instead of ``*`` to multiply (reduce) two tensors (scalar
-product, matrix vector multiplication etc.).
+Until Python 3.5 the only disadvantage of using the array type was that you
+had to use ``dot`` instead of ``*`` to multiply (reduce) two tensors
+(scalar product, matrix vector multiplication etc.). Since Python 3.5 you
+can use the matrix multiplication ``@`` operator.
 
 Long answer
 -----------
 
-Numpy contains both an ``array`` class and a ``matrix`` class. The
+NumPy contains both an ``array`` class and a ``matrix`` class. The
 ``array`` class is intended to be a general-purpose n-dimensional array
 for many kinds of numerical computing, while ``matrix`` is intended to
 facilitate linear algebra computations specifically. In practice there
@@ -136,7 +137,9 @@ There are pros and cons to using both:
       ``dot(v,A)`` treats ``v`` as a row vector. This can save you having to
       type a lot of transposes.
    -  ``<:(`` Having to use the ``dot()`` function for matrix-multiply is
-      messy -- ``dot(dot(A,B),C)`` vs. ``A*B*C``.
+      messy -- ``dot(dot(A,B),C)`` vs. ``A*B*C``. This isn't an issue with
+      Python >= 3.5 because the ``@`` operator allows it to be written as
+      ``A @ B @ C``.
    -  ``:)`` Element-wise multiplication is easy: ``A*B``.
    -  ``:)`` ``array`` is the "default" NumPy type, so it gets the most
       testing, and is the type most likely to be returned by 3rd party
@@ -145,7 +148,7 @@ There are pros and cons to using both:
    -  ``:)`` Closer in semantics to tensor algebra, if you are familiar
       with that.
    -  ``:)`` *All* operations (``*``, ``/``, ``+``, ``-`` etc.) are
-      elementwise
+      element-wise.
 
 -  ``matrix``
 
@@ -160,18 +163,19 @@ There are pros and cons to using both:
       it's a bug), but 3rd party code based on NumPy may not honor type
       preservation like NumPy does.
    -  ``:)`` ``A*B`` is matrix multiplication, so more convenient for
-      linear algebra.
+      linear algebra (For Python >= 3.5 plain arrays have the same convenience
+      with the ``@`` operator).
    -  ``<:(`` Element-wise multiplication requires calling a function,
-      ``multipy(A,B)``.
+      ``multiply(A,B)``.
    -  ``<:(`` The use of operator overloading is a bit illogical: ``*``
-      does not work elementwise but ``/`` does.
+      does not work element-wise but ``/`` does.
 
 The ``array`` is thus much more advisable to use.
 
 Facilities for Matrix Users
 ===========================
 
-Numpy has some features that facilitate the use of the ``matrix`` type,
+NumPy has some features that facilitate the use of the ``matrix`` type,
 which hopefully make things easier for Matlab converts.
 
 -  A ``matlib`` module has been added that contains matrix versions of
@@ -265,11 +269,11 @@ General Purpose Equivalents
      - Distance between 1 and the nearest floating point number.
 
    * - ``ode45``
-     - ``scipy.integrate.ode(f).set_integrator('dopri5')``
+     - ``scipy.integrate.solve_ivp(f)``
      - integrate an ODE with Runge-Kutta 4,5
 
    * - ``ode15s``
-     - ``scipy.integrate.ode(f).set_integrator('vode', method='bdf', order=5)``
+     - ``scipy.integrate.solve_ivp(f, method='BDF')``
      - integrate an ODE with BDF method
 
 Linear Algebra Equivalents
@@ -521,21 +525,21 @@ Linear Algebra Equivalents
 
    * - ``a & b``
      - ``logical_and(a,b)``
-     - element-by-element AND operator (Numpy ufunc) :ref:`See note
+     - element-by-element AND operator (NumPy ufunc) :ref:`See note
        LOGICOPS <numpy-for-matlab-users.notes>`
 
    * - ``a | b``
      - ``logical_or(a,b)``
-     - element-by-element OR operator (Numpy ufunc) :ref:`See note LOGICOPS
+     - element-by-element OR operator (NumPy ufunc) :ref:`See note LOGICOPS
        <numpy-for-matlab-users.notes>`
 
    * - ``bitand(a,b)``
      - ``a & b``
-     - bitwise AND operator (Python native and Numpy ufunc)
+     - bitwise AND operator (Python native and NumPy ufunc)
 
    * - ``bitor(a,b)``
      - ``a | b``
-     - bitwise OR operator (Python native and Numpy ufunc)
+     - bitwise OR operator (Python native and NumPy ufunc)
 
    * - ``inv(a)``
      - ``linalg.inv(a)``
@@ -657,41 +661,41 @@ numpy to have a similarly terse range construction mechanism. Note that
 *indexed* using square brackets, which allows the use of Python's slice
 syntax in the arguments.
 
-\ **LOGICOPS**: & or \| in Numpy is bitwise AND/OR, while in Matlab &
+\ **LOGICOPS**: & or \| in NumPy is bitwise AND/OR, while in Matlab &
 and \| are logical AND/OR. The difference should be clear to anyone with
 significant programming experience. The two can appear to work the same,
 but there are important differences. If you would have used Matlab's &
-or \| operators, you should use the Numpy ufuncs
+or \| operators, you should use the NumPy ufuncs
 logical\_and/logical\_or. The notable differences between Matlab's and
-Numpy's & and \| operators are:
+NumPy's & and \| operators are:
 
--  Non-logical {0,1} inputs: Numpy's output is the bitwise AND of the
+-  Non-logical {0,1} inputs: NumPy's output is the bitwise AND of the
    inputs. Matlab treats any non-zero value as 1 and returns the logical
-   AND. For example (3 & 4) in Numpy is 0, while in Matlab both 3 and 4
+   AND. For example (3 & 4) in NumPy is 0, while in Matlab both 3 and 4
    are considered logical true and (3 & 4) returns 1.
 
--  Precedence: Numpy's & operator is higher precedence than logical
+-  Precedence: NumPy's & operator is higher precedence than logical
    operators like < and >; Matlab's is the reverse.
 
 If you know you have boolean arguments, you can get away with using
-Numpy's bitwise operators, but be careful with parentheses, like this: z
-= (x > 1) & (x < 2). The absence of Numpy operator forms of logical\_and
+NumPy's bitwise operators, but be careful with parentheses, like this: z
+= (x > 1) & (x < 2). The absence of NumPy operator forms of logical\_and
 and logical\_or is an unfortunate consequence of Python's design.
 
 **RESHAPE and LINEAR INDEXING**: Matlab always allows multi-dimensional
-arrays to be accessed using scalar or linear indices, Numpy does not.
+arrays to be accessed using scalar or linear indices, NumPy does not.
 Linear indices are common in Matlab programs, e.g. find() on a matrix
-returns them, whereas Numpy's find behaves differently. When converting
+returns them, whereas NumPy's find behaves differently. When converting
 Matlab code it might be necessary to first reshape a matrix to a linear
 sequence, perform some indexing operations and then reshape back. As
 reshape (usually) produces views onto the same storage, it should be
 possible to do this fairly efficiently. Note that the scan order used by
-reshape in Numpy defaults to the 'C' order, whereas Matlab uses the
+reshape in NumPy defaults to the 'C' order, whereas Matlab uses the
 Fortran order. If you are simply converting to a linear sequence and
 back this doesn't matter. But if you are converting reshapes from Matlab
 code which relies on the scan order, then this Matlab code: z =
 reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in
-Numpy.
+NumPy.
 
 Customizing Your Environment
 ============================
@@ -728,7 +732,7 @@ this is just an example, not a statement of "best practices"):
     # Define a Hermitian function
     def hermitian(A, **kwargs):
         return num.transpose(A,**kwargs).conj()
-    # Make some shorcuts for transpose,hermitian:
+    # Make some shortcuts for transpose,hermitian:
     #    num.transpose(A) --> T(A)
     #    hermitian(A) --> H(A)
     T = num.transpose

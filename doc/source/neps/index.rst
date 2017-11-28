@@ -1,10 +1,10 @@
 ===========================
-Numpy Enhancement Proposals
+NumPy Enhancement Proposals
 ===========================
 
-Numpy Enhancement Proposals (NEPs) describe proposed changes to Numpy.
+NumPy Enhancement Proposals (NEPs) describe proposed changes to NumPy.
 NEPs are modeled on Python Enhancement Proposals (PEPs), and are typically
-written up when large changes to Numpy are proposed.
+written up when large changes to NumPy are proposed.
 
 This page provides an overview of all NEPs, making only a distinction between
 the ones that have been implemented and those that have not been implemented.
@@ -35,3 +35,4 @@ Other NEPs
    structured_array_extensions
    datetime-proposal
    datetime-proposal3
+   dropping-python2.7-proposal

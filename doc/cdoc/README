@@ -1,7 +1,7 @@
 cdoc
 ====
 
-This is a simple Doxygen project for building Numpy C code documentation,
+This is a simple Doxygen project for building NumPy C code documentation,
 with docstrings extracted from the C sources themselves.
 
 The understood syntax for documentation in the C source is

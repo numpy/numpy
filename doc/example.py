@@ -5,7 +5,7 @@ this improves readability.
 Every module should have a docstring at the very top of the file.  The
 module's docstring may extend over multiple lines.  If your docstring does
 extend over multiple lines, the closing three quotation marks must be on
-a line by itself, preferably preceeded by a blank line.
+a line by itself, preferably preceded by a blank line.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 
 from my_module import my_func, other_func
 
-def foo(var1, var2, long_var_name='hi') :
+def foo(var1, var2, long_var_name='hi'):
     r"""A one-line summary that does not use variable names or the
     function name.
 
@@ -52,7 +52,7 @@ def foo(var1, var2, long_var_name='hi') :
         The type above can either refer to an actual Python type
         (e.g. ``int``), or describe the type of the variable in more
         detail, e.g. ``(N,) ndarray`` or ``array_like``.
-    Long_variable_name : {'hi', 'ho'}, optional
+    long_var_name : {'hi', 'ho'}, optional
         Choices in brackets, default first when optional.
 
     Returns
@@ -111,7 +111,7 @@ def foo(var1, var2, long_var_name='hi') :
     These are written in doctest format, and should illustrate how to
     use the function.
 
-    >>> a=[1,2,3]
+    >>> a = [1, 2, 3]
     >>> print [x + 3 for x in a]
     [4, 5, 6]
     >>> print "a\n\nb"

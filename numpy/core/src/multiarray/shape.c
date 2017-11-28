@@ -17,8 +17,12 @@
 
 #include "shape.h"
 
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "common.h" /* for convert_shape_to_string */
+#include "alloc.h"
+
 static int
-_fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original);
+_fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
 
 static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
@@ -37,15 +41,14 @@ NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                NPY_ORDER order)
 {
+    npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, n, elsize;
     int refcnt;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
-    size_t sd;
     npy_intp *dimptr;
     char *new_data;
-    npy_intp largest;
 
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
@@ -53,15 +56,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         return NULL;
     }
 
-    if (PyArray_DESCR(self)->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "Bad data-type size.");
-        return NULL;
-    }
+    /* Compute total size of old and new arrays. The new size might overflow */
+    oldsize = PyArray_SIZE(self);
     newsize = 1;
-    largest = NPY_MAX_INTP / PyArray_DESCR(self)->elsize;
     for(k = 0; k < new_nd; k++) {
         if (new_dimensions[k] == 0) {
+            newsize = 0;
             break;
         }
         if (new_dimensions[k] < 0) {
@@ -69,14 +69,19 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                     "negative dimensions not allowed");
             return NULL;
         }
-        newsize *= new_dimensions[k];
-        if (newsize <= 0 || newsize > largest) {
+        if (npy_mul_with_overflow_intp(&newsize, newsize, new_dimensions[k])) {
             return PyErr_NoMemory();
         }
     }
-    oldsize = PyArray_SIZE(self);
 
-    if (oldsize != newsize) {
+    /* Convert to number of bytes. The new count might overflow */
+    elsize = PyArray_DESCR(self)->elsize;
+    oldnbytes = oldsize * elsize;
+    if (npy_mul_with_overflow_intp(&newnbytes, newsize, elsize)) {
+        return PyErr_NoMemory();
+    }
+
+    if (oldnbytes != newnbytes) {
         if (!(PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize this array: it does not own its data");
@@ -84,7 +89,14 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         if (refcheck) {
+#ifdef PYPY_VERSION
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot resize an array with refcheck=True on PyPy.\n"
+                    "Use the resize function or refcheck=False");
+            return NULL;
+#else
             refcnt = PyArray_REFCOUNT(self);
+#endif /* PYPY_VERSION */
         }
         else {
             refcnt = 1;
@@ -93,20 +105,15 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                 || (PyArray_BASE(self) != NULL)
                 || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "\
-                    "references or is referenced\n"\
+                    "cannot resize an array that "
+                    "references or is referenced\n"
                     "by another array in this way.  Use the resize function");
             return NULL;
         }
 
-        if (newsize == 0) {
-            sd = PyArray_DESCR(self)->elsize;
-        }
-        else {
-            sd = newsize*PyArray_DESCR(self)->elsize;
-        }
-        /* Reallocate space if needed */
-        new_data = PyDataMem_RENEW(PyArray_DATA(self), sd);
+        /* Reallocate space if needed - allocating 0 is forbidden */
+        new_data = PyDataMem_RENEW(
+            PyArray_DATA(self), newnbytes == 0 ? elsize : newnbytes);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
@@ -115,13 +122,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         ((PyArrayObject_fields *)self)->data = new_data;
     }
 
-    if ((newsize > oldsize) && PyArray_ISWRITEABLE(self)) {
+    if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
         /* Fill new memory with zeros */
-        elsize = PyArray_DESCR(self)->elsize;
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
             PyObject *zero = PyInt_FromLong(0);
             char *optr;
-            optr = PyArray_BYTES(self) + oldsize*elsize;
+            optr = PyArray_BYTES(self) + oldnbytes;
             n = newsize - oldsize;
             for (k = 0; k < n; k++) {
                 _putzero((char *)optr, zero, PyArray_DESCR(self));
@@ -130,30 +136,37 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             Py_DECREF(zero);
         }
         else{
-            memset(PyArray_BYTES(self)+oldsize*elsize, 0, (newsize-oldsize)*elsize);
+            memset(PyArray_BYTES(self) + oldnbytes, 0, newnbytes - oldnbytes);
         }
     }
 
-    if (PyArray_NDIM(self) != new_nd) {
-        /* Different number of dimensions. */
-        ((PyArrayObject_fields *)self)->nd = new_nd;
-        /* Need new dimensions and strides arrays */
-        dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
-        if (dimptr == NULL) {
-            PyErr_SetString(PyExc_MemoryError,
-                    "cannot allocate memory for array");
-            return NULL;
+    if (new_nd > 0) {
+        if (PyArray_NDIM(self) != new_nd) {
+            /* Different number of dimensions. */
+            ((PyArrayObject_fields *)self)->nd = new_nd;
+            /* Need new dimensions and strides arrays */
+            dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
+            if (dimptr == NULL) {
+                PyErr_SetString(PyExc_MemoryError,
+                                "cannot allocate memory for array");
+                return NULL;
+            }
+            ((PyArrayObject_fields *)self)->dimensions = dimptr;
+            ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
         }
-        ((PyArrayObject_fields *)self)->dimensions = dimptr;
-        ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
+        /* make new_strides variable */
+        _array_fill_strides(new_strides, new_dimensions, new_nd,
+                            PyArray_DESCR(self)->elsize, PyArray_FLAGS(self),
+                            &(((PyArrayObject_fields *)self)->flags));
+        memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
+        memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     }
-
-    /* make new_strides variable */
-    sd = (size_t) PyArray_DESCR(self)->elsize;
-    sd = (size_t) _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
-            PyArray_FLAGS(self), &(((PyArrayObject_fields *)self)->flags));
-    memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
-    memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
+    else {
+        PyDimMem_FREE(((PyArrayObject_fields *)self)->dimensions);
+        ((PyArrayObject_fields *)self)->nd = 0;
+        ((PyArrayObject_fields *)self)->dimensions = NULL;
+        ((PyArrayObject_fields *)self)->strides = NULL;
+    }
     Py_RETURN_NONE;
 }
 
@@ -206,7 +219,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     /*
      * fix any -1 dimensions and check new-dimensions against old size
      */
-    if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0) {
+    if (_fix_unknown_dimension(newdims, self) < 0) {
         return NULL;
     }
     /*
@@ -252,12 +265,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
 
     Py_INCREF(PyArray_DESCR(self));
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(Py_TYPE(self),
                                        PyArray_DESCR(self),
                                        ndim, dimensions,
                                        strides,
                                        PyArray_DATA(self),
-                                       flags, (PyObject *)self);
+                                       flags, (PyObject *)self, 0, 1);
 
     if (ret == NULL) {
         goto fail;
@@ -283,7 +296,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 
 
 
-/* For back-ward compatability -- Not recommended */
+/* For backward compatibility -- Not recommended */
 
 /*NUMPY_API
  * Reshape
@@ -298,7 +311,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
         return NULL;
     }
     ret = PyArray_Newshape(self, &newdims, NPY_CORDER);
-    PyDimMem_FREE(newdims.ptr);
+    npy_free_cache_dim_obj(newdims);
     return ret;
 }
 
@@ -339,8 +352,10 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
 /*
  * attempt to reshape an array without copying data
  *
- * This function should correctly handle all reshapes, including
- * axes of length 1. Zero strides should work but are untested.
+ * The requested newdims are not checked, but must be compatible with
+ * the size of self, which must be non-zero. Other than that this
+ * function should correctly handle all reshapes, including axes of
+ * length 1. Zero strides should work but are untested.
  *
  * If a copy is needed, returns 0
  * If no copy is needed, returns 1 and fills newstrides
@@ -361,7 +376,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
     int oldnd;
     npy_intp olddims[NPY_MAXDIMS];
     npy_intp oldstrides[NPY_MAXDIMS];
-    npy_intp np, op, last_stride;
+    npy_intp last_stride;
     int oi, oj, ok, ni, nj, nk;
 
     oldnd = 0;
@@ -377,43 +392,14 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
         }
     }
 
-    /*
-      fprintf(stderr, "_attempt_nocopy_reshape( (");
-      for (oi=0; oi<oldnd; oi++)
-      fprintf(stderr, "(%d,%d), ", olddims[oi], oldstrides[oi]);
-      fprintf(stderr, ") -> (");
-      for (ni=0; ni<newnd; ni++)
-      fprintf(stderr, "(%d,*), ", newdims[ni]);
-      fprintf(stderr, "), is_f_order=%d)\n", is_f_order);
-    */
-
-
-    np = 1;
-    for (ni = 0; ni < newnd; ni++) {
-        np *= newdims[ni];
-    }
-    op = 1;
-    for (oi = 0; oi < oldnd; oi++) {
-        op *= olddims[oi];
-    }
-    if (np != op) {
-        /* different total sizes; no hope */
-        return 0;
-    }
-
-    if (np == 0) {
-        /* the current code does not handle 0-sized arrays, so give up */
-        return 0;
-    }
-
     /* oi to oj and ni to nj give the axis ranges currently worked with */
     oi = 0;
     oj = 1;
     ni = 0;
     nj = 1;
     while (ni < newnd && oi < oldnd) {
-        np = newdims[ni];
-        op = olddims[oi];
+        npy_intp np = newdims[ni];
+        npy_intp op = olddims[oi];
 
         while (np != op) {
             if (np < op) {
@@ -475,26 +461,30 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
         newstrides[nk] = last_stride;
     }
 
-    /*
-      fprintf(stderr, "success: _attempt_nocopy_reshape (");
-      for (oi=0; oi<oldnd; oi++)
-      fprintf(stderr, "(%d,%d), ", olddims[oi], oldstrides[oi]);
-      fprintf(stderr, ") -> (");
-      for (ni=0; ni<newnd; ni++)
-      fprintf(stderr, "(%d,%d), ", newdims[ni], newstrides[ni]);
-      fprintf(stderr, ")\n");
-    */
-
     return 1;
 }
 
+static void
+raise_reshape_size_mismatch(PyArray_Dims *newshape, PyArrayObject *arr)
+{
+    PyObject *msg = PyUString_FromFormat("cannot reshape array of size %zd "
+                                         "into shape ", PyArray_SIZE(arr));
+    PyObject *tmp = convert_shape_to_string(newshape->len, newshape->ptr, "");
+
+    PyUString_ConcatAndDel(&msg, tmp);
+    if (msg != NULL) {
+        PyErr_SetObject(PyExc_ValueError, msg);
+        Py_DECREF(msg);
+    }
+}
+
 static int
-_fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original)
+_fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr)
 {
     npy_intp *dimensions;
+    npy_intp s_original = PyArray_SIZE(arr);
     npy_intp i_unknown, s_known;
     int i, n;
-    static char msg[] = "total size of new array must be unchanged";
 
     dimensions = newshape->ptr;
     n = newshape->len;
@@ -508,26 +498,27 @@ _fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original)
             }
             else {
                 PyErr_SetString(PyExc_ValueError,
-                                "can only specify one"  \
-                                " unknown dimension");
+                                "can only specify one unknown dimension");
                 return -1;
             }
         }
-        else {
-            s_known *= dimensions[i];
+        else if (npy_mul_with_overflow_intp(&s_known, s_known,
+                                            dimensions[i])) {
+            raise_reshape_size_mismatch(newshape, arr);
+            return -1;
         }
     }
 
     if (i_unknown >= 0) {
-        if ((s_known == 0) || (s_original % s_known != 0)) {
-            PyErr_SetString(PyExc_ValueError, msg);
+        if (s_known == 0 || s_original % s_known != 0) {
+            raise_reshape_size_mismatch(newshape, arr);
             return -1;
         }
-        dimensions[i_unknown] = s_original/s_known;
+        dimensions[i_unknown] = s_original / s_known;
     }
     else {
         if (s_original != s_known) {
-            PyErr_SetString(PyExc_ValueError, msg);
+            raise_reshape_size_mismatch(newshape, arr);
             return -1;
         }
     }
@@ -691,9 +682,9 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 NPY_NO_EXPORT PyObject *
 PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 {
-    npy_intp *axes, axis;
-    npy_intp i, n;
-    npy_intp permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
+    npy_intp *axes;
+    int i, n;
+    int permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
     PyArrayObject *ret = NULL;
     int flags;
 
@@ -715,13 +706,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
             reverse_permutation[i] = -1;
         }
         for (i = 0; i < n; i++) {
-            axis = axes[i];
-            if (axis < 0) {
-                axis = PyArray_NDIM(ap) + axis;
-            }
-            if (axis < 0 || axis >= PyArray_NDIM(ap)) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid axis for this array");
+            int axis = axes[i];
+            if (check_and_adjust_axis(&axis, PyArray_NDIM(ap)) < 0) {
                 return NULL;
             }
             if (reverse_permutation[axis] != -1) {
@@ -1101,7 +1087,7 @@ build_shape_string(npy_intp n, npy_intp *vals)
  *          validate this!
  *          If an axis flagged for removal has a shape larger then one,
  *          the aligned flag (and in the future the contiguous flags),
- *          may need explicite update.
+ *          may need explicit update.
  *          (check also NPY_RELAXED_STRIDES_CHECKING)
  *
  * For example, this can be used to remove the reduction axes

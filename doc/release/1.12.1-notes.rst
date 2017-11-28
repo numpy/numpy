@@ -1,0 +1,26 @@
+==========================
+NumPy 1.12.1 Release Notes
+==========================
+
+NumPy 1.12.1 supports Python 2.7 and 3.4 - 3.6 and fixes bugs and regressions
+found in NumPy 1.12.0. In particular, the regression in f2py constant parsing
+is fixed. Wheels for Linux, Windows, and OSX can be found on pypi,
+
+Bugs Fixed
+==========
+
+*  BUG: Fix wrong future nat warning and equiv type logic error...
+*  BUG: Fix wrong masked median for some special cases
+*  DOC: Place np.average in inline code
+*  TST: Work around isfinite inconsistency on i386
+*  BUG: Guard against replacing constants without '_' spec in f2py.
+*  BUG: Fix mean for float 16 non-array inputs for 1.12
+*  BUG: Fix calling python api with error set and minor leaks for...
+*  BUG: Make iscomplexobj compatible with custom dtypes again
+*  BUG: Fix undefined behaviour induced by bad __array_wrap__
+*  BUG: Fix MaskedArray.__setitem__
+*  BUG: PPC64el machines are POWER for Fortran in f2py
+*  BUG: Look up methods on MaskedArray in `_frommethod`
+*  BUG: Remove extra digit in binary_repr at limit
+*  BUG: Fix deepcopy regression for empty arrays.
+*  BUG: Fix ma.median for empty ndarrays

@@ -167,7 +167,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
     flex_type_num = (*flex_dtype)->type_num;
 
     /* Flexible types with expandable size */
-    if ((*flex_dtype)->elsize == 0) {
+    if (PyDataType_ISUNSIZED(*flex_dtype)) {
         /* First replace the flex dtype */
         PyArray_DESCR_REPLACE(*flex_dtype);
         if (*flex_dtype == NULL) {
@@ -526,7 +526,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
             }
 
             ret = 0;
-            if (to->elsize == 0) {
+            if (PyDataType_ISUNSIZED(to)) {
                 ret = 1;
             }
             /* 
@@ -1152,7 +1152,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             else if (PyTypeNum_ISNUMBER(type_num2)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type2, &temp);
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
@@ -1190,7 +1190,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             else if (PyTypeNum_ISNUMBER(type_num2)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type2, &temp);
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
@@ -1238,7 +1238,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             if (PyTypeNum_ISNUMBER(type_num1)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type1, &temp);
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);
@@ -1255,7 +1255,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             if (PyTypeNum_ISNUMBER(type_num1)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
-                temp->elsize = 0;
+                PyDataType_MAKEUNSIZED(temp);
                 PyArray_AdaptFlexibleDType(NULL, type1, &temp);
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);
@@ -1353,7 +1353,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         case NPY_UINT: {
             npy_uint value = *(npy_uint *)valueptr;
             if (value <= NPY_MAX_UBYTE) {
-                if (value < NPY_MAX_BYTE) {
+                if (value <= NPY_MAX_BYTE) {
                     *is_small_unsigned = 1;
                 }
                 return NPY_UBYTE;
@@ -1530,7 +1530,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         /*
          * The code to demote complex to float is disabled for now,
-         * as forcing complex by adding 0j is probably desireable.
+         * as forcing complex by adding 0j is probably desirable.
          */
         case NPY_CFLOAT: {
             /*
@@ -1916,7 +1916,7 @@ PyArray_Zero(PyArrayObject *arr)
 {
     char *zeroval;
     int ret, storeflags;
-    PyObject *obj;
+    static PyObject * zero_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -1927,17 +1927,26 @@ PyArray_Zero(PyArrayObject *arr)
         return NULL;
     }
 
-    obj=PyInt_FromLong((long) 0);
+    if (zero_obj == NULL) {
+        zero_obj = PyInt_FromLong((long) 0);
+        if (zero_obj == NULL) {
+            return NULL;
+        }
+    }
     if (PyArray_ISOBJECT(arr)) {
-        memcpy(zeroval, &obj, sizeof(PyObject *));
-        Py_DECREF(obj);
+        /* XXX this is dangerous, the caller probably is not
+           aware that zeroval is actually a static PyObject*
+           In the best case they will only use it as-is, but
+           if they simply memcpy it into a ndarray without using
+           setitem(), refcount errors will occur
+        */
+        memcpy(zeroval, &zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_DESCR(arr)->f->setitem(obj, zeroval, arr);
+    ret = PyArray_SETITEM(arr, zeroval, zero_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
-    Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
         return NULL;
@@ -1953,7 +1962,7 @@ PyArray_One(PyArrayObject *arr)
 {
     char *oneval;
     int ret, storeflags;
-    PyObject *obj;
+    static PyObject * one_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -1964,18 +1973,27 @@ PyArray_One(PyArrayObject *arr)
         return NULL;
     }
 
-    obj = PyInt_FromLong((long) 1);
+    if (one_obj == NULL) {
+        one_obj = PyInt_FromLong((long) 1);
+        if (one_obj == NULL) {
+            return NULL;
+        }
+    }
     if (PyArray_ISOBJECT(arr)) {
-        memcpy(oneval, &obj, sizeof(PyObject *));
-        Py_DECREF(obj);
+        /* XXX this is dangerous, the caller probably is not
+           aware that oneval is actually a static PyObject*
+           In the best case they will only use it as-is, but
+           if they simply memcpy it into a ndarray without using
+           setitem(), refcount errors will occur
+        */
+        memcpy(oneval, &one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_DESCR(arr)->f->setitem(obj, oneval, arr);
+    ret = PyArray_SETITEM(arr, oneval, one_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
-    Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(oneval);
         return NULL;

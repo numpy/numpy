@@ -107,7 +107,7 @@ raw_array_assign_array(int ndim, npy_intp *shape,
 }
 
 /*
- * Assigns the array from 'src' to 'dst, whereever the 'wheremask'
+ * Assigns the array from 'src' to 'dst, wherever the 'wheremask'
  * value is True. The strides must already have been broadcast.
  *
  * Returns 0 on success, -1 on failure.
@@ -230,7 +230,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     }
 
     /*
-     * Performance fix for expresions like "a[1000:6000] += x".  In this
+     * Performance fix for expressions like "a[1000:6000] += x".  In this
      * case, first an in-place add is done, followed by an assignment,
      * equivalently expressed like this:
      *
@@ -293,7 +293,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     if (((PyArray_NDIM(dst) == 1 && PyArray_NDIM(src) >= 1 &&
                     PyArray_STRIDES(dst)[0] *
                             PyArray_STRIDES(src)[PyArray_NDIM(src) - 1] < 0) ||
-                    PyArray_NDIM(dst) > 1) && arrays_overlap(src, dst)) {
+                    PyArray_NDIM(dst) > 1 || PyArray_HASFIELDS(dst)) &&
+                    arrays_overlap(src, dst)) {
         PyArrayObject *tmp;
 
         /*
@@ -342,6 +343,21 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                     PyArray_STRIDES(src), "input array",
                     src_strides) < 0) {
             goto fail;
+        }
+    }
+
+    /* optimization: scalar boolean mask */
+    if (wheremask != NULL &&
+            PyArray_NDIM(wheremask) == 0 &&
+            PyArray_DESCR(wheremask)->type_num == NPY_BOOL) {
+        npy_bool value = *(npy_bool *)PyArray_DATA(wheremask);
+        if (value) {
+            /* where=True is the same as no where at all */
+            wheremask = NULL;
+        }
+        else {
+            /* where=False copies nothing */
+            return 0;
         }
     }
 

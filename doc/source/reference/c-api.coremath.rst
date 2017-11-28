@@ -1,4 +1,4 @@
-Numpy core libraries
+NumPy core libraries
 ====================
 
 .. sectionauthor:: David Cournapeau
@@ -10,7 +10,7 @@ Starting from numpy 1.3.0, we are working on separating the pure C,
 making the code cleaner, and enabling code reuse by other extensions outside
 numpy (scipy, etc...).
 
-Numpy core math library
+NumPy core math library
 -----------------------
 
 The numpy core math library ('npymath') is a first step in this direction. This

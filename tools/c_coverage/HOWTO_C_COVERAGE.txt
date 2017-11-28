@@ -27,7 +27,7 @@ For most cases, it is good enough to do::
   > c_coverage_collect.sh python -c "import numpy; numpy.test()"
   > c_coverage_report.py callgrind.out.pid
 
-which will run all of the Numpy unit tests, create a directory called
+which will run all of the NumPy unit tests, create a directory called
 `coverage` and place the coverage results there.
 
 In a more advanced scenario, you may wish to run individual unit tests
@@ -41,7 +41,7 @@ To collect coverage results, you merely run the python interpreter
 under valgrind's callgrind tool.  The `c_coverage_collect.sh` helper
 script will pass all of the required arguments to valgrind.
 
-For example, in typical usage, you may want to run all of the Numpy
+For example, in typical usage, you may want to run all of the NumPy
 unit tests::
 
   > c_coverage_collect.sh python -c "import numpy; numpy.test()"
@@ -99,7 +99,7 @@ HTML reports
 The HTML report highlights the code that was run in green.
 
 The HTML report has special support for the "generated" functions in
-Numpy.  Each run line of code also contains a number in square
+NumPy.  Each run line of code also contains a number in square
 brackets indicating the number of different generated functions the
 line was run in.  Hovering the mouse over the line will display a list
 of the versions of the function in which the line was run.  These
@@ -112,6 +112,6 @@ Caveats
 The coverage results occasionally misses lines that clearly must have
 been run.  This usually can be traced back to the compiler optimizer
 removing lines because they are tautologically impossible or to
-combine lines together.  Compiling Numpy without optimizations helps,
+combine lines together.  Compiling NumPy without optimizations helps,
 but not completely.  Even despite this flaw, this tool is still
 helpful in identifying large missed blocks or functions.

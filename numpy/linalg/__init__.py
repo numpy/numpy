@@ -50,6 +50,6 @@ from .info import __doc__
 
 from .linalg import *
 
-from numpy.testing.nosetester import _numpy_tester
+from numpy.testing import _numpy_tester
 test = _numpy_tester().test
 bench = _numpy_tester().bench

@@ -284,7 +284,6 @@ import warnings
 from io import BytesIO
 
 import numpy as np
-from numpy.compat import asbytes, asbytes_nested, sixu
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
     dec, SkipTest
@@ -545,26 +544,15 @@ def test_pickle_python2_python3():
         import __builtin__
         xrange = __builtin__.xrange
 
-    expected = np.array([None, xrange, sixu('\u512a\u826f'),
-                         asbytes('\xe4\xb8\x8d\xe8\x89\xaf')],
+    expected = np.array([None, xrange, u'\u512a\u826f',
+                         b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
     for fname in ['py2-objarr.npy', 'py2-objarr.npz',
                   'py3-objarr.npy', 'py3-objarr.npz']:
         path = os.path.join(data_dir, fname)
 
-        if (fname.endswith('.npz') and sys.version_info[0] == 2 and
-                sys.version_info[1] < 7):
-            # Reading object arrays directly from zipfile appears to fail
-            # on Py2.6, see cfae0143b4
-            continue
-
         for encoding in ['bytes', 'latin1']:
-            if (sys.version_info[0] >= 3 and sys.version_info[1] < 4 and
-                    encoding == 'bytes'):
-                # The bytes encoding is available starting from Python 3.4
-                continue
-
             data_f = np.load(path, encoding=encoding)
             if fname.endswith('.npz'):
                 data = data_f['x']
@@ -627,6 +615,11 @@ def test_version_2_0():
         format.write_array(f, d)
         assert_(w[0].category is UserWarning)
 
+    # check alignment of data portion
+    f.seek(0)
+    header = f.readline()
+    assert_(len(header) % format.ARRAY_ALIGN == 0)
+
     f.seek(0)
     n = format.read_array(f)
     assert_array_equal(d, n)
@@ -635,6 +628,7 @@ def test_version_2_0():
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
+@dec.slow
 def test_version_2_0_memmap():
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
@@ -692,23 +686,23 @@ def test_write_version():
             raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
-bad_version_magic = asbytes_nested([
-    '\x93NUMPY\x01\x01',
-    '\x93NUMPY\x00\x00',
-    '\x93NUMPY\x00\x01',
-    '\x93NUMPY\x02\x00',
-    '\x93NUMPY\x02\x02',
-    '\x93NUMPY\xff\xff',
-])
-malformed_magic = asbytes_nested([
-    '\x92NUMPY\x01\x00',
-    '\x00NUMPY\x01\x00',
-    '\x93numpy\x01\x00',
-    '\x93MATLB\x01\x00',
-    '\x93NUMPY\x01',
-    '\x93NUMPY',
-    '',
-])
+bad_version_magic = [
+    b'\x93NUMPY\x01\x01',
+    b'\x93NUMPY\x00\x00',
+    b'\x93NUMPY\x00\x01',
+    b'\x93NUMPY\x02\x00',
+    b'\x93NUMPY\x02\x02',
+    b'\x93NUMPY\xff\xff',
+]
+malformed_magic = [
+    b'\x92NUMPY\x01\x00',
+    b'\x00NUMPY\x01\x00',
+    b'\x93numpy\x01\x00',
+    b'\x93MATLB\x01\x00',
+    b'\x93NUMPY\x01',
+    b'\x93NUMPY',
+    b'',
+]
 
 def test_read_magic():
     s1 = BytesIO()
@@ -769,6 +763,7 @@ def test_read_array_header_1_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_1_0(s)
 
+    assert_(s.tell() % format.ARRAY_ALIGN == 0)
     assert_((shape, fortran, dtype) == ((3, 6), False, float))
 
 
@@ -781,6 +776,7 @@ def test_read_array_header_2_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_2_0(s)
 
+    assert_(s.tell() % format.ARRAY_ALIGN == 0)
     assert_((shape, fortran, dtype) == ((3, 6), False, float))
 
 
@@ -788,11 +784,11 @@ def test_bad_header():
     # header of length less than 2 should fail
     s = BytesIO()
     assert_raises(ValueError, format.read_array_header_1_0, s)
-    s = BytesIO(asbytes('1'))
+    s = BytesIO(b'1')
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # header shorter than indicated size should fail
-    s = BytesIO(asbytes('\x01\x00'))
+    s = BytesIO(b'\x01\x00')
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
@@ -822,7 +818,7 @@ def test_large_file_support():
         # avoid actually writing 5GB
         import subprocess as sp
         sp.check_call(["truncate", "-s", "5368709120", tf_name])
-    except:
+    except Exception:
         raise SkipTest("Could not create 5GB large file")
     # write a small array to the end
     with open(tf_name, "wb") as f:
@@ -834,6 +830,27 @@ def test_large_file_support():
         f.seek(5368709120)
         r = np.load(f)
     assert_array_equal(r, d)
+
+
+@dec.slow
+@dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
+def test_large_archive():
+    # Regression test for product of saving arrays with dimensions of array
+    # having a product that doesn't fit in int32.  See gh-7598 for details.
+    try:
+        a = np.empty((2**30, 2), dtype=np.uint8)
+    except MemoryError:
+        raise SkipTest("Could not create large file")
+
+    fname = os.path.join(tempdir, "large_archive")
+
+    with open(fname, "wb") as f:
+        np.savez(f, arr=a)
+
+    with open(fname, "rb") as f:
+        new_a = np.load(f)["arr"]
+
+    assert_(a.shape == new_a.shape)
 
 
 if __name__ == "__main__":

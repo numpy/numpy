@@ -95,7 +95,7 @@ else:
 
         But there are cross-platform considerations, such as library file extensions,
         plus the fact Windows will just load the first library it finds with that name.  
-        Numpy supplies the load_library function as a convenience.
+        NumPy supplies the load_library function as a convenience.
 
         Parameters
         ----------
@@ -119,7 +119,7 @@ else:
         if ctypes.__version__ < '1.0.1':
             import warnings
             warnings.warn("All features of ctypes interface may not work " \
-                          "with ctypes < 1.0.1")
+                          "with ctypes < 1.0.1", stacklevel=2)
 
         ext = os.path.splitext(libname)[1]
         if not ext:
@@ -164,7 +164,7 @@ def _num_fromflags(flaglist):
     return num
 
 _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
-              'OWNDATA', 'UPDATEIFCOPY']
+              'OWNDATA', 'UPDATEIFCOPY', 'WRITEBACKIFCOPY']
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
@@ -178,7 +178,7 @@ class _ndptr(_ndptr_base):
 
     def _check_retval_(self):
         """This method is called when this class is used as the .restype
-        asttribute for a shared-library function.   It constructs a numpy
+        attribute for a shared-library function.   It constructs a numpy
         array from a void pointer."""
         return array(self)
 
@@ -244,6 +244,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
           - OWNDATA / O
           - WRITEABLE / W
           - ALIGNED / A
+          - WRITEBACKIFCOPY / X
           - UPDATEIFCOPY / U
 
     Returns
@@ -283,7 +284,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         if num is None:
             try:
                 flags = [x.strip().upper() for x in flags]
-            except:
+            except Exception:
                 raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
     try:
@@ -315,7 +316,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[dtype] = klass
+    _pointer_type_cache[(dtype, shape, ndim, num)] = klass
     return klass
 
 if ctypes is not None:

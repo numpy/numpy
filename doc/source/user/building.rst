@@ -4,14 +4,14 @@ Building from source
 ====================
 
 A general overview of building NumPy from source is given here, with detailed
-instructions for specific platforms given seperately.
+instructions for specific platforms given separately.
 
 Prerequisites
 -------------
 
 Building NumPy requires the following software installed:
 
-1) Python 2.6.x, 2.7.x, 3.2.x or newer
+1) Python 2.7.x, 3.4.x or newer
 
    On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
 
@@ -32,7 +32,7 @@ Building NumPy requires the following software installed:
    FORTRAN 77 compiler installed.
 
    Note that NumPy is developed mainly using GNU compilers. Compilers from
-   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Porland,
+   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Portland,
    Lahey, HP, IBM, Microsoft are only supported in the form of community
    feedback, and may not work out of the box. GCC 4.x (and later) compilers
    are recommended.
@@ -47,8 +47,8 @@ Building NumPy requires the following software installed:
 
 4) Cython
 
-   To build development versions of Numpy, you'll need a recent version of
-   Cython.  Released Numpy sources on PyPi include the C files generated from
+   To build development versions of NumPy, you'll need a recent version of
+   Cython.  Released NumPy sources on PyPi include the C files generated from
    Cython code, so for released versions having Cython installed isn't needed.
 
 Basic Installation
@@ -114,14 +114,14 @@ How to check the ABI of blas/lapack/atlas
 
 One relatively simple and reliable way to check for the compiler used to build
 a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a a dependency, gfortran
+means that g77 has been used. If libgfortran.so is a dependency, gfortran
 has been used. If both are dependencies, this means both have been used, which
 is almost always a very bad idea.
 
 Disabling ATLAS and other accelerated libraries
 -----------------------------------------------
 
-Usage of ATLAS and other accelerated libraries in Numpy can be disabled
+Usage of ATLAS and other accelerated libraries in NumPy can be disabled
 via::
 
     BLAS=None LAPACK=None ATLAS=None python setup.py build
@@ -137,7 +137,7 @@ Additional compiler flags can be supplied by setting the ``OPT``,
 Building with ATLAS support
 ---------------------------
 
-Ubuntu 
+Ubuntu
 ~~~~~~
 
 You can install the necessary package for optimized ATLAS with this command::

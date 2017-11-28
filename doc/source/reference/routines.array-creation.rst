@@ -80,6 +80,7 @@ Numerical ranges
    arange
    linspace
    logspace
+   geomspace
    meshgrid
    mgrid
    ogrid

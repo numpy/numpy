@@ -99,7 +99,7 @@ Attributes and properties of masked arrays
       ...         mask=[(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
       ...        dtype=[('a', int), ('b', int)])
       >>> x.recordmask
-      array([False, False,  True, False, False], dtype=bool)
+      array([False, False,  True, False, False])
 
 
 .. attribute:: MaskedArray.fill_value
@@ -417,8 +417,6 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    MaskedArray.__getitem__
    MaskedArray.__setitem__
    MaskedArray.__delitem__
-   MaskedArray.__getslice__
-   MaskedArray.__setslice__
    MaskedArray.__contains__
 
 

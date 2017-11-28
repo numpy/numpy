@@ -65,7 +65,7 @@ inefficient as a new temporary array is created after the first index
 that is subsequently indexed by 2.
 
 Note to those used to IDL or Fortran memory order as it relates to
-indexing.  Numpy uses C-order indexing. That means that the last
+indexing.  NumPy uses C-order indexing. That means that the last
 index usually represents the most rapidly changing memory location,
 unlike Fortran or IDL, where the first index represents the most
 rapidly changing location in memory. This difference represents a
@@ -111,7 +111,7 @@ specific function.
 Index arrays
 ============
 
-Numpy arrays may be indexed with other arrays (or any other sequence-
+NumPy arrays may be indexed with other arrays (or any other sequence-
 like object that can be converted to an array, such as lists, with the
 exception of tuples; see the end of this document for why this is). The
 use of index arrays ranges from simple, straightforward cases to
@@ -158,8 +158,8 @@ Indexing Multi-dimensional arrays
 
 Things become more complex when multidimensional arrays are indexed,
 particularly with multidimensional index arrays. These tend to be
-more unusal uses, but theyare permitted, and they are useful for some
-problems. We'll  start with thesimplest multidimensional case (using
+more unusual uses, but they are permitted, and they are useful for some
+problems. We'll  start with the simplest multidimensional case (using
 the array y from the previous examples): ::
 
  >>> y[np.array([0,2,4]), np.array([0,1,2])]
@@ -200,8 +200,8 @@ one index array with y: ::
 
 What results is the construction of a new array where each value of
 the index array selects one row from the array being indexed and the
-resultant array has the resulting shape (size of row, number index
-elements).
+resultant array has the resulting shape (number of index elements,
+size of row).
 
 An example of where this may be useful is for a color lookup table
 where we want to map the values of an image into RGB triples for
@@ -211,7 +211,7 @@ such an array with an image with shape (ny, nx) with dtype=np.uint8
 lookup table) will result in an array of shape (ny, nx, 3) where a
 triple of RGB values is associated with each pixel location.
 
-In general, the shape of the resulant array will be the concatenation
+In general, the shape of the resultant array will be the concatenation
 of the shape of the index array (or the shape that all the index arrays
 were broadcast to) with the shape of any unused dimensions (those not
 indexed) in the array being indexed.
@@ -240,7 +240,7 @@ The result will be multidimensional if y has more dimensions than b.
 For example: ::
 
  >>> b[:,5] # use a 1-D boolean whose first dim agrees with the first dim of y
- array([False, False, False,  True,  True], dtype=bool)
+ array([False, False, False,  True,  True])
  >>> y[b[:,5]]
  array([[21, 22, 23, 24, 25, 26, 27],
         [28, 29, 30, 31, 32, 33, 34]])
@@ -422,7 +422,7 @@ object: ::
         [37, 40, 43],
         [46, 49, 52]])
 
-For this reason it is possible to use the output from the np.where()
+For this reason it is possible to use the output from the np.nonzero()
 function directly as an index since it always returns a tuple of index
 arrays.
 

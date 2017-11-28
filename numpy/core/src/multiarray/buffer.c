@@ -387,7 +387,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             break;
         }
         case NPY_UNICODE: {
-            /* Numpy Unicode is always 4-byte */
+            /* NumPy Unicode is always 4-byte */
             char buf[128];
             assert(descr->elsize % 4 == 0);
             PyOS_snprintf(buf, sizeof(buf), "%dw", descr->elsize / 4);

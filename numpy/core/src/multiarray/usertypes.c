@@ -11,7 +11,7 @@
   by
 
   Travis Oliphant,  oliphant@ee.byu.edu
-  Brigham Young Univeristy
+  Brigham Young University
 
 
 maintainer email:  oliphant.travis@ieee.org
@@ -146,7 +146,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     }
     typenum = NPY_USERDEF + NPY_NUMUSERTYPES;
     descr->type_num = typenum;
-    if (descr->elsize == 0) {
+    if (PyDataType_ISUNSIZED(descr)) {
         PyErr_SetString(PyExc_ValueError, "cannot register a" \
                         "flexible data-type");
         return -1;

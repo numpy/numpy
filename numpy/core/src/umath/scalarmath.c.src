@@ -23,6 +23,9 @@
 #include "numpy/halffloat.h"
 #include "templ_common.h"
 
+#include "binop_override.h"
+#include "npy_longdouble.h"
+
 /* Basic operations:
  *
  *  BINARY:
@@ -175,6 +178,7 @@ static void
 }
 
 #define @name@_ctype_floor_divide @name@_ctype_divide
+
 static void
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
     if (a == 0 || b == 0) {
@@ -219,27 +223,27 @@ static void
  */
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
-    @type@ temp, ix, mult;
-    /* code from Python's intobject.c, with overflow checking removed. */
-    temp = a;
-    ix = 1;
-    while (b > 0) {
-        if (b & 1) {
-            @name@_ctype_multiply(ix, temp, &mult);
-            ix = mult;
-            if (temp == 0) {
-                break;
-            }
-        }
-        b >>= 1;        /* Shift exponent down by 1 bit */
-        if (b==0) {
-            break;
-        }
-        /* Square the value of temp */
-        @name@_ctype_multiply(temp, temp, &mult);
-        temp = mult;
+    @type@ tmp;
+
+    if (b == 0) {
+        *out = 1;
+        return;
     }
-    *out = ix;
+    if (a == 1) {
+        *out = 1;
+        return;
+    }
+
+    tmp = b & 1 ? a : 1;
+    b >>= 1;
+    while (b > 0) {
+        a *= a;
+        if (b & 1) {
+            tmp *= a;
+        }
+        b >>= 1;
+    }
+    *out = tmp;
 }
 /**end repeat**/
 
@@ -268,20 +272,40 @@ static void
 /**begin repeat
  * #name = float, double, longdouble#
  * #type = npy_float, npy_double, npy_longdouble#
+ * #c = f, , l#
  */
-static @type@ (*_basic_@name@_floor)(@type@);
 static @type@ (*_basic_@name@_sqrt)(@type@);
 static @type@ (*_basic_@name@_fmod)(@type@, @type@);
+
 #define @name@_ctype_add(a, b, outp) *(outp) = (a) + (b)
 #define @name@_ctype_subtract(a, b, outp) *(outp) = (a) - (b)
 #define @name@_ctype_multiply(a, b, outp) *(outp) = (a) * (b)
 #define @name@_ctype_divide(a, b, outp) *(outp) = (a) / (b)
 #define @name@_ctype_true_divide @name@_ctype_divide
-#define @name@_ctype_floor_divide(a, b, outp)   \
-    *(outp) = _basic_@name@_floor((a) / (b))
+
+
+static void
+@name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
+    @type@ mod;
+
+    *out = npy_divmod@c@(a, b, &mod);
+}
+
+
+static void
+@name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
+    npy_divmod@c@(a, b, out);
+}
+
+
+static void
+@name@_ctype_divmod(@type@ a, @type@ b, @type@ *out1, @type@ *out2) {
+    *out1 = npy_divmod@c@(a, b, out2);
+}
+
+
 /**end repeat**/
 
-static npy_half (*_basic_half_floor)(npy_half);
 static npy_half (*_basic_half_sqrt)(npy_half);
 static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 
@@ -294,9 +318,26 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 #define half_ctype_divide(a, b, outp) *(outp) = \
         npy_float_to_half(npy_half_to_float(a) / npy_half_to_float(b))
 #define half_ctype_true_divide half_ctype_divide
-#define half_ctype_floor_divide(a, b, outp)   \
-        *(outp) = npy_float_to_half(_basic_float_floor(npy_half_to_float(a) / \
-        npy_half_to_float(b)))
+
+
+static void
+half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out) {
+    npy_half mod;
+
+    *out = npy_half_divmod(a, b, &mod);
+}
+
+
+static void
+half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
+    npy_half_divmod(a, b, out);
+}
+
+
+static void
+half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2) {
+    *out1 = npy_half_divmod(a, b, out2);
+}
 
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
@@ -344,44 +385,30 @@ static npy_half (*_basic_half_fmod)(npy_half, npy_half);
         (outp)->imag = (in1i*rat - in1r)*scl;                       \
     }                                                               \
     } while(0)
+
 #define @name@_ctype_true_divide @name@_ctype_divide
+
 #define @name@_ctype_floor_divide(a, b, outp) do {      \
-    (outp)->real = _basic_@rname@_floor                 \
-    (((a).real*(b).real + (a).imag*(b).imag) /          \
-     ((b).real*(b).real + (b).imag*(b).imag));          \
+    @rname@_ctype_floor_divide(                         \
+        ((a).real*(b).real + (a).imag*(b).imag),        \
+        ((b).real*(b).real + (b).imag*(b).imag),        \
+        &((outp)->real));                               \
     (outp)->imag = 0;                                   \
     } while(0)
 /**end repeat**/
 
-/**begin repeat
- * #name = float, double, longdouble#
- * #type = npy_float, npy_double, npy_longdouble#
- */
-static void
-@name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    @type@ tmp = a/b;
-    *out = b * (tmp - _basic_@name@_floor(tmp));
-}
-/**end repeat**/
-
-static void
-half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
-    float tmp, fa = npy_half_to_float(a), fb = npy_half_to_float(b);
-    float_ctype_remainder(fa, fb, &tmp);
-    *out = npy_float_to_half(tmp);
-}
 
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong, half, float, double, longdouble,
- *         cfloat, cdouble, clongdouble#
+ *         longlong, ulonglong, cfloat, cdouble, clongdouble#
  */
 #define @name@_ctype_divmod(a, b, out, out2) {  \
     @name@_ctype_floor_divide(a, b, out);       \
     @name@_ctype_remainder(a, b, out2);         \
     }
 /**end repeat**/
+
 
 /**begin repeat
  * #name = float, double, longdouble#
@@ -524,13 +551,13 @@ half_ctype_absolute(npy_half a, npy_half *out)
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
- * #rname = float, double, longdouble#
  * #rtype = npy_float, npy_double, npy_longdouble#
+ * #c = f,,l#
  */
 static void
 @name@_ctype_absolute(@type@ a, @rtype@ *out)
 {
-    *out = _basic_@rname@_sqrt(a.real*a.real + a.imag*a.imag);
+    *out = npy_cabs@c@(a);
 }
 /**end repeat**/
 
@@ -803,6 +830,8 @@ static PyObject *
     int first;
 #endif
 
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -912,6 +941,9 @@ static PyObject *
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
  *
+ * #oname = float*4, double*6, half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble#
+ *
  * #otype = npy_float*4, npy_double*6, npy_half, npy_float,
  *          npy_double, npy_longdouble,
  *          npy_cfloat, npy_cdouble, npy_clongdouble#
@@ -929,7 +961,7 @@ static PyObject *
 
 #if @cmplx@
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -937,25 +969,34 @@ static PyObject *
     int first;
     @type@ out = {@zero@, @zero@};
 
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -1002,34 +1043,39 @@ static PyObject *
 #elif @isint@
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
-    @type@ arg1, arg2;
-    int retstatus;
-    int first;
-    @type@ out = @zero@;
-    @otype@ out1 = @zero@;
+    @type@ arg1, arg2, out;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -1038,49 +1084,18 @@ static PyObject *
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
      */
-    if (@iszero@(arg2)) {
-        out1 = out = @one@;
-    }
-    else if (arg2 < 0) {
-        @name@_ctype_power(arg1, -arg2, &out);
-        out1 = (@otype@) (1.0 / out);
-    }
-    else {
-        @name@_ctype_power(arg1, arg2, &out);
-    }
-
-    /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
-    if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
-            return NULL;
-        }
-        first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
-    }
-
     if (arg2 < 0) {
-        ret = PyArrayScalar_New(@OName@);
-        if (ret == NULL) {
-            return NULL;
-        }
-        PyArrayScalar_ASSIGN(ret, @OName@, out1);
+        PyErr_SetString(PyExc_ValueError,
+                "Integers to negative integer powers are not allowed.");
+        return NULL;
     }
-    else {
-        ret = PyArrayScalar_New(@Name@);
-        if (ret == NULL) {
-            return NULL;
-        }
-        PyArrayScalar_ASSIGN(ret, @Name@, out);
+    @name@_ctype_power(arg1, arg2, &out);
+
+    ret = PyArrayScalar_New(@Name@);
+    if (ret == NULL) {
+        return NULL;
     }
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
 
     return ret;
 }
@@ -1088,7 +1103,7 @@ static PyObject *
 #else
 
 static PyObject *
-@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+@name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
     PyObject *ret;
     @type@ arg1, arg2;
@@ -1096,25 +1111,35 @@ static PyObject *
     int first;
 
     @type@ out = @zero@;
+
+    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
         case -1:
             /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
         case -2:
             /* use default handling */
             if (PyErr_Occurred()) {
                 return NULL;
             }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
         case -3:
+        default:
             /*
              * special case for longdouble and clongdouble
              * because they have a recursive getitem in their dtype
              */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
+    }
+
+    if (modulo != Py_None) {
+        /* modular exponentiation is not implemented (gh-8804) */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
 
     PyUFunc_clearfperr();
@@ -1367,45 +1392,42 @@ emit_complexwarning(void)
  *
  * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
  * #sign = (signed, unsigned)*5, , , , , , , #
- * #unsigntyp = 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0*7#
- * #ctype = long*8, PY_LONG_LONG*2, double*7#
+ * #ctype = long*8, PY_LONG_LONG*2,
+ *          double*3, npy_longdouble, double*2, npy_longdouble#
  * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
- * #realtyp = 0*10, 1*7#
  * #func = (PyLong_FromLong, PyLong_FromUnsignedLong)*4,
  *         PyLong_FromLongLong, PyLong_FromUnsignedLongLong,
- *         PyLong_FromDouble*7#
+ *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
+ *         PyLong_FromDouble*2, npy_longdouble_to_PyLong#
  */
 static PyObject *
 @name@_int(PyObject *obj)
 {
+    PyObject *long_result;
+
 #if @cmplx@
-    @sign@ @ctype@ x= @to_ctype@(PyArrayScalar_VAL(obj, @Name@).real);
-    int ret;
+    @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@).real);
 #else
-    @sign@ @ctype@ x= @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
-#endif
-
-#if @realtyp@
-    double ix;
-    modf(x, &ix);
-    x = ix;
+    @sign@ @ctype@ x = @to_ctype@(PyArrayScalar_VAL(obj, @Name@));
 #endif
 
 #if @cmplx@
-    ret = emit_complexwarning();
-    if (ret < 0) {
+    if (emit_complexwarning() < 0) {
         return NULL;
     }
 #endif
 
-#if @unsigntyp@
-    if(x < LONG_MAX)
-        return PyInt_FromLong(x);
-#else
-    if(LONG_MIN < x && x < LONG_MAX)
-        return PyInt_FromLong(x);
+    long_result = @func@(x);
+    if (long_result == NULL){
+        return NULL;
+    }
+
+#ifndef NPY_PY3K
+    /* Invoke long.__int__ to try to downcast */
+    long_result = Py_TYPE(long_result)->tp_as_number->nb_int(long_result);
 #endif
-    return @func@(x);
+
+    return long_result;
 }
 /**end repeat**/
 
@@ -1423,18 +1445,18 @@ static PyObject *
  * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )*2#
  * #which = long*17, float*17#
  * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
- *         PyLong_FromDouble*7, PyFloat_FromDouble*17#
+ *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
+ *         PyLong_FromDouble*2, npy_longdouble_to_PyLong,
+ *         PyFloat_FromDouble*17#
  */
 static NPY_INLINE PyObject *
 @name@_@which@(PyObject *obj)
 {
 #if @cmplx@
-    int ret;
-    ret = emit_complexwarning();
-    if (ret < 0) {
+    if (emit_complexwarning() < 0) {
         return NULL;
     }
-    return @func@(@to_ctype@((PyArrayScalar_VAL(obj, @Name@)).real));
+    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@).real));
 #else
     return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
 #endif
@@ -1492,6 +1514,8 @@ static PyObject*
 {
     npy_@name@ arg1, arg2;
     int out=0;
+
+    RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
     switch(_@name@_convert2_to_ctypes(self, &arg1, other, &arg2)) {
     case 0:
@@ -1665,25 +1689,6 @@ get_functions(PyObject * mm)
     _basic_clongdouble_pow = funcdata[j + 5];
     Py_DECREF(obj);
 
-    /* Get the floor functions */
-    obj = PyObject_GetAttrString(mm, "floor");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    i = 0;
-    j = 0;
-    while(signatures[i] != NPY_FLOAT) {
-        i += 2;
-        j++;
-    }
-    _basic_half_floor = funcdata[j - 1];
-    _basic_float_floor = funcdata[j];
-    _basic_double_floor = funcdata[j + 1];
-    _basic_longdouble_floor = funcdata[j + 2];
-    Py_DECREF(obj);
-
     /* Get the sqrt functions */
     obj = PyObject_GetAttrString(mm, "sqrt");
     if (obj == NULL) {
@@ -1696,9 +1701,10 @@ get_functions(PyObject * mm)
      * generate_umath.py, the first to go into FLOAT/DOUBLE_sqrt
      * they have the same signature as the scalar variants so we need to skip
      * over them
+     * also skip float16 copy placed before
      */
-    i = 4;
-    j = 2;
+    i = 6;
+    j = 3;
     while (signatures[i] != NPY_FLOAT) {
         i += 2; j++;
     }

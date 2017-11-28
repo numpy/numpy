@@ -1,13 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
+import numpy as np
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal
+    run_module_suite, assert_, assert_equal, assert_array_equal, assert_warns
     )
 
 
-class TestUfunclike(TestCase):
+class TestUfunclike(object):
 
     def test_isposinf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
@@ -60,6 +61,36 @@ class TestUfunclike(TestCase):
         assert_array_equal(f, nx.array([1, -1]))
         assert_(isinstance(f, MyArray))
         assert_equal(f.metadata, 'foo')
+
+        # check 0d arrays don't decay to scalars
+        m0d = m[0,...]
+        m0d.metadata = 'bar'
+        f0d = ufl.fix(m0d)
+        assert_(isinstance(f0d, MyArray))
+        assert_equal(f0d.metadata, 'bar')
+
+    def test_deprecated(self):
+        # NumPy 1.13.0, 2017-04-26
+        assert_warns(DeprecationWarning, ufl.fix, [1, 2], y=nx.empty(2))
+        assert_warns(DeprecationWarning, ufl.isposinf, [1, 2], y=nx.empty(2))
+        assert_warns(DeprecationWarning, ufl.isneginf, [1, 2], y=nx.empty(2))
+
+    def test_scalar(self):
+        x = np.inf
+        actual = np.isposinf(x)
+        expected = np.True_
+        assert_equal(actual, expected)
+        assert_equal(type(actual), type(expected))
+
+        x = -3.4
+        actual = np.fix(x)
+        expected = np.float64(-3.0)
+        assert_equal(actual, expected)
+        assert_equal(type(actual), type(expected))
+
+        out = np.array(0.0)
+        actual = np.fix(x, out=out)
+        assert_(actual is out)
 
 if __name__ == "__main__":
     run_module_suite()

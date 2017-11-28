@@ -4,10 +4,13 @@ import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, zeros, outer, concatenate, isscalar, array, asanyarray
+    asarray, zeros, outer, concatenate, array, asanyarray
     )
-from numpy.core.fromnumeric import product, reshape
+from numpy.core.fromnumeric import product, reshape, transpose
+from numpy.core.multiarray import normalize_axis_index
 from numpy.core import vstack, atleast_3d
+from numpy.lib.index_tricks import ndindex
+from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
 
 __all__ = [
@@ -24,18 +27,36 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     Execute `func1d(a, *args)` where `func1d` operates on 1-D arrays and `a`
     is a 1-D slice of `arr` along `axis`.
 
+    This is equivalent to (but faster than) the following use of `ndindex` and
+    `s_`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of indices::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        for ii in ndindex(Ni):
+            for kk in ndindex(Nk):
+                f = func1d(arr[ii + s_[:,] + kk])
+                Nj = f.shape
+                for jj in ndindex(Nj):
+                    out[ii + jj + kk] = f[jj]
+
+    Equivalently, eliminating the inner loop, this can be expressed as::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        for ii in ndindex(Ni):
+            for kk in ndindex(Nk):
+                out[ii + s_[...,] + kk] = func1d(arr[ii + s_[:,] + kk])
+
     Parameters
     ----------
-    func1d : function
+    func1d : function (M,) -> (Nj...)
         This function should accept 1-D arrays. It is applied to 1-D
         slices of `arr` along the specified axis.
     axis : integer
         Axis along which `arr` is sliced.
-    arr : ndarray
+    arr : ndarray (Ni..., M, Nk...)
         Input array.
     args : any
         Additional arguments to `func1d`.
-    kwargs: any
+    kwargs : any
         Additional named arguments to `func1d`.
 
         .. versionadded:: 1.9.0
@@ -43,11 +64,12 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     Returns
     -------
-    apply_along_axis : ndarray
-        The output array. The shape of `outarr` is identical to the shape of
-        `arr`, except along the `axis` dimension, where the length of `outarr`
-        is equal to the size of the return value of `func1d`.  If `func1d`
-        returns a scalar `outarr` will have one fewer dimensions than `arr`.
+    out : ndarray  (Ni..., Nj..., Nk...)
+        The output array. The shape of `out` is identical to the shape of
+        `arr`, except along the `axis` dimension. This axis is removed, and
+        replaced with new dimensions equal to the shape of the return value
+        of `func1d`. So if `func1d` returns a scalar `out` will have one
+        fewer dimensions than `arr`.
 
     See Also
     --------
@@ -64,7 +86,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     >>> np.apply_along_axis(my_func, 1, b)
     array([ 2.,  5.,  8.])
 
-    For a function that doesn't return a scalar, the number of dimensions in
+    For a function that returns a 1D array, the number of dimensions in
     `outarr` is the same as `arr`.
 
     >>> b = np.array([[8,1,7], [4,3,9], [5,2,6]])
@@ -73,62 +95,76 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
            [3, 4, 9],
            [2, 5, 6]])
 
+    For a function that returns a higher dimensional array, those dimensions
+    are inserted in place of the `axis` dimension.
+
+    >>> b = np.array([[1,2,3], [4,5,6], [7,8,9]])
+    >>> np.apply_along_axis(np.diag, -1, b)
+    array([[[1, 0, 0],
+            [0, 2, 0],
+            [0, 0, 3]],
+           [[4, 0, 0],
+            [0, 5, 0],
+            [0, 0, 6]],
+           [[7, 0, 0],
+            [0, 8, 0],
+            [0, 0, 9]]])
     """
-    arr = asarray(arr)
+    # handle negative axes
+    arr = asanyarray(arr)
     nd = arr.ndim
-    if axis < 0:
-        axis += nd
-    if (axis >= nd):
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-            % (axis, nd))
-    ind = [0]*(nd-1)
-    i = zeros(nd, 'O')
-    indlist = list(range(nd))
-    indlist.remove(axis)
-    i[axis] = slice(None, None)
-    outshape = asarray(arr.shape).take(indlist)
-    i.put(indlist, ind)
-    res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
-    #  if res is a number, then we have a smaller output array
-    if isscalar(res):
-        outarr = zeros(outshape, asarray(res).dtype)
-        outarr[tuple(ind)] = res
-        Ntot = product(outshape)
-        k = 1
-        while k < Ntot:
-            # increment the index
-            ind[-1] += 1
-            n = -1
-            while (ind[n] >= outshape[n]) and (n > (1-nd)):
-                ind[n-1] += 1
-                ind[n] = 0
-                n -= 1
-            i.put(indlist, ind)
-            res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
-            outarr[tuple(ind)] = res
-            k += 1
-        return outarr
+    axis = normalize_axis_index(axis, nd)
+
+    # arr, with the iteration axis at the end
+    in_dims = list(range(nd))
+    inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis+1:] + [axis])
+
+    # compute indices for the iteration axes, and append a trailing ellipsis to
+    # prevent 0d arrays decaying to scalars, which fixes gh-8642
+    inds = ndindex(inarr_view.shape[:-1])
+    inds = (ind + (Ellipsis,) for ind in inds)
+
+    # invoke the function on the first item
+    try:
+        ind0 = next(inds)
+    except StopIteration:
+        raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0')
+    res = asanyarray(func1d(inarr_view[ind0], *args, **kwargs))
+
+    # build a buffer for storing evaluations of func1d.
+    # remove the requested axis, and add the new ones on the end.
+    # laid out so that each write is contiguous.
+    # for a tuple index inds, buff[inds] = func1d(inarr_view[inds])
+    buff = zeros(inarr_view.shape[:-1] + res.shape, res.dtype)
+
+    # permutation of axes such that out = buff.transpose(buff_permute)
+    buff_dims = list(range(buff.ndim))
+    buff_permute = (
+        buff_dims[0 : axis] +
+        buff_dims[buff.ndim-res.ndim : buff.ndim] +
+        buff_dims[axis : buff.ndim-res.ndim]
+    )
+
+    # matrices have a nasty __array_prepare__ and __array_wrap__
+    if not isinstance(res, matrix):
+        buff = res.__array_prepare__(buff)
+
+    # save the first result, then compute and save all remaining results
+    buff[ind0] = res
+    for ind in inds:
+        buff[ind] = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
+
+    if not isinstance(res, matrix):
+        # wrap the array, to preserve subclasses
+        buff = res.__array_wrap__(buff)
+
+        # finally, rotate the inserted axes back to where they belong
+        return transpose(buff, buff_permute)
+
     else:
-        Ntot = product(outshape)
-        holdshape = outshape
-        outshape = list(arr.shape)
-        outshape[axis] = len(res)
-        outarr = zeros(outshape, asarray(res).dtype)
-        outarr[tuple(i.tolist())] = res
-        k = 1
-        while k < Ntot:
-            # increment the index
-            ind[-1] += 1
-            n = -1
-            while (ind[n] >= holdshape[n]) and (n > (1-nd)):
-                ind[n-1] += 1
-                ind[n] = 0
-                n -= 1
-            i.put(indlist, ind)
-            res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
-            outarr[tuple(i.tolist())] = res
-            k += 1
-        return outarr
+        # matrices have to be transposed first, because they collapse dimensions!
+        out_arr = transpose(buff, buff_permute)
+        return res.__array_wrap__(out_arr)
 
 
 def apply_over_axes(func, a, axes):
@@ -166,7 +202,7 @@ def apply_over_axes(func, a, axes):
     Notes
     ------
     This function is equivalent to tuple axis arguments to reorderable ufuncs
-    with keepdims=True. Tuple axis arguments to ufuncs have been availabe since
+    with keepdims=True. Tuple axis arguments to ufuncs have been available since
     version 1.7.0.
 
     Examples
@@ -220,14 +256,20 @@ def expand_dims(a, axis):
     """
     Expand the shape of an array.
 
-    Insert a new axis, corresponding to a given position in the array shape.
+    Insert a new axis that will appear at the `axis` position in the expanded
+    array shape.
+
+    .. note:: Previous to NumPy 1.13.0, neither ``axis < -a.ndim - 1`` nor
+       ``axis > a.ndim`` raised errors or put the new axis where documented.
+       Those axis values are now deprecated and will raise an AxisError in the
+       future.
 
     Parameters
     ----------
     a : array_like
         Input array.
     axis : int
-        Position (amongst axes) where new axis is to be inserted.
+        Position in the expanded axes where the new axis is placed.
 
     Returns
     -------
@@ -237,6 +279,8 @@ def expand_dims(a, axis):
 
     See Also
     --------
+    squeeze : The inverse operation, removing singleton dimensions
+    reshape : Insert, remove, and combine dimensions, and resize existing ones
     doc.indexing, atleast_1d, atleast_2d, atleast_3d
 
     Examples
@@ -253,7 +297,7 @@ def expand_dims(a, axis):
     >>> y.shape
     (1, 2)
 
-    >>> y = np.expand_dims(x, axis=1)  # Equivalent to x[:,newaxis]
+    >>> y = np.expand_dims(x, axis=1)  # Equivalent to x[:,np.newaxis]
     >>> y
     array([[1],
            [2]])
@@ -269,8 +313,16 @@ def expand_dims(a, axis):
     """
     a = asarray(a)
     shape = a.shape
+    if axis > a.ndim or axis < -a.ndim - 1:
+        # 2017-05-17, 1.13.0
+        warnings.warn("Both axis > a.ndim and axis < -a.ndim - 1 are "
+                      "deprecated and will raise an AxisError in the future.",
+                      DeprecationWarning, stacklevel=2)
+    # When the deprecation period expires, delete this if block,
     if axis < 0:
-        axis = axis + len(shape) + 1
+        axis = axis + a.ndim + 1
+    # and uncomment the following line.
+    # axis = normalize_axis_index(axis, a.ndim + 1)
     return a.reshape(shape[:axis] + (1,) + shape[axis:])
 
 row_stack = vstack
@@ -296,7 +348,7 @@ def column_stack(tup):
 
     See Also
     --------
-    hstack, vstack, concatenate
+    stack, hstack, vstack, concatenate
 
     Examples
     --------
@@ -320,21 +372,26 @@ def dstack(tup):
     """
     Stack arrays in sequence depth wise (along third axis).
 
-    Takes a sequence of arrays and stack them along the third axis
-    to make a single array. Rebuilds arrays divided by `dsplit`.
-    This is a simple way to stack 2D arrays (images) into a single
-    3D array for processing.
+    This is equivalent to concatenation along the third axis after 2-D arrays
+    of shape `(M,N)` have been reshaped to `(M,N,1)` and 1-D arrays of shape
+    `(N,)` have been reshaped to `(1,N,1)`. Rebuilds arrays divided by
+    `dsplit`.
+
+    This function makes most sense for arrays with up to 3 dimensions. For
+    instance, for pixel-data with a height (first axis), width (second axis),
+    and r/g/b channels (third axis). The functions `concatenate`, `stack` and
+    `block` provide more general stacking and concatenation operations.
 
     Parameters
     ----------
     tup : sequence of arrays
-        Arrays to stack. All of them must have the same shape along all
-        but the third axis.
+        The arrays must have the same shape along all but the third axis.
+        1-D or 2-D arrays must have the same shape.
 
     Returns
     -------
     stacked : ndarray
-        The array formed by stacking the given arrays.
+        The array formed by stacking the given arrays, will be at least 3-D.
 
     See Also
     --------
@@ -343,10 +400,6 @@ def dstack(tup):
     hstack : Stack along second axis.
     concatenate : Join a sequence of arrays along an existing axis.
     dsplit : Split array along third axis.
-
-    Notes
-    -----
-    Equivalent to ``np.concatenate(tup, axis=2)``.
 
     Examples
     --------
@@ -369,7 +422,7 @@ def dstack(tup):
 
 def _replace_zero_by_x_arrays(sub_arys):
     for i in range(len(sub_arys)):
-        if len(_nx.shape(sub_arys[i])) == 0:
+        if _nx.ndim(sub_arys[i]) == 0:
             sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]), 0)):
             sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
@@ -382,7 +435,9 @@ def array_split(ary, indices_or_sections, axis=0):
     Please refer to the ``split`` documentation.  The only difference
     between these functions is that ``array_split`` allows
     `indices_or_sections` to be an integer that does *not* equally
-    divide the axis.
+    divide the axis. For an array of length l that should be split
+    into n sections, it returns l % n sub-arrays of size l//n + 1
+    and the rest of size l//n.
 
     See Also
     --------
@@ -393,6 +448,10 @@ def array_split(ary, indices_or_sections, axis=0):
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
         [array([ 0.,  1.,  2.]), array([ 3.,  4.,  5.]), array([ 6.,  7.])]
+
+    >>> x = np.arange(7.0)
+    >>> np.array_split(x, 3)
+        [array([ 0.,  1.,  2.]), array([ 3.,  4.]), array([ 5.,  6.])]
 
     """
     try:
@@ -556,9 +615,9 @@ def hsplit(ary, indices_or_sections):
            [[ 6.,  7.]]])]
 
     """
-    if len(_nx.shape(ary)) == 0:
+    if _nx.ndim(ary) == 0:
         raise ValueError('hsplit only works on arrays of 1 or more dimensions')
-    if len(ary.shape) > 1:
+    if ary.ndim > 1:
         return split(ary, indices_or_sections, 1)
     else:
         return split(ary, indices_or_sections, 0)
@@ -610,7 +669,7 @@ def vsplit(ary, indices_or_sections):
             [ 6.,  7.]]])]
 
     """
-    if len(_nx.shape(ary)) < 2:
+    if _nx.ndim(ary) < 2:
         raise ValueError('vsplit only works on arrays of 2 or more dimensions')
     return split(ary, indices_or_sections, 0)
 
@@ -655,7 +714,7 @@ def dsplit(ary, indices_or_sections):
      array([], dtype=float64)]
 
     """
-    if len(_nx.shape(ary)) < 3:
+    if _nx.ndim(ary) < 3:
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
     return split(ary, indices_or_sections, 2)
 

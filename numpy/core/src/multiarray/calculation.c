@@ -118,7 +118,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
-                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
         if (rp == NULL) {
             goto fail;
         }
@@ -134,8 +134,9 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY if necessary */
+    /* Trigger the UPDATEIFCOPY/WRTIEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
+        PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);
         rp = out;
         Py_INCREF(rp);
@@ -233,7 +234,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(NPY_INTP),
-                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
         if (rp == NULL) {
             goto fail;
         }
@@ -249,8 +250,9 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY if necessary */
+    /* Trigger the UPDATEIFCOPY/WRITEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
+        PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);
         rp = out;
         Py_INCREF(rp);
@@ -830,28 +832,24 @@ _GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out,
         return PyObject_CallFunction(op, "OO", m1, m2);
     }
     else {
-        PyObject *args, *kw, *ret;
+        PyObject *args, *ret;
+        static PyObject *kw = NULL;
+
+        if (kw == NULL) {
+            kw = Py_BuildValue("{s:s}", "casting", "unsafe");
+            if (kw == NULL) {
+                return NULL;
+            }
+        }
 
         args = Py_BuildValue("OOO", m1, m2, out);
         if (args == NULL) {
-            return NULL;
-        }
-        kw = PyDict_New();
-        if (kw == NULL) {
-            Py_DECREF(args);
-            return NULL;
-        }
-        if (PyDict_SetItemString(kw, "casting",
-                        PyUString_FromString("unsafe")) < 0) {
-            Py_DECREF(args);
-            Py_DECREF(kw);
             return NULL;
         }
 
         ret = PyObject_Call(op, args, kw);
 
         Py_DECREF(args);
-        Py_DECREF(kw);
 
         return ret;
     }
@@ -1121,7 +1119,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
             oflags = NPY_ARRAY_FARRAY;
         else
             oflags = NPY_ARRAY_CARRAY;
-        oflags |= NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_FORCECAST;
+        oflags |= NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST;
         Py_INCREF(indescr);
         newout = (PyArrayObject*)PyArray_FromArray(out, indescr, oflags);
         if (newout == NULL) {
@@ -1157,6 +1155,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     Py_XDECREF(maxa);
     Py_DECREF(newin);
     /* Copy back into out if out was not already a nice array. */
+    PyArray_ResolveWritebackIfCopy(newout);
     Py_DECREF(newout);
     return (PyObject *)out;
 
@@ -1166,7 +1165,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     Py_XDECREF(maxa);
     Py_XDECREF(mina);
     Py_XDECREF(newin);
-    PyArray_XDECREF_ERR(newout);
+    PyArray_DiscardWritebackIfCopy(newout);
+    Py_XDECREF(newout);
     return NULL;
 }
 
@@ -1177,7 +1177,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 NPY_NO_EXPORT PyObject *
 PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
 {
-    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self)) {
+    if (PyArray_ISCOMPLEX(self) || PyArray_ISOBJECT(self) ||
+            PyArray_ISUSERDEF(self)) {
         if (out == NULL) {
             return PyArray_GenericUnaryFunction(self,
                                                 n_ops.conjugate);
@@ -1190,6 +1191,14 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
     }
     else {
         PyArrayObject *ret;
+        if (!PyArray_ISNUMBER(self)) {
+            /* 2017-05-04, 1.13 */
+            if (DEPRECATE("attempting to conjugate non-numeric dtype; this "
+                          "will error in the future to match the behavior of "
+                          "np.conjugate") < 0) {
+                return NULL;
+            }
+        }
         if (out) {
             if (PyArray_AssignArray(out, self,
                         NULL, NPY_DEFAULT_ASSIGN_CASTING) < 0) {

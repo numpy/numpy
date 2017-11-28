@@ -9,7 +9,7 @@ import numpy as np
 import numpy.core.multiarray_tests as mt
 from numpy.compat import long
 
-from numpy.testing import assert_raises, assert_equal
+from numpy.testing import assert_raises, assert_equal, dec
 
 
 INT64_MAX = np.iinfo(np.int64).max
@@ -59,7 +59,7 @@ def exc_iter(*args):
 
     try:
         yield iterate()
-    except:
+    except Exception:
         import traceback
         msg = "At: %r\n%s" % (repr(value[0]),
                               traceback.format_exc())
@@ -183,6 +183,7 @@ def test_gt_128():
                 assert_equal(d, c)
 
 
+@dec.slow
 def test_divmod_128_64():
     with exc_iter(INT128_VALUES, INT64_POS_VALUES) as it:
         for a, b in it:

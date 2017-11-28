@@ -175,7 +175,8 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta);
  */
 NPY_NO_EXPORT int
 convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
-                                        PyArray_DatetimeMetaData *out_meta);
+                                        PyArray_DatetimeMetaData *out_meta,
+                                        npy_bool from_pickle);
 
 /*
  * Gets a tzoffset in minutes by calling the fromutc() function on
@@ -218,7 +219,7 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
  * to UTC time, otherwise it returns the struct with the local time.
  *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
- * if obj doesn't have the neeeded date or datetime attributes.
+ * if obj doesn't have the needed date or datetime attributes.
  */
 NPY_NO_EXPORT int
 convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,

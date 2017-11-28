@@ -72,6 +72,7 @@ Joining arrays
    dstack
    hstack
    vstack
+   block
 
 Splitting arrays
 ================
@@ -109,6 +110,7 @@ Rearranging elements
 .. autosummary::
    :toctree: generated/
 
+   flip
    fliplr
    flipud
    reshape

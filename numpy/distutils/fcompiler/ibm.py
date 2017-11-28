@@ -36,7 +36,7 @@ class IBMFCompiler(FCompiler):
             xlf = find_executable('xlf')
             if os.path.exists(xlf) and os.path.exists(lslpp):
                 s, o = exec_command(lslpp + ' -Lc xlfcmp')
-                m = re.search('xlfcmp:(?P<version>\d+([.]\d+)+)', o)
+                m = re.search(r'xlfcmp:(?P<version>\d+([.]\d+)+)', o)
                 if m: version = m.group('version')
 
         xlf_dir = '/etc/opt/ibmcmp/xlf'
@@ -90,7 +90,6 @@ class IBMFCompiler(FCompiler):
         return ['-O3']
 
 if __name__ == '__main__':
+    from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
-    compiler = IBMFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    print(customized_fcompiler(compiler='ibm').get_version())

@@ -199,6 +199,7 @@ PyMODINIT_FUNC inittest_array_from_pyobj_ext(void) {
   PyDict_SetItemString(d, "ALIGNED", PyInt_FromLong(NPY_ARRAY_ALIGNED));
   PyDict_SetItemString(d, "WRITEABLE", PyInt_FromLong(NPY_ARRAY_WRITEABLE));
   PyDict_SetItemString(d, "UPDATEIFCOPY", PyInt_FromLong(NPY_ARRAY_UPDATEIFCOPY));
+  PyDict_SetItemString(d, "WRITEBACKIFCOPY", PyInt_FromLong(NPY_ARRAY_WRITEBACKIFCOPY));
 
   PyDict_SetItemString(d, "BEHAVED", PyInt_FromLong(NPY_ARRAY_BEHAVED));
   PyDict_SetItemString(d, "BEHAVED_NS", PyInt_FromLong(NPY_ARRAY_BEHAVED_NS));

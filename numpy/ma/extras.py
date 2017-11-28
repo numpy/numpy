@@ -16,7 +16,7 @@ __all__ = [
     'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
     'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
     'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
-    'hsplit', 'hstack', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
+    'hsplit', 'hstack', 'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
     'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'unique', 'union1d', 'vander', 'vstack',
@@ -27,7 +27,7 @@ import warnings
 
 from . import core as ma
 from .core import (
-    MaskedArray, MAError, add, array, asarray, concatenate, filled,
+    MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
     getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
     nomask, ones, sort, zeros, getdata, get_masked_subclass, dot,
     mask_rowcols
@@ -36,6 +36,9 @@ from .core import (
 import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
+from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import normalize_axis_tuple
+from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
 
@@ -44,9 +47,8 @@ def issequence(seq):
     Is seq a sequence (ndarray, list or tuple)?
 
     """
-    if isinstance(seq, (ndarray, tuple, list)):
-        return True
-    return False
+    return isinstance(seq, (ndarray, tuple, list))
+
 
 def count_masked(arr, axis=None):
     """
@@ -102,6 +104,7 @@ def count_masked(arr, axis=None):
     m = getmaskarray(arr)
     return m.sum(axis)
 
+
 def masked_all(shape, dtype=float):
     """
     Empty masked array with all elements masked.
@@ -152,6 +155,7 @@ def masked_all(shape, dtype=float):
     a = masked_array(np.empty(shape, dtype),
                      mask=np.ones(shape, make_mask_descr(dtype)))
     return a
+
 
 def masked_all_like(arr):
     """
@@ -211,7 +215,7 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
-class _fromnxfunction:
+class _fromnxfunction(object):
     """
     Defines a wrapper to adapt NumPy functions to masked arrays.
 
@@ -219,6 +223,9 @@ class _fromnxfunction:
     An instance of `_fromnxfunction` can be called with the same parameters
     as the wrapped NumPy function. The docstring of `newfunc` is adapted from
     the wrapped function as well, see `getdoc`.
+
+    This class should not be used directly. Instead, one of its extensions that
+    provides support for a specific type of input should be used.
 
     Parameters
     ----------
@@ -260,48 +267,100 @@ class _fromnxfunction:
         return
 
     def __call__(self, *args, **params):
+        pass
+
+
+class _fromnxfunction_single(_fromnxfunction):
+    """
+    A version of `_fromnxfunction` that is called with a single array
+    argument followed by auxiliary args that are passed verbatim for
+    both the data and mask calls.
+    """
+    def __call__(self, x, *args, **params):
         func = getattr(np, self.__name__)
-        if len(args) == 1:
-            x = args[0]
-            if isinstance(x, ndarray):
-                _d = func(x.__array__(), **params)
-                _m = func(getmaskarray(x), **params)
-                return masked_array(_d, mask=_m)
-            elif isinstance(x, tuple) or isinstance(x, list):
-                _d = func(tuple([np.asarray(a) for a in x]), **params)
-                _m = func(tuple([getmaskarray(a) for a in x]), **params)
-                return masked_array(_d, mask=_m)
-            else:
-                _d = func(np.asarray(x), **params)
-                _m = func(getmaskarray(x), **params)
-                return masked_array(_d, mask=_m)
+        if isinstance(x, ndarray):
+            _d = func(x.__array__(), *args, **params)
+            _m = func(getmaskarray(x), *args, **params)
+            return masked_array(_d, mask=_m)
         else:
-            arrays = []
-            args = list(args)
-            while len(args) > 0 and issequence(args[0]):
-                arrays.append(args.pop(0))
-            res = []
-            for x in arrays:
-                _d = func(np.asarray(x), *args, **params)
-                _m = func(getmaskarray(x), *args, **params)
-                res.append(masked_array(_d, mask=_m))
-            return res
+            _d = func(np.asarray(x), *args, **params)
+            _m = func(getmaskarray(x), *args, **params)
+            return masked_array(_d, mask=_m)
 
-atleast_1d = _fromnxfunction('atleast_1d')
-atleast_2d = _fromnxfunction('atleast_2d')
-atleast_3d = _fromnxfunction('atleast_3d')
-#atleast_1d = np.atleast_1d
-#atleast_2d = np.atleast_2d
-#atleast_3d = np.atleast_3d
 
-vstack = row_stack = _fromnxfunction('vstack')
-hstack = _fromnxfunction('hstack')
-column_stack = _fromnxfunction('column_stack')
-dstack = _fromnxfunction('dstack')
+class _fromnxfunction_seq(_fromnxfunction):
+    """
+    A version of `_fromnxfunction` that is called with a single sequence
+    of arrays followed by auxiliary args that are passed verbatim for
+    both the data and mask calls.
+    """
+    def __call__(self, x, *args, **params):
+        func = getattr(np, self.__name__)
+        _d = func(tuple([np.asarray(a) for a in x]), *args, **params)
+        _m = func(tuple([getmaskarray(a) for a in x]), *args, **params)
+        return masked_array(_d, mask=_m)
 
-hsplit = _fromnxfunction('hsplit')
 
-diagflat = _fromnxfunction('diagflat')
+class _fromnxfunction_args(_fromnxfunction):
+    """
+    A version of `_fromnxfunction` that is called with multiple array
+    arguments. The first non-array-like input marks the beginning of the
+    arguments that are passed verbatim for both the data and mask calls.
+    Array arguments are processed independently and the results are
+    returned in a list. If only one array is found, the return value is
+    just the processed array instead of a list.
+    """
+    def __call__(self, *args, **params):
+        func = getattr(np, self.__name__)
+        arrays = []
+        args = list(args)
+        while len(args) > 0 and issequence(args[0]):
+            arrays.append(args.pop(0))
+        res = []
+        for x in arrays:
+            _d = func(np.asarray(x), *args, **params)
+            _m = func(getmaskarray(x), *args, **params)
+            res.append(masked_array(_d, mask=_m))
+        if len(arrays) == 1:
+            return res[0]
+        return res
+
+
+class _fromnxfunction_allargs(_fromnxfunction):
+    """
+    A version of `_fromnxfunction` that is called with multiple array
+    arguments. Similar to `_fromnxfunction_args` except that all args
+    are converted to arrays even if they are not so already. This makes
+    it possible to process scalars as 1-D arrays. Only keyword arguments
+    are passed through verbatim for the data and mask calls. Arrays
+    arguments are processed independently and the results are returned
+    in a list. If only one arg is present, the return value is just the
+    processed array instead of a list.
+    """
+    def __call__(self, *args, **params):
+        func = getattr(np, self.__name__)
+        res = []
+        for x in args:
+            _d = func(np.asarray(x), **params)
+            _m = func(getmaskarray(x), **params)
+            res.append(masked_array(_d, mask=_m))
+        if len(args) == 1:
+            return res[0]
+        return res
+
+
+atleast_1d = _fromnxfunction_allargs('atleast_1d')
+atleast_2d = _fromnxfunction_allargs('atleast_2d')
+atleast_3d = _fromnxfunction_allargs('atleast_3d')
+
+vstack = row_stack = _fromnxfunction_seq('vstack')
+hstack = _fromnxfunction_seq('hstack')
+column_stack = _fromnxfunction_seq('column_stack')
+dstack = _fromnxfunction_seq('dstack')
+
+hsplit = _fromnxfunction_single('hsplit')
+
+diagflat = _fromnxfunction_single('diagflat')
 
 
 #####--------------------------------------------------------------------------
@@ -323,11 +382,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
-    if axis < 0:
-        axis += nd
-    if (axis >= nd):
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-            % (axis, nd))
+    axis = normalize_axis_index(axis, nd)
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
     indlist = list(range(nd))
@@ -471,8 +526,8 @@ def average(a, axis=None, weights=None, returned=False):
         Data to be averaged.
         Masked entries are not taken into account in the computation.
     axis : int, optional
-        Axis along which the average is computed. The default is to compute
-        the average of the flattened array.
+        Axis along which to average `a`. If `None`, averaging is done over
+        the flattened array.
     weights : array_like, optional
         The importance that each element has in the computation of the average.
         The weights array can either be 1-D (in which case its length must be
@@ -513,97 +568,53 @@ def average(a, axis=None, weights=None, returned=False):
 
     """
     a = asarray(a)
-    mask = a.mask
-    ash = a.shape
-    if ash == ():
-        ash = (1,)
-    if axis is None:
-        if mask is nomask:
-            if weights is None:
-                n = a.sum(axis=None)
-                d = float(a.size)
-            else:
-                w = filled(weights, 0.0).ravel()
-                n = umath.add.reduce(a._data.ravel() * w)
-                d = umath.add.reduce(w)
-                del w
-        else:
-            if weights is None:
-                n = a.filled(0).sum(axis=None)
-                d = float(umath.add.reduce((~mask).ravel()))
-            else:
-                w = array(filled(weights, 0.0), float, mask=mask).ravel()
-                n = add.reduce(a.ravel() * w)
-                d = add.reduce(w)
-                del w
-    else:
-        if mask is nomask:
-            if weights is None:
-                d = ash[axis] * 1.0
-                n = add.reduce(a._data, axis)
-            else:
-                w = filled(weights, 0.0)
-                wsh = w.shape
-                if wsh == ():
-                    wsh = (1,)
-                if wsh == ash:
-                    w = np.array(w, float, copy=0)
-                    n = add.reduce(a * w, axis)
-                    d = add.reduce(w, axis)
-                    del w
-                elif wsh == (ash[axis],):
-                    r = [None] * len(ash)
-                    r[axis] = slice(None, None, 1)
-                    w = eval("w[" + repr(tuple(r)) + "] * ones(ash, float)")
-                    n = add.reduce(a * w, axis)
-                    d = add.reduce(w, axis, dtype=float)
-                    del w, r
-                else:
-                    raise ValueError('average: weights wrong shape.')
-        else:
-            if weights is None:
-                n = add.reduce(a, axis)
-                d = umath.add.reduce((~mask), axis=axis, dtype=float)
-            else:
-                w = filled(weights, 0.0)
-                wsh = w.shape
-                if wsh == ():
-                    wsh = (1,)
-                if wsh == ash:
-                    w = array(w, dtype=float, mask=mask, copy=0)
-                    n = add.reduce(a * w, axis)
-                    d = add.reduce(w, axis, dtype=float)
-                elif wsh == (ash[axis],):
-                    r = [None] * len(ash)
-                    r[axis] = slice(None, None, 1)
-                    w = eval("w[" + repr(tuple(r)) +
-                             "] * masked_array(ones(ash, float), mask)")
-                    n = add.reduce(a * w, axis)
-                    d = add.reduce(w, axis, dtype=float)
-                else:
-                    raise ValueError('average: weights wrong shape.')
-                del w
-    if n is masked or d is masked:
-        return masked
-    result = n / d
-    del n
+    m = getmask(a)
 
-    if isinstance(result, MaskedArray):
-        if ((axis is None) or (axis == 0 and a.ndim == 1)) and \
-           (result.mask is nomask):
-            result = result._data
-        if returned:
-            if not isinstance(d, MaskedArray):
-                d = masked_array(d)
-            if isinstance(d, ndarray) and (not d.shape == result.shape):
-                d = ones(result.shape, dtype=float) * d
+    # inspired by 'average' in numpy/lib/function_base.py
+
+    if weights is None:
+        avg = a.mean(axis)
+        scl = avg.dtype.type(a.count(axis))
+    else:
+        wgt = np.asanyarray(weights)
+
+        if issubclass(a.dtype.type, (np.integer, np.bool_)):
+            result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
+        else:
+            result_dtype = np.result_type(a.dtype, wgt.dtype)
+
+        # Sanity checks
+        if a.shape != wgt.shape:
+            if axis is None:
+                raise TypeError(
+                    "Axis must be specified when shapes of a and weights "
+                    "differ.")
+            if wgt.ndim != 1:
+                raise TypeError(
+                    "1D weights expected when shapes of a and weights differ.")
+            if wgt.shape[0] != a.shape[axis]:
+                raise ValueError(
+                    "Length of weights not compatible with specified axis.")
+
+            # setup wgt to broadcast along axis
+            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
+            wgt = wgt.swapaxes(-1, axis)
+
+        if m is not nomask:
+            wgt = wgt*(~a.mask)
+
+        scl = wgt.sum(axis=axis, dtype=result_dtype)
+        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
+
     if returned:
-        return result, d
+        if scl.shape != avg.shape:
+            scl = np.broadcast_to(scl, avg.shape).copy()
+        return avg, scl
     else:
-        return result
+        return avg
 
 
-def median(a, axis=None, out=None, overwrite_input=False):
+def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     """
     Compute the median along the specified axis.
 
@@ -628,6 +639,12 @@ def median(a, axis=None, out=None, overwrite_input=False):
         but it will probably be fully or partially sorted. Default is
         False. Note that, if `overwrite_input` is True, and the input
         is not already an `ndarray`, an error will be raised.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -663,53 +680,121 @@ def median(a, axis=None, out=None, overwrite_input=False):
            fill_value = 1e+20)
 
     """
-    if not hasattr(a, 'mask') or np.count_nonzero(a.mask) == 0:
-        return masked_array(np.median(getdata(a, subok=True), axis=axis,
-                      out=out, overwrite_input=overwrite_input), copy=False)
+    if not hasattr(a, 'mask'):
+        m = np.median(getdata(a, subok=True), axis=axis,
+                      out=out, overwrite_input=overwrite_input,
+                      keepdims=keepdims)
+        if isinstance(m, np.ndarray) and 1 <= m.ndim:
+            return masked_array(m, copy=False)
+        else:
+            return m
+
+    r, k = _ureduce(a, func=_median, axis=axis, out=out,
+                    overwrite_input=overwrite_input)
+    if keepdims:
+        return r.reshape(k)
+    else:
+        return r
+
+def _median(a, axis=None, out=None, overwrite_input=False):
+    # when an unmasked NaN is present return it, so we need to sort the NaN
+    # values behind the mask
+    if np.issubdtype(a.dtype, np.inexact):
+        fill_value = np.inf
+    else:
+        fill_value = None
     if overwrite_input:
         if axis is None:
             asorted = a.ravel()
-            asorted.sort()
+            asorted.sort(fill_value=fill_value)
         else:
-            a.sort(axis=axis)
+            a.sort(axis=axis, fill_value=fill_value)
             asorted = a
     else:
-        asorted = sort(a, axis=axis)
+        asorted = sort(a, axis=axis, fill_value=fill_value)
+
     if axis is None:
         axis = 0
-    elif axis < 0:
-        axis += a.ndim
+    else:
+        axis = normalize_axis_index(axis, asorted.ndim)
 
-    counts = asorted.shape[axis] - (asorted.mask).sum(axis=axis)
+    if asorted.shape[axis] == 0:
+        # for empty axis integer indices fail so use slicing to get same result
+        # as median (which is mean of empty slice = nan)
+        indexer = [slice(None)] * asorted.ndim
+        indexer[axis] = slice(0, 0)
+        return np.ma.mean(asorted[indexer], axis=axis, out=out)
+
+    if asorted.ndim == 1:
+        counts = count(asorted)
+        idx, odd = divmod(count(asorted), 2)
+        mid = asorted[idx + odd - 1:idx + 1]
+        if np.issubdtype(asorted.dtype, np.inexact) and asorted.size > 0:
+            # avoid inf / x = masked
+            s = mid.sum(out=out)
+            if not odd:
+                s = np.true_divide(s, 2., casting='safe', out=out)
+            s = np.lib.utils._median_nancheck(asorted, s, axis, out)
+        else:
+            s = mid.mean(out=out)
+
+        # if result is masked either the input contained enough
+        # minimum_fill_value so that it would be the median or all values
+        # masked
+        if np.ma.is_masked(s) and not np.all(asorted.mask):
+            return np.ma.minimum_fill_value(asorted)
+        return s
+
+    counts = count(asorted, axis=axis)
     h = counts // 2
+
     # create indexing mesh grid for all but reduced axis
     axes_grid = [np.arange(x) for i, x in enumerate(asorted.shape)
                  if i != axis]
     ind = np.meshgrid(*axes_grid, sparse=True, indexing='ij')
+
     # insert indices of low and high median
     ind.insert(axis, h - 1)
-    low = asorted[ind]
-    ind[axis] = h
-    high = asorted[ind]
+    low = asorted[tuple(ind)]
+    ind[axis] = np.minimum(h, asorted.shape[axis] - 1)
+    high = asorted[tuple(ind)]
+
+    def replace_masked(s):
+        # Replace masked entries with minimum_full_value unless it all values
+        # are masked. This is required as the sort order of values equal or
+        # larger than the fill value is undefined and a valid value placed
+        # elsewhere, e.g. [4, --, inf].
+        if np.ma.is_masked(s):
+            rep = (~np.all(asorted.mask, axis=axis)) & s.mask
+            s.data[rep] = np.ma.minimum_fill_value(asorted)
+            s.mask[rep] = False
+
+    replace_masked(low)
+    replace_masked(high)
+
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
-    if asorted.ndim == 1:
-        if odd:
-            low = high
-    else:
-        low[odd] = high[odd]
+    np.copyto(low, high, where=odd)
+    # not necessary for scalar True/False masks
+    try:
+        np.copyto(low.mask, high.mask, where=odd)
+    except Exception:
+        pass
 
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
         s = np.ma.sum([low, high], axis=0, out=out)
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
+
+        s = np.lib.utils._median_nancheck(asorted, s, axis, out)
     else:
         s = np.ma.mean([low, high], axis=0, out=out)
+
     return s
 
 
 def compress_nd(x, axis=None):
-    """Supress slices from multiple dimensions which contain masked values.
+    """Suppress slices from multiple dimensions which contain masked values.
 
     Parameters
     ----------
@@ -718,10 +803,10 @@ def compress_nd(x, axis=None):
         elements are masked, `x` is interpreted as a MaskedArray with `mask`
         set to `nomask`.
     axis : tuple of ints or int, optional
-        Which dimensions to supress slices from can be configured with this
+        Which dimensions to suppress slices from can be configured with this
         parameter.
-        - If axis is a tuple of ints, those are the axes to supress slices from.
-        - If axis is an int, then that is the only axis to supress slices from.
+        - If axis is a tuple of ints, those are the axes to suppress slices from.
+        - If axis is an int, then that is the only axis to suppress slices from.
         - If axis is None, all axis are selected.
 
     Returns
@@ -732,18 +817,11 @@ def compress_nd(x, axis=None):
     x = asarray(x)
     m = getmask(x)
     # Set axis to tuple of ints
-    if isinstance(axis, int):
-        axis = (axis,)
-    elif axis is None:
+    if axis is None:
         axis = tuple(range(x.ndim))
-    elif not isinstance(axis, tuple):
-        raise ValueError('Invalid type for axis argument')
-    # Check axis input
-    axis = [ax + x.ndim if ax < 0 else ax for ax in axis]
-    if not all(0 <= ax < x.ndim for ax in axis):
-        raise ValueError("'axis' entry is out of bounds")
-    if len(axis) != len(set(axis)):
-        raise ValueError("duplicate value in 'axis'")
+    else:
+        axis = normalize_axis_tuple(axis, x.ndim)
+
     # Nothing is masked: return x
     if m is nomask or not m.any():
         return x._data
@@ -861,7 +939,7 @@ def mask_rows(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -906,7 +984,7 @@ def mask_cols(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -1053,6 +1131,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
+
 def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
@@ -1060,8 +1139,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     The output is always a masked array. See `numpy.in1d` for more details.
 
+    We recommend using :func:`isin` instead of `in1d` for new code.
+
     See Also
     --------
+    isin       : Version of this function that preserves the shape of ar1.
     numpy.in1d : Equivalent function for ndarrays.
 
     Notes
@@ -1090,6 +1172,29 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx]
     else:
         return flag[indx][rev_idx]
+
+
+def isin(element, test_elements, assume_unique=False, invert=False):
+    """
+    Calculates `element in test_elements`, broadcasting over
+    `element` only.
+
+    The output is always a masked array of the same shape as `element`.
+    See `numpy.isin` for more details.
+
+    See Also
+    --------
+    in1d       : Flattened version of this function.
+    numpy.isin : Equivalent function for ndarrays.
+
+    Notes
+    -----
+    .. versionadded:: 1.13.0
+
+    """
+    element = ma.asarray(element)
+    return in1d(element, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(element.shape)
 
 
 def union1d(ar1, ar2):
@@ -1173,9 +1278,9 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
                 # Define some common mask
                 common_mask = np.logical_or(xmask, ymask)
                 if common_mask is not nomask:
-                    x.unshare_mask()
-                    y.unshare_mask()
                     xmask = x._mask = y._mask = ymask = common_mask
+                    x._sharedmask = False
+                    y._sharedmask = False
         x = ma.concatenate((x, y), axis)
         xnotmask = np.logical_not(np.concatenate((xmask, ymask), axis)).astype(int)
     x -= x.mean(axis=rowvar)[tup]
@@ -1306,7 +1411,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
     msg = 'bias and ddof have no effect and are deprecated'
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
     # Get the data
     (x, xnotmask, rowvar) = _covhelper(x, y, rowvar, allow_masked)
     # Compute the covariance matrix
@@ -1326,6 +1431,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         _denom = ma.sqrt(ma.multiply.outer(diag, diag))
     else:
         _denom = diagflat(diag)
+        _denom._sharedmask = False  # We know return is always a copy
         n = x.shape[1 - rowvar]
         if rowvar:
             for i in range(n - 1):
@@ -1355,60 +1461,19 @@ class MAxisConcatenator(AxisConcatenator):
     mr_class
 
     """
+    concatenate = staticmethod(concatenate)
 
-    def __init__(self, axis=0):
-        AxisConcatenator.__init__(self, axis, matrix=False)
+    @staticmethod
+    def makemat(arr):
+        return array(arr.data.view(np.matrix), mask=arr.mask)
 
     def __getitem__(self, key):
+        # matrix builder syntax, like 'a, b; c, d'
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
-        if not isinstance(key, tuple):
-            key = (key,)
-        objs = []
-        scalars = []
-        final_dtypedescr = None
-        for k in range(len(key)):
-            scalar = False
-            if isinstance(key[k], slice):
-                step = key[k].step
-                start = key[k].start
-                stop = key[k].stop
-                if start is None:
-                    start = 0
-                if step is None:
-                    step = 1
-                if isinstance(step, complex):
-                    size = int(abs(step))
-                    newobj = np.linspace(start, stop, num=size)
-                else:
-                    newobj = np.arange(start, stop, step)
-            elif isinstance(key[k], str):
-                if (key[k] in 'rc'):
-                    self.matrix = True
-                    self.col = (key[k] == 'c')
-                    continue
-                try:
-                    self.axis = int(key[k])
-                    continue
-                except (ValueError, TypeError):
-                    raise ValueError("Unknown special directive")
-            elif type(key[k]) in np.ScalarType:
-                newobj = asarray([key[k]])
-                scalars.append(k)
-                scalar = True
-            else:
-                newobj = key[k]
-            objs.append(newobj)
-            if isinstance(newobj, ndarray) and not scalar:
-                if final_dtypedescr is None:
-                    final_dtypedescr = newobj.dtype
-                elif newobj.dtype > final_dtypedescr:
-                    final_dtypedescr = newobj.dtype
-        if final_dtypedescr is not None:
-            for k in scalars:
-                objs[k] = objs[k].astype(final_dtypedescr)
-        res = concatenate(tuple(objs), axis=self.axis)
-        return self._retval(res)
+
+        return super(MAxisConcatenator, self).__getitem__(key)
+
 
 class mr_class(MAxisConcatenator):
     """

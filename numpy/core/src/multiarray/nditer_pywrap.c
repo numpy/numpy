@@ -2,7 +2,7 @@
  * This file implements the CPython wrapper of the new NumPy iterator.
  *
  * Copyright (c) 2010 by Mark Wiebe (mwwiebe@gmail.com)
- * The Univerity of British Columbia
+ * The University of British Columbia
  *
  * See LICENSE.txt for the license.
  */
@@ -15,6 +15,8 @@
 #include <numpy/arrayobject.h>
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "alloc.h"
+#include "common.h"
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
@@ -146,6 +148,11 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                     case 'e':
                         if (strcmp(str, "c_index") == 0) {
                             flag = NPY_ITER_C_INDEX;
+                        }
+                        break;
+                    case 'i':
+                        if (strcmp(str, "copy_if_overlap") == 0) {
+                            flag = NPY_ITER_COPY_IF_OVERLAP;
                         }
                         break;
                     case 'n':
@@ -353,6 +360,11 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                             flag = NPY_ITER_NO_BROADCAST;
                         }
                         break;
+                }
+                break;
+            case 'o':
+                if (strcmp(str, "overlap_assume_elementwise") == 0) {
+                    flag = NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
                 }
                 break;
             case 'r':
@@ -682,10 +694,10 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             int fromanyflags = 0;
 
             if (op_flags[iop]&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
-                fromanyflags |= NPY_ARRAY_UPDATEIFCOPY;
+                fromanyflags |= NPY_ARRAY_WRITEBACKIFCOPY;
             }
-            ao = (PyArrayObject *)PyArray_FromAny((PyObject *)op[iop],
-                                            NULL, 0, 0, fromanyflags, NULL);
+            ao = (PyArrayObject *)PyArray_FROM_OF((PyObject *)op[iop],
+                                                  fromanyflags);
             if (ao == NULL) {
                 if (PyErr_Occurred() &&
                             PyErr_ExceptionMatches(PyExc_TypeError)) {
@@ -738,7 +750,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&OOO&O&OO&i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&OOO&O&OO&i:nditer", kwlist,
                     &op_in,
                     NpyIter_GlobalFlagsConverter, &flags,
                     &op_flags_in,
@@ -748,7 +760,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
                     &op_axes_in,
                     PyArray_IntpConverter, &itershape,
                     &buffersize)) {
-        PyDimMem_FREE(itershape.ptr);
+        npy_free_cache_dim_obj(itershape);
         return -1;
     }
 
@@ -794,7 +806,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         }
     }
     else if (itershape.ptr != NULL) {
-        PyDimMem_FREE(itershape.ptr);
+        npy_free_cache_dim_obj(itershape);
         itershape.ptr = NULL;
     }
 
@@ -822,7 +834,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->finished = 0;
     }
 
-    PyDimMem_FREE(itershape.ptr);
+    npy_free_cache_dim_obj(itershape);
 
     /* Release the references we got to the ops and dtypes */
     for (iop = 0; iop < nop; ++iop) {
@@ -833,7 +845,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     return 0;
 
 fail:
-    PyDimMem_FREE(itershape.ptr);
+    npy_free_cache_dim_obj(itershape);
     for (iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
         Py_XDECREF(op_request_dtypes[iop]);
@@ -1293,7 +1305,7 @@ npyiter_remove_axis(NewNpyArrayIterObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyArg_ParseTuple(args, "i", &axis)) {
+    if (!PyArg_ParseTuple(args, "i:remove_axis", &axis)) {
         return NULL;
     }
 
@@ -1608,7 +1620,7 @@ npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
         for (idim = 0; idim < ndim; ++idim) {
             PyObject *v = PySequence_GetItem(value, idim);
             multi_index[idim] = PyInt_AsLong(v);
-            if (multi_index[idim]==-1 && PyErr_Occurred()) {
+            if (error_converting(multi_index[idim])) {
                 Py_XDECREF(v);
                 return -1;
             }
@@ -1668,7 +1680,7 @@ static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
     if (NpyIter_HasIndex(self->iter)) {
         npy_intp ind;
         ind = PyInt_AsLong(value);
-        if (ind==-1 && PyErr_Occurred()) {
+        if (error_converting(ind)) {
             return -1;
         }
         if (NpyIter_GotoIndex(self->iter, ind) != NPY_SUCCEED) {
@@ -1718,7 +1730,7 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
     }
 
     iterindex = PyInt_AsLong(value);
-    if (iterindex==-1 && PyErr_Occurred()) {
+    if (error_converting(iterindex)) {
         return -1;
     }
     if (NpyIter_GotoIterIndex(self->iter, iterindex) != NPY_SUCCEED) {
@@ -2227,14 +2239,6 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
     return 0;
 }
 
-/* Py3 changes PySlice_GetIndices' first argument's type to PyObject* */
-#ifdef NPY_PY3K
-#  define slice_getindices PySlice_GetIndices
-#else
-#  define slice_getindices(op, nop, start, end, step) \
-        PySlice_GetIndices((PySliceObject *)op, nop, start, end, step)
-#endif
-
 static PyObject *
 npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
 {
@@ -2254,15 +2258,15 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
-        if (i == -1 && PyErr_Occurred()) {
+        if (error_converting(i)) {
             return NULL;
         }
         return npyiter_seq_item(self, i);
     }
     else if (PySlice_Check(op)) {
-        Py_ssize_t istart = 0, iend = 0, istep = 0;
-        if (slice_getindices(op, NpyIter_GetNOp(self->iter),
-                            &istart, &iend, &istep) < 0) {
+        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength;
+        if (NpySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
+                                  &istart, &iend, &istep, &islicelength) < 0) {
             return NULL;
         }
         if (istep != 1) {
@@ -2303,15 +2307,15 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
-        if (i == -1 && PyErr_Occurred()) {
+        if (error_converting(i)) {
             return -1;
         }
         return npyiter_seq_ass_item(self, i, value);
     }
     else if (PySlice_Check(op)) {
-        Py_ssize_t istart = 0, iend = 0, istep = 0;
-        if (slice_getindices(op, NpyIter_GetNOp(self->iter),
-                            &istart, &iend, &istep) < 0) {
+        Py_ssize_t istart = 0, iend = 0, istep = 0, islicelength = 0;
+        if (NpySlice_GetIndicesEx(op, NpyIter_GetNOp(self->iter),
+                                  &istart, &iend, &istep, &islicelength) < 0) {
             return -1;
         }
         if (istep != 1) {
@@ -2424,9 +2428,9 @@ NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {
     (binaryfunc)NULL,                       /*sq_concat*/
     (ssizeargfunc)NULL,                     /*sq_repeat*/
     (ssizeargfunc)npyiter_seq_item,         /*sq_item*/
-    (ssizessizeargfunc)npyiter_seq_slice,   /*sq_slice*/
+    (ssizessizeargfunc)NULL,                /*sq_slice*/
     (ssizeobjargproc)npyiter_seq_ass_item,  /*sq_ass_item*/
-    (ssizessizeobjargproc)npyiter_seq_ass_slice,/*sq_ass_slice*/
+    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
     (objobjproc)NULL,                       /*sq_contains */
     (binaryfunc)NULL,                       /*sq_inplace_concat */
     (ssizeargfunc)NULL,                     /*sq_inplace_repeat */

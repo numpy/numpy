@@ -12,6 +12,13 @@ interfacing with general-purpose data-base applications.
 There are also basic facilities for discrete fourier transform,
 basic linear algebra and random number generation.
 
+All numpy wheels distributed from pypi are BSD licensed.
+
+Windows wheels are linked against the ATLAS BLAS / LAPACK library, restricted
+to SSE2 instructions, so may not give optimal linear algebra performance for
+your machine. See http://docs.scipy.org/doc/numpy/user/install.html for
+alternatives.
+
 """
 from __future__ import division, print_function
 
@@ -23,8 +30,8 @@ import subprocess
 import textwrap
 
 
-if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[0:2] < (3, 2):
-    raise RuntimeError("Python version 2.6, 2.7 or >= 3.2 required.")
+if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 4):
+    raise RuntimeError("Python version 2.7 or >= 3.4 required.")
 
 if sys.version_info[0] >= 3:
     import builtins
@@ -40,13 +47,11 @@ License :: OSI Approved
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 2
-Programming Language :: Python :: 2.6
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.2
-Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
+Programming Language :: Python :: 3.6
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -57,7 +62,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 11
+MINOR               = 14
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -68,7 +73,7 @@ def git_version():
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
         env = {}
-        for k in ['SYSTEMROOT', 'PATH']:
+        for k in ['SYSTEMROOT', 'PATH', 'HOME']:
             v = os.environ.get(k)
             if v is not None:
                 env[k] = v
@@ -188,7 +193,7 @@ def check_submodules():
             raise ValueError('Submodule not clean: %s' % line)
 
 
-from setuptools.command.sdist import sdist
+from distutils.command.sdist import sdist
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
@@ -251,18 +256,18 @@ def parse_setuppy_commands():
 
               - `pip install .`       (from a git repo or downloaded source
                                        release)
-              - `pip install numpy`   (last Numpy release on PyPi)
+              - `pip install numpy`   (last NumPy release on PyPi)
 
             """))
         return True
 
     if '--help' in sys.argv[1:] or '-h' in sys.argv[1]:
         print(textwrap.dedent("""
-            Numpy-specific help
+            NumPy-specific help
             -------------------
 
-            To install Numpy from here with reliable uninstall, we recommend
-            that you use `pip install .`. To install the latest Numpy release
+            To install NumPy from here with reliable uninstall, we recommend
+            that you use `pip install .`. To install the latest NumPy release
             from PyPi, use `pip install numpy`.
 
             For help with build/installation issues, please ask on the
@@ -310,7 +315,7 @@ def parse_setuppy_commands():
         flake8="`setup.py flake8` is not supported, use flake8 standalone",
         )
     bad_commands['nosetests'] = bad_commands['test']
-    for commands in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
+    for command in ('upload_docs', 'easy_install', 'bdist', 'bdist_dumb',
                      'register', 'check', 'install_data', 'install_headers',
                      'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command
@@ -325,7 +330,7 @@ def parse_setuppy_commands():
     # If we got here, we didn't detect what setup.py command was given
     import warnings
     warnings.warn("Unrecognized setuptools command, proceeding with "
-                  "generating Cython sources and expanding templates")
+                  "generating Cython sources and expanding templates", stacklevel=2)
     return True
 
 
@@ -341,7 +346,7 @@ def setup_package():
     metadata = dict(
         name = 'numpy',
         maintainer = "NumPy Developers",
-        maintainer_email = "numpy-discussion@scipy.org",
+        maintainer_email = "numpy-discussion@python.org",
         description = DOCLINES[0],
         long_description = "\n".join(DOCLINES[2:]),
         url = "http://www.numpy.org",
@@ -352,10 +357,12 @@ def setup_package():
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked},
+        python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
     )
 
     if "--force" in sys.argv:
         run_build = True
+        sys.argv.remove('--force')
     else:
         # Raise errors for unsupported commands, improve help output, etc.
         run_build = parse_setuppy_commands()
@@ -384,3 +391,8 @@ def setup_package():
 
 if __name__ == '__main__':
     setup_package()
+    # This may avoid problems where numpy is installed via ``*_requires`` by
+    # setuptools, the global namespace isn't reset properly, and then numpy is
+    # imported later (which will then fail to load numpy extension modules).
+    # See gh-7956 for details
+    del builtins.__NUMPY_SETUP__

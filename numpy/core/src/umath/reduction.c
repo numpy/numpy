@@ -21,13 +21,15 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
+#include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
 #include "reduction.h"
+#include "extobj.h"  /* for _check_ufunc_fperr */
 
 /*
  * Allocates a result array for a reduction operation, with
  * dimensions matching 'arr' except set to 1 with 0 stride
- * whereever axis_flags is True. Dropping the reduction axes
+ * wherever axis_flags is True. Dropping the reduction axes
  * from the result must be done later by the caller once the
  * computation is complete.
  *
@@ -83,7 +85,8 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
  */
 static PyArrayObject *
 conform_reduce_result(int ndim, npy_bool *axis_flags,
-                    PyArrayObject *out, int keepdims, const char *funcname)
+                      PyArrayObject *out, int keepdims, const char *funcname,
+                      int need_copy)
 {
     npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
     npy_intp *strides_out = PyArray_STRIDES(out);
@@ -151,6 +154,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     /* Allocate the view */
     dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
+
     ret = (PyArrayObject_fields *)PyArray_NewFromDescr(&PyArray_Type,
                                dtype,
                                ndim, shape,
@@ -161,13 +165,41 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     if (ret == NULL) {
         return NULL;
     }
+
     Py_INCREF(out);
     if (PyArray_SetBaseObject((PyArrayObject *)ret, (PyObject *)out) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
 
-    return (PyArrayObject *)ret;
+    if (need_copy) {
+        PyArrayObject *ret_copy;
+
+        ret_copy = (PyArrayObject *)PyArray_NewLikeArray(
+            (PyArrayObject *)ret, NPY_ANYORDER, NULL, 0);
+        if (ret_copy == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        if (PyArray_CopyInto(ret_copy, (PyArrayObject *)ret) != 0) {
+            Py_DECREF(ret);
+            Py_DECREF(ret_copy);
+            return NULL;
+        }
+
+        Py_INCREF(ret);
+        if (PyArray_SetWritebackIfCopyBase(ret_copy, (PyArrayObject *)ret) < 0) {
+            Py_DECREF(ret);
+            Py_DECREF(ret_copy);
+            return NULL;
+        }
+
+        return ret_copy;
+    }
+    else {
+        return (PyArrayObject *)ret;
+    }
 }
 
 /*
@@ -201,11 +233,16 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
         result = allocate_reduce_result(operand, axis_flags, dtype, subok);
     }
     else {
+        int need_copy = 0;
+
+        if (solve_may_share_memory(operand, out, 1) != 0) {
+            need_copy = 1;
+        }
+
         /* Steal the dtype reference */
         Py_XDECREF(dtype);
-
         result = conform_reduce_result(PyArray_NDIM(operand), axis_flags,
-                                        out, keepdims, funcname);
+                                       out, keepdims, funcname, need_copy);
     }
 
     return result;
@@ -402,6 +439,7 @@ PyArray_InitializeReduceResult(
  * data        : Data which is passed to assign_identity and the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
+ * errormask   : forwarded from _get_bufsize_errmask
  *
  * TODO FIXME: if you squint, this is essentially an second independent
  * implementation of generalized ufuncs with signature (i)->(), plus a few
@@ -423,7 +461,8 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                       int subok,
                       PyArray_AssignReduceIdentityFunc *assign_identity,
                       PyArray_ReduceLoopFunc *loop,
-                      void *data, npy_intp buffersize, const char *funcname)
+                      void *data, npy_intp buffersize, const char *funcname,
+                      int errormask)
 {
     PyArrayObject *result = NULL, *op_view = NULL;
     npy_intp skip_first_count = 0;
@@ -445,6 +484,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     /*
      * This either conforms 'out' to the ndim of 'operand', or allocates
      * a new array appropriate for this reduction.
+     *
+     * A new array with WRITEBACKIFCOPY is allocated if operand and out have memory
+     * overlap.
      */
     Py_INCREF(result_dtype);
     result = PyArray_CreateReduceResult(operand, out,
@@ -517,6 +559,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         goto fail;
     }
 
+    /* Start with the floating-point exception flags cleared */
+    PyUFunc_clearfperr();
+
     if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
@@ -548,6 +593,12 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
             goto fail;
         }
     }
+    
+    /* Check whether any errors occurred during the loop */
+    if (PyErr_Occurred() ||
+            _check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
+        goto fail;
+    }
 
     NpyIter_Deallocate(iter);
     Py_DECREF(op_view);
@@ -560,6 +611,7 @@ finish:
         }
     }
     else {
+        PyArray_ResolveWritebackIfCopy(result); /* prevent spurious warnings */
         Py_DECREF(result);
         result = out;
         Py_INCREF(result);
@@ -568,6 +620,7 @@ finish:
     return result;
 
 fail:
+    PyArray_ResolveWritebackIfCopy(result); /* prevent spurious warnings */
     Py_XDECREF(result);
     Py_XDECREF(op_view);
     if (iter != NULL) {

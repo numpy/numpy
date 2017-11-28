@@ -79,7 +79,7 @@ Unknown Yet Existing Data (NA)
 
 This is the approach taken in the R project, defining a missing element
 as something which does have a valid value which isn't known, or is
-NA (not available). This proposal adopts this behavior as as the
+NA (not available). This proposal adopts this behavior as the
 default for all operations involving missing values.
 
 In this interpretation, nearly any computation with a missing input produces
@@ -413,11 +413,11 @@ New ndarray Methods
 New functions added to the numpy namespace are::
 
     np.isna(arr) [IMPLEMENTED]
-        Returns a boolean array with True whereever the array is masked
+        Returns a boolean array with True wherever the array is masked
         or matches the NA bitpattern, and False elsewhere
 
     np.isavail(arr)
-        Returns a boolean array with False whereever the array is masked
+        Returns a boolean array with False wherever the array is masked
         or matches the NA bitpattern, and True elsewhere
 
 New functions added to the ndarray are::
@@ -884,7 +884,7 @@ a few different access patterns people use to get ahold of the numpy array data,
 here we examine a few of them to see what numpy can do. These examples are
 found from doing google searches of numpy C API array access.
 
-Numpy Documentation - How to extend NumPy
+NumPy Documentation - How to extend NumPy
 -----------------------------------------
 
 http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects

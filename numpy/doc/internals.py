@@ -6,13 +6,13 @@ Array Internals
 Internal organization of numpy arrays
 =====================================
 
-It helps to understand a bit about how numpy arrays are handled under the covers to help understand numpy better. This section will not go into great detail. Those wishing to understand the full details are referred to Travis Oliphant's book "Guide to Numpy".
+It helps to understand a bit about how numpy arrays are handled under the covers to help understand numpy better. This section will not go into great detail. Those wishing to understand the full details are referred to Travis Oliphant's book "Guide to NumPy".
 
-Numpy arrays consist of two major components, the raw array data (from now on,
+NumPy arrays consist of two major components, the raw array data (from now on,
 referred to as the data buffer), and the information about the raw array data.
 The data buffer is typically what people think of as arrays in C or Fortran,
 a contiguous (and fixed) block of memory containing fixed sized data items.
-Numpy also contains a significant set of data that describes how to interpret
+NumPy also contains a significant set of data that describes how to interpret
 the data in the data buffer. This extra information contains (among other things):
 
  1) The basic data element's size in bytes
@@ -49,7 +49,7 @@ uses the same data buffer. This is why it is necessary to force copies through
 use of the .copy() method if one really wants to make a new and independent
 copy of the data buffer.
 
-New views into arrays mean the the object reference counts for the data buffer
+New views into arrays mean the object reference counts for the data buffer
 increase. Simply doing away with the original array object will not remove the
 data buffer if other views of it still exist.
 
@@ -109,7 +109,7 @@ The situation with
 numpy makes this issue yet more complicated. The internal machinery of numpy
 arrays is flexible enough to accept any ordering of indices. One can simply
 reorder indices by manipulating the internal stride information for arrays
-without reordering the data at all. Numpy will know how to map the new index
+without reordering the data at all. NumPy will know how to map the new index
 order to the data without moving the data.
 
 So if this is true, why not choose

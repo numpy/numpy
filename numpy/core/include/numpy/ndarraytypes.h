@@ -15,7 +15,17 @@
         #define NPY_ALLOW_THREADS 0
 #endif
 
+#ifndef __has_extension
+#define __has_extension(x) 0
+#endif
 
+#if !defined(_NPY_NO_DEPRECATIONS) && \
+    ((defined(__GNUC__)&& __GNUC__ >= 6) || \
+     __has_extension(attribute_deprecated_with_message))
+#define NPY_ATTR_DEPRECATE(text) __attribute__ ((deprecated (text)))
+#else
+#define NPY_ATTR_DEPRECATE(text)
+#endif
 
 /*
  * There are several places in the code where an array of dimensions
@@ -71,12 +81,15 @@ enum NPY_TYPES {    NPY_BOOL=0,
 
                     NPY_NTYPES,
                     NPY_NOTYPE,
-                    NPY_CHAR,      /* special flag */
+                    NPY_CHAR NPY_ATTR_DEPRECATE("Use NPY_STRING"),
                     NPY_USERDEF=256,  /* leave room for characters */
 
                     /* The number of types not including the new 1.6 types */
                     NPY_NTYPES_ABI_COMPATIBLE=21
 };
+#ifdef _MSC_VER
+#pragma deprecated(NPY_CHAR)
+#endif
 
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
@@ -328,9 +341,20 @@ struct NpyAuxData_tag {
 #define NPY_USE_PYMEM 1
 
 #if NPY_USE_PYMEM == 1
-#define PyArray_malloc PyMem_Malloc
-#define PyArray_free PyMem_Free
-#define PyArray_realloc PyMem_Realloc
+   /* numpy sometimes calls PyArray_malloc() with the GIL released. On Python
+      3.3 and older, it was safe to call PyMem_Malloc() with the GIL released.
+      On Python 3.4 and newer, it's better to use PyMem_RawMalloc() to be able
+      to use tracemalloc. On Python 3.6, calling PyMem_Malloc() with the GIL
+      released is now a fatal error in debug mode. */
+#  if PY_VERSION_HEX >= 0x03040000
+#    define PyArray_malloc PyMem_RawMalloc
+#    define PyArray_free PyMem_RawFree
+#    define PyArray_realloc PyMem_RawRealloc
+#  else
+#    define PyArray_malloc PyMem_Malloc
+#    define PyArray_free PyMem_Free
+#    define PyArray_realloc PyMem_Realloc
+#  endif
 #else
 #define PyArray_malloc malloc
 #define PyArray_free free
@@ -653,7 +677,7 @@ typedef struct tagPyArrayObject_fields {
     /*
      * This object is decref'd upon
      * deletion of array. Except in the
-     * case of UPDATEIFCOPY which has
+     * case of WRITEBACKIFCOPY which has
      * special handling.
      *
      * For views it points to the original
@@ -661,12 +685,12 @@ typedef struct tagPyArrayObject_fields {
      * views occur.
      *
      * For creation from buffer object it
-     * points to an object that shold be
+     * points to an object that should be
      * decref'd on deletion
      *
-     * For UPDATEIFCOPY flag this is an
-     * array to-be-updated upon deletion
-     * of this one
+     * For WRITEBACKIFCOPY flag this is an
+     * array to-be-updated upon calling
+     * PyArray_ResolveWritebackIfCopy
      */
     PyObject *base;
     /* Pointer to type structure */
@@ -781,7 +805,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * An array never has the next four set; they're only used as parameter
- * flags to the the various FromAny functions
+ * flags to the various FromAny functions
  *
  * This flag may be requested in constructor functions.
  */
@@ -813,7 +837,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_ELEMENTSTRIDES  0x0080
 
 /*
- * Array data is aligned on the appropiate memory address for the type
+ * Array data is aligned on the appropriate memory address for the type
  * stored according to how the compiler would align things (e.g., an
  * array of integers (4 bytes each) starts on a memory address that's
  * a multiple of 4)
@@ -841,12 +865,13 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * If this flag is set, then base contains a pointer to an array of
  * the same size that should be updated with the current contents of
- * this array when this array is deallocated
+ * this array when PyArray_ResolveWritebackIfCopy is called.
  *
  * This flag may be requested in constructor functions.
  * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_UPDATEIFCOPY    0x1000
+#define NPY_ARRAY_UPDATEIFCOPY    0x1000 /* Deprecated in 1.14 */
+#define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
 
 /*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,
@@ -871,10 +896,14 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_OUT_ARRAY    (NPY_ARRAY_CARRAY)
 #define NPY_ARRAY_INOUT_ARRAY  (NPY_ARRAY_CARRAY | \
                                 NPY_ARRAY_UPDATEIFCOPY)
+#define NPY_ARRAY_INOUT_ARRAY2 (NPY_ARRAY_CARRAY | \
+                                NPY_ARRAY_WRITEBACKIFCOPY)
 #define NPY_ARRAY_IN_FARRAY    (NPY_ARRAY_FARRAY_RO)
 #define NPY_ARRAY_OUT_FARRAY   (NPY_ARRAY_FARRAY)
 #define NPY_ARRAY_INOUT_FARRAY (NPY_ARRAY_FARRAY | \
                                 NPY_ARRAY_UPDATEIFCOPY)
+#define NPY_ARRAY_INOUT_FARRAY2 (NPY_ARRAY_FARRAY | \
+                                NPY_ARRAY_WRITEBACKIFCOPY)
 
 #define NPY_ARRAY_UPDATE_ALL   (NPY_ARRAY_C_CONTIGUOUS | \
                                 NPY_ARRAY_F_CONTIGUOUS | \
@@ -997,6 +1026,12 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_DELAY_BUFALLOC             0x00000800
 /* When NPY_KEEPORDER is specified, disable reversing negative-stride axes */
 #define NPY_ITER_DONT_NEGATE_STRIDES        0x00001000
+/*
+ * If output operands overlap with other operands (based on heuristics that
+ * has false positives but no false negatives), make temporary copies to
+ * eliminate overlap.
+ */
+#define NPY_ITER_COPY_IF_OVERLAP            0x00002000
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
@@ -1014,7 +1049,7 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_CONTIG                     0x00200000
 /* The operand may be copied to satisfy requirements */
 #define NPY_ITER_COPY                       0x00400000
-/* The operand may be copied with UPDATEIFCOPY to satisfy requirements */
+/* The operand may be copied with WRITEBACKIFCOPY to satisfy requirements */
 #define NPY_ITER_UPDATEIFCOPY               0x00800000
 /* Allocate the operand if it is NULL */
 #define NPY_ITER_ALLOCATE                   0x01000000
@@ -1028,6 +1063,8 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_WRITEMASKED                0x10000000
 /* This array is the mask for all WRITEMASKED operands */
 #define NPY_ITER_ARRAYMASK                  0x20000000
+/* Assume iterator order data access for COPY_IF_OVERLAP */
+#define NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE 0x40000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
@@ -1644,6 +1681,8 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)(obj))->names != NULL)
 #define PyDataType_HASSUBARRAY(dtype) ((dtype)->subarray != NULL)
+#define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0)
+#define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))

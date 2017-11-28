@@ -3,7 +3,7 @@ Input and output
 
 .. currentmodule:: numpy
 
-Numpy binary files (NPY, NPZ)
+NumPy binary files (NPY, NPZ)
 -----------------------------
 .. autosummary::
    :toctree: generated/
@@ -14,7 +14,7 @@ Numpy binary files (NPY, NPZ)
    savez_compressed
 
 The format of these binary file types is documented in
-http://docs.scipy.org/doc/numpy/neps/npy-format.html  
+http://docs.scipy.org/doc/numpy/neps/npy-format.html
 
 Text files
 ----------
@@ -45,6 +45,8 @@ String formatting
    array2string
    array_repr
    array_str
+   format_float_positional
+   format_float_scientific
 
 Memory mapping files
 --------------------

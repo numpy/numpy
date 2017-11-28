@@ -3,7 +3,7 @@
  * This excludes functions specialized using the templating system.
  *
  * Copyright (c) 2010-2011 by Mark Wiebe (mwwiebe@gmail.com)
- * The Univerity of British Columbia
+ * The University of British Columbia
  *
  * Copyright (c) 2011 Enthought, Inc
  *
@@ -103,12 +103,6 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
     if (idim == ndim) {
         PyErr_SetString(PyExc_RuntimeError,
                 "internal error in iterator perm");
-        return NPY_FAIL;
-    }
-
-    if (NAD_SHAPE(axisdata_del) == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "cannot remove a zero-sized axis from an iterator");
         return NPY_FAIL;
     }
 
@@ -1847,7 +1841,7 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
 }
 
 /*
- * This gets called after the the buffers have been exhausted, and
+ * This gets called after the buffers have been exhausted, and
  * their data needs to be written back to the arrays.  The multi-index
  * must be positioned for the beginning of the buffer.
  */
@@ -2334,7 +2328,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 }
                 else {
                     /* It's all in one stride in the reduce outer loop */
-                    if ((reduce_outerdim > 0) &&
+                    if ((reduce_outerdim == 1) &&
                                     (transfersize/reduce_innersize <=
                                             NAD_SHAPE(reduce_outeraxisdata) -
                                             NAD_INDEX(reduce_outeraxisdata))) {

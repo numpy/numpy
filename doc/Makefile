@@ -90,19 +90,18 @@ upload:
 	# SSH must be correctly configured for this to work.
 	# Assumes that ``make dist`` was already run
 	# Example usage: ``make upload USERNAME=rgommers RELEASE=1.10.1``
-	ssh $(USERNAME)@new.scipy.org mkdir $(UPLOAD_DIR)
-	scp build/dist.tar.gz $(USERNAME)@new.scipy.org:$(UPLOAD_DIR)
-	ssh $(USERNAME)@new.scipy.org tar xvC $(UPLOAD_DIR) \
+	ssh $(USERNAME)@docs.scipy.org mkdir $(UPLOAD_DIR)
+	scp build/dist.tar.gz $(USERNAME)@docs.scipy.org:$(UPLOAD_DIR)
+	ssh $(USERNAME)@docs.scipy.org tar xvC $(UPLOAD_DIR) \
 	    -zf $(UPLOAD_DIR)/dist.tar.gz
-	ssh $(USERNAME)@new.scipy.org mv $(UPLOAD_DIR)/numpy-ref.pdf \
+	ssh $(USERNAME)@docs.scipy.org mv $(UPLOAD_DIR)/numpy-ref.pdf \
 	    $(UPLOAD_DIR)/numpy-ref-$(RELEASE).pdf
-	ssh $(USERNAME)@new.scipy.org mv $(UPLOAD_DIR)/numpy-user.pdf \
+	ssh $(USERNAME)@docs.scipy.org mv $(UPLOAD_DIR)/numpy-user.pdf \
 	    $(UPLOAD_DIR)/numpy-user-$(RELEASE).pdf
-	ssh $(USERNAME)@new.scipy.org mv $(UPLOAD_DIR)/numpy-html.zip \
+	ssh $(USERNAME)@docs.scipy.org mv $(UPLOAD_DIR)/numpy-html.zip \
 	    $(UPLOAD_DIR)/numpy-html-$(RELEASE).zip
-	ssh $(USERNAME)@new.scipy.org rm $(UPLOAD_DIR)/dist.tar.gz
-	ssh $(USERNAME)@new.scipy.org ln -snf numpy-$(RELEASE) /srv/docs_scipy_org/doc/numpy
-	ssh $(USERNAME)@new.scipy.org /srv/bin/fixperm-scipy_org.sh
+	ssh $(USERNAME)@docs.scipy.org rm $(UPLOAD_DIR)/dist.tar.gz
+	ssh $(USERNAME)@docs.scipy.org ln -snf numpy-$(RELEASE) /srv/docs_scipy_org/doc/numpy
 
 #------------------------------------------------------------------------------
 # Basic Sphinx generation rules for different formats

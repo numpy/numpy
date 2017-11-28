@@ -18,6 +18,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "numpy/arrayscalars.h"
 #include "lowlevel_strided_loops.h"
 #include "_datetime.h"
@@ -168,7 +169,7 @@ invalid_weekmask_string:
                 }
 
                 val = PyInt_AsLong(f);
-                if (val == -1 && PyErr_Occurred()) {
+                if (error_converting(val)) {
                     Py_DECREF(f);
                     Py_DECREF(obj);
                     return 0;
@@ -214,7 +215,7 @@ qsort_datetime_compare(const void *elem1, const void *elem2)
 }
 
 /*
- * Sorts the the array of dates provided in place and removes
+ * Sorts the array of dates provided in place and removes
  * NaT, duplicates and any date which is already excluded on account
  * of the weekmask.
  *
@@ -234,7 +235,7 @@ normalize_holidays_list(npy_holidayslist *holidays, npy_bool *weekmask)
     /* Sort the dates */
     qsort(dates, count, sizeof(npy_datetime), &qsort_datetime_compare);
 
-    /* Sweep throught the array, eliminating unnecessary values */
+    /* Sweep through the array, eliminating unnecessary values */
     trimcount = 0;
     for (i = 0; i < count; ++i) {
         npy_datetime date = dates[i];

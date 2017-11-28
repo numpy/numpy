@@ -89,7 +89,7 @@ npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
         return i2;
     }
     else if (i2 == NULL) {
-        Py_INCREF(i2);
+        Py_INCREF(i1);
         return i1;
     }
     else {
@@ -184,6 +184,14 @@ nc_neg@c@(@ctype@ *a, @ctype@ *r)
 {
     r->real = -a->real;
     r->imag = -a->imag;
+    return;
+}
+
+static void
+nc_pos@c@(@ctype@ *a, @ctype@ *r)
+{
+    r->real = +a->real;
+    r->imag = +a->imag;
     return;
 }
 
