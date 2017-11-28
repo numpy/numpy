@@ -169,15 +169,29 @@ class TestArray2String(object):
         assert_equal(np.array2string(x),
                 "[('Sarah', [8., 7.]) ('John', [6., 7.])]")
 
-        # for issue #5692
-        A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
-        A[5:].fill(np.datetime64('NaT'))
+        np.set_printoptions(legacy='1.13')
+        try:
+            # for issue #5692
+            A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
+            A[5:].fill(np.datetime64('NaT'))
+            assert_equal(
+                np.array2string(A),
+                textwrap.dedent("""\
+                [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
+                 ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('NaT',) ('NaT',)
+                 ('NaT',) ('NaT',) ('NaT',)]""")
+            )
+        finally:
+            np.set_printoptions(legacy=False)
+
+        # same again, but with non-legacy behavior
         assert_equal(
             np.array2string(A),
             textwrap.dedent("""\
             [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
-             ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('NaT',) ('NaT',)
-             ('NaT',) ('NaT',) ('NaT',)]""")
+             ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) (                'NaT',)
+             (                'NaT',) (                'NaT',) (                'NaT',)
+             (                'NaT',)]""")
         )
 
         # and again, with timedeltas
