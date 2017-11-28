@@ -5,6 +5,12 @@ Datetime Support Functions
 
 .. currentmodule:: numpy
 
+.. autosummary::
+   :toctree: generated/
+
+   datetime_as_string
+
+
 Business Day Functions
 ======================
 
