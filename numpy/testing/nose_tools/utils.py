@@ -773,8 +773,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 + '\n(mismatch %s%%)' % (match,),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            if not cond:
-                raise AssertionError(msg)
+            raise AssertionError(msg)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
