@@ -571,8 +571,8 @@ class TestMaskedArray(object):
             a[1:50] = np.ma.masked
             assert_equal(
                 repr(a),
-                'masked_array(data = [0 -- -- ... 1997 1998 1999],\n'
-                '             mask = [False  True  True ... False False False],\n'
+                'masked_array(data = [0 -- -- ..., 1997 1998 1999],\n'
+                '             mask = [False  True  True ..., False False False],\n'
                 '       fill_value = 999999)\n'
             )
         finally:

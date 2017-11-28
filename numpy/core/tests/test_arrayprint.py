@@ -487,6 +487,13 @@ class TestPrintOptions(object):
                      '1.1234567891234568')
         assert_equal(str(np.complex128(complex(1, np.nan))), '(1+nanj)')
 
+    def test_legacy_stray_comma(self):
+        np.set_printoptions(legacy='1.13')
+        assert_equal(str(np.arange(10000)), '[   0    1    2 ..., 9997 9998 9999]')
+
+        np.set_printoptions(legacy=False)
+        assert_equal(str(np.arange(10000)), '[   0    1    2 ... 9997 9998 9999]')
+
     def test_dtype_linewidth_wrapping(self):
         np.set_printoptions(linewidth=75)
         assert_equal(repr(np.arange(10,20., dtype='f4')),
