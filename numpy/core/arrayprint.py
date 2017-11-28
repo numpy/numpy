@@ -50,12 +50,6 @@ from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 import warnings
 
-if sys.version_info[0] >= 3:
-    _MAXINT = sys.maxsize
-    _MININT = -sys.maxsize - 1
-else:
-    _MAXINT = sys.maxint
-    _MININT = -sys.maxint - 1
 
 _format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
@@ -988,23 +982,15 @@ def format_float_positional(x, precision=None, unique=True,
 
 class IntegerFormat(object):
     def __init__(self, data):
-        try:
+        if data.size > 0:
             max_str_len = max(len(str(np.max(data))),
                               len(str(np.min(data))))
-            self.format = '%' + str(max_str_len) + 'd'
-        except (TypeError, NotImplementedError):
-            # if reduce(data) fails, this instance will not be called, just
-            # instantiated in formatdict.
-            pass
-        except ValueError:
-            # this occurs when everything is NA
-            pass
+        else:
+            max_str_len = 0
+        self.format = '%{}d'.format(max_str_len)
 
     def __call__(self, x):
-        if _MININT < x < _MAXINT:
-            return self.format % x
-        else:
-            return "%s" % x
+        return self.format % x
 
 
 class BoolFormat(object):
