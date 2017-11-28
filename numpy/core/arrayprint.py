@@ -326,7 +326,7 @@ def _get_formatdict(data, **opt):
             ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
         'longcomplexfloat': lambda:
             ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
-        'datetime': lambda: DatetimeFormat(data),
+        'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
@@ -1051,8 +1051,35 @@ class LongComplexFormat(ComplexFloatingFormat):
         super(LongComplexFormat, self).__init__(*args, **kwargs)
 
 
-class DatetimeFormat(object):
-    def __init__(self, x, unit=None, timezone=None, casting='same_kind'):
+class _TimelikeFormat(object):
+    def __init__(self, data):
+        non_nat = data[~isnat(data)]
+        if len(non_nat) > 0:
+            # Max str length of non-NaT elements
+            max_str_len = max(len(self._format_non_nat(np.max(non_nat))),
+                              len(self._format_non_nat(np.min(non_nat))))
+        else:
+            max_str_len = 0
+        if len(non_nat) < data.size:
+            # data contains a NaT
+            max_str_len = max(max_str_len, 5)
+        self._format = '%{}s'.format(max_str_len)
+        self._nat = "'NaT'".rjust(max_str_len)
+
+    def _format_non_nat(self, x):
+        # override in subclass
+        raise NotImplementedError
+
+    def __call__(self, x):
+        if isnat(x):
+            return self._nat
+        else:
+            return self._format % self._format_non_nat(x)
+
+
+class DatetimeFormat(_TimelikeFormat):
+    def __init__(self, x, unit=None, timezone=None, casting='same_kind',
+                 legacy=False):
         # Get the unit from the dtype
         if unit is None:
             if x.dtype.kind == 'M':
@@ -1065,34 +1092,26 @@ class DatetimeFormat(object):
         self.timezone = timezone
         self.unit = unit
         self.casting = casting
+        self.legacy = legacy
+
+        # must be called after the above are configured
+        super(DatetimeFormat, self).__init__(x)
 
     def __call__(self, x):
+        if self.legacy == '1.13':
+            return self._format_non_nat(x)
+        return super(DatetimeFormat, self).__call__(x)
+
+    def _format_non_nat(self, x):
         return "'%s'" % datetime_as_string(x,
                                     unit=self.unit,
                                     timezone=self.timezone,
                                     casting=self.casting)
 
 
-class TimedeltaFormat(object):
-    def __init__(self, data):
-        non_nat = data[~isnat(data)]
-        if len(non_nat) > 0:
-            # Max str length of non-NaT elements
-            max_str_len = max(len(str(np.max(non_nat).astype('i8'))),
-                              len(str(np.min(non_nat).astype('i8'))))
-        else:
-            max_str_len = 0
-        if len(non_nat) < data.size:
-            # data contains a NaT
-            max_str_len = max(max_str_len, 5)
-        self.format = '%' + str(max_str_len) + 'd'
-        self._nat = "'NaT'".rjust(max_str_len)
-
-    def __call__(self, x):
-        if isnat(x):
-            return self._nat
-        else:
-            return self.format % x.astype('i8')
+class TimedeltaFormat(_TimelikeFormat):
+    def _format_non_nat(self, x):
+        return str(x.astype('i8'))
 
 
 class SubArrayFormat(object):
