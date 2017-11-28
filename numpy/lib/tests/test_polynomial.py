@@ -6,51 +6,82 @@ from numpy.testing import (assert_, assert_almost_equal,
                            assert_equal, assert_raises, run_module_suite)
 
 
-class TestDocs(object):
-    def test_poly1d(self):
+def assert_str_equal(actual, desired, err_msg='', verbose=True):
+    assert_equal(str(actual), desired, err_msg, verbose)
+
+
+def assert_repr_equal(actual, desired, err_msg='', verbose=True):
+    assert_equal(repr(actual), desired, err_msg, verbose)
+
+
+class TestPolynomial(object):
+    def test_poly1d_str_and_repr(self):
         # GH9416: Convert doctests to regular tests.
         p = np.poly1d([1., 2, 3])
-        assert_equal(repr(p), 'poly1d([1., 2., 3.])')
-        assert_equal(str(p), '   2\n1 x + 2 x + 3')
+        assert_repr_equal(p, 'poly1d([1., 2., 3.])')
+        assert_str_equal(p,
+                         '   2\n'
+                         '1 x + 2 x + 3')
 
         q = np.poly1d([3., 2, 1])
-        assert_equal(repr(q), 'poly1d([3., 2., 1.])')
-        assert_equal(str(q), '   2\n3 x + 2 x + 1')
+        assert_repr_equal(q, 'poly1d([3., 2., 1.])')
+        assert_str_equal(q,
+                         '   2\n'
+                         '3 x + 2 x + 1')
 
         r = np.poly1d([1.89999 + 2j, -3j, -5.12345678, 2 + 1j])
-        assert_equal(str(r), '            3      2\n(1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)')
+        assert_str_equal(r,
+                         '            3      2\n'
+                         '(1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)')
 
-        assert_equal(str(np.poly1d([-3, -2, -1])), '    2\n-3 x - 2 x - 1')
+        assert_str_equal(np.poly1d([-3, -2, -1]),
+                         '    2\n'
+                         '-3 x - 2 x - 1')
 
+    def test_poly1d_resolution(self):
+        p = np.poly1d([1., 2, 3])
+        q = np.poly1d([3., 2, 1])
         assert_equal(p(0), 3.0)
         assert_equal(p(5), 38.0)
         assert_equal(q(0), 1.0)
         assert_equal(q(5), 86.0)
 
+    def test_poly1d_math(self):
+        # here we use some simple coeffs to make calculations easier
+        p = np.poly1d([1., 2, 4])
+        q = np.poly1d([4., 2, 1])
+        assert_equal(p/q, (np.poly1d([0.25]), np.poly1d([1.5, 3.75])))
+        assert_equal(p.integ(), np.poly1d([1/3, 1., 4., 0.]))
+        assert_equal(p.integ(1), np.poly1d([1/3, 1., 4., 0.]))
+
+        p = np.poly1d([1., 2, 3])
+        q = np.poly1d([3., 2, 1])
         assert_array_equal(p * q, np.poly1d([3., 8., 14., 8., 3.]))
-        assert_equal(repr(p/q), '(poly1d([0.33333333]), poly1d([1.33333333, 2.66666667]))')
         assert_equal(p + q, np.poly1d([4., 4., 4.]))
         assert_equal(p - q, np.poly1d([-2., 0., 2.]))
         assert_equal(p ** 4, np.poly1d([1., 8., 36., 104., 214., 312., 324., 216., 81.]))
         assert_equal(p(q), np.poly1d([9., 12., 16., 8., 6.]))
         assert_equal(q(p), np.poly1d([3., 12., 32., 40., 34.]))
+        assert_equal(p.deriv(), np.poly1d([2., 2.]))
+        assert_equal(p.deriv(2), np.poly1d([2.]))
+        assert_equal(np.polydiv(np.poly1d([1, 0, -1]), np.poly1d([1, 1])),
+                     (np.poly1d([1., -1.]), np.poly1d([0.])))
 
+    def test_poly1d_misc(self):
+        p = np.poly1d([1., 2, 3])
         assert_equal(np.asarray(p), np.array([1., 2., 3.]))
         assert_equal(len(p), 2)
         assert_equal((p[0], p[1], p[2], p[3]), (3.0, 2.0, 1.0, 0))
-        assert_equal(repr(p.integ()), 'poly1d([0.33333333, 1.        , 3.        , 0.        ])')
-        assert_equal(repr(p.integ(1)), 'poly1d([0.33333333, 1.        , 3.        , 0.        ])')
-        assert_equal(repr(p.integ(5)), 'poly1d([0.00039683, 0.00277778, 0.025     , 0.        , 0.        ,\n       0.        , 0.        , 0.        ])')
-        assert_equal(p.deriv(), np.poly1d([2., 2.]))
-        assert_equal(p.deriv(2), np.poly1d([2.]))
 
+    def test_poly1d_variable_arg(self):
         q = np.poly1d([1., 2, 3], variable='y')
-        assert_equal(str(q), '   2\n1 y + 2 y + 3')
+        assert_str_equal(q,
+                         '   2\n'
+                         '1 y + 2 y + 3')
         q = np.poly1d([1., 2, 3], variable='lambda')
-        assert_equal(str(q), '        2\n1 lambda + 2 lambda + 3')
-
-        assert_equal(np.polydiv(np.poly1d([1, 0, -1]), np.poly1d([1, 1])),
-                     (np.poly1d([1., -1.]), np.poly1d([0.])))
+        assert_str_equal(q,
+                         '        2\n'
+                         '1 lambda + 2 lambda + 3')
 
     def test_poly(self):
         assert_array_almost_equal(np.poly([3, -np.sqrt(2), np.sqrt(2)]),
