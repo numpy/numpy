@@ -565,7 +565,7 @@ class TestDateTime(object):
 
         # Check that one NaT doesn't corrupt subsequent entries
         a = np.array(['2010', 'NaT', '2030']).astype('M')
-        assert_equal(str(a), "['2010' 'NaT' '2030']")
+        assert_equal(str(a), "['2010'  'NaT' '2030']")
 
     def test_timedelta_array_str(self):
         a = np.array([-1, 0, 100], dtype='m')
