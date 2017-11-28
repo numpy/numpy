@@ -175,7 +175,7 @@ def reshape(a, newshape, order='C'):
     you should assign the new shape to the shape attribute of the array::
 
      >>> a = np.zeros((10, 2))
-     # A transpose converts the C-contiguous array into an F-contiguous array
+     # A transpose makes the array non-contiguous
      >>> b = a.T
      # Taking a view makes it possible to modify the shape without modifying
      # the initial object.
