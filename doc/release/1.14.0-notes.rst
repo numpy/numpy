@@ -450,6 +450,11 @@ Reduced memory usage of ``np.loadtxt``
 ``np.loadtxt`` now reads files in chunks instead of all at once which decreases
 its memory usage significantly for large files.
 
+``np.asarray`` and ``np.asanyarray`` now take a ``ndmin`` argument to match ``array``
+-------------------------------------------------------------------------------------
+This makes the shorthands marginally more useful.
+
+
 Changes
 =======
 

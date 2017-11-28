@@ -421,7 +421,7 @@ def count_nonzero(a, axis=None):
     return a_bool.sum(axis=axis, dtype=np.intp)
 
 
-def asarray(a, dtype=None, order=None):
+def asarray(a, dtype=None, order=None, ndmin=0):
     """Convert the input to an array.
 
     Parameters
@@ -436,6 +436,12 @@ def asarray(a, dtype=None, order=None):
         Whether to use row-major (C-style) or
         column-major (Fortran-style) memory representation.
         Defaults to 'C'.
+    ndmin : int, optional
+        Specifies the minimum number of dimensions that the resulting array
+        should have. Ones will be pre-pended to the shape as needed to meet
+        this requirement.
+
+        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -489,10 +495,10 @@ def asarray(a, dtype=None, order=None):
     True
 
     """
-    return array(a, dtype, copy=False, order=order)
+    return array(a, dtype, copy=False, order=order, ndmin=ndmin)
 
 
-def asanyarray(a, dtype=None, order=None):
+def asanyarray(a, dtype=None, order=None, ndmin=0):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
 
     Parameters
@@ -506,6 +512,12 @@ def asanyarray(a, dtype=None, order=None):
     order : {'C', 'F'}, optional
         Whether to use row-major (C-style) or column-major
         (Fortran-style) memory representation.  Defaults to 'C'.
+    ndmin : int, optional
+        Specifies the minimum number of dimensions that the resulting array
+        should have. Ones will be pre-pended to the shape as needed to meet
+        this requirement.
+
+        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -541,7 +553,7 @@ def asanyarray(a, dtype=None, order=None):
     True
 
     """
-    return array(a, dtype, copy=False, order=order, subok=True)
+    return array(a, dtype, copy=False, order=order, subok=True, ndmin=ndmin)
 
 
 def ascontiguousarray(a, dtype=None):
