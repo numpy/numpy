@@ -394,6 +394,17 @@ class TestNewScalarIndexing(object):
         assert_array_equal(x[:, [1, 0]], x[:, ::-1])
         assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
 
+    def test_ellipsis_indexing(self):
+        A = np.arange(6)
+        A.shape = (3, 2)
+        x = asmatrix(A)
+
+        # Indexing with ... would normally return a 0d array, but np.matrix
+        # promotes to 2d as usual
+        x_item = x[1, 1, ...]
+        assert_(type(x_item) is matrix)
+        assert_equal(x_item.shape, (1, 1))
+
 
 class TestPower(object):
     def test_returntype(self):

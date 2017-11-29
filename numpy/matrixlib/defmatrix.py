@@ -289,8 +289,8 @@ class matrix(N.ndarray):
             return out
 
         if out.ndim == 0:
-            return out[()]
-        if out.ndim == 1:
+            out.shape = (1, 1)
+        elif out.ndim == 1:
             sh = out.shape[0]
             # Determine when we should have a column array
             try:
