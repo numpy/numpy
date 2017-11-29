@@ -11,6 +11,7 @@ recursive-include numpy/random/mtrand *.pyx *.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
 recursive-include numpy/_build_utils *
 recursive-include numpy/linalg/lapack_lite *.c *.h
+include tox.ini
 # Add sdist files whose use depends on local configuration.
 include numpy/core/src/multiarray/cblasfuncs.c
 include numpy/core/src/multiarray/python_xerbla.c
@@ -27,4 +28,4 @@ recursive-include tools/swig *
 recursive-include doc/scipy-sphinx-theme *
 recursive-include doc/f2py *
 
-global-exclude *.pyc *.pyo *.pyd
+global-exclude *.pyc *.pyo *.pyd *.swp *.bak *~
