@@ -1167,25 +1167,12 @@ cdef class RandomState:
                                  "population when 'replace=False'")
 
             if p is not None:
-                if np.count_nonzero(p > 0) < size:
-                    raise ValueError("Fewer non-zero entries in p than size")
-                n_uniq = 0
-                p = p.copy()
-                found = np.zeros(shape, dtype=np.int)
-                flat_found = found.ravel()
-                while n_uniq < size:
-                    x = self.rand(size - n_uniq)
-                    if n_uniq > 0:
-                        p[flat_found[0:n_uniq]] = 0
-                    cdf = np.cumsum(p)
-                    cdf /= cdf[-1]
-                    new = cdf.searchsorted(x, side='right')
-                    _, unique_indices = np.unique(new, return_index=True)
-                    unique_indices.sort()
-                    new = new.take(unique_indices)
-                    flat_found[n_uniq:n_uniq + new.size] = new
-                    n_uniq += new.size
-                idx = found
+              if np.count_nonzero(p > 0) < size:
+                  raise ValueError("Fewer non-zero entries in p than size")
+              key = np.random.exponential(size = pop_size)/p
+              idx = np.argpartition(-key, size - 1)[:size]
+              if shape is not None:
+                  idx.shape = shape
             else:
                 idx = self.permutation(pop_size)[:size]
                 if shape is not None:
