@@ -443,8 +443,8 @@ def _array2string(a, options, separator=' ', prefix=""):
     next_line_prefix += " "*len(prefix)
 
     lst = _formatArray(a, format_function, a.ndim, options['linewidth'],
-                       next_line_prefix, separator,
-                       options['edgeitems'], summary_insert)[:-1]
+                       next_line_prefix, separator, options['edgeitems'],
+                       summary_insert, options['legacy'])[:-1]
     return lst
 
 
@@ -617,8 +617,8 @@ def _extendLine(s, line, word, max_line_len, next_line_prefix):
     return s, line
 
 
-def _formatArray(a, format_function, rank, max_line_len,
-                 next_line_prefix, separator, edge_items, summary_insert):
+def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
+                 separator, edge_items, summary_insert, legacy):
     """formatArray is designed for two modes of operation:
 
     1. Full output
@@ -633,6 +633,8 @@ def _formatArray(a, format_function, rank, max_line_len,
         leading_items = edge_items
         trailing_items = edge_items
         summary_insert1 = summary_insert + separator
+        if legacy == '1.13':
+            summary_insert1 = summary_insert + ', '
     else:
         leading_items = 0
         trailing_items = len(a)
@@ -646,7 +648,8 @@ def _formatArray(a, format_function, rank, max_line_len,
             s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
 
         if summary_insert1:
-            s, line = _extendLine(s, line, summary_insert1, max_line_len, next_line_prefix)
+            s, line = _extendLine(s, line, summary_insert1, max_line_len,
+                                  next_line_prefix)
 
         for i in range(trailing_items, 1, -1):
             word = format_function(a[-i]) + separator
@@ -664,7 +667,7 @@ def _formatArray(a, format_function, rank, max_line_len,
                 s += next_line_prefix
             s += _formatArray(a[i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
-                              summary_insert)
+                              summary_insert, legacy)
             s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
 
         if summary_insert1:
@@ -675,13 +678,13 @@ def _formatArray(a, format_function, rank, max_line_len,
                 s += next_line_prefix
             s += _formatArray(a[-i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
-                              summary_insert)
+                              summary_insert, legacy)
             s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
         if leading_items or trailing_items > 1:
             s += next_line_prefix
         s += _formatArray(a[-1], format_function, rank-1, max_line_len,
                           " " + next_line_prefix, separator, edge_items,
-                          summary_insert).rstrip()+']\n'
+                          summary_insert, legacy).rstrip()+']\n'
     return s
 
 
