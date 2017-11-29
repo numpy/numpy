@@ -3908,6 +3908,8 @@ class MaskedArray(ndarray):
             self.size == 0
         )
 
+        is_ndim_empty = self.size == 0 and len(self.shape) > 1
+
         # determine which keyword args need to be shown
         keys = ['data', 'mask', 'fill_value']
         if dtype_needed:
@@ -3918,7 +3920,7 @@ class MaskedArray(ndarray):
 
         # choose what to indent each keyword with
         min_indent = 2
-        if is_one_row:
+        if is_one_row or is_ndim_empty:
             # first key on the same line as the type, remaining keys
             # aligned by equals
             indents = {}
@@ -3945,6 +3947,8 @@ class MaskedArray(ndarray):
         reprs['fill_value'] = repr(self.fill_value)
         if dtype_needed:
             reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
+        if is_ndim_empty:
+            reprs['data'] = 'empty({})'.format(self.shape)
 
         # join keys with values and indentations
         result = ',\n'.join(

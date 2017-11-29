@@ -555,7 +555,15 @@ class TestMaskedArray(object):
               fill_value=999999)''')
         )
 
-
+        # empty arrays with unusual shapes display it
+        assert_equal(
+            repr(array(np.empty((0,2), dtype='f8'))),
+            textwrap.dedent('''\
+            masked_array(data=empty((0, 2)),
+                         mask=False,
+                   fill_value=1e+20,
+                        dtype=float64)''')
+        )
 
     def test_str_repr_legacy(self):
         oldopts = np.get_printoptions()
@@ -575,6 +583,7 @@ class TestMaskedArray(object):
                 '             mask = [False  True  True ..., False False False],\n'
                 '       fill_value = 999999)\n'
             )
+
         finally:
             np.set_printoptions(**oldopts)
 

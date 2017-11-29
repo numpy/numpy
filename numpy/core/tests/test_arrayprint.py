@@ -509,6 +509,15 @@ class TestPrintOptions(object):
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
 
+    def test_empty(self):
+        assert_equal(repr(np.ones((0,))), "array([], dtype=float64)")
+        assert_equal(repr(np.ones((2,0))), "empty((2, 0), dtype=float64)")
+        np.set_printoptions(legacy='1.13')
+        assert_equal(repr(np.ones((0,))), "array([], dtype=float64)")
+        assert_equal(repr(np.ones((2,0))),
+            "array([], shape=(2, 0), dtype=float64)")
+
+
 def test_unicode_object_array():
     import sys
     if sys.version_info[0] >= 3:
