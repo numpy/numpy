@@ -509,6 +509,77 @@ class TestPrintOptions(object):
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
 
+    def test_edgeitems(self):
+        np.set_printoptions(edgeitems=1, threshold=1)
+        a = np.arange(27).reshape((3, 3, 3))
+        assert_equal(
+            repr(a),
+            textwrap.dedent("""\
+            array([[[ 0, ...,  2],
+                    ...,
+                    [ 6, ...,  8]],
+
+                   ...,
+
+                   [[18, ..., 20],
+                    ...,
+                    [24, ..., 26]]])""")
+        )
+
+        b = np.zeros((3, 3, 1, 1))
+        assert_equal(
+            repr(b),
+            textwrap.dedent("""\
+            array([[[[0.]],
+
+                    ...,
+
+                    [[0.]]],
+
+
+                   ...,
+
+
+                   [[[0.]],
+
+                    ...,
+
+                    [[0.]]]])""")
+        )
+
+        # 1.13 had extra trailing spaces, and was missing newlines
+        np.set_printoptions(legacy='1.13')
+
+        assert_equal(
+            repr(a),
+            textwrap.dedent("""\
+            array([[[ 0, ...,  2],
+                    ..., 
+                    [ 6, ...,  8]],
+
+                   ..., 
+                   [[18, ..., 20],
+                    ..., 
+                    [24, ..., 26]]])""")
+        )
+
+        assert_equal(
+            repr(b),
+            textwrap.dedent("""\
+            array([[[[ 0.]],
+
+                    ..., 
+                    [[ 0.]]],
+
+
+                   ..., 
+                   [[[ 0.]],
+
+                    ..., 
+                    [[ 0.]]]])""")
+        )
+
+
 def test_unicode_object_array():
     import sys
     if sys.version_info[0] >= 3:

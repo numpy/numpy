@@ -664,16 +664,20 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
     else:
         s = '['
         sep = separator.rstrip()
+        line_sep = '\n'*max(rank-1, 1)
         for i in range(leading_items):
             if i > 0:
                 s += next_line_prefix
             s += _formatArray(a[i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert, legacy)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
+            s = s.rstrip() + sep.rstrip() + line_sep
 
         if summary_insert1:
-            s += next_line_prefix + summary_insert1 + "\n"
+            if legacy == '1.13':
+                s += next_line_prefix + summary_insert1 + "\n"
+            else:
+                s += next_line_prefix + summary_insert1.strip() + line_sep
 
         for i in range(trailing_items, 1, -1):
             if leading_items or i != trailing_items:
@@ -681,7 +685,7 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
             s += _formatArray(a[-i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert, legacy)
-            s = s.rstrip() + sep.rstrip() + '\n'*max(rank-1, 1)
+            s = s.rstrip() + sep.rstrip() + line_sep
         if leading_items or trailing_items > 1:
             s += next_line_prefix
         s += _formatArray(a[-1], format_function, rank-1, max_line_len,
