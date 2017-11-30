@@ -272,22 +272,27 @@ def get_printoptions():
     """
     return _format_options.copy()
 
-def _leading_trailing(a):
+
+def _leading_trailing(a, index=()):
+    """
+    Keep only the N-D corners (leading and trailing edges) of an array.
+
+    Should be passed a base-class ndarray, since it makes no guarantees about
+    preserving subclasses.
+    """
     edgeitems =  _format_options['edgeitems']
-    if a.ndim == 1:
-        if len(a) > 2*edgeitems:
-            b = concatenate((a[:edgeitems], a[-edgeitems:]))
-        else:
-            b = a
+    axis = len(index)
+    if axis == a.ndim:
+        return a[index]
+
+    if a.shape[axis] > 2*edgeitems:
+        return concatenate((
+            _leading_trailing(a, index + np.index_exp[ :edgeitems]),
+            _leading_trailing(a, index + np.index_exp[-edgeitems:])
+        ), axis=axis)
     else:
-        if len(a) > 2*edgeitems:
-            l = [_leading_trailing(a[i]) for i in range(min(len(a), edgeitems))]
-            l.extend([_leading_trailing(a[-i]) for i in range(
-                min(len(a), edgeitems), 0, -1)])
-        else:
-            l = [_leading_trailing(a[i]) for i in range(0, len(a))]
-        b = concatenate(tuple(l))
-    return b
+        return _leading_trailing(a, index + np.index_exp[:])
+
 
 def _object_format(o):
     """ Object arrays containing lists should be printed unambiguously """
