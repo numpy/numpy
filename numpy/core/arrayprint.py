@@ -427,12 +427,14 @@ def _recursive_guard(fillvalue='...'):
 # gracefully handle recursive calls, when object arrays contain themselves
 @_recursive_guard()
 def _array2string(a, options, separator=' ', prefix=""):
+    # The formatter __init__s cannot deal with subclasses yet
+    data = asarray(a)
+
     if a.size > options['threshold']:
         summary_insert = "..."
-        data = _leading_trailing(a)
+        data = _leading_trailing(data)
     else:
         summary_insert = ""
-        data = asarray(a)
 
     # find the right formatting function for the array
     format_function = _get_format_function(data, **options)
