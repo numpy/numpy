@@ -216,6 +216,21 @@ def check_long_double_representation(cmd):
         except (AttributeError, ValueError):
             pass
 
+    # Disable multi-file interprocedural optimization in the Intel compiler on Linux
+    # which generates intermediary object files and prevents checking the
+    # float representation.
+    elif (sys.platform != "win32" 
+            and cmd.compiler.compiler_type.startswith('intel') 
+            and '-ipo' in cmd.compiler.cc_exe):        
+        newcompiler = cmd.compiler.cc_exe.replace(' -ipo', '')
+        cmd.compiler.set_executables(
+            compiler=newcompiler,
+            compiler_so=newcompiler,
+            compiler_cxx=newcompiler,
+            linker_exe=newcompiler,
+            linker_so=newcompiler + ' -shared'
+        )
+
     # We need to use _compile because we need the object filename
     src, obj = cmd._compile(body, None, None, 'c')
     try:
