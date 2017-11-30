@@ -627,7 +627,7 @@ def savez_compressed(file, *args, **kwds):
     --------
     numpy.save : Save a single array to a binary file in NumPy format.
     numpy.savetxt : Save an array to a file as plain text.
-    numpy.savez : Save several arrays into an uncompressed ``.npz`` file format
+    numpy.savez : Save several arrays into a compressed ``.npz`` file format
     numpy.load : Load the files created by savez_compressed.
 
     Notes
