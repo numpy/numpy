@@ -2939,6 +2939,14 @@ static int _safe_ceil_to_intp(double value, npy_intp* ret)
 {
     double ivalue;
 
+#if __STDC_VERSION__ >= 200000L
+    if (isnan(value))
+#else
+    if (value != value)
+#endif
+      return -1;
+
+/* The following is only correct when value is not NaN. */
     ivalue = npy_ceil(value);
     if (ivalue < NPY_MIN_INTP || ivalue > NPY_MAX_INTP) {
         return -1;
