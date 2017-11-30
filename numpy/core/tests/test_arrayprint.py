@@ -230,6 +230,14 @@ class TestArray2String(object):
         assert_equal(eval(repr(a), vars(np)), a)
         assert_equal(eval(repr(a[0]), vars(np)), a[0])
 
+    def test_edgeitems_kwarg(self):
+        # previously the global print options would be taken over the kwarg
+        arr = np.zeros(3, int)
+        assert_equal(
+            np.array2string(arr, edgeitems=1, threshold=0),
+            "[0 ... 0]"
+        )
+
 
 class TestPrintOptions(object):
     """Test getting and setting global print options."""
