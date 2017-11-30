@@ -2940,7 +2940,7 @@ static int _safe_ceil_to_intp(double value, npy_intp* ret)
     double ivalue;
 
     ivalue = npy_ceil(value);
-    if (npy_isnan(ivalue) || ivalue < NPY_MIN_INTP || ivalue > NPY_MAX_INTP) {
+    if (!(NPY_MIN_INTP <= ivalue && ivalue < NPY_MAX_INTP)) {
         return -1;
     }
 
