@@ -67,7 +67,7 @@ def have_compiler():
         try:
             if not compiler.initialized:
                 compiler.initialize()  # MSVC is different
-        except DistutilsError:
+        except (DistutilsError, ValueError):
             return False
         cmd = [compiler.cc]
     try:

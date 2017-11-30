@@ -12,6 +12,7 @@ import warnings
 import pickle
 import operator
 import itertools
+import sys
 from functools import reduce
 
 
@@ -45,6 +46,7 @@ from numpy.ma.core import (
     ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
+from numpy.testing import dec
 
 pi = np.pi
 
@@ -3500,6 +3502,8 @@ class TestMaskedArrayMathMethods(TestCase):
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
+    @dec.knownfailureif(sys.platform=='win32' and sys.version_info < (3, 6),
+                        msg='Fails on Python < 3.6 (Issue #9671)')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
