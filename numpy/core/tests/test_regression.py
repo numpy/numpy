@@ -446,7 +446,7 @@ class TestRegression(object):
 
     def test_object_array_from_list(self):
         # Ticket #270
-        assert_(np.array([1, 'A', None]).shape == (3,))
+        assert_(np.array([1, 'A', None], dtype='O').shape == (3,))
 
     def test_multiple_assign(self):
         # Ticket #273
@@ -975,7 +975,7 @@ class TestRegression(object):
             def __float__(self):
                 return 1.0
 
-        tmp = np.atleast_1d([MyFloat()])
+        tmp = np.atleast_1d(np.array([MyFloat()], dtype='O'))
         tmp.astype(float)  # Should succeed
 
     def test_object_array_refcount_self_assign(self):
@@ -1302,13 +1302,13 @@ class TestRegression(object):
     def test_array_from_sequence_scalar_array(self):
         # Ticket #1078: segfaults when creating an array with a sequence of
         # 0d arrays.
-        a = np.array((np.ones(2), np.array(2)))
+        a = np.array((np.ones(2), np.array(2)), dtype='O')
         assert_equal(a.shape, (2,))
         assert_equal(a.dtype, np.dtype(object))
         assert_equal(a[0], np.ones(2))
         assert_equal(a[1], np.array(2))
 
-        a = np.array(((1,), np.array(1)))
+        a = np.array(((1,), np.array(1)), dtype='O')
         assert_equal(a.shape, (2,))
         assert_equal(a.dtype, np.dtype(object))
         assert_equal(a[0], (1,))
@@ -1316,7 +1316,7 @@ class TestRegression(object):
 
     def test_array_from_sequence_scalar_array2(self):
         # Ticket #1081: weird array with strange input...
-        t = np.array([np.array([]), np.array(0, object)])
+        t = np.array([np.array([]), np.array(0, object)], dtype='O')
         assert_equal(t.shape, (2,))
         assert_equal(t.dtype, np.dtype(object))
 
@@ -2074,7 +2074,7 @@ class TestRegression(object):
         # Ticket #6456.
         a = {'a': 1}
         b = {'b': 2}
-        arr = np.array([[a, b], [a, b]], order='F')
+        arr = np.array([[a, b], [a, b]], dtype='O', order='F')
         arr_cp = copy.deepcopy(arr)
 
         assert_equal(arr, arr_cp)
@@ -2163,9 +2163,10 @@ class TestRegression(object):
             x[0], x[-1] = x[-1], x[0]
 
         uf = np.frompyfunc(f, 1, 0)
-        a = np.array([[1, 2, 3], [4, 5], [6, 7, 8, 9]])
+        a = np.array([[1, 2, 3], [4, 5], [6, 7, 8, 9]], dtype='O')
         assert_equal(uf(a), ())
-        assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
+        ret = np.array([[3, 2, 1], [5, 4], [9, 7, 8, 6]], dtype='O')
+        assert_array_equal(a, ret)
 
     @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_leak_in_structured_dtype_comparison(self):

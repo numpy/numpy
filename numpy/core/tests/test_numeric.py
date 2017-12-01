@@ -1156,7 +1156,7 @@ class TestNonzero(object):
 
     def test_nonzero_invalid_object(self):
         # gh-9295
-        a = np.array([np.array([1, 2]), 3])
+        a = np.array([np.array([1, 2]), 3], dtype='O')
         assert_raises(ValueError, np.nonzero, a)
 
         class BoolErrors:
@@ -1165,7 +1165,8 @@ class TestNonzero(object):
             def __nonzero__(self):
                 raise ValueError("Not allowed")
 
-        assert_raises(ValueError, np.nonzero, np.array([BoolErrors()]))
+        assert_raises(ValueError, np.nonzero,
+                      np.array([BoolErrors()], dtype='O'))
 
 
 class TestIndex(object):

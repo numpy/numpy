@@ -281,10 +281,10 @@ def test_broadcast_shape():
 
 
 def test_as_strided():
-    a = np.array([None])
+    a = np.array([None], dtype='O')
     a_view = as_strided(a)
-    expected = np.array([None])
-    assert_array_equal(a_view, np.array([None]))
+    expected = np.array([None], dtype='O')
+    assert_array_equal(a_view, np.array([None], dtype='O'))
 
     a = np.array([1, 2, 3, 4])
     a_view = as_strided(a, shape=(2,), strides=(2 * a.itemsize,))

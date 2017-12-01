@@ -174,7 +174,8 @@ class TestDocs(object):
 
     def test_objects(self):
         from decimal import Decimal
-        p = np.poly1d([Decimal('4.0'), Decimal('3.0'), Decimal('2.0')])
+        p = np.poly1d(np.array([Decimal('4.0'), Decimal('3.0'), Decimal('2.0')],
+                               dtype='O'))
         p2 = p * Decimal('1.333333333333333')
         assert_(p2[1] == Decimal("3.9999999999999990"))
         p2 = p.deriv()
@@ -183,8 +184,8 @@ class TestDocs(object):
         assert_(p2[3] == Decimal("1.333333333333333333333333333"))
         assert_(p2[2] == Decimal('1.5'))
         assert_(np.issubdtype(p2.coeffs.dtype, np.object_))
-        p = np.poly([Decimal(1), Decimal(2)])
-        assert_equal(np.poly([Decimal(1), Decimal(2)]),
+        p = np.poly(np.array([Decimal(1), Decimal(2)], dtype='O'))
+        assert_equal(np.poly(np.array([Decimal(1), Decimal(2)], dtype='O')),
                      [1, Decimal(-3), Decimal(2)])
 
     def test_complex(self):

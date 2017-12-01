@@ -412,9 +412,9 @@ class TestIndexing(object):
         a = np.array(0, dtype=object)
         a[()] = b
         assert_(isinstance(a[()], np.ndarray))
-        a = np.array([b, None])
+        a = np.array([b, None], dtype='O')
         assert_(isinstance(a[z], np.ndarray))
-        a = np.array([[b, None]])
+        a = np.array([[b, None]], dtype='O')
         assert_(isinstance(a[z, np.array(0)], np.ndarray))
         assert_(isinstance(a[z, ArrayLike()], np.ndarray))
 

@@ -412,7 +412,8 @@ class TestRandomDist(object):
         assert_(np.isscalar(np.random.choice(2, replace=True, p=p)))
         assert_(np.isscalar(np.random.choice(2, replace=False, p=p)))
         assert_(np.isscalar(np.random.choice([1, 2], replace=True)))
-        assert_(np.random.choice([None], replace=True) is None)
+        none_arr = np.array([None], dtype='O')
+        assert_(np.random.choice(none_arr, replace=True) is None)
         a = np.array([1, 2])
         arr = np.empty(1, dtype=object)
         arr[0] = a
@@ -425,7 +426,7 @@ class TestRandomDist(object):
         assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=p)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=False, p=p)))
         assert_(not np.isscalar(np.random.choice([1, 2], s, replace=True)))
-        assert_(np.random.choice([None], s, replace=True).ndim == 0)
+        assert_(np.random.choice(none_arr, s, replace=True).ndim == 0)
         a = np.array([1, 2])
         arr = np.empty(1, dtype=object)
         arr[0] = a

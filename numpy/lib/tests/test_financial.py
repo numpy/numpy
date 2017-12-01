@@ -76,10 +76,15 @@ class TestFinancial(object):
         assert_equal(res, tgt)
         # Test the case where we use broadcast and
         # the arguments passed in are arrays.
-        res = np.pmt([[Decimal('0'), Decimal('0.8')], [Decimal('0.3'), Decimal('0.8')]],
-                     [Decimal('12'), Decimal('3')], [Decimal('2000'), Decimal('20000')])
-        tgt = np.array([[Decimal('-166.6666666666666666666666667'), Decimal('-19311.25827814569536423841060')],
-                        [Decimal('-626.9081401700757748402586600'), Decimal('-19311.25827814569536423841060')]])
+        res = np.pmt(
+            np.array([[Decimal('0'), Decimal('0.8')], 
+                      [Decimal('0.3'), Decimal('0.8')]], dtype='O'),
+            np.array([Decimal('12'), Decimal('3')], dtype='O'),
+            np.array([Decimal('2000'), Decimal('20000')], dtype='O'))
+        tgt = np.array([[Decimal('-166.6666666666666666666666667'), 
+                         Decimal('-19311.25827814569536423841060')],
+                        [Decimal('-626.9081401700757748402586600'), 
+                         Decimal('-19311.25827814569536423841060')]], dtype='O')
 
         # Cannot use the `assert_allclose` because it uses isfinite under the covers
         # which does not support the Decimal type
@@ -152,21 +157,26 @@ class TestFinancial(object):
         assert_(np.isnan(np.mirr(val, 0.10, 0.12)))
 
     def test_mirr_decimal(self):
-        val = [Decimal('-4500'), Decimal('-800'), Decimal('800'), Decimal('800'),
+        val = np.array(
+              [Decimal('-4500'), Decimal('-800'), Decimal('800'), Decimal('800'),
                Decimal('600'), Decimal('600'), Decimal('800'), Decimal('800'),
-               Decimal('700'), Decimal('3000')]
+               Decimal('700'), Decimal('3000')], dtype='O')
         assert_equal(np.mirr(val, Decimal('0.08'), Decimal('0.055')),
                      Decimal('0.066597175031553548874239618'))
 
-        val = [Decimal('-120000'), Decimal('39000'), Decimal('30000'),
-               Decimal('21000'), Decimal('37000'), Decimal('46000')]
-        assert_equal(np.mirr(val, Decimal('0.10'), Decimal('0.12')), Decimal('0.126094130365905145828421880'))
+        val = np.array(
+              [Decimal('-120000'), Decimal('39000'), Decimal('30000'),
+               Decimal('21000'), Decimal('37000'), Decimal('46000')], dtype='O')
+        assert_equal(np.mirr(val, Decimal('0.10'), Decimal('0.12')), 
+                     Decimal('0.126094130365905145828421880'))
 
-        val = [Decimal('100'), Decimal('200'), Decimal('-50'),
-               Decimal('300'), Decimal('-200')]
-        assert_equal(np.mirr(val, Decimal('0.05'), Decimal('0.06')), Decimal('0.342823387842176663647819868'))
+        val = np.array([Decimal('100'), Decimal('200'), Decimal('-50'),
+                     Decimal('300'), Decimal('-200')], dtype='O')
+        assert_equal(np.mirr(val, Decimal('0.05'), Decimal('0.06')), 
+                     Decimal('0.342823387842176663647819868'))
 
-        val = [Decimal('39000'), Decimal('30000'), Decimal('21000'), Decimal('37000'), Decimal('46000')]
+        val = np.array([Decimal('39000'), Decimal('30000'), Decimal('21000'), 
+                     Decimal('37000'), Decimal('46000')], dtype='O')
         assert_(np.isnan(np.mirr(val, Decimal('0.10'), Decimal('0.12'))))
 
     def test_when(self):

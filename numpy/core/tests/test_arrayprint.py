@@ -35,18 +35,18 @@ class TestArrayRepr(object):
         )
 
     def test_self_containing(self):
-        arr0d = np.array(None)
+        arr0d = np.array(None, dtype='O')
         arr0d[()] = arr0d
         assert_equal(repr(arr0d),
             'array(array(..., dtype=object), dtype=object)')
 
-        arr1d = np.array([None, None])
+        arr1d = np.array([None, None], dtype='O')
         arr1d[1] = arr1d
         assert_equal(repr(arr1d),
             'array([None, array(..., dtype=object)], dtype=object)')
 
-        first = np.array(None)
-        second = np.array(None)
+        first = np.array(None, dtype='O')
+        second = np.array(None, dtype='O')
         first[()] = second
         second[()] = first
         assert_equal(repr(first),
@@ -54,7 +54,7 @@ class TestArrayRepr(object):
 
     def test_containing_list(self):
         # printing square brackets directly would be ambiguuous
-        arr1d = np.array([None, None])
+        arr1d = np.array([None, None], dtype='O')
         arr1d[0] = [1, 2]
         arr1d[1] = [3]
         assert_equal(repr(arr1d),

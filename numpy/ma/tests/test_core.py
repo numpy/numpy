@@ -968,7 +968,7 @@ class TestMaskedArray(object):
     def test_object_with_array(self):
         mx1 = masked_array([1.], mask=[True])
         mx2 = masked_array([1., 2.])
-        mx = masked_array([mx1, mx2], mask=[False, True])
+        mx = masked_array([mx1, mx2], mask=[False, True], dtype='O')
         assert_(mx[0] is mx1)
         assert_(mx[1] is not mx2)
         assert_(np.all(mx[1].data == mx2.data))
@@ -1563,16 +1563,16 @@ class TestMaskedArrayArithmetic(object):
         # With partial mask
         with suppress_warnings() as sup:
             sup.filter(FutureWarning, "Comparison to `None`")
-            a = array([None, 1], mask=[0, 1])
+            a = array([None, 1], mask=[0, 1], dtype='O')
             assert_equal(a == None, array([True, False], mask=[0, 1]))
             assert_equal(a.data == None, [True, False])
             assert_equal(a != None, array([False, True], mask=[0, 1]))
             # With nomask
-            a = array([None, 1], mask=False)
+            a = array([None, 1], mask=False, dtype='O')
             assert_equal(a == None, [True, False])
             assert_equal(a != None, [False, True])
             # With complete mask
-            a = array([None, 2], mask=True)
+            a = array([None, 2], mask=True, dtype='O')
             assert_equal(a == None, array([False, True], mask=True))
             assert_equal(a != None, array([True, False], mask=True))
             # Fully masked, even comparison to None should return "masked"
@@ -4671,7 +4671,7 @@ class TestMaskedFields(object):
 class TestMaskedObjectArray(object):
 
     def test_getitem(self):
-        arr = np.ma.array([None, None])
+        arr = np.ma.array([None, None], dtype='O')
         for dt in [float, object]:
             a0 = np.eye(2).astype(dt)
             a1 = np.eye(3).astype(dt)
@@ -4701,7 +4701,7 @@ class TestMaskedObjectArray(object):
 
     def test_nested_ma(self):
 
-        arr = np.ma.array([None, None])
+        arr = np.ma.array([None, None], dtype='O')
         # set the first object to be an unmasked masked constant. A little fiddly
         arr[0,...] = np.array([np.ma.masked], object)[0,...]
 

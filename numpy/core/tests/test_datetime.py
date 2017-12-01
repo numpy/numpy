@@ -226,26 +226,24 @@ class TestDateTime(object):
         # at the moment, we don't automatically convert these to datetime64
 
         dt = datetime.date(1970, 1, 1)
-        arr = np.array([dt])
-        assert_equal(arr.dtype, np.dtype('O'))
+        assert_raises(ValueError, np.array, [dt])
 
         dt = datetime.datetime(1970, 1, 1, 12, 30, 40)
-        arr = np.array([dt])
-        assert_equal(arr.dtype, np.dtype('O'))
+        assert_raises(ValueError, np.array, [dt])
 
         # find "supertype" for non-dates and dates
 
         b = np.bool_(True)
         dt = np.datetime64('1970-01-01', 'M')
-        arr = np.array([b, dt])
+        arr = np.array([b, dt], dtype='O')
         assert_equal(arr.dtype, np.dtype('O'))
 
         dt = datetime.date(1970, 1, 1)
-        arr = np.array([b, dt])
+        arr = np.array([b, dt], dtype='O')
         assert_equal(arr.dtype, np.dtype('O'))
 
         dt = datetime.datetime(1970, 1, 1, 12, 30, 40)
-        arr = np.array([b, dt])
+        arr = np.array([b, dt], dtype='O')
         assert_equal(arr.dtype, np.dtype('O'))
 
     def test_timedelta_scalar_construction(self):
@@ -470,25 +468,26 @@ class TestDateTime(object):
                  (2000 - 1970)*365 + (2000 - 1972)//4 + 366 + 31 + 28 + 21)
 
     def test_days_to_pydate(self):
-        assert_equal(np.array('1599', dtype='M8[D]').astype('O'),
+        #XXX these tests are changed because np.array(datetime.date(1599,1,1)) fails
+        assert_equal(np.array('1599', dtype='M8[D]').item(),
                     datetime.date(1599, 1, 1))
-        assert_equal(np.array('1600', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('1600', dtype='M8[D]').item(),
                     datetime.date(1600, 1, 1))
-        assert_equal(np.array('1601', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('1601', dtype='M8[D]').item(),
                     datetime.date(1601, 1, 1))
-        assert_equal(np.array('1900', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('1900', dtype='M8[D]').item(),
                     datetime.date(1900, 1, 1))
-        assert_equal(np.array('1901', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('1901', dtype='M8[D]').item(),
                     datetime.date(1901, 1, 1))
-        assert_equal(np.array('2000', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('2000', dtype='M8[D]').item(),
                     datetime.date(2000, 1, 1))
-        assert_equal(np.array('2001', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('2001', dtype='M8[D]').item(),
                     datetime.date(2001, 1, 1))
-        assert_equal(np.array('1600-02-29', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('1600-02-29', dtype='M8[D]').item(),
                     datetime.date(1600, 2, 29))
-        assert_equal(np.array('1600-03-01', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('1600-03-01', dtype='M8[D]').item(),
                     datetime.date(1600, 3, 1))
-        assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('O'),
+        assert_equal(np.array('2001-03-22', dtype='M8[D]').item(),
                     datetime.date(2001, 3, 22))
 
     def test_dtype_comparison(self):

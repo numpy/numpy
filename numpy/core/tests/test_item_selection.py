@@ -51,14 +51,14 @@ class TestTake(object):
     def test_refcounting(self):
         objects = [object() for i in range(10)]
         for mode in ('raise', 'clip', 'wrap'):
-            a = np.array(objects)
+            a = np.array(objects, dtype='O')
             b = np.array([2, 2, 4, 5, 3, 5])
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
                 assert_(all(sys.getrefcount(o) == 3 for o in objects))
             # not contiguous, example:
-            a = np.array(objects * 2)[::2]
+            a = np.array(objects * 2, dtype='O')[::2]
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:

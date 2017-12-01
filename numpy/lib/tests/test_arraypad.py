@@ -1088,7 +1088,7 @@ class TestTypeError1(object):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(mode='mean', stat_length=(3, ))
-        assert_raises(TypeError, pad, arr, ((2, 3, 4), (3, 2)),
+        assert_raises(ValueError, pad, arr, ((2, 3, 4), (3, 2)),
                       **kwargs)
 
 

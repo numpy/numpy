@@ -187,7 +187,7 @@ class TestComparisons(object):
             def __eq__(self, other):
                 raise TypeError("I won't compare")
 
-        a = np.array([FunkyType()])
+        a = np.array([FunkyType()], dtype='O')
         assert_raises(TypeError, np.equal, a, a)
 
         # Check identity doesn't override comparison mismatch.
@@ -205,7 +205,7 @@ class TestComparisons(object):
             def __ne__(self, other):
                 raise TypeError("I won't compare")
 
-        a = np.array([FunkyType()])
+        a = np.array([FunkyType()], dtype='O')
         assert_raises(TypeError, np.not_equal, a, a)
 
         # Check identity doesn't override comparison mismatch.

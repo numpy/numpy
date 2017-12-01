@@ -737,14 +737,16 @@ class TestUfunc(object):
         # Twice reproduced also for tuples:
         np.add.accumulate(arr, out=arr)
         np.add.accumulate(arr, out=arr)
-        assert_array_equal(arr, np.array([[1]*i for i in [1, 3, 6, 10]]))
+        assert_array_equal(arr,
+                           np.array([[1]*i for i in [1, 3, 6, 10]], dtype='O'))
 
         # And the same if the axis argument is used
         arr = np.ones((2, 4), dtype=object)
         arr[0, :] = [[2] for i in range(4)]
         np.add.accumulate(arr, out=arr, axis=-1)
         np.add.accumulate(arr, out=arr, axis=-1)
-        assert_array_equal(arr[0, :], np.array([[2]*i for i in [1, 3, 6, 10]]))
+        assert_array_equal(arr[0, :],
+                           np.array([[2]*i for i in [1, 3, 6, 10]], dtype='O'))
 
     def test_object_array_reduceat_inplace(self):
         # Checks that in-place reduceats work, see also gh-7465

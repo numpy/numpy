@@ -343,8 +343,8 @@ class TestAverage(object):
             assert_equal(np.average(a, weights=w).dtype, np.dtype(rt))
 
     def test_object_dtype(self):
-        a = np.array([decimal.Decimal(x) for x in range(10)])
-        w = np.array([decimal.Decimal(1) for _ in range(10)])
+        a = np.array([decimal.Decimal(x) for x in range(10)], dtype='O')
+        w = np.array([decimal.Decimal(1) for _ in range(10)], dtype='O')
         w /= w.sum()
         assert_almost_equal(a.mean(0), average(a, weights=w))
 
@@ -1785,15 +1785,17 @@ class TestHistogram(object):
         # Decimal weights
         from decimal import Decimal
         values = np.array([1.3, 2.5, 2.3])
-        weights = np.array([Decimal(1), Decimal(2), Decimal(3)])
+        weights = np.array([Decimal(1), Decimal(2), Decimal(3)], dtype='O')
 
         # Check with custom bins
         wa, wb = histogram(values, bins=[0, 2, 3], weights=weights)
-        assert_array_almost_equal(wa, [Decimal(1), Decimal(5)])
+        assert_array_almost_equal(wa,
+                                  np.array([Decimal(1), Decimal(5)], dtype='O'))
 
         # Check with even bins
         wa, wb = histogram(values, bins=2, range=[1, 3], weights=weights)
-        assert_array_almost_equal(wa, [Decimal(1), Decimal(5)])
+        assert_array_almost_equal(wa,
+                                  np.array([Decimal(1), Decimal(5)], dtype='O'))
 
     def test_no_side_effects(self):
         # This is a regression test that ensures that values passed to

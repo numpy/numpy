@@ -299,7 +299,7 @@ class TestArrayConstruction(object):
         assert_equal(r, np.ones((2, 6, 6)))
 
         d = np.ones((6, ))
-        r = np.array([[d, d + 1], d + 2])
+        r = np.array([[d, d + 1], d + 2], dtype='O')
         assert_equal(len(r), 2)
         assert_equal(r[0], [d, d + 1])
         assert_equal(r[1], d + 2)
@@ -777,10 +777,6 @@ class TestCreation(object):
             str(d)
 
     def test_sequence_non_homogenous(self):
-        assert_equal(np.array([4, 2**80]).dtype, object)
-        assert_equal(np.array([4, 2**80, 4]).dtype, object)
-        assert_equal(np.array([2**80, 4]).dtype, object)
-        assert_equal(np.array([2**80] * 3).dtype, object)
         assert_equal(np.array([[1, 1],[1j, 1j]]).dtype, complex)
         assert_equal(np.array([[1j, 1j],[1, 1]]).dtype, complex)
         assert_equal(np.array([[1, 1, 1],[1, 1j, 1.], [1, 1, 1]]).dtype, complex)
@@ -788,9 +784,6 @@ class TestCreation(object):
     @dec.skipif(sys.version_info[0] >= 3)
     def test_sequence_long(self):
         assert_equal(np.array([long(4), long(4)]).dtype, np.long)
-        assert_equal(np.array([long(4), 2**80]).dtype, object)
-        assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
-        assert_equal(np.array([2**80, long(4)]).dtype, object)
 
     def test_non_sequence_sequence(self):
         """Should not segfault.
@@ -815,10 +808,10 @@ class TestCreation(object):
             def __getitem__(self, index):
                 raise KeyError()
 
-        a = np.array([Map()])
+        a = np.array([Map()], dtype='O')
         assert_(a.shape == (1,))
         assert_(a.dtype == np.dtype(object))
-        assert_raises(ValueError, np.array, [Fail()])
+        assert_raises(ValueError, np.array, [Fail()], dtype='O')
 
     def test_no_len_object_type(self):
         # gh-5100, want object array from iterable object without len()
@@ -831,7 +824,7 @@ class TestCreation(object):
                     return ind
                 else:
                     raise IndexError()
-        d = np.array([Point2(), Point2(), Point2()])
+        d = np.array([Point2(), Point2(), Point2()], dtype='O')
         assert_equal(d.dtype, np.dtype(object))
 
     def test_false_len_sequence(self):
@@ -842,7 +835,7 @@ class TestCreation(object):
             def __len__(self):
                 return 42
 
-        assert_raises(ValueError, np.array, C()) # segfault?
+        assert_raises(ValueError, np.array, C(), dtype='O') # segfault?
 
     def test_failed_len_sequence(self):
         # gh-7393
@@ -856,7 +849,7 @@ class TestCreation(object):
 
         # len(d) should give 3, but len(d[0]) will fail
         d = A([1,2,3])
-        assert_equal(len(np.array(d)), 3)
+        assert_equal(len(np.array(d, dtype='O')), 3)
 
     def test_array_too_big(self):
         # Test that array creation succeeds for arrays addressable by intp
@@ -1648,7 +1641,8 @@ class TestMethods(object):
             def raises_anything(*args, **kwargs):
                 raise TypeError("SOMETHING ERRORED")
             __eq__ = __ne__ = __lt__ = __gt__ = __ge__ = __le__ = raises_anything
-        arr = np.array([[Raiser(), n] for n in range(10)]).reshape(-1)
+        arr = np.array([[Raiser(), n] for n in range(10)],
+                       dtype='O').reshape(-1)
         np.random.shuffle(arr)
         for kind in ['q', 'm', 'h']:
             assert_raises(TypeError, arr.sort, kind=kind)
@@ -3455,7 +3449,7 @@ class TestPickling(object):
 
     def test_version0_object(self):
         s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
-        a = np.array([{'a': 1}, {'b': 2}])
+        a = np.array([{'a': 1}, {'b': 2}], dtype='O')
         p = self._loads(s)
         assert_equal(a, p)
 
@@ -3474,7 +3468,7 @@ class TestPickling(object):
 
     def test_version1_object(self):
         s = b'\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
-        a = np.array([{'a': 1}, {'b': 2}])
+        a = np.array([{'a': 1}, {'b': 2}], dtype='O')
         p = self._loads(s)
         assert_equal(a, p)
 
@@ -3623,12 +3617,15 @@ class TestArgmax(object):
           np.timedelta64(3, 's')], 3),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
-        ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
-          timedelta(days=-1, seconds=23)], 0),
-        ([timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
-          timedelta(days=5, seconds=14)], 1),
-        ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
-          timedelta(days=10, seconds=43)], 2),
+        (np.array(
+         [timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
+          timedelta(days=-1, seconds=23)], dtype='O'), 0),
+        (np.array(
+         [timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
+          timedelta(days=5, seconds=14)], dtype='O'), 1),
+        (np.array(
+         [timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
+          timedelta(days=10, seconds=43)], dtype='O'), 2),
 
         ([False, False, False, False, True], 4),
         ([False, False, False, True, False], 3),
@@ -3757,12 +3754,15 @@ class TestArgmin(object):
           np.timedelta64(3, 's')], 1),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
-        ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
-          timedelta(days=-1, seconds=23)], 2),
-        ([timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
-          timedelta(days=5, seconds=14)], 0),
-        ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
-          timedelta(days=10, seconds=43)], 1),
+        (np.array(
+         [timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
+          timedelta(days=-1, seconds=23)], dtype='O'), 2),
+        (np.array(
+         [timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
+          timedelta(days=5, seconds=14)], dtype='O'), 0),
+        (np.array(
+         [timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
+          timedelta(days=10, seconds=43)], dtype='O'), 1),
 
         ([True, True, True, True, False], 4),
         ([True, True, True, False, True], 3),
@@ -4772,7 +4772,8 @@ class TestStats(object):
         np.random.seed(range(3))
         self.rmat = np.random.random((4, 5))
         self.cmat = self.rmat + 1j * self.rmat
-        self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat])
+        self.omat = np.array([Decimal(repr(r)) for r in self.rmat.flat],
+                             dtype='O')
         self.omat = self.omat.reshape(4, 5)
 
     def test_python_type(self):
@@ -4812,7 +4813,7 @@ class TestStats(object):
 
         # object type
         for f in self.funcs:
-            mat = np.array([[Decimal(1)]*3]*3)
+            mat = np.array([[Decimal(1)]*3]*3, dtype='O')
             tgt = mat.dtype.type
             res = f(mat, axis=1).dtype.type
             assert_(res is tgt)
@@ -5159,8 +5160,8 @@ class TestDot(object):
 
         U_non_cont = np.transpose([[1., 1.], [1., 2.]])
         U_cont = np.ascontiguousarray(U_non_cont)
-        x = np.array([Vec([1., 0.]), Vec([0., 1.])])
-        zeros = np.array([Vec([0., 0.]), Vec([0., 0.])])
+        x = np.array([Vec([1., 0.]), Vec([0., 1.])], dtype='O')
+        zeros = np.array([Vec([0., 0.]), Vec([0., 0.])], dtype='O')
         zeros_test = np.dot(U_cont, x) - np.dot(U_non_cont, x)
         assert_equal(zeros[0].array, zeros_test[0].array)
         assert_equal(zeros[1].array, zeros_test[1].array)
@@ -6680,10 +6681,12 @@ class TestConversion(object):
                 raise NotImplementedError
             __nonzero__ = __bool__  # python 2
 
-        assert_raises(NotImplementedError, bool, np.array(NotConvertible()))
-        assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
+        assert_raises(NotImplementedError, bool,
+                      np.array(NotConvertible(), dtype='O'))
+        assert_raises(NotImplementedError, bool,
+                      np.array([NotConvertible()], dtype='O'))
 
-        self_containing = np.array([None])
+        self_containing = np.array([None], dtype='O')
         self_containing[0] = self_containing
         try:
             Error = RecursionError
@@ -6708,16 +6711,16 @@ class TestConversion(object):
             class HasTrunc:
                 def __trunc__(self):
                     return 3
-            assert_equal(3, int_func(np.array(HasTrunc())))
-            assert_equal(3, int_func(np.array([HasTrunc()])))
+            assert_equal(3, int_func(np.array(HasTrunc(), dtype='O')))
+            assert_equal(3, int_func(np.array([HasTrunc()], dtype='O')))
 
             class NotConvertible(object):
                 def __int__(self):
                     raise NotImplementedError
             assert_raises(NotImplementedError,
-                int_func, np.array(NotConvertible()))
+                int_func, np.array(NotConvertible(), dtype='O'))
             assert_raises(NotImplementedError,
-                int_func, np.array([NotConvertible()]))
+                int_func, np.array([NotConvertible()], dtype='O'))
 
 
 class TestWhere(object):
