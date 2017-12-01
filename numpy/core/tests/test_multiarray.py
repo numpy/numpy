@@ -5677,26 +5677,6 @@ class TestInner(object):
             assert_equal(np.inner(b, a).transpose(2,3,0,1), desired)
 
 
-class TestSummarization(object):
-    def test_1d(self):
-        A = np.arange(1001)
-        strA = '[   0    1    2 ...  998  999 1000]'
-        assert_(str(A) == strA)
-
-        reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
-        assert_(repr(A) == reprA)
-
-    def test_2d(self):
-        A = np.arange(1002).reshape(2, 501)
-        strA = '[[   0    1    2 ...  498  499  500]\n' \
-               ' [ 501  502  503 ...  999 1000 1001]]'
-        assert_(str(A) == strA)
-
-        reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
-                '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
-        assert_(repr(A) == reprA)
-
-
 class TestAlen(object):
     def test_basic(self):
         m = np.array([1, 2, 3])
