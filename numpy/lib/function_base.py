@@ -819,14 +819,14 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 cum_n += np.r_[sa.searchsorted(bin_edges[:-1], 'left'),
                                sa.searchsorted(bin_edges[-1], 'right')]
         else:
-            zero = array(0, dtype=ntype)
+            zero = array([0], dtype=ntype)
             for i in arange(0, len(a), BLOCK):
                 tmp_a = a[i:i+BLOCK]
                 tmp_w = weights[i:i+BLOCK]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
-                cw = np.concatenate(([zero], sw.cumsum()))
+                cw = np.concatenate((zero, sw.cumsum()))
                 bin_index = np.r_[sa.searchsorted(bin_edges[:-1], 'left'),
                                   sa.searchsorted(bin_edges[-1], 'right')]
                 cum_n += cw[bin_index]

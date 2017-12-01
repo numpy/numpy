@@ -1701,6 +1701,15 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                     (dtype == NULL) ? PyArray_DESCR(arr) : dtype,
                     &newtype);
     }
+    
+    /* if object was not requested, but we got it, and is not 0d, fail */
+    if (ndim != 0 && dtype != NULL && dtype->type_num == NPY_OBJECT) {
+        if (newtype == NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "object could not be converted to a numpy type.");
+            return NULL;
+        }
+    }
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {

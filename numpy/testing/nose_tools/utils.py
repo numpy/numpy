@@ -675,14 +675,20 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)):
         raise AssertionError(msg)
 
+def asarray_orobj(x):
+    try:
+        return array(x, copy=False, subok=True)
+    except:
+        return array(x, copy=False, dtype='O', subok=True)
+    
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, isnan, isinf, any, inf
-    x = array(x, copy=False, subok=True)
-    y = array(y, copy=False, subok=True)
+
+    x, y = asarray_orobj(x), asarray_orobj(y)
 
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'

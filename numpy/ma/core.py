@@ -3859,7 +3859,8 @@ class MaskedArray(ndarray):
 
                 rdtype = _replace_dtype_fields(self.dtype, "O")
                 res = data.astype(rdtype)
-                _recursive_printoption(res, mask, masked_print_option)
+                # XXX probably correct fix here is to modify copyto to accept scalars
+                _recursive_printoption(res, mask, np.array(masked_print_option, dtype='O'))
         else:
             res = self.filled(self.fill_value)
         return res

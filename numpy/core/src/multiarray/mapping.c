@@ -498,7 +498,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
             PyArrayObject *tmp_arr;
             tmp_arr = (PyArrayObject *)PyArray_FROM_O(obj);
             if (tmp_arr == NULL) {
-                /* TODO: Should maybe replace the error here? */
+                PyErr_SetString(PyExc_IndexError,
+                        "only integers, slices (`:`), ellipsis (`...`), "
+                        "numpy.newaxis (`None`) and integer or boolean "
+                        "arrays are valid indices");
                 goto failed_building_indices;
             }
 

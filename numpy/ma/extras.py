@@ -450,7 +450,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             outarr[tuple(flatten_inplace(j.tolist()))] = res
             dtypes.append(asarray(res).dtype)
             k += 1
-    max_dtypes = np.dtype(np.asarray(dtypes).max())
+    max_dtypes = np.dtype(np.asarray(dtypes, dtype='O').max())
     if not hasattr(arr, '_mask'):
         result = np.asarray(outarr, dtype=max_dtypes)
     else:
