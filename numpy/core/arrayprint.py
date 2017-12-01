@@ -635,16 +635,14 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
     if rank == 0:
         return format_function(a[()]) + '\n'
 
-    if summary_insert and 2*edge_items < len(a):
+    show_summary = summary_insert and 2*edge_items < len(a)
+
+    if show_summary:
         leading_items = edge_items
         trailing_items = edge_items
-        summary_insert1 = summary_insert + separator
-        if legacy == '1.13':
-            summary_insert1 = summary_insert + ', '
     else:
         leading_items = 0
         trailing_items = len(a)
-        summary_insert1 = ""
 
     if rank == 1:
         s = ""
@@ -653,9 +651,12 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
             word = format_function(a[i]) + separator
             s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
 
-        if summary_insert1:
-            s, line = _extendLine(s, line, summary_insert1, max_line_len,
-                                  next_line_prefix)
+        if show_summary:
+            if legacy == '1.13':
+                word = summary_insert + ", "
+            else:
+                word = summary_insert + separator
+            s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
 
         for i in range(trailing_items, 1, -1):
             word = format_function(a[-i]) + separator
@@ -667,21 +668,21 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
         s = '[' + s[len(next_line_prefix):]
     else:
         s = '['
-        sep = separator.rstrip()
-        line_sep = '\n'*max(rank-1, 1)
+        line_sep = separator.rstrip() + '\n'*(rank - 1)
         for i in range(leading_items):
             if i > 0:
                 s += next_line_prefix
             s += _formatArray(a[i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert, legacy)
-            s = s.rstrip() + sep.rstrip() + line_sep
+            s = s.rstrip() + line_sep
 
-        if summary_insert1:
+        if show_summary:
             if legacy == '1.13':
-                s += next_line_prefix + summary_insert1 + "\n"
+                # trailing space, fixed number of newlines, and fixed separator
+                s += next_line_prefix + summary_insert + ", \n"
             else:
-                s += next_line_prefix + summary_insert1.strip() + line_sep
+                s += next_line_prefix + summary_insert + line_sep
 
         for i in range(trailing_items, 1, -1):
             if leading_items or i != trailing_items:
@@ -689,7 +690,7 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
             s += _formatArray(a[-i], format_function, rank-1, max_line_len,
                               " " + next_line_prefix, separator, edge_items,
                               summary_insert, legacy)
-            s = s.rstrip() + sep.rstrip() + line_sep
+            s = s.rstrip() + line_sep
         if leading_items or trailing_items > 1:
             s += next_line_prefix
         s += _formatArray(a[-1], format_function, rank-1, max_line_len,
