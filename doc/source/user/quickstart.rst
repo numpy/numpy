@@ -297,19 +297,19 @@ created and filled with the result.
 
 Unlike in many matrix languages, the product operator ``*`` operates
 elementwise in NumPy arrays. The matrix product can be performed using
-the ``dot`` function or method::
+the ``@`` operator (in python >=3.5) or the ``dot`` function or method::
 
     >>> A = np.array( [[1,1],
     ...             [0,1]] )
     >>> B = np.array( [[2,0],
     ...             [3,4]] )
-    >>> A*B                         # elementwise product
+    >>> A * B                       # elementwise product
     array([[2, 0],
            [0, 4]])
-    >>> A.dot(B)                    # matrix product
+    >>> A @ B                       # matrix product
     array([[5, 4],
            [3, 4]])
-    >>> np.dot(A, B)                # another matrix product
+    >>> A.dot(B)                    # another matrix product
     array([[5, 4],
            [3, 4]])
 
@@ -1357,7 +1357,7 @@ See linalg.py in numpy folder for more.
            [ 0.,  1.]])
     >>> j = np.array([[0.0, -1.0], [1.0, 0.0]])
 
-    >>> np.dot (j, j) # matrix product
+    >>> j @ j        # matrix product
     array([[-1.,  0.],
            [ 0., -1.]])
 
