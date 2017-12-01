@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
+import warnings
 import ast
 import numpy.core.numeric as N
 from numpy.core.numeric import concatenate, isscalar
@@ -70,6 +71,10 @@ class matrix(N.ndarray):
     """
     matrix(data, dtype=None, copy=True)
 
+    .. note:: It is no longer recommended to use this class, even for linear
+              algebra. Instead use regular arrays. The class may be removed
+              in the future.
+
     Returns a matrix from an array-like object, or from a string of data.
     A matrix is a specialized 2-D array that retains its 2-D nature
     through operations.  It has certain special operators, such as ``*``
@@ -105,6 +110,12 @@ class matrix(N.ndarray):
     """
     __array_priority__ = 10.0
     def __new__(subtype, data, dtype=None, copy=True):
+        warnings.warn('the matrix subclass is not the recommended way to '
+                      'represent matrices or deal with linear algebra (see '
+                      'https://docs.scipy.org/doc/numpy/user/'
+                      'numpy-for-matlab-users.html). '
+                      'Please adjust your code to use regular ndarray.',
+                      PendingDeprecationWarning, stacklevel=2)
         if isinstance(data, matrix):
             dtype2 = data.dtype
             if (dtype is None):
