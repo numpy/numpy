@@ -1,0 +1,9 @@
+Different C numeric types of the same size have unique names
+------------------------------------------------------------
+On any given platform, two of ``np.intc``, ``np.int_``, and ``np.longlong``
+would previously appear indistinguishable through their ``repr``, despite
+having different properties when wrapped into ``dtype``s.
+A similar problem existed for the unsigned counterparts to these types, and on
+some plaforms for ``np.double`` and ``np.longdouble``
+
+These types now always print with a unique ``__name__``.
