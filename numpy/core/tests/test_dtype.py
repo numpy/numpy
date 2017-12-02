@@ -649,13 +649,6 @@ class TestDtypeAttributes(object):
         new_dtype = np.dtype(dtype.descr)
         assert_equal(new_dtype.itemsize, 16)
 
-    @pytest.mark.parametrize('t', np.typeDict.values())
-    def test_name_builtin(self, t):
-        name = t.__name__
-        if name.endswith('_'):
-            name = name[:-1]
-        assert_equal(np.dtype(t).name, name)
-
     def test_name_dtype_subclass(self):
         # Ticket #4357
         class user_def_subcls(np.void):
