@@ -516,9 +516,7 @@ array_dealloc(PyArrayObject *self)
          * In any case base is pointing to something that we need
          * to DECREF -- either a view or a buffer object
          */
-        if (fa->base) {
-            Py_DECREF(fa->base);
-        }
+        Py_XDECREF(fa->base);
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
