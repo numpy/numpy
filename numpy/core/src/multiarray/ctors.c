@@ -2207,8 +2207,10 @@ PyArray_FromInterface(PyObject *origin)
 
     /* Get type string from interface specification */
     attr = PyDict_GetItemString(iface, "typestr");
+    Py_INCREF(attr);  /* incref so it is easier to replace */
     if (attr == NULL) {
         Py_DECREF(iface);
+        Py_DECREF(attr);
         PyErr_SetString(PyExc_ValueError,
                 "Missing __array_interface__ typestr");
         return NULL;
@@ -2217,6 +2219,7 @@ PyArray_FromInterface(PyObject *origin)
     /* Allow unicode type strings */
     if (PyUnicode_Check(attr)) {
         tmp = PyUnicode_AsASCIIString(attr);
+        Py_DECREF(attr);
         attr = tmp;
     }
 #endif
@@ -2227,11 +2230,6 @@ PyArray_FromInterface(PyObject *origin)
     }
     /* Get dtype from type string */
     dtype = _array_typedescr_fromstr(PyString_AS_STRING(attr));
-#if defined(NPY_PY3K)
-    if (tmp == attr) {
-        Py_DECREF(tmp);
-    }
-#endif
     if (dtype == NULL) {
         goto fail;
     }
@@ -2251,6 +2249,7 @@ PyArray_FromInterface(PyObject *origin)
             dtype = new_dtype;
         }
     }
+    Py_DECREF(attr);
 
     /* Get shape tuple from interface specification */
     attr = PyDict_GetItemString(iface, "shape");
