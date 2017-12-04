@@ -2,103 +2,127 @@
 NumPy 1.14.0 Release Notes
 ==========================
 
+Numpy 1.14.0 is the result of seven months of work and contains a large number
+of bug fixes and new features, along with several changes with potential
+compatibility issues. The major change that users will notice are the
+stylistic changes in the way numpy arrays and scalars are printed, a change
+that will affect doctests. See below for details on how to preserve the
+old style printing when needed.
+
+A major decision affecting future development concerns the schedule for
+dropping Python 2.7 support in the runup to 2020. The decision has been made to
+support 2.7 for all releases made in 2018, with the last release being
+designated a long term release with support for bug fixes extending through
+2019. In 2019 support for 2.7 will be dropped in all new releases. More details
+can be found in the relevant NEP_.
+
 This release supports Python 2.7 and 3.4 - 3.6.
+
+.. _NEP: https://github.com/numpy/numpy/blob/master/doc/neps/dropping-python2.7-proposal.rst
 
 
 Highlights
 ==========
 
-* The `np.einsum` function will use BLAS when possible
-* ``genfromtxt``, ``loadtxt``, ``fromregex`` and ``savetxt`` can now handle files
-  with arbitrary encoding supported by Python.
+* The `np.einsum` function uses BLAS when possible
+
+* ``genfromtxt``, ``loadtxt``, ``fromregex`` and ``savetxt`` can now handle
+  files with arbitrary Python supported encoding.
+
+* Major improvements to printing of NumPy arrays and scalars.
 
 
 New functions
 =============
 
 * ``parametrize``: decorator added to numpy.testing
+
 * ``chebinterpolate``: Interpolate function at Chebyshev points.
+
 * ``format_float_positional`` and ``format_float_scientific`` : format
   floating-point scalars unambiguously with control of rounding and padding.
+
+* ``PyArray_ResolveWritebackIfCopy`` and ``PyArray_SetWritebackIfCopyBase``,
+  new C-API functions useful in achieving PyPy compatibity.
 
 
 Deprecations
 ============
 
-``np.bool_`` objects being used in place of integers
----------------------------------------------------
-Previously ``operator.index(np.bool_)`` was legal, allowing constructs
-such as ``[1, 2, 3][np.True_]``. This was misleading, as it behaved differently
-from ``np.array([1, 2, 3])[np.True_]``. This behavior is deprecated.
+* Using ``np.bool_`` objects in place of integers is deprecated.  Previously
+  ``operator.index(np.bool_)`` was legal and allowed constructs such as
+  ``[1, 2, 3][np.True_]``. That was misleading, as it behaved differently from
+  ``np.array([1, 2, 3])[np.True_]``.
 
-* Truth testing on an empty array is deprecated. To check if an array is not
+* Truth testing of an empty array is deprecated. To check if an array is not
   empty, use ``array.size > 0``.
-* Calling ``np.bincount`` with ``minlength=None`` is deprecated - instead,
-  ``minlength=0`` should be used.
 
-``np.fromstring`` should always be passed a ``sep`` argument
-------------------------------------------------------------
-Without this argument, this falls back on a broken version of `np.frombuffer`
-that silently accepts and then encode unicode strings. If reading binary data
-is desired, ``frombuffer`` should be used directly.
+* Calling ``np.bincount`` with ``minlength=None`` is deprecated.
+  ``minlength=0`` should be used instead.
+
+* Calling ``np.fromstring`` with the default value of the ``sep`` argument is
+  deprecated.  When that argument is not provided, a broken version of
+  ``np.frombuffer`` is used that silently accepts unicode strings and -- after
+  encoding them as either utf-8 (python 3) or the default encoding
+  (python 2) -- treats them as binary data. If reading binary data is
+  desired, ``np.frombuffer`` should be used directly.
+
+* The ``style`` option of array2string is deprecated in non-legacy printing mode.
+
+* ``PyArray_SetUpdateIfCopyBase`` has been deprecated. For NumPy versions >= 1.14
+  use ``PyArray_SetWritebackIfCopyBase`` instead, see `C API changes` below for
+  more details.
+
+
+
+* The use of ``UPDATEIFCOPY`` arrays is deprecated, see  `C API changes` below
+  for details.  We will not be dropping support for those arrays, but they are
+  not compatible with PyPy.
 
 
 Future Changes
 ==============
 
-``np.issubdtype`` will stop downcasting dtype-like arguments
-------------------------------------------------------------
-It would be expected that ``issubdtype(np.float32, 'float64')`` and
-``issubdtype(np.float32, np.float64)`` mean the same thing - however, there
-was an undocumented special case that translated the former into
-``issubdtype(np.float32, np.floating)``, giving the surprising result of True.
+* ``np.issubdtype`` will stop downcasting dtype-like arguments.
+  It might be expected that ``issubdtype(np.float32, 'float64')`` and
+  ``issubdtype(np.float32, np.float64)`` mean the same thing - however, there
+  was an undocumented special case that translated the former into
+  ``issubdtype(np.float32, np.floating)``, giving the surprising result of True.
 
-This translation now gives a warning explaining what translation is occuring.
-In future, the translation will be disabled, and the first example will be made
-equivalent to the second.
+  This translation now gives a warning that explains what translation is
+  occurring.  In the future, the translation will be disabled, and the first
+  example will be made equivalent to the second.
 
-``np.linalg.lstsq`` default for ``rcond`` will be changed
----------------------------------------------------------
+* ``np.linalg.lstsq`` default for ``rcond`` will be changed.  The ``rcond``
+  parameter to ``np.linalg.lstsq`` will change its default to machine precision
+  times the largest of the input array dimensions. A FutureWarning is issued
+  when ``rcond`` is not passed explicitly.
 
-* The ``rcond`` parameter to ``np.linalg.lstsq`` will change its default to the
-  better value of machine precision times the maximum of the input matrix
-  dimensions. A FutureWarning is given if the parameter is not passed explicitly.
 * ``a.flat.__array__()`` will return a writeable copy of ``a`` when ``a`` is
-  non-contiguous. Previously it returned an UPDATEIFCOPY array when ``a`` was
+  non-contiguous.  Previously it returned an UPDATEIFCOPY array when ``a`` was
   writeable. Currently it returns a non-writeable copy. See gh-7054 for a
   discussion of the issue.
 
-unstructured void array's ``.item`` method will return a bytes object
----------------------------------------------------------------------
-In the future calling ``.item()`` on arrays or scalars of ``np.void`` datatype
-will return a ``bytes`` object instead of a buffer or int array, the same as
-returned by ``bytes(void_scalar)``. This may affect code which assumed the
-return value was mutable, which will no longer be the case. A ``FutureWarning``
-is now issued when this would occur.
-
-
-Build System Changes
-====================
+* Unstructured void array's ``.item`` method will return a bytes object. In the
+  future, calling ``.item()`` on arrays or scalars of ``np.void`` datatype will
+  return a ``bytes`` object instead of a buffer or int array, the same as
+  returned by ``bytes(void_scalar)``. This may affect code which assumed the
+  return value was mutable, which will no longer be the case. A
+  ``FutureWarning`` is now issued when this would occur.
 
 
 Compatibility notes
 ===================
 
-``a.flat.__array__()`` returns non-writeable arrays when ``a`` is non-contiguous
---------------------------------------------------------------------------------
-The intent is that the UPDATEIFCOPY array previously returned when ``a`` was
-non-contiguous will be replaced by a writeable copy in the future. This
-temporary measure is aimed to notify folks who expect the underlying array be
-modified in this situation that that will no longer be the case. The most
-likely places for this to be noticed is when expressions of the form
-``np.asarray(a.flat)`` are used, or when ``a.flat`` is passed as the out
-parameter to a ufunc.
-
-``np.tensordot`` now returns zero array when contracting over 0-length dimension
---------------------------------------------------------------------------------
-Previously ``np.tensordot`` raised a ValueError when contracting over 0-length
-dimension. Now it returns a zero array, which is consistent with the behaviour
-of ``np.dot`` and ``np.einsum``.
+The mask of a masked array view is also a view rather than a copy
+-----------------------------------------------------------------
+There was a FutureWarning about this change in NumPy 1.11.x. In short, it is
+now the case that, when changing a view of a masked array, changes to the mask
+are propagated to the original. That was not previously the case. This change
+affects slices in particular. Note that this does not yet work properly if the
+mask of the original array is ``nomask`` and the mask of the view is changed.
+See gh-5580 for an extended discussion. The original behavior of having a copy
+of the mask can be obtained by calling the ``unshare_mask`` method of the view.
 
 ``np.ma.masked`` is no longer writeable
 ---------------------------------------
@@ -121,6 +145,22 @@ Additionally, the dtype guessing now matches that of ``np.array`` - so when
 passing a python scalar ``x``, ``maximum_fill_value(x)`` is always the same as
 ``maximum_fill_value(np.array(x))``. Previously ``x = long(1)`` on Python 2
 violated this assumption.
+
+``a.flat.__array__()`` returns non-writeable arrays when ``a`` is non-contiguous
+--------------------------------------------------------------------------------
+The intent is that the UPDATEIFCOPY array previously returned when ``a`` was
+non-contiguous will be replaced by a writeable copy in the future. This
+temporary measure is aimed to notify folks who expect the underlying array be
+modified in this situation that that will no longer be the case. The most
+likely places for this to be noticed is when expressions of the form
+``np.asarray(a.flat)`` are used, or when ``a.flat`` is passed as the out
+parameter to a ufunc.
+
+``np.tensordot`` now returns zero array when contracting over 0-length dimension
+--------------------------------------------------------------------------------
+Previously ``np.tensordot`` raised a ValueError when contracting over 0-length
+dimension. Now it returns a zero array, which is consistent with the behaviour
+of ``np.dot`` and ``np.einsum``.
 
 ``numpy.testing`` reorganized
 -----------------------------
@@ -193,6 +233,13 @@ raising a ``TypeError``.
 -----------------------------------------------------------------
 When indexed with a float, the dtype object used to raise ``ValueError``.
 
+User-defined types now need to implement ``__str__`` and ``__repr__``
+---------------------------------------------------------------------
+Previously, user-defined types could fall back to a default implementation of
+``__str__`` and ``__repr__`` implemented in numpy, but this has now been
+removed. Now user-defined types will fall back to the python default
+``object.__str__`` and ``object.__repr__``.
+
 Many changes to array printing, disableable with the new "legacy" printing mode
 -------------------------------------------------------------------------------
 The ``str`` and ``repr`` of ndarrays and numpy scalars have been changed in
@@ -206,37 +253,37 @@ enabling the new 1.13 "legacy" printing mode. This is enabled by calling
 
 In summary, the major changes are:
 
- * The ``repr`` of float arrays often omits a whitespace previously printed
-   in the sign position. See the new ``sign`` option to ``np.set_printoptions``.
- * Floating-point arrays and scalars use a new algorithm for decimal
-   representations, giving the shortest unique representation. This will
-   usually shorten ``float16`` fractional output, and sometimes ``float32`` and
-   ``float128`` output. ``float64`` should be unaffected.  See the new
-   ``floatmode`` option to ``np.set_printoptions``.
- * Float arrays printed in scientific notation no longer use fixed-precision,
-   and now instead show the shortest unique representation.
- * The ``str`` of floating-point scalars is no longer truncated in python2.
- * Non-finite complex scalars print like ``nanj`` instead of ``nan*j``.
- * ``MaskedArray`` arrays now separate printed elements with commas, always
-   print the dtype, and correctly wrap the elements of long arrays to multiple
-   lines. If there is more than 1 dimension, the array attributes are now
-   printed in a new "left-justified" printing style.
- * ``NaT`` values in datetime arrays are now properly aligned.
- * Arrays and scalars of ``np.void`` datatype are now print using hex notation.
- * 0d arrays no longer have their own idiosyncratic implementations of ``str``
-   and ``repr``. The ``style`` argument to ``np.array2string`` is deprecated.
- * Arrays of ``bool`` datatype will omit the datatype in the ``repr``.
- * The "dtype" part of ndarray reprs will now be printed on the next line
-   if there isn't space on the last line of array output.
- * User-defined ``dtypes`` (subclasses of ``np.generic``) now need to
-   implement ``__str__`` and ``__repr__``.
- * The ``...`` used to summarize long arrays now omits a trailing comma for
-   ``str``. Previously, ``str(np.arange(1001))`` gave
-   ``'[   0    1    2 ...,  998  999 1000]'``, which has an extra comma.
- * When a summarization ``...`` would be printed on its own line, eg for
-   summarization along any ndarray dimension but the last, a trailing
-   whitespace is now removed and trailing newlines added to match
-   the leading newlines.
+* The ``repr`` of float arrays often omits a whitespace previously printed
+  in the sign position. See the new ``sign`` option to ``np.set_printoptions``.
+* Floating-point arrays and scalars use a new algorithm for decimal
+  representations, giving the shortest unique representation. This will
+  usually shorten ``float16`` fractional output, and sometimes ``float32`` and
+  ``float128`` output. ``float64`` should be unaffected.  See the new
+  ``floatmode`` option to ``np.set_printoptions``.
+* Float arrays printed in scientific notation no longer use fixed-precision,
+  and now instead show the shortest unique representation.
+* The ``str`` of floating-point scalars is no longer truncated in python2.
+* Non-finite complex scalars print like ``nanj`` instead of ``nan*j``.
+* ``MaskedArray`` arrays now separate printed elements with commas, always
+  print the dtype, and correctly wrap the elements of long arrays to multiple
+  lines. If there is more than 1 dimension, the array attributes are now
+  printed in a new "left-justified" printing style.
+* ``NaT`` values in datetime arrays are now properly aligned.
+* Arrays and scalars of ``np.void`` datatype are now printed using hex notation.
+* 0d arrays no longer have their own idiosyncratic implementations of ``str``
+  and ``repr``. The ``style`` argument to ``np.array2string`` is deprecated.
+* Arrays of ``bool`` datatype will omit the datatype in the ``repr``.
+* The "dtype" part of ndarray reprs will now be printed on the next line
+  if there isn't space on the last line of array output.
+* User-defined ``dtypes`` (subclasses of ``np.generic``) now need to
+  implement ``__str__`` and ``__repr__``.
+* The ``...`` used to summarize long arrays now omits a trailing comma for
+  ``str``. Previously, ``str(np.arange(1001))`` gave
+  ``'[   0    1    2 ...,  998  999 1000]'``, which has an extra comma.
+* When a summarization ``...`` would be printed on its own line, e.g., for
+  summarization along any ndarray dimension but the last, a trailing
+  whitespace is now removed and trailing newlines added to match
+  the leading newlines.
 
 Some of these changes are described in more detail below.
 
@@ -244,43 +291,33 @@ Some of these changes are described in more detail below.
 C API changes
 =============
 
-``UPDATEIFCOPY`` semantics deprecated in favor of ``WRITEBACKIFCOPY``
----------------------------------------------------------------------
+PyPy compatible alternative to ``UPDATEIFCOPY`` arrays
+------------------------------------------------------
+``UPDATEIFCOPY`` arrays are contiguous copies of existing arrays, possibly with
+different dimensions, whose contents are copied back to the original array when
+their refcount goes to zero and they are deallocated. Because PyPy does not use
+refcounts, they do not function correctly with PyPy. NumPy is in the process of
+eliminating their use internally and two new C-API functions,
 
-The ``UPDATEIFCOPY`` flag is deprecated, and replaced by a new flag
-``WRITEBACKIFCOPY``. Use of the flag requires a call to ``PyArray_ResolveWritebackIfCopy``.
+* ``PyArray_SetWritebackIfCopyBase``
+* ``PyArray_ResolveWritebackIfCopy``,
 
-Code using ``UPDATEIFCOPY`` must be updated to account for changed semantics, as
-follows:. When ndarrays are created with either the deprecated ``UPDATEIFCOPY``
-or new ``WRITEBACKIFCOPY`` flags, a temporary copy of the data is created which
-is eventually written back to the original array. For ``UPDATEIFCOPY``, the
-writeback to the original array occurs at ndarray deallocation. For
-``WRITEBACKIFCOPY``, a new ``PyArray_ResolveWritebackIfCopy`` function must be
-explicitly called before deallocation (or, if an error occurred,
-``PyArray_DiscardWritebackIfCopy``). Numpy now mostly uses the
-``WRITEBACKIFCOPY`` mechanism internally, but still uses ``UPDATEIFCOPY`` in
-nditer use for backward-compatibility with the python nditer interface which
-has not changed.
+have been added together with a complimentary flag,
+``NPY_ARRAY_WRITEBACKIFCOPY``. Using the new functionality also requires that
+some flags be changed when new arrays are created, to wit:
+``NPY_ARRAY_INOUT_ARRAY`` should be replaced by ``NPY_ARRAY_INOUT_ARRAY2`` and
+``NPY_ARRAY_INOUT_FARRAY`` should be replaced by ``NPY_ARRAY_INOUT_FARRAY2``.
+Arrays created with these new flags will then have the ``WRITEBACKIFCOPY``
+semantics.
 
-In python code, if numpy is compiled with ``-DDEPRECATE_UPDATEIFCOPY`` or if
-run on PyPy, ``DeprecationWarning`` warnings will be issued on use of
-``UPDATEIFCOPY`` (eg, when nditer is used) if writeback resolution has not
-occurred before calling ``array_dealloc``. In the future this warning will
-always be issued, once nditer stops using ``UPDATEIFCOPY``.
+If PyPy compatibility is not a concern, these new functions can be ignored,
+although there will be a ``DeprecationWarning``. If you do wish to pursue PyPy
+compatibility, more information on these functions and their use may be found
+in the c-api_ documentation and the example in how-to-extend_.
 
-In C code, ``PyArray_SetUpdateIfCopyBase`` should be replaced by
-``PyArray_SetWritebackIfCopyBase``. Until nditer user is updated, this call
-will not emit a ``DeprecationWarning``. Calls to ``PyArray_XDECREF_ERR``
-should be replaced by ``PyArray_DiscardWritebackIfCopy`` and will emit a
-``DeprectaionWarning``.  Calling ndarray creation functions such as
-``PyArray_FromArray`` where flags uses ``NPY_ARRAY_UPDATEIFCOPY`` will raise a
-``DeprecationWarning``. In all these cases the code must be further modified to
-call ``PyArray_ResolveWritebackIfCopy`` before deallocation.
+.. _c-api: https://github.com/numpy/numpy/blob/master/doc/source/reference/c-api.array.rst
+.. _how-to-extend: https://github.com/numpy/numpy/blob/master/doc/source/user/c-info.how-to-extend.rst
 
-Note that during the deprecation period, the ``NPY_ARRAY_INOUT_ARRAY`` and
-``NPY_ARRAY_INOUT_FARRAY`` flags should be replaced by
-``NPY_ARRAY_INOUT_ARRAY2`` and ``NPY_ARRAY_INOUT_FARRAY2``, which behave
-similarly but require use of the new ``WRITEBACKIFCOPY`` semantics.
 
 New Features
 ============
@@ -289,13 +326,12 @@ Encoding argument for text IO functions
 ---------------------------------------
 ``genfromtxt``, ``loadtxt``, ``fromregex`` and ``savetxt`` can now handle files
 with arbitrary encoding supported by Python via the encoding argument.
-For backward compatiblity the argument defaults to the special ``bytes`` value
+For backward compatibility the argument defaults to the special ``bytes`` value
 which continues to treat text as raw byte values and continues to pass latin1
 encoded bytes to custom converters.
 Using any other value (including ``None`` for system default) will switch the
 functions to real text IO so one receives unicode strings instead of bytes in
 the resulting arrays.
-
 
 External ``nose`` plugins are usable by ``numpy.testing.Tester``
 ----------------------------------------------------------------
@@ -343,6 +379,33 @@ This new default changes the float output relative to numpy 1.13. The old
 behavior can be obtained in 1.13 "legacy" printing mode, see compatibility
 notes above.
 
+``hermitian`` option added to``np.linalg.matrix_rank``
+------------------------------------------------------
+The new ``hermitian`` option allows choosing between standard SVD based matrix
+rank calculation and the more efficient eigenvalue based method for
+symmetric/hermitian matrices.
+
+``threshold`` and ``edgeitems`` options added to ``np.array2string``
+--------------------------------------------------------------------
+These options could previously be controlled using ``np.set_printoptions``, but
+now can be changed on a per-call basis as arguments to ``np.array2string``.
+
+``concatenate`` and ``stack`` gained an ``out`` argument
+--------------------------------------------------------
+A preallocated buffer of the desired dtype can now be used for the output of
+these functions.
+
+Support for PGI flang compiler on Windows
+-----------------------------------------
+The PGI flang compiler is a Fortran front end for LLVM released by NVIDIA under
+the Apache 2 license. It can be invoked by ::
+
+    python setup.py config --compiler=clang --fcompiler=flang install
+
+There is little experience with this new compiler, so any feedback from people
+using it will be appreciated.
+
+
 Improvements
 ============
 
@@ -364,38 +427,24 @@ Because ``np.tensordot`` uses BLAS when possible, that will speed up execution.
 By default, ``np.einsum`` will also attempt optimization as the overhead is
 small relative to the potential improvement in speed.
 
-The ``repr`` of ``np.polynomial`` classes is more explicit
-----------------------------------------------------------
-It now shows the domain and window parameters as keyword arguments to make
-them more clear::
-
-    >>> np.polynomial.Polynomial(range(4))
-    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
-
-f2py now handles arrays of dimension 0
---------------------------------------
-f2py now allows for the allocation of arrays of dimension 0. This allows for
-more consistent handling of corner cases downstream.
+``f2py`` now handles arrays of dimension 0
+------------------------------------------
+``f2py`` now allows for the allocation of arrays of dimension 0. This allows
+for more consistent handling of corner cases downstream.
 
 ``numpy.distutils`` supports using MSVC and mingw64-gfortran together
 ---------------------------------------------------------------------
-
-Numpy distutils now supports using MSVC and Mingw64-gfortran compilers
-together. This enables producing Python extension modules on Windows
-containing Fortran code, while retaining compatibility with the
+Numpy distutils now supports using Mingw64 gfortran and MSVC compilers
+together. This enables the production of Python extension modules on Windows
+containing Fortran code while retaining compatibility with the
 binaries distributed by Python.org. Not all use cases are supported,
 but most common ways to wrap Fortran for Python are functional.
 
 Compilation in this mode is usually enabled automatically, and can be
 selected via the ``--fcompiler`` and ``--compiler`` options to
 ``setup.py``. Moreover, linking Fortran codes to static OpenBLAS is
-supported; by default a gfortran-compatible static archive
+supported; by default a gfortran compatible static archive
 ``openblas.a`` is looked for.
-
-``concatenate`` and ``stack`` gained an ``out`` argument
---------------------------------------------------------
-A preallocated buffer of the desired dtype can now be used for the output of
-these functions.
 
 ``np.linalg.pinv`` now works on stacked matrices
 ------------------------------------------------
@@ -421,7 +470,7 @@ Better support for empty structured and string types
 ----------------------------------------------------
 Structured types can contain zero fields, and string dtypes can contain zero
 characters. Zero-length strings still cannot be created directly, and must be
-constructed through structured dtypes:
+constructed through structured dtypes::
 
     str0 = np.empty(10, np.dtype([('v', str, N)]))['v']
     void0 = np.empty(10, np.void)
@@ -435,7 +484,7 @@ now supported for these arrays:
  * `pickle.dumps(arr)`
 
 Support for ``decimal.Decimal`` in ``np.lib.financial``
----------------------------------------------------
+-------------------------------------------------------
 Unless otherwise stated all functions within the ``financial`` package now
 support using the ``decimal.Decimal`` built-in type.
 
@@ -473,7 +522,7 @@ both be replaced by ``FloatingFormat``. Similarly ``ComplexFormat`` and
 ``void`` datatype elements are now printed in hex notation
 ----------------------------------------------------------
 A hex representation compatible with the python ``bytes`` type is now printed
-for unstructured ``np.void`` elements (eg, ``V4`` datatype). Previously, in
+for unstructured ``np.void`` elements, e.g., ``V4`` datatype. Previously, in
 python2 the raw void data of the element was printed to stdout, or in python3
 the integer byte values were shown.
 
@@ -488,22 +537,17 @@ Reduced memory usage of ``np.loadtxt``
 ``np.loadtxt`` now reads files in chunks instead of all at once which decreases
 its memory usage significantly for large files.
 
+
 Changes
 =======
-
-``np.linalg.matrix_rank`` is more efficient for hermitian matrices
-------------------------------------------------------------------
-The keyword argument ``hermitian`` was added to toggle between standard
-SVD-based matrix rank calculation and the more efficient eigenvalue-based
-method for symmetric/hermitian matrices.
 
 Multiple-field indexing/assignment of structured arrays
 -------------------------------------------------------
 The indexing and assignment of structured arrays with multiple fields has
 changed in a number of ways, as warned about in previous releases.
 
-First, indexing a structured array with multiple fields (eg,
-``arr[['f1', 'f3']]``) returns a view into the original array instead of a
+First, indexing a structured array with multiple fields, e.g.,
+``arr[['f1', 'f3']]``, returns a view into the original array instead of a
 copy. The returned view will have extra padding bytes corresponding to
 intervening fields in the original array, unlike the copy in 1.13, which will
 affect code such as ``arr[['f1', 'f3']].view(newdtype)``.
@@ -516,15 +560,18 @@ identically-named field in the source array or to 0 if the source did not have
 a field.
 
 Correspondingly, the order of fields in a structured dtypes now matters when
-computing dtype equality. For example with the dtypes
-`x = dtype({'names': ['A', 'B'], 'formats': ['i4', 'f4'], 'offsets': [0, 4]})`
-`y = dtype({'names': ['B', 'A'], 'formats': ['f4', 'i4'], 'offsets': [4, 0]})`
-now `x == y` will return `False`, unlike before. This makes dictionary-based
-dtype specifications like `dtype({'a': ('i4', 0), 'b': ('f4', 4)})` dangerous
-in python < 3.6 since dict key-order is not preserved in those versions.
+computing dtype equality. For example, with the dtypes ::
+
+    x = dtype({'names': ['A', 'B'], 'formats': ['i4', 'f4'], 'offsets': [0, 4]})
+    y = dtype({'names': ['B', 'A'], 'formats': ['f4', 'i4'], 'offsets': [4, 0]})
+
+the expression ``x == y`` will now return ``False``, unlike before.
+This makes dictionary based dtype specifications like
+``dtype({'a': ('i4', 0), 'b': ('f4', 4)})`` dangerous in python < 3.6
+since dict key order is not preserved in those versions.
 
 Assignment from a structured array to a boolean array now raises a ValueError,
-unlike in 1.13 where it always set the destination elements to `True`.
+unlike in 1.13, where it always set the destination elements to ``True``.
 
 Assignment from structured array with more than one field to a non-structured
 array now raises a ValueError. In 1.13 this copied just the first field of the
@@ -536,21 +583,14 @@ repeating a field name in a multiple-field index.
 The documentation for structured arrays in the user guide has been
 significantly updated to reflect these changes.
 
-User-defined types now need to implement ``__str__`` and ``__repr__``
----------------------------------------------------------------------
-Previously, user-defined types could fall back to a default implementation of
-``__str__`` and ``__repr__`` implemented in numpy, but this has now been
-removed. Now user-defined types will fall back to the python default
-``object.__str__`` and ``object.__repr__``.
-
 Integer and Void scalars are now unaffected by ``np.set_string_function``
 -------------------------------------------------------------------------
-Previously the ``str`` and ``repr`` of integer and void scalars could be
-controlled by ``np.set_string_function``, unlike most other numpy scalars. This
-is no longer the case.
+Previously, unlike most other numpy scalars, the ``str`` and ``repr`` of
+integer and void scalars could be controlled by ``np.set_string_function``.
+This is no longer possible.
 
-0d array printing changed, `style` arg of array2string deprecated
------------------------------------------------------------------
+0d array printing changed, ``style`` arg of array2string deprecated
+-------------------------------------------------------------------
 Previously the ``str`` and ``repr`` of 0d arrays had idiosyncratic
 implementations which returned ``str(a.item())`` and ``'array(' +
 repr(a.item()) + ')'`` respectively for 0d array ``a``, unlike both numpy
@@ -564,11 +604,6 @@ where  ``formatter``  can be specified using ``np.set_printoptions``. The
 This new behavior is disabled in 1.13 legacy printing mode, see compatibility
 notes above.
 
-``threshold`` and ``edgeitems`` options added to ``np.array2string``
------------------------------------------------------------------
-These options could previously be controlled using ``np.set_printoptions``, but
-now can be changed on a per-call basis as arguments to ``np.array2string``.
-
 Seeding ``RandomState`` using an array requires a 1-d array
 -----------------------------------------------------------
 ``RandomState`` previously would accept empty arrays or arrays with 2 or more
@@ -581,3 +616,11 @@ The ``repr`` of a ``MaskedArray`` is now closer to the python code that would
 produce it, with arrays now being shown with commas and dtypes. Like the other
 formatting changes, this can be disabled with the 1.13 legacy printing mode in
 order to help transition doctests.
+
+The ``repr`` of ``np.polynomial`` classes is more explicit
+----------------------------------------------------------
+It now shows the domain and window parameters as keyword arguments to make
+them more clear::
+
+    >>> np.polynomial.Polynomial(range(4))
+    Polynomial([0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
