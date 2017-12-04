@@ -7124,7 +7124,7 @@ class TestCTypes(object):
             _internal.ctypes = ctypes
 
 
-class TestUpdateIfCopy(TestCase):
+class TestWritebackIfCopy(TestCase):
     # all these tests use the WRITEBACKIFCOPY mechanism
     def test_argmax_with_out(self):
         mat = np.eye(5)
@@ -7189,7 +7189,21 @@ class TestUpdateIfCopy(TestCase):
         b = np.dot(a, a, out=a)
         assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
 
-
+    def test_view_assign(self):
+        from numpy.core.multiarray_tests import npy_create_writebackifcopy, npy_resolve
+        arr = np.arange(9).reshape(3, 3).T
+        arr_wb = npy_create_writebackifcopy(arr)
+        assert_(arr_wb.flags.writebackifcopy)
+        assert_(arr_wb.base is arr)
+        arr_wb[:] = -100
+        npy_resolve(arr_wb)
+        assert_equal(arr, -100)
+        # after resolve, the two arrays no longer reference eachother
+        assert_(not arr_wb.ctypes.data == 0)
+        arr_wb[:] = 100
+        assert_equal(arr, -100)
+        
+        
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475
     a = np.arange(5)
