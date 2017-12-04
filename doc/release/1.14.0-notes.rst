@@ -193,18 +193,52 @@ raising a ``TypeError``.
 -----------------------------------------------------------------
 When indexed with a float, the dtype object used to raise ``ValueError``.
 
-Changes to array printing, and the new "legacy" printing mode.
---------------------------------------------------------------
-The new ``sign='-'`` option (see new features below) causes the ``repr`` of
-float arrays to often omit a whitespace previously printed in the sign
-position, and 0d arrays also now print with small whitespace and precision
-differences (see changes below). These changes are likely to break downstream
-user's doctests.
+Many changes to array printing, disableable with the new "legacy" printing mode
+-------------------------------------------------------------------------------
+The ``str`` and ``repr`` of ndarrays and numpy scalars have been changed in
+a variety of ways. These changes are likely to break downstream user's
+doctests.
 
 These new behaviors can be disabled to mostly reproduce numpy 1.13 behavior by
 enabling the new 1.13 "legacy" printing mode. This is enabled by calling
 ``np.set_printoptions(legacy="1.13")``, or using the new ``legacy`` argument to
 ``np.array2string``, as ``np.array2string(arr, legacy='1.13')``.
+
+In summary, the major changes are:
+
+ * The ``repr`` of float arrays often omits a whitespace previously printed
+   in the sign position. See the new ``sign`` option to ``np.set_printoptions``.
+ * Floating-point arrays and scalars use a new algorithm for decimal
+   representations, giving the shortest unique representation. This will
+   usually shorten ``float16`` fractional output, and sometimes ``float32`` and
+   ``float128`` output. ``float64`` should be unaffected.  See the new
+   ``floatmode`` option to ``np.set_printoptions``.
+ * Float arrays printed in scientific notation no longer use fixed-precision,
+   and now instead show the shortest unique representation.
+ * The ``str`` of floating-point scalars is no longer truncated in python2.
+ * Non-finite complex scalars print like ``nanj`` instead of ``nan*j``.
+ * ``MaskedArray`` arrays now separate printed elements with commas, always
+   print the dtype, and correctly wrap the elements of long arrays to multiple
+   lines. If there is more than 1 dimension, the array attributes are now
+   printed in a new "left-justified" printing style.
+ * ``NaT`` values in datetime arrays are now properly aligned.
+ * Arrays and scalars of ``np.void`` datatype are now print using hex notation.
+ * 0d arrays no longer have their own idiosyncratic implementations of ``str``
+   and ``repr``. The ``style`` argument to ``np.array2string`` is deprecated.
+ * Arrays of ``bool`` datatype will omit the datatype in the ``repr``.
+ * The "dtype" part of ndarray reprs will now be printed on the next line
+   if there isn't space on the last line of array output.
+ * User-defined ``dtypes`` (subclasses of ``np.generic``) now need to
+   implement ``__str__`` and ``__repr__``.
+ * The ``...`` used to summarize long arrays now omits a trailing comma for
+   ``str``. Previously, ``str(np.arange(1001))`` gave
+   ``'[   0    1    2 ...,  998  999 1000]'``, which has an extra comma.
+ * When a summarization ``...`` would be printed on its own line, eg for
+   summarization along any ndarray dimension but the last, a trailing
+   whitespace is now removed and trailing newlines added to match
+   the leading newlines.
+
+Some of these changes are described in more detail below.
 
 
 C API changes
@@ -290,6 +324,7 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
+
 Support for reading lzma compressed text files in Python 3
 ----------------------------------------------------------
 With Python versions containing the ``lzma`` module the text IO functions can
@@ -405,18 +440,19 @@ support using the ``decimal.Decimal`` built-in type.
 
 Float printing now uses "dragon4" algorithm for shortest decimal representation
 -------------------------------------------------------------------------------
-All numpy floating-point types (16, 32, 64 and 128 bit) can now be printed to
-give shortest decimal representation of the number which uniquely identifies
-the value from others of the same type.
+The ``str`` and ``repr`` of floating-point values (16, 32, 64 and 128 bit) are
+now printed to give the shortest decimal representation which uniquely
+identifies the value from others of the same type. Previously this was only
+true for ``float64`` values. The remaining float types will now often be shorter
+than in numpy 1.13. Arrays printed in scientific notation now also use the
+shortest scientific representation, instead of fixed precision as before.
+
+ Additionally, the `str` of float scalars scalars will no longer be truncated
+ in python2, unlike python2 `float`s.  `np.double` scalars now have a ``str``
+ and ``repr`` identical to that of a python3 float.
 
 New functions ``np.format_float_scientific`` and ``np.format_float_positional``
 are provided to generate these decimal representations.
-
-The ``str`` and ``repr`` of floating-point scalars now use the shortest unique
-decimal representation. This means float128s will appear longer and float16s
-shorter than in numpy 1.13. Additionally, the `str` of these scalars will no
-longer be truncated in python2, unlike python2 `float`s. `np.double` scalars
-now have a `str` and `repr` identical to that of a python3 float.
 
 A new option ``floatmode`` has been added to ``np.set_printoptions`` and
 ``np.array2string``, which gives control over uniqueness and rounding of
@@ -445,6 +481,7 @@ printing style for ``void`` datatypes is now independently customizable
 The printing style of ``np.void`` arrays is now independently customizable
 using the ``formatter`` argument to ``np.set_printoptions``, using the
 ``'void'`` key, instead of the catch-all ``numpystr`` key as before.
+
 Reduced memory usage of ``np.loadtxt``
 --------------------------------------
 ``np.loadtxt`` now reads files in chunks instead of all at once which decreases
@@ -494,6 +531,9 @@ source to the destination.
 
 Using field "titles" in multiple-field indexing is now disallowed, as is
 repeating a field name in a multiple-field index.
+
+The documentation for structured arrays in the user guide has been
+significantly updated to reflect these changes.
 
 User-defined types now need to implement ``__str__`` and ``__repr__``
 ---------------------------------------------------------------------
