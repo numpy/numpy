@@ -259,7 +259,8 @@ writeback to the original array occurs at ndarray deallocation. For
 explicitly called before deallocation (or, if an error occurred,
 ``PyArray_DiscardWritebackIfCopy``). Numpy now mostly uses the
 ``WRITEBACKIFCOPY`` mechanism internally, but still uses ``UPDATEIFCOPY`` in
-nditer use for backward-compatibility with the python nditer interface.
+nditer use for backward-compatibility with the python nditer interface which
+has not changed.
 
 In python code, if numpy is compiled with ``-DDEPRECATE_UPDATEIFCOPY`` or if
 run on PyPy, ``DeprecationWarning`` warnings will be issued on use of
@@ -267,14 +268,14 @@ run on PyPy, ``DeprecationWarning`` warnings will be issued on use of
 occurred before calling ``array_dealloc``. In the future this warning will
 always be issued, once nditer stops using ``UPDATEIFCOPY``.
 
-In C code, calling ``PyArray_SetUpdateIfCopyBase`` will now always issue a
-``DeprecationWarning`` and should be replaced by
-``PyArray_SetWritebackIfCopyBase``. Similarly, calls to ``PyArray_XDECREF_ERR``
-should be replaced by ``PyArray_DiscardWritebackIfCopy``.  Calling ndarray
-creation functions such as ``PyArray_FromArray`` where flags uses
-``NPY_ARRAY_UPDATEIFCOPY`` will also raise a ``DeprecationWarning``. In all
-these cases the code must be further modified to call
-``PyArray_ResolveWritebackIfCopy`` before deallocation.
+In C code, ``PyArray_SetUpdateIfCopyBase`` should be replaced by
+``PyArray_SetWritebackIfCopyBase``. Until nditer user is updated, this call
+will not emit a ``DeprecationWarning``. Calls to ``PyArray_XDECREF_ERR``
+should be replaced by ``PyArray_DiscardWritebackIfCopy`` and will emit a
+``DeprectaionWarning``.  Calling ndarray creation functions such as
+``PyArray_FromArray`` where flags uses ``NPY_ARRAY_UPDATEIFCOPY`` will raise a
+``DeprecationWarning``. In all these cases the code must be further modified to
+call ``PyArray_ResolveWritebackIfCopy`` before deallocation.
 
 Note that during the deprecation period, the ``NPY_ARRAY_INOUT_ARRAY`` and
 ``NPY_ARRAY_INOUT_FARRAY`` flags should be replaced by
