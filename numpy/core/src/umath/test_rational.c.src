@@ -394,14 +394,14 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         return 0;
     }
     size = PyTuple_GET_SIZE(args);
-    if (size>2) {
+    if (size > 2) {
         PyErr_SetString(PyExc_TypeError,
                 "expected rational or numerator and optional denominator");
         return 0;
     }
-    x[0] = PyTuple_GET_ITEM(args,0);
-    x[1] = PyTuple_GET_ITEM(args,1);
-    if (size==1) {
+
+    if (size == 1) {
+        x[0] = PyTuple_GET_ITEM(args, 0);
         if (PyRational_Check(x[0])) {
             Py_INCREF(x[0]);
             return x[0];
@@ -424,9 +424,11 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             return 0;
         }
     }
-    for (i=0;i<size;i++) {
+
+    for (i=0; i<size; i++) {
         PyObject* y;
         int eq;
+        x[i] = PyTuple_GET_ITEM(args, i);
         n[i] = PyInt_AsLong(x[i]);
         if (error_converting(n[i])) {
             if (PyErr_ExceptionMatches(PyExc_TypeError)) {
