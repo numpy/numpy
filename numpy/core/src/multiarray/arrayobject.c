@@ -437,28 +437,19 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
+            Py_DECREF(fa->base);
+            fa->base = NULL;
             if (retval < 0) {
                 /* this should never happen, how did the two copies of data
                  * get out of sync?
                  */
                 return retval;
             }
-            if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
-                /* Free internal references if an Object array */
-                if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-                    Py_INCREF(self); /*hold on to self */
-                    PyArray_XDECREF(self);
-                    Py_DECREF(self); 
-                }
-                npy_free_cache(fa->data, PyArray_NBYTES(self));
-                fa->data = NULL;
-                PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
-            }
             return 1;
         }
     }
     return 0;
- }
+}
 
 /*********************** end C-API functions **********************/
 
@@ -525,7 +516,9 @@ array_dealloc(PyArrayObject *self)
          * In any case base is pointing to something that we need
          * to DECREF -- either a view or a buffer object
          */
-        Py_DECREF(fa->base);
+        if (fa->base) {
+            Py_DECREF(fa->base);
+        }
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
