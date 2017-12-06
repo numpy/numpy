@@ -434,7 +434,6 @@ class Gnu95FCompiler(GnuFCompiler):
             dll_name,
             output_dir=extra_dll_dir,
             extra_postargs=list(chained_dlls) + [
-                '-Wl,--allow-multiple-definition',
                 '-Wl,--output-def,' + def_path,
                 '-Wl,--export-all-symbols',
                 '-Wl,--enable-auto-import',
