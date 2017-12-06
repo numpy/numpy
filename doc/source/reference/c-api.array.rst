@@ -1354,13 +1354,18 @@ Special functions for NPY_OBJECT
     that when ``arr`` is destructed, it will copy any changes back to ``base``.
     DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase``.
 
+    Returns 0 for success, -1 for failure.
+
 .. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
 
     Precondition: ``arr`` is a copy of ``base`` (though possibly with different
-    strides, ordering, etc.) Sets the WRITEBACKIFCOPY flag and ``arr->base``, and
-    set ``base`` to READONLY. Call PyArray_ResolveWritebackIfCopy before calling
-    :c:func:`PyArray_DECREF`` in order copy any changes back to ``base`` and
+    strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag 
+    and ``arr->base``, and set ``base`` to READONLY. Call
+    :c:func:`PyArray_ResolveWritebackIfCopy` before calling
+    `Py_DECREF`` in order copy any changes back to ``base`` and
     reset the READONLY flag.
+
+    Returns 0 for success, -1 for failure.
 
 
 Array flags
@@ -3251,6 +3256,17 @@ Memory management
     :c:data:`NPY_USE_PYMEM` is 0, if :c:data:`NPY_USE_PYMEM` is 1, then
     the Python memory allocator is used.
 
+.. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
+
+    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function copies ``obj->data`` to
+    `obj->base->data`, clears the flags, `DECREF` s `obj->base` and makes it
+    writeable, and sets ``obj->base`` to NULL. This is the opposite of 
+    :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called once
+    you are finished with ``obj``, just before ``Py_DECREF(obj)``. It may be called
+    multiple times, or with ``NULL`` input.
+
+    Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
 
 Threading support
 ^^^^^^^^^^^^^^^^^
