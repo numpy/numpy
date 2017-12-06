@@ -450,7 +450,7 @@ def _array2string(a, options, separator=' ', prefix=""):
 
     lst = _formatArray(a, format_function, a.ndim, options['linewidth'],
                        next_line_prefix, separator, options['edgeitems'],
-                       summary_insert, options['legacy'])[:-1]
+                       summary_insert, options['legacy'])
     return lst
 
 
@@ -633,7 +633,7 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
 
     """
     if rank == 0:
-        return format_function(a[()]) + '\n'
+        return format_function(a[()])
 
     show_summary = summary_insert and 2*edge_items < len(a)
 
@@ -664,7 +664,7 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
 
         word = format_function(a[-1])
         s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
-        s += line + "]\n"
+        s += line + "]"
         s = '[' + s[len(next_line_prefix):]
     else:
         s = '['
@@ -695,7 +695,7 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
             s += next_line_prefix
         s += _formatArray(a[-1], format_function, rank-1, max_line_len,
                           " " + next_line_prefix, separator, edge_items,
-                          summary_insert, legacy).rstrip()+']\n'
+                          summary_insert, legacy).rstrip()+']'
     return s
 
 
