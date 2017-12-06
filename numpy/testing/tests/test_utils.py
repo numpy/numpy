@@ -296,11 +296,13 @@ class TestEqual(TestArrayEqual):
 
             (shapes (2,), (1, 2) mismatch)
              x: array([1, 2])
-             y: [repr failed for <matrix>: %d format: a number is required, not matrix]""")
+             y: matrix([[1, 2]])""")
             try:
                 self.assertEqual(msg, msg_reference)
             except AssertionError:
                 self.assertEqual(msg2, msg_reference)
+        else:
+            raise AssertionError("Did not raise")
 
 
 class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
