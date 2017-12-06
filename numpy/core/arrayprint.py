@@ -448,9 +448,9 @@ def _array2string(a, options, separator=' ', prefix=""):
     # skip over array(
     next_line_prefix += " "*len(prefix)
 
-    lst = _formatArray(a, format_function, a.ndim, options['linewidth'],
+    lst = _formatArray(a, format_function, options['linewidth'],
                        next_line_prefix, separator, options['edgeitems'],
-                       summary_insert, options['legacy'])[:-1]
+                       summary_insert, options['legacy'])
     return lst
 
 
@@ -623,7 +623,7 @@ def _extendLine(s, line, word, max_line_len, next_line_prefix):
     return s, line
 
 
-def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
+def _formatArray(a, format_function, max_line_len, next_line_prefix,
                  separator, edge_items, summary_insert, legacy):
     """formatArray is designed for two modes of operation:
 
@@ -632,71 +632,76 @@ def _formatArray(a, format_function, rank, max_line_len, next_line_prefix,
     2. Summarized output
 
     """
-    if rank == 0:
-        return format_function(a[()]) + '\n'
+    def recurser(index, hanging_indent):
+        """
+        By using this local function, we don't need to recurse with all the
+        arguments. Since this function is not created recursively, the cost is
+        not significant
+        """
+        axis = len(index)
+        axes_left = a.ndim - axis
 
-    show_summary = summary_insert and 2*edge_items < len(a)
+        if axes_left == 0:
+            return format_function(a[index])
 
-    if show_summary:
-        leading_items = edge_items
-        trailing_items = edge_items
-    else:
-        leading_items = 0
-        trailing_items = len(a)
+        # when recursing, add a space to align with the [ added
+        next_hanging_indent = hanging_indent + ' '
 
-    if rank == 1:
-        s = ""
-        line = next_line_prefix
-        for i in range(leading_items):
-            word = format_function(a[i]) + separator
-            s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
-
+        a_len = a.shape[axis]
+        show_summary = summary_insert and 2*edge_items < a_len
         if show_summary:
-            if legacy == '1.13':
-                word = summary_insert + ", "
-            else:
-                word = summary_insert + separator
-            s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
+            leading_items = edge_items
+            trailing_items = edge_items
+        else:
+            leading_items = 0
+            trailing_items = a_len
 
-        for i in range(trailing_items, 1, -1):
-            word = format_function(a[-i]) + separator
-            s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
+        # stringify the array with the hanging indent on the first line too
+        s = ''
+        if axes_left == 1:
+            line = hanging_indent
+            for i in range(leading_items):
+                val = recurser(index + (i,), next_hanging_indent)
+                word = val + separator
+                s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
 
-        word = format_function(a[-1])
-        s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
-        s += line + "]\n"
-        s = '[' + s[len(next_line_prefix):]
-    else:
-        s = '['
-        line_sep = separator.rstrip() + '\n'*(rank - 1)
-        for i in range(leading_items):
-            if i > 0:
-                s += next_line_prefix
-            s += _formatArray(a[i], format_function, rank-1, max_line_len,
-                              " " + next_line_prefix, separator, edge_items,
-                              summary_insert, legacy)
-            s = s.rstrip() + line_sep
+            if show_summary:
+                if legacy == '1.13':
+                    word = summary_insert + ", "
+                else:
+                    word = summary_insert + separator
+                s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
 
-        if show_summary:
-            if legacy == '1.13':
-                # trailing space, fixed number of newlines, and fixed separator
-                s += next_line_prefix + summary_insert + ", \n"
-            else:
-                s += next_line_prefix + summary_insert + line_sep
+            for i in range(trailing_items, 1, -1):
+                word = recurser(index + (-i,), next_hanging_indent) + separator
+                s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
+            word = recurser(index + (-1,), next_hanging_indent)
+            s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
+            s += line
+        else:
+            s = ''
+            line_sep = separator.rstrip() + '\n'*(axes_left - 1)
+            for i in range(leading_items):
+                s += hanging_indent + recurser(index + (i,), next_hanging_indent) + line_sep
 
-        for i in range(trailing_items, 1, -1):
-            if leading_items or i != trailing_items:
-                s += next_line_prefix
-            s += _formatArray(a[-i], format_function, rank-1, max_line_len,
-                              " " + next_line_prefix, separator, edge_items,
-                              summary_insert, legacy)
-            s = s.rstrip() + line_sep
-        if leading_items or trailing_items > 1:
-            s += next_line_prefix
-        s += _formatArray(a[-1], format_function, rank-1, max_line_len,
-                          " " + next_line_prefix, separator, edge_items,
-                          summary_insert, legacy).rstrip()+']\n'
-    return s
+            if show_summary:
+                if legacy == '1.13':
+                    # trailing space, fixed number of newlines, and fixed separator
+                    s += hanging_indent + summary_insert + ", \n"
+                else:
+                    s += hanging_indent + summary_insert + line_sep
+
+            for i in range(trailing_items, 1, -1):
+                s += hanging_indent + recurser(index + (-i,), next_hanging_indent) + line_sep
+
+            s += hanging_indent + recurser(index + (-1,), next_hanging_indent)
+
+        # remove the hanging indent, and wrap in []
+        s = '[' + s[len(hanging_indent):] + ']'
+        return s
+
+    # invoke the recursive part with an initial index and prefix
+    return recurser(index=(), hanging_indent=next_line_prefix)
 
 
 class FloatingFormat(object):
