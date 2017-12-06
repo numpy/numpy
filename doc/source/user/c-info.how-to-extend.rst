@@ -637,7 +637,9 @@ updates the output array.
 
         Py_DECREF(arr1);
         Py_DECREF(arr2);
+    #if NPY_API_VERSION >= 0x0000000c
         PyArray_ResolveWritebackIfCopy(oarr);
+    #endif
         Py_DECREF(oarr);
         Py_INCREF(Py_None);
         return Py_None;
@@ -645,7 +647,9 @@ updates the output array.
      fail:
         Py_XDECREF(arr1);
         Py_XDECREF(arr2);
+    #if NPY_API_VERSION >= 0x0000000c
         PyArray_DiscardWritebackIfCopy(oarr);
+    #endif
         Py_XDECREF(oarr);
         return NULL;
     }
