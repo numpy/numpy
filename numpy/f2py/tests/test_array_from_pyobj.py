@@ -141,7 +141,7 @@ class Type(object):
             dtype0 = name
             name = None
             for n, i in typeinfo.items():
-                if isinstance(i, tuple) and dtype0.type is i[-1]:
+                if not isinstance(i, type) and dtype0.type is i.type:
                     name = n
                     break
         obj = cls._type_cache.get(name.upper(), None)
