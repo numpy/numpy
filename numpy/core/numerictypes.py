@@ -286,7 +286,7 @@ def bitname(obj):
 def _add_types():
     for a in typeinfo.keys():
         name = english_lower(a)
-        if isinstance(typeinfo[a], tuple):
+        if not isinstance(typeinfo[a], type):
             typeobj = typeinfo[a][-1]
 
             # define C-name and insert typenum and typechar references also
@@ -302,7 +302,7 @@ _add_types()
 def _add_aliases():
     for a in typeinfo.keys():
         name = english_lower(a)
-        if not isinstance(typeinfo[a], tuple):
+        if isinstance(typeinfo[a], type):
             continue
         typeobj = typeinfo[a][-1]
         # insert bit-width version for this class (if relevant)
@@ -429,7 +429,7 @@ _sctype2char_dict = {}
 def _construct_char_code_lookup():
     for name in typeinfo.keys():
         tup = typeinfo[name]
-        if isinstance(tup, tuple):
+        if not isinstance(tup, type):
             if tup[0] not in ['p', 'P']:
                 _sctype2char_dict[tup[-1]] = tup[0]
 _construct_char_code_lookup()
@@ -777,7 +777,7 @@ _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
     for name, val in typeinfo.items():
-        if not isinstance(val, tuple):
+        if isinstance(val, type):
             continue
         obj = val[-1]
         nbytes[obj] = val[2] // 8

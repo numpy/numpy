@@ -62,6 +62,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "compiled_base.h"
 #include "mem_overlap.h"
 #include "alloc.h"
+#include "typeinfo.h"
 
 #include "get_attr_string.h"
 
@@ -4878,6 +4879,13 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "busdaycalendar",
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
+
+    /* Create the typeinfo types */
+    typeinfo_init_structsequences();
+    PyDict_SetItemString(d,
+        "typeinfo", (PyObject *)&PyArray_typeinfoType);
+    PyDict_SetItemString(d,
+        "typeinforanged", (PyObject *)&PyArray_typeinforangedType);
 
     if (!intern_strings()) {
         goto err;

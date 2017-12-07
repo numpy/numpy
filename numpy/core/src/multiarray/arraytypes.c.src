@@ -24,6 +24,7 @@
 #include "_datetime.h"
 #include "arrayobject.h"
 #include "alloc.h"
+#include "typeinfo.h"
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
 #endif
@@ -4820,20 +4821,18 @@ set_typeinfo(PyObject *dict)
      * #cn = i*7, N, i, l, i, N, i#
      */
 
-    PyDict_SetItemString(infodict, "@name@",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("Ciii@cx@@cn@O",
-#else
-            s = Py_BuildValue("ciii@cx@@cn@O",
-#endif
-                NPY_@name@LTR,
-                NPY_@name@,
-                NPY_BITSOF_@uname@,
-                _ALIGN(@type@),
-                @max@,
-                @min@,
-                (PyObject *) &Py@Name@ArrType_Type));
+    s = PyArray_typeinforanged(
+        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@uname@, _ALIGN(@type@),
+        Py_BuildValue("@cx@", @max@),
+        Py_BuildValue("@cn@", @min@),
+        &Py@Name@ArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "@name@", s);
     Py_DECREF(s);
+
 
     /**end repeat**/
 
@@ -4848,91 +4847,80 @@ set_typeinfo(PyObject *dict)
      *         CFloat, CDouble, CLongDouble#
      * #num  = 1, 1, 1, 1, 2, 2, 2#
      */
-
-    PyDict_SetItemString(infodict, "@name@",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", NPY_@name@LTR,
-#else
-            s = Py_BuildValue("ciiiO", NPY_@name@LTR,
-#endif
-                NPY_@name@,
-                NPY_BITSOF_@name@,
-                @num@ * _ALIGN(@type@) > NPY_MAX_COPY_ALIGNMENT ?
-                    NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@type@),
-                (PyObject *) &Py@Name@ArrType_Type));
+    s = PyArray_typeinfo(
+        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@name@,
+        @num@ * _ALIGN(@type@) > NPY_MAX_COPY_ALIGNMENT ?
+            NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@type@),
+        &Py@Name@ArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "@name@", s);
     Py_DECREF(s);
 
     /**end repeat**/
 
-    PyDict_SetItemString(infodict, "OBJECT",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", NPY_OBJECTLTR,
-#else
-            s = Py_BuildValue("ciiiO", NPY_OBJECTLTR,
-#endif
-                NPY_OBJECT,
-                sizeof(PyObject *) * CHAR_BIT,
-                _ALIGN(PyObject *),
-                (PyObject *) &PyObjectArrType_Type));
+    s = PyArray_typeinfo(
+        NPY_OBJECTLTR, NPY_OBJECT, sizeof(PyObject *) * CHAR_BIT,
+        _ALIGN(PyObject *),
+        &PyObjectArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "OBJECT", s);
     Py_DECREF(s);
-    PyDict_SetItemString(infodict, "STRING",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", NPY_STRINGLTR,
-#else
-            s = Py_BuildValue("ciiiO", NPY_STRINGLTR,
-#endif
-                NPY_STRING,
-                0,
-                _ALIGN(char),
-                (PyObject *) &PyStringArrType_Type));
+    s = PyArray_typeinfo(
+        NPY_STRINGLTR, NPY_STRING, 0, _ALIGN(char),
+        &PyStringArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "STRING", s);
     Py_DECREF(s);
-    PyDict_SetItemString(infodict, "UNICODE",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", NPY_UNICODELTR,
-#else
-            s = Py_BuildValue("ciiiO", NPY_UNICODELTR,
-#endif
-                NPY_UNICODE,
-                0,
-                _ALIGN(npy_ucs4),
-                (PyObject *) &PyUnicodeArrType_Type));
+    s = PyArray_typeinfo(
+        NPY_UNICODELTR, NPY_UNICODE, 0, _ALIGN(npy_ucs4),
+        &PyUnicodeArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "UNICODE", s);
     Py_DECREF(s);
-    PyDict_SetItemString(infodict, "VOID",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", NPY_VOIDLTR,
-#else
-            s = Py_BuildValue("ciiiO", NPY_VOIDLTR,
-#endif
-                NPY_VOID,
-                0,
-                _ALIGN(char),
-                (PyObject *) &PyVoidArrType_Type));
+    s = PyArray_typeinfo(
+        NPY_VOIDLTR, NPY_VOID, 0, _ALIGN(char),
+        &PyVoidArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "VOID", s);
     Py_DECREF(s);
-    PyDict_SetItemString(infodict, "DATETIME",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiNNO", NPY_DATETIMELTR,
-#else
-            s = Py_BuildValue("ciiiNNO", NPY_DATETIMELTR,
-#endif
-                NPY_DATETIME,
-                NPY_BITSOF_DATETIME,
-                _ALIGN(npy_datetime),
-                MyPyLong_FromInt64(NPY_MAX_DATETIME),
-                MyPyLong_FromInt64(NPY_MIN_DATETIME),
-                (PyObject *) &PyDatetimeArrType_Type));
+    s = PyArray_typeinforanged(
+        NPY_DATETIMELTR, NPY_DATETIME, NPY_BITSOF_DATETIME,
+        _ALIGN(npy_datetime),
+        MyPyLong_FromInt64(NPY_MAX_DATETIME),
+        MyPyLong_FromInt64(NPY_MIN_DATETIME),
+        &PyDatetimeArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "DATETIME", s);
     Py_DECREF(s);
-    PyDict_SetItemString(infodict, "TIMEDELTA",
-#if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiNNO", NPY_TIMEDELTALTR,
-#else
-            s = Py_BuildValue("ciiiNNO",NPY_TIMEDELTALTR,
-#endif
-                NPY_TIMEDELTA,
-                NPY_BITSOF_TIMEDELTA,
-                _ALIGN(npy_timedelta),
-                MyPyLong_FromInt64(NPY_MAX_TIMEDELTA),
-                MyPyLong_FromInt64(NPY_MIN_TIMEDELTA),
-                (PyObject *)&PyTimedeltaArrType_Type));
+    s = PyArray_typeinforanged(
+        NPY_TIMEDELTALTR, NPY_TIMEDELTA, NPY_BITSOF_TIMEDELTA,
+        _ALIGN(npy_timedelta),
+        MyPyLong_FromInt64(NPY_MAX_TIMEDELTA),
+        MyPyLong_FromInt64(NPY_MIN_TIMEDELTA),
+        &PyTimedeltaArrType_Type
+    );
+    if (s == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(infodict, "TIMEDELTA", s);
     Py_DECREF(s);
 
 #define SETTYPE(name)                           \
