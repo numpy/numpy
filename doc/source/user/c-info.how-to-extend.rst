@@ -605,7 +605,8 @@ Example
 The following example shows how you might write a wrapper that accepts
 two input arguments (that will be converted to an array) and an output
 argument (that must be an array). The function returns None and
-updates the output array.
+updates the output array. Note the updated use of WRITEBACKIFCOPY semantics
+for NumPy v1.14 and above
 
 .. code-block:: c
 
@@ -618,11 +619,15 @@ updates the output array.
         if (!PyArg_ParseTuple(args, "OOO!", &arg1, &arg2,
             &PyArray_Type, &out)) return NULL;
 
-        arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY);
+        arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
         if (arr1 == NULL) return NULL;
-        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_IN_ARRAY);
+        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
         if (arr2 == NULL) goto fail;
-        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_INOUT_ARRAY);
+    #if NPY_API_VERSION >= 0x0000000c
+        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_ARRAY_INOUT_ARRAY2);
+    #else
+        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_ARRAY_INOUT_ARRAY);
+    #endif
         if (oarr == NULL) goto fail;
 
         /* code that makes use of arguments */
