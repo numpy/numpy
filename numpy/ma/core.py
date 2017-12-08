@@ -3937,11 +3937,13 @@ class MaskedArray(ndarray):
         reprs['data'] = np.array2string(
             self._insert_masked_print(),
             separator=", ",
-            prefix=indents['data'] + 'data=')
+            prefix=indents['data'] + 'data=',
+            suffix=',')
         reprs['mask'] = np.array2string(
             self._mask,
             separator=", ",
-            prefix=indents['mask'] + 'mask=')
+            prefix=indents['mask'] + 'mask=',
+            suffix=',')
         reprs['fill_value'] = repr(self.fill_value)
         if dtype_needed:
             reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
