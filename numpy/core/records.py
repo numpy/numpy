@@ -42,6 +42,7 @@ import os
 from . import numeric as sb
 from . import numerictypes as nt
 from numpy.compat import isfileobj, bytes, long
+from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
 __all__ = ['record', 'recarray', 'format_parser']
@@ -525,22 +526,25 @@ class recarray(ndarray):
             if repr_dtype.type is record:
                 repr_dtype = sb.dtype((nt.void, repr_dtype))
             prefix = "rec.array("
-            fmt = 'rec.array(%s, %sdtype=%s)'
+            fmt = 'rec.array(%s,%sdtype=%s)'
         else:
             # otherwise represent it using np.array plus a view
             # This should only happen if the user is playing
             # strange games with dtypes.
             prefix = "array("
-            fmt = 'array(%s, %sdtype=%s).view(numpy.recarray)'
+            fmt = 'array(%s,%sdtype=%s).view(numpy.recarray)'
 
         # get data/shape string. logic taken from numeric.array_repr
         if self.size > 0 or self.shape == (0,):
-            lst = sb.array2string(self, separator=', ', prefix=prefix)
+            lst = sb.array2string(
+                self, separator=', ', prefix=prefix, suffix=',')
         else:
             # show zero-length shape unless it is (0,)
             lst = "[], shape=%s" % (repr(self.shape),)
 
         lf = '\n'+' '*len(prefix)
+        if get_printoptions()['legacy'] == '1.13':
+            lf = ' ' + lf  # trailing space
         return fmt % (lst, lf, repr_dtype)
 
     def field(self, attr, val=None):
