@@ -290,9 +290,9 @@ In summary, the major changes are:
   * A trailing comma is no longer inserted for ``str``.
     Previously, ``str(np.arange(1001))`` gave
     ``'[   0    1    2 ...,  998  999 1000]'``, which has an extra comma.
-  * For arrays of 2-d and beyond, the ``...`` printed on its own line to
-    summarize all but the last axis now has trailing newlines added to match
-    the leading newlines, and the trailing space character removed.
+  * For arrays of 2-d and beyond, when ... is printed on its own line in order
+    to summarize any but the last axis, newlines are now appended to that line
+    to match its leading newlines, and a trailing space character is removed.
     
 * ``MaskedArray`` arrays now separate printed elements with commas, always
   print the dtype, and correctly wrap the elements of long arrays to multiple
