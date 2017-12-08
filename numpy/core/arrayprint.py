@@ -632,7 +632,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
     2. Summarized output
 
     """
-    def recurser(index, hanging_indent):
+    def recurser(index, hanging_indent, curr_width):
         """
         By using this local function, we don't need to recurse with all the
         arguments. Since this function is not created recursively, the cost is
@@ -644,8 +644,13 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         if axes_left == 0:
             return format_function(a[index])
 
-        # when recursing, add a space to align with the [ added
+        # when recursing, add a space to align with the [ added, and reduce the
+        # length of the line by 1
         next_hanging_indent = hanging_indent + ' '
+        if legacy == '1.13':
+            next_width = curr_width
+        else:
+            next_width = curr_width - len(']')
 
         a_len = a.shape[axis]
         show_summary = summary_insert and 2*edge_items < a_len
@@ -663,13 +668,13 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         if axes_left == 1:
             # the length up until the beginning of the separator / bracket
             if legacy == '1.13':
-                elem_width = line_width - len(separator.rstrip())
+                elem_width = curr_width - len(separator.rstrip())
             else:
-                elem_width = line_width - max(len(separator.rstrip()), len(']'))
+                elem_width = curr_width - max(len(separator.rstrip()), len(']'))
 
             line = hanging_indent
             for i in range(leading_items):
-                word = recurser(index + (i,), next_hanging_indent)
+                word = recurser(index + (i,), next_hanging_indent, next_width)
                 s, line = _extendLine(s, line, word, elem_width, hanging_indent)
                 line += separator
 
@@ -681,14 +686,14 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                     line += separator
 
             for i in range(trailing_items, 1, -1):
-                word = recurser(index + (-i,), next_hanging_indent)
+                word = recurser(index + (-i,), next_hanging_indent, next_width)
                 s, line = _extendLine(s, line, word, elem_width, hanging_indent)
                 line += separator
 
             if legacy == '1.13':
                 # width of the seperator is not considered on 1.13
-                elem_width = line_width
-            word = recurser(index + (-1,), next_hanging_indent)
+                elem_width = curr_width
+            word = recurser(index + (-1,), next_hanging_indent, next_width)
             s, line = _extendLine(s, line, word, elem_width, hanging_indent)
 
             s += line
@@ -699,7 +704,8 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             line_sep = separator.rstrip() + '\n'*(axes_left - 1)
 
             for i in range(leading_items):
-                s += hanging_indent + recurser(index + (i,), next_hanging_indent) + line_sep
+                nested = recurser(index + (i,), next_hanging_indent, next_width)
+                s += hanging_indent + nested + line_sep
 
             if show_summary:
                 if legacy == '1.13':
@@ -709,16 +715,21 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                     s += hanging_indent + summary_insert + line_sep
 
             for i in range(trailing_items, 1, -1):
-                s += hanging_indent + recurser(index + (-i,), next_hanging_indent) + line_sep
+                nested = recurser(index + (-i,), next_hanging_indent, next_width)
+                s += hanging_indent + nested + line_sep
 
-            s += hanging_indent + recurser(index + (-1,), next_hanging_indent)
+            nested = recurser(index + (-1,), next_hanging_indent, next_width)
+            s += hanging_indent + nested
 
         # remove the hanging indent, and wrap in []
         s = '[' + s[len(hanging_indent):] + ']'
         return s
 
     # invoke the recursive part with an initial index and prefix
-    return recurser(index=(), hanging_indent=next_line_prefix)
+    return recurser(
+        index=(),
+        hanging_indent=next_line_prefix,
+        curr_width=line_width)
 
 
 class FloatingFormat(object):

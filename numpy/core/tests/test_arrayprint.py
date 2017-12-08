@@ -258,6 +258,37 @@ class TestArray2String(object):
                 '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
         assert_equal(repr(A), reprA)
 
+    def test_linewidth(self):
+        a = np.full(6, 1)
+
+        def make_str(a, width, **kw):
+            return np.array2string(a, separator="", max_line_width=width, **kw)
+
+        assert_equal(make_str(a, 8, legacy='1.13'), '[111111]')
+        assert_equal(make_str(a, 7, legacy='1.13'), '[111111]')
+        assert_equal(make_str(a, 5, legacy='1.13'), '[1111\n'
+                                                    ' 11]')
+
+        assert_equal(make_str(a, 8), '[111111]')
+        assert_equal(make_str(a, 7), '[11111\n'
+                                     ' 1]')
+        assert_equal(make_str(a, 5), '[111\n'
+                                     ' 111]')
+
+        b = a[None,None,:]
+
+        assert_equal(make_str(b, 12, legacy='1.13'), '[[[111111]]]')
+        assert_equal(make_str(b,  9, legacy='1.13'), '[[[111111]]]')
+        assert_equal(make_str(b,  8, legacy='1.13'), '[[[11111\n'
+                                                     '   1]]]')
+
+        assert_equal(make_str(b, 12), '[[[111111]]]')
+        assert_equal(make_str(b,  9), '[[[111\n'
+                                      '   111]]]')
+        assert_equal(make_str(b,  8), '[[[11\n'
+                                      '   11\n'
+                                      '   11]]]')
+
 
 class TestPrintOptions(object):
     """Test getting and setting global print options."""
