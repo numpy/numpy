@@ -253,7 +253,8 @@ enabling the new 1.13 "legacy" printing mode. This is enabled by calling
 
 In summary, the major changes are:
 
-* To floating-point types:
+* For floating-point types:
+
   * The ``repr`` of float arrays often omits a space previously printed
     in the sign position. See the new ``sign`` option to ``np.set_printoptions``.
   * Floating-point arrays and scalars use a new algorithm for decimal
@@ -264,12 +265,16 @@ In summary, the major changes are:
   * Float arrays printed in scientific notation no longer use fixed-precision,
     and now instead show the shortest unique representation.
   * The ``str`` of floating-point scalars is no longer truncated in python2.
-* To other data types:
+ 
+* For other data types:
+
   * Non-finite complex scalars print like ``nanj`` instead of ``nan*j``.
   * ``NaT`` values in datetime arrays are now properly aligned.
   * Arrays and scalars of ``np.void`` datatype are now printed using hex
     notation.
-* To line-wrapping:
+    
+* For line-wrapping:
+
   * The "dtype" part of ndarray reprs will now be printed on the next line
     if there isn't space on the last line of array output.
   * The ``linewidth`` format option is now always respected.
@@ -279,13 +284,16 @@ In summary, the major changes are:
     elements.
   * The last line of an array string will never have more elements than earlier
     lines.
-* To summarization, the use of ``...`` to shorten long arrays:
+    
+* For summarization (the use of ``...`` to shorten long arrays):
+
   * A trailing comma is no longer inserted for ``str``.
     Previously, ``str(np.arange(1001))`` gave
     ``'[   0    1    2 ...,  998  999 1000]'``, which has an extra comma.
   * For arrays of 2-d and beyond, the ``...`` printed on its own line to
     summarize all but the last axis now has trailing newlines added to match
     the leading newlines, and the trailing space character removed.
+    
 * ``MaskedArray`` arrays now separate printed elements with commas, always
   print the dtype, and correctly wrap the elements of long arrays to multiple
   lines. If there is more than 1 dimension, the array attributes are now
