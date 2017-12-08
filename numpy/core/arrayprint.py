@@ -615,15 +615,15 @@ def array2string(a, max_line_width=None, precision=None,
     return _array2string(a, options, separator, prefix)
 
 
-def _extendLine(s, line, word, max_line_len, next_line_prefix):
-    if len((line + word).rstrip()) > max_line_len:
+def _extendLine(s, line, word, line_width, next_line_prefix):
+    if len(line) + len(word) > line_width:
         s += line.rstrip() + "\n"
         line = next_line_prefix
     line += word
     return s, line
 
 
-def _formatArray(a, format_function, max_line_len, next_line_prefix,
+def _formatArray(a, format_function, line_width, next_line_prefix,
                  separator, edge_items, summary_insert, legacy):
     """formatArray is designed for two modes of operation:
 
@@ -661,24 +661,36 @@ def _formatArray(a, format_function, max_line_len, next_line_prefix,
 
         # last axis (rows) - wrap elements if they would not fit on one line
         if axes_left == 1:
+            # the length up until the beginning of the separator / bracket
+            if legacy == '1.13':
+                elem_width = line_width - len(separator.rstrip())
+            else:
+                elem_width = line_width - max(len(separator.rstrip()), len(']'))
+
             line = hanging_indent
             for i in range(leading_items):
-                word = recurser(index + (i,), next_hanging_indent) + separator
-                s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
+                word = recurser(index + (i,), next_hanging_indent)
+                s, line = _extendLine(s, line, word, elem_width, hanging_indent)
+                line += separator
 
             if show_summary:
+                s, line = _extendLine(s, line, summary_insert, elem_width, hanging_indent)
                 if legacy == '1.13':
-                    word = summary_insert + ", "
+                    line += ", "
                 else:
-                    word = summary_insert + separator
-                s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
+                    line += separator
 
             for i in range(trailing_items, 1, -1):
-                word = recurser(index + (-i,), next_hanging_indent) + separator
-                s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
+                word = recurser(index + (-i,), next_hanging_indent)
+                s, line = _extendLine(s, line, word, elem_width, hanging_indent)
+                line += separator
 
+            if legacy == '1.13':
+                # width of the seperator is not considered on 1.13
+                elem_width = line_width
             word = recurser(index + (-1,), next_hanging_indent)
-            s, line = _extendLine(s, line, word, max_line_len, hanging_indent)
+            s, line = _extendLine(s, line, word, elem_width, hanging_indent)
+
             s += line
 
         # other axes - insert newlines between rows
