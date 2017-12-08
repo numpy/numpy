@@ -290,6 +290,8 @@ In summary, the major changes are:
   print the dtype, and correctly wrap the elements of long arrays to multiple
   lines. If there is more than 1 dimension, the array attributes are now
   printed in a new "left-justified" printing style.
+* ``recarray`` arrays no longer print a trailing space before their dtype, and
+  wrap to the right number of columns.
 * 0d arrays no longer have their own idiosyncratic implementations of ``str``
   and ``repr``. The ``style`` argument to ``np.array2string`` is deprecated.
 * Arrays of ``bool`` datatype will omit the datatype in the ``repr``.

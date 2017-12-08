@@ -101,6 +101,17 @@ class TestFromrecords(object):
             assert_((mine.data1[i] == 0.0))
             assert_((mine.data2[i] == 0.0))
 
+    def test_recarray_repr(self):
+        a = np.array([(1, 0.1), (2, 0.2)],
+                     dtype=[('foo', int), ('bar', float)])
+        a = np.rec.array(a)
+        assert_equal(
+            repr(a),
+            textwrap.dedent("""\
+            rec.array([(1, 0.1), (2, 0.2)],
+                      dtype=[('foo', '<i4'), ('bar', '<f8')])""")
+        )
+
     def test_recarray_from_repr(self):
         a = np.array([(1,'ABC'), (2, "DEF")],
                      dtype=[('foo', int), ('bar', 'S4')])
