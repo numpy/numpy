@@ -457,7 +457,8 @@ def _array2string(a, options, separator=' ', prefix=""):
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
-                 edgeitems=None, sign=None, floatmode=None, **kwarg):
+                 edgeitems=None, sign=None, floatmode=None, suffix="",
+                 **kwarg):
     """
     Return a string representation of an array.
 
@@ -477,11 +478,14 @@ def array2string(a, max_line_width=None, precision=None,
     separator : str, optional
         Inserted between elements.
     prefix : str, optional
-        An array is typically printed as::
+    suffix: str, optional
+        The length of the prefix and suffix strings are used to respectively
+        align and wrap the output. An array is typically printed as::
 
-          'prefix(' + array2string(a) + ')'
+          prefix + array2string(a) + suffix
 
-        The length of the prefix string is used to align the output correctly.
+        The output is left-padded by the length of the prefix string, and
+        wrapping is forced at the column ``max_line_width - len(suffix)``.
     style : _NoValue, optional
         Has no effect, do not use.
 
@@ -607,6 +611,9 @@ def array2string(a, max_line_width=None, precision=None,
         warnings.warn("'style' argument is deprecated and no longer functional"
                       " except in 1.13 'legacy' mode",
                       DeprecationWarning, stacklevel=3)
+
+    if options['legacy'] != '1.13':
+        options['linewidth'] -= len(suffix)
 
     # treat as a null array if any of shape elements == 0
     if a.size == 0:
@@ -1293,36 +1300,39 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     else:
         class_name = "array"
 
+    skipdtype = dtype_is_implied(arr.dtype) and arr.size > 0
+
+    prefix = class_name + "("
+    suffix = ")" if skipdtype else ","
+
     if (_format_options['legacy'] == '1.13' and
             arr.shape == () and not arr.dtype.names):
         lst = repr(arr.item())
     elif arr.size > 0 or arr.shape == (0,):
         lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', class_name + "(")
+                           ', ', prefix, suffix=suffix)
     else:  # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
 
-    skipdtype = dtype_is_implied(arr.dtype) and arr.size > 0
+    arr_str = prefix + lst + suffix
 
     if skipdtype:
-        return "%s(%s)" % (class_name, lst)
-    typename = dtype_short_repr(arr.dtype)
+        return arr_str
 
-    prefix = "{}({},".format(class_name, lst)
-    suffix = "dtype={})".format(typename)
+    dtype_str = "dtype={})".format(dtype_short_repr(arr.dtype))
 
     # compute whether we should put dtype on a new line: Do so if adding the
     # dtype would extend the last line past max_line_width.
     # Note: This line gives the correct result even when rfind returns -1.
-    last_line_len = len(prefix) - (prefix.rfind('\n') + 1)
+    last_line_len = len(arr_str) - (arr_str.rfind('\n') + 1)
     spacer = " "
     if _format_options['legacy'] == '1.13':
         if issubclass(arr.dtype.type, flexible):
             spacer = '\n' + ' '*len(class_name + "(")
-    elif last_line_len + len(suffix) + 1 > max_line_width:
+    elif last_line_len + len(dtype_str) + 1 > max_line_width:
         spacer = '\n' + ' '*len(class_name + "(")
 
-    return prefix + spacer + suffix
+    return arr_str + spacer + dtype_str
 
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """

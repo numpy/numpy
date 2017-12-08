@@ -555,6 +555,25 @@ class TestPrintOptions(object):
                    2, 2, 2, 2])""")
         )
 
+        a = np.full(8, fill_value=2)
+
+        np.set_printoptions(linewidth=18, legacy=False)
+        assert_equal(
+            repr(a),
+            textwrap.dedent("""\
+            array([2, 2, 2,
+                   2, 2, 2,
+                   2, 2])""")
+        )
+
+        np.set_printoptions(linewidth=18, legacy='1.13')
+        assert_equal(
+            repr(a),
+            textwrap.dedent("""\
+            array([2, 2, 2, 2,
+                   2, 2, 2, 2])""")
+        )
+
     def test_linewidth_str(self):
         a = np.full(18, fill_value=2)
         np.set_printoptions(linewidth=18)
