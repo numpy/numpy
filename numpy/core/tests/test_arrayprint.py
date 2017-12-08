@@ -117,7 +117,8 @@ class TestArray2String(object):
         """Basic test of array2string."""
         a = np.arange(3)
         assert_(np.array2string(a) == '[0 1 2]')
-        assert_(np.array2string(a, max_line_width=4) == '[0 1\n 2]')
+        assert_(np.array2string(a, max_line_width=4, legacy='1.13') == '[0 1\n 2]')
+        assert_(np.array2string(a, max_line_width=4) == '[0\n 1\n 2]')
 
     def test_format_function(self):
         """Test custom format function for each element in array."""
@@ -188,10 +189,11 @@ class TestArray2String(object):
         assert_equal(
             np.array2string(A),
             textwrap.dedent("""\
-            [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
-             ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) (                'NaT',)
-             (                'NaT',) (                'NaT',) (                'NaT',)
-             (                'NaT',)]""")
+            [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
+             ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
+             ('1970-01-01T00:00:00',) (                'NaT',)
+             (                'NaT',) (                'NaT',)
+             (                'NaT',) (                'NaT',)]""")
         )
 
         # and again, with timedeltas
@@ -524,8 +526,8 @@ class TestPrintOptions(object):
         np.set_printoptions(linewidth=75)
         assert_equal(repr(np.arange(10,20., dtype='f4')),
             "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19.], dtype=float32)")
-        assert_equal(repr(np.arange(10,24., dtype='f4')), textwrap.dedent("""\
-            array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22., 23.],
+        assert_equal(repr(np.arange(10,23., dtype='f4')), textwrap.dedent("""\
+            array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22.],
                   dtype=float32)"""))
 
         styp = '<U4' if sys.version_info[0] >= 3 else '|S4'
@@ -534,6 +536,42 @@ class TestPrintOptions(object):
         assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
                   dtype='{}')""".format(styp)))
+
+    def test_linewidth_repr(self):
+        a = np.full(7, fill_value=2)
+        np.set_printoptions(linewidth=17)
+        assert_equal(
+            repr(a),
+            textwrap.dedent("""\
+            array([2, 2, 2,
+                   2, 2, 2,
+                   2])""")
+        )
+        np.set_printoptions(linewidth=17, legacy='1.13')
+        assert_equal(
+            repr(a),
+            textwrap.dedent("""\
+            array([2, 2, 2,
+                   2, 2, 2, 2])""")
+        )
+
+    def test_linewidth_str(self):
+        a = np.full(18, fill_value=2)
+        np.set_printoptions(linewidth=18)
+        assert_equal(
+            str(a),
+            textwrap.dedent("""\
+            [2 2 2 2 2 2 2 2
+             2 2 2 2 2 2 2 2
+             2 2]""")
+        )
+        np.set_printoptions(linewidth=18, legacy='1.13')
+        assert_equal(
+            str(a),
+            textwrap.dedent("""\
+            [2 2 2 2 2 2 2 2 2
+             2 2 2 2 2 2 2 2 2]""")
+        )
 
     def test_edgeitems(self):
         np.set_printoptions(edgeitems=1, threshold=1)
