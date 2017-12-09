@@ -42,6 +42,13 @@ class TestSeed(object):
         assert_raises(ValueError, np.random.RandomState, [1, 2, 4294967296])
         assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
 
+    def test_invalid_array_shape(self):
+        # gh-9832
+        assert_raises(ValueError, np.random.RandomState, np.array([], dtype=np.int64))
+        assert_raises(ValueError, np.random.RandomState, [[1, 2, 3]])
+        assert_raises(ValueError, np.random.RandomState, [[1, 2, 3],
+                                                          [4, 5, 6]])
+
 
 class TestBinomial(object):
     def test_n_zero(self):
@@ -524,6 +531,11 @@ class TestRandomDist(object):
         assert_equal(np.random.dirichlet(p, np.array((2, 2))).shape, (2, 2, 2))
 
         assert_raises(TypeError, np.random.dirichlet, p, float(1))
+
+    def test_dirichlet_bad_alpha(self):
+        # gh-2089
+        alpha = np.array([5.4e-01, -1.0e-16])
+        assert_raises(ValueError, np.random.mtrand.dirichlet, alpha)
 
     def test_exponential(self):
         np.random.seed(self.seed)
@@ -1102,6 +1114,12 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, dfden, bad_nonc * 3)
 
+    def test_noncentral_f_small_df(self):
+        self.setSeed()
+        desired = np.array([6.869638627492048, 0.785880199263955])
+        actual = np.random.noncentral_f(0.9, 0.9, 2, size=2)
+        assert_array_almost_equal(actual, desired, decimal=14)
+
     def test_chisquare(self):
         df = [1]
         bad_df = [-1]
@@ -1423,6 +1441,10 @@ class TestBroadcast(object):
         actual = zipf(a * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, zipf, bad_a * 3)
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, zipf, np.nan)
+            assert_raises(ValueError, zipf, [0, 0, np.nan])
+
 
     def test_geometric(self):
         p = [0.5]

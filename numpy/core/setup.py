@@ -6,6 +6,7 @@ import pickle
 import copy
 import sysconfig
 import warnings
+import platform
 from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
@@ -685,10 +686,16 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
+    
+    # Must be true for CRT compilers but not MinGW/cygwin. See gh-9977.
+    is_msvc = platform.system() == 'Windows'
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
-            build_info={'include_dirs' : []})  # empty list required for creating npy_math_internal.h
+            build_info={
+                'include_dirs' : [],  # empty list required for creating npy_math_internal.h
+                'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+            })
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
     config.add_npy_pkg_config("mlib.ini.in", "lib/npy-pkg-config",
@@ -728,6 +735,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'conversion_utils.h'),
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
+            join('src', 'multiarray', 'dragon4.h'),
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
             join('src', 'multiarray', 'iterators.h'),
@@ -749,6 +757,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'npy_longdouble.h'),
             join('src', 'private', 'ufunc_override.h'),
             join('src', 'private', 'binop_override.h'),
             join('src', 'private', 'npy_extint128.h'),
@@ -793,6 +802,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'datetime_busday.c'),
             join('src', 'multiarray', 'datetime_busdaycal.c'),
             join('src', 'multiarray', 'descriptor.c'),
+            join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
             join('src', 'multiarray', 'einsum.c.src'),
             join('src', 'multiarray', 'flagsobject.c'),
@@ -822,6 +832,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'private', 'templ_common.h.src'),
             join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'npy_longdouble.c'),
             join('src', 'private', 'ufunc_override.c'),
             ]
 
@@ -879,6 +890,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
             join('src', 'private', 'mem_overlap.c'),
+            join('src', 'private', 'npy_longdouble.c'),
             join('src', 'private', 'ufunc_override.c')]
 
     umath_deps = [
@@ -892,6 +904,7 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'npy_longdouble.h'),
             join('src', 'private', 'ufunc_override.h'),
             join('src', 'private', 'binop_override.h')] + npymath_sources
 
@@ -934,7 +947,8 @@ def configuration(parent_package='',top_path=None):
                     sources=[join('src', 'multiarray', 'multiarray_tests.c.src'),
                              join('src', 'private', 'mem_overlap.c')],
                     depends=[join('src', 'private', 'mem_overlap.h'),
-                             join('src', 'private', 'npy_extint128.h')])
+                             join('src', 'private', 'npy_extint128.h')],
+                    libraries=['npymath'])
 
     #######################################################################
     #                        operand_flag_tests module                    #

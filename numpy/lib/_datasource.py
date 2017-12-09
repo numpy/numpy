@@ -15,7 +15,7 @@ DataSource files can originate locally or remotely:
 - URLs (http, ftp, ...) : 'http://www.scipy.org/not/real/data.txt'
 
 DataSource files can also be compressed or uncompressed.  Currently only
-gzip and bz2 are supported.
+gzip, bz2 and xz are supported.
 
 Example::
 
@@ -38,13 +38,99 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import shutil
+import io
 
 _open = open
+
+def _check_mode(mode, encoding, newline):
+    """Check mode and that encoding and newline are compatible.
+
+    Parameters
+    ----------
+    mode : str
+        File open mode.
+    encoding : str
+        File encoding.
+    newline : str
+        Newline for text files.
+
+    """
+    if "t" in mode:
+        if "b" in mode:
+            raise ValueError("Invalid mode: %r" % (mode,))
+    else:
+        if encoding is not None:
+            raise ValueError("Argument 'encoding' not supported in binary mode")
+        if newline is not None:
+            raise ValueError("Argument 'newline' not supported in binary mode")
+
+
+def _python2_bz2open(fn, mode, encoding, newline):
+    """Wrapper to open bz2 in text mode.
+
+    Parameters
+    ----------
+    fn : str
+        File name
+    mode : {'r', 'w'}
+        File mode. Note that bz2 Text files are not supported.
+    encoding : str
+        Ignored, text bz2 files not supported in Python2.
+    newline : str
+        Ignored, text bz2 files not supported in Python2.
+    """
+    import bz2
+
+    _check_mode(mode, encoding, newline)
+
+    if "t" in mode:
+        # BZ2File is missing necessary functions for TextIOWrapper
+        raise ValueError("bz2 text files not supported in python2")
+    else:
+        return bz2.BZ2File(fn, mode)
+
+def _python2_gzipopen(fn, mode, encoding, newline):
+    """ Wrapper to open gzip in text mode.
+
+    Parameters
+    ----------
+    fn : str, bytes, file
+        File path or opened file.
+    mode : str
+        File mode. The actual files are opened as binary, but will decoded
+        using the specified `encoding` and `newline`.
+    encoding : str
+        Encoding to be used when reading/writing as text.
+    newline : str
+        Newline to be used when reading/writing as text.
+
+    """
+    import gzip
+    # gzip is lacking read1 needed for TextIOWrapper
+    class GzipWrap(gzip.GzipFile):
+        def read1(self, n):
+            return self.read(n)
+
+    _check_mode(mode, encoding, newline)
+
+    gz_mode = mode.replace("t", "")
+
+    if isinstance(fn, (str, bytes)):
+        binary_file = GzipWrap(fn, gz_mode)
+    elif hasattr(fn, "read") or hasattr(fn, "write"):
+        binary_file = GzipWrap(None, gz_mode, fileobj=fn)
+    else:
+        raise TypeError("filename must be a str or bytes object, or a file")
+
+    if "t" in mode:
+        return io.TextIOWrapper(binary_file, encoding, newline=newline)
+    else:
+        return binary_file
 
 
 # Using a class instead of a module-level dictionary
 # to reduce the initial 'import numpy' overhead by
-# deferring the import of bz2 and gzip until needed
+# deferring the import of lzma, bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
 class _FileOpeners(object):
@@ -55,7 +141,7 @@ class _FileOpeners(object):
     supported file format. Attribute lookup is implemented in such a way
     that an instance of `_FileOpeners` itself can be indexed with the keys
     of that dictionary. Currently uncompressed files as well as files
-    compressed with ``gzip`` or ``bz2`` compression are supported.
+    compressed with ``gzip``, ``bz2`` or ``xz`` compression are supported.
 
     Notes
     -----
@@ -65,7 +151,7 @@ class _FileOpeners(object):
     Examples
     --------
     >>> np.lib._datasource._file_openers.keys()
-    [None, '.bz2', '.gz']
+    [None, '.bz2', '.gz', '.xz', '.lzma']
     >>> np.lib._datasource._file_openers['.gz'] is gzip.open
     True
 
@@ -73,21 +159,39 @@ class _FileOpeners(object):
 
     def __init__(self):
         self._loaded = False
-        self._file_openers = {None: open}
+        self._file_openers = {None: io.open}
 
     def _load(self):
         if self._loaded:
             return
+
         try:
             import bz2
-            self._file_openers[".bz2"] = bz2.BZ2File
+            if sys.version_info[0] >= 3:
+                self._file_openers[".bz2"] = bz2.open
+            else:
+                self._file_openers[".bz2"] = _python2_bz2open
         except ImportError:
             pass
+
         try:
             import gzip
-            self._file_openers[".gz"] = gzip.open
+            if sys.version_info[0] >= 3:
+                self._file_openers[".gz"] = gzip.open
+            else:
+                self._file_openers[".gz"] = _python2_gzipopen
         except ImportError:
             pass
+
+        try:
+            import lzma
+            self._file_openers[".xz"] = lzma.open
+            self._file_openers[".lzma"] = lzma.open
+        except (ImportError, AttributeError):
+            # There are incompatible backports of lzma that do not have the
+            # lzma.open attribute, so catch that as well as ImportError.
+            pass
+
         self._loaded = True
 
     def keys(self):
@@ -102,7 +206,7 @@ class _FileOpeners(object):
         -------
         keys : list
             The keys are None for uncompressed files and the file extension
-            strings (i.e. ``'.gz'``, ``'.bz2'``) for supported compression
+            strings (i.e. ``'.gz'``, ``'.xz'``) for supported compression
             methods.
 
         """
@@ -115,7 +219,7 @@ class _FileOpeners(object):
 
 _file_openers = _FileOpeners()
 
-def open(path, mode='r', destpath=os.curdir):
+def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     """
     Open `path` with `mode` and return the file object.
 
@@ -134,6 +238,11 @@ def open(path, mode='r', destpath=os.curdir):
         Path to the directory where the source file gets downloaded to for
         use.  If `destpath` is None, a temporary directory will be created.
         The default path is the current directory.
+    encoding : {None, str}, optional
+        Open text file with given encoding. The default encoding will be
+        what `io.open` uses.
+    newline : {None, str}, optional
+        Newline to use when reading text file.
 
     Returns
     -------
@@ -148,7 +257,7 @@ def open(path, mode='r', destpath=os.curdir):
     """
 
     ds = DataSource(destpath)
-    return ds.open(path, mode)
+    return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
 class DataSource (object):
@@ -458,7 +567,7 @@ class DataSource (object):
                 return False
         return False
 
-    def open(self, path, mode='r'):
+    def open(self, path, mode='r', encoding=None, newline=None):
         """
         Open and return file-like object.
 
@@ -473,6 +582,11 @@ class DataSource (object):
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
             'a' to append. Available modes depend on the type of object
             specified by `path`. Default is 'r'.
+        encoding : {None, str}, optional
+            Open text file with given encoding. The default encoding will be
+            what `io.open` uses.
+        newline : {None, str}, optional
+            Newline to use when reading text file.
 
         Returns
         -------
@@ -496,7 +610,8 @@ class DataSource (object):
             _fname, ext = self._splitzipext(found)
             if ext == 'bz2':
                 mode.replace("+", "")
-            return _file_openers[ext](found, mode=mode)
+            return _file_openers[ext](found, mode=mode,
+                                      encoding=encoding, newline=newline)
         else:
             raise IOError("%s not found." % path)
 
@@ -619,7 +734,7 @@ class Repository (DataSource):
         """
         return DataSource.exists(self, self._fullpath(path))
 
-    def open(self, path, mode='r'):
+    def open(self, path, mode='r', encoding=None, newline=None):
         """
         Open and return file-like object prepending Repository base URL.
 
@@ -636,6 +751,11 @@ class Repository (DataSource):
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
             'a' to append. Available modes depend on the type of object
             specified by `path`. Default is 'r'.
+        encoding : {None, str}, optional
+            Open text file with given encoding. The default encoding will be
+            what `io.open` uses.
+        newline : {None, str}, optional
+            Newline to use when reading text file.
 
         Returns
         -------
@@ -643,7 +763,8 @@ class Repository (DataSource):
             File object.
 
         """
-        return DataSource.open(self, self._fullpath(path), mode)
+        return DataSource.open(self, self._fullpath(path), mode,
+                               encoding=encoding, newline=newline)
 
     def listdir(self):
         """

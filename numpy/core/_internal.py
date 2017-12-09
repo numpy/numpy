@@ -206,6 +206,8 @@ class dummy_ctype(object):
         return self._cls(other)
     def __eq__(self, other):
         return self._cls == other._cls
+    def __ne__(self, other):
+        return self._cls != other._cls
 
 def _getintp_ctype():
     val = _getintp_ctype.cache

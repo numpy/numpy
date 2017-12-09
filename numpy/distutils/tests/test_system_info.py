@@ -6,7 +6,7 @@ from tempfile import mkstemp, mkdtemp
 from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
-from numpy.distutils import ccompiler
+from numpy.distutils import ccompiler, customized_ccompiler
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec
     )
@@ -60,15 +60,14 @@ void bar(void) {
 def have_compiler():
     """ Return True if there appears to be an executable compiler
     """
-    compiler = ccompiler.new_compiler()
-    compiler.customize(None)
+    compiler = customized_ccompiler()
     try:
         cmd = compiler.compiler  # Unix compilers
     except AttributeError:
         try:
             if not compiler.initialized:
                 compiler.initialize()  # MSVC is different
-        except DistutilsError:
+        except (DistutilsError, ValueError):
             return False
         cmd = [compiler.cc]
     try:
@@ -205,8 +204,7 @@ class TestSystemInfoReading(object):
     @dec.skipif(not HAVE_COMPILER)
     def test_compile1(self):
         # Compile source and link the first source
-        c = ccompiler.new_compiler()
-        c.customize(None)
+        c = customized_ccompiler()
         previousDir = os.getcwd()
         try:
             # Change directory to not screw up directories
@@ -223,8 +221,7 @@ class TestSystemInfoReading(object):
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2
-        c = ccompiler.new_compiler()
-        c.customize(None)
+        c = customized_ccompiler()
         extra_link_args = tsi.calc_extra_info()['extra_link_args']
         previousDir = os.getcwd()
         try:

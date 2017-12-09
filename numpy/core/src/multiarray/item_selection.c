@@ -87,8 +87,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     }
     else {
-        int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY;
 
         if ((PyArray_NDIM(out) != nd) ||
             !PyArray_CompareLists(PyArray_DIMS(out), shape, nd)) {
@@ -235,13 +234,15 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     Py_XDECREF(self);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
+        PyArray_ResolveWritebackIfCopy(obj);
         Py_DECREF(obj);
         obj = out;
     }
     return (PyObject *)obj;
 
  fail:
-    PyArray_XDECREF_ERR(obj);
+    PyArray_DiscardWritebackIfCopy(obj);
+    Py_XDECREF(obj);
     Py_XDECREF(indices);
     Py_XDECREF(self);
     return NULL;
@@ -273,7 +274,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
 
     if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
-        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY;
 
         if (clipmode == NPY_RAISE) {
             flags |= NPY_ARRAY_ENSURECOPY;
@@ -407,6 +408,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     Py_XDECREF(values);
     Py_XDECREF(indices);
     if (copied) {
+        PyArray_ResolveWritebackIfCopy(self);
         Py_DECREF(self);
     }
     Py_RETURN_NONE;
@@ -415,7 +417,8 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     Py_XDECREF(indices);
     Py_XDECREF(values);
     if (copied) {
-        PyArray_XDECREF_ERR(self);
+        PyArray_DiscardWritebackIfCopy(self);
+        Py_XDECREF(self);
     }
     return NULL;
 }
@@ -448,7 +451,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         dtype = PyArray_DESCR(self);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(self, dtype,
-                                NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                                NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
         if (obj != self) {
             copied = 1;
         }
@@ -524,6 +527,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     Py_XDECREF(values);
     Py_XDECREF(mask);
     if (copied) {
+        PyArray_ResolveWritebackIfCopy(self);
         Py_DECREF(self);
     }
     Py_RETURN_NONE;
@@ -532,7 +536,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     Py_XDECREF(mask);
     Py_XDECREF(values);
     if (copied) {
-        PyArray_XDECREF_ERR(self);
+        PyArray_DiscardWritebackIfCopy(self);
+        Py_XDECREF(self);
     }
     return NULL;
 }
@@ -694,7 +699,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     else {
         int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_UPDATEIFCOPY |
+                    NPY_ARRAY_WRITEBACKIFCOPY |
                     NPY_ARRAY_FORCECAST;
 
         if ((PyArray_NDIM(out) != multi->nd)
@@ -769,6 +774,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     npy_free_cache(mps, n * sizeof(mps[0]));
     if (out != NULL && out != obj) {
         Py_INCREF(out);
+        PyArray_ResolveWritebackIfCopy(obj);
         Py_DECREF(obj);
         obj = out;
     }
@@ -781,7 +787,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     Py_XDECREF(ap);
     npy_free_cache(mps, n * sizeof(mps[0]));
-    PyArray_XDECREF_ERR(obj);
+    PyArray_DiscardWritebackIfCopy(obj);
+    Py_XDECREF(obj);
     return NULL;
 }
 
@@ -2068,6 +2075,8 @@ PyArray_CountNonzero(PyArrayObject *self)
     char *data;
     npy_intp stride, count;
     npy_intp nonzero_count = 0;
+    int needs_api = 0;
+    PyArray_Descr *dtype;
 
     NpyIter *iter;
     NpyIter_IterNextFunc *iternext;
@@ -2076,22 +2085,38 @@ PyArray_CountNonzero(PyArrayObject *self)
     NPY_BEGIN_THREADS_DEF;
 
     /* Special low-overhead version specific to the boolean type */
-    if (PyArray_DESCR(self)->type_num == NPY_BOOL) {
+    dtype = PyArray_DESCR(self);
+    if (dtype->type_num == NPY_BOOL) {
         return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
                         PyArray_DIMS(self), PyArray_STRIDES(self));
     }
-
     nonzero = PyArray_DESCR(self)->f->nonzero;
 
     /* If it's a trivial one-dimensional loop, don't use an iterator */
     if (PyArray_TRIVIALLY_ITERABLE(self)) {
+        needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
         PyArray_PREPARE_TRIVIAL_ITERATION(self, count, data, stride);
 
-        while (count--) {
-            if (nonzero(data, self)) {
-                ++nonzero_count;
+        if (needs_api){
+            while (count--) {
+                if (nonzero(data, self)) {
+                    ++nonzero_count;
+                }
+                if (PyErr_Occurred()) {
+                    return -1;
+                }
+                data += stride;
             }
-            data += stride;
+        }
+        else {
+            NPY_BEGIN_THREADS_THRESHOLDED(count);
+            while (count--) {
+                if (nonzero(data, self)) {
+                    ++nonzero_count;
+                }
+                data += stride;
+            }
+            NPY_END_THREADS;
         }
 
         return nonzero_count;
@@ -2116,6 +2141,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     if (iter == NULL) {
         return -1;
     }
+    needs_api = NpyIter_IterationNeedsAPI(iter);
 
     /* Get the pointers for inner loop iteration */
     iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2140,16 +2166,21 @@ PyArray_CountNonzero(PyArrayObject *self)
             if (nonzero(data, self)) {
                 ++nonzero_count;
             }
+            if (needs_api && PyErr_Occurred()) {
+                nonzero_count = -1;
+                goto finish;
+            }
             data += stride;
         }
 
     } while(iternext(iter));
 
+finish:
     NPY_END_THREADS;
 
     NpyIter_Deallocate(iter);
 
-    return PyErr_Occurred() ? -1 : nonzero_count;
+    return nonzero_count;
 }
 
 /*NUMPY_API
@@ -2383,7 +2414,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
         data += ind * strides[idim];
     }
 
-    return PyArray_DESCR(self)->f->getitem(data, self);
+    return PyArray_GETITEM(self, data);
 }
 
 /*
@@ -2412,5 +2443,5 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
         data += ind * strides[idim];
     }
 
-    return PyArray_DESCR(self)->f->setitem(obj, data, self);
+    return PyArray_SETITEM(self, data, obj);
 }

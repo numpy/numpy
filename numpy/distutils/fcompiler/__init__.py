@@ -22,10 +22,6 @@ import os
 import sys
 import re
 import types
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from numpy.compat import open_latin1
 
@@ -434,6 +430,7 @@ class FCompiler(CCompiler):
             raise CompilerNotFound()
         return version
 
+
     ############################################################
 
     ## Public methods:
@@ -701,15 +698,47 @@ class FCompiler(CCompiler):
         else:
             return hook_name()
 
+    def can_ccompiler_link(self, ccompiler):
+        """
+        Check if the given C compiler can link objects produced by
+        this compiler.
+        """
+        return True
+
+    def wrap_unlinkable_objects(self, objects, output_dir, extra_dll_dir):
+        """
+        Convert a set of object files that are not compatible with the default
+        linker, to a file that is compatible.
+
+        Parameters
+        ----------
+        objects : list
+            List of object files to include.
+        output_dir : str
+            Output directory to place generated object files.
+        extra_dll_dir : str
+            Output directory to place extra DLL files that need to be
+            included on Windows.
+
+        Returns
+        -------
+        converted_objects : list of str
+             List of converted object files.
+             Note that the number of output files is not necessarily
+             the same as inputs.
+
+        """
+        raise NotImplementedError()
+
     ## class FCompiler
 
 _default_compilers = (
     # sys.platform mappings
     ('win32', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95',
-               'intelvem', 'intelem')),
+               'intelvem', 'intelem', 'flang')),
     ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
     ('linux.*', ('gnu95', 'intel', 'lahey', 'pg', 'absoft', 'nag', 'vast', 'compaq',
-                'intele', 'intelem', 'gnu', 'g95', 'pathf95')),
+                 'intele', 'intelem', 'gnu', 'g95', 'pathf95', 'nagfor')),
     ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
     ('sunos.*', ('sun', 'gnu', 'gnu95', 'g95')),
     ('irix.*', ('mips', 'gnu', 'gnu95',)),
@@ -809,6 +838,8 @@ def get_default_fcompiler(osname=None, platform=None, requiref90=False,
     platform."""
     matching_compiler_types = available_fcompilers_for_platform(osname,
                                                                 platform)
+    log.info("get_default_fcompiler: matching types: '%s'",
+             matching_compiler_types)
     compiler_type =  _find_existing_fcompiler(matching_compiler_types,
                                               osname=osname,
                                               platform=platform,

@@ -62,6 +62,19 @@
 
 #endif
 
+/* MSVC _hypot messes with fp precision mode on 32-bit, see gh-9567 */
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(_WIN64)
+
+#undef HAVE_CABS
+#undef HAVE_CABSF
+#undef HAVE_CABSL
+
+#undef HAVE_HYPOT
+#undef HAVE_HYPOTF
+#undef HAVE_HYPOTL
+
+#endif
+
 
 /* Intel C for Windows uses POW for 64 bits longdouble*/
 #if defined(_MSC_VER) && defined(__INTEL_COMPILER)

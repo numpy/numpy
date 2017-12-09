@@ -15,9 +15,7 @@
 #include "mapping.h"
 
 #include "sequence.h"
-
-static int
-array_any_nonzero(PyArrayObject *mp);
+#include "calculation.h"
 
 /*************************************************************************
  ****************   Implement Sequence Protocol **************************
@@ -32,16 +30,18 @@ array_contains(PyArrayObject *self, PyObject *el)
 {
     /* equivalent to (self == el).any() */
 
-    PyObject *res;
     int ret;
+    PyObject *res, *any;
 
     res = PyArray_EnsureAnyArray(PyObject_RichCompare((PyObject *)self,
                                                       el, Py_EQ));
     if (res == NULL) {
         return -1;
     }
-    ret = array_any_nonzero((PyArrayObject *)res);
+    any = PyArray_Any((PyArrayObject *)res, NPY_MAXDIMS, NULL);
     Py_DECREF(res);
+    ret = PyObject_IsTrue(any);
+    Py_DECREF(any);
     return ret;
 }
 
@@ -61,30 +61,3 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
 
 /****************** End of Sequence Protocol ****************************/
 
-/*
- * Helpers
- */
-
-/* Array evaluates as "TRUE" if any of the elements are non-zero*/
-static int
-array_any_nonzero(PyArrayObject *arr)
-{
-    npy_intp counter;
-    PyArrayIterObject *it;
-    npy_bool anyTRUE = NPY_FALSE;
-
-    it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
-    if (it == NULL) {
-        return anyTRUE;
-    }
-    counter = it->size;
-    while (counter--) {
-        if (PyArray_DESCR(arr)->f->nonzero(it->dataptr, arr)) {
-            anyTRUE = NPY_TRUE;
-            break;
-        }
-        PyArray_ITER_NEXT(it);
-    }
-    Py_DECREF(it);
-    return anyTRUE;
-}

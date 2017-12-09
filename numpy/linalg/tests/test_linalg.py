@@ -712,12 +712,16 @@ class TestCondInf(object):
         assert_almost_equal(linalg.cond(A, inf), 3.)
 
 
-class TestPinv(LinalgSquareTestCase, LinalgNonsquareTestCase):
+class TestPinv(LinalgSquareTestCase,
+               LinalgNonsquareTestCase,
+               LinalgGeneralizedSquareTestCase,
+               LinalgGeneralizedNonsquareTestCase):
 
     def do(self, a, b, tags):
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
-        assert_almost_equal(dot(a, a_ginv).dot(a), a, single_decimal=5, double_decimal=11)
+        dot = dot_generalized
+        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
@@ -793,7 +797,7 @@ class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
         arr = np.asarray(a)
         m, n = arr.shape
         u, s, vt = linalg.svd(a, 0)
-        x, residuals, rank, sv = linalg.lstsq(a, b)
+        x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
         if m <= n:
             assert_almost_equal(b, dot(a, x))
             assert_equal(rank, m)
@@ -814,6 +818,23 @@ class TestLstsq(LinalgSquareTestCase, LinalgNonsquareTestCase):
         assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
         assert_(imply(isinstance(b, matrix), isinstance(residuals, matrix)))
 
+    def test_future_rcond(self):
+        a = np.array([[0., 1.,  0.,  1.,  2.,  0.],
+                      [0., 2.,  0.,  0.,  1.,  0.],
+                      [1., 0.,  1.,  0.,  0.,  4.],
+                      [0., 0.,  0.,  2.,  3.,  0.]]).T
+
+        b = np.array([1, 0, 0, 0, 0, 0])
+        with suppress_warnings() as sup:
+            w = sup.record(FutureWarning, "`rcond` parameter will change")
+            x, residuals, rank, s = linalg.lstsq(a, b)
+            assert_(rank == 4)
+            x, residuals, rank, s = linalg.lstsq(a, b, rcond=-1)
+            assert_(rank == 4)
+            x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
+            assert_(rank == 3)
+            # Warning should be raised exactly once (first command)
+            assert_(len(w) == 1)
 
 class TestMatrixPower(object):
     R90 = array([[0, 1], [-1, 0]])
@@ -1362,6 +1383,19 @@ class TestMatrixRank(object):
         # works on scalar
         yield assert_equal, matrix_rank(1), 1
 
+    def test_symmetric_rank(self):
+        yield assert_equal, 4, matrix_rank(np.eye(4), hermitian=True)
+        yield assert_equal, 1, matrix_rank(np.ones((4, 4)), hermitian=True)
+        yield assert_equal, 0, matrix_rank(np.zeros((4, 4)), hermitian=True)
+        # rank deficient matrix
+        I = np.eye(4)
+        I[-1, -1] = 0.
+        yield assert_equal, 3, matrix_rank(I, hermitian=True)
+        # manually supplied tolerance
+        I[-1, -1] = 1e-8
+        yield assert_equal, 4, matrix_rank(I, hermitian=True, tol=0.99e-8)
+        yield assert_equal, 3, matrix_rank(I, hermitian=True, tol=1.01e-8)
+
 
 def test_reduced_rank():
     # Test matrices with reduced rank
@@ -1472,6 +1506,30 @@ class TestQR(object):
 
 class TestCholesky(object):
     # TODO: are there no other tests for cholesky?
+
+    def test_basic_property(self):
+        # Check A = L L^H
+        shapes = [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
+        dtypes = (np.float32, np.float64, np.complex64, np.complex128)
+
+        for shape, dtype in itertools.product(shapes, dtypes):
+            np.random.seed(1)
+            a = np.random.randn(*shape)
+            if np.issubdtype(dtype, np.complexfloating):
+                a = a + 1j*np.random.randn(*shape)
+
+            t = list(range(len(shape)))
+            t[-2:] = -1, -2
+
+            a = np.matmul(a.transpose(t).conj(), a)
+            a = np.asarray(a, dtype=dtype)
+
+            c = np.linalg.cholesky(a)
+
+            b = np.matmul(c, c.transpose(t).conj())
+            assert_allclose(b, a,
+                            err_msg="{} {}\n{}\n{}".format(shape, dtype, a, c),
+                            atol=500 * a.shape[0] * np.finfo(dtype).eps)
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):

@@ -346,6 +346,9 @@ multiarray_funcs_api = {
     # End 1.10 API
     'PyArray_MapIterArrayCopyIfOverlap':    (301,),
     # End 1.13 API
+    'PyArray_ResolveWritebackIfCopy':       (302,),
+    'PyArray_SetWritebackIfCopyBase':       (303,),
+    # End 1.14 API
 }
 
 ufunc_types_api = {

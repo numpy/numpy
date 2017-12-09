@@ -154,7 +154,8 @@ class NoseTester(object):
         want to initialize `NoseTester` objects on behalf of other code.
 
     """
-    def __init__(self, package=None, raise_warnings="release", depth=0):
+    def __init__(self, package=None, raise_warnings="release", depth=0,
+                 check_fpu_mode=False):
         # Back-compat: 'None' used to mean either "release" or "develop"
         # depending on whether this was a release or develop version of
         # numpy. Those semantics were fine for testing numpy, but not so
@@ -190,6 +191,9 @@ class NoseTester(object):
 
         # Set to "release" in constructor in maintenance branches.
         self.raise_warnings = raise_warnings
+
+        # Whether to check for FPU mode changes
+        self.check_fpu_mode = check_fpu_mode
 
     def _test_argv(self, label, verbose, extra_argv):
         ''' Generate argv for nosetest command
@@ -289,9 +293,13 @@ class NoseTester(object):
         # construct list of plugins
         import nose.plugins.builtin
         from nose.plugins import EntryPointPluginManager
-        from .noseclasses import KnownFailurePlugin, Unplugger
+        from .noseclasses import (KnownFailurePlugin, Unplugger,
+                                  FPUModeCheckPlugin)
         plugins = [KnownFailurePlugin()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
+        if self.check_fpu_mode:
+            plugins += [FPUModeCheckPlugin()]
+            argv += ["--with-fpumodecheckplugin"]
         try:
             # External plugins (like nose-timer)
             entrypoint_manager = EntryPointPluginManager()
@@ -548,4 +556,5 @@ def _numpy_tester():
         mode = "develop"
     else:
         mode = "release"
-    return NoseTester(raise_warnings=mode, depth=1)
+    return NoseTester(raise_warnings=mode, depth=1,
+                      check_fpu_mode=True)

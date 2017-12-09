@@ -573,7 +573,7 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     >>> np.bitwise_and(np.array([2,5,255]), np.array([3,14,16]))
     array([ 2,  4, 16])
     >>> np.bitwise_and([True, True], [False, True])
-    array([False,  True], dtype=bool)
+    array([False,  True])
 
     """)
 
@@ -630,7 +630,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     ...               np.array([4, 4, 4, 2147483647L], dtype=np.int32))
     array([         6,          5,        255, 2147483647])
     >>> np.bitwise_or([True, True], [False, True])
-    array([ True,  True], dtype=bool)
+    array([ True,  True])
 
     """)
 
@@ -680,7 +680,7 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     >>> np.bitwise_xor([31,3], [5,6])
     array([26,  5])
     >>> np.bitwise_xor([True, True], [False, True])
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     """)
 
@@ -1057,13 +1057,13 @@ add_newdoc('numpy.core.umath', 'equal',
     Examples
     --------
     >>> np.equal([0, 1, 3], np.arange(3))
-    array([ True,  True, False], dtype=bool)
+    array([ True,  True, False])
 
     What is compared are values, not types. So an int (1) and an array of
     length one can evaluate as True:
 
     >>> np.equal(1, np.ones(1))
-    array([ True], dtype=bool)
+    array([ True])
 
     """)
 
@@ -1389,14 +1389,14 @@ add_newdoc('numpy.core.umath', 'greater',
     Examples
     --------
     >>> np.greater([4,2],[2,2])
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     If the inputs are ndarrays, then np.greater is equivalent to '>'.
 
     >>> a = np.array([4,2])
     >>> b = np.array([2,2])
     >>> a > b
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     """)
 
@@ -1424,7 +1424,7 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     Examples
     --------
     >>> np.greater_equal([4, 2, 1], [2, 2, 2])
-    array([ True, True, False], dtype=bool)
+    array([ True, True, False])
 
     """)
 
@@ -1541,7 +1541,7 @@ add_newdoc('numpy.core.umath', 'invert',
     Booleans are accepted as well:
 
     >>> np.invert(array([True, False]))
-    array([False,  True], dtype=bool)
+    array([False,  True])
 
     """)
 
@@ -1599,7 +1599,7 @@ add_newdoc('numpy.core.umath', 'isfinite',
     >>> np.isfinite(np.NINF)
     False
     >>> np.isfinite([np.log(-1.),1.,np.log(0)])
-    array([False,  True, False], dtype=bool)
+    array([False,  True, False])
 
     >>> x = np.array([-np.inf, 0., np.inf])
     >>> y = np.array([2, 2, 2])
@@ -1661,7 +1661,7 @@ add_newdoc('numpy.core.umath', 'isinf',
     >>> np.isinf(np.NINF)
     True
     >>> np.isinf([np.inf, -np.inf, 1.0, np.nan])
-    array([ True,  True, False, False], dtype=bool)
+    array([ True,  True, False, False])
 
     >>> x = np.array([-np.inf, 0., np.inf])
     >>> y = np.array([2, 2, 2])
@@ -1709,7 +1709,7 @@ add_newdoc('numpy.core.umath', 'isnan',
     >>> np.isnan(np.inf)
     False
     >>> np.isnan([np.log(-1.),1.,np.log(0)])
-    array([ True, False, False], dtype=bool)
+    array([ True, False, False])
 
     """)
 
@@ -1745,7 +1745,7 @@ add_newdoc('numpy.core.umath', 'isnat',
     >>> np.isnat(np.datetime64("2016-01-01"))
     False
     >>> np.isnat(np.array(["NaT", "2016-01-01"], dtype="datetime64[ns]"))
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     """)
 
@@ -1814,7 +1814,7 @@ add_newdoc('numpy.core.umath', 'less',
     Examples
     --------
     >>> np.less([1, 2], [2, 2])
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     """)
 
@@ -1842,7 +1842,7 @@ add_newdoc('numpy.core.umath', 'less_equal',
     Examples
     --------
     >>> np.less_equal([4, 2, 1], [2, 2, 2])
-    array([False,  True,  True], dtype=bool)
+    array([False,  True,  True])
 
     """)
 
@@ -2155,11 +2155,11 @@ add_newdoc('numpy.core.umath', 'logical_and',
     >>> np.logical_and(True, False)
     False
     >>> np.logical_and([True, False], [False, False])
-    array([False, False], dtype=bool)
+    array([False, False])
 
     >>> x = np.arange(5)
     >>> np.logical_and(x>1, x<4)
-    array([False, False,  True,  True, False], dtype=bool)
+    array([False, False,  True,  True, False])
 
     """)
 
@@ -2188,11 +2188,11 @@ add_newdoc('numpy.core.umath', 'logical_not',
     >>> np.logical_not(3)
     False
     >>> np.logical_not([True, False, 0, 1])
-    array([False,  True,  True, False], dtype=bool)
+    array([False,  True,  True, False])
 
     >>> x = np.arange(5)
     >>> np.logical_not(x<3)
-    array([False, False, False,  True,  True], dtype=bool)
+    array([False, False, False,  True,  True])
 
     """)
 
@@ -2223,11 +2223,11 @@ add_newdoc('numpy.core.umath', 'logical_or',
     >>> np.logical_or(True, False)
     True
     >>> np.logical_or([True, False], [False, False])
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     >>> x = np.arange(5)
     >>> np.logical_or(x < 1, x > 3)
-    array([ True, False, False, False,  True], dtype=bool)
+    array([ True, False, False, False,  True])
 
     """)
 
@@ -2258,17 +2258,17 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     >>> np.logical_xor(True, False)
     True
     >>> np.logical_xor([True, True, False, False], [True, False, True, False])
-    array([False,  True,  True, False], dtype=bool)
+    array([False,  True,  True, False])
 
     >>> x = np.arange(5)
     >>> np.logical_xor(x < 1, x > 3)
-    array([ True, False, False, False,  True], dtype=bool)
+    array([ True, False, False, False,  True])
 
     Simple example showing support of broadcasting
 
     >>> np.logical_xor(0, np.eye(2))
     array([[ True, False],
-           [False,  True]], dtype=bool)
+           [False,  True]])
 
     """)
 
@@ -2647,10 +2647,10 @@ add_newdoc('numpy.core.umath', 'not_equal',
     Examples
     --------
     >>> np.not_equal([1.,2.], [1., 3.])
-    array([False,  True], dtype=bool)
+    array([False,  True])
     >>> np.not_equal([1, 2], [[1, 3],[1, 4]])
     array([[False,  True],
-           [False,  True]], dtype=bool)
+           [False,  True]])
 
     """)
 
@@ -2887,8 +2887,18 @@ add_newdoc('numpy.core.umath', 'remainder',
 
     Computes the remainder complementary to the `floor_divide` function.  It is
     equivalent to the Python modulus operator``x1 % x2`` and has the same sign
-    as the divisor `x2`. It should not be confused with the Matlab(TM) ``rem``
-    function.
+    as the divisor `x2`. The MATLAB function equivalent to ``np.remainder``
+    is ``mod``.
+
+    .. warning::
+
+        This should not be confused with:
+
+        * Python 3.7's `math.remainder` and C's ``remainder``, which
+          computes the IEEE remainder, which are the complement to
+          ``round(x1 / x2)``.
+        * The MATLAB ``rem`` function and or the C ``%`` operator which is the
+          complement to ``int(x1 / x2)``.
 
     Parameters
     ----------
@@ -2908,7 +2918,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     --------
     floor_divide : Equivalent of Python ``//`` operator.
     divmod : Simultaneous floor division and remainder.
-    fmod : Equivalent of the Matlab(TM) ``rem`` function.
+    fmod : Equivalent of the MATLAB ``rem`` function.
     divide, floor
 
     Notes
@@ -3092,7 +3102,7 @@ add_newdoc('numpy.core.umath', 'signbit',
     >>> np.signbit(-1.2)
     True
     >>> np.signbit(np.array([1, -2.3, 2.1]))
-    array([False,  True, False], dtype=bool)
+    array([False,  True, False])
 
     """)
 
@@ -3156,7 +3166,7 @@ add_newdoc('numpy.core.umath', 'nextafter',
     >>> np.nextafter(1, 2) == eps + 1
     True
     >>> np.nextafter([1, 2], [2, 1]) == [eps + 1, 2 - eps]
-    array([ True,  True], dtype=bool)
+    array([ True,  True])
 
     """)
 

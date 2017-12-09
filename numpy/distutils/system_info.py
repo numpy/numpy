@@ -126,6 +126,7 @@ import os
 import re
 import copy
 import warnings
+import atexit
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
@@ -151,6 +152,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
+from numpy.distutils import customized_ccompiler
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -210,6 +212,55 @@ if sys.platform == 'win32':
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
+    _include_dirs = [
+        'include',
+        'include/suitesparse',
+    ]
+    _lib_dirs = [
+        'lib',
+    ]
+    
+    _include_dirs = [d.replace('/', os.sep) for d in _include_dirs]
+    _lib_dirs = [d.replace('/', os.sep) for d in _lib_dirs]
+    def add_system_root(library_root):
+        """Add a package manager root to the include directories"""
+        global default_lib_dirs
+        global default_include_dirs
+        
+        library_root = os.path.normpath(library_root)
+ 
+        default_lib_dirs.extend(
+            os.path.join(library_root, d) for d in _lib_dirs)
+        default_include_dirs.extend(
+            os.path.join(library_root, d) for d in _include_dirs)
+    
+    if sys.version_info >= (3, 3):
+        # VCpkg is the de-facto package manager on windows for C/C++
+        # libraries. If it is on the PATH, then we append its paths here.
+        # We also don't re-implement shutil.which for Python 2.7 because
+        # vcpkg doesn't support MSVC 2008.
+        vcpkg = shutil.which('vcpkg')
+        if vcpkg:
+            vcpkg_dir = os.path.dirname(vcpkg)
+            if platform.architecture() == '32bit':
+                specifier = 'x86'
+            else:
+                specifier = 'x64'
+
+            vcpkg_installed = os.path.join(vcpkg_dir, 'installed') 
+            for vcpkg_root in [
+                os.path.join(vcpkg_installed, specifier + '-windows'),
+                os.path.join(vcpkg_installed, specifier + '-windows-static'),
+            ]:
+                add_system_root(vcpkg_root)
+
+        # Conda is another popular package manager that provides libraries
+        conda = shutil.which('conda')
+        if conda:
+            conda_dir = os.path.dirname(conda)
+            add_system_root(os.path.join(conda_dir, '..', 'Library'))
+            add_system_root(os.path.join(conda_dir, 'Library'))
+                        
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
@@ -330,6 +381,7 @@ def get_info(name, notfound_action=0):
           'openblas': openblas_info,          # use blas_opt instead
           # openblas with embedded lapack
           'openblas_lapack': openblas_lapack_info, # use blas_opt instead
+          'openblas_clapack': openblas_clapack_info, # use blas_opt instead
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
@@ -684,9 +736,13 @@ class system_info(object):
             return self.get_libs(key, '')
 
     def library_extensions(self):
-        static_exts = ['.a']
+        c = customized_ccompiler()
+        static_exts = []
+        if c.compiler_type != 'msvc':
+            # MSVC doesn't understand binutils
+            static_exts.append('.a')
         if sys.platform == 'win32':
-            static_exts.append('.lib')  # .lib is used by MSVC
+            static_exts.append('.lib')  # .lib is used by MSVC and others
         if self.search_static_first:
             exts = static_exts + [so_ext]
         else:
@@ -1480,6 +1536,11 @@ class lapack_opt_info(system_info):
             self.set_info(**openblas_info)
             return
 
+        openblas_info = get_info('openblas_clapack')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
         atlas_info = get_info('atlas_3_10_threads')
         if not atlas_info:
             atlas_info = get_info('atlas_3_10')
@@ -1687,8 +1748,7 @@ class blas_info(system_info):
         # primitive cblas check by looking for the header and trying to link
         # cblas or blas
         res = False
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
         tmpdir = tempfile.mkdtemp()
         s = """#include <cblas.h>
         int main(int argc, const char *argv[])
@@ -1739,12 +1799,28 @@ class openblas_info(blas_info):
         return True
 
     def calc_info(self):
+        c = customized_ccompiler()
+
         lib_dirs = self.get_lib_dirs()
 
         openblas_libs = self.get_libs('libraries', self._lib_names)
         if openblas_libs == self._lib_names: # backward compat with 1.8.0
             openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+
         info = self.check_libs(lib_dirs, openblas_libs, [])
+
+        if c.compiler_type == "msvc" and info is None:
+            from numpy.distutils.fcompiler import new_fcompiler
+            f = new_fcompiler(c_compiler=c)
+            if f and f.compiler_type == 'gnu95':
+                # Try gfortran-compatible library files
+                info = self.check_msvc_gfortran_libs(lib_dirs, openblas_libs)
+                # Skip lapack check, we'd need build_ext to do it
+                assume_lapack = True
+        elif info:
+            assume_lapack = False
+            info['language'] = 'c'
+
         if info is None:
             return
 
@@ -1752,13 +1828,42 @@ class openblas_info(blas_info):
         extra_info = self.calc_extra_info()
         dict_append(info, **extra_info)
 
-        if not self.check_embedded_lapack(info):
+        if not (assume_lapack or self.check_embedded_lapack(info)):
             return
 
-        info['language'] = 'c'
         info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
 
+    def check_msvc_gfortran_libs(self, library_dirs, libraries):
+        # First, find the full path to each library directory
+        library_paths = []
+        for library in libraries:
+            for library_dir in library_dirs:
+                # MinGW static ext will be .a
+                fullpath = os.path.join(library_dir, library + '.a')
+                if os.path.isfile(fullpath):
+                    library_paths.append(fullpath)
+                    break
+            else:
+                return None
+
+        # Generate numpy.distutils virtual static library file
+        tmpdir = os.path.join(os.getcwd(), 'build', 'openblas')
+        if not os.path.isdir(tmpdir):
+            os.makedirs(tmpdir)
+
+        info = {'library_dirs': [tmpdir],
+                'libraries': ['openblas'],
+                'language': 'f77'}
+
+        fake_lib_file = os.path.join(tmpdir, 'openblas.fobjects')
+        fake_clib_file = os.path.join(tmpdir, 'openblas.cobjects')
+        with open(fake_lib_file, 'w') as f:
+            f.write("\n".join(library_paths))
+        with open(fake_clib_file, 'w') as f:
+            pass
+
+        return info
 
 class openblas_lapack_info(openblas_info):
     section = 'openblas'
@@ -1768,8 +1873,8 @@ class openblas_lapack_info(openblas_info):
 
     def check_embedded_lapack(self, info):
         res = False
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
+
         tmpdir = tempfile.mkdtemp()
         s = """void zungqr();
         int main(int argc, const char *argv[])
@@ -1784,6 +1889,8 @@ class openblas_lapack_info(openblas_info):
             extra_args = info['extra_link_args']
         except Exception:
             extra_args = []
+        if sys.version_info < (3, 5) and sys.version_info > (3, 0) and c.compiler_type == "msvc":
+            extra_args.append("/MANIFEST")
         try:
             with open(src, 'wt') as f:
                 f.write(s)
@@ -1799,6 +1906,8 @@ class openblas_lapack_info(openblas_info):
             shutil.rmtree(tmpdir)
         return res
 
+class openblas_clapack_info(openblas_lapack_info):
+    _lib_names = ['openblas', 'lapack']
 
 class blis_info(blas_info):
     section = 'blis'

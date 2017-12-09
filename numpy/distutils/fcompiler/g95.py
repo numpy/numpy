@@ -39,7 +39,6 @@ class G95FCompiler(FCompiler):
 
 if __name__ == '__main__':
     from distutils import log
+    from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
-    compiler = G95FCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    print(customized_fcompiler('g95').get_version())

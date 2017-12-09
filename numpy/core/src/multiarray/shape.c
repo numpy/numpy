@@ -41,15 +41,14 @@ NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                NPY_ORDER order)
 {
+    npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, n, elsize;
     int refcnt;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
-    size_t sd;
     npy_intp *dimptr;
     char *new_data;
-    npy_intp largest;
 
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
@@ -57,15 +56,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         return NULL;
     }
 
-    if (PyArray_DESCR(self)->elsize == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "Bad data-type size.");
-        return NULL;
-    }
+    /* Compute total size of old and new arrays. The new size might overflow */
+    oldsize = PyArray_SIZE(self);
     newsize = 1;
-    largest = NPY_MAX_INTP / PyArray_DESCR(self)->elsize;
     for(k = 0; k < new_nd; k++) {
         if (new_dimensions[k] == 0) {
+            newsize = 0;
             break;
         }
         if (new_dimensions[k] < 0) {
@@ -73,14 +69,19 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                     "negative dimensions not allowed");
             return NULL;
         }
-        newsize *= new_dimensions[k];
-        if (newsize <= 0 || newsize > largest) {
+        if (npy_mul_with_overflow_intp(&newsize, newsize, new_dimensions[k])) {
             return PyErr_NoMemory();
         }
     }
-    oldsize = PyArray_SIZE(self);
 
-    if (oldsize != newsize) {
+    /* Convert to number of bytes. The new count might overflow */
+    elsize = PyArray_DESCR(self)->elsize;
+    oldnbytes = oldsize * elsize;
+    if (npy_mul_with_overflow_intp(&newnbytes, newsize, elsize)) {
+        return PyErr_NoMemory();
+    }
+
+    if (oldnbytes != newnbytes) {
         if (!(PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize this array: it does not own its data");
@@ -92,7 +93,6 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize an array with refcheck=True on PyPy.\n"
                     "Use the resize function or refcheck=False");
-             
             return NULL;
 #else
             refcnt = PyArray_REFCOUNT(self);
@@ -111,14 +111,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             return NULL;
         }
 
-        if (newsize == 0) {
-            sd = PyArray_DESCR(self)->elsize;
-        }
-        else {
-            sd = newsize*PyArray_DESCR(self)->elsize;
-        }
-        /* Reallocate space if needed */
-        new_data = PyDataMem_RENEW(PyArray_DATA(self), sd);
+        /* Reallocate space if needed - allocating 0 is forbidden */
+        new_data = PyDataMem_RENEW(
+            PyArray_DATA(self), newnbytes == 0 ? elsize : newnbytes);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
@@ -127,13 +122,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         ((PyArrayObject_fields *)self)->data = new_data;
     }
 
-    if ((newsize > oldsize) && PyArray_ISWRITEABLE(self)) {
+    if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
         /* Fill new memory with zeros */
-        elsize = PyArray_DESCR(self)->elsize;
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
             PyObject *zero = PyInt_FromLong(0);
             char *optr;
-            optr = PyArray_BYTES(self) + oldsize*elsize;
+            optr = PyArray_BYTES(self) + oldnbytes;
             n = newsize - oldsize;
             for (k = 0; k < n; k++) {
                 _putzero((char *)optr, zero, PyArray_DESCR(self));
@@ -142,7 +136,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             Py_DECREF(zero);
         }
         else{
-            memset(PyArray_BYTES(self)+oldsize*elsize, 0, (newsize-oldsize)*elsize);
+            memset(PyArray_BYTES(self) + oldnbytes, 0, newnbytes - oldnbytes);
         }
     }
 

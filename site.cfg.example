@@ -153,29 +153,32 @@
 # runtime_library_dirs = /home/username/blis/lib
 
 # MKL
-#----
-# MKL is Intel's very optimized yet proprietary implementation of BLAS and
-# Lapack.
-# For recent (9.0.21, for example) mkl, you need to change the names of the
-# lapack library. Assuming you installed the mkl in /opt, for a 32 bits cpu:
+#---- 
+# Intel MKL is Intel's very optimized yet proprietary implementation of BLAS and 
+# Lapack. Find the latest info on building numpy with Intel MKL in this article:
+# https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl
+# Assuming you installed the mkl in /opt/intel/compilers_and_libraries_2018/linux/mkl, 
+# for 64 bits code at Linux: 
+# [mkl] 
+# library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/intel64
+# include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include 
+# mkl_libs = mkl_rt 
+# lapack_libs =  
+# 
+# For 32 bit code at Linux: 
 # [mkl]
-# library_dirs = /opt/intel/mkl/9.1.023/lib/32/
-# lapack_libs = mkl_lapack
-#
-# For 10.*, on 32 bits machines:
-# [mkl]
-# library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
-# lapack_libs = mkl_lapack
-# mkl_libs = mkl, guide
-#
-# On win-64, the following options compiles numpy with the MKL library
-# dynamically linked.
-# [mkl]
-# include_dirs = C:\Program Files (x86)\Intel\Composer XE 2015\mkl\include
-# library_dirs = C:\Program Files (x86)\Intel\Composer XE 2015\mkl\lib\intel64
-# mkl_libs = mkl_core_dll, mkl_intel_lp64_dll, mkl_intel_thread_dll
-# lapack_libs = mkl_lapack95_lp64
-
+# library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/ia32
+# include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include 
+# mkl_libs = mkl_rt 
+# lapack_libs =  
+# 
+# On win-64, the following options compiles numpy with the MKL library 
+# dynamically linked. 
+# [mkl] 
+# include_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\include
+# library_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\lib\intel64
+# mkl_libs = mkl_rt 
+# lapack_libs =
 
 # UMFPACK
 # -------
