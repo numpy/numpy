@@ -1096,4 +1096,11 @@ typedef npy_int64 npy_datetime;
 
 /* End of typedefs for numarray style bit-width names */
 
+/* Warn on use of NPY_ARRAY_UPDATEIFCOPY, for PyPy compatibility */
+#ifdef PYPY_VERSION
+  #ifndef AVOID_UPDATEIFCOPY
+    #define AVOID_UPDATEIFCOPY
+  #endif
+#endif
+
 #endif

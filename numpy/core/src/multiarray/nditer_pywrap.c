@@ -1276,6 +1276,33 @@ npyiter_copy(NewNpyArrayIterObject *self)
     return (PyObject *)iter;
 }
 
+/*
+ * Resolve writeback semantics and make operands read-only
+ */
+static PyObject *
+npyiter_close(NewNpyArrayIterObject *self)
+{
+    NewNpyArrayIterObject *iter;
+    npy_intp iop, nop;
+    PyArrayObject **operands;
+
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is invalid");
+        return NULL;
+    }
+
+    nop = NpyIter_GetNOp(self->iter);
+    operands = self->operands;
+
+    for (iop=0; iop<nop; iop++) {
+        if (PyArray_ResolveWritebackIfCopy(operands[iop]) > 0) {
+            PyArray_CLEARFLAGS(operands[iop], NPY_ARRAY_WRITEABLE);
+        }
+    }
+    Py_RETURN_NONE;
+}
+
 static PyObject *
 npyiter_iternext(NewNpyArrayIterObject *self)
 {
@@ -2337,6 +2364,9 @@ static PyMethodDef npyiter_methods[] = {
         METH_NOARGS, NULL},
     {"copy",
         (PyCFunction)npyiter_copy,
+        METH_NOARGS, NULL},
+    {"close",
+        (PyCFunction)npyiter_close,
         METH_NOARGS, NULL},
     {"__copy__",
         (PyCFunction)npyiter_copy,

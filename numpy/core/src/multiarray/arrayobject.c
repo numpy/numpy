@@ -86,15 +86,9 @@ NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
     int ret;
-#ifdef PYPY_VERSION
-  #ifndef DEPRECATE_UPDATEIFCOPY
-    #define DEPRECATE_UPDATEIFCOPY
-  #endif
-#endif
-
-#ifdef DEPRECATE_UPDATEIFCOPY 
-    /* TODO: enable this once a solution for UPDATEIFCOPY
-     *  and nditer are resolved, also pending the fix for GH7054
+#ifdef AVOID_UPDATEIFCOPY
+    /* enabled by default on PyPy
+     * also pending the fix for GH7054
      */
     /* 2017-Nov-10 1.14 */
     if (DEPRECATE("PyArray_SetUpdateIfCopyBase is deprecated, use "
@@ -502,7 +496,7 @@ array_dealloc(PyArrayObject *self)
         if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
             /* DEPRECATED, remove once the flag is removed */
             Py_INCREF(self); /* hold on to self in next call  since if
-                              * refcount == 0 it will recurse back into 
+                              * refcount == 0 it will recurse back into
                               *array_dealloc
                               */
             retval = PyArray_ResolveWritebackIfCopy(self);

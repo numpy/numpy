@@ -310,6 +310,26 @@ add_newdoc('numpy.core', 'nditer',
     do-while pattern.  The native Python approach is better in most cases, but
     if you need the iterator's coordinates or index, use the C-style pattern.
 
+    If operand flags `"writeonly"` or `"readwrite"` are used, the operands may
+    be views into the original data with the NP_ARRAY_WRITEBACKIFCOPY flag
+    (known as "writeback semantics"). In this case the helper function
+    ``close`` will force resolution of the temporary data::
+
+        >>> a = np.arange(6, dtype='i4')[::-2]
+        >>> it = nditer(a, [], [['writeonly', 'updateifcopy']],
+        ...        casting='unsafe',op_dtypes=[np.dtype('f4')])
+        >>> x = it.operands[0][:] = [-1, -2, -3]
+        >>> it.close()
+        >>> a
+        array([5, 3, 1])
+
+    Once the iterator is closed, methods and attribute access will raise.
+    References (like `x` in the example) share data with the original array
+    `a`.  If writeback semantics were active, then closing the iterator will
+    sever the connection between `x` and `a`, and `x` will be made read-only.
+    Since it is not always clear if writeback semantics will be triggered, best
+    practice is always to use ``it.close()`` when done with the iterator.
+
     Examples
     --------
     Here is how we might write an ``iter_add`` function, using the
@@ -321,6 +341,7 @@ add_newdoc('numpy.core', 'nditer',
                         [['readonly'], ['readonly'], ['writeonly','allocate']])
             for (a, b, c) in it:
                 addop(a, b, out=c)
+            it.close()
             return it.operands[2]
 
     Here is the same function, but following the C-style pattern::
@@ -335,6 +356,7 @@ add_newdoc('numpy.core', 'nditer',
                 addop(it[0], it[1], out=it[2])
                 it.iternext()
 
+            it.close()
             return it.operands[2]
 
     Here is an example outer product function::
@@ -351,6 +373,7 @@ add_newdoc('numpy.core', 'nditer',
             for (a, b, c) in it:
                 mulop(a, b, out=c)
 
+            it.close()
             return it.operands[2]
 
         >>> a = np.arange(2)+1
@@ -374,13 +397,13 @@ add_newdoc('numpy.core', 'nditer',
             while not it.finished:
                 it[0] = lamdaexpr(*it[1:])
                 it.iternext()
+            it.close()
             return it.operands[0]
 
         >>> a = np.arange(5)
         >>> b = np.ones(5)
         >>> luf(lambda i,j:i*i + j/2, a, b)
         array([  0.5,   1.5,   4.5,   9.5,  16.5])
-
     """)
 
 # nditer methods
@@ -461,6 +484,14 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
     Reset the iterator to its initial state.
 
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('close',
+    """
+    close()
+
+    Resolve all writeback semantics in operands, and make any dangling
+    references to such operands read-only
     """))
 
 
