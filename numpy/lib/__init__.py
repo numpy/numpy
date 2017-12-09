@@ -14,6 +14,7 @@ from .shape_base import *
 from .stride_tricks import *
 from .twodim_base import *
 from .ufunclike import *
+from .histograms import *
 
 from . import scimath as emath
 from .polynomial import *
@@ -43,6 +44,7 @@ __all__ += arraysetops.__all__
 __all__ += npyio.__all__
 __all__ += financial.__all__
 __all__ += nanfunctions.__all__
+__all__ += histograms.__all__
 
 from numpy.testing import _numpy_tester
 test = _numpy_tester().test
