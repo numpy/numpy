@@ -4123,6 +4123,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     else:
         return r
 
+
 def _median(a, axis=None, out=None, overwrite_input=False):
     # can't be reasonably be implemented in terms of percentile as we have to
     # call mean to not break astropy
@@ -4196,15 +4197,60 @@ def percentile(a, q, axis=None, out=None,
     """
     Compute the qth percentile of the data along the specified axis.
 
-    The ``q``\ th percentile is synonymous with the `quantile` at ``q/100``.
+    percentile(q) is the same as quantile(q/100).
 
     Parameters
     ----------
-    q : real number in range of [0,100] (or sequence of real numbers)
+    a : array_like
+        Input array or object that can be converted to an array.
+    q : float or sequence of float.
         Percentile to compute, which must be between 0 and 100 inclusive.
         This is divided by 100 and passed on to `quantile`.
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the quantiles are computed. The
+        default is to compute the percentile(s) along a flattened
+        version of the array.
+        .. versionchanged:: 1.9.0
+           a tuple of axes is supported
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+        If True, then allow use of memory of input array `a`
+        calculations. The input array will be modified by the call to
+        `percentile`.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to
+        use when the desired percentile lies between two data points
+        ``i < j``:
+            * linear: ``i + (j - i) * fraction``, where ``fraction``
+              is the fractional part of the index surrounded by ``i``
+              and ``j``.
+            * lower: ``i``.
+            * higher: ``j``.
+            * nearest: ``i`` or ``j``, whichever is nearest.
+            * midpoint: ``(i + j) / 2``.
 
-    All the other parameters have the same meaning as they do in `quantile`.
+        .. versionadded:: 1.9.0
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
+
+        .. versionadded:: 1.9.0
+
+    Returns
+    -------
+    percentile : scalar or ndarray
+        If `q` is a single percentile and `axis=None`, then the result
+        is a scalar. If multiple percentiles are given, first axis of
+        the result corresponds to the percentiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
 
     See also
     --------
@@ -4227,8 +4273,6 @@ def percentile(a, q, axis=None, out=None,
 
     """
     q = np.true_divide(q, 100)  # handles the asarray for us too
-    if not _valid_quantile(q):
-        raise ValueError("Percentiles must be in the range [0, 100]")
     return quantile(a, q, axis, out, overwrite_input, interpolation, keepdims)
 
 
@@ -4237,7 +4281,7 @@ def quantile(a, q, axis=None, out=None,
     """
     Compute the `q`th quantile of the data along the specified axis.
 
-    ..versionadded:: 1.14
+    ..versionadded:: 1.15
 
     Parameters
     ----------
@@ -4249,8 +4293,6 @@ def quantile(a, q, axis=None, out=None,
         Axis or axes along which the quantiles are computed. The
         default is to compute the quantile(s) along a flattened
         version of the array.
-        .. versionchanged:: 1.9.0
-           A sequence of axes is supported
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -4258,13 +4300,7 @@ def quantile(a, q, axis=None, out=None,
     overwrite_input : bool, optional
         If True, then allow use of memory of input array `a`
         calculations. The input array will be modified by the call to
-        `quantile`. This will save memory when you do not need to
-        preserve the contents of the input array. In this case you
-        should not make any assumptions about the contents of the input
-        `a` after this function completes -- treat it as undefined.
-        Default is False. If `a` is not already an array, this parameter
-        will have no effect as `a` will be converted to an array
-        internally regardless of the value of this parameter.
+        `quantile`.
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
         This optional parameter specifies the interpolation method to
         use when the desired quantile lies between two data points
@@ -4276,14 +4312,10 @@ def quantile(a, q, axis=None, out=None,
             * higher: ``j``.
             * nearest: ``i`` or ``j``, whichever is nearest.
             * midpoint: ``(i + j) / 2``.
-
-        .. versionadded:: 1.9.0
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
-
-        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -4347,7 +4379,8 @@ def quantile(a, q, axis=None, out=None,
     """
     q = asarray(q, dtype=np.float64)
     if not _valid_quantile(q):
-        raise ValueError("Quantiles must be in the range [0.0, 1.0]")
+        raise ValueError("Quantiles must be in the range [0.0, 1.0], "
+                         "or percentiles must be in hte range [0.0, 100.0]")
     r, k = _ureduce(a, func=_quantile, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)

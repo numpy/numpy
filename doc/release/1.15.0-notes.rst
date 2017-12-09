@@ -9,7 +9,8 @@ Highlights
 
 New functions
 =============
-
+* ``quantile`` function, an interface to ``percentile`` without factors of 100
+* ``nanquantile`` function, an interface to ``nanpercentile`` without factors of 100
 
 Deprecations
 ============
@@ -30,6 +31,15 @@ C API changes
 New Features
 ============
 
+``np.quantile`` and ``np.nanquantile``
+--------------------------------------
+Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
+rather than percentiles in [0, 100]. ``np.percentile`` is now a thin wrapper
+around ``np.quantile`` with the extra step of dividing by 100.
+Support for reading lzma compressed text files in Python 3
+----------------------------------------------------------
+With Python versions containing the ``lzma`` module the text IO functions can
+now transparently read from files with ``xz`` or ``lzma`` extension.
 
 Improvements
 ============
@@ -37,4 +47,3 @@ Improvements
 
 Changes
 =======
-

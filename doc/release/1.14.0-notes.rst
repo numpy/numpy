@@ -39,9 +39,6 @@ New functions
 
 * ``chebinterpolate``: Interpolate function at Chebyshev points.
 * ``parametrize`` decorator added to numpy.testing
-* ``quantile`` function, a better interface to ``percentile``
-* ``quantile`` function, an interface to ``percentile`` without factors of 100
-* ``nanquantile`` function, an interface to ``nanpercentile`` without factors of 100
 
 * ``format_float_positional`` and ``format_float_scientific`` : format
   floating-point scalars unambiguously with control of rounding and padding.
@@ -269,14 +266,14 @@ In summary, the major changes are:
   * Float arrays printed in scientific notation no longer use fixed-precision,
     and now instead show the shortest unique representation.
   * The ``str`` of floating-point scalars is no longer truncated in python2.
- 
+
 * For other data types:
 
   * Non-finite complex scalars print like ``nanj`` instead of ``nan*j``.
   * ``NaT`` values in datetime arrays are now properly aligned.
   * Arrays and scalars of ``np.void`` datatype are now printed using hex
     notation.
-    
+
 * For line-wrapping:
 
   * The "dtype" part of ndarray reprs will now be printed on the next line
@@ -288,7 +285,7 @@ In summary, the major changes are:
     elements.
   * The last line of an array string will never have more elements than earlier
     lines.
-    
+
 * For summarization (the use of ``...`` to shorten long arrays):
 
   * A trailing comma is no longer inserted for ``str``.
@@ -298,7 +295,7 @@ In summary, the major changes are:
     order to summarize any but the last axis, newlines are now appended to that
     line to match its leading newlines and a trailing space character is
     removed.
-    
+
 * ``MaskedArray`` arrays now separate printed elements with commas, always
   print the dtype, and correctly wrap the elements of long arrays to multiple
   lines. If there is more than 1 dimension, the array attributes are now
@@ -387,16 +384,6 @@ The new ``chebinterpolate`` function interpolates a given function at the
 Chebyshev points of the first kind. A new ``Chebyshev.interpolate`` class
 method adds support for interpolation over arbitrary intervals using the scaled
 and shifted Chebyshev points of the first kind.
-
-``np.quantile`` and ``np.nanquantile``
---------------------------------------
-Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
-rather than percentiles in [0, 100]. ``np.percentile`` is now a thin wrapper
-around ``np.quantile`` with the extra step of dividing by 100.
-Support for reading lzma compressed text files in Python 3
-----------------------------------------------------------
-With Python versions containing the ``lzma`` module the text IO functions can
-now transparently read from files with ``xz`` or ``lzma`` extension.
 
 ``sign`` option added to ``np.setprintoptions`` and ``np.array2string``
 -----------------------------------------------------------------------
