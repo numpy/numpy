@@ -622,8 +622,14 @@ def array2string(a, max_line_width=None, precision=None,
     return _array2string(a, options, separator, prefix)
 
 
-def _extendLine(s, line, word, line_width, next_line_prefix):
-    if len(line) + len(word) > line_width:
+def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
+    needs_wrap = len(line) + len(word) > line_width
+    if legacy != '1.13':
+        s# don't wrap lines if it won't help
+        if len(line) <= len(next_line_prefix):
+            needs_wrap = False
+
+    if needs_wrap:
         s += line.rstrip() + "\n"
         line = next_line_prefix
     line += word
@@ -682,11 +688,13 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             line = hanging_indent
             for i in range(leading_items):
                 word = recurser(index + (i,), next_hanging_indent, next_width)
-                s, line = _extendLine(s, line, word, elem_width, hanging_indent)
+                s, line = _extendLine(
+                    s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
             if show_summary:
-                s, line = _extendLine(s, line, summary_insert, elem_width, hanging_indent)
+                s, line = _extendLine(
+                    s, line, summary_insert, elem_width, hanging_indent, legacy)
                 if legacy == '1.13':
                     line += ", "
                 else:
@@ -694,14 +702,16 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             for i in range(trailing_items, 1, -1):
                 word = recurser(index + (-i,), next_hanging_indent, next_width)
-                s, line = _extendLine(s, line, word, elem_width, hanging_indent)
+                s, line = _extendLine(
+                    s, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
             if legacy == '1.13':
                 # width of the seperator is not considered on 1.13
                 elem_width = curr_width
             word = recurser(index + (-1,), next_hanging_indent, next_width)
-            s, line = _extendLine(s, line, word, elem_width, hanging_indent)
+            s, line = _extendLine(
+                s, line, word, elem_width, hanging_indent, legacy)
 
             s += line
 
