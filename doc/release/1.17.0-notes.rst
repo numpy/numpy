@@ -35,6 +35,15 @@ C API changes
 New Features
 ============
 
+``np.ufunc.reduce`` and related functions now accept a ``where`` mask
+---------------------------------------------------------------------
+``np.ufunc.reduce``, ``np.sum``, ``np.prod``, ``np.min``, ``np.max`` all
+now accept a ``where`` keyword argument, which can be used to tell which
+elements to include in the reduction.  For reductions that do not have an
+identity, it is necessary to also pass in an initial value (e.g.,
+``initial=np.inf`` for ``np.min``).  For instance, the equivalent of
+``nansum`` would be, ``np.sum(a, where=~np.isnan(a))``.
+
 
 Improvements
 ============
