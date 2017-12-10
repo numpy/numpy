@@ -7859,6 +7859,16 @@ def asanyarray(a, dtype=None):
 ##############################################################################
 #                               Pickling                                     #
 ##############################################################################
+
+def _pickle_warn(method):
+    # NumPy 1.15.0, 2017-12-10
+    warnings.warn(
+        "np.ma.{method} is deprecated, use pickle.{method} instead"
+            .format(method),
+        DeprecationWarning,
+        stacklevel=3)
+
+
 def dump(a, F):
     """
     Pickle a masked array to a file.
@@ -7873,6 +7883,7 @@ def dump(a, F):
         The file to pickle `a` to. If a string, the full path to the file.
 
     """
+    _pickle_warn('dump')
     if not hasattr(F, 'readline'):
         with open(F, 'w') as F:
             pickle.dump(a, F)
@@ -7893,6 +7904,7 @@ def dumps(a):
         returned.
 
     """
+    _pickle_warn('dumps')
     return pickle.dumps(a)
 
 
@@ -7916,6 +7928,7 @@ def load(F):
     the NumPy binary .npy format.
 
     """
+    _pickle_warn('load')
     if not hasattr(F, 'readline'):
         with open(F, 'r') as F:
             pickle.load(F)
@@ -7939,6 +7952,7 @@ def loads(strg):
     dumps : Return a string corresponding to the pickling of a masked array.
 
     """
+    _pickle_warn('loads')
     return pickle.loads(strg)
 
 
