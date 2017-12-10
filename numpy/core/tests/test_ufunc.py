@@ -1758,7 +1758,7 @@ class TestUfunc(object):
         # too little
         assert_raises(TypeError, f)
         # too much
-        assert_raises(TypeError, f, d, 0, None, None, False, 0, 1)
+        assert_raises(TypeError, f, d, 0, None, None, False, 0, True, 1)
         # invalid axis
         assert_raises(TypeError, f, d, "invalid")
         assert_raises(TypeError, f, d, axis="invalid")

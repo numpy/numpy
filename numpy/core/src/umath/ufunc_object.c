@@ -3561,7 +3561,7 @@ finish_loop:
 static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         int naxes, int *axes, PyArray_Descr *odtype, int keepdims,
-        PyObject *initial)
+        PyObject *initial, PyArrayObject *wheremask)
 {
     int iaxes, ndim;
     npy_bool reorderable;
@@ -3627,7 +3627,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    result = PyUFunc_ReduceWrapper(arr, out, NULL, dtype, dtype,
+    result = PyUFunc_ReduceWrapper(arr, out, wheremask, dtype, dtype,
                                    NPY_UNSAFE_CASTING,
                                    axis_flags, reorderable,
                                    keepdims, 0,
@@ -4384,8 +4384,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     int i, naxes=0, ndim;
     int axes[NPY_MAXDIMS];
     PyObject *axes_in = NULL;
-    PyArrayObject *mp = NULL, *ret = NULL;
-    PyObject *op;
+    PyArrayObject *mp = NULL, *wheremask = NULL, *ret = NULL;
+    PyObject *op, *where = NULL;
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
@@ -4393,7 +4393,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     int keepdims = 0;
     PyObject *initial = NULL;
     static char *reduce_kwlist[] = {
-            "array", "axis", "dtype", "out", "keepdims", "initial", NULL};
+        "array", "axis", "dtype", "out", "keepdims", "initial", "where", NULL};
     static char *accumulate_kwlist[] = {
             "array", "axis", "dtype", "out", NULL};
     static char *reduceat_kwlist[] = {
@@ -4456,23 +4456,42 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     else if (operation == UFUNC_ACCUMULATE) {
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&:accumulate",
-                                        accumulate_kwlist,
-                                        &op,
-                                        &axes_in,
-                                        PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out)) {
+                                         accumulate_kwlist,
+                                         &op,
+                                         &axes_in,
+                                         PyArray_DescrConverter2, &otype,
+                                         PyArray_OutputConverter, &out)) {
             goto fail;
         }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&iO:reduce",
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&iOO:reduce",
                                         reduce_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out,
-                                        &keepdims, &initial)) {
+                                        &keepdims, &initial, &where)) {
             goto fail;
+        }
+        /* Interpret mask */
+        if (where != NULL) {
+            PyArray_Descr *dtype;
+            dtype = PyArray_DescrFromType(NPY_BOOL);
+            if (dtype == NULL) {
+                goto fail;
+            }
+            /*
+             * Optimization: where=True is the same as no where argument.
+             * This lets us document it as a default argument.
+             */
+            if (where != Py_True) {
+                wheremask = (PyArrayObject *)PyArray_FromAny(where, dtype,
+                                                             0, 0, 0, NULL);
+                if (wheremask == NULL) {
+                    goto fail;
+                }
+            }
         }
     }
     /* Ensure input is an array */
@@ -4602,7 +4621,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     switch(operation) {
     case UFUNC_REDUCE:
         ret = PyUFunc_Reduce(ufunc, mp, out, naxes, axes,
-                                          otype, keepdims, initial);
+                             otype, keepdims, initial, wheremask);
+        Py_XDECREF(wheremask);
         break;
     case UFUNC_ACCUMULATE:
         if (naxes != 1) {
@@ -4660,6 +4680,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
 fail:
     Py_XDECREF(otype);
     Py_XDECREF(mp);
+    Py_XDECREF(wheremask);
     return NULL;
 }
 
