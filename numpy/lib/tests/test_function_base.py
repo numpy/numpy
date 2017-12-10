@@ -2982,9 +2982,9 @@ class TestRescale(object):
         self.arr3d = np.arange(8, dtype=float).reshape((2, 2, 2))
 
     def test_basic(self):
-        assert_equal(rescale(self.arr),
-                     [[0, .2, .4, .6],
-                      [1, .8, .6, .4]])
+        assert_allclose(rescale(self.arr),
+                        [[0, .2, .4, .6],
+                         [1, .8, .6, .4]])
         assert_equal(rescale(self.arr, self.arr.min(), self.arr.max()),
                      self.arr)
 
@@ -2998,9 +2998,9 @@ class TestRescale(object):
         assert_equal(rescale(self.arr, [1, 0, 1, 2], [2, 1, 1, 3], axis=0),
                      [[1, 0, 1, 3],
                       [2, 1, 1, 2]])
-        assert_equal(rescale(self.arr, [[0], [0]], [[1], [1]], axis=1),
-                     [[0, 1/3, 2/3, 1],
-                      [1, 2/3, 1/3, 0]])
+        assert_allclose(rescale(self.arr, [[0], [0]], [[1], [1]], axis=1),
+                        [[0, 1/3, 2/3, 1],
+                         [1, 2/3, 1/3, 0]])
         assert_equal(rescale(self.arr3d, out_max=3.5),
                      (self.arr3d / 2).reshape((2, 2, 2)))
 
@@ -3012,14 +3012,23 @@ class TestRescale(object):
         assert_equal(rescale(self.arr, axis=0),
                      [[0, 0, 0, 1],
                       [1, 1, 1, 0]])
-        assert_equal(rescale(self.arr, axis=1),
-                     [[0, 1/3, 2/3, 1],
-                      [1, 2/3, 1/3, 0]])
+        assert_allclose(rescale(self.arr, axis=1),
+                        [[0, 1/3, 2/3, 1],
+                         [1, 2/3, 1/3, 0]])
         assert_equal(rescale(self.arr3d, axis=2),
                      [[[0, 1],
                        [0, 1]],
                       [[0, 1],
                        [0, 1]]])
+
+    def test_return_params(self):
+        _, offset, scale = rescale(self.arr, return_params=True)
+        assert_equal(offset, 0)
+        assert_equal(scale, .2)
+
+        _, offset, scale = rescale(self.arr, axis=1, return_params=True)
+        assert_equal(offset, np.c_[0, -2/3].T)
+        assert_equal(scale, np.c_[1/3, 1/3].T)
 
     def test_out(self):
         out = np.zeros_like(self.arr)

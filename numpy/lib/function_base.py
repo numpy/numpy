@@ -4401,6 +4401,7 @@ def append(arr, values, axis=None):
 
 
 def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
+            axis=None, return_params=False, out=None):
     """Linearly scale non-NaN values in array to the specified interval.
 
     .. versionadded:: 1.15.0
@@ -4426,6 +4427,10 @@ def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
     axis : int, optional
         Axis along which to scale `arr`. If `None`, scaling is done over
         all axes.
+    return_params : bool, optional
+        If True, also return `offset` and `scale` parameters so that
+        ``offset + scale * x`` maps ``x`` from input interval onto
+        output interval.
     out : array_like, optional
         Array of the same shape as `arr`, in which to store the result.
 
@@ -4434,6 +4439,10 @@ def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
     scaled_array : ndarray
         Output array with the same shape as `arr` and all non-NaN values
         scaled from interval [in_min, in_max] to [out_min, out_max].
+    offset : scalar or ndarray, optional
+        Only provided if `return_params` is True.
+    scale : scalar or ndarray, optional
+        Only provided if `return_params` is True.
 
     Raises
     ------
@@ -4460,14 +4469,25 @@ def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
     out_min = asanyarray(out_min)
     out_max = asanyarray(out_max)
 
+    keepdims = axis is not None  # Avoids extra, unnecessary dims
     if in_min is None:
-        in_min = np.nanmin(arr, axis=axis, keepdims=True)
+        in_min = np.nanmin(arr, axis=axis, keepdims=keepdims).astype(float)
     if in_max is None:
-        in_max = np.nanmax(arr, axis=axis, keepdims=True)
+        in_max = np.nanmax(arr, axis=axis, keepdims=keepdims).astype(float)
 
-    res = (arr - in_min) / (in_max - in_min) * (out_max - out_min) + out_min
+    oldlen = in_max - in_min
+    newlen = out_max - out_min
+
+    offset = (in_max * out_min - in_min * out_max) / oldlen
+    scale = newlen / oldlen
+
+    res = arr * scale + offset
 
     if out is None:
-        return res
-    out[...] = res
+        out = res
+    else:
+        out[...] = res
+
+    if return_params:
+        return out, offset, scale
     return out
