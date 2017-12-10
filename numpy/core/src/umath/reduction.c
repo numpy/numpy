@@ -444,9 +444,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
     /* Iterator parameters */
     NpyIter *iter = NULL;
-    PyArrayObject *op[2];
-    PyArray_Descr *op_dtypes[2];
-    npy_uint32 flags, op_flags[2];
+    PyArrayObject *op[3];
+    PyArray_Descr *op_dtypes[3];
+    npy_uint32 flags, op_flags[3];
 
     /* More than one axis means multiple orders are possible */
     if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
@@ -454,15 +454,6 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                      "reduction operation '%s' is not reorderable, "
                      "so at most one axis may be specified",
                      funcname);
-        return NULL;
-    }
-
-
-    /* Validate that the parameters for future expansion are NULL */
-    if (wheremask != NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "Reduce operations in NumPy do not yet support "
-                "a where mask");
         return NULL;
     }
 
@@ -523,9 +514,16 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                   NPY_ITER_ALIGNED |
                   NPY_ITER_NO_SUBTYPE;
     op_flags[1] = NPY_ITER_READONLY |
-                  NPY_ITER_ALIGNED;
+                  NPY_ITER_ALIGNED |
+                  NPY_ITER_NO_BROADCAST;
+    if (wheremask != NULL) {
+        op[2] = wheremask;
+        op_dtypes[2] = NULL;
+        op_flags[2] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
+        op_flags[0] |= NPY_ITER_WRITEMASKED;
+    }
 
-    iter = NpyIter_AdvancedNew(2, op, flags,
+    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, flags,
                                NPY_KEEPORDER, casting,
                                op_flags,
                                op_dtypes,
@@ -568,7 +566,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
             goto fail;
         }
     }
-    
+
     /* Check whether any errors occurred during the loop */
     if (PyErr_Occurred() ||
             _check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
