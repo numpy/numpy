@@ -1751,7 +1751,7 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
 /*
  * Validate the core dimensions of all the operands, and collect all of
  * the labelled core dimensions into 'core_dim_sizes'.
- * 
+ *
  * Returns 0 on success, and -1 on failure
  *
  * The behavior has been changed in NumPy 1.10.0, and the following
@@ -3707,7 +3707,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             PyDict_SetItem(kwds, npy_um_str_out, out_obj);
         }
     }
-            
+
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
@@ -3827,6 +3827,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             axis = 0;
         }
         else if (check_and_adjust_axis(&axis, ndim) < 0) {
+            Py_XDECREF(otype);
+            Py_DECREF(mp);
             return NULL;
         }
         axes[0] = (int)axis;
