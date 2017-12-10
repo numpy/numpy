@@ -394,13 +394,16 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
         isdesnat = isnat(desired)
         isactnat = isnat(actual)
         dtypes_match = array(desired).dtype.type == array(actual).dtype.type
-        if isdesnat and isactnat and dtypes_match:
+        if isdesnat and isactnat:
             # If both are NaT (and have the same dtype -- datetime or
             # timedelta) they are considered equal.
-            return
+            if dtypes_match:
+                return
+            else:
+                raise AssertionError(msg)
+
     except (TypeError, ValueError, NotImplementedError):
         pass
-
 
     try:
         # Explicitly use __eq__ for comparison, gh-2552
