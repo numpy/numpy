@@ -243,7 +243,7 @@ def reshape(a, newshape, order='C'):
 
      # A transpose makes the array non-contiguous
      >>> b = a.T
-     
+
      # Taking a view makes it possible to modify the shape without modifying
      # the initial object.
      >>> c = b.view()
@@ -1452,7 +1452,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
         same type as `a` is returned unless `a` is a `matrix`, in which case
         a 1-D array rather than a (2-D) `matrix` is returned in order to
         maintain backward compatibility.
-        
+
         If ``a.ndim > 2``, then the dimensions specified by `axis1` and `axis2`
         are removed, and a new axis inserted at the end corresponding to the
         diagonal.
@@ -1963,12 +1963,13 @@ def clip(a, a_min, a_max, out=None):
 
 
 def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                    initial=None):
+                    initial=None, where=None):
     return (a, out)
 
 
 @array_function_dispatch(_sum_dispatcher)
-def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
+def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
+        initial=np._NoValue, where=np._NoValue):
     """
     Sum of array elements over a given axis.
 
@@ -2012,6 +2013,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._No
 
         .. versionadded:: 1.15.0
 
+    where : array_like of bool, optional
+        Elements to include in the sum. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.17.0
+
     Returns
     -------
     sum_along_axis : ndarray
@@ -2052,6 +2058,8 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._No
     array([0, 6])
     >>> np.sum([[0, 1], [0, 5]], axis=1)
     array([1, 5])
+    >>> np.sum([[0, 1], [np.nan, 5]], where=[False, True], axis=1)
+    array([1., 5.])
 
     If the accumulator is too small, overflow occurs:
 
@@ -2077,7 +2085,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._No
         return res
 
     return _wrapreduction(a, np.add, 'sum', axis, dtype, out, keepdims=keepdims,
-                          initial=initial)
+                          initial=initial, where=where)
 
 
 def _any_dispatcher(a, axis=None, out=None, keepdims=None):
@@ -2394,12 +2402,14 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
-def _amax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None):
+def _amax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
+                     where=None):
     return (a, out)
 
 
 @array_function_dispatch(_amax_dispatcher)
-def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
+def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+         where=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis.
 
@@ -2437,6 +2447,11 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
 
         .. versionadded:: 1.15.0
 
+    where : array_like of bool, optional
+        Elements to compare for the maximum. See `~numpy.ufunc.reduce`
+        for details.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -2482,11 +2497,14 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     array([2, 3])
     >>> np.amax(a, axis=1)   # Maxima along the second axis
     array([1, 3])
-
+    >>> np.amax(a, where=[False, True], initial=-1, axis=0)
+    array([-1,  3])
     >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.amax(b)
     nan
+    >>> np.amax(b, where=~np.isnan(b), initial=-1)
+    4.0
     >>> np.nanmax(b)
     4.0
 
@@ -2505,16 +2523,18 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     >>> max([5], default=6)
     5
     """
-    return _wrapreduction(a, np.maximum, 'max', axis, None, out, keepdims=keepdims,
-                          initial=initial)
+    return _wrapreduction(a, np.maximum, 'max', axis, None, out,
+                          keepdims=keepdims, initial=initial, where=where)
 
 
-def _amin_dispatcher(a, axis=None, out=None, keepdims=None, initial=None):
+def _amin_dispatcher(a, axis=None, out=None, keepdims=None, initial=None,
+                     where=None):
     return (a, out)
 
 
 @array_function_dispatch(_amin_dispatcher)
-def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
+def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
+         where=np._NoValue):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -2551,6 +2571,12 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
         computation on empty slice. See `~numpy.ufunc.reduce` for details.
 
         .. versionadded:: 1.15.0
+
+    where : array_like of bool, optional
+        Elements to compare for the minimum. See `~numpy.ufunc.reduce`
+        for details.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -2596,11 +2622,15 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     array([0, 1])
     >>> np.amin(a, axis=1)   # Minima along the second axis
     array([0, 2])
+    >>> np.amin(a, where=[False, True], initial=10, axis=0)
+    array([10,  1])
 
     >>> b = np.arange(5, dtype=float)
     >>> b[2] = np.NaN
     >>> np.amin(b)
     nan
+    >>> np.amin(b, where=~np.isnan(b), initial=10)
+    0.0
     >>> np.nanmin(b)
     0.0
 
@@ -2618,8 +2648,8 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     >>> min([6], default=5)
     6
     """
-    return _wrapreduction(a, np.minimum, 'min', axis, None, out, keepdims=keepdims,
-                          initial=initial)
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out,
+                          keepdims=keepdims, initial=initial, where=where)
 
 
 def _alen_dispathcer(a):
@@ -2660,13 +2690,14 @@ def alen(a):
         return len(array(a, ndmin=1))
 
 
-def _prod_dispatcher(
-        a, axis=None, dtype=None, out=None, keepdims=None, initial=None):
+def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
+                     initial=None, where=None):
     return (a, out)
 
 
 @array_function_dispatch(_prod_dispatcher)
-def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
+def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
+         initial=np._NoValue, where=np._NoValue):
     """
     Return the product of array elements over a given axis.
 
@@ -2711,6 +2742,11 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._N
 
         .. versionadded:: 1.15.0
 
+    where : array_like of bool, optional
+        Elements to include in the product. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.17.0
+
     Returns
     -------
     product_along_axis : ndarray, see `dtype` parameter above.
@@ -2753,6 +2789,11 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._N
     >>> np.prod([[1.,2.],[3.,4.]], axis=1)
     array([  2.,  12.])
 
+    Or select specific elements to include:
+
+    >>> np.prod([1., np.nan, 3.], where=[True, False, True])
+    3.0
+
     If the type of `x` is unsigned, then the output type is
     the unsigned platform integer:
 
@@ -2772,8 +2813,8 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._N
     >>> np.prod([1, 2], initial=5)
     10
     """
-    return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out, keepdims=keepdims,
-                          initial=initial)
+    return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out,
+                          keepdims=keepdims, initial=initial, where=where)
 
 
 def _cumprod_dispatcher(a, axis=None, dtype=None, out=None):

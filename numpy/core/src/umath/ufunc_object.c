@@ -3468,12 +3468,15 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
     PyUFuncObject *ufunc = (PyUFuncObject *)data;
     char *dataptrs_copy[3];
     npy_intp strides_copy[3];
+    npy_bool masked;
 
     /* The normal selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
     NPY_BEGIN_THREADS_DEF;
+    /* Get the number of operands, to determine whether "where" is used */
+    masked = (NpyIter_GetNOp(iter) == 3);
 
     /* Get the inner loop */
     iter_dtypes = NpyIter_GetDescrArray(iter);
@@ -3533,8 +3536,36 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
         strides_copy[0] = strides[0];
         strides_copy[1] = strides[1];
         strides_copy[2] = strides[0];
-        innerloop(dataptrs_copy, countptr,
-                    strides_copy, innerloopdata);
+
+        if (!masked) {
+            innerloop(dataptrs_copy, countptr,
+                      strides_copy, innerloopdata);
+        }
+        else {
+            npy_intp count = *countptr;
+            char *maskptr = dataptrs[2];
+            npy_intp mask_stride = strides[2];
+            /* Optimization for when the mask is broadcast */
+            npy_intp n = mask_stride == 0 ? count : 1;
+            while (count) {
+                char mask = *maskptr;
+                maskptr += mask_stride;
+                while (n < count && mask == *maskptr) {
+                    n++;
+                    maskptr += mask_stride;
+                }
+                /* If mask set, apply inner loop on this contiguous region */
+                if (mask) {
+                    innerloop(dataptrs_copy, &n,
+                              strides_copy, innerloopdata);
+                }
+                dataptrs_copy[0] += n * strides[0];
+                dataptrs_copy[1] += n * strides[1];
+                dataptrs_copy[2] = dataptrs_copy[0];
+                count -= n;
+                n = 1;
+            }
+        }
     } while (iternext(iter));
 
 finish_loop:
@@ -3563,7 +3594,7 @@ finish_loop:
 static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         int naxes, int *axes, PyArray_Descr *odtype, int keepdims,
-        PyObject *initial)
+        PyObject *initial, PyArrayObject *wheremask)
 {
     int iaxes, ndim;
     npy_bool reorderable;
@@ -3629,7 +3660,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    result = PyUFunc_ReduceWrapper(arr, out, NULL, dtype, dtype,
+    result = PyUFunc_ReduceWrapper(arr, out, wheremask, dtype, dtype,
                                    NPY_UNSAFE_CASTING,
                                    axis_flags, reorderable,
                                    keepdims, 0,
@@ -4386,7 +4417,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     int i, naxes=0, ndim;
     int axes[NPY_MAXDIMS];
     PyObject *axes_in = NULL;
-    PyArrayObject *mp = NULL, *ret = NULL;
+    PyArrayObject *mp = NULL, *wheremask = NULL, *ret = NULL;
     PyObject *op;
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
@@ -4395,7 +4426,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     int keepdims = 0;
     PyObject *initial = NULL;
     static char *reduce_kwlist[] = {
-            "array", "axis", "dtype", "out", "keepdims", "initial", NULL};
+        "array", "axis", "dtype", "out", "keepdims", "initial", "where", NULL};
     static char *accumulate_kwlist[] = {
             "array", "axis", "dtype", "out", NULL};
     static char *reduceat_kwlist[] = {
@@ -4458,22 +4489,23 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     else if (operation == UFUNC_ACCUMULATE) {
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&:accumulate",
-                                        accumulate_kwlist,
-                                        &op,
-                                        &axes_in,
-                                        PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out)) {
+                                         accumulate_kwlist,
+                                         &op,
+                                         &axes_in,
+                                         PyArray_DescrConverter2, &otype,
+                                         PyArray_OutputConverter, &out)) {
             goto fail;
         }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&iO:reduce",
-                                        reduce_kwlist,
-                                        &op,
-                                        &axes_in,
-                                        PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out,
-                                        &keepdims, &initial)) {
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&iOO&:reduce",
+                                         reduce_kwlist,
+                                         &op,
+                                         &axes_in,
+                                         PyArray_DescrConverter2, &otype,
+                                         PyArray_OutputConverter, &out,
+                                         &keepdims, &initial,
+                                         _wheremask_converter, &wheremask)) {
             goto fail;
         }
     }
@@ -4604,7 +4636,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     switch(operation) {
     case UFUNC_REDUCE:
         ret = PyUFunc_Reduce(ufunc, mp, out, naxes, axes,
-                                          otype, keepdims, initial);
+                             otype, keepdims, initial, wheremask);
+        Py_XDECREF(wheremask);
         break;
     case UFUNC_ACCUMULATE:
         if (naxes != 1) {
@@ -4662,6 +4695,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
 fail:
     Py_XDECREF(otype);
     Py_XDECREF(mp);
+    Py_XDECREF(wheremask);
     return NULL;
 }
 

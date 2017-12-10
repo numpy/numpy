@@ -24,20 +24,20 @@ umr_all = um.logical_and.reduce
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very
 # small reductions
 def _amax(a, axis=None, out=None, keepdims=False,
-          initial=_NoValue):
-    return umr_maximum(a, axis, None, out, keepdims, initial)
+          initial=_NoValue, where=True):
+    return umr_maximum(a, axis, None, out, keepdims, initial, where)
 
 def _amin(a, axis=None, out=None, keepdims=False,
-          initial=_NoValue):
-    return umr_minimum(a, axis, None, out, keepdims, initial)
+          initial=_NoValue, where=True):
+    return umr_minimum(a, axis, None, out, keepdims, initial, where)
 
 def _sum(a, axis=None, dtype=None, out=None, keepdims=False,
-         initial=_NoValue):
-    return umr_sum(a, axis, dtype, out, keepdims, initial)
+         initial=_NoValue, where=True):
+    return umr_sum(a, axis, dtype, out, keepdims, initial, where)
 
 def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
-          initial=_NoValue):
-    return umr_prod(a, axis, dtype, out, keepdims, initial)
+          initial=_NoValue, where=True):
+    return umr_prod(a, axis, dtype, out, keepdims, initial, where)
 
 def _any(a, axis=None, dtype=None, out=None, keepdims=False):
     return umr_any(a, axis, dtype, out, keepdims)
