@@ -7918,9 +7918,9 @@ def load(F):
     """
     if not hasattr(F, 'readline'):
         with open(F, 'r') as F:
-            pickle.load(F)
+            return pickle.load(F)
     else:
-        pickle.load(F)
+        return pickle.load(F)
 
 
 def loads(strg):
