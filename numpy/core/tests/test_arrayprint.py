@@ -289,6 +289,17 @@ class TestArray2String(object):
                                       '   11\n'
                                       '   11]]]')
 
+    def test_wide_element(self):
+        a = np.array(['xxxxx'])
+        assert_equal(
+            np.array2string(a, max_line_width=5),
+            "['xxxxx']"
+        )
+        assert_equal(
+            np.array2string(a, max_line_width=5, legacy='1.13'),
+            "[ 'xxxxx']"
+        )
+
 
 class TestPrintOptions(object):
     """Test getting and setting global print options."""

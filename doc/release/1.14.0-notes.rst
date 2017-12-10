@@ -265,14 +265,14 @@ In summary, the major changes are:
   * Float arrays printed in scientific notation no longer use fixed-precision,
     and now instead show the shortest unique representation.
   * The ``str`` of floating-point scalars is no longer truncated in python2.
- 
+
 * For other data types:
 
   * Non-finite complex scalars print like ``nanj`` instead of ``nan*j``.
   * ``NaT`` values in datetime arrays are now properly aligned.
   * Arrays and scalars of ``np.void`` datatype are now printed using hex
     notation.
-    
+
 * For line-wrapping:
 
   * The "dtype" part of ndarray reprs will now be printed on the next line
@@ -280,11 +280,11 @@ In summary, the major changes are:
   * The ``linewidth`` format option is now always respected.
     The `repr` or `str` of an array will never exceed this, unless a single
     element is too wide.
-  * All but the last line of array strings will contain the same number of
-    elements.
   * The last line of an array string will never have more elements than earlier
     lines.
-    
+  * An extra space is no longer inserted on the first line if the elements are
+    too wide.
+
 * For summarization (the use of ``...`` to shorten long arrays):
 
   * A trailing comma is no longer inserted for ``str``.
@@ -294,7 +294,7 @@ In summary, the major changes are:
     order to summarize any but the last axis, newlines are now appended to that
     line to match its leading newlines and a trailing space character is
     removed.
-    
+
 * ``MaskedArray`` arrays now separate printed elements with commas, always
   print the dtype, and correctly wrap the elements of long arrays to multiple
   lines. If there is more than 1 dimension, the array attributes are now
