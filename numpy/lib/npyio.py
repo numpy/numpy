@@ -30,7 +30,14 @@ else:
     import cPickle as pickle
     from future_builtins import map
 
-loads = pickle.loads
+
+def loads(*args, **kwargs):
+    # NumPy 1.15.0, 2017-12-10
+    warnings.warn(
+        "np.loads is deprecated, use pickle.loads instead",
+        DeprecationWarning, stacklevel=2)
+    return pickle.loads(*args, **kwargs)
+
 
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
