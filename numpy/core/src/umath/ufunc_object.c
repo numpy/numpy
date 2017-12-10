@@ -3656,7 +3656,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     int i, naxes=0, ndim;
     int axes[NPY_MAXDIMS];
     PyObject *axes_in = NULL;
-    PyArrayObject *mp, *ret = NULL;
+    PyArrayObject *mp = NULL, *ret = NULL;
     PyObject *op, *res = NULL;
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
@@ -3712,19 +3712,17 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
-                                        &op,
-                                        &obj_ind,
-                                        &axes_in,
-                                        PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out)) {
-            Py_XDECREF(otype);
-            return NULL;
+                                         &op,
+                                         &obj_ind,
+                                         &axes_in,
+                                         PyArray_DescrConverter2, &otype,
+                                         PyArray_OutputConverter, &out)) {
+            goto fail;
         }
         indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype,
                                            1, 1, NPY_ARRAY_CARRAY, NULL);
         if (indices == NULL) {
-            Py_XDECREF(otype);
-            return NULL;
+            goto fail;
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
@@ -3734,8 +3732,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out)) {
-            Py_XDECREF(otype);
-            return NULL;
+            goto fail;
         }
     }
     else {
@@ -3746,8 +3743,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out,
                                         &keepdims)) {
-            Py_XDECREF(otype);
-            return NULL;
+            goto fail;
         }
     }
     /* Ensure input is an array */
@@ -3760,7 +3756,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, context);
     Py_XDECREF(context);
     if (mp == NULL) {
-        return NULL;
+        goto fail;
     }
 
     ndim = PyArray_NDIM(mp);
@@ -3771,9 +3767,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         PyErr_Format(PyExc_TypeError,
                      "cannot perform %s with flexible type",
                      _reduce_type[operation]);
-        Py_XDECREF(otype);
-        Py_DECREF(mp);
-        return NULL;
+        goto fail;
     }
 
     /* Convert the 'axis' parameter into a list of axes */
@@ -3793,22 +3787,16 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         if (naxes < 0 || naxes > NPY_MAXDIMS) {
             PyErr_SetString(PyExc_ValueError,
                     "too many values for 'axis'");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axes_in, i);
             int axis = PyArray_PyIntAsInt(tmp);
             if (error_converting(axis)) {
-                Py_XDECREF(otype);
-                Py_DECREF(mp);
-                return NULL;
+                goto fail;
             }
             if (check_and_adjust_axis(&axis, ndim) < 0) {
-                Py_XDECREF(otype);
-                Py_DECREF(mp);
-                return NULL;
+                goto fail;
             }
             axes[i] = (int)axis;
         }
@@ -3818,18 +3806,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         int axis = PyArray_PyIntAsInt(axes_in);
         /* TODO: PyNumber_Index would be good to use here */
         if (error_converting(axis)) {
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         /* Special case letting axis={0 or -1} slip through for scalars */
         if (ndim == 0 && (axis == 0 || axis == -1)) {
             axis = 0;
         }
         else if (check_and_adjust_axis(&axis, ndim) < 0) {
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         axes[0] = (int)axis;
         naxes = 1;
@@ -3849,9 +3833,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                     (naxes == 0 || (naxes == 1 && axes[0] == 0)))) {
             PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
                          _reduce_type[operation]);
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
     }
 
@@ -3897,9 +3879,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         if (naxes != 1) {
             PyErr_SetString(PyExc_ValueError,
                         "accumulate does not allow multiple axes");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         ret = (PyArrayObject *)PyUFunc_Accumulate(ufunc, mp, out, axes[0],
                                                   otype->type_num);
@@ -3908,9 +3888,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         if (naxes != 1) {
             PyErr_SetString(PyExc_ValueError,
                         "reduceat does not allow multiple axes");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc, mp, indices, out,
                                             axes[0], otype->type_num);
@@ -3943,6 +3921,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     return PyArray_Return(ret);
+
+fail:
+    Py_XDECREF(otype);
+    Py_XDECREF(mp);
+    return NULL;
 }
 
 /*
