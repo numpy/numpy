@@ -7087,21 +7087,14 @@ class TestFormat(object):
     def test_1d_format(self):
         # until gh-5543, ensure that the behaviour matches what it used to be
         a = np.array([np.pi])
-
-        def ret_and_exc(f, *args, **kwargs):
-            try:
-                return f(*args, **kwargs), None
-            except Exception as e:
-                # exceptions don't compare equal, so return type and args
-                # which do
-                return None, (type(e), e.args)
-
-        # Could switch on python version here, but all we care about is
-        # that the behaviour hasn't changed
-        assert_equal(
-            ret_and_exc(object.__format__, a, '30'),
-            ret_and_exc('{:30}'.format, a)
-        )
+        if sys.version_info[:2] >= (3, 4):
+            assert_raises(TypeError, '{:30}'.format, a)
+        else:
+            with suppress_warnings() as sup:
+                sup.filter(PendingDeprecationWarning)
+                res = '{:30}'.format(a)
+                dst = object.__format__(a, '30')
+                assert_equal(res, dst)
 
 
 class TestCTypes(object):
