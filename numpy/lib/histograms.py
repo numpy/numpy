@@ -199,6 +199,45 @@ _hist_bin_selectors = {'auto': _hist_bin_auto,
                        'sturges': _hist_bin_sturges}
 
 
+def _ravel_and_check_weights(a, weights):
+    """ Check a and weights have matching shapes, and ravel both """
+    a = np.asarray(a)
+    if weights is not None:
+        weights = np.asarray(weights)
+        if weights.shape != a.shape:
+            raise ValueError(
+                'weights should have the same shape as a.')
+        weights = weights.ravel()
+    a = a.ravel()
+    return a, weights
+
+
+def _get_outer_edges(a, range):
+    """
+    Determine the outer bin edges to use, from either the data or the range
+    argument
+    """
+    if range is None:
+        if a.size == 0:
+            # handle empty arrays. Can't determine range, so use 0-1.
+            first_edge, last_edge = 0.0, 1.0
+        else:
+            first_edge, last_edge = a.min() + 0.0, a.max() + 0.0
+    else:
+        first_edge, last_edge = [mi + 0.0 for mi in range]
+    if first_edge > last_edge:
+        raise ValueError(
+            'max must be larger than min in range parameter.')
+    if not np.all(np.isfinite([first_edge, last_edge])):
+        raise ValueError(
+            'range parameter must be finite.')
+    if first_edge == last_edge:
+        first_edge -= 0.5
+        last_edge += 0.5
+
+    return first_edge, last_edge
+
+
 def histogram(a, bins=10, range=None, normed=False, weights=None,
               density=None):
     r"""
@@ -414,37 +453,15 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     >>> plt.show()
 
     """
-    a = np.asarray(a)
-    if weights is not None:
-        weights = np.asarray(weights)
-        if weights.shape != a.shape:
-            raise ValueError(
-                'weights should have the same shape as a.')
-        weights = weights.ravel()
-    a = a.ravel()
-
-    # Do not modify the original value of range so we can check for `None`
-    if range is None:
-        if a.size == 0:
-            # handle empty arrays. Can't determine range, so use 0-1.
-            first_edge, last_edge = 0.0, 1.0
-        else:
-            first_edge, last_edge = a.min() + 0.0, a.max() + 0.0
-    else:
-        first_edge, last_edge = [mi + 0.0 for mi in range]
-    if first_edge > last_edge:
-        raise ValueError(
-            'max must be larger than min in range parameter.')
-    if not np.all(np.isfinite([first_edge, last_edge])):
-        raise ValueError(
-            'range parameter must be finite.')
-    if first_edge == last_edge:
-        first_edge -= 0.5
-        last_edge += 0.5
 
     # density overrides the normed keyword
     if density is not None:
         normed = False
+
+    a, weights = _ravel_and_check_weights(a, weights)
+
+    # Do not modify the original value of range so we can check for `None`
+    first_edge, last_edge = _get_outer_edges(a, range)
 
     # parse the overloaded bins argument
     n_equal_bins = None
