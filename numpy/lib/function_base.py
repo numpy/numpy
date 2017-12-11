@@ -47,7 +47,8 @@ __all__ = [
     'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'quantile'
     ]
 
 
@@ -4177,24 +4178,79 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return mean(part[indexer], axis=axis, out=out)
 
 
+def _valid_quantile(q):
+    # avoid expensive reductions, relevant for arrays with < O(1000) elements
+    if q.ndim == 1 and q.size < 10:
+        for i in range(q.size):
+            if q[i] < 0.0 or q[i] > 1.0:
+                return False
+    else:
+        # faster than any()
+        if np.count_nonzero(q < 0.0) or np.count_nonzero(q > 1.0):
+            return False
+    return True
+
+
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear', keepdims=False):
     """
     Compute the qth percentile of the data along the specified axis.
 
-    Returns the qth percentile(s) of the array elements.
+    The ``q``\ th percentile is synonymous with the `quantile` at ``q/100``.
+
+    Parameters
+    ----------
+    q : real number in range of [0,100] (or sequence of real numbers)
+        Percentile to compute, which must be between 0 and 100 inclusive.
+        This is divided by 100 and passed on to `quantile`.
+
+    All the other parameters have the same meaning as they do in `quantile`.
+
+    See also
+    --------
+    quantile
+    mean
+    median : equivalent to ``percentile(..., 50)``
+    nanpercentile
+
+    Examples
+    --------
+    >>> a = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
+    >>> np.percentile(a, 50)
+    3.5
+    >>> np.quantile(a, 0.5)
+    3.5
+
+
+    """
+    q = np.true_divide(q, 100)  # handles the asarray for us too
+    if not _valid_quantile(q):
+        raise ValueError("Percentiles must be in the range [0, 100]")
+    return quantile(a, q, axis, out, overwrite_input, interpolation, keepdims)
+
+
+def quantile(a, q, axis=None, out=None,
+             overwrite_input=False, interpolation='linear', keepdims=False):
+    """
+    Compute the `q`th quantile of the data along the specified axis.
+
+    ..versionadded:: 1.15.0
 
     Parameters
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    q : float in range of [0,100] (or sequence of floats)
-        Percentile to compute, which must be between 0 and 100 inclusive.
+    q : float in range of [0,1] (or sequence of floats)
+        Quantile to compute, which must be between 0.0 and 1.0 inclusive.
     axis : {int, sequence of int, None}, optional
-        Axis or axes along which the percentiles are computed. The
-        default is to compute the percentile(s) along a flattened
-        version of the array. A sequence of axes is supported since
-        version 1.9.0.
+        Axis or axes along which the quantiles are computed. The
+        default is to compute the quantile(s) along a flattened
+        version of the array.
+        .. versionchanged:: 1.9.0
+           A sequence of axes is supported
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -4202,7 +4258,7 @@ def percentile(a, q, axis=None, out=None,
     overwrite_input : bool, optional
         If True, then allow use of memory of input array `a`
         calculations. The input array will be modified by the call to
-        `percentile`. This will save memory when you do not need to
+        `quantile`. This will save memory when you do not need to
         preserve the contents of the input array. In this case you
         should not make any assumptions about the contents of the input
         `a` after this function completes -- treat it as undefined.
@@ -4231,10 +4287,10 @@ def percentile(a, q, axis=None, out=None,
 
     Returns
     -------
-    percentile : scalar or ndarray
-        If `q` is a single percentile and `axis=None`, then the result
-        is a scalar. If multiple percentiles are given, first axis of
-        the result corresponds to the percentiles. The other axes are
+    quantile : scalar or ndarray
+        If `q` is a single quantile and `axis=None`, then the result
+        is a scalar. If multiple quantiles are given, first axis of
+        the result corresponds to the quantiles. The other axes are
         the axes that remain after the reduction of `a`. If the input
         contains integers or floats smaller than ``float64``, the output
         data-type is ``float64``. Otherwise, the output data-type is the
@@ -4243,18 +4299,18 @@ def percentile(a, q, axis=None, out=None,
 
     See Also
     --------
-    mean, median, nanpercentile
+    mean, median, nanpercentile, percentile
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th percentile of
-    ``V`` is the value ``q/100`` of the way from the minimum to the
+    Given a vector ``V`` of length ``N``, the ``q``-th quantile of
+    ``V`` is the value ``q`` of the way from the minimum to the
     maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
-    will determine the percentile if the normalized ranking does not
+    will determine the quantile if the normalized ranking does not
     match the location of ``q`` exactly. This function is the same as
-    the median if ``q=50``, the same as the minimum if ``q=0`` and the
-    same as the maximum if ``q=100``.
+    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
+    same as the maximum if ``q=1.0``.
 
     Examples
     --------
@@ -4262,31 +4318,37 @@ def percentile(a, q, axis=None, out=None,
     >>> a
     array([[10,  7,  4],
            [ 3,  2,  1]])
-    >>> np.percentile(a, 50)
+    >>> np.quantile(a, 0.5)
     3.5
-    >>> np.percentile(a, 50, axis=0)
+    >>> np.quantile(a, 0.5, axis=0)
     array([[ 6.5,  4.5,  2.5]])
-    >>> np.percentile(a, 50, axis=1)
+    >>> np.quantile(a, 0.5, axis=1)
     array([ 7.,  2.])
-    >>> np.percentile(a, 50, axis=1, keepdims=True)
+    >>> np.quantile(a, 0.5, axis=1, keepdims=True)
     array([[ 7.],
            [ 2.]])
 
-    >>> m = np.percentile(a, 50, axis=0)
+    >>> m = np.quantile(a, 0.5, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.percentile(a, 50, axis=0, out=out)
+    >>> np.quantile(a, 0.5, axis=0, out=out)
     array([[ 6.5,  4.5,  2.5]])
     >>> m
     array([[ 6.5,  4.5,  2.5]])
 
     >>> b = a.copy()
-    >>> np.percentile(b, 50, axis=1, overwrite_input=True)
+    >>> np.quantile(b, 0.5, axis=1, overwrite_input=True)
     array([ 7.,  2.])
     >>> assert not np.all(a == b)
 
+    See Also
+    --------
+    percentile
+
     """
-    q = array(q, dtype=np.float64, copy=True)
-    r, k = _ureduce(a, func=_percentile, q=q, axis=axis, out=out,
+    q = asarray(q, dtype=np.float64)
+    if not _valid_quantile(q):
+        raise ValueError("Quantiles must be in the range [0.0, 1.0]")
+    r, k = _ureduce(a, func=_quantile, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims:
@@ -4295,8 +4357,8 @@ def percentile(a, q, axis=None, out=None,
         return r
 
 
-def _percentile(a, q, axis=None, out=None,
-                overwrite_input=False, interpolation='linear', keepdims=False):
+def _quantile(a, q, axis=None, out=None,
+              overwrite_input=False, interpolation='linear', keepdims=False):
     a = asarray(a)
     if q.ndim == 0:
         # Do not allow 0-d arrays because following code fails for scalar
@@ -4304,18 +4366,6 @@ def _percentile(a, q, axis=None, out=None,
         q = q[None]
     else:
         zerod = False
-
-    # avoid expensive reductions, relevant for arrays with < O(1000) elements
-    if q.size < 10:
-        for i in range(q.size):
-            if q[i] < 0. or q[i] > 100.:
-                raise ValueError("Percentiles must be in the range [0,100]")
-            q[i] /= 100.
-    else:
-        # faster than any()
-        if np.count_nonzero(q < 0.) or np.count_nonzero(q > 100.):
-            raise ValueError("Percentiles must be in the range [0,100]")
-        q /= 100.
 
     # prepare a for partioning
     if overwrite_input:
