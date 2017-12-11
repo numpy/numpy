@@ -3434,10 +3434,11 @@ class TestPickling(object):
             assert_equal(a, pickle.loads(a.dumps()), err_msg="%r" % a)
 
     def _loads(self, obj):
+        import pickle
         if sys.version_info[0] >= 3:
-            return np.loads(obj, encoding='latin1')
+            return pickle.loads(obj, encoding='latin1')
         else:
-            return np.loads(obj)
+            return pickle.loads(obj)
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field

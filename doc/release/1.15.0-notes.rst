@@ -14,6 +14,16 @@ New functions
 Deprecations
 ============
 
+* Aliases of builtin `pickle` functions are deprecated, in favor of their
+  unaliased ``pickle.<func>`` names:
+
+  * `np.loads`
+  * `np.core.numeric.load`
+  * `np.core.numeric.loads`
+  * `np.ma.loads`, `np.ma.dumps`
+  * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
+    when called with a string.
+
 
 Future Changes
 ==============
