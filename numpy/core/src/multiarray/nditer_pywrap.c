@@ -37,6 +37,7 @@ struct NewNpyArrayIterObject_tag {
     npy_intp *innerstrides, *innerloopsizeptr;
     char readflags[NPY_MAXARGS];
     char writeflags[NPY_MAXARGS];
+    char open;
 };
 
 static int npyiter_cache_values(NewNpyArrayIterObject *self)
@@ -833,6 +834,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         self->started = 0;
         self->finished = 0;
     }
+    self->open = 1;
 
     npy_free_cache_dim_obj(itershape);
 
@@ -1101,6 +1103,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
             iter->started = 0;
             iter->finished = 0;
         }
+        iter->open = 1;
 
         /*
          * If there are any allocated outputs or any copies were made,
@@ -1272,6 +1275,7 @@ npyiter_copy(NewNpyArrayIterObject *self)
 
     iter->started = self->started;
     iter->finished = self->finished;
+    iter->open = self->open;
 
     return (PyObject *)iter;
 }
@@ -1282,7 +1286,6 @@ npyiter_copy(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_close(NewNpyArrayIterObject *self)
 {
-    NewNpyArrayIterObject *iter;
     npy_intp iop, nop;
     PyArrayObject **operands;
 
@@ -1300,12 +1303,17 @@ npyiter_close(NewNpyArrayIterObject *self)
             PyArray_CLEARFLAGS(operands[iop], NPY_ARRAY_WRITEABLE);
         }
     }
+    self->open = 0;
     Py_RETURN_NONE;
 }
 
 static PyObject *
 npyiter_iternext(NewNpyArrayIterObject *self)
 {
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return NULL;
+    }
     if (self->iter != NULL && self->iternext != NULL &&
                         !self->finished && self->iternext(self->iter)) {
         /* If there is nesting, the nested iterators should be reset */
@@ -1433,6 +1441,10 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
                 "Iterator is past the end");
         return NULL;
     }
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return NULL;
+    }
 
     nop = NpyIter_GetNOp(self->iter);
 
@@ -1470,6 +1482,10 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return NULL;
+    }
 
     nop = NpyIter_GetNOp(self->iter);
     operands = self->operands;
@@ -1500,6 +1516,11 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return NULL;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
@@ -1523,6 +1544,10 @@ static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL || self->iternext == NULL || self->finished) {
+        return NULL;
+    }
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
         return NULL;
     }
 
@@ -1917,6 +1942,11 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return NULL;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
@@ -2010,6 +2040,11 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         PyErr_SetString(PyExc_ValueError,
                 "Iterator construction used delayed buffer allocation, "
                 "and no reset has been done yet");
+        return NULL;
+    }
+
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
         return NULL;
     }
 
@@ -2157,6 +2192,11 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         return -1;
     }
 
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return -1;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
 
     /* Negative indexing */
@@ -2231,6 +2271,11 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
         return -1;
     }
 
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return -1;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -2282,6 +2327,11 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
         return NULL;
     }
 
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
+        return NULL;
+    }
+
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
@@ -2328,6 +2378,11 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
         PyErr_SetString(PyExc_ValueError,
                 "Iterator construction used delayed buffer allocation, "
                 "and no reset has been done yet");
+        return -1;
+    }
+
+    if (self->open == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
         return -1;
     }
 

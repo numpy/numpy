@@ -2733,6 +2733,17 @@ def test_iter_too_large_with_multiindex():
             assert_raises(ValueError, test_nditer_too_large,
                           arrays, i*2 + 1, mode)
 
+def test_close():
+    a = np.arange(24, dtype='f8').reshape(2, 3, 4).T
+    it = np.nditer(a, [], [['readwrite', 'updateifcopy']],
+                   casting='same_kind', op_dtypes=[np.dtype('f4')])
+    x = it.operands[0]
+    x[...] = 3
+    it.close()
+    assert_(x.flags.writeable is False)
+    assert_raises(RuntimeError, getattr, it, 'operands')
+    assert_raises(RuntimeError, next, it)
+    assert_raises(RuntimeError, it.__getitem__, 0)
 
 if __name__ == "__main__":
     run_module_suite()
