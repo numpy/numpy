@@ -187,6 +187,8 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
+    # remove duplicates from exposed API
+    __all__ = list(set(__all__))
 
     # Filter annoying Cython warnings that serve no good purpose.
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
