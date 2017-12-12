@@ -9,6 +9,16 @@ written up when large changes to NumPy are proposed.
 This page provides an overview of all NEPs, making only a distinction between
 the ones that have been implemented and those that have not been implemented.
 
+Meta-NEPs (NEPs about NEPs or Processes)
+----------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   nep-0000
+   nep-template
+
+
 Implemented NEPs
 ----------------
 
@@ -19,6 +29,7 @@ Implemented NEPs
    generalized-ufuncs
    new-iterator-ufunc
    npy-format
+
 
 Other NEPs
 ----------
