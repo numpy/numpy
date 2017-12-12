@@ -2966,6 +2966,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     if (_safe_ceil_to_intp((stop - start)/step, &length)) {
         PyErr_SetString(PyExc_OverflowError,
                 "arange: overflow while computing length");
+        return NULL;
     }
 
     if (length <= 0) {
