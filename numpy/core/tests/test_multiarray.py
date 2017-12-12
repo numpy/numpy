@@ -7282,6 +7282,10 @@ def test_npymath_real():
                 expected = npfun(z)
                 assert_allclose(got, expected)
 
+# Test when (stop - start) / step is NaN, ValueError is raised instead
+# of returning a zero-length array.
+def test_arange_nan():
+    assert_raises(ValueError, np.arange, 0, 1, np.nan)
 
 if __name__ == "__main__":
     run_module_suite()
