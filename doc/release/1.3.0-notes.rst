@@ -235,7 +235,7 @@ This should make the porting to new platforms easier, and more robust. In
 particular, the configuration stage does not need to execute any code on the
 target platform, which is a first step toward cross-compilation.
 
-http://projects.scipy.org/numpy/browser/trunk/doc/neps/math_config_clean.txt
+http://numpy.github.io/neps/math_config_clean.html
 
 umath refactor
 --------------
@@ -247,7 +247,7 @@ Improvements to build warnings
 
 Numpy can now build with -W -Wall without warnings
 
-http://projects.scipy.org/numpy/browser/trunk/doc/neps/warnfix.txt
+http://numpy.github.io/neps/warnfix.html
 
 Separate core math library
 --------------------------

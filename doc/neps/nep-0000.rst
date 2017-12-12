@@ -188,7 +188,7 @@ References and Footnotes
    `GitHub <https://github.com/numpy/numpy/tree/master/doc/neps>`_.
 
 .. [2] The URL for viewing NEPs on the web is
-   https://docs.scipy.org/doc/numpy-1.13.0/neps/index.html.
+   http://numpy.github.io/neps/.
 
 .. _repo: https://github.com/numpy/numpy
 
