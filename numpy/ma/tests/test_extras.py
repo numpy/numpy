@@ -316,6 +316,15 @@ class TestConcatenator(object):
         assert_equal(type(actual), type(expected))
         assert_equal(type(actual.data), type(expected.data))
 
+    def test_masked_constant(self):
+        actual = mr_[np.ma.masked, 1]
+        assert_equal(actual.mask, [True, False])
+        assert_equal(actual.data[1], 1)
+
+        actual = mr_[[1, 2], np.ma.masked]
+        assert_equal(actual.mask, [False, False, True])
+        assert_equal(actual.data[:2], [1, 2])
+
 
 class TestNotMasked(object):
     # Tests notmasked_edges and notmasked_contiguous.
