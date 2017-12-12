@@ -316,10 +316,10 @@ class AxisConcatenator(object):
                 newobj = array(item, copy=False, subok=True, ndmin=ndmin)
                 if trans1d != -1 and item_ndim < ndmin:
                     k2 = ndmin - item_ndim
-                    if (trans1d < 0):
-                        trans1d += k2 + 1
-                    defaxes = list(range(ndmin))
                     k1 = trans1d
+                    if k1 < 0:
+                        k1 += k2 + 1
+                    defaxes = list(range(ndmin))
                     axes = defaxes[:k1] + defaxes[k2:] + defaxes[k1:k2]
                     newobj = newobj.transpose(axes)
             objs.append(newobj)
