@@ -1643,7 +1643,7 @@ class TestMethods(object):
         arr = np.array([0, datetime.now(), 1], dtype=object)
         for kind in ['q', 'm', 'h']:
             assert_raises(TypeError, arr.sort, kind=kind)
-        #gh-3879 
+        #gh-3879
         class Raiser(object):
             def raises_anything(*args, **kwargs):
                 raise TypeError("SOMETHING ERRORED")
@@ -7196,8 +7196,30 @@ class TestWritebackIfCopy(TestCase):
         assert_(not arr_wb.ctypes.data == 0)
         arr_wb[:] = 100
         assert_equal(arr, -100)
-        
-        
+
+
+class TestArange(object):
+    def test_infinite(self):
+        assert_raises_regex(
+            ValueError, "size exceeded",
+            np.arange, 0, np.inf
+        )
+
+    def test_nan_step(self):
+        assert_raises_regex(
+            ValueError, "cannot compute length",
+            np.arange, 0, 1, np.nan
+        )
+
+    def test_zero_step(self):
+        assert_raises(ZeroDivisionError, np.arange, 0, 10, 0)
+        assert_raises(ZeroDivisionError, np.arange, 0.0, 10.0, 0.0)
+
+        # empty range
+        assert_raises(ZeroDivisionError, np.arange, 0, 0, 0)
+        assert_raises(ZeroDivisionError, np.arange, 0.0, 0.0, 0.0)
+
+
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475
     a = np.arange(5)
@@ -7270,10 +7292,6 @@ def test_npymath_real():
                 expected = npfun(z)
                 assert_allclose(got, expected)
 
-# Test when (stop - start) / step is NaN, ValueError is raised instead
-# of returning a zero-length array.
-def test_arange_nan():
-    assert_raises(ValueError, np.arange, 0, 1, np.nan)
 
 if __name__ == "__main__":
     run_module_suite()
