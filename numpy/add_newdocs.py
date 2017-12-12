@@ -823,24 +823,24 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
 add_newdoc('numpy.core.multiarray', 'empty_like',
     """
-    empty_like(a, dtype=None, order='K', subok=True)
+    empty_like(prototype, dtype=None, order='K', subok=True)
 
     Return a new array with the same shape and type as a given array.
 
     Parameters
     ----------
-    a : array_like
-        The shape and data-type of `a` define these same attributes of the
-        returned array.
+    prototype : array_like
+        The shape and data-type of `prototype` define these same attributes
+        of the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
 
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
-        'C' otherwise. 'K' means match the layout of ``a`` as closely
-        as possible.
+        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        as closely as possible.
 
         .. versionadded:: 1.6.0
     subok : bool, optional.
@@ -852,7 +852,7 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
     -------
     out : ndarray
         Array of uninitialized (arbitrary) data with the same
-        shape and type as `a`.
+        shape and type as `prototype`.
 
     See Also
     --------
