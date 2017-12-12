@@ -2935,17 +2935,25 @@ PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
  * Return 0 on success, -1 on failure. In case of failure, set a PyExc_Overflow
  * exception
  */
-static int _safe_ceil_to_intp(double value, npy_intp* ret)
+static npy_intp
+_arange_safe_ceil_to_intp(double value)
 {
     double ivalue;
 
     ivalue = npy_ceil(value);
-    if (ivalue < NPY_MIN_INTP || ivalue > NPY_MAX_INTP) {
+    /* condition inverted to handle NaN */
+    if (npy_isnan(ivalue)) {
+        PyErr_SetString(PyExc_ValueError,
+            "arange: cannot compute length");
+        return -1;
+    }
+    if (!(NPY_MIN_INTP <= ivalue && ivalue <= NPY_MAX_INTP)) {
+        PyErr_SetString(PyExc_OverflowError,
+                "arange: overflow while computing length");
         return -1;
     }
 
-    *ret = (npy_intp)ivalue;
-    return 0;
+    return (npy_intp)ivalue;
 }
 
 
@@ -2962,9 +2970,9 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     int ret;
     NPY_BEGIN_THREADS_DEF;
 
-    if (_safe_ceil_to_intp((stop - start)/step, &length)) {
-        PyErr_SetString(PyExc_OverflowError,
-                "arange: overflow while computing length");
+    length = _arange_safe_ceil_to_intp((stop - start)/step);
+    if (error_converting(length)) {
+        return NULL;
     }
 
     if (length <= 0) {
@@ -3053,10 +3061,9 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
             Py_DECREF(val);
             return -1;
         }
-        if (_safe_ceil_to_intp(value, &len)) {
+        len = _arange_safe_ceil_to_intp(value);
+        if (error_converting(len)) {
             Py_DECREF(val);
-            PyErr_SetString(PyExc_OverflowError,
-                    "arange: overflow while computing length");
             return -1;
         }
         value = PyComplex_ImagAsDouble(val);
@@ -3064,9 +3071,8 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         if (error_converting(value)) {
             return -1;
         }
-        if (_safe_ceil_to_intp(value, &tmp)) {
-            PyErr_SetString(PyExc_OverflowError,
-                    "arange: overflow while computing length");
+        tmp = _arange_safe_ceil_to_intp(value);
+        if (error_converting(tmp)) {
             return -1;
         }
         len = PyArray_MIN(len, tmp);
@@ -3077,9 +3083,8 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         if (error_converting(value)) {
             return -1;
         }
-        if (_safe_ceil_to_intp(value, &len)) {
-            PyErr_SetString(PyExc_OverflowError,
-                    "arange: overflow while computing length");
+        len = _arange_safe_ceil_to_intp(value);
+        if (error_converting(len)) {
             return -1;
         }
     }
