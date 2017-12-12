@@ -216,6 +216,11 @@ class TestConcatenator(object):
         assert_equal(actual, expected)
         assert_equal(type(actual), type(expected))
 
+    def test_0d(self):
+        assert_equal(r_[0, np.array(1), 2], [0, 1, 2])
+        assert_equal(r_[[0, 1, 2], np.array(3)], [0, 1, 2, 3])
+        assert_equal(r_[np.array(0), [1, 2, 3]], [0, 1, 2, 3])
+
 
 class TestNdenumerate(object):
     def test_basic(self):

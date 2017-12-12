@@ -5,7 +5,7 @@ import math
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, ScalarType, array, alltrue, cumprod, arange
+    asarray, ScalarType, array, alltrue, cumprod, arange, ndim
     )
 from numpy.core.numerictypes import find_common_type, issubdtype
 
@@ -312,21 +312,16 @@ class AxisConcatenator(object):
                 scalar = True
                 scalartypes.append(newobj.dtype)
             else:
-                newobj = item
-                if ndmin > 1:
-                    tempobj = array(newobj, copy=False, subok=True)
-                    newobj = array(newobj, copy=False, subok=True,
-                                   ndmin=ndmin)
-                    if trans1d != -1 and tempobj.ndim < ndmin:
-                        k2 = ndmin-tempobj.ndim
-                        if (trans1d < 0):
-                            trans1d += k2 + 1
-                        defaxes = list(range(ndmin))
-                        k1 = trans1d
-                        axes = defaxes[:k1] + defaxes[k2:] + \
-                               defaxes[k1:k2]
-                        newobj = newobj.transpose(axes)
-                    del tempobj
+                item_ndim = ndim(item)
+                newobj = array(item, copy=False, subok=True, ndmin=ndmin)
+                if trans1d != -1 and item_ndim < ndmin:
+                    k2 = ndmin - item_ndim
+                    if (trans1d < 0):
+                        trans1d += k2 + 1
+                    defaxes = list(range(ndmin))
+                    k1 = trans1d
+                    axes = defaxes[:k1] + defaxes[k2:] + defaxes[k1:k2]
+                    newobj = newobj.transpose(axes)
             objs.append(newobj)
             if not scalar and isinstance(newobj, _nx.ndarray):
                 arraytypes.append(newobj.dtype)
