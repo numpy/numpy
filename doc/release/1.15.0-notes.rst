@@ -44,7 +44,11 @@ New Features
 Improvements
 ============
 
+``MaskedArray.astype`` now is identical to ``ndarray.astype``
+-------------------------------------------------------------
+
+This means it takes all the same arguments, making more code written for
+ndarray work for masked array too.
 
 Changes
 =======
-
