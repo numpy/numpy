@@ -206,7 +206,7 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
  *                   to. The references written are new.
  * @param  result_n  The length of the result buffer
  *
- * @returns          The number of items in `result`, or -1 if an error occured.
+ * @returns          The number of items in `result`, or -1 if an error occurred.
  *                   The entries in `result` at and beyond this index should be
  *                   assumed to contain garbage, even if they were initialized
  *                   to NULL, so are not safe to Py_XDECREF. Use multi_DECREF to

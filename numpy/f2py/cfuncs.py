@@ -542,7 +542,7 @@ cppmacros[
     'ARRSIZE'] = '#define ARRSIZE(dims,rank) (_PyArray_multiply_list(dims,rank))'
 cppmacros['OLDPYNUM'] = """\
 #ifdef OLDPYNUM
-#error You need to intall Numeric Python version 13 or higher. Get it from http:/sourceforge.net/project/?group_id=1369
+#error You need to install Numeric Python version 13 or higher. Get it from http:/sourceforge.net/project/?group_id=1369
 #endif
 """
 ################# C functions ###############
