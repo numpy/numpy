@@ -7864,7 +7864,7 @@ def _pickle_warn(method):
     # NumPy 1.15.0, 2017-12-10
     warnings.warn(
         "np.ma.{method} is deprecated, use pickle.{method} instead"
-            .format(method),
+            .format(method=method),
         DeprecationWarning,
         stacklevel=3)
 
