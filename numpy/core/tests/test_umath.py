@@ -2202,6 +2202,7 @@ class TestChoose(object):
         a = np.array([True, True])
         assert_equal(np.choose(c, (a, 1)), np.array([1, 1]))
 
+
 class TestRationalFunctions(object):
     def test_lcm(self):
         self._test_lcm_inner(np.int16)
@@ -2282,6 +2283,23 @@ class TestRationalFunctions(object):
 
         assert_equal(np.gcd(a, b), 4*[Decimal('0.04')])
         assert_equal(np.lcm(a, b), 4*[Decimal('0.60')])
+
+    def test_float(self):
+        # not well-defined on float due to rounding errors
+        assert_raises(TypeError, np.gcd, 0.3, 0.4)
+        assert_raises(TypeError, np.lcm, 0.3, 0.4)
+
+    def test_builtin_long(self):
+        # sanity check that array coercion is alright for builtin longs
+        assert_equal(np.array(2**200).item(), 2**200)
+
+        # expressed as prime factors
+        a = np.array(2**100 * 3**5)
+        b = np.array([2**100 * 5**7, 2**50 * 3**10])
+        assert_equal(np.gcd(a, b), [2**100,               2**50 * 3**5])
+        assert_equal(np.lcm(a, b), [2**100 * 3**5 * 5**7, 2**100 * 3**10])
+
+        assert_equal(np.gcd(2**100, 3**100), 1)
 
 
 def is_longdouble_finfo_bogus():
