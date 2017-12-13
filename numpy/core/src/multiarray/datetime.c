@@ -1078,7 +1078,7 @@ get_datetime_units_factor(NPY_DATETIMEUNIT bigbase, NPY_DATETIMEUNIT littlebase)
         factor *= _datetime_factors[unit];
         /*
          * Detect overflow by disallowing the top 16 bits to be 1.
-         * That alows a margin of error much bigger than any of
+         * That allows a margin of error much bigger than any of
          * the datetime factors.
          */
         if (factor&0xff00000000000000ULL) {

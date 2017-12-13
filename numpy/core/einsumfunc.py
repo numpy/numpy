@@ -723,7 +723,7 @@ def einsum_path(*operands, **kwargs):
         memory_arg = memory_limit
 
     # Compute naive cost
-    # This isnt quite right, need to look into exactly how einsum does this
+    # This isn't quite right, need to look into exactly how einsum does this
     naive_cost = _compute_size_by_dict(indices, dimension_dict)
     indices_in_input = input_subscripts.replace(',', '')
     mult = max(len(input_list) - 1, 1)

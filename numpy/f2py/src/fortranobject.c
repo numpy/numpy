@@ -576,7 +576,7 @@ static void f2py_report_on_array_copy_fromany(void) {
  *
  * Description:
  * ------------
- * Provides array_from_pyobj function that returns a contigious array
+ * Provides array_from_pyobj function that returns a contiguous array
  * object with the given dimensions and required storage order, either
  * in row-major (C) or column-major (Fortran) order. The function
  * array_from_pyobj is very flexible about its Python object argument
@@ -745,8 +745,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
             return NULL;
         }
 	/*
-	printf("intent alignement=%d\n", F2PY_GET_ALIGNMENT(intent));
-	printf("alignement check=%d\n", F2PY_CHECK_ALIGNMENT(arr, intent));
+	printf("intent alignment=%d\n", F2PY_GET_ALIGNMENT(intent));
+	printf("alignment check=%d\n", F2PY_CHECK_ALIGNMENT(arr, intent));
 	int i;
 	for (i=1;i<=16;i++)
 	  printf("i=%d isaligned=%d\n", i, ARRAY_ISALIGNED(arr, i));

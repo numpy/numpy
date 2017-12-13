@@ -25,7 +25,7 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
  * the loop, such as when the iternext() function never calls
  * a function which could raise a Python exception.
  *
- * Ths skip_first_count parameter indicates how many elements need to be
+ * The skip_first_count parameter indicates how many elements need to be
  * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
  * when the 'assign_identity' parameter was NULL when calling
  * PyArray_ReduceWrapper.

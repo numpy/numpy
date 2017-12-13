@@ -569,7 +569,7 @@ def msvc_manifest_xml(maj, min):
                          (maj, min))
     # Don't be fooled, it looks like an XML, but it is not. In particular, it
     # should not have any space before starting, and its size should be
-    # divisible by 4, most likely for alignement constraints when the xml is
+    # divisible by 4, most likely for alignment constraints when the xml is
     # embedded in the binary...
     # This template was copied directly from the python 2.6 binary (using
     # strings.exe from mingw on python.exe).

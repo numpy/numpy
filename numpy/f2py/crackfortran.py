@@ -2707,7 +2707,7 @@ def analyzevars(block):
                 i = -1
                 ni = len(vars[n]['dimension'])
                 for d in vars[n]['dimension']:
-                    ddeps = []  # dependecies of 'd'
+                    ddeps = []  # dependencies of 'd'
                     ad = ''
                     pd = ''
                     if d not in vars:
@@ -3324,7 +3324,7 @@ if __name__ == "__main__":
             funcs.append(l)
     if not strictf77 and f77modulename and not skipemptyends:
         outmess("""\
-  Warning: You have specifyied module name for non Fortran 77 code
+  Warning: You have specified module name for non Fortran 77 code
   that should not need one (expect if you are scanning F90 code
   for non module blocks but then you should use flag -skipemptyends
   and also be sure that the files do not contain programs without program statement).

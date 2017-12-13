@@ -333,7 +333,7 @@ def getarrdims(a, var, verbose=0):
         ret['dims'] = ','.join(dim)
         ret['rank'] = repr(len(dim))
         ret['rank*[-1]'] = repr(len(dim) * [-1])[1:-1]
-        for i in range(len(dim)):  # solve dim for dependecies
+        for i in range(len(dim)):  # solve dim for dependencies
             v = []
             if dim[i] in depargs:
                 v = [dim[i]]
