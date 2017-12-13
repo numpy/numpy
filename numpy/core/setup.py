@@ -30,7 +30,7 @@ NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CH
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
-# configuration informations between extensions is not easy.
+# configuration information between extensions is not easy.
 # Using a pickled-based memoize does not work because config_cmd is an instance
 # method, which cPickle does not like.
 #
@@ -557,7 +557,7 @@ def configuration(parent_package='',top_path=None):
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
-            # Check wether we can use inttypes (C99) formats
+            # Check whether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers=['inttypes.h']):
                 moredefs.append(('NPY_USE_C99_FORMATS', 1))
 

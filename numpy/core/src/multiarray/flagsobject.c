@@ -88,7 +88,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 
 /*
  * Check whether the given array is stored contiguously
- * in memory. And update the passed in ap flags apropriately.
+ * in memory. And update the passed in ap flags appropriately.
  *
  * The traditional rule is that for an array to be flagged as C contiguous,
  * the following must hold:

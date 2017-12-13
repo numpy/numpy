@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #ifdef HAVE_XLOCALE_H
     /*
-     * the defines from xlocale.h are included in locale.h on some sytems;
+     * the defines from xlocale.h are included in locale.h on some systems;
      * see gh-8367
      */
     #include <xlocale.h>
