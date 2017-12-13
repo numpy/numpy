@@ -2308,7 +2308,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     .. versionadded:: 1.7.0
 
     For finite values, isclose uses the following equation to test whether
-    two floating point values are equivalent.
+    two floating point values are equivalent. **This equation is different**
+    **than the equation used for** `math.isclose`**.**
 
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
 
