@@ -465,15 +465,16 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
 add_newdoc('numpy.core', 'nested_iters',
     """
-    Create a ordered sequence of iterators. They are nested so that iterating
-    one will reset all the iterators after it in the sequence.
+    Create a outermost-first tuple of iterators. They are nested so that
+    advancing one will change the inner iterators to point at the new
+    element in the outer iterator.
 
     Parameters 
     ----------
     op : ndarray
         The array to iterate over.
 
-    axes :  tuple of tuples
+    axes : list of list of int
         Each item is used as an "op_axes" argument to an nditer
 
     flags, op_flags, op_dtypes, order, casting, buffersize (optional)
@@ -482,7 +483,7 @@ add_newdoc('numpy.core', 'nested_iters',
     Returns
     -------
     iters : tuple of nditer
-        An nditer for each item in `axes`
+        An nditer for each item in `axes`, outermost first
 
     See Also
     --------
