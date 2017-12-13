@@ -2276,6 +2276,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     relative difference (`rtol` * abs(`b`)) and the absolute difference
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
+    
+    .. warning:: The default `atol` is not appropriate for numbers that
+                 are much less than one.
 
     Parameters
     ----------
