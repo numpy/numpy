@@ -465,9 +465,9 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
 add_newdoc('numpy.core', 'nested_iters',
     """
-    Create a outermost-first tuple of iterators. They are nested so that
-    advancing one will change the inner iterators to point at the new
-    element in the outer iterator.
+    Create a tuple of `nditer`s which each iterate over different axes of an
+    array. They are ordered. Advancing one will change the subsequent
+    iterators to point at its new element.
 
     Parameters
     ----------
@@ -494,17 +494,32 @@ add_newdoc('numpy.core', 'nested_iters',
 
     Basic usage. Note how vals is a "flattened" version of
     [a[:, 0, :], a[:, 1, 0], a[:, 2, :]] since we specified
-    that the first iter's axes as [1]
+    the first iter's axes as [1]
 
     >>> a = np.arange(12).reshape(2, 3, 2)
-    >>> i, j = np.nested_iters(a, [[1], [0, 2]])
-    >>> vals = []
-    >>> for x in i:
-    ...    vals.append(y[()] for y in j])
-    >>> vals
-    [[0, 1, 6,  7],
-     [2, 3, 8,  9],
-     [4, 5, 10, 11]]
+    >>> i, j = np.nested_iters(a, [[1], [0, 2]], flags=["multi_index"])
+    >>> while not i.finished:
+    ...     print(i.multi_index)
+    ...     while not j.finished:
+    ...         print('', j.multi_index, j.value)
+    ...         j.iternext()
+    ....    i.iternext()
+
+    (0,)
+     (0, 0) 0
+     (0, 1) 1
+     (1, 0) 6
+     (1, 1) 7
+    (1,)
+     (0, 0) 2
+     (0, 1) 3
+     (1, 0) 8
+     (1, 1) 9
+    (2,)
+     (0, 0) 4
+     (0, 1) 5
+     (1, 0) 10
+     (1, 1) 11
     """)
 
 
