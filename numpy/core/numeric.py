@@ -2278,7 +2278,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     between `a` and `b`.
     
     .. warning:: The default `atol` is not appropriate for comparing numbers
-                 that are much less than one (see Notes).
+                 that are much smaller than one (see Notes).
 
     Parameters
     ----------
@@ -2312,13 +2312,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
 
-    Unlike the builtin `math.isclose`, the above equation is not symmetric
-    in `a` and `b`, so that `isclose(a, b)` might be different from
-    `isclose(b, a)` in some rare cases.
-    
-    **When comparing numbers that are significantly less than one,** `atol`
-    should be proportionately reduced to avoid false positives (see the above
-    equation).
+    Unlike the built-in `math.isclose`, the above equation is not symmetric
+    in `a` and `b` -- it assumes `b` is the reference value -- so that 
+    `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+    the default value of `atol` is not zero, and is targeted at numbers
+    of order unity; especially for numbers significantly smaller than one,
+    it can give false positives if not adjusted appropriately.
 
     Examples
     --------
