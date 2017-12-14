@@ -469,10 +469,10 @@ add_newdoc('numpy.core', 'nested_iters',
     advancing one will change the inner iterators to point at the new
     element in the outer iterator.
 
-    Parameters 
+    Parameters
     ----------
-    op : ndarray
-        The array to iterate over.
+    op : ndarray or sequence of array_like
+        The array(s) to iterate over.
 
     axes : list of list of int
         Each item is used as an "op_axes" argument to an nditer
@@ -492,16 +492,19 @@ add_newdoc('numpy.core', 'nested_iters',
     Examples
     --------
 
-    Basic usage
+    Basic usage. Note how vals is a "flattened" version of
+    [a[:, 0, :], a[:, 1, 0], a[:, 2, :]] since we specified
+    that the first iter's axes as [1]
 
     >>> a = np.arange(12).reshape(2, 3, 2)
-    >>> i, j = np.nested_iters(a, [[0], [1, 2]])
+    >>> i, j = np.nested_iters(a, [[1], [0, 2]])
     >>> vals = []
     >>> for x in i:
-    ...    vals.append([y[()] for y in j])
+    ...    vals.append(y[()] for y in j])
     >>> vals
-    [[0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11], 
-     [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]]
+    [[0, 1, 6,  7],
+     [2, 3, 8,  9],
+     [4, 5, 10, 11]]
     """)
 
 
