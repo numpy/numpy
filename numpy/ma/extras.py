@@ -19,7 +19,7 @@ __all__ = [
     'hsplit', 'hstack', 'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
     'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
-    'setdiff1d', 'setxor1d', 'unique', 'union1d', 'vander', 'vstack',
+    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
     ]
 
 import itertools
@@ -357,6 +357,7 @@ vstack = row_stack = _fromnxfunction_seq('vstack')
 hstack = _fromnxfunction_seq('hstack')
 column_stack = _fromnxfunction_seq('column_stack')
 dstack = _fromnxfunction_seq('dstack')
+stack = _fromnxfunction_seq('stack')
 
 hsplit = _fromnxfunction_single('hsplit')
 
