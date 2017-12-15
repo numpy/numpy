@@ -41,7 +41,9 @@ def add_newdoc(place, name, doc):
 
 add_newdoc('numpy.core.umath', 'absolute',
     """
-    Calculate the absolute value element-wise. Equivalent to ``numpy.abs``.
+    Calculate the absolute value element-wise.
+
+    ``np.abs`` is a shorthand for this function.
 
     Parameters
     ----------
