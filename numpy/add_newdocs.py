@@ -465,7 +465,7 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
 add_newdoc('numpy.core', 'nested_iters',
     """
-    Create nditers for use in nested loops
+    Create `nditer` objects for use in nested loops
 
     Create a tuple of nditers which iterate in nested loops over different
     axes of the op argument. The first iterator is used in the outermost loop,
