@@ -1942,11 +1942,6 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    if (self->open == 0) {
-        PyErr_SetString(PyExc_RuntimeError, "Iterator closed");
-        return NULL;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
