@@ -307,8 +307,8 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
         }
 
         /* Check the casting rule */
-        if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
-                                                     casting)) {
+        if (unit != NPY_FR_ERROR &&
+                !can_cast_datetime64_units(bestunit, unit, casting)) {
             PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
                          "'%s' using casting rule %s",
                          str, _datetime_strings[unit],
@@ -347,8 +347,8 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
         }
 
         /* Check the casting rule */
-        if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
-                                                     casting)) {
+        if (unit != NPY_FR_ERROR &&
+                !can_cast_datetime64_units(bestunit, unit, casting)) {
             PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
                          "'%s' using casting rule %s",
                          str, _datetime_strings[unit],
@@ -730,8 +730,8 @@ finish:
     }
 
     /* Check the casting rule */
-    if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
-                                                 casting)) {
+    if (unit != NPY_FR_ERROR &&
+            !can_cast_datetime64_units(bestunit, unit, casting)) {
         PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
                      "'%s' using casting rule %s",
                      str, _datetime_strings[unit],
@@ -760,14 +760,12 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
 {
     int len = 0;
 
-    /* If no unit is provided, return the maximum length */
-    if (base == -1) {
-        return NPY_DATETIME_MAX_ISO8601_STRLEN;
-    }
-
     switch (base) {
-        /* Generic units can only be used to represent NaT */
+        case NPY_FR_ERROR:
+            /* If no unit is provided, return the maximum length */
+            return NPY_DATETIME_MAX_ISO8601_STRLEN;
         case NPY_FR_GENERIC:
+            /* Generic units can only be used to represent NaT */
             return 4;
         case NPY_FR_as:
             len += 3;  /* "###" */
@@ -928,7 +926,7 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* Automatically detect a good unit */
-    if (base == -1) {
+    if (base == NPY_FR_ERROR) {
         base = lossless_unit_from_datetimestruct(dts);
         /*
          * If there's a timezone, use at least minutes precision,
@@ -1406,20 +1404,24 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             goto fail;
         }
 
-        /* unit == -1 means to autodetect the unit from the datetime data */
+        /*
+         * unit == NPY_FR_ERROR means to autodetect the unit
+         * from the datetime data
+         * */
         if (strcmp(str, "auto") == 0) {
-            unit = -1;
+            unit = NPY_FR_ERROR;
         }
         else {
             unit = parse_datetime_unit_from_string(str, len, NULL);
-            if (unit == -1) {
+            if (unit == NPY_FR_ERROR) {
                 Py_DECREF(strobj);
                 goto fail;
             }
         }
         Py_DECREF(strobj);
 
-        if (unit != -1 && !can_cast_datetime64_units(meta->base, unit, casting)) {
+        if (unit != NPY_FR_ERROR &&
+                !can_cast_datetime64_units(meta->base, unit, casting)) {
             PyErr_Format(PyExc_TypeError, "Cannot create a datetime "
                         "string as units '%s' from a NumPy datetime "
                         "with units '%s' according to the rule %s",

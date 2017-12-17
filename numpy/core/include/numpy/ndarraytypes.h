@@ -235,29 +235,34 @@ typedef enum {
  *   TIMEZONE: 5
  *   NULL TERMINATOR: 1
  */
-#define NPY_DATETIME_MAX_ISO8601_STRLEN (21+3*5+1+3*6+6+1)
+#define NPY_DATETIME_MAX_ISO8601_STRLEN (21 + 3*5 + 1 + 3*6 + 6 + 1)
 
+/* The FR in the unit names stands for frequency */
 typedef enum {
-        NPY_FR_Y = 0,  /* Years */
-        NPY_FR_M = 1,  /* Months */
-        NPY_FR_W = 2,  /* Weeks */
+        /* Force signed enum type, must be -1 for code compatibility */
+        NPY_FR_ERROR = -1,      /* error or undetermined */
+
+        /* Start of valid units */
+        NPY_FR_Y = 0,           /* Years */
+        NPY_FR_M = 1,           /* Months */
+        NPY_FR_W = 2,           /* Weeks */
         /* Gap where 1.6 NPY_FR_B (value 3) was */
-        NPY_FR_D = 4,  /* Days */
-        NPY_FR_h = 5,  /* hours */
-        NPY_FR_m = 6,  /* minutes */
-        NPY_FR_s = 7,  /* seconds */
-        NPY_FR_ms = 8, /* milliseconds */
-        NPY_FR_us = 9, /* microseconds */
-        NPY_FR_ns = 10,/* nanoseconds */
-        NPY_FR_ps = 11,/* picoseconds */
-        NPY_FR_fs = 12,/* femtoseconds */
-        NPY_FR_as = 13,/* attoseconds */
-        NPY_FR_GENERIC = 14 /* Generic, unbound units, can convert to anything */
+        NPY_FR_D = 4,           /* Days */
+        NPY_FR_h = 5,           /* hours */
+        NPY_FR_m = 6,           /* minutes */
+        NPY_FR_s = 7,           /* seconds */
+        NPY_FR_ms = 8,          /* milliseconds */
+        NPY_FR_us = 9,          /* microseconds */
+        NPY_FR_ns = 10,         /* nanoseconds */
+        NPY_FR_ps = 11,         /* picoseconds */
+        NPY_FR_fs = 12,         /* femtoseconds */
+        NPY_FR_as = 13,         /* attoseconds */
+        NPY_FR_GENERIC = 14     /* unbound units, can convert to anything */
 } NPY_DATETIMEUNIT;
 
 /*
  * NOTE: With the NPY_FR_B gap for 1.6 ABI compatibility, NPY_DATETIME_NUMUNITS
- *       is technically one more than the actual number of units.
+ * is technically one more than the actual number of units.
  */
 #define NPY_DATETIME_NUMUNITS (NPY_FR_GENERIC + 1)
 #define NPY_DATETIME_DEFAULTUNIT NPY_FR_GENERIC
