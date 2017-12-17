@@ -19,6 +19,7 @@ pmip
 .sw[nop]
 *.tmp
 *.vim
+.vscode
 tags
 cscope.out
 # gnu global
