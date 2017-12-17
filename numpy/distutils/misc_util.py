@@ -2287,7 +2287,11 @@ def generate_config_py(target):
 import os
 extra_dll_dir = os.path.join(os.path.dirname(__file__), 'extra-dll')
 if os.path.isdir(extra_dll_dir):
-    os.environ["PATH"] += os.pathsep + extra_dll_dir
+    import ctypes
+    for dll in os.listdir(extra_dll_dir):
+        if not dll.endswith('.dll'):
+            continue
+        ctypes.CDLL(os.path.join(extra_dll_dir, dll))
 """)
 
     for k, i in system_info.saved_results.items():
