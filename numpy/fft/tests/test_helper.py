@@ -41,18 +41,16 @@ class TestFFTShift(object):
         assert_array_almost_equal(fft.ifftshift(shifted), freqs)
 
     def test_uneven_dims(self):
-        """ Test input with uneven dimension lengths """
+        """ Test 2D input, which has uneven dimension sizes """
         freqs = [
             [0, 1],
             [2, 3],
-            [4, 5],
-            [6, 7]
+            [4, 5]
         ]
 
         # shift in dimension 0
         shift_dim0 = [
             [4, 5],
-            [6, 7],
             [0, 1],
             [2, 3]
         ]
@@ -65,8 +63,7 @@ class TestFFTShift(object):
         shift_dim1 = [
             [1, 0],
             [3, 2],
-            [5, 4],
-            [7, 6]
+            [5, 4]
         ]
         assert_array_almost_equal(fft.fftshift(freqs, axes=1), shift_dim1)
         assert_array_almost_equal(fft.ifftshift(shift_dim1, axes=1), freqs)
@@ -74,16 +71,15 @@ class TestFFTShift(object):
         # shift in both dimensions
         shift_dim_both = [
             [5, 4],
-            [7, 6],
             [1, 0],
-            [3, 2],
+            [3, 2]
         ]
         assert_array_almost_equal(fft.fftshift(freqs, axes=(0, 1)), shift_dim_both)
         assert_array_almost_equal(fft.ifftshift(shift_dim_both, axes=(0, 1)), freqs)
         assert_array_almost_equal(fft.fftshift(freqs, axes=[0, 1]), shift_dim_both)
         assert_array_almost_equal(fft.ifftshift(shift_dim_both, axes=[0, 1]), freqs)
 
-        # defaults shift in all dimentsions
+        # axes=None (default) shift in all dimensions
         assert_array_almost_equal(fft.fftshift(freqs, axes=None), shift_dim_both)
         assert_array_almost_equal(fft.ifftshift(shift_dim_both, axes=None), freqs)
         assert_array_almost_equal(fft.fftshift(freqs), shift_dim_both)
