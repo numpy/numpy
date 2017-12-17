@@ -414,20 +414,26 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataC, npy_intp *out_stridesC);
 
 /*
- * Return number of elements that must be peeled from
- * the start of 'addr' with 'nvals' elements of size 'esize'
- * in order to reach 'alignment'.
- * alignment must be a power of two.
- * see npy_blocked_end for an example
+ * Return number of elements that must be peeled from the start of 'addr' with
+ * 'nvals' elements of size 'esize' in order to reach blockable alignment.
+ * The required alignment in bytes is passed as the 'alignment' argument and
+ * must be a power of two. This function is used to prepare an array for
+ * blocking. See the 'npy_blocked_end' function documentation below for an
+ * example of how this function is used.
  */
-static NPY_INLINE npy_uintp
+static NPY_INLINE npy_intp
 npy_aligned_block_offset(const void * addr, const npy_uintp esize,
-                         const npy_uintp alignment, const npy_uintp nvals)
+                         const npy_uintp alignment, const npy_intp nvals)
 {
-    const npy_uintp offset = (npy_uintp)addr & (alignment - 1);
-    npy_uintp peel = offset ? (alignment - offset) / esize : 0;
-    peel = nvals < peel ? nvals : peel;
-    return peel;
+    npy_uintp offset, peel;
+
+    /* check that nval can convert to unsigned */
+    assert(nvals >= 0);
+    offset = (npy_uintp)addr & (alignment - 1);
+    peel = offset ? (alignment - offset) / esize : 0;
+    peel = (peel <= (npy_uintp)nvals) ? peel : (npy_uintp)nvals;
+    /* peel will fit in npy_intp because it is <= nvals */
+    return (npy_intp)peel;
 }
 
 /*
@@ -450,11 +456,20 @@ npy_aligned_block_offset(const void * addr, const npy_uintp esize,
  * for(; i < n; i++)
  *   <scalar-op>
  */
-static NPY_INLINE npy_uintp
-npy_blocked_end(const npy_uintp offset, const npy_uintp esize,
-                const npy_uintp vsz, const npy_uintp nvals)
+static NPY_INLINE npy_intp
+npy_blocked_end(const npy_intp offset, const npy_uintp esize,
+                const npy_uintp vsz, const npy_intp nvals)
 {
-    return nvals - offset - (nvals - offset) % (vsz / esize);
+    npy_intp ndiff = nvals - offset;
+
+    assert(offset >= 0);
+    assert(nvals >= 0);
+    assert(ndiff >= 0);
+    /*
+     * the result fits in npy_intp because it is <= ndiff.  Note that
+     * unsigned op signed is unsigned when both are of the same conversion rank
+     */
+    return (npy_intp)(ndiff - ndiff % (vsz / esize));
 }
 
 
