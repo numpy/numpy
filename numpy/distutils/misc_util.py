@@ -2284,10 +2284,25 @@ def generate_config_py(target):
 
     # For gfortran+msvc combination, extra shared libraries may exist
     f.write("""
+
 import os
+import sys
+
 extra_dll_dir = os.path.join(os.path.dirname(__file__), 'extra-dll')
-if os.path.isdir(extra_dll_dir):
-    os.environ["PATH"] += os.pathsep + extra_dll_dir
+
+if os.path.isdir(extra_dll_dir) and sys.platform == 'win32':
+    try:
+        from ctypes import windll, c_wchar_p
+        _AddDllDirectory = windll.kernel32.AddDllDirectory
+        _AddDllDirectory.argtypes = [c_wchar_p]
+        # Needed to initialize AddDllDirectory modifications
+        windll.kernel32.SetDefaultDllDirectories(0x1000)
+    except AttributeError:
+        def _AddDllDirectory(dll_directory):
+            os.environ["PATH"] += os.pathsep + dll_directory
+
+    _AddDllDirectory(extra_dll_dir)
+
 """)
 
     for k, i in system_info.saved_results.items():
