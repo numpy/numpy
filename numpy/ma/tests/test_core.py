@@ -4982,6 +4982,21 @@ class TestMaskedConstant(object):
         assert_not_equal(repr(a), 'masked')
 
 
+class TestMaskedWhereAliases(object):
+
+    # TODO: Test masked_object, masked_equal, ...
+
+    def test_masked_values(self):
+        res = masked_values(np.array([-32768.0]), np.int16(-32768))
+        assert_equal(res.mask, [True])
+
+        res = masked_values(np.inf, np.inf)
+        assert_equal(res.mask, True)
+
+        res = np.ma.masked_values(np.inf, -np.inf)
+        assert_equal(res.mask, False)
+
+
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
