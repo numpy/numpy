@@ -30,7 +30,14 @@ else:
     import cPickle as pickle
     from future_builtins import map
 
-loads = pickle.loads
+
+def loads(*args, **kwargs):
+    # NumPy 1.15.0, 2017-12-10
+    warnings.warn(
+        "np.loads is deprecated, use pickle.loads instead",
+        DeprecationWarning, stacklevel=2)
+    return pickle.loads(*args, **kwargs)
+
 
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
@@ -759,7 +766,7 @@ def _getconv(dtype):
     else:
         return asstr
 
-# amount of lines loadtxt reads in one chunk, can be overriden for testing
+# amount of lines loadtxt reads in one chunk, can be overridden for testing
 _loadtxt_chunksize = 50000
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
@@ -1535,7 +1542,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
         the first `skip_header` lines.  This line can optionally be proceeded
-        by a comment delimeter. If `names` is a sequence or a single-string of
+        by a comment delimiter. If `names` is a sequence or a single-string of
         comma-separated names, the names will be used to define the field names
         in a structured dtype. If `names` is None, the names of the dtype
         fields will be used, if any.

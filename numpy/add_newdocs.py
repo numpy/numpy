@@ -463,6 +463,67 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
     """))
 
+add_newdoc('numpy.core', 'nested_iters',
+    """
+    Create nditers for use in nested loops
+
+    Create a tuple of `nditer` objects which iterate in nested loops over
+    different axes of the op argument. The first iterator is used in the
+    outermost loop, the last in the innermost loop. Advancing one will change
+    the subsequent iterators to point at its new element.
+
+    Parameters
+    ----------
+    op : ndarray or sequence of array_like
+        The array(s) to iterate over.
+
+    axes : list of list of int
+        Each item is used as an "op_axes" argument to an nditer
+
+    flags, op_flags, op_dtypes, order, casting, buffersize (optional)
+        See `nditer` parameters of the same name
+
+    Returns
+    -------
+    iters : tuple of nditer
+        An nditer for each item in `axes`, outermost first
+
+    See Also
+    --------
+    nditer
+
+    Examples
+    --------
+
+    Basic usage. Note how y is the "flattened" version of
+    [a[:, 0, :], a[:, 1, 0], a[:, 2, :]] since we specified
+    the first iter's axes as [1]
+
+    >>> a = np.arange(12).reshape(2, 3, 2)
+    >>> i, j = np.nested_iters(a, [[1], [0, 2]], flags=["multi_index"])
+    >>> for x in i:
+    ...      print(i.multi_index)
+    ...      for y in j:
+    ...          print('', j.multi_index, y)
+
+    (0,)
+     (0, 0) 0
+     (0, 1) 1
+     (1, 0) 6
+     (1, 1) 7
+    (1,)
+     (0, 0) 2
+     (0, 1) 3
+     (1, 0) 8
+     (1, 1) 9
+    (2,)
+     (0, 0) 4
+     (0, 1) 5
+     (1, 0) 10
+     (1, 1) 11
+
+    """)
+
 
 
 ###############################################################################
@@ -823,24 +884,24 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
 add_newdoc('numpy.core.multiarray', 'empty_like',
     """
-    empty_like(a, dtype=None, order='K', subok=True)
+    empty_like(prototype, dtype=None, order='K', subok=True)
 
     Return a new array with the same shape and type as a given array.
 
     Parameters
     ----------
-    a : array_like
-        The shape and data-type of `a` define these same attributes of the
-        returned array.
+    prototype : array_like
+        The shape and data-type of `prototype` define these same attributes
+        of the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
 
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
-        'C' otherwise. 'K' means match the layout of ``a`` as closely
-        as possible.
+        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        as closely as possible.
 
         .. versionadded:: 1.6.0
     subok : bool, optional.
@@ -852,7 +913,7 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
     -------
     out : ndarray
         Array of uninitialized (arbitrary) data with the same
-        shape and type as `a`.
+        shape and type as `prototype`.
 
     See Also
     --------

@@ -85,11 +85,11 @@ underlying memory it is looking at:
 
 The common situations in which you need to change byte ordering are:
 
-#. Your data and dtype endianess don't match, and you want to change
+#. Your data and dtype endianness don't match, and you want to change
    the dtype so that it matches the data.
-#. Your data and dtype endianess don't match, and you want to swap the
+#. Your data and dtype endianness don't match, and you want to swap the
    data so that they match the dtype
-#. Your data and dtype endianess match, but you want the data swapped
+#. Your data and dtype endianness match, but you want the data swapped
    and the dtype to reflect this
 
 Data and dtype endianness don't match, change dtype to match data

@@ -1624,7 +1624,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
 
     # Make sure the input dtype is valid.
     dtype = make_mask_descr(dtype)
-    
+
     # legacy boolean special case: "existence of fields implies true"
     if isinstance(m, ndarray) and m.dtype.fields and dtype == np.bool_:
         return np.ones(m.shape, dtype=dtype)
@@ -2978,11 +2978,30 @@ class MaskedArray(ndarray):
             # heuristic it's not bad.) In all other cases, we make a copy of
             # the mask, so that future modifications to 'self' do not end up
             # side-effecting 'obj' as well.
-            if (obj.__array_interface__["data"][0]
+            if (_mask is not nomask and obj.__array_interface__["data"][0]
                     != self.__array_interface__["data"][0]):
-                _mask = _mask.copy()
+                # We should make a copy. But we could get here via astype,
+                # in which case the mask might need a new dtype as well
+                # (e.g., changing to or from a structured dtype), and the
+                # order could have changed. So, change the mask type if
+                # needed and use astype instead of copy.
+                if self.dtype == obj.dtype:
+                    _mask_dtype = _mask.dtype
+                else:
+                    _mask_dtype = make_mask_descr(self.dtype)
+
+                if self.flags.c_contiguous:
+                    order = "C"
+                elif self.flags.f_contiguous:
+                    order = "F"
+                else:
+                    order = "K"
+
+                _mask = _mask.astype(_mask_dtype, order)
+
         else:
             _mask = nomask
+
         self._mask = _mask
         # Finalize the mask
         if self._mask is not nomask:
@@ -3139,45 +3158,6 @@ class MaskedArray(ndarray):
                 output.fill_value = fill_value
         return output
     view.__doc__ = ndarray.view.__doc__
-
-    def astype(self, newtype):
-        """
-        Returns a copy of the MaskedArray cast to given newtype.
-
-        Returns
-        -------
-        output : MaskedArray
-            A copy of self cast to input newtype.
-            The returned record shape matches self.shape.
-
-        Examples
-        --------
-        >>> x = np.ma.array([[1,2,3.1],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1.0 -- 3.1]
-         [-- 5.0 --]
-         [7.0 -- 9.0]]
-        >>> print(x.astype(int32))
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
-
-        """
-        newtype = np.dtype(newtype)
-        newmasktype = make_mask_descr(newtype)
-
-        output = self._data.astype(newtype).view(type(self))
-        output._update_from(self)
-
-        if self._mask is nomask:
-            output._mask = nomask
-        else:
-            output._mask = self._mask.astype(newmasktype)
-
-        # Don't check _fill_value if it's None, that'll speed things up
-        if self._fill_value is not None:
-            output._fill_value = _check_fill_value(self._fill_value, newtype)
-        return output
 
     def __getitem__(self, indx):
         """
@@ -4303,7 +4283,7 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python int.')
         return int(self.item())
-    
+
     def __long__(self):
         """
         Convert to long.
@@ -4314,7 +4294,7 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python long.')
         return long(self.item())
-      
+
 
     def get_imag(self):
         """
@@ -7859,6 +7839,16 @@ def asanyarray(a, dtype=None):
 ##############################################################################
 #                               Pickling                                     #
 ##############################################################################
+
+def _pickle_warn(method):
+    # NumPy 1.15.0, 2017-12-10
+    warnings.warn(
+        "np.ma.{method} is deprecated, use pickle.{method} instead"
+            .format(method=method),
+        DeprecationWarning,
+        stacklevel=3)
+
+
 def dump(a, F):
     """
     Pickle a masked array to a file.
@@ -7873,6 +7863,7 @@ def dump(a, F):
         The file to pickle `a` to. If a string, the full path to the file.
 
     """
+    _pickle_warn('dump')
     if not hasattr(F, 'readline'):
         with open(F, 'w') as F:
             pickle.dump(a, F)
@@ -7893,6 +7884,7 @@ def dumps(a):
         returned.
 
     """
+    _pickle_warn('dumps')
     return pickle.dumps(a)
 
 
@@ -7916,6 +7908,7 @@ def load(F):
     the NumPy binary .npy format.
 
     """
+    _pickle_warn('load')
     if not hasattr(F, 'readline'):
         with open(F, 'r') as F:
             return pickle.load(F)
@@ -7939,6 +7932,7 @@ def loads(strg):
     dumps : Return a string corresponding to the pickling of a masked array.
 
     """
+    _pickle_warn('loads')
     return pickle.loads(strg)
 
 

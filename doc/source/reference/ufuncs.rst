@@ -550,6 +550,8 @@ Math operations
     square
     cbrt
     reciprocal
+    gcd
+    lcm
 
 .. tip::
 
