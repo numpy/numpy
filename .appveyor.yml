@@ -17,6 +17,7 @@ environment:
       APPVEYOR_SAVE_CACHE_ON_ERROR: true
       APPVEYOR_SKIP_FINALIZE_ON_EXIT: true
       TEST_TIMEOUT: 1000
+      NPY_NUM_BUILD_JOBS: 4
 
   matrix:
     - PYTHON: C:\Python36
@@ -39,29 +40,6 @@ environment:
       PYTHON_ARCH: 64
       TEST_MODE: full
 
-    - PYTHON: C:\Python27
-      PYTHON_VERSION: 2.7
-      PYTHON_ARCH: 32
-      SKIP_NOTAG: true
-      TEST_MODE: full
-
-    - PYTHON: C:\Python34
-      PYTHON_VERSION: 3.4
-      PYTHON_ARCH: 32
-      SKIP_NOTAG: true
-      TEST_MODE: full
-
-    - PYTHON: C:\Python35-x64
-      PYTHON_VERSION: 3.5
-      PYTHON_ARCH: 64
-      SKIP_NOTAG: true
-      TEST_MODE: full
-
-    - PYTHON: C:\Python35
-      PYTHON_VERSION: 3.5
-      PYTHON_ARCH: 32
-      SKIP_NOTAG: true
-      TEST_MODE: full
 
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
@@ -77,15 +55,8 @@ init:
           Write-Host "There are newer queued builds for this pull request, skipping build."
           Exit-AppveyorBuild
         }
-  - ps: |
-      If (($env:SKIP_NOTAG -eq "true") -and ($env:APPVEYOR_REPO_TAG -ne "true")) {
-          Write-Host "Skipping build, not at a tag."
-          Exit-AppveyorBuild
-      }
 
 install:
-  # Show size of cache
-  - C:\cygwin\bin\du -hs "%LOCALAPPDATA%\pip\Cache"
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
   # the parent CMD process).
@@ -130,43 +101,25 @@ install:
       ls $destination
 
   # Upgrade to the latest pip.
-  - '%CMD_IN_ENV% python -m pip install -U pip setuptools wheel'
+  - 'python -m pip install -U pip setuptools wheel'
 
   # Install the numpy test dependencies.
-  - '%CMD_IN_ENV% pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'
+  - 'pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'
 
 build_script:
   # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
   # We then use the import library from the DLL to compile with MSVC
   - ps: |
-      $PYTHON_ARCH = $env:PYTHON_ARCH
-      If ($PYTHON_ARCH -eq 32) {
-          $MINGW = $env:MINGW_32 
+      If ($env:PYTHON_ARCH -eq 32) {
+          $env:Path += ";$env:MINGW_32"
       } Else {
-          $MINGW = $env:MINGW_64
+          $env:Path += ";$env:MINGW_64"
       }
-      $env:Path += ";$MINGW"
-      $env:NPY_NUM_BUILD_JOBS = "4"
-      mkdir dist
-      pip wheel -v -v -v --wheel-dir=dist .
 
-      # For each wheel that pip has placed in the "dist" directory
-      # First, upload the wheel to the "artifacts" tab and then
-      # install the wheel. If we have only built numpy (as is the case here),
-      # then there will be one wheel to install.
-      
-      # This method is more representative of what will be distributed,
-      # because it actually tests what the built wheels will be rather than
-      # what 'setup.py install' will do and at it uploads the wheels so that
-      # they can be inspected.
-
-      ls dist -r | Foreach-Object {
-          appveyor PushArtifact $_.FullName
-          pip install $_.FullName
-      }
+      pip install -e .
 
 test_script:
-  - python runtests.py -v -n -m %TEST_MODE%
+  - pytest -n3
 
 after_build:
   # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.
