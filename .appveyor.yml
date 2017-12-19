@@ -68,36 +68,6 @@ install:
      python -c "import sys,platform,struct;
      print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
 
-  # Install "openblas.a" to PYTHON\lib
-  # Library provided by Matthew Brett at https://github.com/matthew-brett/build-openblas
-  - ps: |
-      $PYTHON_ARCH = $env:PYTHON_ARCH
-      $PYTHON = $env:PYTHON
-      If ($PYTHON_ARCH -eq 32) {
-          $OPENBLAS = $env:OPENBLAS_32
-      } Else {
-          $OPENBLAS = $env:OPENBLAS_64
-      }
-      $clnt = new-object System.Net.WebClient
-      $file = "$(New-TemporaryFile).zip"
-      $tmpdir = New-TemporaryFile | %{ rm $_; mkdir $_ }
-      $destination = "$PYTHON\lib\openblas.a"
-
-      echo $file
-      echo $tmpdir
-      echo $OPENBLAS
-
-      $clnt.DownloadFile($OPENBLAS,$file)
-      Get-FileHash $file | Format-List
-
-      Expand-Archive $file $tmpdir      
-
-      rm $tmpdir\$PYTHON_ARCH\lib\*.dll.a
-      $lib = ls $tmpdir\$PYTHON_ARCH\lib\*.a | ForEach { ls $_ } | Select-Object -first 1
-      echo $lib
-
-      cp $lib $destination
-      ls $destination
 
   # Upgrade to the latest pip.
   - 'python -m pip install -U pip setuptools wheel'
