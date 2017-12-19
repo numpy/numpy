@@ -4982,6 +4982,21 @@ class TestMaskedConstant(object):
         assert_not_equal(repr(a), 'masked')
 
 
+class TestMaskedWhereAliases(object):
+
+    # TODO: Test masked_object, masked_equal, ...
+
+    def test_masked_values(self):
+        res = masked_values(np.array([-32768.0]), np.int16(-32768))
+        assert_equal(res.mask, [True])
+
+        res = masked_values(np.inf, np.inf)
+        assert_equal(res.mask, True)
+
+        res = np.ma.masked_values(np.inf, -np.inf)
+        assert_equal(res.mask, False)
+
+
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
@@ -5037,10 +5052,37 @@ def test_ufunc_with_output():
     y = np.add(x, 1., out=x)
     assert_(y is x)
 
+
 def test_astype():
     descr = [('v', int, 3), ('x', [('y', float)])]
-    x = array(([1, 2, 3], (1.0,)), dtype=descr)
-    assert_equal(x, x.astype(descr))
+    x = array([
+        [([1, 2, 3], (1.0,)),  ([1, 2, 3], (2.0,))],
+        [([1, 2, 3], (3.0,)),  ([1, 2, 3], (4.0,))]], dtype=descr)
+    x[0]['v'][0] = np.ma.masked
+
+    x_a = x.astype(descr)
+    assert x_a.dtype.names == np.dtype(descr).names
+    assert x_a.mask.dtype.names == np.dtype(descr).names
+    assert_equal(x, x_a)
+
+    assert_(x is x.astype(x.dtype, copy=False))
+    assert_equal(type(x.astype(x.dtype, subok=False)), np.ndarray)
+
+    x_f = x.astype(x.dtype, order='F')
+    assert_(x_f.flags.f_contiguous)
+    assert_(x_f.mask.flags.f_contiguous)
+
+    # Also test the same indirectly, via np.array
+    x_a2 = np.array(x, dtype=descr, subok=True)
+    assert x_a2.dtype.names == np.dtype(descr).names
+    assert x_a2.mask.dtype.names == np.dtype(descr).names
+    assert_equal(x, x_a2)
+
+    assert_(x is np.array(x, dtype=descr, copy=False, subok=True))
+
+    x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
+    assert_(x_f2.flags.f_contiguous)
+    assert_(x_f2.mask.flags.f_contiguous)
 
 
 ###############################################################################

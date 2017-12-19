@@ -1643,7 +1643,7 @@ class TestMethods(object):
         arr = np.array([0, datetime.now(), 1], dtype=object)
         for kind in ['q', 'm', 'h']:
             assert_raises(TypeError, arr.sort, kind=kind)
-        #gh-3879 
+        #gh-3879
         class Raiser(object):
             def raises_anything(*args, **kwargs):
                 raise TypeError("SOMETHING ERRORED")
@@ -3434,10 +3434,11 @@ class TestPickling(object):
             assert_equal(a, pickle.loads(a.dumps()), err_msg="%r" % a)
 
     def _loads(self, obj):
+        import pickle
         if sys.version_info[0] >= 3:
-            return np.loads(obj, encoding='latin1')
+            return pickle.loads(obj, encoding='latin1')
         else:
-            return np.loads(obj)
+            return pickle.loads(obj)
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
@@ -6954,7 +6955,7 @@ class TestArrayPriority(object):
         op.ge, op.lt, op.le, op.ne, op.eq
         ]
 
-    # See #7949. Dont use "/" operator With -3 switch, since python reports it
+    # See #7949. Don't use "/" operator With -3 switch, since python reports it
     # as a DeprecationWarning
     if sys.version_info[0] < 3 and not sys.py3kwarning:
         binary_ops.append(op.div)
@@ -7086,21 +7087,14 @@ class TestFormat(object):
     def test_1d_format(self):
         # until gh-5543, ensure that the behaviour matches what it used to be
         a = np.array([np.pi])
-
-        def ret_and_exc(f, *args, **kwargs):
-            try:
-                return f(*args, **kwargs), None
-            except Exception as e:
-                # exceptions don't compare equal, so return type and args
-                # which do
-                return None, (type(e), e.args)
-
-        # Could switch on python version here, but all we care about is
-        # that the behaviour hasn't changed
-        assert_equal(
-            ret_and_exc(object.__format__, a, '30'),
-            ret_and_exc('{:30}'.format, a)
-        )
+        if sys.version_info[:2] >= (3, 4):
+            assert_raises(TypeError, '{:30}'.format, a)
+        else:
+            with suppress_warnings() as sup:
+                sup.filter(PendingDeprecationWarning)
+                res = '{:30}'.format(a)
+                dst = object.__format__(a, '30')
+                assert_equal(res, dst)
 
 
 class TestCTypes(object):
@@ -7202,8 +7196,30 @@ class TestWritebackIfCopy(TestCase):
         assert_(not arr_wb.ctypes.data == 0)
         arr_wb[:] = 100
         assert_equal(arr, -100)
-        
-        
+
+
+class TestArange(object):
+    def test_infinite(self):
+        assert_raises_regex(
+            ValueError, "size exceeded",
+            np.arange, 0, np.inf
+        )
+
+    def test_nan_step(self):
+        assert_raises_regex(
+            ValueError, "cannot compute length",
+            np.arange, 0, 1, np.nan
+        )
+
+    def test_zero_step(self):
+        assert_raises(ZeroDivisionError, np.arange, 0, 10, 0)
+        assert_raises(ZeroDivisionError, np.arange, 0.0, 10.0, 0.0)
+
+        # empty range
+        assert_raises(ZeroDivisionError, np.arange, 0, 0, 0)
+        assert_raises(ZeroDivisionError, np.arange, 0.0, 0.0, 0.0)
+
+
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475
     a = np.arange(5)

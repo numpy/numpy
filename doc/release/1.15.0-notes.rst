@@ -1,0 +1,65 @@
+==========================
+NumPy 1.15.0 Release Notes
+==========================
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+* `np.gcd` and `np.lcm`, to compute the greatest common divisor and least
+  common multiple.
+* `np.ma.stack`, the `np.stack` array-joining function generalized to masked
+  arrays.
+
+
+Deprecations
+============
+
+* Aliases of builtin `pickle` functions are deprecated, in favor of their
+  unaliased ``pickle.<func>`` names:
+
+  * `np.loads`
+  * `np.core.numeric.load`
+  * `np.core.numeric.loads`
+  * `np.ma.loads`, `np.ma.dumps`
+  * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
+    when called with a string.
+
+
+Future Changes
+==============
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+``np.gcd`` and ``np.lcm`` ufuncs added for integer and objects types
+--------------------------------------------------------------------
+These compute the greatest common divisor, and lowest common multiple,
+respectively. These work on all the numpy integer types, as well as the
+builtin arbitrary-precision `Decimal` and `long` types.
+
+
+Improvements
+============
+
+``MaskedArray.astype`` now is identical to ``ndarray.astype``
+-------------------------------------------------------------
+This means it takes all the same arguments, making more code written for
+ndarray work for masked array too.
+
+
+Changes
+=======

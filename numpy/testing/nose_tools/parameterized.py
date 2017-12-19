@@ -409,7 +409,7 @@ class parameterized(object):
 
     @classmethod
     def check_input_values(cls, input_values):
-        # Explicitly convery non-list inputs to a list so that:
+        # Explicitly convert non-list inputs to a list so that:
         # 1. A helpful exception will be raised if they aren't iterable, and
         # 2. Generators are unwrapped exactly once (otherwise `nosetests
         #    --processes=n` has issues; see:

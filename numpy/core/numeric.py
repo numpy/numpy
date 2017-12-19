@@ -42,7 +42,13 @@ else:
     import cPickle as pickle
     import __builtin__ as builtins
 
-loads = pickle.loads
+
+def loads(*args, **kwargs):
+    # NumPy 1.15.0, 2017-12-10
+    warnings.warn(
+        "np.core.numeric.loads is deprecated, use pickle.loads instead",
+        DeprecationWarning, stacklevel=2)
+    return pickle.loads(*args, **kwargs)
 
 
 __all__ = [
@@ -2134,6 +2140,10 @@ def load(file):
     load, save
 
     """
+    # NumPy 1.15.0, 2017-12-10
+    warnings.warn(
+        "np.core.numeric.load is deprecated, use pickle.load instead",
+        DeprecationWarning, stacklevel=2)
     if isinstance(file, type("")):
         file = open(file, "rb")
     return pickle.load(file)
