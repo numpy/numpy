@@ -1,5 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 r''' Test the .npy file format.
 
 Set up:
@@ -832,6 +834,7 @@ def test_large_file_support():
     assert_array_equal(r, d)
 
 
+@pytest.mark.skip
 @dec.slow
 @dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
 def test_large_archive():

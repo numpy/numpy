@@ -13,6 +13,7 @@ from io import BytesIO, StringIO
 from datetime import datetime
 import locale
 import re
+import pytest
 
 import numpy as np
 import numpy.ma as ma
@@ -200,6 +201,7 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
+    @pytest.mark.skip
     @dec.skipif(not IS_64BIT, "Works only with 64bit systems")
     @dec.slow
     def test_big_arrays(self):

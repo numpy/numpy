@@ -12,6 +12,8 @@ import functools
 import ctypes
 import os
 import gc
+import pytest
+
 from contextlib import contextmanager
 if sys.version_info[0] >= 3:
     import builtins
@@ -4351,6 +4353,7 @@ class TestIO(object):
                          np.array([1, 2, 3, 4]),
                          dtype='<f4')
 
+    @pytest.mark.skip
     @dec.slow  # takes > 1 minute on mechanical hard drive
     def test_big_binary(self):
         """Test workarounds for 32-bit limited fwrite, fseek, and ftell
