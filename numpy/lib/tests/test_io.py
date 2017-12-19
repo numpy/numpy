@@ -13,6 +13,7 @@ from io import BytesIO, StringIO
 from datetime import datetime
 import locale
 import re
+import pytest
 
 import numpy as np
 import numpy.ma as ma
@@ -156,7 +157,7 @@ class RoundtripTest(object):
         a = np.array([1, 2, 3, 4], int)
         self.roundtrip(a)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Fail on Win32")
+    @pytest.mark.xfail(sys.platform == 'win32', reason="Fail on Win32")
     def test_mmap(self):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
@@ -200,6 +201,7 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
+    @pytest.mark.skip
     @dec.skipif(not IS_64BIT, "Works only with 64bit systems")
     @dec.slow
     def test_big_arrays(self):

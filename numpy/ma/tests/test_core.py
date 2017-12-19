@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 
 __author__ = "Pierre GF Gerard-Marchant"
 
+import pytest
 import sys
 import warnings
 import pickle
@@ -3722,8 +3723,8 @@ class TestMaskedArrayMathMethods(object):
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
-    @dec.knownfailureif(sys.platform=='win32' and sys.version_info < (3, 6),
-                        msg='Fails on Python < 3.6 (Issue #9671)')
+    @pytest.mark.xfail(sys.platform=='win32' and sys.version_info < (3, 6),
+                       reason='Fails on Python < 3.6 (Issue #9671)')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
@@ -4960,13 +4961,13 @@ class TestMaskedConstant(object):
         assert_warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)
         assert_(np.isnan(a_f[()]))
 
-    @dec.knownfailureif(True, "See gh-9750")
+    @pytest.mark.xfail(True, reason="See gh-9750")
     def test_coercion_unicode(self):
         a_u = np.zeros((), 'U10')
         a_u[()] = np.ma.masked
         assert_equal(a_u[()], u'--')
 
-    @dec.knownfailureif(True, "See gh-9750")
+    @pytest.mark.xfail(True, reason="See gh-9750")
     def test_coercion_bytes(self):
         a_b = np.zeros((), 'S10')
         a_b[()] = np.ma.masked

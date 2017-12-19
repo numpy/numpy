@@ -5,6 +5,7 @@ import platform
 import warnings
 import fnmatch
 import itertools
+import pytest
 
 import numpy.core.umath as ncu
 from numpy.core import umath_tests as ncu_tests
@@ -555,6 +556,7 @@ class TestLog2(object):
             v = np.log2(2.**i)
             assert_equal(v, float(i), err_msg='at exponent %d' % i)
 
+    @pytest.mark.xfail
     def test_log2_special(self):
         assert_equal(np.log2(1.), 0.)
         assert_equal(np.log2(np.inf), np.inf)
@@ -2614,8 +2616,8 @@ def test_nextafter():
 def test_nextafterf():
     return _test_nextafter(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32',
-            "Long double support buggy on win32, ticket 1664.")
+@pytest.mark.xfail(sys.platform == 'win32',
+                   reason="Long double support buggy on win32, ticket 1664.")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
 
@@ -2643,8 +2645,8 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32',
-            "Long double support buggy on win32, ticket 1664.")
+@pytest.mark.xfail(sys.platform == 'win32',
+                   reason="Long double support buggy on win32, ticket 1664.")
 def test_spacingl():
     return _test_spacing(np.longdouble)
 

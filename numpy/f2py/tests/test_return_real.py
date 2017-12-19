@@ -1,5 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+import sys
+
 from numpy import array
 from numpy.compat import long
 from numpy.testing import run_module_suite, assert_, assert_raises, dec
@@ -50,6 +53,8 @@ class TestReturnReal(util.F2PyTest):
             pass
 
 
+@pytest.mark.xfail(sys.platform=='win32',
+                    reason='Fails with MinGW64 Gfortran (Issue #9673)')
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"
     module_name = "c_ext_return_real"
