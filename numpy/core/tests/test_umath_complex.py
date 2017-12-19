@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
 import sys
 import platform
 
@@ -120,7 +121,7 @@ class TestCexp(object):
         # cexp(nan + nani) is nan + nani
         yield check, f, np.nan, np.nan, np.nan, np.nan
 
-    @dec.knownfailureif(True, "cexp(nan + 0I) is wrong on most implementations")
+    @pytest.mark.xfail(True, "cexp(nan + 0I) is wrong on most implementations")
     def test_special_values2(self):
         # XXX: most implementations get it wrong here (including glibc <= 2.10)
         # cexp(nan + 0i) is nan + 0i
@@ -460,8 +461,9 @@ class TestCarg(object):
         check_real_value(ncu._arg, 1, 1, 0.25*np.pi, False)
         check_real_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO)
 
-    @dec.knownfailureif(True,
-        "Complex arithmetic with signed zero is buggy on most implementation")
+    @pytest.mark.xfail(
+        True,
+        reason="Complex arithmetic with signed zero is buggy on most implementation")
     def test_zero(self):
         # carg(-0 +- 0i) returns +- pi
         yield check_real_value, ncu._arg, np.NZERO, np.PZERO,  np.pi, False
@@ -518,6 +520,10 @@ class TestCarg(object):
         yield check_real_value, ncu._arg, np.nan, np.inf, np.nan, False
         yield check_real_value, ncu._arg, np.inf, np.nan, np.nan, False
 
+
+@pytest.mark.xfail(
+    True,
+    reason="Complex arithmetic with signed zero is buggy on most implementation")
 def check_real_value(f, x1, y1, x, exact=True):
     z1 = np.array([complex(x1, y1)])
     if exact:

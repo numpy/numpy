@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
 import sys
 import warnings
 import itertools
@@ -409,8 +410,8 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY,
-        "__int__ is not the same as int in cpython (gh-9972)")
+    @pytest.mark.xfail(not IS_PYPY,
+                       reason="__int__ is not the same as int in cpython (gh-9972)")
     def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)

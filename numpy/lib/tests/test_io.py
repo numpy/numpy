@@ -157,7 +157,7 @@ class RoundtripTest(object):
         a = np.array([1, 2, 3, 4], int)
         self.roundtrip(a)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Fail on Win32")
+    @pytest.mark.xfail(sys.platform == 'win32', reason="Fail on Win32")
     def test_mmap(self):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})

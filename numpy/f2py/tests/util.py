@@ -17,6 +17,7 @@ import textwrap
 import re
 import random
 import numpy.f2py
+import pytest
 
 from numpy.compat import asbytes, asstr
 from numpy.testing import SkipTest, temppath, dec
@@ -308,7 +309,8 @@ if __name__ == "__main__":
 # Unittest convenience
 #
 
-
+@pytest.mark.xfail(sys.platform=='win32',
+                    reason='Fails with MinGW64 Gfortran (Issue #9673)')
 class F2PyTest(object):
     code = None
     sources = None
@@ -319,7 +321,6 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def setup(self):
         if self.module is not None:
             return

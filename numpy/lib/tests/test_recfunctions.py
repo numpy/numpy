@@ -1,5 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
 import numpy.ma as ma
 from numpy.ma.mrecords import MaskedRecords
@@ -687,7 +689,7 @@ class TestJoinBy(object):
         b = np.ones(3, dtype=[('c', 'u1'), ('b', 'f4'), ('a', 'i4')])
         assert_raises(ValueError, join_by, ['a', 'b', 'b'], a, b)
 
-    @dec.knownfailureif(True)
+    @pytest.mark.xfail
     def test_same_name_different_dtypes_key(self):
         a_dtype = np.dtype([('key', 'S5'), ('value', '<f4')])
         b_dtype = np.dtype([('key', 'S10'), ('value', '<f4')])

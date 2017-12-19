@@ -3,6 +3,7 @@ Test the scalar contructors, which also do type-coercion
 """
 from __future__ import division, absolute_import, print_function
 
+import pytest
 import sys
 import platform
 import numpy as np
@@ -43,11 +44,11 @@ class TestFromString(object):
         flongdouble = assert_warns(RuntimeWarning, np.longdouble, '-1e10000')
         assert_equal(flongdouble, -np.inf)
 
-    @dec.knownfailureif((sys.version_info[0] >= 3) or
-                        (sys.platform == "win32" and
-                         platform.architecture()[0] == "64bit"),
-                        "numpy.intp('0xff', 16) not supported on Py3, "
-                        "as it does not inherit from Python int")
+    @pytest.mark.xfail((sys.version_info[0] >= 3) or
+                       (sys.platform == "win32" and
+                       platform.architecture()[0] == "64bit"),
+                       reason="numpy.intp('0xff', 16) not supported on Py3, "
+                       "as it does not inherit from Python int")
     def test_intp(self):
         # Ticket #99
         i_width = np.int_(0).nbytes*2 - 1
