@@ -27,6 +27,7 @@ GPATH
 GRTAGS
 GSYMS
 GTAGS
+.cache
 
 # Compiled source #
 ###################
