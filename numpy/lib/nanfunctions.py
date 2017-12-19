@@ -23,7 +23,7 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import numpy as np
-from numpy.lib.function_base import _ureduce as _ureduce
+from numpy.lib import function_base
 
 
 __all__ = [
@@ -1017,8 +1017,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
-    r, k = _ureduce(a, func=_nanmedian, axis=axis, out=out,
-                    overwrite_input=overwrite_input)
+    r, k = function_base._ureduce(a, func=_nanmedian, axis=axis, out=out,
+                                  overwrite_input=overwrite_input)
     if keepdims and keepdims is not np._NoValue:
         return r.reshape(k)
     else:
@@ -1038,7 +1038,8 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     Parameters
     ----------
     a : array_like
-        Input array or object that can be converted to an array.
+        Input array or object that can be converted to an array, containing
+        nan values to be ignored.
     q : array_like of float
         Percentile or sequence of percentiles to compute, which must be between
         0 and 100 inclusive.
@@ -1134,36 +1135,44 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     >>> assert not np.all(a==b)
 
     """
-
     a = np.asanyarray(a)
-    q = np.asanyarray(q)
+    q = np.true_divide(q, 100.0)  # handles the asarray for us too
+    if not function_base._quantile_is_valid(q):
+        raise ValueError("Percentiles must be in the range [0, 100]")
+    return _nanquantile_unchecked(
+        a, q, axis, out, overwrite_input, interpolation, keepdims)
+
+
+def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
+                           interpolation='linear', keepdims=np._NoValue):
+    """Assumes that q is in [0, 1], and is an ndarray"""
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
-    r, k = _ureduce(a, func=_nanpercentile, q=q, axis=axis, out=out,
-                    overwrite_input=overwrite_input,
-                    interpolation=interpolation)
+    r, k = function_base._ureduce(
+        a, func=_nanquantile_ureduce_func, q=q, axis=axis, out=out,
+        overwrite_input=overwrite_input, interpolation=interpolation
+    )
     if keepdims and keepdims is not np._NoValue:
         return r.reshape(q.shape + k)
     else:
         return r
 
 
-def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
-                   interpolation='linear'):
+def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
+                              interpolation='linear'):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
     See nanpercentile for parameter usage
-
     """
     if axis is None or a.ndim == 1:
         part = a.ravel()
-        result = _nanpercentile1d(part, q, overwrite_input, interpolation)
+        result = _nanquantile_1d(part, q, overwrite_input, interpolation)
     else:
-        result = np.apply_along_axis(_nanpercentile1d, axis, a, q,
+        result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
                                      overwrite_input, interpolation)
         # apply_along_axis fills in collapsed axis with results.
         # Move that axis to the beginning to match percentile's
@@ -1176,9 +1185,9 @@ def _nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     return result
 
 
-def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
+def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     """
-    Private function for rank 1 arrays. Compute percentile ignoring NaNs.
+    Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
     """
     arr1d, overwrite_input = _remove_nan_1d(arr1d,
@@ -1186,8 +1195,8 @@ def _nanpercentile1d(arr1d, q, overwrite_input=False, interpolation='linear'):
     if arr1d.size == 0:
         return np.full(q.shape, np.nan)[()]  # convert to scalar
 
-    return np.percentile(arr1d, q, overwrite_input=overwrite_input,
-                         interpolation=interpolation)
+    return function_base._quantile_unchecked(
+        arr1d, q, overwrite_input=overwrite_input, interpolation=interpolation)
 
 
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
