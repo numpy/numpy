@@ -2245,12 +2245,14 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     Mask using floating point equality.
 
     Return a MaskedArray, masked where the data in array `x` are approximately
-    equal to `value`, i.e. where the following condition is True
+    equal to `value`, determined using `isclose`. The default tolerances for
+    `masked_values` are the same as those for `isclose`.
 
-    (abs(x - value) <= atol+rtol*abs(value))
+    For integer types, exact equality is used, in the same way as
+    `masked_equal`.
 
     The fill_value is set to `value` and the mask is set to ``nomask`` if
-    possible.  For integers, consider using ``masked_equal``.
+    possible.
 
     Parameters
     ----------
@@ -2258,10 +2260,8 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
         Array to mask.
     value : float
         Masking value.
-    rtol : float, optional
-        Tolerance parameter.
-    atol : float, optional
-        Tolerance parameter (1e-8).
+    rtol, atol : float, optional
+        Tolerance parameters passed on to `isclose`
     copy : bool, optional
         Whether to return a copy of `x`.
     shrink : bool, optional
@@ -2309,17 +2309,13 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
           fill_value=999999)
 
     """
-    mabs = umath.absolute
     xnew = filled(x, value)
-    if issubclass(xnew.dtype.type, np.floating):
-        condition = umath.less_equal(
-            mabs(xnew - value), atol + rtol * mabs(value))
-        mask = getmask(x)
+    if np.issubdtype(xnew.dtype, np.floating):
+        mask = np.isclose(xnew, value, atol=atol, rtol=rtol)
     else:
-        condition = umath.equal(xnew, value)
-        mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
-    return masked_array(xnew, mask=mask, copy=copy, fill_value=value)
+        mask = umath.equal(xnew, value)
+    return masked_array(
+        xnew, mask=mask, copy=copy, fill_value=value, shrink=shrink)
 
 
 def masked_invalid(a, copy=True):
