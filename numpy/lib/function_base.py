@@ -2942,7 +2942,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
         .. versionadded:: 1.5
     fweights : array_like, int, optional
-        1-D array of integer freguency weights; the number of times each
+        1-D array of integer frequency weights; the number of times each
         observation vector should be repeated.
 
         .. versionadded:: 1.10
