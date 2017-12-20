@@ -4078,24 +4078,20 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *override = NULL;
     int errval;
 
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
+
     /*
      * Initialize all array objects to NULL to make cleanup easier
      * if something goes wrong.
      */
     for (i = 0; i < ufunc->nargs; i++) {
         mps[i] = NULL;
-    }
-
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_DiscardWritebackIfCopy(mps[i]);
-            Py_XDECREF(mps[i]);
-        }
-        return override;
     }
 
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
