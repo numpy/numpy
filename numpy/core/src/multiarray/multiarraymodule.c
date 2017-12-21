@@ -2191,18 +2191,18 @@ fail:
 static PyObject *
 array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
-    PyObject *iter;
+    PyObject *iterable;
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"iter", "dtype", "count", NULL};
+    static char *kwlist[] = {"iterable", "dtype", "count", NULL};
     PyArray_Descr *descr = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "OO&|" NPY_SSIZE_T_PYFMT ":fromiter", kwlist,
-                &iter, PyArray_DescrConverter, &descr, &nin)) {
+                &iterable, PyArray_DescrConverter, &descr, &nin)) {
         Py_XDECREF(descr);
         return NULL;
     }
-    return PyArray_FromIter(iter, descr, (npy_intp)nin);
+    return PyArray_FromIter(iterable, descr, (npy_intp)nin);
 }
 
 static PyObject *
