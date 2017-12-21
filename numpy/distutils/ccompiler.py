@@ -8,43 +8,16 @@ import shlex
 import time
 from copy import copy
 from distutils import ccompiler
-from distutils.ccompiler import (CCompiler,
-                                 CCompilerError,
-                                 CompileError,
-                                 DistutilsArgError,
-                                 DistutilsByteCompileError,
-                                 DistutilsClassError,
-                                 DistutilsError,
-                                 DistutilsExecError,
-                                 DistutilsFileError,
-                                 DistutilsGetoptError,
-                                 DistutilsInternalError,
-                                 DistutilsModuleError,
-                                 DistutilsOptionError,
-                                 DistutilsPlatformError,
-                                 DistutilsSetupError,
-                                 DistutilsTemplateError,
-                                 LibError,
-                                 LinkError,
-                                 PreprocessError,
-                                 UnknownFileError,
-                                 compiler_class,
-                                 execute,
-                                 gen_lib_options,
-                                 gen_preprocess_options,
-                                 get_default_compiler,
-                                 log,
-                                 mkpath,
-                                 move_file,
-                                 new_compiler,
-                                 newer_group,
-                                 newer_pairwise,
-                                 os,
-                                 re,
-                                 show_compilers,
-                                 spawn,
-                                 split_quoted,
-                                 sys)
+from distutils.ccompiler import (
+    CCompiler, CCompilerError, CompileError, DistutilsArgError,
+    DistutilsByteCompileError, DistutilsClassError, DistutilsError,
+    DistutilsExecError, DistutilsFileError, DistutilsGetoptError,
+    DistutilsInternalError, DistutilsModuleError, DistutilsOptionError,
+    DistutilsPlatformError, DistutilsSetupError, DistutilsTemplateError,
+    LibError, LinkError, PreprocessError, UnknownFileError, compiler_class,
+    execute, gen_lib_options, gen_preprocess_options, get_default_compiler,
+    log, mkpath, move_file, new_compiler, newer_group, newer_pairwise, os, re,
+    show_compilers, spawn, split_quoted, sys)
 from distutils.errors import DistutilsExecError, DistutilsModuleError, \
                              DistutilsPlatformError, CompileError
 from distutils.sysconfig import customize_compiler
@@ -829,7 +802,7 @@ def split_quoted(s):
             pos = 0
 
         elif s[end] == '\\':            # preserve whatever is being escaped;
-                                        # will become part of the current word
+            # will become part of the current word
             s = s[:end] + s[end+1:]
             pos = end+1
 

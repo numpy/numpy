@@ -153,123 +153,32 @@ from . import __version__
 # The eviroment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
-from .auxfuncs import (F2PYError,
-                       absolute_import,
-                       applyrules,
-                       cfuncs,
-                       containscommon,
-                       containsmodule,
-                       debugcapi,
-                       debugoptions,
-                       dictappend,
-                       division,
-                       errmess,
-                       f2py_version,
-                       flatlist,
-                       gentitle,
-                       get_kind,
-                       getargs,
-                       getargs2,
-                       getcallprotoargument,
-                       getcallstatement,
-                       getfortranname,
-                       getmultilineblock,
-                       getpymethoddef,
-                       getrestdoc,
-                       getusercode,
-                       getusercode1,
-                       hasassumedshape,
-                       hasbody,
-                       hascallstatement,
-                       hascommon,
-                       hasexternals,
-                       hasinitvalue,
-                       hasinitvalueasstring,
-                       hasnote,
-                       hasresultnote,
-                       hasvariables,
-                       isallocatable,
-                       isarray,
-                       isarrayofstrings,
-                       ischaracter,
-                       iscomplex,
-                       iscomplexarray,
-                       iscomplexfunction,
-                       iscomplexfunction_warn,
-                       isdouble,
-                       isdummyroutine,
-                       isexternal,
-                       isfalse,
-                       isfunction,
-                       isfunction_wrap,
-                       isint1array,
-                       isinteger,
-                       isintent_aligned16,
-                       isintent_aligned4,
-                       isintent_aligned8,
-                       isintent_aux,
-                       isintent_c,
-                       isintent_cache,
-                       isintent_callback,
-                       isintent_copy,
-                       isintent_dict,
-                       isintent_hide,
-                       isintent_in,
-                       isintent_inout,
-                       isintent_inplace,
-                       isintent_nothide,
-                       isintent_out,
-                       isintent_overwrite,
-                       islogical,
-                       islogicalfunction,
-                       islong_complex,
-                       islong_double,
-                       islong_doublefunction,
-                       islong_long,
-                       islong_longfunction,
-                       ismodule,
-                       ismoduleroutine,
-                       ismutable,
-                       isoptional,
-                       isprivate,
-                       isreal,
-                       isrequired,
-                       isroutine,
-                       isscalar,
-                       issigned_array,
-                       issigned_chararray,
-                       issigned_long_longarray,
-                       issigned_shortarray,
-                       isstring,
-                       isstringarray,
-                       isstringfunction,
-                       issubroutine,
-                       issubroutine_wrap,
-                       isthreadsafe,
-                       istrue,
-                       isunsigned,
-                       isunsigned_char,
-                       isunsigned_chararray,
-                       isunsigned_long_long,
-                       isunsigned_long_longarray,
-                       isunsigned_short,
-                       isunsigned_shortarray,
-                       isunsignedarray,
-                       l_and,
-                       l_not,
-                       l_or,
-                       options,
-                       outmess,
-                       pprint,
-                       print_function,
-                       reduce,
-                       replace,
-                       show,
-                       stripcomma,
-                       sys,
-                       throw_error,
-                       types,
-                       wrapfuncs)
+from .auxfuncs import (
+    F2PYError, absolute_import, applyrules, cfuncs, containscommon,
+    containsmodule, debugcapi, debugoptions, dictappend, division, errmess,
+    f2py_version, flatlist, gentitle, get_kind, getargs, getargs2,
+    getcallprotoargument, getcallstatement, getfortranname, getmultilineblock,
+    getpymethoddef, getrestdoc, getusercode, getusercode1, hasassumedshape,
+    hasbody, hascallstatement, hascommon, hasexternals, hasinitvalue,
+    hasinitvalueasstring, hasnote, hasresultnote, hasvariables, isallocatable,
+    isarray, isarrayofstrings, ischaracter, iscomplex, iscomplexarray,
+    iscomplexfunction, iscomplexfunction_warn, isdouble, isdummyroutine,
+    isexternal, isfalse, isfunction, isfunction_wrap, isint1array, isinteger,
+    isintent_aligned16, isintent_aligned4, isintent_aligned8, isintent_aux,
+    isintent_c, isintent_cache, isintent_callback, isintent_copy,
+    isintent_dict, isintent_hide, isintent_in, isintent_inout,
+    isintent_inplace, isintent_nothide, isintent_out, isintent_overwrite,
+    islogical, islogicalfunction, islong_complex, islong_double,
+    islong_doublefunction, islong_long, islong_longfunction, ismodule,
+    ismoduleroutine, ismutable, isoptional, isprivate, isreal, isrequired,
+    isroutine, isscalar, issigned_array, issigned_chararray,
+    issigned_long_longarray, issigned_shortarray, isstring, isstringarray,
+    isstringfunction, issubroutine, issubroutine_wrap, isthreadsafe, istrue,
+    isunsigned, isunsigned_char, isunsigned_chararray, isunsigned_long_long,
+    isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
+    isunsignedarray, l_and, l_not, l_or, options, outmess, pprint,
+    print_function, reduce, replace, show, stripcomma, sys, throw_error, types,
+    wrapfuncs)
 
 
 f2py_version = __version__.version
@@ -2562,12 +2471,12 @@ def get_parameters(vars, global_params={}):
                     # Again, this will be true if even a single specifier
                     # has been replaced, see comment above.
                     is_replaced = len(v) < orig_v_len
-                    
+
             if not is_replaced:
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
                     # In case there are additive parameters
-                    if len(v_) > 1: 
+                    if len(v_) > 1:
                         v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
 
             # Currently this will not work for complex numbers.
@@ -3450,7 +3359,7 @@ if __name__ == "__main__":
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)
-        with open(pyffilename, 'w') as f: 
+        with open(pyffilename, 'w') as f:
             f.write(pyf)
     if showblocklist:
         show(postlist)

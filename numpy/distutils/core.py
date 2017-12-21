@@ -1,38 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from distutils.core import (CCompilerError,
-                            Command,
-                            CompileError,
-                            DEBUG,
-                            Distribution,
-                            DistutilsArgError,
-                            DistutilsByteCompileError,
-                            DistutilsClassError,
-                            DistutilsError,
-                            DistutilsExecError,
-                            DistutilsFileError,
-                            DistutilsGetoptError,
-                            DistutilsInternalError,
-                            DistutilsModuleError,
-                            DistutilsOptionError,
-                            DistutilsPlatformError,
-                            DistutilsSetupError,
-                            DistutilsTemplateError,
-                            Extension,
-                            LibError,
-                            LinkError,
-                            PreprocessError,
-                            PyPIRCCommand,
-                            USAGE,
-                            UnknownFileError,
-                            extension_keywords,
-                            gen_usage,
-                            os,
-                            run_setup,
-                            setup,
-                            setup_keywords,
-                            sys)
+from distutils.core import (
+    CCompilerError, Command, CompileError, DEBUG, Distribution,
+    DistutilsArgError, DistutilsByteCompileError, DistutilsClassError,
+    DistutilsError, DistutilsExecError, DistutilsFileError,
+    DistutilsGetoptError, DistutilsInternalError, DistutilsModuleError,
+    DistutilsOptionError, DistutilsPlatformError, DistutilsSetupError,
+    DistutilsTemplateError, Extension, LibError, LinkError, PreprocessError,
+    PyPIRCCommand, USAGE, UnknownFileError, extension_keywords, gen_usage, os,
+    run_setup, setup, setup_keywords, sys)
 
 if 'setuptools' in sys.modules:
     have_setuptools = True
