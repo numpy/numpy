@@ -2,10 +2,11 @@ from __future__ import division, absolute_import, print_function
 
 import math
 import textwrap
+import sys
 
-from numpy import array
+import numpy as np
 from numpy.testing import run_module_suite, assert_, assert_equal, dec
-import util
+from . import util
 
 
 class TestF77Callback(util.F2PyTest):
@@ -47,6 +48,16 @@ cf2py  intent(out) a
        a = callback(r)
        end
 
+       subroutine string_callback_array(callback, cu, lencu, a)
+       external callback
+       integer callback
+       integer lencu
+       character*8 cu(lencu)
+       integer a
+cf2py  intent(out) a
+
+       a = callback(cu, lencu)
+       end
     """
 
     @dec.slow
@@ -119,6 +130,8 @@ cf2py  intent(out) a
         r = t(a.mth)
         assert_(r == 9, repr(r))
 
+    @dec.knownfailureif(sys.platform=='win32',
+                        msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback(self):
 
         def callback(code):
@@ -130,6 +143,25 @@ cf2py  intent(out) a
         f = getattr(self.module, 'string_callback')
         r = f(callback)
         assert_(r == 0, repr(r))
+
+    @dec.knownfailureif(sys.platform=='win32',
+                        msg='Fails with MinGW64 Gfortran (Issue #9673)')
+    def test_string_callback_array(self):
+        # See gh-10027
+        cu = np.zeros((1, 8), 'S1')
+
+        def callback(cu, lencu):
+            if cu.shape != (lencu, 8):
+                return 1
+            if cu.dtype != 'S1':
+                return 2
+            if not np.all(cu == b''):
+                return 3
+            return 0
+
+        f = getattr(self.module, 'string_callback_array')
+        res = f(callback, cu, len(cu))
+        assert_(res == 0, repr(res))
 
 
 if __name__ == "__main__":

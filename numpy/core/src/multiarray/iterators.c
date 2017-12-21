@@ -243,7 +243,9 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
     it->ao = ao;
     it->size = PyArray_SIZE(ao);
     it->nd_m1 = nd - 1;
-    it->factors[nd-1] = 1;
+    if (nd != 0) {
+        it->factors[nd-1] = 1;
+    }
     for (i = 0; i < nd; i++) {
         it->dims_m1[i] = PyArray_DIMS(ao)[i] - 1;
         it->strides[i] = PyArray_STRIDES(ao)[i];
@@ -340,7 +342,9 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     it->ao = ao;
     it->size = PyArray_MultiplyList(dims, nd);
     it->nd_m1 = nd - 1;
-    it->factors[nd-1] = 1;
+    if (nd != 0) {
+        it->factors[nd-1] = 1;
+    }
     for (i = 0; i < nd; i++) {
         it->dims_m1[i] = dims[i] - 1;
         k = i - diff;
@@ -917,7 +921,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     if (PyBool_Check(ind)) {
         retval = 0;
         if (PyObject_IsTrue(ind)) {
-            retval = type->f->setitem(val, self->dataptr, self->ao);
+            retval = PyArray_SETITEM(self->ao, self->dataptr, val);
         }
         goto finish;
     }
@@ -926,7 +930,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto skip;
     }
     start = PyArray_PyIntAsIntp(ind);
-    if (start==-1 && PyErr_Occurred()) {
+    if (error_converting(start)) {
         PyErr_Clear();
     }
     else {
@@ -1055,7 +1059,28 @@ static PyMappingMethods iter_as_mapping = {
 };
 
 
-
+/* Two options:
+ *  1) underlying array is contiguous
+ *     -- return 1-d wrapper around it
+ *  2) underlying array is not contiguous
+ *     -- make new 1-d contiguous array with updateifcopy flag set
+ *        to copy back to the old array
+ *
+ *  If underlying array is readonly, then we make the output array readonly
+ *     and updateifcopy does not apply.
+ *
+ *  Changed 2017-07-21, 1.14.0.
+ *
+ *  In order to start the process of removing UPDATEIFCOPY, see gh-7054, the
+ *  behavior is changed to always return an non-writeable copy when the base
+ *  array is non-contiguous. Doing that will hopefully smoke out those few
+ *  folks who assign to the result with the expectation that the base array
+ *  will be changed. At a later date non-contiguous arrays will always return
+ *  writeable copies.
+ *
+ *  Note that the type and argument expected for the __array__ method is
+ *  ignored.
+ */
 static PyArrayObject *
 iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
 {
@@ -1063,27 +1088,14 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
     PyArrayObject *ret;
     npy_intp size;
 
-    /* Any argument ignored */
-
-    /* Two options:
-     *  1) underlying array is contiguous
-     *     -- return 1-d wrapper around it
-     *  2) underlying array is not contiguous
-     *     -- make new 1-d contiguous array with updateifcopy flag set
-     *        to copy back to the old array
-     *
-     *  If underlying array is readonly, then we make the output array readonly
-     *     and updateifcopy does not apply.
-     */
     size = PyArray_SIZE(it->ao);
     Py_INCREF(PyArray_DESCR(it->ao));
+
     if (PyArray_ISCONTIGUOUS(it->ao)) {
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                 PyArray_DESCR(it->ao),
-                                 1, &size,
-                                 NULL, PyArray_DATA(it->ao),
-                                 PyArray_FLAGS(it->ao),
-                                 (PyObject *)it->ao);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type, PyArray_DESCR(it->ao), 1, &size,
+                NULL, PyArray_DATA(it->ao), PyArray_FLAGS(it->ao),
+                (PyObject *)it->ao);
         if (ret == NULL) {
             return NULL;
         }
@@ -1094,11 +1106,10 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
         }
     }
     else {
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                 PyArray_DESCR(it->ao),
-                                 1, &size,
-                                 NULL, NULL,
-                                 0, (PyObject *)it->ao);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type, PyArray_DESCR(it->ao), 1, &size,
+                NULL, NULL, 0,
+                (PyObject *)it->ao);
         if (ret == NULL) {
             return NULL;
         }
@@ -1106,16 +1117,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
             Py_DECREF(ret);
             return NULL;
         }
-        if (PyArray_ISWRITEABLE(it->ao)) {
-            Py_INCREF(it->ao);
-            if (PyArray_SetUpdateIfCopyBase(ret, it->ao) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-        }
-        else {
-            PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
-        }
+        PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
     }
     return ret;
 
@@ -1151,6 +1153,7 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
         return NULL;
     }
     ret = array_richcompare(new, other, cmp_op);
+    PyArray_ResolveWritebackIfCopy(new);
     Py_DECREF(new);
     return ret;
 }
@@ -1323,7 +1326,9 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
         it->nd_m1 = mit->nd - 1;
         it->size = tmp;
         nd = PyArray_NDIM(it->ao);
-        it->factors[mit->nd-1] = 1;
+        if (nd != 0) {
+            it->factors[mit->nd-1] = 1;
+        }
         for (j = 0; j < mit->nd; j++) {
             it->dims_m1[j] = mit->dimensions[j] - 1;
             k = j + nd - mit->nd;
@@ -1805,7 +1810,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
         storeflags = PyArray_FLAGS(ar->ao);
         PyArray_ENABLEFLAGS(ar->ao, NPY_ARRAY_BEHAVED);
-        st = PyArray_DESCR(ar->ao)->f->setitem((PyObject*)fill, ret, ar->ao);
+        st = PyArray_SETITEM(ar->ao, ret, (PyObject*)fill);
         ((PyArrayObject_fields *)ar->ao)->flags = storeflags;
 
         if (st < 0) {

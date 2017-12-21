@@ -52,7 +52,7 @@ the conventional Polynomial class because of its familiarity::
    >>> from numpy.polynomial import Polynomial as P
    >>> p = P([1,2,3])
    >>> p
-   Polynomial([ 1.,  2.,  3.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
 
 Note that there are three parts to the long version of the printout. The
 first is the coefficients, the second is the domain, and the third is the
@@ -77,19 +77,19 @@ we ignore them and run through the basic algebraic and arithmetic operations.
 Addition and Subtraction::
 
    >>> p + p
-   Polynomial([ 2.,  4.,  6.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 2.,  4.,  6.], domain=[-1,  1], window=[-1,  1])
    >>> p - p
-   Polynomial([ 0.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 0.], domain=[-1,  1], window=[-1,  1])
 
 Multiplication::
 
    >>> p * p
-   Polynomial([  1.,   4.,  10.,  12.,   9.], [-1.,  1.], [-1.,  1.])
+   Polynomial([  1.,   4.,  10.,  12.,   9.], domain=[-1,  1], window=[-1,  1])
 
 Powers::
 
    >>> p**2
-   Polynomial([  1.,   4.,  10.,  12.,   9.], [-1.,  1.], [-1.,  1.])
+   Polynomial([  1.,   4.,  10.,  12.,   9.], domain=[-1,  1], window=[-1,  1])
 
 Division:
 
@@ -100,20 +100,20 @@ versions the '/' will only work for division by scalars. At some point it
 will be deprecated::
 
    >>> p // P([-1, 1])
-   Polynomial([ 5.,  3.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 5.,  3.], domain=[-1,  1], window=[-1,  1])
 
 Remainder::
 
    >>> p % P([-1, 1])
-   Polynomial([ 6.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 6.], domain=[-1,  1], window=[-1,  1])
 
 Divmod::
 
    >>> quo, rem = divmod(p, P([-1, 1]))
    >>> quo
-   Polynomial([ 5.,  3.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 5.,  3.], domain=[-1,  1], window=[-1,  1])
    >>> rem
-   Polynomial([ 6.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 6.], domain=[-1,  1], window=[-1,  1])
 
 Evaluation::
 
@@ -134,7 +134,7 @@ the polynomials are regarded as functions this is composition of
 functions::
 
    >>> p(p)
-   Polynomial([  6.,  16.,  36.,  36.,  27.], [-1.,  1.], [-1.,  1.])
+   Polynomial([  6.,  16.,  36.,  36.,  27.], domain=[-1,  1], window=[-1,  1])
 
 Roots::
 
@@ -148,11 +148,11 @@ tuples, lists, arrays, and scalars are automatically cast in the arithmetic
 operations::
 
    >>> p + [1, 2, 3]
-   Polynomial([ 2.,  4.,  6.], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 2.,  4.,  6.], domain=[-1,  1], window=[-1,  1])
    >>> [1, 2, 3] * p
-   Polynomial([  1.,   4.,  10.,  12.,   9.], [-1.,  1.], [-1.,  1.])
+   Polynomial([  1.,   4.,  10.,  12.,   9.], domain=[-1,  1], window=[-1,  1])
    >>> p / 2
-   Polynomial([ 0.5,  1. ,  1.5], [-1.,  1.], [-1.,  1.])
+   Polynomial([ 0.5,  1. ,  1.5], domain=[-1,  1], window=[-1,  1])
 
 Polynomials that differ in domain, window, or class can't be mixed in
 arithmetic::
@@ -180,7 +180,7 @@ conversion of Polynomial classes among themselves is done for type, domain,
 and window casting::
 
     >>> p(T([0, 1]))
-    Chebyshev([ 2.5,  2. ,  1.5], [-1.,  1.], [-1.,  1.])
+    Chebyshev([ 2.5,  2. ,  1.5], domain=[-1,  1], window=[-1,  1])
 
 Which gives the polynomial `p` in Chebyshev form. This works because
 :math:`T_1(x) = x` and substituting :math:`x` for :math:`x` doesn't change
@@ -195,18 +195,18 @@ Polynomial instances can be integrated and differentiated.::
     >>> from numpy.polynomial import Polynomial as P
     >>> p = P([2, 6])
     >>> p.integ()
-    Polynomial([ 0.,  2.,  3.], [-1.,  1.], [-1.,  1.])
+    Polynomial([ 0.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
     >>> p.integ(2)
-    Polynomial([ 0.,  0.,  1.,  1.], [-1.,  1.], [-1.,  1.])
+    Polynomial([ 0.,  0.,  1.,  1.], domain=[-1,  1], window=[-1,  1])
 
 The first example integrates `p` once, the second example integrates it
 twice. By default, the lower bound of the integration and the integration
 constant are 0, but both can be specified.::
 
     >>> p.integ(lbnd=-1)
-    Polynomial([-1.,  2.,  3.], [-1.,  1.], [-1.,  1.])
+    Polynomial([-1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
     >>> p.integ(lbnd=-1, k=1)
-    Polynomial([ 0.,  2.,  3.], [-1.,  1.], [-1.,  1.])
+    Polynomial([ 0.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
 
 In the first case the lower bound of the integration is set to -1 and the
 integration constant is 0. In the second the constant of integration is set
@@ -215,9 +215,9 @@ number of times the polynomial is differentiated::
 
     >>> p = P([1, 2, 3])
     >>> p.deriv(1)
-    Polynomial([ 2.,  6.], [-1.,  1.], [-1.,  1.])
+    Polynomial([ 2.,  6.], domain=[-1,  1], window=[-1,  1])
     >>> p.deriv(2)
-    Polynomial([ 6.], [-1.,  1.], [-1.,  1.])
+    Polynomial([ 6.], domain=[-1,  1], window=[-1,  1])
 
 
 Other Polynomial Constructors
@@ -233,9 +233,9 @@ are demonstrated below::
     >>> from numpy.polynomial import Chebyshev as T
     >>> p = P.fromroots([1, 2, 3])
     >>> p
-    Polynomial([ -6.,  11.,  -6.,   1.], [-1.,  1.], [-1.,  1.])
+    Polynomial([ -6.,  11.,  -6.,   1.], domain=[-1,  1], window=[-1,  1])
     >>> p.convert(kind=T)
-    Chebyshev([ -9.  ,  11.75,  -3.  ,   0.25], [-1.,  1.], [-1.,  1.])
+    Chebyshev([ -9.  ,  11.75,  -3.  ,   0.25], domain=[-1,  1], window=[-1,  1])
 
 The convert method can also convert domain and window::
 
@@ -249,9 +249,9 @@ available. The cast method works like the convert method while the basis
 method returns the basis polynomial of given degree::
 
     >>> P.basis(3)
-    Polynomial([ 0.,  0.,  0.,  1.], [-1.,  1.], [-1.,  1.])
+    Polynomial([ 0.,  0.,  0.,  1.], domain=[-1,  1], window=[-1,  1])
     >>> T.cast(p)
-    Chebyshev([ -9.  ,  11.75,  -3.  ,   0.25], [-1.,  1.], [-1.,  1.])
+    Chebyshev([ -9.  ,  11.75,  -3.  ,   0.25], domain=[-1,  1], window=[-1,  1])
 
 Conversions between types can be useful, but it is *not* recommended
 for routine use. The loss of numerical precision in passing from a

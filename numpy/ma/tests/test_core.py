@@ -8,10 +8,13 @@ from __future__ import division, absolute_import, print_function
 
 __author__ = "Pierre GF Gerard-Marchant"
 
+import sys
 import warnings
 import pickle
 import operator
 import itertools
+import sys
+import textwrap
 from functools import reduce
 
 
@@ -20,7 +23,7 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, suppress_warnings
+    run_module_suite, assert_raises, assert_warns, suppress_warnings, dec
     )
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
@@ -46,6 +49,7 @@ from numpy.ma.core import (
     ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
+from numpy.testing import dec
 
 pi = np.pi
 
@@ -445,6 +449,12 @@ class TestMaskedArray(object):
         assert_not_equal(y._data.ctypes.data, x._data.ctypes.data)
         assert_not_equal(y._mask.ctypes.data, x._mask.ctypes.data)
 
+    def test_copy_0d(self):
+        # gh-9430
+        x = np.ma.array(43, mask=True)
+        xc = x.copy()
+        assert_equal(xc.mask, True)
+
     def test_copy_on_python_builtins(self):
         # Tests copy works on python builtins (issue#8019)
         assert_(isMaskedArray(np.ma.copy([1,2,3])))
@@ -478,18 +488,105 @@ class TestMaskedArray(object):
     def test_str_repr(self):
         a = array([0, 1, 2], mask=[False, True, False])
         assert_equal(str(a), '[0 -- 2]')
-        assert_equal(repr(a), 'masked_array(data = [0 -- 2],\n'
-                              '             mask = [False  True False],\n'
-                              '       fill_value = 999999)\n')
+        assert_equal(
+            repr(a),
+            textwrap.dedent('''\
+            masked_array(data=[0, --, 2],
+                         mask=[False,  True, False],
+                   fill_value=999999)''')
+        )
 
+        # arrays with a continuation
         a = np.ma.arange(2000)
         a[1:50] = np.ma.masked
         assert_equal(
             repr(a),
-            'masked_array(data = [0 -- -- ..., 1997 1998 1999],\n'
-            '             mask = [False  True  True ..., False False False],\n'
-            '       fill_value = 999999)\n'
+            textwrap.dedent('''\
+            masked_array(data=[0, --, --, ..., 1997, 1998, 1999],
+                         mask=[False,  True,  True, ..., False, False, False],
+                   fill_value=999999)''')
         )
+
+        # line-wrapped 1d arrays are correctly aligned
+        a = np.ma.arange(20)
+        assert_equal(
+            repr(a),
+            textwrap.dedent('''\
+            masked_array(data=[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+                               14, 15, 16, 17, 18, 19],
+                         mask=False,
+                   fill_value=999999)''')
+        )
+
+        # 2d arrays cause wrapping
+        a = array([[1, 2, 3], [4, 5, 6]], dtype=np.int8)
+        a[1,1] = np.ma.masked
+        assert_equal(
+            repr(a),
+            textwrap.dedent('''\
+            masked_array(
+              data=[[1, 2, 3],
+                    [4, --, 6]],
+              mask=[[False, False, False],
+                    [False,  True, False]],
+              fill_value=999999,
+              dtype=int8)''')
+        )
+
+        # but not it they're a row vector
+        assert_equal(
+            repr(a[:1]),
+            textwrap.dedent('''\
+            masked_array(data=[[1, 2, 3]],
+                         mask=[[False, False, False]],
+                   fill_value=999999,
+                        dtype=int8)''')
+        )
+
+        # dtype=int is implied, so not shown
+        assert_equal(
+            repr(a.astype(int)),
+            textwrap.dedent('''\
+            masked_array(
+              data=[[1, 2, 3],
+                    [4, --, 6]],
+              mask=[[False, False, False],
+                    [False,  True, False]],
+              fill_value=999999)''')
+        )
+
+
+
+    def test_str_repr_legacy(self):
+        oldopts = np.get_printoptions()
+        np.set_printoptions(legacy='1.13')
+        try:
+            a = array([0, 1, 2], mask=[False, True, False])
+            assert_equal(str(a), '[0 -- 2]')
+            assert_equal(repr(a), 'masked_array(data = [0 -- 2],\n'
+                                  '             mask = [False  True False],\n'
+                                  '       fill_value = 999999)\n')
+
+            a = np.ma.arange(2000)
+            a[1:50] = np.ma.masked
+            assert_equal(
+                repr(a),
+                'masked_array(data = [0 -- -- ..., 1997 1998 1999],\n'
+                '             mask = [False  True  True ..., False False False],\n'
+                '       fill_value = 999999)\n'
+            )
+        finally:
+            np.set_printoptions(**oldopts)
+
+    def test_0d_unicode(self):
+        u = u'caf\xe9'
+        utype = type(u)
+
+        arr_nomask = np.ma.array(u)
+        arr_masked = np.ma.array(u, mask=True)
+
+        assert_equal(utype(arr_nomask), u)
+        assert_equal(utype(arr_masked), u'--')
 
     def test_pickling(self):
         # Tests pickling
@@ -690,6 +787,25 @@ class TestMaskedArray(object):
         assert_equal(y._optinfo['info'], '???')
         y._optinfo['info'] = '!!!'
         assert_equal(x._optinfo['info'], '???')
+
+    def test_optinfo_forward_propagation(self):
+        a = array([1,2,2,4])
+        a._optinfo["key"] = "value"
+        assert_equal(a._optinfo["key"], (a == 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a != 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a > 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a >= 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a <= 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a + 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a - 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a * 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], (a / 2)._optinfo["key"])
+        assert_equal(a._optinfo["key"], a[:2]._optinfo["key"])
+        assert_equal(a._optinfo["key"], a[[0,0,2]]._optinfo["key"])
+        assert_equal(a._optinfo["key"], np.exp(a)._optinfo["key"])
+        assert_equal(a._optinfo["key"], np.abs(a)._optinfo["key"])
+        assert_equal(a._optinfo["key"], array(a, copy=True)._optinfo["key"])
+        assert_equal(a._optinfo["key"], np.zeros_like(a)._optinfo["key"])
 
     def test_fancy_printoptions(self):
         # Test printing a masked array w/ fancy dtype.
@@ -1624,6 +1740,12 @@ class TestMaskedArrayAttributes(object):
         assert_equal(a, b)
         assert_equal(a.mask, nomask)
 
+        # Mask cannot be shrunk on structured types, so is a no-op
+        a = np.ma.array([(1, 2.0)], [('a', int), ('b', float)])
+        b = a.copy()
+        a.shrink_mask()
+        assert_equal(a.mask, b.mask)
+
     def test_flat(self):
         # Test that flat can return all types of items [#4585, #4615]
         # test simple access
@@ -1743,15 +1865,11 @@ class TestFillingValues(object):
         assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
         #.....Using a flexible type w/ a different type shouldn't matter
-        # BEHAVIOR in 1.5 and earlier: match structured types by position
-        #fill_val = np.array((-999, -12345678.9, "???"),
-        #                    dtype=[("A", int), ("B", float), ("C", "|S3")])
-        # BEHAVIOR in 1.6 and later: match structured types by name
-        fill_val = np.array(("???", -999, -12345678.9),
-                            dtype=[("c", "|S3"), ("a", int), ("b", float), ])
-        # suppress deprecation warning in 1.12 (remove in 1.13)
-        with assert_warns(FutureWarning):
-            fval = _check_fill_value(fill_val, ndtype)
+        # BEHAVIOR in 1.5 and earlier, and 1.13 and later: match structured
+        # types by position
+        fill_val = np.array((-999, -12345678.9, "???"),
+                            dtype=[("A", int), ("B", float), ("C", "|S3")])
+        fval = _check_fill_value(fill_val, ndtype)
         assert_(isinstance(fval, ndarray))
         assert_equal(fval.item(), [-999, -12345678.9, b"???"])
 
@@ -3193,8 +3311,21 @@ class TestMaskedArrayMethods(object):
         data = masked_array([[1, 2, 3]], mask=[[1, 1, 1]])
         assert_equal(data.squeeze(), [1, 2, 3])
         assert_equal(data.squeeze()._mask, [1, 1, 1])
-        data = masked_array([[1]], mask=True)
-        assert_(data.squeeze() is masked)
+
+        # normal ndarrays return a view
+        arr = np.array([[1]])
+        arr_sq = arr.squeeze()
+        assert_equal(arr_sq, 1)
+        arr_sq[...] = 2
+        assert_equal(arr[0,0], 2)
+
+        # so maskedarrays should too
+        m_arr = masked_array([[1]], mask=True)
+        m_arr_sq = m_arr.squeeze()
+        assert_(m_arr_sq is not np.ma.masked)
+        assert_equal(m_arr_sq.mask, True)
+        m_arr_sq[...] = 2
+        assert_equal(m_arr[0,0], 2)
 
     def test_swapaxes(self):
         # Tests swapaxes on MaskedArrays.
@@ -3377,6 +3508,33 @@ class TestMaskedArrayMethods(object):
 
         assert_equal(MaskedArray.cumsum(marray.T, 0), control.cumsum(0))
 
+    def test_arraymethod_0d(self):
+        # gh-9430
+        x = np.ma.array(42, mask=True)
+        assert_equal(x.T.mask, x.mask)
+        assert_equal(x.T.data, x.data)
+
+    def test_transpose_view(self):
+        x = np.ma.array([[1, 2, 3], [4, 5, 6]])
+        x[0,1] = np.ma.masked
+        xt = x.T
+
+        xt[1,0] = 10
+        xt[0,1] = np.ma.masked
+
+        assert_equal(x.data, xt.T.data)
+        assert_equal(x.mask, xt.T.mask)
+
+    def test_diagonal_view(self):
+        x = np.ma.zeros((3,3))
+        x[0,0] = 10
+        x[1,1] = np.ma.masked
+        x[2,2] = 20
+        xd = x.diagonal()
+        x[1,1] = 15
+        assert_equal(xd.mask, x.diagonal().mask)
+        assert_equal(xd.data, x.diagonal().data)
+
 
 class TestMaskedArrayMathMethods(object):
 
@@ -3496,6 +3654,11 @@ class TestMaskedArrayMathMethods(object):
                                             axis=0))
         assert_equal(np.trace(mX), mX.trace())
 
+        # gh-5560
+        arr = np.arange(2*4*4).reshape(2,4,4)
+        m_arr = np.ma.masked_array(arr, False)
+        assert_equal(arr.trace(axis1=1, axis2=2), m_arr.trace(axis1=1, axis2=2))
+
     def test_dot(self):
         # Tests dot on MaskedArrays.
         (x, X, XX, m, mx, mX, mXX, m2x, m2X, m2XX) = self.d
@@ -3567,6 +3730,8 @@ class TestMaskedArrayMathMethods(object):
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
+    @dec.knownfailureif(sys.platform=='win32' and sys.version_info < (3, 6),
+                        msg='Fails on Python < 3.6 (Issue #9671)')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
@@ -3778,6 +3943,12 @@ class TestMaskedArrayFunctions(object):
         assert_equal(am.mask.dtype.names, am.dtype.names)
         assert_equal(am["A"],
                     np.ma.masked_array(np.zeros(10), np.ones(10)))
+
+    def test_masked_where_mismatch(self):
+        # gh-4520
+        x = np.arange(10)
+        y = np.arange(5)
+        assert_raises(IndexError, np.ma.masked_where, y > 6, x)
 
     def test_masked_otherfunctions(self):
         assert_equal(masked_inside(list(range(5)), 1, 3),
@@ -4746,6 +4917,93 @@ class TestMaskedConstant(object):
         assert_(not isinstance(m, np.ma.core.MaskedConstant))
         assert_(m is not np.ma.masked)
 
+    def test_repr(self):
+        # copies should not exist, but if they do, it should be obvious that
+        # something is wrong
+        assert_equal(repr(np.ma.masked), 'masked')
+
+        # create a new instance in a weird way
+        masked2 = np.ma.MaskedArray.__new__(np.ma.core.MaskedConstant)
+        assert_not_equal(repr(masked2), 'masked')
+
+    def test_pickle(self):
+        from io import BytesIO
+        import pickle
+
+        with BytesIO() as f:
+            pickle.dump(np.ma.masked, f)
+            f.seek(0)
+            res = pickle.load(f)
+        assert_(res is np.ma.masked)
+
+    def test_copy(self):
+        # gh-9328
+        # copy is a no-op, like it is with np.True_
+        assert_equal(
+            np.ma.masked.copy() is np.ma.masked,
+            np.True_.copy() is np.True_)
+
+    def test_immutable(self):
+        orig = np.ma.masked
+        assert_raises(np.ma.core.MaskError, operator.setitem, orig, (), 1)
+        assert_raises(ValueError,operator.setitem, orig.data, (), 1)
+        assert_raises(ValueError, operator.setitem, orig.mask, (), False)
+
+        view = np.ma.masked.view(np.ma.MaskedArray)
+        assert_raises(ValueError, operator.setitem, view, (), 1)
+        assert_raises(ValueError, operator.setitem, view.data, (), 1)
+        assert_raises(ValueError, operator.setitem, view.mask, (), False)
+
+    def test_coercion_int(self):
+        a_i = np.zeros((), int)
+        assert_raises(MaskError, operator.setitem, a_i, (), np.ma.masked)
+        assert_raises(MaskError, int, np.ma.masked)
+
+    @dec.skipif(sys.version_info.major == 3, "long doesn't exist in Python 3")
+    def test_coercion_long(self):
+        assert_raises(MaskError, long, np.ma.masked)
+
+    def test_coercion_float(self):
+        a_f = np.zeros((), float)
+        assert_warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)
+        assert_(np.isnan(a_f[()]))
+
+    @dec.knownfailureif(True, "See gh-9750")
+    def test_coercion_unicode(self):
+        a_u = np.zeros((), 'U10')
+        a_u[()] = np.ma.masked
+        assert_equal(a_u[()], u'--')
+
+    @dec.knownfailureif(True, "See gh-9750")
+    def test_coercion_bytes(self):
+        a_b = np.zeros((), 'S10')
+        a_b[()] = np.ma.masked
+        assert_equal(a_b[()], b'--')
+
+    def test_subclass(self):
+        # https://github.com/astropy/astropy/issues/6645
+        class Sub(type(np.ma.masked)): pass
+
+        a = Sub()
+        assert_(a is Sub())
+        assert_(a is not np.ma.masked)
+        assert_not_equal(repr(a), 'masked')
+
+
+class TestMaskedWhereAliases(object):
+
+    # TODO: Test masked_object, masked_equal, ...
+
+    def test_masked_values(self):
+        res = masked_values(np.array([-32768.0]), np.int16(-32768))
+        assert_equal(res.mask, [True])
+
+        res = masked_values(np.inf, np.inf)
+        assert_equal(res.mask, True)
+
+        res = np.ma.masked_values(np.inf, -np.inf)
+        assert_equal(res.mask, False)
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
@@ -4802,10 +5060,37 @@ def test_ufunc_with_output():
     y = np.add(x, 1., out=x)
     assert_(y is x)
 
+
 def test_astype():
     descr = [('v', int, 3), ('x', [('y', float)])]
-    x = array(([1, 2, 3], (1.0,)), dtype=descr)
-    assert_equal(x, x.astype(descr))
+    x = array([
+        [([1, 2, 3], (1.0,)),  ([1, 2, 3], (2.0,))],
+        [([1, 2, 3], (3.0,)),  ([1, 2, 3], (4.0,))]], dtype=descr)
+    x[0]['v'][0] = np.ma.masked
+
+    x_a = x.astype(descr)
+    assert x_a.dtype.names == np.dtype(descr).names
+    assert x_a.mask.dtype.names == np.dtype(descr).names
+    assert_equal(x, x_a)
+
+    assert_(x is x.astype(x.dtype, copy=False))
+    assert_equal(type(x.astype(x.dtype, subok=False)), np.ndarray)
+
+    x_f = x.astype(x.dtype, order='F')
+    assert_(x_f.flags.f_contiguous)
+    assert_(x_f.mask.flags.f_contiguous)
+
+    # Also test the same indirectly, via np.array
+    x_a2 = np.array(x, dtype=descr, subok=True)
+    assert x_a2.dtype.names == np.dtype(descr).names
+    assert x_a2.mask.dtype.names == np.dtype(descr).names
+    assert_equal(x, x_a2)
+
+    assert_(x is np.array(x, dtype=descr, copy=False, subok=True))
+
+    x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
+    assert_(x_f2.flags.f_contiguous)
+    assert_(x_f2.mask.flags.f_contiguous)
 
 
 ###############################################################################

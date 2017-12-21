@@ -12,7 +12,7 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, SkipTest
 )
 from numpy.core.multiarray import typeinfo
-import util
+from . import util
 
 wrap = None
 
@@ -51,7 +51,7 @@ def flags2names(flags):
     info = []
     for flagname in ['CONTIGUOUS', 'FORTRAN', 'OWNDATA', 'ENSURECOPY',
                      'ENSUREARRAY', 'ALIGNED', 'NOTSWAPPED', 'WRITEABLE',
-                     'UPDATEIFCOPY', 'BEHAVED', 'BEHAVED_RO',
+                     'WRITEBACKIFCOPY', 'UPDATEIFCOPY', 'BEHAVED', 'BEHAVED_RO',
                      'CARRAY', 'FARRAY'
                      ]:
         if abs(flags) & getattr(wrap, flagname, 0):

@@ -659,7 +659,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     /* snap quotient to nearest integral value */
     if (div) {
-        floordiv = npy_floor(div);
+        floordiv = npy_floor@c@(div);
         if (div - floordiv > 0.5@c@)
             floordiv += 1.0@c@;
     }
@@ -677,4 +677,42 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 #undef RAD2DEG
 #undef DEG2RAD
 
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #type = npy_uint, npy_ulong, npy_ulonglong#
+ * #c = u,ul,ull#
+ */
+NPY_INPLACE @type@
+npy_gcd@c@(@type@ a, @type@ b)
+{
+    @type@ c;
+    while (a != 0) {
+        c = a;
+        a = b%a;
+        b = c;
+    }
+    return b;
+}
+
+NPY_INPLACE @type@
+npy_lcm@c@(@type@ a, @type@ b)
+{
+    @type@ gcd = npy_gcd@c@(a, b);
+    return gcd == 0 ? 0 : a / gcd * b;
+}
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #type = (npy_int, npy_long, npy_longlong)*2#
+ * #c = (,l,ll)*2#
+ * #func=gcd*3,lcm*3#
+ */
+NPY_INPLACE @type@
+npy_@func@@c@(@type@ a, @type@ b)
+{
+    return npy_@func@u@c@(a < 0 ? -a : a, b < 0 ? -b : b);
+}
 /**end repeat**/

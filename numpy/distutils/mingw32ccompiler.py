@@ -265,7 +265,7 @@ def find_python_dll():
     lib_dirs = []
     for stem in stems:
         for folder in sub_dirs:
-            lib_dirs = os.path.join(stem, folder)
+            lib_dirs.append(os.path.join(stem, folder))
 
     # add system directory as well
     if 'SYSTEMROOT' in os.environ:
@@ -329,7 +329,8 @@ def find_dll(dll_name):
 
     def _find_dll_in_winsxs(dll_name):
         # Walk through the WinSxS directory to find the dll.
-        winsxs_path = os.path.join(os.environ['WINDIR'], 'winsxs')
+        winsxs_path = os.path.join(os.environ.get('WINDIR', r'C:\WINDOWS'),
+                                   'winsxs')
         if not os.path.exists(winsxs_path):
             return None
         for root, dirs, files in os.walk(winsxs_path):
@@ -568,7 +569,7 @@ def msvc_manifest_xml(maj, min):
                          (maj, min))
     # Don't be fooled, it looks like an XML, but it is not. In particular, it
     # should not have any space before starting, and its size should be
-    # divisible by 4, most likely for alignement constraints when the xml is
+    # divisible by 4, most likely for alignment constraints when the xml is
     # embedded in the binary...
     # This template was copied directly from the python 2.6 binary (using
     # strings.exe from mingw on python.exe).

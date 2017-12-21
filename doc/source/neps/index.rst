@@ -35,3 +35,4 @@ Other NEPs
    structured_array_extensions
    datetime-proposal
    datetime-proposal3
+   dropping-python2.7-proposal

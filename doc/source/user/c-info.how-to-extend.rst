@@ -56,8 +56,8 @@ order for Python to use it as an extension module. The function must
 be called init{name} where {name} is the name of the module from
 Python. This function must be declared so that it is visible to code
 outside of the routine. Besides adding the methods and constants you
-desire, this subroutine must also contain calls to import_array()
-and/or import_ufunc() depending on which C-API is needed. Forgetting
+desire, this subroutine must also contain calls like ``import_array()``
+and/or ``import_ufunc()`` depending on which C-API is needed. Forgetting
 to place these commands will show itself as an ugly segmentation fault
 (crash) as soon as any C-API subroutine is actually called. It is
 actually possible to have multiple init{name} functions in a single
@@ -468,18 +468,20 @@ writeable). The syntax is
 
             Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
             :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
+            :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
             :c:data:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
             useful to specify an array that will be used for both
-            input and output. If a copy is needed, then when the
-            temporary is deleted (by your use of :c:func:`Py_DECREF` at
-            the end of the interface routine), the temporary array
-            will be copied back into the original array passed in. Use
-            of the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag requires that the input
+            input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
+            must be called before :func:`Py_DECREF` at
+            the end of the interface routine to write back the temporary data
+            into the original array passed in. Use
+            of the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or
+            :c:data:`NPY_ARRAY_UPDATEIFCOPY` flags requires that the input
             object is already an array (because other objects cannot
             be automatically updated in this fashion). If an error
-            occurs use :c:func:`PyArray_DECREF_ERR` (obj) on an array
-            with the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag set. This will
-            delete the array without causing the contents to be copied
+            occurs use :c:func:`PyArray_DiscardWritebackIfCopy` (obj) on an
+            array with these flags set. This will set the underlying base array
+            writable without causing the contents to be copied
             back into the original array.
 
 
@@ -603,7 +605,8 @@ Example
 The following example shows how you might write a wrapper that accepts
 two input arguments (that will be converted to an array) and an output
 argument (that must be an array). The function returns None and
-updates the output array.
+updates the output array. Note the updated use of WRITEBACKIFCOPY semantics
+for NumPy v1.14 and above
 
 .. code-block:: c
 
@@ -616,11 +619,15 @@ updates the output array.
         if (!PyArg_ParseTuple(args, "OOO!", &arg1, &arg2,
             &PyArray_Type, &out)) return NULL;
 
-        arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY);
+        arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
         if (arr1 == NULL) return NULL;
-        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_IN_ARRAY);
+        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
         if (arr2 == NULL) goto fail;
-        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_INOUT_ARRAY);
+    #if NPY_API_VERSION >= 0x0000000c
+        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_ARRAY_INOUT_ARRAY2);
+    #else
+        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_ARRAY_INOUT_ARRAY);
+    #endif
         if (oarr == NULL) goto fail;
 
         /* code that makes use of arguments */
@@ -635,6 +642,9 @@ updates the output array.
 
         Py_DECREF(arr1);
         Py_DECREF(arr2);
+    #if NPY_API_VERSION >= 0x0000000c
+        PyArray_ResolveWritebackIfCopy(oarr);
+    #endif
         Py_DECREF(oarr);
         Py_INCREF(Py_None);
         return Py_None;
@@ -642,6 +652,9 @@ updates the output array.
      fail:
         Py_XDECREF(arr1);
         Py_XDECREF(arr2);
-        PyArray_XDECREF_ERR(oarr);
+    #if NPY_API_VERSION >= 0x0000000c
+        PyArray_DiscardWritebackIfCopy(oarr);
+    #endif
+        Py_XDECREF(oarr);
         return NULL;
     }

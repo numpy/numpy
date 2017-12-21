@@ -20,13 +20,8 @@ source builds/venv/bin/activate
 PYTHON=${PYTHON:-python}
 PIP=${PIP:-pip}
 
-if [ -n "$PYTHON_OO" ]; then
-  PYTHON="${PYTHON} -OO"
-fi
-
-
-if [ -n "$PY3_COMPATIBILITY_CHECK" ]; then
-  PYTHON="${PYTHON} -3"
+if [ -n "$PYTHON_OPTS" ]; then
+  PYTHON="${PYTHON} $PYTHON_OPTS"
 fi
 
 # make some warnings fatal, mostly to match windows compilers
@@ -35,6 +30,10 @@ werrors+="-Werror=nonnull -Werror=pointer-arith"
 
 setup_base()
 {
+  # use default python flags but remoge sign-compare
+  sysflags="$($PYTHON -c "from distutils import sysconfig; \
+    print (sysconfig.get_config_var('CFLAGS'))")"
+  export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
   # We used to use 'setup.py install' here, but that has the terrible
   # behaviour that if a copy of the package is already installed in the
   # install location, then the new copy just gets dropped on top of it.
@@ -45,26 +44,16 @@ setup_base()
   # the advantage that it tests that numpy is 'pip install' compatible,
   # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then
-    if [ -z "$IN_CHROOT" ]; then
-      $PIP install .
-    else
-      sysflags="$($PYTHON -c "from distutils import sysconfig; \
-        print (sysconfig.get_config_var('CFLAGS'))")"
-      CFLAGS="$sysflags $werrors -Wlogical-op" $PIP install -v . 2>&1 | tee log
-      grep -v "_configtest" log \
-        | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
-        | grep -E "warning\>" \
-        | tee warnings
-      # Check for an acceptable number of warnings. Some warnings are out of
-      # our control, so adjust the number as needed. At the moment a
-      # cython generated code produces a warning about '-2147483648L', but
-      # the code seems to compile OK.
-      [[ $(wc -l < warnings) -lt 2 ]]
-    fi
+    $PIP install -v . 2>&1 | tee log
   else
-    sysflags="$($PYTHON -c "from distutils import sysconfig; \
-      print (sysconfig.get_config_var('CFLAGS'))")"
-    CFLAGS="$sysflags $werrors" $PYTHON setup.py build_ext --inplace
+    $PYTHON setup.py build_ext --inplace 2>&1 | tee log
+  fi
+  grep -v "_configtest" log \
+    | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
+    | grep -E "warning\>" \
+    | tee warnings
+  if [ "$LAPACK" != "None" ]; then
+    [[ $(wc -l < warnings) -lt 1 ]]
   fi
 }
 
@@ -143,12 +132,15 @@ run_test()
 export PYTHON
 export PIP
 $PIP install setuptools
+
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Build wheel
   $PIP install wheel
   # ensure that the pip / setuptools versions deployed inside
   # the venv are recent enough
   $PIP install -U virtualenv
+  # ensure some warnings are not issued
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
   $PYTHON setup.py bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
@@ -162,6 +154,10 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # use an up-to-date pip / setuptools inside the venv
   $PIP install -U virtualenv
+  # temporary workaround for sdist failures.
+  $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
+  # ensure some warnings are not issued
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel

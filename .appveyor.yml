@@ -1,0 +1,195 @@
+# As config was originally based on an example by Olivier Grisel. Thanks!
+# https://github.com/ogrisel/python-appveyor-demo/blob/master/appveyor.yml
+clone_depth: 50
+
+# No reason for us to restrict the number concurrent jobs
+max_jobs: 100
+
+cache:
+  - '%LOCALAPPDATA%\pip\Cache'
+
+environment:
+  global:
+      MINGW_32: C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
+      MINGW_64: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin
+      OPENBLAS_32: https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-5f998ef_gcc7_1_0_win32.zip
+      OPENBLAS_64: https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-5f998ef_gcc7_1_0_win64.zip
+      APPVEYOR_SAVE_CACHE_ON_ERROR: true
+      APPVEYOR_SKIP_FINALIZE_ON_EXIT: true
+      TEST_TIMEOUT: 1000
+
+  matrix:
+    - PYTHON: C:\Python36
+      PYTHON_VERSION: 3.6
+      PYTHON_ARCH: 32
+      TEST_MODE: fast
+
+    - PYTHON: C:\Python27-x64
+      PYTHON_VERSION: 2.7
+      PYTHON_ARCH: 64
+      TEST_MODE: fast
+
+    - PYTHON: C:\Python34-x64
+      PYTHON_VERSION: 3.4
+      PYTHON_ARCH: 64
+      TEST_MODE: fast
+
+    - PYTHON: C:\Python36-x64
+      PYTHON_VERSION: 3.6
+      PYTHON_ARCH: 64
+      TEST_MODE: full
+
+    - PYTHON: C:\Python27
+      PYTHON_VERSION: 2.7
+      PYTHON_ARCH: 32
+      SKIP_NOTAG: true
+      TEST_MODE: full
+
+    - PYTHON: C:\Python34
+      PYTHON_VERSION: 3.4
+      PYTHON_ARCH: 32
+      SKIP_NOTAG: true
+      TEST_MODE: full
+
+    - PYTHON: C:\Python35-x64
+      PYTHON_VERSION: 3.5
+      PYTHON_ARCH: 64
+      SKIP_NOTAG: true
+      TEST_MODE: full
+
+    - PYTHON: C:\Python35
+      PYTHON_VERSION: 3.5
+      PYTHON_ARCH: 32
+      SKIP_NOTAG: true
+      TEST_MODE: full
+
+init:
+  - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
+  - "ECHO \"%APPVEYOR_SCHEDULED_BUILD%\""
+  # If there is a newer build queued for the same PR, cancel this one.
+  # The AppVeyor 'rollout builds' option is supposed to serve the same
+  # purpose but it is problematic because it tends to cancel builds pushed
+  # directly to master instead of just PR builds (or the converse).
+  # credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+          Write-Host "There are newer queued builds for this pull request, skipping build."
+          Exit-AppveyorBuild
+        }
+  - ps: |
+      If (($env:SKIP_NOTAG -eq "true") -and ($env:APPVEYOR_REPO_TAG -ne "true")) {
+          Write-Host "Skipping build, not at a tag."
+          Exit-AppveyorBuild
+      }
+
+install:
+  # Show size of cache
+  - C:\cygwin\bin\du -hs "%LOCALAPPDATA%\pip\Cache"
+  # Prepend newly installed Python to the PATH of this build (this cannot be
+  # done from inside the powershell script as it would require to restart
+  # the parent CMD process).
+  - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+
+  # Check that we have the expected version and architecture for Python
+  - python --version
+  - >-
+     %CMD_IN_ENV%
+     python -c "import sys,platform,struct;
+     print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
+
+  # Install "openblas.a" to PYTHON\lib
+  # Library provided by Matthew Brett at https://github.com/matthew-brett/build-openblas
+  - ps: |
+      $PYTHON_ARCH = $env:PYTHON_ARCH
+      $PYTHON = $env:PYTHON
+      If ($PYTHON_ARCH -eq 32) {
+          $OPENBLAS = $env:OPENBLAS_32
+      } Else {
+          $OPENBLAS = $env:OPENBLAS_64
+      }
+      $clnt = new-object System.Net.WebClient
+      $file = "$(New-TemporaryFile).zip"
+      $tmpdir = New-TemporaryFile | %{ rm $_; mkdir $_ }
+      $destination = "$PYTHON\lib\openblas.a"
+
+      echo $file
+      echo $tmpdir
+      echo $OPENBLAS
+
+      $clnt.DownloadFile($OPENBLAS,$file)
+      Get-FileHash $file | Format-List
+
+      Expand-Archive $file $tmpdir      
+
+      rm $tmpdir\$PYTHON_ARCH\lib\*.dll.a
+      $lib = ls $tmpdir\$PYTHON_ARCH\lib\*.a | ForEach { ls $_ } | Select-Object -first 1
+      echo $lib
+
+      cp $lib $destination
+      ls $destination
+
+  # Upgrade to the latest pip.
+  - '%CMD_IN_ENV% python -m pip install -U pip setuptools wheel'
+
+  # Install the numpy test dependencies.
+  - '%CMD_IN_ENV% pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'
+
+build_script:
+  # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
+  # We then use the import library from the DLL to compile with MSVC
+  - ps: |
+      $PYTHON_ARCH = $env:PYTHON_ARCH
+      If ($PYTHON_ARCH -eq 32) {
+          $MINGW = $env:MINGW_32 
+      } Else {
+          $MINGW = $env:MINGW_64
+      }
+      $env:Path += ";$MINGW"
+      $env:NPY_NUM_BUILD_JOBS = "4"
+      mkdir dist
+      pip wheel -v -v -v --wheel-dir=dist .
+
+      # For each wheel that pip has placed in the "dist" directory
+      # First, upload the wheel to the "artifacts" tab and then
+      # install the wheel. If we have only built numpy (as is the case here),
+      # then there will be one wheel to install.
+      
+      # This method is more representative of what will be distributed,
+      # because it actually tests what the built wheels will be rather than
+      # what 'setup.py install' will do and at it uploads the wheels so that
+      # they can be inspected.
+
+      ls dist -r | Foreach-Object {
+          appveyor PushArtifact $_.FullName
+          pip install $_.FullName
+      }
+
+test_script:
+  - python runtests.py -v -n -m %TEST_MODE%
+
+after_build:
+  # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.
+  #
+  # If the cache limit is reached, the cache will not be updated (of not even
+  # created in the first run). So this is a trade of between keeping the cache
+  # current and having a cache at all.
+  # NB: This is done only `on_success` since the cache in uploaded only on
+  # success anyway.
+  - C:\cygwin\bin\find "%LOCALAPPDATA%\pip" -type f -mtime +360 -delete
+  - C:\cygwin\bin\find "%LOCALAPPDATA%\pip" -type f -size +10M -delete
+  - C:\cygwin\bin\find "%LOCALAPPDATA%\pip" -empty -delete
+  # Show size of cache
+  - C:\cygwin\bin\du -hs "%LOCALAPPDATA%\pip\Cache"
+
+on_finish:
+  # We can get a nice display of test results in the "test" tab with py.test
+  # For now, this does nothing.
+  - ps: |
+      If (Test-Path .\junit-results.xml) {
+        (new-object net.webclient).UploadFile(
+          "https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)",
+          (Resolve-Path .\junit-results.xml)
+        )
+      }
+      $LastExitCode = 0

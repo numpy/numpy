@@ -211,7 +211,7 @@ cdef object cont1_array(rk_state *state, rk_cont1 func, object size,
         itera = <flatiter>PyArray_IterNew(<object>oa)
         with lock, nogil:
             for i from 0 <= i < length:
-                array_data[i] = func(state, (<double *>(itera.dataptr))[0])
+                array_data[i] = func(state, (<double *>PyArray_ITER_DATA(itera))[0])
                 PyArray_ITER_NEXT(itera)
     else:
         array = <ndarray>np.empty(size, np.float64)
@@ -536,7 +536,7 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa,
         itera = <flatiter>PyArray_IterNew(<object>oa)
         with lock, nogil:
             for i from 0 <= i < length:
-                array_data[i] = func(state, (<double *>(itera.dataptr))[0])
+                array_data[i] = func(state, (<double *>PyArray_ITER_DATA(itera))[0])
                 PyArray_ITER_NEXT(itera)
     else:
         array = <ndarray>np.empty(size, int)
@@ -659,7 +659,7 @@ cdef class RandomState:
 
         Parameters
         ----------
-        seed : int or array_like, optional
+        seed : int or 1-d array_like, optional
             Seed for `RandomState`.
             Must be convertible to 32 bit unsigned integers.
 
@@ -676,14 +676,19 @@ cdef class RandomState:
                     errcode = rk_randomseed(self.internal_state)
             else:
                 idx = operator.index(seed)
-                if idx > int(2**32 - 1) or idx < 0:
+                if (idx >= 2**32) or (idx < 0):
                     raise ValueError("Seed must be between 0 and 2**32 - 1")
                 with self.lock:
                     rk_seed(idx, self.internal_state)
         except TypeError:
-            obj = np.asarray(seed).astype(np.int64, casting='safe')
-            if ((obj > int(2**32 - 1)) | (obj < 0)).any():
-                raise ValueError("Seed must be between 0 and 2**32 - 1")
+            obj = np.asarray(seed)
+            if obj.size == 0:
+                raise ValueError("Seed must be non-empty")
+            obj = obj.astype(np.int64, casting='safe')
+            if obj.ndim != 1:
+                raise ValueError("Seed array must be 1-d")
+            if ((obj >= 2**32) | (obj < 0)).any():
+                raise ValueError("Seed values must be between 0 and 2**32 - 1")
             obj = obj.astype('L', casting='unsafe')
             with self.lock:
                 init_by_array(self.internal_state, <unsigned long *>PyArray_DATA(obj),
@@ -897,7 +902,7 @@ cdef class RandomState:
         array([[[ True,  True],
                 [ True,  True]],
                [[ True,  True],
-                [ True,  True]]], dtype=bool)
+                [ True,  True]]])
 
         """
         return disc0_array(self.internal_state, rk_long, size, self.lock)
@@ -2007,10 +2012,10 @@ cdef class RandomState:
 
         Parameters
         ----------
-        dfnum : int or array_like of ints
-            Degrees of freedom in numerator. Should be greater than zero.
-        dfden : int or array_like of ints
-            Degrees of freedom in denominator. Should be greater than zero.
+        dfnum : float or array_like of floats
+            Degrees of freedom in numerator, should be > 0.
+        dfden : float or array_like of float
+            Degrees of freedom in denominator, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2109,12 +2114,16 @@ cdef class RandomState:
 
         Parameters
         ----------
-        dfnum : int or array_like of ints
-            Parameter, should be > 1.
-        dfden : int or array_like of ints
-            Parameter, should be > 1.
+        dfnum : float or array_like of floats
+            Numerator degrees of freedom, should be > 0.
+
+            .. versionchanged:: 1.14.0
+               Earlier NumPy versions required dfnum > 1.
+        dfden : float or array_like of floats
+            Denominator degrees of freedom, should be > 0.
         nonc : float or array_like of floats
-            Parameter, should be >= 0.
+            Non-centrality parameter, the sum of the squares of the numerator
+            means, should be >= 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2175,8 +2184,8 @@ cdef class RandomState:
             fdfden = PyFloat_AsDouble(dfden)
             fnonc = PyFloat_AsDouble(nonc)
 
-            if fdfnum <= 1:
-                raise ValueError("dfnum <= 1")
+            if fdfnum <= 0:
+                raise ValueError("dfnum <= 0")
             if fdfden <= 0:
                 raise ValueError("dfden <= 0")
             if fnonc < 0:
@@ -2184,8 +2193,8 @@ cdef class RandomState:
             return cont3_array_sc(self.internal_state, rk_noncentral_f, size,
                                   fdfnum, fdfden, fnonc, self.lock)
 
-        if np.any(np.less_equal(odfnum, 1.0)):
-            raise ValueError("dfnum <= 1")
+        if np.any(np.less_equal(odfnum, 0.0)):
+            raise ValueError("dfnum <= 0")
         if np.any(np.less_equal(odfden, 0.0)):
             raise ValueError("dfden <= 0")
         if np.any(np.less(ononc, 0.0)):
@@ -2206,8 +2215,8 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int or array_like of ints
-             Number of degrees of freedom.
+        df : float or array_like of floats
+             Number of degrees of freedom, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2285,9 +2294,11 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int or array_like of ints
-            Degrees of freedom, should be > 0 as of NumPy 1.10.0,
-            should be > 1 for earlier versions.
+        df : float or array_like of floats
+            Degrees of freedom, should be > 0.
+
+            .. versionchanged:: 1.10.0
+               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, should be non-negative.
         size : int or tuple of ints, optional
@@ -2455,7 +2466,7 @@ cdef class RandomState:
 
         Parameters
         ----------
-        df : int or array_like of ints
+        df : float or array_like of floats
             Degrees of freedom, should be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -4070,13 +4081,15 @@ cdef class RandomState:
         if oa.shape == ():
             fa = PyFloat_AsDouble(a)
 
-            if fa <= 1.0:
-                raise ValueError("a <= 1.0")
+            # use logic that ensures NaN is rejected.
+            if not fa > 1.0:
+                raise ValueError("'a' must be a valid float > 1.0")
             return discd_array_sc(self.internal_state, rk_zipf, size, fa,
                                   self.lock)
 
-        if np.any(np.less_equal(oa, 1.0)):
-            raise ValueError("a <= 1.0")
+        # use logic that ensures NaN is rejected.
+        if not np.all(np.greater(oa, 1.0)):
+            raise ValueError("'a' must contain valid floats > 1.0")
         return discd_array(self.internal_state, rk_zipf, size, oa, self.lock)
 
     def geometric(self, p, size=None):
@@ -4666,6 +4679,11 @@ cdef class RandomState:
         samples : ndarray,
             The drawn samples, of shape (size, alpha.ndim).
 
+        Raises
+        -------
+        ValueError
+            If any value in alpha is less than or equal to zero
+
         Notes
         -----
         .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
@@ -4731,6 +4749,8 @@ cdef class RandomState:
 
         k           = len(alpha)
         alpha_arr   = <ndarray>PyArray_ContiguousFromObject(alpha, NPY_DOUBLE, 1, 1)
+        if np.any(np.less_equal(alpha_arr, 0)):
+            raise ValueError('alpha <= 0')
         alpha_data  = <double*>PyArray_DATA(alpha_arr)
 
         shape = _shape_from_size(size, k)

@@ -50,7 +50,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
         return True
 
     # dep_file is a makefile containing 'object: dependencies'
-    # formated like posix shell (spaces escaped, \ line continuations)
+    # formatted like posix shell (spaces escaped, \ line continuations)
     # the last line contains the compiler commandline arguments as some
     # projects may compile an extension multiple times with different
     # arguments

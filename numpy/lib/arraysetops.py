@@ -556,12 +556,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     >>> states = [0, 2]
     >>> mask = np.in1d(test, states)
     >>> mask
-    array([ True, False,  True, False,  True], dtype=bool)
+    array([ True, False,  True, False,  True])
     >>> test[mask]
     array([0, 2, 0])
     >>> mask = np.in1d(test, states, invert=True)
     >>> mask
-    array([False,  True, False,  True, False], dtype=bool)
+    array([False,  True, False,  True, False])
     >>> test[mask]
     array([1, 5])
     """
@@ -569,8 +569,14 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
 
-    # This code is significantly faster when the condition is satisfied.
-    if len(ar2) < 10 * len(ar1) ** 0.145:
+    # Check if one of the arrays may contain arbitrary objects
+    contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
+
+    # This code is run when
+    # a) the first condition is true, making the code significantly faster
+    # b) the second condition is true (i.e. `ar1` or `ar2` may contain
+    #    arbitrary objects), since then sorting is not guaranteed to work
+    if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
@@ -667,13 +673,13 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> mask = np.isin(element, test_elements)
     >>> mask
     array([[ False,  True],
-           [ True,  False]], dtype=bool)
+           [ True,  False]])
     >>> element[mask]
     array([2, 4])
     >>> mask = np.isin(element, test_elements, invert=True)
     >>> mask
     array([[ True, False],
-           [ False, True]], dtype=bool)
+           [ False, True]])
     >>> element[mask]
     array([0, 6])
 
@@ -683,13 +689,13 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> test_set = {1, 2, 4, 8}
     >>> np.isin(element, test_set)
     array([[ False, False],
-           [ False, False]], dtype=bool)
+           [ False, False]])
 
     Casting the set to a list gives the expected result:
 
     >>> np.isin(element, list(test_set))
     array([[ False,  True],
-           [ True,  False]], dtype=bool)
+           [ True,  False]])
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,

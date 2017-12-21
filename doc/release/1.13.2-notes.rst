@@ -1,0 +1,58 @@
+==========================
+NumPy 1.13.2 Release Notes
+==========================
+
+This is a bugfix release for some problems found since 1.13.1. The most
+important fixes are for CVE-2017-12852 and temporary elision. Users of earlier
+versions of 1.13 should upgrade.
+
+The Python versions supported are 2.7 and 3.4 - 3.6. The Python 3.6 wheels
+available from PIP are built with Python 3.6.2 and should be compatible with
+all previous versions of Python 3.6. The Windows wheels are now built
+with OpenBlas instead ATLAS, which should improve the performance of the linear
+algebra functions.
+
+Contributors
+============
+
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Brandon Carter
+* Charles Harris
+* Eric Wieser
+* Iryna Shcherbina +
+* James Bourbeau +
+* Jonathan Helmus
+* Julian Taylor
+* Matti Picus
+* Michael Lamparski +
+* Michael Seifert
+* Ralf Gommers
+
+Pull requests merged
+====================
+
+A total of 20 pull requests were merged for this release.
+
+* #9390 BUG: Return the poly1d coefficients array directly
+* #9555 BUG: Fix regression in 1.13.x in distutils.mingw32ccompiler.
+* #9556 BUG: Fix true_divide when dtype=np.float64 specified.
+* #9557 DOC: Fix some rst markup in numpy/doc/basics.py.
+* #9558 BLD: Remove -xhost flag from IntelFCompiler.
+* #9559 DOC: Removes broken docstring example (source code, png, pdf)...
+* #9580 BUG: Add hypot and cabs functions to WIN32 blacklist.
+* #9732 BUG: Make scalar function elision check if temp is writeable.
+* #9736 BUG: Various fixes to np.gradient
+* #9742 BUG: Fix np.pad for CVE-2017-12852
+* #9744 BUG: Check for exception in sort functions, add tests
+* #9745 DOC: Add whitespace after "versionadded::" directive so it actually...
+* #9746 BUG: Memory leak in np.dot of size 0
+* #9747 BUG: Adjust gfortran version search regex
+* #9757 BUG: Cython 0.27 breaks NumPy on Python 3.
+* #9764 BUG: Ensure `_npy_scaled_cexp{,f,l}` is defined when needed.
+* #9765 BUG: PyArray_CountNonzero does not check for exceptions
+* #9766 BUG: Fixes histogram monotonicity check for unsigned bin values
+* #9767 BUG: Ensure consistent result dtype of count_nonzero
+* #9771 BUG, MAINT: Fix mtrand for Cython 0.27.

@@ -166,8 +166,14 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
                 new_pos = positions + [con]
                 iter_results.append((new_cost, new_pos, new_input_sets))
 
-        # Update list to iterate over
-        full_results = iter_results
+        # Update combinatorial list, if we did not find anything return best
+        # path + remaining contractions
+        if iter_results:
+            full_results = iter_results
+        else:
+            path = min(full_results, key=lambda x: x[0])[1]
+            path += [tuple(range(len(input_sets) - iteration))]
+            return path
 
     # If we have not found anything return single einsum contraction
     if len(full_results) == 0:
@@ -717,7 +723,7 @@ def einsum_path(*operands, **kwargs):
         memory_arg = memory_limit
 
     # Compute naive cost
-    # This isnt quite right, need to look into exactly how einsum does this
+    # This isn't quite right, need to look into exactly how einsum does this
     naive_cost = _compute_size_by_dict(indices, dimension_dict)
     indices_in_input = input_subscripts.replace(',', '')
     mult = max(len(input_list) - 1, 1)

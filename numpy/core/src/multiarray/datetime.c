@@ -20,6 +20,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "numpy/arrayscalars.h"
 #include "methods.h"
 #include "_datetime.h"
@@ -1077,7 +1078,7 @@ get_datetime_units_factor(NPY_DATETIMEUNIT bigbase, NPY_DATETIMEUNIT littlebase)
         factor *= _datetime_factors[unit];
         /*
          * Detect overflow by disallowing the top 16 bits to be 1.
-         * That alows a margin of error much bigger than any of
+         * That allows a margin of error much bigger than any of
          * the datetime factors.
          */
         if (factor&0xff00000000000000ULL) {
@@ -1803,7 +1804,8 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
  */
 NPY_NO_EXPORT int
 convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
-                                        PyArray_DatetimeMetaData *out_meta)
+                                        PyArray_DatetimeMetaData *out_meta,
+                                        npy_bool from_pickle)
 {
     char *basestr = NULL;
     Py_ssize_t len = 0, tuple_size;
@@ -1854,13 +1856,62 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
 
     /* Convert the values to longs */
     out_meta->num = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 1));
-    if (out_meta->num == -1 && PyErr_Occurred()) {
+    if (error_converting(out_meta->num)) {
         return -1;
     }
 
-    if (tuple_size == 4) {
+    /*
+     * The event metadata was removed way back in numpy 1.7 (cb4545), but was
+     * not deprecated at the time.
+     */
+
+    /* (unit, num, event) */
+    if (tuple_size == 3) {
+        /* Numpy 1.14, 2017-08-11 */
+        if (DEPRECATE(
+                "When passing a 3-tuple as (unit, num, event), the event "
+                "is ignored (since 1.7) - use (unit, num) instead") < 0) {
+            return -1;
+        }
+    }
+    /* (unit, num, den, event) */
+    else if (tuple_size == 4) {
+        PyObject *event = PyTuple_GET_ITEM(tuple, 3);
+        if (from_pickle) {
+            /* if (event == 1) */
+            PyObject *one = PyLong_FromLong(1);
+            int equal_one;
+            if (one == NULL) {
+                return -1;
+            }
+            equal_one = PyObject_RichCompareBool(event, one, Py_EQ);
+            if (equal_one == -1) {
+                return -1;
+            }
+
+            /* if the event data is not 1, it had semantics different to how
+             * datetime types now behave, which are no longer respected.
+             */
+            if (!equal_one) {
+                if (PyErr_WarnEx(PyExc_UserWarning,
+                        "Loaded pickle file contains non-default event data "
+                        "for a datetime type, which has been ignored since 1.7",
+                        1) < 0) {
+                    return -1;
+                }
+            }
+        }
+        else if (event != Py_None) {
+            /* Numpy 1.14, 2017-08-11 */
+            if (DEPRECATE(
+                    "When passing a 4-tuple as (unit, num, den, event), the "
+                    "event argument is ignored (since 1.7), so should be None"
+                    ) < 0) {
+                return -1;
+            }
+        }
         den = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
-        if (den == -1 && PyErr_Occurred()) {
+        if (error_converting(den)) {
             return -1;
         }
     }
@@ -1896,8 +1947,8 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
     Py_ssize_t len = 0;
 
     if (PyTuple_Check(obj)) {
-        return convert_datetime_metadata_tuple_to_datetime_metadata(obj,
-                                                                out_meta);
+        return convert_datetime_metadata_tuple_to_datetime_metadata(
+            obj, out_meta, NPY_FALSE);
     }
 
     /* Get an ASCII string */
@@ -2127,7 +2178,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->year = PyInt_AsLong(tmp);
-    if (out->year == -1 && PyErr_Occurred()) {
+    if (error_converting(out->year)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2139,7 +2190,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->month = PyInt_AsLong(tmp);
-    if (out->month == -1 && PyErr_Occurred()) {
+    if (error_converting(out->month)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2151,7 +2202,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->day = PyInt_AsLong(tmp);
-    if (out->day == -1 && PyErr_Occurred()) {
+    if (error_converting(out->day)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2185,7 +2236,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->hour = PyInt_AsLong(tmp);
-    if (out->hour == -1 && PyErr_Occurred()) {
+    if (error_converting(out->hour)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2197,7 +2248,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->min = PyInt_AsLong(tmp);
-    if (out->min == -1 && PyErr_Occurred()) {
+    if (error_converting(out->min)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2209,7 +2260,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->sec = PyInt_AsLong(tmp);
-    if (out->sec == -1 && PyErr_Occurred()) {
+    if (error_converting(out->sec)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2221,7 +2272,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         return -1;
     }
     out->us = PyInt_AsLong(tmp);
-    if (out->us == -1 && PyErr_Occurred()) {
+    if (error_converting(out->us)) {
         Py_DECREF(tmp);
         return -1;
     }
@@ -2272,7 +2323,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
                 return -1;
             }
             seconds_offset = PyInt_AsLong(tmp);
-            if (seconds_offset == -1 && PyErr_Occurred()) {
+            if (error_converting(seconds_offset)) {
                 Py_DECREF(tmp);
                 return -1;
             }
@@ -2695,7 +2746,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         days = PyLong_AsLongLong(tmp);
-        if (days == -1 && PyErr_Occurred()) {
+        if (error_converting(days)) {
             Py_DECREF(tmp);
             return -1;
         }
@@ -2707,7 +2758,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         seconds = PyInt_AsLong(tmp);
-        if (seconds == -1 && PyErr_Occurred()) {
+        if (error_converting(seconds)) {
             Py_DECREF(tmp);
             return -1;
         }
@@ -2719,7 +2770,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         useconds = PyInt_AsLong(tmp);
-        if (useconds == -1 && PyErr_Occurred()) {
+        if (error_converting(useconds)) {
             Py_DECREF(tmp);
             return -1;
         }

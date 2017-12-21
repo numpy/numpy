@@ -14,6 +14,7 @@
 #include "numpy/ufuncobject.h"
 
 #include "ufunc_object.h"  /* for npy_um_str_pyvals_name */
+#include "common.h"
 
 #if USE_USE_DEFAULTS==1
 static int PyUFunc_NUM_NODEFAULTS = 0;
@@ -74,6 +75,11 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
     char msg[100];
 
     NPY_ALLOW_C_API_DEF
+
+    /* don't need C API for a simple ignore */
+    if (method == UFUNC_ERR_IGNORE) {
+        return 0;
+    }
 
     /* don't need C API for a simple print */
     if (method == UFUNC_ERR_PRINT) {
@@ -209,7 +215,7 @@ _extract_pyvals(PyObject *ref, const char *name, int *bufsize,
 
     if (bufsize != NULL) {
         *bufsize = PyInt_AsLong(PyList_GET_ITEM(ref, 0));
-        if ((*bufsize == -1) && PyErr_Occurred()) {
+        if (error_converting(*bufsize)) {
             return -1;
         }
         if ((*bufsize < NPY_MIN_BUFSIZE) ||

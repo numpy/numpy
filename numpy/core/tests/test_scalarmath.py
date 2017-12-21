@@ -7,9 +7,10 @@ import operator
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
-    suppress_warnings, dec, _gen_alignment_data,
+    run_module_suite,
+    assert_, assert_equal, assert_raises,
+    assert_almost_equal, assert_allclose, assert_array_equal,
+    IS_PYPY, suppress_warnings, dec, _gen_alignment_data,
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -18,6 +19,7 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.cdouble, np.clongdouble]
 
 floating_types = np.floating.__subclasses__()
+complex_floating_types = np.complexfloating.__subclasses__()
 
 
 # This compares scalarmath against ufuncs.
@@ -397,7 +399,7 @@ class TestConversion(object):
         for code in 'lLqQ':
             assert_raises(OverflowError, overflow_error_func, code)
 
-    def test_longdouble_int(self):
+    def test_int_from_infinite_longdouble(self):
         # gh-627
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, int, x)
@@ -407,15 +409,32 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY)
-    def test_clongdouble___int__(self):
+    @dec.knownfailureif(not IS_PYPY,
+        "__int__ is not the same as int in cpython (gh-9972)")
+    def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
         with suppress_warnings() as sup:
             sup.record(np.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
-            self.assertEqual(len(sup.log), 1)
+            assert_equal(len(sup.log), 1)
+
+    @dec.skipif(np.finfo(np.double) == np.finfo(np.longdouble))
+    def test_int_from_huge_longdouble(self):
+        # Produce a longdouble that would overflow a double,
+        # use exponent that avoids bug in Darwin pow function.
+        exp = np.finfo(np.double).maxexp - 1
+        huge_ld = 2 * 1234 * np.longdouble(2) ** exp
+        huge_i = 2 * 1234 * 2 ** exp
+        assert_(huge_ld != np.inf)
+        assert_equal(int(huge_ld), huge_i)
+
+    def test_int_from_longdouble(self):
+        x = np.longdouble(1.5)
+        assert_equal(int(x), 1)
+        x = np.longdouble(-10.5)
+        assert_equal(int(x), -10)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer
@@ -603,9 +622,8 @@ class TestSubtract(object):
 
 
 class TestAbs(object):
-
     def _test_abs_func(self, absfunc):
-        for tp in floating_types:
+        for tp in floating_types + complex_floating_types:
             x = tp(-1.5)
             assert_equal(absfunc(x), 1.5)
             x = tp(0.0)
@@ -615,6 +633,15 @@ class TestAbs(object):
             x = tp(-0.0)
             res = absfunc(x)
             assert_equal(res, 0.0)
+
+            x = tp(np.finfo(tp).max)
+            assert_equal(absfunc(x), x.real)
+
+            x = tp(np.finfo(tp).tiny)
+            assert_equal(absfunc(x), x.real)
+
+            x = tp(np.finfo(tp).min)
+            assert_equal(absfunc(x), -x.real)
 
     def test_builtin_abs(self):
         self._test_abs_func(abs)

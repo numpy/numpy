@@ -250,8 +250,6 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     npy_intp ap1stride = 0;
     npy_intp dimensions[NPY_MAXDIMS];
     npy_intp numbytes;
-    double prior1, prior2;
-    PyTypeObject *subtype;
     MatrixShape ap1shape, ap2shape;
 
     if (_bad_strides(ap1)) {
@@ -381,29 +379,17 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         }
     }
 
-    /* Choose which subtype to return */
-    if (Py_TYPE(ap1) != Py_TYPE(ap2)) {
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
-    }
-    else {
-        prior1 = prior2 = 0.0;
-        subtype = Py_TYPE(ap1);
-    }
-
     if (out != NULL) {
         int d;
 
         /* verify that out is usable */
-        if (Py_TYPE(out) != subtype ||
-            PyArray_NDIM(out) != nd ||
+        if (PyArray_NDIM(out) != nd ||
             PyArray_TYPE(out) != typenum ||
             !PyArray_ISCARRAY(out)) {
 
             PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable "
-                "(must have the right type, nr dimensions, and be a C-Array)");
+                "output array is not acceptable (must have the right datatype, "
+                "number of dimensions, and be a C-Array)");
             goto fail;
         }
         for (d = 0; d < nd; ++d) {
@@ -426,7 +412,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
 
             /* set copy-back */
             Py_INCREF(out);
-            if (PyArray_SetUpdateIfCopyBase(out_buf, out) < 0) {
+            if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
                 Py_DECREF(out);
                 goto fail;
             }
@@ -439,7 +425,22 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         result = out;
     }
     else {
-        PyObject *tmp = (PyObject *)(prior2 > prior1 ? ap2 : ap1);
+        double prior1, prior2;
+        PyTypeObject *subtype;
+        PyObject *tmp;
+
+        /* Choose which subtype to return */
+        if (Py_TYPE(ap1) != Py_TYPE(ap2)) {
+            prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+            prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
+        }
+        else {
+            prior1 = prior2 = 0.0;
+            subtype = Py_TYPE(ap1);
+        }
+
+        tmp = (PyObject *)(prior2 > prior1 ? ap2 : ap1);
 
         out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
                                                typenum, NULL, NULL, 0, 0, tmp);
@@ -456,7 +457,8 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     if (numbytes == 0 || l == 0) {
             Py_DECREF(ap1);
             Py_DECREF(ap2);
-            return PyArray_Return(out_buf);
+            Py_DECREF(out_buf);
+            return PyArray_Return(result);
     }
 
     if (ap2shape == _scalar) {
@@ -770,6 +772,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     Py_DECREF(ap2);
 
     /* Trigger possible copyback into `result` */
+    PyArray_ResolveWritebackIfCopy(out_buf);
     Py_DECREF(out_buf);
 
     return PyArray_Return(result);

@@ -11,6 +11,7 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
+#include "common.h"
 
 
 /*
@@ -95,9 +96,10 @@ minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *list = NULL, *weight = Py_None, *mlength = Py_None;
+    PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
     PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, len, mx, mn, ans_size, minlength;
+    npy_intp *numbers, *ians, len, mx, mn, ans_size;
+    npy_intp minlength = 0;
     npy_intp i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
@@ -113,18 +115,28 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     len = PyArray_SIZE(lst);
 
+    /*
+     * This if/else if can be removed by changing the argspec to O|On above,
+     * once we retire the deprecation
+     */
     if (mlength == Py_None) {
-        minlength = 0;
-    }
-    else {
-        minlength = PyArray_PyIntAsIntp(mlength);
-        if (minlength < 0) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_ValueError,
-                                "minlength must be non-negative");
-            }
+        /* NumPy 1.14, 2017-06-01 */
+        if (DEPRECATE("0 should be passed as minlength instead of None; "
+                      "this will error in future.") < 0) {
             goto fail;
         }
+    }
+    else if (mlength != NULL) {
+        minlength = PyArray_PyIntAsIntp(mlength);
+        if (error_converting(minlength)) {
+            goto fail;
+        }
+    }
+
+    if (minlength < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "'minlength' must not be negative");
+        goto fail;
     }
 
     /* handle empty list */
@@ -141,7 +153,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     minmax(numbers, len, &mn, &mx);
     if (mn < 0) {
         PyErr_SetString(PyExc_ValueError,
-                "The first argument of bincount must be non-negative");
+                "'list' argument must have no negative elements");
         goto fail;
     }
     ans_size = mx + 1;
@@ -327,7 +339,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     array = (PyArrayObject *)PyArray_FromArray((PyArrayObject *)array0, NULL,
-                                    NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+                                    NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
     if (array == NULL) {
         goto fail;
     }
@@ -402,6 +414,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     Py_XDECREF(values);
     Py_XDECREF(mask);
+    PyArray_ResolveWritebackIfCopy(array);
     Py_DECREF(array);
     Py_RETURN_NONE;
 
@@ -580,7 +593,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         lval = PyFloat_AsDouble(left);
-        if ((lval == -1) && PyErr_Occurred()) {
+        if (error_converting(lval)) {
             goto fail;
         }
     }
@@ -589,7 +602,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         rval = PyFloat_AsDouble(right);
-        if ((rval == -1) && PyErr_Occurred()) {
+        if (error_converting(rval)) {
             goto fail;
         }
     }
@@ -736,11 +749,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         lval.real = PyComplex_RealAsDouble(left);
-        if ((lval.real == -1) && PyErr_Occurred()) {
+        if (error_converting(lval.real)) {
             goto fail;
         }
         lval.imag = PyComplex_ImagAsDouble(left);
-        if ((lval.imag == -1) && PyErr_Occurred()) {
+        if (error_converting(lval.imag)) {
             goto fail;
         }
     }
@@ -750,11 +763,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         rval.real = PyComplex_RealAsDouble(right);
-        if ((rval.real == -1) && PyErr_Occurred()) {
+        if (error_converting(rval.real)) {
             goto fail;
         }
         rval.imag = PyComplex_ImagAsDouble(right);
-        if ((rval.imag == -1) && PyErr_Occurred()) {
+        if (error_converting(rval.imag)) {
             goto fail;
         }
     }
@@ -1134,8 +1147,11 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
     }
     NPY_END_ALLOW_THREADS;
     if (invalid) {
-        PyErr_SetString(PyExc_ValueError,
-              "invalid entry in index array");
+        PyErr_Format(PyExc_ValueError,
+            "index %" NPY_INTP_FMT " is out of bounds for array with size "
+            "%" NPY_INTP_FMT,
+            val, unravel_size
+        );
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
@@ -1168,8 +1184,11 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
     }
     NPY_END_ALLOW_THREADS;
     if (invalid) {
-        PyErr_SetString(PyExc_ValueError,
-              "invalid entry in index array");
+        PyErr_Format(PyExc_ValueError,
+            "index %" NPY_INTP_FMT " is out of bounds for array with size "
+            "%" NPY_INTP_FMT,
+            val, unravel_size
+        );
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
@@ -1198,12 +1217,6 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
                     &indices0,
                     PyArray_IntpConverter, &dimensions,
                     PyArray_OrderConverter, &order)) {
-        goto fail;
-    }
-
-    if (dimensions.len == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                "dims must have at least one value");
         goto fail;
     }
 
@@ -1324,6 +1337,20 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     else {
         PyErr_SetString(PyExc_ValueError,
                         "only 'C' or 'F' order is permitted");
+        goto fail;
+    }
+
+
+    if (dimensions.len == 0 && PyArray_NDIM(indices) != 0) {
+        /*
+         * There's no index meaning "take the only element 10 times"
+         * on a zero-d array, so we have no choice but to error. (See gh-580)
+         *
+         * Do this check after iterating, so we give a better error message
+         * for invalid indices.
+         */
+        PyErr_SetString(PyExc_ValueError,
+                "multiple indices are not supported for 0d arrays");
         goto fail;
     }
 

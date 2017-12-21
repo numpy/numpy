@@ -10,4 +10,12 @@ array_repr(PyArrayObject *self);
 NPY_NO_EXPORT PyObject *
 array_str(PyArrayObject *self);
 
+NPY_NO_EXPORT PyObject *
+array_format(PyArrayObject *self, PyObject *args);
+
+#ifndef NPY_PY3K
+    NPY_NO_EXPORT PyObject *
+    array_unicode(PyArrayObject *self);
+#endif
+
 #endif

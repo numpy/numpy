@@ -361,10 +361,10 @@ def poly2cheb(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(range(4))
     >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
     >>> c = p.convert(kind=P.Chebyshev)
     >>> c
-    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
     >>> P.poly2cheb(range(4))
     array([ 1.  ,  3.25,  1.  ,  0.75])
 
@@ -944,7 +944,7 @@ def chebder(c, m=1, scl=1, axis=0):
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
@@ -960,7 +960,7 @@ def chebder(c, m=1, scl=1, axis=0):
                 der[1] = 4*c[2]
             der[0] = c[1]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -1012,8 +1012,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 1``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
-        ``np.isscalar(scl) == False``.
+        If ``m < 1``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -1024,7 +1024,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.
     Why is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`.  Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a`- perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
@@ -1062,6 +1062,10 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)
@@ -1069,7 +1073,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt):
         n = len(c)
@@ -1088,7 +1092,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j - 1] -= c[j]/(2*(j - 1))
             tmp[0] += k[i] - chebval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -1222,7 +1226,7 @@ def chebval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1282,7 +1286,7 @@ def chebgrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = chebval(x, c)
@@ -1335,7 +1339,7 @@ def chebval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
@@ -1399,7 +1403,7 @@ def chebgrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = chebval(x, c)
@@ -1460,7 +1464,7 @@ def chebvander(x, deg):
         v[1] = x
         for i in range(2, ideg + 1):
             v[i] = v[i-1]*x2 - v[i-2]
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def chebvander2d(x, y, deg):
@@ -1510,7 +1514,7 @@ def chebvander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1574,7 +1578,7 @@ def chebvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1810,7 +1814,7 @@ def chebcompanion(c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy

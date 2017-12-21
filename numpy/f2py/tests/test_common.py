@@ -1,11 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import sys
+import numpy as np
+from . import util
 
 from numpy.testing import run_module_suite, assert_array_equal, dec
-import numpy as np
-import util
-
 
 def _path(*a):
     return os.path.join(*((os.path.dirname(__file__),) + a))
@@ -13,6 +13,7 @@ def _path(*a):
 class TestCommonBlock(util.F2PyTest):
     sources = [_path('src', 'common', 'block.f')]
 
+    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_common_block(self):
         self.module.initcb()
         assert_array_equal(self.module.block.long_bn,

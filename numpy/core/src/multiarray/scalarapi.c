@@ -415,7 +415,7 @@ PyArray_ScalarFromObject(PyObject *object)
     else if (PyLong_Check(object)) {
         npy_longlong val;
         val = PyLong_AsLongLong(object);
-        if (val==-1 && PyErr_Occurred()) {
+        if (error_converting(val)) {
             PyErr_Clear();
             return NULL;
         }
@@ -567,7 +567,7 @@ PyArray_DescrFromScalar(PyObject *sc)
     }
 
     descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(sc));
-    if (descr->elsize == 0) {
+    if (PyDataType_ISUNSIZED(descr)) {
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
         if (type_num == NPY_STRING) {

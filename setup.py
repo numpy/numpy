@@ -62,7 +62,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 14
+MINOR               = 15
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -81,7 +81,7 @@ def git_version():
         env['LANGUAGE'] = 'C'
         env['LANG'] = 'C'
         env['LC_ALL'] = 'C'
-        out = subprocess.Popen(cmd, stdout = subprocess.PIPE, env=env).communicate()[0]
+        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
         return out
 
     try:
@@ -147,8 +147,8 @@ if not release:
     a = open(filename, 'w')
     try:
         a.write(cnt % {'version': VERSION,
-                       'full_version' : FULLVERSION,
-                       'git_revision' : GIT_REVISION,
+                       'full_version': FULLVERSION,
+                       'git_revision': GIT_REVISION,
                        'isrelease': str(ISRELEASED)})
     finally:
         a.close()
@@ -164,6 +164,7 @@ def configuration(parent_package='',top_path=None):
                        quiet=True)
 
     config.add_subpackage('numpy')
+    config.add_data_files(('numpy', 'LICENSE.txt'))
 
     config.get_version('numpy/version.py') # sets config.version
 

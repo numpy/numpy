@@ -3,7 +3,8 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises
+    assert_almost_equal, assert_array_almost_equal, assert_raises,
+    assert_raises_regex
     )
 from numpy.lib.index_tricks import (
     mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
@@ -114,6 +115,16 @@ class TestRavelUnravelIndex(object):
         assert_(y.flags.writeable)
 
 
+    def test_0d(self):
+        # gh-580
+        x = np.unravel_index(0, ())
+        assert_equal(x, ())
+
+        assert_raises_regex(ValueError, "0d array", np.unravel_index, [0], ())
+        assert_raises_regex(
+            ValueError, "out of bounds", np.unravel_index, [1], ())
+
+
 class TestGrid(object):
     def test_basic(self):
         a = mgrid[-1:1:10j]
@@ -204,6 +215,11 @@ class TestConcatenator(object):
 
         assert_equal(actual, expected)
         assert_equal(type(actual), type(expected))
+
+    def test_0d(self):
+        assert_equal(r_[0, np.array(1), 2], [0, 1, 2])
+        assert_equal(r_[[0, 1, 2], np.array(3)], [0, 1, 2, 3])
+        assert_equal(r_[np.array(0), [1, 2, 3]], [0, 1, 2, 3])
 
 
 class TestNdenumerate(object):

@@ -804,8 +804,11 @@ class TestGradient(object):
 
         # distances must be scalars or have size equal to gradient[axis]
         gradient(np.arange(5), 3.)
+        gradient(np.arange(5), np.array(3.))
         gradient(np.arange(5), dx)
-        gradient(f_2d, 1.5)  # dy is set equal to dx because scalar
+        # dy is set equal to dx because scalar
+        gradient(f_2d, 1.5)
+        gradient(f_2d, np.array(1.5))
 
         gradient(f_2d, dx_uneven, dx_uneven)
         # mix between even and uneven spaces and
@@ -814,6 +817,10 @@ class TestGradient(object):
 
         # 2D but axis specified
         gradient(f_2d, dx, axis=1)
+
+        # 2d coordinate arguments are not yet allowed
+        assert_raises_regex(ValueError, '.*scalars or 1d',
+            gradient, f_2d, np.stack([dx]*2, axis=-1), 1)
 
     def test_badargs(self):
         f_2d = np.arange(25).reshape(5, 5)
@@ -1829,6 +1836,14 @@ class TestHistogram(object):
         hist, edges = np.histogram(arr, bins=30, range=(-0.5, 5))
         assert_equal(hist[-1], 1)
 
+    def test_unsigned_monotonicity_check(self):
+        # Ensures ValueError is raised if bins not increasing monotonically
+        # when bins contain unsigned values (see #9222)
+        arr = np.array([2])
+        bins = np.array([1, 3, 1], dtype='uint64')
+        with assert_raises(ValueError):
+            hist, edges = np.histogram(arr, bins=bins)
+
 
 class TestHistogramOptimBinNums(object):
     """
@@ -2499,6 +2514,11 @@ class TestPiecewise(object):
         x = piecewise([0, 0], [[False, True]], [lambda x:-1])
         assert_array_equal(x, [0, -1])
 
+        assert_raises_regex(ValueError, '1 or 2 functions are expected',
+            piecewise, [0, 0], [[False, True]], [])
+        assert_raises_regex(ValueError, '1 or 2 functions are expected',
+            piecewise, [0, 0], [[False, True]], [1, 2, 3])
+
     def test_two_conditions(self):
         x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
         assert_array_equal(x, [3, 4])
@@ -2523,7 +2543,7 @@ class TestPiecewise(object):
         assert_(y == 0)
 
         x = 5
-        y = piecewise(x, [[True], [False]], [1, 0])
+        y = piecewise(x, [True, False], [1, 0])
         assert_(y.ndim == 0)
         assert_(y == 1)
 
@@ -2540,6 +2560,17 @@ class TestPiecewise(object):
         x = 4
         y = piecewise(x, [x <= 3, (x > 3) * (x <= 5), x > 5], [1, 2, 3])
         assert_array_equal(y, 2)
+
+        assert_raises_regex(ValueError, '2 or 3 functions are expected',
+            piecewise, x, [x <= 3, x > 3], [1])
+        assert_raises_regex(ValueError, '2 or 3 functions are expected',
+            piecewise, x, [x <= 3, x > 3], [1, 1, 1, 1])
+
+    def test_0d_0d_condition(self):
+        x = np.array(3)
+        c = np.array(x > 3)
+        y = piecewise(x, [c], [1, 2])
+        assert_equal(y, 2)
 
     def test_multidimensional_extrafunc(self):
         x = np.array([[-2.5, -1.5, -0.5],
@@ -2608,7 +2639,7 @@ class TestBincount(object):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "must be non-negative",
+                            "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
         x = np.arange(5)
@@ -2616,7 +2647,7 @@ class TestBincount(object):
                             "'str' object cannot be interpreted",
                             lambda: np.bincount(x, minlength="foobar"))
         assert_raises_regex(ValueError,
-                            "minlength must be non-negative",
+                            "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
     @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
@@ -3011,7 +3042,7 @@ class TestPercentile(object):
         o = np.random.normal(size=(71, 23))
         x = np.dstack([o] * 10)
         assert_equal(np.percentile(x, 30, axis=(0, 1)), np.percentile(o, 30))
-        x = np.rollaxis(x, -1, 0)
+        x = np.moveaxis(x, -1, 0)
         assert_equal(np.percentile(x, 30, axis=(-2, -1)), np.percentile(o, 30))
         x = x.swapaxes(0, 1).copy()
         assert_equal(np.percentile(x, 30, axis=(0, -1)), np.percentile(o, 30))
@@ -3392,7 +3423,7 @@ class TestMedian(object):
         o = np.random.normal(size=(71, 23))
         x = np.dstack([o] * 10)
         assert_equal(np.median(x, axis=(0, 1)), np.median(o))
-        x = np.rollaxis(x, -1, 0)
+        x = np.moveaxis(x, -1, 0)
         assert_equal(np.median(x, axis=(-2, -1)), np.median(o))
         x = x.swapaxes(0, 1).copy()
         assert_equal(np.median(x, axis=(0, -1)), np.median(o))
