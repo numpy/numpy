@@ -105,7 +105,7 @@ abs_intp(npy_intp x)
 
 #define LOOP_BLOCKED(type, vsize)\
     for(; i < npy_blocked_end(peel, sizeof(type), vsize, n);\
-            i += (vsize / sizeof(type)))
+            i += (npy_intp)(vsize / sizeof(type)))
 
 #define LOOP_BLOCKED_END\
     for (; i < n; i++)
@@ -192,12 +192,12 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
     @type@ * op = (@type@ *)args[2];
     npy_intp n = dimensions[0];
     /* argument one scalar */
-    if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), 16)) {
+    if (IS_BLOCKABLE_BINARY_SCALAR1((npy_intp)sizeof(@type@), 16)) {
         sse2_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
     /* argument two scalar */
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), 16)) {
+    else if (IS_BLOCKABLE_BINARY_SCALAR2((npy_intp)sizeof(@type@), 16)) {
         sse2_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
@@ -828,7 +828,7 @@ sse2_@kind@_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
 static void
 sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 {
-    const size_t stride = 16 / sizeof(@type@);
+    const npy_intp stride = (npy_intp)(16 / sizeof(@type@));
     LOOP_BLOCK_ALIGN_VAR(ip, @type@, 16) {
         *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
