@@ -3,13 +3,8 @@ from __future__ import division, print_function
 
 # System imports
 from distutils.core import (
-    CCompilerError, Command, CompileError, DEBUG, Distribution,
-    DistutilsArgError, DistutilsByteCompileError, DistutilsClassError,
-    DistutilsError, DistutilsExecError, DistutilsFileError,
-    DistutilsGetoptError, DistutilsInternalError, DistutilsModuleError,
-    DistutilsOptionError, DistutilsPlatformError, DistutilsSetupError,
-    DistutilsTemplateError, Extension, LibError, LinkError, PreprocessError,
-    PyPIRCCommand, USAGE, UnknownFileError, extension_keywords, gen_usage, os,
+     Command, DEBUG, Distribution,
+    extension_keywords, gen_usage, os,
     run_setup, setup, setup_keywords, sys)
 from distutils      import sysconfig
 

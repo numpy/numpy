@@ -9,14 +9,9 @@ import time
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import (
-    CCompiler, CCompilerError, CompileError, DistutilsArgError,
-    DistutilsByteCompileError, DistutilsClassError, DistutilsError,
-    DistutilsExecError, DistutilsFileError, DistutilsGetoptError,
-    DistutilsInternalError, DistutilsModuleError, DistutilsOptionError,
-    DistutilsPlatformError, DistutilsSetupError, DistutilsTemplateError,
-    LibError, LinkError, PreprocessError, UnknownFileError, compiler_class,
+    CCompiler,  CompileError, compiler_class,
     execute, gen_lib_options, gen_preprocess_options, get_default_compiler,
-    log, mkpath, move_file, new_compiler, newer_group, newer_pairwise, os, re,
+    log, mkpath, move_file, new_compiler, newer_group,  os, re,
     show_compilers, spawn, split_quoted, sys)
 from distutils.errors import DistutilsExecError, DistutilsModuleError, \
                              DistutilsPlatformError, CompileError

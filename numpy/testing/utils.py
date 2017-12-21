@@ -18,7 +18,7 @@ __all__ = [
         ]
 
 from .nose_tools.utils import (
-    GetPerformanceAttributes, HAS_REFCOUNT, IS_PYPY, IgnoreException,
+     HAS_REFCOUNT, IS_PYPY, IgnoreException,
     KnownFailureException, KnownFailureTest, SkipTest, StringIO,
     WarningManager, WarningMessage, absolute_import, arange, array, array_repr,
     assert_, assert_allclose, assert_almost_equal, assert_approx_equal,
@@ -31,4 +31,5 @@ from .nose_tools.utils import (
     integer_repr, isnat, jiffies, measure, memusage, mkdtemp, mkstemp, ndarray,
     nulp_diff, operator, os, partial, print_assert_equal, print_function,
     raises, rand, re, rundocs, runstring, shutil, suppress_warnings, sys,
-    tempdir, temppath, verbose, warnings, wraps)
+    tempdir, temppath, verbose, warnings, wraps,
+    _assert_valid_refcount, _gen_alignment_data)
