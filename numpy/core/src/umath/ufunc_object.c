@@ -126,6 +126,65 @@ PyUFunc_clearfperr()
 }
 
 /*
+ * This function analyzes the input arguments and determines an appropriate
+ * method (__array_prepare__ or __array_wrap__) function to call, taking it
+ * from the input with the highest priority. Return NULL if no argument
+ * defines the method.
+ */
+static PyObject*
+_find_array_method(PyObject *args, int nin, PyObject *method_name)
+{
+    int i, n_methods;
+    PyObject *obj;
+    PyObject *with_method[NPY_MAXARGS], *methods[NPY_MAXARGS];
+    PyObject *method = NULL;
+
+    n_methods = 0;
+    for (i = 0; i < nin; i++) {
+        obj = PyTuple_GET_ITEM(args, i);
+        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
+            continue;
+        }
+        method = PyObject_GetAttr(obj, method_name);
+        if (method) {
+            if (PyCallable_Check(method)) {
+                with_method[n_methods] = obj;
+                methods[n_methods] = method;
+                ++n_methods;
+            }
+            else {
+                Py_DECREF(method);
+                method = NULL;
+            }
+        }
+        else {
+            PyErr_Clear();
+        }
+    }
+    if (n_methods > 0) {
+        /* If we have some methods defined, find the one of highest priority */
+        method = methods[0];
+        if (n_methods > 1) {
+            double maxpriority = PyArray_GetPriority(with_method[0],
+                                                     NPY_PRIORITY);
+            for (i = 1; i < n_methods; ++i) {
+                double priority = PyArray_GetPriority(with_method[i],
+                                                      NPY_PRIORITY);
+                if (priority > maxpriority) {
+                    maxpriority = priority;
+                    Py_DECREF(method);
+                    method = methods[i];
+                }
+                else {
+                    Py_DECREF(methods[i]);
+                }
+            }
+        }
+    }
+    return method;
+}
+
+/*
  * This function analyzes the input arguments
  * and determines an appropriate __array_prepare__ function to call
  * for the outputs.
@@ -149,9 +208,7 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
 {
     Py_ssize_t nargs;
     int i;
-    int np = 0;
-    PyObject *with_prep[NPY_MAXARGS], *preps[NPY_MAXARGS];
-    PyObject *obj, *prep = NULL;
+    PyObject *obj, *prep;
 
     /*
      * If a 'subok' parameter is passed and isn't True, don't wrap
@@ -167,53 +224,12 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
         }
     }
 
-    nargs = PyTuple_GET_SIZE(args);
-    for (i = 0; i < nin; i++) {
-        obj = PyTuple_GET_ITEM(args, i);
-        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
-            continue;
-        }
-        prep = PyObject_GetAttr(obj, npy_um_str_array_prepare);
-        if (prep) {
-            if (PyCallable_Check(prep)) {
-                with_prep[np] = obj;
-                preps[np] = prep;
-                ++np;
-            }
-            else {
-                Py_DECREF(prep);
-                prep = NULL;
-            }
-        }
-        else {
-            PyErr_Clear();
-        }
-    }
-    if (np > 0) {
-        /* If we have some preps defined, find the one of highest priority */
-        prep = preps[0];
-        if (np > 1) {
-            double maxpriority = PyArray_GetPriority(with_prep[0],
-                        NPY_PRIORITY);
-            for (i = 1; i < np; ++i) {
-                double priority = PyArray_GetPriority(with_prep[i],
-                            NPY_PRIORITY);
-                if (priority > maxpriority) {
-                    maxpriority = priority;
-                    Py_DECREF(prep);
-                    prep = preps[i];
-                }
-                else {
-                    Py_DECREF(preps[i]);
-                }
-            }
-        }
-    }
-
     /*
-     * Here prep is the prepping function determined from the
-     * input arrays (could be NULL).
-     *
+     * Determine the prepping function given by the input arrays
+     * (could be NULL).
+     */
+    prep = _find_array_method(args, nin, npy_um_str_array_prepare);
+    /*
      * For all the output arrays decide what to do.
      *
      * 1) Use the prep function determined from the input arrays
@@ -225,6 +241,7 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
      * exact ndarray so that no PyArray_Return is
      * done in that case.
      */
+    nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nout; i++) {
         int j = nin + i;
         int incref = 1;
@@ -3946,9 +3963,8 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
 {
     Py_ssize_t nargs;
     int i, idx_offset, start_idx;
-    int np = 0;
-    PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
-    PyObject *obj, *wrap = NULL;
+    PyObject *obj;
+    PyObject *wrap = NULL;
 
     /*
      * If a 'subok' parameter is passed and isn't True, don't wrap but put None
@@ -3962,53 +3978,13 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
         }
     }
 
-
-    for (i = 0; i < nin; i++) {
-        obj = PyTuple_GET_ITEM(args, i);
-        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
-            continue;
-        }
-        wrap = PyObject_GetAttr(obj, npy_um_str_array_wrap);
-        if (wrap) {
-            if (PyCallable_Check(wrap)) {
-                with_wrap[np] = obj;
-                wraps[np] = wrap;
-                ++np;
-            }
-            else {
-                Py_DECREF(wrap);
-                wrap = NULL;
-            }
-        }
-        else {
-            PyErr_Clear();
-        }
-    }
-    if (np > 0) {
-        /* If we have some wraps defined, find the one of highest priority */
-        wrap = wraps[0];
-        if (np > 1) {
-            double maxpriority = PyArray_GetPriority(with_wrap[0],
-                        NPY_PRIORITY);
-            for (i = 1; i < np; ++i) {
-                double priority = PyArray_GetPriority(with_wrap[i],
-                            NPY_PRIORITY);
-                if (priority > maxpriority) {
-                    maxpriority = priority;
-                    Py_DECREF(wrap);
-                    wrap = wraps[i];
-                }
-                else {
-                    Py_DECREF(wraps[i]);
-                }
-            }
-        }
-    }
+    /*
+     * Determine the wrapping function given by the input arrays
+     * (could be NULL).
+     */
+    wrap = _find_array_method(args, nin, npy_um_str_array_wrap);
 
     /*
-     * Here wrap is the wrapping function determined from the
-     * input arrays (could be NULL).
-     *
      * For all the output arrays decide what to do.
      *
      * 1) Use the wrap function determined from the input arrays
