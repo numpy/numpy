@@ -5,10 +5,7 @@ set of tools
 """
 import os
 
-if int(os.getenv('NPY_PYTEST', '0')):
-    from .pytest_tools.utils import *
-else:
-    from .nose_tools.utils import *
+from .nose_tools.utils import *
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
