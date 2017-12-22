@@ -55,6 +55,15 @@ builtin arbitrary-precision `Decimal` and `long` types.
 Improvements
 ============
 
+``histogram`` and ``histogramdd` functions have moved to ``np.lib.histograms``
+------------------------------------------------------------------------------
+These were originally found in ``np.lib.function_base``. They are still
+available under their un-scoped ``np.histogram(dd)`` names, and
+to maintain compatibility, aliased at ``np.lib.function_base.histogram(dd)``.
+
+Code that does ``from np.lib.function_base import *`` will need to be updated
+with the new location, and should consider not using ``import *`` in future.
+
 ``MaskedArray.astype`` now is identical to ``ndarray.astype``
 -------------------------------------------------------------
 This means it takes all the same arguments, making more code written for
