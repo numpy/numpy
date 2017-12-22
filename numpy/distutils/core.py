@@ -1,7 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from distutils.core import *
+from distutils.core import (Command, DEBUG, Distribution, extension_keywords,
+                            gen_usage, os, run_setup, setup, setup_keywords,
+                            sys)
 
 if 'setuptools' in sys.modules:
     have_setuptools = True

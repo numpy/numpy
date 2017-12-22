@@ -2,7 +2,9 @@
 from __future__ import division, print_function
 
 # System imports
-from distutils.core import *
+from distutils.core import (Command, DEBUG, Distribution, extension_keywords,
+                            gen_usage, os, run_setup, setup, setup_keywords,
+                            sys)
 from distutils      import sysconfig
 
 # Third-party modules - we depend on numpy for everything
