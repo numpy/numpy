@@ -6,6 +6,7 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import pytest
 import numpy
+import importlib
 
 from numpy.core.multiarray_tests import get_fpu_mode
 
@@ -73,3 +74,13 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(autouse=True)
 def add_np(doctest_namespace):
     doctest_namespace['np'] = numpy
+
+
+for module, replacement in {
+    'numpy.testing.decorators': 'numpy.testing.pytest_tools.decorators',
+    'numpy.testing.utils': 'numpy.testing.pytest_tools.utils',
+}.items():
+    module = importlib.import_module(module)
+    replacement = importlib.import_module(replacement)
+    module.__dict__.clear()
+    module.__dict__.update(replacement.__dict__)
