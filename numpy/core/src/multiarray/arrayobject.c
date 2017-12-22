@@ -475,22 +475,10 @@ array_dealloc(PyArrayObject *self)
                 "called.";
             /* 2017-Nov-10 1.14 */
             if (DEPRECATE(msg) < 0) {
-                /* dealloc must not raise an error, best effort try to write
+                /* dealloc cannot raise an error, best effort try to write
                    to stderr and clear the error
                 */
-                PyObject * s;
-#if PY_MAJOR_VERSION < 3
-                s = PyString_FromString(msg);
-#else
-                s = PyUnicode_FromString(msg);
-#endif
-                if (s) {
-                    PyErr_WriteUnraisable(s);
-                    Py_DECREF(s);
-                }
-                else {
-                    PyErr_WriteUnraisable(Py_None);
-                }
+                PyErr_WriteUnraisable((PyObject *)&PyArray_Type);
             }
             retval = PyArray_ResolveWritebackIfCopy(self);
             if (retval < 0)
