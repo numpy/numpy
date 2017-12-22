@@ -43,6 +43,8 @@ add_newdoc('numpy.core.umath', 'absolute',
     """
     Calculate the absolute value element-wise.
 
+    ``np.abs`` is a shorthand for this function.
+
     Parameters
     ----------
     x : array_like
