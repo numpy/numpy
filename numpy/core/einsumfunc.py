@@ -1057,7 +1057,7 @@ def einsum(*operands, **kwargs):
     """
 
     # Grab non-einsum kwargs
-    optimize_arg = kwargs.pop('optimize', False)
+    optimize_arg = kwargs.pop('optimize', True)
 
     # If no optimization, run pure einsum
     if optimize_arg is False:
