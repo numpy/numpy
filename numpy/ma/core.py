@@ -6937,6 +6937,7 @@ def transpose(a, axes=None):
      [[False False]
      [False  True]],
            fill_value = 999999)
+
     >>> ma.transpose(x)
     masked_array(data =
      [[0 2]
