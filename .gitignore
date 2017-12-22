@@ -71,6 +71,7 @@ doc/cdoc/build
 # The shelf plugin uses this dir
 ./.shelf
 MANIFEST
+.cache
 
 # Paver generated files #
 #########################
