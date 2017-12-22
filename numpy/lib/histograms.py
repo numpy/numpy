@@ -228,7 +228,7 @@ def _get_outer_edges(a, range):
     if first_edge > last_edge:
         raise ValueError(
             'max must be larger than min in range parameter.')
-    if not np.all(np.isfinite([first_edge, last_edge])):
+    if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
         raise ValueError(
             'range parameter must be finite.')
     if first_edge == last_edge:

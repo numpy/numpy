@@ -238,6 +238,17 @@ class TestHistogram(object):
         with assert_raises(ValueError):
             hist, edges = np.histogram(arr, bins=bins)
 
+    def test_object_array_of_0d(self):
+        # gh-7864
+        assert_raises(ValueError,
+            histogram, [np.array([0.4]) for i in range(10)] + [-np.inf])
+        assert_raises(ValueError,
+            histogram, [np.array([0.4]) for i in range(10)] + [np.inf])
+
+        # these should not crash
+        np.histogram([np.array([0.5]) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array([0.5]) for i in range(10)] + [.5])
+
 
 class TestHistogramOptimBinNums(object):
     """
