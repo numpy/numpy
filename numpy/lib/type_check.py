@@ -479,7 +479,10 @@ def asscalar(a):
     24
 
     """
-    return a.item()
+    try:
+        return a.item()
+    except AttributeError, e:
+        return np.asarray(a).item()
 
 #-----------------------------------------------------------------------------
 
