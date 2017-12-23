@@ -28,6 +28,7 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "alloc.h"
 #include <assert.h>
+#include <math.h>
 
 #include "get_attr_string.h"
 
