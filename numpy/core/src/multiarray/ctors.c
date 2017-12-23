@@ -2984,7 +2984,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
         }
     }
     else {
-        length = _arange_safe_ceil_to_intp((stop - start)/step);
+        length = _arange_safe_ceil_to_intp(tmp_len);
         if (error_converting(length)) {
             return NULL;
         }
