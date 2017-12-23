@@ -259,8 +259,6 @@ def _get_bin_edges(a, bins, range, weights):
         The upper bound, lowerbound, and number of bins, used in the optimized
         implementation of `histogram` that works on uniform bins.
     """
-    first_edge, last_edge = _get_outer_edges(a, range)
-
     # parse the overloaded bins argument
     n_equal_bins = None
     bin_edges = None
@@ -275,6 +273,8 @@ def _get_bin_edges(a, bins, range, weights):
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
+
+        first_edge, last_edge = _get_outer_edges(a, range)
 
         # truncate the range if needed
         if range is not None:
@@ -303,6 +303,8 @@ def _get_bin_edges(a, bins, range, weights):
                 '`bins` must be an integer, a string, or an array')
         if n_equal_bins < 1:
             raise ValueError('`bins` must be positive, when an integer')
+
+        first_edge, last_edge = _get_outer_edges(a, range)
 
     elif np.ndim(bins) == 1:
         bin_edges = np.asarray(bins)

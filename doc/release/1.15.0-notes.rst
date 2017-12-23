@@ -64,6 +64,16 @@ to maintain compatibility, aliased at ``np.lib.function_base.histogram(dd)``.
 Code that does ``from np.lib.function_base import *`` will need to be updated
 with the new location, and should consider not using ``import *`` in future.
 
+``histogram`` will accept NaN values when explicit bins are given
+-----------------------------------------------------------------
+Previously it would fail when trying to compute a finite range for the data.
+Since the range is ignored anyway when the bins are given explcitly, this error
+was needless.
+
+Note that calling `histogram` on NaN values continues to raise the
+`RuntimeWarning`s typical of working with nan values, which can be silenced
+as usual with `errstate`.
+
 ``np.r_`` works with 0d arrays, and ``np.ma.mr_` works with ``np.ma.masked``
 ----------------------------------------------------------------------------
 0d arrays passed to the `r_` and `mr_` concatenation helpers are now treated as
