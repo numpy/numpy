@@ -234,6 +234,23 @@ class TestRegression(object):
         x = np.arange(10, dtype='>f8')
         assert_array_equal(ref, x)
 
+    def test_arange_inf_step(self):
+        ref = np.arange(0, 1, 10)
+        x = np.arange(0, 1, np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, 1, -10)
+        x = np.arange(0, 1, -np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -1, -10)
+        x = np.arange(0, -1, -np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -1, 10)
+        x = np.arange(0, -1, np.inf)
+        assert_array_equal(ref, x)
+
     def test_argmax(self):
         # Ticket #119
         a = np.random.normal(0, 1, (4, 5, 6, 7, 8))
