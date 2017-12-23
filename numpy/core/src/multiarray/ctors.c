@@ -2942,11 +2942,25 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     PyArray_ArrFuncs *funcs;
     PyObject *obj;
     int ret;
+    double delta, tmp_len;
     NPY_BEGIN_THREADS_DEF;
 
-    if (_safe_ceil_to_intp((stop - start)/step, &length)) {
-        PyErr_SetString(PyExc_OverflowError,
-                "arange: overflow while computing length");
+    delta = stop - start;
+    tmp_len = delta/step;
+
+    if (tmp_len == 0.0 && delta != 0.0) {
+        if (signbit(tmp_len)) {
+            length = -1.0;
+        }
+        else {
+            length = 1.0;
+        }
+    }
+    else {
+        if (_safe_ceil_to_intp(tmp_len, &length)) {
+            PyErr_SetString(PyExc_OverflowError,
+                    "arange: overflow while computing length");
+        }
     }
 
     if (length <= 0) {
@@ -3009,7 +3023,8 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
-    npy_intp len, tmp;
+    npy_intp len, tmp, next_is_nonzero, val_is_zero;
+    PyObject *zero = PyInt_FromLong(0);
     PyObject *val;
     double value;
 
@@ -3023,12 +3038,19 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         }
         return -1;
     }
+
+    next_is_nonzero = PyObject_RichCompareBool(*next, zero, Py_NE);
     val = PyNumber_TrueDivide(*next, step);
     Py_DECREF(*next);
     *next = NULL;
+
     if (!val) {
         return -1;
     }
+
+    val_is_zero = PyObject_RichCompareBool(val, zero, Py_EQ);
+    Py_DECREF(zero);
+
     if (cmplx && PyComplex_Check(val)) {
         value = PyComplex_RealAsDouble(val);
         if (error_converting(value)) {
@@ -3059,12 +3081,24 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         if (error_converting(value)) {
             return -1;
         }
-        if (_safe_ceil_to_intp(value, &len)) {
-            PyErr_SetString(PyExc_OverflowError,
-                    "arange: overflow while computing length");
-            return -1;
+
+        if (val_is_zero && next_is_nonzero) {
+            if (signbit(value)) {
+                len = -1.0;
+            }
+            else {
+                len = 1.0;
+            }
+        }
+        else {
+            if (_safe_ceil_to_intp(value, &len)) {
+                PyErr_SetString(PyExc_OverflowError,
+                        "arange: overflow while computing length");
+                return -1;
+            }
         }
     }
+
     if (len > 0) {
         *next = PyNumber_Add(start, step);
         if (!*next) {
