@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import pickle
 import sys
+import operator
 
 import numpy as np
 from numpy.core.test_rational import rational
@@ -103,6 +104,15 @@ class TestBuiltin(object):
                         {'names':['f0', 'f1'],
                          'formats':['i1', 'f4'],
                          'offsets':[0, 2]}, align=True)
+
+    def test_field_order_equality(self):
+        x = np.dtype({'names': ['A', 'B'], 
+                      'formats': ['i4', 'f4'], 
+                      'offsets': [0, 4]})
+        y = np.dtype({'names': ['B', 'A'], 
+                      'formats': ['f4', 'i4'], 
+                      'offsets': [4, 0]})
+        assert_equal(x == y, False)
 
 class TestRecord(object):
     def test_equivalent_record(self):
@@ -211,11 +221,12 @@ class TestRecord(object):
         dt = np.dtype({'names':['f0', 'f1', 'f2'], 'formats':['<u4', '<u2', '<u2'],
                         'offsets':[4, 0, 2]}, align=True)
         assert_equal(dt.itemsize, 8)
+        # field name should not matter: assignment is by position
         dt2 = np.dtype({'names':['f2', 'f0', 'f1'],
-                        'formats':['<u2', '<u4', '<u2'],
-                        'offsets':[2, 4, 0]}, align=True)
+                        'formats':['<u4', '<u2', '<u2'],
+                        'offsets':[4, 0, 2]}, align=True)
         vals = [(0, 1, 2), (3, -1, 4)]
-        vals2 = [(2, 0, 1), (4, 3, -1)]
+        vals2 = [(0, 1, 2), (3, -1, 4)]
         a = np.array(vals, dt)
         b = np.array(vals2, dt2)
         assert_equal(a.astype(dt2), b)
@@ -287,6 +298,19 @@ class TestRecord(object):
         # no errors here:
         dt = make_dtype(np.uint32(0))
         np.zeros(1, dtype=dt)[0].item()
+
+    def test_fields_by_index(self):
+        dt = np.dtype([('a', np.int8), ('b', np.float32, 3)])
+        assert_dtype_equal(dt[0], np.dtype(np.int8))
+        assert_dtype_equal(dt[1], np.dtype((np.float32, 3)))
+        assert_dtype_equal(dt[-1], dt[1])
+        assert_dtype_equal(dt[-2], dt[0])
+        assert_raises(IndexError, lambda: dt[-3])
+
+        assert_raises(TypeError, operator.getitem, dt, 3.0)
+        assert_raises(TypeError, operator.getitem, dt, [])
+
+        assert_equal(dt[1], dt[np.int8(1)])
 
 
 class TestSubarray(object):

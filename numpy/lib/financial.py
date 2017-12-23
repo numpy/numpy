@@ -7,8 +7,12 @@ so that the functions behave like ufuncs with
 broadcasting and being able to be called with scalars
 or arrays (or other sequences).
 
+Functions support the :class:`decimal.Decimal` type unless
+otherwise stated.
 """
 from __future__ import division, absolute_import, print_function
+
+from decimal import Decimal
 
 import numpy as np
 
@@ -31,7 +35,6 @@ def _convert_when(when):
         return _when_to_num[when]
     except (KeyError, TypeError):
         return [_when_to_num[x] for x in when]
-
 
 def fv(rate, nper, pmt, pv, when='end'):
     """
@@ -117,10 +120,8 @@ def fv(rate, nper, pmt, pv, when='end'):
     when = _convert_when(when)
     (rate, nper, pmt, pv, when) = map(np.asarray, [rate, nper, pmt, pv, when])
     temp = (1+rate)**nper
-    miter = np.broadcast(rate, nper, pmt, pv, when)
-    zer = np.zeros(miter.shape)
-    fact = np.where(rate == zer, nper + zer,
-                    (1 + rate*when)*(temp - 1)/rate + zer)
+    fact = np.where(rate == 0, nper,
+                    (1 + rate*when)*(temp - 1)/rate)
     return -(pv*temp + pmt*fact)
 
 def pmt(rate, nper, pv, fv=0, when='end'):
@@ -209,16 +210,17 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     when = _convert_when(when)
     (rate, nper, pv, fv, when) = map(np.array, [rate, nper, pv, fv, when])
     temp = (1 + rate)**nper
-    mask = (rate == 0.0)
-    masked_rate = np.where(mask, 1.0, rate)
-    z = np.zeros(np.broadcast(masked_rate, nper, pv, fv, when).shape)
-    fact = np.where(mask != z, nper + z,
-                    (1 + masked_rate*when)*(temp - 1)/masked_rate + z)
+    mask = (rate == 0)
+    masked_rate = np.where(mask, 1, rate)
+    fact = np.where(mask != 0, nper,
+                    (1 + masked_rate*when)*(temp - 1)/masked_rate)
     return -(fv + pv*temp) / fact
 
 def nper(rate, pmt, pv, fv=0, when='end'):
     """
     Compute the number of periodic payments.
+
+    :class:`decimal.Decimal` type is not supported.
 
     Parameters
     ----------
@@ -271,20 +273,18 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     use_zero_rate = False
     with np.errstate(divide="raise"):
         try:
-            z = pmt*(1.0+rate*when)/rate
+            z = pmt*(1+rate*when)/rate
         except FloatingPointError:
             use_zero_rate = True
 
     if use_zero_rate:
-        return (-fv + pv) / (pmt + 0.0)
+        return (-fv + pv) / pmt
     else:
-        A = -(fv + pv)/(pmt+0.0)
-        B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)
-        miter = np.broadcast(rate, pmt, pv, fv, when)
-        zer = np.zeros(miter.shape)
-        return np.where(rate == zer, A + zer, B + zer) + 0.0
+        A = -(fv + pv)/(pmt+0)
+        B = np.log((-fv+z) / (pv+z))/np.log(1+rate)
+        return np.where(rate == 0, A, B)
 
-def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
+def ipmt(rate, per, nper, pv, fv=0, when='end'):
     """
     Compute the interest portion of a payment.
 
@@ -374,7 +374,7 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     ipmt = _rbl(rate, per, total_pmt, pv, when)*rate
     try:
         ipmt = np.where(when == 1, ipmt/(1 + rate), ipmt)
-        ipmt = np.where(np.logical_and(when == 1, per == 1), 0.0, ipmt)
+        ipmt = np.where(np.logical_and(when == 1, per == 1), 0, ipmt)
     except IndexError:
         pass
     return ipmt
@@ -388,7 +388,7 @@ def _rbl(rate, per, pmt, pv, when):
     """
     return fv(rate, (per - 1), pmt, pv, when)
 
-def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
+def ppmt(rate, per, nper, pv, fv=0, when='end'):
     """
     Compute the payment against loan principal.
 
@@ -416,7 +416,7 @@ def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
     total = pmt(rate, nper, pv, fv, when)
     return total - ipmt(rate, per, nper, pv, fv, when)
 
-def pv(rate, nper, pmt, fv=0.0, when='end'):
+def pv(rate, nper, pmt, fv=0, when='end'):
     """
     Compute the present value.
 
@@ -505,9 +505,7 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     when = _convert_when(when)
     (rate, nper, pmt, fv, when) = map(np.asarray, [rate, nper, pmt, fv, when])
     temp = (1+rate)**nper
-    miter = np.broadcast(rate, nper, pmt, fv, when)
-    zer = np.zeros(miter.shape)
-    fact = np.where(rate == zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
+    fact = np.where(rate == 0, nper, (1+rate*when)*(temp-1)/rate)
     return -(fv + pmt*fact)/temp
 
 # Computed with Sage
@@ -529,7 +527,7 @@ def _g_div_gp(r, n, p, x, y, w):
 #     where
 #  g(r) is the formula
 #  g'(r) is the derivative with respect to r.
-def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
+def rate(nper, pmt, pv, fv, when='end', guess=None, tol=None, maxiter=100):
     """
     Compute the rate of interest per period.
 
@@ -545,10 +543,10 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
         Future value
     when : {{'begin', 1}, {'end', 0}}, {string, int}, optional
         When payments are due ('begin' (1) or 'end' (0))
-    guess : float, optional
-        Starting guess for solving the rate of interest
-    tol : float, optional
-        Required tolerance for the solution
+    guess : Number, optional
+        Starting guess for solving the rate of interest, default 0.1
+    tol : Number, optional
+        Required tolerance for the solution, default 1e-6
     maxiter : int, optional
         Maximum iterations in finding the solution
 
@@ -573,15 +571,26 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
 
     """
     when = _convert_when(when)
+    default_type = Decimal if isinstance(pmt, Decimal) else float
+
+    # Handle casting defaults to Decimal if/when pmt is a Decimal and
+    # guess and/or tol are not given default values
+    if guess is None:
+        guess = default_type('0.1')
+
+    if tol is None:
+        tol = default_type('1e-6')
+
     (nper, pmt, pv, fv, when) = map(np.asarray, [nper, pmt, pv, fv, when])
+
     rn = guess
-    iter = 0
+    iterator = 0
     close = False
-    while (iter < maxiter) and not close:
+    while (iterator < maxiter) and not close:
         rnp1 = rn - _g_div_gp(rn, nper, pmt, pv, fv, when)
         diff = abs(rnp1-rn)
         close = np.all(diff < tol)
-        iter += 1
+        iterator += 1
         rn = rnp1
     if not close:
         # Return nan's in array of the same shape as rn
@@ -596,6 +605,8 @@ def irr(values):
     This is the "average" periodically compounded rate of return
     that gives a net present value of 0.0; for a more complete explanation,
     see Notes below.
+
+    :class:`decimal.Decimal` type is not supported.
 
     Parameters
     ----------
@@ -650,6 +661,11 @@ def irr(values):
     (Compare with the Example given for numpy.lib.financial.npv)
 
     """
+    # `np.roots` call is why this function does not support Decimal type.
+    #
+    # Ultimately Decimal support needs to be added to np.roots, which has
+    # greater implications on the entire linear algebra module and how it does
+    # eigenvalue computations.
     res = np.roots(values[::-1])
     mask = (res.imag == 0) & (res.real > 0)
     if not mask.any():
@@ -657,7 +673,7 @@ def irr(values):
     res = res[mask].real
     # NPV(rate) = 0 can have more than one solution so we return
     # only the solution closest to zero.
-    rate = 1.0/res - 1
+    rate = 1/res - 1
     rate = rate.item(np.argmin(np.abs(rate)))
     return rate
 
@@ -727,12 +743,19 @@ def mirr(values, finance_rate, reinvest_rate):
         Modified internal rate of return
 
     """
-    values = np.asarray(values, dtype=np.double)
+    values = np.asarray(values)
     n = values.size
+
+    # Without this explicit cast the 1/(n - 1) computation below
+    # becomes a float, which causes TypeError when using Decimal
+    # values.
+    if isinstance(finance_rate, Decimal):
+        n = Decimal(n)
+
     pos = values > 0
     neg = values < 0
     if not (pos.any() and neg.any()):
         return np.nan
     numer = np.abs(npv(reinvest_rate, values*pos))
     denom = np.abs(npv(finance_rate, values*neg))
-    return (numer/denom)**(1.0/(n - 1))*(1 + reinvest_rate) - 1
+    return (numer/denom)**(1/(n - 1))*(1 + reinvest_rate) - 1

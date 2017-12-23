@@ -47,7 +47,6 @@ matrix:
             - debootstrap
     - python: 3.4
       env: USE_DEBUG=1
-      sudo: true
       dist: trusty
       addons:
         apt:

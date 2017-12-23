@@ -66,15 +66,28 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     """
     Take elements from an array along an axis.
 
-    This function does the same thing as "fancy" indexing (indexing arrays
-    using arrays); however, it can be easier to use if you need elements
-    along a given axis.
+    When axis is not None, this function does the same thing as "fancy"
+    indexing (indexing arrays using arrays); however, it can be easier to use
+    if you need elements along a given axis. A call such as
+    ``np.take(arr, indices, axis=3)`` is equivalent to
+    ``arr[:,:,:,indices,...]``.
+
+    Explained without fancy indexing, this is equivalent to the following use
+    of `ndindex`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of
+    indices::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        Nj = indices.shape
+        for ii in ndindex(Ni):
+            for jj in ndindex(Nj):
+                for kk in ndindex(Nk):
+                    out[ii + jj + kk] = a[ii + (indices[jj],) + kk]
 
     Parameters
     ----------
-    a : array_like
+    a : array_like (Ni..., M, Nk...)
         The source array.
-    indices : array_like
+    indices : array_like (Nj...)
         The indices of the values to extract.
 
         .. versionadded:: 1.8.0
@@ -83,7 +96,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     axis : int, optional
         The axis over which to select values. By default, the flattened
         input array is used.
-    out : ndarray, optional
+    out : ndarray, optional (Ni..., Nj..., Nk...)
         If provided, the result will be placed in this array. It should
         be of the appropriate shape and dtype.
     mode : {'raise', 'wrap', 'clip'}, optional
@@ -99,13 +112,30 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     Returns
     -------
-    subarray : ndarray
+    out : ndarray (Ni..., Nj..., Nk...)
         The returned array has the same type as `a`.
 
     See Also
     --------
     compress : Take elements using a boolean mask
     ndarray.take : equivalent method
+
+    Notes
+    -----
+
+    By eliminating the inner loop in the description above, and using `s_` to
+    build simple slice objects, `take` can be expressed  in terms of applying
+    fancy indexing to each 1-d slice::
+
+        Ni, Nk = a.shape[:axis], a.shape[axis+1:]
+        for ii in ndindex(Ni):
+            for kk in ndindex(Nj):
+                out[ii + s_[...,] + kk] = a[ii + s_[:,] + kk][indices]
+
+    For this reason, it is equivalent to (but faster than) the following use
+    of `apply_along_axis`::
+
+        out = np.apply_along_axis(lambda a_1d: a_1d[indices], axis, a)
 
     Examples
     --------
@@ -171,11 +201,11 @@ def reshape(a, newshape, order='C'):
     Notes
     -----
     It is not always possible to change the shape of an array without
-    copying the data. If you want an error to be raise if the data is copied,
+    copying the data. If you want an error to be raised when the data is copied,
     you should assign the new shape to the shape attribute of the array::
 
      >>> a = np.zeros((10, 2))
-     # A transpose make the array non-contiguous
+     # A transpose makes the array non-contiguous
      >>> b = a.T
      # Taking a view makes it possible to modify the shape without modifying
      # the initial object.
@@ -877,13 +907,21 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     array([[0, 3],
            [2, 2]])
 
-    >>> np.argsort(x, axis=0)
+    >>> np.argsort(x, axis=0)  # sorts along first axis (down)
     array([[0, 1],
            [1, 0]])
 
-    >>> np.argsort(x, axis=1)
+    >>> np.argsort(x, axis=1)  # sorts along last axis (across)
     array([[0, 1],
            [0, 1]])
+
+    Indices of the sorted elements of a N-dimensional array:
+
+    >>> ind = np.unravel_index(np.argsort(x, axis=None), x.shape)
+    >>> ind
+    (array([0, 1, 1, 0]), array([0, 0, 1, 1]))
+    >>> x[ind]  # same as np.sort(x, axis=None)
+    array([0, 2, 2, 3])
 
     Sorting with keys:
 
@@ -947,11 +985,19 @@ def argmax(a, axis=None, out=None):
     >>> np.argmax(a, axis=1)
     array([2, 2])
 
+    Indexes of the maximal elements of a N-dimensional array:
+
+    >>> ind = np.unravel_index(np.argmax(a, axis=None), a.shape)
+    >>> ind
+    (1, 2)
+    >>> a[ind]
+    5
+
     >>> b = np.arange(6)
     >>> b[1] = 5
     >>> b
     array([0, 5, 2, 3, 4, 5])
-    >>> np.argmax(b) # Only the first occurrence is returned.
+    >>> np.argmax(b)  # Only the first occurrence is returned.
     1
 
     """
@@ -1003,11 +1049,19 @@ def argmin(a, axis=None, out=None):
     >>> np.argmin(a, axis=1)
     array([0, 0])
 
+    Indices of the minimum elements of a N-dimensional array:
+
+    >>> ind = np.unravel_index(np.argmin(a, axis=None), a.shape)
+    >>> ind
+    (0, 0)
+    >>> a[ind]
+    0
+
     >>> b = np.arange(6)
     >>> b[4] = 0
     >>> b
     array([0, 1, 2, 3, 0, 5])
-    >>> np.argmin(b) # Only the first occurrence is returned.
+    >>> np.argmin(b)  # Only the first occurrence is returned.
     0
 
     """
@@ -1245,13 +1299,13 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D and not a matrix, a 1-D array of the same type as `a`
-        containing the diagonal is returned. If `a` is a matrix, a 1-D
+        If `a` is 2-D and not a `matrix`, a 1-D array of the same type as `a`
+        containing the diagonal is returned. If `a` is a `matrix`, a 1-D
         array containing the diagonal is returned in order to maintain
-        backward compatibility.  If the dimension of `a` is greater than
-        two, then an array of diagonals is returned, "packed" from
-        left-most dimension to right-most (e.g., if `a` is 3-D, then the
-        diagonals are "packed" along rows).
+        backward compatibility.
+        If ``a.ndim > 2``, then the dimensions specified by `axis1` and `axis2`
+        are removed, and a new axis inserted at the end corresponding to the
+        diagonal.
 
     Raises
     ------
@@ -1543,7 +1597,7 @@ def nonzero(a):
     >>> a > 3
     array([[False, False, False],
            [ True,  True,  True],
-           [ True,  True,  True]], dtype=bool)
+           [ True,  True,  True]])
     >>> np.nonzero(a > 3)
     (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
@@ -1938,7 +1992,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     True
 
     >>> np.any([[True, False], [False, False]], axis=0)
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     >>> np.any([-1, 0, 5])
     True
@@ -1949,7 +2003,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     >>> o=np.array([False])
     >>> z=np.any([-1, 4, 5], out=o)
     >>> z, o
-    (array([ True], dtype=bool), array([ True], dtype=bool))
+    (array([ True]), array([ True]))
     >>> # Check now that z is a reference to o
     >>> z is o
     True
@@ -2023,7 +2077,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     False
 
     >>> np.all([[True,False],[True,True]], axis=0)
-    array([ True, False], dtype=bool)
+    array([ True, False])
 
     >>> np.all([-1, 4, 5])
     True
@@ -2034,7 +2088,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     >>> o=np.array([False])
     >>> z=np.all([-1, 4, 5], out=o)
     >>> id(z), id(o), z                             # doctest: +SKIP
-    (28293632, 28293632, array([ True], dtype=bool))
+    (28293632, 28293632, array([ True]))
 
     """
     arr = asanyarray(a)
@@ -2457,7 +2511,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     raised on overflow.  That means that, on a 32-bit platform:
 
     >>> x = np.array([536870910, 536870910, 536870910, 536870910])
-    >>> np.prod(x) #random
+    >>> np.prod(x)  # random
     16
 
     The product of an empty array is the neutral element 1:

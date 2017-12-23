@@ -72,6 +72,8 @@ Exceptions
 
    linalg.LinAlgError
 
+.. _routines.linalg-broadcasting:
+
 Linear algebra on several matrices at once
 ------------------------------------------
 

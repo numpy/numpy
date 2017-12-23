@@ -66,7 +66,8 @@ class GnuFCompiler(FCompiler):
             m = re.search(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
             if m:
                 return ('gfortran', m.group(1))
-            m = re.search(r'GNU Fortran.*?\-?([0-9-.]+)', version_string)
+            m = re.search(
+                r'GNU Fortran.*?\-?([0-9-.]+\.[0-9-.]+)', version_string)
             if m:
                 v = m.group(1)
                 if v.startswith('0') or v.startswith('2') or v.startswith('3'):
@@ -165,6 +166,23 @@ class GnuFCompiler(FCompiler):
             return os.path.dirname(output)
         return None
 
+    def get_libgfortran_dir(self):
+        if sys.platform[:5] == 'linux':
+            libgfortran_name = 'libgfortran.so'
+        elif sys.platform == 'darwin':
+            libgfortran_name = 'libgfortran.dylib'
+        else:
+            libgfortran_name = None
+
+        libgfortran_dir = None
+        if libgfortran_name:
+            find_lib_arg = ['-print-file-name={0}'.format(libgfortran_name)]
+            status, output = exec_command(
+                self.compiler_f77 + find_lib_arg, use_tee=0)
+            if not status:
+                libgfortran_dir = os.path.dirname(output)
+        return libgfortran_dir
+
     def get_library_dirs(self):
         opt = []
         if sys.platform[:5] != 'linux':
@@ -181,6 +199,10 @@ class GnuFCompiler(FCompiler):
                         if os.path.exists(path):
                             opt.append(d2)
                 opt.append(d)
+        # For Macports / Linux, libgfortran and libgcc are not co-located
+        lib_gfortran_dir = self.get_libgfortran_dir()
+        if lib_gfortran_dir:
+            opt.append(lib_gfortran_dir)
         return opt
 
     def get_libraries(self):
@@ -326,6 +348,10 @@ class Gnu95FCompiler(GnuFCompiler):
                     mingwdir = os.path.normpath(path)
                     if os.path.exists(os.path.join(mingwdir, "libmingwex.a")):
                         opt.append(mingwdir)
+        # For Macports / Linux, libgfortran and libgcc are not co-located
+        lib_gfortran_dir = self.get_libgfortran_dir()
+        if lib_gfortran_dir:
+            opt.append(lib_gfortran_dir)
         return opt
 
     def get_libraries(self):
@@ -503,16 +529,11 @@ def _can_target(cmd, arch):
 
 if __name__ == '__main__':
     from distutils import log
+    from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
 
-    compiler = GnuFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
-
+    print(customized_fcompiler('gnu').get_version())
     try:
-        compiler = Gnu95FCompiler()
-        compiler.customize()
-        print(compiler.get_version())
+        print(customized_fcompiler('g95').get_version())
     except Exception:
-        msg = get_exception()
-        print(msg)
+        print(get_exception())

@@ -735,10 +735,10 @@ class FCompiler(CCompiler):
 _default_compilers = (
     # sys.platform mappings
     ('win32', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95',
-               'intelvem', 'intelem')),
+               'intelvem', 'intelem', 'flang')),
     ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
     ('linux.*', ('gnu95', 'intel', 'lahey', 'pg', 'absoft', 'nag', 'vast', 'compaq',
-                'intele', 'intelem', 'gnu', 'g95', 'pathf95')),
+                 'intele', 'intelem', 'gnu', 'g95', 'pathf95', 'nagfor')),
     ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
     ('sunos.*', ('sun', 'gnu', 'gnu95', 'g95')),
     ('irix.*', ('mips', 'gnu', 'gnu95',)),
@@ -838,6 +838,8 @@ def get_default_fcompiler(osname=None, platform=None, requiref90=False,
     platform."""
     matching_compiler_types = available_fcompilers_for_platform(osname,
                                                                 platform)
+    log.info("get_default_fcompiler: matching types: '%s'",
+             matching_compiler_types)
     compiler_type =  _find_existing_fcompiler(matching_compiler_types,
                                               osname=osname,
                                               platform=platform,

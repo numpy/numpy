@@ -230,6 +230,12 @@ class TestConcatenate(object):
                    '0', '1', '2', 'x'])
         assert_array_equal(r, d)
 
+        out = np.zeros(a.size + len(b))
+        r = np.concatenate((a, b), axis=None)
+        rout = np.concatenate((a, b), axis=None, out=out)
+        assert_(out is rout)
+        assert_equal(r, rout)
+
     def test_large_concatenate_axis_None(self):
         # When no axis is given, concatenate uses flattened versions.
         # This also had a bug with many arrays (see gh-5979).
@@ -277,6 +283,34 @@ class TestConcatenate(object):
         assert_array_equal(concatenate((a0, a1, a2), 2), res)
         assert_array_equal(concatenate((a0, a1, a2), -1), res)
         assert_array_equal(concatenate((a0.T, a1.T, a2.T), 0), res.T)
+
+        out = res.copy()
+        rout = concatenate((a0, a1, a2), 2, out=out)
+        assert_(out is rout)
+        assert_equal(res, rout)
+
+    def test_bad_out_shape(self):
+        a = array([1, 2])
+        b = array([3, 4])
+
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty(5))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((4,1)))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((1,4)))
+        concatenate((a, b), out=np.empty(4))
+
+    def test_out_dtype(self):
+        out = np.empty(4, np.float32)
+        res = concatenate((array([1, 2]), array([3, 4])), out=out)
+        assert_(out is res)
+
+        out = np.empty(4, np.complex64)
+        res = concatenate((array([0.1, 0.2]), array([0.3, 0.4])), out=out)
+        assert_(out is res)
+
+        # invalid cast
+        out = np.empty(4, np.int32)
+        assert_raises(TypeError, concatenate,
+            (array([0.1, 0.2]), array([0.3, 0.4])), out=out)
 
 
 def test_stack():
@@ -525,6 +559,28 @@ class TestBlock(object):
     def test_tuple(self):
         assert_raises_regex(TypeError, 'tuple', np.block, ([1, 2], [3, 4]))
         assert_raises_regex(TypeError, 'tuple', np.block, [(1, 2), (3, 4)])
+
+    def test_different_ndims(self):
+        a = 1.
+        b = 2 * np.ones((1, 2))
+        c = 3 * np.ones((1, 1, 3))
+
+        result = np.block([a, b, c])
+        expected = np.array([[[1., 2., 2., 3., 3., 3.]]])
+
+        assert_equal(result, expected)
+
+    def test_different_ndims_depths(self):
+        a = 1.
+        b = 2 * np.ones((1, 2))
+        c = 3 * np.ones((1, 2, 3))
+
+        result = np.block([[a, b], [c]])
+        expected = np.array([[[1., 2., 2.],
+                              [3., 3., 3.],
+                              [3., 3., 3.]]])
+
+        assert_equal(result, expected)
 
 
 if __name__ == "__main__":

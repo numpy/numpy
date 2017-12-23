@@ -61,5 +61,6 @@ Iterating over arrays
    nditer
    ndenumerate
    ndindex
+   nested_iters
    flatiter
    lib.Arrayterator

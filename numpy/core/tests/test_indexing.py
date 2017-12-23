@@ -10,7 +10,7 @@ from numpy.core.multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_warns, HAS_REFCOUNT
+    assert_array_equal, assert_warns, dec, HAS_REFCOUNT, suppress_warnings,
 )
 
 
@@ -105,6 +105,12 @@ class TestIndexing(object):
         assert_(a[()].base is a)
         a = np.array(0)
         assert_(isinstance(a[()], np.int_))
+
+    def test_void_scalar_empty_tuple(self):
+        s = np.zeros((), dtype='V4')
+        assert_equal(s[()].dtype, s.dtype)
+        assert_equal(s[()], s)
+        assert_equal(type(s[...]), np.ndarray)
 
     def test_same_kind_index_casting(self):
         # Indexes should be cast with same-kind and not safe, even if that
@@ -615,6 +621,55 @@ class TestSubclasses(object):
         new_s = s[s > 0]
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
+
+    @dec.skipif(not HAS_REFCOUNT)
+    def test_slice_decref_getsetslice(self):
+        # See gh-10066, a temporary slice object should be discarted.
+        # This test is only really interesting on Python 2 since
+        # it goes through `__set/getslice__` here and can probably be
+        # removed. Use 0:7 to make sure it is never None:7.
+        class KeepIndexObject(np.ndarray):
+            def __getitem__(self, indx):
+                self.indx = indx
+                if indx == slice(0, 7):
+                    raise ValueError
+
+            def __setitem__(self, indx, val):
+                self.indx = indx
+                if indx == slice(0, 4):
+                    raise ValueError
+
+        k = np.array([1]).view(KeepIndexObject)
+        k[0:5]
+        assert_equal(k.indx, slice(0, 5))
+        assert_equal(sys.getrefcount(k.indx), 2)
+        try:
+            k[0:7]
+            raise AssertionError
+        except ValueError:
+            # The exception holds a reference to the slice so clear on Py2
+            if hasattr(sys, 'exc_clear'):
+                with suppress_warnings() as sup:
+                    sup.filter(DeprecationWarning)
+                    sys.exc_clear()
+        assert_equal(k.indx, slice(0, 7))
+        assert_equal(sys.getrefcount(k.indx), 2)
+
+        k[0:3] = 6
+        assert_equal(k.indx, slice(0, 3))
+        assert_equal(sys.getrefcount(k.indx), 2)
+        try:
+            k[0:4] = 2
+            raise AssertionError
+        except ValueError:
+            # The exception holds a reference to the slice so clear on Py2
+            if hasattr(sys, 'exc_clear'):
+                with suppress_warnings() as sup:
+                    sup.filter(DeprecationWarning)
+                    sys.exc_clear()
+        assert_equal(k.indx, slice(0, 4))
+        assert_equal(sys.getrefcount(k.indx), 2)
+
 
 class TestFancyIndexingCast(object):
     def test_boolean_index_cast_assign(self):
@@ -1168,6 +1223,7 @@ class TestBooleanIndexing(object):
         # Note that operator.index(np.array(True)) does not work, a boolean
         # array is thus also deprecated, but not with the same message:
         assert_raises(TypeError, operator.index, np.array(True))
+        assert_warns(DeprecationWarning, operator.index, np.True_)
         assert_raises(TypeError, np.take, args=(a, [0], False))
 
     def test_boolean_indexing_weirdness(self):

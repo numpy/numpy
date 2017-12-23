@@ -377,44 +377,45 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
 
     # Inf/nan/negative zero handling
     try:
-        # If one of desired/actual is not finite, handle it specially here:
-        # check that both are nan if any is a nan, and test for equality
-        # otherwise
-        if not (gisfinite(desired) and gisfinite(actual)):
-            isdesnan = gisnan(desired)
-            isactnan = gisnan(actual)
-            if isdesnan or isactnan:
-                if not (isdesnan and isactnan):
-                    raise AssertionError(msg)
-            else:
-                if not desired == actual:
-                    raise AssertionError(msg)
-            return
-        elif desired == 0 and actual == 0:
+        isdesnan = gisnan(desired)
+        isactnan = gisnan(actual)
+        if isdesnan and isactnan:
+            return  # both nan, so equal
+
+        # handle signed zero specially for floats
+        if desired == 0 and actual == 0:
             if not signbit(desired) == signbit(actual):
                 raise AssertionError(msg)
-    # If TypeError or ValueError raised while using isnan and co, just handle
-    # as before
+
     except (TypeError, ValueError, NotImplementedError):
         pass
 
     try:
-        # If both are NaT (and have the same dtype -- datetime or timedelta)
-        # they are considered equal.
-        if (isnat(desired) == isnat(actual) and
-                array(desired).dtype.type == array(actual).dtype.type):
-            return
-        else:
-            raise AssertionError(msg)
+        isdesnat = isnat(desired)
+        isactnat = isnat(actual)
+        dtypes_match = array(desired).dtype.type == array(actual).dtype.type
+        if isdesnat and isactnat:
+            # If both are NaT (and have the same dtype -- datetime or
+            # timedelta) they are considered equal.
+            if dtypes_match:
+                return
+            else:
+                raise AssertionError(msg)
 
-    # If TypeError or ValueError raised while using isnan and co, just handle
-    # as before
     except (TypeError, ValueError, NotImplementedError):
         pass
 
-    # Explicitly use __eq__ for comparison, ticket #2552
-    if not (desired == actual):
-        raise AssertionError(msg)
+    try:
+        # Explicitly use __eq__ for comparison, gh-2552
+        if not (desired == actual):
+            raise AssertionError(msg)
+
+    except (DeprecationWarning, FutureWarning) as e:
+        # this handles the case when the two types are not even comparable
+        if 'elementwise == comparison' in e.args[0]:
+            raise AssertionError(msg)
+        else:
+            raise
 
 
 def print_assert_equal(test_string, actual, desired):
@@ -775,8 +776,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 + '\n(mismatch %s%%)' % (match,),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            if not cond:
-                raise AssertionError(msg)
+            raise AssertionError(msg)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
@@ -1849,6 +1849,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
 
 class IgnoreException(Exception):
     "Ignoring this exception due to disabled feature"
+    pass
 
 
 @contextlib.contextmanager

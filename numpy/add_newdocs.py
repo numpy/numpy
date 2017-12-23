@@ -463,6 +463,67 @@ add_newdoc('numpy.core', 'nditer', ('reset',
 
     """))
 
+add_newdoc('numpy.core', 'nested_iters',
+    """
+    Create nditers for use in nested loops
+
+    Create a tuple of `nditer` objects which iterate in nested loops over
+    different axes of the op argument. The first iterator is used in the
+    outermost loop, the last in the innermost loop. Advancing one will change
+    the subsequent iterators to point at its new element.
+
+    Parameters
+    ----------
+    op : ndarray or sequence of array_like
+        The array(s) to iterate over.
+
+    axes : list of list of int
+        Each item is used as an "op_axes" argument to an nditer
+
+    flags, op_flags, op_dtypes, order, casting, buffersize (optional)
+        See `nditer` parameters of the same name
+
+    Returns
+    -------
+    iters : tuple of nditer
+        An nditer for each item in `axes`, outermost first
+
+    See Also
+    --------
+    nditer
+
+    Examples
+    --------
+
+    Basic usage. Note how y is the "flattened" version of
+    [a[:, 0, :], a[:, 1, 0], a[:, 2, :]] since we specified
+    the first iter's axes as [1]
+
+    >>> a = np.arange(12).reshape(2, 3, 2)
+    >>> i, j = np.nested_iters(a, [[1], [0, 2]], flags=["multi_index"])
+    >>> for x in i:
+    ...      print(i.multi_index)
+    ...      for y in j:
+    ...          print('', j.multi_index, y)
+
+    (0,)
+     (0, 0) 0
+     (0, 1) 1
+     (1, 0) 6
+     (1, 1) 7
+    (1,)
+     (0, 0) 2
+     (0, 1) 3
+     (1, 0) 8
+     (1, 1) 9
+    (2,)
+     (0, 0) 4
+     (0, 1) 5
+     (1, 0) 10
+     (1, 1) 11
+
+    """)
+
 
 
 ###############################################################################
@@ -823,24 +884,24 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
 add_newdoc('numpy.core.multiarray', 'empty_like',
     """
-    empty_like(a, dtype=None, order='K', subok=True)
+    empty_like(prototype, dtype=None, order='K', subok=True)
 
     Return a new array with the same shape and type as a given array.
 
     Parameters
     ----------
-    a : array_like
-        The shape and data-type of `a` define these same attributes of the
-        returned array.
+    prototype : array_like
+        The shape and data-type of `prototype` define these same attributes
+        of the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
 
         .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
-        'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
-        'C' otherwise. 'K' means match the layout of ``a`` as closely
-        as possible.
+        'F' means F-order, 'A' means 'F' if ``prototype`` is Fortran
+        contiguous, 'C' otherwise. 'K' means match the layout of ``prototype``
+        as closely as possible.
 
         .. versionadded:: 1.6.0
     subok : bool, optional.
@@ -852,7 +913,7 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
     -------
     out : ndarray
         Array of uninitialized (arbitrary) data with the same
-        shape and type as `a`.
+        shape and type as `prototype`.
 
     See Also
     --------
@@ -961,7 +1022,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
     """
     fromstring(string, dtype=float, count=-1, sep='')
 
-    A new 1-D array initialized from raw binary or text data in a string.
+    A new 1-D array initialized from text data in a string.
 
     Parameters
     ----------
@@ -975,11 +1036,13 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         negative (the default), the count will be determined from the
         length of the data.
     sep : str, optional
-        If not provided or, equivalently, the empty string, the data will
-        be interpreted as binary data; otherwise, as ASCII text with
-        decimal numbers.  Also in this latter case, this argument is
-        interpreted as the string separating numbers in the data; extra
-        whitespace between elements is also ignored.
+        The string separating numbers in the data; extra whitespace between
+        elements is also ignored.
+
+        .. deprecated:: 1.14
+            If this argument is not provided, `fromstring` falls back on the
+            behaviour of `frombuffer` after encoding unicode string inputs as
+            either utf-8 (python 3), or the default encoding (python 2).
 
     Returns
     -------
@@ -998,14 +1061,10 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
 
     Examples
     --------
-    >>> np.fromstring('\\x01\\x02', dtype=np.uint8)
-    array([1, 2], dtype=uint8)
     >>> np.fromstring('1 2', dtype=int, sep=' ')
     array([1, 2])
     >>> np.fromstring('1, 2', dtype=int, sep=',')
     array([1, 2])
-    >>> np.fromstring('\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
-    array([1, 2, 3], dtype=uint8)
 
     """)
 
@@ -1154,11 +1213,16 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     array(['w', 'o', 'r', 'l', 'd'],
           dtype='|S1')
 
+    >>> np.frombuffer(b'\\x01\\x02', dtype=np.uint8)
+    array([1, 2], dtype=uint8)
+    >>> np.frombuffer(b'\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
+    array([1, 2, 3], dtype=uint8)
+
     """)
 
 add_newdoc('numpy.core.multiarray', 'concatenate',
     """
-    concatenate((a1, a2, ...), axis=0)
+    concatenate((a1, a2, ...), axis=0, out=None)
 
     Join a sequence of arrays along an existing axis.
 
@@ -1169,6 +1233,10 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
         corresponding to `axis` (the first, by default).
     axis : int, optional
         The axis along which the arrays will be joined.  Default is 0.
+    out : ndarray, optional
+        If provided, the destination to place the result. The shape must be
+        correct, matching that of what concatenate would have returned if no
+        out argument were specified.
 
     Returns
     -------
@@ -1338,7 +1406,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     step : number, optional
         Spacing between values.  For any output `out`, this is the distance
         between two adjacent values, ``out[i+1] - out[i]``.  The default
-        step size is 1.  If `step` is specified, `start` must also be given.
+        step size is 1.  If `step` is specified as a position argument,
+        `start` must also be given.
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
@@ -1504,7 +1573,7 @@ add_newdoc('numpy.core.multiarray', 'where',
     >>> ix
     array([[False, False, False],
            [ True,  True, False],
-           [False,  True, False]], dtype=bool)
+           [False,  True, False]])
     >>> np.where(ix)
     (array([1, 1, 2]), array([0, 1, 1]))
 
@@ -1920,12 +1989,22 @@ add_newdoc('numpy.core', 'dot',
     """
     dot(a, b, out=None)
 
-    Dot product of two arrays.
+    Dot product of two arrays. Specifically,
 
-    For 2-D arrays it is equivalent to matrix multiplication, and for 1-D
-    arrays to inner product of vectors (without complex conjugation). For
-    N dimensions it is a sum product over the last axis of `a` and
-    the second-to-last of `b`::
+    - If both `a` and `b` are 1-D arrays, it is inner product of vectors
+      (without complex conjugation).
+
+    - If both `a` and `b` are 2-D arrays, it is matrix multiplication,
+      but using :func:`matmul` or ``a @ b`` is preferred.
+
+    - If either `a` or `b` is 0-D (scalar), it is equivalent to :func:`multiply`
+      and using ``numpy.multiply(a, b)`` or ``a * b`` is preferred.
+
+    - If `a` is an N-D array and `b` is a 1-D array, it is a sum product over
+      the last axis of `a` and `b`.
+
+    - If `a` is an N-D array and `b` is an M-D array (where ``M>=2``), it is a
+      sum product over the last axis of `a` and the second-to-last axis of `b`::
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
 
@@ -2774,8 +2853,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
         array raises a RuntimeError exception.
     ALIGNED (A)
         The data and all elements are aligned appropriately for the hardware.
+    WRITEBACKIFCOPY (X)
+        This array is a copy of some other array. The C-API function
+        PyArray_ResolveWritebackIfCopy must be called before deallocating
+        to the base array will be updated with the contents of this array.
     UPDATEIFCOPY (U)
-        This array is a copy of some other array. When this array is
+        (Deprecated, use WRITEBACKIFCOPY) This array is a copy of some other array.
+        When this array is
         deallocated, the base array will be updated with the contents of
         this array.
     FNC
@@ -2795,13 +2879,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
     or by using lowercased attribute names (as in ``a.flags.writeable``). Short flag
     names are only supported in dictionary access.
 
-    Only the UPDATEIFCOPY, WRITEABLE, and ALIGNED flags can be changed by
-    the user, via direct assignment to the attribute or dictionary entry,
-    or by calling `ndarray.setflags`.
+    Only the WRITEBACKIFCOPY, UPDATEIFCOPY, WRITEABLE, and ALIGNED flags can be
+    changed by the user, via direct assignment to the attribute or dictionary
+    entry, or by calling `ndarray.setflags`.
 
     The array flags cannot be set arbitrarily:
 
     - UPDATEIFCOPY can only be set ``False``.
+    - WRITEBACKIFCOPY can only be set ``False``.
     - ALIGNED can only be set ``True`` if the data is truly aligned.
     - WRITEABLE can only be set ``True`` if the array owns its own memory
       or the ultimate owner of the memory exposes a writeable buffer
@@ -2921,10 +3006,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     """
     Tuple of array dimensions.
 
-    Notes
-    -----
-    May be used to "reshape" the array, as long as this would not
-    require a change in the total number of elements
+    The shape property is usually used to get the current shape of an array,
+    but may also be used to reshape the array in-place by assigning a tuple of
+    array dimensions to it.  As with `numpy.reshape`, one of the new shape
+    dimensions can be -1, in which case its value is inferred from the size of
+    the array and the remaining dimensions. Reshaping an array in-place will
+    fail if a copy is required.
 
     Examples
     --------
@@ -2943,6 +3030,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: total size of new array must be unchanged
+    >>> np.zeros((4,2))[::2].shape = (-1,)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    AttributeError: incompatible shape for a non-contiguous array
+
+    See Also
+    --------
+    numpy.reshape : similar function
+    ndarray.reshape : similar method
 
     """))
 
@@ -3080,25 +3176,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_wrap__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__copy__',
-    """a.__copy__([order])
+    """a.__copy__()
 
-    Return a copy of the array.
+    Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
 
-    Parameters
-    ----------
-    order : {'C', 'F', 'A'}, optional
-        If order is 'C' (False) then the result is contiguous (default).
-        If order is 'Fortran' (True) then the result has fortran order.
-        If order is 'Any' (None) then the result has fortran order
-        only if the array already is in fortran order.
+    Equivalent to ``a.copy(order='K')``.
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__deepcopy__',
-    """a.__deepcopy__() -> Deep copy of array.
+    """a.__deepcopy__(memo, /) -> Deep copy of array.
 
-    Used if copy.deepcopy is called on an array.
+    Used if :func:`copy.deepcopy` is called on an array.
 
     """))
 
@@ -3112,9 +3202,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__reduce__',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__setstate__',
-    """a.__setstate__(version, shape, dtype, isfortran, rawdata)
+    """a.__setstate__(state, /)
 
     For unpickling.
+
+    The `state` argument must be a sequence that contains the following
+    elements:
 
     Parameters
     ----------
@@ -3764,7 +3857,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     """
-    a.max(axis=None, out=None)
+    a.max(axis=None, out=None, keepdims=False)
 
     Return the maximum along a given axis.
 
@@ -3991,7 +4084,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
 add_newdoc('numpy.core.multiarray', 'copyto',
     """
-    copyto(dst, src, casting='same_kind', where=None)
+    copyto(dst, src, casting='same_kind', where=True)
 
     Copies values from one array to another, broadcasting as necessary.
 
@@ -4108,6 +4201,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
     See Also
     --------
     numpy.reshape : equivalent function
+
+    Notes
+    -----
+    Unlike the free function `numpy.reshape`, this method on `ndarray` allows
+    the elements of the shape parameter to be passed in as separate arguments.
+    For example, ``a.reshape(10, 11)`` is equivalent to
+    ``a.reshape((10, 11))``.
 
     """))
 
@@ -4289,16 +4389,17 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     """
     a.setflags(write=None, align=None, uic=None)
 
-    Set array flags WRITEABLE, ALIGNED, and UPDATEIFCOPY, respectively.
+    Set array flags WRITEABLE, ALIGNED, (WRITEBACKIFCOPY and UPDATEIFCOPY),
+    respectively.
 
     These Boolean-valued flags affect how numpy interprets the memory
     area used by `a` (see Notes below). The ALIGNED flag can only
     be set to True if the data is actually aligned according to the type.
-    The UPDATEIFCOPY flag can never be set to True. The flag WRITEABLE
-    can only be set to True if the array owns its own memory, or the
-    ultimate owner of the memory exposes a writeable buffer interface,
-    or is a string. (The exception for string is made so that unpickling
-    can be done without copying memory.)
+    The WRITEBACKIFCOPY and (deprecated) UPDATEIFCOPY flags can never be set
+    to True. The flag WRITEABLE can only be set to True if the array owns its
+    own memory, or the ultimate owner of the memory exposes a writeable buffer
+    interface, or is a string. (The exception for string is made so that
+    unpickling can be done without copying memory.)
 
     Parameters
     ----------
@@ -4312,20 +4413,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     Notes
     -----
     Array flags provide information about how the memory area used
-    for the array is to be interpreted. There are 6 Boolean flags
-    in use, only three of which can be changed by the user:
-    UPDATEIFCOPY, WRITEABLE, and ALIGNED.
+    for the array is to be interpreted. There are 7 Boolean flags
+    in use, only four of which can be changed by the user:
+    WRITEBACKIFCOPY, UPDATEIFCOPY, WRITEABLE, and ALIGNED.
 
     WRITEABLE (W) the data area can be written to;
 
     ALIGNED (A) the data and strides are aligned appropriately for the hardware
     (as determined by the compiler);
 
-    UPDATEIFCOPY (U) this array is a copy of some other array (referenced
-    by .base). When this array is deallocated, the base array will be
-    updated with the contents of this array.
+    UPDATEIFCOPY (U) (deprecated), replaced by WRITEBACKIFCOPY;
 
-    All flags can be accessed using their first (upper case) letter as well
+    WRITEBACKIFCOPY (X) this array is a copy of some other array (referenced
+    by .base). When the C-API function PyArray_ResolveWritebackIfCopy is
+    called, the base array will be updated with the contents of this array.
+
+    All flags can be accessed using the single (upper case) letter as well
     as the full name.
 
     Examples
@@ -4340,6 +4443,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
       OWNDATA : True
       WRITEABLE : True
       ALIGNED : True
+      WRITEBACKIFCOPY : False
       UPDATEIFCOPY : False
     >>> y.setflags(write=0, align=0)
     >>> y.flags
@@ -4348,11 +4452,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
       OWNDATA : True
       WRITEABLE : False
       ALIGNED : False
+      WRITEBACKIFCOPY : False
       UPDATEIFCOPY : False
     >>> y.setflags(uic=1)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: cannot set UPDATEIFCOPY flag to True
+    ValueError: cannot set WRITEBACKIFCOPY flag to True
 
     """))
 
@@ -5376,7 +5481,8 @@ add_newdoc('numpy.core.multiarray', 'unpackbits',
     myarray : ndarray, uint8 type
        Input array.
     axis : int, optional
-       Unpacks along this axis.
+        The dimension over which bit-unpacking is done.
+        ``None`` implies unpacking the flattened array.
 
     Returns
     -------
@@ -5618,6 +5724,36 @@ add_newdoc('numpy.core', 'ufunc', ('types',
 
     """))
 
+add_newdoc('numpy.core', 'ufunc', ('signature',
+    """
+    Definition of the core elements a generalized ufunc operates on.
+
+    The signature determines how the dimensions of each input/output array
+    are split into core and loop dimensions:
+
+    1. Each dimension in the signature is matched to a dimension of the
+       corresponding passed-in array, starting from the end of the shape tuple.
+    2. Core dimensions assigned to the same label in the signature must have
+       exactly matching sizes, no broadcasting is performed.
+    3. The core dimensions are removed from all inputs and the remaining
+       dimensions are broadcast together, defining the loop dimensions.
+
+    Notes
+    -----
+    Generalized ufuncs are used internally in many linalg functions, and in
+    the testing suite; the examples below are taken from these.
+    For ufuncs that operate on scalars, the signature is `None`, which is
+    equivalent to '()' for every argument.
+
+    Examples
+    --------
+    >>> np.core.umath_tests.matrix_multiply.signature
+    '(m,n),(n,p)->(m,p)'
+    >>> np.linalg._umath_linalg.det.signature
+    '(m,m)->()'
+    >>> np.add.signature is None
+    True  # equivalent to '(),()->()'
+    """))
 
 ##############################################################################
 #
@@ -6785,6 +6921,104 @@ add_newdoc('numpy.core.multiarray', 'normalize_axis_index',
     Traceback (most recent call last):
     ...
     AxisError: axes_arg: axis -4 is out of bounds for array of dimension 3
+    """)
+
+add_newdoc('numpy.core.multiarray', 'datetime_as_string',
+    """
+    datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind')
+
+    Convert an array of datetimes into an array of strings.
+
+    Parameters
+    ----------
+    arr : array_like of datetime64
+        The array of UTC timestamps to format.
+    unit : str
+        One of None, 'auto', or a datetime unit.
+    timezone : {'naive', 'UTC', 'local'} or tzinfo
+        Timezone information to use when displaying the datetime. If 'UTC', end
+        with a Z to indicate UTC time. If 'local', convert to the local timezone
+        first, and suffix with a +-#### timezone offset. If a tzinfo object,
+        then do as with 'local', but use the specified timezone.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}
+        Casting to allow when changing between datetime units.
+
+    Returns
+    -------
+    str_arr : ndarray
+        An array of strings the same shape as `arr`.
+
+    Examples
+    --------
+    >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='M8[m]')
+    >>> d
+    array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
+           '2002-10-27T07:30'], dtype='datetime64[m]')
+
+    Setting the timezone to UTC shows the same information, but with a Z suffix
+
+    >>> np.datetime_as_string(d, timezone='UTC')
+    array(['2002-10-27T04:30Z', '2002-10-27T05:30Z', '2002-10-27T06:30Z',
+           '2002-10-27T07:30Z'], dtype='<U35')
+
+    Note that we picked datetimes that cross a DST boundary. Passing in a
+    ``pytz`` timezone object will print the appropriate offset::
+
+    >>> np.datetime_as_string(d, timezone=pytz.timezone('US/Eastern'))
+    array(['2002-10-27T00:30-0400', '2002-10-27T01:30-0400',
+           '2002-10-27T01:30-0500', '2002-10-27T02:30-0500'], dtype='<U39')
+
+    Passing in a unit will change the precision::
+
+    >>> np.datetime_as_string(d, unit='h')
+    array(['2002-10-27T04', '2002-10-27T05', '2002-10-27T06', '2002-10-27T07'],
+          dtype='<U32')
+    >>> np.datetime_as_string(d, unit='s')
+    array(['2002-10-27T04:30:00', '2002-10-27T05:30:00', '2002-10-27T06:30:00',
+           '2002-10-27T07:30:00'], dtype='<U38')
+
+    But can be made to not lose precision::
+
+    >>> np.datetime_as_string(d, unit='h', casting='safe')
+    TypeError: Cannot create a datetime string as units 'h' from a NumPy
+    datetime with units 'm' according to the rule 'safe'
+    """)
+
+add_newdoc('numpy.core.multiarray', 'datetime_data',
+    """
+    datetime_data(dtype, /)
+
+    Get information about the step size of a date or time type.
+
+    The returned tuple can be passed as the second argument of `datetime64` and
+    `timedelta64`.
+
+    Parameters
+    ----------
+    dtype : dtype
+        The dtype object, which must be a `datetime64` or `timedelta64` type.
+
+    Returns
+    -------
+    unit : str
+        The :ref:`datetime unit <arrays.dtypes.dateunits>` on which this dtype
+        is based.
+    count : int
+        The number of base units in a step.
+
+    Examples
+    --------
+    >>> dt_25s = np.dtype('timedelta64[25s]')
+    >>> np.datetime_data(dt_25s)
+    ('s', 25)
+    >>> np.array(10, dt_25s).astype('timedelta64[s]')
+    array(250, dtype='timedelta64[s]')
+
+    The result can be used to construct a datetime that uses the same units
+    as a timedelta::
+
+    >>> np.datetime64('2010', np.datetime_data(dt_25s))
+    numpy.datetime64('2010-01-01T00:00:00','25s')
     """)
 
 ##############################################################################

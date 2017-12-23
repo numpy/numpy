@@ -243,7 +243,9 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
     it->ao = ao;
     it->size = PyArray_SIZE(ao);
     it->nd_m1 = nd - 1;
-    it->factors[nd-1] = 1;
+    if (nd != 0) {
+        it->factors[nd-1] = 1;
+    }
     for (i = 0; i < nd; i++) {
         it->dims_m1[i] = PyArray_DIMS(ao)[i] - 1;
         it->strides[i] = PyArray_STRIDES(ao)[i];
@@ -340,7 +342,9 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     it->ao = ao;
     it->size = PyArray_MultiplyList(dims, nd);
     it->nd_m1 = nd - 1;
-    it->factors[nd-1] = 1;
+    if (nd != 0) {
+        it->factors[nd-1] = 1;
+    }
     for (i = 0; i < nd; i++) {
         it->dims_m1[i] = dims[i] - 1;
         k = i - diff;
@@ -917,7 +921,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     if (PyBool_Check(ind)) {
         retval = 0;
         if (PyObject_IsTrue(ind)) {
-            retval = type->f->setitem(val, self->dataptr, self->ao);
+            retval = PyArray_SETITEM(self->ao, self->dataptr, val);
         }
         goto finish;
     }
@@ -1149,6 +1153,7 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
         return NULL;
     }
     ret = array_richcompare(new, other, cmp_op);
+    PyArray_ResolveWritebackIfCopy(new);
     Py_DECREF(new);
     return ret;
 }
@@ -1321,7 +1326,9 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
         it->nd_m1 = mit->nd - 1;
         it->size = tmp;
         nd = PyArray_NDIM(it->ao);
-        it->factors[mit->nd-1] = 1;
+        if (nd != 0) {
+            it->factors[mit->nd-1] = 1;
+        }
         for (j = 0; j < mit->nd; j++) {
             it->dims_m1[j] = mit->dimensions[j] - 1;
             k = j + nd - mit->nd;
@@ -1803,7 +1810,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
         storeflags = PyArray_FLAGS(ar->ao);
         PyArray_ENABLEFLAGS(ar->ao, NPY_ARRAY_BEHAVED);
-        st = PyArray_DESCR(ar->ao)->f->setitem((PyObject*)fill, ret, ar->ao);
+        st = PyArray_SETITEM(ar->ao, ret, (PyObject*)fill);
         ((PyArrayObject_fields *)ar->ao)->flags = storeflags;
 
         if (st < 0) {

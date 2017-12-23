@@ -29,7 +29,7 @@ from numpy.ma.extras import (
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
     notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat
+    diagflat, stack, vstack, hstack
     )
 import numpy.ma.extras as mae
 
@@ -315,6 +315,15 @@ class TestConcatenator(object):
         # outer type is masked array, inner type is matrix
         assert_equal(type(actual), type(expected))
         assert_equal(type(actual.data), type(expected.data))
+
+    def test_masked_constant(self):
+        actual = mr_[np.ma.masked, 1]
+        assert_equal(actual.mask, [True, False])
+        assert_equal(actual.data[1], 1)
+
+        actual = mr_[[1, 2], np.ma.masked]
+        assert_equal(actual.mask, [False, False, True])
+        assert_equal(actual.data[:2], [1, 2])
 
 
 class TestNotMasked(object):
@@ -1578,6 +1587,88 @@ class TestShapeBase(object):
         b = diagflat(1.0)
         assert_equal(b.shape, (1, 1))
         assert_equal(b.mask.shape, b.data.shape)
+
+
+class TestStack(object):
+
+    def test_stack_1d(self):
+        a = masked_array([0, 1, 2], mask=[0, 1, 0])
+        b = masked_array([9, 8, 7], mask=[1, 0, 0])
+
+        c = stack([a, b], axis=0)
+        assert_equal(c.shape, (2, 3))
+        assert_array_equal(a.mask, c[0].mask)
+        assert_array_equal(b.mask, c[1].mask)
+
+        d = vstack([a, b])
+        assert_array_equal(c.data, d.data)
+        assert_array_equal(c.mask, d.mask)
+
+        c = stack([a, b], axis=1)
+        assert_equal(c.shape, (3, 2))
+        assert_array_equal(a.mask, c[:, 0].mask)
+        assert_array_equal(b.mask, c[:, 1].mask)
+
+    def test_stack_masks(self):
+        a = masked_array([0, 1, 2], mask=True)
+        b = masked_array([9, 8, 7], mask=False)
+
+        c = stack([a, b], axis=0)
+        assert_equal(c.shape, (2, 3))
+        assert_array_equal(a.mask, c[0].mask)
+        assert_array_equal(b.mask, c[1].mask)
+
+        d = vstack([a, b])
+        assert_array_equal(c.data, d.data)
+        assert_array_equal(c.mask, d.mask)
+
+        c = stack([a, b], axis=1)
+        assert_equal(c.shape, (3, 2))
+        assert_array_equal(a.mask, c[:, 0].mask)
+        assert_array_equal(b.mask, c[:, 1].mask)
+
+    def test_stack_nd(self):
+        # 2D
+        shp = (3, 2)
+        d1 = np.random.randint(0, 10, shp)
+        d2 = np.random.randint(0, 10, shp)
+        m1 = np.random.randint(0, 2, shp).astype(bool)
+        m2 = np.random.randint(0, 2, shp).astype(bool)
+        a1 = masked_array(d1, mask=m1)
+        a2 = masked_array(d2, mask=m2)
+
+        c = stack([a1, a2], axis=0)
+        c_shp = (2,) + shp
+        assert_equal(c.shape, c_shp)
+        assert_array_equal(a1.mask, c[0].mask)
+        assert_array_equal(a2.mask, c[1].mask)
+
+        c = stack([a1, a2], axis=-1)
+        c_shp = shp + (2,)
+        assert_equal(c.shape, c_shp)
+        assert_array_equal(a1.mask, c[..., 0].mask)
+        assert_array_equal(a2.mask, c[..., 1].mask)
+
+        # 4D
+        shp = (3, 2, 4, 5,)
+        d1 = np.random.randint(0, 10, shp)
+        d2 = np.random.randint(0, 10, shp)
+        m1 = np.random.randint(0, 2, shp).astype(bool)
+        m2 = np.random.randint(0, 2, shp).astype(bool)
+        a1 = masked_array(d1, mask=m1)
+        a2 = masked_array(d2, mask=m2)
+
+        c = stack([a1, a2], axis=0)
+        c_shp = (2,) + shp
+        assert_equal(c.shape, c_shp)
+        assert_array_equal(a1.mask, c[0].mask)
+        assert_array_equal(a2.mask, c[1].mask)
+
+        c = stack([a1, a2], axis=-1)
+        c_shp = shp + (2,)
+        assert_equal(c.shape, c_shp)
+        assert_array_equal(a1.mask, c[..., 0].mask)
+        assert_array_equal(a2.mask, c[..., 1].mask)
 
 
 if __name__ == "__main__":

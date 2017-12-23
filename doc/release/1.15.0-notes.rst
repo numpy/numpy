@@ -1,0 +1,80 @@
+==========================
+NumPy 1.15.0 Release Notes
+==========================
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+* `np.gcd` and `np.lcm`, to compute the greatest common divisor and least
+  common multiple.
+* `np.ma.stack`, the `np.stack` array-joining function generalized to masked
+  arrays.
+
+
+Deprecations
+============
+
+* Aliases of builtin `pickle` functions are deprecated, in favor of their
+  unaliased ``pickle.<func>`` names:
+
+  * `np.loads`
+  * `np.core.numeric.load`
+  * `np.core.numeric.loads`
+  * `np.ma.loads`, `np.ma.dumps`
+  * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
+    when called with a string.
+
+
+Future Changes
+==============
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+``np.gcd`` and ``np.lcm`` ufuncs added for integer and objects types
+--------------------------------------------------------------------
+These compute the greatest common divisor, and lowest common multiple,
+respectively. These work on all the numpy integer types, as well as the
+builtin arbitrary-precision `Decimal` and `long` types.
+
+
+Improvements
+============
+
+``histogram`` and ``histogramdd` functions have moved to ``np.lib.histograms``
+------------------------------------------------------------------------------
+These were originally found in ``np.lib.function_base``. They are still
+available under their un-scoped ``np.histogram(dd)`` names, and
+to maintain compatibility, aliased at ``np.lib.function_base.histogram(dd)``.
+
+Code that does ``from np.lib.function_base import *`` will need to be updated
+with the new location, and should consider not using ``import *`` in future.
+
+``np.r_`` works with 0d arrays, and ``np.ma.mr_` works with ``np.ma.masked``
+----------------------------------------------------------------------------
+0d arrays passed to the `r_` and `mr_` concatenation helpers are now treated as
+though they are arrays of length 1. Previously, passing these was an error.
+As a result, ``np.ma.mr_`` now works correctly on the ``masked`` constant.
+
+``MaskedArray.astype`` now is identical to ``ndarray.astype``
+-------------------------------------------------------------
+This means it takes all the same arguments, making more code written for
+ndarray work for masked array too.
+
+
+Changes
+=======

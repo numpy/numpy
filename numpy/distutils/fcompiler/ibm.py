@@ -90,7 +90,6 @@ class IBMFCompiler(FCompiler):
         return ['-O3']
 
 if __name__ == '__main__':
+    from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
-    compiler = IBMFCompiler()
-    compiler.customize()
-    print(compiler.get_version())
+    print(customized_fcompiler(compiler='ibm').get_version())

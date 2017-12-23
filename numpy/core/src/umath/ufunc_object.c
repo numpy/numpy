@@ -70,16 +70,6 @@
 static int
 _does_loop_use_arrays(void *data);
 
-static int
-assign_reduce_identity_zero(PyArrayObject *result, void *data);
-
-static int
-assign_reduce_identity_minusone(PyArrayObject *result, void *data);
-
-static int
-assign_reduce_identity_one(PyArrayObject *result, void *data);
-
-
 /*UFUNC_API*/
 NPY_NO_EXPORT int
 PyUFunc_getfperr(void)
@@ -1177,7 +1167,7 @@ iterator_loop(PyUFuncObject *ufunc,
                     PyUFuncGenericFunction innerloop,
                     void *innerloopdata)
 {
-    npy_intp i, nin = ufunc->nin, nout = ufunc->nout;
+    npy_intp i, iop, nin = ufunc->nin, nout = ufunc->nout;
     npy_intp nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1263,6 +1253,12 @@ iterator_loop(PyUFuncObject *ufunc,
             /* Call the __array_prepare__ functions for the new array */
             if (prepare_ufunc_output(ufunc, &op[nin+i],
                                      arr_prep[i], arr_prep_args, i) < 0) {
+                for(iop = 0; iop < nin+i; ++iop) {
+                    if (op_it[iop] != op[iop]) {
+                        /* ignore errrors */
+                        PyArray_ResolveWritebackIfCopy(op_it[iop]);
+                    }
+                }
                 NpyIter_Deallocate(iter);
                 return -1;
             }
@@ -1315,7 +1311,11 @@ iterator_loop(PyUFuncObject *ufunc,
 
         NPY_END_THREADS;
     }
-
+    for(iop = 0; iop < nop; ++iop) {
+        if (op_it[iop] != op[iop]) {
+            PyArray_ResolveWritebackIfCopy(op_it[iop]);
+        }
+    }
     NpyIter_Deallocate(iter);
     return 0;
 }
@@ -1502,7 +1502,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                     PyObject **arr_prep,
                     PyObject *arr_prep_args)
 {
-    int i, nin = ufunc->nin, nout = ufunc->nout;
+    int retval, i, nin = ufunc->nin, nout = ufunc->nout;
     int nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1688,8 +1688,16 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         NPY_AUXDATA_FREE(innerloopdata);
     }
 
+    retval = 0;
+    nop = NpyIter_GetNOp(iter);
+    for(i=0; i< nop; ++i) {
+        if (PyArray_ResolveWritebackIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0) {
+            retval = -1;
+        }
+    }
+
     NpyIter_Deallocate(iter);
-    return 0;
+    return retval;
 }
 
 static PyObject *
@@ -1733,7 +1741,7 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
 /*
  * Validate the core dimensions of all the operands, and collect all of
  * the labelled core dimensions into 'core_dim_sizes'.
- * 
+ *
  * Returns 0 on success, and -1 on failure
  *
  * The behavior has been changed in NumPy 1.10.0, and the following
@@ -1846,6 +1854,42 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
     }
     return 0;
 }
+
+/*
+ * Returns a new reference
+ * TODO: store a reference in the ufunc object itself, rather than
+ *       constructing one each time
+ */
+static PyObject *
+_get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
+    switch(ufunc->identity) {
+    case PyUFunc_One:
+        *reorderable = 1;
+        return PyInt_FromLong(1);
+
+    case PyUFunc_Zero:
+        *reorderable = 1;
+        return PyInt_FromLong(0);
+
+    case PyUFunc_MinusOne:
+        *reorderable = 1;
+        return PyInt_FromLong(-1);
+
+    case PyUFunc_ReorderableNone:
+        *reorderable = 1;
+        Py_RETURN_NONE;
+
+    case PyUFunc_None:
+        *reorderable = 0;
+        Py_RETURN_NONE;
+
+    default:
+        PyErr_Format(PyExc_ValueError,
+                "ufunc %s has an invalid identity", ufunc_get_name_cstr(ufunc));
+        return NULL;
+    }
+}
+
 
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
@@ -2249,34 +2293,27 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * product of two zero-length arrays will be a scalar,
          * which has size one.
          */
+        npy_bool reorderable;
+        PyObject *identity = _get_identity(ufunc, &reorderable);
+        if (identity == NULL) {
+            retval = -1;
+            goto fail;
+        }
+
         for (i = nin; i < nop; ++i) {
             if (PyArray_SIZE(op[i]) != 0) {
-                switch (ufunc->identity) {
-                    case PyUFunc_Zero:
-                        assign_reduce_identity_zero(op[i], NULL);
-                        break;
-                    case PyUFunc_One:
-                        assign_reduce_identity_one(op[i], NULL);
-                        break;
-                    case PyUFunc_MinusOne:
-                        assign_reduce_identity_minusone(op[i], NULL);
-                        break;
-                    case PyUFunc_None:
-                    case PyUFunc_ReorderableNone:
-                        PyErr_Format(PyExc_ValueError,
-                                "ufunc %s ",
-                                ufunc_name);
-                        retval = -1;
-                        goto fail;
-                    default:
-                        PyErr_Format(PyExc_ValueError,
-                                "ufunc %s has an invalid identity for reduction",
-                                ufunc_name);
-                        retval = -1;
-                        goto fail;
+                if (identity == Py_None) {
+                    PyErr_Format(PyExc_ValueError,
+                            "ufunc %s ",
+                            ufunc_name);
+                    Py_DECREF(identity);
+                    retval = -1;
+                    goto fail;
                 }
+                PyArray_FillWithScalar(op[i], identity);
             }
         }
+        Py_DECREF(identity);
     }
 
     /* Check whether any errors occurred during the loop */
@@ -2285,6 +2322,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         retval = -1;
         goto fail;
     }
+
+    /* Write back any temporary data from PyArray_SetWritebackIfCopyBase */
+    for(i=nin; i< nop; ++i)
+        if (PyArray_ResolveWritebackIfCopy(NpyIter_GetOperandArray(iter)[i]) < 0)
+            goto fail;
 
     PyArray_free(inner_strides);
     NpyIter_Deallocate(iter);
@@ -2666,31 +2708,6 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result, void *NPY_UNUSED(data))
-{
-    return PyArray_FillWithScalar(result, PyArrayScalar_False);
-}
-
-static int
-assign_reduce_identity_one(PyArrayObject *result, void *NPY_UNUSED(data))
-{
-    return PyArray_FillWithScalar(result, PyArrayScalar_True);
-}
-
-static int
-assign_reduce_identity_minusone(PyArrayObject *result, void *NPY_UNUSED(data))
-{
-    static PyObject *MinusOne = NULL;
-
-    if (MinusOne == NULL) {
-        if ((MinusOne = PyInt_FromLong(-1)) == NULL) {
-            return -1;
-        }
-    }
-    return PyArray_FillWithScalar(result, MinusOne);
-}
-
-static int
 reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
             npy_intp *countptr, NpyIter_IterNextFunc *iternext,
             int needs_api, npy_intp skip_first_count, void *data)
@@ -2795,11 +2812,12 @@ static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         int naxes, int *axes, PyArray_Descr *odtype, int keepdims)
 {
-    int iaxes, reorderable, ndim;
+    int iaxes, ndim;
+    npy_bool reorderable;
     npy_bool axis_flags[NPY_MAXDIMS];
     PyArray_Descr *dtype;
     PyArrayObject *result;
-    PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
+    PyObject *identity = NULL;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -2820,60 +2838,28 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         axis_flags[axis] = 1;
     }
 
-    switch (ufunc->identity) {
-        case PyUFunc_Zero:
-            assign_identity = &assign_reduce_identity_zero;
-            reorderable = 1;
-            /*
-             * The identity for a dynamic dtype like
-             * object arrays can't be used in general
-             */
-            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-                assign_identity = NULL;
-            }
-            break;
-        case PyUFunc_One:
-            assign_identity = &assign_reduce_identity_one;
-            reorderable = 1;
-            /*
-             * The identity for a dynamic dtype like
-             * object arrays can't be used in general
-             */
-            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-                assign_identity = NULL;
-            }
-            break;
-        case PyUFunc_MinusOne:
-            assign_identity = &assign_reduce_identity_minusone;
-            reorderable = 1;
-            /*
-             * The identity for a dynamic dtype like
-             * object arrays can't be used in general
-             */
-            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-                assign_identity = NULL;
-            }
-            break;
-
-        case PyUFunc_None:
-            reorderable = 0;
-            break;
-        case PyUFunc_ReorderableNone:
-            reorderable = 1;
-            break;
-        default:
-            PyErr_Format(PyExc_ValueError,
-                    "ufunc %s has an invalid identity for reduction",
-                    ufunc_name);
-            return NULL;
-    }
-
     if (_get_bufsize_errmask(NULL, "reduce", &buffersize, &errormask) < 0) {
         return NULL;
     }
 
+    /* Get the identity */
+    identity = _get_identity(ufunc, &reorderable);
+    if (identity == NULL) {
+        return NULL;
+    }
+    /*
+     * The identity for a dynamic dtype like
+     * object arrays can't be used in general
+     */
+    if (identity != Py_None && PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+        Py_DECREF(identity);
+        identity = Py_None;
+        Py_INCREF(identity);
+    }
+
     /* Get the reduction dtype */
     if (reduce_type_resolver(ufunc, arr, odtype, &dtype) < 0) {
+        Py_DECREF(identity);
         return NULL;
     }
 
@@ -2881,11 +2867,12 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                    NPY_UNSAFE_CASTING,
                                    axis_flags, reorderable,
                                    keepdims, 0,
-                                   assign_identity,
+                                   identity,
                                    reduce_loop,
                                    ufunc, buffersize, ufunc_name, errormask);
 
     Py_DECREF(dtype);
+    Py_DECREF(identity);
     return result;
 }
 
@@ -3218,6 +3205,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
 finish:
+    /* Write back any temporary data from PyArray_SetWritebackIfCopyBase */
+    if (PyArray_ResolveWritebackIfCopy(op[0]) < 0)
+        goto fail;
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
     NpyIter_Deallocate(iter_inner);
@@ -3600,6 +3590,9 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
 finish:
+    if (op[0] && PyArray_ResolveWritebackIfCopy(op[0]) < 0) {
+        goto fail;
+    }
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
 
@@ -3627,7 +3620,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     int i, naxes=0, ndim;
     int axes[NPY_MAXDIMS];
     PyObject *axes_in = NULL;
-    PyArrayObject *mp, *ret = NULL;
+    PyArrayObject *mp = NULL, *ret = NULL;
     PyObject *op, *res = NULL;
     PyObject *obj_ind, *context;
     PyArrayObject *indices = NULL;
@@ -3678,24 +3671,22 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             PyDict_SetItem(kwds, npy_um_str_out, out_obj);
         }
     }
-            
+
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
-                                        &op,
-                                        &obj_ind,
-                                        &axes_in,
-                                        PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out)) {
-            Py_XDECREF(otype);
-            return NULL;
+                                         &op,
+                                         &obj_ind,
+                                         &axes_in,
+                                         PyArray_DescrConverter2, &otype,
+                                         PyArray_OutputConverter, &out)) {
+            goto fail;
         }
         indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype,
                                            1, 1, NPY_ARRAY_CARRAY, NULL);
         if (indices == NULL) {
-            Py_XDECREF(otype);
-            return NULL;
+            goto fail;
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
@@ -3705,8 +3696,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out)) {
-            Py_XDECREF(otype);
-            return NULL;
+            goto fail;
         }
     }
     else {
@@ -3717,8 +3707,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out,
                                         &keepdims)) {
-            Py_XDECREF(otype);
-            return NULL;
+            goto fail;
         }
     }
     /* Ensure input is an array */
@@ -3731,7 +3720,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, context);
     Py_XDECREF(context);
     if (mp == NULL) {
-        return NULL;
+        goto fail;
     }
 
     ndim = PyArray_NDIM(mp);
@@ -3742,9 +3731,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         PyErr_Format(PyExc_TypeError,
                      "cannot perform %s with flexible type",
                      _reduce_type[operation]);
-        Py_XDECREF(otype);
-        Py_DECREF(mp);
-        return NULL;
+        goto fail;
     }
 
     /* Convert the 'axis' parameter into a list of axes */
@@ -3764,22 +3751,16 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         if (naxes < 0 || naxes > NPY_MAXDIMS) {
             PyErr_SetString(PyExc_ValueError,
                     "too many values for 'axis'");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axes_in, i);
             int axis = PyArray_PyIntAsInt(tmp);
             if (error_converting(axis)) {
-                Py_XDECREF(otype);
-                Py_DECREF(mp);
-                return NULL;
+                goto fail;
             }
             if (check_and_adjust_axis(&axis, ndim) < 0) {
-                Py_XDECREF(otype);
-                Py_DECREF(mp);
-                return NULL;
+                goto fail;
             }
             axes[i] = (int)axis;
         }
@@ -3789,16 +3770,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         int axis = PyArray_PyIntAsInt(axes_in);
         /* TODO: PyNumber_Index would be good to use here */
         if (error_converting(axis)) {
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         /* Special case letting axis={0 or -1} slip through for scalars */
         if (ndim == 0 && (axis == 0 || axis == -1)) {
             axis = 0;
         }
         else if (check_and_adjust_axis(&axis, ndim) < 0) {
-            return NULL;
+            goto fail;
         }
         axes[0] = (int)axis;
         naxes = 1;
@@ -3818,9 +3797,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                     (naxes == 0 || (naxes == 1 && axes[0] == 0)))) {
             PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
                          _reduce_type[operation]);
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
     }
 
@@ -3866,9 +3843,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         if (naxes != 1) {
             PyErr_SetString(PyExc_ValueError,
                         "accumulate does not allow multiple axes");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         ret = (PyArrayObject *)PyUFunc_Accumulate(ufunc, mp, out, axes[0],
                                                   otype->type_num);
@@ -3877,9 +3852,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         if (naxes != 1) {
             PyErr_SetString(PyExc_ValueError,
                         "reduceat does not allow multiple axes");
-            Py_XDECREF(otype);
-            Py_DECREF(mp);
-            return NULL;
+            goto fail;
         }
         ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc, mp, indices, out,
                                             axes[0], otype->type_num);
@@ -3912,6 +3885,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     return PyArray_Return(ret);
+
+fail:
+    Py_XDECREF(otype);
+    Py_XDECREF(mp);
+    return NULL;
 }
 
 /*
@@ -4100,6 +4078,14 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *override = NULL;
     int errval;
 
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
+
     /*
      * Initialize all array objects to NULL to make cleanup easier
      * if something goes wrong.
@@ -4108,21 +4094,11 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         mps[i] = NULL;
     }
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_XDECREF_ERR(mps[i]);
-        }
-        return override;
-    }
-
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
     if (errval < 0) {
         for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_XDECREF_ERR(mps[i]);
+            PyArray_DiscardWritebackIfCopy(mps[i]);
+            Py_XDECREF(mps[i]);
         }
         if (errval == -1) {
             return NULL;
@@ -5215,6 +5191,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     NpyIter_Deallocate(iter_buffer);
 
+    if (op1_array != (PyArrayObject*)op1) {
+        PyArray_ResolveWritebackIfCopy(op1_array);
+    }
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
@@ -5231,6 +5210,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
 fail:
 
+    if (op1_array != (PyArrayObject*)op1) {
+        PyArray_ResolveWritebackIfCopy(op1_array);
+    }
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
@@ -5377,15 +5359,8 @@ ufunc_get_name(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_get_identity(PyUFuncObject *ufunc)
 {
-    switch(ufunc->identity) {
-    case PyUFunc_One:
-        return PyInt_FromLong(1);
-    case PyUFunc_Zero:
-        return PyInt_FromLong(0);
-    case PyUFunc_MinusOne:
-        return PyInt_FromLong(-1);
-    }
-    Py_RETURN_NONE;
+    npy_bool reorderable;
+    return _get_identity(ufunc, &reorderable);
 }
 
 static PyObject *

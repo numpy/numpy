@@ -252,7 +252,8 @@ def default_name_func(func, num, p):
     return base_name + name_suffix
 
 
-_test_runner_override = None
+# force nose for numpy purposes.
+_test_runner_override = 'nose'
 _test_runner_guess = False
 _test_runners = set(["unittest", "unittest2", "nose", "nose2", "pytest"])
 _test_runner_aliases = {
@@ -409,7 +410,7 @@ class parameterized(object):
 
     @classmethod
     def check_input_values(cls, input_values):
-        # Explicitly convery non-list inputs to a list so that:
+        # Explicitly convert non-list inputs to a list so that:
         # 1. A helpful exception will be raised if they aren't iterable, and
         # 2. Generators are unwrapped exactly once (otherwise `nosetests
         #    --processes=n` has issues; see:
