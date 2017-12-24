@@ -2974,6 +2974,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     delta = stop - start;
     tmp_len = delta/step;
 
+    /* Underflow and divide-by-inf check */
     if (tmp_len == 0.0 && delta != 0.0) {
         if (npy_signbit(tmp_len)) {
             length = -1.0;
@@ -3106,6 +3107,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
             return -1;
         }
 
+        /* Underflow and divide-by-inf check */
         if (val_is_zero && next_is_nonzero) {
             if (npy_signbit(value)) {
                 len = -1.0;
