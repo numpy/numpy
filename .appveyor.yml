@@ -148,8 +148,8 @@ after_build:
 on_finish:
   # We can get a nice display of test results in the "test" tab with py.test
   # For now, this does nothing.
-  - ls -r . | Out-File listing.txt
-  - Push-AppveyorArtifact .\listing.txt
+  - ps: ls -r . | Out-File listing.txt
+  - ps: Push-AppveyorArtifact .\listing.txt
 
   - ps: |
       If (Test-Path .\junit-results.xml) {
