@@ -21,7 +21,6 @@ environment:
       APPVEYOR_SAVE_CACHE_ON_ERROR: true
       APPVEYOR_SKIP_FINALIZE_ON_EXIT: true
       TEST_TIMEOUT: 1000
-      NPY_NUM_BUILD_JOBS: 4
 
   matrix:
     - PYTHON: C:\Python34-x64
@@ -94,10 +93,8 @@ install:
       $lib = ls $tmpdir\$env:PYTHON_ARCH\lib\*.a | ForEach { ls $_ } | Select-Object -first 1
       echo $lib
 
-      If ($env:USE_PYTEST -ne "true") {
-        cp $lib $destination
-        ls $destination
-      }
+      cp $lib $destination
+      ls $destination
 
   # Upgrade to the latest pip.
   - '%CMD_IN_ENV% python -m pip install -U pip setuptools wheel'
@@ -151,6 +148,9 @@ after_build:
 on_finish:
   # We can get a nice display of test results in the "test" tab with py.test
   # For now, this does nothing.
+  - ls -r . | Out-File listing.txt
+  - Push-AppveyorArtifact .\listing.txt
+
   - ps: |
       If (Test-Path .\junit-results.xml) {
         (new-object net.webclient).UploadFile(
