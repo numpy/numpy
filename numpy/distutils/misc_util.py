@@ -2290,7 +2290,7 @@ def generate_config_py(target):
     # For gfortran+msvc combination, extra shared libraries may exist
     f.write("""
 import os
-extra_dll_dir = os.path.join(os.path.dirname(__file__), 'extra-dll')
+extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 if os.path.isdir(extra_dll_dir):
     os.environ["PATH"] += os.pathsep + extra_dll_dir
 """)
