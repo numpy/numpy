@@ -94,16 +94,14 @@ install:
       $lib = ls $tmpdir\$env:PYTHON_ARCH\lib\*.a | ForEach { ls $_ } | Select-Object -first 1
       echo $lib
 
-      If ($env:USE_PYTEST -ne "true") {
-        cp $lib $destination
-        ls $destination
-      }
+      cp $lib $destination
+      ls $destination
 
   # Upgrade to the latest pip.
-  - '%CMD_IN_ENV% python -m pip install -U pip setuptools wheel'
+  - 'python -m pip install -U pip setuptools wheel'
 
   # Install the numpy test dependencies.
-  - '%CMD_IN_ENV% pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'
+  - 'pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'
 
 build_script:
   # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
