@@ -249,6 +249,31 @@ class TestHistogram(object):
         np.histogram([np.array([0.5]) for i in range(10)] + [.500000000000001])
         np.histogram([np.array([0.5]) for i in range(10)] + [.5])
 
+    def test_some_nan_values(self):
+        # gh-7503
+        one_nan = np.array([0, 1, np.nan])
+        all_nan = np.array([np.nan, np.nan])
+
+        # the internal commparisons with NaN give warnings
+        sup = suppress_warnings()
+        sup.filter(RuntimeWarning)
+        with sup:
+            # can't infer range with nan
+            assert_raises(ValueError, histogram, one_nan, bins='auto')
+            assert_raises(ValueError, histogram, all_nan, bins='auto')
+
+            # explicit range solves the problem
+            h, b = histogram(one_nan, bins='auto', range=(0, 1))
+            assert_equal(h.sum(), 2)  # nan is not counted
+            h, b = histogram(all_nan, bins='auto', range=(0, 1))
+            assert_equal(h.sum(), 0)  # nan is not counted
+
+            # as does an explicit set of bins
+            h, b = histogram(one_nan, bins=[0, 1])
+            assert_equal(h.sum(), 2)  # nan is not counted
+            h, b = histogram(all_nan, bins=[0, 1])
+            assert_equal(h.sum(), 0)  # nan is not counted
+
 
 class TestHistogramOptimBinNums(object):
     """
