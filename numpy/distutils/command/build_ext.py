@@ -263,7 +263,7 @@ class build_ext (old_build_ext):
 
         # Copy over any extra DLL files
         runtime_lib_dir = os.path.join(
-            self.build_lib, self.distribution.get_name(), 'extra-dll')
+            self.build_lib, self.distribution.get_name(), '.libs')
         for fn in os.listdir(self.extra_dll_dir):
             if not fn.lower().endswith('.dll'):
                 continue
