@@ -2276,6 +2276,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     relative difference (`rtol` * abs(`b`)) and the absolute difference
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
+    
+    .. warning:: The default `atol` is not appropriate for comparing numbers
+                 that are much smaller than one (see Notes).
 
     Parameters
     ----------
@@ -2309,9 +2312,15 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
 
-    The above equation is not symmetric in `a` and `b`, so that
-    `isclose(a, b)` might be different from `isclose(b, a)` in
-    some rare cases.
+    Unlike the built-in `math.isclose`, the above equation is not symmetric
+    in `a` and `b` -- it assumes `b` is the reference value -- so that 
+    `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
+    the default value of atol is not zero, and is used to determine what
+    small values should be considered close to zero. The default value is
+    appropriate for expected values of order unity: if the expected values
+    are significantly smaller than one, it can result in false positives. 
+    `atol` should be carefully selected for the use case at hand. A zero value
+    for `atol` will result in `False` if either `a` or `b` is zero.
 
     Examples
     --------
@@ -2325,6 +2334,14 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([True, False])
     >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
     array([True, True])
+    >>> np.isclose([1e-8, 1e-7], [0.0, 0.0])
+    array([ True, False], dtype=bool)
+    >>> np.isclose([1e-100, 1e-7], [0.0, 0.0], atol=0.0)
+    array([False, False], dtype=bool)
+    >>> np.isclose([1e-10, 1e-10], [1e-20, 0.0])
+    array([ True,  True], dtype=bool)
+    >>> np.isclose([1e-10, 1e-10], [1e-20, 0.999999e-10], atol=0.0)
+    array([False,  True], dtype=bool)
     """
     def within_tol(x, y, atol, rtol):
         with errstate(invalid='ignore'):
