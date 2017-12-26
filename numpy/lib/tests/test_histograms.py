@@ -274,6 +274,31 @@ class TestHistogram(object):
             h, b = histogram(all_nan, bins=[0, 1])
             assert_equal(h.sum(), 0)  # nan is not counted
 
+    def test_datetime(self):
+        begin = np.datetime64('2000-01-01', 'D')
+        offsets = np.array([0, 0, 1, 1, 2, 3, 5, 10, 20])
+        bins = np.array([0, 2, 7, 20])
+        dates = begin + offsets
+        date_bins = begin + bins
+
+        td = np.dtype('timedelta64[D]')
+
+        # Results should be the same for integer offsets or datetime values.
+        # For now, only explicit bins are supported, since linspace does not
+        # work on datetimes or timedeltas
+        d_count, d_edge = histogram(dates, bins=date_bins)
+        t_count, t_edge = histogram(offsets.astype(td), bins=bins.astype(td))
+        i_count, i_edge = histogram(offsets, bins=bins)
+
+        assert_equal(d_count, i_count)
+        assert_equal(t_count, i_count)
+
+        assert_equal((d_edge - begin).astype(int), i_edge)
+        assert_equal(t_edge.astype(int), i_edge)
+
+        assert_equal(d_edge.dtype, dates.dtype)
+        assert_equal(t_edge.dtype, td)
+
 
 class TestHistogramOptimBinNums(object):
     """
