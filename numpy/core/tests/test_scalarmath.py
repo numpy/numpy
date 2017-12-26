@@ -561,15 +561,18 @@ class TestMultiply(object):
         # numpy integers. And errors are raised when multiplied with others.
         # Some of this behaviour may be controversial and could be open for
         # change.
+        accepted_types = np.typecodes["AllInteger"]
+        # boolean is okay as long as bool_.__index__ still works (deprecated)
+        accepted_types += "?"
         for seq_type in (list, tuple):
             seq = seq_type([1, 2, 3])
-            for numpy_type in np.typecodes["AllInteger"]:
+            for numpy_type in accepted_types:
                 i = np.dtype(numpy_type).type(2)
                 assert_equal(seq * i, seq * int(i))
                 assert_equal(i * seq, int(i) * seq)
 
             for numpy_type in np.typecodes["All"].replace("V", ""):
-                if numpy_type in np.typecodes["AllInteger"]:
+                if numpy_type in accepted_types:
                     continue
                 i = np.dtype(numpy_type).type()
                 assert_raises(TypeError, operator.mul, seq, i)
