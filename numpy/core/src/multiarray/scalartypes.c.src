@@ -258,7 +258,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
             ((Py_TYPE(m1)->tp_as_number == NULL) ||
              (Py_TYPE(m1)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m2 to an int and try sequence repeat */
-        repeat = PyArray_PyIntAsIntp(m2);
+        repeat = PyNumber_AsSsize_t(m2, PyExc_OverflowError);
         if (error_converting(repeat)) {
             return NULL;
         }
@@ -271,7 +271,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
             ((Py_TYPE(m2)->tp_as_number == NULL) ||
              (Py_TYPE(m2)->tp_as_number->nb_multiply == NULL))) {
         /* Try to convert m1 to an int and try sequence repeat */
-        repeat = PyArray_PyIntAsIntp(m1);
+        repeat = PyNumber_AsSsize_t(m1, PyExc_OverflowError);
         if (error_converting(repeat)) {
             return NULL;
         }
