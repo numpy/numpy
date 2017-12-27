@@ -1440,7 +1440,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
+    docstr = PyUnicode_AsUTF8(str);
 #else
     if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyString_Type, &str)) {
         return NULL;
