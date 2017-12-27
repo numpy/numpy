@@ -3058,6 +3058,8 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 
     *next = PyNumber_Subtract(stop, start);
     if (!(*next)) {
+        Py_DECREF(zero);
+
         if (PyTuple_Check(stop)) {
             PyErr_Clear();
             PyErr_SetString(PyExc_TypeError,
@@ -3073,6 +3075,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     *next = NULL;
 
     if (!val) {
+        Py_DECREF(zero);
         return -1;
     }
 
