@@ -10,7 +10,7 @@ from numpy.testing import (
     run_module_suite,
     assert_, assert_equal, assert_raises,
     assert_almost_equal, assert_allclose, assert_array_equal,
-    IS_PYPY, suppress_warnings, dec, _gen_alignment_data,
+    IS_PYPY, suppress_warnings, dec, _gen_alignment_data, assert_warns
 )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -561,16 +561,29 @@ class TestMultiply(object):
         # numpy integers. And errors are raised when multiplied with others.
         # Some of this behaviour may be controversial and could be open for
         # change.
+        accepted_types = set(np.typecodes["AllInteger"])
+        deprecated_types = set('?')
+        forbidden_types = (
+            set(np.typecodes["All"]) - accepted_types - deprecated_types)
+        forbidden_types -= set('V')  # can't default-construct void scalars
+
         for seq_type in (list, tuple):
             seq = seq_type([1, 2, 3])
-            for numpy_type in np.typecodes["AllInteger"]:
+            for numpy_type in accepted_types:
                 i = np.dtype(numpy_type).type(2)
                 assert_equal(seq * i, seq * int(i))
                 assert_equal(i * seq, int(i) * seq)
 
-            for numpy_type in np.typecodes["All"].replace("V", ""):
-                if numpy_type in np.typecodes["AllInteger"]:
-                    continue
+            for numpy_type in deprecated_types:
+                i = np.dtype(numpy_type).type()
+                assert_equal(
+                    assert_warns(DeprecationWarning, operator.mul, seq, i),
+                    seq * int(i))
+                assert_equal(
+                    assert_warns(DeprecationWarning, operator.mul, i, seq),
+                    int(i) * seq)
+
+            for numpy_type in forbidden_types:
                 i = np.dtype(numpy_type).type()
                 assert_raises(TypeError, operator.mul, seq, i)
                 assert_raises(TypeError, operator.mul, i, seq)
