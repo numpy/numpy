@@ -326,6 +326,18 @@ def _get_bin_edges(a, bins, range, weights):
         return bin_edges, None
 
 
+def _search_sorted_inclusive(a, v):
+    """
+    Like `searchsorted`, but where the last item in `v` is placed on the right.
+
+    In the context of a histogram, this makes the last bin edge inclusive
+    """
+    return np.concatenate((
+        a.searchsorted(v[:-1], 'left'),
+        a.searchsorted(v[-1:], 'right')
+    ))
+
+
 def histogram(a, bins=10, range=None, normed=False, weights=None,
               density=None):
     r"""
@@ -626,19 +638,17 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         if weights is None:
             for i in np.arange(0, len(a), BLOCK):
                 sa = np.sort(a[i:i+BLOCK])
-                cum_n += np.r_[sa.searchsorted(bin_edges[:-1], 'left'),
-                               sa.searchsorted(bin_edges[-1], 'right')]
+                cum_n += _search_sorted_inclusive(sa, bin_edges)
         else:
-            zero = np.array(0, dtype=ntype)
+            zero = np.zeros(1, dtype=ntype)
             for i in np.arange(0, len(a), BLOCK):
                 tmp_a = a[i:i+BLOCK]
                 tmp_w = weights[i:i+BLOCK]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
-                cw = np.concatenate(([zero], sw.cumsum()))
-                bin_index = np.r_[sa.searchsorted(bin_edges[:-1], 'left'),
-                                  sa.searchsorted(bin_edges[-1], 'right')]
+                cw = np.concatenate((zero, sw.cumsum()))
+                bin_index = _search_sorted_inclusive(sa, bin_edges)
                 cum_n += cw[bin_index]
 
         n = np.diff(cum_n)
