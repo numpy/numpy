@@ -3050,9 +3050,10 @@ PyArray_Arange(double start, double stop, double step, int type_num)
 static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
-    npy_intp len, tmp, next_is_nonzero, val_is_zero;
+    npy_intp len, tmp;
     PyObject *zero = PyInt_FromLong(0);
     PyObject *val;
+    int next_is_nonzero, val_is_zero;
     double value;
 
     *next = PyNumber_Subtract(stop, start);
