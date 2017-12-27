@@ -949,8 +949,33 @@ def make_arrays(funcdict):
             thedict = chartotype1  # one input and one output
 
         for t in uf.type_descriptions:
-            if (t.func_data not in (None, FullTypeDescr) and
-                    not isinstance(t.func_data, FuncNameSuffix)):
+            if t.func_data is FullTypeDescr:
+                tname = english_upper(chartoname[t.type])
+                datalist.append('(void *)NULL')
+                funclist.append(
+                        '%s_%s_%s_%s' % (tname, t.in_, t.out, name))
+            elif isinstance(t.func_data, FuncNameSuffix):
+                datalist.append('(void *)NULL')
+                tname = english_upper(chartoname[t.type])
+                funclist.append(
+                        '%s_%s_%s' % (tname, name, t.func_data.suffix))
+            elif t.func_data is None:
+                datalist.append('(void *)NULL')
+                tname = english_upper(chartoname[t.type])
+                funclist.append('%s_%s' % (tname, name))
+                if t.simd is not None:
+                    for vt in t.simd:
+                        code2list.append(textwrap.dedent("""\
+                        #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
+                        if (NPY_CPU_SUPPORTS_{ISA}) {{
+                            {fname}_functions[{idx}] = {type}_{fname}_{isa};
+                        }}
+                        #endif
+                        """).format(
+                            ISA=vt.upper(), isa=vt,
+                            fname=name, type=tname, idx=k
+                        ))
+            else:
                 funclist.append('NULL')
                 astype = ''
                 if not t.astype is None:
@@ -972,32 +997,6 @@ def make_arrays(funcdict):
                     datalist.append('(void *)NULL')
                     #datalist.append('(void *)%s' % t.func_data)
                 sub += 1
-            elif t.func_data is FullTypeDescr:
-                tname = english_upper(chartoname[t.type])
-                datalist.append('(void *)NULL')
-                funclist.append(
-                        '%s_%s_%s_%s' % (tname, t.in_, t.out, name))
-            elif isinstance(t.func_data, FuncNameSuffix):
-                datalist.append('(void *)NULL')
-                tname = english_upper(chartoname[t.type])
-                funclist.append(
-                        '%s_%s_%s' % (tname, name, t.func_data.suffix))
-            else:
-                datalist.append('(void *)NULL')
-                tname = english_upper(chartoname[t.type])
-                funclist.append('%s_%s' % (tname, name))
-                if t.simd is not None:
-                    for vt in t.simd:
-                        code2list.append(textwrap.dedent("""\
-                        #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-                        if (NPY_CPU_SUPPORTS_{ISA}) {{
-                            {fname}_functions[{idx}] = {type}_{fname}_{isa};
-                        }}
-                        #endif
-                        """).format(
-                            ISA=vt.upper(), isa=vt,
-                            fname=name, type=tname, idx=k
-                        ))
 
             for x in t.in_ + t.out:
                 siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
