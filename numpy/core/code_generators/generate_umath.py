@@ -789,7 +789,7 @@ defdict = {
           docstrings.get('numpy.core.umath.divmod'),
           None,
           TD(intflt),
-          TD(O, f='PyNumber_Divmod'),
+          # TD(O, f='PyNumber_Divmod'),  # gh-9730
           ),
 'hypot':
     Ufunc(2, 1, Zero,
@@ -942,12 +942,6 @@ def make_arrays(funcdict):
         k = 0
         sub = 0
 
-        if uf.nin > 1:
-            assert uf.nin == 2
-            thedict = chartotype2  # two inputs and one output
-        else:
-            thedict = chartotype1  # one input and one output
-
         for t in uf.type_descriptions:
             if t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])
@@ -977,6 +971,13 @@ def make_arrays(funcdict):
                         ))
             else:
                 funclist.append('NULL')
+                if (uf.nin, uf.nout) == (2, 1):
+                    thedict = chartotype2
+                elif (uf.nin, uf.nout) == (1, 1):
+                    thedict = chartotype1
+                else:
+                    raise ValueError("Could not handle {}[{}]".format(name, t.type))
+
                 astype = ''
                 if not t.astype is None:
                     astype = '_As_%s' % thedict[t.astype]
