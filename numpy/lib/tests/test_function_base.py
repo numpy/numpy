@@ -556,6 +556,9 @@ class TestPtp(object):
         assert_equal(b.ptp(axis=0), [5.0, 7.0, 7.0])
         assert_equal(b.ptp(axis=-1), [6.0, 6.0, 6.0])
 
+        assert_equal(b.ptp(axis=0, keepdims=True), [[5.0, 7.0, 7.0]])
+        assert_equal(b.ptp(axis=(0,1), keepdims=True), [[8.0]])
+
 
 class TestCumsum(object):
 

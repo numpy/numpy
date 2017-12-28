@@ -142,3 +142,10 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         ret = um.sqrt(ret)
 
     return ret
+
+def _ptp(a, axis=None, out=None, keepdims=False):
+    return um.subtract(
+        umr_maximum(a, axis, None, out, keepdims),
+        umr_minimum(a, axis, None, None, keepdims),
+        out
+    )

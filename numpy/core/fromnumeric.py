@@ -2178,7 +2178,7 @@ def cumproduct(a, axis=None, dtype=None, out=None):
     return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
 
-def ptp(a, axis=None, out=None):
+def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Range of values (maximum - minimum) along an axis.
 
@@ -2188,13 +2188,30 @@ def ptp(a, axis=None, out=None):
     ----------
     a : array_like
         Input values.
-    axis : int, optional
+    axis : None or int or tuple of ints, optional
         Axis along which to find the peaks.  By default, flatten the
-        array.
+        array.  `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.15.0
+
+        If this is a tuple of ints, a reduction is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     out : array_like
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
         but the type of the output values will be cast if necessary.
+
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `ptp` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-classes `sum` method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2216,7 +2233,17 @@ def ptp(a, axis=None, out=None):
     array([1, 1])
 
     """
-    return _wrapfunc(a, 'ptp', axis=axis, out=out)
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    if type(a) is not mu.ndarray:
+        try:
+            ptp = a.ptp
+        except AttributeError:
+            pass
+        else:
+            return ptp(axis=axis, out=out, **kwargs)
+    return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
 def amax(a, axis=None, out=None, keepdims=np._NoValue):

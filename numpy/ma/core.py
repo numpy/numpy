@@ -5721,7 +5721,7 @@ class MaskedArray(ndarray):
             np.copyto(out, np.nan, where=newmask)
         return out
 
-    def ptp(self, axis=None, out=None, fill_value=None):
+    def ptp(self, axis=None, out=None, fill_value=None, keepdims=False):
         """
         Return (maximum - minimum) along the given dimension
         (i.e. peak-to-peak value).
@@ -5746,11 +5746,15 @@ class MaskedArray(ndarray):
 
         """
         if out is None:
-            result = self.max(axis=axis, fill_value=fill_value)
-            result -= self.min(axis=axis, fill_value=fill_value)
+            result = self.max(axis=axis, fill_value=fill_value,
+                              keepdims=keepdims)
+            result -= self.min(axis=axis, fill_value=fill_value,
+                               keepdims=keepdims)
             return result
-        out.flat = self.max(axis=axis, out=out, fill_value=fill_value)
-        min_value = self.min(axis=axis, fill_value=fill_value)
+        out.flat = self.max(axis=axis, out=out, fill_value=fill_value,
+                            keepdims=keepdims)
+        min_value = self.min(axis=axis, fill_value=fill_value,
+                             keepdims=keepdims)
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
@@ -6489,17 +6493,15 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
-def ptp(obj, axis=None, out=None, fill_value=None):
-    """
-    a.ptp(axis=None) =  a.max(axis) - a.min(axis)
-
-    """
+def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
-        return obj.ptp(axis, out=out, fill_value=fill_value)
+        return obj.ptp(axis, out=out, fill_value=fill_value, **kwargs)
     except (AttributeError, TypeError):
         # If obj doesn't have a ptp method or if the method doesn't accept
         # a fill_value argument
-        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
+        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value,
+                                   out=out, **kwargs)
 ptp.__doc__ = MaskedArray.ptp.__doc__
 
 
