@@ -4981,6 +4981,10 @@ class TestMaskedConstant(object):
         assert_(a is not np.ma.masked)
         assert_not_equal(repr(a), 'masked')
 
+    def test_attributes_readonly(self):
+        assert_raises(AttributeError, setattr, np.ma.masked, 'shape', (1,))
+        assert_raises(AttributeError, setattr, np.ma.masked, 'dtype', np.int64)
+
 
 class TestMaskedWhereAliases(object):
 
