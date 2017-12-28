@@ -85,6 +85,11 @@ passed explicitly, and are not yet computed automatically.
 though they are arrays of length 1. Previously, passing these was an error.
 As a result, ``np.ma.mr_`` now works correctly on the ``masked`` constant.
 
+``np.ptp`` accepts a ``keepdims`` argument, and extended axis tuples
+--------------------------------------------------------------------
+``np.ptp`` (peak-to-peak) can now work over multiple axes, just like `max` and
+`min`.
+
 ``MaskedArray.astype`` now is identical to ``ndarray.astype``
 -------------------------------------------------------------
 This means it takes all the same arguments, making more code written for
