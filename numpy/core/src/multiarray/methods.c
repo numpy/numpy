@@ -329,16 +329,7 @@ array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = NPY_MAXDIMS;
-    PyArrayObject *out = NULL;
-    static char *kwlist[] = {"axis", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&:ptp", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out))
-        return NULL;
-
-    return PyArray_Ptp(self, axis, out);
+    NPY_FORWARD_NDARRAY_METHOD("_ptp");
 }
 
 
