@@ -66,6 +66,16 @@ zero::
    >>> np.zeros(10)//1
    array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 
+``MaskedArray.mask`` now returns a view of the mask, not the mask itself
+------------------------------------------------------------------------
+Returning the mask itself was unsafe, as it could be reshaped in place which
+would violate expectations of the masked array code. It's behavior is now
+consistent with the ``.data`` attribute, which also returns a view.
+
+The underlying mask can still be accessed with ``._mask`` if it is needed.
+Tests that contain ``assert x.mask is not y.mask`` or similar will need to be
+updated.
+
 Do not lookup ``__buffer__`` attribute in `numpy.frombuffer`
 ------------------------------------------------------------
 Looking up ``__buffer__`` attribute in `numpy.frombuffer` was undocumented and
