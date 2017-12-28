@@ -1812,7 +1812,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `sum` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -1966,7 +1966,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `any` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2051,7 +2051,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `all` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2210,7 +2210,7 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `ptp` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2275,7 +2275,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `amax` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2376,7 +2376,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `amin` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2518,7 +2518,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `prod` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2917,7 +2917,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `mean` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -3024,7 +3024,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `std` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -3143,7 +3143,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `var` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
