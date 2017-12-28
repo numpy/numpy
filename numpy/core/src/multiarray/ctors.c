@@ -3051,10 +3051,14 @@ static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
     npy_intp len, tmp;
-    PyObject *zero = PyInt_FromLong(0);
-    PyObject *val;
+    PyObject *zero, *val;
     int next_is_nonzero, val_is_zero;
     double value;
+
+    zero = PyInt_FromLong(0);
+    if (!zero) {
+        return -1;
+    }
 
     *next = PyNumber_Subtract(stop, start);
     if (!(*next)) {
