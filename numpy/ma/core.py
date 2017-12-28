@@ -6309,6 +6309,18 @@ class MaskedConstant(MaskedArray):
         # precedent for this with `np.bool_` scalars.
         return self
 
+    def __setattr__(self, attr, value):
+        if not self.__has_singleton():
+            # allow the singleton to be initialized
+            return super(MaskedConstant, self).__setattr__(attr, value)
+        elif self is self.__singleton:
+            raise AttributeError(
+                "attributes of {!r} are not writeable".format(self))
+        else:
+            # duplicate instance - we can end up here from __array_finalize__,
+            # where we set the __class__ attribute
+            return super(MaskedConstant, self).__setattr__(attr, value)
+
 
 masked = masked_singleton = MaskedConstant()
 masked_array = MaskedArray
