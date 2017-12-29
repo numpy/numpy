@@ -13,6 +13,7 @@ addons:
       - gfortran
       - libatlas-dev
       - libatlas-base-dev
+      - valgrind
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
 
@@ -45,6 +46,7 @@ matrix:
         apt:
           packages:
             - debootstrap
+            - valgrind
     - python: 3.4
       env: USE_DEBUG=1
       dist: trusty
