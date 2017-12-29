@@ -5136,13 +5136,17 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
     Return the indices of the bins to which each value in input array belongs.
 
-    Each index ``i`` returned is such that ``bins[i-1] <= x < bins[i]`` if
-    `bins` is monotonically increasing, or ``bins[i-1] > x >= bins[i]`` if
-    `bins` is monotonically decreasing. If values in `x` are beyond the
-    bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate. If right
-    is True, then the right bin is closed so that the index ``i`` is such
-    that ``bins[i-1] < x <= bins[i]`` or ``bins[i-1] >= x > bins[i]`` if `bins`
-    is monotonically increasing or decreasing, respectively.
+    =========  =============  ============================
+    `right`    order of bins  returned index `i` satisfies
+    =========  =============  ============================
+    ``False``  increasing     ``bins[i-1] <= x < bins[i]``
+    ``True``   increasing     ``bins[i-1] < x <= bins[i]``
+    ``False``  decreasing     ``bins[i-1] > x >= bins[i]``
+    ``True``   decreasing     ``bins[i-1] >= x > bins[i]``
+    =========  =============  ============================
+
+    If values in `x` are beyond the bounds of `bins`, 0 or ``len(bins)`` is
+    returned as appropriate.
 
     Parameters
     ----------
@@ -5160,7 +5164,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
     Returns
     -------
-    out : ndarray of ints
+    indices : ndarray of ints
         Output array of indices, of same shape as `x`.
 
     Raises
@@ -5186,6 +5190,15 @@ add_newdoc('numpy.core.multiarray', 'digitize',
     that a binary search is used to bin the values, which scales much better
     for larger number of bins than the previous linear search. It also removes
     the requirement for the input array to be 1-dimensional.
+
+    For monotonically _increasing_ `bins`, the following are equivalent::
+
+        np.digitize(x, bins, right=True)
+        np.searchsorted(bins, x, side='left')
+
+    Note that as the order of the arguments are reversed, the side must be too.
+    The `searchsorted` call is marginally faster, as it does not do any
+    monotonicity checks. Perhaps more importantly, it supports all dtypes.
 
     Examples
     --------
