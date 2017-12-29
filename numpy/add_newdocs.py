@@ -3033,7 +3033,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     >>> np.zeros((4,2))[::2].shape = (-1,)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    AttributeError: incompatible shape for a non-contiguous array
+    AttributeError: Incompatible shape for a non-C-contiguous array. Use
+    `.reshape()` when the order of the array's elements would change in memory.
 
     See Also
     --------

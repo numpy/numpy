@@ -60,8 +60,9 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     if (PyArray_DATA(ret) != PyArray_DATA(self)) {
         Py_DECREF(ret);
         PyErr_SetString(PyExc_AttributeError,
-                        "incompatible shape for a non-contiguous "\
-                        "array");
+                        "Incompatible shape for a non-C-contiguous array. " \
+                        "Use `.reshape()` when the order of the array's " \
+                        "elements would change in memory.");
         return -1;
     }
 
