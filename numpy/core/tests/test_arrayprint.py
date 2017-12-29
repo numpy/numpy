@@ -441,6 +441,7 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array([0.])), 'array([0.])')
         assert_equal(repr(c),
             "array([1.        +1.j        , 1.12345679+1.12345679j])")
+        assert_equal(repr(np.array([0., -0.])), 'array([ 0., -0.])')
 
         np.set_printoptions(sign=' ')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
@@ -448,6 +449,7 @@ class TestPrintOptions(object):
         assert_equal(repr(b), 'array([ 1.234e+09])')
         assert_equal(repr(c),
             "array([ 1.        +1.j        ,  1.12345679+1.12345679j])")
+        assert_equal(repr(np.array([0., -0.])), 'array([ 0., -0.])')
 
         np.set_printoptions(sign='+')
         assert_equal(repr(a), 'array([+0., +1., +2., +3.])')
