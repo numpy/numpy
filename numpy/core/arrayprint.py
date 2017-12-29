@@ -879,8 +879,7 @@ class FloatingFormat(object):
                     for x in finite_vals)
             int_part, frac_part = zip(*(s.split('.') for s in strs))
             if self._legacy == '1.13':
-                self.pad_left = 1 + max(len(s.lstrip('-').lstrip('+'))
-                                        for s in int_part)
+                self.pad_left = 1 + max(len(s.lstrip('-+')) for s in int_part)
             else:
                 self.pad_left = max(len(s) for s in int_part)
             self.pad_right = max(len(s) for s in frac_part)
@@ -896,8 +895,8 @@ class FloatingFormat(object):
 
         if self._legacy != '1.13':
             # account for sign = ' ' by adding one to pad_left
-            if all(finite_vals >= 0) and self.sign == ' ':
-                    self.pad_left += 1
+            if self.sign == ' ' and not any(np.signbit(finite_vals)):
+                self.pad_left += 1
 
         # if there are non-finite values, may need to increase pad_left
         if data.size != finite_vals.size:
