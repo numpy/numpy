@@ -1219,16 +1219,9 @@ def assert_raises(exception_class, fn=None, *args, **kwargs):
     if fn is not None:
         pytest.raises(exception_class, fn, *args,**kwargs)
     else:
-        @contextlib.contextmanager
-        def assert_raises_context():
-            try:
-                yield
-            except BaseException as raised_exception:
-                assert isinstance(raised_exception, exception_class)
-            else:
-                raise ValueError('Function did not raise an exception')
+        assert not kwargs
 
-        return assert_raises_context()
+        return pytest.raises(exception_class)
 
 
 def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
