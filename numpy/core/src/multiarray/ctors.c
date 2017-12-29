@@ -3055,21 +3055,21 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     int next_is_nonzero, val_is_zero;
     double value;
 
-    zero = PyInt_FromLong(0);
-    if (!zero) {
-        return -1;
-    }
-
     *next = PyNumber_Subtract(stop, start);
     if (!(*next)) {
-        Py_DECREF(zero);
-
         if (PyTuple_Check(stop)) {
             PyErr_Clear();
             PyErr_SetString(PyExc_TypeError,
                             "arange: scalar arguments expected "\
                             "instead of a tuple.");
         }
+        return -1;
+    }
+
+    zero = PyInt_FromLong(0);
+    if (!zero) {
+        Py_DECREF(*next);
+        *next = NULL;
         return -1;
     }
 
