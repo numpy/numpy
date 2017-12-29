@@ -3036,7 +3036,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     >>> np.zeros((4,2))[::2].shape = (-1,)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    AttributeError: incompatible shape for a non-contiguous array
+    AttributeError: Incompatible shape for this array; the in-memory
+    representation of the array would mutate. Use `.reshape()` to make a copy
+    with the desired shape.
 
     See Also
     --------

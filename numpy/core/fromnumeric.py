@@ -205,13 +205,15 @@ def reshape(a, newshape, order='C'):
     you should assign the new shape to the shape attribute of the array::
 
      >>> a = np.zeros((10, 2))
-     # A transpose makes the array non-contiguous
+     # A transpose changes the array from being C-contiguous to F-contiguous.
      >>> b = a.T
      # Taking a view makes it possible to modify the shape without modifying
      # the initial object.
      >>> c = b.view()
      >>> c.shape = (20)
-     AttributeError: incompatible shape for a non-contiguous array
+     AttributeError: Incompatible shape for this array; the in-memory
+     representation of the array would mutate. Use `.reshape()` to make a copy
+     with the desired shape.
 
     The `order` keyword gives the index ordering both for *fetching* the values
     from `a`, and then *placing* the values into the output array.
