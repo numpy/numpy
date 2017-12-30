@@ -4055,7 +4055,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('prod',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ptp',
     """
-    a.ptp(axis=None, out=None)
+    a.ptp(axis=None, out=None, keepdims=False)
 
     Peak to peak (maximum - minimum) value along a given axis.
 
