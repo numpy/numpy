@@ -207,7 +207,7 @@ extern rk_error rk_devfill(void *buffer, size_t size, int strong);
 
 /*
  * fill the buffer using rk_devfill if the random device is available and using
- * rk_fill if is is not
+ * rk_fill if it is not
  * parameters have the same meaning as rk_fill and rk_devfill
  * Returns RK_ENODEV if the device is unavailable, or RK_NOERR if it is
  */
