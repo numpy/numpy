@@ -3195,7 +3195,7 @@ def _ureduce(a, func, **kwargs):
         Input array or object that can be converted to an array.
     func : callable
         Reduction function capable of receiving a single axis argument.
-        It is is called with `a` as first argument followed by `kwargs`.
+        It is called with `a` as first argument followed by `kwargs`.
     kwargs : keyword arguments
         additional keyword arguments to pass to `func`.
 
