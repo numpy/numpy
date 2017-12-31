@@ -804,6 +804,8 @@ class system_info(object):
                 # doesn't seem correct
                 if ext == '.dll.a':
                     lib += '.dll'
+                if ext == '.lib':
+                    lib = prefix + lib
                 return lib
 
         return False

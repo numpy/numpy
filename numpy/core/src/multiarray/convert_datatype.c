@@ -135,7 +135,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
  * Usually, if data_obj is not an array, dtype should be the result
  * given by the PyArray_GetArrayParamsFromObject function.
  *
- * The data_obj may be NULL if just a dtype is is known for the source.
+ * The data_obj may be NULL if just a dtype is known for the source.
  *
  * If *flex_dtype is NULL, returns immediately, without setting an
  * exception. This basically assumes an error was already set previously.

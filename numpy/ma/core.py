@@ -1624,7 +1624,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
 
     # Make sure the input dtype is valid.
     dtype = make_mask_descr(dtype)
-    
+
     # legacy boolean special case: "existence of fields implies true"
     if isinstance(m, ndarray) and m.dtype.fields and dtype == np.bool_:
         return np.ones(m.shape, dtype=dtype)
@@ -2245,12 +2245,14 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     Mask using floating point equality.
 
     Return a MaskedArray, masked where the data in array `x` are approximately
-    equal to `value`, i.e. where the following condition is True
+    equal to `value`, determined using `isclose`. The default tolerances for
+    `masked_values` are the same as those for `isclose`.
 
-    (abs(x - value) <= atol+rtol*abs(value))
+    For integer types, exact equality is used, in the same way as
+    `masked_equal`.
 
     The fill_value is set to `value` and the mask is set to ``nomask`` if
-    possible.  For integers, consider using ``masked_equal``.
+    possible.
 
     Parameters
     ----------
@@ -2258,10 +2260,8 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
         Array to mask.
     value : float
         Masking value.
-    rtol : float, optional
-        Tolerance parameter.
-    atol : float, optional
-        Tolerance parameter (1e-8).
+    rtol, atol : float, optional
+        Tolerance parameters passed on to `isclose`
     copy : bool, optional
         Whether to return a copy of `x`.
     shrink : bool, optional
@@ -2309,17 +2309,13 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
           fill_value=999999)
 
     """
-    mabs = umath.absolute
     xnew = filled(x, value)
-    if issubclass(xnew.dtype.type, np.floating):
-        condition = umath.less_equal(
-            mabs(xnew - value), atol + rtol * mabs(value))
-        mask = getmask(x)
+    if np.issubdtype(xnew.dtype, np.floating):
+        mask = np.isclose(xnew, value, atol=atol, rtol=rtol)
     else:
-        condition = umath.equal(xnew, value)
-        mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
-    return masked_array(xnew, mask=mask, copy=copy, fill_value=value)
+        mask = umath.equal(xnew, value)
+    return masked_array(
+        xnew, mask=mask, copy=copy, fill_value=value, shrink=shrink)
 
 
 def masked_invalid(a, copy=True):
@@ -2978,11 +2974,30 @@ class MaskedArray(ndarray):
             # heuristic it's not bad.) In all other cases, we make a copy of
             # the mask, so that future modifications to 'self' do not end up
             # side-effecting 'obj' as well.
-            if (obj.__array_interface__["data"][0]
+            if (_mask is not nomask and obj.__array_interface__["data"][0]
                     != self.__array_interface__["data"][0]):
-                _mask = _mask.copy()
+                # We should make a copy. But we could get here via astype,
+                # in which case the mask might need a new dtype as well
+                # (e.g., changing to or from a structured dtype), and the
+                # order could have changed. So, change the mask type if
+                # needed and use astype instead of copy.
+                if self.dtype == obj.dtype:
+                    _mask_dtype = _mask.dtype
+                else:
+                    _mask_dtype = make_mask_descr(self.dtype)
+
+                if self.flags.c_contiguous:
+                    order = "C"
+                elif self.flags.f_contiguous:
+                    order = "F"
+                else:
+                    order = "K"
+
+                _mask = _mask.astype(_mask_dtype, order)
+
         else:
             _mask = nomask
+
         self._mask = _mask
         # Finalize the mask
         if self._mask is not nomask:
@@ -3139,45 +3154,6 @@ class MaskedArray(ndarray):
                 output.fill_value = fill_value
         return output
     view.__doc__ = ndarray.view.__doc__
-
-    def astype(self, newtype):
-        """
-        Returns a copy of the MaskedArray cast to given newtype.
-
-        Returns
-        -------
-        output : MaskedArray
-            A copy of self cast to input newtype.
-            The returned record shape matches self.shape.
-
-        Examples
-        --------
-        >>> x = np.ma.array([[1,2,3.1],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1.0 -- 3.1]
-         [-- 5.0 --]
-         [7.0 -- 9.0]]
-        >>> print(x.astype(int32))
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
-
-        """
-        newtype = np.dtype(newtype)
-        newmasktype = make_mask_descr(newtype)
-
-        output = self._data.astype(newtype).view(type(self))
-        output._update_from(self)
-
-        if self._mask is nomask:
-            output._mask = nomask
-        else:
-            output._mask = self._mask.astype(newmasktype)
-
-        # Don't check _fill_value if it's None, that'll speed things up
-        if self._fill_value is not None:
-            output._fill_value = _check_fill_value(self._fill_value, newtype)
-        return output
 
     def __getitem__(self, indx):
         """
@@ -4303,7 +4279,7 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python int.')
         return int(self.item())
-    
+
     def __long__(self):
         """
         Convert to long.
@@ -4314,7 +4290,7 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python long.')
         return long(self.item())
-      
+
 
     def get_imag(self):
         """
@@ -5745,7 +5721,7 @@ class MaskedArray(ndarray):
             np.copyto(out, np.nan, where=newmask)
         return out
 
-    def ptp(self, axis=None, out=None, fill_value=None):
+    def ptp(self, axis=None, out=None, fill_value=None, keepdims=False):
         """
         Return (maximum - minimum) along the given dimension
         (i.e. peak-to-peak value).
@@ -5770,11 +5746,15 @@ class MaskedArray(ndarray):
 
         """
         if out is None:
-            result = self.max(axis=axis, fill_value=fill_value)
-            result -= self.min(axis=axis, fill_value=fill_value)
+            result = self.max(axis=axis, fill_value=fill_value,
+                              keepdims=keepdims)
+            result -= self.min(axis=axis, fill_value=fill_value,
+                               keepdims=keepdims)
             return result
-        out.flat = self.max(axis=axis, out=out, fill_value=fill_value)
-        min_value = self.min(axis=axis, fill_value=fill_value)
+        out.flat = self.max(axis=axis, out=out, fill_value=fill_value,
+                            keepdims=keepdims)
+        min_value = self.min(axis=axis, fill_value=fill_value,
+                             keepdims=keepdims)
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
@@ -6513,17 +6493,15 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
-def ptp(obj, axis=None, out=None, fill_value=None):
-    """
-    a.ptp(axis=None) =  a.max(axis) - a.min(axis)
-
-    """
+def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
-        return obj.ptp(axis, out=out, fill_value=fill_value)
+        return obj.ptp(axis, out=out, fill_value=fill_value, **kwargs)
     except (AttributeError, TypeError):
         # If obj doesn't have a ptp method or if the method doesn't accept
         # a fill_value argument
-        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
+        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value,
+                                   out=out, **kwargs)
 ptp.__doc__ = MaskedArray.ptp.__doc__
 
 
@@ -6961,6 +6939,7 @@ def transpose(a, axes=None):
      [[False False]
      [False  True]],
            fill_value = 999999)
+
     >>> ma.transpose(x)
     masked_array(data =
      [[0 2]

@@ -70,16 +70,6 @@
 static int
 _does_loop_use_arrays(void *data);
 
-static int
-assign_reduce_identity_zero(PyArrayObject *result, void *data);
-
-static int
-assign_reduce_identity_minusone(PyArrayObject *result, void *data);
-
-static int
-assign_reduce_identity_one(PyArrayObject *result, void *data);
-
-
 /*UFUNC_API*/
 NPY_NO_EXPORT int
 PyUFunc_getfperr(void)
@@ -1865,6 +1855,42 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
     return 0;
 }
 
+/*
+ * Returns a new reference
+ * TODO: store a reference in the ufunc object itself, rather than
+ *       constructing one each time
+ */
+static PyObject *
+_get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
+    switch(ufunc->identity) {
+    case PyUFunc_One:
+        *reorderable = 1;
+        return PyInt_FromLong(1);
+
+    case PyUFunc_Zero:
+        *reorderable = 1;
+        return PyInt_FromLong(0);
+
+    case PyUFunc_MinusOne:
+        *reorderable = 1;
+        return PyInt_FromLong(-1);
+
+    case PyUFunc_ReorderableNone:
+        *reorderable = 1;
+        Py_RETURN_NONE;
+
+    case PyUFunc_None:
+        *reorderable = 0;
+        Py_RETURN_NONE;
+
+    default:
+        PyErr_Format(PyExc_ValueError,
+                "ufunc %s has an invalid identity", ufunc_get_name_cstr(ufunc));
+        return NULL;
+    }
+}
+
+
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                         PyObject *args, PyObject *kwds,
@@ -2267,34 +2293,27 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * product of two zero-length arrays will be a scalar,
          * which has size one.
          */
+        npy_bool reorderable;
+        PyObject *identity = _get_identity(ufunc, &reorderable);
+        if (identity == NULL) {
+            retval = -1;
+            goto fail;
+        }
+
         for (i = nin; i < nop; ++i) {
             if (PyArray_SIZE(op[i]) != 0) {
-                switch (ufunc->identity) {
-                    case PyUFunc_Zero:
-                        assign_reduce_identity_zero(op[i], NULL);
-                        break;
-                    case PyUFunc_One:
-                        assign_reduce_identity_one(op[i], NULL);
-                        break;
-                    case PyUFunc_MinusOne:
-                        assign_reduce_identity_minusone(op[i], NULL);
-                        break;
-                    case PyUFunc_None:
-                    case PyUFunc_ReorderableNone:
-                        PyErr_Format(PyExc_ValueError,
-                                "ufunc %s ",
-                                ufunc_name);
-                        retval = -1;
-                        goto fail;
-                    default:
-                        PyErr_Format(PyExc_ValueError,
-                                "ufunc %s has an invalid identity for reduction",
-                                ufunc_name);
-                        retval = -1;
-                        goto fail;
+                if (identity == Py_None) {
+                    PyErr_Format(PyExc_ValueError,
+                            "ufunc %s ",
+                            ufunc_name);
+                    Py_DECREF(identity);
+                    retval = -1;
+                    goto fail;
                 }
+                PyArray_FillWithScalar(op[i], identity);
             }
         }
+        Py_DECREF(identity);
     }
 
     /* Check whether any errors occurred during the loop */
@@ -2689,31 +2708,6 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result, void *NPY_UNUSED(data))
-{
-    return PyArray_FillWithScalar(result, PyArrayScalar_False);
-}
-
-static int
-assign_reduce_identity_one(PyArrayObject *result, void *NPY_UNUSED(data))
-{
-    return PyArray_FillWithScalar(result, PyArrayScalar_True);
-}
-
-static int
-assign_reduce_identity_minusone(PyArrayObject *result, void *NPY_UNUSED(data))
-{
-    static PyObject *MinusOne = NULL;
-
-    if (MinusOne == NULL) {
-        if ((MinusOne = PyInt_FromLong(-1)) == NULL) {
-            return -1;
-        }
-    }
-    return PyArray_FillWithScalar(result, MinusOne);
-}
-
-static int
 reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
             npy_intp *countptr, NpyIter_IterNextFunc *iternext,
             int needs_api, npy_intp skip_first_count, void *data)
@@ -2818,11 +2812,12 @@ static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         int naxes, int *axes, PyArray_Descr *odtype, int keepdims)
 {
-    int iaxes, reorderable, ndim;
+    int iaxes, ndim;
+    npy_bool reorderable;
     npy_bool axis_flags[NPY_MAXDIMS];
     PyArray_Descr *dtype;
     PyArrayObject *result;
-    PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
+    PyObject *identity = NULL;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -2843,60 +2838,28 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         axis_flags[axis] = 1;
     }
 
-    switch (ufunc->identity) {
-        case PyUFunc_Zero:
-            assign_identity = &assign_reduce_identity_zero;
-            reorderable = 1;
-            /*
-             * The identity for a dynamic dtype like
-             * object arrays can't be used in general
-             */
-            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-                assign_identity = NULL;
-            }
-            break;
-        case PyUFunc_One:
-            assign_identity = &assign_reduce_identity_one;
-            reorderable = 1;
-            /*
-             * The identity for a dynamic dtype like
-             * object arrays can't be used in general
-             */
-            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-                assign_identity = NULL;
-            }
-            break;
-        case PyUFunc_MinusOne:
-            assign_identity = &assign_reduce_identity_minusone;
-            reorderable = 1;
-            /*
-             * The identity for a dynamic dtype like
-             * object arrays can't be used in general
-             */
-            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-                assign_identity = NULL;
-            }
-            break;
-
-        case PyUFunc_None:
-            reorderable = 0;
-            break;
-        case PyUFunc_ReorderableNone:
-            reorderable = 1;
-            break;
-        default:
-            PyErr_Format(PyExc_ValueError,
-                    "ufunc %s has an invalid identity for reduction",
-                    ufunc_name);
-            return NULL;
-    }
-
     if (_get_bufsize_errmask(NULL, "reduce", &buffersize, &errormask) < 0) {
         return NULL;
     }
 
+    /* Get the identity */
+    identity = _get_identity(ufunc, &reorderable);
+    if (identity == NULL) {
+        return NULL;
+    }
+    /*
+     * The identity for a dynamic dtype like
+     * object arrays can't be used in general
+     */
+    if (identity != Py_None && PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+        Py_DECREF(identity);
+        identity = Py_None;
+        Py_INCREF(identity);
+    }
+
     /* Get the reduction dtype */
     if (reduce_type_resolver(ufunc, arr, odtype, &dtype) < 0) {
+        Py_DECREF(identity);
         return NULL;
     }
 
@@ -2904,11 +2867,12 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                    NPY_UNSAFE_CASTING,
                                    axis_flags, reorderable,
                                    keepdims, 0,
-                                   assign_identity,
+                                   identity,
                                    reduce_loop,
                                    ufunc, buffersize, ufunc_name, errormask);
 
     Py_DECREF(dtype);
+    Py_DECREF(identity);
     return result;
 }
 
@@ -4114,24 +4078,20 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *override = NULL;
     int errval;
 
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
+
     /*
      * Initialize all array objects to NULL to make cleanup easier
      * if something goes wrong.
      */
     for (i = 0; i < ufunc->nargs; i++) {
         mps[i] = NULL;
-    }
-
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_DiscardWritebackIfCopy(mps[i]);
-            Py_XDECREF(mps[i]);
-        }
-        return override;
     }
 
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
@@ -5399,15 +5359,8 @@ ufunc_get_name(PyUFuncObject *ufunc)
 static PyObject *
 ufunc_get_identity(PyUFuncObject *ufunc)
 {
-    switch(ufunc->identity) {
-    case PyUFunc_One:
-        return PyInt_FromLong(1);
-    case PyUFunc_Zero:
-        return PyInt_FromLong(0);
-    case PyUFunc_MinusOne:
-        return PyInt_FromLong(-1);
-    }
-    Py_RETURN_NONE;
+    npy_bool reorderable;
+    return _get_identity(ufunc, &reorderable);
 }
 
 static PyObject *

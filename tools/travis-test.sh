@@ -132,12 +132,15 @@ run_test()
 export PYTHON
 export PIP
 $PIP install setuptools
+
 if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Build wheel
   $PIP install wheel
   # ensure that the pip / setuptools versions deployed inside
   # the venv are recent enough
   $PIP install -U virtualenv
+  # ensure some warnings are not issued
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
   $PYTHON setup.py bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
@@ -151,6 +154,10 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # use an up-to-date pip / setuptools inside the venv
   $PIP install -U virtualenv
+  # temporary workaround for sdist failures.
+  $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
+  # ensure some warnings are not issued
+  export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel

@@ -4004,7 +4004,7 @@ class TestPutmask(object):
             for types in np.sctypes.values():
                 for T in types:
                     if T not in unchecked_types:
-                        yield self.tst_basic, x.copy().astype(T), T, mask, val
+                        self.tst_basic(x.copy().astype(T), T, mask, val)
 
     def test_mask_size(self):
         assert_raises(ValueError, np.putmask, np.array([1, 2, 3]), [True], 5)
@@ -4016,7 +4016,7 @@ class TestPutmask(object):
 
     def test_ip_byteorder(self):
         for dtype in ('>i4', '<i4'):
-            yield self.tst_byteorder, dtype
+            self.tst_byteorder(dtype)
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4045,7 +4045,7 @@ class TestTake(object):
         for types in np.sctypes.values():
             for T in types:
                 if T not in unchecked_types:
-                    yield self.tst_basic, x.copy().astype(T)
+                    self.tst_basic(x.copy().astype(T))
 
     def test_raise(self):
         x = np.random.random(24)*100
@@ -4073,7 +4073,7 @@ class TestTake(object):
 
     def test_ip_byteorder(self):
         for dtype in ('>i4', '<i4'):
-            yield self.tst_byteorder, dtype
+            self.tst_byteorder(dtype)
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4459,10 +4459,10 @@ class TestFromBuffer(object):
                 dt = np.dtype(dtype).newbyteorder(byteorder)
                 x = (np.random.random((4, 7))*5).astype(dt)
                 buf = x.tobytes()
-                yield self.tst_basic, buf, x.flat, {'dtype':dt}
+                self.tst_basic(buf, x.flat, {'dtype':dt})
 
     def test_empty(self):
-        yield self.tst_basic, b'', np.array([]), {}
+        self.tst_basic(b'', np.array([]), {})
 
 
 class TestFlat(object):

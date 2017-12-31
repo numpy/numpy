@@ -414,20 +414,24 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataC, npy_intp *out_stridesC);
 
 /*
- * Return number of elements that must be peeled from
- * the start of 'addr' with 'nvals' elements of size 'esize'
- * in order to reach 'alignment'.
- * alignment must be a power of two.
- * see npy_blocked_end for an example
+ * Return number of elements that must be peeled from the start of 'addr' with
+ * 'nvals' elements of size 'esize' in order to reach blockable alignment.
+ * The required alignment in bytes is passed as the 'alignment' argument and
+ * must be a power of two. This function is used to prepare an array for
+ * blocking. See the 'npy_blocked_end' function documentation below for an
+ * example of how this function is used.
  */
-static NPY_INLINE npy_uintp
+static NPY_INLINE npy_intp
 npy_aligned_block_offset(const void * addr, const npy_uintp esize,
                          const npy_uintp alignment, const npy_uintp nvals)
 {
-    const npy_uintp offset = (npy_uintp)addr & (alignment - 1);
-    npy_uintp peel = offset ? (alignment - offset) / esize : 0;
-    peel = nvals < peel ? nvals : peel;
-    return peel;
+    npy_uintp offset, peel;
+
+    offset = (npy_uintp)addr & (alignment - 1);
+    peel = offset ? (alignment - offset) / esize : 0;
+    peel = (peel <= nvals) ? peel : nvals;
+    assert(peel <= NPY_MAX_INTP);
+    return (npy_intp)peel;
 }
 
 /*
@@ -450,11 +454,16 @@ npy_aligned_block_offset(const void * addr, const npy_uintp esize,
  * for(; i < n; i++)
  *   <scalar-op>
  */
-static NPY_INLINE npy_uintp
-npy_blocked_end(const npy_uintp offset, const npy_uintp esize,
+static NPY_INLINE npy_intp
+npy_blocked_end(const npy_uintp peel, const npy_uintp esize,
                 const npy_uintp vsz, const npy_uintp nvals)
 {
-    return nvals - offset - (nvals - offset) % (vsz / esize);
+    npy_uintp ndiff = nvals - peel;
+    npy_uintp res = (ndiff - ndiff % (vsz / esize));
+
+    assert(nvals >= peel);
+    assert(res <= NPY_MAX_INTP);
+    return (npy_intp)(res);
 }
 
 

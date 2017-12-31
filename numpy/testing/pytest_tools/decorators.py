@@ -1,16 +1,13 @@
 """
+Compatibility shim for pytest compatibility with the nose decorators.
+
 Decorators for labeling and modifying behavior of test objects.
 
 Decorators that merely return a modified version of the original
-function object are straightforward. Decorators that return a new
-function object need to use
-::
+function object are straightforward.
 
-  nose.tools.make_decorator(original_function)(decorator)
-
-in returning the decorator, in order to preserve meta-data such as
-function name, setup and teardown functions and so on - see
-``nose.tools`` for more information.
+Decorators that return a new function will not preserve meta-data such as
+function name, setup and teardown functions and so on.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -35,7 +32,7 @@ def slow(t):
     Parameters
     ----------
     t : callable
-        The test to label as slow.
+        The test to mark as slow.
 
     Returns
     -------
@@ -54,9 +51,10 @@ def slow(t):
           print('Big, slow test')
 
     """
+    import pytest
 
-    t.slow = True
-    return t
+    return pytest.mark.slow(t)
+
 
 def setastest(tf=True):
     """
@@ -69,19 +67,13 @@ def setastest(tf=True):
         If False, specifies that the decorated callable is not a test.
         Default is True.
 
-    Notes
-    -----
-    This decorator can't use the nose namespace, because it can be
-    called from a non-test module. See also ``istest`` and ``nottest`` in
-    ``nose.tools``.
-
     Examples
     --------
     `setastest` can be used in the following way::
 
-      from numpy.testing import dec
+      from numpy.testing.decorators import setastest
 
-      @dec.setastest(False)
+      @setastest(False)
       def func_with_test_in_name(arg1, arg2):
           pass
 
@@ -90,6 +82,7 @@ def setastest(tf=True):
         t.__test__ = tf
         return t
     return set_test
+
 
 def skipif(skip_condition, msg=None):
     """
@@ -115,15 +108,23 @@ def skipif(skip_condition, msg=None):
 
     Notes
     -----
-    The decorator itself is decorated with the ``nose.tools.make_decorator``
-    function in order to transmit function name, and various other metadata.
+    Undecorated functions are returned and that may lead to some lost
+    information. Note that this function differ from the pytest fixture
+    ``pytest.mark.skipif``. The latter marks test functions on import and the
+    skip is handled during collection, hence it cannot be used for non-test
+    functions, nor does it handle callable conditions.
 
     """
-
     def skip_decorator(f):
-        # Local import to avoid a hard nose dependency and only incur the
+        # Local import to avoid a hard pytest dependency and only incur the
         # import time overhead at actual test-time.
-        import nose
+        import inspect
+        import pytest
+
+        if msg is None:
+            out = 'Test skipped due to test condition'
+        else:
+            out = msg
 
         # Allow for both boolean or callable skip conditions.
         if isinstance(skip_condition, collections.Callable):
@@ -131,17 +132,16 @@ def skipif(skip_condition, msg=None):
         else:
             skip_val = lambda: skip_condition
 
+        # We need to define *two* skippers because Python doesn't allow both
+        # return with value and yield inside the same function.
         def get_msg(func,msg=None):
             """Skip message with information about function being skipped."""
             if msg is None:
                 out = 'Test skipped due to test condition'
             else:
                 out = msg
-
             return "Skipping test: %s: %s" % (func.__name__, out)
 
-        # We need to define *two* skippers because Python doesn't allow both
-        # return with value and yield inside the same function.
         def skipper_func(*args, **kwargs):
             """Skipper for normal test functions."""
             if skip_val():
@@ -158,12 +158,11 @@ def skipif(skip_condition, msg=None):
                     yield x
 
         # Choose the right skipper to use when building the actual decorator.
-        if nose.util.isgenerator(f):
+        if inspect.isgeneratorfunction(f):
             skipper = skipper_gen
         else:
             skipper = skipper_func
-
-        return nose.tools.make_decorator(f)(skipper)
+        return skipper
 
     return skip_decorator
 
@@ -194,10 +193,12 @@ def knownfailureif(fail_condition, msg=None):
 
     Notes
     -----
-    The decorator itself is decorated with the ``nose.tools.make_decorator``
-    function in order to transmit function name, and various other metadata.
+    The decorator itself is not decorated in the pytest case unlike for nose.
 
     """
+    import pytest
+    from .utils import KnownFailureException
+
     if msg is None:
         msg = 'Test skipped due to known failure'
 
@@ -208,19 +209,16 @@ def knownfailureif(fail_condition, msg=None):
         fail_val = lambda: fail_condition
 
     def knownfail_decorator(f):
-        # Local import to avoid a hard nose dependency and only incur the
-        # import time overhead at actual test-time.
-        import nose
-        from .noseclasses import KnownFailureException
 
         def knownfailer(*args, **kwargs):
             if fail_val():
                 raise KnownFailureException(msg)
-            else:
-                return f(*args, **kwargs)
-        return nose.tools.make_decorator(f)(knownfailer)
+            return f(*args, **kwargs)
+
+        return knownfailer
 
     return knownfail_decorator
+
 
 def deprecated(conditional=True):
     """
@@ -248,9 +246,6 @@ def deprecated(conditional=True):
 
     """
     def deprecate_decorator(f):
-        # Local import to avoid a hard nose dependency and only incur the
-        # import time overhead at actual test-time.
-        import nose
 
         def _deprecated_imp(*args, **kwargs):
             # Poor man's replacement for the with statement
@@ -262,7 +257,7 @@ def deprecated(conditional=True):
         else:
             cond = conditional
         if cond:
-            return nose.tools.make_decorator(f)(_deprecated_imp)
+            return _deprecated_imp
         else:
             return f
     return deprecate_decorator
@@ -277,9 +272,7 @@ def parametrize(vars, input):
     substitution by name, nor does it support nesting or classes. See the
     pytest documentation for usage.
 
-    .. versionadded:: 1.14.0
-
     """
-    from .parameterized import parameterized
+    import pytest
 
-    return parameterized(input)
+    return pytest.mark.parametrize(vars, input)
