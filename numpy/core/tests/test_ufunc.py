@@ -689,6 +689,12 @@ class TestUfunc(object):
         assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), None])
         # tuples should not have duplicated values
         assert_raises(ValueError, mm, a, b, axes=[(-2, -1), (-2, -1), (-2, -2)])
+        # arrays should have enough axes.
+        z = np.zeros((2, 2))
+        assert_raises(ValueError, mm, z, z[0])
+        assert_raises(ValueError, mm, z, z, out=z[:, 0])
+        assert_raises(ValueError, mm, z[1], z, axes=[0, 1])
+        assert_raises(ValueError, mm, z, z, out=z[0], axes=[0, 1])
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))

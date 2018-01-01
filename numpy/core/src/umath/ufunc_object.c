@@ -1960,19 +1960,6 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
             int dim_offset = ufunc->core_offsets[i];
             int num_dims = ufunc->core_num_dims[i];
             int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
-
-            /* Check if operands have enough dimensions */
-            if (core_start_dim < 0) {
-                PyErr_Format(PyExc_ValueError,
-                        "%s: %s operand %d does not have enough "
-                        "dimensions (has %d, gufunc core with "
-                        "signature %s requires %d)",
-                        ufunc_get_name_cstr(ufunc), i < nin ? "Input" : "Output",
-                        i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                        ufunc->core_signature, num_dims);
-                return -1;
-            }
-
             /*
              * Make sure every core dimension exactly matches all other core
              * dimensions with the same label.
@@ -2162,6 +2149,24 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /*
+     * Check that operands have the minimum dimensions required.
+     * (Just checks core; broadcast dimensions are tested by the iterator.)
+     */
+    for (i = 0; i < nop; i++) {
+        if (op[i] != NULL && PyArray_NDIM(op[i]) < ufunc->core_num_dims[i]) {
+            PyErr_Format(PyExc_ValueError,
+                         "%s: %s operand %d does not have enough "
+                         "dimensions (has %d, gufunc core with "
+                         "signature %s requires %d)",
+                         ufunc_get_name_cstr(ufunc),
+                         i < nin ? "Input" : "Output",
+                         i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                         ufunc->core_signature, ufunc->core_num_dims[i]);
+            goto fail;
+        }
+    }
+
+    /*
      * Figure out the number of iteration dimensions, which
      * is the broadcast result of all the input non-core
      * dimensions.
@@ -2194,9 +2199,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* Possibly remap axes. */
     if (axes) {
-        /*
-         * possibly remap axes, using newly allocated memory.
-         */
         remap_axis = PyArray_malloc(sizeof(remap_axis[0]) * nop);
         remap_axis_memory = PyArray_malloc(sizeof(remap_axis_memory[0]) *
                                                   nop * NPY_MAXDIMS);
@@ -2212,7 +2214,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         if(retval < 0) {
             goto fail;
         }
-    } /* end of if(axis) */
+    }
 
     /* Collect the lengths of the labelled core dimensions */
     retval = _get_coredim_sizes(ufunc, op, core_dim_sizes, remap_axis);
