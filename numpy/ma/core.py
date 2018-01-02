@@ -2999,12 +2999,15 @@ class MaskedArray(ndarray):
                     order = "K"
 
                 _mask = _mask.astype(_mask_dtype, order)
-
+            else:
+                # Take a view so shape changes, etc., do not propagate back.
+                _mask = _mask.view()
         else:
             _mask = nomask
 
         self._mask = _mask
         # Finalize the mask
+        # FIXME: this really doesn't belong here.
         if self._mask is not nomask:
             try:
                 self._mask.shape = self.shape
@@ -3354,6 +3357,8 @@ class MaskedArray(ndarray):
                 self._mask.shape = self.shape
             except (AttributeError, TypeError):
                 pass
+        elif attr == 'shape' and getmask(self) is not nomask:
+            self._mask.shape = self.shape
 
     def __setmask__(self, mask, copy=False):
         """

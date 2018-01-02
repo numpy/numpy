@@ -273,7 +273,11 @@ class TestMa(object):
         assert_(y1.mask is m)
 
         y1a = array(y1, copy=0)
-        assert_(y1a.mask is y1.mask)
+        # For copy=False, one might expect that the array would just
+        # passed on, i.e., that it would be "is" instead of "==".
+        # See gh-4043 for discussion.
+        assert_(y1a._mask.__array_interface__ ==
+                y1._mask.__array_interface__)
 
         y2 = array(x1, mask=m3, copy=0)
         assert_(y2.mask is m3)
