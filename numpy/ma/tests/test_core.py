@@ -352,9 +352,11 @@ class TestMaskedArray(object):
         assert_equal(y1._mask.__array_interface__, m.__array_interface__)
 
         y1a = array(y1)
+        # Default for masked array is not to copy; see gh-10318.
         assert_(y1a._data.__array_interface__ ==
                         y1._data.__array_interface__)
-        assert_(y1a.mask is y1.mask)
+        assert_(y1a._mask.__array_interface__ ==
+                        y1._mask.__array_interface__)
 
         y2 = array(x1, mask=m3)
         assert_(y2._data.__array_interface__ == x1.__array_interface__)
