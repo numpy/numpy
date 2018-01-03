@@ -477,7 +477,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     -----
     For a description of the ``.npy`` format, see the module docstring
     of `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     Examples
     --------
@@ -563,7 +563,7 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see `numpy.lib.format` or the
     NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -644,7 +644,7 @@ def savez_compressed(file, *args, **kwds):
     ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
     in ``.npy`` format. For a description of the ``.npy`` format, see
     `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
