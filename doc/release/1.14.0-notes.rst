@@ -307,7 +307,15 @@ In summary, the major changes are:
 * User-defined ``dtypes`` (subclasses of ``np.generic``) now need to
   implement ``__str__`` and ``__repr__``.
 
-Some of these changes are described in more detail below.
+Some of these changes are described in more detail below. If you need to retain
+the previous behavior for doctests or other reasons, you may want to do
+something like::
+
+    # FIXME: We need the str/repr formatting used in Numpy < 1.14.
+    try:
+        np.set_printoptions(legacy='1.13')
+    except TypeError:
+        pass
 
 
 C API changes
