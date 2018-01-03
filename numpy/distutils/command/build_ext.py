@@ -274,9 +274,9 @@ class build_ext (old_build_ext):
             shared_lib_dir = os.path.join(pkg_root, '.libs')
             if not self.inplace:
                 shared_lib_dir = os.path.join(self.build_lib, shared_lib_dir)
-            if not os.path.isdir(shared_lib_dir):
-                os.makedirs(shared_lib_dir)
             for fn in os.listdir(self.extra_dll_dir):
+                if not os.path.isdir(shared_lib_dir):
+                    os.makedirs(shared_lib_dir)
                 if not fn.lower().endswith('.dll'):
                     continue
                 runtime_lib = os.path.join(self.extra_dll_dir, fn)
