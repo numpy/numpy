@@ -307,6 +307,18 @@ In summary, the major changes are:
 * User-defined ``dtypes`` (subclasses of ``np.generic``) now need to
   implement ``__str__`` and ``__repr__``.
 
+You may want to do something like::
+
+    # FIXME: Set numpy array str/repr to legacy behaviour on numpy > 1.13
+    try:
+        np.set_printoptions(legacy='1.13')
+    except TypeError:
+        pass
+
+after ::
+
+    import numpy as np
+
 Some of these changes are described in more detail below.
 
 
