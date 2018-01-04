@@ -1610,16 +1610,12 @@ static int min_scalar_type_num(char *valueptr, int type_num,
     return type_num;
 }
 
-/*NUMPY_API
- * If arr is a scalar (has 0 dimensions) with a built-in number data type,
- * finds the smallest type size/kind which can still represent its data.
- * Otherwise, returns the array's data type.
- *
- */
+
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_MinScalarType(PyArrayObject *arr)
+PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned)
 {
     PyArray_Descr *dtype = PyArray_DESCR(arr);
+    *is_small_unsigned = 0;
     /*
      * If the array isn't a numeric scalar, just return the array's dtype.
      */
@@ -1630,16 +1626,28 @@ PyArray_MinScalarType(PyArrayObject *arr)
     else {
         char *data = PyArray_BYTES(arr);
         int swap = !PyArray_ISNBO(dtype->byteorder);
-        int is_small_unsigned = 0;
         /* An aligned memory buffer large enough to hold any type */
         npy_longlong value[4];
         dtype->f->copyswap(&value, data, swap, NULL);
 
         return PyArray_DescrFromType(
                         min_scalar_type_num((char *)&value,
-                                dtype->type_num, &is_small_unsigned));
+                                dtype->type_num, is_small_unsigned));
 
     }
+}
+
+/*NUMPY_API
+ * If arr is a scalar (has 0 dimensions) with a built-in number data type,
+ * finds the smallest type size/kind which can still represent its data.
+ * Otherwise, returns the array's data type.
+ *
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_MinScalarType(PyArrayObject *arr)
+{
+    int is_small_unsigned;
+    return PyArray_MinScalarType_internal(arr, &is_small_unsigned);
 }
 
 /*
@@ -1773,33 +1781,12 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
     }
     else {
         for (i = 0; i < narrs; ++i) {
-            /* Get the min scalar type for the array */
-            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
-            int tmp_is_small_unsigned = 0;
-            /*
-             * If it's a scalar, find the min scalar type. The function
-             * is expanded here so that we can flag whether we've got an
-             * unsigned integer which would fit an a signed integer
-             * of the same size, something not exposed in the public API.
-             */
-            if (PyArray_NDIM(arr[i]) == 0 &&
-                                PyTypeNum_ISNUMBER(tmp->type_num)) {
-                char *data = PyArray_BYTES(arr[i]);
-                int swap = !PyArray_ISNBO(tmp->byteorder);
-                int type_num;
-                /* An aligned memory buffer large enough to hold any type */
-                npy_longlong value[4];
-                tmp->f->copyswap(&value, data, swap, NULL);
-                type_num = min_scalar_type_num((char *)&value,
-                                        tmp->type_num, &tmp_is_small_unsigned);
-                tmp = PyArray_DescrFromType(type_num);
-                if (tmp == NULL) {
-                    Py_XDECREF(ret);
-                    return NULL;
-                }
-            }
-            else {
-                Py_INCREF(tmp);
+            int tmp_is_small_unsigned;
+            PyArray_Descr *tmp = PyArray_MinScalarType_internal(
+                arr[i], &tmp_is_small_unsigned);
+            if (tmp == NULL) {
+                Py_XDECREF(ret);
+                return NULL;
             }
             /* Combine it with the existing type */
             if (ret == NULL) {
