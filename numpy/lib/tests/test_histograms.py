@@ -299,6 +299,53 @@ class TestHistogram(object):
         assert_equal(d_edge.dtype, dates.dtype)
         assert_equal(t_edge.dtype, td)
 
+    def do_precision_lower_bound(self, float_small, float_large):
+        eps = np.finfo(float_large).eps
+
+        arr = np.array([1.0], float_small)
+        range = np.array([1.0 + eps, 2.0], float_large)
+
+        # test is looking for behavior when the bounds change between dtypes
+        if range.astype(float_small)[0] != 1:
+            return
+
+        # previously crashed
+        count, x_loc = np.histogram(arr, bins=1, range=range)
+        assert_equal(count, [1])
+
+        # gh-10322 means that the type comes from arr - this may change
+        assert_equal(x_loc.dtype, float_small)
+
+    def do_precision_upper_bound(self, float_small, float_large):
+        eps = np.finfo(float_large).eps
+
+        arr = np.array([1.0], float_small)
+        range = np.array([0.0, 1.0 - eps], float_large)
+
+        # test is looking for behavior when the bounds change between dtypes
+        if range.astype(float_small)[-1] != 1:
+            return
+
+        # previously crashed
+        count, x_loc = np.histogram(arr, bins=1, range=range)
+        assert_equal(count, [1])
+
+        # gh-10322 means that the type comes from arr - this may change
+        assert_equal(x_loc.dtype, float_small)
+
+    def do_precision(self, float_small, float_large):
+        self.do_precision_lower_bound(float_small, float_large)
+        self.do_precision_upper_bound(float_small, float_large)
+
+    def test_precision(self):
+        # not looping results in a useful stack trace upon failure
+        self.do_precision(np.half, np.single)
+        self.do_precision(np.half, np.double)
+        self.do_precision(np.half, np.longdouble)
+        self.do_precision(np.single, np.double)
+        self.do_precision(np.single, np.longdouble)
+        self.do_precision(np.double, np.longdouble)
+
 
 class TestHistogramOptimBinNums(object):
     """
