@@ -1294,6 +1294,37 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 }
 
 /*
+ * Produces the smallest size and lowest kind type to which all
+ * input types can be cast.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypeSequence(PyArray_Descr **types, npy_intp ntypes)
+{
+    npy_intp i;
+    PyArray_Descr *ret = NULL;
+    if (ntypes == 0) {
+        PyErr_SetString(PyExc_TypeError, "at least one type needed to promote");
+        return NULL;
+    }
+    ret = types[0];
+    Py_INCREF(ret);
+    for (i = 1; i < ntypes; ++i) {
+        PyArray_Descr *type = types[i];
+
+        /* Only call promote if the types aren't the same dtype */
+        if (type != ret || !PyArray_ISNBO(type->byteorder)) {
+            PyArray_Descr *tmp = PyArray_PromoteTypes(type, ret);
+            Py_DECREF(ret);
+            ret = tmp;
+            if (ret == NULL) {
+                return NULL;
+            }
+        }
+    }
+    return ret;
+}
+
+/*
  * NOTE: While this is unlikely to be a performance problem, if
  *       it is it could be reverted to a simple positive/negative
  *       check as the previous system used.
@@ -1722,44 +1753,22 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
 
     /* Loop through all the types, promoting them */
     if (!use_min_scalar) {
-        for (i = 0; i < narrs; ++i) {
-            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                Py_INCREF(ret);
-            }
-            else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(ret->byteorder)) {
-                    tmpret = PyArray_PromoteTypes(tmp, ret);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
-                }
-            }
+        /* Build a single array of all the dtypes */
+        PyArray_Descr **all_dtypes = PyArray_malloc(
+            sizeof(*all_dtypes) * (narrs + ndtypes));
+        if (all_dtypes == NULL) {
+            return NULL;
         }
-
+        for (i = 0; i < narrs; ++i) {
+            all_dtypes[i] = PyArray_DESCR(arr[i]);
+        }
         for (i = 0; i < ndtypes; ++i) {
-            PyArray_Descr *tmp = dtypes[i];
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                Py_INCREF(ret);
-            }
-            else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(tmp->byteorder)) {
-                    tmpret = PyArray_PromoteTypes(tmp, ret);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
-                }
-            }
+            all_dtypes[narrs + i] = dtypes[i];
+        }
+        ret = PyArray_PromoteTypeSequence(all_dtypes, narrs + ndtypes);
+        PyArray_free(all_dtypes);
+        if (ret == NULL) {
+            return NULL;
         }
     }
     else {
