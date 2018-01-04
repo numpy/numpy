@@ -318,9 +318,17 @@ def _get_bin_edges(a, bins, range, weights):
         raise ValueError('`bins` must be 1d, when an array')
 
     if n_equal_bins is not None:
+        # gh-10322 means that type resolution rules are dependent on array
+        # shapes. To avoid this causing problems, we pick a type now and stick
+        # with it throughout.
+        bin_type = np.result_type(first_edge, last_edge, a)
+        if np.issubdtype(bin_type, np.integer):
+            bin_type = np.result_type(bin_type, float)
+
         # bin edges must be computed
         bin_edges = np.linspace(
-            first_edge, last_edge, n_equal_bins + 1, endpoint=True)
+            first_edge, last_edge, n_equal_bins + 1,
+            endpoint=True, dtype=bin_type)
         return bin_edges, (first_edge, last_edge, n_equal_bins)
     else:
         return bin_edges, None
@@ -605,21 +613,24 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
                 tmp_a = tmp_a[keep]
                 if tmp_w is not None:
                     tmp_w = tmp_w[keep]
-            tmp_a_data = tmp_a.astype(float)
-            tmp_a = tmp_a_data - first_edge
-            tmp_a *= norm
+
+            # This cast ensures no type promotions occur below, which gh-10322
+            # make unpredictable. Getting it wrong leads to precision errors
+            # like gh-8123.
+            tmp_a = tmp_a.astype(bin_edges.dtype, copy=False)
 
             # Compute the bin indices, and for values that lie exactly on
             # last_edge we need to subtract one
-            indices = tmp_a.astype(np.intp)
+            f_indices = (tmp_a - first_edge) * norm
+            indices = f_indices.astype(np.intp)
             indices[indices == n_equal_bins] -= 1
 
             # The index computation is not guaranteed to give exactly
             # consistent results within ~1 ULP of the bin edges.
-            decrement = tmp_a_data < bin_edges[indices]
+            decrement = tmp_a < bin_edges[indices]
             indices[decrement] -= 1
             # The last bin includes the right edge. The other bins do not.
-            increment = ((tmp_a_data >= bin_edges[indices + 1])
+            increment = ((tmp_a >= bin_edges[indices + 1])
                          & (indices != n_equal_bins - 1))
             indices[increment] += 1
 
