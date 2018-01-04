@@ -38,17 +38,17 @@ static PyStructSequence_Field typeinforanged_fields[] = {
 };
 
 static PyStructSequence_Desc typeinfo_desc = {
-    /* name          */ "numpy.core.multiarray.typeinfo",
-    /* doc           */ "Information about a scalar numpy type",
-    /* fields        */ typeinfo_fields,
-    /* n_in_sequence */ 5,
+    "numpy.core.multiarray.typeinfo",         /* name          */
+    "Information about a scalar numpy type",  /* doc           */
+    typeinfo_fields,                          /* fields        */
+    5,                                        /* n_in_sequence */
 };
 
 static PyStructSequence_Desc typeinforanged_desc = {
-    /* name          */ "numpy.core.multiarray.typeinforanged",
-    /* doc           */ "Information about a scalar numpy type with a range",
-    /* fields        */ typeinforanged_fields,
-    /* n_in_sequence */ 7,
+    "numpy.core.multiarray.typeinforanged",                /* name          */
+    "Information about a scalar numpy type with a range",  /* doc           */
+    typeinforanged_fields,                                 /* fields        */
+    7,                                                     /* n_in_sequence */
 };
 
 PyObject *
