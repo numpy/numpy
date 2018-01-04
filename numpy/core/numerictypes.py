@@ -346,9 +346,8 @@ def _add_integer_aliases():
         bits = i_info.bits  # same for both
 
         for info, charname, intname, Intname in [
-            (i_info,'i%d' % (bits//8,),  'int%d' % bits,  'Int%d' % bits),
-            (u_info,'u%d' % (bits//8,), 'uint%d' % bits, 'UInt%d' % bits)
-        ]:
+                (i_info,'i%d' % (bits//8,), 'int%d' % bits, 'Int%d' % bits),
+                (u_info,'u%d' % (bits//8,), 'uint%d' % bits, 'UInt%d' % bits)]:
             if intname not in allTypes.keys():
                 allTypes[intname] = info.type
                 sctypeDict[intname] = info.type
