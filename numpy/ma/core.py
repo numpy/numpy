@@ -4285,7 +4285,7 @@ class MaskedArray(ndarray):
         Convert to long.
         """
         if self.size > 1:
-            raise TypeError("Only length-1 arrays can be conveted "
+            raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python long.')

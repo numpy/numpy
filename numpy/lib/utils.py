@@ -707,7 +707,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
     """
     Do a keyword search on docstrings.
 
-    A list of of objects that matched the search is displayed,
+    A list of objects that matched the search is displayed,
     sorted by relevance. All given keywords need to be found in the
     docstring for it to be returned as a result, but the order does
     not matter.

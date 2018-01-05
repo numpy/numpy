@@ -320,7 +320,7 @@ raise a ``TypeError``.
 The ``linalg.norm`` function now does all its computations in floating point
 and returns floating results. This change fixes bugs due to integer overflow
 and the failure of abs with signed integers of minimum value, e.g., int8(-128).
-For consistancy, floats are used even where an integer might work.
+For consistency, floats are used even where an integer might work.
 
 
 Deprecations

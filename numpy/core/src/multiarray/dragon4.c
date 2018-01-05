@@ -1002,7 +1002,7 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
  *   * exponent - value exponent in base 2
  *   * mantissaBit - index of the highest set mantissa bit
  *   * hasUnequalMargins - is the high margin twice as large as the low margin
- *   * cutoffMode - how to intepret cutoffNumber: fractional or total digits?
+ *   * cutoffMode - how to interpret cutoffNumber: fractional or total digits?
  *   * cutoffNumber - cut off printing after this many digits. -1 for no cutoff
  *   * pOutBuffer - buffer to output into
  *   * bufferSize - maximum characters that can be printed to pOutBuffer
@@ -1381,7 +1381,7 @@ Dragon4(const npy_uint64 mantissa, const npy_int32 exponent,
 
         /*
          * if we are directly in the middle, round towards the even digit (i.e.
-         * IEEE rouding rules)
+         * IEEE rounding rules)
          */
         if (compare == 0) {
             roundDown = (outputDigit & 1) == 0;

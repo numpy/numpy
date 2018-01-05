@@ -1905,7 +1905,7 @@ parse_operand_subscripts(char *subscripts, int length,
 
     /*
      * Find any labels duplicated for this operand, and turn them
-     * into negative offets to the axis to merge with.
+     * into negative offsets to the axis to merge with.
      *
      * In C, the char type may be signed or unsigned, but with
      * twos complement arithmetic the char is ok either way here, and

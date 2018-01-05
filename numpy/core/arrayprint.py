@@ -707,7 +707,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                 line += separator
 
             if legacy == '1.13':
-                # width of the seperator is not considered on 1.13
+                # width of the separator is not considered on 1.13
                 elem_width = curr_width
             word = recurser(index + (-1,), next_hanging_indent, next_width)
             s, line = _extendLine(

@@ -36,7 +36,7 @@ Misc Functions
 --------------
 - `polyfromroots` -- create a polynomial with specified roots.
 - `polyroots` -- find the roots of a polynomial.
-- `polyvalfromroots` -- evalute a polynomial at given points from roots.
+- `polyvalfromroots` -- evaluate a polynomial at given points from roots.
 - `polyvander` -- Vandermonde-like matrix for powers.
 - `polyvander2d` -- Vandermonde-like matrix for 2D power series.
 - `polyvander3d` -- Vandermonde-like matrix for 3D power series.

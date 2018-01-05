@@ -441,7 +441,7 @@ The signature of ``__array_ufunc__`` is::
       function. This includes any ``out`` arguments, which are always
       contained in a tuple.
 
-A typical implementation would convert any inputs or ouputs that are
+A typical implementation would convert any inputs or outputs that are
 instances of one's own class, pass everything on to a superclass using
 ``super()``, and finally return the results after possible
 back-conversion. An example, taken from the test case

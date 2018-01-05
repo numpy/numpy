@@ -1186,7 +1186,7 @@ def pad(array, pad_width, mode, **kwargs):
     reflect_type : {'even', 'odd'}, optional
         Used in 'reflect', and 'symmetric'.  The 'even' style is the
         default with an unaltered reflection around the edge value.  For
-        the 'odd' style, the extented part of the array is created by
+        the 'odd' style, the extended part of the array is created by
         subtracting the reflected values from two times the edge value.
 
     Returns
