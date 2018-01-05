@@ -1835,7 +1835,7 @@ def det(a):
 
     See Also
     --------
-    slogdet : Another way to representing the determinant, more suitable
+    slogdet : Another way to represent the determinant, more suitable
       for large matrices where underflow/overflow may occur.
 
     Notes
