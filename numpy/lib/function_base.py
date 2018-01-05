@@ -3528,7 +3528,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     else:
         zerod = False
 
-    # prepare a for partioning
+    # prepare a for partitioning
     if overwrite_input:
         if axis is None:
             ap = a.ravel()

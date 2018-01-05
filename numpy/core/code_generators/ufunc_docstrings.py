@@ -297,7 +297,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     Returns
     -------
     out : ndarray
-        Array of of the same shape as `x`.
+        Array of the same shape as `x`.
 
     Notes
     -----

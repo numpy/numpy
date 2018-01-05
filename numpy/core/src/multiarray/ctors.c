@@ -1843,7 +1843,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * NPY_ARRAY_WRITEBACKIFCOPY flag sets this flag in the returned
  * array if a copy is made and the base argument points to the (possibly)
  * misbehaved array. Before returning to python, PyArray_ResolveWritebackIfCopy
- * must be called to update the contents of the orignal array from the copy.
+ * must be called to update the contents of the original array from the copy.
  *
  * NPY_ARRAY_FORCECAST will cause a cast to occur regardless of whether or not
  * it is safe.

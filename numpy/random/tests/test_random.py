@@ -231,7 +231,7 @@ class TestRandint(object):
             res = hashlib.md5(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
-        # bools do not depend on endianess
+        # bools do not depend on endianness
         np.random.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
