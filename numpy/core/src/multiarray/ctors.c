@@ -2181,7 +2181,6 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *origin)
 {
-    PyObject *tmp = NULL;
     PyObject *iface = NULL;
     PyObject *attr = NULL;
     PyObject *base = NULL;
@@ -2216,8 +2215,14 @@ PyArray_FromInterface(PyObject *origin)
 #if defined(NPY_PY3K)
     /* Allow unicode type strings */
     if (PyUnicode_Check(attr)) {
-        tmp = PyUnicode_AsASCIIString(attr);
+        PyObject *tmp = PyUnicode_AsASCIIString(attr);
+        if (tmp == NULL) {
+            goto fail; 
+        }
         attr = tmp;
+    }
+    else {
+        Py_INCREF(attr);
     }
 #endif
     if (!PyBytes_Check(attr)) {
@@ -2227,11 +2232,6 @@ PyArray_FromInterface(PyObject *origin)
     }
     /* Get dtype from type string */
     dtype = _array_typedescr_fromstr(PyString_AS_STRING(attr));
-#if defined(NPY_PY3K)
-    if (tmp == attr) {
-        Py_DECREF(tmp);
-    }
-#endif
     if (dtype == NULL) {
         goto fail;
     }
@@ -2251,6 +2251,10 @@ PyArray_FromInterface(PyObject *origin)
             dtype = new_dtype;
         }
     }
+  
+#if defined(NPY_PY3K)
+    Py_DECREF(attr);  /* Pairs with the unicode handling above */
+#endif
 
     /* Get shape tuple from interface specification */
     attr = PyDict_GetItemString(iface, "shape");
@@ -2278,7 +2282,7 @@ PyArray_FromInterface(PyObject *origin)
     else {
         n = PyTuple_GET_SIZE(attr);
         for (i = 0; i < n; i++) {
-            tmp = PyTuple_GET_ITEM(attr, i);
+            PyObject *tmp = PyTuple_GET_ITEM(attr, i);
             dims[i] = PyArray_PyIntAsIntp(tmp);
             if (error_converting(dims[i])) {
                 goto fail;
@@ -2395,7 +2399,7 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
         for (i = 0; i < n; i++) {
-            tmp = PyTuple_GET_ITEM(attr, i);
+            PyObject *tmp = PyTuple_GET_ITEM(attr, i);
             strides[i] = PyArray_PyIntAsIntp(tmp);
             if (error_converting(strides[i])) {
                 Py_DECREF(ret);
