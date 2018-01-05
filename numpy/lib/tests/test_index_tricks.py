@@ -245,7 +245,7 @@ class TestIndexExpression(object):
 
 class TestIx_(object):
     def test_regression_1(self):
-        # Test empty inputs create ouputs of indexing type, gh-5804
+        # Test empty inputs create outputs of indexing type, gh-5804
         # Test both lists and arrays
         for func in (range, np.arange):
             a, = np.ix_(func(0))

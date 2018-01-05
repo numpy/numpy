@@ -1256,7 +1256,7 @@ iterator_loop(PyUFuncObject *ufunc,
                                      arr_prep[i], arr_prep_args, i) < 0) {
                 for(iop = 0; iop < nin+i; ++iop) {
                     if (op_it[iop] != op[iop]) {
-                        /* ignore errrors */
+                        /* ignore errors */
                         PyArray_ResolveWritebackIfCopy(op_it[iop]);
                     }
                 }
