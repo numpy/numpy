@@ -2335,53 +2335,53 @@ class TestComplexFunctions(object):
 
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
-        yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.log2,  -0.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True
-        yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True
+        _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)
+        _check_branch_cut(np.log2,  -0.5, 1j, 1, -1, True)
+        _check_branch_cut(np.log10, -0.5, 1j, 1, -1, True)
+        _check_branch_cut(np.log1p, -1.5, 1j, 1, -1, True)
+        _check_branch_cut(np.sqrt,  -0.5, 1j, 1, -1, True)
 
-        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True
-        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True
-        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1], -1, 1, True
+        _check_branch_cut(np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True)
+        _check_branch_cut(np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True)
+        _check_branch_cut(np.arctan, [0-2j, 2j],  [1,  1], -1, 1, True)
 
-        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True
-        yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True
-        yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True
+        _check_branch_cut(np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True)
+        _check_branch_cut(np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True)
+        _check_branch_cut(np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True)
 
         # check against bogus branch cuts: assert continuity between quadrants
-        yield _check_branch_cut, np.arcsin, [0-2j, 2j], [ 1,  1], 1, 1
-        yield _check_branch_cut, np.arccos, [0-2j, 2j], [ 1,  1], 1, 1
-        yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1
+        _check_branch_cut(np.arcsin, [0-2j, 2j], [ 1,  1], 1, 1)
+        _check_branch_cut(np.arccos, [0-2j, 2j], [ 1,  1], 1, 1)
+        _check_branch_cut(np.arctan, [ -2,  2], [1j, 1j], 1, 1)
 
-        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1], 1, 1
-        yield _check_branch_cut, np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1
-        yield _check_branch_cut, np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1
+        _check_branch_cut(np.arcsinh, [ -2,  2, 0], [1j, 1j, 1], 1, 1)
+        _check_branch_cut(np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1)
+        _check_branch_cut(np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1)
 
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
-        yield _check_branch_cut, np.log,   -0.5, 1j, 1, -1, True, np.complex64
-        yield _check_branch_cut, np.log2,  -0.5, 1j, 1, -1, True, np.complex64
-        yield _check_branch_cut, np.log10, -0.5, 1j, 1, -1, True, np.complex64
-        yield _check_branch_cut, np.log1p, -1.5, 1j, 1, -1, True, np.complex64
-        yield _check_branch_cut, np.sqrt,  -0.5, 1j, 1, -1, True, np.complex64
+        _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)
+        _check_branch_cut(np.log2,  -0.5, 1j, 1, -1, True, np.complex64)
+        _check_branch_cut(np.log10, -0.5, 1j, 1, -1, True, np.complex64)
+        _check_branch_cut(np.log1p, -1.5, 1j, 1, -1, True, np.complex64)
+        _check_branch_cut(np.sqrt,  -0.5, 1j, 1, -1, True, np.complex64)
 
-        yield _check_branch_cut, np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64
-        yield _check_branch_cut, np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64
-        yield _check_branch_cut, np.arctan, [0-2j, 2j],  [1,  1], -1, 1, True, np.complex64
+        _check_branch_cut(np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64)
+        _check_branch_cut(np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64)
+        _check_branch_cut(np.arctan, [0-2j, 2j],  [1,  1], -1, 1, True, np.complex64)
 
-        yield _check_branch_cut, np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True, np.complex64
-        yield _check_branch_cut, np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True, np.complex64
-        yield _check_branch_cut, np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True, np.complex64
+        _check_branch_cut(np.arcsinh, [0-2j,  2j], [1,   1], -1, 1, True, np.complex64)
+        _check_branch_cut(np.arccosh, [ -1, 0.5], [1j,  1j], 1, -1, True, np.complex64)
+        _check_branch_cut(np.arctanh, [ -2,   2], [1j, 1j], 1, -1, True, np.complex64)
 
         # check against bogus branch cuts: assert continuity between quadrants
-        yield _check_branch_cut, np.arcsin, [0-2j, 2j], [ 1,  1], 1, 1, False, np.complex64
-        yield _check_branch_cut, np.arccos, [0-2j, 2j], [ 1,  1], 1, 1, False, np.complex64
-        yield _check_branch_cut, np.arctan, [ -2,  2], [1j, 1j], 1, 1, False, np.complex64
+        _check_branch_cut(np.arcsin, [0-2j, 2j], [ 1,  1], 1, 1, False, np.complex64)
+        _check_branch_cut(np.arccos, [0-2j, 2j], [ 1,  1], 1, 1, False, np.complex64)
+        _check_branch_cut(np.arctan, [ -2,  2], [1j, 1j], 1, 1, False, np.complex64)
 
-        yield _check_branch_cut, np.arcsinh, [ -2,  2, 0], [1j, 1j, 1], 1, 1, False, np.complex64
-        yield _check_branch_cut, np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1, False, np.complex64
-        yield _check_branch_cut, np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1, False, np.complex64
+        _check_branch_cut(np.arcsinh, [ -2,  2, 0], [1j, 1j, 1], 1, 1, False, np.complex64)
+        _check_branch_cut(np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1, False, np.complex64)
+        _check_branch_cut(np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1, False, np.complex64)
 
     def test_against_cmath(self):
         import cmath
@@ -2489,7 +2489,7 @@ class TestComplexFunctions(object):
 
     def test_loss_of_precision(self):
         for dtype in [np.complex64, np.complex_]:
-            yield self.check_loss_of_precision, dtype
+            self.check_loss_of_precision(dtype)
 
     @dec.knownfailureif(is_longdouble_finfo_bogus(), "Bogus long double finfo")
     def test_loss_of_precision_longcomplex(self):
