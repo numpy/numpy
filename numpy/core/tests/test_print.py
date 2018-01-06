@@ -40,7 +40,7 @@ def test_float_types():
 
     """
     for t in [np.float32, np.double, np.longdouble]:
-        yield check_float_type, t
+        check_float_type(t)
 
 def check_nan_inf_float(tp):
     for x in [np.inf, -np.inf, np.nan]:
@@ -56,7 +56,7 @@ def test_nan_inf_float():
 
     """
     for t in [np.float32, np.double, np.longdouble]:
-        yield check_nan_inf_float, t
+        check_nan_inf_float(t)
 
 def check_complex_type(tp):
     for x in [0, 1, -1, 1e20]:
@@ -84,7 +84,7 @@ def test_complex_types():
 
     """
     for t in [np.complex64, np.cdouble, np.clongdouble]:
-        yield check_complex_type, t
+        check_complex_type(t)
 
 def test_complex_inf_nan():
     """Check inf/nan formatting of complex types."""
@@ -108,7 +108,7 @@ def test_complex_inf_nan():
     }
     for tp in [np.complex64, np.cdouble, np.clongdouble]:
         for c, s in TESTS.items():
-            yield _check_complex_inf_nan, c, s, tp
+            _check_complex_inf_nan(c, s, tp)
 
 def _check_complex_inf_nan(c, s, dtype):
     assert_equal(str(dtype(c)), s)
@@ -164,12 +164,12 @@ def check_complex_type_print(tp):
 def test_float_type_print():
     """Check formatting when using print """
     for t in [np.float32, np.double, np.longdouble]:
-        yield check_float_type_print, t
+        check_float_type_print(t)
 
 def test_complex_type_print():
     """Check formatting when using print """
     for t in [np.complex64, np.cdouble, np.clongdouble]:
-        yield check_complex_type_print, t
+        check_complex_type_print(t)
 
 def test_scalar_format():
     """Test the str.format method with NumPy scalar types"""

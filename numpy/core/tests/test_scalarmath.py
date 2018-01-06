@@ -538,7 +538,7 @@ class TestRepr(object):
         # long double test cannot work, because eval goes through a python
         # float
         for t in [np.float32, np.float64]:
-            yield self._test_type_repr, t
+            self._test_type_repr(t)
 
 
 if not IS_PYPY:
