@@ -454,20 +454,20 @@ def assert_equal_(o1, o2):
 def test_roundtrip():
     for arr in basic_arrays + record_arrays:
         arr2 = roundtrip(arr)
-        yield assert_array_equal, arr, arr2
+        assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_randsize():
     for arr in basic_arrays + record_arrays:
         if arr.dtype != object:
             arr2 = roundtrip_randsize(arr)
-            yield assert_array_equal, arr, arr2
+            assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_truncated():
     for arr in basic_arrays:
         if arr.dtype != object:
-            yield assert_raises, ValueError, roundtrip_truncated, arr
+            assert_raises(ValueError, roundtrip_truncated, arr)
 
 
 def test_long_str():
@@ -508,7 +508,7 @@ def test_memmap_roundtrip():
             fp = open(mfn, 'rb')
             memmap_bytes = fp.read()
             fp.close()
-            yield assert_equal_, normal_bytes, memmap_bytes
+            assert_equal_(normal_bytes, memmap_bytes)
 
             # Check that reading the file using memmap works.
             ma = format.open_memmap(nfn, mode='r')
@@ -728,13 +728,13 @@ def test_read_magic():
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_magic), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_array), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_bad_magic_args():
