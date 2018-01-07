@@ -2304,7 +2304,8 @@ if os.path.isdir(extra_dll_dir) and sys.platform == 'win32':
         windll.kernel32.SetDefaultDllDirectories(0x1000)
     except AttributeError:
         def _AddDllDirectory(dll_directory):
-            os.environ["PATH"] += os.pathsep + dll_directory
+            os.environ.setdefault('PATH', '')
+            os.environ['PATH'] += os.pathsep + dll_directory
 
     _AddDllDirectory(extra_dll_dir)
 
