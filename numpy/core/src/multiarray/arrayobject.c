@@ -1205,6 +1205,56 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
     }
 }
 
+/* This is a copy of _PyErr_ChainExceptions, with:
+ *  - a minimal implementation for python 2
+ *  - __cause__ used instead of __context__
+ */
+NPY_NO_EXPORT void
+PyArray_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
+{
+    if (exc == NULL)
+        return;
+
+    if (PyErr_Occurred()) {
+        /* only py3 supports this anyway */
+        #ifdef NPY_PY3K
+            PyObject *exc2, *val2, *tb2;
+            PyErr_Fetch(&exc2, &val2, &tb2);
+            PyErr_NormalizeException(&exc, &val, &tb);
+            if (tb != NULL) {
+                PyException_SetTraceback(val, tb);
+                Py_DECREF(tb);
+            }
+            Py_DECREF(exc);
+            PyErr_NormalizeException(&exc2, &val2, &tb2);
+            PyException_SetCause(val2, val);
+            PyErr_Restore(exc2, val2, tb2);
+        #endif
+    }
+    else {
+        PyErr_Restore(exc, val, tb);
+    }
+}
+
+/* Silence the current error and emit a deprecation warning instead.
+ *
+ * If warnings are raised as errors, this sets the warning __cause__ to the
+ * silenced error.
+ */
+NPY_NO_EXPORT int
+DEPRECATE_silence_error(const char *msg) {
+    PyObject *exc, *val, *tb;
+    PyErr_Fetch(&exc, &val, &tb);
+    if (DEPRECATE(msg) < 0) {
+        PyArray_ChainExceptionsCause(exc, val, tb);
+        return -1;
+    }
+    Py_XDECREF(exc);
+    Py_XDECREF(val);
+    Py_XDECREF(tb);
+    return 0;
+}
+
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
@@ -1268,8 +1318,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              */
             if (array_other == NULL) {
                 /* 2015-05-07, 1.10 */
-                PyErr_Clear();
-                if (DEPRECATE(
+                if (DEPRECATE_silence_error(
                         "elementwise == comparison failed and returning scalar "
                         "instead; this will raise an error in the future.") < 0) {
                     return NULL;
@@ -1314,9 +1363,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * is not possible.
              */
             /* 2015-05-14, 1.10 */
-            PyErr_Clear();
-            if (DEPRECATE("elementwise == comparison failed; "
-                          "this will raise an error in the future.") < 0) {
+            if (DEPRECATE_silence_error(
+                    "elementwise == comparison failed; "
+                    "this will raise an error in the future.") < 0) {
                 return NULL;
             }
 
@@ -1341,8 +1390,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             */
             if (array_other == NULL) {
                 /* 2015-05-07, 1.10 */
-                PyErr_Clear();
-                if (DEPRECATE(
+                if (DEPRECATE_silence_error(
                         "elementwise != comparison failed and returning scalar "
                         "instead; this will raise an error in the future.") < 0) {
                     return NULL;
@@ -1381,9 +1429,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * is not possible.
              */
             /* 2015-05-14, 1.10 */
-            PyErr_Clear();
-            if (DEPRECATE("elementwise != comparison failed; "
-                          "this will raise an error in the future.") < 0) {
+            if (DEPRECATE_silence_error(
+                    "elementwise != comparison failed; "
+                    "this will raise an error in the future.") < 0) {
                 return NULL;
             }
 
