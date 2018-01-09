@@ -1511,6 +1511,7 @@ class TestArraySetOps(object):
         control = array([1, 2, 3, 4, 5, 7, -1], mask=[0, 0, 0, 0, 0, 0, 1])
         assert_equal(test, control)
 
+        # Tests gh-10340, arguments to union1d should be flattened if they are not already 1D
         x = array([[0, 1, 2], [3, 4, 5]], mask=[[0, 0, 0], [0, 0, 1]])
         y = array([0, 1, 2, 3, 4], mask=[0, 0, 0, 0, 1])
         ez = array([0, 1, 2, 3, 4, 5], mask=[0, 0, 0, 0, 0, 1])
