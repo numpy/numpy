@@ -89,7 +89,7 @@ if sys.version_info >= (3, 5):
 
         def get_libraries(self):
             opt = FCompiler.get_libraries(self)
-            opt.extend(['flang', 'flangrti', 'ompstub'])
+            opt.extend(['libflang', 'libflangrti', 'libompstub'])
             return opt
 
         @functools.lru_cache(maxsize=128)
