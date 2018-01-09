@@ -247,6 +247,7 @@ class TestSetOps(object):
         c = union1d(a, b)
         assert_array_equal(c, ec)
 
+        # Tests gh-10340, arguments to union1d should be flattened if they are not already 1D
         x = np.array([[0, 1, 2], [3, 4, 5]])
         y = np.array([0, 1, 2, 3, 4])
         ez = np.array([0, 1, 2, 3, 4, 5])
