@@ -1501,6 +1501,12 @@ class TestArraySetOps(object):
         test = union1d(a, b)
         control = array([1, 2, 3, 4, 5, 7, -1], mask=[0, 0, 0, 0, 0, 0, 1])
         assert_equal(test, control)
+
+        x = array([[0, 1, 2], [3, 4, 5]], mask=[[0, 0, 0], [0, 0, 1]])
+        y = array([0, 1, 2, 3, 4], mask=[0, 0, 0, 0, 1])
+        ez = array([0, 1, 2, 3, 4, 5], mask=[0, 0, 0, 0, 0, 1])
+        z = union1d(x, y)
+        assert_equal(z, ez)
         #
         assert_array_equal([], union1d([], []))
 
