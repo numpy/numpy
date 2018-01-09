@@ -94,7 +94,7 @@ def test_overlapping_assignments():
         srcidx = tuple([a[0] for a in ind])
         dstidx = tuple([a[1] for a in ind])
 
-        yield _check_assignment, srcidx, dstidx
+        _check_assignment(srcidx, dstidx)
 
 
 @dec.slow
