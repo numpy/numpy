@@ -481,6 +481,14 @@ class TestEinSum(object):
         r = np.arange(4).reshape(2, 2) + 7
         assert_equal(np.einsum('z,mz,zm->', p, q, r), 253)
 
+        # singleton dimensions broadcast (gh-10343)
+        p = np.ones((10,2))
+        q = np.ones((1,2))
+        assert_array_equal(np.einsum('ti,ti->i', p, q, optimize=True),
+                           np.einsum('ti,ti->i', p, q, optimize=False))
+        assert_array_equal(np.einsum('ti,ti->i', p, q, optimize=True),
+                           [10.] * 2)
+
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1')
 
