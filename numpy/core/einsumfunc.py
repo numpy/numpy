@@ -1061,8 +1061,8 @@ def einsum(*operands, **kwargs):
 
     """
 
-    # Grab non-einsum kwargs
-    optimize_arg = kwargs.pop('optimize', True)
+    # Grab non-einsum kwargs; never optimize 2-argument case.
+    optimize_arg = kwargs.pop('optimize', len(operands) > 3)
 
     # If no optimization, run pure einsum
     if optimize_arg is False:
