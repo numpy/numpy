@@ -352,7 +352,7 @@ def setup_package():
         long_description = "\n".join(DOCLINES[2:]),
         url = "http://www.numpy.org",
         author = "Travis E. Oliphant et al.",
-        download_url = "http://sourceforge.net/projects/numpy/files/NumPy/",
+        download_url = "https://pypi.python.org/pypi/numpy",
         license = 'BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
