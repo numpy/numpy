@@ -2277,7 +2277,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return abs(x).min(axis=axis, keepdims=keepdims)
         elif ord == 0:
             # Zero norm
-            return (x != 0).astype(float).sum(axis=axis, keepdims=keepdims)
+            return (x != 0).astype(x.real.dtype).sum(axis=axis, keepdims=keepdims)
         elif ord == 1:
             # special case for speedup
             return add.reduce(abs(x), axis=axis, keepdims=keepdims)
