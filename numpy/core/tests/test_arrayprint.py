@@ -64,6 +64,12 @@ class TestArrayRepr(object):
         # gh-9345
         repr(np.void(b'test'))  # RecursionError ?
 
+    def test_fieldless_structured(self):
+        # gh-10366
+        no_fields = np.dtype([])
+        arr_no_fields = np.empty(4, dtype=no_fields)
+        assert_equal(repr(arr_no_fields), 'array([(), (), (), ()], dtype=[])')
+
 
 class TestComplexArray(object):
     def test_str(self):

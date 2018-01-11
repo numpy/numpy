@@ -1177,7 +1177,6 @@ class SubArrayFormat(object):
 class StructureFormat(object):
     def __init__(self, format_functions):
         self.format_functions = format_functions
-        self.num_fields = len(format_functions)
 
     @classmethod
     def from_data(cls, data, **options):
@@ -1194,11 +1193,14 @@ class StructureFormat(object):
         return cls(format_functions)
 
     def __call__(self, x):
-        s = "("
-        for field, format_function in zip(x, self.format_functions):
-            s += format_function(field) + ", "
-        return (s[:-2] if 1 < self.num_fields else s[:-1]) + ")"
-
+        str_fields = [
+            format_function(field)
+            for field, format_function in zip(x, self.format_functions)
+        ]
+        if len(str_fields) == 1:
+            return "({},)".format(str_fields[0])
+        else:
+            return "({})".format(", ".join(str_fields))
 
 def _void_scalar_repr(x):
     """
@@ -1258,7 +1260,7 @@ def dtype_short_repr(dtype):
     """
     # handle these separately so they don't give garbage like str256
     if issubclass(dtype.type, flexible):
-        if dtype.names:
+        if dtype.names is not None:
             return "%s" % str(dtype)
         else:
             return "'%s'" % str(dtype)
