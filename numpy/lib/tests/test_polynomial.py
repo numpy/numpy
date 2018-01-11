@@ -11,23 +11,23 @@ class TestPolynomial(object):
         p = np.poly1d([1., 2, 3])
         assert_equal(repr(p), 'poly1d([1., 2., 3.])')
         assert_equal(str(p),
-                         '   2\n'
-                         '1 x + 2 x + 3')
+                     '   2\n'
+                     '1 x + 2 x + 3')
 
         q = np.poly1d([3., 2, 1])
         assert_equal(repr(q), 'poly1d([3., 2., 1.])')
         assert_equal(str(q),
-                         '   2\n'
-                         '3 x + 2 x + 1')
+                     '   2\n'
+                     '3 x + 2 x + 1')
 
         r = np.poly1d([1.89999 + 2j, -3j, -5.12345678, 2 + 1j])
         assert_equal(str(r),
-                         '            3      2\n'
-                         '(1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)')
+                     '            3      2\n'
+                     '(1.9 + 2j) x - 3j x - 5.123 x + (2 + 1j)')
 
         assert_equal(str(np.poly1d([-3, -2, -1])),
-                         '    2\n'
-                         '-3 x - 2 x - 1')
+                     '    2\n'
+                     '-3 x - 2 x - 1')
 
     def test_poly1d_resolution(self):
         p = np.poly1d([1., 2, 3])
@@ -67,12 +67,12 @@ class TestPolynomial(object):
     def test_poly1d_variable_arg(self):
         q = np.poly1d([1., 2, 3], variable='y')
         assert_equal(str(q),
-                         '   2\n'
-                         '1 y + 2 y + 3')
+                     '   2\n'
+                     '1 y + 2 y + 3')
         q = np.poly1d([1., 2, 3], variable='lambda')
         assert_equal(str(q),
-                         '        2\n'
-                         '1 lambda + 2 lambda + 3')
+                     '        2\n'
+                     '1 lambda + 2 lambda + 3')
 
     def test_poly(self):
         assert_array_almost_equal(np.poly([3, -np.sqrt(2), np.sqrt(2)]),
