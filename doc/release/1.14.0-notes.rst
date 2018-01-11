@@ -179,10 +179,10 @@ functions, and if used would likely correspond to a typo.
 Previously, this would promote to ``float64`` when arbitrary orders were
 passed, despite not doing so under the simple cases::
 
-    >>> f32 = np.float32([1, 2])
-    >>> np.linalg.norm(f32, 2.0).dtype
+    >>> f32 = np.float32([[1, 2]])
+    >>> np.linalg.norm(f32, 2.0, axis=-1).dtype
     dtype('float32')
-    >>> np.linalg.norm(f32, 2.0001).dtype
+    >>> np.linalg.norm(f32, 2.0001, axis=-1).dtype
     dtype('float64')  # numpy 1.13
     dtype('float32')  # numpy 1.14
 
