@@ -52,7 +52,7 @@ result = numpy.test(options.mode,
                     doctests=options.doctests,
                     coverage=options.coverage)
 
-if result.wasSuccessful():
+if result:
     sys.exit(0)
 else:
     sys.exit(1)
