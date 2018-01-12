@@ -320,7 +320,7 @@ def main(argv):
     finally:
         os.chdir(cwd)
 
-    if result.wasSuccessful():
+    if result:
         sys.exit(0)
     else:
         sys.exit(1)
