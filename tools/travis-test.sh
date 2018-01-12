@@ -94,8 +94,9 @@ setup_chroot()
     sudo tee -a $DIR/etc/ld.so.preload
 
   # install needed packages
-  sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python-dev python-nose python-pip cython"
+  sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes \
+    libatlas-dev libatlas-base-dev gfortran \
+    python-dev python-nose python-pytest python-pip cython"
 }
 
 run_test()
