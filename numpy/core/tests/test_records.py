@@ -356,6 +356,19 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
+    def test_out_of_order_fields(self):
+        # names in the same order, padding added to descr
+        x = self.data[['col1', 'col2']]
+        assert_equal(x.dtype.names, ('col1', 'col2'))
+        assert_equal(x.dtype.descr,
+                     [('col1', '<i4'), ('col2', '<i4'), ('', '|V4')])
+
+        # names change order to match indexing, as of 1.14 - descr can't
+        # represent that
+        y = self.data[['col2', 'col1']]
+        assert_equal(y.dtype.names, ('col2', 'col1'))
+        assert_raises(ValueError, lambda: y.dtype.descr)
+
     def test_pickle_1(self):
         # Issue #1529
         a = np.array([(1, [])], dtype=[('a', np.int32), ('b', np.int32, 0)])
