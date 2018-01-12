@@ -485,7 +485,7 @@
   {
     int i;
     int success = 1;
-    int len;
+    size_t len;
     char desired_dims[255] = "[";
     char s[255];
     char actual_dims[255] = "[";
@@ -3139,6 +3139,15 @@
 %numpy_typemaps(unsigned long long, NPY_ULONGLONG, int)
 %numpy_typemaps(float             , NPY_FLOAT    , int)
 %numpy_typemaps(double            , NPY_DOUBLE   , int)
+%numpy_typemaps(int8_t            , NPY_INT8     , int)
+%numpy_typemaps(int16_t           , NPY_INT16    , int)
+%numpy_typemaps(int32_t           , NPY_INT32    , int)
+%numpy_typemaps(int64_t           , NPY_INT64    , int)
+%numpy_typemaps(uint8_t           , NPY_UINT8    , int)
+%numpy_typemaps(uint16_t          , NPY_UINT16   , int)
+%numpy_typemaps(uint32_t          , NPY_UINT32   , int)
+%numpy_typemaps(uint64_t          , NPY_UINT64   , int)
+
 
 /* ***************************************************************
  * The follow macro expansion does not work, because C++ bool is 4
