@@ -485,7 +485,8 @@ class TestDtypedescr(object):
 
         # gh-9821
         arr_int = np.zeros(4, dt_int)
-        assert_equal(repr(arr_int), "array([0, 0, 0, 0])")
+        assert_equal(repr(arr_int),
+            "array([0, 0, 0, 0], dtype=(numpy.int32, [('a', '<i2'), ('b', '<i2')]))")
 
 
 class TestZeroRank(object):
