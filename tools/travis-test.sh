@@ -147,7 +147,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   pip install --pre --no-index --upgrade --find-links=. numpy
-  pip install nose
+  pip install nose pytest
   popd
   run_test
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
@@ -164,7 +164,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   pip install numpy*
-  pip install nose
+  pip install nose pytest
   popd
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
