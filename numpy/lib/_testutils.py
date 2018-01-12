@@ -26,7 +26,7 @@ class PytestTester(object):
         self.module_name = module_name
 
     def __call__(self, label="fast", verbose=1, extra_argv=None, doctests=False,
-                 coverage=False, tests=None):
+                 coverage=False, tests=None, raise_warnings="release"):
         import pytest
 
         module = sys.modules[self.module_name]
