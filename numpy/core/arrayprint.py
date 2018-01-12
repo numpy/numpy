@@ -1287,6 +1287,11 @@ def dtype_is_implied(dtype):
     dtype = np.dtype(dtype)
     if _format_options['legacy'] == '1.13' and dtype.type == bool_:
         return False
+
+    # not just void types can be structured, and names are not part of the repr
+    if dtype.names is not None:
+        return False
+
     return dtype.type in _typelessdata
 
 
@@ -1299,12 +1304,12 @@ def dtype_short_repr(dtype):
     >>> from numpy import *
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
-    # handle these separately so they don't give garbage like str256
-    if issubclass(dtype.type, flexible):
-        if dtype.names is not None:
-            return "%s" % str(dtype)
-        else:
-            return "'%s'" % str(dtype)
+    if dtype.names is not None:
+        # structured dtypes give a list or tuple repr
+        return str(dtype)
+    elif issubclass(dtype.type, flexible):
+        # handle these separately so they don't give garbage like str256
+        return "'%s'" % str(dtype)
 
     typename = dtype.name
     # quote typenames which can't be represented as python variable names
