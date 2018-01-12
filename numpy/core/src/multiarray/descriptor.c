@@ -3340,8 +3340,8 @@ arraydescr_struct_str(PyArray_Descr *dtype, int includealignflag)
         sub = arraydescr_struct_dict_str(dtype, includealignflag);
     }
 
-    /* If the data type has a non-void (subclassed) type, show it */
-    if (dtype->type_num == NPY_VOID && dtype->typeobj != &PyVoidArrType_Type) {
+    /* If the data type isn't the default, void, show it */
+    if (dtype->typeobj != &PyVoidArrType_Type) {
         /*
          * Note: We cannot get the type name from dtype->typeobj->tp_name
          * because its value depends on whether the type is dynamically or
