@@ -2277,7 +2277,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             return abs(x).min(axis=axis, keepdims=keepdims)
         elif ord == 0:
             # Zero norm
-            return (x != 0).astype(float).sum(axis=axis, keepdims=keepdims)
+            return (x != 0).astype(x.real.dtype).sum(axis=axis, keepdims=keepdims)
         elif ord == 1:
             # special case for speedup
             return add.reduce(abs(x), axis=axis, keepdims=keepdims)
@@ -2292,7 +2292,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 raise ValueError("Invalid norm order for vectors.")
             absx = abs(x)
             absx **= ord
-            return add.reduce(absx, axis=axis, keepdims=keepdims) ** (1.0 / ord)
+            ret = add.reduce(absx, axis=axis, keepdims=keepdims)
+            ret **= (1 / ord)
+            return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis
         row_axis = normalize_axis_index(row_axis, nd)
