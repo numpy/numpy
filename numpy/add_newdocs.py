@@ -1232,7 +1232,8 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
         The arrays must have the same shape, except in the dimension
         corresponding to `axis` (the first, by default).
     axis : int, optional
-        The axis along which the arrays will be joined.  Default is 0.
+        The axis along which the arrays will be joined.  If axis is None,
+        arrays are flattened before use.  Default is 0.
     out : ndarray, optional
         If provided, the destination to place the result. The shape must be
         correct, matching that of what concatenate would have returned if no
@@ -1276,6 +1277,8 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     >>> np.concatenate((a, b.T), axis=1)
     array([[1, 2, 5],
            [3, 4, 6]])
+    >>> np.concatenate((a, b), axis=None)
+    array([1, 2, 3, 4, 5, 6])
 
     This function will not preserve masking of MaskedArray inputs.
 
