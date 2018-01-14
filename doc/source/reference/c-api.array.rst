@@ -382,10 +382,11 @@ From other objects
     sequence, or object that exposes the array interface, *op*. The
     parameters allow specification of the required *dtype*, the
     minimum (*min_depth*) and maximum (*max_depth*) number of
-    dimensions acceptable, and other *requirements* for the array. The
-    *dtype* argument needs to be a :c:type:`PyArray_Descr` structure
+    dimensions acceptable, and other *requirements* for the array. This
+    function **steals a reference** to the dtype argument, which needs
+    to be a :c:type:`PyArray_Descr` structure
     indicating the desired data-type (including required
-    byteorder). The *dtype* argument may be NULL, indicating that any
+    byteorder). The *dtype* argument may be ``NULL``, indicating that any
     data-type (and byteorder) is acceptable. Unless
     :c:data:`NPY_ARRAY_FORCECAST` is present in ``flags``,
     this call will generate an error if the data
