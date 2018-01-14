@@ -2056,6 +2056,13 @@ M   33  21.99
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
 
+        #gh-10394
+        data = TextIO('color\n"red"\n"blue"')
+        test = np.recfromcsv(data, converters={0: lambda x: x.strip(b'\"')})
+        control = np.array([('red',), ('blue',)], dtype=[('color', (bytes, 4))])
+        assert_equal(test.dtype, control.dtype)
+        assert_equal(test, control)
+
     def test_max_rows(self):
         # Test the `max_rows` keyword argument.
         data = '1 2\n3 4\n5 6\n7 8\n9 10\n'
