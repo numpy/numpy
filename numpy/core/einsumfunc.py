@@ -701,14 +701,15 @@ def einsum_path(*operands, **kwargs):
         sh = operands[tnum].shape
         if len(sh) != len(term):
             raise ValueError("Einstein sum subscript %s does not contain the "
-                             "correct number of indices for operand %d.",
-                             input_subscripts[tnum], tnum)
+                             "correct number of indices for operand %d."
+                             % (input_subscripts[tnum], tnum))
         for cnum, char in enumerate(term):
             dim = sh[cnum]
             if char in dimension_dict.keys():
                 if dimension_dict[char] != dim:
                     raise ValueError("Size of label '%s' for operand %d does "
-                                     "not match previous terms.", char, tnum)
+                                     "not match previous terms."
+                                     % (char, tnum))
             else:
                 dimension_dict[char] = dim
 
