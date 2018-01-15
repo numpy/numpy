@@ -2981,6 +2981,14 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.mean(a, dtype=np.float64)
     0.55000000074505806
 
+    It can also handle dask arrays
+
+    >>> import dask.array as da
+    >>> x = da.ones((10, 11, 12), chunks=7)
+    >>> np.mean(x)
+    dask.array<mean_agg-aggregate, shape=(), dtype=float64, chunksize=()>
+    
+    
     """
     kwargs = {}
     if keepdims is not np._NoValue:
