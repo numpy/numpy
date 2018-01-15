@@ -6,8 +6,8 @@ $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 from __future__ import division, absolute_import, print_function
 
 __all__ = ["array2string", "array_str", "array_repr", "set_string_function",
-           "set_printoptions", "get_printoptions", "format_float_positional",
-           "format_float_scientific"]
+           "set_printoptions", "get_printoptions", "printoptions",
+           "format_float_positional", "format_float_scientific"]
 __docformat__ = 'restructuredtext'
 
 #
@@ -49,7 +49,7 @@ from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 import warnings
-
+import contextlib
 
 _format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
@@ -271,6 +271,40 @@ def get_printoptions():
 
     """
     return _format_options.copy()
+
+
+@contextlib.contextmanager
+def printoptions(*args, **kwds):
+    """Context manager for setting print options.
+
+    See `set_printoptions` for the full description of available options.
+
+    Examples
+    --------
+
+    `printoptions` sets print options temporarily, and restores them back
+    at the end of the `with`-block:
+
+    >>> with np.printoptions(precision=2):
+    ...     print(np.array([2.0])) / 3
+    [0.67]
+
+    The `as`-clause of the `with`-statement gives the current print options:
+
+    >>> with np.printoptions(precision=2) as opts:
+    ...      assert_equal(opts, np.get_printoptions())
+
+    See Also
+    --------
+    set_printoptions, get_printoptions
+
+    """
+    opts = np.get_printoptions()
+    try:
+        np.set_printoptions(*args, **kwds)
+        yield np.get_printoptions()
+    finally:
+        np.set_printoptions(**opts)
 
 
 def _leading_trailing(a, edgeitems, index=()):

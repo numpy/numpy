@@ -721,5 +721,37 @@ def test_unicode_object_array():
     assert_equal(repr(x), expected)
 
 
+class TestContextManager(object):
+    def test_ctx_mgr(self):
+        # test that context manager actuall works
+        with np.printoptions(precision=2):
+            s = str(np.array([2.0]) / 3)
+        assert_equal(s, '[0.67]')
+
+    def test_ctx_mgr_restores(self):
+        # test that print options are actually restrored
+        opts = np.get_printoptions()
+        with np.printoptions(precision=opts['precision'] - 1,
+                             linewidth=opts['linewidth'] - 4):
+            pass
+        assert_equal(np.get_printoptions(), opts)
+
+    def test_ctx_mgr_exceptions(self):
+        # test that print options are restored even if an exeption is raised
+        opts = np.get_printoptions()
+        try:
+            with np.printoptions(precision=2, linewidth=11):
+                raise ValueError
+        except ValueError:
+            pass
+        assert_equal(np.get_printoptions(), opts)
+
+    def test_ctx_mgr_as_smth(self):
+        opts = {"precision": 2}
+        with np.printoptions(**opts) as ctx:
+            saved_opts = ctx.copy()
+        assert_equal({k: saved_opts[k] for k in opts}, opts)
+
+
 if __name__ == "__main__":
     run_module_suite()
