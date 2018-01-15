@@ -1566,6 +1566,10 @@ def moveaxis(a, source, destination):
     >>> np.moveaxis(x, [0, 1, 2], [-1, -2, -3]).shape
     (5, 4, 3)
 
+    >>> import dask.array as da
+    >>> x = da.ones((10, 11, 12), chunks=7)
+    >>> np.moveaxis(x, 0, -1)
+    dask.array<transpose, shape=(11, 12, 10), dtype=float64, chunksize=(7, 7, 7)>
     """
     try:
         # allow duck-array types if they define transpose
