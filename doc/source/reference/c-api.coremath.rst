@@ -81,7 +81,22 @@ Useful math constants
 ~~~~~~~~~~~~~~~~~~~~~
 
 The following math constants are available in npy_math.h. Single and extended
-precision are also available by adding the F and L suffixes respectively.
+precision are also available by adding the f and l suffixes respectively, with the exceptions of the following: -
+-> NPY_INFINITYF
+-> NPY_NANF
+-> NPY_PZEROF
+-> NPY_NZEROF
+-> NPY_INFINITYL
+-> NPY_NANL 
+-> NPY_PZEROL
+-> NPY_NZEROL
+
+/*
+ * Useful constants
+ */
+#define NPY_E         2.718281828459045235360287471352662498  /* e */
+#define NPY_LOG2E     1.442695040888963407359924681001892137  /* log_2 e */
+#define NPY_LOG10E    0.4
 
 .. c:var:: NPY_E
 
@@ -418,3 +433,4 @@ __ http://www.openexr.com/about.html
 
    Low-level function which converts a 16-bit half-precision float
    into a 64-bit double-precision float, stored as a uint64.
+
