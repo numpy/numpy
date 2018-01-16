@@ -99,8 +99,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     Parameters
     ----------
-    precision : int, optional
+    precision : int or None, optional
         Number of digits of precision for floating point output (default 8).
+        May be `None` if `floatmode` is not `fixed`, to print as many digits as
+        necessary to uniquely specify the value.
     threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr (default 1000).
@@ -240,6 +242,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     # set the C variable for legacy mode
     if _format_options['legacy'] == '1.13':
         set_legacy_print_mode(113)
+        # reset the sign option in legacy mode to avoid confusion
+        _format_options['sign'] = '-'
     elif _format_options['legacy'] is False:
         set_legacy_print_mode(0)
 
@@ -502,7 +506,7 @@ def array2string(a, max_line_width=None, precision=None,
     max_line_width : int, optional
         The maximum number of columns the string should span. Newline
         characters splits the string appropriately after array elements.
-    precision : int, optional
+    precision : int or None, optional
         Floating point precision. Default is the current printing
         precision (usually 8), which can be altered using `set_printoptions`.
     suppress_small : bool, optional
@@ -782,6 +786,13 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         curr_width=line_width)
 
 
+def _none_or_positive_arg(x, name):
+    if x is None:
+        return -1
+    if x < 0:
+        raise ValueError("{} must be >= 0".format(name))
+    return x
+
 class FloatingFormat(object):
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
@@ -792,16 +803,17 @@ class FloatingFormat(object):
 
         self._legacy = kwarg.get('legacy', False)
         if self._legacy == '1.13':
-            sign = '-' if data.shape == () else ' '
+            # when not 0d, legacy does not support '-'
+            if data.shape != () and sign == '-':
+                sign = ' '
 
         self.floatmode = floatmode
         if floatmode == 'unique':
-            self.precision = -1
+            self.precision = None
         else:
-            if precision < 0:
-                raise ValueError(
-                    "precision must be >= 0 in {} mode".format(floatmode))
             self.precision = precision
+
+        self.precision = _none_or_positive_arg(self.precision, 'precision')
 
         self.suppress_small = suppress_small
         self.sign = sign
@@ -935,7 +947,6 @@ class LongFloatFormat(FloatingFormat):
                       DeprecationWarning, stacklevel=2)
         super(LongFloatFormat, self).__init__(*args, **kwargs)
 
-
 def format_float_scientific(x, precision=None, unique=True, trim='k',
                             sign=False, pad_left=None, exp_digits=None):
     """
@@ -948,9 +959,9 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
     ----------
     x : python float or numpy floating scalar
         Value to format.
-    precision : non-negative integer, optional
-        Maximum number of fractional digits to print. May be omitted if
-        `unique` is `True`, but is required if unique is `False`.
+    precision : non-negative integer or None, optional
+        Maximum number of digits to print. May be None if `unique` is
+        `True`, but must be an integer if unique is `False`.
     unique : boolean, optional
         If `True`, use a digit-generation strategy which gives the shortest
         representation which uniquely identifies the floating-point number from
@@ -995,9 +1006,9 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
     >>> np.format_float_scientific(s, exp_digits=4)
     '1.23e+0024'
     """
-    precision = -1 if precision is None else precision
-    pad_left = -1 if pad_left is None else pad_left
-    exp_digits = -1 if exp_digits is None else exp_digits
+    precision = _none_or_positive_arg(precision, 'precision')
+    pad_left = _none_or_positive_arg(pad_left, 'pad_left')
+    exp_digits = _none_or_positive_arg(exp_digits, 'exp_digits')
     return dragon4_scientific(x, precision=precision, unique=unique,
                               trim=trim, sign=sign, pad_left=pad_left,
                               exp_digits=exp_digits)
@@ -1015,9 +1026,9 @@ def format_float_positional(x, precision=None, unique=True,
     ----------
     x : python float or numpy floating scalar
         Value to format.
-    precision : non-negative integer, optional
-        Maximum number of digits to print. May be omitted if `unique` is
-        `True`, but is required if unique is `False`.
+    precision : non-negative integer or None, optional
+        Maximum number of digits to print. May be None if `unique` is
+        `True`, but must be an integer if unique is `False`.
     unique : boolean, optional
         If `True`, use a digit-generation strategy which gives the shortest
         representation which uniquely identifies the floating-point number from
@@ -1068,9 +1079,9 @@ def format_float_positional(x, precision=None, unique=True,
     >>> np.format_float_positional(np.float16(0.3), unique=False, precision=10)
     '0.3000488281'
     """
-    precision = -1 if precision is None else precision
-    pad_left = -1 if pad_left is None else pad_left
-    pad_right = -1 if pad_right is None else pad_right
+    precision = _none_or_positive_arg(precision, 'precision')
+    pad_left = _none_or_positive_arg(pad_left, 'pad_left')
+    pad_right = _none_or_positive_arg(pad_right, 'pad_right')
     return dragon4_positional(x, precision=precision, unique=unique,
                               fractional=fractional, trim=trim,
                               sign=sign, pad_left=pad_left,
@@ -1108,15 +1119,25 @@ class ComplexFloatingFormat(object):
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
-        self.real_format = FloatingFormat(x.real, precision, floatmode,
+        floatmode_real = floatmode_imag = floatmode
+        if kwarg.get('legacy', False) == '1.13':
+            floatmode_real = 'maxprec_equal'
+            floatmode_imag = 'maxprec'
+
+        self.real_format = FloatingFormat(x.real, precision, floatmode_real,
                                           suppress_small, sign=sign, **kwarg)
-        self.imag_format = FloatingFormat(x.imag, precision, floatmode,
+        self.imag_format = FloatingFormat(x.imag, precision, floatmode_imag,
                                           suppress_small, sign='+', **kwarg)
 
     def __call__(self, x):
         r = self.real_format(x.real)
         i = self.imag_format(x.imag)
-        return r + i + 'j'
+
+        # add the 'j' before the terminal whitespace in i
+        sp = len(i.rstrip())
+        i = i[:sp] + 'j' + i[sp:]
+
+        return r + i
 
 # for back-compatibility, we keep the classes for each complex type too
 class ComplexFormat(ComplexFloatingFormat):

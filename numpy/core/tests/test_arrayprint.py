@@ -433,21 +433,28 @@ class TestPrintOptions(object):
     def test_sign_spacing(self):
         a = np.arange(4.)
         b = np.array([1.234e9])
+        c = np.array([1.0 + 1.0j, 1.123456789 + 1.123456789j], dtype='c16')
 
         assert_equal(repr(a), 'array([0., 1., 2., 3.])')
         assert_equal(repr(np.array(1.)), 'array(1.)')
         assert_equal(repr(b), 'array([1.234e+09])')
         assert_equal(repr(np.array([0.])), 'array([0.])')
+        assert_equal(repr(c),
+            "array([1.        +1.j        , 1.12345679+1.12345679j])")
 
         np.set_printoptions(sign=' ')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
         assert_equal(repr(np.array(1.)), 'array( 1.)')
         assert_equal(repr(b), 'array([ 1.234e+09])')
+        assert_equal(repr(c),
+            "array([ 1.        +1.j        ,  1.12345679+1.12345679j])")
 
         np.set_printoptions(sign='+')
         assert_equal(repr(a), 'array([+0., +1., +2., +3.])')
         assert_equal(repr(np.array(1.)), 'array(+1.)')
         assert_equal(repr(b), 'array([+1.234e+09])')
+        assert_equal(repr(c),
+            "array([+1.        +1.j        , +1.12345679+1.12345679j])")
 
         np.set_printoptions(legacy='1.13')
         assert_equal(repr(a), 'array([ 0.,  1.,  2.,  3.])')
@@ -455,6 +462,8 @@ class TestPrintOptions(object):
         assert_equal(repr(-b), 'array([ -1.23400000e+09])')
         assert_equal(repr(np.array(1.)), 'array(1.0)')
         assert_equal(repr(np.array([0.])), 'array([ 0.])')
+        assert_equal(repr(c),
+            "array([ 1.00000000+1.j        ,  1.12345679+1.12345679j])")
 
         assert_raises(TypeError, np.set_printoptions, wrongarg=True)
 
@@ -478,6 +487,7 @@ class TestPrintOptions(object):
                       0.0862072768214508, 0.39112753029631175],
                       dtype=np.float64)
         z = np.arange(6, dtype=np.float16)/10
+        c = np.array([1.0 + 1.0j, 1.123456789 + 1.123456789j], dtype='c16')
 
         # also make sure 1e23 is right (is between two fp numbers)
         w = np.array(['1e{}'.format(i) for i in range(25)], dtype=np.float64)
@@ -503,6 +513,8 @@ class TestPrintOptions(object):
             "       1.e+16, 1.e+17, 1.e+18, 1.e+19, 1.e+20, 1.e+21, 1.e+22, 1.e+23,\n"
             "       1.e+24])")
         assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
+        assert_equal(repr(c),
+            "array([1.         +1.j         , 1.123456789+1.123456789j])")
 
         # maxprec mode, precision=8
         np.set_printoptions(floatmode='maxprec', precision=8)
@@ -517,6 +529,8 @@ class TestPrintOptions(object):
         assert_equal(repr(w[::5]),
             "array([1.e+00, 1.e+05, 1.e+10, 1.e+15, 1.e+20])")
         assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
+        assert_equal(repr(c),
+            "array([1.        +1.j        , 1.12345679+1.12345679j])")
 
         # fixed mode, precision=4
         np.set_printoptions(floatmode='fixed', precision=4)
@@ -531,6 +545,8 @@ class TestPrintOptions(object):
             "array([1.0000e+00, 1.0000e+05, 1.0000e+10, 1.0000e+15, 1.0000e+20])")
         assert_equal(repr(wp), "array([1.2340e+001, 1.0000e+002, 1.0000e+123])")
         assert_equal(repr(np.zeros(3)), "array([0.0000, 0.0000, 0.0000])")
+        assert_equal(repr(c),
+            "array([1.0000+1.0000j, 1.1235+1.1235j])")
         # for larger precision, representation error becomes more apparent:
         np.set_printoptions(floatmode='fixed', precision=8)
         assert_equal(repr(z),
@@ -550,6 +566,8 @@ class TestPrintOptions(object):
         assert_equal(repr(w[::5]),
             "array([1.e+00, 1.e+05, 1.e+10, 1.e+15, 1.e+20])")
         assert_equal(repr(wp), "array([1.234e+001, 1.000e+002, 1.000e+123])")
+        assert_equal(repr(c),
+            "array([1.00000000+1.00000000j, 1.12345679+1.12345679j])")
 
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
