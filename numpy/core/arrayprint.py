@@ -274,16 +274,15 @@ def get_printoptions():
 
 
 @contextlib.contextmanager
-def printoptions(*args, **kwds):
+def printoptions(*args, **kwargs):
     """Context manager for setting print options.
 
-    See `set_printoptions` for the full description of available options.
+    Set print options for the scope of the `with` block, and restore the old
+    options at the end. See `set_printoptions` for the full description of
+    available options.
 
     Examples
     --------
-
-    `printoptions` sets print options temporarily, and restores them back
-    at the end of the `with`-block:
 
     >>> with np.printoptions(precision=2):
     ...     print(np.array([2.0])) / 3
@@ -301,7 +300,7 @@ def printoptions(*args, **kwds):
     """
     opts = np.get_printoptions()
     try:
-        np.set_printoptions(*args, **kwds)
+        np.set_printoptions(*args, **kwargs)
         yield np.get_printoptions()
     finally:
         np.set_printoptions(**opts)
