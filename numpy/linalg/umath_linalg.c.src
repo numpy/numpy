@@ -483,35 +483,30 @@ static void init_constants(void)
  */
 
 
-/* this struct contains information about how to linearize in a local buffer
-   a matrix so that it can be used by blas functions.
-   All strides are specified in number of elements (similar to what blas
-   expects)
-
-   dst_row_strides: number of elements between different row. Matrix is
-                    considered row-major
-   dst_column_strides: number of elements between different columns in the
-                    destination buffer
-   rows: number of rows of the matrix
-   columns: number of columns of the matrix
-   src_row_strides: strides needed to access the next row in the source matrix
-   src_column_strides: strides needed to access the next column in the source
-                       matrix
+/*
+ * this struct contains information about how to linearize a matrix in a local
+ * buffer so that it can be used by blas functions.  All strides are specified
+ * in bytes and are converted to elements later in type specific functions.
+ *
+ * rows: number of rows in the matrix
+ * columns: number of columns in the matrix
+ * row_strides: the number bytes between consecutive rows.
+ * column_strides: the number of bytes between consecutive columns.
  */
 typedef struct linearize_data_struct
 {
-  size_t     rows;
-  size_t     columns;
-  ptrdiff_t  row_strides;
-  ptrdiff_t  column_strides;
+  npy_intp rows;
+  npy_intp columns;
+  npy_intp row_strides;
+  npy_intp column_strides;
 } LINEARIZE_DATA_t;
 
 static NPY_INLINE void
 init_linearize_data(LINEARIZE_DATA_t *lin_data,
-                    int rows,
-                    int columns,
-                    ptrdiff_t row_strides,
-                    ptrdiff_t column_strides)
+                    npy_intp rows,
+                    npy_intp columns,
+                    npy_intp row_strides,
+                    npy_intp column_strides)
 {
     lin_data->rows = rows;
     lin_data->columns = columns;
@@ -1159,9 +1154,7 @@ static void
     if (tmp_buff) {
         LINEARIZE_DATA_t lin_data;
         /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m,
-                            (ptrdiff_t)steps[1],
-                            (ptrdiff_t)steps[0]);
+        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
         BEGIN_OUTER_LOOP_3
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
@@ -1206,15 +1199,13 @@ static void
         @typ@ sign;
         @basetyp@ logdet;
         /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m,
-                            (ptrdiff_t)steps[1],
-                            (ptrdiff_t)steps[0]);
+        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
 
         BEGIN_OUTER_LOOP_2
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
                                           (void*)tmp_buff,
-                                          (fortran_int*)(tmp_buff+matrix_size),
+                                          (fortran_int*)(tmp_buff + matrix_size),
                                           &sign,
                                           &logdet);
             *(@typ@ *)args[1] = @TYPE@_det_from_slogdet(sign, logdet);
