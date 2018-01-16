@@ -6,6 +6,7 @@ This is a bugfix release for some problems found since 1.14.0. The most
 important fixes are:
 
 
+important fixes are 
 
 The Python versions supported are 2.7 and 3.4 - 3.6. The Python 3.6 wheels
 available from PIP are built with Python 3.6.2 and should be compatible with
@@ -21,3 +22,4 @@ names contributed a patch for the first time.
 
 Pull requests merged
 ====================
+
