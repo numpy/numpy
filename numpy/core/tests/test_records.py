@@ -104,7 +104,7 @@ class TestFromrecords(object):
 
     def test_recarray_repr(self):
         a = np.array([(1, 0.1), (2, 0.2)],
-                     dtype=[('foo', int), ('bar', float)])
+                     dtype=[('foo', '<i4'), ('bar', '<f8')])
         a = np.rec.array(a)
         assert_equal(
             repr(a),
@@ -112,6 +112,16 @@ class TestFromrecords(object):
             rec.array([(1, 0.1), (2, 0.2)],
                       dtype=[('foo', '<i4'), ('bar', '<f8')])""")
         )
+
+        # make sure non-structured dtypes also show up as rec.array
+        a = np.array(np.ones(4, dtype='f8'))
+        assert_(repr(np.rec.array(a)).startswith('rec.array'))
+
+        # check that the 'np.record' part of the dtype isn't shown
+        a = np.rec.array(np.ones(3, dtype='i4,i4'))
+        assert_equal(repr(a).find('numpy.record'), -1)
+        a = np.rec.array(np.ones(3, dtype='i4'))
+        assert_(repr(a).find('dtype=int32') != -1)
 
     def test_0d_recarray_repr(self):
         # testing infered integer types is unpleasant due to sizeof(int) varying
@@ -213,17 +223,6 @@ class TestFromrecords(object):
             arr2 = rec.view(rec.dtype.fields or rec.dtype, np.ndarray)
             assert_equal(arr2.dtype.type, arr.dtype.type)
             assert_equal(type(arr2), type(arr))
-
-    def test_recarray_repr(self):
-        # make sure non-structured dtypes also show up as rec.array
-        a = np.array(np.ones(4, dtype='f8'))
-        assert_(repr(np.rec.array(a)).startswith('rec.array'))
-
-        # check that the 'np.record' part of the dtype isn't shown
-        a = np.rec.array(np.ones(3, dtype='i4,i4'))
-        assert_equal(repr(a).find('numpy.record'), -1)
-        a = np.rec.array(np.ones(3, dtype='i4'))
-        assert_(repr(a).find('dtype=int32') != -1)
 
     def test_recarray_from_names(self):
         ra = np.rec.array([
