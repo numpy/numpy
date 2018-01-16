@@ -5,6 +5,8 @@
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
 typedef void (PyArray_BinSearchFunc)(const char*, const char*, char*,
                                      npy_intp, npy_intp,
                                      npy_intp, npy_intp, npy_intp,
@@ -16,15 +18,15 @@ typedef int (PyArray_ArgBinSearchFunc)(const char*, const char*,
                                        npy_intp, npy_intp, npy_intp,
                                        PyArrayObject*);
 
-struct binsearch_map {
-    enum NPY_TYPES typenum;
+typedef struct {
+    int typenum;
     PyArray_BinSearchFunc *binsearch[NPY_NSEARCHSIDES];
-};
+} binsearch_map;
 
-struct argbinsearch_map {
-    enum NPY_TYPES typenum;
+typedef struct {
+    int typenum;
     PyArray_ArgBinSearchFunc *argbinsearch[NPY_NSEARCHSIDES];
-};
+} argbinsearch_map;
 
 /**begin repeat
  *
@@ -72,7 +74,7 @@ npy_argbinsearch_@side@(const char *arr, const char *key,
  * #Arg = , Arg#
  */
 
-static struct @arg@binsearch_map _@arg@binsearch_map[] = {
+static @arg@binsearch_map _@arg@binsearch_map[] = {
     /* If adding new types, make sure to keep them ordered by type num */
     /**begin repeat1
      *
@@ -100,10 +102,9 @@ static PyArray_@Arg@BinSearchFunc *gen@arg@binsearch_map[] = {
 static NPY_INLINE PyArray_@Arg@BinSearchFunc*
 get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 {
-    static npy_intp num_funcs = sizeof(_@arg@binsearch_map) /
-                                sizeof(_@arg@binsearch_map[0]);
+    npy_intp nfuncs = ARRAY_SIZE(_@arg@binsearch_map);
     npy_intp min_idx = 0;
-    npy_intp max_idx = num_funcs;
+    npy_intp max_idx = nfuncs;
     int type = dtype->type_num;
 
     if (side >= NPY_NSEARCHSIDES) {
@@ -125,7 +126,8 @@ get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
         }
     }
 
-    if (min_idx < num_funcs && _@arg@binsearch_map[min_idx].typenum == type) {
+    if (min_idx < nfuncs &&
+            _@arg@binsearch_map[min_idx].typenum == type) {
         return _@arg@binsearch_map[min_idx].@arg@binsearch[side];
     }
 
@@ -136,5 +138,7 @@ get_@arg@binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
     return NULL;
 }
 /**end repeat**/
+
+#undef ARRAY_SIZE
 
 #endif
