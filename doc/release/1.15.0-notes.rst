@@ -15,6 +15,13 @@ New functions
 * `np.ma.stack`, the `np.stack` array-joining function generalized to masked
   arrays.
 
+* `np.printoptions`, the context manager which sets print options temporarily
+  for the scope of the ``with`` block::
+
+    >>> with np.printoptions(precision=2):
+    ...     print(np.array([2.0])) / 3
+    [0.67] 
+
 
 Deprecations
 ============
