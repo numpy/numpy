@@ -16,6 +16,9 @@ New functions
   common multiple.
 * `np.ma.stack`, the `np.stack` array-joining function generalized to masked
   arrays.
+* ``quantile`` function, an interface to ``percentile`` without factors of 100
+* ``nanquantile`` function, an interface to ``nanpercentile`` without factors
+  of 100
 
 * `np.printoptions`, the context manager which sets print options temporarily
   for the scope of the ``with`` block::
@@ -114,6 +117,13 @@ This only enables you to compile NumPy for one specific platform at a time.
 Creating a full iOS-compatible NumPy package requires building for the 5
 architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
 combining these 5 compiled builds products into a single "fat" binary.
+
+``np.quantile`` and ``np.nanquantile``
+--------------------------------------
+Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
+rather than percentiles in [0, 100]. ``np.percentile`` is now a thin wrapper
+around ``np.quantile`` with the extra step of dividing by 100.
+
 
 Build system
 ------------
