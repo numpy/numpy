@@ -223,10 +223,14 @@ class record(nt.void):
     __module__ = 'numpy'
 
     def __repr__(self):
-        return self.__str__()
+        if get_printoptions()['legacy'] == '1.13':
+            return self.__str__()
+        return super(record, self).__repr__()
 
     def __str__(self):
-        return str(self.item())
+        if get_printoptions()['legacy'] == '1.13':
+            return str(self.item())
+        return super(record, self).__str__()
 
     def __getattribute__(self, attr):
         if attr in ['setfield', 'getfield', 'dtype']:

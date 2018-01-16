@@ -4,6 +4,7 @@ import sys
 import collections
 import pickle
 import warnings
+import textwrap
 from os import path
 
 import numpy as np
@@ -111,6 +112,22 @@ class TestFromrecords(object):
             rec.array([(1, 0.1), (2, 0.2)],
                       dtype=[('foo', '<i4'), ('bar', '<f8')])""")
         )
+
+    def test_0d_recarray_repr(self):
+        # testing infered integer types is unpleasant due to sizeof(int) varying
+        arr_0d = np.rec.array((np.int32(1), 2.0, np.datetime64('2003')))
+        assert_equal(repr(arr_0d), textwrap.dedent("""\
+            rec.array((1, 2., '2003'),
+                      dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])"""))
+
+        record = arr_0d[()]
+        assert_equal(repr(record), "(1, 2., '2003')")
+        # 1.13 converted to python scalars before the repr
+        try:
+            np.set_printoptions(legacy='1.13')
+            assert_equal(repr(record), '(1, 2.0, datetime.date(2003, 1, 1))')
+        finally:
+            np.set_printoptions(legacy=False)
 
     def test_recarray_from_repr(self):
         a = np.array([(1,'ABC'), (2, "DEF")],
