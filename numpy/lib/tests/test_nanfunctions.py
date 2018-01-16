@@ -886,3 +886,39 @@ class TestNanFunctions_Percentile(object):
 
         megamat = np.ones((3, 4, 5, 6))
         assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
+
+
+class TestNanFunctions_Quantile(object):
+    # most of this is already tested by TestPercentile
+
+    def test_regression(self):
+        ar = np.arange(24).reshape(2, 3, 4).astype(float)
+        ar[0][1] = np.nan
+
+        assert_equal(np.nanquantile(ar, q=0.5), np.nanpercentile(ar, q=50))
+        assert_equal(np.nanquantile(ar, q=0.5, axis=0),
+                     np.nanpercentile(ar, q=50, axis=0))
+        assert_equal(np.nanquantile(ar, q=0.5, axis=1),
+                     np.nanpercentile(ar, q=50, axis=1))
+        assert_equal(np.nanquantile(ar, q=[0.5], axis=1),
+                     np.nanpercentile(ar, q=[50], axis=1))
+        assert_equal(np.nanquantile(ar, q=[0.25, 0.5, 0.75], axis=1),
+                     np.nanpercentile(ar, q=[25, 50, 75], axis=1))
+
+    def test_basic(self):
+        x = np.arange(8) * 0.5
+        assert_equal(np.nanquantile(x, 0), 0.)
+        assert_equal(np.nanquantile(x, 1), 3.5)
+        assert_equal(np.nanquantile(x, 0.5), 1.75)
+
+    def test_no_p_overwrite(self):
+        # this is worth retesting, beause quantile does not make a copy
+        p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
+        p = p0.copy()
+        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
+
+        p0 = p0.tolist()
+        p = p.tolist()
+        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
