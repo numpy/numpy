@@ -198,7 +198,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose minimum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the minimum is computed. The default is to compute
         the minimum of the flattened array.
     out : ndarray, optional
@@ -306,7 +306,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose maximum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the maximum is computed. The default is to compute
         the maximum of the flattened array.
     out : ndarray, optional
@@ -413,7 +413,7 @@ def nanargmin(a, axis=None):
     ----------
     a : array_like
         Input data.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which to operate.  By default flattened input is used.
 
     Returns
@@ -458,7 +458,7 @@ def nanargmax(a, axis=None):
     ----------
     a : array_like
         Input data.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which to operate.  By default flattened input is used.
 
     Returns
@@ -505,7 +505,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose sum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the sum is computed. The default is to compute the
         sum of the flattened array.
     dtype : data-type, optional
@@ -596,7 +596,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose product is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the product is computed. The default is to compute
         the product of the flattened array.
     dtype : data-type, optional
@@ -661,7 +661,7 @@ def nancumsum(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Input array.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the cumulative sum is computed. The default
         (None) is to compute the cumsum over the flattened array.
     dtype : dtype, optional
@@ -726,7 +726,7 @@ def nancumprod(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Input array.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the cumulative product is computed.  By default
         the input is flattened.
     dtype : dtype, optional
@@ -791,7 +791,7 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose mean is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the means are computed. The default is to compute
         the mean of the flattened array.
     dtype : data-type, optional
@@ -1217,7 +1217,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose variance is desired.  If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the variance is computed.  The default is to compute
         the variance of the flattened array.
     dtype : data-type, optional
@@ -1359,7 +1359,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     ----------
     a : array_like
         Calculate the standard deviation of the non-NaN values.
-    axis : int, optional
+    axis : {int, tuple of int, None}, optional
         Axis along which the standard deviation is computed. The default is
         to compute the standard deviation of the flattened array.
     dtype : dtype, optional
