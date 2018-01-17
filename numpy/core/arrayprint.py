@@ -857,11 +857,9 @@ class FloatingFormat(object):
             self.trim = 'k'
             self.precision = max(len(s) for s in frac_part)
 
-            # for back-compatibility with np 1.13, use two spaces and full prec
+            # for back-compat with np 1.13, use 2 spaces & sign and full prec
             if self._legacy == '1.13':
-                # undo addition of sign pos below
-                will_add_sign = all(finite_vals > 0) and self.sign == ' '
-                self.pad_left = 3 - will_add_sign
+                self.pad_left = 3
             else:
                 # this should be only 1 or 2. Can be calculated from sign.
                 self.pad_left = max(len(s) for s in int_part)
@@ -880,7 +878,11 @@ class FloatingFormat(object):
                                        sign=self.sign == '+')
                     for x in finite_vals)
             int_part, frac_part = zip(*(s.split('.') for s in strs))
-            self.pad_left = max(len(s) for s in int_part)
+            if self._legacy == '1.13':
+                self.pad_left = 1 + max(len(s.lstrip('-').lstrip('+'))
+                                        for s in int_part)
+            else:
+                self.pad_left = max(len(s) for s in int_part)
             self.pad_right = max(len(s) for s in frac_part)
             self.exp_size = -1
 
@@ -892,9 +894,10 @@ class FloatingFormat(object):
                 self.unique = True
                 self.trim = '.'
 
-        # account for sign = ' ' by adding one to pad_left
-        if all(finite_vals >= 0) and self.sign == ' ':
-            self.pad_left += 1
+        if self._legacy != '1.13':
+            # account for sign = ' ' by adding one to pad_left
+            if all(finite_vals >= 0) and self.sign == ' ':
+                    self.pad_left += 1
 
         # if there are non-finite values, may need to increase pad_left
         if data.size != finite_vals.size:
