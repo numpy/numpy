@@ -464,6 +464,8 @@ class TestPrintOptions(object):
         assert_equal(repr(np.array([0.])), 'array([ 0.])')
         assert_equal(repr(c),
             "array([ 1.00000000+1.j        ,  1.12345679+1.12345679j])")
+        # gh-10383
+        assert_equal(str(np.array([-1., 10])), "[ -1.  10.]")
 
         assert_raises(TypeError, np.set_printoptions, wrongarg=True)
 
