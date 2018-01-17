@@ -1590,7 +1590,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     npy_int32 printExponent;
     npy_int32 numDigits, numWholeDigits, has_sign=0;
 
-    npy_int32 maxPrintLen = bufferSize - 1, pos = 0;
+    npy_int32 maxPrintLen = (npy_int32)bufferSize - 1, pos = 0;
 
     /* track the # of digits past the decimal point that have been printed */
     npy_int32 numFractionDigits = 0;
@@ -1637,11 +1637,11 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
             }
         }
         /* insert the decimal point prior to the fraction */
-        else if (numDigits > (npy_uint32)numWholeDigits) {
-            npy_uint32 maxFractionDigits;
+        else if (numDigits > numWholeDigits) {
+            npy_int32 maxFractionDigits;
 
             numFractionDigits = numDigits - numWholeDigits;
-            maxFractionDigits = maxPrintLen - numWholeDigits -1-pos;
+            maxFractionDigits = maxPrintLen - numWholeDigits - 1 - pos;
             if (numFractionDigits > maxFractionDigits) {
                 numFractionDigits = maxFractionDigits;
             }
@@ -1656,19 +1656,20 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     }
     else {
         /* shift out the fraction to make room for the leading zeros */
-        npy_uint32 numFractionZeros = 0;
+        npy_int32 numFractionZeros = 0;
         if (pos + 2 < maxPrintLen) {
-            npy_uint32 maxFractionZeros, digitsStartIdx, maxFractionDigits, i;
+            npy_int32 maxFractionZeros, digitsStartIdx, maxFractionDigits, i;
 
             maxFractionZeros = maxPrintLen - 2 - pos;
-            numFractionZeros = (npy_uint32)-printExponent - 1;
+            numFractionZeros = -(printExponent + 1);
             if (numFractionZeros > maxFractionZeros) {
                 numFractionZeros = maxFractionZeros;
             }
 
             digitsStartIdx = 2 + numFractionZeros;
 
-            /* shift the significant digits right such that there is room for
+            /*
+             * shift the significant digits right such that there is room for
              * leading zeros
              */
             numFractionDigits = numDigits;
@@ -1719,10 +1720,10 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     }
     else if (trim_mode == TrimMode_None &&
             digit_mode != DigitMode_Unique &&
-            precision > (npy_int32)numFractionDigits && pos < maxPrintLen) {
+            precision > numFractionDigits && pos < maxPrintLen) {
         /* add trailing zeros up to precision length */
         /* compute the number of trailing zeros needed */
-        npy_uint32 count = precision - numFractionDigits;
+        npy_int32 count = precision - numFractionDigits;
         if (pos + count > maxPrintLen) {
             count = maxPrintLen - pos;
         }
@@ -1751,7 +1752,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
 
     /* add any whitespace padding to right side */
     if (digits_right >= numFractionDigits) {
-        npy_uint32 count = digits_right - numFractionDigits;
+        npy_int32 count = digits_right - numFractionDigits;
 
         /* in trim_mode DptZeros, if right padding, add a space for the . */
         if (trim_mode == TrimMode_DptZeros && numFractionDigits == 0
@@ -1769,8 +1770,8 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     }
     /* add any whitespace padding to left side */
     if (digits_left > numWholeDigits + has_sign) {
-        npy_uint32 shift = digits_left - (numWholeDigits + has_sign);
-        npy_uint32 count = pos;
+        npy_int32 shift = digits_left - (numWholeDigits + has_sign);
+        npy_int32 count = pos;
 
         if (count + shift > maxPrintLen){
             count = maxPrintLen - shift;
@@ -1781,7 +1782,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
         }
         pos = shift + count;
         for ( ; shift > 0; shift--) {
-            buffer[shift-1] = ' ';
+            buffer[shift - 1] = ' ';
         }
     }
 
@@ -1871,7 +1872,8 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     /* insert the decimal point prior to the fractional number */
     numFractionDigits = numDigits-1;
     if (numFractionDigits > 0 && bufferSize > 1) {
-        npy_uint32 maxFractionDigits = bufferSize-2;
+        npy_int32 maxFractionDigits = (npy_int32)bufferSize - 2;
+
         if (numFractionDigits > maxFractionDigits) {
             numFractionDigits =  maxFractionDigits;
         }
@@ -1905,9 +1907,10 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
         if (precision > (npy_int32)numFractionDigits) {
             char *pEnd;
             /* compute the number of trailing zeros needed */
-            npy_uint32 numZeros = (precision - numFractionDigits);
-            if (numZeros > bufferSize-1) {
-                numZeros = bufferSize-1;
+            npy_int32 numZeros = (precision - numFractionDigits);
+
+            if (numZeros > (npy_int32)bufferSize - 1) {
+                numZeros = (npy_int32)bufferSize - 1;
             }
 
             for (pEnd = pCurOut + numZeros; pCurOut < pEnd; ++pCurOut) {
@@ -1941,7 +1944,7 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
     /* print the exponent into a local buffer and copy into output buffer */
     if (bufferSize > 1) {
         char exponentBuffer[7];
-        npy_uint32 digits[5];
+        npy_int32 digits[5];
         npy_int32 i, exp_size, count;
 
         if (exp_digits > 5) {
@@ -1978,8 +1981,8 @@ FormatScientific (char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
 
         /* copy the exponent buffer into the output */
         count = exp_size + 2;
-        if (count > bufferSize-1) {
-            count = bufferSize-1;
+        if (count > (npy_int32)bufferSize - 1) {
+            count = (npy_int32)bufferSize - 1;
         }
         memcpy(pCurOut, exponentBuffer, count);
         pCurOut += count;
