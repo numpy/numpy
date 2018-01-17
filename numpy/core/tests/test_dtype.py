@@ -316,15 +316,66 @@ class TestRecord(object):
         assert_raises(IndexError, lambda: dt[-3])
 
         assert_raises(TypeError, operator.getitem, dt, 3.0)
-        assert_raises(TypeError, operator.getitem, dt, [])
 
         assert_equal(dt[1], dt[np.int8(1)])
+
+    @pytest.mark.parametrize('align_flag',[False, True])
+    def test_multifield_index(self, align_flag):
+        # indexing with a list produces subfields
+        # the align flag should be preserved
+        dt = np.dtype([
+            (('title', 'col1'), '<U20'), ('A', '<f8'), ('B', '<f8')
+        ], align=align_flag)
+
+        dt_sub = dt[['B', 'col1']]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': ['B', 'col1'],
+                'formats': ['<f8', '<U20'],
+                'offsets': [88, 0],
+                'titles': [None, 'title'],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        dt_sub = dt[['B']]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': ['B'],
+                'formats': ['<f8'],
+                'offsets': [88],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        dt_sub = dt[[]]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': [],
+                'formats': [],
+                'offsets': [],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        assert_raises(TypeError, operator.getitem, dt, ())
+        assert_raises(TypeError, operator.getitem, dt, [1, 2, 3])
+        assert_raises(TypeError, operator.getitem, dt, ['col1', 2])
+        assert_raises(KeyError, operator.getitem, dt, ['fake'])
+        assert_raises(KeyError, operator.getitem, dt, ['title'])
+        assert_raises(ValueError, operator.getitem, dt, ['col1', 'col1'])
 
     def test_partial_dict(self):
         # 'names' is missing
         assert_raises(ValueError, np.dtype,
                 {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
-        
+
 
 class TestSubarray(object):
     def test_single_subarray(self):

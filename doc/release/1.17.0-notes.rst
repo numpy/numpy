@@ -149,6 +149,18 @@ Floating point scalars implement ``as_integer_ratio`` to match the builtin float
 This returns a (numerator, denominator) pair, which can be used to construct a
 `fractions.Fraction`.
 
+structured ``dtype`` objects can be indexed with multiple fields names
+----------------------------------------------------------------------
+``arr.dtype[['a', 'b']]`` now returns a dtype that is equivalent to
+``arr[['a', 'b']].dtype``, for consistency with
+``arr.dtype['a'] == arr['a'].dtype``.
+
+Like the dtype of structured arrays indexed with a list of fields, this dtype
+has the same `itemsize` as the original, but only keeps a subset of the fields.
+
+This means that `arr[['a', 'b']]` and ``arr.view(arr.dtype[['a', 'b']])`` are
+equivalent.
+
 
 Improvements
 ============
@@ -285,5 +297,10 @@ was accidental. The old behavior can be retained with
 ``__array_interface__`` offset now works as documented
 ------------------------------------------------------
 The interface may use an ``offset`` value that was mistakenly ignored.
+
+Structured arrays indexed with non-existent fields raise ``KeyError`` not ``ValueError``
+----------------------------------------------------------------------------------------
+``arr['bad_field']`` on a structured type raises ``KeyError``, for consistency
+with ``dict['bad_field']``.
 
 .. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html
