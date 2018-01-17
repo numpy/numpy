@@ -38,7 +38,7 @@ python:
 matrix:
   include:
     - python: 2.7
-      env: USE_CHROOT=1 ARCH=i386 DIST=zesty PYTHON=2.7
+      env: USE_CHROOT=1 ARCH=i386 DIST=artful PYTHON=2.7
       sudo: true
       dist: trusty
       addons:
