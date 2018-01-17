@@ -706,6 +706,8 @@ def einsum_path(*operands, **kwargs):
         for cnum, char in enumerate(term):
             dim = sh[cnum]
             if char in dimension_dict.keys():
+
+                # For broadcasting cases we always want the largest dim size
                 if dimension_dict[char] == 1:
                     dimension_dict[char] = dim
                 elif dim not in (1, dimension_dict[char]):
@@ -1102,6 +1104,22 @@ def einsum(*operands, **kwargs):
         # Do we need to deal with the output?
         if specified_out and ((num + 1) == len(contraction_list)):
             handle_out = True
+
+        # Handle broadcasting vs BLAS cases
+        if blas and ((1 in tmp_operands[0]) or (1 in tmp_operands[1])):
+
+            # Checks have already been handled
+            input_str, results_index = einsum_str.split('->')
+            input_left, input_right = input_str.split(',')
+
+            left_dims = {dim : size for dim, size in zip(input_left, tmp_operands[0].shape)}
+            right_dims = {dim : size for dim, size in zip(input_right, tmp_operands[1].shape)}
+
+            # If dims do not match we are broadcasting, BLAS off
+            for ind in idx_rm:
+                if left_dims[ind] != right_dims[ind]:
+                    blas = False
+                    break
 
         # Call tensordot
         if blas:
