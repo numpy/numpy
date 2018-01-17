@@ -596,7 +596,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         Element index to partition by. The k-th value of the element
         will be in its final sorted position and all smaller elements
         will be moved before it and all equal or greater elements behind
-        it. The order all elements in the partitions is undefined. If
+        it. The order of all elements in the partitions is undefined. If
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
     axis : int or None, optional
