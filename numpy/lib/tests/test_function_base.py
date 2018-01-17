@@ -1124,6 +1124,33 @@ class TestVectorize(object):
         r2 = np.cos(args)
         assert_array_almost_equal(r1, r2)
 
+    def test_single_return_value_type(self):
+        # The return value of a ufunc and a vectorized ufunc should be identical
+        some_float = 4.0
+        mysqrt = vectorize(np.sqrt)
+        r1 = mysqrt(some_float)
+        r2 = np.sqrt(some_float)
+        assert_equal(r1, r2)
+        assert_equal(type(r1), type(r2))
+
+        add = vectorize(np.add)
+        a = 0.2
+        b = 0.3
+        r1 = add(a, b)
+        r2 = np.add(a, b)
+        assert_equal(r1, r2)
+        assert_equal(type(r1), type(r2))
+
+        class A(np.ndarray):
+            pass
+
+        a = np.array(4.0).view(A)
+        b = np.array(6.0).view(A)
+        r1 = add(a, b)
+        r2 = np.add(a, b)
+        assert_equal(r1, r2)
+        assert_equal(type(r1), type(r2))
+
     def test_keywords(self):
 
         def foo(a, b=1):
