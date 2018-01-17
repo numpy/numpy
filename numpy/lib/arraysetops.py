@@ -135,13 +135,16 @@ def unique(ar, return_index=False, return_inverse=False,
     return_counts : bool, optional
         If True, also return the number of times each unique item appears
         in `ar`.
+
         .. versionadded:: 1.9.0
+
     axis : int or None, optional
         The axis to operate on. If None, `ar` will be flattened beforehand.
         Otherwise, duplicate items will be removed along the provided axis,
         with all the other axes belonging to the each of the unique elements.
         Object arrays or structured arrays that contain objects are not
         supported if the `axis` kwarg is used.
+
         .. versionadded:: 1.13.0
 
 
@@ -159,6 +162,7 @@ def unique(ar, return_index=False, return_inverse=False,
     unique_counts : ndarray, optional
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
+
         .. versionadded:: 1.9.0
 
     See Also
