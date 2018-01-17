@@ -512,11 +512,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         if ((PyDict_GetItem(fields, name) != NULL)
              || (title
-#if defined(NPY_PY3K)
-                 && PyUString_Check(title)
-#else
-                 && (PyUString_Check(title) || PyUnicode_Check(title))
-#endif
+                 && PyBaseString_Check(title)
                  && (PyDict_GetItem(fields, title) != NULL))) {
 #if defined(NPY_PY3K)
             name = PyUnicode_AsUTF8String(name);
@@ -551,11 +547,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             Py_INCREF(title);
             PyTuple_SET_ITEM(tup, 2, title);
             PyDict_SetItem(fields, name, tup);
-#if defined(NPY_PY3K)
-            if (PyUString_Check(title)) {
-#else
-            if (PyUString_Check(title) || PyUnicode_Check(title)) {
-#endif
+            if (PyBaseString_Check(title)) {
                 if (PyDict_GetItem(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
@@ -1181,11 +1173,7 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(tup);
             goto fail;
         }
-#if defined(NPY_PY3K)
-        if (!PyUString_Check(name)) {
-#else
-        if (!(PyUString_Check(name) || PyUnicode_Check(name))) {
-#endif
+        if (!PyBaseString_Check(name)) {
             PyErr_SetString(PyExc_ValueError,
                     "field names must be strings");
             Py_DECREF(tup);
@@ -1202,11 +1190,7 @@ _convert_from_dict(PyObject *obj, int align)
         PyDict_SetItem(fields, name, tup);
         Py_DECREF(name);
         if (len == 3) {
-#if defined(NPY_PY3K)
-            if (PyUString_Check(title)) {
-#else
-            if (PyUString_Check(title) || PyUnicode_Check(title)) {
-#endif
+            if (PyBaseString_Check(title)) {
                 if (PyDict_GetItem(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
@@ -3821,11 +3805,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         return NULL;
     }
 
-#if defined(NPY_PY3K)
-    if (PyUString_Check(op)) {
-#else
-    if (PyUString_Check(op) || PyUnicode_Check(op)) {
-#endif
+    if (PyBaseString_Check(op)) {
         return _subscript_by_name(self, op);
     }
     else {
