@@ -2121,6 +2121,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
         axes that hold 2-D matrices, and the matrix norms of these matrices
         are computed.  If `axis` is None then either a vector norm (when `x`
         is 1-D) or a matrix norm (when `x` is 2-D) is returned.
+
+        .. versionadded:: 1.8.0
+
     keepdims : bool, optional
         If this is set to True, the axes which are normed over are left in the
         result as dimensions with size one.  With this option the result will
