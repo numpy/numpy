@@ -2033,7 +2033,7 @@ class vectorize(object):
             outputs = ufunc(*inputs)
 
             if ufunc.nout == 1:
-                if iterable(outputs):
+                if np.ndim(outputs) > 0:
                     res = array(outputs, copy=False, subok=True, dtype=otypes[0])
                 else:
                     res = outputs
