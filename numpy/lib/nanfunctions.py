@@ -413,7 +413,7 @@ def nanargmin(a, axis=None):
     ----------
     a : array_like
         Input data.
-    axis : {int, tuple of int, None}, optional
+    axis : int, optional
         Axis along which to operate.  By default flattened input is used.
 
     Returns
@@ -458,7 +458,7 @@ def nanargmax(a, axis=None):
     ----------
     a : array_like
         Input data.
-    axis : {int, tuple of int, None}, optional
+    axis : int, optional
         Axis along which to operate.  By default flattened input is used.
 
     Returns
@@ -661,7 +661,7 @@ def nancumsum(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Input array.
-    axis : {int, tuple of int, None}, optional
+    axis : int, optional
         Axis along which the cumulative sum is computed. The default
         (None) is to compute the cumsum over the flattened array.
     dtype : dtype, optional
@@ -726,7 +726,7 @@ def nancumprod(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Input array.
-    axis : {int, tuple of int, None}, optional
+    axis : int, optional
         Axis along which the cumulative product is computed.  By default
         the input is flattened.
     dtype : dtype, optional
