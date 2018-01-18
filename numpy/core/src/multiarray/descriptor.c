@@ -3381,8 +3381,8 @@ _is_list_of_strings(PyObject *obj)
     return NPY_TRUE;
 }
 
-static PyObject *
-_subscript_by_list_of_strings(PyArray_Descr *self, PyObject *ind)
+NPY_NO_EXPORT PyArray_Descr *
+arraydescr_field_subset_view(PyArray_Descr *self, PyObject *ind)
 {
     int seqlen, i;
     PyObject *fields = NULL;
@@ -3466,7 +3466,7 @@ _subscript_by_list_of_strings(PyArray_Descr *self, PyObject *ind)
     view_dtype->names = names;
     view_dtype->fields = fields;
     view_dtype->flags = self->flags;
-    return (PyObject *)view_dtype;
+    return view_dtype;
 
 fail:
     Py_XDECREF(fields);
@@ -3485,7 +3485,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         return _subscript_by_name(self, op);
     }
     else if (_is_list_of_strings(op)) {
-        return _subscript_by_list_of_strings(self, op);
+        return (PyObject *)arraydescr_field_subset_view(self, op);
     }
     else {
         Py_ssize_t i = PyArray_PyIntAsIntp(op);
