@@ -1513,7 +1513,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyObject *errmsg = PyUString_FromString(
                                        "duplicate field of name ");
                 PyUString_ConcatAndDel(&errmsg, name);
-                PyErr_SetObject(PyExc_KeyError, errmsg);
+                PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
                 Py_DECREF(fields);
                 Py_DECREF(names);
