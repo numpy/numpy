@@ -1602,6 +1602,19 @@ class TestTrapz(object):
         mr = trapz(my, mx)
         assert_almost_equal(mr, r)
 
+    def test_trapz_non_sorted(self):
+        # check that trapz works on un-sorted arrays.
+        v1 = trapz([1, 2, 3], [1, 2, 3])
+        v2 = trapz([1, 3, 2], [1, 3, 2])
+        assert_almost_equal(v2, v1)
+
+        a = np.arange(27.).reshape(3, 3, 3)
+        b = np.copy(a)
+        b[:, 0, :] = a[:, 1, :]
+        b[:, 1, :] = a[:, 2, :]
+        b[:, 2, :] = a[:, 0, :]
+        assert_almost_equal(trapz(b, b, axis=1), trapz(a, a, axis=1))
+
 
 class TestSinc(object):
 
