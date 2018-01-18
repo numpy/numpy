@@ -3712,19 +3712,34 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     array([ 2.,  8.])
 
     """
+    def _argsort_indices(a, axis=-1):
+        """
+        Like argsort, but returns an index suitable for sorting the
+        the original array even if that array is multidimensional
+        # lifted from numpy#6078
+        """
+        a = np.asarray(a)
+        ind = list(np.ix_(*[np.arange(d) for d in a.shape]))
+        ind[axis] = a.argsort(axis)
+        return tuple(ind)
+
     y = asanyarray(y)
     if x is None:
         d = dx
     else:
         x = asanyarray(x)
+
         if x.ndim == 1:
-            d = diff(x)
-            # reshape to correct shape
             shape = [1]*y.ndim
-            shape[axis] = d.shape[0]
-            d = d.reshape(shape)
-        else:
-            d = diff(x, axis=axis)
+            shape[axis] = x.shape[0]
+            x = np.copy(x).reshape(shape)
+
+        x, y = np.broadcast_arrays(x, y)
+        idxs = _argsort_indices(x, axis)
+        y = y[idxs]
+        x = x[idxs]
+        d = diff(x, axis=axis)
+
     nd = y.ndim
     slice1 = [slice(None)]*nd
     slice2 = [slice(None)]*nd
