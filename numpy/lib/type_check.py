@@ -386,11 +386,12 @@ def nan_to_num(x, copy=True):
     """
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
+    isscalar = (x.ndim == 0)
+
     if not issubclass(xtype, _nx.inexact):
-        return x
+        return asscalar(x) if isscalar else x
 
     iscomplex = issubclass(xtype, _nx.complexfloating)
-    isscalar = (x.ndim == 0)
 
     x = x[None] if isscalar else x
     dest = (x.real, x.imag) if iscomplex else (x,)
@@ -579,7 +580,7 @@ def common_type(*arrays):
     an integer array, the minimum precision type that is returned is a
     64-bit floating point dtype.
 
-    All input arrays except int64 and uint64 can be safely cast to the 
+    All input arrays except int64 and uint64 can be safely cast to the
     returned dtype without loss of information.
 
     Parameters
