@@ -618,7 +618,7 @@ def union1d(ar1, ar2):
     >>> reduce(np.union1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
     array([1, 2, 3, 4, 6])
     """
-    return unique(np.concatenate((ar1, ar2)))
+    return unique(np.concatenate((ar1, ar2), axis=None))
 
 def setdiff1d(ar1, ar2, assume_unique=False):
     """
