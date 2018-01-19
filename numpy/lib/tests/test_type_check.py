@@ -380,17 +380,17 @@ class TestNanToNum(object):
     def test_integer(self):
         vals = nan_to_num(1)
         assert_all(vals == 1)
-        assert_equal(type(vals), int)
+        assert_equal(type(vals), np.int_)
 
     def test_float(self):
         vals = nan_to_num(1.0)
         assert_all(vals == 1.0)
-        assert_equal(type(vals), np.float64)
+        assert_equal(type(vals), np.float_)
 
     def test_complex_good(self):
         vals = nan_to_num(1+1j)
         assert_all(vals == 1+1j)
-        assert_equal(type(vals), np.complex128)
+        assert_equal(type(vals), np.complex_)
 
     def test_complex_bad(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -399,7 +399,7 @@ class TestNanToNum(object):
         vals = nan_to_num(v)
         # !! This is actually (unexpectedly) zero
         assert_all(np.isfinite(vals))
-        assert_equal(type(vals), np.complex128)
+        assert_equal(type(vals), np.complex_)
 
     def test_complex_bad2(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -407,7 +407,7 @@ class TestNanToNum(object):
             v += np.array(-1+1.j)/0.
         vals = nan_to_num(v)
         assert_all(np.isfinite(vals))
-        assert_equal(type(vals), np.complex128)
+        assert_equal(type(vals), np.complex_)
         # Fixme
         #assert_all(vals.imag > 1e10)  and assert_all(np.isfinite(vals))
         # !! This is actually (unexpectedly) positive
