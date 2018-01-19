@@ -330,7 +330,7 @@ def _getmaxmin(t):
 
 def nan_to_num(x, copy=True):
     """
-    Replace nan with zero and inf with large finite numbers.
+    Replace NaN with zero and infinity with large finite numbers.
 
     If `x` is inexact, NaN is replaced by zero, and infinity and -infinity
     replaced by the respectively largest and most negative finite floating
@@ -343,7 +343,7 @@ def nan_to_num(x, copy=True):
 
     Parameters
     ----------
-    x : array_like
+    x : scalar or array_like
         Input data.
     copy : bool, optional
         Whether to create a copy of `x` (True) or to replace values
@@ -374,6 +374,12 @@ def nan_to_num(x, copy=True):
 
     Examples
     --------
+    >>> np.nan_to_num(np.inf)
+    1.7976931348623157e+308
+    >>> np.nan_to_num(-np.inf)
+    -1.7976931348623157e+308
+    >>> np.nan_to_num(np.nan)
+    0.0
     >>> x = np.array([np.inf, -np.inf, np.nan, -128, 128])
     >>> np.nan_to_num(x)
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000,
