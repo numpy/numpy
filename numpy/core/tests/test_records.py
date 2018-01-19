@@ -124,8 +124,7 @@ class TestFromrecords(object):
         assert_(repr(a).find('dtype=int32') != -1)
 
     def test_0d_recarray_repr(self):
-        # testing infered integer types is unpleasant due to sizeof(int) varying
-        arr_0d = np.rec.array((np.int32(1), 2.0, np.datetime64('2003')))
+        arr_0d = np.rec.array((1, 2.0, '2003'), dtype='<i4,<f8,<M8[Y]')
         assert_equal(repr(arr_0d), textwrap.dedent("""\
             rec.array((1, 2., '2003'),
                       dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])"""))

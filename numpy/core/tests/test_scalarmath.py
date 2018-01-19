@@ -4,6 +4,7 @@ import sys
 import warnings
 import itertools
 import operator
+import platform
 
 import numpy as np
 from numpy.testing import (
@@ -420,6 +421,7 @@ class TestConversion(object):
             assert_raises(OverflowError, x.__int__)
             assert_equal(len(sup.log), 1)
 
+    @dec.knownfailureif(platform.machine().startswith("ppc64"))
     @dec.skipif(np.finfo(np.double) == np.finfo(np.longdouble))
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,

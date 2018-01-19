@@ -40,7 +40,7 @@ class TestBuiltin(object):
                 assert_(dt.byteorder != dt2.byteorder, "bogus test")
                 assert_dtype_equal(dt, dt2)
             else:
-                self.assertTrue(dt.byteorder != dt3.byteorder, "bogus test")
+                assert_(dt.byteorder != dt3.byteorder, "bogus test")
                 assert_dtype_equal(dt, dt3)
 
     def test_equivalent_dtype_hashing(self):
