@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- encoding:utf-8 -*-
 """
-Script to generate contribor and pull request lists
+Script to generate contributor and pull request lists
 
 This script generates contributor and pull request lists for release
-announcements using Github v3 protocol. Use requires an authentication token in
+changelogs using Github v3 protocol. Use requires an authentication token in
 order to have sufficient bandwidth, you can get one following the directions at
 `<https://help.github.com/articles/creating-an-access-token-for-command-line-use/>_
 Don't add any scope, as the default is read access to public information. The
@@ -28,9 +28,9 @@ Some code was copied from scipy `tools/gh_list.py` and `tools/authors.py`.
 Examples
 --------
 
-From the bash command line with $GITHUB token.
+From the bash command line with $GITHUB token::
 
-    $ ./tools/announce $GITHUB v1.11.0..v1.11.1 > announce.rst
+    $ ./tools/announce $GITHUB v1.13.0..v1.14.0 > 1.14.0-changelog.rst
 
 """
 from __future__ import print_function, division
