@@ -28,7 +28,7 @@ class TestArrayRepr(object):
             '     [3, 4]])')
 
         # two dimensional with flexible dtype
-        xstruct = np.ones((2,2), dtype=[('a', 'i4')]).view(sub)
+        xstruct = np.ones((2,2), dtype=[('a', '<i4')]).view(sub)
         assert_equal(repr(xstruct),
             "sub([[(1,), (1,)],\n"
             "     [(1,), (1,)]], dtype=[('a', '<i4')])"
@@ -362,13 +362,14 @@ class TestPrintOptions(object):
 
     def test_0d_arrays(self):
         unicode = type(u'')
-        assert_equal(unicode(np.array(u'café', np.unicode_)), u'café')
+
+        assert_equal(unicode(np.array(u'café', '<U4')), u'café')
 
         if sys.version_info[0] >= 3:
-            assert_equal(repr(np.array('café', np.unicode_)),
+            assert_equal(repr(np.array('café', '<U4')),
                          "array('café', dtype='<U4')")
         else:
-            assert_equal(repr(np.array(u'café', np.unicode_)),
+            assert_equal(repr(np.array(u'café', '<U4')),
                          "array(u'caf\\xe9', dtype='<U4')")
         assert_equal(str(np.array('test', np.str_)), 'test')
 
@@ -477,7 +478,7 @@ class TestPrintOptions(object):
         repr(np.array([1e4, 0.1], dtype='f2'))
 
     def test_sign_spacing_structured(self):
-        a = np.ones(2, dtype='f,f')
+        a = np.ones(2, dtype='<f,<f')
         assert_equal(repr(a),
             "array([(1., 1.), (1., 1.)], dtype=[('f0', '<f4'), ('f1', '<f4')])")
         assert_equal(repr(a[0]), "(1., 1.)")
