@@ -423,6 +423,7 @@ gentype_format(PyObject *self, PyObject *args)
 
 /**begin repeat
  * #name = half, float, double, longdouble#
+ * #Name = Half, Float, Double, LongDouble#
  * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
  * #type = npy_half, npy_float, npy_double, npy_longdouble#
  * #suff = h, f, d, l#
@@ -434,12 +435,12 @@ format_@name@(@type@ val, npy_bool scientific,
               int pad_left, int pad_right, int exp_digits)
 {
     if (scientific) {
-        return Dragon4_Scientific_AnySize(&val, sizeof(@type@),
+        return Dragon4_Scientific_@Name@(&val,
                         DigitMode_Unique, precision,
                         sign, trim, pad_left, exp_digits);
     }
     else {
-        return Dragon4_Positional_AnySize(&val, sizeof(@type@),
+        return Dragon4_Positional_@Name@(&val,
                         DigitMode_Unique, CutoffMode_TotalLength, precision,
                         sign, trim, pad_left, pad_right);
     }
