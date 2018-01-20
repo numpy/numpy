@@ -184,6 +184,7 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
 {
     npy_int64 hx,ihx,ilx;
     npy_uint64 lx;
+    npy_longdouble u;
 
     GET_LDOUBLE_WORDS64(hx, lx, x);
     ihx = hx & 0x7fffffffffffffffLL;      /* |hx| */
@@ -194,7 +195,6 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
         return x; /* signal the nan */
     }
     if(ihx == 0 && ilx == 0) {          /* x == 0 */
-        npy_longdouble u;
         SET_LDOUBLE_WORDS64(x, p, 0ULL);/* return +-minsubnormal */
         u = x * x;
         if (u == x) {
@@ -204,7 +204,6 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
         }
     }
 
-    npy_longdouble u;
     if(p < 0) { /* p < 0, x -= ulp */
         if((hx==0xffefffffffffffffLL)&&(lx==0xfc8ffffffffffffeLL))
             return x+x; /* overflow, return -inf */
