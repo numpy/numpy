@@ -452,17 +452,8 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
             # Get long double representation
-            if sys.platform != 'darwin':
-                rep = check_long_double_representation(config_cmd)
-                if rep in ['INTEL_EXTENDED_12_BYTES_LE',
-                           'INTEL_EXTENDED_16_BYTES_LE',
-                           'MOTOROLA_EXTENDED_12_BYTES_BE',
-                           'IEEE_QUAD_LE', 'IEEE_QUAD_BE',
-                           'IEEE_DOUBLE_LE', 'IEEE_DOUBLE_BE',
-                           'DOUBLE_DOUBLE_BE', 'DOUBLE_DOUBLE_LE']:
-                    moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
-                else:
-                    raise ValueError("Unrecognized long double format: %s" % rep)
+            rep = check_long_double_representation(config_cmd)
+            moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
 
             # Py3K check
             if sys.version_info[0] == 3:

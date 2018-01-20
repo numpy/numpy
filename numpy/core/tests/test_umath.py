@@ -2694,7 +2694,7 @@ def test_nextafterf():
 
 @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                     reason="long double is same as double")
-@pytest.mark.skipif(platform.machine().startswith("ppc64"),
+@pytest.mark.xfail(condition=platform.machine().startswith("ppc64"),
                     reason="IBM double double")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
@@ -2727,7 +2727,7 @@ def test_spacingf():
 
 @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                     reason="long double is same as double")
-@pytest.mark.skipif(platform.machine().startswith("ppc64"),
+@pytest.mark.xfail(condition=platform.machine().startswith("ppc64"),
                     reason="IBM double double")
 def test_spacingl():
     return _test_spacing(np.longdouble)
