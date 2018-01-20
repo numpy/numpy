@@ -392,11 +392,11 @@ def nan_to_num(x, copy=True):
     """
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
+
     isscalar = (x.ndim == 0)
-    x = x[None] if isscalar else x
 
     if not issubclass(xtype, _nx.inexact):
-        return x[0] if isscalar else x
+        return x[()] if isscalar else x
 
     iscomplex = issubclass(xtype, _nx.complexfloating)
 
@@ -406,7 +406,7 @@ def nan_to_num(x, copy=True):
         _nx.copyto(d, 0.0, where=isnan(d))
         _nx.copyto(d, maxf, where=isposinf(d))
         _nx.copyto(d, minf, where=isneginf(d))
-    return x[0] if isscalar else x
+    return x[()] if isscalar else x
 
 #-----------------------------------------------------------------------------
 
