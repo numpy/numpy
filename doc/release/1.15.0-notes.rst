@@ -101,5 +101,11 @@ Change to simd.inc.src to use AVX2 or AVX512 at compile time. Solving the gap
 that if compile numpy for avx2 (or 512) with -march=native, still get the SSE
 code for the simd functions even though rest of the code gets AVX2.
 
+``nan_to_num`` always returns scalars when receiving scalar inputs
+------------------------------------------------------------------
+`nan_to_num` works with both scalars and arrays. However, there was a corner
+case of receiving an integer number and returning an array as result. Now, the
+function works consistently.
+
 Changes
 =======
