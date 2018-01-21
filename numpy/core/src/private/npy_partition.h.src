@@ -24,8 +24,9 @@
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>
 
-#define NPY_MAX_PIVOT_STACK 50
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
+#define NPY_MAX_PIVOT_STACK 50
 
 /**begin repeat
  *
@@ -56,7 +57,7 @@ NPY_VISIBILITY_HIDDEN int aintroselect_@suff@(@type@ *v, npy_intp* tosort, npy_i
 /**end repeat**/
 
 typedef struct {
-    enum NPY_TYPES typenum;
+    int typenum;
     PyArray_PartitionFunc * part[NPY_NSELECTS];
     PyArray_ArgPartitionFunc * argpart[NPY_NSELECTS];
 } part_map;
@@ -92,10 +93,12 @@ static NPY_INLINE PyArray_PartitionFunc *
 get_partition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;
+    npy_intp ntypes = ARRAY_SIZE(_part_map);
+
     if (which >= NPY_NSELECTS) {
         return NULL;
     }
-    for (i = 0; i < sizeof(_part_map)/sizeof(_part_map[0]); i++) {
+    for (i = 0; i < ntypes; i++) {
         if (type == _part_map[i].typenum) {
             return _part_map[i].part[which];
         }
@@ -108,15 +111,19 @@ static NPY_INLINE PyArray_ArgPartitionFunc *
 get_argpartition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;
+    npy_intp ntypes = ARRAY_SIZE(_part_map);
+
     if (which >= NPY_NSELECTS) {
         return NULL;
     }
-    for (i = 0; i < sizeof(_part_map)/sizeof(_part_map[0]); i++) {
+    for (i = 0; i < ntypes; i++) {
         if (type == _part_map[i].typenum) {
             return _part_map[i].argpart[which];
         }
     }
     return NULL;
 }
+
+#undef ARRAY_SIZE
 
 #endif
