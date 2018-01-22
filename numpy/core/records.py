@@ -666,6 +666,8 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList, dtype=object)
+        if obj.shape == (0,):
+            return sb.array([], dtype=sb.dtype((record, [])))
         arrlist = [sb.array(obj[..., i].tolist()) for i in range(obj.shape[-1])]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned, byteorder=byteorder)

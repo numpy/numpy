@@ -33,6 +33,9 @@ class TestFromrecords(object):
         dtype = [('a', float), ('b', float)]
         r = np.rec.fromrecords([], dtype=dtype)
         assert_equal(r.shape, (0,))
+        r = np.rec.fromrecords([])
+        assert_equal(r.shape, (0,))
+        assert_equal(r.dtype.names, ())
 
     def test_fromrecords_2d(self):
         data = [
