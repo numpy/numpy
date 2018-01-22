@@ -7259,8 +7259,7 @@ logical sisnan_(real *sin__)
 /* Subroutine */ int slabad_(real *small, real *large)
 {
     /* Builtin functions */
-    real r_lg10(real *);
-    double sqrt(doublereal);
+    double r_lg10(real *), sqrt(doublereal);
 
 
 /*
