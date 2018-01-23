@@ -19,28 +19,34 @@ def _disables_array_ufunc(obj):
 
 def _binary_method(ufunc, name):
     """Implement a forward binary method with a ufunc, e.g., __add__."""
+
     def func(self, other):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(self, other)
+
     func.__name__ = '__{}__'.format(name)
     return func
 
 
 def _reflected_binary_method(ufunc, name):
     """Implement a reflected binary method with a ufunc, e.g., __radd__."""
+
     def func(self, other):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(other, self)
+
     func.__name__ = '__r{}__'.format(name)
     return func
 
 
 def _inplace_binary_method(ufunc, name):
     """Implement an in-place binary method with a ufunc, e.g., __iadd__."""
+
     def func(self, other):
         return ufunc(self, other, out=(self,))
+
     func.__name__ = '__i{}__'.format(name)
     return func
 
@@ -54,9 +60,33 @@ def _numeric_methods(ufunc, name):
 
 def _unary_method(ufunc, name):
     """Implement a unary special method with a ufunc."""
+
     def func(self):
         return ufunc(self)
-    func.__name__ = '__{}__'.format(name)
+
+    func.__name__ = name
+    return func
+
+
+def _reduction_method(ufunc, name):
+    """Implement a reduction method with a ufunc."""
+
+    def func(self, *args, **kwargs):
+        return ufunc.reduce(self, *args, **kwargs)
+
+    func.__name__ = name
+
+    return func
+
+
+def _accumulation_method(ufunc, name):
+    """Implement a reduction method with a ufunc."""
+
+    def func(self, *args, **kwargs):
+        return ufunc.accumulate(self, *args, **kwargs)
+
+    func.__name__ = name
+
     return func
 
 
@@ -81,7 +111,9 @@ class NDArrayOperatorsMixin(object):
     class that simply wraps a NumPy array and ensures that the result of any
     arithmetic operation is also an ``ArrayLike`` object::
 
-        class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
+        class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin,
+                        np.lib.mixins.NDArrayReductionsMixin,
+                        np.lib.mixins.NDArrayAccumulationsMixin):
             def __init__(self, value):
                 self.value = np.asarray(value)
 
@@ -179,3 +211,45 @@ class NDArrayOperatorsMixin(object):
     __pos__ = _unary_method(um.positive, 'pos')
     __abs__ = _unary_method(um.absolute, 'abs')
     __invert__ = _unary_method(um.invert, 'invert')
+
+
+class NDArrayReductionsMixin(object):
+    """
+    Mixin defining all array reduction methods using __array_ufunc__.
+
+    This class implements methods for the reductions supported by ``ndarray``,
+    including ``sum``, ``min``, ``any``, etc.
+
+    It is useful for writing classes that do not inherit from `numpy.ndarray`,
+    but that should support reductions like arrays as described in :ref:`A
+    Mechanism for Overriding Ufuncs <neps.ufunc-overrides>`.
+    """
+    # Sum
+    sum = _reduction_method(um.add, 'sum')
+
+    # Product
+    prod = _reduction_method(um.multiply, 'prod')
+
+    # Min/max
+    min = _reduction_method(um.minimum, 'min')
+    max = _reduction_method(um.maximum, 'max')
+
+    # Any/all
+    any = _reduction_method(um.logical_or, 'any')
+    all = _reduction_method(um.logical_and, 'all')
+
+
+class NDArrayAccumulationsMixin(object):
+    """
+    Mixin defining all array accumulation methods using __array_ufunc__.
+
+    This class implements methods for the accumulations supported by ``ndarray``,
+    including ``cumsum`` and ``cumprod``.
+
+    It is useful for writing classes that do not inherit from `numpy.ndarray`,
+    but that should support accumulations like arrays as described in :ref:`A
+    Mechanism for Overriding Ufuncs <neps.ufunc-overrides>`.
+    """
+    # Accumulations here.
+    cumsum = _accumulation_method(um.add, 'cumsum')
+    cumprod = _accumulation_method(um.multiply, 'cumprod')

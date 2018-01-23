@@ -3,12 +3,12 @@ from __future__ import division, absolute_import, print_function
 import numbers
 import operator
 import sys
+import itertools
 
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises
-    )
-
+)
 
 PY2 = sys.version_info.major < 3
 
@@ -16,7 +16,9 @@ PY2 = sys.version_info.major < 3
 # NOTE: This class should be kept as an exact copy of the example from the
 # docstring for NDArrayOperatorsMixin.
 
-class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
+class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin,
+                np.lib.mixins.NDArrayReductionsMixin,
+                np.lib.mixins.NDArrayAccumulationsMixin):
     def __init__(self, value):
         self.value = np.asarray(value)
 
@@ -88,7 +90,6 @@ _ALL_BINARY_OPERATORS = [
     operator.mul,
     operator.truediv,
     operator.floordiv,
-    # TODO: test div on Python 2, only
     operator.mod,
     divmod,
     pow,
@@ -98,6 +99,24 @@ _ALL_BINARY_OPERATORS = [
     operator.xor,
     operator.or_,
 ]
+
+_ALL_REDUCTIONS = [
+    'sum',
+    'prod',
+    'min',
+    'max',
+    'any',
+    'all',
+]
+
+_ALL_ACCUMULATIONS = [
+    'cumsum',
+    'cumprod',
+]
+
+# operator.div is only available in Python 2
+if PY2:
+    _ALL_BINARY_OPERATORS.append(operator.div)
 
 
 class TestNDArrayOperatorsMixin(object):
@@ -213,6 +232,64 @@ class TestNDArrayOperatorsMixin(object):
             np.frexp(ArrayLike(2 ** -3)), expected)
         _assert_equal_type_and_value(
             np.frexp(ArrayLike(np.array(2 ** -3))), expected)
+
+
+class TestNDArrayReductionsMixin(object):
+    def test_reductions_simple(self):
+        array = np.array([-1, 0, 1, 2])
+        array_like = ArrayLike(array)
+
+        for reduction in _ALL_REDUCTIONS:
+            expected = wrap_array_like(getattr(array, reduction)())
+            actual = getattr(array_like, reduction)()
+
+            _assert_equal_type_and_value(actual, expected)
+
+    def test_reductions_with_axis(self):
+        array = np.array([[-1, 0, 1, 2],
+                          [1, 0, 1, 0],
+                          [3, 0, 1, 6]])
+        array_like = ArrayLike(array)
+
+        for reduction, axis in itertools.product(_ALL_REDUCTIONS, (0, 1, (0, 1))):
+            expected = wrap_array_like(getattr(array, reduction)(axis=axis))
+            actual = getattr(array_like, reduction)(axis=axis)
+
+            _assert_equal_type_and_value(actual, expected)
+
+    def test_reductions_with_keepdims(self):
+        array = np.array([-1, 0, 1, 2])
+        array_like = ArrayLike(array)
+
+        for reduction, keepdims in itertools.product(_ALL_REDUCTIONS, (True, False)):
+            expected = wrap_array_like(getattr(array, reduction)(keepdims=keepdims))
+            actual = getattr(array_like, reduction)(keepdims=keepdims)
+
+            _assert_equal_type_and_value(actual, expected)
+
+
+class TestNDArrayAccumulationsMixin(object):
+    def test_accumulations_simple(self):
+        array = np.array([-1, 0, 1, 2])
+        array_like = ArrayLike(array)
+
+        for accumulation in _ALL_ACCUMULATIONS:
+            expected = wrap_array_like(getattr(array, accumulation)())
+            actual = getattr(array_like, accumulation)()
+
+            _assert_equal_type_and_value(actual, expected)
+
+    def test_accumulations_with_axis(self):
+        array = np.array([[-1, 0, 1, 2],
+                          [1, 0, 1, 0],
+                          [3, 0, 1, 6]])
+        array_like = ArrayLike(array)
+
+        for accumulation, axis in itertools.product(_ALL_ACCUMULATIONS, (0, 1)):
+            expected = wrap_array_like(getattr(array, accumulation)(axis=axis))
+            actual = getattr(array_like, accumulation)(axis=axis)
+
+            _assert_equal_type_and_value(actual, expected)
 
 
 if __name__ == "__main__":
