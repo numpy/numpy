@@ -519,6 +519,278 @@ ufunc_get_name_cstr(PyUFuncObject *ufunc) {
     return ufunc->name ? ufunc->name : "<unnamed ufunc>";
 }
 
+/**
+ * Performs the task of an extended PyArg_ParseTupleAndKeywords for
+ * ufunc.__call__.
+ *
+ * This handles the variety of ways that an 'out' argument can be passed,
+ * splitting the positional args into input and output argument tuples.
+ * No array conversions happen inside this function.
+ *
+ * All returned PyObject* values are new references
+ */
+static int
+get_raw_ufunc_arguments(
+        /* input ufunc and arguments */
+        PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
+        /* input and output tuples */
+        PyObject **in_op,
+        PyObject **out_op,
+        /* keyword arguments */
+        NPY_ORDER *out_order,
+        NPY_CASTING *out_casting,
+        PyObject **out_extobj,
+        PyObject **out_typetup,
+        int *out_subok,
+        PyObject **out_wheremask)
+{
+    int i, nargs;
+    int nin = ufunc->nin;
+    int nout = ufunc->nout;
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
+
+    *out_extobj = NULL;
+    *out_typetup = NULL;
+    if (out_wheremask != NULL) {
+        *out_wheremask = NULL;
+    }
+
+    /* Check number of arguments */
+    nargs = (int) PyTuple_Size(args);
+    if ((nargs < nin) || (nargs > ufunc->nargs)) {
+        PyErr_SetString(PyExc_ValueError, "invalid number of arguments");
+        return -1;
+    }
+
+    /* Get input arguments */
+    *in_op = PyTuple_New(nin);
+    if (*in_op == NULL){
+        goto fail;
+    }
+    for (i = 0; i < nin; ++i) {
+        PyObject *obj = PyTuple_GET_ITEM(args, i);
+        Py_INCREF(obj);
+        PyTuple_SET_ITEM(*in_op, i, obj);
+    }
+
+    *out_op = PyTuple_New(nin);
+    if (*out_op == NULL) {
+        goto fail;
+    }
+
+    /* Get positional output arguments */
+    for (i = nin; i < nargs; ++i) {
+        PyObject *obj = PyTuple_GET_ITEM(args, i);
+        Py_INCREF(obj);
+        PyTuple_SET_ITEM(*out_op, i - nin, obj);
+    }
+    for (i = nargs; i < nin + nout; ++i) {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(*out_op, i - nin, Py_None);
+    }
+    /*
+     * Get keyword output and other arguments.
+     * Raise an error if anything else is present in the
+     * keyword dictionary.
+     */
+    if (kwds != NULL) {
+        int has_sig = 0;
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(kwds, &pos, &key, &value)) {
+            Py_ssize_t length = 0;
+            char *str = NULL;
+            int bad_arg = 1;
+
+#if defined(NPY_PY3K)
+            {
+                PyObject *str_key_obj = NULL;
+                str_key_obj = PyUnicode_AsASCIIString(key);
+                if (str_key_obj != NULL) {
+                    key = str_key_obj;
+                    Py_DECREF(str_key_obj);
+                }
+            }
+#endif
+
+            if (PyBytes_AsStringAndSize(key, &str, &length) < 0) {
+                PyErr_Clear();
+                PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
+                goto fail;
+            }
+
+            switch (str[0]) {
+                case 'c':
+                    /* Provides a policy for allowed casting */
+                    if (strcmp(str, "casting") == 0) {
+                        if (!PyArray_CastingConverter(value, out_casting)) {
+                            goto fail;
+                        }
+                        bad_arg = 0;
+                    }
+                    break;
+                case 'd':
+                    /* Another way to specify 'sig' */
+                    if (strcmp(str, "dtype") == 0) {
+                        /* Allow this parameter to be None */
+                        PyArray_Descr *dtype;
+                        if (!PyArray_DescrConverter2(value, &dtype)) {
+                            goto fail;
+                        }
+                        if (dtype != NULL) {
+                            if (*out_typetup != NULL) {
+                                PyErr_SetString(PyExc_RuntimeError,
+                                    "cannot specify both 'sig' and 'dtype'");
+                                goto fail;
+                            }
+                            *out_typetup = Py_BuildValue("(N)", dtype);
+                        }
+                        bad_arg = 0;
+                    }
+                    break;
+                case 'e':
+                    /*
+                     * Overrides the global parameters buffer size,
+                     * error mask, and error object
+                     */
+                    if (strcmp(str, "extobj") == 0) {
+                        Py_INCREF(value);
+                        *out_extobj = value;
+                        bad_arg = 0;
+                    }
+                    break;
+                case 'o':
+                    /*
+                     * Output arrays may be specified as a keyword argument,
+                     * either as a single array or None for single output
+                     * ufuncs, or as a tuple of arrays and Nones.
+                     */
+                    if (strcmp(str, "out") == 0) {
+                        if (nargs > nin) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "cannot specify 'out' as both a "
+                                    "positional and keyword argument");
+                            goto fail;
+                        }
+                        if (PyTuple_CheckExact(value)) {
+                            if (PyTuple_GET_SIZE(value) != nout) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "The 'out' tuple must have exactly "
+                                        "one entry per ufunc output");
+                                goto fail;
+                            }
+                            Py_DECREF(*out_op);
+                            *out_op = value;
+                            Py_INCREF(value);
+                        }
+                        else if (nout == 1) {
+                            /* Can be an array if it only has one output */
+                            Py_INCREF(value);
+                            PyTuple_SET_ITEM(*out_op, 0, value);
+                        }
+                        /*
+                         * If the deprecated behavior is ever removed,
+                         * remote this branch of this if-else
+                         */
+                        else if (PyArray_Check(value) || value == Py_None) {
+                            if (DEPRECATE(
+                                    "passing a single array to the "
+                                    "'out' keyword argument of a "
+                                    "ufunc with\n"
+                                    "more than one output will "
+                                    "result in an error in the "
+                                    "future") < 0) {
+                                /* The future error message */
+                                PyErr_SetString(PyExc_TypeError,
+                                    "'out' must be a tuple of arrays");
+                                goto fail;
+                            }
+                            Py_INCREF(value);
+                            PyTuple_SET_ITEM(*out_op, 0, value);
+                        }
+                        else {
+                            PyErr_SetString(PyExc_TypeError,
+                                "'out' must be a tuple of arrays");
+                            goto fail;
+                        }
+                        bad_arg = 0;
+                    }
+                    /* Allows the default output layout to be overridden */
+                    else if (strcmp(str, "order") == 0) {
+                        if (!PyArray_OrderConverter(value, out_order)) {
+                            goto fail;
+                        }
+                        bad_arg = 0;
+                    }
+                    break;
+                case 's':
+                    /* Allows a specific function inner loop to be selected */
+                    if (strcmp(str, "sig") == 0 ||
+                            strcmp(str, "signature") == 0) {
+                        if (has_sig == 1) {
+                            PyErr_SetString(PyExc_ValueError,
+                                    "cannot specify both 'sig' and 'signature'");
+                            goto fail;
+                        }
+                        if (*out_typetup != NULL) {
+                            PyErr_SetString(PyExc_RuntimeError,
+                                    "cannot specify both 'sig' and 'dtype'");
+                            goto fail;
+                        }
+                        *out_typetup = value;
+                        Py_INCREF(value);
+                        bad_arg = 0;
+                        has_sig = 1;
+                    }
+                    else if (strcmp(str, "subok") == 0) {
+                        if (!PyBool_Check(value)) {
+                            PyErr_SetString(PyExc_TypeError,
+                                        "'subok' must be a boolean");
+                            goto fail;
+                        }
+                        *out_subok = (value == Py_True);
+                        bad_arg = 0;
+                    }
+                    break;
+                case 'w':
+                    /*
+                     * Provides a boolean array 'where=' mask if
+                     * out_wheremask is supplied.
+                     */
+                    if (out_wheremask != NULL && strcmp(str, "where") == 0) {
+                        *out_wheremask = value;
+                        Py_INCREF(value);
+                        bad_arg = 0;
+                    }
+                    break;
+            }
+
+            if (bad_arg) {
+                char *format = "'%s' is an invalid keyword to ufunc '%s'";
+                PyErr_Format(PyExc_TypeError, format, str, ufunc_name);
+                goto fail;
+            }
+        }
+    }
+
+    return 0;
+
+fail:
+    Py_XDECREF(*in_op);
+    *in_op = NULL;
+    Py_XDECREF(*out_op);
+    *out_op = NULL;
+    Py_XDECREF(*out_extobj);
+    *out_extobj = NULL;
+    Py_XDECREF(*out_typetup);
+    *out_typetup = NULL;
+    if (out_wheremask != NULL) {
+        Py_XDECREF(*out_wheremask);
+        *out_wheremask = NULL;
+    }
+    return -1;
+}
+
 /*
  * Parses the positional and keyword arguments for a generic ufunc call.
  *
@@ -540,65 +812,73 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int i, nargs;
     int nin = ufunc->nin;
     int nout = ufunc->nout;
-    PyObject *obj, *context;
-    PyObject *str_key_obj = NULL;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-    int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
-    int has_sig = 0;
+    PyObject *in_tup;
+    PyObject *out_tup;
+    PyObject *where_obj;
 
-    *out_extobj = NULL;
-    *out_typetup = NULL;
-    if (out_wheremask != NULL) {
-        *out_wheremask = NULL;
-    }
+    int err_notimplemented = 0;
 
-    /* Check number of arguments */
-    nargs = PyTuple_Size(args);
-    if ((nargs < nin) || (nargs > ufunc->nargs)) {
-        PyErr_SetString(PyExc_ValueError, "invalid number of arguments");
+    if (get_raw_ufunc_arguments(
+            ufunc, args, kwds,
+            &in_tup, &out_tup,
+            out_order,
+            out_casting,
+            out_extobj,
+            out_typetup,
+            out_subok,
+            /* only load this argument if requested */
+            out_wheremask == NULL ? NULL : &where_obj) < 0) {
         return -1;
     }
 
-    /* Get input arguments */
+
+    /* Process input arguments */
     for (i = 0; i < nin; ++i) {
-        obj = PyTuple_GET_ITEM(args, i);
+        int type_num;
+        PyObject *obj;
+
+        obj = PyTuple_GET_ITEM(in_tup, i);
 
         if (PyArray_Check(obj)) {
             PyArrayObject *obj_a = (PyArrayObject *)obj;
             out_op[i] = (PyArrayObject *)PyArray_FromArray(obj_a, NULL, 0);
         }
         else {
+            PyObject *context;
             if (!PyArray_IsScalar(obj, Generic)) {
+                PyObject *in_out_tup = PySequence_Concat(in_tup, out_tup);
+                if (in_out_tup == NULL) {
+                    goto fail;
+                }
                 /*
                  * TODO: There should be a comment here explaining what
                  *       context does.
                  */
-                context = Py_BuildValue("OOi", ufunc, args, i);
+                context = Py_BuildValue("OOi", ufunc, in_out_tup, i);
                 if (context == NULL) {
-                    return -1;
+                    goto fail;
                 }
             }
             else {
                 context = NULL;
             }
-            out_op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                    NULL, 0, 0, 0, context);
+            out_op[i] = (PyArrayObject *)PyArray_FromAny(
+                    obj, NULL, 0, 0, 0, context);
             Py_XDECREF(context);
         }
 
         if (out_op[i] == NULL) {
-            return -1;
+            goto fail;
         }
 
         type_num = PyArray_DESCR(out_op[i])->type_num;
-        if (!any_flexible &&
-                PyTypeNum_ISFLEXIBLE(type_num)) {
+        if (!any_flexible && PyTypeNum_ISFLEXIBLE(type_num)) {
             any_flexible = 1;
         }
-        if (!any_object &&
-                PyTypeNum_ISOBJECT(type_num)) {
+        if (!any_object && PyTypeNum_ISOBJECT(type_num)) {
             any_object = 1;
         }
 
@@ -610,15 +890,16 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         if (PyTypeNum_ISFLEXIBLE(type_num) &&
                     !any_flexible_userloops &&
                     ufunc->userloops != NULL) {
-                PyUFunc_Loop1d *funcdata;
-                PyObject *key, *obj;
-                key = PyInt_FromLong(type_num);
+            PyUFunc_Loop1d *funcdata;
+            PyObject *key, *obj;
+            key = PyInt_FromLong(type_num);
             if (key == NULL) {
-                continue;
+                goto fail;
             }
             obj = PyDict_GetItem(ufunc->userloops, key);
             Py_DECREF(key);
             if (obj == NULL) {
+                PyErr_Clear();
                 continue;
             }
             funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
@@ -629,6 +910,14 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 }
                 funcdata = funcdata->next;
             }
+        }
+    }
+
+    /* Process output arguments */
+    for (i = nin; i < nargs; ++i) {
+        PyObject *obj = PyTuple_GET_ITEM(out_tup, i - nin);
+        if (_set_out_array(obj, out_op + i) < 0) {
+            goto fail;
         }
     }
 
@@ -731,10 +1020,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         "elementwise comparison failed; returning scalar "
                         "instead, but in the future will perform elementwise "
                         "comparison") < 0) {
-                    return -1;
+                    goto fail;
                 }
             }
-            return -2;
+            err_notimplemented = 1;
+            goto fail;
         }
         else if (!strcmp(ufunc_name, "less") ||
                  !strcmp(ufunc_name, "less_equal") ||
@@ -743,234 +1033,47 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
 #if !defined(NPY_PY3K)
             if (DEPRECATE("unorderable dtypes; returning scalar but in "
                           "the future this will be an error") < 0) {
-                return -1;
-            }
-#endif
-            return -2;
-        }
-    }
-
-    /* Get positional output arguments */
-    for (i = nin; i < nargs; ++i) {
-        obj = PyTuple_GET_ITEM(args, i);
-        if (_set_out_array(obj, out_op + i) < 0) {
-            return -1;
-        }
-    }
-
-    /*
-     * Get keyword output and other arguments.
-     * Raise an error if anything else is present in the
-     * keyword dictionary.
-     */
-    if (kwds != NULL) {
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        while (PyDict_Next(kwds, &pos, &key, &value)) {
-            Py_ssize_t length = 0;
-            char *str = NULL;
-            int bad_arg = 1;
-
-#if defined(NPY_PY3K)
-            Py_XDECREF(str_key_obj);
-            str_key_obj = PyUnicode_AsASCIIString(key);
-            if (str_key_obj != NULL) {
-                key = str_key_obj;
-            }
-#endif
-
-            if (PyBytes_AsStringAndSize(key, &str, &length) < 0) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
                 goto fail;
             }
+#endif
+            err_notimplemented = 1;
+            goto fail;
+        }
+    }
 
-            switch (str[0]) {
-                case 'c':
-                    /* Provides a policy for allowed casting */
-                    if (strcmp(str, "casting") == 0) {
-                        if (!PyArray_CastingConverter(value, out_casting)) {
-                            goto fail;
-                        }
-                        bad_arg = 0;
-                    }
-                    break;
-                case 'd':
-                    /* Another way to specify 'sig' */
-                    if (strcmp(str, "dtype") == 0) {
-                        /* Allow this parameter to be None */
-                        PyArray_Descr *dtype;
-                        if (!PyArray_DescrConverter2(value, &dtype)) {
-                            goto fail;
-                        }
-                        if (dtype != NULL) {
-                            if (*out_typetup != NULL) {
-                                PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot specify both 'sig' and 'dtype'");
-                                goto fail;
-                            }
-                            *out_typetup = Py_BuildValue("(N)", dtype);
-                        }
-                        bad_arg = 0;
-                    }
-                    break;
-                case 'e':
-                    /*
-                     * Overrides the global parameters buffer size,
-                     * error mask, and error object
-                     */
-                    if (strcmp(str, "extobj") == 0) {
-                        *out_extobj = value;
-                        bad_arg = 0;
-                    }
-                    break;
-                case 'o':
-                    /*
-                     * Output arrays may be specified as a keyword argument,
-                     * either as a single array or None for single output
-                     * ufuncs, or as a tuple of arrays and Nones.
-                     */
-                    if (strcmp(str, "out") == 0) {
-                        if (nargs > nin) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "cannot specify 'out' as both a "
-                                    "positional and keyword argument");
-                            goto fail;
-                        }
-                        if (PyTuple_CheckExact(value)) {
-                            if (PyTuple_GET_SIZE(value) != nout) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "The 'out' tuple must have exactly "
-                                        "one entry per ufunc output");
-                                goto fail;
-                            }
-                            /* 'out' must be a tuple of arrays and Nones */
-                            for(i = 0; i < nout; ++i) {
-                                PyObject *val = PyTuple_GET_ITEM(value, i);
-                                if (_set_out_array(val, out_op+nin+i) < 0) {
-                                    goto fail;
-                                }
-                            }
-                        }
-                        else if (nout == 1) {
-                            /* Can be an array if it only has one output */
-                            if (_set_out_array(value, out_op + nin) < 0) {
-                                goto fail;
-                            }
-                        }
-                        else {
-                            /*
-                             * If the deprecated behavior is ever removed,
-                             * keep only the else branch of this if-else
-                             */
-                            if (PyArray_Check(value) || value == Py_None) {
-                                if (DEPRECATE("passing a single array to the "
-                                              "'out' keyword argument of a "
-                                              "ufunc with\n"
-                                              "more than one output will "
-                                              "result in an error in the "
-                                              "future") < 0) {
-                                    /* The future error message */
-                                    PyErr_SetString(PyExc_TypeError,
-                                        "'out' must be a tuple of arrays");
-                                    goto fail;
-                                }
-                                if (_set_out_array(value, out_op+nin) < 0) {
-                                    goto fail;
-                                }
-                            }
-                            else {
-                                PyErr_SetString(PyExc_TypeError,
-                                    nout > 1 ? "'out' must be a tuple "
-                                               "of arrays" :
-                                               "'out' must be an array or a "
-                                               "tuple of a single array");
-                                goto fail;
-                            }
-                        }
-                        bad_arg = 0;
-                    }
-                    /* Allows the default output layout to be overridden */
-                    else if (strcmp(str, "order") == 0) {
-                        if (!PyArray_OrderConverter(value, out_order)) {
-                            goto fail;
-                        }
-                        bad_arg = 0;
-                    }
-                    break;
-                case 's':
-                    /* Allows a specific function inner loop to be selected */
-                    if (strcmp(str, "sig") == 0 ||
-                            strcmp(str, "signature") == 0) {
-                        if (has_sig == 1) {
-                            PyErr_SetString(PyExc_ValueError,
-                                "cannot specify both 'sig' and 'signature'");
-                            goto fail;
-                        }
-                        if (*out_typetup != NULL) {
-                            PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot specify both 'sig' and 'dtype'");
-                            goto fail;
-                        }
-                        *out_typetup = value;
-                        Py_INCREF(value);
-                        bad_arg = 0;
-                        has_sig = 1;
-                    }
-                    else if (strcmp(str, "subok") == 0) {
-                        if (!PyBool_Check(value)) {
-                            PyErr_SetString(PyExc_TypeError,
-                                        "'subok' must be a boolean");
-                            goto fail;
-                        }
-                        *out_subok = (value == Py_True);
-                        bad_arg = 0;
-                    }
-                    break;
-                case 'w':
-                    /*
-                     * Provides a boolean array 'where=' mask if
-                     * out_wheremask is supplied.
-                     */
-                    if (out_wheremask != NULL && strcmp(str, "where") == 0) {
-                        PyArray_Descr *dtype;
-                        dtype = PyArray_DescrFromType(NPY_BOOL);
-                        if (dtype == NULL) {
-                            goto fail;
-                        }
-                        if (value == Py_True) {
-                            /*
-                             * Optimization: where=True is the same as no
-                             * where argument. This lets us document it as a
-                             * default argument
-                             */
-                            bad_arg = 0;
-                            break;
-                        }
-                        *out_wheremask = (PyArrayObject *)PyArray_FromAny(
-                                                            value, dtype,
-                                                            0, 0, 0, NULL);
-                        if (*out_wheremask == NULL) {
-                            goto fail;
-                        }
-                        bad_arg = 0;
-                    }
-                    break;
+    if (out_wheremask != NULL) {
+        /* Process the where argument, if requested */
+        if (where_obj == Py_True) {
+            /*
+             * Optimization: where=True is the same as no
+             * where argument. This lets us document it as a
+             * default argument
+             */
+        }
+        else if (where_obj != NULL) {
+            PyArray_Descr *dtype;
+            dtype = PyArray_DescrFromType(NPY_BOOL);
+            if (dtype == NULL) {
+                goto fail;
             }
-
-            if (bad_arg) {
-                char *format = "'%s' is an invalid keyword to ufunc '%s'";
-                PyErr_Format(PyExc_TypeError, format, str, ufunc_name);
+            *out_wheremask = (PyArrayObject *)PyArray_FromAny(
+                    where_obj, dtype, 0, 0, 0, NULL);
+            Py_DECREF(where_obj);
+            if (*out_wheremask == NULL) {
                 goto fail;
             }
         }
     }
-    Py_XDECREF(str_key_obj);
 
     return 0;
 
 fail:
-    Py_XDECREF(str_key_obj);
+    /* temporaries */
+    Py_XDECREF(in_tup);
+    Py_XDECREF(out_tup);
+    Py_XDECREF(where_obj);
+
+    /* parsed arguments */
     Py_XDECREF(*out_extobj);
     *out_extobj = NULL;
     Py_XDECREF(*out_typetup);
@@ -979,7 +1082,7 @@ fail:
         Py_XDECREF(*out_wheremask);
         *out_wheremask = NULL;
     }
-    return -1;
+    return err_notimplemented ? -2 : -1;
 }
 
 /*
