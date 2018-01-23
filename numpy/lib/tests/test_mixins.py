@@ -78,6 +78,7 @@ def _assert_equal_type_and_value(result, expected, err_msg=None):
                      getattr(expected.value, 'dtype', None), err_msg=err_msg)
 
 
+# TODO: Test operator.div on Python 2.
 _ALL_BINARY_OPERATORS = [
     operator.lt,
     operator.le,
@@ -114,15 +115,8 @@ _ALL_ACCUMULATIONS = [
     'cumprod',
 ]
 
-# operator.div is only available in Python 2
-if PY2:
-    _ALL_BINARY_OPERATORS.append(operator.div)
-
 
 class TestNDArrayOperatorsMixin(object):
-    import warnings
-    warnings.filterwarnings('ignore', category=DeprecationWarning)
-
     def test_array_like_add(self):
 
         def check(result):
