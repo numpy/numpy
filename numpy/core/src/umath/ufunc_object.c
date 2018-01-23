@@ -185,6 +185,43 @@ _find_array_method(PyObject *args, int nin, PyObject *method_name)
 }
 
 /*
+ * Returns an incref'ed pointer to the proper __array_prepare__/__array_wrap__
+ * method for a ufunc output argument, given the output argument `obj`, and the
+ * method chosen from the inputs `input_method`.
+ */
+static PyObject *
+_get_output_array_method(PyObject *obj, PyObject *method,
+                         PyObject *input_method) {
+    if (obj != Py_None) {
+        PyObject *ometh;
+
+        if (PyArray_CheckExact(obj)) {
+            /*
+             * No need to wrap regular arrays - None signals to not call
+             * wrap/prepare at all
+             */
+            Py_RETURN_NONE;
+        }
+
+        ometh = PyObject_GetAttr(obj, method);
+        if (ometh == NULL) {
+            PyErr_Clear();
+        }
+        else if (!PyCallable_Check(ometh)) {
+            Py_DECREF(ometh);
+        }
+        else {
+            /* Use the wrap/prepare method of the output if it's callable */
+            return ometh;
+        }
+    }
+
+    /* Fall back on the input's wrap/prepare */
+    Py_XINCREF(input_method);
+    return input_method;
+}
+
+/*
  * This function analyzes the input arguments
  * and determines an appropriate __array_prepare__ function to call
  * for the outputs.
@@ -206,13 +243,12 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
 {
     Py_ssize_t nargs;
     int i;
-    PyObject *obj, *prep;
 
     /*
      * Determine the prepping function given by the input arrays
      * (could be NULL).
      */
-    prep = _find_array_method(args, nin, npy_um_str_array_prepare);
+    PyObject *prep = _find_array_method(args, nin, npy_um_str_array_prepare);
     /*
      * For all the output arrays decide what to do.
      *
@@ -228,9 +264,7 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
     nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nout; i++) {
         int j = nin + i;
-        int incref = 1;
-        output_prep[i] = prep;
-        obj = NULL;
+        PyObject *obj = NULL;
         if (j < nargs) {
             obj = PyTuple_GET_ITEM(args, j);
             /* Output argument one may also be in a keyword argument */
@@ -243,27 +277,13 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
             obj = PyDict_GetItem(kwds, npy_um_str_out);
         }
 
-        if (obj != Py_None && obj != NULL) {
-            if (PyArray_CheckExact(obj)) {
-                /* None signals to not call any wrapping */
-                output_prep[i] = Py_None;
-            }
-            else {
-                PyObject *oprep = PyObject_GetAttr(obj,
-                                                   npy_um_str_array_prepare);
-                incref = 0;
-                if (!(oprep) || !(PyCallable_Check(oprep))) {
-                    Py_XDECREF(oprep);
-                    oprep = prep;
-                    incref = 1;
-                    PyErr_Clear();
-                }
-                output_prep[i] = oprep;
-            }
+        if (obj == NULL) {
+            Py_XINCREF(prep);
+            output_prep[i] = prep;
         }
-
-        if (incref) {
-            Py_XINCREF(output_prep[i]);
+        else {
+            output_prep[i] = _get_output_array_method(
+                    obj, npy_um_str_array_prepare, prep);
         }
     }
     Py_XDECREF(prep);
@@ -3894,38 +3914,6 @@ fail:
 }
 
 /*
- * Returns an incref'ed pointer to the proper wrapping object for a
- * ufunc output argument, given the output argument 'out', and the
- * input's wrapping function, 'wrap'.
- */
-static PyObject*
-_get_out_wrap(PyObject *out, PyObject *wrap) {
-    PyObject *owrap;
-
-    if (out == Py_None) {
-        /* Iterator allocated outputs get the input's wrapping */
-        Py_XINCREF(wrap);
-        return wrap;
-    }
-    if (PyArray_CheckExact(out)) {
-        /* None signals to not call any wrapping */
-        Py_RETURN_NONE;
-    }
-    /*
-     * For array subclasses use their __array_wrap__ method, or the
-     * input's wrapping if not available
-     */
-    owrap = PyObject_GetAttr(out, npy_um_str_array_wrap);
-    if (owrap == NULL || !PyCallable_Check(owrap)) {
-        Py_XDECREF(owrap);
-        owrap = wrap;
-        Py_XINCREF(wrap);
-        PyErr_Clear();
-    }
-    return owrap;
-}
-
-/*
  * This function analyzes the input arguments
  * and determines an appropriate __array_wrap__ function to call
  * for the outputs.
@@ -4001,7 +3989,8 @@ handle_out:
             }
             else {
                 /* If the kwarg is not a tuple then it is an array (or None) */
-                output_wrap[0] = _get_out_wrap(obj, wrap);
+                output_wrap[0] = _get_output_array_method(
+                        obj, npy_um_str_array_wrap, wrap);
                 start_idx = 1;
                 nargs = 1;
             }
@@ -4012,8 +4001,8 @@ handle_out:
         int j = idx_offset + i;
 
         if (j < nargs) {
-            output_wrap[i] = _get_out_wrap(PyTuple_GET_ITEM(obj, j),
-                                           wrap);
+            output_wrap[i] = _get_output_array_method(
+                    PyTuple_GET_ITEM(obj, j), npy_um_str_array_wrap, wrap);
         }
         else {
             output_wrap[i] = wrap;
