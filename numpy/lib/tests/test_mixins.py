@@ -120,6 +120,8 @@ if PY2:
 
 
 class TestNDArrayOperatorsMixin(object):
+    import warnings
+    warnings.filterwarnings('ignore', category=DeprecationWarning)
 
     def test_array_like_add(self):
 
