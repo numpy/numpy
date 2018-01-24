@@ -8,6 +8,8 @@
 #include "npy_extint128.h"
 #include "common.h"
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
 IsPythonScalar(PyObject * dummy, PyObject *args)
@@ -1036,7 +1038,7 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
         return NULL;
     }
 
-    if (PyTuple_GET_SIZE(A) > sizeof(terms) / sizeof(diophantine_term_t)) {
+    if (PyTuple_GET_SIZE(A) > (Py_ssize_t)ARRAY_SIZE(terms)) {
         PyErr_SetString(PyExc_ValueError, "too many terms in equation");
         goto fail;
     }

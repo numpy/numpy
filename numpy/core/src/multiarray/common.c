@@ -588,7 +588,7 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
-    unsigned int i;
+    int i;
     npy_uintp aligned;
     npy_uintp alignment = PyArray_DESCR(ap)->alignment;
 
