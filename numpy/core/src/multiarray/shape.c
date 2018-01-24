@@ -339,7 +339,9 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
     }
     else {
         npy_intp i;
-        for (i = 0; i < dtype->elsize / sizeof(zero); i++) {
+        npy_intp nsize = dtype->elsize / sizeof(zero);
+
+        for (i = 0; i < nsize; i++) {
             Py_INCREF(zero);
             NPY_COPY_PYOBJECT_PTR(optr, &zero);
             optr += sizeof(zero);

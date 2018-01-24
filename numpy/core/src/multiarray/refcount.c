@@ -276,7 +276,9 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
     }
     else {
         npy_intp i;
-        for (i = 0; i < dtype->elsize / sizeof(obj); i++) {
+        npy_intp nsize = dtype->elsize / sizeof(obj);
+
+        for (i = 0; i < nsize; i++) {
             Py_XINCREF(obj);
             NPY_COPY_PYOBJECT_PTR(optr, &obj);
             optr += sizeof(obj);
