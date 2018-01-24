@@ -1,9 +1,13 @@
 """Mixin classes for custom array types that don't inherit from ndarray."""
 from __future__ import division, absolute_import, print_function
+import warnings
 
 import sys
 
+from numpy.core import multiarray as mu
 from numpy.core import umath as um
+from numpy.core import numerictypes as nt
+from numpy.core._methods import _count_reduce_items
 
 # Nothing should be exposed in the top-level NumPy module.
 __all__ = []
@@ -111,9 +115,7 @@ class NDArrayOperatorsMixin(object):
     class that simply wraps a NumPy array and ensures that the result of any
     arithmetic operation is also an ``ArrayLike`` object::
 
-        class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin,
-                        np.lib.mixins.NDArrayReductionsMixin,
-                        np.lib.mixins.NDArrayAccumulationsMixin):
+        class ArrayLike(np.lib.mixins.NDArrayArithmeticMethodsMixin):
             def __init__(self, value):
                 self.value = np.asarray(value)
 
@@ -213,16 +215,21 @@ class NDArrayOperatorsMixin(object):
     __invert__ = _unary_method(um.invert, 'invert')
 
 
-class NDArrayReductionsMixin(object):
+class NDArrayArithmeticMethodsMixin(NDArrayOperatorsMixin):
     """
     Mixin defining all array reduction methods using __array_ufunc__.
 
-    This class implements methods for the reductions supported by ``ndarray``,
-    including ``sum``, ``min``, ``any``, etc.
+    This class implements methods for the reductions/accumulations supported by
+    ``ndarray``, including ``sum``, ``min``, ``any``, etc.
+
+    Please note that methods like ``np.sum`` will work just fine even if you do
+    not inherit from this class. This class is provided as a utility class to
+    implement methods in the form of ``YourArray.sum``, and will work so long
+    as you implement ``__array_ufunc__`` appropriately.
 
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
-    but that should support reductions like arrays as described in :ref:`A
-    Mechanism for Overriding Ufuncs <neps.ufunc-overrides>`.
+    but that should support reductions/accumulations like arrays as described
+    in :ref:`A Mechanism for Overriding Ufuncs <neps.ufunc-overrides>`.
     """
     # Sum
     sum = _reduction_method(um.add, 'sum')
@@ -238,18 +245,110 @@ class NDArrayReductionsMixin(object):
     any = _reduction_method(um.logical_or, 'any')
     all = _reduction_method(um.logical_and, 'all')
 
-
-class NDArrayAccumulationsMixin(object):
-    """
-    Mixin defining all array accumulation methods using __array_ufunc__.
-
-    This class implements methods for the accumulations supported by ``ndarray``,
-    including ``cumsum`` and ``cumprod``.
-
-    It is useful for writing classes that do not inherit from `numpy.ndarray`,
-    but that should support accumulations like arrays as described in :ref:`A
-    Mechanism for Overriding Ufuncs <neps.ufunc-overrides>`.
-    """
     # Accumulations here.
     cumsum = _accumulation_method(um.add, 'cumsum')
     cumprod = _accumulation_method(um.multiply, 'cumprod')
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    def mean(self, axis=None, dtype=None, out=None, keepdims=False):
+        is_float16_result = False
+
+        rcount = _count_reduce_items(self, axis)
+        # Make this warning show up first
+        if rcount == 0:
+            warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
+
+        # Cast bool, unsigned int, and int to float64 by default
+        if dtype is None:
+            if issubclass(self.dtype.type, (nt.integer, nt.bool_)):
+                dtype = mu.dtype('f8')
+            elif issubclass(self.dtype.type, nt.float16):
+                dtype = mu.dtype('f4')
+                is_float16_result = True
+
+        ret = self.sum(axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+        if isinstance(ret, mu.ndarray):
+            ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
+            if is_float16_result and out is None:
+                ret = um.positive(ret, dtype=self.dtype)
+        elif hasattr(ret, 'dtype'):
+            if is_float16_result:
+                ret = um.positive(ret / rcount, dtype=self.dtype)
+            else:
+                ret = um.positive(ret / rcount, dtype=ret.dtype)
+        else:
+            ret = ret / rcount
+
+        return ret
+
+    def var(self, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+        if axis is None:
+            axis = tuple(range(self.ndim))
+
+        rcount = _count_reduce_items(self, axis)
+        # Make this warning show up on top.
+        if ddof >= rcount:
+            warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning,
+                          stacklevel=2)
+
+        # Cast bool, unsigned int, and int to float64 by default
+        if dtype is None and issubclass(self.dtype.type, (nt.integer, nt.bool_)):
+            dtype = mu.dtype('f8')
+
+        # Compute the mean.
+        # Note that if dtype is not of inexact type then arraymean will
+        # not be either.
+        arrmean = self.sum(axis=axis, dtype=dtype, keepdims=True)
+        if isinstance(arrmean, mu.ndarray):
+            arrmean = um.true_divide(
+                arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
+        else:
+            arrmean = um.positive(arrmean / rcount, dtype=arrmean.dtype)
+
+        # Compute sum of squared deviations from mean
+        # Note that x may not be inexact and that we need it to be an array,
+        # not a scalar.
+        x = self - arrmean
+        if issubclass(self.dtype.type, nt.complexfloating):
+            x = um.multiply(x, um.conjugate(x), out=x).real
+        else:
+            x = um.multiply(x, x, out=x)
+        ret = x.sum(axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+
+        # Compute degrees of freedom and make sure it is not negative.
+        rcount = max([rcount - ddof, 0])
+
+        # divide by degrees of freedom
+        if isinstance(ret, mu.ndarray):
+            ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
+        elif hasattr(ret, 'dtype'):
+            ret = um.positive(ret / rcount, dtype=ret.dtype)
+        else:
+            ret = ret / rcount
+
+        return ret
+
+    def std(self, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+        ret = self.var(axis=axis, dtype=dtype, out=out, ddof=ddof,
+                       keepdims=keepdims)
+
+        if isinstance(ret, NDArrayArithmeticMethodsMixin):
+            ret = um.sqrt(ret, out=ret)
+        elif hasattr(ret, 'dtype'):
+            um.positive(um.sqrt(ret), dtype=ret.dtype)
+        else:
+            ret = um.sqrt(ret)
+
+        return ret
+
+    def ptp(self, axis=None, out=None, keepdims=False):
+        return um.subtract(
+            um.maximum(self, axis, None, out, keepdims),
+            um.minimum(self, axis, None, None, keepdims),
+            out
+        )

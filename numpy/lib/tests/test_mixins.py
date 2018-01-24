@@ -16,9 +16,7 @@ PY2 = sys.version_info.major < 3
 # NOTE: This class should be kept as an exact copy of the example from the
 # docstring for NDArrayOperatorsMixin.
 
-class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin,
-                np.lib.mixins.NDArrayReductionsMixin,
-                np.lib.mixins.NDArrayAccumulationsMixin):
+class ArrayLike(np.lib.mixins.NDArrayArithmeticMethodsMixin):
     def __init__(self, value):
         self.value = np.asarray(value)
 
@@ -230,7 +228,7 @@ class TestNDArrayOperatorsMixin(object):
             np.frexp(ArrayLike(np.array(2 ** -3))), expected)
 
 
-class TestNDArrayReductionsMixin(object):
+class TestNDArrayArithmeticMethodsMixin(object):
     def test_reductions_simple(self):
         array = np.array([-1, 0, 1, 2])
         array_like = ArrayLike(array)
@@ -263,8 +261,6 @@ class TestNDArrayReductionsMixin(object):
 
             _assert_equal_type_and_value(actual, expected)
 
-
-class TestNDArrayAccumulationsMixin(object):
     def test_accumulations_simple(self):
         array = np.array([-1, 0, 1, 2])
         array_like = ArrayLike(array)
