@@ -901,6 +901,8 @@ def polydiv(u, v):
     for k in range(0, m-n+1):
         d = scale * r[k]
         q[k] = d
+        if iscomplex(d*v.any()):
+            r=r.astype(complex)
         r[k:k+n+1] -= d*v
     while NX.allclose(r[0], 0, rtol=1e-14) and (r.shape[-1] > 1):
         r = r[1:]
