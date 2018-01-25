@@ -1413,6 +1413,57 @@ class TestSpecialMethods(object):
         assert_equal(args[1], a)
         assert_equal(i, 0)
 
+    def test_wrap_and_prepare_out(self):
+        # Calling convention for out should not affect how special methods are
+        # called
+
+        class StoreArrayPrepareWrap(np.ndarray):
+            _wrap_args = None
+            _prepare_args = None
+            def __new__(cls):
+                return np.empty(()).view(cls)
+            def __array_wrap__(self, obj, context):
+                self._wrap_args = context[1]
+                return obj
+            def __array_prepare__(self, obj, context):
+                self._prepare_args = context[1]
+                return obj
+            @property
+            def args(self):
+                # We need to ensure these are fetched at the same time, before
+                # any other ufuncs are calld by the assertions
+                return (self._prepare_args, self._wrap_args)
+            def __repr__(self):
+                return "a"  # for short test output
+
+        def do_test(f_call, f_expected):
+            a = StoreArrayPrepareWrap()
+            f_call(a)
+            p, w = a.args
+            expected = f_expected(a)
+            try:
+                assert_equal(p, expected)
+                assert_equal(w, expected)
+            except AssertionError as e:
+                # assert_equal produces truly useless error messages
+                raise AssertionError("\n".join([
+                    "Bad arguments passed in ufunc call",
+                    " expected:              {}".format(expected),
+                    " __array_prepare__ got: {}".format(p),
+                    " __array_wrap__ got:    {}".format(w)
+                ]))
+
+        # method not on the out argument
+        do_test(lambda a: np.add(a, 0),              lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, None),        lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, out=None),    lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, out=(None,)), lambda a: (a, 0))
+
+        # method on the out argument
+        do_test(lambda a: np.add(0, 0, a),           lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=a),       lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=(a,)),    lambda a: (0, 0, a))
+
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
 
