@@ -369,7 +369,7 @@ Linear Algebra Equivalents
      - conjugate transpose of ``a``
 
    * - ``a * b``
-     - ``a.dot(b)``
+     - ``a.dot(b)`` or ``a@b`` (Python 3.5 or newer)
      - matrix multiply
 
    * - ``a .* b``
