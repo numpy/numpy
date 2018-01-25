@@ -1236,7 +1236,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     >>> np.interp(x, xp, fp, period=360)
     array([7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75])
 
-    Complex interpolation
+    Complex interpolation:
+
     >>> x = [1.5, 4.0]
     >>> xp = [2,3,5]
     >>> fp = [1.0j, 0, 2+3j]
