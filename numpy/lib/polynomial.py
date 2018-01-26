@@ -897,9 +897,7 @@ def polydiv(u, v):
     n = len(v) - 1
     scale = 1. / v[0]
     q = NX.zeros((max(m - n + 1, 1),), w.dtype)
-    r = u.copy()
-    if iscomplex(u).any() or iscomplex(v).any():
-        r=r.astype(complex)
+    r = u.astype(w.dtype)
     for k in range(0, m-n+1):
         d = scale * r[k]
         q[k] = d
