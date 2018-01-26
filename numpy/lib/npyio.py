@@ -798,7 +798,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         strings will be decoded as 'latin1'. The default is whitespace.
     converters : dict, optional
         A dictionary mapping column number to a function that will convert
-        that column to a float.  E.g., if column 0 is a date string:
+        that column to a data-type.  E.g., if column 0 is a date string:
         ``converters = {0: datestr2num}``.  Converters can also be used to
         provide a default value for missing data (but see also `genfromtxt`):
         ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
@@ -806,13 +806,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Skip the first `skiprows` lines; default: 0.
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
-        usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
+        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
 
         .. versionchanged:: 1.11.0
             When a single column has to be read it is possible to use
             an integer instead of a tuple. E.g ``usecols = 3`` reads the
-            fourth column the same way as `usecols = (3,)`` would.
+            fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
@@ -827,7 +827,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Encoding used to decode the inputfile. Does not apply to input streams.
         The special value 'bytes' enables backward compatibility workarounds
         that ensures you receive byte arrays as results if possible and passes
-        latin1 encoded strings to converters. Override this value to receive
+        'latin1' encoded strings to converters. Override this value to receive
         unicode arrays and pass strings as input to converters.  If set to None
         the system default is used. The default value is 'bytes'.
 
