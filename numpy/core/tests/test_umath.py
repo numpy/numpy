@@ -1403,7 +1403,7 @@ class TestSpecialMethods(object):
                 return r
 
         a = with_wrap()
-        expected_args = (a, a, None)
+        expected_args = (a, a)
 
         def check_it(x):
             assert_equal(x.arr, np.zeros(1))
