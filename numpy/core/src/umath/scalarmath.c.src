@@ -1424,7 +1424,11 @@ static PyObject *
 
 #ifndef NPY_PY3K
     /* Invoke long.__int__ to try to downcast */
-    long_result = Py_TYPE(long_result)->tp_as_number->nb_int(long_result);
+    {
+        PyObject *before_downcast = long_result;
+        long_result = Py_TYPE(long_result)->tp_as_number->nb_int(long_result);
+        Py_DECREF(before_downcast);
+    }
 #endif
 
     return long_result;
