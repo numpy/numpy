@@ -3037,12 +3037,8 @@ class MaskedArray(ndarray):
             domain = ufunc_domain.get(func, None)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
-                if len(input_args) > 2:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(reduce(domain, input_args), True)
-                else:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(domain(*input_args), True)
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    d = filled(domain(*input_args), True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
