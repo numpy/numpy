@@ -797,11 +797,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
     converters : dict, optional
-        A dictionary mapping column number to a function that will convert
-        that column to a data-type.  E.g., if column 0 is a date string:
-        ``converters = {0: datestr2num}``.  Converters can also be used to
-        provide a default value for missing data (but see also `genfromtxt`):
-        ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
+        A dictionary mapping column number to a function that will parse the
+        column string into the desired value.  E.g., if column 0 is a date
+        string: ``converters = {0: datestr2num}``.  Converters can also be
+        used to provide a default value for missing data (but see also
+        `genfromtxt`): ``converters = {3: lambda s: float(s.strip() or 0)}``.
+        Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines; default: 0.
     usecols : int or sequence, optional
