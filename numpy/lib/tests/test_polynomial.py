@@ -226,8 +226,8 @@ class TestDocs(object):
         b = np.poly1d([2, 6, 6, 1])
         a = np.poly1d([-1j, (1+2j), -(2+1j), 1])
         q, r = np.polydiv(b, a)
-        assert_equal(q.dtype, np.complex128)
-        assert_equal(r.dtype, np.complex128)
+        assert_equal(q.coeffs.dtype, np.complex128)
+        assert_equal(r.coeffs.dtype, np.complex128)
         assert_equal(q*a + r, b)
 
     def test_poly_coeffs_immutable(self):
