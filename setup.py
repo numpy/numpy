@@ -364,6 +364,7 @@ def setup_package():
             'console_scripts': [
                 'f2py = numpy.f2py.__main__:main',
                 'conv-template = numpy.distutils.conv_template:main',
+                'from-template = numpy.distutils.conv_template:main',
             ]
         },
     )
