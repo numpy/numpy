@@ -222,6 +222,12 @@ class TestDocs(object):
         assert_equal(p == p2, False)
         assert_equal(p != p2, True)
 
+    def test_polydiv(self):
+        b=np.poly1d([2, 6, 6, 1])
+        a=np.poly1d([-1j, (1+2j), -(2+1j), 1])
+        q, r = np.polydiv(b, a)
+        assert_equal(q*a + r, b)
+
     def test_poly_coeffs_immutable(self):
         """ Coefficients should not be modifiable """
         p = np.poly1d([1, 2, 3])
