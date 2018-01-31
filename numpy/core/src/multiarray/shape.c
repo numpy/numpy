@@ -648,20 +648,10 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    if (a1 < 0) {
-        a1 += n;
-    }
-    if (a2 < 0) {
-        a2 += n;
-    }
-    if ((a1 < 0) || (a1 >= n)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "bad axis1 argument to swapaxes");
+    if (check_and_adjust_axis_cmsg(&a1, n, "axis1") < 0) {
         return NULL;
     }
-    if ((a2 < 0) || (a2 >= n)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "bad axis2 argument to swapaxes");
+    if (check_and_adjust_axis_cmsg(&a2, n, "axis2") < 0) {
         return NULL;
     }
 
