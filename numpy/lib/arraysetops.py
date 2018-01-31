@@ -284,11 +284,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         ret += (perm[mask],)
     if return_inverse:
         imask = np.cumsum(mask) - 1
-        inv_idx = np.empty(ar.shape, dtype=np.intp)
+        inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
         ret += (inv_idx,)
     if return_counts:
-        idx = np.concatenate(np.nonzero(mask) + ([ar.size],))
+        idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
     return ret
 
