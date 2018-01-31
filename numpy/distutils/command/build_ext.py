@@ -120,7 +120,7 @@ class build_ext (old_build_ext):
         self.compiler.show_customization()
 
         # Setup directory for storing generated extra DLL files on Windows
-        self.extra_dll_dir = os.path.join(self.build_temp, 'extra-dll')
+        self.extra_dll_dir = os.path.join(self.build_temp, '.libs')
         if not os.path.isdir(self.extra_dll_dir):
             os.makedirs(self.extra_dll_dir)
 
@@ -262,15 +262,25 @@ class build_ext (old_build_ext):
         self.build_extensions()
 
         # Copy over any extra DLL files
-        runtime_lib_dir = os.path.join(
-            self.build_lib, self.distribution.get_name(), 'extra-dll')
-        for fn in os.listdir(self.extra_dll_dir):
-            if not fn.lower().endswith('.dll'):
-                continue
-            if not os.path.isdir(runtime_lib_dir):
-                os.makedirs(runtime_lib_dir)
-            runtime_lib = os.path.join(self.extra_dll_dir, fn)
-            copy_file(runtime_lib, runtime_lib_dir)
+        # FIXME: In the case where there are more than two packages,
+        # we blindly assume that both packages need all of the libraries,
+        # resulting in a larger wheel than is required. This should be fixed,
+        # but it's so rare that I won't bother to handle it.
+        pkg_roots = set(
+            self.get_ext_fullname(ext.name).split('.')[0]
+            for ext in self.extensions
+        )
+        for pkg_root in pkg_roots:
+            shared_lib_dir = os.path.join(pkg_root, '.libs')
+            if not self.inplace:
+                shared_lib_dir = os.path.join(self.build_lib, shared_lib_dir)
+            for fn in os.listdir(self.extra_dll_dir):
+                if not os.path.isdir(shared_lib_dir):
+                    os.makedirs(shared_lib_dir)
+                if not fn.lower().endswith('.dll'):
+                    continue
+                runtime_lib = os.path.join(self.extra_dll_dir, fn)
+                copy_file(runtime_lib, shared_lib_dir)
 
     def swig_sources(self, sources):
         # Do nothing. Swig sources have beed handled in build_src command.

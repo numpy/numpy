@@ -477,7 +477,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     -----
     For a description of the ``.npy`` format, see the module docstring
     of `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     Examples
     --------
@@ -563,7 +563,7 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see `numpy.lib.format` or the
     NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -644,7 +644,7 @@ def savez_compressed(file, *args, **kwds):
     ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
     in ``.npy`` format. For a description of the ``.npy`` format, see
     `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -797,22 +797,23 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
     converters : dict, optional
-        A dictionary mapping column number to a function that will convert
-        that column to a float.  E.g., if column 0 is a date string:
-        ``converters = {0: datestr2num}``.  Converters can also be used to
-        provide a default value for missing data (but see also `genfromtxt`):
-        ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
+        A dictionary mapping column number to a function that will parse the
+        column string into the desired value.  E.g., if column 0 is a date
+        string: ``converters = {0: datestr2num}``.  Converters can also be
+        used to provide a default value for missing data (but see also
+        `genfromtxt`): ``converters = {3: lambda s: float(s.strip() or 0)}``.
+        Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines; default: 0.
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
-        usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
+        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
 
         .. versionchanged:: 1.11.0
             When a single column has to be read it is possible to use
             an integer instead of a tuple. E.g ``usecols = 3`` reads the
-            fourth column the same way as `usecols = (3,)`` would.
+            fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
@@ -827,7 +828,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Encoding used to decode the inputfile. Does not apply to input streams.
         The special value 'bytes' enables backward compatibility workarounds
         that ensures you receive byte arrays as results if possible and passes
-        latin1 encoded strings to converters. Override this value to receive
+        'latin1' encoded strings to converters. Override this value to receive
         unicode arrays and pass strings as input to converters.  If set to None
         the system default is used. The default value is 'bytes'.
 

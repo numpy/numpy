@@ -84,8 +84,9 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
     if f is not None:
         if isinstance(f, str):
             func_data = build_func_data(types, f)
+        elif len(f) != len(types):
+            raise ValueError("Number of types and f do not match")
         else:
-            assert len(f) == len(types)
             func_data = f
     else:
         func_data = (None,) * len(types)
@@ -93,10 +94,14 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
         in_ = (in_,) * len(types)
     elif in_ is None:
         in_ = (None,) * len(types)
+    elif len(in_) != len(types):
+        raise ValueError("Number of types and inputs do not match")
     if isinstance(out, str):
         out = (out,) * len(types)
     elif out is None:
         out = (None,) * len(types)
+    elif len(out) != len(types):
+        raise ValueError("Number of types and outputs do not match")
     tds = []
     for t, fd, i, o in zip(types, func_data, in_, out):
         # [(simd-name, list of types)]
@@ -789,7 +794,7 @@ defdict = {
           docstrings.get('numpy.core.umath.divmod'),
           None,
           TD(intflt),
-          TD(O, f='PyNumber_Divmod'),
+          # TD(O, f='PyNumber_Divmod'),  # gh-9730
           ),
 'hypot':
     Ufunc(2, 1, Zero,
@@ -942,16 +947,42 @@ def make_arrays(funcdict):
         k = 0
         sub = 0
 
-        if uf.nin > 1:
-            assert uf.nin == 2
-            thedict = chartotype2  # two inputs and one output
-        else:
-            thedict = chartotype1  # one input and one output
-
         for t in uf.type_descriptions:
-            if (t.func_data not in (None, FullTypeDescr) and
-                    not isinstance(t.func_data, FuncNameSuffix)):
+            if t.func_data is FullTypeDescr:
+                tname = english_upper(chartoname[t.type])
+                datalist.append('(void *)NULL')
+                funclist.append(
+                        '%s_%s_%s_%s' % (tname, t.in_, t.out, name))
+            elif isinstance(t.func_data, FuncNameSuffix):
+                datalist.append('(void *)NULL')
+                tname = english_upper(chartoname[t.type])
+                funclist.append(
+                        '%s_%s_%s' % (tname, name, t.func_data.suffix))
+            elif t.func_data is None:
+                datalist.append('(void *)NULL')
+                tname = english_upper(chartoname[t.type])
+                funclist.append('%s_%s' % (tname, name))
+                if t.simd is not None:
+                    for vt in t.simd:
+                        code2list.append(textwrap.dedent("""\
+                        #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
+                        if (NPY_CPU_SUPPORTS_{ISA}) {{
+                            {fname}_functions[{idx}] = {type}_{fname}_{isa};
+                        }}
+                        #endif
+                        """).format(
+                            ISA=vt.upper(), isa=vt,
+                            fname=name, type=tname, idx=k
+                        ))
+            else:
                 funclist.append('NULL')
+                if (uf.nin, uf.nout) == (2, 1):
+                    thedict = chartotype2
+                elif (uf.nin, uf.nout) == (1, 1):
+                    thedict = chartotype1
+                else:
+                    raise ValueError("Could not handle {}[{}]".format(name, t.type))
+
                 astype = ''
                 if not t.astype is None:
                     astype = '_As_%s' % thedict[t.astype]
@@ -972,29 +1003,6 @@ def make_arrays(funcdict):
                     datalist.append('(void *)NULL')
                     #datalist.append('(void *)%s' % t.func_data)
                 sub += 1
-            elif t.func_data is FullTypeDescr:
-                tname = english_upper(chartoname[t.type])
-                datalist.append('(void *)NULL')
-                funclist.append(
-                        '%s_%s_%s_%s' % (tname, t.in_, t.out, name))
-            elif isinstance(t.func_data, FuncNameSuffix):
-                datalist.append('(void *)NULL')
-                tname = english_upper(chartoname[t.type])
-                funclist.append(
-                        '%s_%s_%s' % (tname, name, t.func_data.suffix))
-            else:
-                datalist.append('(void *)NULL')
-                tname = english_upper(chartoname[t.type])
-                funclist.append('%s_%s' % (tname, name))
-                if t.simd is not None:
-                    for vt in t.simd:
-                        code2list.append("""\
-#ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-if (NPY_CPU_SUPPORTS_{ISA}) {{
-    {fname}_functions[{idx}] = {type}_{fname}_{isa};
-}}
-#endif
-""".format(ISA=vt.upper(), isa=vt, fname=name, type=tname, idx=k))
 
             for x in t.in_ + t.out:
                 siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
@@ -1032,10 +1040,10 @@ def make_ufuncs(funcdict):
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n
         docstring = '\\n\"\"'.join(docstring.split(r"\n"))
-        mlist.append(\
-r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
-                                %d, %d, %s, "%s",
-                                "%s", 0);""" % (name, name, name,
+        mlist.append(textwrap.dedent("""\
+        f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
+                                    %d, %d, %s, "%s",
+                                    "%s", 0);""") % (name, name, name,
                                                 len(uf.type_descriptions),
                                                 uf.nin, uf.nout,
                                                 uf.identity,
@@ -1054,23 +1062,23 @@ def make_code(funcdict, filename):
     code3 = make_ufuncs(funcdict)
     code2 = indent(code2, 4)
     code3 = indent(code3, 4)
-    code = r"""
+    code = textwrap.dedent(r"""
 
-/** Warning this file is autogenerated!!!
+    /** Warning this file is autogenerated!!!
 
-    Please make changes to the code generator program (%s)
-**/
+        Please make changes to the code generator program (%s)
+    **/
 
-%s
+    %s
 
-static void
-InitOperators(PyObject *dictionary) {
-    PyObject *f;
+    static void
+    InitOperators(PyObject *dictionary) {
+        PyObject *f;
 
-%s
-%s
-}
-""" % (filename, code1, code2, code3)
+    %s
+    %s
+    }
+    """) % (filename, code1, code2, code3)
     return code
 
 

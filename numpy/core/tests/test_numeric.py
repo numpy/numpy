@@ -1812,7 +1812,7 @@ class TestAllclose(object):
                 (np.inf, [np.inf])]
 
         for (x, y) in data:
-            yield (self.tst_allclose, x, y)
+            self.tst_allclose(x, y)
 
     def test_ip_not_allclose(self):
         # Parametric test factory.
@@ -1833,7 +1833,7 @@ class TestAllclose(object):
                 (np.array([np.inf, 1]), np.array([0, np.inf]))]
 
         for (x, y) in data:
-            yield (self.tst_not_allclose, x, y)
+            self.tst_not_allclose(x, y)
 
     def test_no_parameter_modification(self):
         x = np.array([np.inf, 1])
@@ -1917,7 +1917,7 @@ class TestIsclose(object):
         tests = self.some_close_tests
         results = self.some_close_results
         for (x, y), result in zip(tests, results):
-            yield (assert_array_equal, np.isclose(x, y), result)
+            assert_array_equal(np.isclose(x, y), result)
 
     def tst_all_isclose(self, x, y):
         assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
@@ -1937,19 +1937,19 @@ class TestIsclose(object):
     def test_ip_all_isclose(self):
         self.setup()
         for (x, y) in self.all_close_tests:
-            yield (self.tst_all_isclose, x, y)
+            self.tst_all_isclose(x, y)
 
     def test_ip_none_isclose(self):
         self.setup()
         for (x, y) in self.none_close_tests:
-            yield (self.tst_none_isclose, x, y)
+            self.tst_none_isclose(x, y)
 
     def test_ip_isclose_allclose(self):
         self.setup()
         tests = (self.all_close_tests + self.none_close_tests +
                  self.some_close_tests)
         for (x, y) in tests:
-            yield (self.tst_isclose_allclose, x, y)
+            self.tst_isclose_allclose(x, y)
 
     def test_equal_nan(self):
         assert_array_equal(np.isclose(np.nan, np.nan, equal_nan=True), [True])
@@ -2656,7 +2656,7 @@ class TestRequire(object):
         fd = [None, 'f8', 'c16']
         for idtype, fdtype, flag in itertools.product(id, fd, self.flag_names):
             a = self.generate_all_false(idtype)
-            yield self.set_and_check_flag, flag, fdtype,  a
+            self.set_and_check_flag(flag, fdtype,  a)
 
     def test_unknown_requirement(self):
         a = self.generate_all_false('f8')
@@ -2688,7 +2688,7 @@ class TestRequire(object):
 
         for flag in self.flag_names:
             a = ArraySubclass((2, 2))
-            yield self.set_and_check_flag, flag, None, a
+            self.set_and_check_flag(flag, None, a)
 
 
 class TestBroadcast(object):

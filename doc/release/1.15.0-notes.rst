@@ -15,6 +15,13 @@ New functions
 * `np.ma.stack`, the `np.stack` array-joining function generalized to masked
   arrays.
 
+* `np.printoptions`, the context manager which sets print options temporarily
+  for the scope of the ``with`` block::
+
+    >>> with np.printoptions(precision=2):
+    ...     print(np.array([2.0])) / 3
+    [0.67] 
+
 
 Deprecations
 ============
@@ -55,11 +62,51 @@ builtin arbitrary-precision `Decimal` and `long` types.
 Improvements
 ============
 
+``histogram`` and ``histogramdd` functions have moved to ``np.lib.histograms``
+------------------------------------------------------------------------------
+These were originally found in ``np.lib.function_base``. They are still
+available under their un-scoped ``np.histogram(dd)`` names, and
+to maintain compatibility, aliased at ``np.lib.function_base.histogram(dd)``.
+
+Code that does ``from np.lib.function_base import *`` will need to be updated
+with the new location, and should consider not using ``import *`` in future.
+
+``histogram`` will accept NaN values when explicit bins are given
+-----------------------------------------------------------------
+Previously it would fail when trying to compute a finite range for the data.
+Since the range is ignored anyway when the bins are given explcitly, this error
+was needless.
+
+Note that calling `histogram` on NaN values continues to raise the
+`RuntimeWarning`s typical of working with nan values, which can be silenced
+as usual with `errstate`.
+
+``histogram`` works on datetime types, when explicit bin edges are given
+------------------------------------------------------------------------
+Dates, times, and timedeltas can now be histogrammed. The bin edges must be
+passed explicitly, and are not yet computed automatically.
+
+``np.r_`` works with 0d arrays, and ``np.ma.mr_` works with ``np.ma.masked``
+----------------------------------------------------------------------------
+0d arrays passed to the `r_` and `mr_` concatenation helpers are now treated as
+though they are arrays of length 1. Previously, passing these was an error.
+As a result, ``np.ma.mr_`` now works correctly on the ``masked`` constant.
+
+``np.ptp`` accepts a ``keepdims`` argument, and extended axis tuples
+--------------------------------------------------------------------
+``np.ptp`` (peak-to-peak) can now work over multiple axes, just like `max` and
+`min`.
+
 ``MaskedArray.astype`` now is identical to ``ndarray.astype``
 -------------------------------------------------------------
 This means it takes all the same arguments, making more code written for
 ndarray work for masked array too.
 
+Enable AVX2/AVX512 at compile time
+-------------------------------------------------------------
+Change to simd.inc.src to use AVX2 or AVX512 at compile time. Solving the gap
+that if compile numpy for avx2 (or 512) with -march=native, still get the SSE
+code for the simd functions even though rest of the code gets AVX2.
 
 Changes
 =======

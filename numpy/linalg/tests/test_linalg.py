@@ -465,7 +465,7 @@ class TestSolve(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
             assert_equal(linalg.solve(x, x).dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
@@ -532,7 +532,7 @@ class TestInv(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
             assert_equal(linalg.inv(x).dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -565,7 +565,7 @@ class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
             assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -608,7 +608,7 @@ class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(v.dtype, get_complex_dtype(dtype))
 
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -658,7 +658,7 @@ class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(s.dtype, get_real_dtype(dtype))
 
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # These raise errors currently
@@ -765,7 +765,7 @@ class TestDet(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(s.dtype, get_real_dtype(dtype))
             assert_equal(ph.dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         a = np.zeros((0, 0), dtype=np.complex64)
@@ -861,7 +861,7 @@ class TestMatrixPower(object):
             assert_equal(mz, identity(M.shape[0]))
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def testip_one(self):
         def tz(M):
@@ -869,7 +869,7 @@ class TestMatrixPower(object):
             assert_equal(mz, M)
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def testip_two(self):
         def tz(M):
@@ -877,14 +877,14 @@ class TestMatrixPower(object):
             assert_equal(mz, dot(M, M))
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def testip_invert(self):
         def tz(M):
             mz = matrix_power(M, -1)
             assert_almost_equal(identity(M.shape[0]), dot(mz, M))
         for M in [self.R90, self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def test_invert_noninvertible(self):
         import numpy.linalg
@@ -918,7 +918,7 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
             w = np.linalg.eigvalsh(x)
             assert_equal(w.dtype, get_real_dtype(dtype))
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -995,7 +995,7 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
             assert_equal(w.dtype, get_real_dtype(dtype))
             assert_equal(v.dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -1365,36 +1365,36 @@ class TestMatrixRank(object):
 
     def test_matrix_rank(self):
         # Full rank matrix
-        yield assert_equal, 4, matrix_rank(np.eye(4))
+        assert_equal(4, matrix_rank(np.eye(4)))
         # rank deficient matrix
         I = np.eye(4)
         I[-1, -1] = 0.
-        yield assert_equal, matrix_rank(I), 3
+        assert_equal(matrix_rank(I), 3)
         # All zeros - zero rank
-        yield assert_equal, matrix_rank(np.zeros((4, 4))), 0
+        assert_equal(matrix_rank(np.zeros((4, 4))), 0)
         # 1 dimension - rank 1 unless all 0
-        yield assert_equal, matrix_rank([1, 0, 0, 0]), 1
-        yield assert_equal, matrix_rank(np.zeros((4,))), 0
+        assert_equal(matrix_rank([1, 0, 0, 0]), 1)
+        assert_equal(matrix_rank(np.zeros((4,))), 0)
         # accepts array-like
-        yield assert_equal, matrix_rank([1]), 1
+        assert_equal(matrix_rank([1]), 1)
         # greater than 2 dimensions treated as stacked matrices
         ms = np.array([I, np.eye(4), np.zeros((4,4))])
-        yield assert_equal, matrix_rank(ms), np.array([3, 4, 0])
+        assert_equal(matrix_rank(ms), np.array([3, 4, 0]))
         # works on scalar
-        yield assert_equal, matrix_rank(1), 1
+        assert_equal(matrix_rank(1), 1)
 
     def test_symmetric_rank(self):
-        yield assert_equal, 4, matrix_rank(np.eye(4), hermitian=True)
-        yield assert_equal, 1, matrix_rank(np.ones((4, 4)), hermitian=True)
-        yield assert_equal, 0, matrix_rank(np.zeros((4, 4)), hermitian=True)
+        assert_equal(4, matrix_rank(np.eye(4), hermitian=True))
+        assert_equal(1, matrix_rank(np.ones((4, 4)), hermitian=True))
+        assert_equal(0, matrix_rank(np.zeros((4, 4)), hermitian=True))
         # rank deficient matrix
         I = np.eye(4)
         I[-1, -1] = 0.
-        yield assert_equal, 3, matrix_rank(I, hermitian=True)
+        assert_equal(3, matrix_rank(I, hermitian=True))
         # manually supplied tolerance
         I[-1, -1] = 1e-8
-        yield assert_equal, 4, matrix_rank(I, hermitian=True, tol=0.99e-8)
-        yield assert_equal, 3, matrix_rank(I, hermitian=True, tol=1.01e-8)
+        assert_equal(4, matrix_rank(I, hermitian=True, tol=0.99e-8))
+        assert_equal(3, matrix_rank(I, hermitian=True, tol=1.01e-8))
 
 
 def test_reduced_rank():

@@ -5,6 +5,8 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import pytest
+import numpy
+import importlib
 
 from numpy.core.multiarray_tests import get_fpu_mode
 
@@ -52,3 +54,33 @@ def check_fpu_mode(request):
         raise AssertionError("FPU precision mode changed from {0:#x} to {1:#x}"
                              " when collecting the test".format(old_mode, 
                                                                 new_mode))
+
+
+def pytest_addoption(parser):
+    parser.addoption("--runslow", action="store_true",
+                     default=False, help="run slow tests")
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--runslow"):
+        # --runslow given in cli: do not skip slow tests
+        return
+    skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip_slow)
+
+
+@pytest.fixture(autouse=True)
+def add_np(doctest_namespace):
+    doctest_namespace['np'] = numpy
+
+
+for module, replacement in {
+    'numpy.testing.decorators': 'numpy.testing.pytest_tools.decorators',
+    'numpy.testing.utils': 'numpy.testing.pytest_tools.utils',
+}.items():
+    module = importlib.import_module(module)
+    replacement = importlib.import_module(replacement)
+    module.__dict__.clear()
+    module.__dict__.update(replacement.__dict__)

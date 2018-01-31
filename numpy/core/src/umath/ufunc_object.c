@@ -126,10 +126,105 @@ PyUFunc_clearfperr()
 }
 
 /*
+ * This function analyzes the input arguments and determines an appropriate
+ * method (__array_prepare__ or __array_wrap__) function to call, taking it
+ * from the input with the highest priority. Return NULL if no argument
+ * defines the method.
+ */
+static PyObject*
+_find_array_method(PyObject *args, int nin, PyObject *method_name)
+{
+    int i, n_methods;
+    PyObject *obj;
+    PyObject *with_method[NPY_MAXARGS], *methods[NPY_MAXARGS];
+    PyObject *method = NULL;
+
+    n_methods = 0;
+    for (i = 0; i < nin; i++) {
+        obj = PyTuple_GET_ITEM(args, i);
+        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
+            continue;
+        }
+        method = PyObject_GetAttr(obj, method_name);
+        if (method) {
+            if (PyCallable_Check(method)) {
+                with_method[n_methods] = obj;
+                methods[n_methods] = method;
+                ++n_methods;
+            }
+            else {
+                Py_DECREF(method);
+                method = NULL;
+            }
+        }
+        else {
+            PyErr_Clear();
+        }
+    }
+    if (n_methods > 0) {
+        /* If we have some methods defined, find the one of highest priority */
+        method = methods[0];
+        if (n_methods > 1) {
+            double maxpriority = PyArray_GetPriority(with_method[0],
+                                                     NPY_PRIORITY);
+            for (i = 1; i < n_methods; ++i) {
+                double priority = PyArray_GetPriority(with_method[i],
+                                                      NPY_PRIORITY);
+                if (priority > maxpriority) {
+                    maxpriority = priority;
+                    Py_DECREF(method);
+                    method = methods[i];
+                }
+                else {
+                    Py_DECREF(methods[i]);
+                }
+            }
+        }
+    }
+    return method;
+}
+
+/*
+ * Returns an incref'ed pointer to the proper __array_prepare__/__array_wrap__
+ * method for a ufunc output argument, given the output argument `obj`, and the
+ * method chosen from the inputs `input_method`.
+ */
+static PyObject *
+_get_output_array_method(PyObject *obj, PyObject *method,
+                         PyObject *input_method) {
+    if (obj != Py_None) {
+        PyObject *ometh;
+
+        if (PyArray_CheckExact(obj)) {
+            /*
+             * No need to wrap regular arrays - None signals to not call
+             * wrap/prepare at all
+             */
+            Py_RETURN_NONE;
+        }
+
+        ometh = PyObject_GetAttr(obj, method);
+        if (ometh == NULL) {
+            PyErr_Clear();
+        }
+        else if (!PyCallable_Check(ometh)) {
+            Py_DECREF(ometh);
+        }
+        else {
+            /* Use the wrap/prepare method of the output if it's callable */
+            return ometh;
+        }
+    }
+
+    /* Fall back on the input's wrap/prepare */
+    Py_XINCREF(input_method);
+    return input_method;
+}
+
+/*
  * This function analyzes the input arguments
  * and determines an appropriate __array_prepare__ function to call
  * for the outputs.
- * Assumes subok is already true if check_subok is false.
  *
  * If an output argument is provided, then it is prepped
  * with its own __array_prepare__ not with the one determined by
@@ -144,76 +239,17 @@ PyUFunc_clearfperr()
  */
 static void
 _find_array_prepare(PyObject *args, PyObject *kwds,
-                    PyObject **output_prep, int nin, int nout,
-                    int check_subok)
+                    PyObject **output_prep, int nin, int nout)
 {
     Py_ssize_t nargs;
     int i;
-    int np = 0;
-    PyObject *with_prep[NPY_MAXARGS], *preps[NPY_MAXARGS];
-    PyObject *obj, *prep = NULL;
 
     /*
-     * If a 'subok' parameter is passed and isn't True, don't wrap
-     * if check_subok is false it assumed subok in kwds keyword is True
+     * Determine the prepping function given by the input arrays
+     * (could be NULL).
      */
-    if (check_subok && kwds != NULL &&
-        (obj = PyDict_GetItem(kwds, npy_um_str_subok)) != NULL) {
-        if (obj != Py_True) {
-            for (i = 0; i < nout; i++) {
-                output_prep[i] = NULL;
-            }
-            return;
-        }
-    }
-
-    nargs = PyTuple_GET_SIZE(args);
-    for (i = 0; i < nin; i++) {
-        obj = PyTuple_GET_ITEM(args, i);
-        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
-            continue;
-        }
-        prep = PyObject_GetAttr(obj, npy_um_str_array_prepare);
-        if (prep) {
-            if (PyCallable_Check(prep)) {
-                with_prep[np] = obj;
-                preps[np] = prep;
-                ++np;
-            }
-            else {
-                Py_DECREF(prep);
-                prep = NULL;
-            }
-        }
-        else {
-            PyErr_Clear();
-        }
-    }
-    if (np > 0) {
-        /* If we have some preps defined, find the one of highest priority */
-        prep = preps[0];
-        if (np > 1) {
-            double maxpriority = PyArray_GetPriority(with_prep[0],
-                        NPY_PRIORITY);
-            for (i = 1; i < np; ++i) {
-                double priority = PyArray_GetPriority(with_prep[i],
-                            NPY_PRIORITY);
-                if (priority > maxpriority) {
-                    maxpriority = priority;
-                    Py_DECREF(prep);
-                    prep = preps[i];
-                }
-                else {
-                    Py_DECREF(preps[i]);
-                }
-            }
-        }
-    }
-
+    PyObject *prep = _find_array_method(args, nin, npy_um_str_array_prepare);
     /*
-     * Here prep is the prepping function determined from the
-     * input arrays (could be NULL).
-     *
      * For all the output arrays decide what to do.
      *
      * 1) Use the prep function determined from the input arrays
@@ -225,11 +261,10 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
      * exact ndarray so that no PyArray_Return is
      * done in that case.
      */
+    nargs = PyTuple_GET_SIZE(args);
     for (i = 0; i < nout; i++) {
         int j = nin + i;
-        int incref = 1;
-        output_prep[i] = prep;
-        obj = NULL;
+        PyObject *obj = NULL;
         if (j < nargs) {
             obj = PyTuple_GET_ITEM(args, j);
             /* Output argument one may also be in a keyword argument */
@@ -242,27 +277,13 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
             obj = PyDict_GetItem(kwds, npy_um_str_out);
         }
 
-        if (obj != Py_None && obj != NULL) {
-            if (PyArray_CheckExact(obj)) {
-                /* None signals to not call any wrapping */
-                output_prep[i] = Py_None;
-            }
-            else {
-                PyObject *oprep = PyObject_GetAttr(obj,
-                                                   npy_um_str_array_prepare);
-                incref = 0;
-                if (!(oprep) || !(PyCallable_Check(oprep))) {
-                    Py_XDECREF(oprep);
-                    oprep = prep;
-                    incref = 1;
-                    PyErr_Clear();
-                }
-                output_prep[i] = oprep;
-            }
+        if (obj == NULL) {
+            Py_XINCREF(prep);
+            output_prep[i] = prep;
         }
-
-        if (incref) {
-            Py_XINCREF(output_prep[i]);
+        else {
+            output_prep[i] = _get_output_array_method(
+                    obj, npy_um_str_array_prepare, prep);
         }
     }
     Py_XDECREF(prep);
@@ -1255,7 +1276,7 @@ iterator_loop(PyUFuncObject *ufunc,
                                      arr_prep[i], arr_prep_args, i) < 0) {
                 for(iop = 0; iop < nin+i; ++iop) {
                     if (op_it[iop] != op[iop]) {
-                        /* ignore errrors */
+                        /* ignore errors */
                         PyArray_ResolveWritebackIfCopy(op_it[iop]);
                     }
                 }
@@ -2101,7 +2122,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(args, kwds, arr_prep, nin, nout, 0);
+        _find_array_prepare(args, kwds, arr_prep, nin, nout);
 
         /* Set up arr_prep_args if a prep function was needed */
         for (i = 0; i < nout; ++i) {
@@ -2486,7 +2507,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(args, kwds, arr_prep, nin, nout, 0);
+        _find_array_prepare(args, kwds, arr_prep, nin, nout);
 
         /* Set up arr_prep_args if a prep function was needed */
         for (i = 0; i < nout; ++i) {
@@ -3893,38 +3914,6 @@ fail:
 }
 
 /*
- * Returns an incref'ed pointer to the proper wrapping object for a
- * ufunc output argument, given the output argument 'out', and the
- * input's wrapping function, 'wrap'.
- */
-static PyObject*
-_get_out_wrap(PyObject *out, PyObject *wrap) {
-    PyObject *owrap;
-
-    if (out == Py_None) {
-        /* Iterator allocated outputs get the input's wrapping */
-        Py_XINCREF(wrap);
-        return wrap;
-    }
-    if (PyArray_CheckExact(out)) {
-        /* None signals to not call any wrapping */
-        Py_RETURN_NONE;
-    }
-    /*
-     * For array subclasses use their __array_wrap__ method, or the
-     * input's wrapping if not available
-     */
-    owrap = PyObject_GetAttr(out, npy_um_str_array_wrap);
-    if (owrap == NULL || !PyCallable_Check(owrap)) {
-        Py_XDECREF(owrap);
-        owrap = wrap;
-        Py_XINCREF(wrap);
-        PyErr_Clear();
-    }
-    return owrap;
-}
-
-/*
  * This function analyzes the input arguments
  * and determines an appropriate __array_wrap__ function to call
  * for the outputs.
@@ -3946,9 +3935,8 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
 {
     Py_ssize_t nargs;
     int i, idx_offset, start_idx;
-    int np = 0;
-    PyObject *with_wrap[NPY_MAXARGS], *wraps[NPY_MAXARGS];
-    PyObject *obj, *wrap = NULL;
+    PyObject *obj;
+    PyObject *wrap = NULL;
 
     /*
      * If a 'subok' parameter is passed and isn't True, don't wrap but put None
@@ -3962,53 +3950,13 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
         }
     }
 
-
-    for (i = 0; i < nin; i++) {
-        obj = PyTuple_GET_ITEM(args, i);
-        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
-            continue;
-        }
-        wrap = PyObject_GetAttr(obj, npy_um_str_array_wrap);
-        if (wrap) {
-            if (PyCallable_Check(wrap)) {
-                with_wrap[np] = obj;
-                wraps[np] = wrap;
-                ++np;
-            }
-            else {
-                Py_DECREF(wrap);
-                wrap = NULL;
-            }
-        }
-        else {
-            PyErr_Clear();
-        }
-    }
-    if (np > 0) {
-        /* If we have some wraps defined, find the one of highest priority */
-        wrap = wraps[0];
-        if (np > 1) {
-            double maxpriority = PyArray_GetPriority(with_wrap[0],
-                        NPY_PRIORITY);
-            for (i = 1; i < np; ++i) {
-                double priority = PyArray_GetPriority(with_wrap[i],
-                            NPY_PRIORITY);
-                if (priority > maxpriority) {
-                    maxpriority = priority;
-                    Py_DECREF(wrap);
-                    wrap = wraps[i];
-                }
-                else {
-                    Py_DECREF(wraps[i]);
-                }
-            }
-        }
-    }
+    /*
+     * Determine the wrapping function given by the input arrays
+     * (could be NULL).
+     */
+    wrap = _find_array_method(args, nin, npy_um_str_array_wrap);
 
     /*
-     * Here wrap is the wrapping function determined from the
-     * input arrays (could be NULL).
-     *
      * For all the output arrays decide what to do.
      *
      * 1) Use the wrap function determined from the input arrays
@@ -4041,7 +3989,8 @@ handle_out:
             }
             else {
                 /* If the kwarg is not a tuple then it is an array (or None) */
-                output_wrap[0] = _get_out_wrap(obj, wrap);
+                output_wrap[0] = _get_output_array_method(
+                        obj, npy_um_str_array_wrap, wrap);
                 start_idx = 1;
                 nargs = 1;
             }
@@ -4052,8 +4001,8 @@ handle_out:
         int j = idx_offset + i;
 
         if (j < nargs) {
-            output_wrap[i] = _get_out_wrap(PyTuple_GET_ITEM(obj, j),
-                                           wrap);
+            output_wrap[i] = _get_output_array_method(
+                    PyTuple_GET_ITEM(obj, j), npy_um_str_array_wrap, wrap);
         }
         else {
             output_wrap[i] = wrap;
@@ -4078,24 +4027,20 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *override = NULL;
     int errval;
 
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
+    if (errval) {
+        return NULL;
+    }
+    else if (override) {
+        return override;
+    }
+
     /*
      * Initialize all array objects to NULL to make cleanup easier
      * if something goes wrong.
      */
     for (i = 0; i < ufunc->nargs; i++) {
         mps[i] = NULL;
-    }
-
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
-    if (errval) {
-        return NULL;
-    }
-    else if (override) {
-        for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_DiscardWritebackIfCopy(mps[i]);
-            Py_XDECREF(mps[i]);
-        }
-        return override;
     }
 
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);

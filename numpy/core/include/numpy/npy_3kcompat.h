@@ -94,6 +94,8 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyUString_InternFromString PyUnicode_InternFromString
 #define PyUString_Format PyUnicode_Format
 
+#define PyBaseString_Check(obj) (PyUnicode_Check(obj))
+
 #else
 
 #define PyBytes_Type PyString_Type
@@ -122,6 +124,8 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyUString_Size PyString_Size
 #define PyUString_InternFromString PyString_InternFromString
 #define PyUString_Format PyString_Format
+
+#define PyBaseString_Check(obj) (PyBytes_Check(obj) || PyUnicode_Check(obj))
 
 #endif /* NPY_PY3K */
 

@@ -238,8 +238,8 @@ def bitname(obj):
         else:
             newname = name
         info = typeinfo[english_upper(newname)]
-        assert(info[-1] == obj)  # sanity check
-        bits = info[2]
+        assert(info.type == obj)  # sanity check
+        bits = info.bits
 
     except KeyError:     # bit-width name
         base, bits = _evalname(name)
@@ -284,51 +284,53 @@ def bitname(obj):
 
 
 def _add_types():
-    for a in typeinfo.keys():
-        name = english_lower(a)
-        if isinstance(typeinfo[a], tuple):
-            typeobj = typeinfo[a][-1]
-
+    for type_name, info in typeinfo.items():
+        name = english_lower(type_name)
+        if not isinstance(info, type):
             # define C-name and insert typenum and typechar references also
-            allTypes[name] = typeobj
-            sctypeDict[name] = typeobj
-            sctypeDict[typeinfo[a][0]] = typeobj
-            sctypeDict[typeinfo[a][1]] = typeobj
+            allTypes[name] = info.type
+            sctypeDict[name] = info.type
+            sctypeDict[info.char] = info.type
+            sctypeDict[info.num] = info.type
 
         else:  # generic class
-            allTypes[name] = typeinfo[a]
+            allTypes[name] = info
 _add_types()
 
 def _add_aliases():
-    for a in typeinfo.keys():
-        name = english_lower(a)
-        if not isinstance(typeinfo[a], tuple):
+    for type_name, info in typeinfo.items():
+        if isinstance(info, type):
             continue
-        typeobj = typeinfo[a][-1]
+        name = english_lower(type_name)
+
         # insert bit-width version for this class (if relevant)
-        base, bit, char = bitname(typeobj)
+        base, bit, char = bitname(info.type)
         if base[-3:] == 'int' or char[0] in 'ui':
             continue
         if base != '':
             myname = "%s%d" % (base, bit)
-            if ((name != 'longdouble' and name != 'clongdouble') or
-                   myname not in allTypes.keys()):
-                allTypes[myname] = typeobj
-                sctypeDict[myname] = typeobj
+            if (name not in ('longdouble', 'clongdouble') or
+                   myname not in allTypes):
+                base_capitalize = english_capitalize(base)
                 if base == 'complex':
-                    na_name = '%s%d' % (english_capitalize(base), bit//2)
+                    na_name = '%s%d' % (base_capitalize, bit//2)
                 elif base == 'bool':
-                    na_name = english_capitalize(base)
-                    sctypeDict[na_name] = typeobj
+                    na_name = base_capitalize
                 else:
-                    na_name = "%s%d" % (english_capitalize(base), bit)
-                    sctypeDict[na_name] = typeobj
-                sctypeNA[na_name] = typeobj
-                sctypeDict[na_name] = typeobj
-                sctypeNA[typeobj] = na_name
-                sctypeNA[typeinfo[a][0]] = na_name
+                    na_name = "%s%d" % (base_capitalize, bit)
+
+                allTypes[myname] = info.type
+
+                # add mapping for both the bit name and the numarray name
+                sctypeDict[myname] = info.type
+                sctypeDict[na_name] = info.type
+
+                # add forward, reverse, and string mapping to numarray
+                sctypeNA[na_name] = info.type
+                sctypeNA[info.type] = na_name
+                sctypeNA[info.char] = na_name
         if char != '':
-            sctypeDict[char] = typeobj
+            sctypeDict[char] = info.type
             sctypeNA[char] = na_name
 _add_aliases()
 
@@ -339,34 +341,22 @@ _add_aliases()
 def _add_integer_aliases():
     _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
     for ctype in _ctypes:
-        val = typeinfo[ctype]
-        bits = val[2]
-        charname = 'i%d' % (bits//8,)
-        ucharname = 'u%d' % (bits//8,)
-        intname = 'int%d' % bits
-        UIntname = 'UInt%d' % bits
-        Intname = 'Int%d' % bits
-        uval = typeinfo['U'+ctype]
-        typeobj = val[-1]
-        utypeobj = uval[-1]
-        if intname not in allTypes.keys():
-            uintname = 'uint%d' % bits
-            allTypes[intname] = typeobj
-            allTypes[uintname] = utypeobj
-            sctypeDict[intname] = typeobj
-            sctypeDict[uintname] = utypeobj
-            sctypeDict[Intname] = typeobj
-            sctypeDict[UIntname] = utypeobj
-            sctypeDict[charname] = typeobj
-            sctypeDict[ucharname] = utypeobj
-            sctypeNA[Intname] = typeobj
-            sctypeNA[UIntname] = utypeobj
-            sctypeNA[charname] = typeobj
-            sctypeNA[ucharname] = utypeobj
-        sctypeNA[typeobj] = Intname
-        sctypeNA[utypeobj] = UIntname
-        sctypeNA[val[0]] = Intname
-        sctypeNA[uval[0]] = UIntname
+        i_info = typeinfo[ctype]
+        u_info = typeinfo['U'+ctype]
+        bits = i_info.bits  # same for both
+
+        for info, charname, intname, Intname in [
+                (i_info,'i%d' % (bits//8,), 'int%d' % bits, 'Int%d' % bits),
+                (u_info,'u%d' % (bits//8,), 'uint%d' % bits, 'UInt%d' % bits)]:
+            if intname not in allTypes.keys():
+                allTypes[intname] = info.type
+                sctypeDict[intname] = info.type
+                sctypeDict[Intname] = info.type
+                sctypeDict[charname] = info.type
+                sctypeNA[Intname] = info.type
+                sctypeNA[charname] = info.type
+            sctypeNA[info.type] = Intname
+            sctypeNA[info.char] = Intname
 _add_integer_aliases()
 
 # We use these later
@@ -427,11 +417,10 @@ _set_up_aliases()
 # Now, construct dictionary to lookup character codes from types
 _sctype2char_dict = {}
 def _construct_char_code_lookup():
-    for name in typeinfo.keys():
-        tup = typeinfo[name]
-        if isinstance(tup, tuple):
-            if tup[0] not in ['p', 'P']:
-                _sctype2char_dict[tup[-1]] = tup[0]
+    for name, info in typeinfo.items():
+        if not isinstance(info, type):
+            if info.char not in ['p', 'P']:
+                _sctype2char_dict[info.type] = info.char
 _construct_char_code_lookup()
 
 
@@ -776,15 +765,15 @@ _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, val in typeinfo.items():
-        if not isinstance(val, tuple):
+    for name, info in typeinfo.items():
+        if isinstance(info, type):
             continue
-        obj = val[-1]
-        nbytes[obj] = val[2] // 8
-        _alignment[obj] = val[3]
-        if (len(val) > 5):
-            _maxvals[obj] = val[4]
-            _minvals[obj] = val[5]
+        obj = info.type
+        nbytes[obj] = info.bits // 8
+        _alignment[obj] = info.alignment
+        if len(info) > 5:
+            _maxvals[obj] = info.max
+            _minvals[obj] = info.min
         else:
             _maxvals[obj] = None
             _minvals[obj] = None

@@ -310,7 +310,7 @@ Linear Algebra Equivalents
 
    * - ``[ a b; c d ]``
      - ``vstack([hstack([a,b]), hstack([c,d])])`` or
-       ``bmat('a b; c d').A``
+       ``block([[a, b], [c, d])``
      - construct a matrix from blocks ``a``, ``b``, ``c``, and ``d``
 
    * - ``a(end)``
@@ -369,7 +369,7 @@ Linear Algebra Equivalents
      - conjugate transpose of ``a``
 
    * - ``a * b``
-     - ``a.dot(b)``
+     - ``a.dot(b)`` or ``a@b`` (Python 3.5 or newer)
      - matrix multiply
 
    * - ``a .* b``

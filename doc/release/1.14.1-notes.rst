@@ -1,0 +1,21 @@
+==========================
+NumPy 1.14.1 Release Notes
+==========================
+
+This is a bugfix release for some problems found since 1.14.0. This release
+includes fixes to the spacing in the str and repr of complex values.
+
+The Python versions supported are 2.7 and 3.4 - 3.6. The Python 3.6 wheels
+available from PIP are built with Python 3.6.2 and should be compatible with
+all previous versions of Python 3.6. It was cythonized with Cython 0.26.1,
+which should be free of the bugs found in 0.27 while also being compatible with
+Python 3.7-dev.
+
+Contributors
+============
+
+A total of xx people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+Pull requests merged
+====================

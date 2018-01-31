@@ -596,7 +596,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         Element index to partition by. The k-th value of the element
         will be in its final sorted position and all smaller elements
         will be moved before it and all equal or greater elements behind
-        it. The order all elements in the partitions is undefined. If
+        it. The order of all elements in the partitions is undefined. If
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
     axis : int or None, optional
@@ -1076,6 +1076,15 @@ def searchsorted(a, v, side='left', sorter=None):
     corresponding elements in `v` were inserted before the indices, the
     order of `a` would be preserved.
 
+    Assuming that `a` is sorted:
+
+    ======  ============================
+    `side`  returned index `i` satisfies
+    ======  ============================
+    left    ``a[i-1] < v <= a[i]``
+    right   ``a[i-1] <= v < a[i]``
+    ======  ============================
+
     Parameters
     ----------
     a : 1-D array_like
@@ -1110,6 +1119,10 @@ def searchsorted(a, v, side='left', sorter=None):
 
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
+
+    This function is a faster version of the builtin python `bisect.bisect_left`
+    (``side='left'``) and `bisect.bisect_right` (``side='right'``) functions,
+    which is also vectorized in the `v` argument.
 
     Examples
     --------
@@ -1812,7 +1825,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `sum` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -1966,7 +1979,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `any` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2051,7 +2064,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `all` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2178,7 +2191,7 @@ def cumproduct(a, axis=None, dtype=None, out=None):
     return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
 
-def ptp(a, axis=None, out=None):
+def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Range of values (maximum - minimum) along an axis.
 
@@ -2188,13 +2201,30 @@ def ptp(a, axis=None, out=None):
     ----------
     a : array_like
         Input values.
-    axis : int, optional
+    axis : None or int or tuple of ints, optional
         Axis along which to find the peaks.  By default, flatten the
-        array.
+        array.  `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.15.0
+
+        If this is a tuple of ints, a reduction is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     out : array_like
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
         but the type of the output values will be cast if necessary.
+
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+
+        If the default value is passed, then `keepdims` will not be
+        passed through to the `ptp` method of sub-classes of
+        `ndarray`, however any non-default value will be.  If the
+        sub-class' method does not implement `keepdims` any
+        exceptions will be raised.
 
     Returns
     -------
@@ -2216,7 +2246,17 @@ def ptp(a, axis=None, out=None):
     array([1, 1])
 
     """
-    return _wrapfunc(a, 'ptp', axis=axis, out=out)
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    if type(a) is not mu.ndarray:
+        try:
+            ptp = a.ptp
+        except AttributeError:
+            pass
+        else:
+            return ptp(axis=axis, out=out, **kwargs)
+    return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
 def amax(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2248,7 +2288,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `amax` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2349,7 +2389,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `amin` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2491,7 +2531,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `prod` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2890,7 +2930,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `mean` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -2997,7 +3037,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `std` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns
@@ -3116,7 +3156,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         If the default value is passed, then `keepdims` will not be
         passed through to the `var` method of sub-classes of
         `ndarray`, however any non-default value will be.  If the
-        sub-classes `sum` method does not implement `keepdims` any
+        sub-class' method does not implement `keepdims` any
         exceptions will be raised.
 
     Returns

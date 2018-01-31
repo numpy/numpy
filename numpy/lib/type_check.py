@@ -215,7 +215,7 @@ def iscomplex(x):
     if issubclass(ax.dtype.type, _nx.complexfloating):
         return ax.imag != 0
     res = zeros(ax.shape, bool)
-    return +res  # convet to array-scalar if needed
+    return +res  # convert to array-scalar if needed
 
 def isreal(x):
     """

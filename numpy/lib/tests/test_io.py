@@ -376,7 +376,7 @@ class TestSaveTxt(object):
         lines = c.readlines()
         assert_equal(lines, [b'01 : 2.0\n', b'03 : 4.0\n'])
 
-        # Specify delimiter, should be overiden
+        # Specify delimiter, should be overridden
         c = BytesIO()
         np.savetxt(c, a, fmt='%02d : %3.1f', delimiter=',')
         c.seek(0)
@@ -1096,7 +1096,7 @@ class TestFromTxt(LoadTxtBase):
         assert_equal(test, control)
 
     def test_array(self):
-        # Test outputing a standard ndarray
+        # Test outputting a standard ndarray
         data = TextIO('1 2\n3 4')
         control = np.array([[1, 2], [3, 4]], dtype=int)
         test = np.ndfromtxt(data, dtype=int)
@@ -2226,7 +2226,7 @@ class TestPathUsage(object):
 
     @dec.skipif(Path is None, "No pathlib.Path")
     def test_ndfromtxt(self):
-        # Test outputing a standard ndarray
+        # Test outputting a standard ndarray
         with temppath(suffix='.txt') as path:
             path = Path(path)
             with path.open('w') as f:
@@ -2292,7 +2292,7 @@ def test_gzip_load():
 
 
 def test_gzip_loadtxt():
-    # Thanks to another windows brokeness, we can't use
+    # Thanks to another windows brokenness, we can't use
     # NamedTemporaryFile: a file created from this function cannot be
     # reopened by another open call. So we first put the gzipped string
     # of the test reference array, write it to a securely opened file,

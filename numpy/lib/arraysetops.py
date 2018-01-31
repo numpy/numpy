@@ -110,6 +110,14 @@ def ediff1d(ary, to_end=None, to_begin=None):
     return result
 
 
+def _unpack_tuple(x):
+    """ Unpacks one-element tuples for use as return values """
+    if len(x) == 1:
+        return x[0]
+    else:
+        return x
+
+
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None, return_mask=False,
            return_data=True, assume_sorted=False, sort_inplace=False):
@@ -141,13 +149,16 @@ def unique(ar, return_index=False, return_inverse=False,
     return_counts : bool, optional
         If True, also return the number of times each unique item appears
         in `ar`.
+
         .. versionadded:: 1.9.0
+
     axis : int or None, optional
         The axis to operate on. If None, `ar` will be flattened beforehand.
         Otherwise, duplicate items will be removed along the provided axis,
         with all the other axes belonging to the each of the unique elements.
         Object arrays or structured arrays that contain objects are not
         supported if the `axis` kwarg is used.
+
         .. versionadded:: 1.13.0
     return_mask : bool, optional
         If True, also return a mask of `ar` (along the specified axis,
@@ -183,6 +194,7 @@ def unique(ar, return_index=False, return_inverse=False,
     unique_counts : ndarray, optional
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
+
         .. versionadded:: 1.9.0
     unique_mask : ndarray, optional
         The mask of the original array that yields the unique values.
@@ -262,13 +274,11 @@ def unique(ar, return_index=False, return_inverse=False,
     orig_ar = ar
     ar = np.asanyarray(ar)
     if axis is None:
-        output = _unique1d(ar, return_index, return_inverse, return_counts,
-                           return_mask, return_data, assume_sorted,
-                           sort_inplace, assume_sorted or sort_inplace)
-        if len(output) == 1:
-            return output[0]
-        else:
-            return output
+        ret = _unique1d(ar, return_index, return_inverse, return_counts,
+                        return_mask, return_data, assume_sorted,
+                        sort_inplace, assume_sorted or sort_inplace)
+        return _unpack_tuple(ret)
+
     if not (-ar.ndim <= axis < ar.ndim):
         raise ValueError('Invalid axis kwarg specified for unique')
 
@@ -323,10 +333,8 @@ def unique(ar, return_index=False, return_inverse=False,
         uniq = reshape_uniq(output[0])
         output = (uniq,) + output[1:]
 
-    if len(output) == 1:
-        return output[0]
-    else:
-        return output
+    return _unpack_tuple(output)
+
 
 def _unique1d(ar, return_index=False, return_inverse=False,
               return_counts=False, return_mask=False,
@@ -380,7 +388,9 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         ar = ar[perm]
     elif not assume_sorted:
         ar.sort()
-    mask = np.concatenate(([True], ar[1:] != ar[:-1]))
+    mask = np.empty(ar.shape, dtype=np.bool_)
+    mask[:1] = True
+    mask[1:] = ar[1:] != ar[:-1]
 
     if not optional_returns:
         ret = (ar[mask],)
@@ -414,6 +424,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 imask[idx] = True
             ret += (imask,)
     return ret
+
 
 def intersect1d(ar1, ar2, assume_unique=False):
     """
@@ -735,7 +746,7 @@ def union1d(ar1, ar2):
     >>> reduce(np.union1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
     array([1, 2, 3, 4, 6])
     """
-    return unique(np.concatenate((ar1, ar2)))
+    return unique(np.concatenate((ar1, ar2), axis=None))
 
 def setdiff1d(ar1, ar2, assume_unique=False):
     """

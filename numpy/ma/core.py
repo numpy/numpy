@@ -3029,18 +3029,16 @@ class MaskedArray(ndarray):
 
         if context is not None:
             result._mask = result._mask.copy()
-            (func, args, _) = context
-            m = reduce(mask_or, [getmaskarray(arg) for arg in args])
+            func, args, out_i = context
+            # args sometimes contains outputs (gh-10459), which we don't want
+            input_args = args[:func.nin]
+            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func, None)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
-                if len(args) > 2:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(reduce(domain, args), True)
-                else:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(domain(*args), True)
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    d = filled(domain(*input_args), True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
@@ -4285,7 +4283,7 @@ class MaskedArray(ndarray):
         Convert to long.
         """
         if self.size > 1:
-            raise TypeError("Only length-1 arrays can be conveted "
+            raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python long.')
@@ -5721,7 +5719,7 @@ class MaskedArray(ndarray):
             np.copyto(out, np.nan, where=newmask)
         return out
 
-    def ptp(self, axis=None, out=None, fill_value=None):
+    def ptp(self, axis=None, out=None, fill_value=None, keepdims=False):
         """
         Return (maximum - minimum) along the given dimension
         (i.e. peak-to-peak value).
@@ -5746,11 +5744,15 @@ class MaskedArray(ndarray):
 
         """
         if out is None:
-            result = self.max(axis=axis, fill_value=fill_value)
-            result -= self.min(axis=axis, fill_value=fill_value)
+            result = self.max(axis=axis, fill_value=fill_value,
+                              keepdims=keepdims)
+            result -= self.min(axis=axis, fill_value=fill_value,
+                               keepdims=keepdims)
             return result
-        out.flat = self.max(axis=axis, out=out, fill_value=fill_value)
-        min_value = self.min(axis=axis, fill_value=fill_value)
+        out.flat = self.max(axis=axis, out=out, fill_value=fill_value,
+                            keepdims=keepdims)
+        min_value = self.min(axis=axis, fill_value=fill_value,
+                             keepdims=keepdims)
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
@@ -6309,6 +6311,18 @@ class MaskedConstant(MaskedArray):
         # precedent for this with `np.bool_` scalars.
         return self
 
+    def __setattr__(self, attr, value):
+        if not self.__has_singleton():
+            # allow the singleton to be initialized
+            return super(MaskedConstant, self).__setattr__(attr, value)
+        elif self is self.__singleton:
+            raise AttributeError(
+                "attributes of {!r} are not writeable".format(self))
+        else:
+            # duplicate instance - we can end up here from __array_finalize__,
+            # where we set the __class__ attribute
+            return super(MaskedConstant, self).__setattr__(attr, value)
+
 
 masked = masked_singleton = MaskedConstant()
 masked_array = MaskedArray
@@ -6489,17 +6503,15 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
-def ptp(obj, axis=None, out=None, fill_value=None):
-    """
-    a.ptp(axis=None) =  a.max(axis) - a.min(axis)
-
-    """
+def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
-        return obj.ptp(axis, out=out, fill_value=fill_value)
+        return obj.ptp(axis, out=out, fill_value=fill_value, **kwargs)
     except (AttributeError, TypeError):
         # If obj doesn't have a ptp method or if the method doesn't accept
         # a fill_value argument
-        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
+        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value,
+                                   out=out, **kwargs)
 ptp.__doc__ = MaskedArray.ptp.__doc__
 
 
@@ -6937,6 +6949,7 @@ def transpose(a, axes=None):
      [[False False]
      [False  True]],
            fill_value = 999999)
+
     >>> ma.transpose(x)
     masked_array(data =
      [[0 2]

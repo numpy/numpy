@@ -1232,7 +1232,8 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
         The arrays must have the same shape, except in the dimension
         corresponding to `axis` (the first, by default).
     axis : int, optional
-        The axis along which the arrays will be joined.  Default is 0.
+        The axis along which the arrays will be joined.  If axis is None,
+        arrays are flattened before use.  Default is 0.
     out : ndarray, optional
         If provided, the destination to place the result. The shape must be
         correct, matching that of what concatenate would have returned if no
@@ -1276,6 +1277,8 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     >>> np.concatenate((a, b.T), axis=1)
     array([[1, 2, 5],
            [3, 4, 6]])
+    >>> np.concatenate((a, b), axis=None)
+    array([1, 2, 3, 4, 5, 6])
 
     This function will not preserve masking of MaskedArray inputs.
 
@@ -4055,7 +4058,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('prod',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ptp',
     """
-    a.ptp(axis=None, out=None)
+    a.ptp(axis=None, out=None, keepdims=False)
 
     Peak to peak (maximum - minimum) value along a given axis.
 
@@ -4522,7 +4525,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
     """
     a.partition(kth, axis=-1, kind='introselect', order=None)
 
-    Rearranges the elements in the array in such a way that value of the
+    Rearranges the elements in the array in such a way that the value of the
     element in kth position is in the position it would be in a sorted array.
     All elements smaller than the kth element are moved before this element and
     all equal or greater are moved behind it. The ordering of the elements in
@@ -4536,7 +4539,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
         Element index to partition by. The kth element value will be in its
         final sorted position and all smaller elements will be moved before it
         and all equal or greater elements behind it.
-        The order all elements in the partitions is undefined.
+        The order of all elements in the partitions is undefined.
         If provided with a sequence of kth it will partition all elements
         indexed by kth of them into their sorted position at once.
     axis : int, optional
@@ -4546,8 +4549,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
         Selection algorithm. Default is 'introselect'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc.  A single field can
-        be specified as a string, and not all fields need be specified,
+        which fields to compare first, second, etc. A single field can
+        be specified as a string, and not all fields need to be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
 
@@ -5136,13 +5139,17 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
     Return the indices of the bins to which each value in input array belongs.
 
-    Each index ``i`` returned is such that ``bins[i-1] <= x < bins[i]`` if
-    `bins` is monotonically increasing, or ``bins[i-1] > x >= bins[i]`` if
-    `bins` is monotonically decreasing. If values in `x` are beyond the
-    bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate. If right
-    is True, then the right bin is closed so that the index ``i`` is such
-    that ``bins[i-1] < x <= bins[i]`` or ``bins[i-1] >= x > bins[i]`` if `bins`
-    is monotonically increasing or decreasing, respectively.
+    =========  =============  ============================
+    `right`    order of bins  returned index `i` satisfies
+    =========  =============  ============================
+    ``False``  increasing     ``bins[i-1] <= x < bins[i]``
+    ``True``   increasing     ``bins[i-1] < x <= bins[i]``
+    ``False``  decreasing     ``bins[i-1] > x >= bins[i]``
+    ``True``   decreasing     ``bins[i-1] >= x > bins[i]``
+    =========  =============  ============================
+
+    If values in `x` are beyond the bounds of `bins`, 0 or ``len(bins)`` is
+    returned as appropriate.
 
     Parameters
     ----------
@@ -5160,7 +5167,7 @@ add_newdoc('numpy.core.multiarray', 'digitize',
 
     Returns
     -------
-    out : ndarray of ints
+    indices : ndarray of ints
         Output array of indices, of same shape as `x`.
 
     Raises
@@ -5186,6 +5193,15 @@ add_newdoc('numpy.core.multiarray', 'digitize',
     that a binary search is used to bin the values, which scales much better
     for larger number of bins than the previous linear search. It also removes
     the requirement for the input array to be 1-dimensional.
+
+    For monotonically _increasing_ `bins`, the following are equivalent::
+
+        np.digitize(x, bins, right=True)
+        np.searchsorted(bins, x, side='left')
+
+    Note that as the order of the arguments are reversed, the side must be too.
+    The `searchsorted` call is marginally faster, as it does not do any
+    monotonicity checks. Perhaps more importantly, it supports all dtypes.
 
     Examples
     --------

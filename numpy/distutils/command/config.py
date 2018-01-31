@@ -359,7 +359,7 @@ int main (void)
         decl : dict
             for every (key, value), the declaration in the value will be
             used for function in key. If a function is not in the
-            dictionay, no declaration will be used.
+            dictionary, no declaration will be used.
         call : dict
             for every item (f, value), if the value is True, a call will be
             done to the function f.
