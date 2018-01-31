@@ -347,10 +347,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     optional_indices = return_index or return_inverse
 
-    if (not optional_indices and not assume_sorted
-        and return_mask and not mask_is_sorted):
+    if (not assume_sorted and return_mask and not mask_is_sorted):
         # Will need the permutation to compute masks
         optional_indices = True
+
     if ((not optional_indices and not assume_sorted and not sort_inplace)
         or ar.ndim != 1):
         # Otherwise, we don't need to make a copy
