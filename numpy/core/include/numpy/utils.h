@@ -6,6 +6,8 @@
                 #define __COMP_NPY_UNUSED __attribute__ ((__unused__))
         # elif defined(__ICC)
                 #define __COMP_NPY_UNUSED __attribute__ ((__unused__))
+        # elif defined(__clang__)
+                #define __COMP_NPY_UNUSED __attribute__ ((unused))
         #else
                 #define __COMP_NPY_UNUSED
         #endif
