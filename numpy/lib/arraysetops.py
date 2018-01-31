@@ -365,8 +365,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 if return_mask:
                     optional_indices = True
 
-    shape = ar.shape
-    size = ar.size
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         ar = ar[perm]
@@ -387,12 +385,12 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             ret += (idx,)
     if return_inverse:
         imask = np.cumsum(mask) - 1
-        inv_idx = np.empty(shape, dtype=np.intp)
+        inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
         ret += (inv_idx,)
     perm = None
     if return_counts:
-        cidx = np.concatenate(np.nonzero(mask) + ([size],))
+        cidx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(cidx),)
         del cidx
     if return_mask:
@@ -401,7 +399,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             imask = mask
         else:
             # Build a mask in input order
-            imask = np.zeros(shape, np.bool_)
+            imask = np.zeros(mask.shape, np.bool_)
             imask[idx] = True
         ret += (imask,)
     return ret
