@@ -346,8 +346,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
 
     optional_indices = return_index or return_inverse
-    optional_returns = (optional_indices or return_counts
-                        or return_mask or not return_data)
 
     if (not optional_indices and not assume_sorted
         and return_mask and not mask_is_sorted):
@@ -367,20 +365,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 if return_mask:
                     optional_indices = True
 
-    if ar.size == 0:
-        ret = ()
-        if return_data:
-            ret = (ar,)
-        if return_index:
-            ret += (np.empty(0, np.intp),)
-        if return_inverse:
-            ret += (np.empty(0, np.intp),)
-        if return_counts:
-            ret += (np.empty(0, np.intp),)
-        if return_mask:
-            ret += (np.empty(0, np.bool_),)
-        return ret
-
     shape = ar.shape
     size = ar.size
     if optional_indices:
@@ -392,37 +376,34 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask[:1] = True
     mask[1:] = ar[1:] != ar[:-1]
 
-    if not optional_returns:
-        ret = (ar[mask],)
-    else:
-        ret = ()
-        if return_data:
-            ret += (ar[mask],)
-        del ar
-        if return_index or (return_mask and not assume_sorted
-                            and not mask_is_sorted):
-            idx = perm[mask]
-            if return_index:
-                ret += (idx,)
-        if return_inverse:
-            imask = np.cumsum(mask) - 1
-            inv_idx = np.empty(shape, dtype=np.intp)
-            inv_idx[perm] = imask
-            ret += (inv_idx,)
-        perm = None
-        if return_counts:
-            cidx = np.concatenate(np.nonzero(mask) + ([size],))
-            ret += (np.diff(cidx),)
-            del cidx
-        if return_mask:
-            if assume_sorted or mask_is_sorted:
-                # Mask is already in input order
-                imask = mask
-            else:
-                # Build a mask in input order
-                imask = np.zeros(shape, np.bool_)
-                imask[idx] = True
-            ret += (imask,)
+    ret = ()
+    if return_data:
+        ret += (ar[mask],)
+    del ar
+    if return_index or (return_mask and not assume_sorted
+                        and not mask_is_sorted):
+        idx = perm[mask]
+        if return_index:
+            ret += (idx,)
+    if return_inverse:
+        imask = np.cumsum(mask) - 1
+        inv_idx = np.empty(shape, dtype=np.intp)
+        inv_idx[perm] = imask
+        ret += (inv_idx,)
+    perm = None
+    if return_counts:
+        cidx = np.concatenate(np.nonzero(mask) + ([size],))
+        ret += (np.diff(cidx),)
+        del cidx
+    if return_mask:
+        if assume_sorted or mask_is_sorted:
+            # Mask is already in input order
+            imask = mask
+        else:
+            # Build a mask in input order
+            imask = np.zeros(shape, np.bool_)
+            imask[idx] = True
+        ret += (imask,)
     return ret
 
 
