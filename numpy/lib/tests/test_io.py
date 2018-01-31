@@ -1073,6 +1073,13 @@ class Testfromregex(object):
             x = np.fromregex(path, regexp, dt, encoding='UTF-8')
             assert_array_equal(x, a)
 
+    def test_compiled_bytes(self):
+        regexp = re.compile(b'(\\d)')
+        c = BytesIO(b'123')
+        dt = [('num', np.float64)]
+        a = np.array([1, 2, 3], dtype=dt)
+        x = np.fromregex(c, regexp, dt)
+        assert_array_equal(x, a)
 
 #####--------------------------------------------------------------------------
 
@@ -1982,7 +1989,7 @@ M   33  21.99
             utf8.encode(encoding)
         except (UnicodeError, ImportError):
             raise SkipTest('Skipping test_utf8_file_nodtype_unicode, '
-                           'unable to encode utf8 in preferred encoding') 
+                           'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
             with io.open(path, "wt") as f:
