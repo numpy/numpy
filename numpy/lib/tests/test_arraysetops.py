@@ -409,8 +409,8 @@ class TestUnique(object):
         assert_raises(TypeError, self._run_axis_tests,
                       [('a', int), ('b', object)])
 
-        assert_raises(ValueError, unique, np.arange(10), axis=2)
-        assert_raises(ValueError, unique, np.arange(10), axis=-2)
+        assert_raises(np.AxisError, unique, np.arange(10), axis=2)
+        assert_raises(np.AxisError, unique, np.arange(10), axis=-2)
 
     def test_unique_axis_list(self):
         msg = "Unique failed on list of lists"

@@ -2864,10 +2864,10 @@ class TestMethods(object):
         assert_(a.flags['OWNDATA'])
         b = a.copy()
         # check exceptions
-        assert_raises(ValueError, a.swapaxes, -5, 0)
-        assert_raises(ValueError, a.swapaxes, 4, 0)
-        assert_raises(ValueError, a.swapaxes, 0, -5)
-        assert_raises(ValueError, a.swapaxes, 0, 4)
+        assert_raises(np.AxisError, a.swapaxes, -5, 0)
+        assert_raises(np.AxisError, a.swapaxes, 4, 0)
+        assert_raises(np.AxisError, a.swapaxes, 0, -5)
+        assert_raises(np.AxisError, a.swapaxes, 0, 4)
 
         for i in range(-4, 4):
             for j in range(-4, 4):
