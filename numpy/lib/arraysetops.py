@@ -268,34 +268,26 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     optional_indices = return_index or return_inverse
 
-    if ar.size == 0:
-        ret = (ar,)
-        if return_index:
-            ret += (np.empty(0, np.intp),)
-        if return_inverse:
-            ret += (np.empty(0, np.intp),)
-        if return_counts:
-            ret += (np.empty(0, np.intp),)
-        return ret
-
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
     else:
         ar.sort()
         aux = ar
-    flag = np.concatenate(([True], aux[1:] != aux[:-1]))
+    mask = np.empty(aux.shape, dtype=np.bool_)
+    mask[:1] = True
+    mask[1:] = aux[1:] != aux[:-1]
 
-    ret = (aux[flag],)
+    ret = (aux[mask],)
     if return_index:
-        ret += (perm[flag],)
+        ret += (perm[mask],)
     if return_inverse:
-        iflag = np.cumsum(flag) - 1
+        imask = np.cumsum(mask) - 1
         inv_idx = np.empty(ar.shape, dtype=np.intp)
-        inv_idx[perm] = iflag
+        inv_idx[perm] = imask
         ret += (inv_idx,)
     if return_counts:
-        idx = np.concatenate(np.nonzero(flag) + ([ar.size],))
+        idx = np.concatenate(np.nonzero(mask) + ([ar.size],))
         ret += (np.diff(idx),)
     return ret
 
