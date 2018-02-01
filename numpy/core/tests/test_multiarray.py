@@ -2635,6 +2635,10 @@ class TestMethods(object):
         assert_equal(a.diagonal(0), [0, 5, 10])
         assert_equal(a.diagonal(1), [1, 6, 11])
         assert_equal(a.diagonal(-1), [4, 9])
+        assert_raises(np.AxisError, a.diagonal, axis1=0, axis2=5)
+        assert_raises(np.AxisError, a.diagonal, axis1=5, axis2=0)
+        assert_raises(np.AxisError, a.diagonal, axis1=5, axis2=5)
+        assert_raises(ValueError, a.diagonal, axis1=1, axis2=1)
 
         b = np.arange(8).reshape((2, 2, 2))
         assert_equal(b.diagonal(), [[0, 6], [1, 7]])
@@ -2647,6 +2651,7 @@ class TestMethods(object):
         assert_equal(b.diagonal(offset=1, axis1=0, axis2=2), [[1], [3]])
         # Order of axis argument doesn't matter:
         assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
+
 
     def test_diagonal_view_notwriteable(self):
         # this test is only for 1.9, the diagonal view will be
