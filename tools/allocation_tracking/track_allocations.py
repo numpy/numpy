@@ -108,30 +108,29 @@ class AllocationTracker(object):
         self.current_line = line
 
     def write_html(self, filename):
-        f = open(filename, "w")
-        f.write('<HTML><HEAD><script src="sorttable.js"></script></HEAD><BODY>\n')
-        f.write('<TABLE class="sortable" width=100%>\n')
-        f.write("<TR>\n")
-        cols = "event#,lineinfo,bytes allocated,bytes freed,#allocations,#frees,max memory usage,long lived bytes".split(',')
-        for header in cols:
-            f.write("  <TH>{0}</TH>".format(header))
-        f.write("\n</TR>\n")
-        for idx, event in enumerate(self.allocation_trace):
+        with open(filename, "w") as f:
+            f.write('<HTML><HEAD><script src="sorttable.js"></script></HEAD><BODY>\n')
+            f.write('<TABLE class="sortable" width=100%>\n')
             f.write("<TR>\n")
-            event = [idx] + list(event)
-            for col, val in zip(cols, event):
-                if col == 'lineinfo':
-                    # special handling
-                    try:
-                        filename, line, module, code, index = val
-                        val = "{0}({1}): {2}".format(filename, line, code[index])
-                    except Exception:
-                        # sometimes this info is not available (from eval()?)
-                        val = str(val)
-                f.write("  <TD>{0}</TD>".format(val))
+            cols = "event#,lineinfo,bytes allocated,bytes freed,#allocations,#frees,max memory usage,long lived bytes".split(',')
+            for header in cols:
+                f.write("  <TH>{0}</TH>".format(header))
             f.write("\n</TR>\n")
-        f.write("</TABLE></BODY></HTML>\n")
-        f.close()
+            for idx, event in enumerate(self.allocation_trace):
+                f.write("<TR>\n")
+                event = [idx] + list(event)
+                for col, val in zip(cols, event):
+                    if col == 'lineinfo':
+                        # special handling
+                        try:
+                            filename, line, module, code, index = val
+                            val = "{0}({1}): {2}".format(filename, line, code[index])
+                        except Exception:
+                            # sometimes this info is not available (from eval()?)
+                            val = str(val)
+                    f.write("  <TD>{0}</TD>".format(val))
+                f.write("\n</TR>\n")
+            f.write("</TABLE></BODY></HTML>\n")
 
 
 if __name__ == '__main__':

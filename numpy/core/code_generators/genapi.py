@@ -216,66 +216,65 @@ def find_functions(filename, tag='API'):
           This function does foo...
          */
     """
-    fo = open(filename, 'r')
-    functions = []
-    return_type = None
-    function_name = None
-    function_args = []
-    doclist = []
-    SCANNING, STATE_DOC, STATE_RETTYPE, STATE_NAME, STATE_ARGS = list(range(5))
-    state = SCANNING
-    tagcomment = '/*' + tag
-    for lineno, line in enumerate(fo):
-        try:
-            line = line.strip()
-            if state == SCANNING:
-                if line.startswith(tagcomment):
-                    if line.endswith('*/'):
+    with open(filename, 'r') as fo:
+        functions = []
+        return_type = None
+        function_name = None
+        function_args = []
+        doclist = []
+        SCANNING, STATE_DOC, STATE_RETTYPE, STATE_NAME, STATE_ARGS = list(range(5))
+        state = SCANNING
+        tagcomment = '/*' + tag
+        for lineno, line in enumerate(fo):
+            try:
+                line = line.strip()
+                if state == SCANNING:
+                    if line.startswith(tagcomment):
+                        if line.endswith('*/'):
+                            state = STATE_RETTYPE
+                        else:
+                            state = STATE_DOC
+                elif state == STATE_DOC:
+                    if line.startswith('*/'):
                         state = STATE_RETTYPE
                     else:
-                        state = STATE_DOC
-            elif state == STATE_DOC:
-                if line.startswith('*/'):
-                    state = STATE_RETTYPE
-                else:
-                    line = line.lstrip(' *')
-                    doclist.append(line)
-            elif state == STATE_RETTYPE:
-                # first line of declaration with return type
-                m = re.match(r'NPY_NO_EXPORT\s+(.*)$', line)
-                if m:
-                    line = m.group(1)
-                return_type = line
-                state = STATE_NAME
-            elif state == STATE_NAME:
-                # second line, with function name
-                m = re.match(r'(\w+)\s*\(', line)
-                if m:
-                    function_name = m.group(1)
-                else:
-                    raise ParseError(filename, lineno+1,
-                                     'could not find function name')
-                function_args.append(line[m.end():])
-                state = STATE_ARGS
-            elif state == STATE_ARGS:
-                if line.startswith('{'):
-                    # finished
-                    fargs_str = ' '.join(function_args).rstrip(' )')
-                    fargs = split_arguments(fargs_str)
-                    f = Function(function_name, return_type, fargs,
-                                 '\n'.join(doclist))
-                    functions.append(f)
-                    return_type = None
-                    function_name = None
-                    function_args = []
-                    doclist = []
-                    state = SCANNING
-                else:
-                    function_args.append(line)
-        except Exception:
-            print(filename, lineno + 1)
-            raise
-    fo.close()
+                        line = line.lstrip(' *')
+                        doclist.append(line)
+                elif state == STATE_RETTYPE:
+                    # first line of declaration with return type
+                    m = re.match(r'NPY_NO_EXPORT\s+(.*)$', line)
+                    if m:
+                        line = m.group(1)
+                    return_type = line
+                    state = STATE_NAME
+                elif state == STATE_NAME:
+                    # second line, with function name
+                    m = re.match(r'(\w+)\s*\(', line)
+                    if m:
+                        function_name = m.group(1)
+                    else:
+                        raise ParseError(filename, lineno+1,
+                                         'could not find function name')
+                    function_args.append(line[m.end():])
+                    state = STATE_ARGS
+                elif state == STATE_ARGS:
+                    if line.startswith('{'):
+                        # finished
+                        fargs_str = ' '.join(function_args).rstrip(' )')
+                        fargs = split_arguments(fargs_str)
+                        f = Function(function_name, return_type, fargs,
+                                     '\n'.join(doclist))
+                        functions.append(f)
+                        return_type = None
+                        function_name = None
+                        function_args = []
+                        doclist = []
+                        state = SCANNING
+                    else:
+                        function_args.append(line)
+            except Exception:
+                print(filename, lineno + 1)
+                raise
     return functions
 
 def should_rebuild(targets, source_files):
@@ -489,14 +488,11 @@ def get_versions_hash():
     d = []
 
     file = os.path.join(os.path.dirname(__file__), 'cversions.txt')
-    fid = open(file, 'r')
-    try:
+    with open(file, 'r') as fid:
         for line in fid:
             m = VERRE.match(line)
             if m:
                 d.append((int(m.group(1), 16), m.group(2)))
-    finally:
-        fid.close()
 
     return dict(d)
 

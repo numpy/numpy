@@ -63,12 +63,11 @@ def configuration(parent_package='', top_path=None):
         target = os.path.join(build_dir, f2py_exe)
         if newer(__file__, target):
             log.info('Creating %s', target)
-            f = open(target, 'w')
-            f.write(_get_f2py_shebang() + '\n')
-            mainloc = os.path.join(os.path.dirname(__file__), "__main__.py")
-            with open(mainloc) as mf:
-                f.write(mf.read())
-            f.close()
+            with open(target, 'w') as f:
+                f.write(_get_f2py_shebang() + '\n')
+                mainloc = os.path.join(os.path.dirname(__file__), "__main__.py")
+                with open(mainloc) as mf:
+                    f.write(mf.read())
         return target
 
     config.add_scripts(generate_f2py_py)

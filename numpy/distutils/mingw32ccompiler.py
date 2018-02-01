@@ -312,15 +312,15 @@ def generate_def(dll, dfile):
     if len(syms) == 0:
         log.warn('No symbols found in %s' % dll)
 
-    d = open(dfile, 'w')
-    d.write('LIBRARY        %s\n' % os.path.basename(dll))
-    d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
-    d.write(';DATA          PRELOAD SINGLE\n')
-    d.write('\nEXPORTS\n')
-    for s in syms:
-        #d.write('@%d    %s\n' % (s[0], s[1]))
-        d.write('%s\n' % s[1])
-    d.close()
+    with open(dfile, 'w') as d:
+        d.write('LIBRARY        %s\n' % os.path.basename(dll))
+        d.write(';CODE          PRELOAD MOVEABLE DISCARDABLE\n')
+        d.write(';DATA          PRELOAD SINGLE\n')
+        d.write('\nEXPORTS\n')
+        for s in syms:
+            #d.write('@%d    %s\n' % (s[0], s[1]))
+            d.write('%s\n' % s[1])
+
 
 def find_dll(dll_name):
 
@@ -651,7 +651,6 @@ def generate_manifest(config):
             mi = int((msver - ma) * 10)
             # Write the manifest file
             manxml = msvc_manifest_xml(ma, mi)
-            man = open(manifest_name(config), "w")
-            config.temp_files.append(manifest_name(config))
-            man.write(manxml)
-            man.close()
+            with open(manifest_name(config), "w") as man:
+                config.temp_files.append(manifest_name(config))
+                man.write(manxml)

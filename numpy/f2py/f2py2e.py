@@ -333,9 +333,8 @@ def callcrackfortran(files, options):
         if options['signsfile'][-6:] == 'stdout':
             sys.stdout.write(pyf)
         else:
-            f = open(options['signsfile'], 'w')
-            f.write(pyf)
-            f.close()
+            with open(options['signsfile'], 'w') as f:
+                f.write(pyf)
     if options["coutput"] is None:
         for mod in postlist:
             mod["coutput"] = "%smodule.c" % mod["name"]

@@ -278,9 +278,8 @@ if __name__ == "__main__":
 
     script = os.path.join(d, get_temp_module_name() + '.py')
     dst_sources.append(script)
-    f = open(script, 'wb')
-    f.write(asbytes(code))
-    f.close()
+    with open(script, 'wb') as f:
+        f.write(asbytes(code))
 
     # Build
     cwd = os.getcwd()

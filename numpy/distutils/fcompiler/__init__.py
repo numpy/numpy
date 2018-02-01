@@ -968,29 +968,27 @@ def is_free_format(file):
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
     result = 0
-    f = open_latin1(file, 'r')
-    line = f.readline()
-    n = 10000 # the number of non-comment lines to scan for hints
-    if _has_f_header(line):
-        n = 0
-    elif _has_f90_header(line):
-        n = 0
-        result = 1
-    while n>0 and line:
-        line = line.rstrip()
-        if line and line[0]!='!':
-            n -= 1
-            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-1:]=='&':
-                result = 1
-                break
+    with open_latin1(file, 'r') as f:
         line = f.readline()
-    f.close()
+        n = 10000 # the number of non-comment lines to scan for hints
+        if _has_f_header(line):
+            n = 0
+        elif _has_f90_header(line):
+            n = 0
+            result = 1
+        while n>0 and line:
+            line = line.rstrip()
+            if line and line[0]!='!':
+                n -= 1
+                if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-1:]=='&':
+                    result = 1
+                    break
+            line = f.readline()
     return result
 
 def has_f90_header(src):
-    f = open_latin1(src, 'r')
-    line = f.readline()
-    f.close()
+    with open_latin1(src, 'r') as f:
+        line = f.readline()
     return _has_f90_header(line) or _has_fix_header(line)
 
 _f77flags_re = re.compile(r'(c|)f77flags\s*\(\s*(?P<fcname>\w+)\s*\)\s*=\s*(?P<fflags>.*)', re.I)
@@ -1001,17 +999,16 @@ def get_f77flags(src):
     Return a dictionary {<fcompiler type>:<f77 flags>}.
     """
     flags = {}
-    f = open_latin1(src, 'r')
-    i = 0
-    for line in f:
-        i += 1
-        if i>20: break
-        m = _f77flags_re.match(line)
-        if not m: continue
-        fcname = m.group('fcname').strip()
-        fflags = m.group('fflags').strip()
-        flags[fcname] = split_quoted(fflags)
-    f.close()
+    with open_latin1(src, 'r') as f:
+        i = 0
+        for line in f:
+            i += 1
+            if i>20: break
+            m = _f77flags_re.match(line)
+            if not m: continue
+            fcname = m.group('fcname').strip()
+            fflags = m.group('fflags').strip()
+            flags[fcname] = split_quoted(fflags)
     return flags
 
 # TODO: implement get_f90flags and use it in _compile similarly to get_f77flags

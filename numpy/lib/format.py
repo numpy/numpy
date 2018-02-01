@@ -760,20 +760,16 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        fp = open(filename, mode+'b')
-        try:
+        with open(filename, mode+'b') as f:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
             if version != (2, 0) and used_ver == (2, 0):
                 warnings.warn("Stored array in format 2.0. It can only be"
                               "read by NumPy >= 1.9", UserWarning, stacklevel=2)
             offset = fp.tell()
-        finally:
-            fp.close()
     else:
         # Read the header of the file first.
-        fp = open(filename, 'rb')
-        try:
+        with open(filename, 'rb') as fp:
             version = read_magic(fp)
             _check_version(version)
 
@@ -782,8 +778,6 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
                 msg = "Array can't be memory-mapped: Python objects in dtype."
                 raise ValueError(msg)
             offset = fp.tell()
-        finally:
-            fp.close()
 
     if fortran_order:
         order = 'F'
