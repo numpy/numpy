@@ -324,7 +324,8 @@ def unique(ar, return_index=False, return_inverse=False,
         sort_inplace = True
 
     # The mask is sorted iff the input ends up sorted
-    mask_is_sorted = assume_sorted or (sort_inplace and orig_base is consolidated_base)
+    mask_is_sorted = assume_sorted or (sort_inplace
+        and orig_base is consolidated_base)
 
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
