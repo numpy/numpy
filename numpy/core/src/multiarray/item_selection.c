@@ -1818,24 +1818,15 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     }
 
     /* Handle negative axes with standard Python indexing rules */
-    if (axis1 < 0) {
-        axis1 += ndim;
+    if (check_and_adjust_axis_cmsg(&axis1, ndim, "axis1") < 0) {
+        return NULL;
     }
-    if (axis2 < 0) {
-        axis2 += ndim;
+    if (check_and_adjust_axis_cmsg(&axis2, ndim, "axis2") < 0) {
+        return NULL;
     }
-
-    /* Error check the two axes */
     if (axis1 == axis2) {
         PyErr_SetString(PyExc_ValueError,
                     "axis1 and axis2 cannot be the same");
-        return NULL;
-    }
-    else if (axis1 < 0 || axis1 >= ndim || axis2 < 0 || axis2 >= ndim) {
-        PyErr_Format(PyExc_ValueError,
-                    "axis1(=%d) and axis2(=%d) "
-                    "must be within range (ndim=%d)",
-                    axis1, axis2, ndim);
         return NULL;
     }
 
