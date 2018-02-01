@@ -600,7 +600,7 @@ def filled(a, fill_value=None):
     ----------
     a : MaskedArray or array_like
         An input object.
-    fill_value : scalar, optional
+    fill_value : scalar or shape that can be broadcast to same shape as `a`, optional
         Filling value. Default is None.
 
     Returns
