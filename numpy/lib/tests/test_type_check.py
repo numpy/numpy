@@ -7,7 +7,8 @@ from numpy.testing import (
     )
 from numpy.lib.type_check import (
     common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
-    nan_to_num, isrealobj, iscomplexobj, asfarray, real_if_close
+    nan_to_num, isrealobj, iscomplexobj, asfarray, real_if_close,
+    find_dtype_offsets
     )
 
 
@@ -426,6 +427,53 @@ class TestArrayConversion(object):
         # other numpy function
         assert_raises(TypeError,
             asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))
+
+
+
+class TestFindDtypeOffsets(TestCase):
+
+    def test_basic(self):
+        dt = object
+        actual = find_dtype_offsets(dt, object)
+        expected = np.array([0], dtype=np.intp)
+        assert_array_equal(actual, expected)
+
+    def test_subdtype(self):
+        dt = (np.int32, 3)
+        actual = find_dtype_offsets(dt, np.int32)
+        expected = np.array([0, 4, 8], dtype=np.intp)
+        assert_array_equal(actual, expected)
+
+    def test_fields(self):
+        dt = [('a', np.float32), ('b', np.float64)]
+
+        actual = find_dtype_offsets(dt, np.float32)
+        expected = np.array([0], dtype=np.intp)
+        assert_array_equal(actual, expected)
+
+        actual = find_dtype_offsets(dt, np.float64)
+        expected = np.array([4], dtype=np.intp)
+        assert_array_equal(actual, expected)
+
+    def test_compound(self):
+        dt = [
+            ('a', np.dtype([
+                ('a1', np.int32, 3),
+                ('a2', np.bool, 1)
+            ]), 2),
+            ('b', np.int32, 3)
+        ]
+
+        actual = find_dtype_offsets(dt, np.int32)
+        expected = np.array([
+            # first occurence of a1
+            0,  4,  8,
+            # second occurence of a1
+            13, 17, 21,
+            # b
+            26, 30, 34
+        ], dtype=np.intp)
+        assert_array_equal(actual, expected)
 
 
 if __name__ == "__main__":

@@ -53,3 +53,4 @@ Miscellaneous
    typename
    sctype2char
    mintypecode
+   find_dtype_offsets
