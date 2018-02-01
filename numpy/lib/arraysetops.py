@@ -273,6 +273,12 @@ def unique(ar, return_index=False, return_inverse=False,
     """
     orig_ar = ar
     ar = np.asanyarray(ar)
+
+    indirect_sort = return_index or return_inverse
+    if indirect_sort:
+        # We won't perform an in-place sort even if requested
+        sort_inplace = False
+
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
                         return_mask, return_data, assume_sorted,
@@ -312,17 +318,13 @@ def unique(ar, return_index=False, return_inverse=False,
 
     consolidated_base = np.array_view_root(consolidated)
     orig_base = np.array_view_root(orig_ar)
-    if return_index or return_inverse:
-        # We won't perform an in-place sort even if requested
-        mask_is_sorted = assume_sorted
-    elif orig_base is consolidated_base:
-        # We're operating on a view
-        mask_is_sorted = assume_sorted or sort_inplace
-    else:
+    if not indirect_sort and orig_base is not consolidated_base:
         # We're operating on a copy, so we might as well
         # do an in-place sort on that copy
         sort_inplace = True
-        mask_is_sorted = assume_sorted
+
+    # The mask is sorted iff the input ends up sorted
+    mask_is_sorted = assume_sorted or (sort_inplace and orig_base is consolidated_base)
 
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
