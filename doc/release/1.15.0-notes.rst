@@ -101,12 +101,11 @@ Change to simd.inc.src to use AVX2 or AVX512 at compile time. Solving the gap
 that if compile numpy for avx2 (or 512) with -march=native, still get the SSE
 code for the simd functions even though rest of the code gets AVX2.
 
-``nan_to_num`` always returns scalars when receiving scalar inputs
-------------------------------------------------------------------
-`nan_to_num` works with both scalars and arrays. However, there was a corner
-case of receiving an integer number and returning an array as result. Now, the
-function is consistent with ufuncs. It also casts 0-dimensional arrays to
-scalars.
+``nan_to_num`` always returns scalars when receiving scalar or 0d inputs
+------------------------------------------------------------------------
+Previously an array was returned for integer scalar inputs, which is
+inconsistent with the behavior for float inputs, and that of ufuncs in general.
+For all types of scalar or 0d input, the result is now a scalar.
 
 Changes
 =======
