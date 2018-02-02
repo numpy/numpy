@@ -2,7 +2,6 @@
 #define _NPY_PRIVATE_COMMON_H_
 #include <numpy/npy_common.h>
 #include <numpy/npy_cpu.h>
-#include <numpy/npy_3kcompat.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
 
@@ -181,18 +180,6 @@ static NPY_INLINE int
 check_and_adjust_axis(int *axis, int ndim)
 {
     return check_and_adjust_axis_msg(axis, ndim, Py_None);
-}
-static NPY_INLINE int
-check_and_adjust_axis_cmsg(int *axis, int ndim, char const *cmsg)
-{
-    int ret;
-    PyObject *msg = PyUString_FromString(cmsg);
-    if (msg == NULL) {
-        return -1;
-    }
-    ret = check_and_adjust_axis_msg(axis, ndim, msg);
-    Py_DECREF(msg);
-    return ret;
 }
 
 
