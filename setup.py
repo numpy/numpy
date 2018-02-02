@@ -144,14 +144,11 @@ if not release:
 """
     FULLVERSION, GIT_REVISION = get_version_info()
 
-    a = open(filename, 'w')
-    try:
+    with open(filename, 'w') as a:
         a.write(cnt % {'version': VERSION,
                        'full_version': FULLVERSION,
                        'git_revision': GIT_REVISION,
                        'isrelease': str(ISRELEASED)})
-    finally:
-        a.close()
 
 
 def configuration(parent_package='',top_path=None):

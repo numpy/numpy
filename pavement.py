@@ -626,9 +626,8 @@ def write_log_task(options, filename='Changelog'):
         stdout=subprocess.PIPE)
 
     out = st.communicate()[0]
-    a = open(filename, 'w')
-    a.writelines(out)
-    a.close()
+    with open(filename, 'w') as a:
+        a.writelines(out)
 
 
 @task

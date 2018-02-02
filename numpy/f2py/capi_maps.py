@@ -187,9 +187,8 @@ if os.path.isfile('.f2py_f2cmap'):
     # they use PARAMETERSs in type specifications.
     try:
         outmess('Reading .f2py_f2cmap ...\n')
-        f = open('.f2py_f2cmap', 'r')
-        d = eval(f.read(), {}, {})
-        f.close()
+        with open('.f2py_f2cmap', 'r') as f:
+            d = eval(f.read(), {}, {})
         for k, d1 in list(d.items()):
             for k1 in list(d1.keys()):
                 d1[k1.lower()] = d1[k1]

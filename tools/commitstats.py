@@ -9,7 +9,8 @@ import os
 names = re.compile(r'r\d+\s[|]\s(.*)\s[|]\s200')
 
 def get_count(filename, repo):
-    mystr = open(filename).read()
+    with open(filename) as f:
+        mystr = f.read()
     result = names.findall(mystr)
     u = np.unique(result)
     count = [(x, result.count(x), repo) for x in u]

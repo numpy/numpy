@@ -216,9 +216,8 @@ elif sys.platform[:5] == 'linux':
 
         """
         try:
-            f = open(_proc_pid_stat, 'r')
-            l = f.readline().split(' ')
-            f.close()
+            with open(_proc_pid_stat, 'r') as f:
+                l = f.readline().split(' ')
             return int(l[22])
         except Exception:
             return
@@ -245,9 +244,8 @@ if sys.platform[:5] == 'linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            f = open(_proc_pid_stat, 'r')
-            l = f.readline().split(' ')
-            f.close()
+            with open(_proc_pid_stat, 'r') as f:
+                l = f.readline().split(' ')
             return int(l[13])
         except Exception:
             return int(100*(time.time()-_load_time[0]))

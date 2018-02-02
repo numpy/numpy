@@ -32,14 +32,13 @@ def main():
 
     cache = load_cache()
 
-    f = open(args[0], 'r')
-    try:
-        text = f.read()
-        text = comment_re.sub(lambda m: process_match(m, cache), text)
-        sys.stdout.write(text)
-    finally:
-        f.close()
-        save_cache(cache)
+    with open(args[0], 'r') as f:
+        try:
+            text = f.read()
+            text = comment_re.sub(lambda m: process_match(m, cache), text)
+            sys.stdout.write(text)
+        finally:
+            save_cache(cache)
 
 def filter_comment(text):
     if text.startswith('NUMPY_API'):
@@ -72,23 +71,18 @@ def process_match(m, cache=None):
 
 def load_cache():
     if os.path.exists(CACHE_FILE):
-        f = open(CACHE_FILE, 'rb')
-        try:
-            cache = pickle.load(f)
-        except Exception:
-            cache = {}
-        finally:
-            f.close()
+        with open(CACHE_FILE, 'rb') as f:
+            try:
+                cache = pickle.load(f)
+            except Exception:
+                cache = {}
     else:
         cache = {}
     return cache
 
 def save_cache(cache):
-    f = open(CACHE_FILE + '.new', 'wb')
-    try:
+    with open(CACHE_FILE + '.new', 'wb') as f:
         pickle.dump(cache, f)
-    finally:
-        f.close()
     os.rename(CACHE_FILE + '.new', CACHE_FILE)
 
 def render_html(text):

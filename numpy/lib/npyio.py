@@ -716,19 +716,17 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         try:
             for key, val in namedict.items():
                 fname = key + '.npy'
-                fid = open(tmpfile, 'wb')
-                try:
-                    format.write_array(fid, np.asanyarray(val),
-                                       allow_pickle=allow_pickle,
-                                       pickle_kwargs=pickle_kwargs)
-                    fid.close()
-                    fid = None
-                    zipf.write(tmpfile, arcname=fname)
-                except IOError as exc:
-                    raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
-                finally:
-                    if fid:
+                with open(tmpfile, 'wb') as fid:
+                    try:
+                        format.write_array(fid, np.asanyarray(val),
+                                           allow_pickle=allow_pickle,
+                                           pickle_kwargs=pickle_kwargs)
                         fid.close()
+                        fid = None
+                        zipf.write(tmpfile, arcname=fname)
+                    except IOError as exc:
+                        raise IOError("Failed to write to %s: %s" % (tmpfile, exc))
+
         finally:
             os.remove(tmpfile)
 
@@ -1436,9 +1434,8 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Examples
     --------
-    >>> f = open('test.dat', 'w')
-    >>> f.write("1312 foo\\n1534  bar\\n444   qux")
-    >>> f.close()
+    >>> with open('test.dat', 'w') as f:
+    ...     f.write("1312 foo\\n1534  bar\\n444   qux")
 
     >>> regexp = r"(\\d+)\\s+(...)"  # match [digits, whitespace, anything]
     >>> output = np.fromregex('test.dat', regexp,

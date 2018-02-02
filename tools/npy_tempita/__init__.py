@@ -1291,7 +1291,7 @@ def fill_command(args=None):
         template_content = sys.stdin.read()
         template_name = '<stdin>'
     else:
-        with open(template_name, 'rb', encoding="latin-1") as f: 
+        with open(template_name, 'rb', encoding="latin-1") as f:
             template_content = f.read()
     if options.use_html:
         TemplateClass = HTMLTemplate
@@ -1300,7 +1300,7 @@ def fill_command(args=None):
     template = TemplateClass(template_content, name=template_name)
     result = template.substitute(vars)
     if options.output:
-        with open(options.output, 'wb') as f: 
+        with open(options.output, 'wb') as f:
             f.write(result)
     else:
         sys.stdout.write(result)
