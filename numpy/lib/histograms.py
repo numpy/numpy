@@ -237,6 +237,10 @@ def _get_outer_edges(a, range):
         first_edge = first_edge - 0.5
         last_edge = last_edge + 0.5
 
+    if a.dtype.kind not in ['i']:
+        first_edge = a.dtype.type(first_edge)
+        last_edge = a.dtype.type(last_edge)
+
     return first_edge, last_edge
 
 

@@ -299,6 +299,15 @@ class TestHistogram(object):
         assert_equal(d_edge.dtype, dates.dtype)
         assert_equal(t_edge.dtype, td)
 
+    def test_precision_data_and_range(self):
+        tiny_shift = 1e-8
+        count, x_loc = np.histogram(
+            np.array([1.0], np.float32),
+            bins=1,
+            range=np.array([1.0 + tiny_shift, 2.0], np.float64)
+        )
+        assert_equal(count, 1)
+
 
 class TestHistogramOptimBinNums(object):
     """
