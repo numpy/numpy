@@ -364,7 +364,9 @@ PyMODINIT_FUNC initumath(void)
     Py_DECREF(s);
 
     /* Load the ufunc operators into the array module's namespace */
-    InitOperators(d);
+    if (InitOperators(d) < 0) {
+        goto err;
+    }
 
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
