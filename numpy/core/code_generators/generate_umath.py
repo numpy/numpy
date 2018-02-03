@@ -1045,7 +1045,10 @@ def make_ufuncs(funcdict):
                 {name}_functions, {name}_data, {name}_signatures, {nloops},
                 {nin}, {nout}, {identity}, "{name}",
                 "{doc}", 0
-            );""")
+            );
+            if (f == NULL) {{
+                return -1;
+            }}""")
         mlist.append(fmt.format(
             name=name, nloops=len(uf.type_descriptions),
             nin=uf.nin, nout=uf.nout, identity=uf.identity, doc=docstring
@@ -1073,12 +1076,14 @@ def make_code(funcdict, filename):
 
     %s
 
-    static void
+    static int
     InitOperators(PyObject *dictionary) {
         PyObject *f;
 
     %s
     %s
+
+        return 0;
     }
     """) % (filename, code1, code2, code3)
     return code
