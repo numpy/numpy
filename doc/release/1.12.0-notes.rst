@@ -190,7 +190,7 @@ ma.median warns and returns nan when unmasked invalid values are encountered
 Similar to unmasked median the masked median `ma.median` now emits a Runtime
 warning and returns `NaN` in slices where an unmasked `NaN` is present.
 
-Greater consistancy in ``assert_almost_equal``
+Greater consistency in ``assert_almost_equal``
 ----------------------------------------------
 The precision check for scalars has been changed to match that for arrays. It
 is now::

@@ -166,7 +166,7 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 # variable attributes tested via "int %s a" % attribute
 OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 
-# Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
+# Subset of OPTIONAL_STDFUNCS which may already have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = [
     "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
     "ftello", "fseeko"

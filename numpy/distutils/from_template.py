@@ -238,8 +238,7 @@ _special_names = find_repl_patterns('''
 <ctypereal=float,double,\\0,\\1>
 ''')
 
-if __name__ == "__main__":
-
+def main():
     try:
         file = sys.argv[1]
     except IndexError:
@@ -254,3 +253,6 @@ if __name__ == "__main__":
     allstr = fid.read()
     writestr = process_str(allstr)
     outfile.write(writestr)
+
+if __name__ == "__main__":
+    main()

@@ -352,13 +352,21 @@ def setup_package():
         long_description = "\n".join(DOCLINES[2:]),
         url = "http://www.numpy.org",
         author = "Travis E. Oliphant et al.",
-        download_url = "http://sourceforge.net/projects/numpy/files/NumPy/",
+        download_url = "https://pypi.python.org/pypi/numpy",
         license = 'BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked},
         python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+        zip_safe=False,
+        entry_points={
+            'console_scripts': [
+                'f2py = numpy.f2py.__main__:main',
+                'conv-template = numpy.distutils.conv_template:main',
+                'from-template = numpy.distutils.conv_template:main',
+            ]
+        },
     )
 
     if "--force" in sys.argv:

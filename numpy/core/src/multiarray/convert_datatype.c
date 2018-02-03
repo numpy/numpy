@@ -135,7 +135,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
  * Usually, if data_obj is not an array, dtype should be the result
  * given by the PyArray_GetArrayParamsFromObject function.
  *
- * The data_obj may be NULL if just a dtype is is known for the source.
+ * The data_obj may be NULL if just a dtype is known for the source.
  *
  * If *flex_dtype is NULL, returns immediately, without setting an
  * exception. This basically assumes an error was already set previously.
@@ -1294,6 +1294,37 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 }
 
 /*
+ * Produces the smallest size and lowest kind type to which all
+ * input types can be cast.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypeSequence(PyArray_Descr **types, npy_intp ntypes)
+{
+    npy_intp i;
+    PyArray_Descr *ret = NULL;
+    if (ntypes == 0) {
+        PyErr_SetString(PyExc_TypeError, "at least one type needed to promote");
+        return NULL;
+    }
+    ret = types[0];
+    Py_INCREF(ret);
+    for (i = 1; i < ntypes; ++i) {
+        PyArray_Descr *type = types[i];
+
+        /* Only call promote if the types aren't the same dtype */
+        if (type != ret || !PyArray_ISNBO(type->byteorder)) {
+            PyArray_Descr *tmp = PyArray_PromoteTypes(type, ret);
+            Py_DECREF(ret);
+            ret = tmp;
+            if (ret == NULL) {
+                return NULL;
+            }
+        }
+    }
+    return ret;
+}
+
+/*
  * NOTE: While this is unlikely to be a performance problem, if
  *       it is it could be reverted to a simple positive/negative
  *       check as the previous system used.
@@ -1579,16 +1610,12 @@ static int min_scalar_type_num(char *valueptr, int type_num,
     return type_num;
 }
 
-/*NUMPY_API
- * If arr is a scalar (has 0 dimensions) with a built-in number data type,
- * finds the smallest type size/kind which can still represent its data.
- * Otherwise, returns the array's data type.
- *
- */
+
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_MinScalarType(PyArrayObject *arr)
+PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned)
 {
     PyArray_Descr *dtype = PyArray_DESCR(arr);
+    *is_small_unsigned = 0;
     /*
      * If the array isn't a numeric scalar, just return the array's dtype.
      */
@@ -1599,16 +1626,28 @@ PyArray_MinScalarType(PyArrayObject *arr)
     else {
         char *data = PyArray_BYTES(arr);
         int swap = !PyArray_ISNBO(dtype->byteorder);
-        int is_small_unsigned = 0;
         /* An aligned memory buffer large enough to hold any type */
         npy_longlong value[4];
         dtype->f->copyswap(&value, data, swap, NULL);
 
         return PyArray_DescrFromType(
                         min_scalar_type_num((char *)&value,
-                                dtype->type_num, &is_small_unsigned));
+                                dtype->type_num, is_small_unsigned));
 
     }
+}
+
+/*NUMPY_API
+ * If arr is a scalar (has 0 dimensions) with a built-in number data type,
+ * finds the smallest type size/kind which can still represent its data.
+ * Otherwise, returns the array's data type.
+ *
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_MinScalarType(PyArrayObject *arr)
+{
+    int is_small_unsigned;
+    return PyArray_MinScalarType_internal(arr, &is_small_unsigned);
 }
 
 /*
@@ -1722,75 +1761,32 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
 
     /* Loop through all the types, promoting them */
     if (!use_min_scalar) {
-        for (i = 0; i < narrs; ++i) {
-            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                Py_INCREF(ret);
-            }
-            else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(ret->byteorder)) {
-                    tmpret = PyArray_PromoteTypes(tmp, ret);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
-                }
-            }
+        /* Build a single array of all the dtypes */
+        PyArray_Descr **all_dtypes = PyArray_malloc(
+            sizeof(*all_dtypes) * (narrs + ndtypes));
+        if (all_dtypes == NULL) {
+            return NULL;
         }
-
+        for (i = 0; i < narrs; ++i) {
+            all_dtypes[i] = PyArray_DESCR(arr[i]);
+        }
         for (i = 0; i < ndtypes; ++i) {
-            PyArray_Descr *tmp = dtypes[i];
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                Py_INCREF(ret);
-            }
-            else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(tmp->byteorder)) {
-                    tmpret = PyArray_PromoteTypes(tmp, ret);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
-                }
-            }
+            all_dtypes[narrs + i] = dtypes[i];
+        }
+        ret = PyArray_PromoteTypeSequence(all_dtypes, narrs + ndtypes);
+        PyArray_free(all_dtypes);
+        if (ret == NULL) {
+            return NULL;
         }
     }
     else {
         for (i = 0; i < narrs; ++i) {
-            /* Get the min scalar type for the array */
-            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
-            int tmp_is_small_unsigned = 0;
-            /*
-             * If it's a scalar, find the min scalar type. The function
-             * is expanded here so that we can flag whether we've got an
-             * unsigned integer which would fit an a signed integer
-             * of the same size, something not exposed in the public API.
-             */
-            if (PyArray_NDIM(arr[i]) == 0 &&
-                                PyTypeNum_ISNUMBER(tmp->type_num)) {
-                char *data = PyArray_BYTES(arr[i]);
-                int swap = !PyArray_ISNBO(tmp->byteorder);
-                int type_num;
-                /* An aligned memory buffer large enough to hold any type */
-                npy_longlong value[4];
-                tmp->f->copyswap(&value, data, swap, NULL);
-                type_num = min_scalar_type_num((char *)&value,
-                                        tmp->type_num, &tmp_is_small_unsigned);
-                tmp = PyArray_DescrFromType(type_num);
-                if (tmp == NULL) {
-                    Py_XDECREF(ret);
-                    return NULL;
-                }
-            }
-            else {
-                Py_INCREF(tmp);
+            int tmp_is_small_unsigned;
+            PyArray_Descr *tmp = PyArray_MinScalarType_internal(
+                arr[i], &tmp_is_small_unsigned);
+            if (tmp == NULL) {
+                Py_XDECREF(ret);
+                return NULL;
             }
             /* Combine it with the existing type */
             if (ret == NULL) {

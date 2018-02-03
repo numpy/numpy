@@ -281,7 +281,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
     if (f_exp <= 0x38000000u) {
         /*
          * Signed zeros, subnormal floats, and floats with small
-         * exponents all convert to signed zero halfs.
+         * exponents all convert to signed zero half-floats.
          */
         if (f_exp < 0x33000000u) {
 #if NPY_HALF_GENERATE_UNDERFLOW
@@ -396,7 +396,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
     if (d_exp <= 0x3f00000000000000ULL) {
         /*
          * Signed zeros, subnormal floats, and floats with small
-         * exponents all convert to signed zero halfs.
+         * exponents all convert to signed zero half-floats.
          */
         if (d_exp < 0x3e60000000000000ULL) {
 #if NPY_HALF_GENERATE_UNDERFLOW

@@ -482,7 +482,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
             pj = pr - elsize;
             GENERIC_SWAP(pm, pj, elsize);
             /*
-             * Generic comparisons may be buggy, so don't rely on the sentinals
+             * Generic comparisons may be buggy, so don't rely on the sentinels
              * to keep the pointers from going out of bounds.
              */
             for (;;) {

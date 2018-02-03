@@ -315,8 +315,7 @@ def unique_key(adict):
     return newkey
 
 
-if __name__ == "__main__":
-
+def main():
     try:
         file = sys.argv[1]
     except IndexError:
@@ -335,3 +334,6 @@ if __name__ == "__main__":
         e = get_exception()
         raise ValueError("In %s loop at %s" % (file, e))
     outfile.write(writestr)
+
+if __name__ == "__main__":
+    main()

@@ -14,7 +14,7 @@ NumPy binary files (NPY, NPZ)
    savez_compressed
 
 The format of these binary file types is documented in
-http://docs.scipy.org/doc/numpy/neps/npy-format.html
+http://numpy.github.io/neps/npy-format.html
 
 Text files
 ----------

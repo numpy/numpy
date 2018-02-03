@@ -9,6 +9,7 @@ import atexit
 import tempfile
 import subprocess
 import shutil
+import multiprocessing
 
 import distutils
 from distutils.errors import DistutilsError
@@ -92,7 +93,11 @@ def get_num_build_jobs():
 
     """
     from numpy.distutils.core import get_distribution
-    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", 1))
+    try:
+        cpu_count = len(os.sched_getaffinity(0))
+    except AttributeError:
+        cpu_count = multiprocessing.cpu_count()
+    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", cpu_count))
     dist = get_distribution()
     # may be None during configuration
     if dist is None:
@@ -2284,10 +2289,26 @@ def generate_config_py(target):
 
     # For gfortran+msvc combination, extra shared libraries may exist
     f.write("""
+
 import os
-extra_dll_dir = os.path.join(os.path.dirname(__file__), 'extra-dll')
-if os.path.isdir(extra_dll_dir):
-    os.environ["PATH"] += os.pathsep + extra_dll_dir
+import sys
+
+extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
+
+if os.path.isdir(extra_dll_dir) and sys.platform == 'win32':
+    try:
+        from ctypes import windll, c_wchar_p
+        _AddDllDirectory = windll.kernel32.AddDllDirectory
+        _AddDllDirectory.argtypes = [c_wchar_p]
+        # Needed to initialize AddDllDirectory modifications
+        windll.kernel32.SetDefaultDllDirectories(0x1000)
+    except AttributeError:
+        def _AddDllDirectory(dll_directory):
+            os.environ.setdefault('PATH', '')
+            os.environ['PATH'] += os.pathsep + dll_directory
+
+    _AddDllDirectory(extra_dll_dir)
+
 """)
 
     for k, i in system_info.saved_results.items():

@@ -237,7 +237,7 @@ of floating point round-off error.
 
 Like for other types, NumPy includes a typedef npy_half for the 16 bit
 float.  Unlike for most of the other types, you cannot use this as a
-normal type in C, since is is a typedef for npy_uint16.  For example,
+normal type in C, since it is a typedef for npy_uint16.  For example,
 1.0 looks like 0x3c00 to C, and if you do an equality comparison
 between the different signed zeros, you will get -0.0 != 0.0
 (0x8000 != 0x0000), which is incorrect.

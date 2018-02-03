@@ -238,44 +238,34 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 /**end repeat**/
 #endif
 
+/* Get a nested slot, or NULL if absent */
+#define GET_NESTED_SLOT(type, group, slot) \
+    ((type)->group == NULL ? NULL : (type)->group->slot)
+
 static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2)
 {
-    npy_intp repeat;
-
     /*
      * If the other object supports sequence repeat and not number multiply
-     * we should call sequence repeat to support e.g. list repeat by numpy
-     * scalars (they may be converted to ndarray otherwise).
+     * we fall back on the python builtin to invoke the sequence repeat, rather
+     * than promoting both arguments to ndarray.
+     * This covers a list repeat by numpy scalars.
      * A python defined class will always only have the nb_multiply slot and
      * some classes may have neither defined. For the latter we want need
      * to give the normal case a chance to convert the object to ndarray.
      * Probably no class has both defined, but if they do, prefer number.
      */
     if (!PyArray_IsScalar(m1, Generic) &&
-            ((Py_TYPE(m1)->tp_as_sequence != NULL) &&
-             (Py_TYPE(m1)->tp_as_sequence->sq_repeat != NULL)) &&
-            ((Py_TYPE(m1)->tp_as_number == NULL) ||
-             (Py_TYPE(m1)->tp_as_number->nb_multiply == NULL))) {
-        /* Try to convert m2 to an int and try sequence repeat */
-        repeat = PyArray_PyIntAsIntp(m2);
-        if (error_converting(repeat)) {
-            return NULL;
-        }
-        /* Note that npy_intp is compatible to Py_Ssize_t */
-        return PySequence_Repeat(m1, repeat);
+            GET_NESTED_SLOT(Py_TYPE(m1), tp_as_sequence, sq_repeat) != NULL &&
+            GET_NESTED_SLOT(Py_TYPE(m1), tp_as_number, nb_multiply) == NULL) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
     if (!PyArray_IsScalar(m2, Generic) &&
-            ((Py_TYPE(m2)->tp_as_sequence != NULL) &&
-             (Py_TYPE(m2)->tp_as_sequence->sq_repeat != NULL)) &&
-            ((Py_TYPE(m2)->tp_as_number == NULL) ||
-             (Py_TYPE(m2)->tp_as_number->nb_multiply == NULL))) {
-        /* Try to convert m1 to an int and try sequence repeat */
-        repeat = PyArray_PyIntAsIntp(m1);
-        if (error_converting(repeat)) {
-            return NULL;
-        }
-        return PySequence_Repeat(m2, repeat);
+            GET_NESTED_SLOT(Py_TYPE(m2), tp_as_sequence, sq_repeat) != NULL &&
+            GET_NESTED_SLOT(Py_TYPE(m2), tp_as_number, nb_multiply) == NULL) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
     }
     /* All normal cases are handled by PyArray's multiply */
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_multiply, gentype_multiply);
@@ -2376,11 +2366,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
         return -1;
     }
 
-#if defined(NPY_PY3K)
-    if (PyUString_Check(ind)) {
-#else
-    if (PyBytes_Check(ind) || PyUnicode_Check(ind)) {
-#endif
+    if (PyBaseString_Check(ind)) {
         /*
          * Much like in voidtype_setfield, we cannot simply use ndarray's
          * __setitem__ since assignment to void scalars should not broadcast
