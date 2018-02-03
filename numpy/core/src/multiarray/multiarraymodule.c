@@ -2196,13 +2196,13 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     static char *kwlist[] = {"iterable", "dtype", "count", NULL};
     static char *kwlist_old[] = {"iter", "dtype", "count", NULL};
     PyArray_Descr *descr = NULL;
+    PyObject *ptype, *pvalue, *ptraceback;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "OO&|" NPY_SSIZE_T_PYFMT ":fromiter", kwlist,
                 &iterable, PyArray_DescrConverter, &descr, &nin)) {
         Py_XDECREF(descr);
 
-        PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         if (!PyArg_ParseTupleAndKeywords(args, keywds,
                     "OO&|" NPY_SSIZE_T_PYFMT ":fromiter", kwlist_old,
