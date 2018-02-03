@@ -444,7 +444,7 @@ class Test_UPDATEIFCOPY(_DeprecationTestCase):
         arr = np.arange(9).reshape(3, 3)
         v = arr.T
         self.assert_deprecated(npy_updateifcopy_deprecation, args=(v,))
-    
+
 
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
@@ -479,6 +479,13 @@ class TestBincount(_DeprecationTestCase):
     # 2017-06-01, 1.14.0
     def test_bincount_minlength(self):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
+
+
+class TestFromiter(_DeprecationTestCase):
+    # Test that iter keyword for fromiter raises a DeprecationWarning.
+    # See PR #10253.
+    def test_fromiter_iter(self):
+        self.assert_deprecated(lambda: np.fromiter(iter=[1, 2, 3], dtype=int))
 
 
 if __name__ == "__main__":
