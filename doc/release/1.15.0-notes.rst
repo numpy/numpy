@@ -29,6 +29,9 @@ Deprecations
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
 
+* The ``iter`` keyword argument for ``np.fromiter`` is deprecated.
+  ``iterable`` should be used instead.
+
 
 Future Changes
 ==============
