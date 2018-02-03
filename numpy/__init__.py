@@ -150,7 +150,6 @@ else:
     # no-one else in the world is using it (though I hope not)
     from numpy.lib._testutils import PytestTester
     test = PytestTester(__name__)
-    bench = test
     del PytestTester
 
     # Allow distributors to run custom init code
