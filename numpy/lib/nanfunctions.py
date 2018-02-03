@@ -198,8 +198,8 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose minimum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the minimum is computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the minimum is computed. The default is to compute
         the minimum of the flattened array.
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
@@ -306,8 +306,8 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose maximum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the maximum is computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the maximum is computed. The default is to compute
         the maximum of the flattened array.
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
@@ -505,8 +505,8 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose sum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the sum is computed. The default is to compute the
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the sum is computed. The default is to compute the
         sum of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
@@ -596,8 +596,8 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose product is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the product is computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the product is computed. The default is to compute
         the product of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
@@ -791,8 +791,8 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose mean is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the means are computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the means are computed. The default is to compute
         the mean of the flattened array.
     dtype : data-type, optional
         Type to use in computing the mean.  For integer inputs, the default
@@ -1217,8 +1217,8 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose variance is desired.  If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the variance is computed.  The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the variance is computed.  The default is to compute
         the variance of the flattened array.
     dtype : data-type, optional
         Type to use in computing the variance.  For arrays of integer type
@@ -1359,8 +1359,8 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     ----------
     a : array_like
         Calculate the standard deviation of the non-NaN values.
-    axis : int, optional
-        Axis along which the standard deviation is computed. The default is
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the standard deviation is computed. The default is
         to compute the standard deviation of the flattened array.
     dtype : dtype, optional
         Type to use in computing the standard deviation. For arrays of
