@@ -166,6 +166,31 @@ MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 
+
+class MagicVersion(object):
+
+    def __init__(self, magic_string):
+        self._magic_string = magic_string
+
+    def create_magic_version_string(self, major_version, minor_version):
+        if sys.version_info[0] < 3:
+            return self._magic_string + chr(major_version) + chr(minor_version)
+        else:
+            return self._magic_string + bytes([major_version, minor_version])
+
+    def retrieve_version_from_magic_version_string(self, magic_version_string):
+        self._check_magic_version_string(magic_version_string)
+        if sys.version_info[0] < 3:
+            return ord(magic_version_string[-2]), ord(magic_version_string[-1])
+        else:
+            return magic_version_string[-2], magic_version_string[-1]
+
+    def _check_magic_version_string(self, magic_version_string):
+        if magic_version_string[:-2] != self._magic_string:
+            error_message = "the magic string is not correct; expected {}, got {}"
+            raise ValueError(error_message.format(self._magic_string, magic_version_string[:-2]))
+
+
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
 
@@ -173,6 +198,10 @@ def _check_version(version):
     if version not in [(1, 0), (2, 0), None]:
         msg = "we only support format version (1,0) and (2, 0), not %s"
         raise ValueError(msg % (version,))
+
+
+_magic_version = MagicVersion(MAGIC_PREFIX)
+
 
 def magic(major, minor):
     """ Return the magic string for the given file format version.
@@ -194,10 +223,7 @@ def magic(major, minor):
         raise ValueError("major version must be 0 <= major < 256")
     if minor < 0 or minor > 255:
         raise ValueError("minor version must be 0 <= minor < 256")
-    if sys.version_info[0] < 3:
-        return MAGIC_PREFIX + chr(major) + chr(minor)
-    else:
-        return MAGIC_PREFIX + bytes([major, minor])
+    return _magic_version.create_magic_version_string(major, minor)
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -211,15 +237,8 @@ def read_magic(fp):
     major : int
     minor : int
     """
-    magic_str = _read_bytes(fp, MAGIC_LEN, "magic string")
-    if magic_str[:-2] != MAGIC_PREFIX:
-        msg = "the magic string is not correct; expected %r, got %r"
-        raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
-    if sys.version_info[0] < 3:
-        major, minor = map(ord, magic_str[-2:])
-    else:
-        major, minor = magic_str[-2:]
-    return major, minor
+    magic_version_string = _read_bytes(fp, MAGIC_LEN, "magic string")
+    return _magic_version.retrieve_version_from_magic_version_string(magic_version_string)
 
 def dtype_to_descr(dtype):
     """
