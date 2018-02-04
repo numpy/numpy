@@ -2,10 +2,16 @@
 from __future__ import division, absolute_import, print_function
 
 import sys, os
-from io import BytesIO
 import re
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
 from plex.traditional import re as Re
+
+PY2 = sys.version_info < (3, 0)
+
+if PY2:
+    from io import BytesIO
+else:
+    from io import StringIO as BytesIO
 
 class MyScanner(Scanner):
     def __init__(self, info, name='<default>'):
@@ -221,6 +227,37 @@ def removeHeader(source):
         state = state(line)
     return lines.getValue()
 
+def removeSubroutinePrototypes(source):
+    expression = re.compile(
+        '/\* Subroutine \*/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
+    )
+    lines = LineQueue()
+    for line in BytesIO(source):
+        if not expression.match(line):
+            lines.add(line)
+
+    return lines.getValue()
+
+def removeBuiltinFunctions(source):
+    lines = LineQueue()
+    def LookingForBuiltinFunctions(line):
+        if line.strip() == '/* Builtin functions */':
+            return InBuiltInFunctions
+        else:
+            lines.add(line)
+            return LookingForBuiltinFunctions
+
+    def InBuiltInFunctions(line):
+        if line.strip() == '':
+            return LookingForBuiltinFunctions
+        else:
+            return InBuiltInFunctions
+
+    state = LookingForBuiltinFunctions
+    for line in BytesIO(source):
+        state = state(line)
+    return lines.getValue()
+
 def replaceDlamch(source):
     """Replace dlamch_ calls with appropriate macros"""
     def repl(m):
@@ -240,6 +277,8 @@ def scrubSource(source, nsteps=None, verbose=False):
              ('clean source', cleanSource),
              ('clean comments', cleanComments),
              ('replace dlamch_() calls', replaceDlamch),
+             ('remove definitions', removeSubroutinePrototypes),
+             ('remove builtin functions', removeBuiltinFunctions),
             ]
 
     if nsteps is not None:
