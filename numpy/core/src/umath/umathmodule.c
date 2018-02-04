@@ -359,10 +359,6 @@ PyMODINIT_FUNC initumath(void)
         goto err;
     }
 
-    s = PyString_FromString("0.4.0");
-    PyDict_SetItemString(d, "__version__", s);
-    Py_DECREF(s);
-
     /* Load the ufunc operators into the array module's namespace */
     if (InitOperators(d) < 0) {
         goto err;
