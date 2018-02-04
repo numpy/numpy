@@ -216,11 +216,69 @@ class DictionarySerializer(object):
         return "".join(result_list)
 
     def _filter(self, string):
+        # TODO fix python 2.7.5 bug
         return _filter_header(string)
+
+
+class UnsupportedHeaderSize(ValueError):
+
+    def __init__(self, header_length, version):
+        error_message = "Header length %s too big for version=%s"
+        error_message %= (header_length, version)
+        super(UnsupportedHeaderSize, self).__init__(error_message)
+
+
+class HeaderSerializer(object):
+
+    def __init__(self, magic_version, version, alignment, pack_format, maximum_size):
+        self._magic_version_string = magic_version.create_magic_version_string(*version)
+        self._version = version
+        self._alignment = alignment
+        self._pack_format = pack_format
+        self._maximum_size = maximum_size
+
+    def serialize(self, header_content):
+        import struct
+        magic_size = len(self._magic_version_string)
+        pack_size = struct.calcsize(self._pack_format)
+        content_size = len(header_content)
+        # +1 accounting for the missing newline
+        raw_size = magic_size + pack_size + content_size + 1
+        padding_size = -raw_size % self._alignment
+        padded_size = raw_size + padding_size
+        if padded_size > self._maximum_size:
+            raise UnsupportedHeaderSize(content_size, self._version)
+        prefix = self._magic_version_string
+        # +1 accounting for the missing newline
+        size = struct.pack(self._pack_format, content_size + 1 + padding_size)
+        return prefix + size + header_content + (b' ' * padding_size) + b'\n'
+
+
+class MultiVersionHeaderSerializer(object):
+
+    def __init__(self, serializer_version_1, serializer_version_2):
+        self._serializer_version_1 = serializer_version_1
+        self._serializer_version_2 = serializer_version_2
+
+    def serialize(self, header_content, version):
+        if version == HeaderVersion.VERSION_1:
+            return self._serializer_version_1.serialize(header_content)
+        elif version == HeaderVersion.VERSION_2:
+            return self._serializer_version_2.serialize(header_content)
+        elif version == HeaderVersion.AUTOMATIC:
+            try:
+                return self._serializer_version_1.serialize(header_content)
+            except UnsupportedHeaderSize:
+                warnings.warn("Stored array in format 2.0. It can only be"
+                              "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+                return self._serializer_version_2.serialize(header_content)
 
 
 _magic_version = MagicVersion(MAGIC_PREFIX)
 _dictionary_serializer = DictionarySerializer()
+_header_serializer_version_1 = HeaderSerializer(_magic_version, HeaderVersion.VERSION_1, ARRAY_ALIGN, '<H', 2**16 - 1)
+_header_serializer_version_2 = HeaderSerializer(_magic_version, HeaderVersion.VERSION_2, ARRAY_ALIGN, '<I', 2**32 - 1)
+_header_serializer = MultiVersionHeaderSerializer(_header_serializer_version_1, _header_serializer_version_2)
 
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
@@ -336,35 +394,8 @@ def _write_array_header(fp, d, version=HeaderVersion.AUTOMATIC):
     version : tuple of int
         the file version which needs to be used to store the data
     """
-    import struct
-    header = _dictionary_serializer.serialize(d)
-
-    hlen = len(header) + 1 # 1 for newline
-    padlen_v1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
-    padlen_v2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
-
-    # Which version(s) we write depends on the total header size; v1 has a max of 65535
-    if hlen + padlen_v1 < 2**16 and version in (HeaderVersion.AUTOMATIC, HeaderVersion.VERSION_1):
-        version = HeaderVersion.VERSION_1
-        header_prefix = magic(*version) + struct.pack('<H', hlen + padlen_v1)
-        topad = padlen_v1
-    elif hlen + padlen_v2 < 2**32 and version in (HeaderVersion.AUTOMATIC, HeaderVersion.VERSION_2):
-        version = HeaderVersion.VERSION_2
-        header_prefix = magic(*version) + struct.pack('<I', hlen + padlen_v2)
-        topad = padlen_v2
-    else:
-        msg = "Header length %s too big for version=%s"
-        msg %= (hlen, version)
-        raise ValueError(msg)
-
-    # Pad the header with spaces and a final newline such that the magic
-    # string, the header-length short and the header are aligned on a
-    # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
-    # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
-    # offset must be page-aligned (i.e. the beginning of the file).
-    header = header + b' '*topad + b'\n'
-
-    fp.write(header_prefix)
+    header_content = _dictionary_serializer.serialize(d)
+    header = _header_serializer.serialize(header_content, version)
     fp.write(header)
     return version
 
@@ -595,13 +626,7 @@ def write_array(fp, array, version=HeaderVersion.AUTOMATIC, allow_pickle=True, p
 
     """
     _check_version(version)
-    used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
-                                   version)
-    # this warning can be removed when 1.9 has aged enough
-    if version != HeaderVersion.VERSION_2 and used_ver == HeaderVersion.VERSION_2:
-        warnings.warn("Stored array in format 2.0. It can only be"
-                      "read by NumPy >= 1.9", UserWarning, stacklevel=2)
-
+    _write_array_header(fp, header_data_from_array_1_0(array), version)
     if array.itemsize == 0:
         buffersize = 0
     else:
@@ -800,11 +825,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # If we got here, then it should be safe to create the file.
         fp = open(filename, mode+'b')
         try:
-            used_ver = _write_array_header(fp, d, version)
-            # this warning can be removed when 1.9 has aged enough
-            if version != HeaderVersion.VERSION_2 and used_ver == HeaderVersion.VERSION_2:
-                warnings.warn("Stored array in format 2.0. It can only be"
-                              "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+            _write_array_header(fp, d, version)
             offset = fp.tell()
         finally:
             fp.close()
