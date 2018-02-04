@@ -173,6 +173,10 @@ class MagicVersion(object):
         self._magic_string = magic_string
 
     def create_magic_version_string(self, major_version, minor_version):
+        if not (0 <= major_version < 256):
+            raise ValueError("major version must be 0 <= major < 256")
+        if not (0 <= minor_version < 256):
+            raise ValueError("minor version must be 0 <= minor < 256")
         if sys.version_info[0] < 3:
             return self._magic_string + chr(major_version) + chr(minor_version)
         else:
@@ -198,6 +202,27 @@ class HeaderVersion(object):
     VERSION_2 = (2, 0)
 
 
+class DictionarySerializer(object):
+
+    def serialize(self, dictionary):
+        return asbytes(self._filter(self._construct(dictionary)))
+
+    def _construct(self, dictionary):
+        result_list = ["{"]
+        for key, value in sorted(dictionary.items()):
+            # Need to use repr here, since we eval these when reading
+            result_list.append("'%s': %s, " % (key, repr(value)))
+        result_list.append("}")
+        return "".join(result_list)
+
+    def _filter(self, string):
+        return _filter_header(string)
+
+
+_magic_version = MagicVersion(MAGIC_PREFIX)
+_dictionary_serializer = DictionarySerializer()
+
+
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
 
@@ -205,9 +230,6 @@ def _check_version(version):
     if version not in [HeaderVersion.VERSION_1, HeaderVersion.VERSION_2, HeaderVersion.AUTOMATIC]:
         msg = "we only support format version (1,0) and (2, 0), not %s"
         raise ValueError(msg % (version,))
-
-
-_magic_version = MagicVersion(MAGIC_PREFIX)
 
 
 def magic(major, minor):
@@ -226,11 +248,8 @@ def magic(major, minor):
     ------
     ValueError if the version cannot be formatted.
     """
-    if major < 0 or major > 255:
-        raise ValueError("major version must be 0 <= major < 256")
-    if minor < 0 or minor > 255:
-        raise ValueError("minor version must be 0 <= minor < 256")
     return _magic_version.create_magic_version_string(major, minor)
+
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -246,6 +265,7 @@ def read_magic(fp):
     """
     magic_version_string = _read_bytes(fp, MAGIC_LEN, "magic string")
     return _magic_version.retrieve_version_from_magic_version_string(magic_version_string)
+
 
 def dtype_to_descr(dtype):
     """
@@ -279,6 +299,7 @@ def dtype_to_descr(dtype):
     else:
         return dtype.str
 
+
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
 
@@ -292,19 +313,10 @@ def header_data_from_array_1_0(array):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
-    d = {'shape': array.shape}
-    if array.flags.c_contiguous:
-        d['fortran_order'] = False
-    elif array.flags.f_contiguous:
-        d['fortran_order'] = True
-    else:
-        # Totally non-contiguous data. We will have to make it C-contiguous
-        # before writing. Note that we need to test for C_CONTIGUOUS first
-        # because a 1-D array is both C_CONTIGUOUS and F_CONTIGUOUS.
-        d['fortran_order'] = False
+    return {'shape': array.shape,
+            'fortran_order': not array.flags.c_contiguous and array.flags.f_contiguous,
+            'descr': dtype_to_descr(array.dtype)}
 
-    d['descr'] = dtype_to_descr(array.dtype)
-    return d
 
 def _write_array_header(fp, d, version=HeaderVersion.AUTOMATIC):
     """ Write the header for an array and returns the version used
@@ -325,13 +337,7 @@ def _write_array_header(fp, d, version=HeaderVersion.AUTOMATIC):
         the file version which needs to be used to store the data
     """
     import struct
-    header = ["{"]
-    for key, value in sorted(d.items()):
-        # Need to use repr here, since we eval these when reading
-        header.append("'%s': %s, " % (key, repr(value)))
-    header.append("}")
-    header = "".join(header)
-    header = asbytes(_filter_header(header))
+    header = _dictionary_serializer.serialize(d)
 
     hlen = len(header) + 1 # 1 for newline
     padlen_v1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
@@ -361,6 +367,7 @@ def _write_array_header(fp, d, version=HeaderVersion.AUTOMATIC):
     fp.write(header_prefix)
     fp.write(header)
     return version
+
 
 def write_array_header_1_0(fp, d):
     """ Write the header for an array using the 1.0 format.
