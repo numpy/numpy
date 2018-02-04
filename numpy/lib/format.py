@@ -191,11 +191,18 @@ class MagicVersion(object):
             raise ValueError(error_message.format(self._magic_string, magic_version_string[:-2]))
 
 
+class HeaderVersion(object):
+
+    AUTOMATIC = None
+    VERSION_1 = (1, 0)
+    VERSION_2 = (2, 0)
+
+
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
 
 def _check_version(version):
-    if version not in [(1, 0), (2, 0), None]:
+    if version not in [HeaderVersion.VERSION_1, HeaderVersion.VERSION_2, HeaderVersion.AUTOMATIC]:
         msg = "we only support format version (1,0) and (2, 0), not %s"
         raise ValueError(msg % (version,))
 
@@ -299,7 +306,7 @@ def header_data_from_array_1_0(array):
     d['descr'] = dtype_to_descr(array.dtype)
     return d
 
-def _write_array_header(fp, d, version=None):
+def _write_array_header(fp, d, version=HeaderVersion.AUTOMATIC):
     """ Write the header for an array and returns the version used
 
     Parameters
@@ -308,10 +315,10 @@ def _write_array_header(fp, d, version=None):
     d : dict
         This has the appropriate entries for writing its string representation
         to the header of the file.
-    version: tuple or None
+    version: tuple or None (HeaderVersion.AUTOMATIC)
         None means use oldest that works
         explicit version will raise a ValueError if the format does not
-        allow saving this data.  Default: None
+        allow saving this data.  Default: None (HeaderVersion.AUTOMATIC)
     Returns
     -------
     version : tuple of int
@@ -331,13 +338,13 @@ def _write_array_header(fp, d, version=None):
     padlen_v2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
 
     # Which version(s) we write depends on the total header size; v1 has a max of 65535
-    if hlen + padlen_v1 < 2**16 and version in (None, (1, 0)):
-        version = (1, 0)
-        header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen_v1)
+    if hlen + padlen_v1 < 2**16 and version in (HeaderVersion.AUTOMATIC, HeaderVersion.VERSION_1):
+        version = HeaderVersion.VERSION_1
+        header_prefix = magic(*version) + struct.pack('<H', hlen + padlen_v1)
         topad = padlen_v1
-    elif hlen + padlen_v2 < 2**32 and version in (None, (2, 0)):
-        version = (2, 0)
-        header_prefix = magic(2, 0) + struct.pack('<I', hlen + padlen_v2)
+    elif hlen + padlen_v2 < 2**32 and version in (HeaderVersion.AUTOMATIC, HeaderVersion.VERSION_2):
+        version = HeaderVersion.VERSION_2
+        header_prefix = magic(*version) + struct.pack('<I', hlen + padlen_v2)
         topad = padlen_v2
     else:
         msg = "Header length %s too big for version=%s"
@@ -365,7 +372,7 @@ def write_array_header_1_0(fp, d):
         This has the appropriate entries for writing its string
         representation to the header of the file.
     """
-    _write_array_header(fp, d, (1, 0))
+    _write_array_header(fp, d, HeaderVersion.VERSION_1)
 
 
 def write_array_header_2_0(fp, d):
@@ -381,7 +388,7 @@ def write_array_header_2_0(fp, d):
         This has the appropriate entries for writing its string
         representation to the header of the file.
     """
-    _write_array_header(fp, d, (2, 0))
+    _write_array_header(fp, d, HeaderVersion.VERSION_2)
 
 def read_array_header_1_0(fp):
     """
@@ -412,7 +419,7 @@ def read_array_header_1_0(fp):
         If the data is invalid.
 
     """
-    return _read_array_header(fp, version=(1, 0))
+    return _read_array_header(fp, version=HeaderVersion.VERSION_1)
 
 def read_array_header_2_0(fp):
     """
@@ -445,7 +452,7 @@ def read_array_header_2_0(fp):
         If the data is invalid.
 
     """
-    return _read_array_header(fp, version=(2, 0))
+    return _read_array_header(fp, version=HeaderVersion.VERSION_2)
 
 
 def _filter_header(s):
@@ -493,9 +500,9 @@ def _read_array_header(fp, version):
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
-    if version == (1, 0):
+    if version == HeaderVersion.VERSION_1:
         hlength_type = '<H'
-    elif version == (2, 0):
+    elif version == HeaderVersion.VERSION_2:
         hlength_type = '<I'
     else:
         raise ValueError("Invalid version %r" % version)
@@ -540,7 +547,7 @@ def _read_array_header(fp, version):
 
     return d['shape'], d['fortran_order'], dtype
 
-def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
+def write_array(fp, array, version=HeaderVersion.AUTOMATIC, allow_pickle=True, pickle_kwargs=None):
     """
     Write an array to an NPY file, including a header.
 
@@ -555,9 +562,10 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         ``.write()`` method.
     array : ndarray
         The array to write to disk.
-    version : (int, int) or None, optional
+    version : (int, int) or None (HeaderVersion.AUTOMATIC), optional
         The version number of the format. None means use the oldest
-        supported version that is able to store the data.  Default: None
+        supported version that is able to store the data.
+        Default: None (HeaderVersion.AUTOMATIC)
     allow_pickle : bool, optional
         Whether to allow writing pickled data. Default: True
     pickle_kwargs : dict, optional
@@ -580,7 +588,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
     used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
                                    version)
     # this warning can be removed when 1.9 has aged enough
-    if version != (2, 0) and used_ver == (2, 0):
+    if version != HeaderVersion.VERSION_2 and used_ver == HeaderVersion.VERSION_2:
         warnings.warn("Stored array in format 2.0. It can only be"
                       "read by NumPy >= 1.9", UserWarning, stacklevel=2)
 
@@ -710,7 +718,7 @@ def read_array(fp, allow_pickle=True, pickle_kwargs=None):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=None):
+                fortran_order=False, version=HeaderVersion.AUTOMATIC):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -737,10 +745,11 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         Whether the array should be Fortran-contiguous (True) or
         C-contiguous (False, the default) if we are creating a new file in
         "write" mode.
-    version : tuple of int (major, minor) or None
+    version : tuple of int (major, minor) or None (HeaderVersion.AUTOMATIC)
         If the mode is a "write" mode, then this is the version of the file
         format used to create the file.  None means use the oldest
-        supported version that is able to store the data.  Default: None
+        supported version that is able to store the data.
+        Default: None (HeaderVersion.AUTOMATIC)
 
     Returns
     -------
@@ -783,7 +792,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         try:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
-            if version != (2, 0) and used_ver == (2, 0):
+            if version != HeaderVersion.VERSION_2 and used_ver == HeaderVersion.VERSION_2:
                 warnings.warn("Stored array in format 2.0. It can only be"
                               "read by NumPy >= 1.9", UserWarning, stacklevel=2)
             offset = fp.tell()
