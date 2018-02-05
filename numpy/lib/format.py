@@ -166,13 +166,129 @@ MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 
+
+class MagicVersion(object):
+
+    def __init__(self, magic_string):
+        self._magic_string = magic_string
+
+    def create_magic_version_string(self, major_version, minor_version):
+        if not (0 <= major_version < 256):
+            raise ValueError("major version must be 0 <= major < 256")
+        if not (0 <= minor_version < 256):
+            raise ValueError("minor version must be 0 <= minor < 256")
+        if sys.version_info[0] < 3:
+            return self._magic_string + chr(major_version) + chr(minor_version)
+        else:
+            return self._magic_string + bytes([major_version, minor_version])
+
+    def retrieve_version_from_magic_version_string(self, magic_version_string):
+        self._check_magic_version_string(magic_version_string)
+        if sys.version_info[0] < 3:
+            return ord(magic_version_string[-2]), ord(magic_version_string[-1])
+        else:
+            return magic_version_string[-2], magic_version_string[-1]
+
+    def _check_magic_version_string(self, magic_version_string):
+        if magic_version_string[:-2] != self._magic_string:
+            error_message = "the magic string is not correct; expected {}, got {}"
+            raise ValueError(error_message.format(self._magic_string, magic_version_string[:-2]))
+
+
+class HeaderVersion(object):
+
+    AUTOMATIC = None
+    VERSION_1 = (1, 0)
+    VERSION_2 = (2, 0)
+
+
+class DictionarySerializer(object):
+
+    def serialize(self, dictionary):
+        return asbytes(self._filter(self._construct(dictionary)))
+
+    def _construct(self, dictionary):
+        result_list = ["{"]
+        for key, value in sorted(dictionary.items()):
+            # Need to use repr here, since we eval these when reading
+            result_list.append("'%s': %s, " % (key, repr(value)))
+        result_list.append("}")
+        return "".join(result_list)
+
+    def _filter(self, string):
+        # TODO fix python 2.7.5 bug
+        return _filter_header(string)
+
+
+class UnsupportedHeaderSize(ValueError):
+
+    def __init__(self, header_length, version):
+        error_message = "Header length %s too big for version=%s"
+        error_message %= (header_length, version)
+        super(UnsupportedHeaderSize, self).__init__(error_message)
+
+
+class HeaderSerializer(object):
+
+    def __init__(self, magic_version, version, alignment, pack_format, maximum_size):
+        self._magic_version_string = magic_version.create_magic_version_string(*version)
+        self._version = version
+        self._alignment = alignment
+        self._pack_format = pack_format
+        self._maximum_size = maximum_size
+
+    def serialize(self, header_content):
+        import struct
+        magic_size = len(self._magic_version_string)
+        pack_size = struct.calcsize(self._pack_format)
+        content_size = len(header_content)
+        # +1 accounting for the missing newline
+        raw_size = magic_size + pack_size + content_size + 1
+        padding_size = -raw_size % self._alignment
+        padded_size = raw_size + padding_size
+        if padded_size > self._maximum_size:
+            raise UnsupportedHeaderSize(content_size, self._version)
+        prefix = self._magic_version_string
+        # +1 accounting for the missing newline
+        size = struct.pack(self._pack_format, content_size + 1 + padding_size)
+        return prefix + size + header_content + (b' ' * padding_size) + b'\n'
+
+
+class MultiVersionHeaderSerializer(object):
+
+    def __init__(self, serializer_version_1, serializer_version_2):
+        self._serializer_version_1 = serializer_version_1
+        self._serializer_version_2 = serializer_version_2
+
+    def serialize(self, header_content, version):
+        if version == HeaderVersion.VERSION_1:
+            return self._serializer_version_1.serialize(header_content)
+        elif version == HeaderVersion.VERSION_2:
+            return self._serializer_version_2.serialize(header_content)
+        elif version == HeaderVersion.AUTOMATIC:
+            try:
+                return self._serializer_version_1.serialize(header_content)
+            except UnsupportedHeaderSize:
+                warnings.warn("Stored array in format 2.0. It can only be"
+                              "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+                return self._serializer_version_2.serialize(header_content)
+
+
+_magic_version = MagicVersion(MAGIC_PREFIX)
+_dictionary_serializer = DictionarySerializer()
+_header_serializer_version_1 = HeaderSerializer(_magic_version, HeaderVersion.VERSION_1, ARRAY_ALIGN, '<H', 2**16 - 1)
+_header_serializer_version_2 = HeaderSerializer(_magic_version, HeaderVersion.VERSION_2, ARRAY_ALIGN, '<I', 2**32 - 1)
+_header_serializer = MultiVersionHeaderSerializer(_header_serializer_version_1, _header_serializer_version_2)
+
+
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
 
 def _check_version(version):
-    if version not in [(1, 0), (2, 0), None]:
+    if version not in [HeaderVersion.VERSION_1, HeaderVersion.VERSION_2, HeaderVersion.AUTOMATIC]:
         msg = "we only support format version (1,0) and (2, 0), not %s"
         raise ValueError(msg % (version,))
+
 
 def magic(major, minor):
     """ Return the magic string for the given file format version.
@@ -190,14 +306,8 @@ def magic(major, minor):
     ------
     ValueError if the version cannot be formatted.
     """
-    if major < 0 or major > 255:
-        raise ValueError("major version must be 0 <= major < 256")
-    if minor < 0 or minor > 255:
-        raise ValueError("minor version must be 0 <= minor < 256")
-    if sys.version_info[0] < 3:
-        return MAGIC_PREFIX + chr(major) + chr(minor)
-    else:
-        return MAGIC_PREFIX + bytes([major, minor])
+    return _magic_version.create_magic_version_string(major, minor)
+
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -211,15 +321,9 @@ def read_magic(fp):
     major : int
     minor : int
     """
-    magic_str = _read_bytes(fp, MAGIC_LEN, "magic string")
-    if magic_str[:-2] != MAGIC_PREFIX:
-        msg = "the magic string is not correct; expected %r, got %r"
-        raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
-    if sys.version_info[0] < 3:
-        major, minor = map(ord, magic_str[-2:])
-    else:
-        major, minor = magic_str[-2:]
-    return major, minor
+    magic_version_string = _read_bytes(fp, MAGIC_LEN, "magic string")
+    return _magic_version.retrieve_version_from_magic_version_string(magic_version_string)
+
 
 def dtype_to_descr(dtype):
     """
@@ -253,6 +357,7 @@ def dtype_to_descr(dtype):
     else:
         return dtype.str
 
+
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
 
@@ -266,21 +371,12 @@ def header_data_from_array_1_0(array):
         This has the appropriate entries for writing its string representation
         to the header of the file.
     """
-    d = {'shape': array.shape}
-    if array.flags.c_contiguous:
-        d['fortran_order'] = False
-    elif array.flags.f_contiguous:
-        d['fortran_order'] = True
-    else:
-        # Totally non-contiguous data. We will have to make it C-contiguous
-        # before writing. Note that we need to test for C_CONTIGUOUS first
-        # because a 1-D array is both C_CONTIGUOUS and F_CONTIGUOUS.
-        d['fortran_order'] = False
+    return {'shape': array.shape,
+            'fortran_order': not array.flags.c_contiguous and array.flags.f_contiguous,
+            'descr': dtype_to_descr(array.dtype)}
 
-    d['descr'] = dtype_to_descr(array.dtype)
-    return d
 
-def _write_array_header(fp, d, version=None):
+def _write_array_header(fp, d, version=HeaderVersion.AUTOMATIC):
     """ Write the header for an array and returns the version used
 
     Parameters
@@ -289,52 +385,20 @@ def _write_array_header(fp, d, version=None):
     d : dict
         This has the appropriate entries for writing its string representation
         to the header of the file.
-    version: tuple or None
+    version: tuple or None (HeaderVersion.AUTOMATIC)
         None means use oldest that works
         explicit version will raise a ValueError if the format does not
-        allow saving this data.  Default: None
+        allow saving this data.  Default: None (HeaderVersion.AUTOMATIC)
     Returns
     -------
     version : tuple of int
         the file version which needs to be used to store the data
     """
-    import struct
-    header = ["{"]
-    for key, value in sorted(d.items()):
-        # Need to use repr here, since we eval these when reading
-        header.append("'%s': %s, " % (key, repr(value)))
-    header.append("}")
-    header = "".join(header)
-    header = asbytes(_filter_header(header))
-
-    hlen = len(header) + 1 # 1 for newline
-    padlen_v1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
-    padlen_v2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
-
-    # Which version(s) we write depends on the total header size; v1 has a max of 65535
-    if hlen + padlen_v1 < 2**16 and version in (None, (1, 0)):
-        version = (1, 0)
-        header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen_v1)
-        topad = padlen_v1
-    elif hlen + padlen_v2 < 2**32 and version in (None, (2, 0)):
-        version = (2, 0)
-        header_prefix = magic(2, 0) + struct.pack('<I', hlen + padlen_v2)
-        topad = padlen_v2
-    else:
-        msg = "Header length %s too big for version=%s"
-        msg %= (hlen, version)
-        raise ValueError(msg)
-
-    # Pad the header with spaces and a final newline such that the magic
-    # string, the header-length short and the header are aligned on a
-    # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
-    # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
-    # offset must be page-aligned (i.e. the beginning of the file).
-    header = header + b' '*topad + b'\n'
-
-    fp.write(header_prefix)
+    header_content = _dictionary_serializer.serialize(d)
+    header = _header_serializer.serialize(header_content, version)
     fp.write(header)
     return version
+
 
 def write_array_header_1_0(fp, d):
     """ Write the header for an array using the 1.0 format.
@@ -346,7 +410,7 @@ def write_array_header_1_0(fp, d):
         This has the appropriate entries for writing its string
         representation to the header of the file.
     """
-    _write_array_header(fp, d, (1, 0))
+    _write_array_header(fp, d, HeaderVersion.VERSION_1)
 
 
 def write_array_header_2_0(fp, d):
@@ -362,7 +426,7 @@ def write_array_header_2_0(fp, d):
         This has the appropriate entries for writing its string
         representation to the header of the file.
     """
-    _write_array_header(fp, d, (2, 0))
+    _write_array_header(fp, d, HeaderVersion.VERSION_2)
 
 def read_array_header_1_0(fp):
     """
@@ -393,7 +457,7 @@ def read_array_header_1_0(fp):
         If the data is invalid.
 
     """
-    return _read_array_header(fp, version=(1, 0))
+    return _read_array_header(fp, version=HeaderVersion.VERSION_1)
 
 def read_array_header_2_0(fp):
     """
@@ -426,7 +490,7 @@ def read_array_header_2_0(fp):
         If the data is invalid.
 
     """
-    return _read_array_header(fp, version=(2, 0))
+    return _read_array_header(fp, version=HeaderVersion.VERSION_2)
 
 
 def _filter_header(s):
@@ -454,7 +518,9 @@ def _filter_header(s):
 
     tokens = []
     last_token_was_number = False
-    for token in tokenize.generate_tokens(StringIO(asstr(s)).read):
+    # adding newline as python 2.7.5 workaround
+    string = asstr(s) + "\n"
+    for token in tokenize.generate_tokens(StringIO(string).readline):
         token_type = token[0]
         token_string = token[1]
         if (last_token_was_number and
@@ -464,7 +530,8 @@ def _filter_header(s):
         else:
             tokens.append(token)
         last_token_was_number = (token_type == tokenize.NUMBER)
-    return tokenize.untokenize(tokens)
+    # removing newline (see above) as python 2.7.5 workaround
+    return tokenize.untokenize(tokens)[:-1]
 
 
 def _read_array_header(fp, version):
@@ -474,9 +541,9 @@ def _read_array_header(fp, version):
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
-    if version == (1, 0):
+    if version == HeaderVersion.VERSION_1:
         hlength_type = '<H'
-    elif version == (2, 0):
+    elif version == HeaderVersion.VERSION_2:
         hlength_type = '<I'
     else:
         raise ValueError("Invalid version %r" % version)
@@ -521,7 +588,7 @@ def _read_array_header(fp, version):
 
     return d['shape'], d['fortran_order'], dtype
 
-def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
+def write_array(fp, array, version=HeaderVersion.AUTOMATIC, allow_pickle=True, pickle_kwargs=None):
     """
     Write an array to an NPY file, including a header.
 
@@ -536,9 +603,10 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
         ``.write()`` method.
     array : ndarray
         The array to write to disk.
-    version : (int, int) or None, optional
+    version : (int, int) or None (HeaderVersion.AUTOMATIC), optional
         The version number of the format. None means use the oldest
-        supported version that is able to store the data.  Default: None
+        supported version that is able to store the data.
+        Default: None (HeaderVersion.AUTOMATIC)
     allow_pickle : bool, optional
         Whether to allow writing pickled data. Default: True
     pickle_kwargs : dict, optional
@@ -558,13 +626,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
 
     """
     _check_version(version)
-    used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
-                                   version)
-    # this warning can be removed when 1.9 has aged enough
-    if version != (2, 0) and used_ver == (2, 0):
-        warnings.warn("Stored array in format 2.0. It can only be"
-                      "read by NumPy >= 1.9", UserWarning, stacklevel=2)
-
+    _write_array_header(fp, header_data_from_array_1_0(array), version)
     if array.itemsize == 0:
         buffersize = 0
     else:
@@ -691,7 +753,7 @@ def read_array(fp, allow_pickle=True, pickle_kwargs=None):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=None):
+                fortran_order=False, version=HeaderVersion.AUTOMATIC):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -718,10 +780,11 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         Whether the array should be Fortran-contiguous (True) or
         C-contiguous (False, the default) if we are creating a new file in
         "write" mode.
-    version : tuple of int (major, minor) or None
+    version : tuple of int (major, minor) or None (HeaderVersion.AUTOMATIC)
         If the mode is a "write" mode, then this is the version of the file
         format used to create the file.  None means use the oldest
-        supported version that is able to store the data.  Default: None
+        supported version that is able to store the data.
+        Default: None (HeaderVersion.AUTOMATIC)
 
     Returns
     -------
@@ -762,11 +825,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # If we got here, then it should be safe to create the file.
         fp = open(filename, mode+'b')
         try:
-            used_ver = _write_array_header(fp, d, version)
-            # this warning can be removed when 1.9 has aged enough
-            if version != (2, 0) and used_ver == (2, 0):
-                warnings.warn("Stored array in format 2.0. It can only be"
-                              "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+            _write_array_header(fp, d, version)
             offset = fp.tell()
         finally:
             fp.close()
