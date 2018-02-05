@@ -455,8 +455,8 @@ def _filter_header(s):
     tokens = []
     last_token_was_number = False
     # adding newline as python 2.7.5 workaround
-    s += "\n"
-    for token in tokenize.generate_tokens(StringIO(asstr(s)).readline):
+    string = asstr(s) + "\n"
+    for token in tokenize.generate_tokens(StringIO(string).readline):
         token_type = token[0]
         token_string = token[1]
         if (last_token_was_number and
