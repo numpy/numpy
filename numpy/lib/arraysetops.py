@@ -223,10 +223,12 @@ def unique(ar, return_index=False, return_inverse=False,
         ret = _unique1d(ar, return_index, return_inverse, return_counts)
         return _unpack_tuple(ret)
 
-    if not (-ar.ndim <= axis < ar.ndim):
-        raise ValueError('Invalid axis kwarg specified for unique')
+    try:
+        ar = np.swapaxes(ar, axis, 0)
+    except np.AxisError:
+        # this removes the "axis1" or "axis2" prefix from the error message
+        raise np.AxisError(axis, ar.ndim)
 
-    ar = np.swapaxes(ar, axis, 0)
     orig_shape, orig_dtype = ar.shape, ar.dtype
     # Must reshape to a contiguous 2D array for this to work...
     ar = ar.reshape(orig_shape[0], -1)

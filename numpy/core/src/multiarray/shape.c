@@ -17,6 +17,7 @@
 
 #include "shape.h"
 
+#include "multiarraymodule.h" /* for interned strings */
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"
@@ -648,20 +649,10 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    if (a1 < 0) {
-        a1 += n;
-    }
-    if (a2 < 0) {
-        a2 += n;
-    }
-    if ((a1 < 0) || (a1 >= n)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "bad axis1 argument to swapaxes");
+    if (check_and_adjust_axis_msg(&a1, n, npy_ma_str_axis1) < 0) {
         return NULL;
     }
-    if ((a2 < 0) || (a2 >= n)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "bad axis2 argument to swapaxes");
+    if (check_and_adjust_axis_msg(&a2, n, npy_ma_str_axis2) < 0) {
         return NULL;
     }
 
