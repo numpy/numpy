@@ -242,6 +242,8 @@ types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'conf
 def dumpRoutineNames(library, output_dir):
     if not PY2:
         os.makedirs(output_dir, exist_ok=True)
+    else:
+        os.makedirs(output_dir)
     for typename in {'unknown'} | types:
         routines = library.allRoutinesByType(typename)
         filename = os.path.join(output_dir, typename + '_routines.lst')
