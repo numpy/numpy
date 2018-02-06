@@ -281,8 +281,7 @@ def ensure_executable(name):
     try:
         which(name)
     except:
-        print(name + ' not found')
-        raise SystemExit()
+        raise SystemExit(name + ' not found')
 
 def main():
     if len(sys.argv) != 3:
