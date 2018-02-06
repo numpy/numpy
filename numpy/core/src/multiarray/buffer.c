@@ -12,6 +12,7 @@
 #include "npy_pycompat.h"
 
 #include "buffer.h"
+#include "common.h"
 #include "numpyos.h"
 #include "arrayobject.h"
 
@@ -243,14 +244,19 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
             child = (PyArray_Descr*)PyTuple_GetItem(item, 0);
             offset_obj = PyTuple_GetItem(item, 1);
-            new_offset = base_offset + PyInt_AsLong(offset_obj);
+            new_offset = PyInt_AsLong(offset_obj);
+            if (error_converting(new_offset)) {
+                return -1;
+            }
+            new_offset += base_offset;
 
             /* Insert padding manually */
             if (*offset > new_offset) {
-                PyErr_SetString(PyExc_RuntimeError,
-                                "This should never happen: Invalid offset in "
-                                "buffer format string generation. Please "
-                                "report a bug to the Numpy developers.");
+                PyErr_SetString(
+                    PyExc_ValueError,
+                    "dtypes with overlapping or out-of-order fields are not "
+                    "representable as buffers. Consider reordering the fields."
+                );
                 return -1;
             }
             while (*offset < new_offset) {
