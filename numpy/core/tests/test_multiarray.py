@@ -6455,6 +6455,19 @@ class TestNewBufferProtocol(object):
             shape, strides = get_buffer_info(arr, ['C_CONTIGUOUS'])
             assert_(strides[-1] == 8)
 
+    def test_out_of_order_fields(self):
+        dt = np.dtype(dict(
+            formats=['<i4', '<i4'],
+            names=['one', 'two'],
+            offsets=[4, 0],
+            itemsize=8
+        ))
+
+        # overlapping fields cannot be represented by PEP3118
+        arr = np.empty(1, dt)
+        with assert_raises(ValueError):
+            memoryview(arr)
+
 
 class TestArrayAttributeDeletion(object):
 
