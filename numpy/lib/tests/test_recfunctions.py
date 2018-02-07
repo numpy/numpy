@@ -9,8 +9,8 @@ from numpy.testing import (
     )
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
-    find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
-    )
+    find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
+    repack_fields)
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
 zip_descr = np.lib.recfunctions.zip_descr
@@ -191,6 +191,18 @@ class TestRecFunctions(object):
         control = [0, 1, 2, 3, 4, 6]
         assert_equal(sorted(test[-1]), control)
         assert_equal(test[0], a[test[-1]])
+
+    def test_repack_fields(self):
+        dt = np.dtype('u1,f4,i8', align=True)
+        a = np.zeros(2, dtype=dt)
+
+        assert_equal(repack_fields(dt), np.dtype('u1,f4,i8'))
+        assert_equal(repack_fields(a).itemsize, 13)
+        assert_equal(repack_fields(repack_fields(dt), align=True), dt)
+
+        # make sure type is preserved
+        dt = np.dtype((np.record, dt))
+        assert_(repack_fields(dt).type is np.record)
 
 
 class TestRecursiveFillFields(object):

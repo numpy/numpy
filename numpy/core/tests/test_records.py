@@ -384,7 +384,8 @@ class TestRecord(object):
 
         # https://github.com/numpy/numpy/issues/3256
         ra = np.recarray((2,), dtype=[('x', object), ('y', float), ('z', int)])
-        ra[['x','y']]  # TypeError?
+        with assert_warns(FutureWarning):
+            ra[['x','y']]  # TypeError?
 
     def test_record_scalar_setitem(self):
         # https://github.com/numpy/numpy/issues/3561

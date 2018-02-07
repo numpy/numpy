@@ -2,14 +2,32 @@
 NumPy 1.14.1 Release Notes
 ==========================
 
-This is a bugfix release for some problems found since 1.14.0. This release
-includes fixes to the spacing in the str and repr of complex values.
+This is a bugfix release for some problems found since 1.14.0. The most
+important fixes are the reversion of the multifield index "view" behavior (see
+compatibility notes), and fixes to the spacing in the str and repr of complex
+values.
 
 The Python versions supported are 2.7 and 3.4 - 3.6. The Python 3.6 wheels
 available from PIP are built with Python 3.6.2 and should be compatible with
 all previous versions of Python 3.6. It was cythonized with Cython 0.26.1,
 which should be free of the bugs found in 0.27 while also being compatible with
 Python 3.7-dev.
+
+
+Compatibility notes
+===================
+
+Multifield Indexing of Structured Arrays will still return a copy
+-----------------------------------------------------------------
+We have reverted the change in 1.14.0 that multi-field indexing of structured
+arrays returns a view instead of a copy, and pushed it back to 1.15. This will
+give us time to implement additional related bugfixes to ease the transition.
+Affected users should read the the 1.14.1 Numpy User Guide for advice on how to
+manage this transition, under "basics/structured arrays/accessing multiple
+fields". A new method `numpy.lib.recfunctions.repack_fields` has been
+introduced to help with this.  All other changes to structured arrays described
+in the 1.14.0 release notes still hold in 1.14.1, and have not been reverted.
+
 
 Contributors
 ============

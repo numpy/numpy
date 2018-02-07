@@ -617,7 +617,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         const char *msg =
             "Numpy has detected that you may be viewing or writing to an array "
             "returned by selecting multiple fields in a structured array. \n\n"
-            "This code may break in numpy 1.13 because this will return a view "
+            "This code may break in numpy 1.15 because this will return a view "
             "instead of a copy -- see release notes for details.";
         /* 2016-09-19, 1.12 */
         if (DEPRECATE_FUTUREWARNING(msg) < 0) {

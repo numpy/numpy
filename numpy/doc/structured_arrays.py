@@ -133,10 +133,9 @@ summary they are:
 
      Offsets may be chosen such that the fields overlap, though this will mean
      that assigning to one field may clobber any overlapping field's data. As
-     an exception, fields of :class:`numpy.object` type .. (see 
-     :ref:`object arrays <arrays.object>`) cannot overlap with other fields,
-     because of the risk of clobbering the internal object pointer and then
-     dereferencing it.
+     an exception, fields of :class:`numpy.object` type cannot overlap with
+     other fields, because of the risk of clobbering the internal object
+     pointer and then dereferencing it.
 
      The optional 'aligned' value can be set to ``True`` to make the automatic
      offset computation use aligned offsets (see :ref:`offsets-and-alignment`),
@@ -234,6 +233,11 @@ multiple of the largest field size, and raise an exception if not.
 If the offsets of the fields and itemsize of a structured array satisfy the
 alignment conditions, the array will have the ``ALIGNED`` :ref:`flag
 <numpy.ndarray.flags>` set.
+
+A convenience function :func:`numpy.lib.recfunctions.repack_fields` converts an
+aligned dtype or array to a packed one and vice versa. It takes either a dtype
+or structured ndarray as an argument, and returns a copy with fields re-packed,
+with or without padding bytes.
 
 .. _titles:
 
@@ -396,27 +400,61 @@ typically a non-structured array, except in the case of nested structures.
 Accessing Multiple Fields
 ```````````````````````````
 
-One can index a structured array with a multi-field index, where the index is a
-list of field names::
+One can index and assign to a structured array with a multi-field index, where
+the index is a list of field names.
 
- >>> a = np.zeros(3, dtype=[('a', 'i8'), ('b', 'i4'), ('c', 'f8')])
+.. warning::
+    The behavior of multi-field indexes will change from Numpy 1.14 to Numpy
+    1.15.
+
+In Numpy 1.15, the result of indexing with a multi-field index will be a view
+into the original array, as follows::
+
+ >>> a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'i4'), ('c', 'f4')])
  >>> a[['a', 'c']]
- array([(0, 0.0), (0, 0.0), (0, 0.0)],
-       dtype={'names':['a','c'], 'formats':['<i8','<f8'], 'offsets':[0,11], 'itemsize':19})
+ array([(0, 0.), (0, 0.), (0, 0.)],
+      dtype={'names':['a','c'], 'formats':['<i4','<f4'], 'offsets':[0,8], 'itemsize':12})
+
+Assignment to the view modifies the original array. The view's fields will be
+in the order they were indexed. Note that unlike for single-field indexing, the
+view's dtype has the same itemsize as the original array, and has fields at the
+same offsets as in the original array, and unindexed fields are merely missing.
+
+In Numpy 1.14, indexing an array with a multi-field index returns a copy of
+the result above for 1.15, but with fields packed together in memory as if
+passed through :func:`numpy.lib.recfunctions.repack_fields`. This is the
+behavior of Numpy 1.7 to 1.13.
+
+.. warning::
+   The new behavior in Numpy 1.15 leads to extra "padding" bytes at the
+   location of unindexed fields. You will need to update any code which depends
+   on the data having a "packed" layout. For instance code such as::
+
+    >>> a[['a','c']].view('i8')  # will fail in Numpy 1.15
+    ValueError: When changing to a smaller dtype, its size must be a divisor of the size of original dtype
+
+   will need to be changed. This code has raised a ``FutureWarning`` since
+   Numpy 1.12.
+
+   The following is a recommended fix, which will behave identically in Numpy
+   1.14 and Numpy 1.15::
+
+    >>> from numpy.lib.recfunctions import repack_fields
+    >>> repack_fields(a[['a','c']]).view('i8')  # supported 1.14 and 1.15
+    array([0, 0, 0])
+
+Assigning to an array with a multi-field index will behave the same in Numpy
+1.14 and Numpy 1.15. In both versions the assignment will modify the original
+array::
+
  >>> a[['a', 'c']] = (2, 3)
  >>> a
  array([(2, 0, 3.0), (2, 0, 3.0), (2, 0, 3.0)],
        dtype=[('a', '<i8'), ('b', '<i4'), ('c', '<f8')])
 
-The resulting array is a view into the original array, such that assignment to
-the view modifies the original array. The view's fields will be in the order
-they were indexed. Note that unlike for single-field indexing, the view's dtype
-has the same itemsize as the original array, and has fields at the same offsets
-as in the original array, and unindexed fields are merely missing.
-
-Since the view is a structured array itself, it obeys the assignment rules
-described above. For example, this means that one can swap the values of two
-fields using appropriate multi-field indexes::
+This obeys the structured array assignment rules described above. For example,
+this means that one can swap the values of two fields using appropriate
+multi-field indexes::
 
  >>> a[['a', 'c']] = a[['c', 'a']]
 
