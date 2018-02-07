@@ -2042,7 +2042,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         strcolidx = [i for (i, v) in enumerate(column_types)
                      if v == np.unicode_]
 
-        type_str = np.unicode_
         if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility
             warnings.warn(
@@ -2058,33 +2057,37 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
             try:
                 data = [encode_unicode_cols(r) for r in data]
-                type_str = np.bytes_
             except UnicodeEncodeError:
                 pass
+            else:
+                for i in strcolidx:
+                    column_types[i] = np.bytes_
 
+        # Update string types to be the right length
+        sized_column_types = column_types[:]
+        for i, col_type in enumerate(column_types):
+            if np.issubdtype(col_type, np.character):
+                n_chars = max(len(row[i]) for row in data)
+                sized_column_types[i] = (col_type, n_chars)
 
-        # ... and take the largest number of chars.
-        for i in strcolidx:
-            max_line_length = max(len(row[i]) for row in data)
-            column_types[i] = np.dtype((type_str, max_line_length))
-        #
         if names is None:
-            # If the dtype is uniform, don't define names, else use ''
-            base = set([c.type for c in converters if c._checked])
+            # If the dtype is uniform (before sizing strings)
+            base = set([
+                c_type
+                for c, c_type in zip(converters, column_types)
+                if c._checked])
             if len(base) == 1:
-                if strcolidx:
-                    (ddtype, mdtype) = (type_str, bool)
-                else:
-                    (ddtype, mdtype) = (list(base)[0], bool)
+                uniform_type, = base
+                (ddtype, mdtype) = (uniform_type, bool)
             else:
                 ddtype = [(defaultfmt % i, dt)
-                          for (i, dt) in enumerate(column_types)]
+                          for (i, dt) in enumerate(sized_column_types)]
                 if usemask:
                     mdtype = [(defaultfmt % i, bool)
-                              for (i, dt) in enumerate(column_types)]
+                              for (i, dt) in enumerate(sized_column_types)]
         else:
-            ddtype = list(zip(names, column_types))
-            mdtype = list(zip(names, [bool] * len(column_types)))
+            ddtype = list(zip(names, sized_column_types))
+            mdtype = list(zip(names, [bool] * len(sized_column_types)))
         output = np.array(data, dtype=ddtype)
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)
