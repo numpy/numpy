@@ -94,6 +94,7 @@
 %#define array_descr(a)         PyArray_DESCR((PyArrayObject*)a)
 %#define array_flags(a)         PyArray_FLAGS((PyArrayObject*)a)
 %#define array_enableflags(a,f) PyArray_ENABLEFLAGS((PyArrayObject*)a,f)
+%#define array_clearflags(a,f)  PyArray_CLEARFLAGS((PyArrayObject*)a,f)
 %#define array_is_fortran(a)    (PyArray_IS_F_CONTIGUOUS((PyArrayObject*)a))
 %#endif
 %#define array_is_contiguous(a) (PyArray_ISCONTIGUOUS((PyArrayObject*)a))
@@ -539,6 +540,7 @@
     npy_intp * strides = array_strides(ary);
     if (array_is_fortran(ary)) return success;
     /* Set the Fortran ordered flag */
+    array_clearflags(ary,NPY_ARRAY_CARRAY);
     array_enableflags(ary,NPY_ARRAY_FARRAY);
     /* Recompute the strides */
     strides[0] = strides[nd-1];
