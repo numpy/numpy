@@ -537,7 +537,7 @@
   {
     int success = 1;
     int nd = array_numdims(ary);
-    int i;    
+    int i;
     npy_intp * strides = array_strides(ary);
     if (array_is_fortran(ary)) return success;
     int n_non_one = 0;
