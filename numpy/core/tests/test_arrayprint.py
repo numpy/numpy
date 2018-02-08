@@ -34,6 +34,55 @@ class TestArrayRepr(object):
             "     [(1,), (1,)]], dtype=[('a', '<i4')])"
         )
 
+    def test_0d_object_subclass(self):
+        # make sure that subclasses which return 0ds instead
+        # of scalars don't cause infinite recursion in str
+        class sub(np.ndarray):
+            def __new__(cls, inp):
+                obj = np.asarray(inp).view(cls)
+                return obj
+
+            def __getitem__(self, ind):
+                ret = super(sub, self).__getitem__(ind)
+                return sub(ret)
+
+        x = sub(1)
+        assert_equal(repr(x), 'sub(1)')
+        assert_equal(str(x), '1')
+
+        x = sub([1, 1])
+        assert_equal(repr(x), 'sub([1, 1])')
+        assert_equal(str(x), '[1 1]')
+
+        # check it works properly with object arrays too
+        x = sub(None)
+        assert_equal(repr(x), 'sub(None, dtype=object)')
+        assert_equal(str(x), 'None')
+
+        # plus recursive object arrays (even depth > 1)
+        y = sub(None)
+        x[()] = y
+        y[()] = x
+        assert_equal(repr(x),
+            'sub(sub(sub(..., dtype=object), dtype=object), dtype=object)')
+        assert_equal(str(x), '...')
+
+        # nested 0d-subclass-object
+        x = sub(None)
+        x[()] = sub(None)
+        assert_equal(repr(x), 'sub(sub(None, dtype=object), dtype=object)')
+        assert_equal(str(x), 'None')
+
+        # test that object + subclass is OK:
+        x = sub([None, None])
+        assert_equal(repr(x), 'sub([None, None], dtype=object)')
+        assert_equal(str(x), '[None None]')
+
+        x = sub([None, sub([None, None])])
+        assert_equal(repr(x),
+            'sub([None, sub([None, None], dtype=object)], dtype=object)')
+        assert_equal(str(x), '[None sub([None, None], dtype=object)]')
+
     def test_self_containing(self):
         arr0d = np.array(None)
         arr0d[()] = arr0d
