@@ -839,7 +839,7 @@ def gradient(f, *varargs, **kwargs):
         \\left\\{
             \\begin{array}{r}
                 \\alpha+\\beta+\\gamma=0 \\\\
-                -\\beta h_{d}+\\gamma h_{s}=1 \\\\
+                \\beta h_{d}-\\gamma h_{s}=1 \\\\
                 \\beta h_{d}^{2}+\\gamma h_{s}^{2}=0
             \\end{array}
         \\right.
