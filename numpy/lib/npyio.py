@@ -26,9 +26,11 @@ from numpy.compat import (
 
 if sys.version_info[0] >= 3:
     import pickle
+    from collections.abc import Mapping
 else:
     import cPickle as pickle
     from future_builtins import map
+    from collections import Mapping
 
 
 def loads(*args, **kwargs):
@@ -92,7 +94,7 @@ class BagObj(object):
 
         This also enables tab-completion in an interpreter or IPython.
         """
-        return object.__getattribute__(self, '_obj').keys()
+        return list(object.__getattribute__(self, '_obj').keys())
 
 
 def zipfile_factory(file, *args, **kwargs):
@@ -110,7 +112,7 @@ def zipfile_factory(file, *args, **kwargs):
     return zipfile.ZipFile(file, *args, **kwargs)
 
 
-class NpzFile(object):
+class NpzFile(Mapping):
     """
     NpzFile(fid)
 
@@ -216,6 +218,13 @@ class NpzFile(object):
     def __del__(self):
         self.close()
 
+    # Implement the Mapping ABC
+    def __iter__(self):
+        return iter(self.files)
+
+    def __len__(self):
+        return len(self.files)
+
     def __getitem__(self, key):
         # FIXME: This seems like it will copy strings around
         #   more than is strictly necessary.  The zipfile
@@ -225,11 +234,11 @@ class NpzFile(object):
         #   It would be better if the zipfile could read
         #   (or at least uncompress) the data
         #   directly into the array memory.
-        member = 0
+        member = False
         if key in self._files:
-            member = 1
+            member = True
         elif key in self.files:
-            member = 1
+            member = True
             key += '.npy'
         if member:
             bytes = self.zip.open(key)
@@ -245,31 +254,27 @@ class NpzFile(object):
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
-    def __iter__(self):
-        return iter(self.files)
 
-    def items(self):
-        """
-        Return a list of tuples, with each tuple (filename, array in file).
+    if sys.version_info.major == 3:
+        # deprecate the python 2 dict apis that we supported by accident in
+        # python 3. We forgot to implement itervalues() at all in earlier
+        # versions of numpy, so no need to deprecated it here.
 
-        """
-        return [(f, self[f]) for f in self.files]
+        def iteritems(self):
+            # Numpy 1.15, 2018-02-20
+            warnings.warn(
+                "NpzFile.iteritems is deprecated in python 3, to match the "
+                "removal of dict.itertems. Use .items() instead.",
+                DeprecationWarning, stacklevel=2)
+            return self.items()
 
-    def iteritems(self):
-        """Generator that returns tuples (filename, array in file)."""
-        for f in self.files:
-            yield (f, self[f])
-
-    def keys(self):
-        """Return files in the archive with a ``.npy`` extension."""
-        return self.files
-
-    def iterkeys(self):
-        """Return an iterator over the files in the archive."""
-        return self.__iter__()
-
-    def __contains__(self, key):
-        return self.files.__contains__(key)
+        def iterkeys(self):
+            # Numpy 1.15, 2018-02-20
+            warnings.warn(
+                "NpzFile.iterkeys is deprecated in python 3, to match the "
+                "removal of dict.iterkeys. Use .keys() instead.",
+                DeprecationWarning, stacklevel=2)
+            return self.keys()
 
 
 def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
