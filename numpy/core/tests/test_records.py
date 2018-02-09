@@ -357,7 +357,7 @@ class TestRecord(object):
             r.setfield([2,3], *r.dtype.fields['f'])
 
     def test_out_of_order_fields(self):
-        dt = dtype({'names': ['a', 'b'],
+        dt = np.dtype({'names': ['a', 'b'],
                     'formats': ['i4', 'i4'],
                     'offsets': [4, 0]})
         y = np.rec.fromrecords([(1, 2), (4, 5)], dtype=dt)
