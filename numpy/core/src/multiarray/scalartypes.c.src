@@ -2510,13 +2510,76 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
 static int
 gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
-    Py_ssize_t len;
-    void *buf;
+    PyArray_Descr *outcode;
 
-    /* FIXME: XXX: the format is not implemented! -- this needs more work */
+    if (flags & PyBUF_WRITABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
+        view->obj = NULL;
+        return -1;
+    }
 
-    len = gentype_getreadbuf(self, 0, &buf);
-    return PyBuffer_FillInfo(view, self, buf, len, 1, flags);
+    outcode = PyArray_DescrFromScalar(self);
+
+    if (flags & PyBUF_FORMAT && 3 <= sizeof view->internal ) {
+        view->format = (char *) &view->internal;
+        view->format[0] = '\0';
+        view->format[1] = '\0';
+        view->format[2] = '\0';
+
+        switch (outcode->type_num) {
+        case NPY_BOOL:         view->format[0] = '?'; break;
+        case NPY_BYTE:         view->format[0] = 'b'; break;
+        case NPY_UBYTE:        view->format[0] = 'B'; break;
+        case NPY_SHORT:        view->format[0] = 'h'; break;
+        case NPY_USHORT:       view->format[0] = 'H'; break;
+        case NPY_INT:          view->format[0] = 'i'; break;
+        case NPY_UINT:         view->format[0] = 'I'; break;
+        case NPY_LONG:         view->format[0] = 'l'; break;
+        case NPY_ULONG:        view->format[0] = 'L'; break;
+        case NPY_LONGLONG:     view->format[0] = 'q'; break;
+        case NPY_ULONGLONG:    view->format[0] = 'Q'; break;
+        case NPY_HALF:         view->format[0] = 'e'; break;
+        case NPY_FLOAT:        view->format[0] = 'f'; break;
+        case NPY_DOUBLE:       view->format[0] = 'd'; break;
+        case NPY_LONGDOUBLE:   view->format[0] = 'g'; break;
+        case NPY_CFLOAT:
+            view->format[0] = 'Z';
+            view->format[1] = 'f';
+            break;
+        case NPY_CDOUBLE:
+            view->format[0] = 'Z';
+            view->format[1] = 'd';
+            break;
+        case NPY_CLONGDOUBLE:
+            view->format[0] = 'Z';
+            view->format[1] = 'g';
+            break;
+        default:
+            PyErr_Format(PyExc_BufferError,
+                         "unknown format code for scalar dtype '%c'",
+                         outcode->type);
+            Py_DECREF(outcode);
+            view->obj = NULL;
+            return -1;
+        }
+    }
+    else {
+        view->format = NULL;
+    }
+
+    view->buf = (void *)scalar_value(self, outcode);
+    Py_DECREF(outcode);
+
+    view->len = outcode->elsize;
+    view->itemsize = outcode->elsize;
+    view->readonly = 1;
+    view->ndim = 0;
+    view->shape = NULL;
+    view->strides = NULL;
+    view->suboffsets = NULL;
+    view->obj = self;
+    Py_INCREF(self);
+    return 0;
 }
 
 /* releasebuffer is not needed */
