@@ -215,6 +215,8 @@ typedef doublereal E_f;	/* real function with -R not specified */
 #undef vax
 #endif
 
+/*  https://anonscm.debian.org/cgit/collab-maint/libf2c2.git/tree/f2ch.add  */
+
 /* If you are using a C++ compiler, append the following to f2c.h
    for compiling libF77 and libI77. */
 
