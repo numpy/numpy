@@ -240,10 +240,6 @@ def getWrappedRoutineNames(wrapped_routines_file):
 types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'config'}
 
 def dumpRoutineNames(library, output_dir):
-    if not PY2:
-        os.makedirs(output_dir, exist_ok=True)
-    else:
-        os.makedirs(output_dir)
     for typename in {'unknown'} | types:
         routines = library.allRoutinesByType(typename)
         filename = os.path.join(output_dir, typename + '_routines.lst')
@@ -297,7 +293,14 @@ def main():
     lapack_src_dir = sys.argv[2]
     output_dir = os.path.join(os.path.dirname(__file__), 'build')
 
-    shutil.rmtree(output_dir)
+    try:
+        shutil.rmtree(output_dir)
+    except:
+        pass
+    try:
+        os.makedirs(output_dir)
+    except:
+        pass
 
     wrapped_routines, ignores = getWrappedRoutineNames(wrapped_routines_file)
     library = getLapackRoutines(wrapped_routines, ignores, lapack_src_dir)
