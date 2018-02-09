@@ -3010,18 +3010,20 @@ class MaskedArray(ndarray):
 
         if context is not None:
             result._mask = result._mask.copy()
-            (func, args, _) = context
-            m = reduce(mask_or, [getmaskarray(arg) for arg in args])
+            func, args, out_i = context
+            # args sometimes contains outputs (gh-10459), which we don't want
+            input_args = args[:func.nin]
+            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func, None)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
-                if len(args) > 2:
+                if len(input_args) > 2:
                     with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(reduce(domain, args), True)
+                        d = filled(reduce(domain, input_args), True)
                 else:
                     with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(domain(*args), True)
+                        d = filled(domain(*input_args), True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
