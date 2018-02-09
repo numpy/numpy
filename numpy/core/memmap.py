@@ -231,7 +231,7 @@ class memmap(ndarray):
 
         if shape is None:
             bytes = flen - offset
-            if (bytes % _dbytes):
+            if bytes % _dbytes:
                 fid.close()
                 raise ValueError("Size of available data is not a "
                         "multiple of the data-type size.")
