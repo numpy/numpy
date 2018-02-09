@@ -237,7 +237,8 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         n = PyArray_DIMS(ap)[0];
         ptr2 = (char **)PyArray_malloc(n * sizeof(char *));
         if (!ptr2) {
-            goto fail;
+            PyErr_NoMemory();
+            return -1;
         }
         for (i = 0; i < n; i++) {
             ptr2[i] = PyArray_BYTES(ap) + i*PyArray_STRIDES(ap)[0];
@@ -249,7 +250,8 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         m = PyArray_DIMS(ap)[1];
         ptr3 = (char ***)PyArray_malloc(n*(m+1) * sizeof(char *));
         if (!ptr3) {
-            goto fail;
+            PyErr_NoMemory();
+            return -1;
         }
         for (i = 0; i < n; i++) {
             ptr3[i] = (char **) &ptr3[n + m * i];
@@ -262,10 +264,6 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
     memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
     *op = (PyObject *)ap;
     return 0;
-
-fail:
-    PyErr_SetString(PyExc_MemoryError, "no memory");
-    return -1;
 }
 
 /* Deprecated --- Use PyArray_AsCArray instead */
@@ -1329,6 +1327,7 @@ _pyarray_revert(PyArrayObject *ret)
     else {
         char *tmp = PyArray_malloc(PyArray_DESCR(ret)->elsize);
         if (tmp == NULL) {
+            PyErr_NoMemory();
             return -1;
         }
         sw2 = op + (length - 1) * os;
