@@ -278,7 +278,7 @@ def scrubSource(source, nsteps=None, verbose=False):
              ('clean comments', cleanComments),
              ('replace dlamch_() calls', replaceDlamch),
              ('remove prototypes', removeSubroutinePrototypes),
-             ('remove builtin functions', removeBuiltinFunctions),
+             ('remove builtin function prototypes', removeBuiltinFunctions),
             ]
 
     if nsteps is not None:
