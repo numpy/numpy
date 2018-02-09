@@ -110,6 +110,10 @@ def _array_descr(descriptor):
             num = field[1] - offset
             result.append(('', '|V%d' % num))
             offset += num
+        elif field[1] < offset:
+            raise ValueError(
+                "dtype.descr is not defined for types with overlapping or "
+                "out-of-order fields")
         if len(field) > 3:
             name = (field[2], field[3])
         else:

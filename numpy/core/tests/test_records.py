@@ -355,6 +355,13 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
+    def test_out_of_order_fields(self):
+        dt = np.dtype({'names': ['a', 'b'],
+                    'formats': ['i4', 'i4'],
+                    'offsets': [4, 0]})
+        y = np.rec.fromrecords([(1, 2), (4, 5)], dtype=dt)
+        assert_raises(ValueError, lambda: y.dtype.descr)
+
     def test_pickle_1(self):
         # Issue #1529
         a = np.array([(1, [])], dtype=[('a', np.int32), ('b', np.int32, 0)])
