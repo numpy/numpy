@@ -211,6 +211,9 @@ class memmap(ndarray):
                 raise ValueError("mode must be one of %s" %
                                  (valid_filemodes + list(mode_equivalents.keys())))
 
+        if mode == 'w+' and shape is None:
+            raise ValueError("shape must be given")
+
         if hasattr(filename, 'read'):
             fid = filename
             own_file = False
@@ -220,9 +223,6 @@ class memmap(ndarray):
         else:
             fid = open(filename, (mode == 'c' and 'r' or mode)+'b')
             own_file = True
-
-        if (mode == 'w+') and shape is None:
-            raise ValueError("shape must be given")
 
         fid.seek(0, 2)
         flen = fid.tell()
