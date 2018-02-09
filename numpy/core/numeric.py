@@ -1868,8 +1868,8 @@ def fromfunction(function, shape, **kwargs):
     """
     Construct an array by executing a function on an array of coordinates.
 
-    The resulting array therefore has a value ``fn(*indices((2,3,4)))`` for
-    an array of shape ``(2, 3, 4)``.
+    The resulting array therefore has a value ``fn(*indices((x,y,z)))`` for
+    an array of shape ``(x, y, z)``.
 
     Parameters
     ----------
@@ -1896,13 +1896,11 @@ def fromfunction(function, shape, **kwargs):
 
     See Also
     --------
-    indices, meshgrid
+    indices, meshgrid, vectorize
 
     Notes
     -----
     Keywords other than `dtype` are passed to `function`.
-
-    Function is only called once, not once per index.
 
     Examples
     --------
@@ -1911,8 +1909,10 @@ def fromfunction(function, shape, **kwargs):
            [1, 2, 3],
            [2, 3, 4]])
 
-    >>> np.fromfunction(lambda i, j: i.shape == j.shape, (3, 3), dtype=int)
-    True
+    >>> np.fromfunction(np.vectorize(lambda i, j: i == j), (3, 3), dtype=int)
+    array([[True, False, False],
+           [False, True, False],
+           [False, False, True]], dtype=bool))
 
     """
     dtype = kwargs.pop('dtype', float)
