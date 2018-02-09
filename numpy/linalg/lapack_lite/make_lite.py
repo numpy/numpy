@@ -297,10 +297,7 @@ def main():
         shutil.rmtree(output_dir)
     except:
         pass
-    try:
-        os.makedirs(output_dir)
-    except:
-        pass
+    os.makedirs(output_dir)
 
     wrapped_routines, ignores = getWrappedRoutineNames(wrapped_routines_file)
     library = getLapackRoutines(wrapped_routines, ignores, lapack_src_dir)
