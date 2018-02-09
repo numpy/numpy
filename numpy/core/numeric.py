@@ -1866,15 +1866,15 @@ def indices(dimensions, dtype=int):
 
 def fromfunction(function, shape, **kwargs):
     """
-    Construct an array by executing a function over each coordinate.
+    Construct an array by executing a function on an array of coordinates.
 
-    The resulting array therefore has a value ``fn(x, y, z)`` at
-    coordinate ``(x, y, z)``.
+    The resulting array therefore has a value ``fn(*indices((2,3,4)))`` for
+    an array of shape ``(2, 3, 4)``.
 
     Parameters
     ----------
     function : callable
-        The function is called with N parameters, where N is the rank of
+        The function is called once with N parameters, where N is the rank of
         `shape`.  Each parameter represents the coordinates of the array
         varying along a specific axis.  For example, if `shape`
         were ``(2, 2)``, then the parameters would be
@@ -1902,17 +1902,17 @@ def fromfunction(function, shape, **kwargs):
     -----
     Keywords other than `dtype` are passed to `function`.
 
+    Function is only called once, not once per index.
+
     Examples
     --------
-    >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
-    array([[ True, False, False],
-           [False,  True, False],
-           [False, False,  True]])
-
     >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=int)
     array([[0, 1, 2],
            [1, 2, 3],
            [2, 3, 4]])
+
+    >>> np.fromfunction(lambda i, j: i.shape == j.shape, (3, 3), dtype=int)
+    True
 
     """
     dtype = kwargs.pop('dtype', float)
