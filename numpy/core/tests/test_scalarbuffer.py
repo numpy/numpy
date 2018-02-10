@@ -1,8 +1,9 @@
 """
 Test scalar buffer interface adheres to PEP 3118
 """
+import sys
 import numpy as np
-from numpy.testing import run_module_suite, assert_
+from numpy.testing import run_module_suite, assert_, dec
 
 # types
 scalars = [
@@ -12,7 +13,7 @@ scalars = [
     np.uintp, np.uint8, np.uint16, np.uint32, np.uint64,
     np.half, np.single, np.double, np.float_, np.longfloat,
     np.float16, np.float32, np.float64, np.csingle, np.complex_,
-    np.clongfloat, np.complex64, np.complex128, 
+    np.clongfloat, np.complex64, np.complex128,
 ]
 
 scalars_set_code = [
@@ -74,12 +75,14 @@ if hasattr(np, 'complex256'):
 
 
 class TestScalarPEP3118(object):
+    @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
     def test_scalar_match_array(self):
         for scalar in scalars:
             x = scalar()
             a = np.array([], dtype=scalar)
             assert_(x.data.format == a.data.format)
-    
+
+    @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
     def test_scalar_dim(self):
         for scalar in scalars:
             x = scalar()
@@ -87,12 +90,14 @@ class TestScalarPEP3118(object):
             assert_(x.data.shape == ())
             assert_(x.data.strides == ())
             assert_(x.data.suboffsets == ())
-        
+
+    @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
     def test_scalar_known_size(self):
         for scalar, size in scalars_set_size:
             x = scalar()
             assert_(x.data.nbytes == size)
-    
+
+    @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
     def test_scalar_known_code(self):
         for scalar, code in scalars_set_code:
             x = scalar()
