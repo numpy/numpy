@@ -36,42 +36,12 @@ scalars_set_code = [
     (np.csingle, 'Zf'),
     (np.complex_, 'Zd'),
     (np.clongfloat, 'Zg'),
-
-    # TODO: 'p', 'l', or 'q'?
-    # (np.intp, 'p'),
-    # (np.uintp, 'P'),
-]
-
-scalars_set_size = [
-    (np.bool8, 1),
-    (np.int8, 1),
-    (np.int16, 2),
-    (np.int32, 4),
-    (np.int64, 8),
-    (np.uint8, 1),
-    (np.uint16, 2),
-    (np.uint32, 4),
-    (np.uint64, 8),
-    (np.float16, 2),
-    (np.float32, 4),
-    (np.float64, 8),
-    (np.complex64, 8),
-    (np.complex128, 16),
 ]
 
 # platform dependant dtypes
-if hasattr(np, 'float96'):
-    scalars.append(np.float96)
-    scalars_set_size.append((np.float96, 12))
-if hasattr(np, 'float128'):
-    scalars.append(np.float128)
-    scalars_set_size.append((np.float128, 16))
-if hasattr(np, 'complex192'):
-    scalars.append(np.complex192)
-    scalars_set_size.append((np.complex192, 24))
-if hasattr(np, 'complex256'):
-    scalars.append(np.complex256)
-    scalars_set_size.append((np.complex256, 32))
+for dtype in ('float96', 'float128', 'complex192', 'complex256'):
+    if hasattr(np, dtype):
+        scalars.append(getattr(np, dtype))
 
 
 class TestScalarPEP3118(object):
@@ -79,29 +49,48 @@ class TestScalarPEP3118(object):
     def test_scalar_match_array(self):
         for scalar in scalars:
             x = scalar()
-            a = np.array([], dtype=scalar)
-            assert_(x.data.format == a.data.format)
+            a = np.array([], dtype=np.dtype(scalar))
+            mv_x = memoryview(x)
+            mv_a = memoryview(a)
+            assert_(mv_x.format == mv_a.format)
 
     @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
     def test_scalar_dim(self):
         for scalar in scalars:
             x = scalar()
-            assert_(x.data.ndim == 0)
-            assert_(x.data.shape == ())
-            assert_(x.data.strides == ())
-            assert_(x.data.suboffsets == ())
-
-    @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
-    def test_scalar_known_size(self):
-        for scalar, size in scalars_set_size:
-            x = scalar()
-            assert_(x.data.nbytes == size)
+            mv_x = memoryview(x)
+            assert_(mv_x.itemsize == np.dtype(scalar).itemsize)
+            assert_(mv_x.ndim == 0)
+            assert_(mv_x.shape == ())
+            assert_(mv_x.strides == ())
+            assert_(mv_x.suboffsets == ())
 
     @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
     def test_scalar_known_code(self):
         for scalar, code in scalars_set_code:
             x = scalar()
-            assert_(x.data.format == code)
+            mv_x = memoryview(x)
+            assert_(mv_x.format == code)
+
+    @dec.skipif(sys.version_info.major < 3, "scalars do not implement buffer interface in Python 2")
+    def test_void_scalar_structured_data(self):
+        dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
+        a = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
+        x = a[0]
+        assert_(isinstance(x, np.void))
+
+        mv_x = memoryview(x)
+        expected_size = 16 * np.unicode_().__array__().itemsize
+        expected_size += 2 * np.float64().__array__().itemsize
+        assert_(mv_x.itemsize == expected_size)
+        assert_(mv_x.ndim == 0)
+        assert_(mv_x.shape == ())
+        assert_(mv_x.strides == ())
+        assert_(mv_x.suboffsets == ())
+
+        mv_a = memoryview(a)
+        assert_(mv_x.itemsize == mv_a.itemsize)
+        assert_(mv_x.format == mv_a.format)
 
 if __name__ == "__main__":
     run_module_suite()
