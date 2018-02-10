@@ -1765,7 +1765,7 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
         PyArray_Descr **all_dtypes = PyArray_malloc(
             sizeof(*all_dtypes) * (narrs + ndtypes));
         if (all_dtypes == NULL) {
-            return NULL;
+            return PyErr_NoMemory();
         }
         for (i = 0; i < narrs; ++i) {
             all_dtypes[i] = PyArray_DESCR(arr[i]);
