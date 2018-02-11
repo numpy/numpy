@@ -834,6 +834,7 @@ _descriptor_from_pep3118_format(char *s)
     /* Strip whitespace, except from field names */
     buf = malloc(strlen(s) + 1);
     if (buf == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
     p = buf;
