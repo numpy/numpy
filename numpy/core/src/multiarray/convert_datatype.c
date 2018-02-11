@@ -1002,6 +1002,17 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
     int type_num1, type_num2, ret_type_num;
 
+    /*
+     * Fast path for identical dtypes.
+     *
+     * Non-native-byte-order types are converted to native ones below, so we
+     * can't quit early.
+     */
+    if (type1 == type2 && PyArray_ISNBO(type1->byteorder)) {
+        Py_INCREF(type1);
+        return type1;
+    }
+
     type_num1 = type1->type_num;
     type_num2 = type2->type_num;
 
@@ -1296,6 +1307,8 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 /*
  * Produces the smallest size and lowest kind type to which all
  * input types can be cast.
+ *
+ * Equivalent to functools.reduce(PyArray_PromoteTypes, types)
  */
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_PromoteTypeSequence(PyArray_Descr **types, npy_intp ntypes)
@@ -1309,16 +1322,11 @@ PyArray_PromoteTypeSequence(PyArray_Descr **types, npy_intp ntypes)
     ret = types[0];
     Py_INCREF(ret);
     for (i = 1; i < ntypes; ++i) {
-        PyArray_Descr *type = types[i];
-
-        /* Only call promote if the types aren't the same dtype */
-        if (type != ret || !PyArray_ISNBO(type->byteorder)) {
-            PyArray_Descr *tmp = PyArray_PromoteTypes(type, ret);
-            Py_DECREF(ret);
-            ret = tmp;
-            if (ret == NULL) {
-                return NULL;
-            }
+        PyArray_Descr *tmp = PyArray_PromoteTypes(types[i], ret);
+        Py_DECREF(ret);
+        ret = tmp;
+        if (ret == NULL) {
+            return NULL;
         }
     }
     return ret;
@@ -1697,12 +1705,11 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                     npy_intp ndtypes, PyArray_Descr **dtypes)
 {
     npy_intp i;
-    int use_min_scalar = 0;
-    PyArray_Descr *ret = NULL, *tmpret;
-    int ret_is_small_unsigned = 0;
+    int use_min_scalar;
 
     /* If there's just one type, pass it through */
     if (narrs + ndtypes == 1) {
+        PyArray_Descr *ret = NULL;
         if (narrs == 1) {
             ret = PyArray_DESCR(arr[0]);
         }
@@ -1718,28 +1725,30 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
      * the maximum "kind" of the scalars surpasses the maximum
      * "kind" of the arrays
      */
+    use_min_scalar = 0;
     if (narrs > 0) {
-        int all_scalars, max_scalar_kind = -1, max_array_kind = -1;
-        int kind;
+        int all_scalars;
+        int max_scalar_kind = -1;
+        int max_array_kind = -1;
 
         all_scalars = (ndtypes > 0) ? 0 : 1;
 
         /* Compute the maximum "kinds" and whether everything is scalar */
         for (i = 0; i < narrs; ++i) {
             if (PyArray_NDIM(arr[i]) == 0) {
-                kind = dtype_kind_to_simplified_ordering(
+                int kind = dtype_kind_to_simplified_ordering(
                                     PyArray_DESCR(arr[i])->kind);
                 if (kind > max_scalar_kind) {
                     max_scalar_kind = kind;
                 }
             }
             else {
-                all_scalars = 0;
-                kind = dtype_kind_to_simplified_ordering(
+                int kind = dtype_kind_to_simplified_ordering(
                                     PyArray_DESCR(arr[i])->kind);
                 if (kind > max_array_kind) {
                     max_array_kind = kind;
                 }
+                all_scalars = 0;
             }
         }
         /*
@@ -1747,7 +1756,7 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
          * finish computing the max array kind
          */
         for (i = 0; i < ndtypes; ++i) {
-            kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
+            int kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
             if (kind > max_array_kind) {
                 max_array_kind = kind;
             }
@@ -1761,6 +1770,8 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
 
     /* Loop through all the types, promoting them */
     if (!use_min_scalar) {
+        PyArray_Descr *ret;
+
         /* Build a single array of all the dtypes */
         PyArray_Descr **all_dtypes = PyArray_malloc(
             sizeof(*all_dtypes) * (narrs + ndtypes));
@@ -1776,11 +1787,12 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
         }
         ret = PyArray_PromoteTypeSequence(all_dtypes, narrs + ndtypes);
         PyArray_free(all_dtypes);
-        if (ret == NULL) {
-            return NULL;
-        }
+        return ret;
     }
     else {
+        int ret_is_small_unsigned = 0;
+        PyArray_Descr *ret = NULL;
+
         for (i = 0; i < narrs; ++i) {
             int tmp_is_small_unsigned;
             PyArray_Descr *tmp = PyArray_MinScalarType_internal(
@@ -1795,30 +1807,15 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 ret_is_small_unsigned = tmp_is_small_unsigned;
             }
             else {
-#if 0
-                printf("promoting type ");
-                PyObject_Print(tmp, stdout, 0);
-                printf(" (%d) ", tmp_is_small_unsigned);
-                PyObject_Print(ret, stdout, 0);
-                printf(" (%d) ", ret_is_small_unsigned);
-                printf("\n");
-#endif
-                /* If they point to the same type, don't call promote */
-                if (tmp == ret && PyArray_ISNBO(tmp->byteorder)) {
-                    Py_DECREF(tmp);
+                PyArray_Descr *tmpret = promote_types(
+                    tmp, ret, tmp_is_small_unsigned, ret_is_small_unsigned);
+                Py_DECREF(tmp);
+                Py_DECREF(ret);
+                ret = tmpret;
+                if (ret == NULL) {
+                    return NULL;
                 }
-                else {
-                    tmpret = promote_types(tmp, ret, tmp_is_small_unsigned,
-                                                        ret_is_small_unsigned);
-                    if (tmpret == NULL) {
-                        Py_DECREF(tmp);
-                        Py_DECREF(ret);
-                        return NULL;
-                    }
-                    Py_DECREF(tmp);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                }
+
                 ret_is_small_unsigned = tmp_is_small_unsigned &&
                                         ret_is_small_unsigned;
             }
@@ -1832,36 +1829,23 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 Py_INCREF(ret);
             }
             else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(tmp->byteorder)) {
-                    if (ret_is_small_unsigned) {
-                        tmpret = promote_types(tmp, ret, 0,
-                                                ret_is_small_unsigned);
-                        if (tmpret == NULL) {
-                            Py_DECREF(tmp);
-                            Py_DECREF(ret);
-                            return NULL;
-                        }
-                    }
-                    else {
-                        tmpret = PyArray_PromoteTypes(tmp, ret);
-                    }
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
+                PyArray_Descr *tmpret = promote_types(
+                    tmp, ret, 0, ret_is_small_unsigned);
+                Py_DECREF(ret);
+                ret = tmpret;
+                if (ret == NULL) {
+                    return NULL;
                 }
             }
         }
-    }
+        /* None of the above loops ran */
+        if (ret == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "no arrays or types available to calculate result type");
+        }
 
-    if (ret == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "no arrays or types available to calculate result type");
+        return ret;
     }
-
-    return ret;
 }
 
 /*NUMPY_API
