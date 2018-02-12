@@ -246,7 +246,7 @@ alias for the field. The title may be used to index an array, just like a
 field name.
 
 To add titles when using the list-of-tuples form of dtype specification, the
-field name may be be specified as a tuple of two strings instead of a single
+field name may be specified as a tuple of two strings instead of a single
 string, which will be the field's title and field name respectively. For
 example::
 
