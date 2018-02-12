@@ -7212,7 +7212,7 @@ class TestWritebackIfCopy(TestCase):
         arr_wb[:] = -100
         npy_resolve(arr_wb)
         assert_equal(arr, -100)
-        # after resolve, the two arrays no longer reference eachother
+        # after resolve, the two arrays no longer reference each other
         assert_(not arr_wb.ctypes.data == 0)
         arr_wb[:] = 100
         assert_equal(arr, -100)

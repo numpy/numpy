@@ -292,7 +292,7 @@ A total of 418 pull requests were merged for this release.
 * `#7407 <https://github.com/numpy/numpy/pull/7407>`__: BUG: Fix decref before incref for in-place accumulate
 * `#7410 <https://github.com/numpy/numpy/pull/7410>`__: DOC: add nanprod to the list of math routines
 * `#7414 <https://github.com/numpy/numpy/pull/7414>`__: Tweak corrcoef
-* `#7415 <https://github.com/numpy/numpy/pull/7415>`__: DOC: Documention fixes
+* `#7415 <https://github.com/numpy/numpy/pull/7415>`__: DOC: Documentation fixes
 * `#7416 <https://github.com/numpy/numpy/pull/7416>`__: BUG: Incorrect handling of range in `histogram` with automatic...
 * `#7418 <https://github.com/numpy/numpy/pull/7418>`__: DOC: Minor typo fix, hermefik -> hermefit.
 * `#7421 <https://github.com/numpy/numpy/pull/7421>`__: ENH: adds np.nancumsum and np.nancumprod
