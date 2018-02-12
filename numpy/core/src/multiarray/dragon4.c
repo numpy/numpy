@@ -896,7 +896,7 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
     if (shiftBits == 0) {
         npy_uint32 i;
 
-        /* copy blcoks from high to low */
+        /* copy blocks from high to low */
         for (pInCur = result->blocks + result->length,
                  pOutCur = pInCur + shiftBlocks;
                  pInCur >= pInBlocks;

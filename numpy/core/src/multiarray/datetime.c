@@ -2152,7 +2152,7 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * to UTC time, otherwise it returns the struct with the local time.
  *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
- * if obj doesn't have the neeeded date or datetime attributes.
+ * if obj doesn't have the needed date or datetime attributes.
  */
 NPY_NO_EXPORT int
 convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
