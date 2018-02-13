@@ -1546,7 +1546,7 @@ def cond(x, p=None):
             else:
                 r = s[..., 0] / s[..., -1]
     else:
-        # Call inv(x) ignoring errors: the result array will be
+        # Call inv(x) ignoring errors. The result array will
         # contain nans in the entries where inversion failed.
         _assertRankAtLeast2(x)
         _assertNdSquareness(x)
@@ -1557,7 +1557,7 @@ def cond(x, p=None):
             r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
         r = r.astype(result_t, copy=False)
 
-    # Convert nans to infs, unless the original array had nan entries
+    # Convert nans to infs unless the original array had nan entries
     r = asarray(r)
     nan_mask = isnan(r)
     if nan_mask.any():
