@@ -148,15 +148,14 @@ def unique(ar, return_index=False, return_inverse=False,
         .. versionadded:: 1.9.0
 
     axis : int or None, optional
-        The axis to operate on. If None, `ar` will be flattened beforehand.
-        Otherwise, duplicate items will be removed along the provided axis,
-        with all the other axes belonging to the each of the unique elements.
-        Object arrays or structured arrays that contain objects are not
-        supported if the `axis` kwarg is used.
+        The axis to operate on. If None, `ar` will be flattened. If an integer,
+        the subarrays indexed by the given axis will be flattened and treated
+        as the elements of a 1-D array with the dimension of the given axis,
+        see the notes for more details.  Object arrays or structured arrays
+        that contain objects are not supported if the `axis` kwarg is used. The
+        default is None.
 
         .. versionadded:: 1.13.0
-
-
 
     Returns
     -------
@@ -178,6 +177,17 @@ def unique(ar, return_index=False, return_inverse=False,
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
+    Notes
+    -----
+    When an axis is specified the subarrays indexed by the axis are sorted.
+    This is done by making the specified axis the first dimension of the array
+    and then flattening the subarrays in C order. The flattened subarrays are
+    then viewed as a structured type with each element given a label, with the
+    effect that we end up with a 1-D array of structured types that can be
+    treated in the same way as any other 1-D array. The result is that the
+    flattened subarrays are sorted in lexicographic order starting with the
+    first element.
 
     Examples
     --------
@@ -223,25 +233,18 @@ def unique(ar, return_index=False, return_inverse=False,
         ret = _unique1d(ar, return_index, return_inverse, return_counts)
         return _unpack_tuple(ret)
 
+    # axis was specified and not None
     try:
         ar = np.swapaxes(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
         raise np.AxisError(axis, ar.ndim)
 
-    orig_shape, orig_dtype = ar.shape, ar.dtype
     # Must reshape to a contiguous 2D array for this to work...
+    orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], -1)
     ar = np.ascontiguousarray(ar)
-
-    if ar.dtype.char in (np.typecodes['AllInteger'] +
-                         np.typecodes['Datetime'] + 'S'):
-        # Optimization: Creating a view of your data with a np.void data type of
-        # size the number of bytes in a full row. Handles any type where items
-        # have a unique binary representation, i.e. 0 is only 0, not +0 and -0.
-        dtype = np.dtype((np.void, ar.dtype.itemsize * ar.shape[1]))
-    else:
-        dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
     try:
         consolidated = ar.view(dtype)
