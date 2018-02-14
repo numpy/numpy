@@ -226,7 +226,7 @@ in writing setup scripts:
   ``runtime_library_dirs``, ``extra_objects``, ``extra_compile_args``,
   ``extra_link_args``, ``export_symbols``, ``swig_opts``, ``depends``,
   ``language``, ``f2py_options``, ``module_dirs``, ``extra_info``,
-  ``extra_f77_compile_args``, ``extra_compile_f90_args``.
+  ``extra_f77_compile_args``, ``extra_f90_compile_args``.
 
   Note that ``config.paths`` method is applied to all lists that
   may contain paths. ``extra_info`` is a dictionary or a list
