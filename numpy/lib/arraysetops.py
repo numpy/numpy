@@ -149,14 +149,13 @@ def unique(ar, return_index=False, return_inverse=False,
 
     axis : int or None, optional
         The axis to operate on. If None, `ar` will be flattened beforehand.
-        Otherwise, duplicate items will be removed along the provided axis,
-        with all the other axes belonging to the each of the unique elements.
+        Otherwise, the subarrays indexed by the axis will be flattened and
+        treated as the elements of a 1-D array with the dimension of the given
+        axis. The sort order of the subarrays may be unexpected, see the notes.
         Object arrays or structured arrays that contain objects are not
-        supported if the `axis` kwarg is used.
+        supported if the `axis` kwarg is used. The default is None.
 
         .. versionadded:: 1.13.0
-
-
 
     Returns
     -------
@@ -178,6 +177,21 @@ def unique(ar, return_index=False, return_inverse=False,
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
+    Notes
+    -----
+    When an axis is specified the subarrays indexed by the axis are sorted,
+    however, the way in which the subarrays are compared is chosen so as to
+    obtain the best speed. This can result in an unexpected ordering of the
+    input array after the call. There are currently two ways in which the
+    subarrays may be compared after they are flattened in C order: as
+    structured types or as byte strings. If a structured type is used, each
+    element of the flattened subarray is given a label and they are compared in
+    lexicographic order.  That preserves the ordering of the elements of the
+    original array. If byte strings are used, the flattened subarrays are
+    sorted as if they are strings of unsigned bytes. The result in that case
+    may depend on whether the architecture is big or little endian and on
+    whether the original elements were signed or unsigned,
 
     Examples
     --------
