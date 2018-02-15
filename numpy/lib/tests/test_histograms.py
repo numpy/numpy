@@ -347,13 +347,17 @@ class TestHistogram(object):
         self.do_precision(np.double, np.longdouble)
 
     def test_histogram_bin_edges(self):
-        hist, e     = histogram([1, 2, 3, 4], [1, 2])
-        edges       = histogram_bin_edges([1, 2, 3, 4], [1, 2])
+        hist, e = histogram([1, 2, 3, 4], [1, 2])
+        edges = histogram_bin_edges([1, 2, 3, 4], [1, 2])
         assert_array_equal(edges, e)
 
-        arr         = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
-        hist, e     = histogram(arr, bins=30, range=(-0.5, 5))
-        edges       = histogram_bin_edges(arr, bins=30, range=(-0.5, 5))
+        arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
+        hist, e = histogram(arr, bins=30, range=(-0.5, 5))
+        edges = histogram_bin_edges(arr, bins=30, range=(-0.5, 5))
+        assert_array_equal(edges, e)
+
+        hist, e = histogram(arr, bins='auto', range=(0, 1))
+        edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
 
 class TestHistogramOptimBinNums(object):

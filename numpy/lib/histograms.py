@@ -8,7 +8,7 @@ import operator
 import numpy as np
 from numpy.compat.py3k import basestring
 
-__all__ = ['histogram', 'histogramdd']
+__all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 
 
 def _hist_bin_sqrt(x):
@@ -347,9 +347,91 @@ def _search_sorted_inclusive(a, v):
 
 def histogram_bin_edges(a, bins=10, range=None, weights=None):
     """
-    Function to calculate the edges of the bins used by the histogram function. 
-    This function should be used when the edges of the bins are required 
-    without the overhead of calculating the histogram.
+    Function to calculate only the edges of the bins used by the histogram function. 
+
+    Parameters
+    ----------
+    a : array_like
+        Input data. The histogram is computed over the flattened array.
+    bins : int or sequence of scalars or str, optional
+        If `bins` is an int, it defines the number of equal-width
+        bins in the given range (10, by default). If `bins` is a
+        sequence, it defines the bin edges, including the rightmost
+        edge, allowing for non-uniform bin widths.
+
+        .. versionadded:: 1.11.0
+
+        If `bins` is a string from the list below, `histogram` will use
+        the method chosen to calculate the optimal bin width and
+        consequently the number of bins (see `Notes` for more detail on
+        the estimators) from the data that falls within the requested
+        range. While the bin width will be optimal for the actual data
+        in the range, the number of bins will be computed to fill the
+        entire range, including the empty portions. For visualisation,
+        using the 'auto' option is suggested. Weighted data is not
+        supported for automated bin size selection.
+
+        'auto'
+            Maximum of the 'sturges' and 'fd' estimators. Provides good
+            all around performance.
+
+        'fd' (Freedman Diaconis Estimator)
+            Robust (resilient to outliers) estimator that takes into
+            account data variability and data size.
+
+        'doane'
+            An improved version of Sturges' estimator that works better
+            with non-normal datasets.
+
+        'scott'
+            Less robust estimator that that takes into account data
+            variability and data size.
+
+        'rice'
+            Estimator does not take variability into account, only data
+            size. Commonly overestimates number of bins required.
+
+        'sturges'
+            R's default method, only accounts for data size. Only
+            optimal for gaussian data and underestimates number of bins
+            for large non-gaussian datasets.
+
+        'sqrt'
+            Square root (of data size) estimator, used by Excel and
+            other programs for its speed and simplicity.
+
+    range : (float, float), optional
+        The lower and upper range of the bins.  If not provided, range
+        is simply ``(a.min(), a.max())``.  Values outside the range are
+        ignored. The first element of the range must be less than or
+        equal to the second. `range` affects the automatic bin
+        computation as well. While bin width is computed to be optimal
+        based on the actual data within `range`, the bin count will fill
+        the entire range including portions containing no data.
+
+    weights : array_like, optional
+        An array of weights, of the same shape as `a`.  Each value in
+        `a` only contributes its associated weight towards the bin count
+        (instead of 1). If `density` is True, the weights are
+        normalized, so that the integral of the density over the range
+        remains 1.
+
+    Returns
+    -------
+    bin_edges : array of dtype float
+        Return the bin edges ``(length(hist)+1)``.
+
+    >>> histogram_bin_edges(arr, bins='auto', range=(0, 1))
+    [0.   0.25 0.5  0.75 1.  ]
+
+    >>> histogram_bin_edges(arr, bins=30, range=(-0.5, 5))
+    [-0.5        -0.31666667 -0.13333333  0.05        0.23333333  0.41666667
+    0.6         0.78333333  0.96666667  1.15        1.33333333  1.51666667
+    1.7         1.88333333  2.06666667  2.25        2.43333333  2.61666667
+    2.8         2.98333333  3.16666667  3.35        3.53333333  3.71666667
+    3.9         4.08333333  4.26666667  4.45        4.63333333  4.81666667
+    5.        ]
+
     """
     a, weights      = _ravel_and_check_weights(a, weights)
     bin_edges, _    = _get_bin_edges(a, bins, range, weights)
