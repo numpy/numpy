@@ -345,6 +345,15 @@ def _search_sorted_inclusive(a, v):
         a.searchsorted(v[-1:], 'right')
     ))
 
+def histogram_bin_edges(a, bins=10, range=None, weights=None):
+    """
+    Function to calculate the edges of the bins used by the histogram function. 
+    This function should be used when the edges of the bins are required 
+    without the overhead of calculating the histogram.
+    """
+    a, weights      = _ravel_and_check_weights(a, weights)
+    bin_edges, _    = _get_bin_edges(a, bins, range, weights)
+    return bin_edges
 
 def histogram(a, bins=10, range=None, normed=False, weights=None,
               density=None):
