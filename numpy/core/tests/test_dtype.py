@@ -552,7 +552,7 @@ class TestString(object):
         assert_equal(str(dt),
                     "[('a', '<m8[D]'), ('b', '<M8[us]')]")
 
-    def test_complex_dtype_repr(self):
+    def test_repr_structured(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
                                 ('rtile', '>f4', (64, 36))], (3,)),
                        ('bottom', [('bleft', ('>f4', (8, 64)), (1,)),
@@ -572,6 +572,7 @@ class TestString(object):
                     "(('Green pixel', 'g'), 'u1'), "
                     "(('Blue pixel', 'b'), 'u1')], align=True)")
 
+    def test_repr_structured_not_packed(self):
         dt = np.dtype({'names': ['rgba', 'r', 'g', 'b'],
                        'formats': ['<u4', 'u1', 'u1', 'u1'],
                        'offsets': [0, 0, 1, 2],
@@ -596,9 +597,15 @@ class TestString(object):
                     "'titles':['Red pixel','Blue pixel'], "
                     "'itemsize':4})")
 
+    def test_repr_structured_datetime(self):
         dt = np.dtype([('a', '<M8[D]'), ('b', '<m8[us]')])
         assert_equal(repr(dt),
                     "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
+
+    def test_repr_str_subarray(self):
+        dt = np.dtype(('<i2', (1,)))
+        assert_equal(repr(dt), "dtype(('<i2', (1,)))")
+        assert_equal(str(dt), "('<i2', (1,))")
 
     @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
     def test_dtype_str_with_long_in_shape(self):
