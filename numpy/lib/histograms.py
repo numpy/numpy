@@ -347,7 +347,7 @@ def _search_sorted_inclusive(a, v):
 
 def histogram_bin_edges(a, bins=10, range=None, weights=None):
     """
-    Function to calculate only the edges of the bins used by the histogram function. 
+    Function to calculate only the edges of the bins used by the `histogram` function. 
 
     Parameters
     ----------
@@ -421,20 +421,22 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
 
+    Examples
+    --------
     >>> histogram_bin_edges(arr, bins='auto', range=(0, 1))
-    [0.   0.25 0.5  0.75 1.  ]
+    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
 
     >>> histogram_bin_edges(arr, bins=30, range=(-0.5, 5))
-    [-0.5        -0.31666667 -0.13333333  0.05        0.23333333  0.41666667
-    0.6         0.78333333  0.96666667  1.15        1.33333333  1.51666667
-    1.7         1.88333333  2.06666667  2.25        2.43333333  2.61666667
-    2.8         2.98333333  3.16666667  3.35        3.53333333  3.71666667
-    3.9         4.08333333  4.26666667  4.45        4.63333333  4.81666667
-    5.        ]
+    array([-0.5       , -0.31666667, -0.13333333,  0.05      ,  0.23333333,
+        0.41666667,  0.6       ,  0.78333333,  0.96666667,  1.15      ,
+        1.33333333,  1.51666667,  1.7       ,  1.88333333,  2.06666667,
+        2.25      ,  2.43333333,  2.61666667,  2.8       ,  2.98333333,
+        3.16666667,  3.35      ,  3.53333333,  3.71666667,  3.9       ,
+        4.08333333,  4.26666667,  4.45      ,  4.63333333,  4.81666667,  5.        ])
 
     """
-    a, weights      = _ravel_and_check_weights(a, weights)
-    bin_edges, _    = _get_bin_edges(a, bins, range, weights)
+    a, weights = _ravel_and_check_weights(a, weights)
+    bin_edges, _ = _get_bin_edges(a, bins, range, weights)
     return bin_edges
 
 def histogram(a, bins=10, range=None, normed=False, weights=None,
