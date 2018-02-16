@@ -1775,7 +1775,7 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     kind to which both ``type1`` and ``type2`` may be safely cast.
     The returned data type is always in native byte order.
 
-    This function is symmetric, and _usually_ associative.
+    This function is symmetric, but rarely associative.
 
     Parameters
     ----------
