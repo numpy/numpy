@@ -63,17 +63,21 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
         if (i < nin) {
             if (!PyArray_CanCastArrayTo(operands[i], dtypes[i], casting)) {
                 PyObject *errmsg;
-                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
-                                "input from ", ufunc_name);
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromString(" to "));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)dtypes[i]));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromFormat(" with casting rule %s",
-                                        npy_casting_to_string(casting)));
+                PyObject *fmt = PyUString_FromFormat(
+                    "Cannot cast ufunc %s input from {} to {} with casting "
+                    "rule %s",
+                    ufunc_name, npy_casting_to_string(casting)
+                );
+                if (fmt == NULL) {
+                    return -1;
+                }
+                errmsg = PyObject_CallMethod(fmt, "format", "OO",
+                    (PyObject *)PyArray_DESCR(operands[i]),
+                    (PyObject *)dtypes[i]);
+                Py_DECREF(fmt);
+                if (errmsg == NULL){
+                    return -1;
+                }
                 PyErr_SetObject(PyExc_TypeError, errmsg);
                 Py_DECREF(errmsg);
                 return -1;
@@ -82,17 +86,22 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
             if (!PyArray_CanCastTypeTo(dtypes[i],
                                     PyArray_DESCR(operands[i]), casting)) {
                 PyObject *errmsg;
-                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
-                                "output from ", ufunc_name);
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)dtypes[i]));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromString(" to "));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromFormat(" with casting rule %s",
-                                        npy_casting_to_string(casting)));
+                PyObject *fmt = PyUString_FromFormat(
+                    "Cannot cast ufunc %s output from {} to {} with casting "
+                    "rule %s",
+                    ufunc_name, npy_casting_to_string(casting)
+                );
+                if (fmt == NULL) {
+                    return -1;
+                }
+                errmsg = PyObject_CallMethod(fmt, "format", "OO",
+                    (PyObject *)dtypes[i],
+                    (PyObject *)PyArray_DESCR(operands[i])
+                );
+                Py_DECREF(fmt);
+                if (errmsg == NULL){
+                    return -1;
+                }
                 PyErr_SetObject(PyExc_TypeError, errmsg);
                 Py_DECREF(errmsg);
                 return -1;
