@@ -2955,10 +2955,8 @@ class TestMethods(object):
             msg = 'dtype: {0}'.format(dt)
             ap = complex(a)
             assert_equal(ap, a, msg)
-            bp = complex(b)
-            assert_equal(bp, b, msg)
-            cp = complex(c)
-            assert_equal(cp, c, msg)
+            assert_raises(TypeError, complex, b)
+            assert_raises(TypeError, complex, c)
 
     def test__complex__should_not_work(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
@@ -6726,9 +6724,10 @@ class TestConversion(object):
         # gh-9972 means that these aren't always the same
         int_funcs = (int, lambda x: x.__int__())
         for int_func in int_funcs:
-            assert_equal(int_func(np.array([1])), 1)
-            assert_equal(int_func(np.array([0])), 0)
-            assert_equal(int_func(np.array([[42]])), 42)
+            assert_equal(int_func(np.array(1)), 1)
+            assert_equal(int_func(np.array(0)), 0)
+            assert_raises(TypeError, int_func, np.array([1]))
+            assert_raises(TypeError, int_func, np.array([[42]]))
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
             # gh-9972
@@ -6740,15 +6739,14 @@ class TestConversion(object):
                 def __trunc__(self):
                     return 3
             assert_equal(3, int_func(np.array(HasTrunc())))
-            assert_equal(3, int_func(np.array([HasTrunc()])))
+            assert_raises(TypeError, int_func, np.array([HasTrunc()]))
 
             class NotConvertible(object):
                 def __int__(self):
                     raise NotImplementedError
             assert_raises(NotImplementedError,
                 int_func, np.array(NotConvertible()))
-            assert_raises(NotImplementedError,
-                int_func, np.array([NotConvertible()]))
+            assert_raises(TypeError, int_func, np.array([NotConvertible()]))
 
 
 class TestWhere(object):

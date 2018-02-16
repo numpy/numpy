@@ -246,8 +246,8 @@ class TestHistogram(object):
             histogram, [np.array([0.4]) for i in range(10)] + [np.inf])
 
         # these should not crash
-        np.histogram([np.array([0.5]) for i in range(10)] + [.500000000000001])
-        np.histogram([np.array([0.5]) for i in range(10)] + [.5])
+        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array(0.5) for i in range(10)] + [.5])
 
     def test_some_nan_values(self):
         # gh-7503

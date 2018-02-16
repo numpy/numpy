@@ -118,7 +118,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types.
-    _mult_inplace = _nx.isscalar(delta) 
+    _mult_inplace = _nx.isscalar(delta)
     if num > 1:
         step = delta / div
         if step == 0:
@@ -142,7 +142,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     y += start
 
     if endpoint and num > 1:
-        y[-1] = stop
+        y[-1,...] = stop
 
     if retstep:
         return y.astype(dtype, copy=False), step
