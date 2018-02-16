@@ -1,5 +1,5 @@
 """
-Test the scalar contructors, which also do type-coercion
+Test the scalar constructors, which also do type-coercion
 """
 from __future__ import division, absolute_import, print_function
 

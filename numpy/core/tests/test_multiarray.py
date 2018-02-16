@@ -3341,7 +3341,7 @@ class TestTemporaryElide(object):
         # def incref_elide_l(d):
         #    return l[4] + l[4] # PyNumber_Add without increasing refcount
         from numpy.core.multiarray_tests import incref_elide_l
-        # padding with 1 makes sure the object on the stack is not overwriten
+        # padding with 1 makes sure the object on the stack is not overwritten
         l = [1, 1, 1, 1, np.ones(100000)]
         res = incref_elide_l(l)
         # the return original should not be changed to an inplace operation

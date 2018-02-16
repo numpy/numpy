@@ -99,7 +99,7 @@ if __name__ == "__main__":
         'Topic :: Software Development :: Code Generators',
     ]
     setup(version=version,
-          description="F2PY - Fortran to Python Interface Generaton",
+          description="F2PY - Fortran to Python Interface Generator",
           author="Pearu Peterson",
           author_email="pearu@cens.ioc.ee",
           maintainer="Pearu Peterson",

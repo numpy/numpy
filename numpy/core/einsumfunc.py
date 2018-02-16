@@ -596,7 +596,7 @@ def einsum_path(*operands, **kwargs):
     --------
 
     We can begin with a chain dot example. In this case, it is optimal to
-    contract the ``b`` and ``c`` tensors first as reprsented by the first
+    contract the ``b`` and ``c`` tensors first as represented by the first
     element of the path ``(1, 2)``. The resulting tensor is added to the end
     of the contraction and the remaining contraction ``(0, 1)`` is then
     completed.
