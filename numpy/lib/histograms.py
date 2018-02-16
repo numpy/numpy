@@ -230,7 +230,7 @@ def _get_outer_edges(a, range):
             'max must be larger than min in range parameter.')
     if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
         raise ValueError(
-            'range parameter must be finite.')
+            "autodetected range of [{}, {}] is not finite".format(first_edge, last_edge))
 
     # expand empty range to avoid divide by zero
     if first_edge == last_edge:
