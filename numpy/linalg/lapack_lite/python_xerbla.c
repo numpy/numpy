@@ -1,4 +1,6 @@
 #include "Python.h"
+
+#undef c_abs
 #include "f2c.h"
 
 /*

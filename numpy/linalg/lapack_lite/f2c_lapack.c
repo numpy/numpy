@@ -476,10 +476,6 @@ integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1,
     /* System generated locals */
     integer ret_val;
 
-    /* Builtin functions */
-    /* Subroutine */ int s_copy(char *, char *, ftnlen, ftnlen);
-    integer s_cmp(char *, char *, ftnlen, ftnlen);
-
     /* Local variables */
     static integer i__;
     static char c1[1], c2[2], c3[3], c4[2];
@@ -1394,10 +1390,6 @@ integer iparmq_(integer *ispec, char *name__, char *opts, integer *n, integer
     /* System generated locals */
     integer ret_val, i__1, i__2;
     real r__1;
-
-    /* Builtin functions */
-    double log(doublereal);
-    integer i_nint(real *);
 
     /* Local variables */
     static integer nh, ns;
