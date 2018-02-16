@@ -834,8 +834,8 @@ array_scalar_forward(PyArrayObject *v,
                      const char *where)
 {
     PyObject *scalar;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only size-1 arrays can be"\
+    if (PyArray_NDIM(v) != 0) {
+        PyErr_SetString(PyExc_TypeError, "only rank-0 arrays can be"\
                         " converted to Python scalars");
         return NULL;
     }

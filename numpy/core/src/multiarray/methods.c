@@ -2374,8 +2374,9 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyArrayObject *arr;
     PyArray_Descr *dtype;
     PyObject *c;
-    if (PyArray_SIZE(self) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
+
+    if (PyArray_NDIM(self) != 0) {
+        PyErr_SetString(PyExc_TypeError, "only rank-0 arrays can "\
                         "be converted to Python scalars");
         return NULL;
     }
