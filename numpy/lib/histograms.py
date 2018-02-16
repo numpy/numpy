@@ -221,7 +221,7 @@ def _get_outer_edges(a, range):
         first_edge, last_edge = range
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                "range of [{}, {}] is not finite".format(first_edge, last_edge))
+                "supplied range of [{}, {}] is not finite".format(first_edge, last_edge))
     elif a.size == 0:
         # handle empty arrays. Can't determine range, so use 0-1.
         first_edge, last_edge = 0, 1
