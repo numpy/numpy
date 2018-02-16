@@ -359,8 +359,6 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         sequence, it defines the bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
 
-        .. versionadded:: 1.11.0
-
         If `bins` is a string from the list below, `histogram` will use
         the method chosen to calculate the optimal bin width and
         consequently the number of bins (see `Notes` for more detail on
@@ -412,9 +410,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     weights : array_like, optional
         An array of weights, of the same shape as `a`.  Each value in
         `a` only contributes its associated weight towards the bin count
-        (instead of 1). If `density` is True, the weights are
-        normalized, so that the integral of the density over the range
-        remains 1.
+        (instead of 1). 
 
     Returns
     -------
@@ -423,17 +419,16 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     Examples
     --------
+    >>> arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
+    
+    >>> histogram_bin_edges(arr, [1, 2])
+    array([1, 2])
+
     >>> histogram_bin_edges(arr, bins='auto', range=(0, 1))
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
+    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
 
-    >>> histogram_bin_edges(arr, bins=30, range=(-0.5, 5))
-    array([-0.5       , -0.31666667, -0.13333333,  0.05      ,  0.23333333,
-        0.41666667,  0.6       ,  0.78333333,  0.96666667,  1.15      ,
-        1.33333333,  1.51666667,  1.7       ,  1.88333333,  2.06666667,
-        2.25      ,  2.43333333,  2.61666667,  2.8       ,  2.98333333,
-        3.16666667,  3.35      ,  3.53333333,  3.71666667,  3.9       ,
-        4.08333333,  4.26666667,  4.45      ,  4.63333333,  4.81666667,  5.        ])
-
+    >>> histogram_bin_edges(arr, bins='fd', range=(0, 1))
+    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
     """
     a, weights = _ravel_and_check_weights(a, weights)
     bin_edges, _ = _get_bin_edges(a, bins, range, weights)

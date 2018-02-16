@@ -360,6 +360,7 @@ class TestHistogram(object):
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
 
+
 class TestHistogramOptimBinNums(object):
     """
     Provide test coverage when using provided estimators for optimal number of
