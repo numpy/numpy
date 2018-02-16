@@ -22,6 +22,8 @@ New functions
     ...     print(np.array([2.0])) / 3
     [0.67] 
 
+  * `np.lib.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
+    without needing to caclulate the histogram.
 
 Deprecations
 ============
