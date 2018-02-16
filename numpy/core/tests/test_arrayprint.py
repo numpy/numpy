@@ -809,7 +809,7 @@ class TestContextManager(object):
         assert_equal(np.get_printoptions(), opts)
 
     def test_ctx_mgr_exceptions(self):
-        # test that print options are restored even if an exeption is raised
+        # test that print options are restored even if an exception is raised
         opts = np.get_printoptions()
         try:
             with np.printoptions(precision=2, linewidth=11):
