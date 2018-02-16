@@ -131,6 +131,12 @@ def doc_note(initialdoc, note):
         return
     if note is None:
         return initialdoc
+
+    # FIXME: disable this function for the moment until we figure out what to
+    # do with it. Currently it may result in duplicate Notes sections or Notes
+    # sections in the wrong place
+    return initialdoc
+
     newdoc = """
     %s
 
@@ -7472,11 +7478,7 @@ def inner(a, b):
     Returns the inner product of a and b for arrays of floating point types.
 
     Like the generic NumPy equivalent the product sum is over the last dimension
-    of a and b.
-
-    Notes
-    -----
-    The first argument is not conjugated.
+    of a and b. The first argument is not conjugated.
 
     """
     fa = filled(a, 0)
