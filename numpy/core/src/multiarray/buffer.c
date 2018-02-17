@@ -303,6 +303,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
     }
     else {
         int is_standard_size = 1;
+        int is_natively_aligned = 1;
         int is_native_only_type = (descr->type_num == NPY_LONGDOUBLE ||
                                    descr->type_num == NPY_CLONGDOUBLE);
         if (sizeof(npy_longlong) != 8) {
@@ -313,12 +314,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
         *offset += descr->elsize;
 
-        int is_natively_aligned;
-        if(PyArray_IsScalar(obj, Generic)) {
-            /* scalars are always natively aligned */
-            is_natively_aligned = 1;
-        }
-        else {
+        if(!PyArray_IsScalar(obj, Generic)) {
+            /* only check ndarrays, scalars are always natively aligned */
             is_natively_aligned = _is_natively_aligned_at(descr,
                                               (PyArrayObject*)obj, *offset);
         }
@@ -463,13 +460,14 @@ _buffer_info_new(PyObject *obj)
     _buffer_info_t *info;
     _tmp_string_t fmt = {NULL, 0, 0};
     int k;
+    PyArray_Descr *descr = NULL;
+    int err = 0;
 
     info = malloc(sizeof(_buffer_info_t));
     if (info == NULL) {
         goto fail;
     }
 
-    PyArray_Descr *descr;
     if (PyArray_IsScalar(obj, Generic)) {
         descr = PyArray_DescrFromScalar(obj);
         info->ndim = 0;
@@ -498,9 +496,12 @@ _buffer_info_new(PyObject *obj)
             }
         }
     }
+    if (descr == NULL) {
+        goto fail;
+    }
 
     /* Fill in format */
-    int err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
+    err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
     if(PyArray_IsScalar(obj, Generic)) {
         Py_DECREF(descr);
     }
@@ -782,6 +783,8 @@ int
 gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     _buffer_info_t *info = NULL;
+    PyArray_Descr *descr = NULL;
+    int elsize = 0;
 
     if (flags & PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
@@ -806,11 +809,8 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
         view->format = NULL;
     }
 
-    PyArray_Descr *descr;
     descr = PyArray_DescrFromScalar(self);
     view->buf = (void *)scalar_value(self, descr);
-
-    int elsize;
     elsize = descr->elsize;
 #ifndef Py_UNICODE_WIDE
     if (descr->type_num == NPY_UNICODE) {
