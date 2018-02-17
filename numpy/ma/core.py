@@ -5538,6 +5538,7 @@ class MaskedArray(ndarray):
         else:
             idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
             idx[axis] = sidx
+            idx = tuple(idx)
 
         self[...] = self[idx]
 
