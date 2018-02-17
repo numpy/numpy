@@ -1346,9 +1346,9 @@ def pad(array, pad_width, mode, **kwargs):
         # Create a new padded array
         rank = list(range(narray.ndim))
         total_dim_increase = [np.sum(pad_width[i]) for i in rank]
-        offset_slices = [slice(pad_width[i][0],
-                               pad_width[i][0] + narray.shape[i])
-                         for i in rank]
+        offset_slices = tuple(
+            slice(pad_width[i][0], pad_width[i][0] + narray.shape[i])
+            for i in rank)
         new_shape = np.array(narray.shape) + total_dim_increase
         newmat = np.zeros(new_shape, narray.dtype)
 
