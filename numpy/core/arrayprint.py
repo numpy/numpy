@@ -369,9 +369,6 @@ def _get_format_function(data, **options):
     find the right formatting function for the dtype_
     """
     dtype_ = data.dtype
-    if dtype_.fields is not None:
-        return StructureFormat.from_data(data, **options)
-
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
     if issubclass(dtypeobj, _nt.bool_):
@@ -398,7 +395,10 @@ def _get_format_function(data, **options):
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
     elif issubclass(dtypeobj, _nt.void):
-        return formatdict['void']()
+        if dtype_.names is not None:
+            return StructuredVoidFormat.from_data(data, **options)
+        else:
+            return formatdict['void']()
     else:
         return formatdict['numpystr']()
 
@@ -1200,14 +1200,21 @@ class SubArrayFormat(object):
         return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
 
 
-class StructureFormat(object):
+class StructuredVoidFormat(object):
+    """
+    Formatter for structured np.void objects.
+
+    This does not work on structured alias types like np.dtype(('i4', 'i2,i2')),
+    as alias scalars lose their field information, and the implementation
+    relies upon np.void.__getitem__.
+    """
     def __init__(self, format_functions):
         self.format_functions = format_functions
 
     @classmethod
     def from_data(cls, data, **options):
         """
-        This is a second way to initialize StructureFormat, using the raw data
+        This is a second way to initialize StructuredVoidFormat, using the raw data
         as input. Added to avoid changing the signature of __init__.
         """
         format_functions = []
@@ -1228,13 +1235,24 @@ class StructureFormat(object):
         else:
             return "({})".format(", ".join(str_fields))
 
+
+# for backwards compatibility
+class StructureFormat(StructuredVoidFormat):
+    def __init__(self, *args, **kwargs):
+        # NumPy 1.14, 2018-02-14
+        warnings.warn(
+            "StructureFormat has been replaced by StructuredVoidFormat",
+            DeprecationWarning, stacklevel=2)
+        super(StructureFormat, self).__init__(*args, **kwargs)
+
+
 def _void_scalar_repr(x):
     """
     Implements the repr for structured-void scalars. It is called from the
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    return StructureFormat.from_data(array(x), **_format_options)(x)
+    return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
 
 
 _typelessdata = [int_, float_, complex_, bool_]
@@ -1272,6 +1290,11 @@ def dtype_is_implied(dtype):
     dtype = np.dtype(dtype)
     if _format_options['legacy'] == '1.13' and dtype.type == bool_:
         return False
+
+    # not just void types can be structured, and names are not part of the repr
+    if dtype.names is not None:
+        return False
+
     return dtype.type in _typelessdata
 
 
@@ -1284,12 +1307,12 @@ def dtype_short_repr(dtype):
     >>> from numpy import *
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
-    # handle these separately so they don't give garbage like str256
-    if issubclass(dtype.type, flexible):
-        if dtype.names is not None:
-            return "%s" % str(dtype)
-        else:
-            return "'%s'" % str(dtype)
+    if dtype.names is not None:
+        # structured dtypes give a list or tuple repr
+        return str(dtype)
+    elif issubclass(dtype.type, flexible):
+        # handle these separately so they don't give garbage like str256
+        return "'%s'" % str(dtype)
 
     typename = dtype.name
     # quote typenames which can't be represented as python variable names
