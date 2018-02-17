@@ -29,11 +29,15 @@ dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
 (constructed by ``start:stop:step`` notation inside of brackets), an
 integer, or a tuple of slice objects and integers. :const:`Ellipsis`
 and :const:`newaxis` objects can be interspersed with these as
-well. In order to remain backward compatible with a common usage in
-Numeric, basic slicing is also initiated if the selection object is
-any non-ndarray sequence (such as a :class:`list`) containing :class:`slice`
-objects, the :const:`Ellipsis` object, or the :const:`newaxis` object,
-but not for integer arrays or other embedded sequences.
+well.
+
+.. deprecated:: 1.15.0
+
+  In order to remain backward compatible with a common usage in
+  Numeric, basic slicing is also initiated if the selection object is
+  any non-ndarray and non-tuple sequence (such as a :class:`list`) containing
+  :class:`slice` objects, the :const:`Ellipsis` object, or the :const:`newaxis`
+  object, but not for integer arrays or other embedded sequences.
 
 .. index::
    triple: ndarray; special methods; getitem
@@ -196,7 +200,8 @@ basic slicing that returns a :term:`view`).
    why this occurs.
 
    Also recognize that ``x[[1,2,3]]`` will trigger advanced indexing,
-   whereas ``x[[1,2,slice(None)]]`` will trigger basic slicing.
+   whereas due to the deprecated Numeric compatibility mentioned above,
+   ``x[[1,2,slice(None)]]`` will trigger basic slicing.
 
 Integer array indexing
 ^^^^^^^^^^^^^^^^^^^^^^

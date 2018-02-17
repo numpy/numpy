@@ -293,8 +293,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
         if (commit_to_unpack) {
             /* propagate errors */
             if (tmp_obj == NULL) {
-                multi_DECREF(result, i);
-                return -1;
+                goto fail;
             }
         }
         else {
@@ -313,6 +312,16 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
                     || PySlice_Check(tmp_obj)
                     || tmp_obj == Py_Ellipsis
                     || tmp_obj == Py_None) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "Using a non-tuple sequence for multidimensional "
+                        "indexing is deprecated; use `arr[tuple(seq)]` "
+                        "instead of `arr[seq]`. In the future this will be "
+                        "interpreted as an array index, `arr[np.array(seq)]`, "
+                        "which will result either in an error or a different "
+                        "result.") < 0) {
+                    i++;  /* since loop update doesn't run */
+                    goto fail;
+                }
                 commit_to_unpack = 1;
             }
         }
@@ -328,6 +337,10 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
         multi_DECREF(result, i);
         return unpack_scalar(index, result, result_n);
     }
+
+fail:
+    multi_DECREF(result, i);
+    return -1;
 }
 
 /**
