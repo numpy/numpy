@@ -128,7 +128,10 @@ class TestGeneric(object):
         a = arange(10)
         # No mask
         test = flatnotmasked_contiguous(a)
-        assert_equal(test, slice(0, a.size))
+        assert_equal(test, [slice(0, a.size)])
+        # mask of all false
+        a.mask = np.zeros(10, dtype=bool)
+        assert_equal(test, [slice(0, a.size)])
         # Some mask
         a[(a < 3) | (a > 8) | (a == 5)] = masked
         test = flatnotmasked_contiguous(a)
@@ -136,7 +139,7 @@ class TestGeneric(object):
         #
         a[:] = masked
         test = flatnotmasked_contiguous(a)
-        assert_equal(test, None)
+        assert_equal(test, [])
 
 
 class TestAverage(object):
@@ -384,14 +387,14 @@ class TestNotMasked(object):
             [slice(0, 1, None), slice(2, 3, None)],
             [slice(2, 3, None)],
             [slice(2, 3, None)],
-            None,
+            [],
             [slice(2, 3, None)]
         ])
         #
         tmp = notmasked_contiguous(a, 1)
         assert_equal(tmp, [
             [slice(0, 4, None)],
-            None,
+            [],
             [slice(0, 6, None), slice(7, 8, None)]
         ])
 

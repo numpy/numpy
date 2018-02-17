@@ -55,6 +55,14 @@ On python 3, this means that ``.iteritems()``, ``.iterkeys()`` have been
 deprecated, and ``.keys()`` and ``.items()`` now return views and not lists.
 This is consistent with how the builtin ``dict`` type changed between python 2
 and python 3.
+``np.ma.notmasked_contiguous`` and ``np.ma.flatnotmasked_contiguous`` always return lists
+-----------------------------------------------------------------------------------------
+This was always the documented behavior, but in reality the result used to be
+any of slice, None, or list.
+
+All downstream users seem to use detect the `None` result from
+``flatnotmasked_contiguous`` and replace it with ``[]``.
+These callers will continue to work as before.
 
 
 C API changes
