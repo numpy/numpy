@@ -772,7 +772,8 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                     s += hanging_indent + summary_insert + line_sep
 
             for i in range(trailing_items, 1, -1):
-                nested = recurser(index + (-i,), next_hanging_indent, next_width)
+                nested = recurser(index + (-i,), next_hanging_indent,
+                                  next_width)
                 s += hanging_indent + nested + line_sep
 
             nested = recurser(index + (-1,), next_hanging_indent, next_width)
@@ -782,12 +783,16 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         s = '[' + s[len(hanging_indent):] + ']'
         return s
 
-    # invoke the recursive part with an initial index and prefix
-    return recurser(
-        index=(),
-        hanging_indent=next_line_prefix,
-        curr_width=line_width)
-
+    try:
+        # invoke the recursive part with an initial index and prefix
+        return recurser(index=(),
+                        hanging_indent=next_line_prefix,
+                        curr_width=line_width)
+    finally:
+        # recursive closures have a cyclic reference to themselves, which
+        # requires gc to collect (gh-10620). To avoid this problem, for
+        # performance and PyPy friendliness, we break the cycle:
+        recurser = None
 
 def _none_or_positive_arg(x, name):
     if x is None:
