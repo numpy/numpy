@@ -417,6 +417,10 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
 
+    See Also
+    --------
+    histogram
+
     Examples
     --------
     >>> arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
@@ -534,7 +538,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     See Also
     --------
-    histogramdd, bincount, searchsorted, digitize
+    histogramdd, bincount, searchsorted, digitize, histogram_bin_edges
 
     Notes
     -----
