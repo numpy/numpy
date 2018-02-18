@@ -719,5 +719,10 @@ def test_dtypes_are_true():
     assert bool(np.dtype([('a', 'i8'), ('b', 'f4')]))
 
 
+def test_invalid_dtype_string():
+    # test for gh-10440
+    assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
+
+
 if __name__ == "__main__":
     run_module_suite()

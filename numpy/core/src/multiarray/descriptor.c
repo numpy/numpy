@@ -198,7 +198,7 @@ _check_for_commastring(char *type, Py_ssize_t len)
      * allows commas inside of [], for parameterized dtypes to use.
      */
     sqbracket = 0;
-    for (i = 1; i < len; i++) {
+    for (i = 0; i < len; i++) {
         switch (type[i]) {
             case ',':
                 if (sqbracket == 0) {
