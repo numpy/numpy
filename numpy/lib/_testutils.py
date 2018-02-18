@@ -55,6 +55,13 @@ class PytestTester(object):
         if tests is None:
             tests = [self.module_name]
 
+        if raise_warnings == "develop":
+            pytest_args += ['-W', 'error']
+        elif raise_warnings == "release":
+            pytest_args += ['-rw']
+        else:
+            raise ValueError()
+
         pytest_args += ['--pyargs'] + list(tests)
 
         try:
