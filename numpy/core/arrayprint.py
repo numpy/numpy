@@ -642,122 +642,124 @@ def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     line += word
     return s, line
 
-def _recursive_fmt(param, index, indent, curr_width):
-    """
-    Helper function for _formatArray, to recursively print array elements.
-
-    "param" are the values that are invariant under recursion, including
-    the array to be printed itself. index, indent and curr_width
-    are updated during recursion.
-    """
-    # unpack parameters
-    a, format_function, separator, edge_items, summary_insert, legacy = param
-
-    axis = len(index)
-    axes_left = a.ndim - axis
-
-    if axes_left == 0:
-        return format_function(a[index])
-
-    # when recursing, add a space to align with the [ added, and reduce the
-    # length of the line by 1
-    next_indent = indent + ' '
-    if legacy == '1.13':
-        next_width = curr_width
-    else:
-        next_width = curr_width - len(']')
-
-    a_len = a.shape[axis]
-    show_summary = summary_insert and 2*edge_items < a_len
-    if show_summary:
-        leading_items = edge_items
-        trailing_items = edge_items
-    else:
-        leading_items = 0
-        trailing_items = a_len
-
-    # stringify the array with the hanging indent on the first line too
-    s = ''
-
-    # last axis (rows) - wrap elements if they would not fit on one line
-    if axes_left == 1:
-        # the length up until the beginning of the separator / bracket
-        if legacy == '1.13':
-            elem_width = curr_width - len(separator.rstrip())
-        else:
-            elem_width = curr_width - max(len(separator.rstrip()), len(']'))
-
-        line = indent
-        for i in range(leading_items):
-            word = _recursive_fmt(param, index + (i,), next_indent, next_width)
-            s, line = _extendLine(s, line, word, elem_width, indent, legacy)
-            line += separator
-
-        if show_summary:
-            s, line = _extendLine(
-                s, line, summary_insert, elem_width, indent, legacy)
-            if legacy == '1.13':
-                line += ", "
-            else:
-                line += separator
-
-        for i in range(trailing_items, 1, -1):
-            word = _recursive_fmt(param, index + (-i,), next_indent, next_width)
-            s, line = _extendLine(s, line, word, elem_width, indent, legacy)
-            line += separator
-
-        if legacy == '1.13':
-            # width of the separator is not considered on 1.13
-            elem_width = curr_width
-        word =_recursive_fmt(param, index + (-1,), next_indent, next_width)
-        s, line = _extendLine(
-            s, line, word, elem_width, indent, legacy)
-
-        s += line
-
-    # other axes - insert newlines between rows
-    else:
-        s = ''
-        line_sep = separator.rstrip() + '\n'*(axes_left - 1)
-
-        for i in range(leading_items):
-            nested =_recursive_fmt(param, index + (i,), next_indent, next_width)
-            s += indent + nested + line_sep
-
-        if show_summary:
-            if legacy == '1.13':
-                # trailing space, fixed nbr of newlines, and fixed separator
-                s += indent + summary_insert + ", \n"
-            else:
-                s += indent + summary_insert + line_sep
-
-        for i in range(trailing_items, 1, -1):
-            nested = _recursive_fmt(param, index + (-i,), next_indent,
-                                    next_width)
-            s += indent + nested + line_sep
-
-        nested =_recursive_fmt(param, index + (-1,), next_indent, next_width)
-        s += indent + nested
-
-    # remove the hanging indent, and wrap in []
-    s = '[' + s[len(indent):] + ']'
-    return s
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
                  separator, edge_items, summary_insert, legacy):
-    """_formatArray is designed for two modes of operation:
+    """formatArray is designed for two modes of operation:
 
     1. Full output
 
     2. Summarized output
 
     """
+    def recurser(index, hanging_indent, curr_width):
+        """
+        By using this local function, we don't need to recurse with all the
+        arguments. Since this function is not created recursively, the cost is
+        not significant
+        """
+        axis = len(index)
+        axes_left = a.ndim - axis
 
-    # invoke the recursive part with an initial index and prefix
-    param = a, format_function, separator, edge_items, summary_insert, legacy
-    return _recursive_fmt(param, index=(), indent=next_line_prefix,
-                          curr_width=line_width)
+        if axes_left == 0:
+            return format_function(a[index])
 
+        # when recursing, add a space to align with the [ added, and reduce the
+        # length of the line by 1
+        next_hanging_indent = hanging_indent + ' '
+        if legacy == '1.13':
+            next_width = curr_width
+        else:
+            next_width = curr_width - len(']')
+
+        a_len = a.shape[axis]
+        show_summary = summary_insert and 2*edge_items < a_len
+        if show_summary:
+            leading_items = edge_items
+            trailing_items = edge_items
+        else:
+            leading_items = 0
+            trailing_items = a_len
+
+        # stringify the array with the hanging indent on the first line too
+        s = ''
+
+        # last axis (rows) - wrap elements if they would not fit on one line
+        if axes_left == 1:
+            # the length up until the beginning of the separator / bracket
+            if legacy == '1.13':
+                elem_width = curr_width - len(separator.rstrip())
+            else:
+                elem_width = curr_width - max(len(separator.rstrip()), len(']'))
+
+            line = hanging_indent
+            for i in range(leading_items):
+                word = recurser(index + (i,), next_hanging_indent, next_width)
+                s, line = _extendLine(
+                    s, line, word, elem_width, hanging_indent, legacy)
+                line += separator
+
+            if show_summary:
+                s, line = _extendLine(
+                    s, line, summary_insert, elem_width, hanging_indent, legacy)
+                if legacy == '1.13':
+                    line += ", "
+                else:
+                    line += separator
+
+            for i in range(trailing_items, 1, -1):
+                word = recurser(index + (-i,), next_hanging_indent, next_width)
+                s, line = _extendLine(
+                    s, line, word, elem_width, hanging_indent, legacy)
+                line += separator
+
+            if legacy == '1.13':
+                # width of the seperator is not considered on 1.13
+                elem_width = curr_width
+            word = recurser(index + (-1,), next_hanging_indent, next_width)
+            s, line = _extendLine(
+                s, line, word, elem_width, hanging_indent, legacy)
+
+            s += line
+
+        # other axes - insert newlines between rows
+        else:
+            s = ''
+            line_sep = separator.rstrip() + '\n'*(axes_left - 1)
+
+            for i in range(leading_items):
+                nested = recurser(index + (i,), next_hanging_indent, next_width)
+                s += hanging_indent + nested + line_sep
+
+            if show_summary:
+                if legacy == '1.13':
+                    # trailing space, fixed nbr of newlines, and fixed separator
+                    s += hanging_indent + summary_insert + ", \n"
+                else:
+                    s += hanging_indent + summary_insert + line_sep
+
+            for i in range(trailing_items, 1, -1):
+                nested = recurser(index + (-i,), next_hanging_indent,
+                                  next_width)
+                s += hanging_indent + nested + line_sep
+
+            nested = recurser(index + (-1,), next_hanging_indent, next_width)
+            s += hanging_indent + nested
+
+        # remove the hanging indent, and wrap in []
+        s = '[' + s[len(hanging_indent):] + ']'
+        return s
+
+    try:
+        # invoke the recursive part with an initial index and prefix
+        return recurser(index=(),
+                        hanging_indent=next_line_prefix,
+                        curr_width=line_width)
+    finally:
+        # recursive closures have a cyclic reference to themselves, which
+        # requires gc to collect (gh-10620). To avoid this problem, for
+        # performance and PyPy friendliness, we break the cycle:
+        recurser = None
 
 def _none_or_positive_arg(x, name):
     if x is None:
