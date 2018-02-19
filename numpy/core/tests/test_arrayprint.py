@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
-import sys, gc
+import sys
 
 import numpy as np
 from numpy.testing import (
@@ -355,18 +355,6 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
-    def test_refcount(self):
-        # make sure we do not hold references to the array due to a recursive
-        # closure (gh-10620)
-        gc.disable()
-        a = np.arange(2)
-        r1 = sys.getrefcount(a)
-        np.array2string(a)
-        np.array2string(a)
-        r2 = sys.getrefcount(a)
-        gc.collect()
-        gc.enable()
-        assert_(r1 == r2)
 
 class TestPrintOptions(object):
     """Test getting and setting global print options."""
