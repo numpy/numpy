@@ -1183,7 +1183,7 @@ cdef class RandomState:
                 idx = found
             else:
                 if pop_size >= 3 and self.version > 0 and \
-                   (loggam(pop_size+1)-loggam(pop_size-size))/np.log(pop_size) > size + np.log(.99)/np.log(pop_size) + 1:
+                   (loggam(pop_size+1)-loggam(pop_size-size))/np.log(pop_size) > size + np.log(.5)/np.log(pop_size) + 1:
                     idx = set()
                     while len(idx)<size:
                         idx.update(self.randint(0, pop_size, size=size - len(idx)))
