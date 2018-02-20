@@ -1465,9 +1465,9 @@ def fromregex(file, regexp, dtype, encoding=None):
             dtype = np.dtype(dtype)
 
         content = file.read()
-        if isinstance(content, bytes) and not isinstance(regexp, bytes):
+        if isinstance(content, bytes) and isinstance(regexp, np.unicode):
             regexp = asbytes(regexp)
-        elif not isinstance(content, bytes) and isinstance(regexp, bytes):
+        elif isinstance(content, np.unicode) and isinstance(regexp, bytes):
             regexp = asstr(regexp)
 
         if not hasattr(regexp, 'match'):
