@@ -410,7 +410,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     weights : array_like, optional
         An array of weights, of the same shape as `a`.  Each value in
         `a` only contributes its associated weight towards the bin count
-        (instead of 1). 
+        (instead of 1). This is currently not used by any of the bin estimators,
+        but maybe in the future.
 
     Returns
     -------
@@ -431,8 +432,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     >>> histogram_bin_edges(arr, bins='auto', range=(0, 1))
     array([0.  , 0.25, 0.5 , 0.75, 1.  ])
 
-    >>> histogram_bin_edges(arr, bins='fd', range=(0, 1))
-    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
+    >>> histogram_bin_edges(arr, bins=2)
+    array([ 0. ,  2.5,  5. ])
     """
     a, weights = _ravel_and_check_weights(a, weights)
     bin_edges, _ = _get_bin_edges(a, bins, range, weights)
