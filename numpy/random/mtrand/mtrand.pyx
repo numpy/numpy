@@ -1025,7 +1025,7 @@ cdef class RandomState:
         return bytestring
 
 
-    def choice(self, a, size=None, replace=True, p=None):
+    def choice(self, a, size=None, replace=True, p=None, small=False):
         """
         choice(a, size=None, replace=True, p=None)
 
@@ -1048,6 +1048,8 @@ cdef class RandomState:
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
             entries in a.
+        small : boolean, optional
+            Speeds up operation when selecting a small sample from a much larger array. len(a) >> size
 
         Returns
         --------
@@ -1182,8 +1184,7 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                if pop_size >= 3 and self.version > 0 and \
-                   (loggam(pop_size+1)-loggam(pop_size-size))/np.log(pop_size) > size + np.log(.5)/np.log(pop_size) + 1:
+                if small:
                     idx = set()
                     while len(idx)<size:
                         idx.update(self.randint(0, pop_size, size=size - len(idx)))
