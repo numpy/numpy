@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy import (logspace, linspace, geomspace, dtype, array, sctypes,
-                   arange, isnan, ndarray, sqrt, nextafter)
+from numpy import (logspace, linspace, geomspace, fpspace, dtype, array,
+                   sctypes, arange, isnan, ndarray, sqrt, nextafter)
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_allclose, suppress_warnings
@@ -319,6 +319,70 @@ class TestLinspace(object):
                 assert_(isinstance(y, tuple) and len(y) == 2 and
                         len(y[0]) == num and isnan(y[1]),
                         'num={0}, endpoint={1}'.format(num, ept))
+
+
+class TestFpspace(object):
+
+    def test_basic(self):
+        y = fpspace(0, 1, endpoint=False)
+        assert_(len(y) == 256)
+        y = fpspace(0, 1, endpoint=True)
+        assert_(y[-1] == 1)
+
+    def test_corner(self):
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, ".*safely interpreted as an integer")
+            y = list(fpspace(0, 1, refpoint=0, exponentbits=1, significandbits=0.5))
+            assert_(y == [0.0, 0.5, 1.0])
+            y = list(fpspace(0, 1, refpoint=0, exponentbits=1.5, significandbits=0.0))
+            assert_(y == [0.0, 0.5, 1.0])
+
+    def test_type(self):
+        t1 = fpspace(0, 1, refpoint=0).dtype
+        t2 = fpspace(0, 1, exponentbits=1).dtype
+        t3 = fpspace(0, 1, significandbits=0).dtype
+        assert_equal(t1, t2)
+        assert_equal(t2, t3)
+
+    def test_dtype(self):
+        y = fpspace(0, 6, dtype='float32')
+        assert_equal(y.dtype, dtype('float32'))
+        y = fpspace(0, 6, dtype='float64')
+        assert_equal(y.dtype, dtype('float64'))
+        y = fpspace(0, 6, dtype='int32')
+        assert_equal(y.dtype, dtype('int32'))
+
+    def test_array_scalar(self):
+        lim1 = array([-120, 100], dtype="int8")
+        lim2 = array([120, -100], dtype="int8")
+        lim3 = array([1200, 1000], dtype="uint16")
+        t1 = fpspace(lim1[0], lim1[1], exponentbits=2)
+        t2 = fpspace(lim2[0], lim2[1], exponentbits=2)
+        t3 = fpspace(lim3[0], lim3[1], exponentbits=2)
+        t4 = fpspace(-120.0, 100.0, exponentbits=2)
+        t5 = fpspace(120.0, -100.0, exponentbits=2)
+        t6 = fpspace(1200.0, 1000.0, exponentbits=2)
+        assert_equal(t1, t4)
+        assert_equal(t2, t5)
+        assert_equal(t3, t6)
+
+    def test_physical_quantities(self):
+        a = PhysicalQuantity(0.0)
+        b = PhysicalQuantity(1.0)
+        assert_equal(fpspace(a, b), fpspace(0.0, 1.0))
+
+    def test_subclass(self):
+        a = array(0).view(PhysicalQuantity2)
+        b = array(1).view(PhysicalQuantity2)
+        fs = fpspace(a, b)
+        assert_equal(fs, fpspace(0.0, 1.0))
+        fs = fpspace(a, b, refpoint=0)
+        assert_equal(fs, fpspace(0.0, 1.0, refpoint=0))
+
+    def test_equivalent_to_arange(self):
+        for j in range(10):
+            assert_equal(fpspace(0, pow(2, j+1), refpoint=0, exponentbits=1, significandbits=j, endpoint=False, dtype=int),
+                         arange(pow(2, j+1), dtype=int))
 
 
 if __name__ == "__main__":
