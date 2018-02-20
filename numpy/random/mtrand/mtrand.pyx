@@ -1027,7 +1027,7 @@ cdef class RandomState:
 
     def choice(self, a, size=None, replace=True, p=None, small=False):
         """
-        choice(a, size=None, replace=True, p=None)
+        choice(a, size=None, replace=True, p=None, small=False)
 
         Generates a random sample from a given 1-D array
 
