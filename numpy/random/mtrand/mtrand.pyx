@@ -27,7 +27,7 @@ include "numpy.pxd"
 include "cpython/pycapsule.pxd"
 
 from libc cimport string
-from libcpp.set cimport set
+from libcpp.unordered_set cimport unordered_set
 
 cdef extern from "math.h":
     double exp(double x)
@@ -1186,7 +1186,7 @@ cdef class RandomState:
                 idx = found
             else:
                 if small:
-                    cdef unsorted_set[np.int32] temp_idx()
+                    cdef unordered_set[np.int32] temp_idx()
                     while temp_idx.size() < size:
                         cdef int s = size - temp_idx.size();
                         cdef ndarray I = self.randint(0, pop_size, size=s, dtype=np.int32)
