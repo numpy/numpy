@@ -27,6 +27,7 @@ include "numpy.pxd"
 include "cpython/pycapsule.pxd"
 
 from libc cimport string
+from libcpp.unordered_set cimport unordered_set
 
 cdef extern from "math.h":
     double exp(double x)
@@ -1030,9 +1031,9 @@ cdef class RandomState:
         return bytestring
 
 
-    def choice(self, a, size=None, replace=True, p=None):
+    def choice(self, a, size=None, replace=True, p=None, small=False):
         """
-        choice(a, size=None, replace=True, p=None)
+        choice(a, size=None, replace=True, p=None, small=False)
 
         Generates a random sample from a given 1-D array
 
@@ -1053,6 +1054,8 @@ cdef class RandomState:
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
             entries in a.
+        small : boolean, optional
+            Speeds up operation when selecting a small sample from a much larger array. ``len(a) >> size``
 
         Returns
         --------
@@ -1187,7 +1190,17 @@ cdef class RandomState:
                     n_uniq += new.size
                 idx = found
             else:
-                idx = self.permutation(pop_size)[:size]
+                if small:
+                    cdef unordered_set[np.int32] temp_idx()
+                    while temp_idx.size() < size:
+                        cdef int s = size - temp_idx.size();
+                        cdef ndarray I = self.randint(0, pop_size, size=s, dtype=np.int32)
+                        for i in range(s):
+                            temp_idx.insert(I[i])
+                    idx = np.array(list(temp_idx))
+
+                else:
+                    idx = self.permutation(pop_size)[:size]
                 if shape is not None:
                     idx.shape = shape
 
