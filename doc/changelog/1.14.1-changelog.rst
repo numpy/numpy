@@ -1,32 +1,3 @@
-==========================
-NumPy 1.14.1 Release Notes
-==========================
-
-This is a bugfix release for some problems reported following the 1.14.0 release. The major
-problems fixed are the following.
-
-* Problems with the new array printing, particularly the printing of complex
-  values, Please report any additional problems that may turn up.
-* Problems with ``np.einsum`` due to the new ``optimized=True`` default. Some
-  fixes for optimization have been applied and ``optimize=False`` is now the
-  default.
-* The sort order in ``np.unique`` when ``axis=<some-number>`` will now always
-  be lexicographic in the subarray elements. In previous NumPy versions there
-  was an optimization that could result in sorting the subarrays as unsigned
-  byte strings.
-* The change in 1.14.0 that multi-field indexing of structured arrays returns a
-  view instead of a copy has been reverted but remains on track for NumPy 1.15.
-  Affected users should read the 1.14.1 Numpy User Guide section
-  "basics/structured arrays/accessing multiple fields" for advice on how to
-  manage this transition.
-
-The Python versions supported in this release are 2.7 and 3.4 - 3.6. The Python
-3.6 wheels available from PIP are built with Python 3.6.2 and should be
-compatible with all previous versions of Python 3.6. The source releases were
-cythonized with Cython 0.26.1, which is known to **not** support the upcoming
-Python 3.7 release.  People who wish to run Python 3.7 should check out the
-NumPy repo and try building with the, as yet, unreleased master branch of
-Cython.
 
 Contributors
 ============
