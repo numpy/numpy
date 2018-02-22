@@ -6,36 +6,22 @@ from common cimport *
 
 np.import_array()
 
-cdef struct state:
-    uint64_t state
+cdef extern from "src/splitmix64/splitmix64.h":
 
-ctypedef state state_t
+    cdef struct s_splitmix64_state:
+        uint64_t state
 
-ctypedef uint64_t (*random_uint64)(state_t *st)
+    ctypedef s_splitmix64_state splitmix64_state
 
-cdef struct func_state:
-    state st
-    random_uint64 f
-
-ctypedef func_state func_state_t
+    cdef uint64_t splitmix64_next(splitmix64_state* state)  nogil
 
 
-cdef uint64_t _splitmix64(state_t *st):
-    cdef uint64_t z
-    # TODO: Use literals -- PyCharm complains
-    cdef uint64_t c1 = 11400714819323198485
-    cdef uint64_t c2 = 13787848793156543929
-    cdef uint64_t c3 = 10723151780598845931
-    st[0].state += c1 # 0x9E3779B97F4A7C15
-    z = <uint64_t>st[0].state
-    z = (z ^ (z >> 30)) * c2 # 0xBF58476D1CE4E5B9
-    z = (z ^ (z >> 27)) * c3 # 0x94D049BB133111EB
-    return z ^ (z >> 31)
+ctypedef uint64_t (*random_uint64)(splitmix64_state* state)
 
-cdef uint64_t _splitmix64_anon(void* st):
-    return _splitmix64(<state *> st)
+cdef uint64_t _splitmix64_anon(void* st) nogil:
+    return splitmix64_next(<splitmix64_state *>st)
 
-cdef class CorePRNG:
+cdef class SplitMix64:
     """
     Prototype Core PRNG using directly implemented version of SplitMix64.
 
@@ -44,7 +30,7 @@ cdef class CorePRNG:
     Exposes no user-facing API except `get_state` and `set_state`. Designed
     for use in a `RandomGenerator` object.
     """
-    cdef state rng_state
+    cdef splitmix64_state rng_state
     cdef anon_func_state anon_func_state
     cdef public object _anon_func_state
 
@@ -70,7 +56,7 @@ cdef class CorePRNG:
         -----
         Testing only
         """
-        return _splitmix64(&self.rng_state)
+        return splitmix64_next(&self.rng_state)
 
     def get_state(self):
         """Get PRNG state"""

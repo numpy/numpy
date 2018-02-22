@@ -3,7 +3,7 @@ cimport numpy as np
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from common cimport *
 
-from core_prng.core_prng import CorePRNG
+from core_prng.splitmix64 import SplitMix64
 
 np.import_array()
 
@@ -24,10 +24,12 @@ cdef class RandomGenerator:
     """
     cdef public object __core_prng
     cdef anon_func_state anon_rng_func_state
+    cdef random_uint64_anon next_uint64
+    cdef void *rng_state
 
     def __init__(self, prng=None):
         if prng is None:
-            prng = CorePRNG()
+            prng = SplitMix64()
         self.__core_prng = prng
 
         capsule = prng._anon_func_state
@@ -35,7 +37,11 @@ cdef class RandomGenerator:
         if not PyCapsule_IsValid(capsule, anon_name):
             raise ValueError("Invalid pointer to anon_func_state")
         self.anon_rng_func_state = (<anon_func_state *>PyCapsule_GetPointer(capsule, anon_name))[0]
+        self.next_uint64 = <random_uint64_anon>self.anon_rng_func_state.f
+        self.rng_state = self.anon_rng_func_state.state
 
     def random_integer(self):
-        cdef random_uint64_anon f = <random_uint64_anon>self.anon_rng_func_state.f
-        return f(self.anon_rng_func_state.state)
+        return self.next_uint64(self.rng_state)
+
+    def random_double(self):
+        return (self.next_uint64(self.rng_state) >> 11) * (1.0 / 9007199254740992.0)

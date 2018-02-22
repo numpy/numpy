@@ -1,14 +1,27 @@
+from os.path import join
+
 import numpy as np
 from Cython.Build import cythonize
 from setuptools import setup, find_packages, Distribution
 from setuptools.extension import Extension
 
-extensions = [Extension("core_prng.core_prng",
-                        ["core_prng/core_prng.pyx"],
-                        include_dirs=[np.get_include()]),
+MOD_DIR = './core_prng'
+
+extensions = [Extension("core_prng.splitmix64",
+                        ["core_prng/splitmix64.pyx",
+                         join(MOD_DIR, 'src', 'splitmix64', 'splitmix64.c')],
+                        include_dirs=[np.get_include(),
+                                      join(MOD_DIR, 'src', 'splitmix64')]),
+              Extension("core_prng.xoroshiro128",
+                        ["core_prng/xoroshiro128.pyx",
+                         join(MOD_DIR, 'src', 'xoroshiro128',
+                              'xoroshiro128.c')],
+                        include_dirs=[np.get_include(),
+                                      join(MOD_DIR, 'src', 'xoroshiro128')]),
               Extension("core_prng.generator",
                         ["core_prng/generator.pyx"],
                         include_dirs=[np.get_include()])]
+
 
 class BinaryDistribution(Distribution):
     def is_pure(self):
