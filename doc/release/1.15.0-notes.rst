@@ -114,5 +114,10 @@ Previously an array was returned for integer scalar inputs, which is
 inconsistent with the behavior for float inputs, and that of ufuncs in general.
 For all types of scalar or 0d input, the result is now a scalar.
 
+``np.flatnonzero`` works on numpy-convertible types
+---------------------------------------------------
+``np.flatnonzero`` now uses ``np.ravel(a)`` instead of ``a.ravel()``, so it
+works for lists, tuples, etc.
+
 Changes
 =======

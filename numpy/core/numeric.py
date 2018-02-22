@@ -829,12 +829,12 @@ def flatnonzero(a):
     """
     Return indices that are non-zero in the flattened version of a.
 
-    This is equivalent to a.ravel().nonzero()[0].
+    This is equivalent to np.nonzero(np.ravel(a))[0].
 
     Parameters
     ----------
-    a : ndarray
-        Input array.
+    a : array_like
+        Input data.
 
     Returns
     -------
@@ -862,7 +862,7 @@ def flatnonzero(a):
     array([-2, -1,  1,  2])
 
     """
-    return a.ravel().nonzero()[0]
+    return np.nonzero(np.ravel(a))[0]
 
 
 _mode_from_name_dict = {'v': 0,
