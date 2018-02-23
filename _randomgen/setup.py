@@ -1,3 +1,4 @@
+import os
 from os.path import join
 
 import numpy as np
@@ -7,7 +8,17 @@ from setuptools.extension import Extension
 
 MOD_DIR = './core_prng'
 
-extensions = [Extension("core_prng.splitmix64",
+EXTRA_LINK_ARGS = []
+if os.name == 'nt':
+    EXTRA_LINK_ARGS = ['/LTCG', '/OPT:REF', 'Advapi32.lib', 'Kernel32.lib']
+
+extensions = [Extension('core_prng.entropy',
+                        sources=[join(MOD_DIR, 'entropy.pyx'),
+                                 join(MOD_DIR, 'src', 'entropy', 'entropy.c')],
+                        include_dirs=[np.get_include(),
+                                      join(MOD_DIR, 'src', 'entropy')],
+                        extra_link_args=EXTRA_LINK_ARGS),
+              Extension("core_prng.splitmix64",
                         ["core_prng/splitmix64.pyx",
                          join(MOD_DIR, 'src', 'splitmix64', 'splitmix64.c')],
                         include_dirs=[np.get_include(),
