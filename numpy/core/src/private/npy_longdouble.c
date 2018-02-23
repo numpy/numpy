@@ -17,7 +17,7 @@
  * Heavily derived from PyLong_FromDouble
  * Notably, we can't set the digits directly, so have to shift and or instead.
  */
-PyObject *
+NPY_VISIBILITY_HIDDEN PyObject *
 npy_longdouble_to_PyLong(npy_longdouble ldval)
 {
     PyObject *v;
