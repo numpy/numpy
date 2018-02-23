@@ -1,7 +1,14 @@
+import operator
+
 cimport numpy as np
 import numpy as np
 
-from libc.stdint cimport uint32_t
+from libc.stdint cimport uint32_t, uint64_t
+
+np.import_array()
+
+cdef extern from "src/splitmix64/splitmix64.h":
+    cdef uint64_t splitmix64_next(uint64_t *state)  nogil
 
 cdef extern from "src/entropy/entropy.h":
     cdef bint entropy_getbytes(void* dest, size_t size)
@@ -15,6 +22,65 @@ cdef Py_ssize_t compute_numel(size):
     else:
         n = size
     return n
+
+cdef np.ndarray seed_by_array(object seed, Py_ssize_t n):
+    """
+    Transforms a seed array into an initiial state
+    
+    Parameters
+    ----------
+    seed: array, 1d, uint64
+        Array to use.  If seed is a scalar, promote to array.
+    n : int
+        Number of 64-bit unsiened integers required
+    
+    Notes
+    -----
+    Uses splitmix64 to perform the transformation
+    """
+    cdef uint64_t seed_copy = 0
+    cdef uint64_t[::1] seed_array
+    cdef uint64_t[::1] initial_state
+    cdef Py_ssize_t seed_size, iter_bound
+    cdef int i, loc = 0
+
+    try:
+        if hasattr(seed, 'squeeze'):
+                seed = seed.squeeze()
+        idx = operator.index(seed)
+        if idx > int(2**64 - 1) or idx < 0:
+            raise ValueError("Seed must be between 0 and 2**64 - 1")
+        seed = [seed]
+        seed_array = np.array(seed, dtype=np.uint64)
+    except TypeError:
+        exc_msg = "Seed values must be integers between 0 and 2**64 - 1"
+        obj = np.asarray(seed).astype(np.object).ravel()
+        if obj.ndim != 1:
+            raise ValueError('Array-valued seeds must be 1-dimensional')
+        if ((obj > int(2**64 - 1)) | (obj < 0)).any():
+            raise ValueError(exc_msg)
+        try:
+            obj_int = obj.astype(np.uint64, casting='unsafe')
+        except ValueError:
+            raise ValueError(exc_msg)
+        if not (obj == obj_int).all():
+            raise ValueError(exc_msg)
+        seed_array = obj_int
+
+    seed_size = seed_array.shape[0]
+    iter_bound = n if n > seed_size else seed_size
+
+    initial_state = <np.ndarray>np.empty(n, dtype=np.uint64)
+    for i in range(iter_bound):
+        if i < seed_size:
+            seed_copy ^= seed_array[i]
+        initial_state[loc] = splitmix64_next(&seed_copy)
+        loc += 1
+        if loc == n:
+            loc = 0
+
+    return np.array(initial_state)
+
 
 def random_entropy(size=None, source='system'):
     """

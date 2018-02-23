@@ -2,43 +2,51 @@ import numpy as np
 cimport numpy as np
 from cpython.pycapsule cimport PyCapsule_New
 from common cimport *
+
 from core_prng.entropy import random_entropy
+from core_prng cimport entropy
 
 np.import_array()
 
 cdef extern from "src/splitmix64/splitmix64.h":
-    cdef struct s_splitmix64_state:
-        uint64_t state
 
-    ctypedef s_splitmix64_state splitmix64_state
-
-    cdef uint64_t splitmix64_next(splitmix64_state*state)  nogil
+    cdef uint64_t splitmix64_next(uint64_t *state)  nogil
 
 
-ctypedef uint64_t (*random_uint64)(splitmix64_state*state)
+ctypedef uint64_t (*random_uint64)(uint64_t *state)
 
-cdef uint64_t _splitmix64_anon(void*st) nogil:
-    return splitmix64_next(<splitmix64_state *> st)
+cdef uint64_t _splitmix64_anon(void *st) nogil:
+    return splitmix64_next(<uint64_t *> st)
 
 cdef class SplitMix64:
     """
     Prototype Core PRNG using directly implemented version of SplitMix64.
+
+    Parameters
+    ----------
+    seed : int, array of int
+        Integer or array of integers between 0 and 2**64 - 1
 
     Notes
     -----
     Exposes no user-facing API except `get_state` and `set_state`. Designed
     for use in a `RandomGenerator` object.
     """
-    cdef splitmix64_state rng_state
+    cdef uint64_t rng_state
     cdef anon_func_state anon_func_state
     cdef public object _anon_func_state
 
-    def __init__(self):
-        try:
-            state = random_entropy(2)
-        except RuntimeError:
-            state = random_entropy(2, 'fallback')
-        self.rng_state.state = <uint64_t>int(state.view(np.uint64)[0])
+    def __init__(self, seed=None):
+        if seed is None:
+            try:
+                state = random_entropy(2)
+            except RuntimeError:
+                state = random_entropy(2, 'fallback')
+            state = state.view(np.uint64)
+        else:
+            state = entropy.seed_by_array(seed, 1)
+
+        self.rng_state = <uint64_t>int(state[0])
 
         self.anon_func_state.state = <void *> &self.rng_state
         self.anon_func_state.f = <void *> &_splitmix64_anon
