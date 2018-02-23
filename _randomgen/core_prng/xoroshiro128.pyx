@@ -3,7 +3,7 @@ cimport numpy as np
 from libc.stdint cimport uint64_t
 from cpython.pycapsule cimport PyCapsule_New
 from common cimport *
-
+from core_prng.entropy import random_entropy
 np.import_array()
 
 cdef extern from "src/xoroshiro128/xoroshiro128.h":
@@ -37,8 +37,13 @@ cdef class Xoroshiro128:
     cdef public object _anon_func_state
 
     def __init__(self):
-        self.rng_state.s[0] = 17013192669731687407
-        self.rng_state.s[1] = 14803936204105204271
+        try:
+            state = random_entropy(4)
+        except RuntimeError:
+            state = random_entropy(4, 'fallback')
+        state = state.view(np.uint64)
+        self.rng_state.s[0] = <uint64_t>int(state[0])
+        self.rng_state.s[1] = <uint64_t>int(state[1])
 
         self.anon_func_state.state = <void *>&self.rng_state
         self.anon_func_state.f = <void *>&_xoroshiro128_anon
