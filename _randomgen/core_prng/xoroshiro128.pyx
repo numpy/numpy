@@ -4,6 +4,7 @@ from libc.stdint cimport uint64_t
 from cpython.pycapsule cimport PyCapsule_New
 from common cimport *
 from core_prng.entropy import random_entropy
+from core_prng cimport entropy
 np.import_array()
 
 cdef extern from "src/xoroshiro128/xoroshiro128.h":
@@ -27,6 +28,11 @@ cdef class Xoroshiro128:
     """
     Prototype Core PRNG using xoroshiro128
 
+    Parameters
+    ----------
+    seed : int, array of int
+        Integer or array of integers between 0 and 2**64 - 1
+
     Notes
     -----
     Exposes no user-facing API except `get_state` and `set_state`. Designed
@@ -36,12 +42,16 @@ cdef class Xoroshiro128:
     cdef anon_func_state anon_func_state
     cdef public object _anon_func_state
 
-    def __init__(self):
-        try:
-            state = random_entropy(4)
-        except RuntimeError:
-            state = random_entropy(4, 'fallback')
-        state = state.view(np.uint64)
+    def __init__(self, seed=None):
+        if seed is None:
+            try:
+                state = random_entropy(4)
+            except RuntimeError:
+                state = random_entropy(4, 'fallback')
+            state = state.view(np.uint64)
+        else:
+            state = entropy.seed_by_array(seed, 2)
+
         self.rng_state.s[0] = <uint64_t>int(state[0])
         self.rng_state.s[1] = <uint64_t>int(state[1])
 
