@@ -3318,6 +3318,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
 
     """
+    if isinstance(a, np.matrix) and axis is None:
+        a = array(a)
+
     r, k = _ureduce(a, func=_median, axis=axis, out=out,
                     overwrite_input=overwrite_input)
     if keepdims:
