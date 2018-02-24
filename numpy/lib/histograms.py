@@ -427,14 +427,16 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     --------
     >>> arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
     
-    >>> histogram_bin_edges(arr, [1, 2])
-    array([1, 2])
-
-    >>> histogram_bin_edges(arr, bins='auto', range=(0, 1))
+    >>> np.histogram_bin_edges(arr, bins='auto', range=(0, 1))
     array([0.  , 0.25, 0.5 , 0.75, 1.  ])
 
-    >>> histogram_bin_edges(arr, bins=2)
+    >>> np.histogram_bin_edges(arr, bins=2)
     array([ 0. ,  2.5,  5. ])
+
+    # For consistency with histogram, an array of pre-computed bins is 
+    # passed through unmodified
+    >>> np.histogram_bin_edges(arr, [1, 2])
+    array([1, 2])
     """
     a, weights = _ravel_and_check_weights(a, weights)
     bin_edges, _ = _get_bin_edges(a, bins, range, weights)
