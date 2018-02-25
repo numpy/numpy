@@ -14,7 +14,6 @@ from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
 from . import _methods
 
-
 _dt_ = nt.sctype2char
 
 # functions that are methods
@@ -26,7 +25,7 @@ __all__ = [
     'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
-    ]
+]
 
 _gentype = types.GeneratorType
 # save away Python sum
@@ -60,6 +59,28 @@ def _wrapfunc(obj, method, *args, **kwds):
     # a downstream library like 'pandas'.
     except (AttributeError, TypeError):
         return _wrapit(obj, method, *args, **kwds)
+
+
+def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
+    passkwargs = {}
+    for k, v in kwargs.items():
+        if v is not np._NoValue:
+            passkwargs[k] = v
+
+    if type(obj) is not mu.ndarray:
+        try:
+            reduction = getattr(obj, method)
+        except AttributeError:
+            pass
+        else:
+            # This branch is needed for reductions like any which don't
+            # support a dtype.
+            if dtype is not None:
+                return reduction(axis=axis, dtype=dtype, out=out, **passkwargs)
+            else:
+                return reduction(axis=axis, out=out, **passkwargs)
+
+    return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
 
 def take(a, indices, axis=None, out=None, mode='raise'):
@@ -1195,7 +1216,7 @@ def resize(a, new_shape):
         n_copies = n_copies + 1
         extra = Na - extra
 
-    a = concatenate((a,)*n_copies)
+    a = concatenate((a,) * n_copies)
     if extra > 0:
         a = a[:-extra]
 
@@ -1877,25 +1898,14 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     -128
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
     if isinstance(a, _gentype):
         res = _sum_(a)
         if out is not None:
             out[...] = res
             return out
         return res
-    if type(a) is not mu.ndarray:
-        try:
-            sum = a.sum
-        except AttributeError:
-            pass
-        else:
-            return sum(axis=axis, dtype=dtype, out=out, **kwargs)
-    return _methods._sum(a, axis=axis, dtype=dtype,
-                         out=out, **kwargs)
 
+    return _wrapreduction(a, np.add, 'sum', axis, dtype, out, keepdims=keepdims)
 
 
 def any(a, axis=None, out=None, keepdims=np._NoValue):
@@ -1978,11 +1988,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     (191614240, 191614240)
 
     """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.any(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.logical_or, 'any', axis, None, out, keepdims=keepdims)
 
 
 def all(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2058,11 +2064,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     (28293632, 28293632, array([ True]))
 
     """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.all(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
 
 
 def cumsum(a, axis=None, dtype=None, out=None):
@@ -2285,20 +2287,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     4.0
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-
-    if type(a) is not mu.ndarray:
-        try:
-            amax = a.max
-        except AttributeError:
-            pass
-        else:
-            return amax(axis=axis, out=out, **kwargs)
-
-    return _methods._amax(a, axis=axis,
-                          out=out, **kwargs)
+    return _wrapreduction(a, np.maximum, 'max', axis, None, out, keepdims=keepdims)
 
 
 def amin(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2386,19 +2375,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
     0.0
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    if type(a) is not mu.ndarray:
-        try:
-            amin = a.min
-        except AttributeError:
-            pass
-        else:
-            return amin(axis=axis, out=out, **kwargs)
-
-    return _methods._amin(a, axis=axis,
-                          out=out, **kwargs)
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out, keepdims=keepdims)
 
 
 def alen(a):
@@ -2532,19 +2509,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     True
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    if type(a) is not mu.ndarray:
-        try:
-            prod = a.prod
-        except AttributeError:
-            pass
-        else:
-            return prod(axis=axis, dtype=dtype, out=out, **kwargs)
-
-    return _methods._prod(a, axis=axis, dtype=dtype,
-                          out=out, **kwargs)
+    return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out, keepdims=keepdims)
 
 
 def cumprod(a, axis=None, dtype=None, out=None):
