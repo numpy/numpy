@@ -7,7 +7,7 @@ from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
                       TooHardError,asanyarray)
 
-__all__ = ['logspace', 'linspace', 'geomspace']
+__all__ = ['logspace', 'linspace', 'geomspace', 'fpspace']
 
 
 def _index_deprecate(i, stacklevel=2):
@@ -356,3 +356,154 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
                                  endpoint=endpoint, base=10.0, dtype=dtype)
 
     return result.astype(dtype)
+
+def fpspace(start, stop, refpoint=None, base=2, exponentbits=5,
+            significandbits=2, subnormals=True, endpoint=True, retscale=False,
+            dtype=None):
+    """
+    Return numbers spaced on a floating-point scale, calculated over the
+    interval [`start`, `stop`].
+
+    This is similar to `geomspace` mirrored about a reference point, but
+    with `linspace` between each `geomspace` value.
+
+    The endpoint of the interval can optionally be excluded, and the starting
+    point will be the closest value on the floating-point scale within the
+    specified interval.
+
+    Parameters
+    ----------
+    start : float
+        The starting value of the sequence if `refpoint` is set to None, start,
+        stop, or a special combination of parameters.  Regardless, the starting
+        value of the sequence will be the closest number to `start` on the
+        floating-point scale within the specified interval.
+    stop : float
+        The end value of the sequence if `endpoint` is set to True and
+        `refpoint` is set to None, start, stop, or a special combination of
+        parameters.  Regardless, if `endpoint` is set to True then the end
+        value of the sequence will be the closest number to `stop` on the
+        floating-point scale within the specified interval.  Otherwise, it will
+        be the next closest number.
+    refpoint : float, optional
+        The reference point about which the floating-point scale is centered.
+        Default is None.
+    base : integer, optional
+        The base of the floating-point space.
+        Default is 2.0.
+    exponentbits : integer, optional
+        Number of unbiased exponent bits in the floating-point space.
+        Default is 5.
+    significandbits : integer, optional
+        Number of explicit significand bits in the floating-point space.
+        Default is 2.
+    subnormals : boolean, optional
+        If true, subnormal floating-point values are included.  Otherwise, they
+        are not included.
+        Default is True.
+    endpoint : boolean, optional
+        If true and `refpoint` is set to None, start, stop, or a special
+        combination of parameters then `stop` is the last sample.  Regardless,
+        if `endpoint` is set to True then the last sample will be the closest
+        number to `stop` on the floating-point scale within the specified
+        interval.  Otherwise, it will be the next closest number.
+        Default is True.
+    retscale : boolean, optional
+        If True, return (`samples`, `scale`), where `scale` is the multiplier
+        to convert from the unbiased floating-point values to the specified
+        interval.
+        Default is False.
+    dtype : dtype
+        The type of the output array.  If `dtype` is not given, infer the data
+        type from the other input arguments.
+        Default is None.
+
+    Returns
+    -------
+    samples : ndarray
+        samples spaced on a floating-point scale centered about `refpoint`
+    scale : float, optional
+        Only returned if `retscale` is True.  The multiplier to convert from
+        the unbiased floating-point values to the specified interval.
+
+    Examples
+    --------
+    >>> np.fpspace(0.0, 1.0, exponentbits=2, significandbits=0)
+    array([ 0., 0.25, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.75, 1. ])
+    >>> np.fpspace(0.0, 1.0, exponentbits=1, significandbits=1)
+    array([ 0., 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1. ])
+    >>> np.fpspace(0.0, 1.0, refpoint=0.0, exponentbits=2, significandbits=0)
+    array([ 0, 0.125, 0.25, 0.5, 1. ])
+    >>> np.fpspace(0.0, 1.0, refpoint=0.0, exponentbits=1, significandbits=1)
+    array([ 0., 0.25, 0.5, 0.75, 1. ])
+    >>> np.fpspace(0.0, 1.0, refpoint=0.0, exponentbits=1, significandbits=1, subnormals=False)
+    array([ 0., 0.5, 0.75, 1. ])
+
+    Graphical illustration:
+
+    >>> import matplotlib.pyplot as plt
+    >>> significandbits = 4
+    >>> x1 = np.fpspace(0.1, 1, significandbits=significandbits, subnormals=True)
+    >>> x2 = np.fpspace(0.1, 1, significandbits=significandbits, subnormals=False)
+    >>> y1 = np.zeros(x1.size)
+    >>> y2 = np.zeros(x2.size)
+    >>> plt.plot(x1, y1, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> plt.plot(x2, y2 + 0.5, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> plt.ylim([-0.5, 1])
+    (-0.5, 1)
+    >>> plt.show()
+
+    """
+    # Convert float/complex array scalars to float, gh-3504
+    # and make sure one can use variables that have an __array_interface__, gh-6634
+    start = asanyarray(start) * 1.0
+    stop  = asanyarray(stop)  * 1.0
+    base = int(base)
+    exponentbits = int(exponentbits)
+    significandbits = int(significandbits)
+
+    dt = result_type(start, stop)
+    if dtype is None:
+        dtype = dt
+
+    if refpoint is None:
+        refpoint = 0.5 * (start + stop)
+
+    u_start = int(0)
+    u_stop = int(_nx.power(base, significandbits) - 1)
+    u_num = int(u_stop - u_start + 1)
+    u = linspace(u_start, u_stop, num=u_num, endpoint=True, dtype=dt)
+
+    y_subnormals = u if subnormals else u[:1]
+
+    v_start = int(1)
+    v_stop = int(_nx.power(base, exponentbits) - 1)
+    v_num = int(v_stop - v_start + 1)
+    v = linspace(v_start, v_stop, num=v_num, endpoint=True, dtype=dt)
+
+    y_normalized = (_nx.power(base, significandbits) + _nx.repeat(u.reshape(1, -1), v_num, 0).flatten()) * _nx.power(base, _nx.repeat(v, u_num) - 1)
+
+    y_bound = _nx.reshape((_nx.power(base, significandbits) * _nx.power(base, _nx.power(base, exponentbits) - 1)), (1))
+
+    y_pos = _nx.concatenate((y_subnormals, y_normalized, y_bound))
+    y_neg = (-y_pos)[::-1]
+
+    y = _nx.concatenate((y_neg[:-1], y_pos))
+
+    a = start - refpoint
+    b = stop - refpoint
+    scale = a / y[0] if abs(a) > abs(b) else b / y[-1]
+
+    y *= scale
+    y = y[_nx.where(_nx.logical_and(min(a, b) <= y, y <= max(a, b)))]
+    y += refpoint
+
+    if not endpoint:
+        y = y[:-1]
+
+    if retscale:
+        return y.astype(dtype, copy=False), scale
+    else:
+        return y.astype(dtype, copy=False)
