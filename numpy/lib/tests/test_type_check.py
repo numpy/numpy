@@ -442,5 +442,16 @@ class TestArrayConversion(object):
             asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))
 
 
+class TestAsScalar(object):
+
+    def test_basic(self):
+        a = asscalar(np.array([1]))
+        assert_equal(a.__class__, int)
+        assert_raises(ValueError, asscalar,[1,2])
+        b = asscalar(3.4)
+        assert_equal(b.__class__, float)
+
+
+
 if __name__ == "__main__":
     run_module_suite()
