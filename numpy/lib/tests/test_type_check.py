@@ -445,10 +445,10 @@ class TestArrayConversion(object):
 class TestAsScalar(object):
 
     def test_basic(self):
-        a = asscalar(np.array([1]))
+        a = np.asscalar(np.array([1]))
         assert_equal(a.__class__, int)
-        assert_raises(ValueError, asscalar,[1,2])
-        b = asscalar(3.4)
+        assert_raises(ValueError, asscalar, [1, 2])
+        b = np.asscalar(3.4)
         assert_equal(b.__class__, float)
 
 
