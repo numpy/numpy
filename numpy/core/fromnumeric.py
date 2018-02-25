@@ -657,8 +657,9 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     """
     if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
-        axis = 0
+        axis = -1
     else:
         a = asanyarray(a).copy(order="K")
     a.partition(kth, axis=axis, kind=kind, order=order)
@@ -840,8 +841,9 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     """
     if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
-        axis = 0
+        axis = -1
     else:
         a = asanyarray(a).copy(order="K")
     a.sort(axis=axis, kind=kind, order=order)

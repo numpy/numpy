@@ -1742,6 +1742,13 @@ class TestMethods(object):
         assert_equal(r, np.array([('a', 1), ('c', 3), ('b', 255), ('d', 258)],
                                  dtype=mydtype))
 
+    def test_sort_matrix_none(self):
+        a = np.matrix([[2, 1, 0]])
+        actual = np.sort(a, axis=None)
+        expected = np.matrix([[0, 1, 2]])
+        assert_equal(actual, expected)
+        assert_(type(expected) is np.matrix)
+
     def test_argsort(self):
         # all c scalar argsorts use the same code with different types
         # so it suffices to run a quick check with one type. The number
@@ -2486,6 +2493,14 @@ class TestMethods(object):
                 tgt = np.sort(d)[kth]
                 assert_array_equal(np.partition(d, kth)[kth], tgt,
                                    err_msg="data: %r\n kth: %r" % (d, kth))
+
+    def test_partition_matrix_none(self):
+        # gh-4301
+        a = np.matrix([[2, 1, 0]])
+        actual = np.partition(a, 1, axis=None)
+        expected = np.matrix([[0, 1, 2]])
+        assert_equal(actual, expected)
+        assert_(type(expected) is np.matrix)
 
     def test_argpartition_gh5524(self):
         #  A test for functionality of argpartition on lists.
