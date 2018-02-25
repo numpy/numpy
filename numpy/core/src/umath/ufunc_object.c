@@ -3215,9 +3215,15 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
          */
         ndim_iter = ndim;
         flags |= NPY_ITER_MULTI_INDEX;
-        /* Add some more flags */
-        op_flags[0] |= NPY_ITER_UPDATEIFCOPY|NPY_ITER_ALIGNED;
-        op_flags[1] |= NPY_ITER_COPY|NPY_ITER_ALIGNED;
+        /*
+         * Add some more flags.
+         *
+         * The accumulation outer loop is 'elementwise' over the array, so turn
+         * on NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE. That is, in-place
+         * accumulate(x, out=x) is safe to do without temporary copies.
+         */
+        op_flags[0] |= NPY_ITER_UPDATEIFCOPY|NPY_ITER_ALIGNED|NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+        op_flags[1] |= NPY_ITER_COPY|NPY_ITER_ALIGNED|NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
         op_dtypes_param = op_dtypes;
         op_dtypes[1] = op_dtypes[0];
         NPY_UF_DBG_PRINT("Allocating outer iterator\n");
