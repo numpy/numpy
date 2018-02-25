@@ -5,7 +5,7 @@ import sys, gc
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_raises, assert_warns
+     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec
 )
 import textwrap
 
@@ -33,6 +33,27 @@ class TestArrayRepr(object):
             "sub([[(1,), (1,)],\n"
             "     [(1,), (1,)]], dtype=[('a', '<i4')])"
         )
+
+    @dec.knownfailureif(True, "See gh-10544")
+    def test_object_subclass(self):
+        class sub(np.ndarray):
+            def __new__(cls, inp):
+                obj = np.asarray(inp).view(cls)
+                return obj
+
+            def __getitem__(self, ind):
+                ret = super(sub, self).__getitem__(ind)
+                return sub(ret)
+
+        # test that object + subclass is OK:
+        x = sub([None, None])
+        assert_equal(repr(x), 'sub([None, None], dtype=object)')
+        assert_equal(str(x), '[None None]')
+
+        x = sub([None, sub([None, None])])
+        assert_equal(repr(x),
+            'sub([None, sub([None, None], dtype=object)], dtype=object)')
+        assert_equal(str(x), '[None sub([None, None], dtype=object)]')
 
     def test_0d_object_subclass(self):
         # make sure that subclasses which return 0ds instead
@@ -73,15 +94,27 @@ class TestArrayRepr(object):
         assert_equal(repr(x), 'sub(sub(None, dtype=object), dtype=object)')
         assert_equal(str(x), 'None')
 
-        # test that object + subclass is OK:
-        x = sub([None, None])
-        assert_equal(repr(x), 'sub([None, None], dtype=object)')
-        assert_equal(str(x), '[None None]')
+        # gh-10663
+        class DuckCounter(np.ndarray):
+            def __getitem__(self, item):
+                result = super(DuckCounter, self).__getitem__(item)
+                if not isinstance(result, DuckCounter):
+                    result = result[...].view(DuckCounter)
+                return result
 
-        x = sub([None, sub([None, None])])
-        assert_equal(repr(x),
-            'sub([None, sub([None, None], dtype=object)], dtype=object)')
-        assert_equal(str(x), '[None sub([None, None], dtype=object)]')
+            def to_string(self):
+                return {0: 'zero', 1: 'one', 2: 'two'}.get(self.item(), 'many')
+
+            def __str__(self):
+                if self.shape == ():
+                    return self.to_string()
+                else:
+                    fmt = {'all': lambda x: x.to_string()}
+                    return np.array2string(self, formatter=fmt)
+
+        dc = np.arange(5).view(DuckCounter)
+        assert_equal(str(dc), "[zero one two many many]")
+        assert_equal(str(dc[0]), "zero")
 
     def test_self_containing(self):
         arr0d = np.array(None)
