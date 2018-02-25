@@ -488,7 +488,7 @@ def asscalar(a):
     """
     try:
         return a.item()
-    except AttributeError, e:
+    except AttributeError as e:
         return asarray(a).item()
 
 #-----------------------------------------------------------------------------
