@@ -435,11 +435,13 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     For consistency with histogram, an array of pre-computed bins is
     passed through unmodified
+    
     >>> np.histogram_bin_edges(arr, [1, 2])
     array([1, 2])
 
     This function allows you to pre-compute bins and use them to generate
     histograms with common bins. 
+
     >>> group_id = np.array([0, 1, 1, 0, 1, 1, 0, 1, 1])
     >>> shared_bins = np.histogram_bin_edges(arr, bins='auto')
     >>> shared_bins
@@ -455,16 +457,17 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     When the histograms are calculated without passing commons bins, ``bins='auto'`` computes
     different bins for each of the histograms
+
     >>> group_id = np.array([0, 1, 1, 0, 1, 1, 0, 1, 1])
     >>> hist_0, bins_0 = np.histogram(arr[group_id == 0], bins='auto')
     >>> hist_0
-    >>> array([1, 1, 1])
+    array([1, 1, 1])
     >>> bins_0
     array([0., 1., 2., 3.])
 
     >>> hist_1, bins_1 = np.histogram(arr[group_id == 1], bins='auto')
     >>> hist_1
-    >>> array([2, 1, 1, 2])
+    array([2, 1, 1, 2])
     >>> bins_1
     array([0.  , 1.25, 2.5 , 3.75, 5.  ])
     
