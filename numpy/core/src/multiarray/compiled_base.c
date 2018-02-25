@@ -560,7 +560,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     if (axp == NULL) {
         goto fail;
     }
-    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 1, 0);
+    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 0, 0);
     if (ax == NULL) {
         goto fail;
     }
@@ -671,7 +671,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
-    return (PyObject *)af;
+    return PyArray_Return(af);
 
 fail:
     Py_XDECREF(afp);
@@ -715,7 +715,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     if (axp == NULL) {
         goto fail;
     }
-    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 1, 0);
+    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 0, 0);
     if (ax == NULL) {
         goto fail;
     }
@@ -847,7 +847,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
-    return (PyObject *)af;
+    return PyArray_Return(af);
 
 fail:
     Py_XDECREF(afp);
