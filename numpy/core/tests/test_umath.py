@@ -1403,14 +1403,28 @@ class TestSpecialMethods(object):
                 return r
 
         a = with_wrap()
+        expected_args = (a, a)
+
+        def check_it(x):
+            assert_equal(x.arr, np.zeros(1))
+            func, args, i = x.context
+            assert_(func is ncu.minimum)
+            assert_equal(args, expected_args)
+            assert_equal(i, 0)
+
+
+
         x = ncu.minimum(a, a)
-        assert_equal(x.arr, np.zeros(1))
-        func, args, i = x.context
-        assert_(func is ncu.minimum)
-        assert_equal(len(args), 2)
-        assert_equal(args[0], a)
-        assert_equal(args[1], a)
-        assert_equal(i, 0)
+        check_it(x)
+
+        x = ncu.minimum(a, a, None)
+        check_it(x)
+
+        x = ncu.minimum(a, a, out=None)
+        check_it(x)
+
+        x = ncu.minimum(a, a, out=(None,))
+        check_it(x)
 
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
