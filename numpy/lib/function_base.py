@@ -2309,7 +2309,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     else:
         X_T = (X*w).T
     c = dot(X, X_T.conj())
-    c *= 1. / np.float64(fact)
+    c *= np.true_divide(1, fact)
     return c.squeeze()
 
 
