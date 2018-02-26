@@ -24,7 +24,7 @@ from numpy.core import (
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, object_, ones, matmul,
-    swapaxes, divide, count_nonzero, ndarray, isnan
+    swapaxes, divide, count_nonzero, ndarray, isnan, reciprocal
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
@@ -2325,7 +2325,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             absx = abs(x)
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
-            ret **= (1 / ord)
+            ret **= reciprocal(ord, dtype=ret.dtype)
             return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis
