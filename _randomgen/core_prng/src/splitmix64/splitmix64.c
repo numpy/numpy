@@ -22,4 +22,8 @@ license.
 
 #include "splitmix64.h"
 
-extern inline uint64_t splitmix64_next(uint64_t *state);
+static inline uint64_t splitmix64_next(uint64_t *state);
+
+extern inline uint64_t splitmix64_next64(splitmix64_state *state);
+
+extern inline uint32_t splitmix64_next32(splitmix64_state *state);

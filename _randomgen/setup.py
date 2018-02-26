@@ -31,7 +31,11 @@ extensions = [Extension('core_prng.entropy',
                                       join(MOD_DIR, 'src', 'xoroshiro128')]),
               Extension("core_prng.generator",
                         ["core_prng/generator.pyx"],
-                        include_dirs=[np.get_include()])]
+                        include_dirs=[np.get_include()]),
+              Extension("core_prng.common",
+                        ["core_prng/common.pyx"],
+                        include_dirs=[np.get_include()]),
+              ]
 
 
 class BinaryDistribution(Distribution):
