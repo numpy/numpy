@@ -119,5 +119,17 @@ For all types of scalar or 0d input, the result is now a scalar.
 ``np.flatnonzero`` now uses ``np.ravel(a)`` instead of ``a.ravel()``, so it
 works for lists, tuples, etc.
 
+``np.interp`` returns numpy scalars rather than builtin scalars
+---------------------------------------------------------------
+Previously ``np.interp(0.5, [0, 1], [10, 20])`` would return a ``float``, but
+now it returns a ``np.float64`` object, which more closely matches the behavior
+of other functions.
+
+Additionally, the special case of ``np.interp(object_array_0d, ...)`` is no
+longer supported, as ``np.interp(object_array_nd)`` was never supported anyway.
+
+As a result of this change, the ``period`` argument can now be used on 0d
+arrays.
+
 Changes
 =======

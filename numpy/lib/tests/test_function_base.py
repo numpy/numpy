@@ -2252,8 +2252,17 @@ class TestInterp(object):
         y = np.linspace(0, 1, 5)
         x0 = np.array(.3)
         assert_almost_equal(np.interp(x0, x, y), x0)
-        x0 = np.array(.3, dtype=object)
-        assert_almost_equal(np.interp(x0, x, y), .3)
+
+        xp = np.array([0, 2, 4])
+        fp = np.array([1, -1, 1])
+
+        actual = np.interp(np.array(1), xp, fp)
+        assert_equal(actual, 0)
+        assert_(isinstance(actual, np.float64))
+
+        actual = np.interp(np.array(4.5), xp, fp, period=4)
+        assert_equal(actual, 0.5)
+        assert_(isinstance(actual, np.float64))
 
     def test_if_len_x_is_small(self):
         xp = np.arange(0, 10, 0.0001)
