@@ -1,5 +1,11 @@
 #include <stdint.h>
 
+typedef struct s_xoroshiro128_state {
+  uint64_t s[2];
+  int has_uint32;
+  uint32_t uinteger;
+} xoroshiro128_state;
+
 static inline uint64_t rotl(const uint64_t x, int k) {
   return (x << k) | (x >> (64 - k));
 }
@@ -16,4 +22,19 @@ static inline uint64_t xoroshiro128_next(uint64_t *s) {
   return result;
 }
 
-void xoroshiro128_jump(uint64_t *s);
+static inline uint64_t xoroshiro128_next64(xoroshiro128_state *state) {
+  return xoroshiro128_next(&state->s[0]);
+}
+
+static inline uint64_t xoroshiro128_next32(xoroshiro128_state *state) {
+  if (state->has_uint32) {
+    state->has_uint32 = 0;
+    return state->uinteger;
+  }
+  uint64_t next = xoroshiro128_next(&state->s[0]);
+  state->has_uint32 = 1;
+  state->uinteger = (uint32_t)(next & 0xffffffff);
+  return (uint32_t)(next >> 32);
+}
+
+void xoroshiro128_jump(xoroshiro128_state *state);
