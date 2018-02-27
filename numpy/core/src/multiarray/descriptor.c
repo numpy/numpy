@@ -465,8 +465,8 @@ _convert_from_array_descr(PyObject *obj, int align)
             Py_DECREF(name);
             if (tmp == NULL) { 
                 goto fail;
-            name = tmp;
             }
+            name = tmp;
         }
 #endif
         if (PyUString_GET_SIZE(name) == 0) {
