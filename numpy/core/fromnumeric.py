@@ -1881,6 +1881,12 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     if keepdims is not np._NoValue:
         kwargs['keepdims'] = keepdims
     if isinstance(a, _gentype):
+        # 2018-02-25, 1.15.0
+        warnings.warn(
+            "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
+            "Use np.sum(np.from_iter(generator)) or the python sum builtin instead.",
+            DeprecationWarning, stacklevel=2)
+
         res = _sum_(a)
         if out is not None:
             out[...] = res

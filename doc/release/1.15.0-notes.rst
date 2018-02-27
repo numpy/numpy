@@ -36,6 +36,11 @@ Deprecations
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
 
+* Giving a generator to `np.sum` is now deprecated. This was undocumented, but
+  worked. Previously, it would calculate the sum of the generator expression.
+  In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
+  or the built-in Python `sum` instead.
+
 
 Future Changes
 ==============
