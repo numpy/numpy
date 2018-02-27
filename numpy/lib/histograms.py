@@ -360,7 +360,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         sequence, it defines the bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
 
-        If `bins` is a string from the list below, `histogram` will use
+        If `bins` is a string from the list below, `histogram_bin_edges` will use
         the method chosen to calculate the optimal bin width and
         consequently the number of bins (see `Notes` for more detail on
         the estimators) from the data that falls within the requested
@@ -417,7 +417,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     Returns
     -------
     bin_edges : array of dtype float
-        Return the bin edges ``(length(hist)+1)``.
+        The edges to pass into `histogram`
 
     See Also
     --------
