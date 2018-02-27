@@ -4700,8 +4700,8 @@ class TestRecord(object):
 
             # But raises UnicodeEncodeError if it can't be encoded:
             nonencodable_name = u'\uc3bc'
-            assert_raises(UnicodeEncodeError, np.dtype, [(encodable_name, int)])
-            assert_raises(UnicodeEncodeError, np.dtype, [(('a', encodable_name), int)])
+            assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
+            assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
