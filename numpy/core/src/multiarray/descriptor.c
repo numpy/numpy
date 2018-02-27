@@ -460,10 +460,12 @@ _convert_from_array_descr(PyObject *obj, int align)
 #if !defined(NPY_PY3)
         /* convert unicode name to ascii on Python 2 if possible */ 
         if (PyUnicode_Check(name)) {
-            name = PyUnicode_AsASCIIString(name);
+            PyObject *tmp;
+            tmp = PyUnicode_AsASCIIString(name);
             Py_DECREF(name);
-            if (name == NULL) { 
+            if (tmp == NULL) { 
                 goto fail;
+            name = tmp;
             }
         }
 #endif
