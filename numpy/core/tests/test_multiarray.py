@@ -4694,14 +4694,14 @@ class TestRecord(object):
 
         def test_unicode_field_names(self):
             # Unicode field names are converted to ascii on Python 2:
-            encodable_title = u'b'
-            assert_equal(np.dtype([(encodable_title, int)]).names[0], b'b')
-            assert_equal(np.dtype([(('a', encodable_title), int)]).names[0], b'b')
+            encodable_name = u'b'
+            assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
+            assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
 
             # But raises UnicodeEncodeError if it can't be encoded:
-            nonencodable_title = u'\uc3bc'
-            assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_title, int)])
-            assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_title), int)])
+            nonencodable_name = u'\uc3bc'
+            assert_raises(UnicodeEncodeError, np.dtype, [(encodable_name, int)])
+            assert_raises(UnicodeEncodeError, np.dtype, [(('a', encodable_name), int)])
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
