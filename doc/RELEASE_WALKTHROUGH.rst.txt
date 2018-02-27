@@ -102,7 +102,7 @@ to forgo the signing in the future::
     $ twine upload -s release/installers/numpy-1.14.1.zip  # Upload last.
 
 If one of the commands breaks in the middle, which is not uncommon, you may
-need to selectively upload the remaining files becuase PyPI does not allow the
+need to selectively upload the remaining files because PyPI does not allow the
 same file to be uploaded twice. The source file should be uploaded last to
 avoid synchronization problems if pip users access the files while this is in
 process. Note that PyPI only allows a single source distribution, here we have
