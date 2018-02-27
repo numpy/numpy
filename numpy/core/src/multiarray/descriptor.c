@@ -437,7 +437,11 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         name = PyTuple_GET_ITEM(item, 0);
+#if defined(NPY_PY3K)
         if (PyUString_Check(name)) {
+#else
+        if ((PyUString_Check(name) || PyUnicode_Check(name))) {
+#endif
             title = NULL;
         }
         else if (PyTuple_Check(name)) {
@@ -446,7 +450,11 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
+#if defined(NPY_PY3K)
             if (!PyUString_Check(name)) {
+#else
+            if (!(PyUString_Check(name) || PyUnicode_Check(name))) {
+#endif
                 goto fail;
             }
         }
@@ -457,6 +465,17 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
+        
+#if !defined(NPY_PY3)
+        /* convert unicode name to ascii on Python 2 if possible */ 
+        if PyUnicode_Check(name){
+            Py_DECREF(name);
+            name = PyUnicode_AsASCIIString(name);
+            if (name == NULL) { 
+                goto fail;
+            }
+        }
+#endif
         if (PyUString_GET_SIZE(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
