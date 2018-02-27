@@ -808,7 +808,7 @@ class TestMultiIndexingAutomated(object):
             `arr[indices]` should be identical.
         no_copy : bool
             Whether the indexing operation requires a copy. If this is `True`,
-            `np.may_share_memory(arr, arr[indicies])` should be `True` (with
+            `np.may_share_memory(arr, arr[indices])` should be `True` (with
             some exceptions for scalars and possibly 0-d arrays).
 
         Notes

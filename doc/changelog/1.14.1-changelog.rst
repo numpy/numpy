@@ -58,6 +58,6 @@ A total of 36 pull requests were merged for this release.
 * `#10610 <https://github.com/numpy/numpy/pull/10610>`__: BUG: Align type definition with generated lapack
 * `#10612 <https://github.com/numpy/numpy/pull/10612>`__: BUG/ENH: Improve output for structured non-void types
 * `#10622 <https://github.com/numpy/numpy/pull/10622>`__: BUG: deallocate recursive closure in arrayprint.py (1.14 backport)
-* `#10624 <https://github.com/numpy/numpy/pull/10624>`__: BUG: Correctly identify comma seperated dtype strings
+* `#10624 <https://github.com/numpy/numpy/pull/10624>`__: BUG: Correctly identify comma separated dtype strings
 * `#10629 <https://github.com/numpy/numpy/pull/10629>`__: BUG: deallocate recursive closure in arrayprint.py (backport...
 * `#10630 <https://github.com/numpy/numpy/pull/10630>`__: REL: Prepare for 1.14.1 release.
