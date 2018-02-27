@@ -1520,9 +1520,9 @@ class TestMethods(object):
             assert_equal(c, ai, msg)
 
         # test sorting of complex arrays requiring byte-swapping, gh-5441
-        for endianess in '<>':
+        for endianness in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
                 c = arr.copy()
                 c.sort()
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
@@ -1778,9 +1778,9 @@ class TestMethods(object):
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
 
         # test argsort of complex arrays requiring byte-swapping, gh-5441
-        for endianess in '<>':
+        for endianness in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
                 msg = 'byte-swapped complex argsort, dtype={0}'.format(dt)
                 assert_equal(arr.argsort(),
                              np.arange(len(arr), dtype=np.intp), msg)

@@ -210,7 +210,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
                     PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
-     * ufunc.reduceat(a, indicies[, axis, dtype, out])
+     * ufunc.reduceat(a, indices[, axis, dtype, out])
      * the number of arguments has been checked in PyUFunc_GenericReduction.
      */
     npy_intp i;
@@ -224,7 +224,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
                      "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
-    /* a and indicies */
+    /* a and indices */
     *normal_args = PyTuple_GetSlice(args, 0, 2);
     if (*normal_args == NULL) {
         return -1;
