@@ -314,8 +314,11 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
         *offset += descr->elsize;
 
-        if(!PyArray_IsScalar(obj, Generic)) {
-            /* only check ndarrays, scalars are always natively aligned */
+        if(PyArray_IsScalar(obj, Generic)) {
+            /* scalars are always natively aligned */
+            is_natively_aligned = 1;
+        }
+        else {
             is_natively_aligned = _is_natively_aligned_at(descr,
                                               (PyArrayObject*)obj, *offset);
         }
@@ -470,6 +473,9 @@ _buffer_info_new(PyObject *obj)
 
     if (PyArray_IsScalar(obj, Generic)) {
         descr = PyArray_DescrFromScalar(obj);
+        if (descr == NULL) {
+            goto fail;
+        }
         info->ndim = 0;
         info->shape = NULL;
         info->strides = NULL;
@@ -495,16 +501,12 @@ _buffer_info_new(PyObject *obj)
                 info->strides[k] = PyArray_STRIDES(arr)[k];
             }
         }
-    }
-    if (descr == NULL) {
-        goto fail;
+        Py_INCREF(descr);
     }
 
     /* Fill in format */
     err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
-    if(PyArray_IsScalar(obj, Generic)) {
-        Py_DECREF(descr);
-    }
+    Py_DECREF(descr);
     if (err != 0) {
         free(fmt.s);
         goto fail;
