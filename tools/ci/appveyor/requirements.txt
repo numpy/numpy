@@ -4,4 +4,3 @@ pytest-timeout
 pytest-xdist
 pytest-env
 pytest-faulthandler
-pytest-warnings
