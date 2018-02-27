@@ -113,7 +113,7 @@ def main(argv):
     parser.add_argument("--bench-compare", action="store", metavar="COMMIT",
                         help=("Compare benchmark results to COMMIT. "
                               "Note that you need to commit your changes first!"))
-    parser.add_argument("--raise-warnings", default=None, type=str,
+    parser.add_argument("--raise-warnings", default='develop', type=str,
                         choices=('develop', 'release'),
                         help=("if 'develop', warnings are treated as errors; "
                               "defaults to 'develop' in development versions."))

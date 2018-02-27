@@ -60,7 +60,7 @@ class PytestTester(object):
         elif raise_warnings == "release":
             pytest_args += ['-rw']
         else:
-            raise ValueError()
+            raise ValueError(raise_warnings)
 
         pytest_args += ['--pyargs'] + list(tests)
 
