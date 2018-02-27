@@ -457,7 +457,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
-#if !defined(NPY_PY3)
+#if !defined(NPY_PY3K)
         /* convert unicode name to ascii on Python 2 if possible */ 
         if (PyUnicode_Check(name)) {
             PyObject *tmp;
