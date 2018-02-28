@@ -17,6 +17,7 @@ cdef extern from "src/distributions/distributions.h":
     double random_double(void *void_state) nogil
     float random_float(void *void_state) nogil
     uint32_t random_uint32(void *void_state) nogil
+    double random_standard_exponential(void *void_state) nogil
 
 cdef class RandomGenerator:
     """
@@ -83,7 +84,7 @@ cdef class RandomGenerator:
         else:
             raise ValueError('bits must be 32 or 64')
 
-    def random_sample(self, size=None, dtype=np.float64, out=None):
+    def random_sample(self, size=None, dtype=np.float64):
         """
         random_sample(size=None, dtype='d', out=None)
 
@@ -105,10 +106,6 @@ cdef class RandomGenerator:
             Desired dtype of the result, either 'd' (or 'float64') or 'f'
             (or 'float32'). All dtypes are determined by their name. The
             default value is 'd'.
-        out : ndarray, optional
-            Alternative output array in which to place the result. If size is not None,
-            it must have the same shape as the provided size and must match the type of
-            the output values.
 
         Returns
         -------
@@ -135,8 +132,49 @@ cdef class RandomGenerator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double, self._prng, size, self.lock, out)
+            return double_fill(&random_double, self._prng, size, self.lock)
         elif key == 'float32':
-            return float_fill(&random_float, self._prng, size, self.lock, out)
+            return float_fill(&random_float, self._prng, size, self.lock)
         else:
             raise TypeError('Unsupported dtype "%s" for random_sample' % key)
+
+
+    def standard_exponential(self, size=None, dtype=np.float64):
+        """
+        standard_exponential(size=None, dtype='d', method='inv', out=None)
+
+        Draw samples from the standard exponential distribution.
+
+        `standard_exponential` is identical to the exponential distribution
+        with a scale parameter of 1.
+
+        Parameters
+        ----------
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
+        dtype : dtype, optional
+            Desired dtype of the result, either 'd' (or 'float64') or 'f'
+            (or 'float32'). All dtypes are determined by their name. The
+            default value is 'd'.
+
+        Returns
+        -------
+        out : float or ndarray
+            Drawn samples.
+
+        Examples
+        --------
+        Output a 3x8000 array:
+
+        >>> n = np.random.standard_exponential((3, 8000))
+        """
+        key = np.dtype(dtype).name
+        if key == 'float64':
+            return double_fill(&random_standard_exponential, self._prng, size, self.lock)
+        elif key == 'float32':
+            return float_fill_from_double(&random_standard_exponential, self._prng, size, self.lock)
+        else:
+            raise TypeError('Unsupported dtype "%s" for standard_exponential'
+                            % key)

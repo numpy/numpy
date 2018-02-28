@@ -15,11 +15,12 @@ float random_float(void *void_state) {
 
 double random_double(void *void_state) {
   prng_t *prng_state = (prng_t *)void_state;
-  prng_uint64 next_uint64 = (prng_uint64)(prng_state->next_uint64);
-  uint64_t next_value = next_uint64(prng_state->state);
-  return (next_value >> 11) * (1.0 / 9007199254740992.0);
-  //
+  prng_double next_double = (prng_double)prng_state->next_double;
+  return next_double(prng_state->state);
+}
 
-  //prng_double next_double = (prng_double)prng_state->next_double;
-  //return next_double(&prng_state->state);
+double random_standard_exponential(void *void_state) {
+  prng_t *prng_state = (prng_t *)void_state;
+  prng_double next_double = (prng_double)prng_state->next_double;
+  return -log(1.0 - next_double(prng_state->state));
 }

@@ -14,6 +14,8 @@ typedef int bool;
 #include <stdint.h>
 #endif
 
+#include <math.h>
+
 typedef double (*prng_double)(void *st);
 typedef float (*prng_float)(void *st);
 typedef uint32_t (*prng_uint32)(void *st);
@@ -31,3 +33,5 @@ float random_float(void *void_state);
 double random_double(void *void_state);
 
 uint32_t random_uint32(void *void_state);
+
+double random_standard_exponential(void *void_state);
