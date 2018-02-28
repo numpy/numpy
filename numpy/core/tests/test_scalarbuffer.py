@@ -14,6 +14,7 @@ scalars = [
     np.csingle, np.cdouble, np.clongdouble,
 ]
 
+# PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_set_code = [
     (np.bool_, '?'),
     (np.byte, 'b'),

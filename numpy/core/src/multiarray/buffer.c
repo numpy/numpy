@@ -303,7 +303,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
     }
     else {
         int is_standard_size = 1;
-        int is_natively_aligned = 1;
+        int is_natively_aligned;
         int is_native_only_type = (descr->type_num == NPY_LONGDOUBLE ||
                                    descr->type_num == NPY_CLONGDOUBLE);
         if (sizeof(npy_longlong) != 8) {
@@ -786,7 +786,7 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
 {
     _buffer_info_t *info = NULL;
     PyArray_Descr *descr = NULL;
-    int elsize = 0;
+    int elsize;
 
     if (flags & PyBUF_WRITABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
