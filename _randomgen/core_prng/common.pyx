@@ -19,21 +19,17 @@ cdef check_output(object out, object dtype, object size):
         raise ValueError('size and out cannot be simultaneously used')
 
 
-cdef object double_fill(void *func, void *state, object size, object lock, object out):
+cdef object double_fill(void *func, void *state, object size, object lock):
     cdef prng_double random_func = (<prng_double>func)
     cdef double *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
-    if size is None and out is None:
+    if size is None:
         with lock:
             return random_func(state)
 
-    if out is not None:
-        check_output(out, np.double, size)
-        out_array = <np.ndarray>out
-    else:
-        out_array = <np.ndarray>np.empty(size, np.double)
+    out_array = <np.ndarray>np.empty(size, np.double)
 
     n = np.PyArray_SIZE(out_array)
     out_array_data = <double *>np.PyArray_DATA(out_array)
@@ -42,25 +38,40 @@ cdef object double_fill(void *func, void *state, object size, object lock, objec
             out_array_data[i] = random_func(state)
     return out_array
 
-cdef object float_fill(void *func, void *state, object size, object lock, object out):
+cdef object float_fill(void *func, void *state, object size, object lock):
     cdef prng_float random_func = (<prng_float>func)
     cdef float *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
-    if size is None and out is None:
+    if size is None:
         with lock:
             return random_func(state)
 
-    if out is not None:
-        check_output(out, np.float32, size)
-        out_array = <np.ndarray>out
-    else:
-        out_array = <np.ndarray>np.empty(size, np.float32)
+    out_array = <np.ndarray>np.empty(size, np.float32)
 
     n = np.PyArray_SIZE(out_array)
     out_array_data = <float *>np.PyArray_DATA(out_array)
     with lock, nogil:
         for i in range(n):
             out_array_data[i] = random_func(state)
+    return out_array
+
+cdef object float_fill_from_double(void *func, void *state, object size, object lock):
+    cdef prng_double random_func = (<prng_double>func)
+    cdef float *out_array_data
+    cdef np.ndarray out_array
+    cdef np.npy_intp i, n
+
+    if size is None:
+        with lock:
+            return <float>random_func(state)
+
+    out_array = <np.ndarray>np.empty(size, np.float32)
+
+    n = np.PyArray_SIZE(out_array)
+    out_array_data = <float *>np.PyArray_DATA(out_array)
+    with lock, nogil:
+        for i in range(n):
+            out_array_data[i] = <float>random_func(state)
     return out_array

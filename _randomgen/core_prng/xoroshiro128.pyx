@@ -47,12 +47,15 @@ cdef class Xoroshiro128:
     Exposes no user-facing API except `get_state` and `set_state`. Designed
     for use in a `RandomGenerator` object.
     """
-    cdef xoroshiro128_state rng_state
-    cdef prng_t _prng
+    cdef xoroshiro128_state  *rng_state
+    cdef prng_t *_prng
     cdef public object _prng_capsule
 
 
     def __init__(self, seed=None):
+        self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
+        self._prng = <prng_t *>malloc(sizeof(prng_t))
+
         if seed is None:
             try:
                 state = random_entropy(4)
@@ -64,7 +67,7 @@ cdef class Xoroshiro128:
         self.rng_state.s[0] = <uint64_t>int(state[0])
         self.rng_state.s[1] = <uint64_t>int(state[1])
 
-        self._prng.state = <void *>&self.rng_state
+        self._prng.state = <void *>self.rng_state
         self._prng.next_uint64 = <void *>&xoroshiro128_uint64
         self._prng.next_uint32 = <void *>&xoroshiro128_uint32
         self._prng.next_double = <void *>&xoroshiro128_double
@@ -91,14 +94,14 @@ cdef class Xoroshiro128:
         Testing only
         """
         if bits == 64:
-            return xoroshiro128_next64(&self.rng_state)
+            return xoroshiro128_next64(self.rng_state)
         elif bits == 32:
-            return xoroshiro128_next32(&self.rng_state)
+            return xoroshiro128_next32(self.rng_state)
         else:
             raise ValueError('bits must be 32 or 64')
 
     def jump(self):
-        xoroshiro128_jump(&self.rng_state)
+        xoroshiro128_jump(self.rng_state)
 
     @property
     def state(self):

@@ -47,7 +47,6 @@ cdef class SplitMix64:
     """
     cdef splitmix64_state *rng_state
     cdef prng_t *_prng
-    cdef prng_t *_prng2
     cdef public object _prng_capsule
 
     def __init__(self, seed=None):
@@ -72,8 +71,6 @@ cdef class SplitMix64:
         cdef const char *anon_name = "CorePRNG"
         self._prng_capsule = PyCapsule_New(<void *>self._prng,
                                            anon_name, NULL)
-        self._prng2 = <prng_t *>PyCapsule_GetPointer(self._prng_capsule, anon_name)
-
 
     def __random_integer(self):
         """
