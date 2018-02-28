@@ -24,10 +24,10 @@ def on_powerpc():
 
 
 class _FilterInvalids(object):
-    def setUp(self):
+    def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def tearDown(self):
+    def teardown(self):
         np.seterr(**self.olderr)
 
 

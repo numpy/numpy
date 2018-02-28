@@ -351,10 +351,10 @@ class TestCsqrt(object):
         # cuts first)
 
 class TestCpow(object):
-    def setUp(self):
+    def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def tearDown(self):
+    def teardown(self):
         np.seterr(**self.olderr)
 
     def test_simple(self):
@@ -391,10 +391,10 @@ class TestCpow(object):
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
 class TestCabs(object):
-    def setUp(self):
+    def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def tearDown(self):
+    def teardown(self):
         np.seterr(**self.olderr)
 
     def test_simple(self):
