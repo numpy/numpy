@@ -1,3 +1,4 @@
+from libc.stdint cimport uint64_t, uint32_t
 import numpy as np
 cimport numpy as np
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
@@ -12,13 +13,10 @@ from core_prng.splitmix64 import SplitMix64
 
 np.import_array()
 
-
-cdef double random_double(void *void_state):
-    cdef anon_func_state_t *anon_state = <anon_func_state_t *>void_state
-    cdef random_double_anon random_double_f = <random_double_anon>anon_state.next_double
-    cdef void *state = anon_state.state
-    return random_double_f(state)
-
+cdef extern from "src/distributions/distributions.h":
+    double random_double(void *void_state) nogil
+    float random_float(void *void_state) nogil
+    uint32_t random_uint32(void *void_state) nogil
 
 cdef class RandomGenerator:
     """
@@ -36,9 +34,10 @@ cdef class RandomGenerator:
     >>> rg.random_integer()
     """
     cdef public object __core_prng
-    cdef anon_func_state anon_rng_func_state
-    cdef random_uint64_anon next_uint64
-    cdef random_double_anon next_double
+    cdef prng_t *_prng
+    cdef prng_uint64 next_uint64
+    cdef prng_double next_double
+    cdef prng_uint32 next_uint32
     cdef void *rng_state
     cdef object lock
 
@@ -47,30 +46,42 @@ cdef class RandomGenerator:
             prng = SplitMix64()
         self.__core_prng = prng
 
-        capsule = prng._anon_func_state
-        cdef const char *anon_name = "Anon CorePRNG func_state"
+        capsule = prng._prng_capsule
+        cdef const char *anon_name = "CorePRNG"
         if not PyCapsule_IsValid(capsule, anon_name):
             raise ValueError("Invalid pointer to anon_func_state")
-        self.anon_rng_func_state = (<anon_func_state *>PyCapsule_GetPointer(capsule, anon_name))[0]
-        self.next_uint64 = <random_uint64_anon>self.anon_rng_func_state.next_uint64
-        self.next_double = <random_double_anon>self.anon_rng_func_state.next_double
-        self.rng_state = self.anon_rng_func_state.state
+        self._prng = <prng_t *>PyCapsule_GetPointer(capsule, anon_name)
+        self.next_uint32 = <prng_uint32>self._prng.next_uint32
+        self.next_uint64 = <prng_uint64>self._prng.next_uint64
+        self.next_double = <prng_double>self._prng.next_double
+        self.rng_state = self._prng.state
         self.lock = Lock()
 
     @property
     def state(self):
-        """Get ot set the underlying PRNG's state"""
+        """Get or set the underlying PRNG's state"""
         return self.__core_prng.state
 
     @state.setter
     def state(self, value):
         self.__core_prng.state = value
 
-    def random_integer(self):
-        return self.next_uint64(self.rng_state)
+    def random_integer(self, bits=64):
+        if bits==64:
+            return self.next_uint64(self.rng_state)
+        elif bits==32:
+            return random_uint32(self._prng) # self.next_uint32(self.rng_state)
+            # return self.next_uint32(self.rng_state)
+        else:
+            raise ValueError('bits must be 32 or 64')
 
-    def random_double(self):
-        return self.next_double(self.rng_state)
+    def random_double(self, bits=64):
+        if bits==64:
+            return self.next_double(self.rng_state)
+        elif bits==32:
+            return random_float(self._prng)
+        else:
+            raise ValueError('bits must be 32 or 64')
 
     def random_sample(self, size=None, dtype=np.float64, out=None):
         """
@@ -124,9 +135,8 @@ cdef class RandomGenerator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double, &self.anon_rng_func_state, size, self.lock, out)
+            return double_fill(&random_double, self._prng, size, self.lock, out)
         elif key == 'float32':
-            raise NotImplementedError
-            # return float_fill(&self.rng_state, &random_uniform_fill_float, size, self.lock, out)
+            return float_fill(&random_float, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for random_sample' % key)

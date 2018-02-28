@@ -1,6 +1,6 @@
 from libc.stdint cimport uint32_t, uint64_t
-from cpython.pycapsule cimport PyCapsule_New
-
+from cpython.pycapsule cimport PyCapsule_New, PyCapsule_GetPointer
+from libc.stdlib cimport malloc
 import numpy as np
 cimport numpy as np
 
@@ -19,13 +19,14 @@ cdef extern from "src/splitmix64/splitmix64.h":
     ctypedef s_splitmix64_state splitmix64_state
 
     cdef uint64_t splitmix64_next64(splitmix64_state *state)  nogil
-    cdef uint64_t splitmix64_next32(splitmix64_state *state)  nogil
+    cdef uint32_t splitmix64_next32(splitmix64_state *state)  nogil
 
 cdef uint64_t splitmix64_uint64(void *st) nogil:
     return splitmix64_next64(<splitmix64_state *> st)
 
-cdef uint64_t splitmix64_uint32(void *st) nogil:
-    return splitmix64_next32(<splitmix64_state *> st)
+cdef uint32_t splitmix64_uint32(void *st): #  nogil: TODO
+    cdef splitmix64_state *state = <splitmix64_state *> st
+    return splitmix64_next32(state)
 
 cdef double splitmix64_double(void *st) nogil:
     return uint64_to_double(splitmix64_uint64(<splitmix64_state *> st))
@@ -44,11 +45,14 @@ cdef class SplitMix64:
     Exposes no user-facing API except `get_state` and `set_state`. Designed
     for use in a `RandomGenerator` object.
     """
-    cdef splitmix64_state rng_state
-    cdef anon_func_state anon_func_state
-    cdef public object _anon_func_state
+    cdef splitmix64_state *rng_state
+    cdef prng_t *_prng
+    cdef prng_t *_prng2
+    cdef public object _prng_capsule
 
     def __init__(self, seed=None):
+        self.rng_state = <splitmix64_state *>malloc(sizeof(splitmix64_state))
+        self._prng = <prng_t *>malloc(sizeof(prng_t))
         if seed is None:
             try:
                 state = random_entropy(2)
@@ -60,14 +64,16 @@ cdef class SplitMix64:
 
         self.rng_state.state = <uint64_t> int(state[0])
         self.rng_state.has_uint32 = 0
+        self.rng_state.uinteger = 0
+        self._prng.state = <void *>self.rng_state
+        self._prng.next_uint64 = <void *> &splitmix64_uint64
+        self._prng.next_uint32 = <void *> &splitmix64_uint32
+        self._prng.next_double = <void *> &splitmix64_double
+        cdef const char *anon_name = "CorePRNG"
+        self._prng_capsule = PyCapsule_New(<void *>self._prng,
+                                           anon_name, NULL)
+        self._prng2 = <prng_t *>PyCapsule_GetPointer(self._prng_capsule, anon_name)
 
-        self.anon_func_state.state = <void *> &self.rng_state
-        self.anon_func_state.next_uint64 = <void *> &splitmix64_uint64
-        self.anon_func_state.next_uint32 = <void *> &splitmix64_uint32
-        self.anon_func_state.next_double = <void *> &splitmix64_double
-        cdef const char *anon_name = "Anon CorePRNG func_state"
-        self._anon_func_state = PyCapsule_New(<void *> &self.anon_func_state,
-                                              anon_name, NULL)
 
     def __random_integer(self):
         """
@@ -82,7 +88,7 @@ cdef class SplitMix64:
         -----
         Testing only
         """
-        return splitmix64_next64(&self.rng_state)
+        return splitmix64_next64(self.rng_state)
 
     @property
     def state(self):

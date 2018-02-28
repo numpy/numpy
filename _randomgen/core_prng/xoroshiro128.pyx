@@ -48,8 +48,8 @@ cdef class Xoroshiro128:
     for use in a `RandomGenerator` object.
     """
     cdef xoroshiro128_state rng_state
-    cdef anon_func_state anon_func_state
-    cdef public object _anon_func_state
+    cdef prng_t _prng
+    cdef public object _prng_capsule
 
 
     def __init__(self, seed=None):
@@ -64,12 +64,12 @@ cdef class Xoroshiro128:
         self.rng_state.s[0] = <uint64_t>int(state[0])
         self.rng_state.s[1] = <uint64_t>int(state[1])
 
-        self.anon_func_state.state = <void *>&self.rng_state
-        self.anon_func_state.next_uint64 = <void *>&xoroshiro128_uint64
-        self.anon_func_state.next_uint32 = <void *>&xoroshiro128_uint32
-        self.anon_func_state.next_double = <void *>&xoroshiro128_double
-        cdef const char *anon_name = "Anon CorePRNG func_state"
-        self._anon_func_state = PyCapsule_New(<void *>&self.anon_func_state,
+        self._prng.state = <void *>&self.rng_state
+        self._prng.next_uint64 = <void *>&xoroshiro128_uint64
+        self._prng.next_uint32 = <void *>&xoroshiro128_uint32
+        self._prng.next_double = <void *>&xoroshiro128_double
+        cdef const char *anon_name = "CorePRNG"
+        self._prng_capsule = PyCapsule_New(<void *>&self._prng,
                                               anon_name, NULL)
 
     def __random_integer(self, bits=64):
