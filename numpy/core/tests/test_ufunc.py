@@ -597,6 +597,105 @@ class TestUfunc(object):
         umt.inner1d(a, b, out=c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a*b, axis=-1), err_msg=msg)
 
+    def test_axes_argument(self):
+        # inner1d signature: '(i),(i)->()'
+        in1d = umt.inner1d
+        a = np.arange(27.).reshape((3, 3, 3))
+        b = np.arange(10., 19.).reshape((3, 1, 3))
+        # basic tests on inputs (outputs tested below with matrix_multiply).
+        c = in1d(a, b)
+        assert_array_equal(c, (a * b).sum(-1))
+        # default
+        c = in1d(a, b, axes=[(-1,), (-1,), ()])
+        assert_array_equal(c, (a * b).sum(-1))
+        # integers ok for single axis.
+        c = in1d(a, b, axes=[-1, -1, ()])
+        assert_array_equal(c, (a * b).sum(-1))
+        # mix fine
+        c = in1d(a, b, axes=[(-1,), -1, ()])
+        assert_array_equal(c, (a * b).sum(-1))
+        # can omit last axis.
+        c = in1d(a, b, axes=[-1, -1])
+        assert_array_equal(c, (a * b).sum(-1))
+        # can pass in other types of integer (with __index__ protocol)
+        c = in1d(a, b, axes=[np.int8(-1), np.array(-1, dtype=np.int32)])
+        assert_array_equal(c, (a * b).sum(-1))
+        # swap some axes
+        c = in1d(a, b, axes=[0, 0])
+        assert_array_equal(c, (a * b).sum(0))
+        c = in1d(a, b, axes=[0, 2])
+        assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
+        # Check errors for inproperly constructed axes arguments.
+        # should have list.
+        assert_raises(TypeError, in1d, a, b, axes=-1)
+        # needs enough elements
+        assert_raises(ValueError, in1d, a, b, axes=[-1])
+        # should pass in indices.
+        assert_raises(TypeError, in1d, a, b, axes=[-1.0, -1.0])
+        assert_raises(TypeError, in1d, a, b, axes=[(-1.0,), -1])
+        assert_raises(TypeError, in1d, a, b, axes=[None, 1])
+        # cannot pass an index unless there is only one dimension
+        # (output is wrong in this case)
+        assert_raises(TypeError, in1d, a, b, axes=[-1, -1, -1])
+        # or pass in generally the wrong number of axes
+        assert_raises(ValueError, in1d, a, b, axes=[-1, -1, (-1,)])
+        assert_raises(ValueError, in1d, a, b, axes=[-1, (-2, -1), ()])
+        # axes need to have same length.
+        assert_raises(ValueError, in1d, a, b, axes=[0, 1])
+
+        # matrix_multiply signature: '(m,n),(n,p)->(m,p)'
+        mm = umt.matrix_multiply
+        a = np.arange(12).reshape((2, 3, 2))
+        b = np.arange(8).reshape((2, 2, 2, 1)) + 1
+        # Sanity check.
+        c = mm(a, b)
+        assert_array_equal(c, np.matmul(a, b))
+        # Default axes.
+        c = mm(a, b, axes=[(-2, -1), (-2, -1), (-2, -1)])
+        assert_array_equal(c, np.matmul(a, b))
+        # Default with explicit axes.
+        c = mm(a, b, axes=[(1, 2), (2, 3), (2, 3)])
+        assert_array_equal(c, np.matmul(a, b))
+        # swap some axes.
+        c = mm(a, b, axes=[(0, -1), (1, 2), (-2, -1)])
+        assert_array_equal(c, np.matmul(a.transpose(1, 0, 2),
+                                        b.transpose(0, 3, 1, 2)))
+        # Default with output array.
+        c = np.empty((2, 2, 3, 1))
+        d = mm(a, b, out=c, axes=[(1, 2), (2, 3), (2, 3)])
+        assert_(c is d)
+        assert_array_equal(c, np.matmul(a, b))
+        # Transposed output array
+        c = np.empty((1, 2, 2, 3))
+        d = mm(a, b, out=c, axes=[(-2, -1), (-2, -1), (3, 0)])
+        assert_(c is d)
+        assert_array_equal(c, np.matmul(a, b).transpose(3, 0, 1, 2))
+        # Check errors for inproperly constructed axes arguments.
+        # wrong argument
+        assert_raises(TypeError, mm, a, b, axis=1)
+        # axes should be list
+        assert_raises(TypeError, mm, a, b, axes=1)
+        assert_raises(TypeError, mm, a, b, axes=((-2, -1), (-2, -1), (-2, -1)))
+        # list needs to have right length
+        assert_raises(ValueError, mm, a, b, axes=[])
+        assert_raises(ValueError, mm, a, b, axes=[(-2, -1)])
+        # list should contain tuples for multiple axes
+        assert_raises(TypeError, mm, a, b, axes=[-1, -1, -1])
+        assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
+        assert_raises(TypeError,
+                      mm, a, b, axes=[[-2, -1], [-2, -1], [-2, -1]])
+        assert_raises(TypeError,
+                      mm, a, b, axes=[(-2, -1), (-2, -1), [-2, -1]])
+        assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), None])
+        # tuples should not have duplicated values
+        assert_raises(ValueError, mm, a, b, axes=[(-2, -1), (-2, -1), (-2, -2)])
+        # arrays should have enough axes.
+        z = np.zeros((2, 2))
+        assert_raises(ValueError, mm, z, z[0])
+        assert_raises(ValueError, mm, z, z, out=z[:, 0])
+        assert_raises(ValueError, mm, z[1], z, axes=[0, 1])
+        assert_raises(ValueError, mm, z, z, out=z[0], axes=[0, 1])
+
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
         b = np.arange(10, 16).reshape((2, 3))
