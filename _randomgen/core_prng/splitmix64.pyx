@@ -6,7 +6,7 @@ cimport numpy as np
 
 from common cimport *
 from core_prng.entropy import random_entropy
-from core_prng cimport entropy
+cimport entropy
 
 np.import_array()
 

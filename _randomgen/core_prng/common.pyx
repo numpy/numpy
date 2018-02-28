@@ -19,14 +19,15 @@ cdef check_output(object out, object dtype, object size):
         raise ValueError('size and out cannot be simultaneously used')
 
 
-cdef object double_fill(random_double_anon *random_double, void *state, object size, object lock, object out):
+cdef object double_fill(void *func, void *state, object size, object lock, object out):
+    cdef random_0 random_func = (<random_0>func)
     cdef double *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
     if size is None and out is None:
         with lock:
-            return random_double[0](state)
+            return random_func(state)
 
     if out is not None:
         check_output(out, np.double, size)
@@ -38,5 +39,5 @@ cdef object double_fill(random_double_anon *random_double, void *state, object s
     out_array_data = <double *>np.PyArray_DATA(out_array)
     with lock, nogil:
         for i in range(n):
-            out_array_data[i] = random_double[0](state)
+            out_array_data[i] = random_func(state)
     return out_array

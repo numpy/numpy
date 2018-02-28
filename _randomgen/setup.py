@@ -3,8 +3,11 @@ from os.path import join
 
 import numpy as np
 from Cython.Build import cythonize
+import Cython.Compiler.Options
 from setuptools import setup, find_packages, Distribution
 from setuptools.extension import Extension
+
+Cython.Compiler.Options.annotate = True
 
 MOD_DIR = './core_prng'
 
