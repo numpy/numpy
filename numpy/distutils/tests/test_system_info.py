@@ -160,7 +160,7 @@ class TestSystemInfoReading(object):
         self.c_temp1 = site_and_parse(get_class('temp1'), self._sitecfg)
         self.c_temp2 = site_and_parse(get_class('temp2'), self._sitecfg)
 
-    def tearDown(self):
+    def teardown(self):
         # Do each removal separately
         try:
             shutil.rmtree(self._dir1)

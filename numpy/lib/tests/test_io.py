@@ -599,11 +599,11 @@ class LoadTxtBase(object):
 class TestLoadTxt(LoadTxtBase):
     loadfunc = staticmethod(np.loadtxt)
 
-    def setUp(self):
+    def setup(self):
         # lower chunksize for testing
         self.orig_chunk = np.lib.npyio._loadtxt_chunksize
         np.lib.npyio._loadtxt_chunksize = 1
-    def tearDown(self):
+    def teardown(self):
         np.lib.npyio._loadtxt_chunksize = self.orig_chunk
 
     def test_record(self):
