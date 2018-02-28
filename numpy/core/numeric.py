@@ -69,7 +69,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError' ]
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -364,6 +364,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
     multiarray.copyto(res, fill_value, casting='unsafe')
     return res
+
 
 def count_nonzero(a, axis=None):
     """
@@ -686,12 +687,12 @@ def require(a, dtype=None, requirements=None):
       UPDATEIFCOPY : False
 
     """
-    possible_flags = {'C':'C', 'C_CONTIGUOUS':'C', 'CONTIGUOUS':'C',
-                      'F':'F', 'F_CONTIGUOUS':'F', 'FORTRAN':'F',
-                      'A':'A', 'ALIGNED':'A',
-                      'W':'W', 'WRITEABLE':'W',
-                      'O':'O', 'OWNDATA':'O',
-                      'E':'E', 'ENSUREARRAY':'E'}
+    possible_flags = {'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
+                      'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
+                      'A': 'A', 'ALIGNED': 'A',
+                      'W': 'W', 'WRITEABLE': 'W',
+                      'O': 'O', 'OWNDATA': 'O',
+                      'E': 'E', 'ENSUREARRAY': 'E'}
     if not requirements:
         return asanyarray(a, dtype=dtype)
     else:
@@ -1123,7 +1124,7 @@ def outer(a, b, out=None):
     """
     a = asarray(a)
     b = asarray(b)
-    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
+    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
 
 
 def tensordot(a, b, axes=2):
@@ -1790,6 +1791,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     return moveaxis(cp, -1, axisc)
 
+
 little_endian = (sys.byteorder == 'little')
 
 
@@ -2313,12 +2315,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
 
     Unlike the built-in `math.isclose`, the above equation is not symmetric
-    in `a` and `b` -- it assumes `b` is the reference value -- so that 
+    in `a` and `b` -- it assumes `b` is the reference value -- so that
     `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
     the default value of atol is not zero, and is used to determine what
     small values should be considered close to zero. The default value is
     appropriate for expected values of order unity: if the expected values
-    are significantly smaller than one, it can result in false positives. 
+    are significantly smaller than one, it can result in false positives.
     `atol` should be carefully selected for the use case at hand. A zero value
     for `atol` will result in `False` if either `a` or `b` is zero.
 
@@ -2471,12 +2473,12 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-_errdict = {"ignore":ERR_IGNORE,
-            "warn":ERR_WARN,
-            "raise":ERR_RAISE,
-            "call":ERR_CALL,
-            "print":ERR_PRINT,
-            "log":ERR_LOG}
+_errdict = {"ignore": ERR_IGNORE,
+            "warn": ERR_WARN,
+            "raise": ERR_RAISE,
+            "call": ERR_CALL,
+            "print": ERR_PRINT,
+            "log": ERR_LOG}
 
 _errdict_rev = {}
 for key in _errdict.keys():
@@ -2543,7 +2545,8 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
      'under': 'ignore'}
     >>> np.seterr(**old_settings)  # reset to default
-    {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore',
+     'under': 'ignore'}
 
     >>> np.int16(32000) * np.int16(3)
     30464
@@ -2690,11 +2693,11 @@ def seterrcall(func):
         Function to call upon floating-point errors ('call'-mode) or
         object whose 'write' method is used to log such message ('log'-mode).
 
-        The call function takes two arguments. The first is a string describing the
-        type of error (such as "divide by zero", "overflow", "underflow", or "invalid value"),
-        and the second is the status flag.  The flag is a byte, whose four
-        least-significant bits indicate the type of error, one of "divide", "over",
-        "under", "invalid"::
+        The call function takes two arguments. The first is a string describing
+        the type of error (such as "divide by zero", "overflow", "underflow",
+        or "invalid value"), and the second is the status flag.  The flag is a
+        byte, whose four least-significant bits indicate the type of error, one
+        of "divide", "over", "under", "invalid"::
 
           [0 0 0 0 divide over under invalid]
 
@@ -2811,6 +2814,8 @@ def geterrcall():
 
 class _unspecified(object):
     pass
+
+
 _Unspecified = _unspecified()
 
 
@@ -2917,6 +2922,7 @@ def extend_all(module):
     for a in mall:
         if a not in adict:
             __all__.append(a)
+
 
 from .umath import *
 from .numerictypes import *
