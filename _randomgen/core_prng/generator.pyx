@@ -2,6 +2,7 @@ import numpy as np
 cimport numpy as np
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from common cimport *
+cimport common
 try:
     from threading import Lock
 except ImportError:
@@ -10,6 +11,14 @@ except ImportError:
 from core_prng.splitmix64 import SplitMix64
 
 np.import_array()
+
+
+cdef double random_double(void *void_state):
+    cdef anon_func_state_t *anon_state = <anon_func_state_t *>void_state
+    cdef random_double_anon random_double_f = <random_double_anon>anon_state.next_double
+    cdef void *state = anon_state.state
+    return random_double_f(state)
+
 
 cdef class RandomGenerator:
     """
@@ -115,7 +124,7 @@ cdef class RandomGenerator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&self.next_double, self.rng_state, size, self.lock, out)
+            return double_fill(&random_double, &self.anon_rng_func_state, size, self.lock, out)
         elif key == 'float32':
             raise NotImplementedError
             # return float_fill(&self.rng_state, &random_uniform_fill_float, size, self.lock, out)

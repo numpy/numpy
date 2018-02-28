@@ -13,6 +13,7 @@ print(RandomGenerator(SplitMix64([1.0, 2.0])).random_integer())
 print('\n'*3)
 print('Check random_sample')
 rg = RandomGenerator()
+print(rg.random_sample())
 print(rg.random_sample((3)))
 print(rg.random_sample((3,1)))
 

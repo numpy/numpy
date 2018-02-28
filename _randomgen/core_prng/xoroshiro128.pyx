@@ -5,7 +5,7 @@ from libc.stdlib cimport malloc
 from cpython.pycapsule cimport PyCapsule_New
 from common cimport *
 from core_prng.entropy import random_entropy
-from core_prng cimport entropy
+cimport entropy
 
 np.import_array()
 
