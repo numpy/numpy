@@ -61,7 +61,10 @@ To perform an inplace build that can be run from the source folder run::
 
     python setup.py build_ext --inplace -j 4
 
-Note that the ``python`` command is for installation on python 2. For installation on python 3, replace with the ``python3``command. See `Requirements for Installing Packages <https://packaging.python.org/tutorials/installing-packages/>`_ for more details.
+Note that the ``python`` command here is the system default Python, generally
+python 2, the ``python3`` command may be needed to install on python 3.
+See `Requirements for Installing Packages <https://packaging.python.org/tutorials/installing-packages/>`_
+for more details.
 
 The number of build jobs can also be specified via the environment variable
 NPY_NUM_BUILD_JOBS.
