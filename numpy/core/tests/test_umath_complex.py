@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import platform
+import unittest
 
 import numpy as np
 import numpy.core.umath as ncu
@@ -350,7 +351,7 @@ class TestCsqrt(object):
         # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
         # cuts first)
 
-class TestCpow(object):
+class TestCpow(unittest.TestCase):
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
 
@@ -390,7 +391,7 @@ class TestCpow(object):
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
-class TestCabs(object):
+class TestCabs(unittest.TestCase):
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
 
