@@ -68,7 +68,11 @@ cdef class RandomGenerator:
         self.__core_prng.state = value
 
     def random_integer(self, bits=64):
+        #print("In random_integer")
         if bits==64:
+            #print("Calling...")
+            #print(<uint64_t>&self.next_uint64)
+            #print(<uint64_t>&self.rng_state)
             return self.next_uint64(self.rng_state)
         elif bits==32:
             return random_uint32(self._prng) # self.next_uint32(self.rng_state)

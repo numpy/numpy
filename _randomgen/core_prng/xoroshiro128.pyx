@@ -1,8 +1,10 @@
+from libc.stdint cimport uint32_t, uint64_t
+from libc.stdlib cimport malloc, free
+from cpython.pycapsule cimport PyCapsule_New
+
 import numpy as np
 cimport numpy as np
-from libc.stdint cimport uint32_t, uint64_t
-from libc.stdlib cimport malloc
-from cpython.pycapsule cimport PyCapsule_New
+
 from common cimport *
 from core_prng.entropy import random_entropy
 cimport entropy
@@ -24,7 +26,7 @@ cdef extern from "src/xoroshiro128/xoroshiro128.h":
     cdef uint64_t xoroshiro128_next32(xoroshiro128_state *state)  nogil
     cdef void xoroshiro128_jump(xoroshiro128_state  *state)
 
-cdef uint64_t xoroshiro128_uint64(void* st) nogil:
+cdef uint64_t xoroshiro128_uint64(void* st):# nogil:
     return xoroshiro128_next64(<xoroshiro128_state *>st)
 
 cdef uint64_t xoroshiro128_uint32(void *st) nogil:
@@ -51,29 +53,26 @@ cdef class Xoroshiro128:
     cdef prng_t *_prng
     cdef public object _prng_capsule
 
-
     def __init__(self, seed=None):
         self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-
-        if seed is None:
-            try:
-                state = random_entropy(4)
-            except RuntimeError:
-                state = random_entropy(4, 'fallback')
-            state = state.view(np.uint64)
-        else:
-            state = entropy.seed_by_array(seed, 2)
-        self.rng_state.s[0] = <uint64_t>int(state[0])
-        self.rng_state.s[1] = <uint64_t>int(state[1])
+        self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
         self._prng.next_uint64 = <void *>&xoroshiro128_uint64
         self._prng.next_uint32 = <void *>&xoroshiro128_uint32
         self._prng.next_double = <void *>&xoroshiro128_double
-        cdef const char *anon_name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>&self._prng,
-                                              anon_name, NULL)
+
+        cdef const char *name = "CorePRNG"
+        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+
+    def __dealloc__(self):
+        free(self.rng_state)
+        free(self._prng)
+
+    def _reset_state_variables(self):
+        self.rng_state.has_uint32 = 0
+        self.rng_state.uinteger = 0
 
     def __random_integer(self, bits=64):
         """
@@ -99,6 +98,40 @@ cdef class Xoroshiro128:
             return xoroshiro128_next32(self.rng_state)
         else:
             raise ValueError('bits must be 32 or 64')
+
+    def seed(self, seed=None):
+        """
+        seed(seed=None, stream=None)
+
+        Seed the generator.
+
+        This method is called when ``RandomState`` is initialized. It can be
+        called again to re-seed the generator. For details, see
+        ``RandomState``.
+
+        Parameters
+        ----------
+        seed : int, optional
+            Seed for ``RandomState``.
+
+        Raises
+        ------
+        ValueError
+            If seed values are out of range for the PRNG.
+
+        """
+        ub =  2 ** 64
+        if seed is None:
+            try:
+                state = random_entropy(4)
+            except RuntimeError:
+                state = random_entropy(4, 'fallback')
+            state = state.view(np.uint64)
+        else:
+            state = entropy.seed_by_array(seed, 2)
+        self.rng_state.s[0] = <uint64_t>int(state[0])
+        self.rng_state.s[1] = <uint64_t>int(state[1])
+        self._reset_state_variables()
 
     def jump(self):
         xoroshiro128_jump(self.rng_state)
