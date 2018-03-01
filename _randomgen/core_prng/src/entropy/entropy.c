@@ -142,7 +142,7 @@ uint32_t entropy_randombytes(void) {
   uint32_t out = 0;
   int64_t counter;
   struct _timeb tv;
-  _ftime(&tv);
+  _ftime_s(&tv);
   out = entropy_hash_32(GetCurrentProcessId()) ^
         entropy_hash_32((uint32_t)tv.time) ^ entropy_hash_32(tv.millitm) ^
         entropy_hash_32(clock());
