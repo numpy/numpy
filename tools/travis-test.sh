@@ -95,7 +95,7 @@ setup_chroot()
 
   # install needed packages
   sudo chroot $DIR bash -c "apt-get install -qq -y --force-yes \
-    libatlas-dev libatlas-base-dev gfortran \
+    libatlas-base-dev gfortran \
     python-dev python-nose python-pytest python-pip cython"
 }
 
