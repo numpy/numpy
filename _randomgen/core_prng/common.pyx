@@ -20,7 +20,7 @@ cdef check_output(object out, object dtype, object size):
 
 
 cdef object double_fill(void *func, void *state, object size, object lock):
-    cdef prng_double random_func = (<prng_double>func)
+    cdef random_double_0 random_func = (<random_double_0>func)
     cdef double *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
@@ -39,7 +39,7 @@ cdef object double_fill(void *func, void *state, object size, object lock):
     return out_array
 
 cdef object float_fill(void *func, void *state, object size, object lock):
-    cdef prng_float random_func = (<prng_float>func)
+    cdef random_float_0 random_func = (<random_float_0>func)
     cdef float *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
@@ -58,7 +58,7 @@ cdef object float_fill(void *func, void *state, object size, object lock):
     return out_array
 
 cdef object float_fill_from_double(void *func, void *state, object size, object lock):
-    cdef prng_double random_func = (<prng_double>func)
+    cdef random_double_0 random_func = (<random_double_0>func)
     cdef float *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n

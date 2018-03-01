@@ -56,9 +56,9 @@ cdef class SplitMix64:
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = <void *>&splitmix64_uint64
-        self._prng.next_uint32 = <void *>&splitmix64_uint32
-        self._prng.next_double = <void *>&splitmix64_double
+        self._prng.next_uint64 = &splitmix64_uint64
+        self._prng.next_uint32 = &splitmix64_uint32
+        self._prng.next_double = &splitmix64_double
 
         cdef const char *name = "CorePRNG"
         self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)

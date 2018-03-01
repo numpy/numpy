@@ -36,10 +36,6 @@ cdef class RandomGenerator:
     """
     cdef public object __core_prng
     cdef prng_t *_prng
-    cdef prng_uint64 next_uint64
-    cdef prng_double next_double
-    cdef prng_uint32 next_uint32
-    cdef void *rng_state
     cdef object lock
 
     def __init__(self, prng=None):
@@ -52,10 +48,6 @@ cdef class RandomGenerator:
         if not PyCapsule_IsValid(capsule, anon_name):
             raise ValueError("Invalid pointer to anon_func_state")
         self._prng = <prng_t *>PyCapsule_GetPointer(capsule, anon_name)
-        self.next_uint32 = <prng_uint32>self._prng.next_uint32
-        self.next_uint64 = <prng_uint64>self._prng.next_uint64
-        self.next_double = <prng_double>self._prng.next_double
-        self.rng_state = self._prng.state
         self.lock = Lock()
 
     @property
@@ -70,19 +62,15 @@ cdef class RandomGenerator:
     def random_integer(self, bits=64):
         #print("In random_integer")
         if bits==64:
-            #print("Calling...")
-            #print(<uint64_t>&self.next_uint64)
-            #print(<uint64_t>&self.rng_state)
-            return self.next_uint64(self.rng_state)
+            return self._prng.next_uint64(self._prng.state)
         elif bits==32:
-            return random_uint32(self._prng) # self.next_uint32(self.rng_state)
-            # return self.next_uint32(self.rng_state)
+            return random_uint32(self._prng)
         else:
             raise ValueError('bits must be 32 or 64')
 
     def random_double(self, bits=64):
         if bits==64:
-            return self.next_double(self.rng_state)
+            return self._prng.next_double(self._prng.state)
         elif bits==32:
             return random_float(self._prng)
         else:
