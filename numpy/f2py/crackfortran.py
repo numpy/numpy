@@ -390,6 +390,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             l = l[:-1]
         if not strictf77:
             (l, rl) = split_by_unquoted(l, '!')
+            l += ' '
             if rl[:5].lower() == '!f2py':  # f2py directive
                 l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
         if l.strip() == '':  # Skip empty line
