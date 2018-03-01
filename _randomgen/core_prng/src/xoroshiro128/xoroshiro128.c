@@ -49,7 +49,7 @@ void xoroshiro128_jump(xoroshiro128_state *state) {
         s0 ^= state->s[0];
         s1 ^= state->s[1];
       }
-      xoroshiro128_next(&state->s);
+      xoroshiro128_next(&state->s[0]);
     }
 
   state->s[0] = s0;
