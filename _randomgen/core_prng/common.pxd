@@ -1,19 +1,15 @@
 from libc.stdint cimport uint32_t, uint64_t
 
 cdef extern from "src/distributions/distributions.h":
-    ctypedef double (*prng_double)(void *st) nogil
+    ctypedef double (*random_double_0)(void *st) nogil
 
-    ctypedef float (*prng_float)(void *st) nogil
-
-    ctypedef uint32_t (*prng_uint32)(void *st) nogil
-
-    ctypedef uint64_t (*prng_uint64)(void *st) nogil
+    ctypedef float (*random_float_0)(void *st) nogil
 
     cdef struct prng:
       void *state
-      void *next_uint64
-      void *next_uint32
-      void *next_double
+      uint64_t (*next_uint64)(void *st)
+      uint32_t (*next_uint32)(void *st)
+      double (*next_double)(void *st)
 
     ctypedef prng prng_t
 

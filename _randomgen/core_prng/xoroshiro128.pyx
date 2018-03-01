@@ -29,7 +29,7 @@ cdef extern from "src/xoroshiro128/xoroshiro128.h":
 cdef uint64_t xoroshiro128_uint64(void* st):# nogil:
     return xoroshiro128_next64(<xoroshiro128_state *>st)
 
-cdef uint64_t xoroshiro128_uint32(void *st) nogil:
+cdef uint32_t xoroshiro128_uint32(void *st) nogil:
     return xoroshiro128_next32(<xoroshiro128_state *> st)
 
 cdef double xoroshiro128_double(void* st) nogil:
@@ -59,9 +59,9 @@ cdef class Xoroshiro128:
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = <void *>&xoroshiro128_uint64
-        self._prng.next_uint32 = <void *>&xoroshiro128_uint32
-        self._prng.next_double = <void *>&xoroshiro128_double
+        self._prng.next_uint64 = &xoroshiro128_uint64
+        self._prng.next_uint32 = &xoroshiro128_uint32
+        self._prng.next_double = &xoroshiro128_double
 
         cdef const char *name = "CorePRNG"
         self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
