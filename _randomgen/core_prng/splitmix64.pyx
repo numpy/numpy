@@ -1,6 +1,7 @@
 from libc.stdint cimport uint32_t, uint64_t
-from cpython.pycapsule cimport PyCapsule_New, PyCapsule_GetPointer
-from libc.stdlib cimport malloc
+from libc.stdlib cimport malloc, free
+from cpython.pycapsule cimport PyCapsule_New
+
 import numpy as np
 cimport numpy as np
 
@@ -52,25 +53,23 @@ cdef class SplitMix64:
     def __init__(self, seed=None):
         self.rng_state = <splitmix64_state *>malloc(sizeof(splitmix64_state))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-        if seed is None:
-            try:
-                state = random_entropy(2)
-            except RuntimeError:
-                state = random_entropy(2, 'fallback')
-            state = state.view(np.uint64)
-        else:
-            state = entropy.seed_by_array(seed, 1)
+        self.seed(seed)
 
-        self.rng_state.state = <uint64_t> int(state[0])
+        self._prng.state = <void *>self.rng_state
+        self._prng.next_uint64 = <void *>&splitmix64_uint64
+        self._prng.next_uint32 = <void *>&splitmix64_uint32
+        self._prng.next_double = <void *>&splitmix64_double
+
+        cdef const char *name = "CorePRNG"
+        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+
+    def __dealloc__(self):
+        free(self.rng_state)
+        free(self._prng)
+
+    def _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
         self.rng_state.uinteger = 0
-        self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = <void *> &splitmix64_uint64
-        self._prng.next_uint32 = <void *> &splitmix64_uint32
-        self._prng.next_double = <void *> &splitmix64_double
-        cdef const char *anon_name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>self._prng,
-                                           anon_name, NULL)
 
     def __random_integer(self):
         """
@@ -86,6 +85,40 @@ cdef class SplitMix64:
         Testing only
         """
         return splitmix64_next64(self.rng_state)
+
+    def seed(self, seed=None):
+        """
+        seed(seed=None, stream=None)
+
+        Seed the generator.
+
+        This method is called when ``RandomState`` is initialized. It can be
+        called again to re-seed the generator. For details, see
+        ``RandomState``.
+
+        Parameters
+        ----------
+        seed : int, optional
+            Seed for ``RandomState``.
+
+        Raises
+        ------
+        ValueError
+            If seed values are out of range for the PRNG.
+
+        """
+        ub =  2 ** 64
+        if seed is None:
+            try:
+                state = random_entropy(2)
+            except RuntimeError:
+                state = random_entropy(2, 'fallback')
+            state = state.view(np.uint64)
+        else:
+            state = entropy.seed_by_array(seed, 1)
+        self.rng_state.state = <uint64_t> int(state[0])
+        self._reset_state_variables()
+
 
     @property
     def state(self):

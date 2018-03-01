@@ -1,6 +1,8 @@
 import os
 from os.path import join
 
+import versioneer
+
 import numpy as np
 from Cython.Build import cythonize
 import Cython.Compiler.Options
@@ -48,6 +50,8 @@ class BinaryDistribution(Distribution):
 
 
 setup(
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     ext_modules=cythonize(extensions),
     name='core_prng',
     packages=find_packages(),
