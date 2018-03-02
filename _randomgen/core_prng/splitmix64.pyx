@@ -25,9 +25,8 @@ cdef extern from "src/splitmix64/splitmix64.h":
 cdef uint64_t splitmix64_uint64(void *st) nogil:
     return splitmix64_next64(<splitmix64_state *> st)
 
-cdef uint32_t splitmix64_uint32(void *st): #  nogil: TODO
-    cdef splitmix64_state *state = <splitmix64_state *> st
-    return splitmix64_next32(state)
+cdef uint32_t splitmix64_uint32(void *st) nogil:
+    return splitmix64_next32(<splitmix64_state *> st)
 
 cdef double splitmix64_double(void *st) nogil:
     return uint64_to_double(splitmix64_uint64(<splitmix64_state *> st))

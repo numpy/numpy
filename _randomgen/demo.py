@@ -1,5 +1,6 @@
 from core_prng.generator import RandomGenerator
-from core_prng import SplitMix64, Xoroshiro128, ThreeFry
+
+from core_prng import SplitMix64, Xoroshiro128, ThreeFry, MT19937
 
 print(RandomGenerator().random_integer())
 print(RandomGenerator(Xoroshiro128()).random_integer())
@@ -40,3 +41,10 @@ rg = RandomGenerator(ThreeFry())
 print(rg.state)
 rg.random_integer()
 print(rg.state)
+rg = RandomGenerator(MT19937())
+state = rg.state
+print(state)
+rg.state = state
+print(rg.random_integer())
+print(rg.random_integer(32))
+print(rg.random_sample())

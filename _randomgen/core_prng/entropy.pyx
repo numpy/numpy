@@ -25,14 +25,14 @@ cdef Py_ssize_t compute_numel(size):
 
 cdef np.ndarray seed_by_array(object seed, Py_ssize_t n):
     """
-    Transforms a seed array into an initiial state
+    Transforms a seed array into an initial state
     
     Parameters
     ----------
     seed: array, 1d, uint64
         Array to use.  If seed is a scalar, promote to array.
     n : int
-        Number of 64-bit unsiened integers required
+        Number of 64-bit unsigned integers required
     
     Notes
     -----
