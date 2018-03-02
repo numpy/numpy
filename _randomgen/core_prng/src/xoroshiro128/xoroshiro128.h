@@ -26,7 +26,7 @@ static inline uint64_t xoroshiro128_next64(xoroshiro128_state *state) {
   return xoroshiro128_next(&state->s[0]);
 }
 
-static inline uint64_t xoroshiro128_next32(xoroshiro128_state *state) {
+static inline uint32_t xoroshiro128_next32(xoroshiro128_state *state) {
   if (state->has_uint32) {
     state->has_uint32 = 0;
     return state->uinteger;

@@ -11,31 +11,37 @@ cimport entropy
 
 np.import_array()
 
-cdef extern from "src/xoroshiro128/xoroshiro128.h":
+cdef extern from "src/threefry/threefry.h":
 
-    cdef struct s_xoroshiro128_state:
-      uint64_t s[2]
-      int has_uint32
-      uint32_t uinteger
+    cdef struct s_threefry:
+        uint64_t c0, c1
 
-    ctypedef s_xoroshiro128_state xoroshiro128_state
+    ctypedef s_threefry threefry_t
 
-    cdef uint64_t xoroshiro128_next64(xoroshiro128_state *state)  nogil
-    cdef uint64_t xoroshiro128_next32(xoroshiro128_state *state)  nogil
-    cdef void xoroshiro128_jump(xoroshiro128_state  *state)
+    cdef struct s_threefry_state:
+        threefry_t *c
+        threefry_t *k
+        int has_uint32
+        uint32_t uinteger
 
-cdef uint64_t xoroshiro128_uint64(void* st):# nogil:
-    return xoroshiro128_next64(<xoroshiro128_state *>st)
+    ctypedef s_threefry_state threefry_state
 
-cdef uint32_t xoroshiro128_uint32(void *st) nogil:
-    return xoroshiro128_next32(<xoroshiro128_state *> st)
+    cdef uint64_t threefry_next64(threefry_state *state)  nogil
+    cdef uint64_t threefry_next32(threefry_state *state)  nogil
 
-cdef double xoroshiro128_double(void* st) nogil:
-    return uint64_to_double(xoroshiro128_next64(<xoroshiro128_state *>st))
 
-cdef class Xoroshiro128:
+cdef uint64_t threefry_uint64(void* st):# nogil:
+    return threefry_next64(<threefry_state *>st)
+
+cdef uint32_t threefry_uint32(void *st) nogil:
+    return threefry_next32(<threefry_state *> st)
+
+cdef double threefry_double(void* st) nogil:
+    return uint64_to_double(threefry_next64(<threefry_state *>st))
+
+cdef class ThreeFry:
     """
-    Prototype Core PRNG using xoroshiro128
+    Prototype Core PRNG using threefry
 
     Parameters
     ----------
@@ -44,27 +50,31 @@ cdef class Xoroshiro128:
 
     Notes
     -----
-    Exposes no user-facing API except `get_state` and `set_state`. Designed
-    for use in a `RandomGenerator` object.
+    Exposes no user-facing API except `state`. Designed for use in
+    a `RandomGenerator` object.
     """
-    cdef xoroshiro128_state  *rng_state
+    cdef threefry_state  *rng_state
     cdef prng_t *_prng
     cdef public object _prng_capsule
 
     def __init__(self, seed=None):
-        self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
+        self.rng_state = <threefry_state *>malloc(sizeof(threefry_state))
+        self.rng_state.c = <threefry_t *>malloc(sizeof(threefry_t))
+        self.rng_state.k = <threefry_t *>malloc(sizeof(threefry_t))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = &xoroshiro128_uint64
-        self._prng.next_uint32 = &xoroshiro128_uint32
-        self._prng.next_double = &xoroshiro128_double
+        self._prng.next_uint64 = &threefry_uint64
+        self._prng.next_uint32 = &threefry_uint32
+        self._prng.next_double = &threefry_double
 
         cdef const char *name = "CorePRNG"
         self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     def __dealloc__(self):
+        free(self.rng_state.c)
+        free(self.rng_state.k)
         free(self.rng_state)
         free(self._prng)
 
@@ -91,9 +101,9 @@ cdef class Xoroshiro128:
         Testing only
         """
         if bits == 64:
-            return xoroshiro128_next64(self.rng_state)
+            return threefry_next64(self.rng_state)
         elif bits == 32:
-            return xoroshiro128_next32(self.rng_state)
+            return threefry_next32(self.rng_state)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -116,7 +126,6 @@ cdef class Xoroshiro128:
         ------
         ValueError
             If seed values are out of range for the PRNG.
-
         """
         ub =  2 ** 64
         if seed is None:
@@ -127,21 +136,25 @@ cdef class Xoroshiro128:
             state = state.view(np.uint64)
         else:
             state = entropy.seed_by_array(seed, 2)
-        self.rng_state.s[0] = <uint64_t>int(state[0])
-        self.rng_state.s[1] = <uint64_t>int(state[1])
+        # TODO: Need to be able to set the key and counter directly
+        self.rng_state.c.c0 = 0
+        self.rng_state.c.c1 = 0
+        self.rng_state.k.c0 = <uint64_t>int(state[0])
+        self.rng_state.k.c1 = <uint64_t>int(state[1])
         self._reset_state_variables()
-
-    def jump(self):
-        xoroshiro128_jump(self.rng_state)
 
     @property
     def state(self):
         """Get or set the PRNG state"""
-        state = np.empty(2, dtype=np.uint64)
-        state[0] = self.rng_state.s[0]
-        state[1] = self.rng_state.s[1]
+        c = np.empty(2, dtype=np.uint64)
+        k = np.empty(2, dtype=np.uint64)
+        c[0] = self.rng_state.c.c0
+        c[1] = self.rng_state.c.c1
+        k[0] = self.rng_state.k.c0
+        k[1] = self.rng_state.k.c1
+        state = {'c':c,'k':k}
         return {'prng': self.__class__.__name__,
-                's': state,
+                'state': state,
                 'has_uint32': self.rng_state.has_uint32,
                 'uinteger': self.rng_state.uinteger}
 
@@ -153,7 +166,9 @@ cdef class Xoroshiro128:
         if prng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
-        self.rng_state.s[0] = <uint64_t>value['s'][0]
-        self.rng_state.s[1] = <uint64_t>value['s'][1]
+        self.rng_state.c.c0 = <uint64_t>value['state']['c'][0]
+        self.rng_state.c.c1 = <uint64_t>value['state']['c'][1]
+        self.rng_state.k.c0 = <uint64_t>value['state']['k'][0]
+        self.rng_state.k.c1 = <uint64_t>value['state']['k'][1]
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
