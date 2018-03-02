@@ -298,7 +298,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     return ret
 
 
-def intersect1d(ar1, ar2, assume_unique=False):
+def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
     Find the intersection of two arrays.
 
@@ -311,11 +311,17 @@ def intersect1d(ar1, ar2, assume_unique=False):
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
-
+    return_indices : bool
+        If True, the indices which correspond to the interesction of the 
+        of the two arrays are returned.
     Returns
     -------
     intersect1d : ndarray
         Sorted 1D array of common and unique elements.
+    comm1 : ndarray
+        Indices of common points in first array.
+    comm2 : ndarray
+        Indices of common points in second array.
 
     See Also
     --------
@@ -332,6 +338,12 @@ def intersect1d(ar1, ar2, assume_unique=False):
     >>> from functools import reduce
     >>> reduce(np.intersect1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
     array([3])
+    
+    To return the indices of the values common to the input arrays
+    along with the intersected values:
+    
+    >>>np.intersect1d([1,2,3,4],[2,1,4,6],return_indices=True)
+    (array(1,2,4),array([0,1,3]),array([1,0,2]))
     """
     if not assume_unique:
         # Might be faster than unique( intersect1d( ar1, ar2 ) )?
@@ -339,6 +351,18 @@ def intersect1d(ar1, ar2, assume_unique=False):
         ar2 = unique(ar2)
     aux = np.concatenate((ar1, ar2))
     aux.sort()
+    if return_indices:
+      first = []
+      second =[]
+      commvals = np.intersect1d(arr1,arr2)
+      for i in range(len(commvals)):
+        val1 = np.where(arr1 == commvals[i])[0][0]
+        val2 = np.where(arr2 == commvals[i])[0][0]
+        first.append(val1)
+        second.append(val2)
+      comm1 =np.reshape(np.array(first),-1)
+      comm2 = np.reshape(np.array(second),-1)111
+      return aux[:-1][aux[1:] == aux[:-1]],comm1,comm2
     return aux[:-1][aux[1:] == aux[:-1]]
 
 def setxor1d(ar1, ar2, assume_unique=False):
@@ -660,38 +684,4 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
-def commonpts1d(arr1,arr2):
-    '''
-    Find the indices of points that are common among two arrays. 
-    
-    Return the indices for the common points in both arrays.
-    
-    Parameters
-    ----------
-    arr1,arr2 : array_like
-    
-    Returns
-    -------
-    commvals : ndarray
-        Result from np.intersect1d on arr1,arr2
-    comm1 : ndarry
-        Indices for common points in first array.
-    comm2 : ndarray
-        Indices for common points in second array
-    
-    Examples
-    --------
-    >>> commonpts1d([1,2,3,4],[2,1,4,6])
-    (array(1,2,4),array([0,1,3]),array([1,0,2]))
-    '''
-    first = []
-    second =[]
-    commvals = np.intersect1d(arr1,arr2)
-    for i in range(len(commvals)):
-        val1 = np.where(arr1 == commvals[i])[0][0]
-        val2 = np.where(arr2 == commvals[i])[0][0]
-        first.append(val1)
-        second.append(val2) #shouldn't happen
-    comm1 =np.reshape(np.array(first),-1)
-    comm2 = np.reshape(np.array(second),-1)
-    return commvals,comm1,comm2
+
