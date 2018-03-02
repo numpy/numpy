@@ -360,8 +360,8 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         val2 = np.where(arr2 == commvals[i])[0][0]
         first.append(val1)
         second.append(val2)
-      comm1 =np.reshape(np.array(first),-1)
-      comm2 = np.reshape(np.array(second),-1)111
+      comm1 = np.reshape(np.array(first),-1)
+      comm2 = np.reshape(np.array(second),-1)
       return aux[:-1][aux[1:] == aux[:-1]],comm1,comm2
     return aux[:-1][aux[1:] == aux[:-1]]
 
