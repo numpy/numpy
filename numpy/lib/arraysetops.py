@@ -351,19 +351,13 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         ar2 = unique(ar2)
     aux = np.concatenate((ar1, ar2))
     aux.sort()
+    int1d = aux[:-1][aux[1:] == aux[:-1]]
+
     if return_indices:
-      first = []
-      second =[]
-      commvals = np.intersect1d(arr1,arr2)
-      for i in range(len(commvals)):
-        val1 = np.where(arr1 == commvals[i])[0][0]
-        val2 = np.where(arr2 == commvals[i])[0][0]
-        first.append(val1)
-        second.append(val2)
-      comm1 = np.reshape(np.array(first),-1)
-      comm2 = np.reshape(np.array(second),-1)
-      return aux[:-1][aux[1:] == aux[:-1]],comm1,comm2
-    return aux[:-1][aux[1:] == aux[:-1]]
+      a_inds, = np.in1d(ar1,int1d).nonzero()
+      b_inds, = np.in1d(ar2,int1d).nonzero()
+      return int1d,a_inds,b_inds
+    return int1d
 
 def setxor1d(ar1, ar2, assume_unique=False):
     """
