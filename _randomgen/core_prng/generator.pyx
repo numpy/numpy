@@ -10,6 +10,7 @@ except ImportError:
     from dummy_threading import Lock
 
 from core_prng.splitmix64 import SplitMix64
+import core_prng.pickle
 
 np.import_array()
 
@@ -49,6 +50,18 @@ cdef class RandomGenerator:
             raise ValueError("Invalid pointer to anon_func_state")
         self._prng = <prng_t *>PyCapsule_GetPointer(capsule, anon_name)
         self.lock = Lock()
+
+    # Pickling support:
+    def __getstate__(self):
+        return self.state
+
+    def __setstate__(self, state):
+        self.state = state
+
+    def __reduce__(self):
+        return (core_prng.pickle.__generator_ctor,
+                (self.state['prng'],),
+                self.state)
 
     @property
     def state(self):
