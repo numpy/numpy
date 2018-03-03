@@ -14,16 +14,16 @@ np.import_array()
 
 cdef extern from "src/xoroshiro128/xoroshiro128.h":
 
-    cdef struct s_xoroshiro128_state:
+    struct s_xoroshiro128_state:
       uint64_t s[2]
       int has_uint32
       uint32_t uinteger
 
     ctypedef s_xoroshiro128_state xoroshiro128_state
 
-    cdef uint64_t xoroshiro128_next64(xoroshiro128_state *state)  nogil
-    cdef uint64_t xoroshiro128_next32(xoroshiro128_state *state)  nogil
-    cdef void xoroshiro128_jump(xoroshiro128_state  *state)
+    uint64_t xoroshiro128_next64(xoroshiro128_state *state)  nogil
+    uint64_t xoroshiro128_next32(xoroshiro128_state *state)  nogil
+    void xoroshiro128_jump(xoroshiro128_state  *state)
 
 cdef uint64_t xoroshiro128_uint64(void* st):# nogil:
     return xoroshiro128_next64(<xoroshiro128_state *>st)

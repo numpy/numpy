@@ -13,15 +13,15 @@ cimport entropy
 np.import_array()
 
 cdef extern from "src/splitmix64/splitmix64.h":
-    cdef struct s_splitmix64_state:
+    struct s_splitmix64_state:
         uint64_t state
         int has_uint32
         uint32_t uinteger
 
     ctypedef s_splitmix64_state splitmix64_state
 
-    cdef uint64_t splitmix64_next64(splitmix64_state *state)  nogil
-    cdef uint32_t splitmix64_next32(splitmix64_state *state)  nogil
+    uint64_t splitmix64_next64(splitmix64_state *state)  nogil
+    uint32_t splitmix64_next32(splitmix64_state *state)  nogil
 
 cdef uint64_t splitmix64_uint64(void *st) nogil:
     return splitmix64_next64(<splitmix64_state *> st)

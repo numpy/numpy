@@ -14,17 +14,17 @@ np.import_array()
 
 cdef extern from "src/mt19937/mt19937.h":
 
-    cdef struct s_mt19937_state:
+    struct s_mt19937_state:
         uint32_t key[624]
         int pos
 
     ctypedef s_mt19937_state mt19937_state
 
-    cdef uint64_t mt19937_next64(mt19937_state *state)  nogil
-    cdef uint32_t mt19937_next32(mt19937_state *state)  nogil
-    cdef double mt19937_next_double(mt19937_state *state)  nogil
-    cdef void mt19937_init_by_array(mt19937_state *state, uint32_t *init_key, int key_length)
-    cdef void mt19937_seed(mt19937_state *state, uint32_t seed)
+    uint64_t mt19937_next64(mt19937_state *state)  nogil
+    uint32_t mt19937_next32(mt19937_state *state)  nogil
+    double mt19937_next_double(mt19937_state *state)  nogil
+    void mt19937_init_by_array(mt19937_state *state, uint32_t *init_key, int key_length)
+    void mt19937_seed(mt19937_state *state, uint32_t seed)
 
 cdef uint64_t mt19937_uint64(void *st) nogil:
     return mt19937_next64(<mt19937_state *> st)

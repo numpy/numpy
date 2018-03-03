@@ -18,5 +18,6 @@
    * standard gamma float
 7. Remove SplitMix64 as an external generator
 8. Restore ability to use `out` in core distributions
-9. Add correct carry for ThreeFry to allow full set of counters.  Important when implmenting jump
 
+## Done
+9. Add correct carry for ThreeFry to allow full set of counters.  Important when implemeting jump

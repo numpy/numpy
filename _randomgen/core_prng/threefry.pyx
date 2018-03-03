@@ -1,4 +1,3 @@
-from libc.stdint cimport uint32_t, uint64_t
 from libc.stdlib cimport malloc, free
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -13,8 +12,7 @@ cimport entropy
 np.import_array()
 
 cdef extern from "src/threefry/threefry.h":
-
-    cdef struct s_r123array4x64:
+    struct s_r123array4x64:
         uint64_t v[4]
 
     ctypedef s_r123array4x64 r123array4x64
@@ -22,7 +20,7 @@ cdef extern from "src/threefry/threefry.h":
     ctypedef r123array4x64 threefry4x64_key_t
     ctypedef r123array4x64 threefry4x64_ctr_t
 
-    cdef struct s_threefry_state:
+    struct s_threefry_state:
         threefry4x64_key_t *ctr;
         threefry4x64_ctr_t *key;
         int buffer_pos;
@@ -32,8 +30,10 @@ cdef extern from "src/threefry/threefry.h":
 
     ctypedef s_threefry_state threefry_state
 
-    cdef uint64_t threefry_next64(threefry_state *state)  nogil
-    cdef uint64_t threefry_next32(threefry_state *state)  nogil
+    uint64_t threefry_next64(threefry_state *state)  nogil
+    uint64_t threefry_next32(threefry_state *state)  nogil
+    void threefry_jump(threefry_state *state)
+    void threefry_advance(uint64_t *step, threefry_state *state)
 
 
 cdef uint64_t threefry_uint64(void* st) nogil:
@@ -196,3 +196,19 @@ cdef class ThreeFry:
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
         self.rng_state.buffer_pos = value['buffer_pos']
+
+    def jump(self):
+        """Jump the state as-if 2**128 draws have been made"""
+        threefry_jump(self.rng_state)
+
+    def advance(self, step):
+        """Advance the state as-if a specific number of draws have been made"""
+        cdef np.ndarray step_a = np.zeros(4,dtype=np.uint64)
+        if step >= 2**256 or step < 0:
+            raise ValueError('step must be between 0 and 2**256-1')
+        loc = 0
+        while step > 0:
+            step_a[loc] = step % 2**64
+            step >>= 64
+            loc += 1
+        threefry_advance(<uint64_t *>step_a.data, self.rng_state)
