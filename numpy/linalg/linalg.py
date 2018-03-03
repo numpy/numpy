@@ -2302,6 +2302,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
             raise TypeError("'axis' must be None, an integer or a tuple of integers")
         axis = (axis,)
 
+    #Deals with the edge case where if the ord is infinite and empty then the function does not output 0 as it should for any empty array.     
+    if x.size == 0:
+        return 0     
+
     if len(axis) == 1:
         if ord == Inf:
             return abs(x).max(axis=axis, keepdims=keepdims)
@@ -2367,7 +2371,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         return ret
     else:
         raise ValueError("Improper number of dimensions to norm.")
-
+          
 
 # multi_dot
 
