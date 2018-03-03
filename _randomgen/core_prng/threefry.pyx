@@ -90,7 +90,6 @@ cdef class ThreeFry:
                 (self.state['prng'],),
                 self.state)
 
-
     def __dealloc__(self):
         free(self.rng_state.ctr)
         free(self.rng_state.key)
@@ -174,7 +173,7 @@ cdef class ThreeFry:
             ctr[i] = self.rng_state.ctr.v[i]
             key[i] = self.rng_state.key.v[i]
             buffer[i] = self.rng_state.buffer[i]
-        state = {'ctr':ctr,'k':key}
+        state = {'ctr':ctr,'key':key}
         return {'prng': self.__class__.__name__,
                 'state': state,
                 'buffer': buffer,
@@ -193,7 +192,7 @@ cdef class ThreeFry:
         for i in range(4):
             self.rng_state.ctr.v[i] = <uint64_t>value['state']['ctr'][i]
             self.rng_state.key.v[i] = <uint64_t>value['state']['key'][i]
-            self.rng_state.buffer[i] = <uint64_t>value['state']['buffer'][i]
+            self.rng_state.buffer[i] = <uint64_t>value['buffer'][i]
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
         self.rng_state.buffer_pos = value['buffer_pos']
