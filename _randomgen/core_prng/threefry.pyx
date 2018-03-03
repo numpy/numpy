@@ -7,6 +7,7 @@ cimport numpy as np
 
 from common cimport *
 from core_prng.entropy import random_entropy
+import core_prng.pickle
 cimport entropy
 
 np.import_array()
@@ -76,6 +77,19 @@ cdef class ThreeFry:
 
         cdef const char *name = "CorePRNG"
         self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+
+    # Pickling support:
+    def __getstate__(self):
+        return self.state
+
+    def __setstate__(self, state):
+        self.state = state
+
+    def __reduce__(self):
+        return (core_prng.pickle.__prng_ctor,
+                (self.state['prng'],),
+                self.state)
+
 
     def __dealloc__(self):
         free(self.rng_state.ctr)

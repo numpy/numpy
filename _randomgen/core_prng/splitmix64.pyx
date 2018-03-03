@@ -7,6 +7,7 @@ cimport numpy as np
 
 from common cimport *
 from core_prng.entropy import random_entropy
+import core_prng.pickle
 cimport entropy
 
 np.import_array()
@@ -65,6 +66,19 @@ cdef class SplitMix64:
     def __dealloc__(self):
         free(self.rng_state)
         free(self._prng)
+
+    # Pickling support:
+    def __getstate__(self):
+        return self.state
+
+    def __setstate__(self, state):
+        self.state = state
+
+    def __reduce__(self):
+        return (core_prng.pickle.__prng_ctor,
+                (self.state['prng'],),
+                self.state)
+
 
     def _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
