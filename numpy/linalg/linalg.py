@@ -24,7 +24,7 @@ from numpy.core import (
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, object_, ones, matmul,
-    swapaxes, divide, count_nonzero, ndarray, isnan
+    swapaxes, divide, count_nonzero, ndarray, isnan, prod
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
