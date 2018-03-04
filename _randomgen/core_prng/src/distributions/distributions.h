@@ -20,6 +20,27 @@ typedef int bool;
 typedef double (*random_double_0)(void *st);
 typedef float (*random_float_0)(void *st);
 
+typedef struct s_binomial_t
+{
+    int has_binomial; /* !=0: following parameters initialized for binomial */
+    double psave;
+    long nsave;
+    double r;
+    double q;
+    double fm;
+    long m;
+    double p1;
+    double xm;
+    double xl;
+    double xr;
+    double c;
+    double laml;
+    double lamr;
+    double p2;
+    double p3;
+    double p4;
+} binomial_t;
+
 typedef struct prng {
   void *state;
   uint64_t (*next_uint64)(void *st);
@@ -29,6 +50,7 @@ typedef struct prng {
   double gauss;
   int has_gauss_f;
   float gauss_f;
+  binomial_t *binomial;
 } prng_t;
 
 float random_float(prng_t *prng_state);

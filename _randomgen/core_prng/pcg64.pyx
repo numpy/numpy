@@ -33,6 +33,7 @@ cdef extern from "src/pcg64/pcg64.h":
     uint64_t pcg64_next64(pcg64_state *state)  nogil
     uint64_t pcg64_next32(pcg64_state *state)  nogil
     void pcg64_jump(pcg64_state  *state)
+    void pcg64_advance(pcg64_state *state, uint64_t *step)
 
 
 cdef uint64_t pcg64_uint64(void* st):# nogil:
@@ -62,19 +63,17 @@ cdef class PCG64:
     cdef prng_t *_prng
     cdef public object _prng_capsule
 
-    def __init__(self, seed=None):
+    def __init__(self, seed=None, inc=1):
         self.rng_state = <pcg64_state *>malloc(sizeof(pcg64_state))
         self.rng_state.pcg_state = <pcg64_random_t *>malloc(sizeof(pcg64_random_t))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-        self.seed(seed)
+        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
+        self.seed(seed, inc)
 
         self._prng.state = <void *>self.rng_state
         self._prng.next_uint64 = &pcg64_uint64
         self._prng.next_uint32 = &pcg64_uint32
         self._prng.next_double = &pcg64_double
-
-        self.rng_state.pcg_state.inc.high = 0
-        self.rng_state.pcg_state.inc.low = 1
 
         cdef const char *name = "CorePRNG"
         self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
@@ -93,6 +92,7 @@ cdef class PCG64:
 
     def __dealloc__(self):
         free(self.rng_state)
+        free(self._prng.binomial)
         free(self._prng)
 
     def _reset_state_variables(self):
@@ -124,7 +124,7 @@ cdef class PCG64:
         else:
             raise ValueError('bits must be 32 or 64')
 
-    def seed(self, seed=None):
+    def seed(self, seed=None, inc=1):
         """
         seed(seed=None, stream=None)
 
@@ -138,6 +138,8 @@ cdef class PCG64:
         ----------
         seed : int, optional
             Seed for ``RandomState``.
+        inc : int, optional
+            Increment to use for PCG stream
 
         Raises
         ------
@@ -156,6 +158,8 @@ cdef class PCG64:
             state = entropy.seed_by_array(seed, 2)
         self.rng_state.pcg_state.state.high = <uint64_t>int(state[0])
         self.rng_state.pcg_state.state.low = <uint64_t>int(state[1])
+        self.rng_state.pcg_state.inc.high = inc // 2**64
+        self.rng_state.pcg_state.inc.low = inc % 2**64
         self._reset_state_variables()
 
     @property
@@ -186,3 +190,13 @@ cdef class PCG64:
         self.rng_state.pcg_state.inc.low = value['state']['inc'] % 2 ** 64
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
+
+    def advance(self, step):
+        cdef np.ndarray delta = np.empty(2,dtype=np.uint64)
+        delta[0] = step // 2**64
+        delta[1] = step % 2**64
+        pcg64_advance(self.rng_state, <uint64_t *>delta.data)
+        return self
+
+    def jump(self):
+        return self.advance(2**64)

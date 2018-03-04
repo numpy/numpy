@@ -55,6 +55,7 @@ cdef class Xoroshiro128:
     def __init__(self, seed=None):
         self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
+        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
@@ -79,6 +80,7 @@ cdef class Xoroshiro128:
 
     def __dealloc__(self):
         free(self.rng_state)
+        free(self._prng.binomial)
         free(self._prng)
 
     def _reset_state_variables(self):
@@ -146,6 +148,7 @@ cdef class Xoroshiro128:
 
     def jump(self):
         xoroshiro128_jump(self.rng_state)
+        return self
 
     @property
     def state(self):
