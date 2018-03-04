@@ -346,8 +346,6 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     cont = 0
     finalline = ''
     ll = ''
-    commentline = re.compile(
-        r'(?P<line>([^"]*["][^"]*["][^"!]*|[^\']*\'[^\']*\'[^\'!]*|[^!\'"]*))!{1}(?P<rest>.*)')
     includeline = re.compile(
         r'\s*include\s*(\'|")(?P<name>[^\'"]*)(\'|")', re.I)
     cont1 = re.compile(r'(?P<line>.*)&\s*\Z')
@@ -391,17 +389,10 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 break
             l = l[:-1]
         if not strictf77:
-            r = commentline.match(l)
-            if r:
-                l = r.group('line') + ' '  # Strip comments starting with `!'
-                rl = r.group('rest')
-                if rl[:4].lower() == 'f2py':  # f2py directive
-                    l = l + 4 * ' '
-                    r = commentline.match(rl[4:])
-                    if r:
-                        l = l + r.group('line')
-                    else:
-                        l = l + rl[4:]
+            (l, rl) = split_by_unquoted(l, '!')
+            l += ' '
+            if rl[:5].lower() == '!f2py':  # f2py directive
+                l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
         if l.strip() == '':  # Skip empty line
             cont = 0
             continue
@@ -618,6 +609,25 @@ multilinepattern = re.compile(
     r"\s*(?P<before>''')(?P<this>.*?)(?P<after>''')\s*\Z", re.S), 'multiline'
 ##
 
+def split_by_unquoted(line, characters):
+    """
+    Splits the line into (line[:i], line[i:]),
+    where i is the index of first occurence of one of the characters
+    not within quotes, or len(line) if no such index exists
+    """
+    assert not (set('"\'') & set(characters)), "cannot split by unquoted quotes"
+    r = re.compile(
+        r"\A(?P<before>({single_quoted}|{double_quoted}|{not_quoted})*)"
+        r"(?P<after>{char}.*)\Z".format(
+            not_quoted="[^\"'{}]".format(re.escape(characters)),
+            char="[{}]".format(re.escape(characters)),
+            single_quoted=r"('([^'\\]|(\\.))*')",
+            double_quoted=r'("([^"\\]|(\\.))*")'))
+    m = r.match(line)
+    if m:
+        d = m.groupdict()
+        return (d["before"], d["after"])
+    return (line, "")
 
 def _simplifyargs(argsline):
     a = []
@@ -642,12 +652,16 @@ def crackline(line, reset=0):
     global filepositiontext, currentfilename, neededmodule, expectbegin
     global skipblocksuntil, skipemptyends, previous_context, gotnextfile
 
-    if ';' in line and not (f2pyenhancementspattern[0].match(line) or
-                            multilinepattern[0].match(line)):
-        for l in line.split(';'):
-            # XXX: non-zero reset values need testing
-            assert reset == 0, repr(reset)
-            crackline(l, reset)
+    line, semicolon_line = split_by_unquoted(line, ";")
+    if semicolon_line and not (f2pyenhancementspattern[0].match(line) or
+                               multilinepattern[0].match(line)):
+        # XXX: non-zero reset values need testing
+        assert reset == 0, repr(reset)
+        # split line on unquoted semicolons
+        while semicolon_line:
+            crackline(line, reset)
+            line, semicolon_line = split_by_unquoted(semicolon_line[1:], ";")
+        crackline(line, reset)
         return
     if reset < 0:
         groupcounter = 0
@@ -802,25 +816,21 @@ def markouterparen(line):
 def markoutercomma(line, comma=','):
     l = ''
     f = 0
-    cc = ''
-    for c in line:
-        if (not cc or cc == ')') and c == '(':
-            f = f + 1
-            cc = ')'
-        elif not cc and c == '\'' and (not l or l[-1] != '\\'):
-            f = f + 1
-            cc = '\''
-        elif c == cc:
-            f = f - 1
-            if f == 0:
-                cc = ''
-        elif c == comma and f == 0:
-            l = l + '@' + comma + '@'
-            continue
-        l = l + c
-    assert not f, repr((f, line, l, cc))
+    before, after = split_by_unquoted(line, comma + '()')
+    l += before
+    while after:
+        if (after[0] == comma) and (f == 0):
+            l += '@' + comma + '@'
+        else:
+            l += after[0]
+            if after[0] == '(':
+                f += 1
+            elif after[0] == ')':
+                f -= 1
+        before, after = split_by_unquoted(after[1:], comma + '()')
+        l += before
+    assert not f, repr((f, line, l))
     return l
-
 
 def unmarkouterparen(line):
     r = line.replace('@(@', '(').replace('@)@', ')')
