@@ -2,6 +2,7 @@ import numpy as np
 cimport numpy as np
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from common cimport *
+from libc.stdlib cimport malloc, free
 
 cimport numpy as np
 import numpy as np

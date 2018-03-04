@@ -55,6 +55,7 @@ cdef class XorShift1024:
     def __init__(self, seed=None):
         self.rng_state = <xorshift1024_state *>malloc(sizeof(xorshift1024_state))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
+        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
@@ -79,6 +80,7 @@ cdef class XorShift1024:
 
     def __dealloc__(self):
         free(self.rng_state)
+        free(self._prng.binomial)
         free(self._prng)
 
     def _reset_state_variables(self):
@@ -104,9 +106,9 @@ cdef class XorShift1024:
         Testing only
         """
         if bits == 64:
-            return xorshift1024_next64(self.rng_state)
+            return self._prng.next_uint64(self._prng.state)
         elif bits == 32:
-            return xorshift1024_next32(self.rng_state)
+            return self._prng.next_uint32(self._prng.state)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -147,6 +149,7 @@ cdef class XorShift1024:
 
     def jump(self):
         xorshift1024_jump(self.rng_state)
+        return self
 
     @property
     def state(self):

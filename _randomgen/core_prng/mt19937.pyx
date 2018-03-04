@@ -56,6 +56,7 @@ cdef class MT19937:
     def __init__(self, seed=None):
         self.rng_state = <mt19937_state *>malloc(sizeof(mt19937_state))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
+        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
@@ -68,6 +69,7 @@ cdef class MT19937:
 
     def __dealloc__(self):
         free(self.rng_state)
+        free(self._prng.binomial)
         free(self._prng)
 
     # Pickling support:
@@ -82,9 +84,14 @@ cdef class MT19937:
                 (self.state['prng'],),
                 self.state)
 
-    def __random_integer(self):
+    def __random_integer(self, bits=64):
         """
         64-bit Random Integers from the PRNG
+
+        Parameters
+        ----------
+        bits : {32, 64}
+            Number of random bits to return
 
         Returns
         -------
@@ -95,7 +102,12 @@ cdef class MT19937:
         -----
         Testing only
         """
-        return mt19937_next64(self.rng_state)
+        if bits == 64:
+            return self._prng.next_uint64(self._prng.state)
+        elif bits == 32:
+            return self._prng.next_uint32(self._prng.state)
+        else:
+            raise ValueError('bits must be 32 or 64')
 
     def seed(self, seed=None):
         """

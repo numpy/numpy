@@ -235,3 +235,9 @@ static inline uint32_t pcg64_next32(pcg64_state *state) {
   state->uinteger = (uint32_t)(next & 0xffffffff);
   return (uint32_t)(next >> 32);
 }
+
+#if __SIZEOF_INT128__ && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
+void pcg64_advance(pcg64_state *state, pcg128_t step);
+#else
+void pcg64_advance(pcg64_state *state, uint64_t *step);
+#endif

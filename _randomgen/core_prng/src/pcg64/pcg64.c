@@ -90,3 +90,16 @@ pcg128_t pcg_advance_lcg_128(pcg128_t state, pcg128_t delta, pcg128_t cur_mult,
 
 extern inline uint64_t pcg64_next64(pcg64_state *state);
 extern inline uint32_t pcg64_next32(pcg64_state *state);
+
+#if __SIZEOF_INT128__ && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
+extern void pcg64_advance(pcg64_state *state, pcg128_t step) {
+    pcg64_advance_r(state->pcg_state, step);
+}
+#else
+extern void pcg64_advance(pcg64_state *state, uint64_t *step) {
+    pcg128_t delta;
+    delta.high = step[0];
+    delta.low = step[1];
+    pcg64_advance_r(state->pcg_state, delta);
+}
+#endif

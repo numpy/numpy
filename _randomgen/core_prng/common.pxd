@@ -5,6 +5,27 @@ cdef extern from "src/distributions/distributions.h":
 
     ctypedef float (*random_float_0)(void *st) nogil
 
+    cdef struct s_binomial_t:
+        int has_binomial;
+        double psave;
+        long nsave;
+        double r;
+        double q;
+        double fm;
+        long m;
+        double p1;
+        double xm;
+        double xl;
+        double xr;
+        double c;
+        double laml;
+        double lamr;
+        double p2;
+        double p3;
+        double p4;
+
+    ctypedef s_binomial_t binomial_t
+
     cdef struct prng:
         void *state
         uint64_t (*next_uint64)(void *st)
@@ -14,6 +35,7 @@ cdef extern from "src/distributions/distributions.h":
         double gauss
         int has_gauss_f
         float gauss_f
+        binomial_t *binomial
 
     ctypedef prng prng_t
 
