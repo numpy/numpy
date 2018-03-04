@@ -194,11 +194,6 @@ def _assertRank2(*arrays):
             raise LinAlgError('%d-dimensional array given. Array must be '
                     'two-dimensional' % a.ndim)
 
-def _assertRank3(*arrays):
-    for a in arrays:
-        if a.ndim != 3:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'three-dimensional' % a.ndim)
 
 def _assertRankAtLeast2(*arrays):
     for a in arrays:
