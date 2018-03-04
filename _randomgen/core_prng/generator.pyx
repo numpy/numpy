@@ -1,9 +1,14 @@
-from libc.stdint cimport uint64_t, uint32_t
 import numpy as np
 cimport numpy as np
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from common cimport *
-cimport common
+
+cimport numpy as np
+import numpy as np
+from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
+
+from common cimport *
+
 try:
     from threading import Lock
 except ImportError:
@@ -15,10 +20,13 @@ import core_prng.pickle
 np.import_array()
 
 cdef extern from "src/distributions/distributions.h":
-    double random_double(void *void_state) nogil
-    float random_float(void *void_state) nogil
-    uint32_t random_uint32(void *void_state) nogil
-    double random_standard_exponential(void *void_state) nogil
+    double random_double(prng_t *prng_state) nogil
+    float random_float(prng_t *prng_state) nogil
+    uint32_t random_uint32(prng_t *prng_state) nogil
+    double random_standard_exponential(prng_t *prng_state) nogil
+    float random_standard_exponential_float(prng_t *prng_state) nogil
+    double random_gauss(prng_t *prng_state)
+    float random_gauss_float(prng_t *prng_state)
 
 cdef class RandomGenerator:
     """
@@ -48,8 +56,11 @@ cdef class RandomGenerator:
         cdef const char *anon_name = "CorePRNG"
         if not PyCapsule_IsValid(capsule, anon_name):
             raise ValueError("Invalid pointer to anon_func_state")
-        self._prng = <prng_t *>PyCapsule_GetPointer(capsule, anon_name)
+        self._prng = <prng_t *> PyCapsule_GetPointer(capsule, anon_name)
         self.lock = Lock()
+        with self.lock:
+            self._prng.has_gauss = 0
+            self._prng.has_gauss_f = 0
 
     # Pickling support:
     def __getstate__(self):
@@ -66,25 +77,34 @@ cdef class RandomGenerator:
     @property
     def state(self):
         """Get or set the underlying PRNG's state"""
-        return self.__core_prng.state
+        state = self.__core_prng.state
+        state['has_gauss'] = self._prng.has_gauss
+        state['has_gauss_f'] = self._prng.has_gauss_f
+        state['gauss'] = self._prng.gauss
+        state['gauss_f'] = self._prng.gauss_f
+        return state
 
     @state.setter
     def state(self, value):
+        self._prng.has_gauss = value['has_gauss']
+        self._prng.has_gauss_f = value['has_gauss_f']
+        self._prng.gauss = value['gauss']
+        self._prng.gauss_f = value['gauss_f']
         self.__core_prng.state = value
 
     def random_integer(self, bits=64):
         #print("In random_integer")
-        if bits==64:
+        if bits == 64:
             return self._prng.next_uint64(self._prng.state)
-        elif bits==32:
+        elif bits == 32:
             return random_uint32(self._prng)
         else:
             raise ValueError('bits must be 32 or 64')
 
     def random_double(self, bits=64):
-        if bits==64:
+        if bits == 64:
             return self._prng.next_double(self._prng.state)
-        elif bits==32:
+        elif bits == 32:
             return random_float(self._prng)
         else:
             raise ValueError('bits must be 32 or 64')
@@ -143,7 +163,6 @@ cdef class RandomGenerator:
         else:
             raise TypeError('Unsupported dtype "%s" for random_sample' % key)
 
-
     def standard_exponential(self, size=None, dtype=np.float64):
         """
         standard_exponential(size=None, dtype='d', method='inv', out=None)
@@ -179,7 +198,66 @@ cdef class RandomGenerator:
         if key == 'float64':
             return double_fill(&random_standard_exponential, self._prng, size, self.lock)
         elif key == 'float32':
-            return float_fill_from_double(&random_standard_exponential, self._prng, size, self.lock)
+            return float_fill(&random_standard_exponential_float, self._prng, size, self.lock)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
+
+    # Complicated, continuous distributions:
+    def standard_normal(self, size=None, dtype=np.float64, method='bm'):
+        """
+        standard_normal(size=None, dtype='d', method='bm', out=None)
+
+        Draw samples from a standard Normal distribution (mean=0, stdev=1).
+
+        Parameters
+        ----------
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  Default is None, in which case a
+            single value is returned.
+        dtype : {str, dtype}, optional
+            Desired dtype of the result, either 'd' (or 'float64') or 'f'
+            (or 'float32'). All dtypes are determined by their name. The
+            default value is 'd'.
+        method : str, optional
+            Either 'bm' or 'zig'. 'bm' uses the default Box-Muller transformations
+            method.  'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
+        out : ndarray, optional
+            Alternative output array in which to place the result. If size is not None,
+            it must have the same shape as the provided size and must match the type of
+            the output values.
+
+        Returns
+        -------
+        out : float or ndarray
+            Drawn samples.
+
+        Examples
+        --------
+        >>> s = np.random.standard_normal(8000)
+        >>> s
+        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311, #random
+               -0.38672696, -0.4685006 ])                               #random
+        >>> s.shape
+        (8000,)
+        >>> s = np.random.standard_normal(size=(3, 4, 2))
+        >>> s.shape
+        (3, 4, 2)
+
+        """
+        key = np.dtype(dtype).name
+        if key == 'float64':
+            if method == u'zig':
+                raise NotImplementedError
+                #return double_fill(&self.rng_state, &random_gauss_zig_double_fill, size, self.lock, out)
+            else:
+                return double_fill(&random_gauss, self._prng, size, self.lock)
+        elif key == 'float32':
+            if method == u'zig':
+                raise NotImplementedError
+                #return float_fill(&self.rng_state, &random_gauss_zig_float_fill, size, self.lock, out)
+            else:
+                return float_fill(&random_gauss_float, self._prng, size, self.lock)
+        else:
+            raise TypeError('Unsupported dtype "%s" for standard_normal' % key)

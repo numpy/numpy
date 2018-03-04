@@ -6,10 +6,14 @@ cdef extern from "src/distributions/distributions.h":
     ctypedef float (*random_float_0)(void *st) nogil
 
     cdef struct prng:
-      void *state
-      uint64_t (*next_uint64)(void *st)
-      uint32_t (*next_uint32)(void *st)
-      double (*next_double)(void *st)
+        void *state
+        uint64_t (*next_uint64)(void *st)
+        uint32_t (*next_uint32)(void *st)
+        double (*next_double)(void *st)
+        int has_gauss
+        double gauss
+        int has_gauss_f
+        float gauss_f
 
     ctypedef prng prng_t
 

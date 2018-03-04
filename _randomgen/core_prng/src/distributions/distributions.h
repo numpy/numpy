@@ -15,6 +15,7 @@ typedef int bool;
 #endif
 
 #include <math.h>
+#include "numpy/npy_common.h"
 
 typedef double (*random_double_0)(void *st);
 typedef float (*random_float_0)(void *st);
@@ -24,6 +25,10 @@ typedef struct prng {
   uint64_t (*next_uint64)(void *st);
   uint32_t (*next_uint32)(void *st);
   double (*next_double)(void *st);
+  int has_gauss;
+  double gauss;
+  int has_gauss_f;
+  float gauss_f;
 } prng_t;
 
 float random_float(prng_t *prng_state);
@@ -33,3 +38,11 @@ double random_double(prng_t *prng_state);
 uint32_t random_uint32(prng_t *prng_state);
 
 double random_standard_exponential(prng_t *prng_state);
+
+float random_standard_exponential_float(prng_t *prng_state);
+
+double random_gauss(prng_t *prng_state);
+
+float random_gauss_float(prng_t *prng_state);
+
+double random_standard_exponential_zig_double(prng_t *prng_state);

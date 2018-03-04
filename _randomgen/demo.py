@@ -1,6 +1,6 @@
 from core_prng.generator import RandomGenerator
 
-from core_prng import SplitMix64, Xoroshiro128, ThreeFry, MT19937
+from core_prng import SplitMix64, Xoroshiro128, ThreeFry, MT19937, XorShift1024
 
 print(RandomGenerator().random_integer())
 print(RandomGenerator(Xoroshiro128()).random_integer())
@@ -48,3 +48,8 @@ rg.state = state
 print(rg.random_integer())
 print(rg.random_integer(32))
 print(rg.random_sample())
+
+rg = RandomGenerator(XorShift1024())
+state = rg.state
+print(state)
+rg.state = state
