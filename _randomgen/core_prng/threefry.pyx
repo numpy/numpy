@@ -2,7 +2,6 @@ from libc.stdlib cimport malloc, free
 from cpython.pycapsule cimport PyCapsule_New
 
 import numpy as np
-cimport numpy as np
 
 from common cimport *
 from core_prng.entropy import random_entropy
@@ -11,7 +10,7 @@ cimport entropy
 
 np.import_array()
 
-cdef extern from "src/threefry/threefry.h":
+cdef extern from 'src/threefry/threefry.h':
     struct s_r123array4x64:
         uint64_t v[4]
 
@@ -63,20 +62,20 @@ cdef class ThreeFry:
     cdef prng_t *_prng
     cdef public object _prng_capsule
 
-    def __init__(self, seed=None):
+    def __init__(self, seed=None, counter=None, key=None):
         self.rng_state = <threefry_state *>malloc(sizeof(threefry_state))
         self.rng_state.ctr = <threefry4x64_ctr_t *>malloc(sizeof(threefry4x64_ctr_t))
         self.rng_state.key = <threefry4x64_key_t *>malloc(sizeof(threefry4x64_key_t))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
         self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
-        self.seed(seed)
+        self.seed(seed, counter, key)
 
         self._prng.state = <void *>self.rng_state
         self._prng.next_uint64 = &threefry_uint64
         self._prng.next_uint32 = &threefry_uint32
         self._prng.next_double = &threefry_double
 
-        cdef const char *name = "CorePRNG"
+        cdef const char *name = 'CorePRNG'
         self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     # Pickling support:
@@ -135,9 +134,9 @@ cdef class ThreeFry:
         for i in range(cnt):
             self._prng.next_uint64(self._prng.state)
 
-    def seed(self, seed=None):
+    def seed(self, seed=None, counter=None, key=None):
         """
-        seed(seed=None, stream=None)
+        seed(seed=None, counter=None, key=None)
 
         Seed the generator.
 
@@ -149,25 +148,47 @@ cdef class ThreeFry:
         ----------
         seed : int, optional
             Seed for ``RandomState``.
+        counter : {int array}, optional
+            Positive integer less than 2**256 containing the counter position
+            or a 4 element array of uint64 containing the counter
+        key : {int, array}, options
+            Positive integer less than 2**256 containing the key
+            or a 4 element array of uint64 containing the key
 
         Raises
         ------
         ValueError
-            If seed values are out of range for the PRNG.
+            If values are out of range for the PRNG.
+
+        Notes
+        -----
+        The two representation of the counter and key are related through
+        array[i] = (value // 2**(64*i)) % 2**64.
         """
+        if seed is not None and key is not None:
+            raise ValueError('seed and key cannot be both used')
         ub =  2 ** 64
-        if seed is None:
-            try:
-                state = random_entropy(8)
-            except RuntimeError:
-                state = random_entropy(8, 'fallback')
-            state = state.view(np.uint64)
+        if key is None:
+            if seed is None:
+                try:
+                    state = random_entropy(8)
+                except RuntimeError:
+                    state = random_entropy(8, 'fallback')
+                state = state.view(np.uint64)
+            else:
+                state = entropy.seed_by_array(seed, 4)
+            for i in range(4):
+                self.rng_state.key.v[i] = state[i]
         else:
-            state = entropy.seed_by_array(seed, 4)
-        # TODO: Need to be able to set the key and counter directly
+            key = int_to_array(key, 'key', 256)
+            for i in range(4):
+                self.rng_state.key.v[i] = key[i]
+
+        counter = 0 if counter is None else counter
+        counter = int_to_array(counter, 'counter', 256)
         for i in range(4):
-            self.rng_state.ctr.v[i] = 0
-            self.rng_state.key.v[i] = state[i]
+            self.rng_state.ctr.v[i] = counter[i]
+
         self._reset_state_variables()
 
     @property
@@ -180,7 +201,7 @@ cdef class ThreeFry:
             ctr[i] = self.rng_state.ctr.v[i]
             key[i] = self.rng_state.key.v[i]
             buffer[i] = self.rng_state.buffer[i]
-        state = {'ctr':ctr,'key':key}
+        state = {'counter':ctr,'key':key}
         return {'prng': self.__class__.__name__,
                 'state': state,
                 'buffer': buffer,
@@ -197,7 +218,7 @@ cdef class ThreeFry:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
         for i in range(4):
-            self.rng_state.ctr.v[i] = <uint64_t>value['state']['ctr'][i]
+            self.rng_state.ctr.v[i] = <uint64_t>value['state']['counter'][i]
             self.rng_state.key.v[i] = <uint64_t>value['state']['key'][i]
             self.rng_state.buffer[i] = <uint64_t>value['buffer'][i]
         self.rng_state.has_uint32 = value['has_uint32']
@@ -206,17 +227,12 @@ cdef class ThreeFry:
 
     def jump(self):
         """Jump the state as-if 2**128 draws have been made"""
-        threefry_jump(self.rng_state)
-        return self
+        return self.advance(2**128)
 
     def advance(self, step):
         """Advance the state as-if a specific number of draws have been made"""
-        cdef np.ndarray step_a = np.zeros(4,dtype=np.uint64)
-        if step >= 2**256 or step < 0:
-            raise ValueError('step must be between 0 and 2**256-1')
+        cdef np.ndarray step_a
+        step_a = int_to_array(step, 'step', 256)
         loc = 0
-        while step > 0:
-            step_a[loc] = step % 2**64
-            step >>= 64
-            loc += 1
         threefry_advance(<uint64_t *>step_a.data, self.rng_state)
+        return self

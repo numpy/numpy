@@ -122,3 +122,43 @@ double random_standard_exponential_zig_double(prng_t *prng_state)
 {
     return standard_exponential_zig_double(prng_state);
 }
+
+static NPY_INLINE float standard_exponential_zig_float(prng_t *prng_state);
+
+static float standard_exponential_zig_float_unlikely(prng_t *prng_state, uint8_t idx, float x)
+{
+    if (idx == 0)
+    {
+        return ziggurat_exp_r_f - logf(random_float(prng_state));
+    }
+    else if ((fe_float[idx - 1] - fe_float[idx]) * random_float(prng_state) + fe_float[idx] < expf(-x))
+    {
+        return x;
+    }
+    else
+    {
+        return standard_exponential_zig_float(prng_state);
+    }
+}
+
+static NPY_INLINE float standard_exponential_zig_float(prng_t *prng_state)
+{
+    uint32_t ri;
+    uint8_t idx;
+    float x;
+    ri = prng_state->next_uint32(prng_state->state);
+    ri >>= 1;
+    idx = ri & 0xFF;
+    ri >>= 8;
+    x = ri * we_float[idx];
+    if (ri < ke_float[idx])
+    {
+        return x; // 98.9% of the time we return here 1st try
+    }
+    return standard_exponential_zig_float_unlikely(prng_state, idx, x);
+}
+
+float random_standard_exponential_zig_float(prng_t *prng_state)
+{
+    return standard_exponential_zig_float(prng_state);
+}

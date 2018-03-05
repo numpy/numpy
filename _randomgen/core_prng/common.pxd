@@ -1,4 +1,6 @@
 from libc.stdint cimport uint32_t, uint64_t
+import numpy as np
+cimport numpy as np
 
 cdef extern from "src/distributions/distributions.h":
     ctypedef double (*random_double_0)(void *st) nogil
@@ -42,8 +44,10 @@ cdef extern from "src/distributions/distributions.h":
 cdef inline double uint64_to_double(uint64_t rnd) nogil:
     return (rnd >> 11) * (1.0 / 9007199254740992.0)
 
-cdef object double_fill(void *func, void *state, object size, object lock)
+cdef object double_fill(void *func, void *state, object size, object lock, object out)
 
-cdef object float_fill(void *func, void *state, object size, object lock)
+cdef object float_fill(void *func, void *state, object size, object lock, object out)
 
-cdef object float_fill_from_double(void *func, void *state, object size, object lock)
+cdef object float_fill_from_double(void *func, void *state, object size, object lock, object out)
+
+cdef np.ndarray int_to_array(object value, object name, object bits)
