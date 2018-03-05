@@ -131,5 +131,16 @@ longer supported, as ``np.interp(object_array_nd)`` was never supported anyway.
 As a result of this change, the ``period`` argument can now be used on 0d
 arrays.
 
+Allow dtype field names to be unicode in Python 2
+---------------------------------------------------------------
+Previously ``np.dtype([(u'name', float)])`` would raise a ``TypeError`` in
+Python 2, as only bytestrings were allowed in field names. Now any unicode
+string field names will be encoded with the ``ascii`` codec, raising a
+``UnicodeEncodeError`` upon failure.
+
+This change makes it easier to write Python 2/3 compatible code using
+``from __future__ import unicode_literals``, which previously would cause
+string literal field names to raise a TypeError in Python 2.
+
 Changes
 =======
