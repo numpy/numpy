@@ -1,7 +1,5 @@
 #include "mt19937.h"
 
-extern inline uint32_t mt19937_random(mt19937_state *state);
-
 void mt19937_seed(mt19937_state *state, uint32_t seed)
 {
     int pos;
