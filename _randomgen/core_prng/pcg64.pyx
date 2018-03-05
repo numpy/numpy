@@ -11,11 +11,26 @@ cimport entropy
 
 np.import_array()
 
+IF PCG_EMULATED_MATH==1:
+    cdef extern from "src/pcg64/pcg64.h":
+
+        ctypedef struct pcg128_t:
+            uint64_t high
+            uint64_t low
+ELSE:
+    cdef extern from "inttypes.h":
+        ctypedef unsigned long long __uint128_t
+
+    cdef extern from "src/pcg64/pcg64.h":
+        ctypedef __uint128_t pcg128_t
+
 cdef extern from "src/pcg64/pcg64.h":
 
     ctypedef struct pcg128_t:
         uint64_t high
-        uint64_t low
+        uint64_t low        
+
+cdef extern from "src/pcg64/pcg64.h":
 
     cdef struct pcg_state_setseq_128:
         pcg128_t state
@@ -162,19 +177,27 @@ cdef class PCG64:
             state = state.view(np.uint64)
         else:
             state = entropy.seed_by_array(seed, 2)
-        self.rng_state.pcg_state.state.high = <uint64_t>int(state[0])
-        self.rng_state.pcg_state.state.low = <uint64_t>int(state[1])
-        self.rng_state.pcg_state.inc.high = inc // 2**64
-        self.rng_state.pcg_state.inc.low = inc % 2**64
+        IF PCG_EMULATED_MATH==1:
+            self.rng_state.pcg_state.state.high = <uint64_t>int(state[0])
+            self.rng_state.pcg_state.state.low = <uint64_t>int(state[1])
+            self.rng_state.pcg_state.inc.high = inc // 2**64
+            self.rng_state.pcg_state.inc.low = inc % 2**64
+        ELSE:
+            self.rng_state.pcg_state.state = state[0] * 2**64 + state[1]
+            self.rng_state.pcg_state.inc = inc
         self._reset_state_variables()
 
     @property
     def state(self):
         """Get or set the PRNG state"""
-        state = 2 **64 * self.rng_state.pcg_state.state.high
-        state += self.rng_state.pcg_state.state.low
-        inc = 2 **64 * self.rng_state.pcg_state.inc.high
-        inc += self.rng_state.pcg_state.inc.low
+        IF PCG_EMULATED_MATH==1:
+            state = 2 **64 * self.rng_state.pcg_state.state.high
+            state += self.rng_state.pcg_state.state.low
+            inc = 2 **64 * self.rng_state.pcg_state.inc.high
+            inc += self.rng_state.pcg_state.inc.low
+        ELSE:
+            state = self.rng_state.pcg_state.state
+            inc = self.rng_state.pcg_state.inc
 
         return {'prng': self.__class__.__name__,
                 'state': {'state': state, 'inc':inc},
@@ -189,11 +212,15 @@ cdef class PCG64:
         if prng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
+        IF PCG_EMULATED_MATH==1:
+            self.rng_state.pcg_state.state.high = value['state']['state'] // 2 ** 64
+            self.rng_state.pcg_state.state.low = value['state']['state'] % 2 ** 64
+            self.rng_state.pcg_state.inc.high = value['state']['inc'] // 2 ** 64
+            self.rng_state.pcg_state.inc.low = value['state']['inc'] % 2 ** 64
+        ELSE:
+            self.rng_state.pcg_state.state  = value['state']['state']
+            self.rng_state.pcg_state.inc = value['state']['inc']
 
-        self.rng_state.pcg_state.state.high = value['state']['state'] // 2 ** 64
-        self.rng_state.pcg_state.state.low = value['state']['state'] % 2 ** 64
-        self.rng_state.pcg_state.inc.high = value['state']['inc'] // 2 ** 64
-        self.rng_state.pcg_state.inc.low = value['state']['inc'] % 2 ** 64
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
 

@@ -1,3 +1,5 @@
+import timeit
+
 from core_prng import Xoroshiro128, ThreeFry, MT19937, \
     Xorshift1024, PCG64, Philox
 from core_prng.generator import RandomGenerator
@@ -59,3 +61,18 @@ rg = RandomGenerator(Philox())
 state = rg.state
 print(state)
 rg.state = state
+
+PRNGS = [MT19937, PCG64, Philox, ThreeFry, Xoroshiro128, Xorshift1024]
+
+setup = """
+from core_prng import {module}
+m = {module}()
+m._benchmark(701)
+"""
+for p in PRNGS:
+    module = p.__name__
+    print(module)
+    t = timeit.timeit("m._benchmark(10000000)", setup.format(module=module),
+                      number=10)
+    print('{:0.2f} ms'.format(1000 * t / 10))
+    print('{:,} randoms per second'.format(int(10000000 / (t/10))))

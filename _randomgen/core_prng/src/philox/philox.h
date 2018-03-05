@@ -1,5 +1,11 @@
 #include <inttypes.h>
 
+#ifdef _WIN32
+#define INLINE __inline _forceinline
+#else
+#define INLINE inline
+#endif
+
 struct r123array2x64 {
   uint64_t v[2];
 };
@@ -38,7 +44,7 @@ static inline uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
 // static __inline _forceinline struct r123array4x64 _philox4x64round(struct
 // r123array4x64 ctr, struct r123array2x64 key);
 
-static __inline _forceinline struct r123array4x64
+static INLINE struct r123array4x64
 _philox4x64round(struct r123array4x64 ctr, struct r123array2x64 key) {
   uint64_t hi0;
   uint64_t hi1;
@@ -49,13 +55,13 @@ _philox4x64round(struct r123array4x64 ctr, struct r123array2x64 key) {
   return out;
 }
 
-static __inline philox4x64_key_t philox4x64keyinit(philox4x64_ukey_t uk) {
+static INLINE philox4x64_key_t philox4x64keyinit(philox4x64_ukey_t uk) {
   return uk;
 }
 // static __inline _forceinline philox4x64_ctr_t philox4x64_R(unsigned int R,
 // philox4x64_ctr_t ctr, philox4x64_key_t key);
 
-static __inline _forceinline philox4x64_ctr_t
+static INLINE philox4x64_ctr_t
 philox4x64_R(unsigned int R, philox4x64_ctr_t ctr, philox4x64_key_t key) {
   if (R > 0) {
     ctr = _philox4x64round(ctr, key);
