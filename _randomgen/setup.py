@@ -1,17 +1,17 @@
+import os
 import struct
 import sys
-import os
 from os.path import join
 
 import Cython.Compiler.Options
 import numpy as np
-import versioneer
 from Cython.Build import cythonize
 from setuptools import setup, find_packages, Distribution
 from setuptools.extension import Extension
 
-Cython.Compiler.Options.annotate = True
+import versioneer
 
+Cython.Compiler.Options.annotate = True
 
 USE_SSE2 = True if not '--no-sse2' in sys.argv else False
 MOD_DIR = './core_prng'
@@ -21,12 +21,13 @@ PCG_EMULATED_MATH = False
 
 EXTRA_COMPILE_ARGS = []
 EXTRA_LINK_ARGS = []
+EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else ['-std=c99']
 if os.name == 'nt':
     EXTRA_LINK_ARGS = ['/LTCG', '/OPT:REF', 'Advapi32.lib', 'Kernel32.lib']
     PCG_EMULATED_MATH = True
     if DEBUG:
         EXTRA_LINK_ARGS += ['-debug']
-        EXTRA_COMPILE_ARGS = ["-Zi", "/Od"]
+        EXTRA_COMPILE_ARGS += ["-Zi", "/Od"]
 
 if USE_SSE2:
     if os.name == 'nt':
