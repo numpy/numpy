@@ -22,12 +22,14 @@ np.import_array()
 
 cdef extern from "src/distributions/distributions.h":
     double random_double(prng_t *prng_state) nogil
-    float random_float(prng_t *prng_state) nogil
-    uint32_t random_uint32(prng_t *prng_state) nogil
+    double random_standard_exponential_zig_double(prng_t *prng_state) nogil
+    double random_gauss(prng_t *prng_state) nogil
     double random_standard_exponential(prng_t *prng_state) nogil
+
     float random_standard_exponential_float(prng_t *prng_state) nogil
-    double random_gauss(prng_t *prng_state)
-    float random_gauss_float(prng_t *prng_state)
+    float random_float(prng_t *prng_state) nogil
+    float random_gauss_float(prng_t *prng_state) nogil
+    float random_standard_exponential_zig_float(prng_t *prng_state) nogil
 
 cdef class RandomGenerator:
     """
@@ -98,7 +100,7 @@ cdef class RandomGenerator:
         if bits == 64:
             return self._prng.next_uint64(self._prng.state)
         elif bits == 32:
-            return random_uint32(self._prng)
+            return self._prng.next_uint32(self._prng.state)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -110,7 +112,7 @@ cdef class RandomGenerator:
         else:
             raise ValueError('bits must be 32 or 64')
 
-    def random_sample(self, size=None, dtype=np.float64):
+    def random_sample(self, size=None, dtype=np.float64, out=None):
         """
         random_sample(size=None, dtype='d', out=None)
 
@@ -132,6 +134,10 @@ cdef class RandomGenerator:
             Desired dtype of the result, either 'd' (or 'float64') or 'f'
             (or 'float32'). All dtypes are determined by their name. The
             default value is 'd'.
+        out : ndarray, optional
+            Alternative output array in which to place the result. If size is not None,
+            it must have the same shape as the provided size and must match the type of
+            the output values.
 
         Returns
         -------
@@ -158,15 +164,15 @@ cdef class RandomGenerator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double, self._prng, size, self.lock)
+            return double_fill(&random_double, self._prng, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_float, self._prng, size, self.lock)
+            return float_fill(&random_float, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for random_sample' % key)
 
-    def standard_exponential(self, size=None, dtype=np.float64):
+    def standard_exponential(self, size=None, dtype=np.float64, method=u'zig', out=None):
         """
-        standard_exponential(size=None, dtype='d', method='inv', out=None)
+        standard_exponential(size=None, dtype='d', method='zig', out=None)
 
         Draw samples from the standard exponential distribution.
 
@@ -183,6 +189,13 @@ cdef class RandomGenerator:
             Desired dtype of the result, either 'd' (or 'float64') or 'f'
             (or 'float32'). All dtypes are determined by their name. The
             default value is 'd'.
+        method : str, optional
+            Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
+            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
+        out : ndarray, optional
+            Alternative output array in which to place the result. If size is not None,
+            it must have the same shape as the provided size and must match the type of
+            the output values.
 
         Returns
         -------
@@ -197,17 +210,23 @@ cdef class RandomGenerator:
         """
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_standard_exponential, self._prng, size, self.lock)
+            if method == u'zig':
+                return double_fill(&random_standard_exponential_zig_double, self._prng, size, self.lock, out)
+            else:
+                return double_fill(&random_standard_exponential, self._prng, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_standard_exponential_float, self._prng, size, self.lock)
+            if method == u'zig':
+                return float_fill(&random_standard_exponential_zig_float, self._prng, size, self.lock, out)
+            else:
+                return float_fill(&random_standard_exponential_float, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
 
     # Complicated, continuous distributions:
-    def standard_normal(self, size=None, dtype=np.float64, method='bm'):
+    def standard_normal(self, size=None, dtype=np.float64, method=u'zig', out=None):
         """
-        standard_normal(size=None, dtype='d', method='bm', out=None)
+        standard_normal(size=None, dtype='d', method='zig', out=None)
 
         Draw samples from a standard Normal distribution (mean=0, stdev=1).
 
@@ -222,7 +241,7 @@ cdef class RandomGenerator:
             (or 'float32'). All dtypes are determined by their name. The
             default value is 'd'.
         method : str, optional
-            Either 'bm' or 'zig'. 'bm' uses the default Box-Muller transformations
+            Either 'bm' or 'zig'. 'bm' uses the Box-Muller transformations
             method.  'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
@@ -251,14 +270,14 @@ cdef class RandomGenerator:
         if key == 'float64':
             if method == u'zig':
                 raise NotImplementedError
-                #return double_fill(&self.rng_state, &random_gauss_zig_double_fill, size, self.lock, out)
+                #return double_fill(&random_gauss_zig_double, self._prng, size, self.lock, out)
             else:
-                return double_fill(&random_gauss, self._prng, size, self.lock)
+                return double_fill(&random_gauss, self._prng, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
                 raise NotImplementedError
-                #return float_fill(&self.rng_state, &random_gauss_zig_float_fill, size, self.lock, out)
+                #return float_fill(&random_gauss_zig_float, self._prng, size, self.lock, out)
             else:
-                return float_fill(&random_gauss_float, self._prng, size, self.lock)
+                return float_fill(&random_gauss_float, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_normal' % key)

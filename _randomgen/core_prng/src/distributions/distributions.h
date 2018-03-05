@@ -68,3 +68,5 @@ double random_gauss(prng_t *prng_state);
 float random_gauss_float(prng_t *prng_state);
 
 double random_standard_exponential_zig_double(prng_t *prng_state);
+
+float random_standard_exponential_zig_float(prng_t *prng_state);
