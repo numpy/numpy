@@ -1,3 +1,5 @@
+import struct
+import sys
 import os
 from os.path import join
 
@@ -10,6 +12,8 @@ from setuptools.extension import Extension
 
 Cython.Compiler.Options.annotate = True
 
+
+USE_SSE2 = True if not '--no-sse2' in sys.argv else False
 MOD_DIR = './core_prng'
 
 DEBUG = False
@@ -24,6 +28,17 @@ if os.name == 'nt':
         EXTRA_LINK_ARGS += ['-debug']
         EXTRA_COMPILE_ARGS = ["-Zi", "/Od"]
 
+if USE_SSE2:
+    if os.name == 'nt':
+        EXTRA_COMPILE_ARGS += ['/wd4146', '/GL']
+        if struct.calcsize('P') < 8:
+            EXTRA_COMPILE_ARGS += ['/arch:SSE2']
+    else:
+        EXTRA_COMPILE_ARGS += ['-msse2']
+DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
+if USE_SSE2:
+    DSFMT_DEFS += [('HAVE_SSE2', '1')]
+
 extensions = [Extension('core_prng.entropy',
                         sources=[join(MOD_DIR, 'entropy.pyx'),
                                  join(MOD_DIR, 'src', 'entropy', 'entropy.c')],
@@ -31,6 +46,15 @@ extensions = [Extension('core_prng.entropy',
                                       join(MOD_DIR, 'src', 'entropy')],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
+                        ),
+              Extension("core_prng.dsfmt",
+                        ["core_prng/dsfmt.pyx",
+                         join(MOD_DIR, 'src', 'dsfmt', 'dSFMT.c')],
+                        include_dirs=[np.get_include(),
+                                      join(MOD_DIR, 'src', 'dsfmt')],
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        define_macros=DSFMT_DEFS,
                         ),
               Extension("core_prng.mt19937",
                         ["core_prng/mt19937.pyx",

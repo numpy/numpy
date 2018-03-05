@@ -1,7 +1,7 @@
 import timeit
 
 from core_prng import Xoroshiro128, ThreeFry, MT19937, \
-    Xorshift1024, PCG64, Philox
+    Xorshift1024, PCG64, Philox, DSFMT
 from core_prng.generator import RandomGenerator
 
 print(RandomGenerator().random_integer(32))
@@ -62,7 +62,13 @@ state = rg.state
 print(state)
 rg.state = state
 
-PRNGS = [MT19937, PCG64, Philox, ThreeFry, Xoroshiro128, Xorshift1024]
+rg = RandomGenerator(DSFMT())
+state = rg.state
+print(state)
+rg.state = state
+
+
+PRNGS = [MT19937, PCG64, Philox, ThreeFry, Xoroshiro128, Xorshift1024, DSFMT]
 
 setup = """
 from core_prng import {module}
