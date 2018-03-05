@@ -1,7 +1,4 @@
 # TODO
-6. Port over 0 parameter distributions
-   * standard normal ziggurat
-   * standard normal ziggurat float
 13. Simplify state
 
 ## Done
@@ -11,6 +8,8 @@
 4. Augment state to include has_gauss and gauss
 5. Augment state to have binomial structure
 6. Port over 0 parameter distributions
+   * standard normal ziggurat
+   * standard normal ziggurat float
    * standard exponential ziggurat
    * standard exponential ziggurat float   
    * standard exponential float

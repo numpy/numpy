@@ -21,15 +21,17 @@ import core_prng.pickle
 np.import_array()
 
 cdef extern from "src/distributions/distributions.h":
-    double random_double(prng_t *prng_state) nogil
-    double random_standard_exponential_zig_double(prng_t *prng_state) nogil
-    double random_gauss(prng_t *prng_state) nogil
+    double random_sample(prng_t *prng_state) nogil
     double random_standard_exponential(prng_t *prng_state) nogil
+    double random_standard_exponential_zig(prng_t *prng_state) nogil
+    double random_gauss(prng_t *prng_state) nogil
+    double random_gauss_zig(prng_t* prng_state) nogil
 
-    float random_standard_exponential_float(prng_t *prng_state) nogil
-    float random_float(prng_t *prng_state) nogil
-    float random_gauss_float(prng_t *prng_state) nogil
-    float random_standard_exponential_zig_float(prng_t *prng_state) nogil
+    float random_sample_f(prng_t *prng_state) nogil
+    float random_standard_exponential_f(prng_t *prng_state) nogil
+    float random_standard_exponential_zig_f(prng_t *prng_state) nogil
+    float random_gauss_f(prng_t *prng_state) nogil
+    float random_gauss_zig_f(prng_t* prng_state) nogil
 
 cdef class RandomGenerator:
     """
@@ -108,7 +110,7 @@ cdef class RandomGenerator:
         if bits == 64:
             return self._prng.next_double(self._prng.state)
         elif bits == 32:
-            return random_float(self._prng)
+            return random_sample_f(self._prng)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -164,9 +166,9 @@ cdef class RandomGenerator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double, self._prng, size, self.lock, out)
+            return double_fill(&random_sample, self._prng, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_float, self._prng, size, self.lock, out)
+            return float_fill(&random_sample_f, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for random_sample' % key)
 
@@ -211,14 +213,14 @@ cdef class RandomGenerator:
         key = np.dtype(dtype).name
         if key == 'float64':
             if method == u'zig':
-                return double_fill(&random_standard_exponential_zig_double, self._prng, size, self.lock, out)
+                return double_fill(&random_standard_exponential_zig, self._prng, size, self.lock, out)
             else:
                 return double_fill(&random_standard_exponential, self._prng, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                return float_fill(&random_standard_exponential_zig_float, self._prng, size, self.lock, out)
+                return float_fill(&random_standard_exponential_zig_f, self._prng, size, self.lock, out)
             else:
-                return float_fill(&random_standard_exponential_float, self._prng, size, self.lock, out)
+                return float_fill(&random_standard_exponential_f, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
@@ -269,15 +271,13 @@ cdef class RandomGenerator:
         key = np.dtype(dtype).name
         if key == 'float64':
             if method == u'zig':
-                raise NotImplementedError
-                #return double_fill(&random_gauss_zig_double, self._prng, size, self.lock, out)
+                return double_fill(&random_gauss_zig, self._prng, size, self.lock, out)
             else:
                 return double_fill(&random_gauss, self._prng, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                raise NotImplementedError
-                #return float_fill(&random_gauss_zig_float, self._prng, size, self.lock, out)
+                return float_fill(&random_gauss_zig_f, self._prng, size, self.lock, out)
             else:
-                return float_fill(&random_gauss_float, self._prng, size, self.lock, out)
+                return float_fill(&random_gauss_f, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_normal' % key)

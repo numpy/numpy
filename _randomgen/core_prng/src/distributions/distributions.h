@@ -53,20 +53,17 @@ typedef struct prng {
   binomial_t *binomial;
 } prng_t;
 
-float random_float(prng_t *prng_state);
-
-double random_double(prng_t *prng_state);
+float random_sample_f(prng_t *prng_state);
+double random_sample(prng_t *prng_state);
 
 uint32_t random_uint32(prng_t *prng_state);
 
 double random_standard_exponential(prng_t *prng_state);
-
-float random_standard_exponential_float(prng_t *prng_state);
+float random_standard_exponential_f(prng_t *prng_state);
+double random_standard_exponential_zig(prng_t *prng_state);
+float random_standard_exponential_zig_f(prng_t *prng_state);
 
 double random_gauss(prng_t *prng_state);
-
-float random_gauss_float(prng_t *prng_state);
-
-double random_standard_exponential_zig_double(prng_t *prng_state);
-
-float random_standard_exponential_zig_float(prng_t *prng_state);
+float random_gauss_f(prng_t *prng_state);
+double random_gauss_zig(prng_t* prng_state);
+float random_gauss_zig_f(prng_t* prng_state);
