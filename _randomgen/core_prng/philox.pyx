@@ -11,43 +11,47 @@ cimport entropy
 
 np.import_array()
 
-cdef extern from "src/threefry/threefry.h":
+cdef extern from "src/philox/philox.h":
+    struct s_r123array2x64:
+        uint64_t v[2]
+
     struct s_r123array4x64:
         uint64_t v[4]
 
     ctypedef s_r123array4x64 r123array4x64
+    ctypedef s_r123array2x64 r123array2x64
 
-    ctypedef r123array4x64 threefry4x64_key_t
-    ctypedef r123array4x64 threefry4x64_ctr_t
+    ctypedef r123array4x64 philox4x64_ctr_t;
+    ctypedef r123array2x64 philox4x64_key_t;
 
-    struct s_threefry_state:
-        threefry4x64_ctr_t *ctr;
-        threefry4x64_key_t *key;
+    struct s_philox_state:
+        philox4x64_ctr_t *ctr;
+        philox4x64_key_t *key;
         int buffer_pos;
         uint64_t buffer[4];
         int has_uint32
         uint32_t uinteger
 
-    ctypedef s_threefry_state threefry_state
+    ctypedef s_philox_state philox_state
 
-    uint64_t threefry_next64(threefry_state *state)  nogil
-    uint64_t threefry_next32(threefry_state *state)  nogil
-    void threefry_jump(threefry_state *state)
-    void threefry_advance(uint64_t *step, threefry_state *state)
+    uint64_t philox_next64(philox_state *state)  nogil
+    uint64_t philox_next32(philox_state *state)  nogil
+    void philox_jump(philox_state *state)
+    void philox_advance(uint64_t *step, philox_state *state)
 
 
-cdef uint64_t threefry_uint64(void* st) nogil:
-    return threefry_next64(<threefry_state *>st)
+cdef uint64_t philox_uint64(void*st) nogil:
+    return philox_next64(<philox_state *> st)
 
-cdef uint32_t threefry_uint32(void *st) nogil:
-    return threefry_next32(<threefry_state *> st)
+cdef uint32_t philox_uint32(void *st) nogil:
+    return philox_next32(<philox_state *> st)
 
-cdef double threefry_double(void* st) nogil:
-    return uint64_to_double(threefry_next64(<threefry_state *>st))
+cdef double philox_double(void*st) nogil:
+    return uint64_to_double(philox_next64(<philox_state *> st))
 
-cdef class ThreeFry:
+cdef class Philox:
     """
-    Prototype Core PRNG using threefry
+    Prototype Core PRNG using philox
 
     Parameters
     ----------
@@ -59,25 +63,27 @@ cdef class ThreeFry:
     Exposes no user-facing API except `state`. Designed for use in
     a `RandomGenerator` object.
     """
-    cdef threefry_state  *rng_state
+    cdef philox_state  *rng_state
     cdef prng_t *_prng
     cdef public object _prng_capsule
 
     def __init__(self, seed=None):
-        self.rng_state = <threefry_state *>malloc(sizeof(threefry_state))
-        self.rng_state.ctr = <threefry4x64_ctr_t *>malloc(sizeof(threefry4x64_ctr_t))
-        self.rng_state.key = <threefry4x64_key_t *>malloc(sizeof(threefry4x64_key_t))
-        self._prng = <prng_t *>malloc(sizeof(prng_t))
-        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
+        self.rng_state = <philox_state *> malloc(sizeof(philox_state))
+        self.rng_state.ctr = <philox4x64_ctr_t *> malloc(
+            sizeof(philox4x64_ctr_t))
+        self.rng_state.key = <philox4x64_key_t *> malloc(
+            sizeof(philox4x64_key_t))
+        self._prng = <prng_t *> malloc(sizeof(prng_t))
+        self._prng.binomial = <binomial_t *> malloc(sizeof(binomial_t))
         self.seed(seed)
 
-        self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = &threefry_uint64
-        self._prng.next_uint32 = &threefry_uint32
-        self._prng.next_double = &threefry_double
+        self._prng.state = <void *> self.rng_state
+        self._prng.next_uint64 = &philox_uint64
+        self._prng.next_uint32 = &philox_uint32
+        self._prng.next_double = &philox_double
 
         cdef const char *name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self._prng_capsule = PyCapsule_New(<void *> self._prng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):
@@ -155,32 +161,35 @@ cdef class ThreeFry:
         ValueError
             If seed values are out of range for the PRNG.
         """
-        ub =  2 ** 64
+        ub = 2 ** 64
         if seed is None:
             try:
-                state = random_entropy(8)
+                state = random_entropy(4)
             except RuntimeError:
-                state = random_entropy(8, 'fallback')
+                state = random_entropy(4, 'fallback')
             state = state.view(np.uint64)
         else:
-            state = entropy.seed_by_array(seed, 4)
+            state = entropy.seed_by_array(seed, 2)
         # TODO: Need to be able to set the key and counter directly
         for i in range(4):
             self.rng_state.ctr.v[i] = 0
-            self.rng_state.key.v[i] = state[i]
+        self.rng_state.key.v[0] = state[0]
+        self.rng_state.key.v[1] = state[1]
         self._reset_state_variables()
 
     @property
     def state(self):
         """Get or set the PRNG state"""
         ctr = np.empty(4, dtype=np.uint64)
-        key = np.empty(4, dtype=np.uint64)
+        key = np.empty(2, dtype=np.uint64)
         buffer = np.empty(4, dtype=np.uint64)
         for i in range(4):
             ctr[i] = self.rng_state.ctr.v[i]
-            key[i] = self.rng_state.key.v[i]
             buffer[i] = self.rng_state.buffer[i]
-        state = {'ctr':ctr,'key':key}
+            if i < 2:
+                key[i] = self.rng_state.key.v[i]
+
+        state = {'ctr': ctr, 'key': key}
         return {'prng': self.__class__.__name__,
                 'state': state,
                 'buffer': buffer,
@@ -197,26 +206,27 @@ cdef class ThreeFry:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
         for i in range(4):
-            self.rng_state.ctr.v[i] = <uint64_t>value['state']['ctr'][i]
-            self.rng_state.key.v[i] = <uint64_t>value['state']['key'][i]
-            self.rng_state.buffer[i] = <uint64_t>value['buffer'][i]
+            self.rng_state.ctr.v[i] = <uint64_t> value['state']['ctr'][i]
+            self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
+            if i < 2:
+                self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
         self.rng_state.buffer_pos = value['buffer_pos']
 
     def jump(self):
         """Jump the state as-if 2**128 draws have been made"""
-        threefry_jump(self.rng_state)
+        philox_jump(self.rng_state)
         return self
 
     def advance(self, step):
         """Advance the state as-if a specific number of draws have been made"""
-        cdef np.ndarray step_a = np.zeros(4,dtype=np.uint64)
-        if step >= 2**256 or step < 0:
+        cdef np.ndarray step_a = np.zeros(4, dtype=np.uint64)
+        if step >= 2 ** 256 or step < 0:
             raise ValueError('step must be between 0 and 2**256-1')
         loc = 0
         while step > 0:
-            step_a[loc] = step % 2**64
+            step_a[loc] = step % 2 ** 64
             step >>= 64
             loc += 1
-        threefry_advance(<uint64_t *>step_a.data, self.rng_state)
+        philox_advance(<uint64_t *> step_a.data, self.rng_state)

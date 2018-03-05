@@ -1,6 +1,6 @@
+from core_prng import SplitMix64, Xoroshiro128, ThreeFry, MT19937, \
+    XorShift1024, PCG64, Philox
 from core_prng.generator import RandomGenerator
-
-from core_prng import SplitMix64, Xoroshiro128, ThreeFry, MT19937, XorShift1024, PCG64
 
 print(RandomGenerator().random_integer(32))
 print(RandomGenerator(Xoroshiro128()).random_integer())
@@ -21,7 +21,6 @@ print(rg.random_sample((3)))
 print(rg.random_sample((3, 1)))
 print(rg.state)
 import numpy as np
-
 
 a = rg.random_sample((1, 1), dtype=np.float32)
 print(a)
@@ -56,6 +55,11 @@ print(state)
 rg.state = state
 
 rg = RandomGenerator(PCG64())
+state = rg.state
+print(state)
+rg.state = state
+
+rg = RandomGenerator(Philox())
 state = rg.state
 print(state)
 rg.state = state

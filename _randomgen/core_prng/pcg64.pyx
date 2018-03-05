@@ -124,6 +124,12 @@ cdef class PCG64:
         else:
             raise ValueError('bits must be 32 or 64')
 
+    def _benchmark(self, Py_ssize_t cnt):
+        cdef Py_ssize_t i
+        for i in range(cnt):
+            self._prng.next_uint64(self._prng.state)
+
+
     def seed(self, seed=None, inc=1):
         """
         seed(seed=None, stream=None)
