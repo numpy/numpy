@@ -26,12 +26,16 @@ cdef extern from "src/distributions/distributions.h":
     double random_standard_exponential_zig(prng_t *prng_state) nogil
     double random_gauss(prng_t *prng_state) nogil
     double random_gauss_zig(prng_t* prng_state) nogil
+    double random_standard_gamma(prng_t *prng_state, double shape) nogil
+    double random_standard_gamma_zig(prng_t *prng_state, double shape) nogil
 
     float random_sample_f(prng_t *prng_state) nogil
     float random_standard_exponential_f(prng_t *prng_state) nogil
     float random_standard_exponential_zig_f(prng_t *prng_state) nogil
     float random_gauss_f(prng_t *prng_state) nogil
     float random_gauss_zig_f(prng_t* prng_state) nogil
+    float random_standard_gamma_f(prng_t *prng_state, float shape) nogil
+    float random_standard_gamma_zig_f(prng_t *prng_state, float shape) nogil
 
 cdef class RandomGenerator:
     """
@@ -281,3 +285,109 @@ cdef class RandomGenerator:
                 return float_fill(&random_gauss_f, self._prng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_normal' % key)
+
+
+    def standard_gamma(self, shape, size=None, dtype=np.float64, method='zig',
+                       out=None):
+        """
+        standard_gamma(shape, size=None, dtype='d', method='inv', out=None)
+
+        Draw samples from a standard Gamma distribution.
+
+        Samples are drawn from a Gamma distribution with specified parameters,
+        shape (sometimes designated "k") and scale=1.
+
+        Parameters
+        ----------
+        shape : float or array_like of floats
+            Parameter, should be > 0.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``shape`` is a scalar.  Otherwise,
+            ``np.array(shape).size`` samples are drawn.
+        dtype : {str, dtype}, optional
+            Desired dtype of the result, either 'd' (or 'float64') or 'f'
+            (or 'float32'). All dtypes are determined by their name. The
+            default value is 'd'.
+        method : str, optional
+            Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
+            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
+        out : ndarray, optional
+            Alternative output array in which to place the result. If size is
+            not None, it must have the same shape as the provided size and
+            must match the type of the output values.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized standard gamma distribution.
+
+        See Also
+        --------
+        scipy.stats.gamma : probability density function, distribution or
+            cumulative density function, etc.
+
+        Notes
+        -----
+        The probability density for the Gamma distribution is
+
+        .. math:: p(x) = x^{k-1}\\frac{e^{-x/\\theta}}{\\theta^k\\Gamma(k)},
+
+        where :math:`k` is the shape and :math:`\\theta` the scale,
+        and :math:`\\Gamma` is the Gamma function.
+
+        The Gamma distribution is often used to model the times to failure of
+        electronic components, and arises naturally in processes for which the
+        waiting times between Poisson distributed events are relevant.
+
+        References
+        ----------
+        .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
+               Wolfram Web Resource.
+               http://mathworld.wolfram.com/GammaDistribution.html
+        .. [2] Wikipedia, "Gamma distribution",
+               http://en.wikipedia.org/wiki/Gamma_distribution
+
+        Examples
+        --------
+        Draw samples from the distribution:
+
+        >>> shape, scale = 2., 1. # mean and width
+        >>> s = np.random.standard_gamma(shape, 1000000)
+
+        Display the histogram of the samples, along with
+        the probability density function:
+
+        >>> import matplotlib.pyplot as plt
+        >>> import scipy.special as sps
+        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/ \\
+        ...                       (sps.gamma(shape) * scale**shape))
+        >>> plt.plot(bins, y, linewidth=2, color='r')
+        >>> plt.show()
+        """
+        cdef void *func
+        if method != u'zig' and method != u'inv':
+            raise ValueError("method must be either 'inv' or 'zig'")
+        key = np.dtype(dtype).name
+        if key == 'float64':
+            if method == 'inv':
+                func = <void *>&random_standard_gamma
+            else:
+                func = <void *>&random_standard_gamma_zig
+            return cont(func, self._prng, size, self.lock, 1,
+                        shape, 'shape', CONS_NON_NEGATIVE,
+                        0.0, '', CONS_NONE,
+                        0.0, '', CONS_NONE,
+                        out)
+        if key == 'float32':
+            if method == 'inv':
+                func = <void *>&random_standard_gamma_f
+            else:
+                func = <void *>&random_standard_gamma_zig_f
+            return cont_f(func, self._prng, size, self.lock,
+                          shape, 'shape', CONS_NON_NEGATIVE,
+                          out)
+        else:
+            raise TypeError('Unsupported dtype "%s" for standard_gamma' % key)

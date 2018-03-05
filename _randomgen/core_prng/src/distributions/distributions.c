@@ -237,3 +237,249 @@ float random_gauss_zig_f(prng_t* prng_state)
         }
     }
 }
+
+static NPY_INLINE double standard_gamma(prng_t* prng_state, double shape)
+{
+    double b, c;
+    double U, V, X, Y;
+
+    if (shape == 1.0)
+    {
+        return random_standard_exponential(prng_state);
+    }
+    else if (shape < 1.0)
+    {
+        for (;;)
+        {
+            U = prng_state->next_double(prng_state->state);
+            V = random_standard_exponential(prng_state);
+            if (U <= 1.0 - shape)
+            {
+                X = pow(U, 1. / shape);
+                if (X <= V)
+                {
+                    return X;
+                }
+            }
+            else
+            {
+                Y = -log((1 - U) / shape);
+                X = pow(1.0 - shape + shape * Y, 1. / shape);
+                if (X <= (V + Y))
+                {
+                    return X;
+                }
+            }
+        }
+    }
+    else
+    {
+        b = shape - 1. / 3.;
+        c = 1. / sqrt(9 * b);
+        for (;;)
+        {
+            do
+            {
+                X = random_gauss(prng_state);
+                V = 1.0 + c * X;
+            } while (V <= 0.0);
+
+            V = V * V * V;
+            U = random_sample(prng_state);
+            if (U < 1.0 - 0.0331 * (X * X) * (X * X))
+                return (b * V);
+            if (log(U) < 0.5 * X * X + b * (1. - V + log(V)))
+                return (b * V);
+        }
+    }
+}
+
+static NPY_INLINE float standard_gamma_float(prng_t *prng_state, float shape)
+{
+    float b, c;
+    float U, V, X, Y;
+
+    if (shape == 1.0f)
+    {
+        return random_standard_exponential_f(prng_state);
+    }
+    else if (shape < 1.0f)
+    {
+        for (;;)
+        {
+            U = random_sample_f(prng_state);
+            V = random_standard_exponential_f(prng_state);
+            if (U <= 1.0f - shape)
+            {
+                X = powf(U, 1.0f / shape);
+                if (X <= V)
+                {
+                    return X;
+                }
+            }
+            else
+            {
+                Y = -logf((1.0f - U) / shape);
+                X = powf(1.0f - shape + shape * Y, 1.0f / shape);
+                if (X <= (V + Y))
+                {
+                    return X;
+                }
+            }
+        }
+    }
+    else
+    {
+        b = shape - 1.0f / 3.0f;
+        c = 1.0f / sqrtf(9.0f * b);
+        for (;;)
+        {
+            do
+            {
+                X = random_gauss_f(prng_state);
+                V = 1.0f + c * X;
+            } while (V <= 0.0f);
+
+            V = V * V * V;
+            U = random_sample_f(prng_state);
+            if (U < 1.0f - 0.0331f * (X * X) * (X * X))
+                return (b * V);
+            if (logf(U) < 0.5f * X * X + b * (1.0f - V + logf(V)))
+                return (b * V);
+        }
+    }
+}
+
+
+double random_standard_gamma(prng_t* prng_state, double shape)
+{
+    return standard_gamma(prng_state, shape);
+}
+
+float random_standard_gamma_f(prng_t* prng_state, float shape)
+{
+    return standard_gamma_float(prng_state, shape);
+}
+
+
+static NPY_INLINE double standard_gamma_zig(prng_t *prng_state, double shape)
+{
+    double b, c;
+    double U, V, X, Y;
+
+    if (shape == 1.0)
+    {
+        return random_standard_exponential_zig(prng_state);
+    }
+    else if (shape < 1.0)
+    {
+        for (;;)
+        {
+            U = random_sample(prng_state);
+            V = random_standard_exponential_zig(prng_state);
+            if (U <= 1.0 - shape)
+            {
+                X = pow(U, 1. / shape);
+                if (X <= V)
+                {
+                    return X;
+                }
+            }
+            else
+            {
+                Y = -log((1 - U) / shape);
+                X = pow(1.0 - shape + shape * Y, 1. / shape);
+                if (X <= (V + Y))
+                {
+                    return X;
+                }
+            }
+        }
+    }
+    else
+    {
+        b = shape - 1. / 3.;
+        c = 1. / sqrt(9 * b);
+        for (;;)
+        {
+            do
+            {
+                X = random_gauss_zig(prng_state);
+                V = 1.0 + c * X;
+            } while (V <= 0.0);
+
+            V = V * V * V;
+            U = random_sample(prng_state);
+            if (U < 1.0 - 0.0331 * (X * X) * (X * X))
+                return (b * V);
+            if (log(U) < 0.5 * X * X + b * (1. - V + log(V)))
+                return (b * V);
+        }
+    }
+}
+
+static NPY_INLINE float standard_gamma_zig_f(prng_t *prng_state, float shape)
+{
+    float b, c;
+    float U, V, X, Y;
+
+    if (shape == 1.0f)
+    {
+        return random_standard_exponential_zig_f(prng_state);
+    }
+    else if (shape < 1.0f)
+    {
+        for (;;)
+        {
+            U = random_sample_f(prng_state);
+            V = random_standard_exponential_zig_f(prng_state);
+            if (U <= 1.0f - shape)
+            {
+                X = powf(U, 1.0f / shape);
+                if (X <= V)
+                {
+                    return X;
+                }
+            }
+            else
+            {
+                Y = -logf((1.0f - U) / shape);
+                X = powf(1.0f - shape + shape * Y, 1.0f / shape);
+                if (X <= (V + Y))
+                {
+                    return X;
+                }
+            }
+        }
+    }
+    else
+    {
+        b = shape - 1.0f / 3.0f;
+        c = 1.0f / sqrtf(9.0f * b);
+        for (;;)
+        {
+            do
+            {
+                X = random_gauss_zig_f(prng_state);
+                V = 1.0f + c * X;
+            } while (V <= 0.0f);
+
+            V = V * V * V;
+            U = random_sample_f(prng_state);
+            if (U < 1.0f - 0.0331f * (X * X) * (X * X))
+                return (b * V);
+            if (logf(U) < 0.5f * X * X + b * (1.0f - V + logf(V)))
+                return (b * V);
+        }
+    }
+}
+
+double random_standard_gamma_zig(prng_t *prng_state, double shape)
+{
+    return standard_gamma_zig(prng_state, shape);
+}
+
+float random_standard_gamma_zig_f(prng_t *prng_state, float shape)
+{
+    return standard_gamma_zig_f(prng_state, shape);
+}
