@@ -4,7 +4,6 @@
    * standard exponential ziggurat float   
    * standard normal ziggurat
    * standard normal ziggurat float
-7. Remove SplitMix64 as an external generator
 8. Restore ability to use `out` in core distributions
 12. Key/Counter for ThreeFry
 13. Simplify state
@@ -21,6 +20,7 @@
    * standard normal float
    * standard gamma - Not implement: This is a 1 param
    * standard gamma float - Not implement: This is a 1 param
+7. Remove SplitMix64 as an external generator
 9. Add correct carry for ThreeFry to allow full set of counters.  Important when implemeting jump
 10. Seed/Inc for PCG64
 11. Advance/Jump for PCG64
