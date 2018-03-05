@@ -1,12 +1,16 @@
 from .generator import RandomGenerator
 from .mt19937 import MT19937
-from .splitmix64 import SplitMix64
+from .pcg64 import PCG64
+from .philox import Philox
 from .threefry import ThreeFry
 from .xoroshiro128 import Xoroshiro128
+from .xorshift1024 import Xorshift1024
 
-PRNGS = {'SplitMix64': SplitMix64,
+PRNGS = {'MT19937': MT19937,
+         'PCG64': PCG64,
+         'Philox': Philox,
          'ThreeFry': ThreeFry,
-         'MT19937': MT19937,
+         'Xorshift1024': Xorshift1024,
          'Xoroshiro128': Xoroshiro128}
 
 

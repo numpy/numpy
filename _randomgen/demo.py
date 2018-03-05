@@ -1,14 +1,10 @@
-from core_prng import SplitMix64, Xoroshiro128, ThreeFry, MT19937, \
-    XorShift1024, PCG64, Philox
+from core_prng import Xoroshiro128, ThreeFry, MT19937, \
+    Xorshift1024, PCG64, Philox
 from core_prng.generator import RandomGenerator
 
 print(RandomGenerator().random_integer(32))
 print(RandomGenerator(Xoroshiro128()).random_integer())
 print(RandomGenerator(ThreeFry()).random_integer())
-print(RandomGenerator(SplitMix64()).random_integer())
-print(RandomGenerator(SplitMix64()).random_integer())
-print(RandomGenerator(SplitMix64(1)).random_integer())
-print(RandomGenerator(SplitMix64([1.0, 2.0])).random_integer())
 
 print('\n' * 3)
 print('Check random_sample')
@@ -49,7 +45,7 @@ print(rg.random_integer())
 print(rg.random_integer(32))
 print(rg.random_sample())
 
-rg = RandomGenerator(XorShift1024())
+rg = RandomGenerator(Xorshift1024())
 state = rg.state
 print(state)
 rg.state = state

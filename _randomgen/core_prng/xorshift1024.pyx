@@ -34,7 +34,7 @@ cdef uint32_t xorshift1024_uint32(void *st) nogil:
 cdef double xorshift1024_double(void* st) nogil:
     return uint64_to_double(xorshift1024_next64(<xorshift1024_state *>st))
 
-cdef class XorShift1024:
+cdef class Xorshift1024:
     """
     Prototype Core PRNG using xorshift1024
 

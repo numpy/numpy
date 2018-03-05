@@ -15,7 +15,7 @@ try:
 except ImportError:
     from dummy_threading import Lock
 
-from core_prng.splitmix64 import SplitMix64
+from core_prng.xoroshiro128 import Xoroshiro128
 import core_prng.pickle
 
 np.import_array()
@@ -50,7 +50,7 @@ cdef class RandomGenerator:
 
     def __init__(self, prng=None):
         if prng is None:
-            prng = SplitMix64()
+            prng = Xoroshiro128()
         self.__core_prng = prng
 
         capsule = prng._prng_capsule
