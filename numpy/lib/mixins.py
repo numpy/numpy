@@ -137,6 +137,8 @@ class NDArrayOperatorsMixin(object):
     Note that unlike ``numpy.ndarray``, ``ArrayLike`` does not allow operations
     with arbitrary, unrecognized types. This ensures that interactions with
     ArrayLike preserve a well-defined casting hierarchy.
+
+    .. versionadded:: 1.13
     """
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.
