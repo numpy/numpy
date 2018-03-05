@@ -34,7 +34,7 @@ class memmap(ndarray):
     This class may at some point be turned into a factory function
     which returns a view into an mmap buffer.
 
-    Delete the memmap instance to close.
+    Delete the memmap instance to close the memmap file.
 
 
     Parameters
