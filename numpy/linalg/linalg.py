@@ -2383,8 +2383,9 @@ def multi_dot(arrays):
 
     If the first argument is 1-D it is treated as a row vector.
     If the last argument is 1-D it is treated as a column vector.
-    If one of the other arguments is N-D, N>2, it is treated as a stack of matrices and broadcast accordingly
-    All other arguments must be 2-D.
+    All arguments other than the first and last must be atleast 2-D.
+    If any of the arguments is N-D, N>2, it is treated as a stack of matrices and broadcast accordingly
+    
 
     Think of `multi_dot` as::
 
@@ -2396,8 +2397,9 @@ def multi_dot(arrays):
     arrays : sequence of array_like
         If the first argument is 1-D it is treated as row vector.
         If the last argument is 1-D it is treated as column vector.
-        If one of the other arguments is N-D, N>2, it is treated as a stack of matrices and broadcast accordingly
-        All other arguments must be 2-D.
+        All arguments other than the first and last must be atleast 2-D.
+        If any of the arguments is N-D, N>2, it is treated as a stack of matrices and broadcast accordingly
+        
 
     Returns
     -------
@@ -2511,13 +2513,6 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
     multiplication.
 
     Also return the cost matrix if `return_costs` is `True`
-
-    The implementation CLOSELY follows Cormen, "Introduction to Algorithms",
-    Chapter 15.2, p. 370-378.  Note that Cormen uses 1-based indices.
-
-        cost[i, j] = min([
-            cost[prefix] + cost[suffix] + cost_mult(prefix, suffix)
-            for k in range(i, j)])
 
     """
     n = len(arrays)
