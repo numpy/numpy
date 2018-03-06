@@ -2495,9 +2495,9 @@ def _multi_dot_three(A, B, C):
     b1c0, c1 = C.shape[-2:]
     dim = [prod(A.shape[:-2]), prod(B.shape[:-2]), prod(B.shape[:-2]) ]
     # cost1 = cost((AB)C) = a0*a1b0*b1c0 + a0*b1c0*c1
-    cost1 = a0 * b1c0 * max(dim[0:1]) * (a1b0 + c1 * dim[2])
+    cost1 = a0 * b1c0 * max(dim[0:2]) * (a1b0 + c1 * dim[2])
     # cost2 = cost(A(BC)) = a1b0*b1c0*c1 + a0*a1b0*c1
-    cost2 = a1b0 * c1 * dim[0] * (a0 + b1c0 * max(dim[1:2]))
+    cost2 = a1b0 * c1 * dim[0] * (a0 + b1c0 * max(dim[1:3]))
 
     if cost1 < cost2:
         return matmul(matmul(A, B), C)
@@ -2532,7 +2532,7 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
             j = i + l
             m[i, j] = Inf
             for k in range(i, j):
-                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]*max(dim[i:j])
+                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]*max(dim[i:j+1])
                 if q < m[i, j]:
                     m[i, j] = q
                     s[i, j] = k  # Note that Cormen uses 1-based index
