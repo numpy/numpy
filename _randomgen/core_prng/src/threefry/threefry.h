@@ -4,6 +4,14 @@ Adapted from random123's threefry.h
 
 #include <inttypes.h>
 
+#ifdef _WIN32
+#define INLINE __inline __forceinline
+#else
+#define INLINE inline
+#endif
+
+#define THREEFRY_BUFFER_SIZE 4UL
+
 enum r123_enum_threefry64x4 {
   /* These are the R_256 constants from the Threefish reference sources
      with names changed to R_64x4... */
@@ -32,15 +40,15 @@ struct r123array4x64 {
 typedef struct r123array4x64 threefry4x64_key_t;
 typedef struct r123array4x64 threefry4x64_ctr_t;
 
-static inline uint64_t RotL_64(uint64_t x, unsigned int N);
-static inline uint64_t RotL_64(uint64_t x, unsigned int N) {
+static INLINE uint64_t RotL_64(uint64_t x, unsigned int N);
+static INLINE uint64_t RotL_64(uint64_t x, unsigned int N) {
   return (x << (N & 63)) | (x >> ((64 - N) & 63));
 }
 
-static inline threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
+static INLINE threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
                                                 threefry4x64_ctr_t in,
                                                 threefry4x64_key_t k);
-static inline threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
+static INLINE threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
                                                 threefry4x64_ctr_t in,
                                                 threefry4x64_key_t k) {
   threefry4x64_ctr_t X;
@@ -268,14 +276,13 @@ typedef struct s_threefry_state {
   threefry4x64_key_t *ctr;
   threefry4x64_ctr_t *key;
   int buffer_pos;
-  uint64_t buffer[4];
+  uint64_t buffer[THREEFRY_BUFFER_SIZE];
   int has_uint32;
   uint32_t uinteger;
 } threefry_state;
 
-static inline uint64_t threefry_next(threefry_state *state) {
-  /* TODO: This 4 should be a constant somewhere */
-  if (state->buffer_pos < 4) {
+static INLINE uint64_t threefry_next(threefry_state *state) {
+  if (state->buffer_pos < THREEFRY_BUFFER_SIZE) {
     uint64_t out = state->buffer[state->buffer_pos];
     state->buffer_pos++;
     return out;
@@ -302,11 +309,11 @@ static inline uint64_t threefry_next(threefry_state *state) {
   return state->buffer[0];
 }
 
-static inline uint64_t threefry_next64(threefry_state *state) {
+static INLINE uint64_t threefry_next64(threefry_state *state) {
   return threefry_next(state);
 }
 
-static inline uint64_t threefry_next32(threefry_state *state) {
+static INLINE uint64_t threefry_next32(threefry_state *state) {
   if (state->has_uint32) {
     state->has_uint32 = 0;
     return state->uinteger;

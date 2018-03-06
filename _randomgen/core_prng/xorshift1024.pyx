@@ -112,10 +112,16 @@ cdef class Xorshift1024:
         else:
             raise ValueError('bits must be 32 or 64')
 
-    def _benchmark(self, Py_ssize_t cnt):
+    def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
         cdef Py_ssize_t i
-        for i in range(cnt):
-            self._prng.next_uint64(self._prng.state)
+        if method==u'uint64':
+            for i in range(cnt):
+                self._prng.next_uint64(self._prng.state)
+        elif method==u'double':
+            for i in range(cnt):
+                self._prng.next_double(self._prng.state)
+        else:
+            raise ValueError('Unknown method')
 
     def seed(self, seed=None):
         """

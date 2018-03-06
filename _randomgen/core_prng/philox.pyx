@@ -10,6 +10,8 @@ cimport entropy
 
 np.import_array()
 
+DEF PHILOX_BUFFER_SIZE=4
+
 cdef extern from 'src/philox/philox.h':
     struct s_r123array2x64:
         uint64_t v[2]
@@ -27,7 +29,7 @@ cdef extern from 'src/philox/philox.h':
         philox4x64_ctr_t *ctr;
         philox4x64_key_t *key;
         int buffer_pos;
-        uint64_t buffer[4];
+        uint64_t buffer[PHILOX_BUFFER_SIZE];
         int has_uint32
         uint32_t uinteger
 
@@ -106,8 +108,8 @@ cdef class Philox:
     def _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
         self.rng_state.uinteger = 0
-        self.rng_state.buffer_pos = 4
-        for i in range(4):
+        self.rng_state.buffer_pos = PHILOX_BUFFER_SIZE
+        for i in range(PHILOX_BUFFER_SIZE):
             self.rng_state.buffer[i] = 0
 
     def __random_integer(self, bits=64):
@@ -135,10 +137,16 @@ cdef class Philox:
         else:
             raise ValueError('bits must be 32 or 64')
 
-    def _benchmark(self, Py_ssize_t cnt):
+    def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
         cdef Py_ssize_t i
-        for i in range(cnt):
-            self._prng.next_uint64(self._prng.state)
+        if method==u'uint64':
+            for i in range(cnt):
+                self._prng.next_uint64(self._prng.state)
+        elif method==u'double':
+            for i in range(cnt):
+                self._prng.next_double(self._prng.state)
+        else:
+            raise ValueError('Unknown method')
 
     def seed(self, seed=None, counter=None, key=None):
         """
@@ -201,12 +209,13 @@ cdef class Philox:
         """Get or set the PRNG state"""
         ctr = np.empty(4, dtype=np.uint64)
         key = np.empty(2, dtype=np.uint64)
-        buffer = np.empty(4, dtype=np.uint64)
+        buffer = np.empty(PHILOX_BUFFER_SIZE, dtype=np.uint64)
         for i in range(4):
             ctr[i] = self.rng_state.ctr.v[i]
-            buffer[i] = self.rng_state.buffer[i]
             if i < 2:
                 key[i] = self.rng_state.key.v[i]
+        for i in range(PHILOX_BUFFER_SIZE):
+            buffer[i] = self.rng_state.buffer[i]
 
         state = {'counter': ctr, 'key': key}
         return {'prng': self.__class__.__name__,
@@ -226,9 +235,11 @@ cdef class Philox:
                              'PRNG'.format(self.__class__.__name__))
         for i in range(4):
             self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
-            self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
             if i < 2:
                 self.rng_state.key.v[i] = <uint64_t> value['state']['key'][i]
+        for i in range(PHILOX_BUFFER_SIZE):
+            self.rng_state.buffer[i] = <uint64_t> value['buffer'][i]
+
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
         self.rng_state.buffer_pos = value['buffer_pos']

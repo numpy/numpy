@@ -75,10 +75,29 @@ from core_prng import {module}
 m = {module}()
 m._benchmark(701)
 """
+import pandas as pd
+res = []
 for p in PRNGS:
     module = p.__name__
     print(module)
     t = timeit.timeit("m._benchmark(10000000)", setup.format(module=module),
                       number=10)
-    print('{:0.2f} ms'.format(1000 * t / 10))
-    print('{:,} randoms per second'.format(int(10000000 / (t/10))))
+    res.append(pd.Series({'module': module, 'ms': 1000 *
+                          t / 10, 'rps': int(10000000 / (t/10))}))
+    #print('{:0.2f} ms'.format())
+    # print('{:,} randoms per second'.format()))
+res = pd.DataFrame(res)
+print(res.set_index('module').sort_values('ms'))
+
+res = []
+for p in PRNGS:
+    module = p.__name__
+    print(module)
+    t = timeit.timeit("m._benchmark(10000000, 'double')", setup.format(module=module),
+                      number=10)
+    res.append(pd.Series({'module': module, 'ms': 1000 *
+                          t / 10, 'rps': int(10000000 / (t/10))}))
+    #print('{:0.2f} ms'.format())
+    # print('{:,} randoms per second'.format()))
+res = pd.DataFrame(res)
+print(res.set_index('module').sort_values('ms'))
