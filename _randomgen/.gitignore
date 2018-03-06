@@ -2,4 +2,10 @@
 build/
 *.egg-info/
 *.pyd
+*.pyc
 *.html
+*.obj
+*.exe
+**/Random123
+settings.json
+*.so

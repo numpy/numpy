@@ -29,7 +29,7 @@
 #ifndef _INTTYPES
 #include "../common/stdint.h"
 #endif
-#define inline __forceinline
+#define inline __inline __forceinline
 #else
 #include <inttypes.h>
 #endif

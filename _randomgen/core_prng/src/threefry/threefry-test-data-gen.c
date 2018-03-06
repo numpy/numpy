@@ -4,7 +4,7 @@
  *  cl threefry-test-data-gen.c /Ox
  *  threefry-test-data-gen.exe
  *
- *  gcc threefry-test-data-gen.c -o philox-test-data-gen
+ *  gcc threefry-test-data-gen.c -o threefry-test-data-gen
  *  ./threefry-test-data-gen
  *
  * Requres the Random123 directory containing header files to be located in the
@@ -38,12 +38,13 @@ int main() {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp, "key, %" PRIu64 ", %" PRIu64 ", %" PRIu64 ", %" PRIu64 "\n",
+  fprintf(fp,
+          "key, 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 "\n",
           key.v[0], key.v[1], key.v[2], key.v[3]);
   for (i = 0; i < N; i++) {
-    fprintf(fp, "%d, %" PRIu64 "\n", i, store[i]);
+    fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {
-      printf("%d, %" PRIu64 "\n", i, store[i]);
+      printf("%d, 0x%" PRIx64 "\n", i, store[i]);
     }
   }
   fclose(fp);
@@ -61,16 +62,18 @@ int main() {
     }
   }
 
-  fp = fopen("philox-testset-2.csv", "w");
+  fp = fopen("threefry-testset-2.csv", "w");
   if (fp == NULL) {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp, "key: %" PRIu64 ", %" PRIu64 "\n", key.v[0], key.v[1]);
+  fprintf(fp,
+          "key, 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 "\n",
+          key.v[0], key.v[1], key.v[2], key.v[3]);
   for (i = 0; i < N; i++) {
-    fprintf(fp, "%d, %" PRIu64 "\n", i, store[i]);
+    fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {
-      printf("%d, %" PRIu64 "\n", i, store[i]);
+      printf("%d, 0x%" PRIx64 "\n", i, store[i]);
     }
   }
   fclose(fp);
