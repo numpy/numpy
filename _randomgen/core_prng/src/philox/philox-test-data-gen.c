@@ -38,11 +38,11 @@ int main() {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp, "key: %" PRIu64 ", %" PRIu64 "\n", key.v[0], key.v[1]);
+  fprintf(fp, "key, 0x%" PRIx64 ", 0x%" PRIx64 "\n", key.v[0], key.v[1]);
   for (i = 0; i < N; i++) {
-    fprintf(fp, "%d, %" PRIu64 "\n", i, store[i]);
+    fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {
-      printf("%d, %" PRIu64 "\n", i, store[i]);
+      printf("%d, 0x%" PRIx64 "\n", i, store[i]);
     }
   }
   fclose(fp);
@@ -63,11 +63,11 @@ int main() {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp, "key: %" PRIu64 ", %" PRIu64 "\n", key.v[0], key.v[1]);
+  fprintf(fp, "key, 0x%" PRIx64 ", 0x%" PRIx64 "\n", key.v[0], key.v[1]);
   for (i = 0; i < N; i++) {
-    fprintf(fp, "%d, %" PRIu64 "\n", i, store[i]);
+    fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {
-      printf("%d, %" PRIu64 "\n", i, store[i]);
+      printf("%d, 0x%" PRIx64 "\n", i, store[i]);
     }
   }
   fclose(fp);
