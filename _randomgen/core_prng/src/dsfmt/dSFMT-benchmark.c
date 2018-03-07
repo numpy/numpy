@@ -5,9 +5,11 @@
  * gcc dSFMT-benchmark.c dSFMT.c -O3 -DHAVE_SSE2 -DDSFMT_MEXP=19937 -o
  * dSFMT-benchmark
  */
-#include "dSFMT.h"
 #include <inttypes.h>
 #include <time.h>
+
+#include "dSFMT.h"
+
 
 #define N 1000000000
 
