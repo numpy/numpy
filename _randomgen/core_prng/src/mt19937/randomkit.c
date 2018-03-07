@@ -81,7 +81,6 @@
 #include <sys/timeb.h>
 #include <time.h>
 
-
 /*
  * mingw msvcr lib import wrongly export _ftime, which does not exist in the
  * actual msvc runtime for version >= 8; we make it an alias to _ftime64, which
@@ -127,7 +126,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 
 #ifndef RK_DEV_URANDOM
 #define RK_DEV_URANDOM "/dev/urandom"

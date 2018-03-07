@@ -241,10 +241,10 @@ inline pcg128_t pcg_output_xsl_rr_rr_128_128(pcg128_t state) {
   PCG_128BIT_CONSTANT(6364136223846793005ULL, 1442695040888963407ULL)
 #endif
 
-/*
- * Static initialization constants (if you can't call srandom for some
- * bizarre reason).
- */
+  /*
+   * Static initialization constants (if you can't call srandom for some
+   * bizarre reason).
+   */
 
 #define PCG_STATE_ONESEQ_8_INITIALIZER                                         \
   { 0xd7U }

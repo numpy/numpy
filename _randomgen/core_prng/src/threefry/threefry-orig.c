@@ -29,9 +29,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <stdint.h>
 #include "threefry.h"
+#include <stdint.h>
 
 #define N_WORDS 2
 #define KEY_LENGTH 3
@@ -42,9 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static const int ROTATION[] = {16, 42, 12, 31, 16, 32, 24, 21};
 
-uint64_t rotl_64(uint64_t x, int d) {
-  return ((x << d) | (x >> (64-d)));
-}
+uint64_t rotl_64(uint64_t x, int d) { return ((x << d) | (x >> (64 - d))); }
 
 threefry_t mix(threefry_t x, int R) {
   x.c0 += x.c1;
@@ -53,21 +50,21 @@ threefry_t mix(threefry_t x, int R) {
 }
 
 threefry_t threefry(threefry_t p, threefry_t k) {
-  uint64_t K[] = {k.c0, k.c1, C240^k.c0^k.c1};
+  uint64_t K[] = {k.c0, k.c1, C240 ^ k.c0 ^ k.c1};
   int rmod4, rdiv4;
   threefry_t x;
   x = p;
-  for (int r=0; r<N_ROUNDS; r++) {
-    rmod4 = r%4;
-    if (rmod4==0) {
-      rdiv4 = r/4;
-      x.c0 += K[rdiv4%KEY_LENGTH];
-      x.c1 += K[(rdiv4+1)%KEY_LENGTH] + rdiv4;
+  for (int r = 0; r < N_ROUNDS; r++) {
+    rmod4 = r % 4;
+    if (rmod4 == 0) {
+      rdiv4 = r / 4;
+      x.c0 += K[rdiv4 % KEY_LENGTH];
+      x.c1 += K[(rdiv4 + 1) % KEY_LENGTH] + rdiv4;
     }
-    x = mix(x, ROTATION[r%8]);
+    x = mix(x, ROTATION[r % 8]);
   }
-  x.c0 += K[(N_ROUNDS/4)%KEY_LENGTH];
-  x.c1 += K[(N_ROUNDS/4+1)%KEY_LENGTH] + N_ROUNDS/4;
+  x.c0 += K[(N_ROUNDS / 4) % KEY_LENGTH];
+  x.c1 += K[(N_ROUNDS / 4 + 1) % KEY_LENGTH] + N_ROUNDS / 4;
   return x;
 }
 
