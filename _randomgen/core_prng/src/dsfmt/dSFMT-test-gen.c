@@ -1,10 +1,14 @@
 /*
+ * cl dSFMT-test-gen.c dSFMT.c -DHAVE_SSE2 -DDSFMT_MEXP=19937 /Ox
  *
  * gcc dSFMT-test-gen.c dSFMT.c -DHAVE_SSE2 -DDSFMT_MEXP=19937 -o dSFMT
  */
-#include "dSFMT.h"
+
 #include <inttypes.h>
 #include <stdio.h>
+
+#include "dSFMT.h"
+
 
 int main(void) {
   int i;
@@ -27,7 +31,9 @@ int main(void) {
     d = out[i];
     temp = (uint64_t *)&d;
     fprintf(fp, "%d, %" PRIu64 "\n", i, *temp);
-    printf("%d, %" PRIu64 "\n", i, *temp);
+    if (i==999) {
+        printf("%d, %" PRIu64 "\n", i, *temp);
+    }
   }
   fclose(fp);
 
@@ -44,7 +50,9 @@ int main(void) {
     d = out[i];
     temp = (uint64_t *)&d;
     fprintf(fp, "%d, %" PRIu64 "\n", i, *temp);
-    printf("%d, %" PRIu64 "\n", i, *temp);
+    if (i==999) {
+        printf("%d, %" PRIu64 "\n", i, *temp);
+    }
   }
   fclose(fp);
 }
