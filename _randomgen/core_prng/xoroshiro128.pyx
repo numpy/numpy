@@ -2,6 +2,9 @@ from libc.stdint cimport uint32_t, uint64_t
 from libc.stdlib cimport malloc, free
 from cpython.pycapsule cimport PyCapsule_New
 
+from collections import namedtuple
+ctypes_interface = namedtuple('ctypes_interface', ['state','next_uint64','next_uint32','next_double'])
+
 import numpy as np
 cimport numpy as np
 
@@ -9,6 +12,8 @@ from common cimport *
 from core_prng.entropy import random_entropy
 import core_prng.pickle
 cimport entropy
+
+import ctypes
 
 np.import_array()
 
@@ -51,6 +56,7 @@ cdef class Xoroshiro128:
     cdef xoroshiro128_state  *rng_state
     cdef prng_t *_prng
     cdef public object _prng_capsule
+    cdef public object ctypes
 
     def __init__(self, seed=None):
         self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
@@ -62,6 +68,11 @@ cdef class Xoroshiro128:
         self._prng.next_uint64 = &xoroshiro128_uint64
         self._prng.next_uint32 = &xoroshiro128_uint32
         self._prng.next_double = &xoroshiro128_double
+        
+        self.ctypes = ctypes_interface(ctypes.c_void_p(<Py_ssize_t>self.rng_state),
+                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint64, ctypes.CFUNCTYPE(ctypes.c_uint64, ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint32, ctypes.CFUNCTYPE(ctypes.c_uint32, ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&xoroshiro128_double, ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_void_p)))
 
         cdef const char *name = "CorePRNG"
         self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
