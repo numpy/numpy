@@ -33,9 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "threefry.h"
 
-extern inline uint64_t threefry_next64(threefry_state *state);
+extern INLINE uint64_t threefry_next64(threefry_state *state);
 
-extern inline uint64_t threefry_next32(threefry_state *state);
+extern INLINE uint64_t threefry_next32(threefry_state *state);
 
 extern void threefry_jump(threefry_state *state) {
   /* Advances state as-if 2^128 draws were made */

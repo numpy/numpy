@@ -32,17 +32,20 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
 #include "xoroshiro128.h"
 
-extern inline uint64_t xoroshiro128_next64(xoroshiro128_state *state);
+extern INLINE uint64_t xoroshiro128_next64(xoroshiro128_state *state);
 
-extern inline uint32_t xoroshiro128_next32(xoroshiro128_state *state);
+extern INLINE uint32_t xoroshiro128_next32(xoroshiro128_state *state);
 
 void xoroshiro128_jump(xoroshiro128_state *state) {
+  int i, b;
+  uint64_t s0;
+  uint64_t s1;
   static const uint64_t JUMP[] = {0xbeac0467eba5facb, 0xd86b048b86aa9922};
 
-  uint64_t s0 = 0;
-  uint64_t s1 = 0;
-  for (int i = 0; i < sizeof JUMP / sizeof *JUMP; i++)
-    for (int b = 0; b < 64; b++) {
+  s0 = 0;
+  s1 = 0;
+  for (i = 0; i < sizeof JUMP / sizeof *JUMP; i++)
+    for (b = 0; b < 64; b++) {
       if (JUMP[i] & UINT64_C(1) << b) {
         s0 ^= state->s[0];
         s1 ^= state->s[1];

@@ -6,7 +6,7 @@
 #define INLINE inline
 #endif
 
-#define PHILOX_BUFFER_SIZE 4UL
+#define PHILOX_BUFFER_SIZE 4L
 
 struct r123array2x64 {
   uint64_t v[2];
@@ -143,14 +143,16 @@ typedef struct s_philox_state {
 } philox_state;
 
 static INLINE uint64_t philox_next(philox_state *state) {
+  uint64_t out;
+  int i;
+  philox4x64_ctr_t ct;
+
   if (state->buffer_pos < PHILOX_BUFFER_SIZE) {
-    uint64_t out = state->buffer[state->buffer_pos];
+    out = state->buffer[state->buffer_pos];
     state->buffer_pos++;
     return out;
   }
   /* generate 4 new uint64_t */
-  int i;
-  philox4x64_ctr_t ct;
   state->ctr->v[0]++;
   /* Handle carry */
   if (state->ctr->v[0] == 0) {
@@ -175,11 +177,13 @@ static INLINE uint64_t philox_next64(philox_state *state) {
 }
 
 static INLINE uint64_t philox_next32(philox_state *state) {
+  uint64_t next;
+
   if (state->has_uint32) {
     state->has_uint32 = 0;
     return state->uinteger;
   }
-  uint64_t next = philox_next(state);
+  next = philox_next(state);
 
   state->has_uint32 = 1;
   state->uinteger = (uint32_t)(next & 0xffffffff);
