@@ -25,7 +25,7 @@ cdef extern from "src/xorshift1024/xorshift1024.h":
     uint64_t xorshift1024_next32(xorshift1024_state *state)  nogil
     void xorshift1024_jump(xorshift1024_state  *state)
 
-cdef uint64_t xorshift1024_uint64(void* st):# nogil:
+cdef uint64_t xorshift1024_uint64(void* st) nogil:
     return xorshift1024_next64(<xorshift1024_state *>st)
 
 cdef uint32_t xorshift1024_uint32(void *st) nogil:

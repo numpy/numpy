@@ -51,7 +51,7 @@ cdef extern from "src/pcg64/pcg64.h":
     void pcg64_advance(pcg64_state *state, uint64_t *step)
 
 
-cdef uint64_t pcg64_uint64(void* st):# nogil:
+cdef uint64_t pcg64_uint64(void* st) nogil:
     return pcg64_next64(<pcg64_state *>st)
 
 cdef uint32_t pcg64_uint32(void *st) nogil:
