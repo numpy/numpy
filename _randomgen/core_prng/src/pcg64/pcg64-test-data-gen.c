@@ -3,11 +3,12 @@
  *
  * GCC only
  *
- * gcc  pcg64-test-data-gen.c pcg64.orig.c ../splitmix64/splitmix64.c -o pgc64-test-data-gen
+ * gcc  pcg64-test-data-gen.c pcg64.orig.c ../splitmix64/splitmix64.c -o
+ * pgc64-test-data-gen
  */
 
-#include "pcg64.orig.h"
 #include "../splitmix64/splitmix64.h"
+#include "pcg64.orig.h"
 #include <inttypes.h>
 #include <stdio.h>
 
