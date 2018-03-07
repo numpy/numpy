@@ -38,14 +38,14 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 
 #if !defined(DSFMT_MEXP)
 #ifdef __GNUC__
-  #warning "DSFMT_MEXP is not defined. I assume DSFMT_MEXP is 19937."
+#warning "DSFMT_MEXP is not defined. I assume DSFMT_MEXP is 19937."
 #endif
-  #define DSFMT_MEXP 19937
+#define DSFMT_MEXP 19937
 #endif
 /*-----------------
   BASIC DEFINITIONS
@@ -64,103 +64,103 @@ extern "C" {
 #define DSFMT_N64 (DSFMT_N * 2)
 
 #if !defined(DSFMT_BIG_ENDIAN)
-#  if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN)
-#    if __BYTE_ORDER == __BIG_ENDIAN
-#      define DSFMT_BIG_ENDIAN 1
-#    endif
-#  elif defined(_BYTE_ORDER) && defined(_BIG_ENDIAN)
-#    if _BYTE_ORDER == _BIG_ENDIAN
-#      define DSFMT_BIG_ENDIAN 1
-#    endif
-#  elif defined(__BYTE_ORDER__) && defined(__BIG_ENDIAN__)
-#    if __BYTE_ORDER__ == __BIG_ENDIAN__
-#      define DSFMT_BIG_ENDIAN 1
-#    endif
-#  elif defined(BYTE_ORDER) && defined(BIG_ENDIAN)
-#    if BYTE_ORDER == BIG_ENDIAN
-#      define DSFMT_BIG_ENDIAN 1
-#    endif
-#  elif defined(__BIG_ENDIAN) || defined(_BIG_ENDIAN) \
-    || defined(__BIG_ENDIAN__) || defined(BIG_ENDIAN)
-#      define DSFMT_BIG_ENDIAN 1
-#  endif
+#if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN)
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define DSFMT_BIG_ENDIAN 1
+#endif
+#elif defined(_BYTE_ORDER) && defined(_BIG_ENDIAN)
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define DSFMT_BIG_ENDIAN 1
+#endif
+#elif defined(__BYTE_ORDER__) && defined(__BIG_ENDIAN__)
+#if __BYTE_ORDER__ == __BIG_ENDIAN__
+#define DSFMT_BIG_ENDIAN 1
+#endif
+#elif defined(BYTE_ORDER) && defined(BIG_ENDIAN)
+#if BYTE_ORDER == BIG_ENDIAN
+#define DSFMT_BIG_ENDIAN 1
+#endif
+#elif defined(__BIG_ENDIAN) || defined(_BIG_ENDIAN) ||                         \
+    defined(__BIG_ENDIAN__) || defined(BIG_ENDIAN)
+#define DSFMT_BIG_ENDIAN 1
+#endif
 #endif
 
 #if defined(DSFMT_BIG_ENDIAN) && defined(__amd64)
-#  undef DSFMT_BIG_ENDIAN
+#undef DSFMT_BIG_ENDIAN
 #endif
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#  include <inttypes.h>
+#include <inttypes.h>
 #elif defined(_MSC_VER) || defined(__BORLANDC__)
-#  if !defined(DSFMT_UINT32_DEFINED) && !defined(SFMT_UINT32_DEFINED)
+#if !defined(DSFMT_UINT32_DEFINED) && !defined(SFMT_UINT32_DEFINED)
 typedef unsigned int uint32_t;
 typedef unsigned __int64 uint64_t;
-#    ifndef UINT64_C
-#      define UINT64_C(v) (v ## ui64)
-#    endif
-#    define DSFMT_UINT32_DEFINED
-#    if !defined(inline) && !defined(__cplusplus)
-#      define inline __forceinline
-#    endif
-#  endif
+#ifndef UINT64_C
+#define UINT64_C(v) (v##ui64)
+#endif
+#define DSFMT_UINT32_DEFINED
+#if !defined(inline) && !defined(__cplusplus)
+#define inline __forceinline
+#endif
+#endif
 #else
-#  include <inttypes.h>
-#  if !defined(inline) && !defined(__cplusplus)
-#    if defined(__GNUC__)
-#      define inline __forceinline__
-#    else
-#      define inline
-#    endif
-#  endif
+#include <inttypes.h>
+#if !defined(inline) && !defined(__cplusplus)
+#if defined(__GNUC__)
+#define inline __forceinline__
+#else
+#define inline
+#endif
+#endif
 #endif
 
 #ifndef PRIu64
-#  if defined(_MSC_VER) || defined(__BORLANDC__)
-#    define PRIu64 "I64u"
-#    define PRIx64 "I64x"
-#  else
-#    define PRIu64 "llu"
-#    define PRIx64 "llx"
-#  endif
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+#define PRIu64 "I64u"
+#define PRIx64 "I64x"
+#else
+#define PRIu64 "llu"
+#define PRIx64 "llx"
+#endif
 #endif
 
 #ifndef UINT64_C
-#  define UINT64_C(v) (v ## ULL)
+#define UINT64_C(v) (v##ULL)
 #endif
 
 /*------------------------------------------
   128-bit SIMD like data type for standard C
   ------------------------------------------*/
 #if defined(HAVE_ALTIVEC)
-#  if !defined(__APPLE__)
-#    include <altivec.h>
-#  endif
+#if !defined(__APPLE__)
+#include <altivec.h>
+#endif
 /** 128-bit data structure */
 union W128_T {
-    vector unsigned int s;
-    uint64_t u[2];
-    uint32_t u32[4];
-    double d[2];
+  vector unsigned int s;
+  uint64_t u[2];
+  uint32_t u32[4];
+  double d[2];
 };
 
 #elif defined(HAVE_SSE2)
-#  include <emmintrin.h>
+#include <emmintrin.h>
 
 /** 128-bit data structure */
 union W128_T {
-    __m128i si;
-    __m128d sd;
-    uint64_t u[2];
-    uint32_t u32[4];
-    double d[2];
+  __m128i si;
+  __m128d sd;
+  uint64_t u[2];
+  uint32_t u32[4];
+  double d[2];
 };
-#else  /* standard C */
+#else /* standard C */
 /** 128-bit data structure */
 union W128_T {
-    uint64_t u[2];
-    uint32_t u32[4];
-    double d[2];
+  uint64_t u[2];
+  uint32_t u32[4];
+  double d[2];
 };
 #endif
 
@@ -169,8 +169,8 @@ typedef union W128_T w128_t;
 
 /** the 128-bit internal state array */
 struct DSFMT_T {
-    w128_t status[DSFMT_N + 1];
-    int idx;
+  w128_t status[DSFMT_N + 1];
+  int idx;
 };
 typedef struct DSFMT_T dsfmt_t;
 
@@ -191,42 +191,42 @@ const char *dsfmt_get_idstring(void);
 int dsfmt_get_min_array_size(void);
 
 #if defined(__GNUC__)
-#  define DSFMT_PRE_INLINE inline static
-#  define DSFMT_PST_INLINE __attribute__((always_inline))
+#define DSFMT_PRE_INLINE inline static
+#define DSFMT_PST_INLINE __attribute__((always_inline))
 #elif defined(_MSC_VER) && _MSC_VER >= 1200
-#  define DSFMT_PRE_INLINE __forceinline static
-#  define DSFMT_PST_INLINE
+#define DSFMT_PRE_INLINE __forceinline static
+#define DSFMT_PST_INLINE
 #else
-#  define DSFMT_PRE_INLINE inline static
-#  define DSFMT_PST_INLINE
+#define DSFMT_PRE_INLINE inline static
+#define DSFMT_PST_INLINE
 #endif
 DSFMT_PRE_INLINE uint32_t dsfmt_genrand_uint32(dsfmt_t *dsfmt) DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE double dsfmt_genrand_close1_open2(dsfmt_t *dsfmt)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE double dsfmt_genrand_close_open(dsfmt_t *dsfmt)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE double dsfmt_genrand_open_close(dsfmt_t *dsfmt)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE double dsfmt_genrand_open_open(dsfmt_t *dsfmt)
-    DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE double
+dsfmt_genrand_close1_open2(dsfmt_t *dsfmt) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE double
+dsfmt_genrand_close_open(dsfmt_t *dsfmt) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE double
+dsfmt_genrand_open_close(dsfmt_t *dsfmt) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE double
+dsfmt_genrand_open_open(dsfmt_t *dsfmt) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE uint32_t dsfmt_gv_genrand_uint32(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double dsfmt_gv_genrand_close1_open2(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double dsfmt_gv_genrand_close_open(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double dsfmt_gv_genrand_open_close(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double dsfmt_gv_genrand_open_open(void) DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void dsfmt_gv_fill_array_open_close(double array[], int size)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void dsfmt_gv_fill_array_close_open(double array[], int size)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void dsfmt_gv_fill_array_open_open(double array[], int size)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void dsfmt_gv_fill_array_close1_open2(double array[], int size)
-    DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void dsfmt_gv_fill_array_open_close(double array[],
+                                                     int size) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void dsfmt_gv_fill_array_close_open(double array[],
+                                                     int size) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void dsfmt_gv_fill_array_open_open(double array[],
+                                                    int size) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void
+dsfmt_gv_fill_array_close1_open2(double array[], int size) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE void dsfmt_gv_init_gen_rand(uint32_t seed) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE void dsfmt_gv_init_by_array(uint32_t init_key[],
                                              int key_length) DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void dsfmt_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed)
-    DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void dsfmt_init_gen_rand(dsfmt_t *dsfmt,
+                                          uint32_t seed) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE void dsfmt_init_by_array(dsfmt_t *dsfmt, uint32_t init_key[],
                                           int key_length) DSFMT_PST_INLINE;
 
@@ -239,15 +239,15 @@ DSFMT_PRE_INLINE void dsfmt_init_by_array(dsfmt_t *dsfmt, uint32_t init_key[],
  * @return double precision floating point pseudorandom number
  */
 inline static uint32_t dsfmt_genrand_uint32(dsfmt_t *dsfmt) {
-    uint32_t r;
-    uint64_t *psfmt64 = &dsfmt->status[0].u[0];
+  uint32_t r;
+  uint64_t *psfmt64 = &dsfmt->status[0].u[0];
 
-    if (dsfmt->idx >= DSFMT_N64) {
-        dsfmt_gen_rand_all(dsfmt);
-        dsfmt->idx = 0;
-    }
-    r = psfmt64[dsfmt->idx++] & 0xffffffffU;
-    return r;
+  if (dsfmt->idx >= DSFMT_N64) {
+    dsfmt_gen_rand_all(dsfmt);
+    dsfmt->idx = 0;
+  }
+  r = psfmt64[dsfmt->idx++] & 0xffffffffU;
+  return r;
 }
 
 /**
@@ -260,15 +260,15 @@ inline static uint32_t dsfmt_genrand_uint32(dsfmt_t *dsfmt) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_genrand_close1_open2(dsfmt_t *dsfmt) {
-    double r;
-    double *psfmt64 = &dsfmt->status[0].d[0];
+  double r;
+  double *psfmt64 = &dsfmt->status[0].d[0];
 
-    if (dsfmt->idx >= DSFMT_N64) {
-        dsfmt_gen_rand_all(dsfmt);
-        dsfmt->idx = 0;
-    }
-    r = psfmt64[dsfmt->idx++];
-    return r;
+  if (dsfmt->idx >= DSFMT_N64) {
+    dsfmt_gen_rand_all(dsfmt);
+    dsfmt->idx = 0;
+  }
+  r = psfmt64[dsfmt->idx++];
+  return r;
 }
 
 /**
@@ -279,7 +279,7 @@ inline static double dsfmt_genrand_close1_open2(dsfmt_t *dsfmt) {
  * @return double precision floating point pseudorandom number
  */
 inline static uint32_t dsfmt_gv_genrand_uint32(void) {
-    return dsfmt_genrand_uint32(&dsfmt_global_data);
+  return dsfmt_genrand_uint32(&dsfmt_global_data);
 }
 
 /**
@@ -290,7 +290,7 @@ inline static uint32_t dsfmt_gv_genrand_uint32(void) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_gv_genrand_close1_open2(void) {
-    return dsfmt_genrand_close1_open2(&dsfmt_global_data);
+  return dsfmt_genrand_close1_open2(&dsfmt_global_data);
 }
 
 /**
@@ -302,7 +302,7 @@ inline static double dsfmt_gv_genrand_close1_open2(void) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_genrand_close_open(dsfmt_t *dsfmt) {
-    return dsfmt_genrand_close1_open2(dsfmt) - 1.0;
+  return dsfmt_genrand_close1_open2(dsfmt) - 1.0;
 }
 
 /**
@@ -313,7 +313,7 @@ inline static double dsfmt_genrand_close_open(dsfmt_t *dsfmt) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_gv_genrand_close_open(void) {
-    return dsfmt_gv_genrand_close1_open2() - 1.0;
+  return dsfmt_gv_genrand_close1_open2() - 1.0;
 }
 
 /**
@@ -325,7 +325,7 @@ inline static double dsfmt_gv_genrand_close_open(void) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_genrand_open_close(dsfmt_t *dsfmt) {
-    return 2.0 - dsfmt_genrand_close1_open2(dsfmt);
+  return 2.0 - dsfmt_genrand_close1_open2(dsfmt);
 }
 
 /**
@@ -336,7 +336,7 @@ inline static double dsfmt_genrand_open_close(dsfmt_t *dsfmt) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_gv_genrand_open_close(void) {
-    return 2.0 - dsfmt_gv_genrand_close1_open2();
+  return 2.0 - dsfmt_gv_genrand_close1_open2();
 }
 
 /**
@@ -348,19 +348,19 @@ inline static double dsfmt_gv_genrand_open_close(void) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_genrand_open_open(dsfmt_t *dsfmt) {
-    double *dsfmt64 = &dsfmt->status[0].d[0];
-    union {
-        double d;
-        uint64_t u;
-    } r;
+  double *dsfmt64 = &dsfmt->status[0].d[0];
+  union {
+    double d;
+    uint64_t u;
+  } r;
 
-    if (dsfmt->idx >= DSFMT_N64) {
-        dsfmt_gen_rand_all(dsfmt);
-        dsfmt->idx = 0;
-    }
-    r.d = dsfmt64[dsfmt->idx++];
-    r.u |= 1;
-    return r.d - 1.0;
+  if (dsfmt->idx >= DSFMT_N64) {
+    dsfmt_gen_rand_all(dsfmt);
+    dsfmt->idx = 0;
+  }
+  r.d = dsfmt64[dsfmt->idx++];
+  r.u |= 1;
+  return r.d - 1.0;
 }
 
 /**
@@ -371,7 +371,7 @@ inline static double dsfmt_genrand_open_open(dsfmt_t *dsfmt) {
  * @return double precision floating point pseudorandom number
  */
 inline static double dsfmt_gv_genrand_open_open(void) {
-    return dsfmt_genrand_open_open(&dsfmt_global_data);
+  return dsfmt_genrand_open_open(&dsfmt_global_data);
 }
 
 /**
@@ -386,7 +386,7 @@ inline static double dsfmt_gv_genrand_open_open(void) {
  * see also \sa dsfmt_fill_array_close1_open2()
  */
 inline static void dsfmt_gv_fill_array_close1_open2(double array[], int size) {
-    dsfmt_fill_array_close1_open2(&dsfmt_global_data, array, size);
+  dsfmt_fill_array_close1_open2(&dsfmt_global_data, array, size);
 }
 
 /**
@@ -402,7 +402,7 @@ inline static void dsfmt_gv_fill_array_close1_open2(double array[], int size) {
  * dsfmt_gv_fill_array_close1_open2()
  */
 inline static void dsfmt_gv_fill_array_open_close(double array[], int size) {
-    dsfmt_fill_array_open_close(&dsfmt_global_data, array, size);
+  dsfmt_fill_array_open_close(&dsfmt_global_data, array, size);
 }
 
 /**
@@ -418,7 +418,7 @@ inline static void dsfmt_gv_fill_array_open_close(double array[], int size) {
  * dsfmt_gv_fill_array_close1_open2()
  */
 inline static void dsfmt_gv_fill_array_close_open(double array[], int size) {
-    dsfmt_fill_array_close_open(&dsfmt_global_data, array, size);
+  dsfmt_fill_array_close_open(&dsfmt_global_data, array, size);
 }
 
 /**
@@ -434,7 +434,7 @@ inline static void dsfmt_gv_fill_array_close_open(double array[], int size) {
  * dsfmt_gv_fill_array_close1_open2()
  */
 inline static void dsfmt_gv_fill_array_open_open(double array[], int size) {
-    dsfmt_fill_array_open_open(&dsfmt_global_data, array, size);
+  dsfmt_fill_array_open_open(&dsfmt_global_data, array, size);
 }
 
 /**
@@ -444,7 +444,7 @@ inline static void dsfmt_gv_fill_array_open_open(double array[], int size) {
  * @param seed a 32-bit integer used as the seed.
  */
 inline static void dsfmt_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed) {
-    dsfmt_chk_init_gen_rand(dsfmt, seed, DSFMT_MEXP);
+  dsfmt_chk_init_gen_rand(dsfmt, seed, DSFMT_MEXP);
 }
 
 /**
@@ -454,7 +454,7 @@ inline static void dsfmt_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed) {
  * see also \sa dsfmt_init_gen_rand()
  */
 inline static void dsfmt_gv_init_gen_rand(uint32_t seed) {
-    dsfmt_init_gen_rand(&dsfmt_global_data, seed);
+  dsfmt_init_gen_rand(&dsfmt_global_data, seed);
 }
 
 /**
@@ -466,7 +466,7 @@ inline static void dsfmt_gv_init_gen_rand(uint32_t seed) {
  */
 inline static void dsfmt_init_by_array(dsfmt_t *dsfmt, uint32_t init_key[],
                                        int key_length) {
-    dsfmt_chk_init_by_array(dsfmt, init_key, key_length, DSFMT_MEXP);
+  dsfmt_chk_init_by_array(dsfmt, init_key, key_length, DSFMT_MEXP);
 }
 
 /**
@@ -478,36 +478,34 @@ inline static void dsfmt_init_by_array(dsfmt_t *dsfmt, uint32_t init_key[],
  * see also \sa dsfmt_init_by_array()
  */
 inline static void dsfmt_gv_init_by_array(uint32_t init_key[], int key_length) {
-    dsfmt_init_by_array(&dsfmt_global_data, init_key, key_length);
+  dsfmt_init_by_array(&dsfmt_global_data, init_key, key_length);
 }
 
 #if !defined(DSFMT_DO_NOT_USE_OLD_NAMES)
 DSFMT_PRE_INLINE const char *get_idstring(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE int get_min_array_size(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE void init_gen_rand(uint32_t seed) DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void init_by_array(uint32_t init_key[], int key_length)
-    DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void init_by_array(uint32_t init_key[],
+                                    int key_length) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double genrand_close1_open2(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double genrand_close_open(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double genrand_open_close(void) DSFMT_PST_INLINE;
 DSFMT_PRE_INLINE double genrand_open_open(void) DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void fill_array_open_close(double array[], int size)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void fill_array_close_open(double array[], int size)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void fill_array_open_open(double array[], int size)
-    DSFMT_PST_INLINE;
-DSFMT_PRE_INLINE void fill_array_close1_open2(double array[], int size)
-    DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void fill_array_open_close(double array[],
+                                            int size) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void fill_array_close_open(double array[],
+                                            int size) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void fill_array_open_open(double array[],
+                                           int size) DSFMT_PST_INLINE;
+DSFMT_PRE_INLINE void fill_array_close1_open2(double array[],
+                                              int size) DSFMT_PST_INLINE;
 
 /**
  * This function is just the same as dsfmt_get_idstring().
  * @return id string.
  * see also \sa dsfmt_get_idstring()
  */
-inline static const char *get_idstring(void) {
-    return dsfmt_get_idstring();
-}
+inline static const char *get_idstring(void) { return dsfmt_get_idstring(); }
 
 /**
  * This function is just the same as dsfmt_get_min_array_size().
@@ -515,7 +513,7 @@ inline static const char *get_idstring(void) {
  * see also \sa dsfmt_get_min_array_size()
  */
 inline static int get_min_array_size(void) {
-    return dsfmt_get_min_array_size();
+  return dsfmt_get_min_array_size();
 }
 
 /**
@@ -524,7 +522,7 @@ inline static int get_min_array_size(void) {
  * see also \sa dsfmt_gv_init_gen_rand(), \sa dsfmt_init_gen_rand().
  */
 inline static void init_gen_rand(uint32_t seed) {
-    dsfmt_gv_init_gen_rand(seed);
+  dsfmt_gv_init_gen_rand(seed);
 }
 
 /**
@@ -534,7 +532,7 @@ inline static void init_gen_rand(uint32_t seed) {
  * see also \sa dsfmt_gv_init_by_array(), \sa dsfmt_init_by_array().
  */
 inline static void init_by_array(uint32_t init_key[], int key_length) {
-    dsfmt_gv_init_by_array(init_key, key_length);
+  dsfmt_gv_init_by_array(init_key, key_length);
 }
 
 /**
@@ -544,7 +542,7 @@ inline static void init_by_array(uint32_t init_key[], int key_length) {
  * dsfmt_gv_genrand_close1_open2()
  */
 inline static double genrand_close1_open2(void) {
-    return dsfmt_gv_genrand_close1_open2();
+  return dsfmt_gv_genrand_close1_open2();
 }
 
 /**
@@ -554,7 +552,7 @@ inline static double genrand_close1_open2(void) {
  * dsfmt_gv_genrand_close_open()
  */
 inline static double genrand_close_open(void) {
-    return dsfmt_gv_genrand_close_open();
+  return dsfmt_gv_genrand_close_open();
 }
 
 /**
@@ -564,7 +562,7 @@ inline static double genrand_close_open(void) {
  * dsfmt_gv_genrand_open_close()
  */
 inline static double genrand_open_close(void) {
-    return dsfmt_gv_genrand_open_close();
+  return dsfmt_gv_genrand_open_close();
 }
 
 /**
@@ -574,7 +572,7 @@ inline static double genrand_open_close(void) {
  * dsfmt_gv_genrand_open_open()
  */
 inline static double genrand_open_open(void) {
-    return dsfmt_gv_genrand_open_open();
+  return dsfmt_gv_genrand_open_open();
 }
 
 /**
@@ -587,7 +585,7 @@ inline static double genrand_open_open(void) {
  * dsfmt_gv_fill_array_close1_open2()
  */
 inline static void fill_array_open_close(double array[], int size) {
-    dsfmt_gv_fill_array_open_close(array, size);
+  dsfmt_gv_fill_array_open_close(array, size);
 }
 
 /**
@@ -600,7 +598,7 @@ inline static void fill_array_open_close(double array[], int size) {
  * dsfmt_gv_fill_array_close1_open2()
  */
 inline static void fill_array_close_open(double array[], int size) {
-    dsfmt_gv_fill_array_close_open(array, size);
+  dsfmt_gv_fill_array_close_open(array, size);
 }
 
 /**
@@ -613,7 +611,7 @@ inline static void fill_array_close_open(double array[], int size) {
  * dsfmt_gv_fill_array_close1_open2()
  */
 inline static void fill_array_open_open(double array[], int size) {
-    dsfmt_gv_fill_array_open_open(array, size);
+  dsfmt_gv_fill_array_open_open(array, size);
 }
 
 /**
@@ -625,7 +623,7 @@ inline static void fill_array_open_open(double array[], int size) {
  * dsfmt_gv_fill_array_close1_open2()
  */
 inline static void fill_array_close1_open2(double array[], int size) {
-    dsfmt_gv_fill_array_close1_open2(array, size);
+  dsfmt_gv_fill_array_close1_open2(array, size);
 }
 #endif /* DSFMT_DO_NOT_USE_OLD_NAMES */
 
@@ -634,7 +632,6 @@ inline static void fill_array_close1_open2(double array[], int size) {
 #endif
 
 #endif /* DSFMT_H */
-
 
 typedef struct s_dsfmt_state {
   dsfmt_t *state;
@@ -651,7 +648,8 @@ static inline double dsfmt_next_double(dsfmt_state *state) {
     state->buffer_loc++;
     return out;
   }
-  dsfmt_fill_array_close_open(state->state, state->buffered_uniforms, DSFMT_N64);
+  dsfmt_fill_array_close_open(state->state, state->buffered_uniforms,
+                              DSFMT_N64);
   state->buffer_loc = 1;
   return state->buffered_uniforms[0];
 }
@@ -669,10 +667,11 @@ static inline uint64_t dsfmt_next64(dsfmt_state *state) {
   return out;
 }
 
-
 static inline uint32_t dsfmt_next32(dsfmt_state *state) {
   /* Discard bottom 16 bits */
   double d = dsfmt_next_double(state);
   uint64_t *out = (uint64_t *)&d;
   return (uint32_t)((*out >> 16) & 0xffffffff);
 }
+
+void dsfmt_jump(dsfmt_state *state);

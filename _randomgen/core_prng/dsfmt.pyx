@@ -48,7 +48,7 @@ cdef extern from "src/dsfmt/dSFMT.h":
 
     void dsfmt_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed)
     void dsfmt_init_by_array(dsfmt_t *dsfmt, uint32_t init_key[], int key_length)
-    # void dsfmt_jump(dsfmt_state  *state)
+    void dsfmt_jump(dsfmt_state  *state);
 
 cdef uint64_t dsfmt_uint64(void* st):# nogil:
     return dsfmt_next64(<dsfmt_state *>st)
@@ -215,32 +215,34 @@ cdef class DSFMT:
             If seed values are out of range for the PRNG.
 
         """
-        cdef np.ndarray init_key
-        ub =  2 ** 32
-        if seed is None:
-            try:
-                state = random_entropy(1)
-            except RuntimeError:
-                state = random_entropy(1, 'fallback')
-            seed = state[0]
-        if np.isscalar(seed):
-            # TODO: This isn't correct, but works now
-            seed = int(seed)
-            if seed < 0 or seed > ub:
-                raise ValueError('seed must be an unsigned 32-bit integer')
-            dsfmt_init_gen_rand(self.rng_state.state, seed)
-        else:
-            # TODO: This also need to be impeoved to be more careful
-            init_key = np.asarray(seed, dtype=np.uint32).ravel()
-            dsfmt_init_by_array(self.rng_state.state,
-                                <uint32_t *>init_key.data,
-                                init_key.shape[0])
+        cdef np.ndarray obj
+        try:
+            if seed is None:
+                try:
+                    seed = random_entropy(1)
+                except RuntimeError:
+                    seed = random_entropy(1, 'fallback')
+                dsfmt_init_gen_rand(self.rng_state.state, seed[0])
+            else:
+                if hasattr(seed, 'squeeze'):
+                    seed = seed.squeeze()
+                idx = operator.index(seed)
+                if idx > int(2**32 - 1) or idx < 0:
+                    raise ValueError("Seed must be between 0 and 2**32 - 1")
+                dsfmt_init_gen_rand(self.rng_state.state, seed)
+        except TypeError:
+            obj = np.asarray(seed).astype(np.int64, casting='safe').ravel()
+            if ((obj > int(2**32 - 1)) | (obj < 0)).any():
+                raise ValueError("Seed must be between 0 and 2**32 - 1")
+            obj = obj.astype(np.uint32, casting='unsafe', order='C')
+            dsfmt_init_by_array(self.rng_state.state, <uint32_t*>obj.data,
+                                np.PyArray_DIM(obj, 0))
 
         self._reset_state_variables()
 
-#    def jump(self):
-#        dsfmt_jump(self.rng_state)
-#        return self
+    def jump(self):
+        dsfmt_jump(self.rng_state)
+        return self
 
     @property
     def state(self):
