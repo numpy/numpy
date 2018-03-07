@@ -25,6 +25,7 @@ cdef extern from "src/mt19937/mt19937.h":
     double mt19937_next_double(mt19937_state *state)  nogil
     void mt19937_init_by_array(mt19937_state *state, uint32_t *init_key, int key_length)
     void mt19937_seed(mt19937_state *state, uint32_t seed)
+    void mt19937_jump(mt19937_state *state)
 
 cdef uint64_t mt19937_uint64(void *st) nogil:
     return mt19937_next64(<mt19937_state *> st)
@@ -161,6 +162,10 @@ cdef class MT19937:
                 raise ValueError("Seed must be between 0 and 2**32 - 1")
             obj = obj.astype(np.uint32, casting='unsafe', order='C')
             mt19937_init_by_array(self.rng_state, <uint32_t*> obj.data, np.PyArray_DIM(obj, 0))
+
+    def jump(self):
+        mt19937_jump(self.rng_state)
+        return self
 
     @property
     def state(self):
