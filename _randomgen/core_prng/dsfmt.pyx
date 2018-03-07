@@ -50,7 +50,7 @@ cdef extern from "src/dsfmt/dSFMT.h":
     void dsfmt_init_by_array(dsfmt_t *dsfmt, uint32_t init_key[], int key_length)
     void dsfmt_jump(dsfmt_state  *state);
 
-cdef uint64_t dsfmt_uint64(void* st):# nogil:
+cdef uint64_t dsfmt_uint64(void* st) nogil:
     return dsfmt_next64(<dsfmt_state *>st)
 
 cdef uint32_t dsfmt_uint32(void *st) nogil:
