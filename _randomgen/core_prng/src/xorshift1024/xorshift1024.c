@@ -4,11 +4,12 @@
    to 2^512 calls to next(); it can be used to generate 2^512
    non-overlapping subsequences for parallel computations. */
 
-extern inline uint64_t xorshift1024_next(xorshift1024_state *state);
-extern inline uint64_t xorshift1024_next64(xorshift1024_state *state);
-extern inline uint32_t xorshift1024_next32(xorshift1024_state *state);
+extern INLINE uint64_t xorshift1024_next(xorshift1024_state *state);
+extern INLINE uint64_t xorshift1024_next64(xorshift1024_state *state);
+extern INLINE uint32_t xorshift1024_next32(xorshift1024_state *state);
 
 void xorshift1024_jump(xorshift1024_state *state) {
+  int i, j, b;
   static const uint64_t JUMP[] = {
       0x84242f96eca9c41d, 0xa3c65b8776f96855, 0x5b34a39f070b5837,
       0x4489affce4f31a1e, 0x2ffeeb0a48316f40, 0xdc2d9891fe68c022,
@@ -18,14 +19,14 @@ void xorshift1024_jump(xorshift1024_state *state) {
       0x284600e3f30e38c3};
 
   uint64_t t[16] = {0};
-  for (int i = 0; i < sizeof JUMP / sizeof *JUMP; i++)
-    for (int b = 0; b < 64; b++) {
+  for (i = 0; i < sizeof JUMP / sizeof *JUMP; i++)
+    for (b = 0; b < 64; b++) {
       if (JUMP[i] & UINT64_C(1) << b)
-        for (int j = 0; j < 16; j++)
+        for (j = 0; j < 16; j++)
           t[j] ^= state->s[(j + state->p) & 15];
       xorshift1024_next(state);
     }
 
-  for (int j = 0; j < 16; j++)
+  for (j = 0; j < 16; j++)
     state->s[(j + state->p) & 15] = t[j];
 }

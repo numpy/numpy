@@ -213,11 +213,12 @@ static inline uint64_t pcg64_next64(pcg64_state *state) {
 }
 
 static inline uint32_t pcg64_next32(pcg64_state *state) {
+  uint64_t next;
   if (state->has_uint32) {
     state->has_uint32 = 0;
     return state->uinteger;
   }
-  uint64_t next = pcg64_random_r(state->pcg_state);
+  next = pcg64_random_r(state->pcg_state);
   state->has_uint32 = 1;
   state->uinteger = (uint32_t)(next & 0xffffffff);
   return (uint32_t)(next >> 32);

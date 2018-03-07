@@ -1,4 +1,15 @@
-#include <stdint.h>
+#ifdef _WIN32
+#if _MSC_VER == 1500
+#include "../common/inttypes.h"
+#define INLINE __forceinline
+#else
+#include <inttypes.h>
+#define INLINE __inline __forceinline
+#endif
+#else
+#include <inttypes.h>
+#define INLINE inline
+#endif
 
 typedef struct s_xoroshiro128_state {
   uint64_t s[2];
@@ -6,11 +17,11 @@ typedef struct s_xoroshiro128_state {
   uint32_t uinteger;
 } xoroshiro128_state;
 
-static inline uint64_t rotl(const uint64_t x, int k) {
+static INLINE uint64_t rotl(const uint64_t x, int k) {
   return (x << k) | (x >> (64 - k));
 }
 
-static inline uint64_t xoroshiro128_next(uint64_t *s) {
+static INLINE uint64_t xoroshiro128_next(uint64_t *s) {
   const uint64_t s0 = s[0];
   uint64_t s1 = s[1];
   const uint64_t result = s0 + s1;
@@ -22,16 +33,17 @@ static inline uint64_t xoroshiro128_next(uint64_t *s) {
   return result;
 }
 
-static inline uint64_t xoroshiro128_next64(xoroshiro128_state *state) {
+static INLINE uint64_t xoroshiro128_next64(xoroshiro128_state *state) {
   return xoroshiro128_next(&state->s[0]);
 }
 
-static inline uint32_t xoroshiro128_next32(xoroshiro128_state *state) {
+static INLINE uint32_t xoroshiro128_next32(xoroshiro128_state *state) {
+  uint64_t next;
   if (state->has_uint32) {
     state->has_uint32 = 0;
     return state->uinteger;
   }
-  uint64_t next = xoroshiro128_next(&state->s[0]);
+  next = xoroshiro128_next(&state->s[0]);
   state->has_uint32 = 1;
   state->uinteger = (uint32_t)(next & 0xffffffff);
   return (uint32_t)(next >> 32);

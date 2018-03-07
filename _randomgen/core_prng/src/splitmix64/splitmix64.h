@@ -1,4 +1,13 @@
-#include <stdint.h>
+#ifdef _WIN32
+#if _MSC_VER == 1500
+#include "../common/inttypes.h"
+#define inline __forceinline
+#else
+#include <inttypes.h>
+#endif
+#else
+#include <inttypes.h>
+#endif
 
 typedef struct s_splitmix64_state {
   uint64_t state;
@@ -18,11 +27,12 @@ static inline uint64_t splitmix64_next64(splitmix64_state *state) {
 }
 
 static inline uint32_t splitmix64_next32(splitmix64_state *state) {
+  uint64_t next;
   if (state->has_uint32) {
     state->has_uint32 = 0;
     return state->uinteger;
   }
-  uint64_t next = splitmix64_next64(state);
+  next = splitmix64_next64(state);
   state->uinteger = next & 0xffffffff;
   state->has_uint32 = 1;
   return (uint32_t)(next >> 32);
