@@ -34,3 +34,42 @@ def bounded_uints(lb, ub, n, state):
 
 
 bounded_uints(323, 2394691, 10000000, s.value)
+
+
+g = x.cffi.next_double
+cffi_state = x.cffi.state
+state_addr = x.cffi.state_address
+
+
+def normals(n, state):
+    out = np.empty(n)
+    for i in range(n//2):
+        x1 = 2.0*g(state) - 1.0
+        x2 = 2.0*g(state) - 1.0
+        r2 = x1*x1 + x2*x2
+        while r2 >= 1.0 or r2 == 0.0:
+            x1 = 2.0*g(state) - 1.0
+            x2 = 2.0*g(state) - 1.0
+            r2 = x1*x1 + x2*x2
+        f = np.sqrt(-2.0*np.log(r2)/r2)
+        out[2*i] = f*x1
+        out[2*i+1] = f*x2
+
+    if n % 2 == 1:
+        x1 = 2.0*g(state) - 1.0
+        x2 = 2.0*g(state) - 1.0
+        r2 = x1*x1 + x2*x2
+        while r2 >= 1.0 or r2 == 0.0:
+            x1 = 2.0*g(state) - 1.0
+            x2 = 2.0*g(state) - 1.0
+            r2 = x1*x1 + x2*x2
+        f = np.sqrt(-2.0*np.log(r2)/r2)
+        out[n] = f*x1
+    return out
+
+
+print(normals(10, cffi_state).var())
+
+normalsj = nb.jit(normals, nopython=True)
+
+print(normalsj(10000000, state_addr).var())
