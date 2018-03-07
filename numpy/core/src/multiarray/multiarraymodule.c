@@ -4523,6 +4523,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(ComplexFloating, Inexact);
     SINGLE_INHERIT(Flexible, Generic);
     SINGLE_INHERIT(Character, Flexible);
+    SINGLE_INHERIT(Timeunit, Generic);
 
 #define DUAL_INHERIT(child, parent1, parent2)                           \
     Py##child##ArrType_Type.tp_base = &Py##parent2##ArrType_Type;       \
@@ -4594,10 +4595,8 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-    /* Datetime doesn't fit in any category */
-    SINGLE_INHERIT(Datetime, Generic);
-    /* Timedelta is an integer with an associated unit */
-    SINGLE_INHERIT(Timedelta, SignedInteger);
+    SINGLE_INHERIT(Datetime, Timeunit);
+    SINGLE_INHERIT(Timedelta, Timeunit);
 
     /*
        fprintf(stderr,
