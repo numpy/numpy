@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, dec, suppress_warnings
+    assert_raises_regex, assert_warns, dec, suppress_warnings
 )
 
 # Use pytz to test out various time zones if available
@@ -507,7 +507,7 @@ class TestDateTime(object):
     def test_base_class(self):
         assert_(isinstance(np.datetime64, np.timebase))
         assert_(isinstance(np.timedelta64, np.timebase))
-        with assert_raises(TypeError):
+        with assert_raises_regex(TypeError, 'cannot create'):
             np.timebase()
 
     def test_pydatetime_creation(self):
