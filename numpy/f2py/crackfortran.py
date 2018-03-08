@@ -652,12 +652,13 @@ def crackline(line, reset=0):
     global filepositiontext, currentfilename, neededmodule, expectbegin
     global skipblocksuntil, skipemptyends, previous_context, gotnextfile
 
-    line, semicolon_line = split_by_unquoted(line, ";")
-    if semicolon_line and not (f2pyenhancementspattern[0].match(line) or
+    _, has_semicolon = split_by_unquoted(line, ";")
+    if has_semicolon and not (f2pyenhancementspattern[0].match(line) or
                                multilinepattern[0].match(line)):
         # XXX: non-zero reset values need testing
         assert reset == 0, repr(reset)
         # split line on unquoted semicolons
+        line, semicolon_line = split_by_unquoted(line, ";")
         while semicolon_line:
             crackline(line, reset)
             line, semicolon_line = split_by_unquoted(semicolon_line[1:], ";")
