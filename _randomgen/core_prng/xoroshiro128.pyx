@@ -13,9 +13,6 @@ from core_prng.entropy import random_entropy
 import core_prng.pickle
 cimport entropy
 
-import ctypes
-import cffi 
-
 np.import_array()
 
 cdef extern from "src/xoroshiro128/xoroshiro128.h":
@@ -56,10 +53,7 @@ cdef class Xoroshiro128:
     """
     cdef xoroshiro128_state  *rng_state
     cdef prng_t *_prng
-    cdef public object _prng_capsule
-    cdef public object ctypes
-    cdef public object cffi
-    cdef public object state_address
+    cdef public object capsule
 
     def __init__(self, seed=None):
         self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
@@ -72,28 +66,8 @@ cdef class Xoroshiro128:
         self._prng.next_uint32 = &xoroshiro128_uint32
         self._prng.next_double = &xoroshiro128_double
 
-        ffi = cffi.FFI()
-        self.cffi = interface(<Py_ssize_t>self.rng_state,
-                              ffi.cast('void *',<Py_ssize_t>self.rng_state),
-                              ffi.cast('uint64_t (*)(void *)',<uint64_t>&xoroshiro128_uint64),
-                              ffi.cast('uint32_t (*)(void *)',<uint64_t>&xoroshiro128_uint32),
-                              ffi.cast('double (*)(void *)',<uint64_t>&xoroshiro128_double))
-        
-        self.state_address = <Py_ssize_t>self.rng_state
-        self.ctypes = interface(<Py_ssize_t>self.rng_state,
-                                ctypes.c_void_p(<Py_ssize_t>self.rng_state),
-                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint64, 
-                                     ctypes.CFUNCTYPE(ctypes.c_uint64, 
-                                     ctypes.c_void_p)),
-                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint32, 
-                                     ctypes.CFUNCTYPE(ctypes.c_uint32, 
-                                     ctypes.c_void_p)),
-                         ctypes.cast(<Py_ssize_t>&xoroshiro128_double, 
-                                     ctypes.CFUNCTYPE(ctypes.c_double, 
-                                     ctypes.c_void_p)))
-
         cdef const char *name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):
@@ -213,3 +187,30 @@ cdef class Xoroshiro128:
         self.rng_state.s[1] = <uint64_t>value['s'][1]
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
+
+    @property
+    def ctypes(self):
+        import ctypes
+        
+        return interface(<Py_ssize_t>self.rng_state,
+                         ctypes.c_void_p(<Py_ssize_t>self.rng_state),
+                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint64, 
+                                     ctypes.CFUNCTYPE(ctypes.c_uint64, 
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint32, 
+                                     ctypes.CFUNCTYPE(ctypes.c_uint32, 
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&xoroshiro128_double, 
+                                     ctypes.CFUNCTYPE(ctypes.c_double, 
+                                     ctypes.c_void_p)))
+
+    @property
+    def cffi(self):
+        import cffi 
+
+        ffi = cffi.FFI()
+        return interface(<Py_ssize_t>self.rng_state,
+                         ffi.cast('void *',<Py_ssize_t>self.rng_state),
+                         ffi.cast('uint64_t (*)(void *)',<uint64_t>self._prng.next_uint64),
+                         ffi.cast('uint32_t (*)(void *)',<uint64_t>self._prng.next_uint32),
+                         ffi.cast('double (*)(void *)',<uint64_t>self._prng.next_double))

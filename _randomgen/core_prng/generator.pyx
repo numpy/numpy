@@ -20,23 +20,6 @@ import core_prng.pickle
 
 np.import_array()
 
-cdef extern from "src/distributions/distributions.h":
-    double random_sample(prng_t *prng_state) nogil
-    double random_standard_exponential(prng_t *prng_state) nogil
-    double random_standard_exponential_zig(prng_t *prng_state) nogil
-    double random_gauss(prng_t *prng_state) nogil
-    double random_gauss_zig(prng_t* prng_state) nogil
-    double random_standard_gamma(prng_t *prng_state, double shape) nogil
-    double random_standard_gamma_zig(prng_t *prng_state, double shape) nogil
-
-    float random_sample_f(prng_t *prng_state) nogil
-    float random_standard_exponential_f(prng_t *prng_state) nogil
-    float random_standard_exponential_zig_f(prng_t *prng_state) nogil
-    float random_gauss_f(prng_t *prng_state) nogil
-    float random_gauss_zig_f(prng_t* prng_state) nogil
-    float random_standard_gamma_f(prng_t *prng_state, float shape) nogil
-    float random_standard_gamma_zig_f(prng_t *prng_state, float shape) nogil
-
 cdef class RandomGenerator:
     """
     Prototype Random Generator that consumes randoms from a CorePRNG class
@@ -61,7 +44,7 @@ cdef class RandomGenerator:
             prng = Xoroshiro128()
         self.__core_prng = prng
 
-        capsule = prng._prng_capsule
+        capsule = prng.capsule
         cdef const char *anon_name = "CorePRNG"
         if not PyCapsule_IsValid(capsule, anon_name):
             raise ValueError("Invalid pointer to anon_func_state")

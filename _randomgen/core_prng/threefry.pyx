@@ -62,7 +62,7 @@ cdef class ThreeFry:
     """
     cdef threefry_state  *rng_state
     cdef prng_t *_prng
-    cdef public object _prng_capsule
+    cdef public object capsule
 
     def __init__(self, seed=None, counter=None, key=None):
         self.rng_state = <threefry_state *>malloc(sizeof(threefry_state))
@@ -78,7 +78,7 @@ cdef class ThreeFry:
         self._prng.next_double = &threefry_double
 
         cdef const char *name = 'CorePRNG'
-        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):

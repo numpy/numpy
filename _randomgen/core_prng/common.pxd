@@ -21,7 +21,7 @@ ctypedef ConstraintType constraint_type
 
 cdef extern from "src/distributions/distributions.h":
 
-    cdef struct s_binomial_t:
+    struct s_binomial_t:
         int has_binomial;
         double psave;
         long nsave;
@@ -42,7 +42,7 @@ cdef extern from "src/distributions/distributions.h":
 
     ctypedef s_binomial_t binomial_t
 
-    cdef struct prng:
+    struct prng:
         void *state
         uint64_t (*next_uint64)(void *st)
         uint32_t (*next_uint32)(void *st)
@@ -54,6 +54,23 @@ cdef extern from "src/distributions/distributions.h":
         binomial_t *binomial
 
     ctypedef prng prng_t
+
+    double random_sample(prng_t *prng_state) nogil
+    double random_standard_exponential(prng_t *prng_state) nogil
+    double random_standard_exponential_zig(prng_t *prng_state) nogil
+    double random_gauss(prng_t *prng_state) nogil
+    double random_gauss_zig(prng_t* prng_state) nogil
+    double random_standard_gamma(prng_t *prng_state, double shape) nogil
+    double random_standard_gamma_zig(prng_t *prng_state, double shape) nogil
+
+    float random_sample_f(prng_t *prng_state) nogil
+    float random_standard_exponential_f(prng_t *prng_state) nogil
+    float random_standard_exponential_zig_f(prng_t *prng_state) nogil
+    float random_gauss_f(prng_t *prng_state) nogil
+    float random_gauss_zig_f(prng_t* prng_state) nogil
+    float random_standard_gamma_f(prng_t *prng_state, float shape) nogil
+    float random_standard_gamma_zig_f(prng_t *prng_state, float shape) nogil
+
 
 ctypedef double (*random_double_0)(prng_t *state) nogil
 ctypedef double (*random_double_1)(prng_t *state, double a) nogil

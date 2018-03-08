@@ -76,7 +76,7 @@ cdef class PCG64:
     """
     cdef pcg64_state *rng_state
     cdef prng_t *_prng
-    cdef public object _prng_capsule
+    cdef public object capsule
 
     def __init__(self, seed=None, inc=1):
         self.rng_state = <pcg64_state *>malloc(sizeof(pcg64_state))
@@ -91,7 +91,7 @@ cdef class PCG64:
         self._prng.next_double = &pcg64_double
 
         cdef const char *name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):

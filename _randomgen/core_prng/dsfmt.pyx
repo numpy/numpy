@@ -75,7 +75,7 @@ cdef class DSFMT:
     """
     cdef dsfmt_state  *rng_state
     cdef prng_t *_prng
-    cdef public object _prng_capsule
+    cdef public object capsule
 
     def __init__(self, seed=None):
         self.rng_state = <dsfmt_state *>malloc(sizeof(dsfmt_state))
@@ -90,7 +90,7 @@ cdef class DSFMT:
         self._prng.next_uint32 = &dsfmt_uint32
         self._prng.next_double = &dsfmt_double
         cdef const char *name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):
