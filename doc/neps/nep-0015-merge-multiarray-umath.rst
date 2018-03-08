@@ -126,7 +126,7 @@ n/a
 Discussion
 ----------
 
-TBD
+* https://mail.python.org/pipermail/numpy-discussion/2018-March/077764.html
 
 
 Copyright
