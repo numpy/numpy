@@ -632,7 +632,7 @@ def select(condlist, choicelist, default=0):
                 deprecated_ints = True
             else:
                 raise ValueError(
-                    'invalid entry in choicelist: should be boolean ndarray')
+                    'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
     if deprecated_ints:
         # 2014-02-24, 1.9
