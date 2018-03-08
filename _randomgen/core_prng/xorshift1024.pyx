@@ -50,7 +50,7 @@ cdef class Xorshift1024:
     """
     cdef xorshift1024_state  *rng_state
     cdef prng_t *_prng
-    cdef public object _prng_capsule
+    cdef public object capsule
 
     def __init__(self, seed=None):
         self.rng_state = <xorshift1024_state *>malloc(sizeof(xorshift1024_state))
@@ -64,7 +64,7 @@ cdef class Xorshift1024:
         self._prng.next_double = &xorshift1024_double
 
         cdef const char *name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):

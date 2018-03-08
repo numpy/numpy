@@ -66,7 +66,7 @@ cdef class Philox:
     """
     cdef philox_state  *rng_state
     cdef prng_t *_prng
-    cdef public object _prng_capsule
+    cdef public object capsule
 
     def __init__(self, seed=None, counter=None, key=None):
         self.rng_state = <philox_state *> malloc(sizeof(philox_state))
@@ -84,7 +84,7 @@ cdef class Philox:
         self._prng.next_double = &philox_double
 
         cdef const char *name = 'CorePRNG'
-        self._prng_capsule = PyCapsule_New(<void *> self._prng, name, NULL)
+        self.capsule = PyCapsule_New(<void *> self._prng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):

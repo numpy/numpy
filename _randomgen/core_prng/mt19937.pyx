@@ -52,7 +52,7 @@ cdef class MT19937:
     """
     cdef mt19937_state *rng_state
     cdef prng_t *_prng
-    cdef public object _prng_capsule
+    cdef public object capsule
 
     def __init__(self, seed=None):
         self.rng_state = <mt19937_state *>malloc(sizeof(mt19937_state))
@@ -66,7 +66,7 @@ cdef class MT19937:
         self._prng.next_double = &mt19937_double
 
         cdef const char *name = "CorePRNG"
-        self._prng_capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
     def __dealloc__(self):
         free(self.rng_state)
