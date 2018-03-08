@@ -54,8 +54,36 @@ jobs:
      #      path: doc/neps/_build/html/
      #      destination: neps
 
-      -  deploy:
+      - add_ssh_keys:
+          fingerprints:
+            - "9f:8c:e5:3f:53:40:0b:ee:c9:c3:0f:fd:0f:3c:cc:55"
+
+      -  run:
+          name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              echo "Deploying on master"
-            fi
+            set -e;
+            git clone git@github.com:numpy/devdocs.git devdocs;
+            cd devdocs;
+            cp -R ../doc/build/html/. .;
+            touch .nojekyll;
+            git config --global user.email "numpy-circleci-bot@nomail";
+            git config --global user.name "numpy-circleci-bot";
+            git config --global push.default simple;
+            git add . > /dev/null;
+            git commit -m "Docs build of $CIRCLE_SHA1";
+            git push origin master --force
+
+      -  run:
+          name: deploy neps
+          command: |
+            set -e;
+            git clone git@github.com:numpy/neps.git neps;
+            cd neps;
+            cp -R ../doc/neps/_build/html/. .;
+            touch .nojekyll;
+            git config --global user.email "numpy-circleci-bot@nomail";
+            git config --global user.name "numpy-circleci-bot";
+            git config --global push.default simple;
+            git add . > /dev/null;
+            git commit -m "Docs build of $CIRCLE_SHA1";
+            git push origin master --force
