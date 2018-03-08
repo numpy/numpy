@@ -26,6 +26,7 @@ import sys
 import operator
 import warnings
 import textwrap
+import re
 from functools import reduce
 
 if sys.version_info[0] >= 3:
@@ -132,19 +133,17 @@ def doc_note(initialdoc, note):
     if note is None:
         return initialdoc
 
-    # FIXME: disable this function for the moment until we figure out what to
-    # do with it. Currently it may result in duplicate Notes sections or Notes
-    # sections in the wrong place
-    return initialdoc
+    notesplit = re.split('\n\s*?Notes\n\s*?-----', initialdoc)
 
-    newdoc = """
-    %s
-
-    Notes
+    notedoc = """\
+Notes
     -----
-    %s
-    """
-    return newdoc % (initialdoc, note)
+    %s""" % note
+
+    if len(notesplit) > 1:
+        notedoc = '\n\n    ' + notedoc + '\n'
+
+    return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
 def get_object_signature(obj):
