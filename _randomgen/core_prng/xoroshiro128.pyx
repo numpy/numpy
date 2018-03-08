@@ -54,6 +54,8 @@ cdef class Xoroshiro128:
     cdef xoroshiro128_state  *rng_state
     cdef prng_t *_prng
     cdef public object capsule
+    cdef object ctypes
+    cdef object cffi
 
     def __init__(self, seed=None):
         self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
@@ -66,6 +68,9 @@ cdef class Xoroshiro128:
         self._prng.next_uint32 = &xoroshiro128_uint32
         self._prng.next_double = &xoroshiro128_double
 
+        self.ctypes = None
+        self.cffi = None
+        
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
@@ -193,9 +198,12 @@ cdef class Xoroshiro128:
 
     @property
     def ctypes(self):
+        if self.ctypes is not None:
+            return self.ctypes
+
         import ctypes
         
-        return interface(<Py_ssize_t>self.rng_state,
+        self.ctypes = interface(<Py_ssize_t>self.rng_state,
                          ctypes.c_void_p(<Py_ssize_t>self.rng_state),
                          ctypes.cast(<Py_ssize_t>&xoroshiro128_uint64, 
                                      ctypes.CFUNCTYPE(ctypes.c_uint64, 
@@ -207,15 +215,19 @@ cdef class Xoroshiro128:
                                      ctypes.CFUNCTYPE(ctypes.c_double, 
                                      ctypes.c_void_p)),
                          ctypes.c_void_p(<Py_ssize_t>self._prng))
+        return self.ctypes
 
     @property
     def cffi(self):
+        if self.cffi is not None:
+            return self.cffi
         import cffi 
 
         ffi = cffi.FFI()
-        return interface(<Py_ssize_t>self.rng_state,
+        self.cffi = interface(<Py_ssize_t>self.rng_state,
                          ffi.cast('void *',<Py_ssize_t>self.rng_state),
                          ffi.cast('uint64_t (*)(void *)',<uint64_t>self._prng.next_uint64),
                          ffi.cast('uint32_t (*)(void *)',<uint64_t>self._prng.next_uint32),
                          ffi.cast('double (*)(void *)',<uint64_t>self._prng.next_double),
                          ffi.cast('void *',<Py_ssize_t>self._prng))
+        return self.cffi
