@@ -73,6 +73,19 @@ jobs:
             git commit -m "Docs build of $CIRCLE_SHA1";
             git push origin master --force
 
+      - add_ssh_keys:
+          fingerprints:
+            - "11:fb:19:69:80:3a:6d:37:9c:d1:ac:20:17:cd:c8:17"
+
+      - run:
+          name: set up neps repo SSH key
+          command: |
+            cat <<\EOF > ~/.ssh/config
+            Host github.com
+              IdentitiesOnly yes
+              IdentityFile /home/circleci/.ssh/id_rsa_11fb1969803a6d379cd1ac2017cdc817
+            EOF
+
       -  run:
           name: deploy neps
           command: |
