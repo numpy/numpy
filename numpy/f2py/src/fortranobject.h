@@ -78,16 +78,16 @@ typedef void *(*f2pycfunc)(void);
 typedef struct {
   char *name;                /* attribute (array||routine) name */
   int rank;                  /* array rank, 0 for scalar, max is F2PY_MAX_DIMS,
-				|| rank=-1 for Fortran routine */
+                                || rank=-1 for Fortran routine */
   struct {npy_intp d[F2PY_MAX_DIMS];} dims; /* dimensions of the array, || not used */
   int type;                  /* PyArray_<type> || not used */
   char *data;                /* pointer to array || Fortran routine */
-  f2py_init_func func;            /* initialization function for
-				allocatable arrays:
-				func(&rank,dims,set_ptr_func,name,len(name))
-				|| C/API wrapper for Fortran routine */
+  f2py_init_func func;       /* initialization function for
+                                allocatable arrays:
+                                func(&rank,dims,set_ptr_func,name,len(name))
+                                || C/API wrapper for Fortran routine */
   char *doc;                 /* documentation string; only recommended
-				for routines. */
+                                for routines. */
 } FortranDataDef;
 
 typedef struct {
@@ -139,16 +139,16 @@ int F2PyCapsule_Check(PyObject *ptr);
 #define F2PY_ALIGN16(intent) (intent & F2PY_INTENT_ALIGNED16)
 
 #define F2PY_GET_ALIGNMENT(intent) \
-	(F2PY_ALIGN4(intent) ? 4 : \
-	 (F2PY_ALIGN8(intent) ? 8 : \
-	  (F2PY_ALIGN16(intent) ? 16 : 1) ))
+        (F2PY_ALIGN4(intent) ? 4 : \
+         (F2PY_ALIGN8(intent) ? 8 : \
+          (F2PY_ALIGN16(intent) ? 16 : 1) ))
 #define F2PY_CHECK_ALIGNMENT(arr, intent) ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
 
   extern PyArrayObject* array_from_pyobj(const int type_num,
-					 npy_intp *dims,
-					 const int rank,
-					 const int intent,
-					 PyObject *obj);
+                                         npy_intp *dims,
+                                         const int rank,
+                                         const int intent,
+                                         PyObject *obj);
   extern int copy_ND_array(const PyArrayObject *in, PyArrayObject *out);
 
 #ifdef DEBUG_COPY_ND_ARRAY

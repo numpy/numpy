@@ -1373,7 +1373,7 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
     fortran_int lda = fortran_int_max(N, 1);
 
     mem_buff = malloc(safe_N * safe_N * sizeof(@typ@) +
-    	              safe_N * sizeof(@basetyp@));
+                      safe_N * sizeof(@basetyp@));
     if (!mem_buff) {
         goto error;
     }

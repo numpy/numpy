@@ -161,22 +161,22 @@ typedef union
 
 /* Get two 64 bit ints from a long double.  */
 
-#define GET_LDOUBLE_WORDS64(ix0,ix1,d)				\
-do {								\
-  ieee854_long_double_shape_type qw_u;				\
-  qw_u.value = (d);						\
-  (ix0) = qw_u.parts64.msw;					\
-  (ix1) = qw_u.parts64.lsw;					\
+#define GET_LDOUBLE_WORDS64(ix0,ix1,d) \
+do {                                   \
+  ieee854_long_double_shape_type qw_u; \
+  qw_u.value = (d);                    \
+  (ix0) = qw_u.parts64.msw;            \
+  (ix1) = qw_u.parts64.lsw;            \
 } while (0)
 
 /* Set a long double from two 64 bit ints.  */
 
-#define SET_LDOUBLE_WORDS64(d,ix0,ix1)				\
-do {								\
-  ieee854_long_double_shape_type qw_u;				\
-  qw_u.parts64.msw = (ix0);					\
-  qw_u.parts64.lsw = (ix1);					\
-  (d) = qw_u.value;						\
+#define SET_LDOUBLE_WORDS64(d,ix0,ix1) \
+do {                                   \
+  ieee854_long_double_shape_type qw_u; \
+  qw_u.parts64.msw = (ix0);            \
+  qw_u.parts64.lsw = (ix1);            \
+  (d) = qw_u.value;                    \
 } while (0)
 
 static npy_longdouble _nextl(npy_longdouble x, int p)

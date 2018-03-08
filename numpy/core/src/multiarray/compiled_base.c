@@ -692,8 +692,8 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     npy_intp i, lenx, lenxp;
 
     const npy_double *dx, *dz;
-    const npy_cdouble *dy; 
-    npy_cdouble lval, rval; 
+    const npy_cdouble *dy;
+    npy_cdouble lval, rval;
     npy_cdouble *dres, *slopes = NULL;
 
     static char *kwlist[] = {"x", "xp", "fp", "left", "right", NULL};
@@ -740,7 +740,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     if (af == NULL) {
         goto fail;
     }
-        
+
     dy = (const npy_cdouble *)PyArray_DATA(afp);
     dres = (npy_cdouble *)PyArray_DATA(af);
     /* Get left and right fill values. */
@@ -757,7 +757,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             goto fail;
         }
     }
-        
+
     if ((right == NULL) || (right == Py_None)) {
         rval = dy[lenxp - 1];
     }
@@ -771,12 +771,12 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             goto fail;
         }
     }
-        
+
     /* binary_search_with_guess needs at least a 3 item long array */
     if (lenxp == 1) {
         const npy_double xp_val = dx[0];
         const npy_cdouble fp_val = dy[0];
-            
+
         NPY_BEGIN_THREADS_THRESHOLDED(lenx);
         for (i = 0; i < lenx; ++i) {
             const npy_double x_val = dz[i];
@@ -787,7 +787,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         npy_intp j = 0;
-        
+
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
             slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
@@ -795,9 +795,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 goto fail;
             }
         }
-            
+
         NPY_BEGIN_THREADS;
-        
+
         if (slopes != NULL) {
             for (i = 0; i < lenxp - 1; ++i) {
                 const double inv_dx = 1.0 / (dx[i+1] - dx[i]);
@@ -805,16 +805,16 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 slopes[i].imag = (dy[i+1].imag - dy[i].imag) * inv_dx;
             }
         }
-        
+
         for (i = 0; i < lenx; ++i) {
             const npy_double x_val = dz[i];
-            
+
             if (npy_isnan(x_val)) {
                 dres[i].real = x_val;
                 dres[i].imag = 0.0;
                 continue;
             }
-            
+
             j = binary_search_with_guess(x_val, dx, lenxp, j);
             if (j == -1) {
                 dres[i] = lval;
@@ -833,17 +833,17 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 else {
                     const npy_double inv_dx = 1.0 / (dx[j+1] - dx[j]);
                     dres[i].real = (dy[j+1].real - dy[j].real)*(x_val - dx[j])*
-			inv_dx + dy[j].real;
+                        inv_dx + dy[j].real;
                     dres[i].imag = (dy[j+1].imag - dy[j].imag)*(x_val - dx[j])*
-			inv_dx + dy[j].imag;
+                        inv_dx + dy[j].imag;
                 }
             }
         }
-        
+
         NPY_END_THREADS;
-    } 
+    }
     PyArray_free(slopes);
-    
+
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
