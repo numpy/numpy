@@ -4594,7 +4594,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-    SINGLE_INHERIT(Timeunit, Generic);
+    SINGLE_INHERIT(Timebase, Generic);
     SINGLE_INHERIT(Datetime, Timebase);
     SINGLE_INHERIT(Timedelta, Timebase);
 
