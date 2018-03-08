@@ -61,24 +61,28 @@ jobs:
       -  run:
           name: deploy devdocs
           command: |
-            set -e;
-            git clone git@github.com:numpy/devdocs.git devdocs;
-            cd devdocs;
-            cp -R ../doc/build/html/. .;
-            touch .nojekyll;
-            git config --global user.email "numpy-circleci-bot@nomail";
-            git config --global user.name "numpy-circleci-bot";
-            git config --global push.default simple;
-            git add . > /dev/null;
-            git commit -m "Docs build of $CIRCLE_SHA1";
-            git push origin master --force
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              set -e;
+              git clone git@github.com:numpy/devdocs.git devdocs;
+              cd devdocs;
+              cp -R ../doc/build/html/. .;
+              touch .nojekyll;
+              git config --global user.email "numpy-circleci-bot@nomail";
+              git config --global user.name "numpy-circleci-bot";
+              git config --global push.default simple;
+              git add . > /dev/null;
+              git commit -m "Docs build of $CIRCLE_SHA1";
+              git push origin master --force
+            else
+              echo "Not on the master branch; skipping deployment"
+            fi
 
       - add_ssh_keys:
           fingerprints:
             - "11:fb:19:69:80:3a:6d:37:9c:d1:ac:20:17:cd:c8:17"
 
       - run:
-          name: set up neps repo SSH key
+          name: select SSH key for neps repo
           command: |
             cat <<\EOF > ~/.ssh/config
             Host github.com
@@ -89,14 +93,18 @@ jobs:
       -  run:
           name: deploy neps
           command: |
-            set -e;
-            git clone git@github.com:numpy/neps.git neps;
-            cd neps;
-            cp -R ../doc/neps/_build/html/. .;
-            touch .nojekyll;
-            git config --global user.email "numpy-circleci-bot@nomail";
-            git config --global user.name "numpy-circleci-bot";
-            git config --global push.default simple;
-            git add . > /dev/null;
-            git commit -m "Docs build of $CIRCLE_SHA1";
-            git push origin master --force
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              set -e;
+              git clone git@github.com:numpy/neps.git neps;
+              cd neps;
+              cp -R ../doc/neps/_build/html/. .;
+              touch .nojekyll;
+              git config --global user.email "numpy-circleci-bot@nomail";
+              git config --global user.name "numpy-circleci-bot";
+              git config --global push.default simple;
+              git add . > /dev/null;
+              git commit -m "Docs build of $CIRCLE_SHA1";
+              git push origin master --force
+            else
+              echo "Not on the master branch; skipping deployment"
+            fi
