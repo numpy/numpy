@@ -82,6 +82,7 @@ cdef class Philox:
         self._prng.next_uint64 = &philox_uint64
         self._prng.next_uint32 = &philox_uint32
         self._prng.next_double = &philox_double
+        self._prng.next_raw = &philox_uint64
 
         cdef const char *name = 'CorePRNG'
         self.capsule = PyCapsule_New(<void *> self._prng, name, NULL)
