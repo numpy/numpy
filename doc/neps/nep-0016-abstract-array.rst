@@ -307,7 +307,7 @@ by far the easiest place to start.
 Links to discussion
 -------------------
 
-TBD
+* https://mail.python.org/pipermail/numpy-discussion/2018-March/077767.html
 
 
 Appendix: Benchmark script
