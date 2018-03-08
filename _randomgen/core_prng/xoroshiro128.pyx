@@ -3,7 +3,7 @@ from libc.stdlib cimport malloc, free
 from cpython.pycapsule cimport PyCapsule_New
 
 from collections import namedtuple
-interface = namedtuple('interface', ['state_address','state','next_uint64','next_uint32','next_double'])
+interface = namedtuple('interface', ['state_address','state','next_uint64','next_uint32','next_double','prng'])
 
 import numpy as np
 cimport numpy as np
@@ -89,6 +89,9 @@ cdef class Xoroshiro128:
     def _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
         self.rng_state.uinteger = 0
+        # TODO: These should be done everywhere for safety
+        self._prng.has_gauss = 0
+        self._prng.has_gauss_f = 0
 
     def __random_integer(self, bits=64):
         """
@@ -202,7 +205,8 @@ cdef class Xoroshiro128:
                                      ctypes.c_void_p)),
                          ctypes.cast(<Py_ssize_t>&xoroshiro128_double, 
                                      ctypes.CFUNCTYPE(ctypes.c_double, 
-                                     ctypes.c_void_p)))
+                                     ctypes.c_void_p)),
+                         ctypes.c_void_p(<Py_ssize_t>self._prng))
 
     @property
     def cffi(self):
@@ -213,4 +217,5 @@ cdef class Xoroshiro128:
                          ffi.cast('void *',<Py_ssize_t>self.rng_state),
                          ffi.cast('uint64_t (*)(void *)',<uint64_t>self._prng.next_uint64),
                          ffi.cast('uint32_t (*)(void *)',<uint64_t>self._prng.next_uint32),
-                         ffi.cast('double (*)(void *)',<uint64_t>self._prng.next_double))
+                         ffi.cast('double (*)(void *)',<uint64_t>self._prng.next_double),
+                         ffi.cast('void *',<Py_ssize_t>self._prng))
