@@ -4938,7 +4938,7 @@ set_typeinfo(PyObject *dict)
     SETTYPE(ComplexFloating);
     SETTYPE(Flexible);
     SETTYPE(Character);
-    SETTYPE(Timeunit);
+    SETTYPE(Timebase);
 
 #undef SETTYPE
 

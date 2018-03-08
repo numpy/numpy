@@ -420,10 +420,11 @@ def _get_format_function(data, **options):
             return formatdict['complexfloat']()
     elif issubclass(dtypeobj, (_nt.unicode_, _nt.string_)):
         return formatdict['numpystr']()
-    elif issubclass(dtypeobj, _nt.datetime64):
-        return formatdict['datetime']()
-    elif issubclass(dtypeobj, _nt.timedelta64):
-        return formatdict['timedelta']()
+    elif issubclass(dtypeobj, _nt.timebase):
+        if issubclass(dtypeobj, _nt.datetime64):
+            return formatdict['datetime']()
+        else:
+            return formatdict['timedelta']()
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
     elif issubclass(dtypeobj, _nt.void):

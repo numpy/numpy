@@ -73,7 +73,7 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               (217,),
     'NpyIter_Type':                     (218,),
     # End 1.6 API
-    'PyTimeunitArrType_Type':           (304,),
+    'PyTimebaseArrType_Type':           (304,),
     # End 1.15 API
 }
 
