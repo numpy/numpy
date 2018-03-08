@@ -642,26 +642,30 @@ typedef struct s_dsfmt_state {
   int buffer_loc;
 } dsfmt_state;
 
-static inline double dsfmt_next_double(dsfmt_state *state) {
+static inline double dsfmt_next_buffer(dsfmt_state *state) {
   if (state->buffer_loc < DSFMT_N64) {
     double out = state->buffered_uniforms[state->buffer_loc];
     state->buffer_loc++;
     return out;
   }
-  dsfmt_fill_array_close_open(state->state, state->buffered_uniforms,
-                              DSFMT_N64);
+  dsfmt_fill_array_close1_open2(state->state, state->buffered_uniforms,
+                                DSFMT_N64);
   state->buffer_loc = 1;
   return state->buffered_uniforms[0];
 }
 
+static inline double dsfmt_next_double(dsfmt_state *state) {
+  return dsfmt_next_buffer(state) - 1.0;
+}
+
 static inline uint64_t dsfmt_next64(dsfmt_state *state) {
   /* Discard bottom 16 bits */
-  double d = dsfmt_next_double(state);
+  double d = dsfmt_next_buffer(state);
   uint64_t out;
   uint64_t *tmp;
   tmp = (uint64_t *)&d;
   out = (*tmp >> 16) << 32;
-  d = dsfmt_next_double(state);
+  d = dsfmt_next_buffer(state);
   tmp = (uint64_t *)&d;
   out |= (*tmp >> 16) & 0xffffffff;
   return out;
@@ -669,9 +673,15 @@ static inline uint64_t dsfmt_next64(dsfmt_state *state) {
 
 static inline uint32_t dsfmt_next32(dsfmt_state *state) {
   /* Discard bottom 16 bits */
-  double d = dsfmt_next_double(state);
+  double d = dsfmt_next_buffer(state);
   uint64_t *out = (uint64_t *)&d;
   return (uint32_t)((*out >> 16) & 0xffffffff);
+}
+
+static inline uint64_t dsfmt_next_raw(dsfmt_state *state) {
+  double d;
+  d = dsfmt_next_buffer(state);
+  return *((uint64_t *)&d);
 }
 
 void dsfmt_jump(dsfmt_state *state);

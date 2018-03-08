@@ -62,6 +62,7 @@ cdef class Xorshift1024:
         self._prng.next_uint64 = &xorshift1024_uint64
         self._prng.next_uint32 = &xorshift1024_uint32
         self._prng.next_double = &xorshift1024_double
+        self._prng.next_raw = &xorshift1024_uint64
 
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)

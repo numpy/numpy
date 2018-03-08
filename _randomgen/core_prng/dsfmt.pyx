@@ -44,7 +44,8 @@ cdef extern from "src/dsfmt/dSFMT.h":
 
     double dsfmt_next_double(dsfmt_state *state)  nogil
     uint64_t dsfmt_next64(dsfmt_state *state)  nogil
-    uint64_t dsfmt_next32(dsfmt_state *state)  nogil
+    uint32_t dsfmt_next32(dsfmt_state *state)  nogil
+    uint64_t dsfmt_next_raw(dsfmt_state *state)  nogil
 
     void dsfmt_init_gen_rand(dsfmt_t *dsfmt, uint32_t seed)
     void dsfmt_init_by_array(dsfmt_t *dsfmt, uint32_t init_key[], int key_length)
@@ -58,6 +59,9 @@ cdef uint32_t dsfmt_uint32(void *st) nogil:
 
 cdef double dsfmt_double(void* st) nogil:
     return dsfmt_next_double(<dsfmt_state *>st)
+
+cdef uint64_t dsfmt_raw(void *st) nogil:
+    return dsfmt_next_raw(<dsfmt_state *>st)
 
 cdef class DSFMT:
     """
@@ -79,8 +83,8 @@ cdef class DSFMT:
 
     def __init__(self, seed=None):
         self.rng_state = <dsfmt_state *>malloc(sizeof(dsfmt_state))
-        self.rng_state.state = <dsfmt_t *>malloc(sizeof(dsfmt_t))
-        self.rng_state.buffered_uniforms = <double *>malloc(DSFMT_N64 * sizeof(double))
+        self.rng_state.state = <dsfmt_t *>PyArray_malloc_aligned(sizeof(dsfmt_t))
+        self.rng_state.buffered_uniforms = <double *>PyArray_malloc_aligned(DSFMT_N64 * sizeof(double))
         self.rng_state.buffer_loc = DSFMT_N64
         self._prng = <prng_t *>malloc(sizeof(prng_t))
         self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
@@ -89,6 +93,7 @@ cdef class DSFMT:
         self._prng.next_uint64 = &dsfmt_uint64
         self._prng.next_uint32 = &dsfmt_uint32
         self._prng.next_double = &dsfmt_double
+        self._prng.next_raw = &dsfmt_raw
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
 
@@ -105,8 +110,8 @@ cdef class DSFMT:
                 self.state)
 
     def __dealloc__(self):
-        free(self.rng_state.state)
-        free(self.rng_state.buffered_uniforms)
+        PyArray_free_aligned(self.rng_state.state)
+        PyArray_free_aligned(self.rng_state.buffered_uniforms)
         free(self.rng_state)
         free(self._prng.binomial)
         free(self._prng)

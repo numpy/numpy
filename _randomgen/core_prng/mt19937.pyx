@@ -64,6 +64,7 @@ cdef class MT19937:
         self._prng.next_uint64 = &mt19937_uint64
         self._prng.next_uint32 = &mt19937_uint32
         self._prng.next_double = &mt19937_double
+        self._prng.next_raw = &mt19937_uint64
 
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)

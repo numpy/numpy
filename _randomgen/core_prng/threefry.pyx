@@ -76,6 +76,7 @@ cdef class ThreeFry:
         self._prng.next_uint64 = &threefry_uint64
         self._prng.next_uint32 = &threefry_uint32
         self._prng.next_double = &threefry_double
+        self._prng.next_raw = &threefry_uint64
 
         cdef const char *name = 'CorePRNG'
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)

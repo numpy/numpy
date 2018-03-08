@@ -67,6 +67,7 @@ cdef class Xoroshiro128:
         self._prng.next_uint64 = &xoroshiro128_uint64
         self._prng.next_uint32 = &xoroshiro128_uint32
         self._prng.next_double = &xoroshiro128_double
+        self._prng.next_raw = &xoroshiro128_uint64
 
         self.ctypes = None
         self.cffi = None
