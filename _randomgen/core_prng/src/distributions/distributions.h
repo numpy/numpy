@@ -17,6 +17,12 @@ typedef int bool;
 #include "numpy/npy_common.h"
 #include <math.h>
 
+#ifdef DLL_EXPORT
+#define DECLDIR __declspec(dllexport)
+#else
+#define DECLDIR extern
+#endif
+
 typedef double (*random_double_0)(void *st);
 typedef float (*random_float_0)(void *st);
 
@@ -52,22 +58,22 @@ typedef struct prng {
   binomial_t *binomial;
 } prng_t;
 
-extern float random_sample_f(prng_t *prng_state);
-extern double random_sample(prng_t *prng_state);
+DECLDIR float random_sample_f(prng_t *prng_state);
+DECLDIR double random_sample(prng_t *prng_state);
 
-extern uint32_t random_uint32(prng_t *prng_state);
+DECLDIR uint32_t random_uint32(prng_t *prng_state);
 
-extern double random_standard_exponential(prng_t *prng_state);
-extern float random_standard_exponential_f(prng_t *prng_state);
-extern double random_standard_exponential_zig(prng_t *prng_state);
-extern float random_standard_exponential_zig_f(prng_t *prng_state);
+DECLDIR double random_standard_exponential(prng_t *prng_state);
+DECLDIR float random_standard_exponential_f(prng_t *prng_state);
+DECLDIR double random_standard_exponential_zig(prng_t *prng_state);
+DECLDIR float random_standard_exponential_zig_f(prng_t *prng_state);
 
-extern double random_gauss(prng_t *prng_state);
-extern float random_gauss_f(prng_t *prng_state);
-extern double random_gauss_zig(prng_t *prng_state);
-extern float random_gauss_zig_f(prng_t *prng_state);
+DECLDIR double random_gauss(prng_t *prng_state);
+DECLDIR float random_gauss_f(prng_t *prng_state);
+DECLDIR double random_gauss_zig(prng_t *prng_state);
+DECLDIR float random_gauss_zig_f(prng_t *prng_state);
 
-extern double random_standard_gamma(prng_t *prng_state, double shape);
-extern float random_standard_gamma_f(prng_t *prng_state, float shape);
-extern double random_standard_gamma_zig(prng_t *prng_state, double shape);
-extern float random_standard_gamma_zig_f(prng_t *prng_state, float shape);
+DECLDIR double random_standard_gamma(prng_t *prng_state, double shape);
+DECLDIR float random_standard_gamma_f(prng_t *prng_state, float shape);
+DECLDIR double random_standard_gamma_zig(prng_t *prng_state, double shape);
+DECLDIR float random_standard_gamma_zig_f(prng_t *prng_state, float shape);
