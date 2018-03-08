@@ -497,6 +497,19 @@ class TestDateTime(object):
         assert_(np.dtype('M8[2D]') != np.dtype('M8[D]'))
         assert_(np.dtype('M8[D]') != np.dtype('M8[2D]'))
 
+    def test_type_hierarchy(self):
+        assert_equal(np.timebase.mro(), [np.timebase, np.generic, object])
+        assert_equal(np.datetime64.mro(),
+                     [np.datetime64, np.timebase, np.generic, object])
+        assert_equal(np.timedelta.mro(),
+                     [np.timedelta64, np.timebase, np.generic, object])
+
+    def test_base_class(self):
+        assert_(isinstance(np.datetime64, np.timebase))
+        assert_(isinstance(np.timedelta64, np.timebase))
+        with assert_raises(TypeError):
+            np.timebase()
+
     def test_pydatetime_creation(self):
         a = np.array(['1960-03-12', datetime.date(1960, 3, 12)], dtype='M8[D]')
         assert_equal(a[0], a[1])
