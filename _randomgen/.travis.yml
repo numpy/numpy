@@ -1,0 +1,59 @@
+# Travis script that uses miniconda in place of the system installed python
+# versions.  Allows substantial flexability for choosing versions of
+# required packages and is simpler to use to test up-to-date scientific Python
+# stack
+group: edge
+dist: trusty
+sudo: required
+language: python
+
+matrix:
+  fast_finish: true
+  include:
+  - env:
+    - PYTHON=2.7
+    - NUMPY=1.10
+    - CYTHON=0.24
+  - env:
+    - PYTHON=3.5
+    - NUMPY=1.11
+  - env:
+    - PYTHON=3.6
+    - NUMPY=1.13
+    - CYTHON=0.25
+  - env:
+    - PYTHON=3.6
+    - NUMPY=1.13
+    - CYTHON=0.26
+  - env:
+    - PYTHON=3.6
+
+before_install:
+  - if [ ${TRAVIS_OS_NAME} = "osx" ]; then wget https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
+  - if [ ${TRAVIS_OS_NAME} = "linux" ]; then wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh; fi
+  - chmod +x miniconda3.sh
+  - ./miniconda3.sh -b
+  - export PATH=/home/travis/miniconda3/bin:$PATH
+  - conda config --set always_yes true
+  # Disable until fixed
+  # - conda update --all --quiet
+  - PKGS="python=${PYTHON}"
+  - PKGS="${PKGS} numpy"; if [ ${NUMPY} ]; then PKGS="${PKGS}=${NUMPY}"; fi
+  - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
+  - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
+  - export BUILD_DIR=$PWD
+  - conda create -n core-prng-test ${PKGS} pytest setuptools nose --quiet
+  - source activate core-prng-test
+  - pip install tempita -q
+
+install:
+  - python setup.py develop
+
+script:
+  - set -e
+  - pytest core_prng
+  - |
+    if [ -z ${NUMPY} ]; then
+      cd ${BUILD_DIR}
+      python benchmark.py;
+    fi

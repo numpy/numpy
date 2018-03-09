@@ -10,6 +10,7 @@ from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport Py_INCREF, PyComplex_RealAsDouble, PyComplex_ImagAsDouble, PyComplex_FromDoubles
 from common cimport *
 from distributions cimport *
+from bounded_integers cimport *
 from libc cimport string
 from libc.stdlib cimport malloc, free
 
@@ -28,6 +29,17 @@ from core_prng.xoroshiro128 import Xoroshiro128
 import core_prng.pickle
 
 np.import_array()
+
+_randint_types = {'bool': (0, 2),
+                 'int8': (-2**7, 2**7),
+                 'int16': (-2**15, 2**15),
+                 'int32': (-2**31, 2**31),
+                 'int64': (-2**63, 2**63),
+                 'uint8': (0, 2**8),
+                 'uint16': (0, 2**16),
+                 'uint32': (0, 2**32),
+                 'uint64': (0, 2**64)
+                 }
 
 cdef class RandomGenerator:
     """
@@ -75,6 +87,13 @@ cdef class RandomGenerator:
                 (self.state['prng'],),
                 self.state)
 
+    def seed(self, *args, **kwargs):
+        """
+        TODO: Should this remain
+        """
+        self.__core_prng.seed(*args, **kwargs)
+        return self
+
     @property
     def state(self):
         """Get or set the underlying PRNG's state"""
@@ -87,11 +106,14 @@ cdef class RandomGenerator:
 
     @state.setter
     def state(self, value):
+        self.__core_prng.state = value
+        if isinstance(value, tuple):
+            # Legacy MT19937 state
+            return
         self._prng.has_gauss = value['has_gauss']
         self._prng.has_gauss_f = value['has_gauss_f']
         self._prng.gauss = value['gauss']
         self._prng.gauss_f = value['gauss_f']
-        self.__core_prng.state = value
 
     def random_uintegers(self, size=None, int bits=64):
         """
@@ -210,7 +232,6 @@ cdef class RandomGenerator:
         return randoms
 
     def random_integer(self, bits=64):
-        #print("In random_integer")
         if bits == 64:
             return self._prng.next_uint64(self._prng.state)
         elif bits == 32:
@@ -568,7 +589,37 @@ cdef class RandomGenerator:
         array([[ 8,  6,  9,  7],
                [ 1, 16,  9, 12]], dtype=uint8)
         """
-        raise NotImplementedError('To be completed')
+        if high is None:
+            high = low
+            low = 0
+
+        key = np.dtype(dtype).name
+        if not key in _randint_types:
+            raise TypeError('Unsupported dtype "%s" for randint' % key)
+
+        if key == 'int32':
+            ret =  _rand_int32(low, high, size, self._prng, self.lock)
+        elif key == 'int64':
+            ret =  _rand_int64(low, high, size, self._prng, self.lock)
+        elif key == 'int16':
+            ret =  _rand_int16(low, high, size, self._prng, self.lock)
+        elif key == 'int8':
+            ret =  _rand_int8(low, high, size, self._prng, self.lock)
+        elif key == 'uint64':
+            ret =  _rand_uint64(low, high, size, self._prng, self.lock)
+        elif key == 'uint32':
+            ret =  _rand_uint32(low, high, size, self._prng, self.lock)
+        elif key == 'uint16':
+            ret =  _rand_uint16(low, high, size, self._prng, self.lock)
+        elif key == 'uint8':
+            ret =  _rand_uint8(low, high, size, self._prng, self.lock)
+        elif key == 'bool':
+            ret =  _rand_bool(low, high, size, self._prng, self.lock)
+        
+        if size is None and dtype in (np.bool, np.int, np.long):
+                if np.array(ret).shape == ():
+                    return dtype(ret)
+        return ret
 
     def bytes(self, np.npy_intp length):
         """
@@ -1094,8 +1145,6 @@ cdef class RandomGenerator:
                     low=low, high=high)), DeprecationWarning)
 
         return self.randint(low, high + 1, size=size, dtype='l')
-
-
 
     # Complicated, continuous distributions:
     def standard_normal(self, size=None, dtype=np.float64, method=u'zig', out=None):

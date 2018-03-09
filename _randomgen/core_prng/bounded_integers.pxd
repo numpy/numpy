@@ -27,10 +27,13 @@ cdef inline uint64_t _gen_mask(uint64_t max_val) nogil:
     mask |= mask >> 16
     mask |= mask >> 32
     return mask
-{{
-py:
-inttypes = ('uint64','uint32','uint16','uint8','bool','int64','int32','int16','int8')
-}}
-{{for inttype in inttypes}}
-cdef object _rand_{{inttype}}(object low, object high, object size, prng_t *state, object lock)
-{{endfor}}
+
+cdef object _rand_uint64(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_uint32(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_uint16(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_uint8(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_bool(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_int64(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_int32(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_int16(object low, object high, object size, prng_t *state, object lock)
+cdef object _rand_int8(object low, object high, object size, prng_t *state, object lock)

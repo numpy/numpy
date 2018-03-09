@@ -45,8 +45,8 @@ static INLINE uint32_t xoroshiro128_next32(xoroshiro128_state *state) {
   }
   next = xoroshiro128_next(&state->s[0]);
   state->has_uint32 = 1;
-  state->uinteger = (uint32_t)(next & 0xffffffff);
-  return (uint32_t)(next >> 32);
+  state->uinteger = (uint32_t)(next >> 32);
+  return (uint32_t)(next & 0xffffffff);
 }
 
 void xoroshiro128_jump(xoroshiro128_state *state);

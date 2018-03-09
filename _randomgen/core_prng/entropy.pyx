@@ -44,27 +44,34 @@ cdef np.ndarray seed_by_array(object seed, Py_ssize_t n):
     cdef Py_ssize_t seed_size, iter_bound
     cdef int i, loc = 0
 
-    try:
-        if hasattr(seed, 'squeeze'):
-                seed = seed.squeeze()
-        idx = operator.index(seed)
-        if idx > int(2**64 - 1) or idx < 0:
-            raise ValueError("Seed must be between 0 and 2**64 - 1")
-        seed = [seed]
-        seed_array = np.array(seed, dtype=np.uint64)
-    except TypeError:
-        exc_msg = "Seed values must be integers between 0 and 2**64 - 1"
-        obj = np.asarray(seed).astype(np.object).ravel()
+    if hasattr(seed, 'squeeze'):
+        seed = seed.squeeze()
+    arr = np.asarray(seed)
+    if arr.shape == ():
+        err_msg = 'Scalar seeds must be integers between 0 and 2**64 - 1'
+        if not np.isreal(arr):
+            raise TypeError(err_msg)
+        int_seed = int(seed)
+        if int_seed != seed:
+            raise TypeError(err_msg)
+        if int_seed < 0 or int_seed > 2**64 - 1:
+            raise ValueError(err_msg)
+        seed_array = np.array([int_seed], dtype=np.uint64)
+    else:
+        err_msg = "Seed values must be integers between 0 and 2**64 - 1"
+        obj = np.asarray(seed).astype(np.object)
         if obj.ndim != 1:
             raise ValueError('Array-valued seeds must be 1-dimensional')
+        if not np.isreal(obj).all():
+            raise TypeError(err_msg)
         if ((obj > int(2**64 - 1)) | (obj < 0)).any():
-            raise ValueError(exc_msg)
+            raise ValueError(err_msg)
         try:
             obj_int = obj.astype(np.uint64, casting='unsafe')
         except ValueError:
-            raise ValueError(exc_msg)
+            raise ValueError(err_msg)
         if not (obj == obj_int).all():
-            raise ValueError(exc_msg)
+            raise TypeError(err_msg)
         seed_array = obj_int
 
     seed_size = seed_array.shape[0]

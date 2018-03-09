@@ -61,9 +61,7 @@ inline pcg128_t PCG_128BIT_CONSTANT(uint64_t high, uint64_t low) {
 #define PCG_EMULATED_128BIT_MATH 1
 #endif
 
-typedef struct {
-  pcg128_t state;
-} pcg_state_128;
+typedef struct { pcg128_t state; } pcg_state_128;
 
 typedef struct {
   pcg128_t state;
@@ -76,8 +74,8 @@ typedef struct {
   PCG_128BIT_CONSTANT(6364136223846793005ULL, 1442695040888963407ULL)
 #define PCG_STATE_SETSEQ_128_INITIALIZER                                       \
   {                                                                            \
-    PCG_128BIT_CONSTANT(0x979c9a98d8462005ULL, 0x7d3e9cb6cfe0549bULL),         \
-        PCG_128BIT_CONSTANT(0x0000000000000001ULL, 0xda3e39cb94b95bdbULL)      \
+    PCG_128BIT_CONSTANT(0x979c9a98d8462005ULL, 0x7d3e9cb6cfe0549bULL)          \
+    , PCG_128BIT_CONSTANT(0x0000000000000001ULL, 0xda3e39cb94b95bdbULL)        \
   }
 
 inline uint64_t pcg_rotr_64(uint64_t value, unsigned int rot) {
@@ -220,8 +218,10 @@ static inline uint32_t pcg64_next32(pcg64_state *state) {
   }
   next = pcg64_random_r(state->pcg_state);
   state->has_uint32 = 1;
-  state->uinteger = (uint32_t)(next & 0xffffffff);
-  return (uint32_t)(next >> 32);
+  state->uinteger = (uint32_t)(next >> 32);
+  return (uint32_t)(next & 0xffffffff);
 }
 
 void pcg64_advance(pcg64_state *state, uint64_t *step);
+
+void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc);

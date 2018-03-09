@@ -1,10 +1,11 @@
 /*
  * Generate testing csv files
  *
- *  cl threefry-test-data-gen.c /Ox
+ *  cl threefry-test-data-gen.c /Ox ../splitmix64/splitmix64.c /Ox
  *  threefry-test-data-gen.exe
  *
- *  gcc threefry-test-data-gen.c -o threefry-test-data-gen
+ *  gcc threefry-test-data-gen.c ../splitmix64/splitmix64.c /Ox -o
+ * threefry-test-data-gen
  *  ./threefry-test-data-gen
  *
  * Requres the Random123 directory containing header files to be located in the
@@ -12,6 +13,7 @@
  *
  */
 
+#include "../splitmix64/splitmix64.h"
 #include "Random123/threefry.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -20,10 +22,15 @@
 
 int main() {
   threefry4x64_key_t ctr = {{0, 0, 0, 0}};
-  threefry4x64_ctr_t key = {{0xDEADBEAF, 0, 0, 0}};
+  uint64_t state, seed = 0xDEADBEAF;
+  state = seed;
+  threefry4x64_ctr_t key = {{0}};
   threefry4x64_ctr_t out;
   uint64_t store[N];
   int i, j;
+  for (i = 0; i < 4; i++) {
+    key.v[i] = splitmix64_next(&state);
+  }
   for (i = 0; i < N / 4UL; i++) {
     ctr.v[0]++;
     out = threefry4x64_R(threefry4x64_rounds, ctr, key);
@@ -38,9 +45,6 @@ int main() {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp,
-          "key, 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 "\n",
-          key.v[0], key.v[1], key.v[2], key.v[3]);
   for (i = 0; i < N; i++) {
     fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {
@@ -50,11 +54,11 @@ int main() {
   fclose(fp);
 
   ctr.v[0] = 0;
-  key.v[0] = 0;
-  key.v[1] = 0;
-  key.v[2] = 0xFBADBEEF;
-  key.v[3] = 0xDEADBEAF;
-  for (i = 0; i < N / 4UL; i++) {
+  state = seed = 0;
+  for (i = 0; i < 4; i++) {
+    key.v[i] = splitmix64_next(&state);
+  }
+  for (i = 0; i < N / 4; i++) {
     ctr.v[0]++;
     out = threefry4x64_R(threefry4x64_rounds, ctr, key);
     for (j = 0; j < 4; j++) {
@@ -67,9 +71,6 @@ int main() {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp,
-          "key, 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 "\n",
-          key.v[0], key.v[1], key.v[2], key.v[3]);
   for (i = 0; i < N; i++) {
     fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {

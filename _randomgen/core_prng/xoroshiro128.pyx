@@ -93,12 +93,13 @@ cdef class Xoroshiro128:
         free(self._prng.binomial)
         free(self._prng)
 
-    def _reset_state_variables(self):
+    cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
         self.rng_state.uinteger = 0
-        # TODO: These should be done everywhere for safety
         self._prng.has_gauss = 0
         self._prng.has_gauss_f = 0
+        self._prng.gauss = 0.0
+        self._prng.gauss_f = 0.0
 
     def __random_integer(self, bits=64):
         """
@@ -223,7 +224,10 @@ cdef class Xoroshiro128:
     def cffi(self):
         if self.cffi is not None:
             return self.cffi
-        import cffi 
+        try:
+            import cffi 
+        except ImportError:
+            raise ImportError('cffi is cannot be imported.')
 
         ffi = cffi.FFI()
         self.cffi = interface(<Py_ssize_t>self.rng_state,

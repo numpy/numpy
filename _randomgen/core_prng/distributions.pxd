@@ -56,7 +56,6 @@ cdef extern from "src/distributions/distributions.h":
     float random_standard_gamma_f(prng_t *prng_state, float shape) nogil
     float random_standard_gamma_zig_f(prng_t *prng_state, float shape) nogil
 
-    uint32_t random_uint32(prng_t *prng_state) nogil
     int64_t random_positive_int64(prng_t *prng_state) nogil
     int32_t random_positive_int32(prng_t *prng_state) nogil
     long random_positive_int(prng_t *prng_state) nogil

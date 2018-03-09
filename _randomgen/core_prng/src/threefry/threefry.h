@@ -328,9 +328,8 @@ static INLINE uint64_t threefry_next32(threefry_state *state) {
   next = threefry_next(state);
 
   state->has_uint32 = 1;
-  state->uinteger = (uint32_t)(next & 0xffffffff);
-
-  return (uint32_t)(next >> 32);
+  state->uinteger = (uint32_t)(next >> 32);
+  return (uint32_t)(next & 0xffffffff);
 }
 
 extern void threefry_jump(threefry_state *state);

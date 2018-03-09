@@ -1,3 +1,6 @@
+#!python
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True
+
 import sys
 import numpy as np
 cimport numpy as np
@@ -59,7 +62,7 @@ cdef object double_fill(void *func, prng_t *state, object size, object lock, obj
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
-    if size is None:
+    if size is None and out is None:
         with lock:
             return random_func(state)
 
@@ -82,7 +85,7 @@ cdef object float_fill(void *func, prng_t *state, object size, object lock, obje
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
-    if size is None:
+    if size is None and out is None:
         with lock:
             return random_func(state)
 
@@ -105,7 +108,7 @@ cdef object float_fill_from_double(void *func, prng_t *state, object size, objec
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
-    if size is None:
+    if size is None and out is None:
         with lock:
             return <float>random_func(state)
 

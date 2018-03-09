@@ -1,4 +1,5 @@
 from .generator import RandomGenerator
+from .dsfmt import DSFMT
 from .mt19937 import MT19937
 from .pcg64 import PCG64
 from .philox import Philox
@@ -7,6 +8,7 @@ from .xoroshiro128 import Xoroshiro128
 from .xorshift1024 import Xorshift1024
 
 PRNGS = {'MT19937': MT19937,
+         'DSFMT': DSFMT,
          'PCG64': PCG64,
          'Philox': Philox,
          'ThreeFry': ThreeFry,

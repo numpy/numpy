@@ -7,7 +7,7 @@ static NPY_INLINE float next_float(prng_t *prng_state) {
          (1.0f / 8388608.0f);
 }
 
-uint32_t random_uint32(prng_t *prng_state) {
+static NPY_INLINE uint32_t random_uint32(prng_t *prng_state) {
   return prng_state->next_uint32(prng_state->state);
 }
 
@@ -33,6 +33,7 @@ double random_gauss(prng_t *prng_state) {
   if (prng_state->has_gauss) {
     const double temp = prng_state->gauss;
     prng_state->has_gauss = false;
+    prng_state->gauss = 0.0;
     return temp;
   } else {
     double f, x1, x2, r2;
@@ -56,6 +57,7 @@ float random_gauss_f(prng_t *prng_state) {
   if (prng_state->has_gauss_f) {
     const float temp = prng_state->gauss_f;
     prng_state->has_gauss_f = false;
+    prng_state->gauss_f = 0.0f;
     return temp;
   } else {
     float f, x1, x2, r2;

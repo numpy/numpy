@@ -14,17 +14,13 @@
 
 int main() {
   uint64_t sum = 0;
-  uint64_t temp;
   uint32_t seed = 0xDEADBEAF;
   int i;
   rk_state state;
   rk_seed(seed, &state);
   uint64_t store[N];
   for (i = 0; i < N; i++) {
-    temp = 0;
-    temp = (uint64_t)rk_random(&state) << 32;
-    temp |= rk_random(&state);
-    store[i] = temp;
+    store[i] = (uint64_t)rk_random(&state);
   }
 
   FILE *fp;
@@ -45,10 +41,7 @@ int main() {
   seed = 0;
   rk_seed(seed, &state);
   for (i = 0; i < N; i++) {
-    temp = 0;
-    temp = (uint64_t)rk_random(&state) << 32;
-    temp |= rk_random(&state);
-    store[i] = temp;
+    store[i] = (uint64_t)rk_random(&state);
   }
   fp = fopen("mt19937-testset-2.csv", "w");
   if (fp == NULL) {
