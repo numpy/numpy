@@ -20,7 +20,7 @@ New functions
 
     >>> with np.printoptions(precision=2):
     ...     print(np.array([2.0])) / 3
-    [0.67] 
+    [0.67]
 
 
 Deprecations
@@ -58,6 +58,18 @@ These compute the greatest common divisor, and lowest common multiple,
 respectively. These work on all the numpy integer types, as well as the
 builtin arbitrary-precision `Decimal` and `long` types.
 
+Support for cross-platform builds for iOS
+-----------------------------------------
+
+The build system has been modified to add support for the
+``_PYTHON_HOST_PLATFORM`` environment variable, used by ``distutils`` when
+compiling on one platform for another platform. This makes it possible to
+compile NumPy for iOS targets.
+
+This only enables you to compile NumPy for one specific platform at a time.
+Creating a full iOS-compatible NumPy package requires building for the 5
+architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
+combining these 5 compiled builds products into a single "fat" binary.
 
 Improvements
 ============
