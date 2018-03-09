@@ -58,25 +58,18 @@ jobs:
           fingerprints:
             - "9f:8c:e5:3f:53:40:0b:ee:c9:c3:0f:fd:0f:3c:cc:55"
 
-# XXX
-# NOTE: if statement below is flipped for testing
-# XXX
-
       -  run:
           name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" != "master" ]; then
-              set -e;
-              mkdir devdocs && cd devdocs
-              git init && git remote add origin git@github.com:numpy/devdocs.git
-              cp -R ../doc/build/html/. .;
-              touch .nojekyll;
-              git config --global user.email "numpy-circleci-bot@nomail";
-              git config --global user.name "numpy-circleci-bot";
-              git config --global push.default simple;
-              git add . > /dev/null;
-              git commit --allow-empty -m "Docs build of $CIRCLE_SHA1";
-              git push origin master --force
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              touch doc/build/html/.nojekyll
+
+              ./tools/push_to_repo.py doc/build/html \
+                  git@github.com:numpy/devdocs.git \
+                  --committer "numpy-circleci-bot" \
+                  --email "numpy-circleci-bot@nomail" \
+                  --message "Docs build of $CIRCLE_SHA1" \
+                  --force
             else
               echo "Not on the master branch; skipping deployment"
             fi
@@ -97,18 +90,15 @@ jobs:
       -  run:
           name: deploy neps
           command: |
-            if [ "${CIRCLE_BRANCH}" != "master" ]; then
-              set -e;
-              mkdir devdocs && cd devdocs
-              git init && git remote add origin git@github.com:numpy/devdocs.git
-              cp -R ../doc/build/html/. .;
-              touch .nojekyll;
-              git config --global user.email "numpy-circleci-bot@nomail";
-              git config --global user.name "numpy-circleci-bot";
-              git config --global push.default simple;
-              git add . > /dev/null;
-              git commit --allow-empty -m "Docs build of $CIRCLE_SHA1";
-              git push origin master --force
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              touch doc/neps/_build/html/.nojekyll
+
+              ./tools/push_to_repo.py doc/neps/_build/html \
+                  git@github.com:numpy/neps.git \
+                  --committer "numpy-circleci-bot" \
+                  --email "numpy-circleci-bot@nomail" \
+                  --message "Docs build of $CIRCLE_SHA1" \
+                  --force
             else
               echo "Not on the master branch; skipping deployment"
             fi
