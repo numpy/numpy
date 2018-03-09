@@ -1,4 +1,5 @@
 import os
+import glob
 import struct
 import sys
 from os.path import join
@@ -8,6 +9,15 @@ import numpy as np
 from Cython.Build import cythonize
 from setuptools import setup, find_packages, Distribution
 from setuptools.extension import Extension
+
+try:
+    import Cython.Tempita as tempita
+except ImportError:
+    try:
+        import tempita
+    except ImportError:
+        raise ImportError('tempita required to install, '
+                          'use pip install tempita')
 
 import versioneer
 
@@ -42,6 +52,19 @@ if USE_SSE2:
 DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
 if USE_SSE2:
     DSFMT_DEFS += [('HAVE_SSE2', '1')]
+
+files = glob.glob('./core_prng/*.in')
+for templated_file in files:
+    print(templated_file)
+    output_file_name = os.path.splitext(templated_file)[0]
+    if (os.path.exists(output_file_name) and
+            (os.path.getmtime(templated_file) < os.path.getmtime(output_file_name))):
+        continue
+    with open(templated_file, 'r') as source_file:
+        template = tempita.Template(source_file.read())
+    with open(output_file_name, 'w') as output_file:
+        output_file.write(template.substitute())
+
 
 extensions = [Extension('core_prng.entropy',
                         sources=[join(MOD_DIR, 'entropy.pyx'),
@@ -133,6 +156,14 @@ extensions = [Extension('core_prng.entropy',
                         ),
               Extension("core_prng.common",
                         ["core_prng/common.pyx"],
+                        include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS
+                        ),
+              Extension("core_prng.bounded_integers",
+                        ["core_prng/bounded_integers.pyx",
+                         join(MOD_DIR, 'src', 'distributions',
+                              'distributions.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS

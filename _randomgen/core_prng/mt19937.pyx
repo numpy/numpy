@@ -7,6 +7,7 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
+from distributions cimport prng_t, binomial_t
 import core_prng.pickle
 from core_prng.entropy import random_entropy
 
@@ -36,6 +37,9 @@ cdef uint32_t mt19937_uint32(void *st) nogil:
 cdef double mt19937_double(void *st) nogil:
     return mt19937_next_double(<mt19937_state *> st)
 
+cdef uint64_t mt19937_raw(void *st) nogil:
+    return <uint64_t>mt19937_next32(<mt19937_state *> st)
+
 cdef class MT19937:
     """
     Prototype Core PRNG using MT19937
@@ -64,7 +68,7 @@ cdef class MT19937:
         self._prng.next_uint64 = &mt19937_uint64
         self._prng.next_uint32 = &mt19937_uint32
         self._prng.next_double = &mt19937_double
-        self._prng.next_raw = &mt19937_uint64
+        self._prng.next_raw = &mt19937_raw
 
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
