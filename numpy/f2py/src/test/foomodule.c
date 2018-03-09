@@ -5,7 +5,7 @@
  * $Revision: 1.2 $
  * $Date: 2000/09/17 16:10:27 $
  */
-#ifdef __CPLUSPLUS__
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -139,6 +139,6 @@ void initfoo() {
         Py_FatalError("can't initialize module foo");
 }
 
-#ifdef __CPLUSCPLUS__
+#ifdef __cplusplus
 }
 #endif
