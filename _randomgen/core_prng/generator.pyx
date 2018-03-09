@@ -9,6 +9,7 @@ cimport cython
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport Py_INCREF, PyComplex_RealAsDouble, PyComplex_ImagAsDouble, PyComplex_FromDoubles
 from common cimport *
+from distributions cimport *
 from libc cimport string
 from libc.stdlib cimport malloc, free
 

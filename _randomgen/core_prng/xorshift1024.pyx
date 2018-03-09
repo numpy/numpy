@@ -5,6 +5,7 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
+from distributions cimport prng_t, binomial_t
 from core_prng.entropy import random_entropy
 import core_prng.pickle
 cimport entropy
