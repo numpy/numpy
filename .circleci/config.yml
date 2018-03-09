@@ -20,7 +20,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install cython sphinx matplotlib numpydoc
+            pip install cython sphinx matplotlib
 
       - run:
           name: build numpy
