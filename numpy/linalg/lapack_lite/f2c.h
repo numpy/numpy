@@ -7,6 +7,8 @@
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
+#include <math.h>
+
 typedef int integer;
 typedef char *address;
 typedef short int shortint;
