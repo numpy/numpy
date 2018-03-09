@@ -55,7 +55,6 @@ if USE_SSE2:
 
 files = glob.glob('./core_prng/*.in')
 for templated_file in files:
-    print(templated_file)
     output_file_name = os.path.splitext(templated_file)[0]
     if (os.path.exists(output_file_name) and
             (os.path.getmtime(templated_file) < os.path.getmtime(output_file_name))):

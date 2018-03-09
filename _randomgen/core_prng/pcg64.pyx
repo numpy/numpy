@@ -50,7 +50,7 @@ cdef extern from "src/pcg64/pcg64.h":
     uint64_t pcg64_next32(pcg64_state *state)  nogil
     void pcg64_jump(pcg64_state  *state)
     void pcg64_advance(pcg64_state *state, uint64_t *step)
-
+    void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc)
 
 cdef uint64_t pcg64_uint64(void* st) nogil:
     return pcg64_next64(<pcg64_state *>st)
@@ -112,9 +112,13 @@ cdef class PCG64:
         free(self._prng.binomial)
         free(self._prng)
 
-    def _reset_state_variables(self):
+    cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
         self.rng_state.uinteger = 0
+        self._prng.has_gauss = 0
+        self._prng.has_gauss_f = 0
+        self._prng.gauss = 0.0
+        self._prng.gauss_f = 0.0
 
     def __random_integer(self, bits=64):
         """
@@ -176,23 +180,33 @@ cdef class PCG64:
             If seed values are out of range for the PRNG.
 
         """
-        ub =  2 ** 64
+        cdef np.ndarray _seed, _inc
+        ub =  2 ** 128
         if seed is None:
             try:
-                state = random_entropy(4)
+                _seed = <np.ndarray>random_entropy(4)
             except RuntimeError:
-                state = random_entropy(4, 'fallback')
-            state = state.view(np.uint64)
+                _seed = <np.ndarray>random_entropy(4, 'fallback')
+            
+            _seed = <np.ndarray>_seed.view(np.uint64)
         else:
-            state = entropy.seed_by_array(seed, 2)
-        IF PCG_EMULATED_MATH==1:
-            self.rng_state.pcg_state.state.high = <uint64_t>int(state[0])
-            self.rng_state.pcg_state.state.low = <uint64_t>int(state[1])
-            self.rng_state.pcg_state.inc.high = inc // 2**64
-            self.rng_state.pcg_state.inc.low = inc % 2**64
-        ELSE:
-            self.rng_state.pcg_state.state = state[0] * 2**64 + state[1]
-            self.rng_state.pcg_state.inc = inc
+            if not np.isscalar(seed):
+                raise TypeError('seed must be a scalar integer between 0 and {ub}'.format(ub=ub))
+            if seed < 0 or seed > ub or int(seed) != seed:
+                raise ValueError('inc must be a scalar integer between 0 and {ub}'.format(ub=ub))
+            _seed = <np.ndarray>np.empty(2, np.uint64)
+            _seed[0] = int(seed) // 2**64
+            _seed[1] = int(seed) % 2**64
+        
+        if not np.isscalar(inc):
+            raise TypeError('inc must be a scalar integer between 0 and {ub}'.format(ub=ub))
+        if inc < 0 or inc > ub or int(inc) != inc:
+            raise ValueError('inc must be a scalar integer between 0 and {ub}'.format(ub=ub))
+        _inc = <np.ndarray>np.empty(2, np.uint64)
+        _inc[0] = int(inc) // 2**64
+        _inc[1] = int(inc) % 2**64
+        
+        pcg64_set_seed(self.rng_state, <uint64_t *>_seed.data, <uint64_t *>_inc.data)
         self._reset_state_variables()
 
     @property

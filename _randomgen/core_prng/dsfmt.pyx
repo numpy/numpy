@@ -85,7 +85,7 @@ cdef class DSFMT:
     def __init__(self, seed=None):
         self.rng_state = <dsfmt_state *>malloc(sizeof(dsfmt_state))
         self.rng_state.state = <dsfmt_t *>PyArray_malloc_aligned(sizeof(dsfmt_t))
-        self.rng_state.buffered_uniforms = <double *>PyArray_malloc_aligned(DSFMT_N64 * sizeof(double))
+        self.rng_state.buffered_uniforms = <double *>PyArray_calloc_aligned(DSFMT_N64, sizeof(double))
         self.rng_state.buffer_loc = DSFMT_N64
         self._prng = <prng_t *>malloc(sizeof(prng_t))
         self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
@@ -117,8 +117,11 @@ cdef class DSFMT:
         free(self._prng.binomial)
         free(self._prng)
 
-    def _reset_state_variables(self):
-        pass
+    cdef _reset_state_variables(self):
+        self._prng.has_gauss = 0
+        self._prng.has_gauss_f = 0
+        self._prng.gauss = 0.0
+        self._prng.gauss_f = 0.0
 
     def __random_integer(self, bits=64):
         """
@@ -199,6 +202,7 @@ cdef class DSFMT:
             dsfmt_init_by_array(self.rng_state.state,
                                 <uint32_t *>obj.data,
                                 np.PyArray_DIM(obj, 0))
+        self._reset_state_variables()
 
     def seed(self, seed=None):
         """

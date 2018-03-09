@@ -186,9 +186,8 @@ static INLINE uint64_t philox_next32(philox_state *state) {
   next = philox_next(state);
 
   state->has_uint32 = 1;
-  state->uinteger = (uint32_t)(next & 0xffffffff);
-
-  return (uint32_t)(next >> 32);
+  state->uinteger = (uint32_t)(next >> 32);
+  return (uint32_t)(next & 0xffffffff);
 }
 
 extern void philox_jump(philox_state *state);

@@ -14,6 +14,7 @@ typedef int bool;
 #include <stdint.h>
 #endif
 
+#include "Python.h"
 #include "numpy/npy_common.h"
 #include <math.h>
 
@@ -68,7 +69,6 @@ typedef struct prng {
 DECLDIR float random_sample_f(prng_t *prng_state);
 DECLDIR double random_sample(prng_t *prng_state);
 
-DECLDIR uint32_t random_uint32(prng_t *prng_state);
 DECLDIR int64_t random_positive_int64(prng_t *prng_state);
 DECLDIR int32_t random_positive_int32(prng_t *prng_state);
 DECLDIR long random_positive_int(prng_t *prng_state);

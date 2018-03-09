@@ -38,8 +38,8 @@ static INLINE uint32_t xorshift1024_next32(xorshift1024_state *state) {
   }
   next = xorshift1024_next(state);
   state->has_uint32 = 1;
-  state->uinteger = (uint32_t)(next & 0xffffffff);
-  return (uint32_t)(next >> 32);
+  state->uinteger = (uint32_t)(next >> 32);
+  return (uint32_t)(next & 0xffffffff);
 }
 
 void xorshift1024_jump(xorshift1024_state *state);

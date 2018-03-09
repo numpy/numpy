@@ -1,15 +1,10 @@
-from distributions cimport *
+#!python
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True
 
-_randint_type = {'bool': (0, 2),
-                 'int8': (-2**7, 2**7),
-                 'int16': (-2**15, 2**15),
-                 'int32': (-2**31, 2**31),
-                 'int64': (-2**63, 2**63),
-                 'uint8': (0, 2**8),
-                 'uint16': (0, 2**16),
-                 'uint32': (0, 2**32),
-                 'uint64': (0, 2**64)
-                 }
+import numpy as np
+cimport numpy as np
+from distributions cimport *
+np.import_array()
 
 {{
 py:
@@ -86,7 +81,7 @@ big_type_info = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFF
 cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, prng_t *state, object lock):
     """Array path for 64-bit integer types"""
     cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
-    cdef np.npy_intp i, cnt
+    cdef np.npy_intp i, cnt, n
     cdef np.broadcast it
     cdef object closed_upper
     cdef uint64_t *out_data
@@ -196,7 +191,7 @@ cdef object _rand_{{nptype}}(object low, object high, object size, prng_t *state
     cdef np.ndarray out_arr, low_arr, high_arr
     cdef {{utype}}_t rng, off, out_val
     cdef {{utype}}_t *out_data
-    cdef np.npy_intp i, cnt
+    cdef np.npy_intp i, n, cnt
 
     if size is not None:
         if (np.prod(size) == 0):

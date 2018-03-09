@@ -7,8 +7,8 @@ from .threefry import ThreeFry
 from .xoroshiro128 import Xoroshiro128
 from .xorshift1024 import Xorshift1024
 
-__all__ = ['RandomGenerator', 'DSFMT', 'PCG64', 'Xoroshiro128',
-           'ThreeFry', 'MT19937', 'Xorshift1024']
+__all__ = ['RandomGenerator', 'DSFMT', 'MT19937', 'PCG64', 'Philox',
+           'ThreeFry', 'Xoroshiro128', 'Xorshift1024']
 
 from ._version import get_versions
 

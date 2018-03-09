@@ -12,6 +12,7 @@
  *
  */
 
+#include "../splitmix64/splitmix64.h"
 #include "Random123/philox.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -20,10 +21,15 @@
 
 int main() {
   philox4x64_ctr_t ctr = {{0, 0, 0, 0}};
-  philox4x64_key_t key = {{0, 0xDEADBEAF}};
+  philox4x64_key_t key = {{0, 0}};
+  uint64_t state, seed = 0xDEADBEAF;
   philox4x64_ctr_t out;
   uint64_t store[N];
+  state = seed;
   int i, j;
+  for (i = 0; i < 2; i++) {
+    key.v[i] = splitmix64_next(&state);
+  }
   for (i = 0; i < N / 4UL; i++) {
     ctr.v[0]++;
     out = philox4x64_R(philox4x64_rounds, ctr, key);
@@ -38,7 +44,7 @@ int main() {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp, "key, 0x%" PRIx64 ", 0x%" PRIx64 "\n", key.v[0], key.v[1]);
+  fprintf(fp, "seed, 0x%" PRIx64 "\n", seed);
   for (i = 0; i < N; i++) {
     fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {
@@ -48,8 +54,10 @@ int main() {
   fclose(fp);
 
   ctr.v[0] = 0;
-  key.v[0] = 0xDEADBEAF;
-  key.v[1] = 0xFBADBEEF;
+  state = seed = 0;
+  for (i = 0; i < 2; i++) {
+    key.v[i] = splitmix64_next(&state);
+  }
   for (i = 0; i < N / 4UL; i++) {
     ctr.v[0]++;
     out = philox4x64_R(philox4x64_rounds, ctr, key);
@@ -63,7 +71,7 @@ int main() {
     printf("Couldn't open file\n");
     return -1;
   }
-  fprintf(fp, "key, 0x%" PRIx64 ", 0x%" PRIx64 "\n", key.v[0], key.v[1]);
+  fprintf(fp, "seed, 0x%" PRIx64 "\n", seed);
   for (i = 0; i < N; i++) {
     fprintf(fp, "%d, 0x%" PRIx64 "\n", i, store[i]);
     if (i == 999) {

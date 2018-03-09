@@ -33,7 +33,7 @@ static inline uint32_t splitmix64_next32(splitmix64_state *state) {
     return state->uinteger;
   }
   next = splitmix64_next64(state);
-  state->uinteger = next & 0xffffffff;
   state->has_uint32 = 1;
-  return (uint32_t)(next >> 32);
+  state->uinteger = (uint32_t)(next >> 32);
+  return (uint32_t)(next & 0xffffffff);
 }

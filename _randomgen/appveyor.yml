@@ -1,0 +1,33 @@
+skip_tags: true
+clone_depth: 50
+
+os: Visual Studio 2015
+
+environment:
+  matrix:
+    - PY_MAJOR_VER: 2
+      PYTHON_ARCH: "x86"
+    - PY_MAJOR_VER: 3
+      PYTHON_ARCH: "x86_64"
+    - PY_MAJOR_VER: 3
+      PYTHON_ARCH: "x86"
+
+platform:
+    - x64
+
+build_script:
+  - ps: Start-FileDownload "https://repo.continuum.io/miniconda/Miniconda$env:PY_MAJOR_VER-latest-Windows-$env:PYTHON_ARCH.exe" C:\Miniconda.exe; echo "Finished downloading miniconda"
+  - cmd: C:\Miniconda.exe /S /D=C:\Py
+  - SET PATH=C:\Py;C:\Py\Scripts;C:\Py\Library\bin;%PATH%
+  - conda config --set always_yes yes
+  - conda update conda --quiet
+  - conda install numpy cython nose pandas pytest --quiet
+  - python setup.py develop
+  - set "GIT_DIR=%cd%"
+
+test_script:
+  - pytest core_prng
+
+on_success:
+  - cd %GIT_DIR%\
+  - IF %PYTHON_ARCH%==x86_64 python benchmark.py
