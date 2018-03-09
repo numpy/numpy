@@ -152,6 +152,8 @@ class TestRealScalars(object):
         assert_equal(fpos64('1.5', unique=False, precision=3), "1.500")
         assert_equal(fsci32('1.5', unique=False, precision=3), "1.500e+00")
         assert_equal(fsci64('1.5', unique=False, precision=3), "1.500e+00")
+        # gh-10713
+        assert_equal(fpos64('324', unique=False, precision=5, fractional=False), "324.00")
 
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
