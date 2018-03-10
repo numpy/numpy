@@ -191,7 +191,7 @@ def expand_sub(substr, names):
 
 def process_str(allstr):
     newstr = allstr
-    writestr = '' #_head # using _head will break free-format files
+    writestr = ''
 
     struct = parse_structure(newstr)
 
