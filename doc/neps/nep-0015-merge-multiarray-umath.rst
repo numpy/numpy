@@ -120,7 +120,25 @@ The only compatibility break is the deprecation of ``np.set_numeric_ops``.
 Alternatives
 ------------
 
-n/a
+Preserve ``set_numeric_ops`` for monkeypatching
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In discussing this NEP, one additional use case was raised for
+``set_numeric_ops``: if you have an optimized vector math library
+(e.g. Intel's MKL VML, Sleef, or Yeppp), then ``set_numeric_ops`` can
+be used to monkeypatch numpy to use these operations instead of
+numpy's built-in vector operations. But, even if we grant that this is
+a great idea, using ``set_numeric_ops`` isn't actually the best way to
+do it. All ``set_numeric_ops`` allows you to do is take over Python's
+syntactic operators (``+``, ``*``, etc.) on ndarrays; it doesn't let
+you affect operations called via other APIs (e.g., ``np.add``), or
+operations that don't have built-in syntax (e.g., ``np.exp``). Also,
+you have to reimplement the whole ufunc machinery, instead of just the
+core loop. On the other hand, the `PyUFunc_ReplaceLoopBySignature
+<https://docs.scipy.org/doc/numpy/reference/c-api.ufunc.html#c.PyUFunc_ReplaceLoopBySignature>`__
+API – which was added in 2006 – allows replacement of the inner loops
+of arbitrary ufuncs, so it's both simpler and more powerful. So this
+doesn't seem like a good reason to not deprecate ``set_numeric_ops``.
 
 
 Discussion
