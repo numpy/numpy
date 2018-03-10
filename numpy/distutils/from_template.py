@@ -98,6 +98,11 @@ def find_repl_patterns(astr):
         names[name] = thelist
     return names
 
+def find_and_remove_repl_patterns(astr):
+    names = find_repl_patterns(astr)
+    astr = re.subn(named_re, '', astr)[0]
+    return astr, names
+
 item_re = re.compile(r"\A\\(?P<index>\d+)\Z")
 def conv(astr):
     b = astr.split(',')
@@ -194,8 +199,9 @@ def process_str(allstr):
     names = {}
     names.update(_special_names)
     for sub in struct:
-        writestr += newstr[oldend:sub[0]]
-        names.update(find_repl_patterns(newstr[oldend:sub[0]]))
+        cleanedstr, defs = find_and_remove_repl_patterns(newstr[oldend:sub[0]])
+        writestr += cleanedstr
+        names.update(defs)
         writestr += expand_sub(newstr[sub[0]:sub[1]], names)
         oldend =  sub[1]
     writestr += newstr[oldend:]
