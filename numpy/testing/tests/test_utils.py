@@ -911,6 +911,34 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
         self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
                           x, y, nulp)
 
+    def test_float16_pass(self):
+        nulp = 5
+        x = np.linspace(-20, 20, 50, dtype=np.float16)
+        x = np.r_[-x, x]
+
+        eps = np.finfo(x.dtype).eps
+        y = x + x*eps*nulp/2.
+        assert_array_almost_equal_nulp(x, y, nulp)
+
+        epsneg = np.finfo(x.dtype).epsneg
+        y = x - x*epsneg*nulp/2.
+        assert_array_almost_equal_nulp(x, y, nulp)
+
+    def test_float16_fail(self):
+        nulp = 5
+        x = np.linspace(-20, 20, 50, dtype=np.float16)
+        x = np.r_[-x, x]
+
+        eps = np.finfo(x.dtype).eps
+        y = x + x*eps*nulp*2.
+        self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
+                          x, y, nulp)
+
+        epsneg = np.finfo(x.dtype).epsneg
+        y = x - x*epsneg*nulp*2.
+        self.assertRaises(AssertionError, assert_array_almost_equal_nulp,
+                          x, y, nulp)
+
     def test_complex128_pass(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float64)
