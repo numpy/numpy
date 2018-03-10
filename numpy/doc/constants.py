@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 =========
 Constants
 =========
+
+.. currentmodule:: numpy
 
 NumPy includes several constants:
 
@@ -225,7 +228,7 @@ add_newdoc('numpy', 'e',
 
     References
     ----------
-    .. [1] http://en.wikipedia.org/wiki/Napier_constant
+    https://en.wikipedia.org/wiki/E_%28mathematical_constant%29
 
     """)
 
@@ -363,6 +366,26 @@ add_newdoc('numpy', 'newaxis',
 
     """)
 
+add_newdoc('numpy', 'pi',
+    """
+    ``pi = 3.1415926535897932384626433...``
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Pi
+
+    """)
+
+add_newdoc('numpy', 'euler_gamma',
+    """
+    ``γ = 0.5772156649015328606065120900824024310421...``
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Euler-Mascheroni_constant
+
+    """)
+
 if __doc__:
     constants_str = []
     constants.sort()
@@ -383,7 +406,7 @@ if __doc__:
         s = "\n".join(new_lines)
 
         # Done.
-        constants_str.append(""".. const:: %s\n    %s""" % (name, s))
+        constants_str.append(""".. data:: %s\n    %s""" % (name, s))
     constants_str = "\n".join(constants_str)
 
     __doc__ = __doc__ % dict(constant_list=constants_str)
