@@ -28,10 +28,34 @@ _philox4x64bumpkey(struct r123array2x64 key) {
 }
 
 #ifdef _WIN32
-/* TODO: This isn't correct for many platforms */
 #include <intrin.h>
+/* TODO: This isn't correct for many platforms */
+#ifdef _WIN64
 #pragma intrinsic(_umul128)
+#else
+#pragma intrinsic(__emulu)
+static INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
 
+  uint64_t a_lo, a_hi, b_lo, b_hi, a_x_b_hi, a_x_b_mid, a_x_b_lo, b_x_a_mid,
+      carry_bit;
+  a_lo = (uint32_t)a;
+  a_hi = a >> 32;
+  b_lo = (uint32_t)b;
+  b_hi = b >> 32;
+
+  a_x_b_hi = __emulu(a_hi, b_hi);
+  a_x_b_mid = __emulu(a_hi, b_lo);
+  b_x_a_mid = __emulu(b_hi, a_lo);
+  a_x_b_lo = __emulu(a_lo, b_lo);
+
+  carry_bit = ((uint64_t)(uint32_t)a_x_b_mid + (uint64_t)(uint32_t)b_x_a_mid +
+               (a_x_b_lo >> 32)) >> 32;
+
+  *high = a_x_b_hi + (a_x_b_mid >> 32) + (b_x_a_mid >> 32) + carry_bit;
+
+  return a_x_b_lo + ((a_x_b_mid + b_x_a_mid) << 32);
+}
+#endif
 static INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
   return _umul128(a, b, hip);
 }

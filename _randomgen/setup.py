@@ -30,7 +30,6 @@ DEBUG = False
 PCG_EMULATED_MATH = False
 
 EXTRA_INCLUDE_DIRS = []
-EXTRA_COMPILE_ARGS = []
 EXTRA_LINK_ARGS = []
 EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else ['-std=c99']
 if os.name == 'nt':
@@ -39,9 +38,10 @@ if os.name == 'nt':
     if DEBUG:
         EXTRA_LINK_ARGS += ['-debug']
         EXTRA_COMPILE_ARGS += ["-Zi", "/Od"]
-if os.name == 'nt' and sys.version_info < (3, 0):
-    EXTRA_INCLUDE_DIRS += [join(MOD_DIR, 'src', 'common')]
+    if sys.version_info < (3, 0):
+        EXTRA_INCLUDE_DIRS += [join(MOD_DIR, 'src', 'common')]
 
+DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
 if USE_SSE2:
     if os.name == 'nt':
         EXTRA_COMPILE_ARGS += ['/wd4146', '/GL']
@@ -49,8 +49,6 @@ if USE_SSE2:
             EXTRA_COMPILE_ARGS += ['/arch:SSE2']
     else:
         EXTRA_COMPILE_ARGS += ['-msse2']
-DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
-if USE_SSE2:
     DSFMT_DEFS += [('HAVE_SSE2', '1')]
 
 files = glob.glob('./core_prng/*.in')
