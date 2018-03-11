@@ -229,7 +229,7 @@ def removeHeader(source):
 
 def removeSubroutinePrototypes(source):
     expression = re.compile(
-        '/\* Subroutine \*/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
+        r'/[*] Subroutine [*]/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
     )
     lines = LineQueue()
     for line in UStringIO(source):
