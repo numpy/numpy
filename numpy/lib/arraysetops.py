@@ -313,7 +313,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         can speed up the calculation.  Default is False.
     return_indices : bool
         If True, the indices which correspond to the interesction of the 
-        of the two arrays are returned.
+        two arrays are returned. Default is False.
     Returns
     -------
     intersect1d : ndarray
@@ -342,8 +342,8 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     To return the indices of the values common to the input arrays
     along with the intersected values:
     
-    >>>np.intersect1d([1,2,3,4],[2,1,4,6],return_indices=True)
-    (array(1,2,4),array([0,1,3]),array([1,0,2]))
+    >>> np.intersect1d([1,2,3,4], [2,1,4,6], return_indices=True)
+    (array(1,2,4), array([0,1,3]), array([1,0,2]))
     """
     if not assume_unique:
         # Might be faster than unique( intersect1d( ar1, ar2 ) )?
@@ -354,9 +354,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     int1d = aux[:-1][aux[1:] == aux[:-1]]
 
     if return_indices:
-      a_inds, = np.in1d(ar1,int1d).nonzero()
-      b_inds, = np.in1d(ar2,int1d).nonzero()
-      return int1d,a_inds,b_inds
+      indices1, = np.in1d(ar1,int1d).nonzero()
+      indices2, = np.in1d(ar2,int1d).nonzero()
+      return int1d, indices1, indices2
     return int1d
 
 def setxor1d(ar1, ar2, assume_unique=False):
