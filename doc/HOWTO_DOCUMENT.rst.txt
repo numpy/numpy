@@ -322,7 +322,7 @@ The sections of the docstring are:
      See Also
      --------
      func_a : Function a with its description.
-     func_b, func_c_, func_d
+     func_b, func_c, func_d
      func_e
 
 10. **Notes**
