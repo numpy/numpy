@@ -50,6 +50,8 @@ if USE_SSE2:
     else:
         EXTRA_COMPILE_ARGS += ['-msse2']
     DSFMT_DEFS += [('HAVE_SSE2', '1')]
+if struct.calcsize('P') < 8:
+    PCG_EMULATED_MATH = True
 
 files = glob.glob('./core_prng/*.in')
 for templated_file in files:

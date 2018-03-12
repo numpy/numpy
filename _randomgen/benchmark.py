@@ -26,8 +26,8 @@ if struct.calcsize('P') == 8 and os.name != 'nt':
 else:
     scale_64 = 2
 
-PRNGS = ['PCG64', 'MT19937', 'Xoroshiro128', 'Xorshift1024',
-         'Philox', 'ThreeFry', 'ThreeFry32', 'numpy']
+PRNGS = ['DSFMT', 'MT19937', 'PCG64', 'Philox', 'ThreeFry', 'ThreeFry32', 
+         'Xoroshiro128', 'Xorshift1024', 'numpy']
 
 
 def timer(code, setup):
