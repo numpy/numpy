@@ -12,56 +12,41 @@ cimport entropy
 
 np.import_array()
 
-IF PCG_EMULATED_MATH==1:
-    cdef extern from "src/pcg64/pcg64.h":
 
-        ctypedef struct pcg128_t:
-            uint64_t high
-            uint64_t low
-ELSE:
-    cdef extern from "inttypes.h":
-        ctypedef unsigned long long __uint128_t
+cdef extern from "src/pcg32/pcg32.h":
 
-    cdef extern from "src/pcg64/pcg64.h":
-        ctypedef __uint128_t pcg128_t
+    cdef struct pcg_state_setseq_64:
+        uint64_t state
+        uint64_t inc
 
-cdef extern from "src/pcg64/pcg64.h":
+    ctypedef pcg_state_setseq_64 pcg32_random_t
 
-    ctypedef struct pcg128_t:
-        uint64_t high
-        uint64_t low        
+    struct s_pcg32_state:
+      pcg32_random_t *pcg_state
 
-cdef extern from "src/pcg64/pcg64.h":
+    ctypedef s_pcg32_state pcg32_state
 
-    cdef struct pcg_state_setseq_128:
-        pcg128_t state
-        pcg128_t inc
+    uint64_t pcg32_next64(pcg32_state *state)  nogil
+    uint32_t pcg32_next32(pcg32_state *state)  nogil
+    double pcg32_next_double(pcg32_state *state)  nogil
+    void pcg32_jump(pcg32_state  *state)
+    void pcg32_advance_state(pcg32_state *state, uint64_t step)
+    void pcg32_set_seed(pcg32_state *state, uint64_t seed, uint64_t inc)
 
-    ctypedef pcg_state_setseq_128 pcg64_random_t
+cdef uint64_t pcg32_uint64(void* st) nogil:
+    return pcg32_next64(<pcg32_state *>st)
 
-    struct s_pcg64_state:
-      pcg64_random_t *pcg_state
-      int has_uint32
-      uint32_t uinteger
+cdef uint32_t pcg32_uint32(void *st) nogil:
+    return pcg32_next32(<pcg32_state *> st)
 
-    ctypedef s_pcg64_state pcg64_state
+cdef double pcg32_double(void* st) nogil:
+    return pcg32_next_double(<pcg32_state *>st)
 
-    uint64_t pcg64_next64(pcg64_state *state)  nogil
-    uint32_t pcg64_next32(pcg64_state *state)  nogil
-    void pcg64_jump(pcg64_state  *state)
-    void pcg64_advance(pcg64_state *state, uint64_t *step)
-    void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc)
+cdef uint64_t pcg32_raw(void* st) nogil:
+    return <uint64_t>pcg32_next32(<pcg32_state *> st)
 
-cdef uint64_t pcg64_uint64(void* st) nogil:
-    return pcg64_next64(<pcg64_state *>st)
 
-cdef uint32_t pcg64_uint32(void *st) nogil:
-    return pcg64_next32(<pcg64_state *> st)
-
-cdef double pcg64_double(void* st) nogil:
-    return uint64_to_double(pcg64_next64(<pcg64_state *>st))
-
-cdef class PCG64:
+cdef class PCG32:
     """
     Prototype Core PRNG using pcg64
 
@@ -75,22 +60,22 @@ cdef class PCG64:
     Exposes no user-facing API except `get_state` and `set_state`. Designed
     for use in a `RandomGenerator` object.
     """
-    cdef pcg64_state *rng_state
+    cdef pcg32_state *rng_state
     cdef prng_t *_prng
     cdef public object capsule
 
     def __init__(self, seed=None, inc=0):
-        self.rng_state = <pcg64_state *>malloc(sizeof(pcg64_state))
-        self.rng_state.pcg_state = <pcg64_random_t *>malloc(sizeof(pcg64_random_t))
+        self.rng_state = <pcg32_state *>malloc(sizeof(pcg32_state))
+        self.rng_state.pcg_state = <pcg32_random_t *>malloc(sizeof(pcg32_random_t))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
         self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed, inc)
 
         self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = &pcg64_uint64
-        self._prng.next_uint32 = &pcg64_uint32
-        self._prng.next_double = &pcg64_double
-        self._prng.next_raw = &pcg64_uint64
+        self._prng.next_uint64 = &pcg32_uint64
+        self._prng.next_uint32 = &pcg32_uint32
+        self._prng.next_double = &pcg32_double
+        self._prng.next_raw = &pcg32_raw
 
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
@@ -113,8 +98,6 @@ cdef class PCG64:
         free(self._prng)
 
     cdef _reset_state_variables(self):
-        self.rng_state.has_uint32 = 0
-        self.rng_state.uinteger = 0
         self._prng.has_gauss = 0
         self._prng.has_gauss_f = 0
         self._prng.gauss = 0.0
@@ -180,14 +163,13 @@ cdef class PCG64:
             If seed values are out of range for the PRNG.
 
         """
-        cdef np.ndarray _seed, _inc
-        ub =  2 ** 128
+        ub =  2 ** 64
         if seed is None:
             try:
-                _seed = <np.ndarray>random_entropy(4)
+                seed = <np.ndarray>random_entropy(2)
             except RuntimeError:
-                _seed = <np.ndarray>random_entropy(4, 'fallback')
-            _seed = <np.ndarray>_seed.view(np.uint64)
+                seed = <np.ndarray>random_entropy(2, 'fallback')
+            seed = seed.view(np.uint64).squeeze()
         else:
             err_msg = 'seed must be a scalar integer between 0 and ' \
                       '{ub}'.format(ub=ub)
@@ -197,37 +179,23 @@ cdef class PCG64:
                 raise TypeError(err_msg)
             if seed < 0 or seed > ub:
                 raise ValueError(err_msg)
-            _seed = <np.ndarray>np.empty(2, np.uint64)
-            _seed[0] = int(seed) // 2**64
-            _seed[1] = int(seed) % 2**64
-        
+
         if not np.isscalar(inc):
-            raise TypeError('inc must be a scalar integer between 0 and {ub}'.format(ub=ub))
+            raise TypeError('inc must be a scalar integer between 0 '
+                            'and {ub}'.format(ub=ub))
         if inc < 0 or inc > ub or int(inc) != inc:
-            raise ValueError('inc must be a scalar integer between 0 and {ub}'.format(ub=ub))
-        _inc = <np.ndarray>np.empty(2, np.uint64)
-        _inc[0] = int(inc) // 2**64
-        _inc[1] = int(inc) % 2**64
-        
-        pcg64_set_seed(self.rng_state, <uint64_t *>_seed.data, <uint64_t *>_inc.data)
+            raise ValueError('inc must be a scalar integer between 0 '
+                             'and {ub}'.format(ub=ub))
+
+        pcg32_set_seed(self.rng_state, <uint64_t>seed, <uint64_t>inc)
         self._reset_state_variables()
 
     @property
     def state(self):
         """Get or set the PRNG state"""
-        IF PCG_EMULATED_MATH==1:
-            state = 2 **64 * self.rng_state.pcg_state.state.high
-            state += self.rng_state.pcg_state.state.low
-            inc = 2 **64 * self.rng_state.pcg_state.inc.high
-            inc += self.rng_state.pcg_state.inc.low
-        ELSE:
-            state = self.rng_state.pcg_state.state
-            inc = self.rng_state.pcg_state.inc
-
         return {'prng': self.__class__.__name__,
-                'state': {'state': state, 'inc':inc},
-                'has_uint32': self.rng_state.has_uint32,
-                'uinteger': self.rng_state.uinteger}
+                'state': {'state': self.rng_state.pcg_state.state,
+                          'inc':self.rng_state.pcg_state.inc}}
 
     @state.setter
     def state(self, value):
@@ -237,24 +205,12 @@ cdef class PCG64:
         if prng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
-        IF PCG_EMULATED_MATH==1:
-            self.rng_state.pcg_state.state.high = value['state']['state'] // 2 ** 64
-            self.rng_state.pcg_state.state.low = value['state']['state'] % 2 ** 64
-            self.rng_state.pcg_state.inc.high = value['state']['inc'] // 2 ** 64
-            self.rng_state.pcg_state.inc.low = value['state']['inc'] % 2 ** 64
-        ELSE:
-            self.rng_state.pcg_state.state  = value['state']['state']
-            self.rng_state.pcg_state.inc = value['state']['inc']
-
-        self.rng_state.has_uint32 = value['has_uint32']
-        self.rng_state.uinteger = value['uinteger']
+        self.rng_state.pcg_state.state  = value['state']['state']
+        self.rng_state.pcg_state.inc = value['state']['inc']
 
     def advance(self, step):
-        cdef np.ndarray delta = np.empty(2,dtype=np.uint64)
-        delta[0] = step // 2**64
-        delta[1] = step % 2**64
-        pcg64_advance(self.rng_state, <uint64_t *>delta.data)
+        pcg32_advance_state(self.rng_state, <uint64_t>step)
         return self
 
     def jump(self):
-        return self.advance(2**64)
+        return self.advance(2**32)

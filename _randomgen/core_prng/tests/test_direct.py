@@ -7,7 +7,7 @@ from numpy.testing import assert_equal, assert_allclose, assert_array_equal, \
     assert_raises
 
 from core_prng import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
-    PCG64, Philox, Xoroshiro128, Xorshift1024
+    PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024
 
 if (sys.version_info > (3, 0)):
     long = int
@@ -24,7 +24,7 @@ def uniform32_from_uint64(x):
     out = (joined >> np.uint32(9)) * (1.0 / 2 ** 23)
     return out.astype(np.float32)
 
-
+ 
 def uniform32_from_uint63(x):
     x = np.uint64(x)
     x = np.uint32(x >> np.uint64(32))
@@ -406,4 +406,15 @@ class TestThreeFry32(Base):
         cls.dtype = np.uint32
         cls.data1 = cls._read_csv(join(pwd, './data/threefry32-testset-1.csv'))
         cls.data2 = cls._read_csv(join(pwd, './data/threefry32-testset-2.csv'))
+        cls.seed_error_type = TypeError
+
+
+class TestPCG32(TestPCG64):
+    @classmethod
+    def setup_class(cls):
+        cls.prng = PCG32
+        cls.bits = 32
+        cls.dtype = np.uint32
+        cls.data1 = cls._read_csv(join(pwd, './data/pcg32-testset-1.csv'))
+        cls.data2 = cls._read_csv(join(pwd, './data/pcg32-testset-2.csv'))
         cls.seed_error_type = TypeError
