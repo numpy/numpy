@@ -1,18 +1,21 @@
-import pickle
-import time
-import sys
 import os
+import pickle
+import sys
+import time
+
 import numpy as np
 import pytest
+from numpy.testing import assert_almost_equal, assert_equal, assert_, \
+    assert_array_equal
 
-from core_prng import *
+from core_prng import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
+    PCG64, Philox, Xoroshiro128, Xorshift1024
 from core_prng import entropy
 
-from numpy.testing import assert_almost_equal, assert_equal, assert_raises, assert_, assert_array_equal
 
-
-@pytest.fixture(scope='module', params=(np.bool, np.int8, np.int16, np.int32, np.int64,
-                                        np.uint8, np.uint16, np.uint32, np.uint64))
+@pytest.fixture(scope='module',
+                params=(np.bool, np.int8, np.int16, np.int32, np.int64,
+                        np.uint8, np.uint16, np.uint32, np.uint64))
 def dtype(request):
     return request.param
 
@@ -71,7 +74,8 @@ def comp_state(state1, state2):
     elif type(state1) != type(state2):
         identical &= type(state1) == type(state2)
     else:
-        if (isinstance(state1, (list, tuple, np.ndarray)) and isinstance(state2, (list, tuple, np.ndarray))):
+        if (isinstance(state1, (list, tuple, np.ndarray)) and isinstance(
+                state2, (list, tuple, np.ndarray))):
             for s1, s2 in zip(state1, state2):
                 identical &= comp_state(s1, s2)
         else:
@@ -128,7 +132,7 @@ class RNG(object):
             self.rg.jump()
             jumped_state = self.rg.state
             assert_(not comp_state(state, jumped_state))
-            self.rg.random_sample(2*3*5*7*11*13*17)
+            self.rg.random_sample(2 * 3 * 5 * 7 * 11 * 13 * 17)
             self.rg.state = state
             self.rg.jump()
             rejumped_state = self.rg.state
@@ -206,8 +210,6 @@ class RNG(object):
     def test_entropy_init(self):
         rg = RandomGenerator(self.prng())
         rg2 = RandomGenerator(self.prng())
-        s1 = rg.state
-        s2 = rg2.state
         assert_(not comp_state(rg.state, rg2.state))
 
     def test_seed(self):
@@ -270,7 +272,7 @@ class RNG(object):
         else:
             try:
                 maxsize = sys.maxint
-            except:
+            except AttributeError:
                 maxsize = sys.maxsize
         if maxsize < 2 ** 32:
             assert_((vals < sys.maxsize).all())
@@ -311,7 +313,8 @@ class RNG(object):
 
         self.rg.state = st
         vals3 = self.rg.complex_normal(
-            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j, method='zig')
+            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j,
+            method='zig')
         np.testing.assert_allclose(vals, vals3)
 
         self.rg.state = st
@@ -322,7 +325,8 @@ class RNG(object):
         v_imag = 2.5
         rho = cov / np.sqrt(v_real * v_imag)
         imag = 7 + np.sqrt(v_imag) * (rho *
-                                      norms[:, 0] + np.sqrt(1 - rho ** 2) * norms[:, 1])
+                                      norms[:, 0] + np.sqrt(1 - rho ** 2) *
+                                      norms[:, 1])
         real = 2 + np.sqrt(v_real) * norms[:, 0]
         vals4 = [re + im * (0 + 1.0j) for re, im in zip(real, imag)]
 
@@ -341,7 +345,8 @@ class RNG(object):
 
         self.rg.state = st
         vals3 = self.rg.complex_normal(
-            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j, method='bm')
+            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j,
+            method='bm')
         np.testing.assert_allclose(vals, vals3)
 
     def test_complex_normal_zero_variance(self):
@@ -540,12 +545,6 @@ class RNG(object):
         unpick = pickle.loads(pick)
         assert_((type(self.rg) == type(unpick)))
         assert_(comp_state(self.rg.state, unpick.state))
-
-    @pytest.mark.xfail
-    def test_version(self):
-        state = self.rg.state
-        assert_('version' in state)
-        assert_(state['version'] == 0)
 
     def test_seed_array(self):
         if self.seed_vector_bits is None:
@@ -790,11 +789,13 @@ class RNG(object):
         assert_equal(a, c)
         self._reset_state()
         d = self.rg.randint(np.array(
-            [lower] * 10), np.array([upper], dtype=np.object), size=10, dtype=dtype)
+            [lower] * 10), np.array([upper], dtype=np.object), size=10,
+            dtype=dtype)
         assert_equal(a, d)
         self._reset_state()
         e = self.rg.randint(
-            np.array([lower] * 10), np.array([upper] * 10), size=10, dtype=dtype)
+            np.array([lower] * 10), np.array([upper] * 10), size=10,
+            dtype=dtype)
         assert_equal(a, e)
 
         self._reset_state()
@@ -846,18 +847,16 @@ class TestMT19937(RNG):
         cls._extra_setup()
         cls.seed_error = ValueError
 
-    @pytest.mark.xfail
     def test_numpy_state(self):
-        # TODO: Do we want lagacy state support
         nprg = np.random.RandomState()
         nprg.standard_normal(99)
-        state = nprg.state
+        state = nprg.get_state()
         self.rg.state = state
         state2 = self.rg.state
-        assert_((state[1] == state2['state'][0]).all())
-        assert_((state[2] == state2['state'][1]))
-        assert_((state[3] == state2['gauss']['has_gauss']))
-        assert_((state[4] == state2['gauss']['gauss']))
+        assert_((state[1] == state2['state']['key']).all())
+        assert_((state[2] == state2['state']['pos']))
+        assert_((state[3] == state2['has_gauss']))
+        assert_((state[4] == state2['gauss']))
 
 
 class TestPCG64(RNG):
@@ -955,6 +954,19 @@ class TestDSFMT(RNG):
         cls.initial_state = cls.rg.state
         cls._extra_setup()
         cls.seed_vector_bits = 32
+
+
+class TestThreeFry32(RNG):
+    @classmethod
+    def setup_class(cls):
+        cls.prng = ThreeFry32
+        cls.advance = [2 ** 96 + 2 ** 16 + 2 ** 5 + 1]
+        cls.seed = [2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
+        cls.rg = RandomGenerator(cls.prng(*cls.seed))
+        cls.initial_state = cls.rg.state
+        cls.seed_vector_bits = 64
+        cls._extra_setup()
+        cls.seed_error = ValueError
 
 
 class TestEntropy(object):

@@ -2,13 +2,12 @@
 #include "ziggurat.h"
 #include "ziggurat_constants.h"
 
-static NPY_INLINE float next_float(prng_t *prng_state) {
-  return (prng_state->next_uint32(prng_state->state) >> 9) *
-         (1.0f / 8388608.0f);
-}
-
 static NPY_INLINE uint32_t random_uint32(prng_t *prng_state) {
   return prng_state->next_uint32(prng_state->state);
+}
+
+static NPY_INLINE float next_float(prng_t *prng_state) {
+  return (random_uint32(prng_state) >> 9) * (1.0f / 8388608.0f);
 }
 
 static NPY_INLINE uint64_t random_uint64(prng_t *prng_state) {
@@ -77,7 +76,7 @@ float random_gauss_f(prng_t *prng_state) {
   }
 }
 
-double standard_exponential_zig(prng_t *prng_state);
+static NPY_INLINE double standard_exponential_zig(prng_t *prng_state);
 
 static double standard_exponential_zig_unlikely(prng_t *prng_state, uint8_t idx,
                                                 double x) {
@@ -93,11 +92,11 @@ static double standard_exponential_zig_unlikely(prng_t *prng_state, uint8_t idx,
   }
 }
 
-double standard_exponential_zig(prng_t *prng_state) {
+static NPY_INLINE double standard_exponential_zig(prng_t *prng_state) {
   uint64_t ri;
   uint8_t idx;
   double x;
-  ri = prng_state->next_uint64(prng_state->state);
+  ri = random_uint64(prng_state);
   ri >>= 3;
   idx = ri & 0xFF;
   ri >>= 8;
@@ -131,7 +130,7 @@ static NPY_INLINE float standard_exponential_zig_f(prng_t *prng_state) {
   uint32_t ri;
   uint8_t idx;
   float x;
-  ri = prng_state->next_uint32(prng_state->state);
+  ri = random_uint32(prng_state);
   ri >>= 1;
   idx = ri & 0xFF;
   ri >>= 8;
@@ -154,7 +153,7 @@ double random_gauss_zig(prng_t *prng_state) {
   double x, xx, yy;
   for (;;) {
     /* r = e3n52sb8 */
-    r = prng_state->next_uint64(prng_state->state);
+    r = random_uint64(prng_state);
     idx = r & 0xff;
     r >>= 8;
     sign = r & 0x1;
@@ -190,7 +189,7 @@ float random_gauss_zig_f(prng_t *prng_state) {
   float x, xx, yy;
   for (;;) {
     /* r = n23sb8 */
-    r = prng_state->next_uint32(prng_state->state);
+    r = random_uint32(prng_state);
     idx = r & 0xff;
     sign = (r >> 8) & 0x1;
     rabs = (int32_t)((r >> 9) & 0x0007fffff);
@@ -400,26 +399,26 @@ float random_standard_gamma_zig_f(prng_t *prng_state, float shape) {
 }
 
 int64_t random_positive_int64(prng_t *prng_state) {
-  return prng_state->next_uint64(prng_state->state) >> 1;
+  return random_uint64(prng_state) >> 1;
 }
 
 int32_t random_positive_int32(prng_t *prng_state) {
-  return prng_state->next_uint32(prng_state->state) >> 1;
+  return random_uint32(prng_state) >> 1;
 }
 
 long random_positive_int(prng_t *prng_state) {
 #if ULONG_MAX <= 0xffffffffUL
-  return (long)(prng_state->next_uint32(prng_state->state) >> 1);
+  return (long)(random_uint32(prng_state) >> 1);
 #else
-  return (long)(prng_state->next_uint64(prng_state->state) >> 1);
+  return (long)(random_uint64(prng_state) >> 1);
 #endif
 }
 
 unsigned long random_uint(prng_t *prng_state) {
 #if ULONG_MAX <= 0xffffffffUL
-  return prng_state->next_uint32(prng_state->state);
+  return random_uint32(prng_state);
 #else
-  return prng_state->next_uint64(prng_state->state);
+  return random_uint64(prng_state);
 #endif
 }
 

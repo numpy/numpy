@@ -59,7 +59,7 @@ cdef object float_fill(void *func, prng_t *state, object size, object lock, obje
 
 cdef object float_fill_from_double(void *func, prng_t *state, object size, object lock, object out)
 
-cdef np.ndarray int_to_array(object value, object name, object bits)
+cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size)
 
 cdef object cont(void *func, prng_t *state, object size, object lock, int narg,
                  object a, object a_name, constraint_type a_constraint,

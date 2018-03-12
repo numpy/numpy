@@ -26,7 +26,7 @@ cdef extern from "src/xoroshiro128/xoroshiro128.h":
     ctypedef s_xoroshiro128_state xoroshiro128_state
 
     uint64_t xoroshiro128_next64(xoroshiro128_state *state)  nogil
-    uint64_t xoroshiro128_next32(xoroshiro128_state *state)  nogil
+    uint32_t xoroshiro128_next32(xoroshiro128_state *state)  nogil
     void xoroshiro128_jump(xoroshiro128_state  *state)
 
 cdef uint64_t xoroshiro128_uint64(void* st) nogil:

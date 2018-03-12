@@ -7,7 +7,6 @@
  * pgc64-test-data-gen
  */
 
-#include "../splitmix64/splitmix64.h"
 #include "pcg64.orig.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -18,12 +17,16 @@ int main() {
   pcg64_random_t rng;
   uint64_t state, seed = 0xDEADBEAF;
   state = seed;
-  __uint128_t temp;
-  rng.state = (__uint128_t)splitmix64_next(&state) << 64;
-  rng.state |= splitmix64_next(&state);
-  rng.inc = (__uint128_t)1;
+  __uint128_t temp, s, inc;
   int i;
   uint64_t store[N];
+  s = (__uint128_t)seed;
+  inc = (__uint128_t)0;
+  pcg64_srandom_r(&rng, s, inc);
+  printf("0x%" PRIx64, (uint64_t)(rng.state >> 64));
+  printf("%" PRIx64 "\n", (uint64_t)rng.state);
+  printf("0x%" PRIx64, (uint64_t)(rng.inc >> 64));
+  printf("%" PRIx64 "\n", (uint64_t)rng.inc);
   for (i = 0; i < N; i++) {
     store[i] = pcg64_random_r(&rng);
   }
@@ -44,9 +47,13 @@ int main() {
   fclose(fp);
 
   state = seed = 0;
-  rng.state =
-      (__uint128_t)splitmix64_next(&state) << 64 | splitmix64_next(&state);
-  rng.inc = (__uint128_t)1;
+  s = (__uint128_t)seed;
+  i = (__uint128_t)0;
+  pcg64_srandom_r(&rng, s, i);
+  printf("0x%" PRIx64, (uint64_t)(rng.state >> 64));
+  printf("%" PRIx64 "\n", (uint64_t)rng.state);
+  printf("0x%" PRIx64, (uint64_t)(rng.inc >> 64));
+  printf("%" PRIx64 "\n", (uint64_t)rng.inc);
   for (i = 0; i < N; i++) {
     store[i] = pcg64_random_r(&rng);
   }

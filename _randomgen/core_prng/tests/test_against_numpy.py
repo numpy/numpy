@@ -240,7 +240,7 @@ class TestAgainstNumPy(object):
                         is_small=True)
         self._is_state_common()
 
-    def test_zipf(self):
+    def test_geometric(self):
         self._set_common_state()
         self._is_state_common()
         compare_1_input(self.nprs.geometric,
@@ -376,7 +376,6 @@ class TestAgainstNumPy(object):
         assert_allclose(f(10), g(10))
         assert_allclose(f(3, 4, 5), g(3, 4, 5))
 
-    @pytest.mark.xfail
     def test_poisson_lam_max(self):
         assert_allclose(self.rg.poisson_lam_max, self.nprs.poisson_lam_max)
 
