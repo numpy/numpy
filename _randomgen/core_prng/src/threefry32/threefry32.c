@@ -2,7 +2,7 @@
 
 extern INLINE uint64_t threefry32_next64(threefry32_state *state);
 
-extern INLINE uint64_t threefry32_next32(threefry32_state *state);
+extern INLINE uint32_t threefry32_next32(threefry32_state *state);
 
 extern void threefry32_jump(threefry32_state *state) {
   /* Advances state as-if 2^64 draws were made */

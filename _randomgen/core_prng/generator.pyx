@@ -1385,7 +1385,7 @@ cdef class RandomGenerator:
         cdef double *randoms_data
         cdef double fgamma_r, fgamma_i, frelation_r, frelation_i, frho, fvar_r , fvar_i, \
             floc_r, floc_i, f_real, f_imag, i_r_scale, r_scale, i_scale, f_rho
-        cdef np.npy_intp i, j, n
+        cdef np.npy_intp i, j, n, n2
         cdef np.broadcast it
 
         oloc = <np.ndarray>np.PyArray_FROM_OTF(loc, np.NPY_COMPLEX128, np.NPY_ALIGNED)
@@ -1480,11 +1480,12 @@ cdef class RandomGenerator:
 
         it = np.PyArray_MultiIterNew5(randoms, oloc, v_real, v_imag, rho)
         with self.lock, nogil:
+            n2 = 2 * n  # Avoid compiler noise for cast to long
             if method == u'zig':
-                for i in range( 2 * n):
+                for i in range(n2):
                     randoms_data[i] = random_gauss_zig(self._prng)
             else:
-                for i in range( 2 * n):
+                for i in range(n2):
                     randoms_data[i] = random_gauss(self._prng)
         with nogil:
             j = 0
@@ -3967,11 +3968,10 @@ cdef class RandomGenerator:
         array([100,   0])
 
         """
-        cdef np.npy_intp d
+        cdef np.npy_intp d, i, j, dn, sz
         cdef np.ndarray parr "arrayObject_parr", mnarr "arrayObject_mnarr"
         cdef double *pix
         cdef long *mnix
-        cdef np.npy_intp i, j, dn, sz
         cdef double Sum
 
         d = len(pvals)

@@ -2,7 +2,7 @@
 
 extern INLINE uint64_t philox_next64(philox_state *state);
 
-extern INLINE uint64_t philox_next32(philox_state *state);
+extern INLINE uint32_t philox_next32(philox_state *state);
 
 extern void philox_jump(philox_state *state) {
   /* Advances state as-if 2^128 draws were made */

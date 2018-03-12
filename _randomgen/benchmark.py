@@ -119,9 +119,15 @@ def timer_normal_zig():
 
 
 if __name__ == '__main__':
-    timer_raw()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--full', dest='full', action='store_true')
+    args = parser.parse_args()
+
     timer_uniform()
-    timer_32bit()
-    timer_64bit()
-    timer_normal()
-    timer_normal_zig()
+    if args.full:
+        timer_raw()
+        timer_32bit()
+        timer_64bit()
+        timer_normal()
+        timer_normal_zig()

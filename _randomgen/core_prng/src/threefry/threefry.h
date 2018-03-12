@@ -319,7 +319,7 @@ static INLINE uint64_t threefry_next64(threefry_state *state) {
   return threefry_next(state);
 }
 
-static INLINE uint64_t threefry_next32(threefry_state *state) {
+static INLINE uint32_t threefry_next32(threefry_state *state) {
   uint64_t next;
   if (state->has_uint32) {
     state->has_uint32 = 0;
