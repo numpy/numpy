@@ -608,7 +608,7 @@ class TestSubclasses(object):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-    @dec.skipif(not HAS_REFCOUNT)
+    @dec._needs_refcount
     def test_slice_decref_getsetslice(self):
         # See gh-10066, a temporary slice object should be discarted.
         # This test is only really interesting on Python 2 since

@@ -23,7 +23,6 @@ from numpy.testing import (
     run_module_suite, assert_warns, assert_, SkipTest,
     assert_raises_regex, assert_raises, assert_allclose,
     assert_array_equal, temppath, tempdir, dec, IS_PYPY, suppress_warnings,
-    HAS_REFCOUNT
 )
 
 
@@ -2365,7 +2364,7 @@ def test_npzfile_dict():
     assert_('x' in z.keys())
 
 
-@dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+@dec._needs_refcount
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.
