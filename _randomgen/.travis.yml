@@ -10,38 +10,33 @@ language: python
 matrix:
   fast_finish: true
   include:
-  - env:
-    - PYTHON=2.7
-    - NUMPY=1.10
-    - CYTHON=0.24
-  - env:
-    - PYTHON=3.5
-    - NUMPY=1.11
-  - env:
-    - PYTHON=3.6
-    - NUMPY=1.13
-    - CYTHON=0.25
-  - env:
-    - PYTHON=3.6
-    - NUMPY=1.13
-    - CYTHON=0.26
-  - env:
-    - PYTHON=3.6
+    - os: linux
+      env: [PYTHON=2.7, NUMPY=1.10, CYTHON=0.24]
+    - os: linux
+      env: [PYTHON=3.5, NUMPY=1.11]
+    - os: linux
+      env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.25]
+    - os: linux
+      env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.26]
+    - os: linux
+      env: [PYTHON=3.6]
+    - os: osx
+      language: generic
+      env: [PYTHON=3.6]
+
 
 before_install:
-  - if [ ${TRAVIS_OS_NAME} = "osx" ]; then wget https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
-  - if [ ${TRAVIS_OS_NAME} = "linux" ]; then wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh; fi
+  - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda3.sh; fi
+  - if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh; fi
   - chmod +x miniconda3.sh
   - ./miniconda3.sh -b
-  - export PATH=/home/travis/miniconda3/bin:$PATH
+  - export PATH=${HOME}/miniconda3/bin:$PATH
   - conda config --set always_yes true
-  # Disable until fixed
-  # - conda update --all --quiet
+  - conda update --all --quiet
   - PKGS="python=${PYTHON}"
   - PKGS="${PKGS} numpy"; if [ ${NUMPY} ]; then PKGS="${PKGS}=${NUMPY}"; fi
   - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
-  - export BUILD_DIR=$PWD
   - conda create -n core-prng-test ${PKGS} pytest setuptools nose --quiet
   - source activate core-prng-test
   - pip install tempita -q
@@ -53,7 +48,6 @@ script:
   - set -e
   - pytest core_prng
   - |
-    if [ -z ${NUMPY} ]; then
-      cd ${BUILD_DIR}
+    if [[ -z ${NUMPY} ]]; then
       python benchmark.py;
     fi
