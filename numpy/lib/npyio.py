@@ -1104,7 +1104,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 nshape = list(X.shape)
                 pos = nshape[0]
                 nshape[0] += len(x)
-                X.resize(nshape)
+                X.resize(nshape, refcheck=False)
                 X[pos:, ...] = x
     finally:
         if fown:
