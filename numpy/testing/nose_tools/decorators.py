@@ -17,10 +17,10 @@ from __future__ import division, absolute_import, print_function
 
 import collections
 
-from .utils import SkipTest, assert_warns
+from .utils import SkipTest, assert_warns, HAS_REFCOUNT
 
 __all__ = ['slow', 'setastest', 'skipif', 'knownfailureif', 'deprecated',
-           'parametrize',]
+           'parametrize', '_needs_refcount',]
 
 
 def slow(t):
@@ -283,3 +283,5 @@ def parametrize(vars, input):
     from .parameterized import parameterized
 
     return parameterized(input)
+
+_needs_refcount = skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")

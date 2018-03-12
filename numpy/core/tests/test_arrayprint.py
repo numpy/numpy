@@ -5,7 +5,7 @@ import sys, gc
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec
+     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec,
 )
 import textwrap
 
@@ -388,6 +388,7 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
+    @dec._needs_refcount
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
         # closure (gh-10620)

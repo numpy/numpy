@@ -14,20 +14,6 @@ from numpy.testing import (
 )
 
 
-try:
-    cdll = None
-    if hasattr(sys, 'gettotalrefcount'):
-        try:
-            cdll = np.ctypeslib.load_library('multiarray_d', np.core.multiarray.__file__)
-        except OSError:
-            pass
-    if cdll is None:
-        cdll = np.ctypeslib.load_library('multiarray', np.core.multiarray.__file__)
-    _HAS_CTYPE = True
-except ImportError:
-    _HAS_CTYPE = False
-
-
 class TestIndexing(object):
     def test_index_no_floats(self):
         a = np.array([[[5]]])
@@ -622,7 +608,7 @@ class TestSubclasses(object):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-    @dec.skipif(not HAS_REFCOUNT)
+    @dec._needs_refcount
     def test_slice_decref_getsetslice(self):
         # See gh-10066, a temporary slice object should be discarted.
         # This test is only really interesting on Python 2 since
