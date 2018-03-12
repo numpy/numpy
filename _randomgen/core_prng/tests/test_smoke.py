@@ -9,7 +9,7 @@ from numpy.testing import assert_almost_equal, assert_equal, assert_, \
     assert_array_equal
 
 from core_prng import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
-    PCG64, Philox, Xoroshiro128, Xorshift1024
+    PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024
 from core_prng import entropy
 
 
@@ -986,3 +986,16 @@ class TestEntropy(object):
         time.sleep(0.1)
         e2 = entropy.random_entropy(source='fallback')
         assert_((e1 != e2))
+
+
+class TestPCG32(TestPCG64):
+    @classmethod
+    def setup_class(cls):
+        cls.prng = PCG32
+        cls.advance = 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1
+        cls.seed = [2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1,
+                    2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
+        cls.rg = RandomGenerator(cls.prng(*cls.seed))
+        cls.initial_state = cls.rg.state
+        cls.seed_vector_bits = None
+        cls._extra_setup()

@@ -633,6 +633,11 @@ inline static void fill_array_close1_open2(double array[], int size) {
 
 #endif /* DSFMT_H */
 
+union random_val_t {
+  double d;
+  uint64_t u64;
+};
+
 typedef struct s_dsfmt_state {
   dsfmt_t *state;
   int has_uint32;
@@ -660,28 +665,27 @@ static inline double dsfmt_next_double(dsfmt_state *state) {
 
 static inline uint64_t dsfmt_next64(dsfmt_state *state) {
   /* Discard bottom 16 bits */
-  double d = dsfmt_next_buffer(state);
+  union random_val_t rv;
+  rv.d = dsfmt_next_buffer(state);
   uint64_t out;
-  uint64_t *tmp;
-  tmp = (uint64_t *)&d;
-  out = (*tmp >> 16) << 32;
-  d = dsfmt_next_buffer(state);
-  tmp = (uint64_t *)&d;
-  out |= (*tmp >> 16) & 0xffffffff;
+  out = (rv.u64 >> 16) << 32;
+  rv.d = dsfmt_next_buffer(state);
+  out |= (rv.u64 >> 16) & 0xffffffff;
   return out;
 }
 
 static inline uint32_t dsfmt_next32(dsfmt_state *state) {
   /* Discard bottom 16 bits */
-  double d = dsfmt_next_buffer(state);
-  uint64_t *out = (uint64_t *)&d;
-  return (uint32_t)((*out >> 16) & 0xffffffff);
+  union random_val_t rv;
+  rv.d = dsfmt_next_buffer(state);
+  // uint64_t *out = (uint64_t *)&d;
+  return (uint32_t)((rv.u64 >> 16) & 0xffffffff);
 }
 
 static inline uint64_t dsfmt_next_raw(dsfmt_state *state) {
-  double d;
-  d = dsfmt_next_buffer(state);
-  return *((uint64_t *)&d);
+  union random_val_t rv;
+  rv.d = dsfmt_next_buffer(state);
+  return rv.u64;
 }
 
 void dsfmt_jump(dsfmt_state *state);
