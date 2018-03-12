@@ -1424,7 +1424,7 @@ class TestRegression(object):
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @dec._needs_refcount
     def test_structured_arrays_with_objects2(self):
         # Ticket #1299 second test
         stra = 'aaaa'
@@ -1537,7 +1537,7 @@ class TestRegression(object):
         y = np.add(x, x, x)
         assert_equal(id(x), id(y))
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @dec._needs_refcount
     def test_take_refcount(self):
         # ticket #939
         a = np.arange(16, dtype=float)
@@ -1937,7 +1937,7 @@ class TestRegression(object):
             a = np.empty((100000000,), dtype='i1')
             del a
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @dec._needs_refcount
     def test_ufunc_reduce_memoryleak(self):
         a = np.arange(6)
         acnt = sys.getrefcount(a)
@@ -2167,7 +2167,7 @@ class TestRegression(object):
         assert_equal(uf(a), ())
         assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @dec._needs_refcount
     def test_leak_in_structured_dtype_comparison(self):
         # gh-6250
         recordtype = np.dtype([('a', np.float64),

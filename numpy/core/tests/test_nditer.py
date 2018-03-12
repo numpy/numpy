@@ -33,7 +33,7 @@ def iter_iterindices(i):
         i.iternext()
     return ret
 
-@dec.skipif(not HAS_REFCOUNT, "python does not have sys.getrefcount")
+@dec._needs_refcount
 def test_iter_refcount():
     # Make sure the iterator doesn't leak
 
