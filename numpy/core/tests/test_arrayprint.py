@@ -5,7 +5,8 @@ import sys, gc
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec
+     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec,
+     HAS_REFCOUNT,
 )
 import textwrap
 
@@ -388,6 +389,7 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
+    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
         # closure (gh-10620)
