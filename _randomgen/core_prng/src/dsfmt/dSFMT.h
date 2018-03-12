@@ -665,9 +665,9 @@ static inline double dsfmt_next_double(dsfmt_state *state) {
 
 static inline uint64_t dsfmt_next64(dsfmt_state *state) {
   /* Discard bottom 16 bits */
+  uint64_t out;
   union random_val_t rv;
   rv.d = dsfmt_next_buffer(state);
-  uint64_t out;
   out = (rv.u64 >> 16) << 32;
   rv.d = dsfmt_next_buffer(state);
   out |= (rv.u64 >> 16) & 0xffffffff;

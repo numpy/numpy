@@ -69,12 +69,18 @@ cdef class RandomGenerator:
         capsule = prng.capsule
         cdef const char *anon_name = "CorePRNG"
         if not PyCapsule_IsValid(capsule, anon_name):
-            raise ValueError("Invalid pointer to anon_func_state")
+            raise ValueError("Invalid prng. The prng must be instantized.")
         self._prng = <prng_t *> PyCapsule_GetPointer(capsule, anon_name)
         self.lock = Lock()
         with self.lock:
             self._prng.has_gauss = 0
             self._prng.has_gauss_f = 0
+
+    def __repr__(self):
+        return self.__str__() + ' at 0x{:X}'.format(id(self))
+
+    def __str__(self):
+        return 'RandomGenerator(' + self.__core_prng.__class__.__name__ + ')'
 
     # Pickling support:
     def __getstate__(self):
