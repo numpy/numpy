@@ -30,4 +30,4 @@ test_script:
 
 on_success:
   - cd %GIT_DIR%\
-  - IF %PY_MAJOR_VER%==3 python benchmark.py
+  - python benchmark.py
