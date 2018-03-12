@@ -17,25 +17,33 @@ Adapted from random123's threefry.h
 
 #define THREEFRY_BUFFER_SIZE 4L
 
-
 static INLINE uint32_t RotL_32(uint32_t x, unsigned int N);
-static INLINE uint32_t RotL_32(uint32_t x, unsigned int N)
-{
-    return (x << (N & 31)) | (x >> ((32-N) & 31));
+static INLINE uint32_t RotL_32(uint32_t x, unsigned int N) {
+  return (x << (N & 31)) | (x >> ((32 - N) & 31));
 }
 
-struct r123array4x32{ uint32_t v[4];  };
+struct r123array4x32 {
+  uint32_t v[4];
+};
 
 enum r123_enum_threefry32x4 {
 
-    R_32x4_0_0=10, R_32x4_0_1=26,
-    R_32x4_1_0=11, R_32x4_1_1=21,
-    R_32x4_2_0=13, R_32x4_2_1=27,
-    R_32x4_3_0=23, R_32x4_3_1= 5,
-    R_32x4_4_0= 6, R_32x4_4_1=20,
-    R_32x4_5_0=17, R_32x4_5_1=11,
-    R_32x4_6_0=25, R_32x4_6_1=10,
-    R_32x4_7_0=18, R_32x4_7_1=20
+  R_32x4_0_0 = 10,
+  R_32x4_0_1 = 26,
+  R_32x4_1_0 = 11,
+  R_32x4_1_1 = 21,
+  R_32x4_2_0 = 13,
+  R_32x4_2_1 = 27,
+  R_32x4_3_0 = 23,
+  R_32x4_3_1 = 5,
+  R_32x4_4_0 = 6,
+  R_32x4_4_1 = 20,
+  R_32x4_5_0 = 17,
+  R_32x4_5_1 = 11,
+  R_32x4_6_0 = 25,
+  R_32x4_6_1 = 10,
+  R_32x4_7_0 = 18,
+  R_32x4_7_1 = 20
 
 };
 
@@ -45,15 +53,19 @@ typedef struct r123array4x32 threefry4x32_ukey_t;
 static INLINE threefry4x32_key_t threefry4x32keyinit(threefry4x32_ukey_t uk) {
   return uk;
 };
-static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds, threefry4x32_ctr_t in , threefry4x32_key_t k);
-static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds, threefry4x32_ctr_t in , threefry4x32_key_t k) {
+static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds,
+                                                threefry4x32_ctr_t in,
+                                                threefry4x32_key_t k);
+static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds,
+                                                threefry4x32_ctr_t in,
+                                                threefry4x32_key_t k) {
   threefry4x32_ctr_t X;
   uint32_t ks[4 + 1];
   int i;
   ks[4] = 0x1BD11BDA;
   for (i = 0; i < 4; i++) {
     ks[i] = k.v[i];
-    X.v[i] = in .v[i];
+    X.v[i] = in.v[i];
     ks[4] ^= k.v[i];
   }
   X.v[0] += ks[0];
@@ -764,14 +776,13 @@ static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds, threefry4x
   }
   return X;
 }
-enum r123_enum_threefry4x32 {
-  threefry4x32_rounds = 20
-};
-static INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in , threefry4x32_key_t k);
-static INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in , threefry4x32_key_t k) {
-  return threefry4x32_R(threefry4x32_rounds, in , k);
+enum r123_enum_threefry4x32 { threefry4x32_rounds = 20 };
+static INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in,
+                                              threefry4x32_key_t k);
+static INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in,
+                                              threefry4x32_key_t k) {
+  return threefry4x32_R(threefry4x32_rounds, in, k);
 }
-
 
 typedef struct s_threefry32_state {
   threefry4x32_key_t *ctr;
@@ -813,7 +824,7 @@ static INLINE uint64_t threefry32_next64(threefry32_state *state) {
   return ((uint64_t)threefry32_next(state) << 32) | threefry32_next(state);
 }
 
-static INLINE uint64_t threefry32_next32(threefry32_state *state) {
+static INLINE uint32_t threefry32_next32(threefry32_state *state) {
   return threefry32_next(state);
 }
 

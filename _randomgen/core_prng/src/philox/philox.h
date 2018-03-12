@@ -49,7 +49,8 @@ static INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
   a_x_b_lo = __emulu(a_lo, b_lo);
 
   carry_bit = ((uint64_t)(uint32_t)a_x_b_mid + (uint64_t)(uint32_t)b_x_a_mid +
-               (a_x_b_lo >> 32)) >> 32;
+               (a_x_b_lo >> 32)) >>
+              32;
 
   *high = a_x_b_hi + (a_x_b_mid >> 32) + (b_x_a_mid >> 32) + carry_bit;
 
@@ -82,7 +83,8 @@ static INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
   a_x_b_lo = a_lo * b_lo;
 
   carry_bit = ((uint64_t)(uint32_t)a_x_b_mid + (uint64_t)(uint32_t)b_x_a_mid +
-               (a_x_b_lo >> 32)) >> 32;
+               (a_x_b_lo >> 32)) >>
+              32;
 
   *high = a_x_b_hi + (a_x_b_mid >> 32) + (b_x_a_mid >> 32) + carry_bit;
 
@@ -227,7 +229,7 @@ static INLINE uint64_t philox_next64(philox_state *state) {
   return philox_next(state);
 }
 
-static INLINE uint64_t philox_next32(philox_state *state) {
+static INLINE uint32_t philox_next32(philox_state *state) {
   uint64_t next;
 
   if (state->has_uint32) {

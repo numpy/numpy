@@ -2,30 +2,38 @@
 #include "ziggurat.h"
 #include "ziggurat_constants.h"
 
+/* Inline generators for internal use */
 static NPY_INLINE uint32_t random_uint32(prng_t *prng_state) {
   return prng_state->next_uint32(prng_state->state);
-}
-
-static NPY_INLINE float next_float(prng_t *prng_state) {
-  return (random_uint32(prng_state) >> 9) * (1.0f / 8388608.0f);
 }
 
 static NPY_INLINE uint64_t random_uint64(prng_t *prng_state) {
   return prng_state->next_uint64(prng_state->state);
 }
 
-float random_sample_f(prng_t *prng_state) { return next_float(prng_state); }
+static NPY_INLINE float random_float(prng_t *prng_state) {
+  return (random_uint32(prng_state) >> 9) * (1.0f / 8388608.0f);
+}
 
-double random_sample(prng_t *prng_state) {
+static NPY_INLINE float random_double(prng_t *prng_state) {
   return prng_state->next_double(prng_state->state);
 }
 
+/* Random generators for external use */
+float random_sample_f(prng_t *prng_state) {
+  return random_float(prng_state);
+}
+
+double random_sample(prng_t *prng_state) {
+  return random_double(prng_state);
+}
+
 double random_standard_exponential(prng_t *prng_state) {
-  return -log(1.0 - prng_state->next_double(prng_state->state));
+  return -log(1.0 - random_double(prng_state));
 }
 
 float random_standard_exponential_f(prng_t *prng_state) {
-  return -logf(1.0f - next_float(prng_state));
+  return -logf(1.0f - random_float(prng_state));
 }
 
 double random_gauss(prng_t *prng_state) {
@@ -38,8 +46,8 @@ double random_gauss(prng_t *prng_state) {
     double f, x1, x2, r2;
 
     do {
-      x1 = 2.0 * prng_state->next_double(prng_state->state) - 1.0;
-      x2 = 2.0 * prng_state->next_double(prng_state->state) - 1.0;
+      x1 = 2.0 * random_double(prng_state) - 1.0;
+      x2 = 2.0 * random_double(prng_state) - 1.0;
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
@@ -62,8 +70,8 @@ float random_gauss_f(prng_t *prng_state) {
     float f, x1, x2, r2;
 
     do {
-      x1 = 2.0f * next_float(prng_state) - 1.0f;
-      x2 = 2.0f * next_float(prng_state) - 1.0f;
+      x1 = 2.0f * random_float(prng_state) - 1.0f;
+      x2 = 2.0f * random_float(prng_state) - 1.0f;
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
@@ -81,9 +89,9 @@ static NPY_INLINE double standard_exponential_zig(prng_t *prng_state);
 static double standard_exponential_zig_unlikely(prng_t *prng_state, uint8_t idx,
                                                 double x) {
   if (idx == 0) {
-    return ziggurat_exp_r - log(prng_state->next_double(prng_state->state));
+    return ziggurat_exp_r - log(random_double(prng_state));
   } else if ((fe_double[idx - 1] - fe_double[idx]) *
-                     prng_state->next_double(prng_state->state) +
+                     random_double(prng_state) +
                  fe_double[idx] <
              exp(-x)) {
     return x;
@@ -116,8 +124,8 @@ static NPY_INLINE float standard_exponential_zig_f(prng_t *prng_state);
 static float standard_exponential_zig_unlikely_f(prng_t *prng_state,
                                                  uint8_t idx, float x) {
   if (idx == 0) {
-    return ziggurat_exp_r_f - logf(next_float(prng_state));
-  } else if ((fe_float[idx - 1] - fe_float[idx]) * next_float(prng_state) +
+    return ziggurat_exp_r_f - logf(random_float(prng_state));
+  } else if ((fe_float[idx - 1] - fe_float[idx]) * random_float(prng_state) +
                  fe_float[idx] <
              expf(-x)) {
     return x;
@@ -166,15 +174,15 @@ double random_gauss_zig(prng_t *prng_state) {
     if (idx == 0) {
       for (;;) {
         xx = -ziggurat_nor_inv_r *
-             log(prng_state->next_double(prng_state->state));
-        yy = -log(prng_state->next_double(prng_state->state));
+             log(random_double(prng_state));
+        yy = -log(random_double(prng_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r + xx)
                                      : ziggurat_nor_r + xx;
       }
     } else {
       if (((fi_double[idx - 1] - fi_double[idx]) *
-               prng_state->next_double(prng_state->state) +
+               random_double(prng_state) +
            fi_double[idx]) < exp(-0.5 * x * x))
         return x;
     }
@@ -200,14 +208,14 @@ float random_gauss_zig_f(prng_t *prng_state) {
       return x; // # 99.3% of the time return here
     if (idx == 0) {
       for (;;) {
-        xx = -ziggurat_nor_inv_r_f * logf(next_float(prng_state));
-        yy = -logf(next_float(prng_state));
+        xx = -ziggurat_nor_inv_r_f * logf(random_float(prng_state));
+        yy = -logf(random_float(prng_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r_f + xx)
                                      : ziggurat_nor_r_f + xx;
       }
     } else {
-      if (((fi_float[idx - 1] - fi_float[idx]) * next_float(prng_state) +
+      if (((fi_float[idx - 1] - fi_float[idx]) * random_float(prng_state) +
            fi_float[idx]) < exp(-0.5 * x * x))
         return x;
     }
@@ -222,7 +230,7 @@ static NPY_INLINE double standard_gamma(prng_t *prng_state, double shape) {
     return random_standard_exponential(prng_state);
   } else if (shape < 1.0) {
     for (;;) {
-      U = prng_state->next_double(prng_state->state);
+      U = random_double(prng_state);
       V = random_standard_exponential(prng_state);
       if (U <= 1.0 - shape) {
         X = pow(U, 1. / shape);
@@ -1134,8 +1142,8 @@ long random_hypergeometric(prng_t *prng_state, long good, long bad,
   }
 }
 
-unsigned long random_interval(prng_t *prng_state, unsigned long max) {
-  unsigned long mask, value;
+uint64_t random_interval(prng_t *prng_state, uint64_t max) {
+  uint64_t mask, value;
   if (max == 0) {
     return 0;
   }
@@ -1148,12 +1156,9 @@ unsigned long random_interval(prng_t *prng_state, unsigned long max) {
   mask |= mask >> 4;
   mask |= mask >> 8;
   mask |= mask >> 16;
-#if ULONG_MAX > 0xffffffffUL
   mask |= mask >> 32;
-#endif
 
-/* Search a random value in [0..mask] <= max */
-#if ULONG_MAX > 0xffffffffUL
+  /* Search a random value in [0..mask] <= max */
   if (max <= 0xffffffffUL) {
     while ((value = (random_uint32(prng_state) & mask)) > max)
       ;
@@ -1161,10 +1166,6 @@ unsigned long random_interval(prng_t *prng_state, unsigned long max) {
     while ((value = (random_uint64(prng_state) & mask)) > max)
       ;
   }
-#else
-  while ((value = (random_uint32(prng_state) & mask)) > max)
-    ;
-#endif
   return value;
 }
 

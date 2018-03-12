@@ -129,7 +129,8 @@ DECLDIR long random_geometric(prng_t *prng_state, double p);
 DECLDIR long random_zipf(prng_t *prng_state, double a);
 DECLDIR long random_hypergeometric(prng_t *prng_state, long good, long bad,
                                    long sample);
-DECLDIR unsigned long random_interval(prng_t *prng_state, unsigned long max);
+
+DECLDIR uint64_t random_interval(prng_t *prng_state, uint64_t max);
 DECLDIR uint64_t random_bounded_uint64(prng_t *prng_state, uint64_t off,
                                        uint64_t rng, uint64_t mask);
 DECLDIR uint32_t random_buffered_bounded_uint32(prng_t *prng_state,
