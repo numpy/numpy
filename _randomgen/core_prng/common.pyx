@@ -20,21 +20,28 @@ cdef double kahan_sum(double *darr, np.npy_intp n):
         sum = t
     return sum
 
-cdef np.ndarray int_to_array(object value, object name, object bits):
-    len = bits // 64
+cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size):
+    len = bits // uint_size
     value = np.asarray(value)
+    if uint_size == 32:
+        dtype = np.uint32
+    elif uint_size == 64:
+        dtype = np.uint64
+    else:
+        raise ValueError('Unknown uint_size')
     if value.shape == ():
         value = int(value)
         upper = int(2)**int(bits)
         if value < 0 or value >= upper:
             raise ValueError('{name} must be positive and '
                              'less than 2**{bits}.'.format(name=name, bits=bits))
-        out = np.empty(len, dtype=np.uint64)
+
+        out = np.empty(len, dtype=dtype)
         for i in range(len):
-            out[i] = value % 2**64
-            value >>= 64
+            out[i] = value % 2**int(uint_size)
+            value >>= int(uint_size)
     else:
-        out = value.astype(np.uint64)
+        out = value.astype(dtype)
         if out.shape != (len,):
             raise ValueError('{name} must have {len} elements when using '
                              'array form'.format(name=name, len=len))

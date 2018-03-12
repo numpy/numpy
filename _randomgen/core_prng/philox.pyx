@@ -37,7 +37,7 @@ cdef extern from 'src/philox/philox.h':
     ctypedef s_philox_state philox_state
 
     uint64_t philox_next64(philox_state *state)  nogil
-    uint64_t philox_next32(philox_state *state)  nogil
+    uint32_t philox_next32(philox_state *state)  nogil
     void philox_jump(philox_state *state)
     void philox_advance(uint64_t *step, philox_state *state)
 
@@ -200,11 +200,11 @@ cdef class Philox:
             for i in range(2):
                 self.rng_state.key.v[i] = state[i]
         else:
-            key = int_to_array(key, 'key', 128)
+            key = int_to_array(key, 'key', 128, 64)
             for i in range(2):
                 self.rng_state.key.v[i] = key[i]
         counter = 0 if counter is None else counter
-        counter = int_to_array(counter, 'counter', 256)
+        counter = int_to_array(counter, 'counter', 256, 64)
         for i in range(4):
             self.rng_state.ctr.v[i] = counter[i]
 
@@ -257,7 +257,7 @@ cdef class Philox:
     def advance(self, step):
         """Advance the state as-if a specific number of draws have been made"""
         cdef np.ndarray step_a
-        step_a = int_to_array(step, 'step', 256)
+        step_a = int_to_array(step, 'step', 256, 64)
         loc = 0
         philox_advance(<uint64_t *> step_a.data, self.rng_state)
         return self

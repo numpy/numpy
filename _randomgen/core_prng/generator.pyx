@@ -59,6 +59,7 @@ cdef class RandomGenerator:
     cdef public object __core_prng
     cdef prng_t *_prng
     cdef object lock
+    poisson_lam_max = POISSON_LAM_MAX
 
     def __init__(self, prng=None):
         if prng is None:

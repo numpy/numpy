@@ -1526,9 +1526,8 @@ class TestBroadcast(object):
         assert_raises(ValueError, neg_binom, n, bad_p_one * 3)
         assert_raises(ValueError, neg_binom, n, bad_p_two * 3)
 
-    @pytest.mark.xfail
     def test_poisson(self):
-        max_lam = random.RandomState().poisson_lam_max
+        max_lam = random.poisson_lam_max
 
         lam = [1]
         bad_lam_one = [-1]

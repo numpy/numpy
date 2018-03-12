@@ -47,7 +47,7 @@ cdef extern from "src/pcg64/pcg64.h":
     ctypedef s_pcg64_state pcg64_state
 
     uint64_t pcg64_next64(pcg64_state *state)  nogil
-    uint64_t pcg64_next32(pcg64_state *state)  nogil
+    uint32_t pcg64_next32(pcg64_state *state)  nogil
     void pcg64_jump(pcg64_state  *state)
     void pcg64_advance(pcg64_state *state, uint64_t *step)
     void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc)
@@ -79,7 +79,7 @@ cdef class PCG64:
     cdef prng_t *_prng
     cdef public object capsule
 
-    def __init__(self, seed=None, inc=1):
+    def __init__(self, seed=None, inc=0):
         self.rng_state = <pcg64_state *>malloc(sizeof(pcg64_state))
         self.rng_state.pcg_state = <pcg64_random_t *>malloc(sizeof(pcg64_random_t))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
@@ -157,7 +157,7 @@ cdef class PCG64:
             raise ValueError('Unknown method')
 
 
-    def seed(self, seed=None, inc=1):
+    def seed(self, seed=None, inc=0):
         """
         seed(seed=None, stream=None)
 
@@ -187,13 +187,16 @@ cdef class PCG64:
                 _seed = <np.ndarray>random_entropy(4)
             except RuntimeError:
                 _seed = <np.ndarray>random_entropy(4, 'fallback')
-            
             _seed = <np.ndarray>_seed.view(np.uint64)
         else:
+            err_msg = 'inc must be a scalar integer between 0 and ' \
+                      '{ub}'.format(ub=ub)
             if not np.isscalar(seed):
-                raise TypeError('seed must be a scalar integer between 0 and {ub}'.format(ub=ub))
-            if seed < 0 or seed > ub or int(seed) != seed:
-                raise ValueError('inc must be a scalar integer between 0 and {ub}'.format(ub=ub))
+                raise TypeError(err_msg)
+            if int(seed) != seed:
+                raise TypeError(err_msg)
+            if seed < 0 or seed > ub:
+                raise ValueError(err_msg)
             _seed = <np.ndarray>np.empty(2, np.uint64)
             _seed[0] = int(seed) // 2**64
             _seed[1] = int(seed) % 2**64

@@ -1,20 +1,20 @@
-#include "threefry.h"
+#include "threefry32.h"
 
-extern INLINE uint64_t threefry_next64(threefry_state *state);
+extern INLINE uint64_t threefry32_next64(threefry32_state *state);
 
-extern INLINE uint64_t threefry_next32(threefry_state *state);
+extern INLINE uint64_t threefry32_next32(threefry32_state *state);
 
-extern void threefry_jump(threefry_state *state) {
-  /* Advances state as-if 2^128 draws were made */
+extern void threefry32_jump(threefry32_state *state) {
+  /* Advances state as-if 2^64 draws were made */
   state->ctr->v[2]++;
   if (state->ctr->v[2] == 0) {
     state->ctr->v[3]++;
   }
 }
 
-extern void threefry_advance(uint64_t *step, threefry_state *state) {
+extern void threefry32_advance(uint32_t *step, threefry32_state *state) {
   int i, carry = 0;
-  uint64_t v_orig;
+  uint32_t v_orig;
   for (i = 0; i < 4; i++) {
     if (carry == 1) {
       state->ctr->v[i]++;

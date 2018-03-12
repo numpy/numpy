@@ -6,7 +6,8 @@ import numpy as np
 from numpy.testing import assert_equal, assert_allclose, assert_array_equal, \
     assert_raises
 
-from core_prng import *
+from core_prng import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
+    PCG64, Philox, Xoroshiro128, Xorshift1024
 
 if (sys.version_info > (3, 0)):
     long = int
@@ -250,6 +251,31 @@ class TestThreeFry(Base):
         cls.seed_error_type = TypeError
 
 
+class TestPCG64(Base):
+    @classmethod
+    def setup_class(cls):
+        cls.prng = PCG64
+        cls.bits = 64
+        cls.dtype = np.uint64
+        cls.data1 = cls._read_csv(join(pwd, './data/pcg64-testset-1.csv'))
+        cls.data2 = cls._read_csv(join(pwd, './data/pcg64-testset-2.csv'))
+        cls.seed_error_type = TypeError
+
+    def test_seed_float_array(self):
+        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        assert_raises(self.seed_error_type, rs.seed, np.array([np.pi]))
+        assert_raises(self.seed_error_type, rs.seed, np.array([-np.pi]))
+        assert_raises(self.seed_error_type, rs.seed, np.array([np.pi, -np.pi]))
+        assert_raises(self.seed_error_type, rs.seed, np.array([0, np.pi]))
+        assert_raises(self.seed_error_type, rs.seed, [np.pi])
+        assert_raises(self.seed_error_type, rs.seed, [0, np.pi])
+
+    def test_seed_out_of_range_array(self):
+        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        assert_raises(self.seed_error_type, rs.seed, [2 ** (2 * self.bits + 1)])
+        assert_raises(self.seed_error_type, rs.seed, [-1])
+
+
 class TestPhilox(Base):
     @classmethod
     def setup_class(cls):
@@ -316,7 +342,6 @@ class TestDSFMT(Base):
 
     def test_uniform_double(self):
         rs = RandomGenerator(self.prng(*self.data1['seed']))
-        aa = uniform_from_dsfmt(self.data1['data'])
         assert_array_equal(uniform_from_dsfmt(self.data1['data']),
                            rs.random_sample(1000))
 
@@ -371,3 +396,14 @@ class TestDSFMT(Base):
         uniforms = rs.random_sample(len(vals), dtype=np.float32)
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float32)
+
+
+class TestThreeFry32(Base):
+    @classmethod
+    def setup_class(cls):
+        cls.prng = ThreeFry32
+        cls.bits = 32
+        cls.dtype = np.uint32
+        cls.data1 = cls._read_csv(join(pwd, './data/threefry32-testset-1.csv'))
+        cls.data2 = cls._read_csv(join(pwd, './data/threefry32-testset-2.csv'))
+        cls.seed_error_type = TypeError
