@@ -913,7 +913,8 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
 
     def test_float16_pass(self):
         nulp = 5
-        x = np.linspace(-20, 20, 50, dtype=np.float16)
+        x = np.linspace(-4, 4, 10, dtype=np.float16)
+        x = 10**x
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
@@ -926,7 +927,8 @@ class TestArrayAlmostEqualNulp(unittest.TestCase):
 
     def test_float16_fail(self):
         nulp = 5
-        x = np.linspace(-20, 20, 50, dtype=np.float16)
+        x = np.linspace(-4, 4, 10, dtype=np.float16)
+        x = 10**x
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
