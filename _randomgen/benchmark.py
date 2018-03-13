@@ -103,16 +103,9 @@ def timer_64bit():
     run_timer(dist, command, command_numpy, SETUP, '64-bit unsigned integers')
 
 
-def timer_normal():
-    dist = 'standard_normal'
-    command = 'rg.standard_normal(1000000, method="bm")'
-    command_numpy = 'rg.standard_normal(1000000)'
-    run_timer(dist, command, command_numpy, SETUP, 'Box-Muller normals')
-
-
 def timer_normal_zig():
     dist = 'standard_normal'
-    command = 'rg.standard_normal(1000000, method="zig")'
+    command = 'rg.standard_normal(1000000)'
     command_numpy = 'rg.standard_normal(1000000)'
     run_timer(dist, command, command_numpy, SETUP,
               'Standard normals (Ziggurat)')
@@ -129,5 +122,4 @@ if __name__ == '__main__':
         timer_raw()
         timer_32bit()
         timer_64bit()
-        timer_normal()
         timer_normal_zig()

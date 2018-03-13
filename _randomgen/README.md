@@ -7,7 +7,14 @@ Experimental Core Pseudo Random Number Generator interface for future
 NumPy RandomState evolution.
 
 This is a library and generic interface for alternative random 
-generators in Python and NumPy. 
+generators in Python and NumPy.
+
+
+### Compatibility Warning
+Core PRNG no longer supports Box-Muller normal variates and so it not
+100% compatible with NumPy (or randomstate). Box-Muller normals are slow
+to generate and all functions which previously relied on Box-Muller
+normals now use the faster Ziggurat implementation.
 
 ## Features
 
@@ -42,14 +49,14 @@ y = rnd.standard_gamma(5.5, 10000, method='zig')
 
     * Uniforms (`random_sample`)
     * Exponentials (`standard_exponential`, both Inverse CDF and Ziggurat)
-    * Normals (`standard_normal`, both Box-Muller and Ziggurat)
-    * Standard Gammas (via `standard_gamma`, both Inverse CDF and Ziggurat)
+    * Normals (`standard_normal`)
+    * Standard Gammas (via `standard_gamma`)
   
   **WARNING**: The 32-bit generators are **experimental** and subject 
   to change.
   
   **Note**: There are _no_ plans to extend the alternative precision 
-  generation to all random number types.
+  generation to all distributions.
 
 * Support for filling existing arrays using `out` keyword argument. Currently
   supported in (both 32- and 64-bit outputs)
@@ -61,7 +68,7 @@ y = rnd.standard_gamma(5.5, 10000, method='zig')
 
 ## Included Pseudo Random Number Generators
 
-This modules includes a number of alternative random 
+This module includes a number of alternative random
 number generators in addition to the MT19937 that is included in NumPy. 
 The RNGs include:
 
@@ -71,23 +78,22 @@ The RNGs include:
   SSE2-aware version of the MT19937 generator that is especially fast at 
   generating doubles
 * [xoroshiro128+](http://xoroshiro.di.unimi.it/) and
-  [xorshift1024*](http://xorshift.di.unimi.it/)
+  [xorshift1024*φ](http://xorshift.di.unimi.it/)
 * [PCG64](http:w//www.pcg-random.org/)
-* ThreeFry and Philox implementationf from [Random123](https://www.deshawrsearch.com/resources_random123.html)
+* ThreeFry and Philox from [Random123](https://www.deshawrsearch.com/resources_random123.html)
 ## Differences from `numpy.random.RandomState`
 
 ### New Features
 * `standard_normal`, `normal`, `randn` and `multivariate_normal` all 
-  support an additional `method` keyword argument which can be `bm` or
-  `zig` where `bm` corresponds to the current method using the Box-Muller
-  transformation and `zig` uses the much faster (100%+) Ziggurat method.
-* `standard_exponential` and `standard_gamma` both support an additional
+  use the much faster (100%+) Ziggurat method.
+* `standard_gamma` and `gamma` both use the much faster Ziggurat method.
+* `standard_exponential` `exponential` both support an additional
   `method` keyword argument which can be `inv` or
   `zig` where `inv` corresponds to the current method using the inverse
   CDF and `zig` uses the much faster (100%+) Ziggurat method.
 * Core random number generators can produce either single precision
   (`np.float32`) or double precision (`np.float64`, the default) using
-  an the optional keyword argument `dtype`
+  the optional keyword argument `dtype`
 * Core random number generators can fill existing arrays using the
   `out` keyword argument
 
@@ -126,7 +132,7 @@ The version matched the latest version of NumPy where
 ## Documentation
 
 An occasionally updated build of the documentation is available on
-[my github pages](http://bashtage.github.io/core-prng/).
+[my GitHub pages](http://bashtage.github.io/core-prng/).
 
 ## Plans
 This module is essentially complete.  There are a few rough edges that 
@@ -139,8 +145,8 @@ need to be smoothed.
 Building requires:
 
   * Python (2.7, 3.4, 3.5, 3.6)
-  * NumPy (1.9, 1.10, 1.11, 1.12)
-  * Cython (0.22, **not** 0.23, 0.24, 0.25)
+  * NumPy (1.10, 1.11, 1.12, 1.13, 1.14)
+  * Cython (0.25+)
   * tempita (0.5+), if not provided by Cython
  
 Testing requires pytest (3.0+).
@@ -151,12 +157,12 @@ versions.
 ## Development and Testing
 
 All development has been on 64-bit Linux, and it is regularly tested on 
-Travis-CI (Linux) and Appveyor (Windows). The library is occasionally 
-tested on Linux 32-bit, OSX 10.13, Free BSD 11.1.
+Travis-CI (Linux/OSX) and Appveyor (Windows). The library is occasionally
+tested on Linux 32-bit and Free BSD 11.1.
 
 Basic tests are in place for all RNGs. The MT19937 is tested against 
 NumPy's implementation for identical results. It also passes NumPy's 
-test suite.
+test suite where still relevant.
 
 ## Installing
 
@@ -206,37 +212,37 @@ NumPy's mt19937.
 ```
 Speed-up relative to NumPy (Uniform Doubles)
 ************************************************************
-MT19937          22.9%
-PCG64           109.6%
-Philox           -6.2%
-ThreeFry        -16.6%
-Xoroshiro128    161.0%
-Xorshift1024    119.9%
+DSFMT           137.1%
+MT19937          21.0%
+PCG32           101.2%
+PCG64           110.7%
+Philox           -2.7%
+ThreeFry        -11.4%
+ThreeFry32      -62.3%
+Xoroshiro128    181.4%
+Xorshift1024    141.8%
 
 Speed-up relative to NumPy (64-bit unsigned integers)
 ************************************************************
-MT19937           6.2%
-PCG64            88.2%
-Philox          -23.0%
-ThreeFry        -26.5%
-Xoroshiro128    142.4%
-Xorshift1024    107.5%
+DSFMT            24.8%
+MT19937          15.0%
+PCG32            92.6%
+PCG64            99.0%
+Philox          -20.4%
+ThreeFry        -21.7%
+ThreeFry32      -64.4%
+Xoroshiro128    164.2%
+Xorshift1024    120.8%
 
-Speed-up relative to NumPy (Standard normals (Box-Muller))
+Speed-up relative to NumPy (Standard normals)
 ************************************************************
-MT19937          17.7%
-PCG64            35.6%
-Philox          -26.2%
-ThreeFry        -16.9%
-Xoroshiro128     57.9%
-Xorshift1024     40.9%
-
-Speed-up relative to NumPy (Standard normals (Ziggurat))
-************************************************************
-MT19937         107.9%
-PCG64           149.6%
-Philox           11.1%
-ThreeFry         78.8%
-Xoroshiro128    224.7%
-Xorshift1024    158.6%
+DSFMT           299.4%
+MT19937         271.2%
+PCG32           364.5%
+PCG64           364.2%
+Philox          256.9%
+ThreeFry        236.0%
+ThreeFry32       97.0%
+Xoroshiro128    477.4%
+Xorshift1024    360.7%
 ```

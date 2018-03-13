@@ -5,7 +5,7 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
-from distributions cimport prng_t, binomial_t
+from distributions cimport prng_t
 from core_prng.entropy import random_entropy
 import core_prng.pickle
 cimport entropy
@@ -83,7 +83,6 @@ cdef class PCG64:
         self.rng_state = <pcg64_state *>malloc(sizeof(pcg64_state))
         self.rng_state.pcg_state = <pcg64_random_t *>malloc(sizeof(pcg64_random_t))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed, inc)
 
         self._prng.state = <void *>self.rng_state
@@ -109,7 +108,6 @@ cdef class PCG64:
 
     def __dealloc__(self):
         free(self.rng_state)
-        free(self._prng.binomial)
         free(self._prng)
 
     cdef _reset_state_variables(self):
