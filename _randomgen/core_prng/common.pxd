@@ -38,12 +38,12 @@ ctypedef double (*random_double_3)(prng_t *state, double a, double b, double c) 
 ctypedef float (*random_float_0)(prng_t *state) nogil
 ctypedef float (*random_float_1)(prng_t *state, float a) nogil
 
-ctypedef long (*random_uint_0)(prng_t *state) nogil
-ctypedef long (*random_uint_d)(prng_t *state, double a) nogil
-ctypedef long (*random_uint_dd)(prng_t *state, double a, double b) nogil
-ctypedef long (*random_uint_di)(prng_t *state, double a, uint64_t b) nogil
-ctypedef long (*random_uint_i)(prng_t *state, long a) nogil
-ctypedef long (*random_uint_iii)(prng_t *state, long a, long b, long c) nogil
+ctypedef int64_t (*random_uint_0)(prng_t *state) nogil
+ctypedef int64_t (*random_uint_d)(prng_t *state, double a) nogil
+ctypedef int64_t (*random_uint_dd)(prng_t *state, double a, double b) nogil
+ctypedef int64_t (*random_uint_di)(prng_t *state, double a, uint64_t b) nogil
+ctypedef int64_t (*random_uint_i)(prng_t *state, int64_t a) nogil
+ctypedef int64_t (*random_uint_iii)(prng_t *state, int64_t a, int64_t b, int64_t c) nogil
 
 ctypedef uint32_t (*random_uint_0_32)(prng_t *state) nogil
 ctypedef uint32_t (*random_uint_1_i_32)(prng_t *state, uint32_t a) nogil
@@ -71,7 +71,7 @@ cdef object cont(void *func, prng_t *state, object size, object lock, int narg,
                  object out)
 
 cdef object disc(void *func, prng_t *state, object size, object lock,
-                 int narg_double, int narg_long,
+                 int narg_double, int narg_int64,
                  object a, object a_name, constraint_type a_constraint,
                  object b, object b_name, constraint_type b_constraint,
                  object c, object c_name, constraint_type c_constraint)

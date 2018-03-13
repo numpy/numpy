@@ -3,13 +3,9 @@
 #include "ziggurat_constants.h"
 
 /* Random generators for external use */
-float random_sample_f(prng_t *prng_state) {
-  return random_float(prng_state);
-}
+float random_sample_f(prng_t *prng_state) { return random_float(prng_state); }
 
-double random_sample(prng_t *prng_state) {
-  return random_double(prng_state);
-}
+double random_sample(prng_t *prng_state) { return random_double(prng_state); }
 
 double random_standard_exponential(prng_t *prng_state) {
   return -log(1.0 - random_double(prng_state));
@@ -75,8 +71,7 @@ static double standard_exponential_zig_unlikely(prng_t *prng_state, uint8_t idx,
                                                 double x) {
   if (idx == 0) {
     return ziggurat_exp_r - log(random_double(prng_state));
-  } else if ((fe_double[idx - 1] - fe_double[idx]) *
-                     random_double(prng_state) +
+  } else if ((fe_double[idx - 1] - fe_double[idx]) * random_double(prng_state) +
                  fe_double[idx] <
              exp(-x)) {
     return x;
@@ -158,16 +153,14 @@ double random_gauss_zig(prng_t *prng_state) {
       return x; // # 99.3% of the time return here
     if (idx == 0) {
       for (;;) {
-        xx = -ziggurat_nor_inv_r *
-             log(random_double(prng_state));
+        xx = -ziggurat_nor_inv_r * log(random_double(prng_state));
         yy = -log(random_double(prng_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r + xx)
                                      : ziggurat_nor_r + xx;
       }
     } else {
-      if (((fi_double[idx - 1] - fi_double[idx]) *
-               random_double(prng_state) +
+      if (((fi_double[idx - 1] - fi_double[idx]) * random_double(prng_state) +
            fi_double[idx]) < exp(-0.5 * x * x))
         return x;
     }
@@ -402,15 +395,15 @@ int32_t random_positive_int32(prng_t *prng_state) {
   return random_uint32(prng_state) >> 1;
 }
 
-long random_positive_int(prng_t *prng_state) {
+int64_t random_positive_int(prng_t *prng_state) {
 #if ULONG_MAX <= 0xffffffffUL
-  return (long)(random_uint32(prng_state) >> 1);
+  return (int64_t)(random_uint32(prng_state) >> 1);
 #else
-  return (long)(random_uint64(prng_state) >> 1);
+  return (int64_t)(random_uint64(prng_state) >> 1);
 #endif
 }
 
-unsigned long random_uint(prng_t *prng_state) {
+uint64_t random_uint(prng_t *prng_state) {
 #if ULONG_MAX <= 0xffffffffUL
   return random_uint32(prng_state);
 #else
@@ -425,7 +418,7 @@ unsigned long random_uint(prng_t *prng_state) {
  */
 static double loggam(double x) {
   double x0, x2, xp, gl, gl0;
-  long k, n;
+  int64_t k, n;
 
   static double a[10] = {8.333333333333333e-02, -2.777777777777778e-03,
                          7.936507936507937e-04, -5.952380952380952e-04,
@@ -437,7 +430,7 @@ static double loggam(double x) {
   if ((x == 1.0) || (x == 2.0)) {
     return 0.0;
   } else if (x <= 7.0) {
-    n = (long)(7 - x);
+    n = (int64_t)(7 - x);
     x0 = x + n;
   }
   x2 = 1.0 / (x0 * x0);
@@ -584,8 +577,8 @@ double random_standard_t(prng_t *prng_state, double df) {
   return sqrt(df / 2) * num / sqrt(denom);
 }
 
-static long random_poisson_mult(prng_t *prng_state, double lam) {
-  long X;
+static int64_t random_poisson_mult(prng_t *prng_state, double lam) {
+  int64_t X;
   double prod, U, enlam;
 
   enlam = exp(-lam);
@@ -609,8 +602,8 @@ static long random_poisson_mult(prng_t *prng_state, double lam) {
  */
 #define LS2PI 0.91893853320467267
 #define TWELFTH 0.083333333333333333333333
-static long random_poisson_ptrs(prng_t *prng_state, double lam) {
-  long k;
+static int64_t random_poisson_ptrs(prng_t *prng_state, double lam) {
+  int64_t k;
   double U, V, slam, loglam, a, b, invalpha, vr, us;
 
   slam = sqrt(lam);
@@ -624,7 +617,7 @@ static long random_poisson_ptrs(prng_t *prng_state, double lam) {
     U = random_sample(prng_state) - 0.5;
     V = random_sample(prng_state);
     us = 0.5 - fabs(U);
-    k = (long)floor((2 * a / us + b) * U + lam + 0.43);
+    k = (int64_t)floor((2 * a / us + b) * U + lam + 0.43);
     if ((us >= 0.07) && (V <= vr)) {
       return k;
     }
@@ -638,7 +631,7 @@ static long random_poisson_ptrs(prng_t *prng_state, double lam) {
   }
 }
 
-long random_poisson(prng_t *prng_state, double lam) {
+int64_t random_poisson(prng_t *prng_state, double lam) {
   if (lam >= 10) {
     return random_poisson_ptrs(prng_state, lam);
   } else if (lam == 0) {
@@ -648,18 +641,18 @@ long random_poisson(prng_t *prng_state, double lam) {
   }
 }
 
-long random_negative_binomial(prng_t *prng_state, double n, double p) {
+int64_t random_negative_binomial(prng_t *prng_state, double n, double p) {
   double Y = random_gamma(prng_state, n, (1 - p) / p);
   return random_poisson(prng_state, Y);
 }
 
-long random_binomial_btpe(prng_t *prng_state, long n, double p, binomial_t* binomial) {
+int64_t random_binomial_btpe(prng_t *prng_state, int64_t n, double p,
+                             binomial_t *binomial) {
   double r, q, fm, p1, xm, xl, xr, c, laml, lamr, p2, p3, p4;
   double a, u, v, s, F, rho, t, A, nrq, x1, x2, f1, f2, z, z2, w, w2, x;
-  long m, y, k, i;
+  int64_t m, y, k, i;
 
-  if (!(binomial->has_binomial) ||
-      (binomial->nsave != n) ||
+  if (!(binomial->has_binomial) || (binomial->nsave != n) ||
       (binomial->psave != p)) {
     /* initialize */
     binomial->nsave = n;
@@ -668,9 +661,8 @@ long random_binomial_btpe(prng_t *prng_state, long n, double p, binomial_t* bino
     binomial->r = r = min(p, 1.0 - p);
     binomial->q = q = 1.0 - r;
     binomial->fm = fm = n * r + r;
-    binomial->m = m = (long)floor(binomial->fm);
-    binomial->p1 = p1 =
-        floor(2.195 * sqrt(n * r * q) - 4.6 * q) + 0.5;
+    binomial->m = m = (int64_t)floor(binomial->fm);
+    binomial->p1 = p1 = floor(2.195 * sqrt(n * r * q) - 4.6 * q) + 0.5;
     binomial->xm = xm = m + 0.5;
     binomial->xl = xl = xm - p1;
     binomial->xr = xr = xm + p1;
@@ -706,7 +698,7 @@ Step10:
   v = random_sample(prng_state);
   if (u > p1)
     goto Step20;
-  y = (long)floor(xm - p1 * v + u);
+  y = (int64_t)floor(xm - p1 * v + u);
   goto Step60;
 
 Step20:
@@ -716,26 +708,26 @@ Step20:
   v = v * c + 1.0 - fabs(m - x + 0.5) / p1;
   if (v > 1.0)
     goto Step10;
-  y = (long)floor(x);
+  y = (int64_t)floor(x);
   goto Step50;
 
 Step30:
   if (u > p3)
     goto Step40;
-  y = (long)floor(xl + log(v) / laml);
+  y = (int64_t)floor(xl + log(v) / laml);
   if (y < 0)
     goto Step10;
   v = v * (u - p2) * laml;
   goto Step50;
 
 Step40:
-  y = (long)floor(xr - log(v) / lamr);
+  y = (int64_t)floor(xr - log(v) / lamr);
   if (y > n)
     goto Step10;
   v = v * (u - p3) * lamr;
 
 Step50:
-  k = labs(y - m);
+  k = llabs(y - m);
   if ((k > 20) && (k < ((nrq) / 2.0 - 1)))
     goto Step52;
 
@@ -794,12 +786,12 @@ Step60:
   return y;
 }
 
-long random_binomial_inversion(prng_t *prng_state, long n, double p, binomial_t* binomial) {
+int64_t random_binomial_inversion(prng_t *prng_state, int64_t n, double p,
+                                  binomial_t *binomial) {
   double q, qn, np, px, U;
-  long X, bound;
+  int64_t X, bound;
 
-  if (!(binomial->has_binomial) ||
-      (binomial->nsave != n) ||
+  if (!(binomial->has_binomial) || (binomial->nsave != n) ||
       (binomial->psave != p)) {
     binomial->nsave = n;
     binomial->psave = p;
@@ -807,8 +799,7 @@ long random_binomial_inversion(prng_t *prng_state, long n, double p, binomial_t*
     binomial->q = q = 1.0 - p;
     binomial->r = qn = exp(n * log(q));
     binomial->c = np = n * p;
-    binomial->m = bound =
-        (long)min(n, np + 10.0 * sqrt(np * q + 1));
+    binomial->m = bound = (int64_t)min(n, np + 10.0 * sqrt(np * q + 1));
   } else {
     q = binomial->q;
     qn = binomial->r;
@@ -832,7 +823,8 @@ long random_binomial_inversion(prng_t *prng_state, long n, double p, binomial_t*
   return X;
 }
 
-long random_binomial(prng_t *prng_state, double p, long n, binomial_t * binomial) {
+int64_t random_binomial(prng_t *prng_state, double p, int64_t n,
+                        binomial_t *binomial) {
   double q;
 
   if (p <= 0.5) {
@@ -860,7 +852,7 @@ double random_noncentral_chisquare(prng_t *prng_state, double df, double nonc) {
     const double n = random_gauss_zig(prng_state) + sqrt(nonc);
     return Chi2 + n * n;
   } else {
-    const long i = random_poisson(prng_state, nonc / 2.0);
+    const int64_t i = random_poisson(prng_state, nonc / 2.0);
     return random_chisquare(prng_state, df + 2 * i);
   }
 }
@@ -938,9 +930,9 @@ double random_vonmises(prng_t *prng_state, double mu, double kappa) {
   }
 }
 
-long random_logseries(prng_t *prng_state, double p) {
+int64_t random_logseries(prng_t *prng_state, double p) {
   double q, r, U, V;
-  long result;
+  int64_t result;
 
   r = log(1.0 - p);
 
@@ -952,7 +944,7 @@ long random_logseries(prng_t *prng_state, double p) {
     U = random_sample(prng_state);
     q = 1.0 - exp(r * U);
     if (V <= q * q) {
-      result = (long)floor(1 + log(V) / log(q));
+      result = (int64_t)floor(1 + log(V) / log(q));
       if (result < 1) {
         continue;
       } else {
@@ -966,9 +958,9 @@ long random_logseries(prng_t *prng_state, double p) {
   }
 }
 
-long random_geometric_search(prng_t *prng_state, double p) {
+int64_t random_geometric_search(prng_t *prng_state, double p) {
   double U;
-  long X;
+  int64_t X;
   double sum, prod, q;
 
   X = 1;
@@ -983,11 +975,11 @@ long random_geometric_search(prng_t *prng_state, double p) {
   return X;
 }
 
-long random_geometric_inversion(prng_t *prng_state, double p) {
-  return (long)ceil(log(1.0 - random_sample(prng_state)) / log(1.0 - p));
+int64_t random_geometric_inversion(prng_t *prng_state, double p) {
+  return (int64_t)ceil(log(1.0 - random_sample(prng_state)) / log(1.0 - p));
 }
 
-long random_geometric(prng_t *prng_state, double p) {
+int64_t random_geometric(prng_t *prng_state, double p) {
   if (p >= 0.333333333333333333333333) {
     return random_geometric_search(prng_state, p);
   } else {
@@ -995,9 +987,9 @@ long random_geometric(prng_t *prng_state, double p) {
   }
 }
 
-long random_zipf(prng_t *prng_state, double a) {
+int64_t random_zipf(prng_t *prng_state, double a) {
   double T, U, V;
-  long X;
+  int64_t X;
   double am1, b;
 
   am1 = a - 1.0;
@@ -1005,9 +997,9 @@ long random_zipf(prng_t *prng_state, double a) {
   do {
     U = 1.0 - random_sample(prng_state);
     V = random_sample(prng_state);
-    X = (long)floor(pow(U, -1.0 / am1));
-    /* The real result may be above what can be represented in a signed
-     * long. It will get casted to -sys.maxint-1. Since this is
+    X = (int64_t)floor(pow(U, -1.0 / am1));
+    /* The real result may be above what can be represented in a int64.
+     * It will get casted to -sys.maxint-1. Since this is
      * a straightforward rejection algorithm, we can just reject this value
      * in the rejection condition below. This function then models a Zipf
      * distribution truncated to sys.maxint.
@@ -1036,9 +1028,9 @@ double random_triangular(prng_t *prng_state, double left, double mode,
   }
 }
 
-long random_hypergeometric_hyp(prng_t *prng_state, long good, long bad,
-                               long sample) {
-  long d1, k, z;
+int64_t random_hypergeometric_hyp(prng_t *prng_state, int64_t good, int64_t bad,
+                                  int64_t sample) {
+  int64_t d1, k, z;
   double d2, u, y;
 
   d1 = bad + good - sample;
@@ -1048,12 +1040,12 @@ long random_hypergeometric_hyp(prng_t *prng_state, long good, long bad,
   k = sample;
   while (y > 0.0) {
     u = random_sample(prng_state);
-    y -= (long)floor(u + y / (d1 + k));
+    y -= (int64_t)floor(u + y / (d1 + k));
     k--;
     if (k == 0)
       break;
   }
-  z = (long)(d2 - y);
+  z = (int64_t)(d2 - y);
   if (good > bad)
     z = sample - z;
   return z;
@@ -1063,11 +1055,11 @@ long random_hypergeometric_hyp(prng_t *prng_state, long good, long bad,
 /* D2 = 3 - 2*sqrt(3/e) */
 #define D1 1.7155277699214135
 #define D2 0.8989161620588988
-long random_hypergeometric_hrua(prng_t *prng_state, long good, long bad,
-                                long sample) {
-  long mingoodbad, maxgoodbad, popsize, m, d9;
+int64_t random_hypergeometric_hrua(prng_t *prng_state, int64_t good,
+                                   int64_t bad, int64_t sample) {
+  int64_t mingoodbad, maxgoodbad, popsize, m, d9;
   double d4, d5, d6, d7, d8, d10, d11;
-  long Z;
+  int64_t Z;
   double T, W, X, Y;
 
   mingoodbad = min(good, bad);
@@ -1079,7 +1071,7 @@ long random_hypergeometric_hrua(prng_t *prng_state, long good, long bad,
   d6 = m * d4 + 0.5;
   d7 = sqrt((double)(popsize - m) * sample * d4 * d5 / (popsize - 1) + 0.5);
   d8 = D1 * d7 + D2;
-  d9 = (long)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
+  d9 = (int64_t)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
   d10 = (loggam(d9 + 1) + loggam(mingoodbad - d9 + 1) + loggam(m - d9 + 1) +
          loggam(maxgoodbad - m + d9 + 1));
   d11 = min(min(m, mingoodbad) + 1.0, floor(d6 + 16 * d7));
@@ -1094,7 +1086,7 @@ long random_hypergeometric_hrua(prng_t *prng_state, long good, long bad,
     if ((W < 0.0) || (W >= d11))
       continue;
 
-    Z = (long)floor(W);
+    Z = (int64_t)floor(W);
     T = d10 - (loggam(Z + 1) + loggam(mingoodbad - Z + 1) + loggam(m - Z + 1) +
                loggam(maxgoodbad - m + Z + 1));
 
@@ -1123,8 +1115,8 @@ long random_hypergeometric_hrua(prng_t *prng_state, long good, long bad,
 #undef D1
 #undef D2
 
-long random_hypergeometric(prng_t *prng_state, long good, long bad,
-                           long sample) {
+int64_t random_hypergeometric(prng_t *prng_state, int64_t good, int64_t bad,
+                              int64_t sample) {
   if (sample > 10) {
     return random_hypergeometric_hrua(prng_state, good, bad, sample);
   } else {

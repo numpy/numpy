@@ -8,11 +8,11 @@ cdef extern from "src/distributions/distributions.h":
     struct s_binomial_t:
         int has_binomial
         double psave
-        long nsave
+        int64_t nsave
         double r
         double q
         double fm
-        long m
+        int64_t m
         double p1
         double xm
         double xl
@@ -50,8 +50,8 @@ cdef extern from "src/distributions/distributions.h":
 
     int64_t random_positive_int64(prng_t *prng_state) nogil
     int32_t random_positive_int32(prng_t *prng_state) nogil
-    long random_positive_int(prng_t *prng_state) nogil
-    unsigned long random_uint(prng_t *prng_state) nogil
+    int64_t random_positive_int(prng_t *prng_state) nogil
+    uint64_t random_uint(prng_t *prng_state) nogil
 
     double random_normal_zig(prng_t *prng_state, double loc, double scale) nogil
 
@@ -82,17 +82,17 @@ cdef extern from "src/distributions/distributions.h":
     double random_triangular(prng_t *prng_state, double left, double mode,
                                     double right) nogil
 
-    long random_poisson(prng_t *prng_state, double lam) nogil
-    long random_negative_binomial(prng_t *prng_state, double n, double p) nogil
-    long random_binomial(prng_t *prng_state, double p, long n, binomial_t *binomial) nogil
-    long random_logseries(prng_t *prng_state, double p) nogil
-    long random_geometric_search(prng_t *prng_state, double p) nogil
-    long random_geometric_inversion(prng_t *prng_state, double p) nogil
-    long random_geometric(prng_t *prng_state, double p) nogil
-    long random_zipf(prng_t *prng_state, double a) nogil
-    long random_hypergeometric(prng_t *prng_state, long good, long bad,
-                                    long sample) nogil
-    unsigned long random_interval(prng_t *prng_state, unsigned long max) nogil
+    int64_t random_poisson(prng_t *prng_state, double lam) nogil
+    int64_t random_negative_binomial(prng_t *prng_state, double n, double p) nogil
+    int64_t random_binomial(prng_t *prng_state, double p, int64_t n, binomial_t *binomial) nogil
+    int64_t random_logseries(prng_t *prng_state, double p) nogil
+    int64_t random_geometric_search(prng_t *prng_state, double p) nogil
+    int64_t random_geometric_inversion(prng_t *prng_state, double p) nogil
+    int64_t random_geometric(prng_t *prng_state, double p) nogil
+    int64_t random_zipf(prng_t *prng_state, double a) nogil
+    int64_t random_hypergeometric(prng_t *prng_state, int64_t good, int64_t bad,
+                                    int64_t sample) nogil
+    uint64_t random_interval(prng_t *prng_state, uint64_t max) nogil
     uint64_t random_bounded_uint64(prng_t *prng_state, uint64_t off,
                                         uint64_t rng, uint64_t mask) nogil
     uint32_t random_buffered_bounded_uint32(prng_t *prng_state, uint32_t off,

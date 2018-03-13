@@ -18,6 +18,21 @@ typedef int bool;
 #include "numpy/npy_common.h"
 #include <math.h>
 
+#ifdef _WIN32
+#if _MSC_VER == 1500
+
+static NPY_INLINE int64_t llabs(int64_t x) {
+  int64_t o;
+  if (x < 0) {
+    o = -x;
+  } else {
+    o = x;
+  }
+  return o;
+}
+#endif
+#endif
+
 #ifdef DLL_EXPORT
 #define DECLDIR __declspec(dllexport)
 #else
@@ -36,11 +51,11 @@ typedef int bool;
 typedef struct s_binomial_t {
   int has_binomial; /* !=0: following parameters initialized for binomial */
   double psave;
-  long nsave;
+  int64_t nsave;
   double r;
   double q;
   double fm;
-  long m;
+  int64_t m;
   double p1;
   double xm;
   double xl;
@@ -83,8 +98,8 @@ DECLDIR double random_sample(prng_t *prng_state);
 
 DECLDIR int64_t random_positive_int64(prng_t *prng_state);
 DECLDIR int32_t random_positive_int32(prng_t *prng_state);
-DECLDIR long random_positive_int(prng_t *prng_state);
-DECLDIR unsigned long random_uint(prng_t *prng_state);
+DECLDIR int64_t random_positive_int(prng_t *prng_state);
+DECLDIR uint64_t random_uint(prng_t *prng_state);
 
 DECLDIR double random_standard_exponential(prng_t *prng_state);
 DECLDIR float random_standard_exponential_f(prng_t *prng_state);
@@ -137,16 +152,18 @@ DECLDIR double random_vonmises(prng_t *prng_state, double mu, double kappa);
 DECLDIR double random_triangular(prng_t *prng_state, double left, double mode,
                                  double right);
 
-DECLDIR long random_poisson(prng_t *prng_state, double lam);
-DECLDIR long random_negative_binomial(prng_t *prng_state, double n, double p);
-DECLDIR long random_binomial(prng_t *prng_state, double p, long n, binomial_t* binomial);
-DECLDIR long random_logseries(prng_t *prng_state, double p);
-DECLDIR long random_geometric_search(prng_t *prng_state, double p);
-DECLDIR long random_geometric_inversion(prng_t *prng_state, double p);
-DECLDIR long random_geometric(prng_t *prng_state, double p);
-DECLDIR long random_zipf(prng_t *prng_state, double a);
-DECLDIR long random_hypergeometric(prng_t *prng_state, long good, long bad,
-                                   long sample);
+DECLDIR int64_t random_poisson(prng_t *prng_state, double lam);
+DECLDIR int64_t random_negative_binomial(prng_t *prng_state, double n,
+                                         double p);
+DECLDIR int64_t random_binomial(prng_t *prng_state, double p, int64_t n,
+                                binomial_t *binomial);
+DECLDIR int64_t random_logseries(prng_t *prng_state, double p);
+DECLDIR int64_t random_geometric_search(prng_t *prng_state, double p);
+DECLDIR int64_t random_geometric_inversion(prng_t *prng_state, double p);
+DECLDIR int64_t random_geometric(prng_t *prng_state, double p);
+DECLDIR int64_t random_zipf(prng_t *prng_state, double a);
+DECLDIR int64_t random_hypergeometric(prng_t *prng_state, int64_t good,
+                                      int64_t bad, int64_t sample);
 
 DECLDIR uint64_t random_interval(prng_t *prng_state, uint64_t max);
 DECLDIR uint64_t random_bounded_uint64(prng_t *prng_state, uint64_t off,
