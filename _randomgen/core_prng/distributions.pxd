@@ -32,10 +32,6 @@ cdef extern from "src/distributions/distributions.h":
         uint32_t (*next_uint32)(void *st) nogil
         double (*next_double)(void *st) nogil
         uint64_t (*next_raw)(void *st) nogil
-        int has_gauss
-        double gauss
-        int has_gauss_f
-        float gauss_f
         binomial_t *binomial
 
     ctypedef prng prng_t
@@ -43,15 +39,12 @@ cdef extern from "src/distributions/distributions.h":
     double random_sample(prng_t *prng_state) nogil
     double random_standard_exponential(prng_t *prng_state) nogil
     double random_standard_exponential_zig(prng_t *prng_state) nogil
-    double random_gauss(prng_t *prng_state) nogil
     double random_gauss_zig(prng_t* prng_state) nogil
-    double random_standard_gamma(prng_t *prng_state, double shape) nogil
     double random_standard_gamma_zig(prng_t *prng_state, double shape) nogil
 
     float random_sample_f(prng_t *prng_state) nogil
     float random_standard_exponential_f(prng_t *prng_state) nogil
     float random_standard_exponential_zig_f(prng_t *prng_state) nogil
-    float random_gauss_f(prng_t *prng_state) nogil
     float random_gauss_zig_f(prng_t* prng_state) nogil
     float random_standard_gamma_f(prng_t *prng_state, float shape) nogil
     float random_standard_gamma_zig_f(prng_t *prng_state, float shape) nogil
@@ -61,7 +54,6 @@ cdef extern from "src/distributions/distributions.h":
     long random_positive_int(prng_t *prng_state) nogil
     unsigned long random_uint(prng_t *prng_state) nogil
 
-    double random_normal(prng_t *prng_state, double loc, double scale) nogil
     double random_normal_zig(prng_t *prng_state, double loc, double scale) nogil
 
     double random_gamma(prng_t *prng_state, double shape, double scale) nogil

@@ -105,10 +105,6 @@ cdef class ThreeFry32:
         free(self._prng)
 
     cdef _reset_state_variables(self):
-        self._prng.has_gauss = 0
-        self._prng.has_gauss_f = 0
-        self._prng.gauss = 0.0
-        self._prng.gauss_f = 0.0
         self.rng_state.buffer_pos = THREEFRY_BUFFER_SIZE
         for i in range(THREEFRY_BUFFER_SIZE):
             self.rng_state.buffer[i] = 0

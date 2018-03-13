@@ -96,9 +96,7 @@ class TestSetState(object):
         self.state = self.prng.state
         self.legacy_state = (self.state['prng'],
                              self.state['state']['key'],
-                             self.state['state']['pos'],
-                             self.state['has_gauss'],
-                             self.state['gauss'])
+                             self.state['state']['pos'])
 
     def test_basic(self):
         old = self.prng.tomaxint(16)
@@ -124,6 +122,7 @@ class TestSetState(object):
         new = self.prng.standard_normal(size=3)
         assert_(np.all(old == new))
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_backwards_compatibility(self):
         # Make sure we can accept old state tuples that do not have the
         # cached Gaussian value.
@@ -408,9 +407,10 @@ class TestRandomDist(object):
                             [0.4575674820298663, 0.7781880808593471]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_randn(self):
         mt19937.seed(self.seed)
-        actual = mt19937.randn(3, 2, method='bm')
+        actual = mt19937.randn(3, 2)
         desired = np.array([[1.34016345771863121, 1.73759122771936081],
                             [1.498988344300628, -0.2286433324536169],
                             [2.031033998682787, 2.17032494605655257]])
@@ -614,6 +614,7 @@ class TestRandomDist(object):
                             [46, 45]])
         assert_array_equal(actual, desired)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_chisquare(self):
         mt19937.seed(self.seed)
         actual = mt19937.chisquare(50, size=(3, 2))
@@ -622,6 +623,7 @@ class TestRandomDist(object):
                             [72.3828403199695174, 74.18408615260374006]])
         assert_array_almost_equal(actual, desired, decimal=13)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_dirichlet(self):
         mt19937.seed(self.seed)
         alpha = np.array([51.72840233779265162, 39.74494232180943953])
@@ -665,6 +667,7 @@ class TestRandomDist(object):
         assert_equal(mt19937.exponential(scale=0), 0)
         assert_raises(ValueError, mt19937.exponential, scale=-0.)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_f(self):
         mt19937.seed(self.seed)
         actual = mt19937.f(12, 77, size=(3, 2))
@@ -673,6 +676,7 @@ class TestRandomDist(object):
                             [1.02176975757740629, 1.34431827623300415]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_gamma(self):
         mt19937.seed(self.seed)
         actual = mt19937.gamma(5, 3, size=(3, 2))
@@ -751,6 +755,7 @@ class TestRandomDist(object):
                             [-0.21682183359214885, 2.63373365386060332]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_lognormal(self):
         mt19937.seed(self.seed)
         actual = mt19937.lognormal(mean=.123456789, sigma=2.0, size=(3, 2))
@@ -782,12 +787,13 @@ class TestRandomDist(object):
                              [4, 3, 4, 2, 3, 4]]])
         assert_array_equal(actual, desired)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_multivariate_normal(self):
         mt19937.seed(self.seed)
         mean = (.123456789, 10)
         cov = [[1, 0], [0, 1]]
         size = (3, 2)
-        actual = mt19937.multivariate_normal(mean, cov, size, method='bm')
+        actual = mt19937.multivariate_normal(mean, cov, size)
         desired = np.array([[[1.463620246718631, 11.73759122771936],
                              [1.622445133300628, 9.771356667546383]],
                             [[2.154490787682787, 12.170324946056553],
@@ -798,7 +804,7 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
         # Check for default size, was raising deprecation warning
-        actual = mt19937.multivariate_normal(mean, cov, method='bm')
+        actual = mt19937.multivariate_normal(mean, cov)
         desired = np.array([0.895289569463708, 9.17180864067987])
         assert_array_almost_equal(actual, desired, decimal=15)
 
@@ -806,16 +812,17 @@ class TestRandomDist(object):
         # RuntimeWarning
         mean = [0, 0]
         cov = [[1, 2], [2, 1]]
-        assert_warns(RuntimeWarning, mt19937.multivariate_normal, mean, cov, method='bm')
+        assert_warns(RuntimeWarning, mt19937.multivariate_normal, mean, cov)
 
         # and that it doesn't warn with RuntimeWarning check_valid='ignore'
         assert_no_warnings(mt19937.multivariate_normal, mean, cov,
-                           check_valid='ignore', method='bm')
+                           check_valid='ignore')
 
         # and that it raises with RuntimeWarning check_valid='raises'
         assert_raises(ValueError, mt19937.multivariate_normal, mean, cov,
-                      check_valid='raise', method='bm')
+                      check_valid='raise')
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_negative_binomial(self):
         mt19937.seed(self.seed)
         actual = mt19937.negative_binomial(n=100, p=.12345, size=(3, 2))
@@ -824,6 +831,7 @@ class TestRandomDist(object):
                             [779, 647]])
         assert_array_equal(actual, desired)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_noncentral_chisquare(self):
         mt19937.seed(self.seed)
         actual = mt19937.noncentral_chisquare(df=5, nonc=5, size=(3, 2))
@@ -845,6 +853,7 @@ class TestRandomDist(object):
                             [13.484222138963087, 14.377255424602957]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_noncentral_f(self):
         mt19937.seed(self.seed)
         actual = mt19937.noncentral_f(dfnum=5, dfden=2, nonc=1,
@@ -854,9 +863,10 @@ class TestRandomDist(object):
                             [0.43741599463544162, 1.1774208752428319]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_normal(self):
         mt19937.seed(self.seed)
-        actual = mt19937.normal(loc=.123456789, scale=2.0, size=(3, 2), method='bm')
+        actual = mt19937.normal(loc=.123456789, scale=2.0, size=(3, 2))
         desired = np.array([[2.80378370443726244, 3.59863924443872163],
                             [3.121433477601256, -0.33382987590723379],
                             [4.18552478636557357, 4.46410668111310471]])
@@ -917,6 +927,7 @@ class TestRandomDist(object):
         assert_equal(mt19937.rayleigh(scale=0), 0)
         assert_raises(ValueError, mt19937.rayleigh, scale=-0.)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_cauchy(self):
         mt19937.seed(self.seed)
         actual = mt19937.standard_cauchy(size=(3, 2))
@@ -933,6 +944,7 @@ class TestRandomDist(object):
                             [0.6116915921431676, 1.50592546727413201]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_gamma(self):
         mt19937.seed(self.seed)
         actual = mt19937.standard_gamma(shape=3, size=(3, 2), method='inv')
@@ -945,14 +957,16 @@ class TestRandomDist(object):
         assert_equal(mt19937.standard_gamma(shape=0), 0)
         assert_raises(ValueError, mt19937.standard_gamma, shape=-0.)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_normal(self):
         mt19937.seed(self.seed)
-        actual = mt19937.standard_normal(size=(3, 2), method='bm')
+        actual = mt19937.standard_normal(size=(3, 2))
         desired = np.array([[1.34016345771863121, 1.73759122771936081],
                             [1.498988344300628, -0.2286433324536169],
                             [2.031033998682787, 2.17032494605655257]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_t(self):
         mt19937.seed(self.seed)
         actual = mt19937.standard_t(df=10, size=(3, 2))
@@ -1029,6 +1043,7 @@ class TestRandomDist(object):
         r = mt19937.vonmises(mu=0., kappa=1.1e-8, size=10 ** 6)
         assert_(np.isfinite(r).all())
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_wald(self):
         mt19937.seed(self.seed)
         actual = mt19937.wald(mean=1.23, scale=1.54, size=(3, 2))
@@ -1086,6 +1101,7 @@ class TestBroadcast(object):
         actual = uniform(low, high * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_normal(self):
         loc = [0]
         scale = [1]
@@ -1096,15 +1112,16 @@ class TestBroadcast(object):
                             1.8417114045748335])
 
         self.set_seed()
-        actual = normal(loc * 3, scale, method='bm')
+        actual = normal(loc * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, normal, loc * 3, bad_scale)
 
         self.set_seed()
-        actual = normal(loc, scale * 3, method='bm')
+        actual = normal(loc, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, normal, loc, bad_scale * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_beta(self):
         a = [1]
         b = [2]
@@ -1140,6 +1157,7 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, exponential, bad_scale * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_gamma(self):
         shape = [1]
         bad_shape = [-1]
@@ -1153,6 +1171,7 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, std_gamma, bad_shape * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_gamma(self):
         shape = [1]
         scale = [2]
@@ -1175,6 +1194,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, gamma, bad_shape, scale * 3)
         assert_raises(ValueError, gamma, shape, bad_scale * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_f(self):
         dfnum = [1]
         dfden = [2]
@@ -1197,6 +1217,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, f, bad_dfnum, dfden * 3)
         assert_raises(ValueError, f, dfnum, bad_dfden * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_noncentral_f(self):
         dfnum = [2]
         dfden = [3]
@@ -1243,6 +1264,7 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, chisquare, bad_df * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_noncentral_chisquare(self):
         df = [1]
         nonc = [2]
@@ -1265,6 +1287,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_chi, bad_df, nonc * 3)
         assert_raises(ValueError, nonc_chi, df, bad_nonc * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_t(self):
         df = [1]
         bad_df = [-1]
@@ -1393,6 +1416,7 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, logistic, loc, bad_scale * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_lognormal(self):
         mean = [0]
         sigma = [1]
@@ -1425,6 +1449,7 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rayleigh, bad_scale * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_wald(self):
         mean = [0.5]
         scale = [1]
@@ -1503,6 +1528,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, binom, n, bad_p_one * 3)
         assert_raises(ValueError, binom, n, bad_p_two * 3)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_negative_binomial(self):
         n = [1]
         p = [0.5]

@@ -72,9 +72,6 @@ cdef class RandomGenerator:
             raise ValueError("Invalid prng. The prng must be instantized.")
         self._prng = <prng_t *> PyCapsule_GetPointer(capsule, anon_name)
         self.lock = Lock()
-        with self.lock:
-            self._prng.has_gauss = 0
-            self._prng.has_gauss_f = 0
 
     def __repr__(self):
         return self.__str__() + ' at 0x{:X}'.format(id(self))
@@ -104,23 +101,11 @@ cdef class RandomGenerator:
     @property
     def state(self):
         """Get or set the underlying PRNG's state"""
-        state = self.__core_prng.state
-        state['has_gauss'] = self._prng.has_gauss
-        state['has_gauss_f'] = self._prng.has_gauss_f
-        state['gauss'] = self._prng.gauss
-        state['gauss_f'] = self._prng.gauss_f
-        return state
+        return self.__core_prng.state
 
     @state.setter
     def state(self, value):
         self.__core_prng.state = value
-        if isinstance(value, tuple):
-            # Legacy MT19937 state
-            return
-        self._prng.has_gauss = value['has_gauss']
-        self._prng.has_gauss_f = value['has_gauss_f']
-        self._prng.gauss = value['gauss']
-        self._prng.gauss_f = value['gauss_f']
 
     def random_uintegers(self, size=None, int bits=64):
         """
@@ -243,14 +228,6 @@ cdef class RandomGenerator:
             return self._prng.next_uint64(self._prng.state)
         elif bits == 32:
             return self._prng.next_uint32(self._prng.state)
-        else:
-            raise ValueError('bits must be 32 or 64')
-
-    def random_double(self, bits=64):
-        if bits == 64:
-            return self._prng.next_double(self._prng.state)
-        elif bits == 32:
-            return random_sample_f(self._prng)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -994,9 +971,9 @@ cdef class RandomGenerator:
         else:
             return self.random_sample(size=args, dtype=dtype)
 
-    def randn(self, *args, method=u'zig', dtype=np.float64):
+    def randn(self, *args, dtype=np.float64):
         """
-        randn(d0, d1, ..., dn, method='zig', dtype='d')
+        randn(d0, d1, ..., dn, dtype='d')
 
         Return a sample (or samples) from the "standard normal" distribution.
 
@@ -1016,10 +993,6 @@ cdef class RandomGenerator:
         d0, d1, ..., dn : int, optional
             The dimensions of the returned array, should be all positive.
             If no argument is given a single Python float is returned.
-        method : str, optional
-            Either 'bm' or 'zig'. 'bm' uses the default Box-Muller
-            transformations method.  'zig' uses the much faster Ziggurat
-            method of Marsaglia and Tsang.
         dtype : {str, dtype}, optional
             Desired dtype of the result, either 'd' (or 'float64') or 'f'
             (or 'float32'). All dtypes are determined by their name. The
@@ -1055,9 +1028,9 @@ cdef class RandomGenerator:
 
         """
         if len(args) == 0:
-            return self.standard_normal(method=method, dtype=dtype)
+            return self.standard_normal(dtype=dtype)
         else:
-            return self.standard_normal(size=args, method=method, dtype=dtype)
+            return self.standard_normal(size=args, dtype=dtype)
 
     def random_integers(self, low, high=None, size=None):
         """
@@ -1154,9 +1127,9 @@ cdef class RandomGenerator:
         return self.randint(low, high + 1, size=size, dtype='l')
 
     # Complicated, continuous distributions:
-    def standard_normal(self, size=None, dtype=np.float64, method=u'zig', out=None):
+    def standard_normal(self, size=None, dtype=np.float64, out=None):
         """
-        standard_normal(size=None, dtype='d', method='zig', out=None)
+        standard_normal(size=None, dtype='d', out=None)
 
         Draw samples from a standard Normal distribution (mean=0, stdev=1).
 
@@ -1170,9 +1143,6 @@ cdef class RandomGenerator:
             Desired dtype of the result, either 'd' (or 'float64') or 'f'
             (or 'float32'). All dtypes are determined by their name. The
             default value is 'd'.
-        method : str, optional
-            Either 'bm' or 'zig'. 'bm' uses the Box-Muller transformations
-            method.  'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -1198,22 +1168,17 @@ cdef class RandomGenerator:
         """
         key = np.dtype(dtype).name
         if key == 'float64':
-            if method == u'zig':
-                return double_fill(&random_gauss_zig, self._prng, size, self.lock, out)
-            else:
-                return double_fill(&random_gauss, self._prng, size, self.lock, out)
+            return double_fill(&random_gauss_zig, self._prng, size, self.lock, out)
         elif key == 'float32':
-            if method == u'zig':
-                return float_fill(&random_gauss_zig_f, self._prng, size, self.lock, out)
-            else:
-                return float_fill(&random_gauss_f, self._prng, size, self.lock, out)
+            return float_fill(&random_gauss_zig_f, self._prng, size, self.lock, out)
+
         else:
             raise TypeError('Unsupported dtype "%s" for standard_normal' % key)
 
 
-    def normal(self, loc=0.0, scale=1.0, size=None, method=u'zig'):
+    def normal(self, loc=0.0, scale=1.0, size=None):
         """
-        normal(loc=0.0, scale=1.0, size=None, method='zig')
+        normal(loc=0.0, scale=1.0, size=None)
 
         Draw random samples from a normal (Gaussian) distribution.
 
@@ -1238,10 +1203,6 @@ cdef class RandomGenerator:
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
             a single value is returned if ``loc`` and ``scale`` are both scalars.
             Otherwise, ``np.broadcast(loc, scale).size`` samples are drawn.
-        method : str, optional
-            Either 'bm' or 'zig'. 'bm' uses the default Box-Muller transformations
-            method.  'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
-
 
         Returns
         -------
@@ -1304,23 +1265,15 @@ cdef class RandomGenerator:
         >>> plt.show()
 
         """
-        if method == 'bm':
-            return cont(&random_normal, self._prng, size, self.lock, 2,
-                        loc, '', CONS_NONE,
-                        scale, 'scale', CONS_NON_NEGATIVE,
-                        0.0, '', CONS_NONE,
-                        None)
-        else:
-            return cont(&random_normal_zig, self._prng, size, self.lock, 2,
-                        loc, '', CONS_NONE,
-                        scale, 'scale', CONS_NON_NEGATIVE,
-                        0.0, '', CONS_NONE,
-                        None)
+        return cont(&random_normal_zig, self._prng, size, self.lock, 2,
+                    loc, '', CONS_NONE,
+                    scale, 'scale', CONS_NON_NEGATIVE,
+                    0.0, '', CONS_NONE,
+                    None)
 
-    def complex_normal(self, loc=0.0, gamma=1.0, relation=0.0, size=None,
-                       method=u'zig'):
+    def complex_normal(self, loc=0.0, gamma=1.0, relation=0.0, size=None):
         """
-        complex_normal(loc=0.0, gamma=1.0, relation=0.0, size=None, method='zig')
+        complex_normal(loc=0.0, gamma=1.0, relation=0.0, size=None)
 
         Draw random samples from a complex normal (Gaussian) distribution.
 
@@ -1338,10 +1291,6 @@ cdef class RandomGenerator:
             a single value is returned if ``loc``, ``gamma`` and ``relation``
             are all scalars. Otherwise,
             ``np.broadcast(loc, gamma, relation).size`` samples are drawn.
-        method : str, optional
-            Either 'bm' or 'zig'. 'bm' uses the default Box-Muller
-            transformations method.  'zig' uses the much faster Ziggurat
-            method of Marsaglia and Tsang.
 
         Returns
         -------
@@ -1379,8 +1328,6 @@ cdef class RandomGenerator:
 
         >>> s = np.random.complex_normal(size=1000)
         """
-        if method != u'zig' and method != u'bm':
-            raise ValueError("method must be either 'bm' or 'zig'")
         cdef np.ndarray ogamma, orelation, oloc, randoms, v_real, v_imag, rho
         cdef double *randoms_data
         cdef double fgamma_r, fgamma_i, frelation_r, frelation_i, frho, fvar_r , fvar_i, \
@@ -1415,12 +1362,8 @@ cdef class RandomGenerator:
                 raise ValueError('Im(relation) ** 2 > Re(gamma ** 2 - relation** 2)')
 
             if size is None:
-                if method == u'zig':
-                    f_real = random_gauss_zig(self._prng)
-                    f_imag = random_gauss_zig(self._prng)
-                else:
-                    f_real = random_gauss(self._prng)
-                    f_imag = random_gauss(self._prng)
+                f_real = random_gauss_zig(self._prng)
+                f_imag = random_gauss_zig(self._prng)
 
                 compute_complex(&f_real, &f_imag, floc_r, floc_i, fvar_r, fvar_i, f_rho)
                 return PyComplex_FromDoubles(f_real, f_imag)
@@ -1434,20 +1377,12 @@ cdef class RandomGenerator:
             i_scale = sqrt(fvar_i)
             j = 0
             with self.lock, nogil:
-                if method == u'zig':
-                    for i in range(n):
-                        f_real = random_gauss_zig(self._prng)
-                        f_imag = random_gauss_zig(self._prng)
-                        randoms_data[j+1] = floc_i + i_scale * (f_rho * f_real + i_r_scale * f_imag)
-                        randoms_data[j] = floc_r + r_scale * f_real
-                        j += 2
-                else:
-                    for i in range(n):
-                        f_real = random_gauss(self._prng)
-                        f_imag = random_gauss(self._prng)
-                        randoms_data[j+1] = floc_i + i_scale * (f_rho * f_real + i_r_scale * f_imag)
-                        randoms_data[j] = floc_r + r_scale * f_real
-                        j += 2
+                for i in range(n):
+                    f_real = random_gauss_zig(self._prng)
+                    f_imag = random_gauss_zig(self._prng)
+                    randoms_data[j+1] = floc_i + i_scale * (f_rho * f_real + i_r_scale * f_imag)
+                    randoms_data[j] = floc_r + r_scale * f_real
+                    j += 2
 
             return randoms
 
@@ -1481,12 +1416,8 @@ cdef class RandomGenerator:
         it = np.PyArray_MultiIterNew5(randoms, oloc, v_real, v_imag, rho)
         with self.lock, nogil:
             n2 = 2 * n  # Avoid compiler noise for cast to long
-            if method == u'zig':
-                for i in range(n2):
-                    randoms_data[i] = random_gauss_zig(self._prng)
-            else:
-                for i in range(n2):
-                    randoms_data[i] = random_gauss(self._prng)
+            for i in range(n2):
+                randoms_data[i] = random_gauss_zig(self._prng)
         with nogil:
             j = 0
             for i in range(n):
@@ -1501,10 +1432,9 @@ cdef class RandomGenerator:
 
         return randoms
 
-    def standard_gamma(self, shape, size=None, dtype=np.float64, method=u'zig',
-                       out=None):
+    def standard_gamma(self, shape, size=None, dtype=np.float64, out=None):
         """
-        standard_gamma(shape, size=None, dtype='d', method='inv', out=None)
+        standard_gamma(shape, size=None, dtype='d', out=None)
 
         Draw samples from a standard Gamma distribution.
 
@@ -1524,9 +1454,6 @@ cdef class RandomGenerator:
             Desired dtype of the result, either 'd' (or 'float64') or 'f'
             (or 'float32'). All dtypes are determined by their name. The
             default value is 'd'.
-        method : str, optional
-            Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
-            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is
             not None, it must have the same shape as the provided size and
@@ -1582,25 +1509,15 @@ cdef class RandomGenerator:
         >>> plt.show()
         """
         cdef void *func
-        if method != u'zig' and method != u'inv':
-            raise ValueError("method must be either 'inv' or 'zig'")
         key = np.dtype(dtype).name
         if key == 'float64':
-            if method == 'inv':
-                func = <void *>&random_standard_gamma
-            else:
-                func = <void *>&random_standard_gamma_zig
-            return cont(func, self._prng, size, self.lock, 1,
+            return cont(&random_standard_gamma_zig, self._prng, size, self.lock, 1,
                         shape, 'shape', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         0.0, '', CONS_NONE,
                         out)
         if key == 'float32':
-            if method == 'inv':
-                func = <void *>&random_standard_gamma_f
-            else:
-                func = <void *>&random_standard_gamma_zig_f
-            return cont_f(func, self._prng, size, self.lock,
+            return cont_f(&random_standard_gamma_zig_f, self._prng, size, self.lock,
                           shape, 'shape', CONS_NON_NEGATIVE,
                           out)
         else:
@@ -3242,7 +3159,6 @@ cdef class RandomGenerator:
 
         >>> sum(np.random.binomial(9, 0.1, 20000) == 0)/20000.
         # answer = 0.38885, or 38%.
-
         """
         return disc(&random_binomial, self._prng, size, self.lock, 1, 1,
                     p, 'p', CONS_BOUNDED_0_1_NOTNAN,
@@ -3729,10 +3645,10 @@ cdef class RandomGenerator:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8, method=u'zig'):
+                            tol=1e-8):
         """
         multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8, method='zig')
+                            tol=1e-8)
 
         Draw random samples from a multivariate normal distribution.
 
@@ -3759,9 +3675,6 @@ cdef class RandomGenerator:
             Behavior when the covariance matrix is not positive semidefinite.
         tol : float, optional
             Tolerance when checking the singular values in covariance matrix.
-        method : str, optional
-            Either 'bm' or 'zig'. 'bm' uses the default Box-Muller transformations
-            method.  'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
 
         Returns
         -------
@@ -3858,7 +3771,7 @@ cdef class RandomGenerator:
         # form a matrix of shape final_shape.
         final_shape = list(shape[:])
         final_shape.append(mean.shape[0])
-        x = self.standard_normal(final_shape, method=method).reshape(-1, mean.shape[0])
+        x = self.standard_normal(final_shape).reshape(-1, mean.shape[0])
 
         # Transform matrix of standard normals into matrix where each row
         # contains multivariate normals with the desired covariance.
@@ -4125,7 +4038,8 @@ cdef class RandomGenerator:
             while i < totsize:
                 acc = 0.0
                 for j in range(k):
-                    val_data[i+j] = random_standard_gamma(self._prng, alpha_data[j])
+                    val_data[i+j] = random_standard_gamma_zig(self._prng,
+                                                              alpha_data[j])
                     acc             = acc + val_data[i + j]
                 invacc  = 1/acc
                 for j in range(k):

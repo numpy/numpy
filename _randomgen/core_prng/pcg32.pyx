@@ -97,12 +97,6 @@ cdef class PCG32:
         free(self._prng.binomial)
         free(self._prng)
 
-    cdef _reset_state_variables(self):
-        self._prng.has_gauss = 0
-        self._prng.has_gauss_f = 0
-        self._prng.gauss = 0.0
-        self._prng.gauss_f = 0.0
-
     def __random_integer(self, bits=64):
         """
         64-bit Random Integers from the PRNG
@@ -188,7 +182,6 @@ cdef class PCG32:
                              'and {ub}'.format(ub=ub))
 
         pcg32_set_seed(self.rng_state, <uint64_t>seed, <uint64_t>inc)
-        self._reset_state_variables()
 
     @property
     def state(self):

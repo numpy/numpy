@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random
-import pytest
 from numpy.testing import assert_allclose, assert_array_equal, assert_equal
+import pytest
 
 from core_prng import RandomGenerator, MT19937
 
@@ -12,9 +12,7 @@ def compare_0_input(f1, f2):
               (tuple([]), {'size': (20, 31, 5)})]
 
 
-def compare_1_input(f1, f2, is_small=False, core_prng_kwargs=None):
-    if core_prng_kwargs is None:
-        core_prng_kwargs = {}
+def compare_1_input(f1, f2, is_small=False):
     a = 0.3 if is_small else 10
     inputs = [((a,), {}),
               ((a,), {'size': 10}),
@@ -23,14 +21,11 @@ def compare_1_input(f1, f2, is_small=False, core_prng_kwargs=None):
               ((np.array([a] * 10),), {'size': (100, 10)})]
     for i in inputs:
         v1 = f1(*i[0], **i[1])
-        i[1].update(core_prng_kwargs)
         v2 = f2(*i[0], **i[1])
         assert_allclose(v1, v2)
 
 
-def compare_2_input(f1, f2, is_np=False, is_scalar=False, core_prng_kwargs=None):
-    if core_prng_kwargs is None:
-        core_prng_kwargs = {}
+def compare_2_input(f1, f2, is_np=False, is_scalar=False):
     if is_np:
         a, b = 10, 0.3
         dtype = np.int
@@ -52,7 +47,6 @@ def compare_2_input(f1, f2, is_np=False, is_scalar=False, core_prng_kwargs=None)
 
     for i in inputs:
         v1 = f1(*i[0], **i[1])
-        i[1].update(core_prng_kwargs)
         v2 = f2(*i[0], **i[1])
         assert_allclose(v1, v2)
 
@@ -101,8 +95,8 @@ class TestAgainstNumPy(object):
         st[0] = 'MT19937'
         st[1] = state['state']['key']
         st[2] = state['state']['pos']
-        st[3] = state['has_gauss']
-        st[4] = state['gauss']
+        st[3] = 0
+        st[4] = 0.0
         cls.nprs.set_state(st)
 
     def _is_state_common(self):
@@ -110,8 +104,6 @@ class TestAgainstNumPy(object):
         state2 = self.rg.state
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
-        assert (state[3] == state2['has_gauss'])
-        assert_allclose(state[4], state2['gauss'])
 
     def test_common_seed(self):
         self.rg.seed(1234)
@@ -129,8 +121,6 @@ class TestAgainstNumPy(object):
         state2 = self.rg.state
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
-        assert (state[3] == state2['has_gauss'])
-        assert (state[4] == state2['gauss'])
 
     def test_random_sample(self):
         self._set_common_state()
@@ -168,6 +158,7 @@ class TestAgainstNumPy(object):
                         self.rg.tomaxint)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_chisquare(self):
         self._set_common_state()
         self._is_state_common()
@@ -175,14 +166,15 @@ class TestAgainstNumPy(object):
                         self.rg.chisquare)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_gamma(self):
         self._set_common_state()
         self._is_state_common()
         compare_1_input(self.nprs.standard_gamma,
-                        self.rg.standard_gamma,
-                        core_prng_kwargs={'method':'inv'})
+                        self.rg.standard_gamma)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_standard_t(self):
         self._set_common_state()
         self._is_state_common()
@@ -248,6 +240,7 @@ class TestAgainstNumPy(object):
                         is_small=True)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_beta(self):
         self._set_common_state()
         self._is_state_common()
@@ -262,6 +255,7 @@ class TestAgainstNumPy(object):
                         self.rg.exponential)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_f(self):
         self._set_common_state()
         self._is_state_common()
@@ -269,6 +263,7 @@ class TestAgainstNumPy(object):
                         self.rg.f)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_gamma(self):
         self._set_common_state()
         self._is_state_common()
@@ -297,6 +292,7 @@ class TestAgainstNumPy(object):
                         self.rg.laplace)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_lognormal(self):
         self._set_common_state()
         self._is_state_common()
@@ -304,6 +300,7 @@ class TestAgainstNumPy(object):
                         self.rg.lognormal)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_noncentral_chisquare(self):
         self._set_common_state()
         self._is_state_common()
@@ -311,12 +308,12 @@ class TestAgainstNumPy(object):
                         self.rg.noncentral_chisquare)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_normal(self):
         self._set_common_state()
         self._is_state_common()
         compare_2_input(self.nprs.normal,
-                        self.rg.normal,
-                        core_prng_kwargs={'method':'bm'})
+                        self.rg.normal)
         self._is_state_common()
 
     def test_uniform(self):
@@ -333,6 +330,7 @@ class TestAgainstNumPy(object):
                         self.rg.vonmises)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_wald(self):
         self._set_common_state()
         self._is_state_common()
@@ -356,6 +354,7 @@ class TestAgainstNumPy(object):
                         is_np=True)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_negative_binomial(self):
         self._set_common_state()
         self._is_state_common()
@@ -364,13 +363,16 @@ class TestAgainstNumPy(object):
                         is_np=True)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_randn(self):
         f = self.rg.randn
         g = self.nprs.randn
-        assert_allclose(f(10, method='bm'), g(10))
-        assert_allclose(f(3, 4, 5, method='bm'), g(3, 4, 5))
+        assert_allclose(f(10), g(10))
+        assert_allclose(f(3, 4, 5), g(3, 4, 5))
 
     def test_rand(self):
+        self._set_common_state()
+        self._is_state_common()
         f = self.rg.rand
         g = self.nprs.rand
         assert_allclose(f(10), g(10))
@@ -379,6 +381,7 @@ class TestAgainstNumPy(object):
     def test_poisson_lam_max(self):
         assert_allclose(self.rg.poisson_lam_max, self.nprs.poisson_lam_max)
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_dirichlet(self):
         f = self.rg.dirichlet
         g = self.nprs.dirichlet
@@ -387,6 +390,7 @@ class TestAgainstNumPy(object):
         assert_allclose(f(np.array(a), 10), g(np.array(a), 10))
         assert_allclose(f(np.array(a), (3, 37)), g(np.array(a), (3, 37)))
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_noncentral_f(self):
         self._set_common_state()
         self._is_state_common()
@@ -464,6 +468,7 @@ class TestAgainstNumPy(object):
         assert_equal(fa, ga)
         self._is_state_common()
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_multivariate_normal(self):
         self._set_common_state()
         self._is_state_common()
@@ -471,11 +476,11 @@ class TestAgainstNumPy(object):
         cov = [[1, .2, .3], [.2, 4, 1], [.3, 1, 10]]
         f = self.rg.multivariate_normal
         g = self.nprs.multivariate_normal
-        assert_allclose(f(mu, cov, method='bm'), g(mu, cov))
-        assert_allclose(f(np.array(mu), cov, method='bm'), g(np.array(mu), cov))
-        assert_allclose(f(np.array(mu), np.array(cov), method='bm'),
+        assert_allclose(f(mu, cov), g(mu, cov))
+        assert_allclose(f(np.array(mu), cov), g(np.array(mu), cov))
+        assert_allclose(f(np.array(mu), np.array(cov)),
                         g(np.array(mu), np.array(cov)))
-        assert_allclose(f(np.array(mu), np.array(cov), size=(7, 31), method='bm'),
+        assert_allclose(f(np.array(mu), np.array(cov), size=(7, 31)),
                         g(np.array(mu), np.array(cov), size=(7, 31)))
         self._is_state_common()
 

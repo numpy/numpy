@@ -86,10 +86,10 @@ def comp_state(state1, state2):
 def warmup(rg, n=None):
     if n is None:
         n = 11 + np.random.randint(0, 20)
-    rg.standard_normal(n, method='bm')
-    rg.standard_normal(n, method='zig')
-    rg.standard_normal(n, method='bm', dtype=np.float32)
-    rg.standard_normal(n, method='zig', dtype=np.float32)
+    rg.standard_normal(n)
+    rg.standard_normal(n)
+    rg.standard_normal(n, dtype=np.float32)
+    rg.standard_normal(n, dtype=np.float32)
     rg.randint(0, 2 ** 24, n, dtype=np.uint64)
     rg.randint(0, 2 ** 48, n, dtype=np.uint64)
     rg.standard_gamma(11.0, n)
@@ -112,8 +112,8 @@ class RNG(object):
     def test_init(self):
         rg = RandomGenerator(self.prng())
         state = rg.state
-        rg.standard_normal(1, method='bm')
-        rg.standard_normal(1, method='zig')
+        rg.standard_normal(1)
+        rg.standard_normal(1)
         rg.state = state
         new_state = rg.state
         assert_(comp_state(state, new_state))
@@ -173,7 +173,7 @@ class RNG(object):
         params_0(self.rg.random_sample)
 
     def test_standard_normal_zig(self):
-        assert_(len(self.rg.standard_normal(10, method='zig')) == 10)
+        assert_(len(self.rg.standard_normal(10)) == 10)
 
     def test_standard_normal(self):
         assert_(len(self.rg.standard_normal(10)) == 10)
@@ -303,22 +303,21 @@ class RNG(object):
     def test_complex_normal(self):
         st = self.rg.state
         vals = self.rg.complex_normal(
-            2.0 + 7.0j, 10.0, 5.0 - 5.0j, size=10, method='zig')
+            2.0 + 7.0j, 10.0, 5.0 - 5.0j, size=10)
         assert_(len(vals) == 10)
 
         self.rg.state = st
         vals2 = [self.rg.complex_normal(
-            2.0 + 7.0j, 10.0, 5.0 - 5.0j, method='zig') for _ in range(10)]
+            2.0 + 7.0j, 10.0, 5.0 - 5.0j) for _ in range(10)]
         np.testing.assert_allclose(vals, vals2)
 
         self.rg.state = st
         vals3 = self.rg.complex_normal(
-            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j,
-            method='zig')
+            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j)
         np.testing.assert_allclose(vals, vals3)
 
         self.rg.state = st
-        norms = self.rg.standard_normal(size=20, method='zig')
+        norms = self.rg.standard_normal(size=20)
         norms = np.reshape(norms, (10, 2))
         cov = 0.5 * (-5.0)
         v_real = 7.5
@@ -335,18 +334,17 @@ class RNG(object):
     def test_complex_normal_bm(self):
         st = self.rg.state
         vals = self.rg.complex_normal(
-            2.0 + 7.0j, 10.0, 5.0 - 5.0j, size=10, method='bm')
+            2.0 + 7.0j, 10.0, 5.0 - 5.0j, size=10)
         assert_(len(vals) == 10)
 
         self.rg.state = st
         vals2 = [self.rg.complex_normal(
-            2.0 + 7.0j, 10.0, 5.0 - 5.0j, method='bm') for _ in range(10)]
+            2.0 + 7.0j, 10.0, 5.0 - 5.0j) for _ in range(10)]
         np.testing.assert_allclose(vals, vals2)
 
         self.rg.state = st
         vals3 = self.rg.complex_normal(
-            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j,
-            method='bm')
+            2.0 + 7.0j * np.ones(10), 10.0 * np.ones(1), 5.0 - 5.0j)
         np.testing.assert_allclose(vals, vals3)
 
     def test_complex_normal_zero_variance(self):
@@ -421,15 +419,14 @@ class RNG(object):
         assert_equal(vals.shape, (10, 10, 10))
 
         state = self.rg.state
-        vals = self.rg.randn(10, 10, 10, method='bm')
+        vals = self.rg.randn(10, 10, 10)
         self.rg.state = state
-        assert_equal(vals, self.rg.standard_normal((10, 10, 10), method='bm'))
+        assert_equal(vals, self.rg.standard_normal((10, 10, 10)))
 
         state = self.rg.state
-        vals_inv = self.rg.randn(10, 10, 10, method='bm')
+        vals_inv = self.rg.randn(10, 10, 10)
         self.rg.state = state
-        vals_zig = self.rg.randn(10, 10, 10, method='zig')
-        assert_((vals_zig != vals_inv).any())
+        vals_zig = self.rg.randn(10, 10, 10)
 
         vals = self.rg.randn(10, 10, 10, dtype=np.float32)
         assert_(vals.shape == (10, 10, 10))
@@ -519,9 +516,9 @@ class RNG(object):
         cov = [[1, 0], [0, 100]]  # diagonal covariance
         x = self.rg.multivariate_normal(mean, cov, 5000)
         assert_(x.shape == (5000, 2))
-        x_zig = self.rg.multivariate_normal(mean, cov, 5000, method='zig')
+        x_zig = self.rg.multivariate_normal(mean, cov, 5000)
         assert_(x.shape == (5000, 2))
-        x_inv = self.rg.multivariate_normal(mean, cov, 5000, method='bm')
+        x_inv = self.rg.multivariate_normal(mean, cov, 5000)
         assert_(x.shape == (5000, 2))
         assert_((x_zig != x_inv).any())
 
@@ -635,11 +632,11 @@ class RNG(object):
         rg = RandomGenerator(self.prng())
         warmup(rg)
         state = rg.state
-        r1 = rg.standard_normal(11, method='bm', dtype=np.float32)
+        r1 = rg.standard_normal(11, dtype=np.float32)
         rg2 = RandomGenerator(self.prng())
         warmup(rg2)
         rg2.state = state
-        r2 = rg2.standard_normal(11, method='bm', dtype=np.float32)
+        r2 = rg2.standard_normal(11, dtype=np.float32)
         assert_array_equal(r1, r2)
         assert_equal(r1.dtype, np.float32)
         assert_(comp_state(rg.state, rg2.state))
@@ -648,11 +645,11 @@ class RNG(object):
         rg = RandomGenerator(self.prng())
         warmup(rg)
         state = rg.state
-        r1 = rg.standard_normal(11, method='zig', dtype=np.float32)
+        r1 = rg.standard_normal(11, dtype=np.float32)
         rg2 = RandomGenerator(self.prng())
         warmup(rg2)
         rg2.state = state
-        r2 = rg2.standard_normal(11, method='zig', dtype=np.float32)
+        r2 = rg2.standard_normal(11, dtype=np.float32)
         assert_array_equal(r1, r2)
         assert_equal(r1.dtype, np.float32)
         assert_(comp_state(rg.state, rg2.state))
@@ -855,8 +852,6 @@ class TestMT19937(RNG):
         state2 = self.rg.state
         assert_((state[1] == state2['state']['key']).all())
         assert_((state[2] == state2['state']['pos']))
-        assert_((state[3] == state2['has_gauss']))
-        assert_((state[4] == state2['gauss']))
 
 
 class TestPCG64(RNG):

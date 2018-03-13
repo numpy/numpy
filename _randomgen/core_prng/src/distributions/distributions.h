@@ -59,12 +59,25 @@ typedef struct prng {
   uint32_t (*next_uint32)(void *st);
   double (*next_double)(void *st);
   uint64_t (*next_raw)(void *st);
-  int has_gauss;
-  double gauss;
-  int has_gauss_f;
-  float gauss_f;
   binomial_t *binomial;
 } prng_t;
+
+/* Inline generators for internal use */
+static NPY_INLINE uint32_t random_uint32(prng_t *prng_state) {
+  return prng_state->next_uint32(prng_state->state);
+}
+
+static NPY_INLINE uint64_t random_uint64(prng_t *prng_state) {
+  return prng_state->next_uint64(prng_state->state);
+}
+
+static NPY_INLINE float random_float(prng_t *prng_state) {
+  return (random_uint32(prng_state) >> 9) * (1.0f / 8388608.0f);
+}
+
+static NPY_INLINE double random_double(prng_t *prng_state) {
+  return prng_state->next_double(prng_state->state);
+}
 
 DECLDIR float random_sample_f(prng_t *prng_state);
 DECLDIR double random_sample(prng_t *prng_state);
@@ -79,17 +92,23 @@ DECLDIR float random_standard_exponential_f(prng_t *prng_state);
 DECLDIR double random_standard_exponential_zig(prng_t *prng_state);
 DECLDIR float random_standard_exponential_zig_f(prng_t *prng_state);
 
+/*
 DECLDIR double random_gauss(prng_t *prng_state);
 DECLDIR float random_gauss_f(prng_t *prng_state);
+*/
 DECLDIR double random_gauss_zig(prng_t *prng_state);
 DECLDIR float random_gauss_zig_f(prng_t *prng_state);
 
+/*
 DECLDIR double random_standard_gamma(prng_t *prng_state, double shape);
 DECLDIR float random_standard_gamma_f(prng_t *prng_state, float shape);
+*/
 DECLDIR double random_standard_gamma_zig(prng_t *prng_state, double shape);
 DECLDIR float random_standard_gamma_zig_f(prng_t *prng_state, float shape);
 
+/*
 DECLDIR double random_normal(prng_t *prng_state, double loc, double scale);
+*/
 DECLDIR double random_normal_zig(prng_t *prng_state, double loc, double scale);
 
 DECLDIR double random_gamma(prng_t *prng_state, double shape, double scale);

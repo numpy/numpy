@@ -110,10 +110,6 @@ cdef class Philox:
     cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
         self.rng_state.uinteger = 0
-        self._prng.has_gauss = 0
-        self._prng.has_gauss_f = 0
-        self._prng.gauss = 0.0
-        self._prng.gauss_f = 0.0
         self.rng_state.buffer_pos = PHILOX_BUFFER_SIZE
         for i in range(PHILOX_BUFFER_SIZE):
             self.rng_state.buffer[i] = 0
