@@ -32,7 +32,6 @@ cdef extern from "src/distributions/distributions.h":
         uint32_t (*next_uint32)(void *st) nogil
         double (*next_double)(void *st) nogil
         uint64_t (*next_raw)(void *st) nogil
-        binomial_t *binomial
 
     ctypedef prng prng_t
 
@@ -85,7 +84,7 @@ cdef extern from "src/distributions/distributions.h":
 
     long random_poisson(prng_t *prng_state, double lam) nogil
     long random_negative_binomial(prng_t *prng_state, double n, double p) nogil
-    long random_binomial(prng_t *prng_state, double p, long n) nogil
+    long random_binomial(prng_t *prng_state, double p, long n, binomial_t *binomial) nogil
     long random_logseries(prng_t *prng_state, double p) nogil
     long random_geometric_search(prng_t *prng_state, double p) nogil
     long random_geometric_inversion(prng_t *prng_state, double p) nogil

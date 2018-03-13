@@ -4,7 +4,7 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 
 from common cimport *
-from distributions cimport prng_t, binomial_t
+from distributions cimport prng_t
 from core_prng.entropy import random_entropy
 import core_prng.pickle
 cimport entropy
@@ -70,7 +70,6 @@ cdef class ThreeFry:
         self.rng_state.ctr = <threefry4x64_ctr_t *>malloc(sizeof(threefry4x64_ctr_t))
         self.rng_state.key = <threefry4x64_key_t *>malloc(sizeof(threefry4x64_key_t))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed, counter, key)
 
         self._prng.state = <void *>self.rng_state
@@ -98,7 +97,6 @@ cdef class ThreeFry:
         free(self.rng_state.ctr)
         free(self.rng_state.key)
         free(self.rng_state)
-        free(self._prng.binomial)
         free(self._prng)
 
     cdef _reset_state_variables(self):

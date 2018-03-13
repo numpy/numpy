@@ -7,7 +7,7 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
-from distributions cimport prng_t, binomial_t
+from distributions cimport prng_t
 import core_prng.pickle
 from core_prng.entropy import random_entropy
 
@@ -61,7 +61,6 @@ cdef class MT19937:
     def __init__(self, seed=None):
         self.rng_state = <mt19937_state *>malloc(sizeof(mt19937_state))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
@@ -75,7 +74,6 @@ cdef class MT19937:
 
     def __dealloc__(self):
         free(self.rng_state)
-        free(self._prng.binomial)
         free(self._prng)
 
     # Pickling support:

@@ -59,7 +59,6 @@ typedef struct prng {
   uint32_t (*next_uint32)(void *st);
   double (*next_double)(void *st);
   uint64_t (*next_raw)(void *st);
-  binomial_t *binomial;
 } prng_t;
 
 /* Inline generators for internal use */
@@ -140,7 +139,7 @@ DECLDIR double random_triangular(prng_t *prng_state, double left, double mode,
 
 DECLDIR long random_poisson(prng_t *prng_state, double lam);
 DECLDIR long random_negative_binomial(prng_t *prng_state, double n, double p);
-DECLDIR long random_binomial(prng_t *prng_state, double p, long n);
+DECLDIR long random_binomial(prng_t *prng_state, double p, long n, binomial_t* binomial);
 DECLDIR long random_logseries(prng_t *prng_state, double p);
 DECLDIR long random_geometric_search(prng_t *prng_state, double p);
 DECLDIR long random_geometric_inversion(prng_t *prng_state, double p);

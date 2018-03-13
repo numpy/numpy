@@ -9,7 +9,7 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
-from distributions cimport prng_t, binomial_t
+from distributions cimport prng_t
 from core_prng.entropy import random_entropy
 import core_prng.pickle
 cimport entropy
@@ -55,13 +55,12 @@ cdef class Xoroshiro128:
     cdef xoroshiro128_state  *rng_state
     cdef prng_t *_prng
     cdef public object capsule
-    cdef object ctypes
-    cdef object cffi
+    cdef object _ctypes
+    cdef object _cffi
 
     def __init__(self, seed=None):
         self.rng_state = <xoroshiro128_state *>malloc(sizeof(xoroshiro128_state))
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed)
 
         self._prng.state = <void *>self.rng_state
@@ -70,8 +69,8 @@ cdef class Xoroshiro128:
         self._prng.next_double = &xoroshiro128_double
         self._prng.next_raw = &xoroshiro128_uint64
 
-        self.ctypes = None
-        self.cffi = None
+        self._ctypes = None
+        self._cffi = None
         
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
@@ -90,7 +89,6 @@ cdef class Xoroshiro128:
 
     def __dealloc__(self):
         free(self.rng_state)
-        free(self._prng.binomial)
         free(self._prng)
 
     cdef _reset_state_variables(self):
@@ -197,12 +195,12 @@ cdef class Xoroshiro128:
 
     @property
     def ctypes(self):
-        if self.ctypes is not None:
-            return self.ctypes
+        if self._ctypes is not None:
+            return self._ctypes
 
         import ctypes
         
-        self.ctypes = interface(<Py_ssize_t>self.rng_state,
+        self._ctypes = interface(<Py_ssize_t>self.rng_state,
                          ctypes.c_void_p(<Py_ssize_t>self.rng_state),
                          ctypes.cast(<Py_ssize_t>&xoroshiro128_uint64, 
                                      ctypes.CFUNCTYPE(ctypes.c_uint64, 
@@ -218,15 +216,15 @@ cdef class Xoroshiro128:
 
     @property
     def cffi(self):
-        if self.cffi is not None:
-            return self.cffi
+        if self._cffi is not None:
+            return self._cffi
         try:
             import cffi 
         except ImportError:
             raise ImportError('cffi is cannot be imported.')
 
         ffi = cffi.FFI()
-        self.cffi = interface(<Py_ssize_t>self.rng_state,
+        self._cffi = interface(<Py_ssize_t>self.rng_state,
                          ffi.cast('void *',<Py_ssize_t>self.rng_state),
                          ffi.cast('uint64_t (*)(void *)',<uint64_t>self._prng.next_uint64),
                          ffi.cast('uint32_t (*)(void *)',<uint64_t>self._prng.next_uint32),

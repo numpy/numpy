@@ -3,9 +3,6 @@
 import operator 
 import warnings
 
-import numpy as np
-cimport numpy as np
-cimport cython
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport Py_INCREF, PyComplex_RealAsDouble, PyComplex_ImagAsDouble, PyComplex_FromDoubles
 from common cimport *
@@ -13,9 +10,10 @@ from distributions cimport *
 from bounded_integers cimport *
 from libc cimport string
 from libc.stdlib cimport malloc, free
-
 cimport numpy as np
 import numpy as np
+cimport cython
+
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 
 from common cimport *
@@ -58,6 +56,7 @@ cdef class RandomGenerator:
     """
     cdef public object __core_prng
     cdef prng_t *_prng
+    cdef binomial_t *_binomial
     cdef object lock
     poisson_lam_max = POISSON_LAM_MAX
 
@@ -71,7 +70,11 @@ cdef class RandomGenerator:
         if not PyCapsule_IsValid(capsule, anon_name):
             raise ValueError("Invalid prng. The prng must be instantized.")
         self._prng = <prng_t *> PyCapsule_GetPointer(capsule, anon_name)
+        self._binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.lock = Lock()
+
+    def __dealloc__(self):
+        free(self._binomial)
 
     def __repr__(self):
         return self.__str__() + ' at 0x{:X}'.format(id(self))
@@ -3160,10 +3163,64 @@ cdef class RandomGenerator:
         >>> sum(np.random.binomial(9, 0.1, 20000) == 0)/20000.
         # answer = 0.38885, or 38%.
         """
-        return disc(&random_binomial, self._prng, size, self.lock, 1, 1,
-                    p, 'p', CONS_BOUNDED_0_1_NOTNAN,
-                    n, 'n', CONS_NON_NEGATIVE,
-                    0.0, '', CONS_NONE)
+
+        # Uses a custom implementation since self._binomial is required
+        cdef double _dp = 0
+        cdef long _in = 0
+        cdef bint is_scalar = True
+        cdef np.npy_intp i, cnt
+        cdef np.ndarray randoms
+        cdef np.int_t *randoms_data
+        cdef np.broadcast it
+
+        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_LONG, np.NPY_ALIGNED)
+        is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
+
+        if not is_scalar:
+            check_array_constraint(p_arr, 'p', CONS_BOUNDED_0_1_NOTNAN)
+            check_array_constraint(n_arr, 'n', CONS_NON_NEGATIVE)
+            if size is not None:
+                randoms = <np.ndarray>np.empty(size, np.int)
+            else:
+                it = np.PyArray_MultiIterNew2(p_arr, n_arr)
+                randoms = <np.ndarray>np.empty(it.shape, np.int)
+
+            randoms_data = <np.int_t *>np.PyArray_DATA(randoms)
+            cnt = np.PyArray_SIZE(randoms)
+
+            it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
+            with self.lock, nogil:
+                for i in range(cnt):
+                    _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
+                    _in = (<long*>np.PyArray_MultiIter_DATA(it, 2))[0]
+                    (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(self._prng, _dp, _in, self._binomial)
+
+                    np.PyArray_MultiIter_NEXT(it)
+
+            return randoms
+
+        _dp = PyFloat_AsDouble(p)
+        _in = PyInt_AsLong(n)
+        check_constraint(_dp, 'p', CONS_BOUNDED_0_1_NOTNAN)
+        check_constraint(<double>_in, 'n', CONS_NON_NEGATIVE)
+
+        if size is None:
+            with self.lock:
+                return random_binomial(self._prng, _dp, _in, self._binomial)
+
+        randoms = <np.ndarray>np.empty(size, np.int)
+        cnt = np.PyArray_SIZE(randoms)
+        randoms_data =  <np.int_t *>np.PyArray_DATA(randoms)
+
+        with self.lock, nogil:
+            for i in range(cnt):
+                randoms_data[i] = random_binomial(self._prng, _dp, _in,
+                                                  self._binomial)
+
+        return randoms
+
 
     def negative_binomial(self, n, p, size=None):
         """
@@ -3913,7 +3970,8 @@ cdef class RandomGenerator:
                 Sum = 1.0
                 dn = n
                 for j in range(d-1):
-                    mnix[i+j] = random_binomial(self._prng, pix[j]/Sum, dn)
+                    mnix[i+j] = random_binomial(self._prng, pix[j]/Sum, dn,
+                                                self._binomial)
                     dn = dn - mnix[i+j]
                     if dn <= 0:
                         break

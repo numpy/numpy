@@ -6,7 +6,7 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
-from distributions cimport prng_t, binomial_t
+from distributions cimport prng_t
 from core_prng.entropy import random_entropy
 import core_prng.pickle
 cimport entropy
@@ -88,7 +88,6 @@ cdef class DSFMT:
         self.rng_state.buffered_uniforms = <double *>PyArray_calloc_aligned(DSFMT_N64, sizeof(double))
         self.rng_state.buffer_loc = DSFMT_N64
         self._prng = <prng_t *>malloc(sizeof(prng_t))
-        self._prng.binomial = <binomial_t *>malloc(sizeof(binomial_t))
         self.seed(seed)
         self._prng.state = <void *>self.rng_state
         self._prng.next_uint64 = &dsfmt_uint64
@@ -114,7 +113,6 @@ cdef class DSFMT:
         PyArray_free_aligned(self.rng_state.state)
         PyArray_free_aligned(self.rng_state.buffered_uniforms)
         free(self.rng_state)
-        free(self._prng.binomial)
         free(self._prng)
 
     cdef _reset_state_variables(self):

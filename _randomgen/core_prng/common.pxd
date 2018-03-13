@@ -21,6 +21,9 @@ cdef enum ConstraintType:
 
 ctypedef ConstraintType constraint_type
 
+cdef int check_constraint(double val, object name, constraint_type cons) except -1
+cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1
+
 cdef extern from "src/aligned_malloc/aligned_malloc.h":
     cdef void *PyArray_realloc_aligned(void *p, size_t n);
     cdef void *PyArray_malloc_aligned(size_t n);

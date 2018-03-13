@@ -653,50 +653,50 @@ long random_negative_binomial(prng_t *prng_state, double n, double p) {
   return random_poisson(prng_state, Y);
 }
 
-long random_binomial_btpe(prng_t *prng_state, long n, double p) {
+long random_binomial_btpe(prng_t *prng_state, long n, double p, binomial_t* binomial) {
   double r, q, fm, p1, xm, xl, xr, c, laml, lamr, p2, p3, p4;
   double a, u, v, s, F, rho, t, A, nrq, x1, x2, f1, f2, z, z2, w, w2, x;
   long m, y, k, i;
 
-  if (!(prng_state->binomial->has_binomial) ||
-      (prng_state->binomial->nsave != n) ||
-      (prng_state->binomial->psave != p)) {
+  if (!(binomial->has_binomial) ||
+      (binomial->nsave != n) ||
+      (binomial->psave != p)) {
     /* initialize */
-    prng_state->binomial->nsave = n;
-    prng_state->binomial->psave = p;
-    prng_state->binomial->has_binomial = 1;
-    prng_state->binomial->r = r = min(p, 1.0 - p);
-    prng_state->binomial->q = q = 1.0 - r;
-    prng_state->binomial->fm = fm = n * r + r;
-    prng_state->binomial->m = m = (long)floor(prng_state->binomial->fm);
-    prng_state->binomial->p1 = p1 =
+    binomial->nsave = n;
+    binomial->psave = p;
+    binomial->has_binomial = 1;
+    binomial->r = r = min(p, 1.0 - p);
+    binomial->q = q = 1.0 - r;
+    binomial->fm = fm = n * r + r;
+    binomial->m = m = (long)floor(binomial->fm);
+    binomial->p1 = p1 =
         floor(2.195 * sqrt(n * r * q) - 4.6 * q) + 0.5;
-    prng_state->binomial->xm = xm = m + 0.5;
-    prng_state->binomial->xl = xl = xm - p1;
-    prng_state->binomial->xr = xr = xm + p1;
-    prng_state->binomial->c = c = 0.134 + 20.5 / (15.3 + m);
+    binomial->xm = xm = m + 0.5;
+    binomial->xl = xl = xm - p1;
+    binomial->xr = xr = xm + p1;
+    binomial->c = c = 0.134 + 20.5 / (15.3 + m);
     a = (fm - xl) / (fm - xl * r);
-    prng_state->binomial->laml = laml = a * (1.0 + a / 2.0);
+    binomial->laml = laml = a * (1.0 + a / 2.0);
     a = (xr - fm) / (xr * q);
-    prng_state->binomial->lamr = lamr = a * (1.0 + a / 2.0);
-    prng_state->binomial->p2 = p2 = p1 * (1.0 + 2.0 * c);
-    prng_state->binomial->p3 = p3 = p2 + c / laml;
-    prng_state->binomial->p4 = p4 = p3 + c / lamr;
+    binomial->lamr = lamr = a * (1.0 + a / 2.0);
+    binomial->p2 = p2 = p1 * (1.0 + 2.0 * c);
+    binomial->p3 = p3 = p2 + c / laml;
+    binomial->p4 = p4 = p3 + c / lamr;
   } else {
-    r = prng_state->binomial->r;
-    q = prng_state->binomial->q;
-    fm = prng_state->binomial->fm;
-    m = prng_state->binomial->m;
-    p1 = prng_state->binomial->p1;
-    xm = prng_state->binomial->xm;
-    xl = prng_state->binomial->xl;
-    xr = prng_state->binomial->xr;
-    c = prng_state->binomial->c;
-    laml = prng_state->binomial->laml;
-    lamr = prng_state->binomial->lamr;
-    p2 = prng_state->binomial->p2;
-    p3 = prng_state->binomial->p3;
-    p4 = prng_state->binomial->p4;
+    r = binomial->r;
+    q = binomial->q;
+    fm = binomial->fm;
+    m = binomial->m;
+    p1 = binomial->p1;
+    xm = binomial->xm;
+    xl = binomial->xl;
+    xr = binomial->xr;
+    c = binomial->c;
+    laml = binomial->laml;
+    lamr = binomial->lamr;
+    p2 = binomial->p2;
+    p3 = binomial->p3;
+    p4 = binomial->p4;
   }
 
 /* sigh ... */
@@ -794,26 +794,26 @@ Step60:
   return y;
 }
 
-long random_binomial_inversion(prng_t *prng_state, long n, double p) {
+long random_binomial_inversion(prng_t *prng_state, long n, double p, binomial_t* binomial) {
   double q, qn, np, px, U;
   long X, bound;
 
-  if (!(prng_state->binomial->has_binomial) ||
-      (prng_state->binomial->nsave != n) ||
-      (prng_state->binomial->psave != p)) {
-    prng_state->binomial->nsave = n;
-    prng_state->binomial->psave = p;
-    prng_state->binomial->has_binomial = 1;
-    prng_state->binomial->q = q = 1.0 - p;
-    prng_state->binomial->r = qn = exp(n * log(q));
-    prng_state->binomial->c = np = n * p;
-    prng_state->binomial->m = bound =
+  if (!(binomial->has_binomial) ||
+      (binomial->nsave != n) ||
+      (binomial->psave != p)) {
+    binomial->nsave = n;
+    binomial->psave = p;
+    binomial->has_binomial = 1;
+    binomial->q = q = 1.0 - p;
+    binomial->r = qn = exp(n * log(q));
+    binomial->c = np = n * p;
+    binomial->m = bound =
         (long)min(n, np + 10.0 * sqrt(np * q + 1));
   } else {
-    q = prng_state->binomial->q;
-    qn = prng_state->binomial->r;
-    np = prng_state->binomial->c;
-    bound = prng_state->binomial->m;
+    q = binomial->q;
+    qn = binomial->r;
+    np = binomial->c;
+    bound = binomial->m;
   }
   X = 0;
   px = qn;
@@ -832,21 +832,21 @@ long random_binomial_inversion(prng_t *prng_state, long n, double p) {
   return X;
 }
 
-long random_binomial(prng_t *prng_state, double p, long n) {
+long random_binomial(prng_t *prng_state, double p, long n, binomial_t * binomial) {
   double q;
 
   if (p <= 0.5) {
     if (p * n <= 30.0) {
-      return random_binomial_inversion(prng_state, n, p);
+      return random_binomial_inversion(prng_state, n, p, binomial);
     } else {
-      return random_binomial_btpe(prng_state, n, p);
+      return random_binomial_btpe(prng_state, n, p, binomial);
     }
   } else {
     q = 1.0 - p;
     if (q * n <= 30.0) {
-      return n - random_binomial_inversion(prng_state, n, q);
+      return n - random_binomial_inversion(prng_state, n, q, binomial);
     } else {
-      return n - random_binomial_btpe(prng_state, n, q);
+      return n - random_binomial_btpe(prng_state, n, q, binomial);
     }
   }
 }
