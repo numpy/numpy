@@ -118,10 +118,7 @@ cdef class DSFMT:
         free(self._prng)
 
     cdef _reset_state_variables(self):
-        self._prng.has_gauss = 0
-        self._prng.has_gauss_f = 0
-        self._prng.gauss = 0.0
-        self._prng.gauss_f = 0.0
+        pass
 
     def __random_integer(self, bits=64):
         """

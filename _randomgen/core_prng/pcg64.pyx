@@ -115,10 +115,6 @@ cdef class PCG64:
     cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
         self.rng_state.uinteger = 0
-        self._prng.has_gauss = 0
-        self._prng.has_gauss_f = 0
-        self._prng.gauss = 0.0
-        self._prng.gauss_f = 0.0
 
     def __random_integer(self, bits=64):
         """

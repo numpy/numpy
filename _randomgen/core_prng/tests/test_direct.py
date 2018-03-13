@@ -5,6 +5,7 @@ from os.path import join
 import numpy as np
 from numpy.testing import assert_equal, assert_allclose, assert_array_equal, \
     assert_raises
+import pytest
 
 from core_prng import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
     PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024
@@ -145,15 +146,16 @@ class Base(object):
         uints = rs.random_raw(1000)
         assert_equal(uints, self.data2['data'])
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_gauss_inv(self):
         n = 25
         rs = RandomGenerator(self.prng(*self.data1['seed']))
-        gauss = rs.standard_normal(n, method='bm')
+        gauss = rs.standard_normal(n)
         assert_allclose(gauss,
                         gauss_from_uint(self.data1['data'], n, self.bits))
 
         rs = RandomGenerator(self.prng(*self.data2['seed']))
-        gauss = rs.standard_normal(25, method='bm')
+        gauss = rs.standard_normal(25)
         assert_allclose(gauss,
                         gauss_from_uint(self.data2['data'], n, self.bits))
 
@@ -349,15 +351,16 @@ class TestDSFMT(Base):
         assert_equal(uniform_from_dsfmt(self.data2['data']),
                      rs.random_sample(1000))
 
+    @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_gauss_inv(self):
         n = 25
         rs = RandomGenerator(self.prng(*self.data1['seed']))
-        gauss = rs.standard_normal(n, method='bm')
+        gauss = rs.standard_normal(n)
         assert_allclose(gauss,
                         gauss_from_uint(self.data1['data'], n, 'dsfmt'))
 
         rs = RandomGenerator(self.prng(*self.data2['seed']))
-        gauss = rs.standard_normal(25, method='bm')
+        gauss = rs.standard_normal(25)
         assert_allclose(gauss,
                         gauss_from_uint(self.data2['data'], n, 'dsfmt'))
 

@@ -2,23 +2,6 @@
 #include "ziggurat.h"
 #include "ziggurat_constants.h"
 
-/* Inline generators for internal use */
-static NPY_INLINE uint32_t random_uint32(prng_t *prng_state) {
-  return prng_state->next_uint32(prng_state->state);
-}
-
-static NPY_INLINE uint64_t random_uint64(prng_t *prng_state) {
-  return prng_state->next_uint64(prng_state->state);
-}
-
-static NPY_INLINE float random_float(prng_t *prng_state) {
-  return (random_uint32(prng_state) >> 9) * (1.0f / 8388608.0f);
-}
-
-static NPY_INLINE double random_double(prng_t *prng_state) {
-  return prng_state->next_double(prng_state->state);
-}
-
 /* Random generators for external use */
 float random_sample_f(prng_t *prng_state) {
   return random_float(prng_state);
@@ -36,6 +19,7 @@ float random_standard_exponential_f(prng_t *prng_state) {
   return -logf(1.0f - random_float(prng_state));
 }
 
+/*
 double random_gauss(prng_t *prng_state) {
   if (prng_state->has_gauss) {
     const double temp = prng_state->gauss;
@@ -51,9 +35,9 @@ double random_gauss(prng_t *prng_state) {
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
-    /* Box-Muller transform */
+    // Box-Muller transform
     f = sqrt(-2.0 * log(r2) / r2);
-    /* Keep for next call */
+    // Keep for next call
     prng_state->gauss = f * x1;
     prng_state->has_gauss = true;
     return f * x2;
@@ -75,14 +59,15 @@ float random_gauss_f(prng_t *prng_state) {
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
-    /* Box-Muller transform */
+    // Box-Muller transform
     f = sqrtf(-2.0f * logf(r2) / r2);
-    /* Keep for next call */
+    // Keep for next call
     prng_state->gauss_f = f * x1;
     prng_state->has_gauss_f = true;
     return f * x2;
   }
 }
+*/
 
 static NPY_INLINE double standard_exponential_zig(prng_t *prng_state);
 
@@ -222,6 +207,7 @@ float random_gauss_zig_f(prng_t *prng_state) {
   }
 }
 
+/*
 static NPY_INLINE double standard_gamma(prng_t *prng_state, double shape) {
   double b, c;
   double U, V, X, Y;
@@ -306,6 +292,7 @@ static NPY_INLINE float standard_gamma_float(prng_t *prng_state, float shape) {
   }
 }
 
+
 double random_standard_gamma(prng_t *prng_state, double shape) {
   return standard_gamma(prng_state, shape);
 }
@@ -313,6 +300,7 @@ double random_standard_gamma(prng_t *prng_state, double shape) {
 float random_standard_gamma_f(prng_t *prng_state, float shape) {
   return standard_gamma_float(prng_state, shape);
 }
+*/
 
 static NPY_INLINE double standard_gamma_zig(prng_t *prng_state, double shape) {
   double b, c;
@@ -469,9 +457,11 @@ static double loggam(double x) {
   return gl;
 }
 
+/*
 double random_normal(prng_t *prng_state, double loc, double scale) {
   return loc + scale * random_gauss(prng_state);
 }
+*/
 
 double random_normal_zig(prng_t *prng_state, double loc, double scale) {
   return loc + scale * random_gauss_zig(prng_state);
@@ -486,11 +476,11 @@ double random_uniform(prng_t *prng_state, double lower, double range) {
 }
 
 double random_gamma(prng_t *prng_state, double shape, double scale) {
-  return scale * random_standard_gamma(prng_state, shape);
+  return scale * random_standard_gamma_zig(prng_state, shape);
 }
 
 float random_gamma_float(prng_t *prng_state, float shape, float scale) {
-  return scale * random_standard_gamma_f(prng_state, shape);
+  return scale * random_standard_gamma_zig_f(prng_state, shape);
 }
 
 double random_beta(prng_t *prng_state, double a, double b) {
@@ -521,14 +511,14 @@ double random_beta(prng_t *prng_state, double a, double b) {
       }
     }
   } else {
-    Ga = random_standard_gamma(prng_state, a);
-    Gb = random_standard_gamma(prng_state, b);
+    Ga = random_standard_gamma_zig(prng_state, a);
+    Gb = random_standard_gamma_zig(prng_state, b);
     return Ga / (Ga + Gb);
   }
 }
 
 double random_chisquare(prng_t *prng_state, double df) {
-  return 2.0 * random_standard_gamma(prng_state, df / 2.0);
+  return 2.0 * random_standard_gamma_zig(prng_state, df / 2.0);
 }
 
 double random_f(prng_t *prng_state, double dfnum, double dfden) {
@@ -537,7 +527,7 @@ double random_f(prng_t *prng_state, double dfnum, double dfden) {
 }
 
 double random_standard_cauchy(prng_t *prng_state) {
-  return random_gauss(prng_state) / random_gauss(prng_state);
+  return random_gauss_zig(prng_state) / random_gauss_zig(prng_state);
 }
 
 double random_pareto(prng_t *prng_state, double a) {
@@ -579,7 +569,7 @@ double random_logistic(prng_t *prng_state, double loc, double scale) {
 }
 
 double random_lognormal(prng_t *prng_state, double mean, double sigma) {
-  return exp(random_normal(prng_state, mean, sigma));
+  return exp(random_normal_zig(prng_state, mean, sigma));
 }
 
 double random_rayleigh(prng_t *prng_state, double mode) {
@@ -589,8 +579,8 @@ double random_rayleigh(prng_t *prng_state, double mode) {
 double random_standard_t(prng_t *prng_state, double df) {
   double num, denom;
 
-  num = random_gauss(prng_state);
-  denom = random_standard_gamma(prng_state, df / 2);
+  num = random_gauss_zig(prng_state);
+  denom = random_standard_gamma_zig(prng_state, df / 2);
   return sqrt(df / 2) * num / sqrt(denom);
 }
 
@@ -867,7 +857,7 @@ double random_noncentral_chisquare(prng_t *prng_state, double df, double nonc) {
   }
   if (1 < df) {
     const double Chi2 = random_chisquare(prng_state, df - 1);
-    const double n = random_gauss(prng_state) + sqrt(nonc);
+    const double n = random_gauss_zig(prng_state) + sqrt(nonc);
     return Chi2 + n * n;
   } else {
     const long i = random_poisson(prng_state, nonc / 2.0);
@@ -886,7 +876,7 @@ double random_wald(prng_t *prng_state, double mean, double scale) {
   double mu_2l;
 
   mu_2l = mean / (2 * scale);
-  Y = random_gauss(prng_state);
+  Y = random_gauss_zig(prng_state);
   Y = mean * Y * Y;
   X = mean + mu_2l * (Y - sqrt(4 * scale * Y + Y * Y));
   U = random_sample(prng_state);

@@ -28,25 +28,16 @@ else:
     raise RuntimeError('Required DLL/so file was not found.')
 
 ffi.cdef("""
-double random_gauss(void *prng_state);
 double random_gauss_zig(void *prng_state);
 """)
 x = Xoroshiro128()
 xffi = x.cffi
 prng = xffi.prng
 
-random_gauss = lib.random_gauss
 random_gauss_zig = lib.random_gauss_zig
 
 
 def normals(n, prng):
-    out = np.empty(n)
-    for i in range(n):
-        out[i] = random_gauss(prng)
-    return out
-
-
-def normals_zig(n, prng):
     out = np.empty(n)
     for i in range(n):
         out[i] = random_gauss_zig(prng)
@@ -54,11 +45,10 @@ def normals_zig(n, prng):
 
 
 normalsj = nb.jit(normals, nopython=True)
-normals_zigj = nb.jit(normals_zig, nopython=True)
+
 
 # Numba requires a memory address for void *
 # Can also get address from x.ctypes.prng.value
 prng_address = int(ffi.cast('uintptr_t', prng))
 
 norm = normalsj(1000, prng_address)
-norm_zig = normals_zigj(1000, prng_address)
