@@ -487,14 +487,14 @@ cdef class RandomGenerator:
         """
         cdef np.npy_intp n
         cdef np.ndarray randoms
-        cdef long *randoms_data
+        cdef int64_t *randoms_data
 
         if size is None:
             with self.lock:
                 return random_positive_int(self._prng)
 
-        randoms = <np.ndarray>np.empty(size, dtype=np.int)
-        randoms_data = <long*>np.PyArray_DATA(randoms)
+        randoms = <np.ndarray>np.empty(size, dtype=np.int64)
+        randoms_data = <int64_t*>np.PyArray_DATA(randoms)
         n = np.PyArray_SIZE(randoms)
 
         for i in range(n):
@@ -776,7 +776,7 @@ cdef class RandomGenerator:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
-                found = np.zeros(shape, dtype=np.int)
+                found = np.zeros(shape, dtype=np.int64)
                 flat_found = found.ravel()
                 while n_uniq < size:
                     x = self.rand(size - n_uniq)
@@ -1039,13 +1039,11 @@ cdef class RandomGenerator:
         """
         random_integers(low, high=None, size=None)
 
-        Random integers of type np.int between `low` and `high`, inclusive.
+        Random integers of type np.int64 between `low` and `high`, inclusive.
 
-        Return random integers of type np.int from the "discrete uniform"
+        Return random integers of type np.int64 from the "discrete uniform"
         distribution in the closed interval [`low`, `high`].  If `high` is
-        None (the default), then results are from [1, `low`]. The np.int
-        type translates to the C long type used by Python 2 for "short"
-        integers and its precision is platform dependent.
+        None (the default), then results are from [1, `low`]. 
 
         This function has been deprecated. Use randint instead.
 
@@ -1418,7 +1416,7 @@ cdef class RandomGenerator:
 
         it = np.PyArray_MultiIterNew5(randoms, oloc, v_real, v_imag, rho)
         with self.lock, nogil:
-            n2 = 2 * n  # Avoid compiler noise for cast to long
+            n2 = 2 * n  # Avoid compiler noise for cast
             for i in range(n2):
                 randoms_data[i] = random_gauss_zig(self._prng)
         with nogil:
@@ -3166,36 +3164,36 @@ cdef class RandomGenerator:
 
         # Uses a custom implementation since self._binomial is required
         cdef double _dp = 0
-        cdef long _in = 0
+        cdef int64_t _in = 0
         cdef bint is_scalar = True
         cdef np.npy_intp i, cnt
         cdef np.ndarray randoms
-        cdef np.int_t *randoms_data
+        cdef np.int64_t *randoms_data
         cdef np.broadcast it
 
         p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
-        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_LONG, np.NPY_ALIGNED)
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
 
         if not is_scalar:
             check_array_constraint(p_arr, 'p', CONS_BOUNDED_0_1_NOTNAN)
             check_array_constraint(n_arr, 'n', CONS_NON_NEGATIVE)
             if size is not None:
-                randoms = <np.ndarray>np.empty(size, np.int)
+                randoms = <np.ndarray>np.empty(size, np.int64)
             else:
                 it = np.PyArray_MultiIterNew2(p_arr, n_arr)
-                randoms = <np.ndarray>np.empty(it.shape, np.int)
+                randoms = <np.ndarray>np.empty(it.shape, np.int64)
 
-            randoms_data = <np.int_t *>np.PyArray_DATA(randoms)
+            randoms_data = <np.int64_t *>np.PyArray_DATA(randoms)
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
             with self.lock, nogil:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
-                    _in = (<long*>np.PyArray_MultiIter_DATA(it, 2))[0]
-                    (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(self._prng, _dp, _in, self._binomial)
+                    _in = (<int64_t*>np.PyArray_MultiIter_DATA(it, 2))[0]
+                    (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(self._prng, _dp, _in, self._binomial)
 
                     np.PyArray_MultiIter_NEXT(it)
 
@@ -3210,9 +3208,9 @@ cdef class RandomGenerator:
             with self.lock:
                 return random_binomial(self._prng, _dp, _in, self._binomial)
 
-        randoms = <np.ndarray>np.empty(size, np.int)
+        randoms = <np.ndarray>np.empty(size, np.int64)
         cnt = np.PyArray_SIZE(randoms)
-        randoms_data =  <np.int_t *>np.PyArray_DATA(randoms)
+        randoms_data =  <np.int64_t *>np.PyArray_DATA(randoms)
 
         with self.lock, nogil:
             for i in range(cnt):
@@ -3334,7 +3332,7 @@ cdef class RandomGenerator:
         :math:`k` events occurring within the observed
         interval :math:`\\lambda`.
 
-        Because the output is limited to the range of the C long type, a
+        Because the output is limited to the range of the C int64 type, a
         ValueError is raised when `lam` is within 10 sigma of the maximum
         representable value.
 
@@ -3589,11 +3587,11 @@ cdef class RandomGenerator:
         """
         cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
-        cdef long lngood, lnbad, lnsample
+        cdef int64_t lngood, lnbad, lnsample
 
-        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_LONG, np.NPY_ALIGNED)
-        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_LONG, np.NPY_ALIGNED)
-        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_LONG, np.NPY_ALIGNED)
+        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ALIGNED)
+        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ALIGNED)
+        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ALIGNED)
 
         if np.PyArray_NDIM(ongood) == np.PyArray_NDIM(onbad) == np.PyArray_NDIM(onsample) == 0:
 
@@ -3941,7 +3939,7 @@ cdef class RandomGenerator:
         cdef np.npy_intp d, i, j, dn, sz
         cdef np.ndarray parr "arrayObject_parr", mnarr "arrayObject_mnarr"
         cdef double *pix
-        cdef long *mnix
+        cdef int64_t *mnix
         cdef double Sum
 
         d = len(pvals)
@@ -3959,9 +3957,9 @@ cdef class RandomGenerator:
             except:
                 shape = tuple(size) + (d,)
 
-        multin = np.zeros(shape, dtype=np.int)
+        multin = np.zeros(shape, dtype=np.int64)
         mnarr = <np.ndarray>multin
-        mnix = <long*>np.PyArray_DATA(mnarr)
+        mnix = <int64_t*>np.PyArray_DATA(mnarr)
         sz = np.PyArray_SIZE(mnarr)
 
         with self.lock, nogil:

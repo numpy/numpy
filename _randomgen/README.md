@@ -96,6 +96,7 @@ The RNGs include:
   the optional keyword argument `dtype`
 * Core random number generators can fill existing arrays using the
   `out` keyword argument
+* Standardizes integer-values random values as int64 for all platforms.
 
 
 ### New Functions

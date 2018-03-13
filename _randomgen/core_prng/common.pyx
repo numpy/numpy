@@ -407,7 +407,7 @@ cdef object discrete_broadcast_d(void *func, prng_t *state, object size, object 
                                  np.ndarray a_arr, object a_name, constraint_type a_constraint):
 
     cdef np.ndarray randoms
-    cdef long *randoms_data
+    cdef int64_t *randoms_data
     cdef np.broadcast it
     cdef random_uint_d f = (<random_uint_d>func)
     cdef np.npy_intp i, n
@@ -416,12 +416,12 @@ cdef object discrete_broadcast_d(void *func, prng_t *state, object size, object 
         check_array_constraint(a_arr, a_name, a_constraint)
 
     if size is not None:
-        randoms = np.empty(size, np.int)
+        randoms = np.empty(size, np.int64)
     else:
         #randoms = np.empty(np.shape(a_arr), np.double)
-        randoms = np.PyArray_SimpleNew(np.PyArray_NDIM(a_arr), np.PyArray_DIMS(a_arr), np.NPY_LONG)
+        randoms = np.PyArray_SimpleNew(np.PyArray_NDIM(a_arr), np.PyArray_DIMS(a_arr), np.NPY_INT64)
 
-    randoms_data = <long *>np.PyArray_DATA(randoms)
+    randoms_data = <int64_t *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
@@ -438,7 +438,7 @@ cdef object discrete_broadcast_dd(void *func, prng_t *state, object size, object
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint):
     cdef np.ndarray randoms
-    cdef long *randoms_data
+    cdef int64_t *randoms_data
     cdef np.broadcast it
     cdef random_uint_dd f = (<random_uint_dd>func)
     cdef np.npy_intp i, n
@@ -449,13 +449,13 @@ cdef object discrete_broadcast_dd(void *func, prng_t *state, object size, object
         check_array_constraint(b_arr, b_name, b_constraint)
 
     if size is not None:
-        randoms = <np.ndarray>np.empty(size, np.int)
+        randoms = <np.ndarray>np.empty(size, np.int64)
     else:
         it = np.PyArray_MultiIterNew2(a_arr, b_arr)
-        randoms = <np.ndarray>np.empty(it.shape, np.int)
-        # randoms = np.PyArray_SimpleNew(it.nd, np.PyArray_DIMS(it), np.NPY_LONG)
+        randoms = <np.ndarray>np.empty(it.shape, np.int64)
+        # randoms = np.PyArray_SimpleNew(it.nd, np.PyArray_DIMS(it), np.NPY_INT64)
 
-    randoms_data = <long *>np.PyArray_DATA(randoms)
+    randoms_data = <int64_t *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
@@ -473,7 +473,7 @@ cdef object discrete_broadcast_di(void *func, prng_t *state, object size, object
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint):
     cdef np.ndarray randoms
-    cdef long *randoms_data
+    cdef int64_t *randoms_data
     cdef np.broadcast it
     cdef random_uint_di f = (<random_uint_di>func)
     cdef np.npy_intp i, n
@@ -486,20 +486,20 @@ cdef object discrete_broadcast_di(void *func, prng_t *state, object size, object
         check_array_constraint(b_arr, b_name, b_constraint)
 
     if size is not None:
-        randoms = <np.ndarray>np.empty(size, np.int)
+        randoms = <np.ndarray>np.empty(size, np.int64)
     else:
         it = np.PyArray_MultiIterNew2(a_arr, b_arr)
-        randoms = <np.ndarray>np.empty(it.shape, np.int)
+        randoms = <np.ndarray>np.empty(it.shape, np.int64)
 
-    randoms_data = <long *>np.PyArray_DATA(randoms)
+    randoms_data = <int64_t *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
     with lock, nogil:
         for i in range(n):
             a_val = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
-            b_val = (<long*>np.PyArray_MultiIter_DATA(it, 2))[0]
-            (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = f(state, a_val, b_val)
+            b_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 2))[0]
+            (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0] = f(state, a_val, b_val)
 
             np.PyArray_MultiIter_NEXT(it)
 
@@ -510,7 +510,7 @@ cdef object discrete_broadcast_iii(void *func, prng_t *state, object size, objec
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint,
                                   np.ndarray c_arr, object c_name, constraint_type c_constraint):
     cdef np.ndarray randoms
-    cdef long *randoms_data
+    cdef int64_t *randoms_data
     cdef np.broadcast it
     cdef random_uint_iii f = (<random_uint_iii>func)
     cdef np.npy_intp i, n
@@ -525,20 +525,20 @@ cdef object discrete_broadcast_iii(void *func, prng_t *state, object size, objec
         check_array_constraint(c_arr, c_name, c_constraint)
 
     if size is not None:
-        randoms = <np.ndarray>np.empty(size, np.int)
+        randoms = <np.ndarray>np.empty(size, np.int64)
     else:
         it = np.PyArray_MultiIterNew3(a_arr, b_arr, c_arr)
-        randoms = <np.ndarray>np.empty(it.shape, np.int)
+        randoms = <np.ndarray>np.empty(it.shape, np.int64)
 
-    randoms_data = <long *>np.PyArray_DATA(randoms)
+    randoms_data = <int64_t *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew4(randoms, a_arr, b_arr, c_arr)
     with lock, nogil:
         for i in range(n):
-            a_val = (<long*>np.PyArray_MultiIter_DATA(it, 1))[0]
-            b_val = (<long*>np.PyArray_MultiIter_DATA(it, 2))[0]
-            c_val = (<long*>np.PyArray_MultiIter_DATA(it, 3))[0]
+            a_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
+            b_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 2))[0]
+            c_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 3))[0]
             randoms_data[i] = f(state, a_val, b_val, c_val)
 
             np.PyArray_MultiIter_NEXT(it)
@@ -548,7 +548,7 @@ cdef object discrete_broadcast_iii(void *func, prng_t *state, object size, objec
 cdef object discrete_broadcast_i(void *func, prng_t *state, object size, object lock,
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint):
     cdef np.ndarray randoms
-    cdef long *randoms_data
+    cdef int64_t *randoms_data
     cdef np.broadcast it
     cdef random_uint_i f = (<random_uint_i>func)
     cdef np.npy_intp i, n
@@ -557,32 +557,32 @@ cdef object discrete_broadcast_i(void *func, prng_t *state, object size, object 
         check_array_constraint(a_arr, a_name, a_constraint)
 
     if size is not None:
-        randoms = <np.ndarray>np.empty(size, np.int)
+        randoms = <np.ndarray>np.empty(size, np.int64)
     else:
-        randoms = np.PyArray_SimpleNew(np.PyArray_NDIM(a_arr), np.PyArray_DIMS(a_arr), np.NPY_LONG)
+        randoms = np.PyArray_SimpleNew(np.PyArray_NDIM(a_arr), np.PyArray_DIMS(a_arr), np.NPY_INT64)
 
-    randoms_data = <long *>np.PyArray_DATA(randoms)
+    randoms_data = <int64_t *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew2(randoms, a_arr)
     with lock, nogil:
         for i in range(n):
-            a_val = (<long*>np.PyArray_MultiIter_DATA(it, 1))[0]
+            a_val = (<int64_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
             randoms_data[i] = f(state, a_val)
 
             np.PyArray_MultiIter_NEXT(it)
 
     return randoms
 
-# Needs double <vec>, double-double <vec>, double-long<vec>, long <vec>, long-long-long
+# Needs double <vec>, double-double <vec>, double-int64_t<vec>, int64_t <vec>, int64_t-int64_t-int64_t
 cdef object disc(void *func, prng_t *state, object size, object lock,
-                 int narg_double, int narg_long,
+                 int narg_double, int narg_int64,
                  object a, object a_name, constraint_type a_constraint,
                  object b, object b_name, constraint_type b_constraint,
                  object c, object c_name, constraint_type c_constraint):
 
     cdef double _da = 0, _db = 0
-    cdef long _ia = 0, _ib = 0 , _ic = 0
+    cdef int64_t _ia = 0, _ib = 0 , _ic = 0
     cdef bint is_scalar = True
     if narg_double > 0:
         a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
@@ -590,22 +590,22 @@ cdef object disc(void *func, prng_t *state, object size, object lock,
         if narg_double > 1:
             b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
-        elif narg_long == 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_LONG, np.NPY_ALIGNED)
+        elif narg_int64 == 1:
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
     else:
-        if narg_long > 0:
-            a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_LONG, np.NPY_ALIGNED)
+        if narg_int64 > 0:
+            a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_INT64, np.NPY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
-        if narg_long > 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_LONG, np.NPY_ALIGNED)
+        if narg_int64 > 1:
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
-        if narg_long > 2 :
-            c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_LONG, np.NPY_ALIGNED)
+        if narg_int64 > 2 :
+            c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_INT64, np.NPY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(c_arr) == 0
 
     if not is_scalar:
-        if narg_long == 0:
+        if narg_int64 == 0:
             if narg_double == 1:
                 return discrete_broadcast_d(func, state, size, lock,
                                             a_arr, a_name, a_constraint)
@@ -613,7 +613,7 @@ cdef object disc(void *func, prng_t *state, object size, object lock,
                 return discrete_broadcast_dd(func, state, size, lock,
                                              a_arr, a_name, a_constraint,
                                              b_arr, b_name, b_constraint)
-        elif narg_long == 1:
+        elif narg_int64 == 1:
             if narg_double == 0:
                 return discrete_broadcast_i(func, state, size, lock,
                                             a_arr, a_name, a_constraint)
@@ -634,34 +634,34 @@ cdef object disc(void *func, prng_t *state, object size, object lock,
             _db = PyFloat_AsDouble(b)
             if b_constraint != CONS_NONE and is_scalar:
                 check_constraint(_db, b_name, b_constraint)
-        elif narg_long == 1:
+        elif narg_int64 == 1:
             _ib = PyInt_AsLong(b)
             if b_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ib, b_name, b_constraint)
     else:
-        if narg_long > 0:
+        if narg_int64 > 0:
             _ia = PyInt_AsLong(a)
             if a_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ia, a_name, a_constraint)
-        if narg_long > 1:
+        if narg_int64 > 1:
             _ib = PyInt_AsLong(b)
             if b_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ib, b_name, b_constraint)
-        if narg_long > 2 :
+        if narg_int64 > 2 :
             _ic = PyInt_AsLong(c)
             if c_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ic, c_name, c_constraint)
 
     if size is None:
         with lock:
-            if narg_long == 0:
+            if narg_int64 == 0:
                 if narg_double == 0:
                     return (<random_uint_0>func)(state)
                 elif narg_double == 1:
                     return (<random_uint_d>func)(state, _da)
                 elif narg_double == 2:
                     return (<random_uint_dd>func)(state, _da, _db)
-            elif narg_long == 1:
+            elif narg_int64 == 1:
                 if narg_double == 0:
                     return (<random_uint_i>func)(state, _ia)
                 if narg_double == 1:
@@ -670,8 +670,8 @@ cdef object disc(void *func, prng_t *state, object size, object lock,
                 return (<random_uint_iii>func)(state, _ia, _ib, _ic)
 
     cdef np.npy_intp i, n
-    cdef np.ndarray randoms = <np.ndarray>np.empty(size, np.int)
-    cdef np.int_t *randoms_data
+    cdef np.ndarray randoms = <np.ndarray>np.empty(size, np.int64)
+    cdef np.int64_t *randoms_data
     cdef random_uint_0 f0;
     cdef random_uint_d fd;
     cdef random_uint_dd fdd;
@@ -680,10 +680,10 @@ cdef object disc(void *func, prng_t *state, object size, object lock,
     cdef random_uint_iii fiii;
 
     n = np.PyArray_SIZE(randoms)
-    randoms_data =  <np.int_t *>np.PyArray_DATA(randoms)
+    randoms_data =  <np.int64_t *>np.PyArray_DATA(randoms)
 
     with lock, nogil:
-        if narg_long == 0:
+        if narg_int64 == 0:
             if narg_double == 0:
                 f0 = (<random_uint_0>func)
                 for i in range(n):
@@ -696,7 +696,7 @@ cdef object disc(void *func, prng_t *state, object size, object lock,
                 fdd = (<random_uint_dd>func)
                 for i in range(n):
                     randoms_data[i] = fdd(state, _da, _db)
-        elif narg_long == 1:
+        elif narg_int64 == 1:
             if narg_double == 0:
                 fi = (<random_uint_i>func)
                 for i in range(n):

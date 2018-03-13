@@ -298,16 +298,14 @@ class TestRandint(object):
 
             res = hashlib.md5(val.view(np.int8)).hexdigest()
             print(tgt[np.dtype(dt).name] == res)
-            # TODO
-            # assert_(tgt[np.dtype(dt).name] == res)
+            assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianess
         mt19937.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
         print(tgt[np.dtype(bool).name] == res)
-        # TODO
-        # assert_(tgt[np.dtype(bool).name] == res)
+        assert_(tgt[np.dtype(bool).name] == res)
 
     def test_repeatability_broadcasting(self):
 
@@ -1081,9 +1079,6 @@ class TestBroadcast(object):
 
     def set_seed(self):
         random.seed(self.seed)
-
-    # TODO: Include test for randint once it can broadcast
-    # Can steal the test written in PR #6938
 
     def test_uniform(self):
         low = [0]
