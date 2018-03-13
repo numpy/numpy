@@ -100,6 +100,11 @@ as usual with `errstate`.
 Dates, times, and timedeltas can now be histogrammed. The bin edges must be
 passed explicitly, and are not yet computed automatically.
 
+``histogram`` "auto" estimator handles limited variance better
+------------------------------------------------------------------------
+No longer does an IQR of 0 result in `n_bins=1`, rather the number of bins
+chosen is related to the data size in this situation
+
 ``np.r_`` works with 0d arrays, and ``np.ma.mr_` works with ``np.ma.masked``
 ----------------------------------------------------------------------------
 0d arrays passed to the `r_` and `mr_` concatenation helpers are now treated as
