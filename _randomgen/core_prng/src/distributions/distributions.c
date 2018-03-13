@@ -15,7 +15,7 @@ static NPY_INLINE float random_float(prng_t *prng_state) {
   return (random_uint32(prng_state) >> 9) * (1.0f / 8388608.0f);
 }
 
-static NPY_INLINE float random_double(prng_t *prng_state) {
+static NPY_INLINE double random_double(prng_t *prng_state) {
   return prng_state->next_double(prng_state->state);
 }
 
