@@ -24,7 +24,7 @@ import versioneer
 Cython.Compiler.Options.annotate = True
 
 USE_SSE2 = True if not '--no-sse2' in sys.argv else False
-MOD_DIR = './core_prng'
+MOD_DIR = './randomgen'
 
 DEBUG = False
 PCG_EMULATED_MATH = False
@@ -53,7 +53,7 @@ if USE_SSE2:
 if struct.calcsize('P') < 8:
     PCG_EMULATED_MATH = True
 
-files = glob.glob('./core_prng/*.in')
+files = glob.glob('./randomgen/*.in')
 for templated_file in files:
     output_file_name = os.path.splitext(templated_file)[0]
     if (os.path.exists(output_file_name) and
@@ -65,7 +65,7 @@ for templated_file in files:
         output_file.write(template.substitute())
 
 
-extensions = [Extension('core_prng.entropy',
+extensions = [Extension('randomgen.entropy',
                         sources=[join(MOD_DIR, 'entropy.pyx'),
                                  join(MOD_DIR, 'src', 'entropy', 'entropy.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
@@ -74,8 +74,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.dsfmt",
-                        ["core_prng/dsfmt.pyx",
+              Extension("randomgen.dsfmt",
+                        ["randomgen/dsfmt.pyx",
                          join(MOD_DIR, 'src', 'dsfmt', 'dSFMT.c'),
                          join(MOD_DIR, 'src', 'dsfmt', 'dSFMT-jump.c'),
                          join(MOD_DIR, 'src', 'aligned_malloc', 'aligned_malloc.c')],
@@ -86,8 +86,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_link_args=EXTRA_LINK_ARGS,
                         define_macros=DSFMT_DEFS,
                         ),
-              Extension("core_prng.mt19937",
-                        ["core_prng/mt19937.pyx",
+              Extension("randomgen.mt19937",
+                        ["randomgen/mt19937.pyx",
                          join(MOD_DIR, 'src', 'mt19937', 'mt19937.c'),
                          join(MOD_DIR, 'src', 'mt19937', 'mt19937-jump.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
@@ -96,8 +96,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.philox",
-                        ["core_prng/philox.pyx",
+              Extension("randomgen.philox",
+                        ["randomgen/philox.pyx",
                          join(MOD_DIR, 'src', 'philox', 'philox.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
@@ -105,8 +105,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.pcg64",
-                        ["core_prng/pcg64.pyx",
+              Extension("randomgen.pcg64",
+                        ["randomgen/pcg64.pyx",
                          join(MOD_DIR, 'src', 'pcg64',  'pcg64.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
@@ -114,8 +114,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.pcg32",
-                        ["core_prng/pcg32.pyx",
+              Extension("randomgen.pcg32",
+                        ["randomgen/pcg32.pyx",
                          join(MOD_DIR, 'src', 'pcg32', 'pcg32.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
@@ -123,8 +123,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.threefry",
-                        ["core_prng/threefry.pyx",
+              Extension("randomgen.threefry",
+                        ["randomgen/threefry.pyx",
                          join(MOD_DIR, 'src', 'threefry', 'threefry.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
@@ -132,8 +132,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.threefry32",
-                        ["core_prng/threefry32.pyx",
+              Extension("randomgen.threefry32",
+                        ["randomgen/threefry32.pyx",
                          join(MOD_DIR, 'src', 'threefry32', 'threefry32.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
@@ -141,8 +141,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.xoroshiro128",
-                        ["core_prng/xoroshiro128.pyx",
+              Extension("randomgen.xoroshiro128",
+                        ["randomgen/xoroshiro128.pyx",
                          join(MOD_DIR, 'src', 'xoroshiro128',
                               'xoroshiro128.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
@@ -152,8 +152,8 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.xorshift1024",
-                        ["core_prng/xorshift1024.pyx",
+              Extension("randomgen.xorshift1024",
+                        ["randomgen/xorshift1024.pyx",
                          join(MOD_DIR, 'src', 'xorshift1024',
                               'xorshift1024.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
@@ -162,22 +162,22 @@ extensions = [Extension('core_prng.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.generator",
-                        ["core_prng/generator.pyx",
+              Extension("randomgen.generator",
+                        ["randomgen/generator.pyx",
                          join(MOD_DIR, 'src', 'distributions',
                               'distributions.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.common",
-                        ["core_prng/common.pyx"],
+              Extension("randomgen.common",
+                        ["randomgen/common.pyx"],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
-              Extension("core_prng.bounded_integers",
-                        ["core_prng/bounded_integers.pyx",
+              Extension("randomgen.bounded_integers",
+                        ["randomgen/bounded_integers.pyx",
                          join(MOD_DIR, 'src', 'distributions',
                               'distributions.c')],
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
@@ -197,9 +197,9 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     ext_modules=cythonize(extensions, compile_time_env={
         "PCG_EMULATED_MATH": PCG_EMULATED_MATH}),
-    name='core_prng',
+    name='randomgen',
     packages=find_packages(),
-    package_dir={'core_prng': './core_prng'},
+    package_dir={'randomgen': './randomgen'},
     package_data={'': ['*.c', '*.h', '*.pxi', '*.pyx', '*.pxd']},
     include_package_data=True,
     license='NSCA',
@@ -207,7 +207,7 @@ setup(
     author_email='kevin.k.sheppard@gmail.com',
     distclass=BinaryDistribution,
     description='Next-gen RandomState supporting multiple PRNGs',
-    url='https://github.com/bashtage/core-prng',
+    url='https://github.com/bashtage/randomgen',
     keywords=['pseudo random numbers', 'PRNG', 'Python'],
     zip_safe=False
 )

@@ -42,8 +42,8 @@ def get_config():
     cfg.VCS = "git"
     cfg.style = "pep440"
     cfg.tag_prefix = ""
-    cfg.parentdir_prefix = "core_prng-"
-    cfg.versionfile_source = "core_prng/_version.py"
+    cfg.parentdir_prefix = "randomgen-"
+    cfg.versionfile_source = "randomgen/_version.py"
     cfg.verbose = False
     return cfg
 

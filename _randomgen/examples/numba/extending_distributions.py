@@ -1,5 +1,5 @@
 r"""
-On *nix, execute in core_prng/src/distributions
+On *nix, execute in randomgen/src/distributions
 
 export PYTHON_INCLUDE=#path to Python's include folder, usually ${PYTHON_HOME}/include/python${PYTHON_VERSION}m
 export NUMPY_INCLUDE=#path to numpy's include folder, usually ${PYTHON_HOME}/lib/python${PYTHON_VERSION}/site-packages/numpy/core/include
@@ -16,7 +16,7 @@ move distributions.dll ../../../examples/numba/
 import os
 import numpy as np
 from cffi import FFI
-from core_prng import Xoroshiro128
+from randomgen import Xoroshiro128
 import numba as nb
 
 ffi = FFI()
@@ -28,19 +28,19 @@ else:
     raise RuntimeError('Required DLL/so file was not found.')
 
 ffi.cdef("""
-double random_gauss_zig(void *prng_state);
+double random_gauss_zig(void *brng_state);
 """)
 x = Xoroshiro128()
 xffi = x.cffi
-prng = xffi.prng
+brng = xffi.brng
 
 random_gauss_zig = lib.random_gauss_zig
 
 
-def normals(n, prng):
+def normals(n, brng):
     out = np.empty(n)
     for i in range(n):
-        out[i] = random_gauss_zig(prng)
+        out[i] = random_gauss_zig(brng)
     return out
 
 
@@ -48,7 +48,7 @@ normalsj = nb.jit(normals, nopython=True)
 
 
 # Numba requires a memory address for void *
-# Can also get address from x.ctypes.prng.value
-prng_address = int(ffi.cast('uintptr_t', prng))
+# Can also get address from x.ctypes.brng.value
+brng_address = int(ffi.cast('uintptr_t', brng))
 
-norm = normalsj(1000, prng_address)
+norm = normalsj(1000, brng_address)

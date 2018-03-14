@@ -1,7 +1,7 @@
 Xorshift1024*φ
 --------------
 
-.. currentmodule:: core_prng.xorshift1024
+.. currentmodule:: randomgen.xorshift1024
 
 Random generator
 ================

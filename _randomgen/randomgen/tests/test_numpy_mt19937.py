@@ -10,8 +10,8 @@ from numpy.testing import (
     assert_array_almost_equal)
 import pytest
 
-from core_prng._testing import suppress_warnings
-from core_prng import RandomGenerator, MT19937
+from randomgen._testing import suppress_warnings
+from randomgen import RandomGenerator, MT19937
 
 random = mt19937 = RandomGenerator(MT19937())
 
@@ -92,34 +92,34 @@ class TestMultinomial(object):
 class TestSetState(object):
     def setup(self):
         self.seed = 1234567890
-        self.prng = RandomGenerator(MT19937(self.seed))
-        self.state = self.prng.state
-        self.legacy_state = (self.state['prng'],
+        self.brng = RandomGenerator(MT19937(self.seed))
+        self.state = self.brng.state
+        self.legacy_state = (self.state['brng'],
                              self.state['state']['key'],
                              self.state['state']['pos'])
 
     def test_basic(self):
-        old = self.prng.tomaxint(16)
-        self.prng.state = self.state
-        new = self.prng.tomaxint(16)
+        old = self.brng.tomaxint(16)
+        self.brng.state = self.state
+        new = self.brng.tomaxint(16)
         assert_(np.all(old == new))
 
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
-        old = self.prng.standard_normal(size=3)
-        self.prng.state = self.state
-        new = self.prng.standard_normal(size=3)
+        old = self.brng.standard_normal(size=3)
+        self.brng.state = self.state
+        new = self.brng.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
         # cached Gaussian is restored.
 
-        self.prng.standard_normal()
-        state = self.prng.state
-        old = self.prng.standard_normal(size=3)
-        self.prng.state = state
-        new = self.prng.standard_normal(size=3)
+        self.brng.standard_normal()
+        state = self.brng.state
+        old = self.brng.standard_normal(size=3)
+        self.brng.state = state
+        new = self.brng.standard_normal(size=3)
         assert_(np.all(old == new))
 
     @pytest.mark.skip(reason='Box-Muller no longer supported')
@@ -127,18 +127,18 @@ class TestSetState(object):
         # Make sure we can accept old state tuples that do not have the
         # cached Gaussian value.
         old_state = self.legacy_state[:-2]
-        x1 = self.prng.standard_normal(size=16)
-        self.prng.state = old_state
-        x2 = self.prng.standard_normal(size=16)
-        self.prng.state = self.state
-        x3 = self.prng.standard_normal(size=16)
+        x1 = self.brng.standard_normal(size=16)
+        self.brng.state = old_state
+        x2 = self.brng.standard_normal(size=16)
+        self.brng.state = self.state
+        x3 = self.brng.standard_normal(size=16)
         assert_(np.all(x1 == x2))
         assert_(np.all(x1 == x3))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        self.prng.negative_binomial(0.5, 0.5)
+        self.brng.negative_binomial(0.5, 0.5)
 
 
 class TestRandint(object):

@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=source
 set BUILDDIR=build
-set SPHINXPROJ=CorePRNG
+set SPHINXPROJ=RandomGen
 
 if "%1" == "" goto help
 

@@ -3,15 +3,15 @@ cimport numpy as np
 cimport cython
 from libc.stdint cimport uint32_t
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from core_prng.common cimport prng_t
-from core_prng.xoroshiro128 import Xoroshiro128
+from randomgen.common cimport brng_t
+from randomgen.xoroshiro128 import Xoroshiro128
 
 np.import_array()
 
 def uniform_mean(Py_ssize_t N):
     cdef Py_ssize_t i
-    cdef prng_t *rng
-    cdef const char *capsule_name = "CorePRNG"
+    cdef brng_t *rng
+    cdef const char *capsule_name = "BasicRNG"
     cdef double[::1] random_values
     cdef np.ndarray randoms
 
@@ -19,14 +19,14 @@ def uniform_mean(Py_ssize_t N):
     capsule = x.capsule
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
-    rng = <prng_t *> PyCapsule_GetPointer(capsule, capsule_name)
+    rng = <brng_t *> PyCapsule_GetPointer(capsule, capsule_name)
     random_values = np.empty(N)
     for i in range(N):
         random_values[i] = rng.next_double(rng.state)
     randoms = np.asarray(random_values)
     return randoms.mean()
 
-cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, prng_t *rng):
+cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, brng_t *rng):
     cdef uint32_t mask, delta, val
     mask = delta = ub - lb
     mask |= mask >> 1
@@ -45,9 +45,9 @@ cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, prng_t *rng):
 @cython.wraparound(False)
 def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
     cdef Py_ssize_t i
-    cdef prng_t *rng
+    cdef brng_t *rng
     cdef uint32_t[::1] out
-    cdef const char *capsule_name = "CorePRNG"
+    cdef const char *capsule_name = "BasicRNG"
 
     x = Xoroshiro128()
     out = np.empty(n, dtype=np.uint32)
@@ -55,7 +55,7 @@ def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
     
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
-    rng = <prng_t *>PyCapsule_GetPointer(capsule, capsule_name)
+    rng = <brng_t *>PyCapsule_GetPointer(capsule, capsule_name)
 
     for i in range(n):
         out[i] = bounded_uint(lb, ub, rng)

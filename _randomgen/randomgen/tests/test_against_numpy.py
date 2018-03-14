@@ -3,7 +3,7 @@ import numpy.random
 from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 import pytest
 
-from core_prng import RandomGenerator, MT19937
+from randomgen import RandomGenerator, MT19937
 
 
 def compare_0_input(f1, f2):
@@ -38,8 +38,10 @@ def compare_2_input(f1, f2, is_np=False, is_scalar=False):
               ((np.array([a] * 10), b), {}),
               ((a, np.array([b] * 10)), {}),
               ((a, np.array([b] * 10)), {'size': 10}),
-              ((np.reshape(np.array([[a] * 100]), (100, 1)), np.array([b] * 10)), {'size': (100, 10)}),
-              ((np.ones((7, 31), dtype=dtype) * a, np.array([b] * 31)), {'size': (7, 31)}),
+              ((np.reshape(np.array([[a] * 100]), (100, 1)),
+                np.array([b] * 10)), {'size': (100, 10)}),
+              ((np.ones((7, 31), dtype=dtype) * a,
+                np.array([b] * 31)), {'size': (7, 31)}),
               ((np.ones((7, 31), dtype=dtype) * a, np.array([b] * 31)), {'size': (10, 7, 31)})]
 
     if is_scalar:
@@ -81,9 +83,9 @@ class TestAgainstNumPy(object):
     @classmethod
     def setup_class(cls):
         cls.np = numpy.random
-        cls.prng = MT19937
+        cls.brng = MT19937
         cls.seed = [2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
-        cls.rg = RandomGenerator(cls.prng(*cls.seed))
+        cls.rg = RandomGenerator(cls.brng(*cls.seed))
         cls.nprs = cls.np.RandomState(*cls.seed)
         cls.initial_state = cls.rg.state
         cls._set_common_state()
@@ -430,7 +432,8 @@ class TestAgainstNumPy(object):
         p = [.1, .3, .4, .2]
         assert_equal(f(100, p), g(100, p))
         assert_equal(f(100, np.array(p)), g(100, np.array(p)))
-        assert_equal(f(100, np.array(p), size=(7, 23)), g(100, np.array(p), size=(7, 23)))
+        assert_equal(f(100, np.array(p), size=(7, 23)),
+                     g(100, np.array(p), size=(7, 23)))
         self._is_state_common()
 
     def test_choice(self):
@@ -525,7 +528,7 @@ class TestAgainstNumPy(object):
     def test_dir(self):
         nprs_d = set(dir(self.nprs))
         rs_d = dir(self.rg)
-        excluded = {'get_state', 'poisson_lam_max','set_state'}
+        excluded = {'get_state', 'poisson_lam_max', 'set_state'}
         nprs_d.difference_update(excluded)
         assert (len(nprs_d.difference(rs_d)) == 0)
 

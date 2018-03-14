@@ -1,4 +1,4 @@
-from core_prng import Xoroshiro128
+from randomgen import Xoroshiro128
 import numpy as np
 import numba as nb
 

@@ -1,9 +1,9 @@
-# Core PRNG
+# RandomGen
 
-[![Travis Build Status](https://travis-ci.org/bashtage/ng-numpy-randomstate.svg?branch=master)](https://travis-ci.org/bashtage/core-prng) 
-[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true)](https://ci.appveyor.com/project/bashtage/core-prng/branch/master)
+[![Travis Build Status](https://travis-ci.org/bashtage/ng-numpy-randomstate.svg?branch=master)](https://travis-ci.org/bashtage/randomgen) 
+[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true)](https://ci.appveyor.com/project/bashtage/randomgen/branch/master)
 
-Experimental Core Pseudo Random Number Generator interface for future
+Random Number Generator using settable Basic RNG interface for future
 NumPy RandomState evolution.
 
 This is a library and generic interface for alternative random 
@@ -11,7 +11,7 @@ generators in Python and NumPy.
 
 
 ### Compatibility Warning
-Core PRNG no longer supports Box-Muller normal variates and so it not
+RandomGen no longer supports Box-Muller normal variates and so it not
 100% compatible with NumPy (or randomstate). Box-Muller normals are slow
 to generate and all functions which previously relied on Box-Muller
 normals now use the faster Ziggurat implementation.
@@ -22,7 +22,7 @@ normals now use the faster Ziggurat implementation.
 
 ```python
 # import numpy.random as rnd
-from core_prng import RandomGenerator, MT19937
+from randomgen import RandomGenerator, MT19937
 rnd = RandomGenerator(MT19937())
 x = rnd.standard_normal(100)
 y = rnd.random_sample(100)
@@ -36,7 +36,7 @@ z = rnd.randn(10,10)
   exponential and standard gamma using the Ziggurat method
 
 ```python
-from core_prng import RandomGenerator
+from randomgen import RandomGenerator
 # Use Xoroshiro128
 rnd = RandomGenerator()
 w = rnd.standard_normal(10000, method='zig')
@@ -110,7 +110,7 @@ PRNG implementation.
 or 64-bit (`[0, 2**64-1]`)
 * `jump` - Jumps RNGs that support it.  `jump` moves the state a great 
 distance. _Only available if supported by the RNG._
-* `advance` - Advanced the core RNG 'as-if' a number of draws were made, 
+* `advance` - Advanced the RNG 'as-if' a number of draws were made, 
 without actually drawing the numbers. _Only available if supported by 
 the RNG._
 
@@ -133,7 +133,7 @@ The version matched the latest version of NumPy where
 ## Documentation
 
 An occasionally updated build of the documentation is available on
-[my GitHub pages](http://bashtage.github.io/core-prng/).
+[my GitHub pages](http://bashtage.github.io/randomgen/).
 
 ## Plans
 This module is essentially complete.  There are a few rough edges that 
@@ -188,10 +188,10 @@ compiler.
 
 ## Using
 
-The separate generators are importable from `core_prng`
+The separate generators are importable from `randomgen`
 
 ```python
-from core_prng import RandomGenerator, ThreeFry, PCG64, MT19937
+from randomgen import RandomGenerator, ThreeFry, PCG64, MT19937
 rg = RandomGenerator(ThreeFry())
 rg.random_sample(100)
 

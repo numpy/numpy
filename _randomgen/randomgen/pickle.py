@@ -20,13 +20,13 @@ PRNGS = {'MT19937': MT19937,
          'Xoroshiro128': Xoroshiro128}
 
 
-def __generator_ctor(prng_name='mt19937'):
+def __generator_ctor(brng_name='mt19937'):
     """
     Pickling helper function that returns a mod_name.RandomState object
 
     Parameters
     ----------
-    prng_name: str
+    brng_name: str
         String containing the core PRNG
 
     Returns
@@ -35,38 +35,38 @@ def __generator_ctor(prng_name='mt19937'):
         RandomGenerator using the named core PRNG
     """
     try:
-        prng_name = prng_name.decode('ascii')
+        brng_name = brng_name.decode('ascii')
     except AttributeError:
         pass
-    if prng_name in PRNGS:
-        prng = PRNGS[prng_name]
+    if brng_name in PRNGS:
+        brng = PRNGS[brng_name]
     else:
-        raise ValueError(str(prng_name) + ' is not a known PRNG module.')
+        raise ValueError(str(brng_name) + ' is not a known PRNG module.')
 
-    return RandomGenerator(prng())
+    return RandomGenerator(brng())
 
 
-def __prng_ctor(prng_name='mt19937'):
+def __brng_ctor(brng_name='mt19937'):
     """
     Pickling helper function that returns a mod_name.RandomState object
 
     Parameters
     ----------
-    prng_name: str
-        String containing the core PRNG
+    brng_name: str
+        String containing the name of the Basic RNG
 
     Returns
     -------
-    prng: CorePRNG
-        Core PRNG instance
+    brng: BasicRNG
+        Basic RNG instance
     """
     try:
-        prng_name = prng_name.decode('ascii')
+        brng_name = brng_name.decode('ascii')
     except AttributeError:
         pass
-    if prng_name in PRNGS:
-        prng = PRNGS[prng_name]
+    if brng_name in PRNGS:
+        brng = PRNGS[brng_name]
     else:
-        raise ValueError(str(prng_name) + ' is not a known PRNG module.')
+        raise ValueError(str(brng_name) + ' is not a known PRNG module.')
 
-    return prng()
+    return brng()
