@@ -1,6 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import tempfile
 import sys
 import shutil
@@ -6992,7 +6997,7 @@ class TestHashing(object):
 
     def test_collections_hashable(self):
         x = np.array([])
-        assert_(not isinstance(x, collections.Hashable))
+        assert_(not isinstance(x, collections_abc.Hashable))
 
 
 class TestArrayPriority(object):

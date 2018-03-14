@@ -1,6 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import re
 import sys
 import warnings
@@ -547,7 +552,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     y = zeros(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
-        if not isinstance(item, collections.Callable):
+        if not isinstance(item, collections_abc.Callable):
             y[condlist[k]] = item
         else:
             vals = x[condlist[k]]
