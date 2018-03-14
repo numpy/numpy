@@ -1402,7 +1402,11 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
     PyObject *str;
+    #if (PY_VERSION_HEX >= 0x030700A2)
+    const char *docstr;
+    #else
     char *docstr;
+    #endif
     static char *msg = "already has a docstring";
     PyObject *tp_dict = PyArrayDescr_Type.tp_dict;
     PyObject *myobj;
