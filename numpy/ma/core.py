@@ -133,7 +133,7 @@ def doc_note(initialdoc, note):
     if note is None:
         return initialdoc
 
-    notesplit = re.split('\n\s*?Notes\n\s*?-----', initialdoc)
+    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', initialdoc)
 
     notedoc = """\
 Notes
