@@ -5,9 +5,10 @@ ThreeFry Counter-based RNG
 
 .. currentmodule:: randomgen.threefry
 
-Random generator
-================
 .. autoclass:: ThreeFry
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

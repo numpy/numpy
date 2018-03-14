@@ -535,13 +535,14 @@ class TestAgainstNumPy(object):
         assert (len(nprs_d.difference(rs_d)) == 0)
 
         npmod = dir(numpy.random)
-        mod = dir(randomgen)
-        known_exlcuded = ['__all__', 'Tester', 'info', 'bench',
-                          '__RandomState_ctor', 'mtrand', 'test',
-                          '__warningregistry__', '_numpy_tester', 'division',
-                          'get_state', 'set_state', 'seed', 'ranf', 'random',
-                          'sample', 'absolute_import', 'print_function',
-                          'RandomState']
+        mod = dir(randomgen.generator)
+        known_exlcuded = ['__all__', '__cached__', '__path__', 'Tester',
+                          'info', 'bench', '__RandomState_ctor', 'mtrand',
+                          'test', '__warningregistry__', '_numpy_tester',
+                          'division', 'get_state', 'set_state', 'seed',
+                          'ranf', 'random', 'sample', 'absolute_import',
+                          'print_function', 'RandomState']
         mod += known_exlcuded
         diff = set(npmod).difference(mod)
+        print(diff)
         assert_equal(len(diff), 0)

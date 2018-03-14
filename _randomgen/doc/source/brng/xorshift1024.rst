@@ -5,9 +5,10 @@ Xorshift1024*φ
 
 .. currentmodule:: randomgen.xorshift1024
 
-Random generator
-================
 .. autoclass:: Xorshift1024
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

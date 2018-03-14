@@ -1,10 +1,19 @@
 Random Generator
 ----------------
+The :class:`~randomgen.generator.RandomGenerator` provides access to 
+a wide range of distributions, and served as a replacement for 
+:class:`~numpy.random.RandomState`.  The main difference between 
+the two is that :class:`~randomgen.generator.RandomGenerator` relies
+on an additional basic RNG to manage state and generate the random 
+bits which are then transformed into random values from useful 
+distributions. The default basic RNG used by 
+:class:`~randomgen.generator.RandomGenerator` is 
+:class:`~randomgen.xoroshiro128.Xoroshiro128`.  The basic RNG can be 
+changed by passing an instantized basic RNG to 
+:class:`~randomgen.generator.RandomGenerator`. 
 
 .. currentmodule:: randomgen.generator
 
-Random generator
-================
 .. autoclass::
    RandomGenerator
 

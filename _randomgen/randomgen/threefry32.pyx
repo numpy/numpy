@@ -222,14 +222,14 @@ cdef class ThreeFry32:
 
         Seed the generator.
 
-        This method is called when ``RandomState`` is initialized. It can be
+        This method is called when ``ThreeFry32`` is initialized. It can be
         called again to re-seed the generator. For details, see
-        ``RandomState``.
+        ``ThreeFry32``.
 
         Parameters
         ----------
         seed : int, optional
-            Seed for ``RandomState``.
+            Seed for ``ThreeFry32``.
         counter : {int array}, optional
             Positive integer less than 2**128 containing the counter position
             or a 4 element array of uint32 containing the counter
@@ -316,8 +316,7 @@ cdef class ThreeFry32:
         """
         jump(iter=1)
 
-        Jumps the state of the random number generator as-if 2**64 random
-        numbers have been generated.
+        Jumps the state as-if 2**64 random numbers have been generated.
 
         Parameters
         ----------

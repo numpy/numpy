@@ -5,9 +5,10 @@ Parallel Congruent Generator (32-bit, PCG32)
 
 .. currentmodule:: randomgen.pcg32
 
-Random generator
-================
 .. autoclass:: PCG32
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

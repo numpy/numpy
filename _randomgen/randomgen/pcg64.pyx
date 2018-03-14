@@ -110,7 +110,7 @@ cdef class PCG64:
     >>> from randomgen import RandomGenerator, PCG64
     >>> rg = [RandomGenerator(PCG64(1234, i + 1)) for i in range(10)]
 
-    The alternative method is to call ``advance`` on a single RandomState to
+    The alternative method is to call ``advance`` on a single instance to
     produce non-overlapping sequences.
 
     >>> rg = [RandomGenerator(PCG64(1234, i + 1)) for i in range(10)]
@@ -221,14 +221,14 @@ cdef class PCG64:
 
         Seed the generator.
 
-        This method is called when ``RandomState`` is initialized. It can be
+        This method is called when ``PCG64`` is initialized. It can be
         called again to re-seed the generator. For details, see
-        ``RandomState``.
+        ``PCG64``.
 
         Parameters
         ----------
         seed : int, optional
-            Seed for ``RandomState``.
+            Seed for ``PCG64``.
         inc : int, optional
             Increment to use for PCG stream
 

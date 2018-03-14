@@ -42,7 +42,7 @@ cdef class Xorshift1024:
     Container for the xorshift1024*φ pseudo-random number generator.
 
     xorshift1024*φ is a 64-bit implementation of Saito and Matsumoto's XSadd
-    generator [1]_ (see also [2]_, [3]_, [4]_). xorshift1024* has a period of
+    generator [1]_ (see also [2]_, [3]_, [4]_). xorshift1024*φ has a period of
     :math:`2^{1024} - 1` and supports jumping the sequence in increments of
     :math:`2^{512}`, which allows multiple non-overlapping sequences to be
     generated.
@@ -62,7 +62,7 @@ cdef class Xorshift1024:
         Random seed initializing the pseudo-random number generator.
         Can be an integer in [0, 2**64-1], array of integers in
         [0, 2**64-1] or ``None`` (the default). If `seed` is ``None``,
-        then ``xorshift1024.RandomState`` will try to read data from
+        then ``Xorshift1024`` will try to read data from
         ``/dev/urandom`` (or the Windows analog) if available.  If
         unavailable, a 64-bit hash of the time and process ID is used.
 
@@ -212,14 +212,14 @@ cdef class Xorshift1024:
 
         Seed the generator.
 
-        This method is called when ``RandomState`` is initialized. It can be
+        This method is called when ``Xorshift1024`` is initialized. It can be
         called again to re-seed the generator. For details, see
-        ``RandomState``.
+        ``Xorshift1024``.
 
         Parameters
         ----------
         seed : int, optional
-            Seed for ``RandomState``.
+            Seed for ``Xorshift1024``.
 
         Raises
         ------

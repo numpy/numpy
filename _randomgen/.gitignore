@@ -9,6 +9,8 @@ build/
 **/Random123
 settings.json
 *.so
+randomgen/bounded_integers.pyx
+randomgen/bounded_integers.pxd
 randomgen/bounded_integers.c
 randomgen/common.c
 randomgen/dsfmt.c

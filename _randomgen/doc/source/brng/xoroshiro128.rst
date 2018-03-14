@@ -5,9 +5,10 @@ Xoroshiro128+
 
 .. currentmodule:: randomgen.xoroshiro128
 
-Random generator
-================
 .. autoclass:: Xoroshiro128
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

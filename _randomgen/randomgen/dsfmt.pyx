@@ -84,7 +84,7 @@ cdef class DSFMT:
     Notes
     -----
     ``DSFMT`` directly provides generators for doubles, and unsigned 32 and 64-
-    bit integers [1]_ . These are not firectly available and must b consumed
+    bit integers [1]_ . These are not firectly available and must be consumed
     via a ``RandomGenerator`` object.
 
     The Python stdlib module "random" also contains a Mersenne Twister
@@ -241,8 +241,7 @@ cdef class DSFMT:
         """
         jump(iter=1)
 
-        Jumps the state of the random number generator as-if 2**128 random numbers
-        have been generated.
+        Jumps the state as-if 2**128 random numbers have been generated.
 
         Parameters
         ----------

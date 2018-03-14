@@ -16,8 +16,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 from distutils.version import LooseVersion
-# import guzzle_sphinx_theme
-import sphinx_rtd_theme
+import guzzle_sphinx_theme
+# import sphinx_rtd_theme
 import randomgen
 
 # -- Project information -----------------------------------------------------
@@ -27,10 +27,13 @@ copyright = '2018, Kevin Sheppard'
 author = 'Kevin Sheppard'
 
 # The short X.Y version.
-version = '.'.join(map(str, LooseVersion(randomgen.__version__).version[:2]))
+
+version = randomgen.__version__
+if '+' in version:
+    version = version.split('+')
+    version = ''.join((version[0], ' (+', version[1].split('.')[0], ')'))
 # The full version, including alpha/beta/rc tags.
 release = randomgen.__version__
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -44,6 +47,9 @@ release = randomgen.__version__
 extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
+    'sphinx.ext.extlinks',
+    'sphinx.ext.todo',
+    'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
@@ -86,13 +92,26 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 # html_theme = 'alabaster'
-html_theme = 'sphinx_rtd_theme'
-html_theme_path = ["_themes", ]
+# html_theme = 'sphinx_rtd_theme'
+# html_theme_path = ["_themes", ]
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
+
+html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
+html_theme_path = guzzle_sphinx_theme.html_theme_path()
+html_theme = 'guzzle_sphinx_theme'
+
+# Register the theme as an extension to generate a sitemap.xml
+extensions.append("guzzle_sphinx_theme")
+
+# Guzzle theme options (see theme.conf for more information)
+html_theme_options = {
+    # Set the name of the project to appear in the sidebar
+    "project_nav_name": project + u" " + version,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -108,7 +127,12 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
+html_sidebars = {
+    '**': ['logo-text.html', 'globaltoc.html', 'searchbox.html']
+}
 
+# If false, no module index is generated.
+html_domain_indices = True
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
@@ -162,7 +186,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'RandomGen', 'RandomGen Documentation',
-     author, 'RandomGen', 'One line description of project.',
+     author, 'RandomGen', 'Alternative random number generators for Python.',
      'Miscellaneous'),
 ]
 
