@@ -37,8 +37,8 @@ before_install:
   - PKGS="${PKGS} numpy"; if [ ${NUMPY} ]; then PKGS="${PKGS}=${NUMPY}"; fi
   - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
-  - conda create -n core-prng-test ${PKGS} pytest setuptools nose --quiet
-  - source activate core-prng-test
+  - conda create -n randomgen-test ${PKGS} pytest setuptools nose --quiet
+  - source activate randomgen-test
   - pip install tempita -q
 
 install:
@@ -46,7 +46,7 @@ install:
 
 script:
   - set -e
-  - pytest core_prng
+  - pytest randomgen
   - |
     if [[ -z ${NUMPY} ]]; then
       python benchmark.py;

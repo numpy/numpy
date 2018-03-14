@@ -1,9 +1,9 @@
-Core Pseudo Random Number Generators (PRNG)
--------------------------------------------
+Basic Random Number Generators
+------------------------------
 
-Stable PRNGs
-============
-These PRNGs will be included in future releases.
+Stable RNGs
+===========
+These RNGs will be included in future releases.
 
 
 .. toctree::
@@ -17,10 +17,10 @@ These PRNGs will be included in future releases.
    Xorshift1024*φ <xorshift1024>
 
 
-Experimental PRNGs
-==================
+Experimental RNGs
+=================
 
-These PRNGs are currently included for testing but are may not be
+These RNGs are currently included for testing but are may not be
 permanent.
 
 .. toctree::

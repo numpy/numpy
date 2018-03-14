@@ -19,7 +19,7 @@ type_info = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000U
 {{for  nptype, utype, nptype_up, npctype, remaining, bitshift, lb, ub in type_info}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
 
-cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef {{utype}}_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -78,7 +78,7 @@ big_type_info = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFF
 )}}
 {{for  nptype, utype, npctype, lb, ub in big_type_info}}
 {{ py: otype = nptype}}
-cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, brng_t *state, object lock):
     """Array path for 64-bit integer types"""
     cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
     cdef np.npy_intp i, cnt, n
@@ -153,7 +153,7 @@ type_info = (('uint64', 'uint64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
 )}}
 {{for  nptype, utype, lb, ub in type_info}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
-cdef object _rand_{{nptype}}(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_{{nptype}}(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_{{nptype}}(low, high, size, *state, lock)
 
@@ -177,7 +177,7 @@ cdef object _rand_{{nptype}}(object low, object high, object size, prng_t *state
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously

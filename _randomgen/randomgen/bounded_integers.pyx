@@ -9,7 +9,7 @@ np.import_array()
 
 
 
-cdef object _rand_uint32_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_uint32_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef uint32_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -61,7 +61,7 @@ cdef object _rand_uint32_broadcast(np.ndarray low, np.ndarray high, object size,
     return out_arr
 
 
-cdef object _rand_uint16_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_uint16_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef uint16_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -113,7 +113,7 @@ cdef object _rand_uint16_broadcast(np.ndarray low, np.ndarray high, object size,
     return out_arr
 
 
-cdef object _rand_uint8_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_uint8_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef uint8_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -165,7 +165,7 @@ cdef object _rand_uint8_broadcast(np.ndarray low, np.ndarray high, object size, 
     return out_arr
 
 
-cdef object _rand_bool_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_bool_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef bool_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -217,7 +217,7 @@ cdef object _rand_bool_broadcast(np.ndarray low, np.ndarray high, object size, p
     return out_arr
 
 
-cdef object _rand_int32_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_int32_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef uint32_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -269,7 +269,7 @@ cdef object _rand_int32_broadcast(np.ndarray low, np.ndarray high, object size, 
     return out_arr
 
 
-cdef object _rand_int16_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_int16_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef uint16_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -321,7 +321,7 @@ cdef object _rand_int16_broadcast(np.ndarray low, np.ndarray high, object size, 
     return out_arr
 
 
-cdef object _rand_int8_broadcast(np.ndarray low, np.ndarray high, object size, prng_t *state, object lock):
+cdef object _rand_int8_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
     """Array path for smaller integer types"""
     cdef uint8_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
@@ -374,7 +374,7 @@ cdef object _rand_int8_broadcast(np.ndarray low, np.ndarray high, object size, p
 
 
 
-cdef object _rand_uint64_broadcast(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_uint64_broadcast(object low, object high, object size, brng_t *state, object lock):
     """Array path for 64-bit integer types"""
     cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
     cdef np.npy_intp i, cnt, n
@@ -434,7 +434,7 @@ cdef object _rand_uint64_broadcast(object low, object high, object size, prng_t 
 
     return out_arr
 
-cdef object _rand_int64_broadcast(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_int64_broadcast(object low, object high, object size, brng_t *state, object lock):
     """Array path for 64-bit integer types"""
     cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
     cdef np.npy_intp i, cnt, n
@@ -496,7 +496,7 @@ cdef object _rand_int64_broadcast(object low, object high, object size, prng_t *
 
 
 
-cdef object _rand_uint64(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_uint64(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_uint64(low, high, size, *state, lock)
 
@@ -520,7 +520,7 @@ cdef object _rand_uint64(object low, object high, object size, prng_t *state, ob
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -572,7 +572,7 @@ cdef object _rand_uint64(object low, object high, object size, prng_t *state, ob
             return out_arr
     return _rand_uint64_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_uint32(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_uint32(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_uint32(low, high, size, *state, lock)
 
@@ -596,7 +596,7 @@ cdef object _rand_uint32(object low, object high, object size, prng_t *state, ob
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -648,7 +648,7 @@ cdef object _rand_uint32(object low, object high, object size, prng_t *state, ob
             return out_arr
     return _rand_uint32_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_uint16(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_uint16(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_uint16(low, high, size, *state, lock)
 
@@ -672,7 +672,7 @@ cdef object _rand_uint16(object low, object high, object size, prng_t *state, ob
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -724,7 +724,7 @@ cdef object _rand_uint16(object low, object high, object size, prng_t *state, ob
             return out_arr
     return _rand_uint16_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_uint8(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_uint8(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_uint8(low, high, size, *state, lock)
 
@@ -748,7 +748,7 @@ cdef object _rand_uint8(object low, object high, object size, prng_t *state, obj
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -800,7 +800,7 @@ cdef object _rand_uint8(object low, object high, object size, prng_t *state, obj
             return out_arr
     return _rand_uint8_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_bool(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_bool(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_bool(low, high, size, *state, lock)
 
@@ -824,7 +824,7 @@ cdef object _rand_bool(object low, object high, object size, prng_t *state, obje
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -876,7 +876,7 @@ cdef object _rand_bool(object low, object high, object size, prng_t *state, obje
             return out_arr
     return _rand_bool_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_int64(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_int64(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_int64(low, high, size, *state, lock)
 
@@ -900,7 +900,7 @@ cdef object _rand_int64(object low, object high, object size, prng_t *state, obj
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -952,7 +952,7 @@ cdef object _rand_int64(object low, object high, object size, prng_t *state, obj
             return out_arr
     return _rand_int64_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_int32(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_int32(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_int32(low, high, size, *state, lock)
 
@@ -976,7 +976,7 @@ cdef object _rand_int32(object low, object high, object size, prng_t *state, obj
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -1028,7 +1028,7 @@ cdef object _rand_int32(object low, object high, object size, prng_t *state, obj
             return out_arr
     return _rand_int32_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_int16(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_int16(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_int16(low, high, size, *state, lock)
 
@@ -1052,7 +1052,7 @@ cdef object _rand_int16(object low, object high, object size, prng_t *state, obj
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously
@@ -1104,7 +1104,7 @@ cdef object _rand_int16(object low, object high, object size, prng_t *state, obj
             return out_arr
     return _rand_int16_broadcast(low_arr, high_arr, size, state, lock)
 
-cdef object _rand_int8(object low, object high, object size, prng_t *state, object lock):
+cdef object _rand_int8(object low, object high, object size, brng_t *state, object lock):
     """
     _rand_int8(low, high, size, *state, lock)
 
@@ -1128,7 +1128,7 @@ cdef object _rand_int8(object low, object high, object size, prng_t *state, obje
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
-    state : augmented random state
+    state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
         Lock to prevent multiple using a single RandomState simultaneously

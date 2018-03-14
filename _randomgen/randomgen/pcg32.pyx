@@ -5,9 +5,9 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
-from distributions cimport prng_t
-from core_prng.entropy import random_entropy
-import core_prng.pickle
+from distributions cimport brng_t
+from randomgen.entropy import random_entropy
+import randomgen.pickle
 
 np.import_array()
 
@@ -47,7 +47,7 @@ cdef uint64_t pcg32_raw(void* st) nogil:
 
 cdef class PCG32:
     """
-    Prototype Core PRNG using pcg64
+    Prototype Basic RNG using pcg64
 
     Parameters
     ----------
@@ -60,23 +60,23 @@ cdef class PCG32:
     for use in a `RandomGenerator` object.
     """
     cdef pcg32_state *rng_state
-    cdef prng_t *_prng
+    cdef brng_t *_brng
     cdef public object capsule
 
     def __init__(self, seed=None, inc=0):
         self.rng_state = <pcg32_state *>malloc(sizeof(pcg32_state))
         self.rng_state.pcg_state = <pcg32_random_t *>malloc(sizeof(pcg32_random_t))
-        self._prng = <prng_t *>malloc(sizeof(prng_t))
+        self._brng = <brng_t *>malloc(sizeof(brng_t))
         self.seed(seed, inc)
 
-        self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = &pcg32_uint64
-        self._prng.next_uint32 = &pcg32_uint32
-        self._prng.next_double = &pcg32_double
-        self._prng.next_raw = &pcg32_raw
+        self._brng.state = <void *>self.rng_state
+        self._brng.next_uint64 = &pcg32_uint64
+        self._brng.next_uint32 = &pcg32_uint32
+        self._brng.next_double = &pcg32_double
+        self._brng.next_raw = &pcg32_raw
 
-        cdef const char *name = "CorePRNG"
-        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        cdef const char *name = "BasicRNG"
+        self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):
@@ -86,13 +86,13 @@ cdef class PCG32:
         self.state = state
 
     def __reduce__(self):
-        return (core_prng.pickle.__prng_ctor,
-                (self.state['prng'],),
+        return (randomgen.pickle.__brng_ctor,
+                (self.state['brng'],),
                 self.state)
 
     def __dealloc__(self):
         free(self.rng_state)
-        free(self._prng)
+        free(self._brng)
 
     def __random_integer(self, bits=64):
         """
@@ -113,9 +113,9 @@ cdef class PCG32:
         Testing only
         """
         if bits == 64:
-            return self._prng.next_uint64(self._prng.state)
+            return self._brng.next_uint64(self._brng.state)
         elif bits == 32:
-            return self._prng.next_uint32(self._prng.state)
+            return self._brng.next_uint32(self._brng.state)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -123,10 +123,10 @@ cdef class PCG32:
         cdef Py_ssize_t i
         if method==u'uint64':
             for i in range(cnt):
-                self._prng.next_uint64(self._prng.state)
+                self._brng.next_uint64(self._brng.state)
         elif method==u'double':
             for i in range(cnt):
-                self._prng.next_double(self._prng.state)
+                self._brng.next_double(self._brng.state)
         else:
             raise ValueError('Unknown method')
 
@@ -183,7 +183,7 @@ cdef class PCG32:
     @property
     def state(self):
         """Get or set the PRNG state"""
-        return {'prng': self.__class__.__name__,
+        return {'brng': self.__class__.__name__,
                 'state': {'state': self.rng_state.pcg_state.state,
                           'inc':self.rng_state.pcg_state.inc}}
 
@@ -191,8 +191,8 @@ cdef class PCG32:
     def state(self, value):
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
-        prng = value.get('prng', '')
-        if prng != self.__class__.__name__:
+        brng = value.get('brng', '')
+        if brng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
         self.rng_state.pcg_state.state  = value['state']['state']

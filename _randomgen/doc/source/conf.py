@@ -18,18 +18,18 @@
 from distutils.version import LooseVersion
 # import guzzle_sphinx_theme
 import sphinx_rtd_theme
-import core_prng
+import randomgen
 
 # -- Project information -----------------------------------------------------
 
-project = 'Core PRNG'
+project = 'RandomGen'
 copyright = '2018, Kevin Sheppard'
 author = 'Kevin Sheppard'
 
 # The short X.Y version.
-version = '.'.join(map(str,LooseVersion(core_prng.__version__).version[:2]))
+version = '.'.join(map(str, LooseVersion(randomgen.__version__).version[:2]))
 # The full version, including alpha/beta/rc tags.
-release = core_prng.__version__
+release = randomgen.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -111,7 +111,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'CorePRNGdoc'
+htmlhelp_basename = 'RandomGendoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -138,7 +138,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'CorePRNG.tex', 'Core PRNG Documentation',
+    (master_doc, 'RandomGen.tex', 'RandomGen Documentation',
      'Kevin Sheppard', 'manual'),
 ]
 
@@ -148,7 +148,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'coreprng', 'Core PRNG Documentation',
+    (master_doc, 'RandomGen', 'RandomGen Documentation',
      [author], 1)
 ]
 
@@ -159,8 +159,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'CorePRNG', 'Core PRNG Documentation',
-     author, 'CorePRNG', 'One line description of project.',
+    (master_doc, 'RandomGen', 'RandomGen Documentation',
+     author, 'RandomGen', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -172,4 +172,4 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
 
-autosummary_generate=True
+autosummary_generate = True

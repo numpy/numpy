@@ -1,7 +1,7 @@
 Xoroshiro128+
 -------------
 
-.. currentmodule:: core_prng.xoroshiro128
+.. currentmodule:: randomgen.xoroshiro128
 
 Random generator
 ================

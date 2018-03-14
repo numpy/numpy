@@ -5,9 +5,9 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
-from distributions cimport prng_t
-from core_prng.entropy import random_entropy
-import core_prng.pickle
+from distributions cimport brng_t
+from randomgen.entropy import random_entropy
+import randomgen.pickle
 
 np.import_array()
 
@@ -62,7 +62,7 @@ cdef double pcg64_double(void* st) nogil:
 
 cdef class PCG64:
     """
-    Prototype Core PRNG using pcg64
+    Prototype Basic RNG using pcg64
 
     Parameters
     ----------
@@ -75,23 +75,23 @@ cdef class PCG64:
     for use in a `RandomGenerator` object.
     """
     cdef pcg64_state *rng_state
-    cdef prng_t *_prng
+    cdef brng_t *_brng
     cdef public object capsule
 
     def __init__(self, seed=None, inc=0):
         self.rng_state = <pcg64_state *>malloc(sizeof(pcg64_state))
         self.rng_state.pcg_state = <pcg64_random_t *>malloc(sizeof(pcg64_random_t))
-        self._prng = <prng_t *>malloc(sizeof(prng_t))
+        self._brng = <brng_t *>malloc(sizeof(brng_t))
         self.seed(seed, inc)
 
-        self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = &pcg64_uint64
-        self._prng.next_uint32 = &pcg64_uint32
-        self._prng.next_double = &pcg64_double
-        self._prng.next_raw = &pcg64_uint64
+        self._brng.state = <void *>self.rng_state
+        self._brng.next_uint64 = &pcg64_uint64
+        self._brng.next_uint32 = &pcg64_uint32
+        self._brng.next_double = &pcg64_double
+        self._brng.next_raw = &pcg64_uint64
 
-        cdef const char *name = "CorePRNG"
-        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        cdef const char *name = "BasicRNG"
+        self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
 
     # Pickling support:
     def __getstate__(self):
@@ -101,13 +101,13 @@ cdef class PCG64:
         self.state = state
 
     def __reduce__(self):
-        return (core_prng.pickle.__prng_ctor,
-                (self.state['prng'],),
+        return (randomgen.pickle.__brng_ctor,
+                (self.state['brng'],),
                 self.state)
 
     def __dealloc__(self):
         free(self.rng_state)
-        free(self._prng)
+        free(self._brng)
 
     cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
@@ -132,9 +132,9 @@ cdef class PCG64:
         Testing only
         """
         if bits == 64:
-            return self._prng.next_uint64(self._prng.state)
+            return self._brng.next_uint64(self._brng.state)
         elif bits == 32:
-            return self._prng.next_uint32(self._prng.state)
+            return self._brng.next_uint32(self._brng.state)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -142,10 +142,10 @@ cdef class PCG64:
         cdef Py_ssize_t i
         if method==u'uint64':
             for i in range(cnt):
-                self._prng.next_uint64(self._prng.state)
+                self._brng.next_uint64(self._brng.state)
         elif method==u'double':
             for i in range(cnt):
-                self._prng.next_double(self._prng.state)
+                self._brng.next_double(self._brng.state)
         else:
             raise ValueError('Unknown method')
 
@@ -217,7 +217,7 @@ cdef class PCG64:
             state = self.rng_state.pcg_state.state
             inc = self.rng_state.pcg_state.inc
 
-        return {'prng': self.__class__.__name__,
+        return {'brng': self.__class__.__name__,
                 'state': {'state': state, 'inc':inc},
                 'has_uint32': self.rng_state.has_uint32,
                 'uinteger': self.rng_state.uinteger}
@@ -226,8 +226,8 @@ cdef class PCG64:
     def state(self, value):
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
-        prng = value.get('prng', '')
-        if prng != self.__class__.__name__:
+        brng = value.get('brng', '')
+        if brng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
         IF PCG_EMULATED_MATH==1:

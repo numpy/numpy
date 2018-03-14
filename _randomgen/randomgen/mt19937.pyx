@@ -7,9 +7,9 @@ import numpy as np
 cimport numpy as np
 
 from common cimport *
-from distributions cimport prng_t
-import core_prng.pickle
-from core_prng.entropy import random_entropy
+from distributions cimport brng_t
+import randomgen.pickle
+from randomgen.entropy import random_entropy
 
 np.import_array()
 
@@ -42,7 +42,7 @@ cdef uint64_t mt19937_raw(void *st) nogil:
 
 cdef class MT19937:
     """
-    Prototype Core PRNG using MT19937
+    Prototype Basic RNG using MT19937
 
     Parameters
     ----------
@@ -55,26 +55,26 @@ cdef class MT19937:
     `RandomGenerator` object.
     """
     cdef mt19937_state *rng_state
-    cdef prng_t *_prng
+    cdef brng_t *_brng
     cdef public object capsule
 
     def __init__(self, seed=None):
         self.rng_state = <mt19937_state *>malloc(sizeof(mt19937_state))
-        self._prng = <prng_t *>malloc(sizeof(prng_t))
+        self._brng = <brng_t *>malloc(sizeof(brng_t))
         self.seed(seed)
 
-        self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = &mt19937_uint64
-        self._prng.next_uint32 = &mt19937_uint32
-        self._prng.next_double = &mt19937_double
-        self._prng.next_raw = &mt19937_raw
+        self._brng.state = <void *>self.rng_state
+        self._brng.next_uint64 = &mt19937_uint64
+        self._brng.next_uint32 = &mt19937_uint32
+        self._brng.next_double = &mt19937_double
+        self._brng.next_raw = &mt19937_raw
 
-        cdef const char *name = "CorePRNG"
-        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        cdef const char *name = "BasicRNG"
+        self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
 
     def __dealloc__(self):
         free(self.rng_state)
-        free(self._prng)
+        free(self._brng)
 
     # Pickling support:
     def __getstate__(self):
@@ -84,8 +84,8 @@ cdef class MT19937:
         self.state = state
 
     def __reduce__(self):
-        return (core_prng.pickle.__prng_ctor,
-                (self.state['prng'],),
+        return (randomgen.pickle.__brng_ctor,
+                (self.state['brng'],),
                 self.state)
 
     def __random_integer(self, bits=64):
@@ -107,9 +107,9 @@ cdef class MT19937:
         Testing only
         """
         if bits == 64:
-            return self._prng.next_uint64(self._prng.state)
+            return self._brng.next_uint64(self._brng.state)
         elif bits == 32:
-            return self._prng.next_uint32(self._prng.state)
+            return self._brng.next_uint32(self._brng.state)
         else:
             raise ValueError('bits must be 32 or 64')
 
@@ -117,10 +117,10 @@ cdef class MT19937:
         cdef Py_ssize_t i
         if method==u'uint64':
             for i in range(cnt):
-                self._prng.next_uint64(self._prng.state)
+                self._brng.next_uint64(self._brng.state)
         elif method==u'double':
             for i in range(cnt):
-                self._prng.next_double(self._prng.state)
+                self._brng.next_double(self._brng.state)
         else:
             raise ValueError('Unknown method')
 
@@ -177,7 +177,7 @@ cdef class MT19937:
         for i in range(624):
             key[i] = self.rng_state.key[i]
 
-        return {'prng': self.__class__.__name__,
+        return {'brng': self.__class__.__name__,
                 'state': {'key':key, 'pos': self.rng_state.pos}}
 
     @state.setter
@@ -185,14 +185,14 @@ cdef class MT19937:
         if isinstance(value, tuple):
             if value[0] != 'MT19937' or len(value) not in (3,5):
                     raise ValueError('state is not a legacy MT19937 state')
-            value ={'prng': 'MT19937',
+            value ={'brng': 'MT19937',
                     'state':{'key': value[1], 'pos': value[2]}}
 
 
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
-        prng = value.get('prng', '')
-        if prng != self.__class__.__name__:
+        brng = value.get('brng', '')
+        if brng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
         key = value['state']['key']

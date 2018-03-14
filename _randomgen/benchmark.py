@@ -10,12 +10,12 @@ rs = RandomState()
 
 SETUP = '''
 import numpy as np
-if '{prng}' == 'numpy':
+if '{brng}' == 'numpy':
     import numpy.random
     rg = numpy.random.RandomState()
 else:
-    from core_prng import RandomGenerator, {prng}
-    rg = RandomGenerator({prng}())
+    from randomgen import RandomGenerator, {brng}
+    rg = RandomGenerator({brng}())
 rg.random_sample()
 '''
 
@@ -44,9 +44,9 @@ def run_timer(dist, command, numpy_command=None, setup='', random_type=''):
         numpy_command = command
 
     res = {}
-    for prng in PRNGS:
-        cmd = numpy_command if prng == 'numpy' else command
-        res[prng] = timer(cmd, setup=setup.format(prng=prng))
+    for brng in PRNGS:
+        cmd = numpy_command if brng == 'numpy' else command
+        res[brng] = timer(cmd, setup=setup.format(brng=brng))
 
     s = pd.Series(res)
     t = s.apply(lambda x: '{0:0.2f} ms'.format(x))

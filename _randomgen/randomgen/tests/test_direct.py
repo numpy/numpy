@@ -7,7 +7,7 @@ from numpy.testing import assert_equal, assert_allclose, assert_array_equal, \
     assert_raises
 import pytest
 
-from core_prng import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
+from randomgen import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
     PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024
 
 if (sys.version_info > (3, 0)):
@@ -25,7 +25,7 @@ def uniform32_from_uint64(x):
     out = (joined >> np.uint32(9)) * (1.0 / 2 ** 23)
     return out.astype(np.float32)
 
- 
+
 def uniform32_from_uint63(x):
     x = np.uint64(x)
     x = np.uint32(x >> np.uint64(32))
@@ -121,7 +121,7 @@ class Base(object):
 
     @classmethod
     def setup_class(cls):
-        cls.prng = Xoroshiro128
+        cls.brng = Xoroshiro128
         cls.bits = 64
         cls.dtype = np.uint64
         cls.seed_error_type = TypeError
@@ -138,48 +138,48 @@ class Base(object):
             return {'seed': seed, 'data': np.array(data, dtype=cls.dtype)}
 
     def test_raw(self):
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         uints = rs.random_raw(1000)
         assert_equal(uints, self.data1['data'])
 
-        rs = RandomGenerator(self.prng(*self.data2['seed']))
+        rs = RandomGenerator(self.brng(*self.data2['seed']))
         uints = rs.random_raw(1000)
         assert_equal(uints, self.data2['data'])
 
     @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_gauss_inv(self):
         n = 25
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         gauss = rs.standard_normal(n)
         assert_allclose(gauss,
                         gauss_from_uint(self.data1['data'], n, self.bits))
 
-        rs = RandomGenerator(self.prng(*self.data2['seed']))
+        rs = RandomGenerator(self.brng(*self.data2['seed']))
         gauss = rs.standard_normal(25)
         assert_allclose(gauss,
                         gauss_from_uint(self.data2['data'], n, self.bits))
 
     def test_uniform_double(self):
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         vals = uniform_from_uint(self.data1['data'], self.bits)
         uniforms = rs.random_sample(len(vals))
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float64)
 
-        rs = RandomGenerator(self.prng(*self.data2['seed']))
+        rs = RandomGenerator(self.brng(*self.data2['seed']))
         vals = uniform_from_uint(self.data2['data'], self.bits)
         uniforms = rs.random_sample(len(vals))
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float64)
 
     def test_uniform_float(self):
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         vals = uniform32_from_uint(self.data1['data'], self.bits)
         uniforms = rs.random_sample(len(vals), dtype=np.float32)
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float32)
 
-        rs = RandomGenerator(self.prng(*self.data2['seed']))
+        rs = RandomGenerator(self.brng(*self.data2['seed']))
         vals = uniform32_from_uint(self.data2['data'], self.bits)
         uniforms = rs.random_sample(len(vals), dtype=np.float32)
         assert_allclose(uniforms, vals)
@@ -187,13 +187,13 @@ class Base(object):
 
     def test_seed_float(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(self.seed_error_type, rs.seed, np.pi)
         assert_raises(self.seed_error_type, rs.seed, -np.pi)
 
     def test_seed_float_array(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(self.seed_error_type, rs.seed, np.array([np.pi]))
         assert_raises(self.seed_error_type, rs.seed, np.array([-np.pi]))
         assert_raises(ValueError, rs.seed, np.array([np.pi, -np.pi]))
@@ -203,13 +203,13 @@ class Base(object):
 
     def test_seed_out_of_range(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(ValueError, rs.seed, 2 ** (2 * self.bits + 1))
         assert_raises(ValueError, rs.seed, -1)
 
     def test_seed_out_of_range_array(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(ValueError, rs.seed, [2 ** (2 * self.bits + 1)])
         assert_raises(ValueError, rs.seed, [-1])
 
@@ -217,7 +217,7 @@ class Base(object):
 class TestXoroshiro128(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = Xoroshiro128
+        cls.brng = Xoroshiro128
         cls.bits = 64
         cls.dtype = np.uint64
         cls.data1 = cls._read_csv(
@@ -230,7 +230,7 @@ class TestXoroshiro128(Base):
 class TestXorshift1024(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = Xorshift1024
+        cls.brng = Xorshift1024
         cls.bits = 64
         cls.dtype = np.uint64
         cls.data1 = cls._read_csv(
@@ -243,7 +243,7 @@ class TestXorshift1024(Base):
 class TestThreeFry(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = ThreeFry
+        cls.brng = ThreeFry
         cls.bits = 64
         cls.dtype = np.uint64
         cls.data1 = cls._read_csv(
@@ -256,7 +256,7 @@ class TestThreeFry(Base):
 class TestPCG64(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = PCG64
+        cls.brng = PCG64
         cls.bits = 64
         cls.dtype = np.uint64
         cls.data1 = cls._read_csv(join(pwd, './data/pcg64-testset-1.csv'))
@@ -264,7 +264,7 @@ class TestPCG64(Base):
         cls.seed_error_type = TypeError
 
     def test_seed_float_array(self):
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(self.seed_error_type, rs.seed, np.array([np.pi]))
         assert_raises(self.seed_error_type, rs.seed, np.array([-np.pi]))
         assert_raises(self.seed_error_type, rs.seed, np.array([np.pi, -np.pi]))
@@ -273,15 +273,16 @@ class TestPCG64(Base):
         assert_raises(self.seed_error_type, rs.seed, [0, np.pi])
 
     def test_seed_out_of_range_array(self):
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
-        assert_raises(self.seed_error_type, rs.seed, [2 ** (2 * self.bits + 1)])
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
+        assert_raises(self.seed_error_type, rs.seed,
+                      [2 ** (2 * self.bits + 1)])
         assert_raises(self.seed_error_type, rs.seed, [-1])
 
 
 class TestPhilox(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = Philox
+        cls.brng = Philox
         cls.bits = 64
         cls.dtype = np.uint64
         cls.data1 = cls._read_csv(
@@ -294,7 +295,7 @@ class TestPhilox(Base):
 class TestMT19937(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = MT19937
+        cls.brng = MT19937
         cls.bits = 32
         cls.dtype = np.uint32
         cls.data1 = cls._read_csv(join(pwd, './data/mt19937-testset-1.csv'))
@@ -303,27 +304,27 @@ class TestMT19937(Base):
 
     def test_seed_out_of_range(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(ValueError, rs.seed, 2 ** (self.bits + 1))
         assert_raises(ValueError, rs.seed, -1)
         assert_raises(ValueError, rs.seed, 2 ** (2 * self.bits + 1))
 
     def test_seed_out_of_range_array(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(ValueError, rs.seed, [2 ** (self.bits + 1)])
         assert_raises(ValueError, rs.seed, [-1])
         assert_raises(TypeError, rs.seed, [2 ** (2 * self.bits + 1)])
 
     def test_seed_float(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(TypeError, rs.seed, np.pi)
         assert_raises(TypeError, rs.seed, -np.pi)
 
     def test_seed_float_array(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(TypeError, rs.seed, np.array([np.pi]))
         assert_raises(TypeError, rs.seed, np.array([-np.pi]))
         assert_raises(TypeError, rs.seed, np.array([np.pi, -np.pi]))
@@ -335,7 +336,7 @@ class TestMT19937(Base):
 class TestDSFMT(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = DSFMT
+        cls.brng = DSFMT
         cls.bits = 53
         cls.dtype = np.uint64
         cls.data1 = cls._read_csv(join(pwd, './data/dSFMT-testset-1.csv'))
@@ -343,43 +344,43 @@ class TestDSFMT(Base):
         cls.seed_error_type = TypeError
 
     def test_uniform_double(self):
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_array_equal(uniform_from_dsfmt(self.data1['data']),
                            rs.random_sample(1000))
 
-        rs = RandomGenerator(self.prng(*self.data2['seed']))
+        rs = RandomGenerator(self.brng(*self.data2['seed']))
         assert_equal(uniform_from_dsfmt(self.data2['data']),
                      rs.random_sample(1000))
 
     @pytest.mark.skip(reason='Box-Muller no longer supported')
     def test_gauss_inv(self):
         n = 25
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         gauss = rs.standard_normal(n)
         assert_allclose(gauss,
                         gauss_from_uint(self.data1['data'], n, 'dsfmt'))
 
-        rs = RandomGenerator(self.prng(*self.data2['seed']))
+        rs = RandomGenerator(self.brng(*self.data2['seed']))
         gauss = rs.standard_normal(25)
         assert_allclose(gauss,
                         gauss_from_uint(self.data2['data'], n, 'dsfmt'))
 
     def test_seed_out_of_range_array(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(ValueError, rs.seed, [2 ** (self.bits + 1)])
         assert_raises(ValueError, rs.seed, [-1])
         assert_raises(TypeError, rs.seed, [2 ** (2 * self.bits + 1)])
 
     def test_seed_float(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(TypeError, rs.seed, np.pi)
         assert_raises(TypeError, rs.seed, -np.pi)
 
     def test_seed_float_array(self):
         # GH #82
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(TypeError, rs.seed, np.array([np.pi]))
         assert_raises(TypeError, rs.seed, np.array([-np.pi]))
         assert_raises(TypeError, rs.seed, np.array([np.pi, -np.pi]))
@@ -388,13 +389,13 @@ class TestDSFMT(Base):
         assert_raises(TypeError, rs.seed, [0, np.pi])
 
     def test_uniform_float(self):
-        rs = RandomGenerator(self.prng(*self.data1['seed']))
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
         vals = uniform32_from_uint(self.data1['data'], self.bits)
         uniforms = rs.random_sample(len(vals), dtype=np.float32)
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float32)
 
-        rs = RandomGenerator(self.prng(*self.data2['seed']))
+        rs = RandomGenerator(self.brng(*self.data2['seed']))
         vals = uniform32_from_uint(self.data2['data'], self.bits)
         uniforms = rs.random_sample(len(vals), dtype=np.float32)
         assert_allclose(uniforms, vals)
@@ -404,7 +405,7 @@ class TestDSFMT(Base):
 class TestThreeFry32(Base):
     @classmethod
     def setup_class(cls):
-        cls.prng = ThreeFry32
+        cls.brng = ThreeFry32
         cls.bits = 32
         cls.dtype = np.uint32
         cls.data1 = cls._read_csv(join(pwd, './data/threefry32-testset-1.csv'))
@@ -415,7 +416,7 @@ class TestThreeFry32(Base):
 class TestPCG32(TestPCG64):
     @classmethod
     def setup_class(cls):
-        cls.prng = PCG32
+        cls.brng = PCG32
         cls.bits = 32
         cls.dtype = np.uint32
         cls.data1 = cls._read_csv(join(pwd, './data/pcg32-testset-1.csv'))

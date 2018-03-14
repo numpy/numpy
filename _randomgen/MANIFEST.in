@@ -1,2 +1,2 @@
 include versioneer.py
-include core_prng/_version.py
+include randomgen/_version.py

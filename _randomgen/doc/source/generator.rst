@@ -1,7 +1,7 @@
 Random Generator
 ----------------
 
-.. currentmodule:: core_prng.generator
+.. currentmodule:: randomgen.generator
 
 Random generator
 ================

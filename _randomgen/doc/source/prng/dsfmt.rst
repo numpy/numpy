@@ -1,7 +1,7 @@
 Double SIMD Mersenne Twister (dSFMT) 
 ------------------------------------
 
-.. currentmodule:: core_prng.dsfmt
+.. currentmodule:: randomgen.dsfmt
 
 Random generator
 ================

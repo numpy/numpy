@@ -7,9 +7,9 @@ cimport numpy as np
 
 from common import interface
 from common cimport *
-from distributions cimport prng_t
-from core_prng.entropy import random_entropy
-import core_prng.pickle
+from distributions cimport brng_t
+from randomgen.entropy import random_entropy
+import randomgen.pickle
 
 np.import_array()
 
@@ -99,8 +99,8 @@ cdef class DSFMT:
     generators should be initialized with the same seed to ensure that the
     segments come from the same sequence.
 
-    >>> from core_prng.entropy import random_entropy
-    >>> from core_prng import RandomGenerator, DSFMT
+    >>> from randomgen.entropy import random_entropy
+    >>> from randomgen import RandomGenerator, DSFMT
     >>> seed = random_entropy()
     >>> rs = [RandomGenerator(DSFMT(seed)) for _ in range(10)]
     # Advance rs[i] by i jumps
@@ -137,7 +137,7 @@ cdef class DSFMT:
            Sequences and Their Applications - SETA, 290--298, 2008.
     """
     cdef dsfmt_state  *rng_state
-    cdef prng_t *_prng
+    cdef brng_t *_brng
     cdef public object capsule
     cdef public object _cffi
     cdef public object _ctypes
@@ -148,15 +148,15 @@ cdef class DSFMT:
         self.rng_state.state = <dsfmt_t *>PyArray_malloc_aligned(sizeof(dsfmt_t))
         self.rng_state.buffered_uniforms = <double *>PyArray_calloc_aligned(DSFMT_N64, sizeof(double))
         self.rng_state.buffer_loc = DSFMT_N64
-        self._prng = <prng_t *>malloc(sizeof(prng_t))
+        self._brng = <brng_t *>malloc(sizeof(brng_t))
         self.seed(seed)
-        self._prng.state = <void *>self.rng_state
-        self._prng.next_uint64 = &dsfmt_uint64
-        self._prng.next_uint32 = &dsfmt_uint32
-        self._prng.next_double = &dsfmt_double
-        self._prng.next_raw = &dsfmt_raw
-        cdef const char *name = "CorePRNG"
-        self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+        self._brng.state = <void *>self.rng_state
+        self._brng.next_uint64 = &dsfmt_uint64
+        self._brng.next_uint32 = &dsfmt_uint32
+        self._brng.next_double = &dsfmt_double
+        self._brng.next_raw = &dsfmt_raw
+        cdef const char *name = "BasicRNG"
+        self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
 
         self._cffi = None
         self._ctypes = None
@@ -170,24 +170,24 @@ cdef class DSFMT:
         self.state = state
 
     def __reduce__(self):
-        return (core_prng.pickle.__prng_ctor,
-                (self.state['prng'],),
+        return (randomgen.pickle.__brng_ctor,
+                (self.state['brng'],),
                 self.state)
 
     def __dealloc__(self):
         PyArray_free_aligned(self.rng_state.state)
         PyArray_free_aligned(self.rng_state.buffered_uniforms)
         free(self.rng_state)
-        free(self._prng)
+        free(self._brng)
 
     def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
         cdef Py_ssize_t i
         if method==u'uint64':
             for i in range(cnt):
-                self._prng.next_uint64(self._prng.state)
+                self._brng.next_uint64(self._brng.state)
         elif method==u'double':
             for i in range(cnt):
-                self._prng.next_double(self._prng.state)
+                self._brng.next_double(self._brng.state)
         else:
             raise ValueError('Unknown method')
 
@@ -247,7 +247,7 @@ cdef class DSFMT:
         Parameters
         ----------
         iter : integer, positive
-            Number of times to jump the state of the prng.
+            Number of times to jump the state of the brng.
 
         Returns
         -------
@@ -283,7 +283,7 @@ cdef class DSFMT:
         buffered_uniforms = np.empty(DSFMT_N64,dtype=np.double)
         for i in range(DSFMT_N64):
             buffered_uniforms[i] = self.rng_state.buffered_uniforms[i]
-        return {'prng': self.__class__.__name__,
+        return {'brng': self.__class__.__name__,
                 'state': {'state':np.asarray(state),
                           'idx':self.rng_state.state.idx},
                 'buffer_loc': self.rng_state.buffer_loc,
@@ -294,8 +294,8 @@ cdef class DSFMT:
         cdef Py_ssize_t i, j, loc = 0
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
-        prng = value.get('prng', '')
-        if prng != self.__class__.__name__:
+        brng = value.get('brng', '')
+        if brng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
         state = value['state']['state']
@@ -324,7 +324,7 @@ cdef class DSFMT:
             * next_uint64 - function pointer to produce 64 bit integers
             * next_uint32 - function pointer to produce 32 bit integers
             * next_double - function pointer to produce doubles
-            * prng - pointer to the PRNG struct
+            * brng - pointer to the Basic RNG struct
         """
 
         if self._ctypes is not None:
@@ -343,7 +343,7 @@ cdef class DSFMT:
                          ctypes.cast(<Py_ssize_t>&dsfmt_double,
                                      ctypes.CFUNCTYPE(ctypes.c_double,
                                      ctypes.c_void_p)),
-                         ctypes.c_void_p(<Py_ssize_t>self._prng))
+                         ctypes.c_void_p(<Py_ssize_t>self._brng))
         return self.ctypes
 
     @property
@@ -361,7 +361,7 @@ cdef class DSFMT:
             * next_uint64 - function pointer to produce 64 bit integers
             * next_uint32 - function pointer to produce 32 bit integers
             * next_double - function pointer to produce doubles
-            * prng - pointer to the PRNG struct
+            * brng - pointer to the Basic RNG struct
         """
         if self._cffi is not None:
             return self._cffi
@@ -373,10 +373,10 @@ cdef class DSFMT:
         ffi = cffi.FFI()
         self._cffi = interface(<Py_ssize_t>self.rng_state,
                          ffi.cast('void *',<Py_ssize_t>self.rng_state),
-                         ffi.cast('uint64_t (*)(void *)',<uint64_t>self._prng.next_uint64),
-                         ffi.cast('uint32_t (*)(void *)',<uint64_t>self._prng.next_uint32),
-                         ffi.cast('double (*)(void *)',<uint64_t>self._prng.next_double),
-                         ffi.cast('void *',<Py_ssize_t>self._prng))
+                         ffi.cast('uint64_t (*)(void *)',<uint64_t>self._brng.next_uint64),
+                         ffi.cast('uint32_t (*)(void *)',<uint64_t>self._brng.next_uint32),
+                         ffi.cast('double (*)(void *)',<uint64_t>self._brng.next_double),
+                         ffi.cast('void *',<Py_ssize_t>self._brng))
         return self.cffi
 
     @property
@@ -386,8 +386,8 @@ cdef class DSFMT:
 
         Returns
         -------
-        gen : core_prng.generator.RandomGenerator
-            Random generator used this instance as the core PRNG
+        gen : randomgen.generator.RandomGenerator
+            Random generator used this instance as the basic RNG
         """
         if self._generator is None:
             from .generator import RandomGenerator
