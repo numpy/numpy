@@ -496,8 +496,12 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
  * #OP = EQ, NE, GT, GE, LT, LE#
  */
+/**begin repeat1
+ * #suffix = , _OO_O#
+ */
 NPY_NO_EXPORT void
-OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+OBJECT@suffix@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT void

@@ -814,6 +814,21 @@ class TestUfunc(object):
         assert_equal(np.logical_or.reduce(a), 3)
         assert_equal(np.logical_and.reduce(a), None)
 
+    def test_object_comparison(self):
+        class HasComparisons(object):
+            def __eq__(self, other):
+                return '=='
+
+        arr0d = np.array(HasComparisons())
+        assert_equal(arr0d == arr0d, True)
+        assert_equal(np.equal(arr0d, arr0d), True)  # normal behavior is a cast
+        assert_equal(np.equal(arr0d, arr0d, dtype=object), '==')
+
+        arr1d = np.array([HasComparisons()])
+        assert_equal(arr1d == arr1d, np.array([True]))
+        assert_equal(np.equal(arr1d, arr1d), np.array([True]))  # normal behavior is a cast
+        assert_equal(np.equal(arr1d, arr1d, dtype=object), np.array(['==']))
+
     def test_object_array_reduction(self):
         # Reductions on object arrays
         a = np.array(['a', 'b', 'c'], dtype=object)
