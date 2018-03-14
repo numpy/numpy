@@ -7,6 +7,11 @@ dist: trusty
 sudo: required
 language: python
 
+env:
+  global:
+    # Doctr deploy key for bashtage/core-prng
+    - secure: "urckknKH5lkUNjXuVCQGVEZYQfSQrAAvdp8sWAKlYJwJLT8iB439KrCUQu8InzcZAA9chPp3syCoT4E0NGkCVPhtJSs/7+LhG+aY/iU6Jp7bwpn5QHCNHQ5jwdc8A0ryqEoQhTiDauRtdzLWPtG5iliz+hr5SOB22w563Le3cx9w0vw9Jy36q+DHe91KEKeF4l464MHhx8aNTmSTBfxPUYyaPHn7/0Wi227PChKMbqnbtoNRcnRwNPjXbRIEs5w2VKtj9m+pvb+DGVjNeSrRBP7aaPgYY+WH+eBOsXrZNuYwF3LEcKx8edVGcEYf2CUKf1VWC2uug/BStY2PU2ZUu/ij3qh+tk2GKhFCc61OPiq7rpeG8Alp5b7IWyFzEjV8IahpdOwa81uGv8B52KD3REOJf8N28s1/WzPlOqRm/9ne+txUZHFk7abE69JK2cBjWGrhBLPxXZSumzhkrpZDyzNb0qZYQSAuAuxUdWhI1gdUJXhmlf4UUqM9vTp7129SbO4wrUK3TIZDIt+7tUuLJYfIm6pOdJBNfrTk4mtvwLh/hsNezd/Vv1BOqrvZ6ZGPMM9eDBh+tMvAfVBe6T6rDoSLUQzYf3GEfp/yJP+QrH9AD46s/DRNL/rAiyOW4oDhMiS+S5EVb/CEu4Ud82HyIZNFAi42gx0jJNkaK2gN8hE="
+
 matrix:
   fast_finish: true
   include:
@@ -39,7 +44,7 @@ before_install:
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
   - conda create -n randomgen-test ${PKGS} pytest setuptools nose --quiet
   - source activate randomgen-test
-  - pip install tempita -q
+  - pip install tempita sphinx guzzle_sphinx_theme ipython pandas doctr coverage coveralls pytest-cov codecov -q
 
 install:
   - python setup.py develop
@@ -51,3 +56,16 @@ script:
     if [[ -z ${NUMPY} ]]; then
       python benchmark.py;
     fi
+  - |
+    if [[ -z ${NUMPY} ]]; then
+      if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
+        cd ${BUILD_DIR}/doc
+        make html
+        make html
+        cd ${BUILD_DIR}
+        doctr deploy --built-docs doc --no-require-master
+        if [[ ${TRAVIS_TAG}} ]]; then
+          doctr deploy --built-docs doc --no-require-master
+        fi;
+      fi;
+    fi;
