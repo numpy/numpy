@@ -44,7 +44,11 @@ before_install:
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
   - conda create -n randomgen-test ${PKGS} pytest setuptools nose --quiet
   - source activate randomgen-test
-  - pip install tempita sphinx guzzle_sphinx_theme ipython pandas doctr coverage coveralls pytest-cov codecov -q
+  - pip install tempita coverage coveralls pytest-cov codecov -q
+  # Docbuild
+  - if [[ -z ${NUMPY} && ${TRAVIS_OS_NAME} == "linux" ]]; then pip install sphinx sphinx_rtd_theme guzzle_sphinx_theme ipython doctr -q; fi
+  - if [[ -z ${NUMPY} && ${TRAVIS_OS_NAME} == "linux" ]]; then conda install numba pandas matplotlib --quiet; fi
+  - export BUILD_DIR=${PWD}
 
 install:
   - python setup.py develop
@@ -57,15 +61,15 @@ script:
       python benchmark.py;
     fi
   - |
-    if [[ -z ${NUMPY} ]]; then
-      if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
-        cd ${BUILD_DIR}/doc
-        make html
-        make html
-        cd ${BUILD_DIR}
-        doctr deploy --built-docs doc --no-require-master
-        if [[ ${TRAVIS_TAG}} ]]; then
-          doctr deploy --built-docs doc --no-require-master
-        fi;
+    if [[ -z ${NUMPY} && ${TRAVIS_OS_NAME} == "linux" ]]; then
+      ls
+      echo $PWD
+      cd ${BUILD_DIR}/doc
+      make html
+      make html
+      cd ${BUILD_DIR}
+      doctr deploy doc
+      if [[ ${TRAVIS_TAG}} ]]; then
+        doctr deploy doc --no-require-master
       fi;
     fi;

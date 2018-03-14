@@ -323,9 +323,9 @@ cdef class RandomGenerator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_sample, self._brng, size, self.lock, out)
+            return double_fill(&random_double, self._brng, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_sample_f, self._brng, size, self.lock, out)
+            return float_fill(&random_float, self._brng, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for random_sample' % key)
 
@@ -4306,7 +4306,7 @@ randint = _random_generator.randint
 randn = _random_generator.randn
 random_integers = _random_generator.random_integers
 random_raw = _random_generator.random_raw
-sample = _random_generator.random_sample
+random_sample = _random_generator.random_sample
 random_uintegers = _random_generator.random_uintegers
 rayleigh = _random_generator.rayleigh
 shuffle = _random_generator.shuffle

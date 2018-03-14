@@ -3,16 +3,16 @@
 #include "ziggurat_constants.h"
 
 /* Random generators for external use */
-float random_sample_f(brng_t *brng_state) { return random_float(brng_state); }
+float random_float(brng_t *brng_state) { return next_float(brng_state); }
 
-double random_sample(brng_t *brng_state) { return random_double(brng_state); }
+double random_double(brng_t *brng_state) { return next_double(brng_state); }
 
 double random_standard_exponential(brng_t *brng_state) {
-  return -log(1.0 - random_double(brng_state));
+  return -log(1.0 - next_double(brng_state));
 }
 
 float random_standard_exponential_f(brng_t *brng_state) {
-  return -logf(1.0f - random_float(brng_state));
+  return -logf(1.0f - next_float(brng_state));
 }
 
 /*
@@ -26,8 +26,8 @@ double random_gauss(brng_t *brng_state) {
     double f, x1, x2, r2;
 
     do {
-      x1 = 2.0 * random_double(brng_state) - 1.0;
-      x2 = 2.0 * random_double(brng_state) - 1.0;
+      x1 = 2.0 * next_double(brng_state) - 1.0;
+      x2 = 2.0 * next_double(brng_state) - 1.0;
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
@@ -50,8 +50,8 @@ float random_gauss_f(brng_t *brng_state) {
     float f, x1, x2, r2;
 
     do {
-      x1 = 2.0f * random_float(brng_state) - 1.0f;
-      x2 = 2.0f * random_float(brng_state) - 1.0f;
+      x1 = 2.0f * next_float(brng_state) - 1.0f;
+      x2 = 2.0f * next_float(brng_state) - 1.0f;
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
@@ -70,8 +70,8 @@ static NPY_INLINE double standard_exponential_zig(brng_t *brng_state);
 static double standard_exponential_zig_unlikely(brng_t *brng_state, uint8_t idx,
                                                 double x) {
   if (idx == 0) {
-    return ziggurat_exp_r - log(random_double(brng_state));
-  } else if ((fe_double[idx - 1] - fe_double[idx]) * random_double(brng_state) +
+    return ziggurat_exp_r - log(next_double(brng_state));
+  } else if ((fe_double[idx - 1] - fe_double[idx]) * next_double(brng_state) +
                  fe_double[idx] <
              exp(-x)) {
     return x;
@@ -84,7 +84,7 @@ static NPY_INLINE double standard_exponential_zig(brng_t *brng_state) {
   uint64_t ri;
   uint8_t idx;
   double x;
-  ri = random_uint64(brng_state);
+  ri = next_uint64(brng_state);
   ri >>= 3;
   idx = ri & 0xFF;
   ri >>= 8;
@@ -104,8 +104,8 @@ static NPY_INLINE float standard_exponential_zig_f(brng_t *brng_state);
 static float standard_exponential_zig_unlikely_f(brng_t *brng_state,
                                                  uint8_t idx, float x) {
   if (idx == 0) {
-    return ziggurat_exp_r_f - logf(random_float(brng_state));
-  } else if ((fe_float[idx - 1] - fe_float[idx]) * random_float(brng_state) +
+    return ziggurat_exp_r_f - logf(next_float(brng_state));
+  } else if ((fe_float[idx - 1] - fe_float[idx]) * next_float(brng_state) +
                  fe_float[idx] <
              expf(-x)) {
     return x;
@@ -118,7 +118,7 @@ static NPY_INLINE float standard_exponential_zig_f(brng_t *brng_state) {
   uint32_t ri;
   uint8_t idx;
   float x;
-  ri = random_uint32(brng_state);
+  ri = next_uint32(brng_state);
   ri >>= 1;
   idx = ri & 0xFF;
   ri >>= 8;
@@ -141,7 +141,7 @@ double random_gauss_zig(brng_t *brng_state) {
   double x, xx, yy;
   for (;;) {
     /* r = e3n52sb8 */
-    r = random_uint64(brng_state);
+    r = next_uint64(brng_state);
     idx = r & 0xff;
     r >>= 8;
     sign = r & 0x1;
@@ -153,14 +153,14 @@ double random_gauss_zig(brng_t *brng_state) {
       return x; // # 99.3% of the time return here
     if (idx == 0) {
       for (;;) {
-        xx = -ziggurat_nor_inv_r * log(random_double(brng_state));
-        yy = -log(random_double(brng_state));
+        xx = -ziggurat_nor_inv_r * log(next_double(brng_state));
+        yy = -log(next_double(brng_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r + xx)
                                      : ziggurat_nor_r + xx;
       }
     } else {
-      if (((fi_double[idx - 1] - fi_double[idx]) * random_double(brng_state) +
+      if (((fi_double[idx - 1] - fi_double[idx]) * next_double(brng_state) +
            fi_double[idx]) < exp(-0.5 * x * x))
         return x;
     }
@@ -175,7 +175,7 @@ float random_gauss_zig_f(brng_t *brng_state) {
   float x, xx, yy;
   for (;;) {
     /* r = n23sb8 */
-    r = random_uint32(brng_state);
+    r = next_uint32(brng_state);
     idx = r & 0xff;
     sign = (r >> 8) & 0x1;
     rabs = (int32_t)((r >> 9) & 0x0007fffff);
@@ -186,14 +186,14 @@ float random_gauss_zig_f(brng_t *brng_state) {
       return x; // # 99.3% of the time return here
     if (idx == 0) {
       for (;;) {
-        xx = -ziggurat_nor_inv_r_f * logf(random_float(brng_state));
-        yy = -logf(random_float(brng_state));
+        xx = -ziggurat_nor_inv_r_f * logf(next_float(brng_state));
+        yy = -logf(next_float(brng_state));
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r_f + xx)
                                      : ziggurat_nor_r_f + xx;
       }
     } else {
-      if (((fi_float[idx - 1] - fi_float[idx]) * random_float(brng_state) +
+      if (((fi_float[idx - 1] - fi_float[idx]) * next_float(brng_state) +
            fi_float[idx]) < exp(-0.5 * x * x))
         return x;
     }
@@ -209,7 +209,7 @@ static NPY_INLINE double standard_gamma(brng_t *brng_state, double shape) {
     return random_standard_exponential(brng_state);
   } else if (shape < 1.0) {
     for (;;) {
-      U = random_double(brng_state);
+      U = next_double(brng_state);
       V = random_standard_exponential(brng_state);
       if (U <= 1.0 - shape) {
         X = pow(U, 1. / shape);
@@ -234,7 +234,7 @@ static NPY_INLINE double standard_gamma(brng_t *brng_state, double shape) {
       } while (V <= 0.0);
 
       V = V * V * V;
-      U = random_sample(brng_state);
+      U = next_double(brng_state);
       if (U < 1.0 - 0.0331 * (X * X) * (X * X))
         return (b * V);
       if (log(U) < 0.5 * X * X + b * (1. - V + log(V)))
@@ -251,7 +251,7 @@ static NPY_INLINE float standard_gamma_float(brng_t *brng_state, float shape) {
     return random_standard_exponential_f(brng_state);
   } else if (shape < 1.0f) {
     for (;;) {
-      U = random_sample_f(brng_state);
+      U = next_float(brng_state);
       V = random_standard_exponential_f(brng_state);
       if (U <= 1.0f - shape) {
         X = powf(U, 1.0f / shape);
@@ -276,7 +276,7 @@ static NPY_INLINE float standard_gamma_float(brng_t *brng_state, float shape) {
       } while (V <= 0.0f);
 
       V = V * V * V;
-      U = random_sample_f(brng_state);
+      U = next_float(brng_state);
       if (U < 1.0f - 0.0331f * (X * X) * (X * X))
         return (b * V);
       if (logf(U) < 0.5f * X * X + b * (1.0f - V + logf(V)))
@@ -303,7 +303,7 @@ static NPY_INLINE double standard_gamma_zig(brng_t *brng_state, double shape) {
     return random_standard_exponential_zig(brng_state);
   } else if (shape < 1.0) {
     for (;;) {
-      U = random_sample(brng_state);
+      U = next_double(brng_state);
       V = random_standard_exponential_zig(brng_state);
       if (U <= 1.0 - shape) {
         X = pow(U, 1. / shape);
@@ -328,7 +328,7 @@ static NPY_INLINE double standard_gamma_zig(brng_t *brng_state, double shape) {
       } while (V <= 0.0);
 
       V = V * V * V;
-      U = random_sample(brng_state);
+      U = next_double(brng_state);
       if (U < 1.0 - 0.0331 * (X * X) * (X * X))
         return (b * V);
       if (log(U) < 0.5 * X * X + b * (1. - V + log(V)))
@@ -345,7 +345,7 @@ static NPY_INLINE float standard_gamma_zig_f(brng_t *brng_state, float shape) {
     return random_standard_exponential_zig_f(brng_state);
   } else if (shape < 1.0f) {
     for (;;) {
-      U = random_sample_f(brng_state);
+      U = next_float(brng_state);
       V = random_standard_exponential_zig_f(brng_state);
       if (U <= 1.0f - shape) {
         X = powf(U, 1.0f / shape);
@@ -370,7 +370,7 @@ static NPY_INLINE float standard_gamma_zig_f(brng_t *brng_state, float shape) {
       } while (V <= 0.0f);
 
       V = V * V * V;
-      U = random_sample_f(brng_state);
+      U = next_float(brng_state);
       if (U < 1.0f - 0.0331f * (X * X) * (X * X))
         return (b * V);
       if (logf(U) < 0.5f * X * X + b * (1.0f - V + logf(V)))
@@ -388,26 +388,26 @@ float random_standard_gamma_zig_f(brng_t *brng_state, float shape) {
 }
 
 int64_t random_positive_int64(brng_t *brng_state) {
-  return random_uint64(brng_state) >> 1;
+  return next_uint64(brng_state) >> 1;
 }
 
 int32_t random_positive_int32(brng_t *brng_state) {
-  return random_uint32(brng_state) >> 1;
+  return next_uint32(brng_state) >> 1;
 }
 
 int64_t random_positive_int(brng_t *brng_state) {
 #if ULONG_MAX <= 0xffffffffUL
-  return (int64_t)(random_uint32(brng_state) >> 1);
+  return (int64_t)(next_uint32(brng_state) >> 1);
 #else
-  return (int64_t)(random_uint64(brng_state) >> 1);
+  return (int64_t)(next_uint64(brng_state) >> 1);
 #endif
 }
 
 uint64_t random_uint(brng_t *brng_state) {
 #if ULONG_MAX <= 0xffffffffUL
-  return random_uint32(brng_state);
+  return next_uint32(brng_state);
 #else
-  return random_uint64(brng_state);
+  return next_uint64(brng_state);
 #endif
 }
 
@@ -465,7 +465,7 @@ double random_exponential(brng_t *brng_state, double scale) {
 }
 
 double random_uniform(brng_t *brng_state, double lower, double range) {
-  return lower + range * random_sample(brng_state);
+  return lower + range * next_double(brng_state);
 }
 
 double random_gamma(brng_t *brng_state, double shape, double scale) {
@@ -484,8 +484,8 @@ double random_beta(brng_t *brng_state, double a, double b) {
     /* Use Johnk's algorithm */
 
     while (1) {
-      U = random_sample(brng_state);
-      V = random_sample(brng_state);
+      U = next_double(brng_state);
+      V = next_double(brng_state);
       X = pow(U, 1.0 / a);
       Y = pow(V, 1.0 / b);
 
@@ -538,7 +538,7 @@ double random_power(brng_t *brng_state, double a) {
 double random_laplace(brng_t *brng_state, double loc, double scale) {
   double U;
 
-  U = random_sample(brng_state);
+  U = next_double(brng_state);
   if (U < 0.5) {
     U = loc + scale * log(U + U);
   } else {
@@ -550,14 +550,14 @@ double random_laplace(brng_t *brng_state, double loc, double scale) {
 double random_gumbel(brng_t *brng_state, double loc, double scale) {
   double U;
 
-  U = 1.0 - random_sample(brng_state);
+  U = 1.0 - next_double(brng_state);
   return loc - scale * log(-log(U));
 }
 
 double random_logistic(brng_t *brng_state, double loc, double scale) {
   double U;
 
-  U = random_sample(brng_state);
+  U = next_double(brng_state);
   return loc + scale * log(U / (1.0 - U));
 }
 
@@ -566,7 +566,7 @@ double random_lognormal(brng_t *brng_state, double mean, double sigma) {
 }
 
 double random_rayleigh(brng_t *brng_state, double mode) {
-  return mode * sqrt(-2.0 * log(1.0 - random_sample(brng_state)));
+  return mode * sqrt(-2.0 * log(1.0 - next_double(brng_state)));
 }
 
 double random_standard_t(brng_t *brng_state, double df) {
@@ -585,7 +585,7 @@ static int64_t random_poisson_mult(brng_t *brng_state, double lam) {
   X = 0;
   prod = 1.0;
   while (1) {
-    U = random_sample(brng_state);
+    U = next_double(brng_state);
     prod *= U;
     if (prod > enlam) {
       X += 1;
@@ -614,8 +614,8 @@ static int64_t random_poisson_ptrs(brng_t *brng_state, double lam) {
   vr = 0.9277 - 3.6224 / (b - 2);
 
   while (1) {
-    U = random_sample(brng_state) - 0.5;
-    V = random_sample(brng_state);
+    U = next_double(brng_state) - 0.5;
+    V = next_double(brng_state);
     us = 0.5 - fabs(U);
     k = (int64_t)floor((2 * a / us + b) * U + lam + 0.43);
     if ((us >= 0.07) && (V <= vr)) {
@@ -694,8 +694,8 @@ int64_t random_binomial_btpe(brng_t *brng_state, int64_t n, double p,
 /* sigh ... */
 Step10:
   nrq = n * r * q;
-  u = random_sample(brng_state) * p4;
-  v = random_sample(brng_state);
+  u = next_double(brng_state) * p4;
+  v = next_double(brng_state);
   if (u > p1)
     goto Step20;
   y = (int64_t)floor(xm - p1 * v + u);
@@ -808,13 +808,13 @@ int64_t random_binomial_inversion(brng_t *brng_state, int64_t n, double p,
   }
   X = 0;
   px = qn;
-  U = random_sample(brng_state);
+  U = next_double(brng_state);
   while (U > px) {
     X++;
     if (X > bound) {
       X = 0;
       px = qn;
-      U = random_sample(brng_state);
+      U = next_double(brng_state);
     } else {
       U -= px;
       px = ((n - X + 1) * p * px) / (X * q);
@@ -871,7 +871,7 @@ double random_wald(brng_t *brng_state, double mean, double scale) {
   Y = random_gauss_zig(brng_state);
   Y = mean * Y * Y;
   X = mean + mu_2l * (Y - sqrt(4 * scale * Y + Y * Y));
-  U = random_sample(brng_state);
+  U = next_double(brng_state);
   if (U <= mean / (mean + X)) {
     return X;
   } else {
@@ -886,7 +886,7 @@ double random_vonmises(brng_t *brng_state, double mu, double kappa) {
   int neg;
 
   if (kappa < 1e-8) {
-    return M_PI * (2 * random_sample(brng_state) - 1);
+    return M_PI * (2 * next_double(brng_state) - 1);
   } else {
     /* with double precision rho is zero until 1.4e-8 */
     if (kappa < 1e-5) {
@@ -902,17 +902,17 @@ double random_vonmises(brng_t *brng_state, double mu, double kappa) {
     }
 
     while (1) {
-      U = random_sample(brng_state);
+      U = next_double(brng_state);
       Z = cos(M_PI * U);
       W = (1 + s * Z) / (s + Z);
       Y = kappa * (s - W);
-      V = random_sample(brng_state);
+      V = next_double(brng_state);
       if ((Y * (2 - Y) - V >= 0) || (log(Y / V) + 1 - Y >= 0)) {
         break;
       }
     }
 
-    U = random_sample(brng_state);
+    U = next_double(brng_state);
 
     result = acos(W);
     if (U < 0.5) {
@@ -937,11 +937,11 @@ int64_t random_logseries(brng_t *brng_state, double p) {
   r = log(1.0 - p);
 
   while (1) {
-    V = random_sample(brng_state);
+    V = next_double(brng_state);
     if (V >= p) {
       return 1;
     }
-    U = random_sample(brng_state);
+    U = next_double(brng_state);
     q = 1.0 - exp(r * U);
     if (V <= q * q) {
       result = (int64_t)floor(1 + log(V) / log(q));
@@ -966,7 +966,7 @@ int64_t random_geometric_search(brng_t *brng_state, double p) {
   X = 1;
   sum = prod = p;
   q = 1.0 - p;
-  U = random_sample(brng_state);
+  U = next_double(brng_state);
   while (U > sum) {
     prod *= q;
     sum += prod;
@@ -976,7 +976,7 @@ int64_t random_geometric_search(brng_t *brng_state, double p) {
 }
 
 int64_t random_geometric_inversion(brng_t *brng_state, double p) {
-  return (int64_t)ceil(log(1.0 - random_sample(brng_state)) / log(1.0 - p));
+  return (int64_t)ceil(log(1.0 - next_double(brng_state)) / log(1.0 - p));
 }
 
 int64_t random_geometric(brng_t *brng_state, double p) {
@@ -995,8 +995,8 @@ int64_t random_zipf(brng_t *brng_state, double a) {
   am1 = a - 1.0;
   b = pow(2.0, am1);
   do {
-    U = 1.0 - random_sample(brng_state);
-    V = random_sample(brng_state);
+    U = 1.0 - next_double(brng_state);
+    V = next_double(brng_state);
     X = (int64_t)floor(pow(U, -1.0 / am1));
     /* The real result may be above what can be represented in a int64.
      * It will get casted to -sys.maxint-1. Since this is
@@ -1020,7 +1020,7 @@ double random_triangular(brng_t *brng_state, double left, double mode,
   leftprod = leftbase * base;
   rightprod = (right - mode) * base;
 
-  U = random_sample(brng_state);
+  U = next_double(brng_state);
   if (U <= ratio) {
     return left + sqrt(U * leftprod);
   } else {
@@ -1039,7 +1039,7 @@ int64_t random_hypergeometric_hyp(brng_t *brng_state, int64_t good, int64_t bad,
   y = d2;
   k = sample;
   while (y > 0.0) {
-    u = random_sample(brng_state);
+    u = next_double(brng_state);
     y -= (int64_t)floor(u + y / (d1 + k));
     k--;
     if (k == 0)
@@ -1078,8 +1078,8 @@ int64_t random_hypergeometric_hrua(brng_t *brng_state, int64_t good,
   /* 16 for 16-decimal-digit precision in D1 and D2 */
 
   while (1) {
-    X = random_sample(brng_state);
-    Y = random_sample(brng_state);
+    X = next_double(brng_state);
+    Y = next_double(brng_state);
     W = d6 + d8 * (Y - 0.5) / X;
 
     /* fast rejection: */
@@ -1142,10 +1142,10 @@ uint64_t random_interval(brng_t *brng_state, uint64_t max) {
 
   /* Search a random value in [0..mask] <= max */
   if (max <= 0xffffffffUL) {
-    while ((value = (random_uint32(brng_state) & mask)) > max)
+    while ((value = (next_uint32(brng_state) & mask)) > max)
       ;
   } else {
-    while ((value = (random_uint64(brng_state) & mask)) > max)
+    while ((value = (next_uint64(brng_state) & mask)) > max)
       ;
   }
   return value;
@@ -1174,10 +1174,10 @@ static NPY_INLINE uint64_t bounded_uint64(brng_t *brng_state, uint64_t off,
     return off;
 
   if (rng <= 0xffffffffUL) {
-    while ((val = (random_uint32(brng_state) & mask)) > rng)
+    while ((val = (next_uint32(brng_state) & mask)) > rng)
       ;
   } else {
-    while ((val = (random_uint64(brng_state) & mask)) > rng)
+    while ((val = (next_uint64(brng_state) & mask)) > rng)
       ;
   }
   return off + val;
@@ -1200,7 +1200,7 @@ static NPY_INLINE uint32_t bounded_uint32(brng_t *brng_state, uint32_t off,
   if (rng == 0)
     return off;
 
-  while ((val = (random_uint32(brng_state) & mask)) > rng)
+  while ((val = (next_uint32(brng_state) & mask)) > rng)
     ;
   return off + val;
 }
@@ -1225,7 +1225,7 @@ static NPY_INLINE uint16_t buffered_bounded_uint16(brng_t *brng_state,
 
   do {
     if (!(bcnt[0])) {
-      buf[0] = random_uint32(brng_state);
+      buf[0] = next_uint32(brng_state);
       bcnt[0] = 1;
     } else {
       buf[0] >>= 16;
@@ -1251,7 +1251,7 @@ static NPY_INLINE uint8_t buffered_bounded_uint8(brng_t *brng_state,
     return off;
   do {
     if (!(bcnt[0])) {
-      buf[0] = random_uint32(brng_state);
+      buf[0] = next_uint32(brng_state);
       bcnt[0] = 3;
     } else {
       buf[0] >>= 8;
@@ -1275,7 +1275,7 @@ static NPY_INLINE npy_bool buffered_bounded_bool(brng_t *brng_state,
   if (rng == 0)
     return off;
   if (!(bcnt[0])) {
-    buf[0] = random_uint32(brng_state);
+    buf[0] = next_uint32(brng_state);
     bcnt[0] = 31;
   } else {
     buf[0] >>= 1;

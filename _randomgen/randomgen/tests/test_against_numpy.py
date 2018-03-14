@@ -1,10 +1,11 @@
 import numpy as np
 import numpy.random
-from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 
-from randomgen import RandomGenerator, MT19937
 import randomgen
+from randomgen import RandomGenerator, MT19937
+
 
 def compare_0_input(f1, f2):
     inputs = [(tuple([]), {}), (tuple([]), {'size': 10}),
@@ -42,7 +43,8 @@ def compare_2_input(f1, f2, is_np=False, is_scalar=False):
                 np.array([b] * 10)), {'size': (100, 10)}),
               ((np.ones((7, 31), dtype=dtype) * a,
                 np.array([b] * 31)), {'size': (7, 31)}),
-              ((np.ones((7, 31), dtype=dtype) * a, np.array([b] * 31)), {'size': (10, 7, 31)})]
+              ((np.ones((7, 31), dtype=dtype) * a, np.array([b] * 31)),
+               {'size': (10, 7, 31)})]
 
     if is_scalar:
         inputs = inputs[:3]
@@ -528,15 +530,18 @@ class TestAgainstNumPy(object):
     def test_dir(self):
         nprs_d = set(dir(self.nprs))
         rs_d = dir(self.rg)
-        excluded = {'get_state', 'poisson_lam_max', 'set_state'}
+        excluded = {'get_state', 'set_state'}
         nprs_d.difference_update(excluded)
         assert (len(nprs_d.difference(rs_d)) == 0)
 
         npmod = dir(numpy.random)
         mod = dir(randomgen)
         known_exlcuded = ['__all__', 'Tester', 'info', 'bench',
-                         '__RandomState_ctor', 'mtrand', 'test',
-                         '__warningregistry__', '_numpy_tester']
+                          '__RandomState_ctor', 'mtrand', 'test',
+                          '__warningregistry__', '_numpy_tester', 'division',
+                          'get_state', 'set_state', 'seed', 'ranf', 'random',
+                          'sample', 'absolute_import', 'print_function',
+                          'RandomState']
         mod += known_exlcuded
         diff = set(npmod).difference(mod)
         assert_equal(len(diff), 0)

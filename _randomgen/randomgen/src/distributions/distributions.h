@@ -77,24 +77,24 @@ typedef struct brng {
 } brng_t;
 
 /* Inline generators for internal use */
-static NPY_INLINE uint32_t random_uint32(brng_t *brng_state) {
+static NPY_INLINE uint32_t next_uint32(brng_t *brng_state) {
   return brng_state->next_uint32(brng_state->state);
 }
 
-static NPY_INLINE uint64_t random_uint64(brng_t *brng_state) {
+static NPY_INLINE uint64_t next_uint64(brng_t *brng_state) {
   return brng_state->next_uint64(brng_state->state);
 }
 
-static NPY_INLINE float random_float(brng_t *brng_state) {
-  return (random_uint32(brng_state) >> 9) * (1.0f / 8388608.0f);
+static NPY_INLINE float next_float(brng_t *brng_state) {
+  return (next_uint32(brng_state) >> 9) * (1.0f / 8388608.0f);
 }
 
-static NPY_INLINE double random_double(brng_t *brng_state) {
+static NPY_INLINE double next_double(brng_t *brng_state) {
   return brng_state->next_double(brng_state->state);
 }
 
-DECLDIR float random_sample_f(brng_t *brng_state);
-DECLDIR double random_sample(brng_t *brng_state);
+DECLDIR float random_float(brng_t *brng_state);
+DECLDIR double random_double(brng_t *brng_state);
 
 DECLDIR int64_t random_positive_int64(brng_t *brng_state);
 DECLDIR int32_t random_positive_int32(brng_t *brng_state);
