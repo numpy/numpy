@@ -343,12 +343,15 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     along with the intersected values:
     
     >>> np.intersect1d([1,2,3,4], [2,1,4,6], return_indices=True)
-    (array(1,2,4), array([0,1,3]), array([1,0,2]))
+    (array([1,2,4]), array([0,1,3]), array([1,0,2]))
+    >>> np.intersect1d([1,2,2,3,4,3,2],[1,8,4,2,2,3,2,3],return_indices=True)
+    (array([1, 2, 3, 4]), array([0, 1, 3, 4]), array([0, 3, 5, 2]))
+    
     """
     if not assume_unique:
         if return_indices:
-            ar1, ind1 = unique(ar1, return_indices=True)
-            ar1, ind1 = unique(ar1, return_indices=True)
+            ar1, ind1 = unique(ar1, return_index=True)
+            ar2, ind2 = unique(ar2, return_index=True)
         else:
             ar1 = unique(ar1)
             ar2 = unique(ar2)
@@ -367,13 +370,13 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     if return_indices:
         ar1_indices = aux_sort_indices[:-1][mask]
         ar2_indices = aux_sort_indices[1:][mask] - ar1.size
-        if assume_unique:
+        if not assume_unique:
             ar1_indices = ind1[ar1_indices]
             ar2_indices = ind2[ar2_indices]
 
         return int1d, ar1_indices, ar2_indices
-
-    return int1d
+    else:
+        return int1d
 
 def setxor1d(ar1, ar2, assume_unique=False):
     """
