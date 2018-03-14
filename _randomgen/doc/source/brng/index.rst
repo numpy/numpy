@@ -1,6 +1,13 @@
 Basic Random Number Generators
 ------------------------------
 
+The random values produced by :class:`~randomgen.generator.RandomGenerator` 
+are produced by a basic RNG.  These basic RNGs do not directly provide
+random numbers and only contains methods used for seeding, getting or
+setting the state, jumping or advancing the state, and for accessing 
+low-level wrappers for consumption by code that can efficiently 
+access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
+
 Stable RNGs
 ===========
 These RNGs will be included in future releases.

@@ -5,9 +5,11 @@ Double SIMD Mersenne Twister (dSFMT)
 
 .. currentmodule:: randomgen.dsfmt
 
-Random generator
-================
+
 .. autoclass:: DSFMT
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

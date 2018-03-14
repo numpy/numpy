@@ -5,9 +5,10 @@ Parallel Congruent Generator (64-bit, PCG64)
 
 .. currentmodule:: randomgen.pcg64
 
-Random generator
-================
 .. autoclass:: PCG64
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

@@ -227,14 +227,14 @@ cdef class Philox:
 
         Seed the generator.
 
-        This method is called when ``RandomState`` is initialized. It can be
+        This method is called when ``Philox`` is initialized. It can be
         called again to re-seed the generator. For details, see
-        ``RandomState``.
+        ``Philox``.
 
         Parameters
         ----------
         seed : int, optional
-            Seed for ``RandomState``.
+            Seed for ``Philox``.
         counter : {int array}, optional
             Positive integer less than 2**256 containing the counter position
             or a 4 element array of uint64 containing the counter
@@ -329,8 +329,7 @@ cdef class Philox:
         """
         jump(iter=1)
 
-        Jumps the state of the random number generator as-if 2**128 random
-        numbers have been generated.
+        Jumps the state as-if 2**128 random numbers have been generated.
 
         Parameters
         ----------

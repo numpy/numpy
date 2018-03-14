@@ -5,9 +5,10 @@ Philox Counter-based RNG
 
 .. currentmodule:: randomgen.philox
 
-Random generator
-================
 .. autoclass:: Philox
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

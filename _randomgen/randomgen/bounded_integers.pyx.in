@@ -180,7 +180,7 @@ cdef object _rand_{{nptype}}(object low, object high, object size, brng_t *state
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------

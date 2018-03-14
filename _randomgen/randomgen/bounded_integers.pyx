@@ -523,7 +523,7 @@ cdef object _rand_uint64(object low, object high, object size, brng_t *state, ob
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -599,7 +599,7 @@ cdef object _rand_uint32(object low, object high, object size, brng_t *state, ob
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -675,7 +675,7 @@ cdef object _rand_uint16(object low, object high, object size, brng_t *state, ob
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -751,7 +751,7 @@ cdef object _rand_uint8(object low, object high, object size, brng_t *state, obj
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -827,7 +827,7 @@ cdef object _rand_bool(object low, object high, object size, brng_t *state, obje
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -903,7 +903,7 @@ cdef object _rand_int64(object low, object high, object size, brng_t *state, obj
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -979,7 +979,7 @@ cdef object _rand_int32(object low, object high, object size, brng_t *state, obj
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -1055,7 +1055,7 @@ cdef object _rand_int16(object low, object high, object size, brng_t *state, obj
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------
@@ -1131,7 +1131,7 @@ cdef object _rand_int8(object low, object high, object size, brng_t *state, obje
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
-        Lock to prevent multiple using a single RandomState simultaneously
+        Lock to prevent multiple using a single generator simultaneously
 
     Returns
     -------

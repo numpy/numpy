@@ -24,7 +24,7 @@ matrix:
     - os: linux
       env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.26]
     - os: linux
-      env: [PYTHON=3.6]
+      env: [PYTHON=3.6, DOCBUILD=true]
     - os: osx
       language: generic
       env: [PYTHON=3.6]
@@ -46,10 +46,9 @@ before_install:
   - conda create -n randomgen-test ${PKGS} pytest setuptools nose --quiet
   - source activate randomgen-test
   - pip install tempita coverage coveralls pytest-cov codecov -q
-  # Docbuild
-  - if [[ -z ${NUMPY} && ${TRAVIS_OS_NAME} == "linux" ]]; then pip install sphinx sphinx_rtd_theme guzzle_sphinx_theme ipython doctr -q; fi
-  - if [[ -z ${NUMPY} && ${TRAVIS_OS_NAME} == "linux" ]]; then conda install numba pandas matplotlib --quiet; fi
   - export BUILD_DIR=${PWD}
+  - if [[ ${DOCBUILD} == true ]]; then pip install sphinx sphinx_rtd_theme guzzle_sphinx_theme ipython doctr -q; fi
+  - if [[ ${DOCBUILD} == true ]]; then conda install numba pandas matplotlib --quiet; fi
 
 install:
   - python setup.py develop
@@ -58,19 +57,23 @@ script:
   - set -e
   - pytest randomgen
   - |
-    if [[ -z ${NUMPY} ]]; then
-      python benchmark.py;
-    fi
-  - |
-    if [[ -z ${NUMPY} && ${TRAVIS_OS_NAME} == "linux" ]]; then
-      ls
-      echo $PWD
+    if [[ ${DOCBUILD} == true ]]; then
       cd ${BUILD_DIR}/doc
       make html
       make html
       cd ${BUILD_DIR}
-      doctr deploy doc
-      if [[ -n ${TRAVIS_TAG}} ]]; then
+      doctr deploy devel --build-tags
+      if [[ -z ${TRAVIS_TAG} ]]; then
+        echo "Not a tagged build."
+      else
         doctr deploy . --build-tags
-      fi;
-    fi;
+      fi
+    fi
+
+after_success:
+  - |
+    if [[ ${DOCBUILD} == true ]]; then
+      cd ${BUILD_DIR}
+      python benchmark.py;
+    fi
+  

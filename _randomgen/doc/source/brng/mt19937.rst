@@ -5,9 +5,10 @@ Mersenne Twister (MT19937)
 
 .. currentmodule:: randomgen.mt19937
 
-Random generator
-================
 .. autoclass:: MT19937
+
+Seeding and State
+=================
 
 .. autosummary::
    :toctree: generated/

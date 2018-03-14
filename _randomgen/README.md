@@ -1,7 +1,7 @@
 # RandomGen
 
-[![Travis Build Status](https://travis-ci.org/bashtage/core-prng.svg?branch=master)](https://travis-ci.org/bashtage/core-prng)
-[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true)](https://ci.appveyor.com/project/bashtage/core-prng/branch/master)
+[![Travis Build Status](https://travis-ci.org/bashtage/randomgen.svg?branch=master)](https://travis-ci.org/bashtage/randomgen)
+[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true)](https://ci.appveyor.com/project/bashtage/randomgen/branch/master)
 
 Random Number Generator using settable Basic RNG interface for future
 NumPy RandomState evolution.
@@ -116,13 +116,10 @@ the RNG._
 
 ## Status
 
-* Replacement for `numpy.random.RandomState`. The 
-  `MT19937` generator is identical to `numpy.random.RandomState`, and 
-  will produce an identical sequence of random numbers for a given seed.   
 * Builds and passes all tests on:
   * Linux 32/64 bit, Python 2.7, 3.4, 3.5, 3.6 (probably works on 2.6 and 3.3)
   * PC-BSD (FreeBSD) 64-bit, Python 2.7
-  * OSX 64-bit, Python 2.7
+  * OSX 64-bit, Python 3.6
   * Windows 32/64 bit (only tested on Python 2.7, 3.5 and 3.6, but
     should work on 3.3/3.4)
 
@@ -132,14 +129,16 @@ The version matched the latest version of NumPy where
 
 ## Documentation
 
-An occasionally updated build of the documentation is available on
-[my GitHub pages](http://bashtage.github.io/randomgen/).
+Documentation for the latest release is available on
+[my GitHub pages](http://bashtage.github.io/randomgen/). Documentation for 
+the latest commit (unreleased) is available under  
+[devel](http://bashtage.github.io/randomgen/devel/).
 
 ## Plans
 This module is essentially complete.  There are a few rough edges that 
 need to be smoothed.
   
-* Creation of additional streams from a RandomState where supported 
+* Creation of additional streams from where supported 
   (i.e. a `next_stream()` method)
   
 ## Requirements

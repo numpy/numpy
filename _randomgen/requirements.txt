@@ -1,4 +1,4 @@
-numpy
-cython
-cffi
-pandas
+numpy>=1.10
+cython>=0.24
+setuptools
+wheel

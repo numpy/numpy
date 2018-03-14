@@ -118,7 +118,7 @@ def random_entropy(size=None, source='system'):
 
     This function reads from the system entropy pool and so samples are
     not reproducible.  In particular, it does *NOT* make use of a
-    RandomState, and so ``seed``, ``get_state`` and ``set_state`` have no
+    basic RNG, and so ``seed`` and setting ``state`` have no
     effect.
 
     Raises RuntimeError if the command fails.

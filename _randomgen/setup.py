@@ -19,7 +19,20 @@ except ImportError:
         raise ImportError('tempita required to install, '
                           'use pip install tempita')
 
+try:
+    import pypandoc
+    # With an input file: it will infer the input format from the filename
+    with open('README.rst', 'w') as readme:
+        readme.write(pypandoc.convert_file('README.md', 'rst'))
+except ImportError:
+    import warnings
+    warnings.warn(
+        'Unable to import pypandoc.  Do not use this as a release build!')
+
 import versioneer
+
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 Cython.Compiler.Options.annotate = True
 
@@ -187,17 +200,43 @@ extensions = [Extension('randomgen.entropy',
               ]
 
 
+classifiers = ['Development Status :: 5 - Production/Stable',
+               'Environment :: Console',
+               'Intended Audience :: End Users/Desktop',
+               'Intended Audience :: Financial and Insurance Industry',
+               'Intended Audience :: Information Technology',
+               'Intended Audience :: Science/Research',
+               'License :: OSI Approved',
+               'Operating System :: MacOS :: MacOS X',
+               'Operating System :: Microsoft :: Windows',
+               'Operating System :: POSIX :: Linux',
+               'Operating System :: Unix',
+               'Programming Language :: C',
+               'Programming Language :: Cython',
+               'Programming Language :: Python :: 2.7',
+               'Programming Language :: Python :: 3.3',
+               'Programming Language :: Python :: 3.4',
+               'Programming Language :: Python :: 3.5',
+               'Programming Language :: Python :: 3.6',
+               'Topic :: Adaptive Technologies',
+               'Topic :: Artistic Software',
+               'Topic :: Office/Business :: Financial',
+               'Topic :: Scientific/Engineering',
+               'Topic :: Security :: Cryptography']
+
+
 class BinaryDistribution(Distribution):
     def is_pure(self):
         return False
 
 
 setup(
+    name='randomgen',
     version=versioneer.get_version(),
+    classifiers=classifiers,
     cmdclass=versioneer.get_cmdclass(),
     ext_modules=cythonize(extensions, compile_time_env={
         "PCG_EMULATED_MATH": PCG_EMULATED_MATH}),
-    name='randomgen',
     packages=find_packages(),
     package_dir={'randomgen': './randomgen'},
     package_data={'': ['*.h', '*.pxi', '*.pyx', '*.pxd', '*.in']},
@@ -206,8 +245,13 @@ setup(
     author='Kevin Sheppard',
     author_email='kevin.k.sheppard@gmail.com',
     distclass=BinaryDistribution,
+    long_description=open('README.rst').read(),
     description='Random generator supporting multiple PRNGs',
-    url='https://github.com/bashtage/core-prng',
-    keywords=['pseudo random numbers', 'PRNG', 'Python'],
-    zip_safe=False
+    url='https://github.com/bashtage/randomgen',
+    keywords=['pseudo random numbers', 'PRNG', 'RNG', 'RandomState', 'random',
+              'random numbers', 'parallel random numbers', 'PCG',
+              'XorShift', 'dSFMT', 'MT19937', 'Random123', 'ThreeFry',
+              'Philox'],
+    zip_safe=False,
+    install_requires=required
 )

@@ -22,7 +22,7 @@ PRNGS = {'MT19937': MT19937,
 
 def __generator_ctor(brng_name='mt19937'):
     """
-    Pickling helper function that returns a mod_name.RandomState object
+    Pickling helper function that returns a RandomGenerator object
 
     Parameters
     ----------
@@ -48,7 +48,7 @@ def __generator_ctor(brng_name='mt19937'):
 
 def __brng_ctor(brng_name='mt19937'):
     """
-    Pickling helper function that returns a mod_name.RandomState object
+    Pickling helper function that returns a basic RNG object
 
     Parameters
     ----------

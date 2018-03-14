@@ -43,17 +43,76 @@ cdef uint64_t mt19937_raw(void *st) nogil:
 
 cdef class MT19937:
     """
-    Prototype Basic RNG using MT19937
+    MT19937(seed=None)
+
+    Container for the Mersenne Twister pseudo-random number generator.
 
     Parameters
     ----------
-    seed : int, array of int
-        Integer or array of integers between 0 and 2**64 - 1
+    seed : {None, int, array_like}, optional
+        Random seed used to initialize the pseudo-random number generator.  Can
+        be any integer between 0 and 2**32 - 1 inclusive, an array (or other
+        sequence) of such integers, or ``None`` (the default).  If `seed` is
+        ``None``, then will attempt to read data from ``/dev/urandom`` 
+        (or the Windows analog) if available or seed from the clock otherwise.
 
     Notes
     -----
-    Exposes no user-facing API except `state`. Designed for use in a
-    `RandomGenerator` object.
+    ``MT19937`` directly provides generators for doubles, and unsigned 32 and 64-
+    bit integers [1]_ . These are not firectly available and must be consumed
+    via a ``RandomGenerator`` object.
+
+    The Python stdlib module "random" also contains a Mersenne Twister
+    pseudo-random number generator.
+
+    **State and Seeding**
+
+    The ``MT19937`` state vector consists of a 768 element array of
+    32-bit unsigned integers plus a single integer value between 0 and 768
+    indicating  the current position within the main array.
+
+    ``MT19937`` is seeded using either a single 32-bit unsigned integer
+    or a vector of 32-bit unsigned integers.  In either case, the input seed is
+    used as an input (or inputs) for a hashing function, and the output of the
+    hashing function is used as the initial state. Using a single 32-bit value
+    for the seed can only initialize a small range of the possible initial
+    state values.
+
+    **Compatibility Guarantee**
+
+    ``MT19937`` make a compatibility guarantee. A fixed seed and a fixed 
+    series of calls to ``MT19937`` methods will always produce the same 
+    results up to roundoff error except when the values were incorrect. 
+    Incorrect values will be fixed and the version in which the fix was 
+    made will be noted in the relevant docstring.
+
+    **Parallel Features**
+
+    ``MT19937`` can be used in parallel applications by
+    calling the method ``jump`` which advances the state as-if :math:`2^{128}`
+    random numbers have been generated ([1]_, [2]_). This allows the original sequence to
+    be split so that distinct segments can be used in each worker process.  All
+    generators should be initialized with the same seed to ensure that the
+    segments come from the same sequence.
+
+    >>> from randomgen.entropy import random_entropy
+    >>> from randomgen import RandomGenerator, MT19937
+    >>> seed = random_entropy()
+    >>> rs = [RandomGenerator(MT19937(seed) for _ in range(10)]
+    # Advance rs[i] by i jumps
+    >>> for i in range(10):
+            rs[i].jump(i)
+
+    References
+    ----------
+    .. [1] Hiroshi Haramoto, Makoto Matsumoto, and Pierre L\'Ecuyer, "A Fast
+        Jump Ahead Algorithm for Linear Recurrences in a Polynomial Space",
+        Sequences and Their Applications - SETA, 290--298, 2008.        
+    .. [2] Hiroshi Haramoto, Makoto Matsumoto, Takuji Nishimura, François 
+        Panneton, Pierre L\'Ecuyer, "Efficient Jump Ahead for F2-Linear
+        Random Number Generators", INFORMS JOURNAL ON COMPUTING, Vol. 20, 
+        No. 3, Summer 2008, pp. 385-390.
+
     """
     cdef mt19937_state *rng_state
     cdef brng_t *_brng
@@ -134,18 +193,20 @@ cdef class MT19937:
 
     def seed(self, seed=None):
         """
-        seed(seed=None, stream=None)
+        seed(seed=None)
 
         Seed the generator.
 
-        This method is called when ``RandomState`` is initialized. It can be
-        called again to re-seed the generator. For details, see
-        ``RandomState``.
-
         Parameters
         ----------
-        seed : int, optional
-            Seed for ``RandomState``.
+        seed : {None, int, array_like}, optional
+            Random seed initializing the pseudo-random number generator.
+            Can be an integer in [0, 2**32-1], array of integers in
+            [0, 2**32-1] or ``None`` (the default). If `seed` is ``None``,
+            then ``MT19937`` will try to read entropy from ``/dev/urandom``
+            (or the Windows analog) if available to produce a 64-bit
+            seed. If unavailable, a 64-bit hash of the time and process
+            ID is used.
 
         Raises
         ------
@@ -174,13 +235,38 @@ cdef class MT19937:
             obj = obj.astype(np.uint32, casting='unsafe', order='C')
             mt19937_init_by_array(self.rng_state, <uint32_t*> obj.data, np.PyArray_DIM(obj, 0))
 
-    def jump(self):
-        mt19937_jump(self.rng_state)
+    def jump(self, np.npy_intp iter=1):
+        """
+        jump(iter=1)
+
+        Jumps the state as-if 2**128 random numbers have been generated.
+
+        Parameters
+        ----------
+        iter : integer, positive
+            Number of times to jump the state of the brng.
+
+        Returns
+        -------
+        self : DSFMT
+            PRNG jumped iter times
+        """
+        cdef np.npy_intp i 
+        for i in range(iter):
+            mt19937_jump(self.rng_state)
         return self
 
     @property
     def state(self):
-        """Get or set the PRNG state"""
+        """
+        Get or set the PRNG state
+
+        Returns
+        -------
+        state : dict
+            Dictionary containing the information required to describe the
+            state of the PRNG
+        """
         key = np.zeros(624, dtype=np.uint32)
         for i in range(624):
             key[i] = self.rng_state.key[i]

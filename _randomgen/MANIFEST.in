@@ -1,6 +1,9 @@
+exclude randomgen/entropy.c
+recursive-exclude randomgen  *.c
 include versioneer.py
 include randomgen/_version.py
-recursive-include randomgen  *.py *.pyx *.px[di] *.h *.in
-recursive-include randomgen/src *.c
-
-
+include requirements.txt
+include README.md
+include README.rst
+recursive-include randomgen  *.py *.pyx *.px[di] *.h *.in *.csv
+graft randomgen/src

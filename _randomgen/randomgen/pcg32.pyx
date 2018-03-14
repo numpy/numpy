@@ -95,7 +95,7 @@ cdef class PCG32:
     >>> from randomgen import RandomGenerator, PCG32
     >>> rg = [RandomGenerator(PCG32(1234, i + 1)) for i in range(10)]
 
-    The alternative method is to call ``advance`` on a single RandomState to
+    The alternative method is to call ``advance`` on a instance to
     produce non-overlapping sequences.
 
     >>> rg = [RandomGenerator(PCG32(1234, i + 1)) for i in range(10)]
@@ -200,14 +200,14 @@ cdef class PCG32:
 
         Seed the generator.
 
-        This method is called when ``RandomState`` is initialized. It can be
+        This method is called when ``PCG32`` is initialized. It can be
         called again to re-seed the generator. For details, see
-        ``RandomState``.
+        ``PCG32``.
 
         Parameters
         ----------
         seed : int, optional
-            Seed for ``RandomState``.
+            Seed for ``PCG32``.
         inc : int, optional
             Increment to use for PCG stream
 

@@ -46,13 +46,13 @@ cdef class Xoroshiro128:
         Random seed initializing the pseudo-random number generator.
         Can be an integer in [0, 2**64-1], array of integers in
         [0, 2**64-1] or ``None`` (the default). If `seed` is ``None``,
-        then ``xoroshiro128plus.RandomState`` will try to read data from
+        then ``Xoroshiro128`` will try to read data from
         ``/dev/urandom`` (or the Windows analog) if available.  If
         unavailable, a 64-bit hash of the time and process ID is used.
 
     Notes
     -----
-        xoroshiro128+ is the successor to xorshift128+ written by David Blackman and
+    xoroshiro128+ is the successor to xorshift128+ written by David Blackman and
     Sebastiano Vigna.  It is a 64-bit PRNG that uses a carefully handcrafted
     shift/rotate-based linear transformation.  This change both improves speed and
     statistical quality of the PRNG [1]_. xoroshiro128+ has a period of
@@ -213,8 +213,7 @@ cdef class Xoroshiro128:
         """
         jump(iter=1)
 
-        Jumps the state of the random number generator as-if 2**64 random numbers
-        have been generated.
+        Jumps the state as-if 2**64 random numbers have been generated.
 
         Parameters
         ----------
