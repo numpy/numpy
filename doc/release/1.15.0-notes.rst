@@ -208,6 +208,12 @@ This change makes it easier to write Python 2/3 compatible code using
 ``from __future__ import unicode_literals``, which previously would cause
 string literal field names to raise a TypeError in Python 2.
 
+Comparison ufuncs accept ``dtype=object``, overriding the default ``bool``
+--------------------------------------------------------------------------
+This allows object arrays of symbolic types, which override ``==`` and other
+operators to return expressions, to be compared elementwise with
+``np.equal(a, b, dtype=object)``.
+
 ``sort`` functions accept ``kind='stable'``
 -------------------------------------------
 Up until now, to perform a stable sort on the data, the user must do::
