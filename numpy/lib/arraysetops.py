@@ -345,37 +345,34 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     >>> np.intersect1d([1,2,3,4], [2,1,4,6], return_indices=True)
     (array(1,2,4), array([0,1,3]), array([1,0,2]))
     """
-    if not (assume_unique or return_indices):
-        # Might be faster than unique( intersect1d( ar1, ar2 ) )?
-        # Added the extra conditional because np.unique uses an additional 
-        # keyword when return_indices is specified for intersect1d. 
-        ar1 = unique(ar1)
-        ar2 = unique(ar2)
+    if not assume_unique:
+        if return_indices:
+            ar1, ind1 = unique(ar1, return_indices=True)
+            ar1, ind1 = unique(ar1, return_indices=True)
+        else:
+            ar1 = unique(ar1)
+            ar2 = unique(ar2)
 
+    aux = np.concatenate((ar1, ar2))
 
     if return_indices:
-      if not assume_unique:
-        a1, ind1 = unique(ar1, return_index = True) #a1 not necessary
-        a2, ind2 = unique(ar2, return_index = True)
-        aux = np.concatenate([a1,a2])
-      else:
-        aux = np.concatenate([ar1, ar2])
-      aux_sort_indices = np.argsort(aux, kind='mergesort')
-      aux_sorted = aux[aux_sort_indices]
-      mask = aux_sorted[1:] == aux_sorted[:-1]
-      int1d = aux_sorted[:-1][mask]
-      ar1_indices = aux_sort_indices[:-1][mask]
+        aux_sort_indices = np.argsort(aux, kind='mergesort')
+        aux = aux[aux_sort_indices]
+    else:
+        aux.sort()
 
-      if not assume_unique:
-        ar2_indices = aux_sort_indices[1:][mask] - a1.size
-        return int1d, ind1[ar1_indices], ind2[ar2_indices]
-      else:
+    mask = aux[1:] == aux[:-1]
+    int1d = aux[:-1][mask]
+
+    if return_indices:
+        ar1_indices = aux_sort_indices[:-1][mask]
         ar2_indices = aux_sort_indices[1:][mask] - ar1.size
+        if assume_unique:
+            ar1_indices = ind1[ar1_indices]
+            ar2_indices = ind2[ar2_indices]
+
         return int1d, ar1_indices, ar2_indices
-    
-    aux = np.concatenate([ar1,ar2])  
-    aux.sort()
-    int1d = aux[:-1][aux[1:] == aux[:-1]]
+
     return int1d
 
 def setxor1d(ar1, ar2, assume_unique=False):
