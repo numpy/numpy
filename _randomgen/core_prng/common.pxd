@@ -1,7 +1,7 @@
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int8_t, int16_t, int32_t, int64_t, intptr_t)
 from libc.math cimport sqrt
-from cpython cimport PyInt_AsLong, PyFloat_AsDouble
+
 from distributions cimport prng_t 
 import numpy as np
 cimport numpy as np

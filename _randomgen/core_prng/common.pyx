@@ -1,12 +1,18 @@
 #!python
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True
 
+from collections import namedtuple
+from cpython cimport PyInt_AsLong, PyFloat_AsDouble
 import sys
 import numpy as np
 cimport numpy as np
 from common cimport *
 
 np.import_array()
+
+interface = namedtuple('interface', ['state_address', 'state', 'next_uint64',
+                                     'next_uint32', 'next_double', 'prng'])
+
 
 cdef double kahan_sum(double *darr, np.npy_intp n):
     cdef double c, y, t, sum

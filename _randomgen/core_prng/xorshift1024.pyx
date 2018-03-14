@@ -4,11 +4,11 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 cimport numpy as np
 
+from common import interface
 from common cimport *
 from distributions cimport prng_t
-from core_prng.entropy import random_entropy
+from core_prng.entropy import random_entropy, seed_by_array
 import core_prng.pickle
-cimport entropy
 
 np.import_array()
 
@@ -36,19 +36,95 @@ cdef double xorshift1024_double(void* st) nogil:
     return uint64_to_double(xorshift1024_next64(<xorshift1024_state *>st))
 
 cdef class Xorshift1024:
-    """
-    Prototype Core PRNG using xorshift1024
+    u"""
+    Xorshift1024(seed=None)
+
+    Container for the xorshift1024*φ pseudo-random number generator.
+
+    xorshift1024*φ is a 64-bit implementation of Saito and Matsumoto's XSadd
+    generator [1]_ (see also [2]_, [3]_, [4]_). xorshift1024* has a period of
+    :math:`2^{1024} - 1` and supports jumping the sequence in increments of
+    :math:`2^{512}`, which allows multiple non-overlapping sequences to be
+    generated.
+
+    ``Xorshift1024`` exposes no user-facing API except ``generator``,
+    ``state``, ``cffi`` and ``ctypes``. Designed for use in a
+    ``RandomGenerator`` object.
+
+    **Compatibility Guarantee**
+
+    ``Xorshift1024`` guarantees that a fixed seed will always produce the
+    same results.
 
     Parameters
     ----------
-    seed : int, array of int
-        Integer or array of integers between 0 and 2**64 - 1
+    seed : {None, int, array_like}, optional
+        Random seed initializing the pseudo-random number generator.
+        Can be an integer in [0, 2**64-1], array of integers in
+        [0, 2**64-1] or ``None`` (the default). If `seed` is ``None``,
+        then ``xorshift1024.RandomState`` will try to read data from
+        ``/dev/urandom`` (or the Windows analog) if available.  If
+        unavailable, a 64-bit hash of the time and process ID is used.
 
     Notes
     -----
-    Exposes no user-facing API except `get_state` and `set_state`. Designed
-    for use in a `RandomGenerator` object.
+    See ``Xoroshiro128`` for a faster implementation that has a smaller
+    period.
+
+    **Parallel Features**
+
+    ``Xorshift1024`` can be used in parallel applications by
+    calling the method ``jump`` which advances the state as-if
+    :math:`2^{512}` random numbers have been generated. This
+    allows the original sequence to be split so that distinct segments can be used
+    in each worker process. All generators should be initialized with the same
+    seed to ensure that the segments come from the same sequence.
+
+    >>> from core_prng import RandomGenerator, Xorshift1024
+    >>> rg = [RandomGenerator(Xorshift1024(1234)) for _ in range(10)]
+    # Advance rg[i] by i jumps
+    >>> for i in range(10):
+    ...     rg[i].jump(i)
+
+    **State and Seeding**
+
+    The ``Xorshift1024`` state vector consists of a 16 element array
+    of 64-bit unsigned integers.
+
+    ``Xorshift1024`` is seeded using either a single 64-bit unsigned integer
+    or a vector of 64-bit unsigned integers.  In either case, the input seed is
+    used as an input (or inputs) for another simple random number generator,
+    Splitmix64, and the output of this PRNG function is used as the initial state.
+    Using a single 64-bit value for the seed can only initialize a small range of
+    the possible initial state values.  When using an array, the SplitMix64 state
+    for producing the ith component of the initial state is XORd with the ith
+    value of the seed array until the seed array is exhausted. When using an array
+    the initial state for the SplitMix64 state is 0 so that using a single element
+    array and using the same value as a scalar will produce the same initial state.
+
+    Examples
+    --------
+    >>> from core_prng import RandomGenerator, Xorshift1024
+    >>> rg = RandomGenerator(Xorshift1024(1234))
+    >>> rg.standard_normal()
+
+    Identical method using only Xoroshiro128
+
+    >>> rg = Xorshift10241234).generator
+    >>> rg.standard_normal()
+
+    References
+    ----------
+    .. [1] "xorshift*/xorshift+ generators and the PRNG shootout",
+           http://xorshift.di.unimi.it/
+    .. [2] Marsaglia, George. "Xorshift RNGs." Journal of Statistical Software
+           [Online], 8.14, pp. 1 - 6, .2003.
+    .. [3] Sebastiano Vigna. "An experimental exploration of Marsaglia's xorshift
+           generators, scrambled." CoRR, abs/1402.6246, 2014.
+    .. [4] Sebastiano Vigna. "Further scramblings of Marsaglia's xorshift
+           generators." CoRR, abs/1403.0930, 2014.
     """
+
     cdef xorshift1024_state  *rng_state
     cdef prng_t *_prng
     cdef public object capsule
@@ -152,14 +228,37 @@ cdef class Xorshift1024:
                 state = random_entropy(4, 'fallback')
             state = state.view(np.uint64)
         else:
-            state = entropy.seed_by_array(seed, 16)
+            state = seed_by_array(seed, 16)
         for i in range(16):
             self.rng_state.s[i] = <uint64_t>int(state[i])
         self.rng_state.p = 0
         self._reset_state_variables()
 
-    def jump(self):
-        xorshift1024_jump(self.rng_state)
+    def jump(self, np.npy_intp iter):
+        """
+        jump(iter = 1)
+
+        Jumps the state as-if 2**512 random numbers have been generated
+
+        Parameters
+        ----------
+        iter : integer, positive
+            Number of times to jump the state of the rng.
+
+        Returns
+        -------
+        self : Xorshift1024
+            PRNG jumped iter times
+
+        Notes
+        -----
+        Jumping the rng state resets any pre-computed random numbers. This is required
+        to ensure exact reproducibility.
+        """
+        cdef np.npy_intp i
+        for i in range(iter):
+            xorshift1024_jump(self.rng_state)
+        self._reset_state_variables()
         return self
 
     @property
@@ -186,3 +285,88 @@ cdef class Xorshift1024:
         self.rng_state.p = value['state']['p']
         self.rng_state.has_uint32 = value['has_uint32']
         self.rng_state.uinteger = value['uinteger']
+
+    @property
+    def ctypes(self):
+        """
+        Cytpes interface
+
+        Returns
+        -------
+        interface : namedtuple
+            Named tuple containing CFFI wrapper
+
+            * state_address - Memory address of the state struct
+            * state - pointer to the state struct
+            * next_uint64 - function pointer to produce 64 bit integers
+            * next_uint32 - function pointer to produce 32 bit integers
+            * next_double - function pointer to produce doubles
+            * prng - pointer to the PRNG struct
+        """
+
+        if self._ctypes is not None:
+            return self._ctypes
+
+        import ctypes
+        
+        self._ctypes = interface(<Py_ssize_t>self.rng_state,
+                         ctypes.c_void_p(<Py_ssize_t>self.rng_state),
+                         ctypes.cast(<Py_ssize_t>&xorshift1024_uint64, 
+                                     ctypes.CFUNCTYPE(ctypes.c_uint64, 
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&xorshift1024_uint32, 
+                                     ctypes.CFUNCTYPE(ctypes.c_uint32, 
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&xorshift1024_double, 
+                                     ctypes.CFUNCTYPE(ctypes.c_double, 
+                                     ctypes.c_void_p)),
+                         ctypes.c_void_p(<Py_ssize_t>self._prng))
+        return self.ctypes
+
+    @property
+    def cffi(self):
+        """
+        CFFI interface
+
+        Returns
+        -------
+        interface : namedtuple
+            Named tuple containing CFFI wrapper
+
+            * state_address - Memory address of the state struct
+            * state - pointer to the state struct
+            * next_uint64 - function pointer to produce 64 bit integers
+            * next_uint32 - function pointer to produce 32 bit integers
+            * next_double - function pointer to produce doubles
+            * prng - pointer to the PRNG struct
+        """
+        if self._cffi is not None:
+            return self._cffi
+        try:
+            import cffi 
+        except ImportError:
+            raise ImportError('cffi is cannot be imported.')
+
+        ffi = cffi.FFI()
+        self._cffi = interface(<Py_ssize_t>self.rng_state,
+                         ffi.cast('void *',<Py_ssize_t>self.rng_state),
+                         ffi.cast('uint64_t (*)(void *)',<uint64_t>self._prng.next_uint64),
+                         ffi.cast('uint32_t (*)(void *)',<uint64_t>self._prng.next_uint32),
+                         ffi.cast('double (*)(void *)',<uint64_t>self._prng.next_double),
+                         ffi.cast('void *',<Py_ssize_t>self._prng))
+        return self.cffi
+
+    @property
+    def generator(self):
+        """
+        Return a RandomGenerator object
+
+        Returns
+        -------
+        gen : core_prng.generator.RandomGenerator
+            Random generator used this instance as the core PRNG
+        """
+        if self._generator is None:
+            from .generator import RandomGenerator
+            self._generator = RandomGenerator(self)
+        return self._generator

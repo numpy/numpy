@@ -8,7 +8,6 @@ from common cimport *
 from distributions cimport prng_t
 from core_prng.entropy import random_entropy
 import core_prng.pickle
-cimport entropy
 
 np.import_array()
 
