@@ -23,7 +23,7 @@ cdef Py_ssize_t compute_numel(size):
         n = size
     return n
 
-cdef np.ndarray seed_by_array(object seed, Py_ssize_t n):
+def seed_by_array(object seed, Py_ssize_t n):
     """
     Transforms a seed array into an initial state
     

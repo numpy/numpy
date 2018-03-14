@@ -5,11 +5,11 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 cimport numpy as np
 
+from common import interface
 from common cimport *
 from distributions cimport prng_t
 from core_prng.entropy import random_entropy
 import core_prng.pickle
-cimport entropy
 
 np.import_array()
 
@@ -65,22 +65,83 @@ cdef uint64_t dsfmt_raw(void *st) nogil:
     return dsfmt_next_raw(<dsfmt_state *>st)
 
 cdef class DSFMT:
-    """
-    Prototype Core PRNG using dsfmt
+    u"""
+    DSFMT(seed=None)
+
+    Container for the SIMD-based Mersenne Twister pseudo RNG.
 
     Parameters
     ----------
-    seed : int, array of int
-        Integer or array of integers between 0 and 2**64 - 1
+    seed : {None, int, array_like}, optional
+        Random seed initializing the pseudo-random number generator.
+        Can be an integer in [0, 2**32-1], array of integers in
+        [0, 2**32-1] or ``None`` (the default). If `seed` is ``None``,
+        then ``DSFMT`` will try to read entropy from ``/dev/urandom``
+        (or the Windows analog) if available to produce a 64-bit
+        seed. If unavailable, a 64-bit hash of the time and process
+        ID is used.
 
     Notes
     -----
-    Exposes no user-facing API except `state`. Designed for use in a
-    `RandomGenerator` object.
+    ``DSFMT`` directly provides generators for doubles, and unsigned 32 and 64-
+    bit integers [1]_ . These are not firectly available and must b consumed
+    via a ``RandomGenerator`` object.
+
+    The Python stdlib module "random" also contains a Mersenne Twister
+    pseudo-random number generator.
+
+    **Parallel Features**
+
+    ``DSFMT`` can be used in parallel applications by calling the method
+    ``jump`` which advances the state as-if :math:`2^{128}` random numbers
+    have been generated [2]_. This allows the original sequence to be split
+    so that distinct segments can be used in each worker process.  All
+    generators should be initialized with the same seed to ensure that the
+    segments come from the same sequence.
+
+    >>> from core_prng.entropy import random_entropy
+    >>> from core_prng import RandomGenerator, DSFMT
+    >>> seed = random_entropy()
+    >>> rs = [RandomGenerator(DSFMT(seed)) for _ in range(10)]
+    # Advance rs[i] by i jumps
+    >>> for i in range(10):
+    ...     rs[i].jump()
+
+    **State and Seeding**
+
+    The ``DSFMT`` state vector consists of a 384 element array of
+    64-bit unsigned integers plus a single integer value between 0 and 382
+    indicating  the current position within the main array. The implementation
+    used here augments this with a 384 element array of doubles which are used
+    to efficiently access the random numbers produced by the dSFMT generator.
+
+    ``DSFMT`` is seeded using either a single 32-bit unsigned integer
+    or a vector of 32-bit unsigned integers.  In either case, the input seed is
+    used as an input (or inputs) for a hashing function, and the output of the
+    hashing function is used as the initial state. Using a single 32-bit value
+    for the seed can only initialize a small range of the possible initial
+    state values.
+
+    **Compatibility Guarantee**
+
+    ``DSFMT`` does makes a guarantee that a fixed seed and will always
+    produce the same results.
+
+    References
+    ----------
+    .. [1] Mutsuo Saito and Makoto Matsumoto, "SIMD-oriented Fast Mersenne
+           Twister: a 128-bit Pseudorandom Number Generator." Monte Carlo
+           and Quasi-Monte Carlo Methods 2006, Springer, pp. 607 -- 622, 2008.
+    .. [2] Hiroshi Haramoto, Makoto Matsumoto, and Pierre L\'Ecuyer, "A Fast
+           Jump Ahead Algorithm for Linear Recurrences in a Polynomial Space",
+           Sequences and Their Applications - SETA, 290--298, 2008.
     """
     cdef dsfmt_state  *rng_state
     cdef prng_t *_prng
     cdef public object capsule
+    cdef public object _cffi
+    cdef public object _ctypes
+    cdef public object _generator
 
     def __init__(self, seed=None):
         self.rng_state = <dsfmt_state *>malloc(sizeof(dsfmt_state))
@@ -96,6 +157,10 @@ cdef class DSFMT:
         self._prng.next_raw = &dsfmt_raw
         cdef const char *name = "CorePRNG"
         self.capsule = PyCapsule_New(<void *>self._prng, name, NULL)
+
+        self._cffi = None
+        self._ctypes = None
+        self._generator = None
 
     # Pickling support:
     def __getstate__(self):
@@ -115,34 +180,6 @@ cdef class DSFMT:
         free(self.rng_state)
         free(self._prng)
 
-    cdef _reset_state_variables(self):
-        pass
-
-    def __random_integer(self, bits=64):
-        """
-        64-bit Random Integers from the PRNG
-
-        Parameters
-        ----------
-        bits : {32, 64}
-            Number of random bits to return
-
-        Returns
-        -------
-        rv : int
-            Next random value
-
-        Notes
-        -----
-        Testing only
-        """
-        if bits == 64:
-            return dsfmt_next64(self.rng_state)
-        elif bits == 32:
-            return dsfmt_next32(self.rng_state)
-        else:
-            raise ValueError('bits must be 32 or 64')
-
     def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
         cdef Py_ssize_t i
         if method==u'uint64':
@@ -156,18 +193,20 @@ cdef class DSFMT:
 
     def seed(self, seed=None):
         """
-        seed(seed=None, stream=None)
+        seed(seed=None)
 
         Seed the generator.
 
-        This method is called when ``RandomState`` is initialized. It can be
-        called again to re-seed the generator. For details, see
-        ``RandomState``.
-
         Parameters
         ----------
-        seed : int, optional
-            Seed for ``RandomState``.
+        seed : {None, int, array_like}, optional
+            Random seed initializing the pseudo-random number generator.
+            Can be an integer in [0, 2**32-1], array of integers in
+            [0, 2**32-1] or ``None`` (the default). If `seed` is ``None``,
+            then ``DSFMT`` will try to read entropy from ``/dev/urandom``
+            (or the Windows analog) if available to produce a 64-bit
+            seed. If unavailable, a 64-bit hash of the time and process
+            ID is used.
 
         Raises
         ------
@@ -197,61 +236,41 @@ cdef class DSFMT:
             dsfmt_init_by_array(self.rng_state.state,
                                 <uint32_t *>obj.data,
                                 np.PyArray_DIM(obj, 0))
-        self._reset_state_variables()
 
-    def seed(self, seed=None):
+    def jump(self, np.npy_intp iter):
         """
-        seed(seed=None, stream=None)
+        jump(iter = 1)
 
-        Seed the generator.
-
-        This method is called when ``RandomState`` is initialized. It can be
-        called again to re-seed the generator. For details, see
-        ``RandomState``.
+        Jumps the state of the random number generator as-if 2**128 random numbers
+        have been generated.
 
         Parameters
         ----------
-        seed : int, optional
-            Seed for ``RandomState``.
+        iter : integer, positive
+            Number of times to jump the state of the prng.
 
-        Raises
-        ------
-        ValueError
-            If seed values are out of range for the PRNG.
-
+        Returns
+        -------
+        self : DSFMT
+            PRNG jumped iter times
         """
-        cdef np.ndarray obj
-        try:
-            if seed is None:
-                try:
-                    seed = random_entropy(1)
-                except RuntimeError:
-                    seed = random_entropy(1, 'fallback')
-                dsfmt_init_gen_rand(self.rng_state.state, seed[0])
-            else:
-                if hasattr(seed, 'squeeze'):
-                    seed = seed.squeeze()
-                idx = operator.index(seed)
-                if idx > int(2**32 - 1) or idx < 0:
-                    raise ValueError("Seed must be between 0 and 2**32 - 1")
-                dsfmt_init_gen_rand(self.rng_state.state, seed)
-        except TypeError:
-            obj = np.asarray(seed).astype(np.int64, casting='safe').ravel()
-            if ((obj > int(2**32 - 1)) | (obj < 0)).any():
-                raise ValueError("Seed must be between 0 and 2**32 - 1")
-            obj = obj.astype(np.uint32, casting='unsafe', order='C')
-            dsfmt_init_by_array(self.rng_state.state, <uint32_t*>obj.data,
-                                np.PyArray_DIM(obj, 0))
-
-        self._reset_state_variables()
-
-    def jump(self):
-        dsfmt_jump(self.rng_state)
+        cdef np.npy_intp i
+        for i in range(iter):
+            dsfmt_jump(self.rng_state)
         return self
 
     @property
     def state(self):
-        """Get or set the PRNG state"""
+        """
+        Get or set the PRNG state
+
+        Returns
+        -------
+        state : dict
+            Dictionary containing the information required to describe the
+            state of the PRNG
+        """
+
         cdef Py_ssize_t i, j, loc = 0
         cdef uint64_t[::1] state
         cdef double[::1] buffered_uniforms
@@ -289,3 +308,88 @@ cdef class DSFMT:
         for i in range(DSFMT_N64):
             self.rng_state.buffered_uniforms[i] = buffered_uniforms[i]
         self.rng_state.buffer_loc = value['buffer_loc']
+
+    @property
+    def ctypes(self):
+        """
+        Cytpes interface
+
+        Returns
+        -------
+        interface : namedtuple
+            Named tuple containing CFFI wrapper
+
+            * state_address - Memory address of the state struct
+            * state - pointer to the state struct
+            * next_uint64 - function pointer to produce 64 bit integers
+            * next_uint32 - function pointer to produce 32 bit integers
+            * next_double - function pointer to produce doubles
+            * prng - pointer to the PRNG struct
+        """
+
+        if self._ctypes is not None:
+            return self._ctypes
+
+        import ctypes
+
+        self._ctypes = interface(<Py_ssize_t>self.rng_state,
+                         ctypes.c_void_p(<Py_ssize_t>self.rng_state),
+                         ctypes.cast(<Py_ssize_t>&dsfmt_uint64,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint64,
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&dsfmt_uint32,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint32,
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&dsfmt_double,
+                                     ctypes.CFUNCTYPE(ctypes.c_double,
+                                     ctypes.c_void_p)),
+                         ctypes.c_void_p(<Py_ssize_t>self._prng))
+        return self.ctypes
+
+    @property
+    def cffi(self):
+        """
+        CFFI interface
+
+        Returns
+        -------
+        interface : namedtuple
+            Named tuple containing CFFI wrapper
+
+            * state_address - Memory address of the state struct
+            * state - pointer to the state struct
+            * next_uint64 - function pointer to produce 64 bit integers
+            * next_uint32 - function pointer to produce 32 bit integers
+            * next_double - function pointer to produce doubles
+            * prng - pointer to the PRNG struct
+        """
+        if self._cffi is not None:
+            return self._cffi
+        try:
+            import cffi
+        except ImportError:
+            raise ImportError('cffi is cannot be imported.')
+
+        ffi = cffi.FFI()
+        self._cffi = interface(<Py_ssize_t>self.rng_state,
+                         ffi.cast('void *',<Py_ssize_t>self.rng_state),
+                         ffi.cast('uint64_t (*)(void *)',<uint64_t>self._prng.next_uint64),
+                         ffi.cast('uint32_t (*)(void *)',<uint64_t>self._prng.next_uint32),
+                         ffi.cast('double (*)(void *)',<uint64_t>self._prng.next_double),
+                         ffi.cast('void *',<Py_ssize_t>self._prng))
+        return self.cffi
+
+    @property
+    def generator(self):
+        """
+        Return a RandomGenerator object
+
+        Returns
+        -------
+        gen : core_prng.generator.RandomGenerator
+            Random generator used this instance as the core PRNG
+        """
+        if self._generator is None:
+            from .generator import RandomGenerator
+            self._generator = RandomGenerator(self)
+        return self._generator

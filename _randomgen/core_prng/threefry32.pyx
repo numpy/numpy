@@ -5,9 +5,8 @@ import numpy as np
 
 from common cimport *
 from distributions cimport prng_t
-from core_prng.entropy import random_entropy
+from core_prng.entropy import random_entropy, seed_by_array
 import core_prng.pickle
-cimport entropy
 
 np.import_array()
 
@@ -183,7 +182,7 @@ cdef class ThreeFry32:
                 except RuntimeError:
                     state = random_entropy(4, 'fallback')
             else:
-                state = entropy.seed_by_array(seed, 2)
+                state = seed_by_array(seed, 2)
                 state = state.view(np.uint32)
             for i in range(4):
                 self.rng_state.key.v[i] = state[i]
