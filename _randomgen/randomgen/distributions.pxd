@@ -35,13 +35,13 @@ cdef extern from "src/distributions/distributions.h":
 
     ctypedef brng brng_t
 
-    double random_sample(brng_t *brng_state) nogil
+    double random_double(brng_t *brng_state) nogil
     double random_standard_exponential(brng_t *brng_state) nogil
     double random_standard_exponential_zig(brng_t *brng_state) nogil
     double random_gauss_zig(brng_t* brng_state) nogil
     double random_standard_gamma_zig(brng_t *brng_state, double shape) nogil
 
-    float random_sample_f(brng_t *brng_state) nogil
+    float random_float(brng_t *brng_state) nogil
     float random_standard_exponential_f(brng_t *brng_state) nogil
     float random_standard_exponential_zig_f(brng_t *brng_state) nogil
     float random_gauss_zig_f(brng_t* brng_state) nogil

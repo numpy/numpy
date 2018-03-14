@@ -15,7 +15,7 @@ __all__ = ['RandomGenerator', 'DSFMT', 'MT19937', 'PCG64', 'PCG32', 'Philox',
            'gamma', 'geometric', 'gumbel', 'hypergeometric', 'laplace', 'logistic', 'lognormal', 'logseries',
            'multinomial', 'multivariate_normal', 'negative_binomial', 'noncentral_chisquare', 'noncentral_f',
            'normal', 'permutation', 'pareto', 'poisson', 'power', 'rand', 'randint', 'randn',
-           'random_integers', 'random_raw', 'random_uintegers', 'rayleigh', 'state', 'sample', 'shuffle',
+           'random_integers', 'random_raw', 'random_sample', 'random_uintegers', 'rayleigh', 'state', 'shuffle',
            'standard_cauchy', 'standard_exponential', 'standard_gamma', 'standard_normal', 'standard_t',
            'tomaxint', 'triangular', 'uniform', 'vonmises', 'wald', 'weibull', 'zipf']
 

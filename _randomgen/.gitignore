@@ -9,3 +9,16 @@ build/
 **/Random123
 settings.json
 *.so
+randomgen/bounded_integers.c
+randomgen/common.c
+randomgen/dsfmt.c
+randomgen/entropy.c
+randomgen/generator.c
+randomgen/mt19937.c
+randomgen/pcg32.c
+randomgen/pcg64.c
+randomgen/philox.c
+randomgen/threefry.c
+randomgen/threefry32.c
+randomgen/xoroshiro128.c
+randomgen/xorshift1024.c
