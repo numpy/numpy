@@ -15,7 +15,12 @@ function name, setup and teardown functions and so on - see
 """
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 
 from .utils import SkipTest, assert_warns, HAS_REFCOUNT
 
@@ -126,7 +131,7 @@ def skipif(skip_condition, msg=None):
         import nose
 
         # Allow for both boolean or callable skip conditions.
-        if isinstance(skip_condition, collections.Callable):
+        if isinstance(skip_condition, collections_abc.Callable):
             skip_val = lambda: skip_condition()
         else:
             skip_val = lambda: skip_condition
@@ -202,7 +207,7 @@ def knownfailureif(fail_condition, msg=None):
         msg = 'Test skipped due to known failure'
 
     # Allow for both boolean or callable known failure conditions.
-    if isinstance(fail_condition, collections.Callable):
+    if isinstance(fail_condition, collections_abc.Callable):
         fail_val = lambda: fail_condition()
     else:
         fail_val = lambda: fail_condition
@@ -257,7 +262,7 @@ def deprecated(conditional=True):
             with assert_warns(DeprecationWarning):
                 f(*args, **kwargs)
 
-        if isinstance(conditional, collections.Callable):
+        if isinstance(conditional, collections_abc.Callable):
             cond = conditional()
         else:
             cond = conditional
