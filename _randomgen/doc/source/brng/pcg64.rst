@@ -1,38 +1,41 @@
-Double SIMD Mersenne Twister (dSFMT) 
-------------------------------------
+Parallel Congruent Generator (64-bit, PCG64)
+--------------------------------------------
 
-.. currentmodule:: randomgen.dsfmt
+.. module:: randomgen.pcg64
+
+.. currentmodule:: randomgen.pcg64
 
 Random generator
 ================
-.. autoclass:: DSFMT
+.. autoclass:: PCG64
 
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.seed
-   ~DSFMT.state
+   ~PCG64.seed
+   ~PCG64.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.jump
+   ~PCG64.advance
+   ~PCG64.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.generator
+   ~PCG64.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.cffi
-   ~DSFMT.ctypes
+   ~PCG64.cffi
+   ~PCG64.ctypes
 
 

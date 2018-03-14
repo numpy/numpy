@@ -128,6 +128,9 @@ cdef class Xorshift1024:
     cdef xorshift1024_state  *rng_state
     cdef brng_t *_brng
     cdef public object capsule
+    cdef object _ctypes
+    cdef object _cffi
+    cdef object _generator
 
     def __init__(self, seed=None):
         self.rng_state = <xorshift1024_state *>malloc(sizeof(xorshift1024_state))
@@ -139,6 +142,10 @@ cdef class Xorshift1024:
         self._brng.next_uint32 = &xorshift1024_uint32
         self._brng.next_double = &xorshift1024_double
         self._brng.next_raw = &xorshift1024_uint64
+
+        self._ctypes = None
+        self._cffi = None
+        self._generator = None
 
         cdef const char *name = "BasicRNG"
         self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
@@ -234,9 +241,9 @@ cdef class Xorshift1024:
         self.rng_state.p = 0
         self._reset_state_variables()
 
-    def jump(self, np.npy_intp iter):
+    def jump(self, np.npy_intp iter=1):
         """
-        jump(iter = 1)
+        jump(iter=1)
 
         Jumps the state as-if 2**512 random numbers have been generated
 
@@ -263,7 +270,15 @@ cdef class Xorshift1024:
 
     @property
     def state(self):
-        """Get or set the PRNG state"""
+        """
+        Get or set the PRNG state
+
+        Returns
+        -------
+        state : dict
+            Dictionary containing the information required to describe the
+            state of the PRNG
+        """
         s = np.empty(16, dtype=np.uint64)
         for i in range(16):
             s[i] = self.rng_state.s[i]

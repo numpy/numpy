@@ -1,38 +1,40 @@
-Xorshift1024*φ
---------------
+Mersenne Twister (MT19937) 
+--------------------------
 
-.. currentmodule:: randomgen.xorshift1024
+.. module:: randomgen.mt19937
+
+.. currentmodule:: randomgen.mt19937
 
 Random generator
 ================
-.. autoclass:: Xorshift1024
+.. autoclass:: MT19937
 
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.seed
-   ~Xorshift1024.state
+   ~MT19937.seed
+   ~MT19937.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.jump
+   ~MT19937.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.generator
+   ~MT19937.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.cffi
-   ~Xorshift1024.ctypes
+   ~MT19937.cffi
+   ~MT19937.ctypes
 
 

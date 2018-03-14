@@ -1,38 +1,40 @@
-Xoroshiro128+
--------------
+Double SIMD Mersenne Twister (dSFMT) 
+------------------------------------
 
-.. currentmodule:: randomgen.xoroshiro128
+.. module:: randomgen.dsfmt
+
+.. currentmodule:: randomgen.dsfmt
 
 Random generator
 ================
-.. autoclass:: Xoroshiro128
+.. autoclass:: DSFMT
 
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.seed
-   ~Xoroshiro128.state
+   ~DSFMT.seed
+   ~DSFMT.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.jump
+   ~DSFMT.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.generator
+   ~DSFMT.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.cffi
-   ~Xoroshiro128.ctypes
+   ~DSFMT.cffi
+   ~DSFMT.ctypes
 
 

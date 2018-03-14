@@ -6,6 +6,7 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 cimport numpy as np
 
+from common import interface
 from common cimport *
 from distributions cimport brng_t
 import randomgen.pickle
@@ -57,6 +58,9 @@ cdef class MT19937:
     cdef mt19937_state *rng_state
     cdef brng_t *_brng
     cdef public object capsule
+    cdef object _ctypes
+    cdef object _cffi
+    cdef object _generator
 
     def __init__(self, seed=None):
         self.rng_state = <mt19937_state *>malloc(sizeof(mt19937_state))
@@ -68,6 +72,10 @@ cdef class MT19937:
         self._brng.next_uint32 = &mt19937_uint32
         self._brng.next_double = &mt19937_double
         self._brng.next_raw = &mt19937_raw
+
+        self._ctypes = None
+        self._cffi = None
+        self._generator = None
 
         cdef const char *name = "BasicRNG"
         self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
@@ -199,3 +207,88 @@ cdef class MT19937:
         for i in range(624):
             self.rng_state.key[i] = key[i]
         self.rng_state.pos = value['state']['pos']
+
+    @property
+    def ctypes(self):
+        """
+        Cytpes interface
+
+        Returns
+        -------
+        interface : namedtuple
+            Named tuple containing CFFI wrapper
+
+            * state_address - Memory address of the state struct
+            * state - pointer to the state struct
+            * next_uint64 - function pointer to produce 64 bit integers
+            * next_uint32 - function pointer to produce 32 bit integers
+            * next_double - function pointer to produce doubles
+            * brng - pointer to the Basic RNG struct
+        """
+
+        if self._ctypes is not None:
+            return self._ctypes
+
+        import ctypes
+
+        self._ctypes = interface(<Py_ssize_t>self.rng_state,
+                         ctypes.c_void_p(<Py_ssize_t>self.rng_state),
+                         ctypes.cast(<Py_ssize_t>&mt19937_uint64,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint64,
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&mt19937_uint32,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint32,
+                                     ctypes.c_void_p)),
+                         ctypes.cast(<Py_ssize_t>&mt19937_double,
+                                     ctypes.CFUNCTYPE(ctypes.c_double,
+                                     ctypes.c_void_p)),
+                         ctypes.c_void_p(<Py_ssize_t>self._brng))
+        return self.ctypes
+
+    @property
+    def cffi(self):
+        """
+        CFFI interface
+
+        Returns
+        -------
+        interface : namedtuple
+            Named tuple containing CFFI wrapper
+
+            * state_address - Memory address of the state struct
+            * state - pointer to the state struct
+            * next_uint64 - function pointer to produce 64 bit integers
+            * next_uint32 - function pointer to produce 32 bit integers
+            * next_double - function pointer to produce doubles
+            * brng - pointer to the Basic RNG struct
+        """
+        if self._cffi is not None:
+            return self._cffi
+        try:
+            import cffi
+        except ImportError:
+            raise ImportError('cffi is cannot be imported.')
+
+        ffi = cffi.FFI()
+        self._cffi = interface(<Py_ssize_t>self.rng_state,
+                         ffi.cast('void *',<Py_ssize_t>self.rng_state),
+                         ffi.cast('uint64_t (*)(void *)',<uint64_t>self._brng.next_uint64),
+                         ffi.cast('uint32_t (*)(void *)',<uint64_t>self._brng.next_uint32),
+                         ffi.cast('double (*)(void *)',<uint64_t>self._brng.next_double),
+                         ffi.cast('void *',<Py_ssize_t>self._brng))
+        return self.cffi
+
+    @property
+    def generator(self):
+        """
+        Return a RandomGenerator object
+
+        Returns
+        -------
+        gen : randomgen.generator.RandomGenerator
+            Random generator used this instance as the core PRNG
+        """
+        if self._generator is None:
+            from .generator import RandomGenerator
+            self._generator = RandomGenerator(self)
+        return self._generator

@@ -38,17 +38,54 @@ _randint_types = {'bool': (0, 2),
 
 cdef class RandomGenerator:
     """
-    Prototype Random Generator that consumes randoms from a Basic RNG class
+    RandomGenerator(brng=None)
+
+    Container for the Basic Random Number Generators.
+
+    ``RandomGenerator`` exposes a number of methods for generating random
+    numbers drawn from a variety of probability distributions. In addition to the
+    distribution-specific arguments, each method takes a keyword argument
+    `size` that defaults to ``None``. If `size` is ``None``, then a single
+    value is generated and returned. If `size` is an integer, then a 1-D
+    array filled with generated values is returned. If `size` is a tuple,
+    then an array with that shape is filled and returned.
+
+    **No Compatibility Guarantee**
+
+    ``RandomGenerator`` is evolving and so it isn't possible to provide a
+    compatibility guarantee like NumPy does. In particular, better algorithms
+    have already been added. This will change once ``RandomGenerator``
+    stabilizes.
 
     Parameters
     ----------
-    brng : BasicRNG, optional
-        Object exposing a PyCapsule containing state and function pointers
+    brng : Basic RNG, optional
+        Basic RNG to use as the core generator. If none is provided, uses
+        Xoroshiro128.
+
+    Notes
+    -----
+    The Python stdlib module "random" contains pseudo-random number generator
+    with a number of methods that are similar to the ones available in
+    ``RandomGenerator``. It uses Mersenne Twister, and this basic RNG can be
+    accessed using ``MT19937``. ``RandomGenerator``, besides being
+    NumPy-aware, has the advantage that it provides a much larger number
+    of probability distributions to choose from.
 
     Examples
     --------
-    >>> from randomgen.generator import RandomGenerator
+    >>> from randomgen import RandomGenerator
     >>> rg = RandomGenerator()
+    >>> rg.standard_normal()
+
+    Using a specific generator
+
+    >>> from randomgen import MT19937
+    >>> rg = RandomGenerator(MT19937())
+
+    The generator is also directly avialable from basic RNGs
+
+    >>> rg = MT19937().generator
     >>> rg.standard_normal()
     """
     cdef public object _basicrng
@@ -93,14 +130,25 @@ cdef class RandomGenerator:
 
     def seed(self, *args, **kwargs):
         """
-        TODO: Should this remain
+        Reseed the basic RNG.
+
+        Parameters depend on the basic RNG used.
         """
+        # TODO: Should this remain
         self._basicrng.seed(*args, **kwargs)
         return self
 
     @property
     def state(self):
-        """Get or set the underlying PRNG's state"""
+        """
+        Get or set the Basic RNG's state
+
+        Returns
+        -------
+        state : dict
+            Dictionary containing the information required to describe the
+            state of the Basic RNG
+        """
         return self._basicrng.state
 
     @state.setter

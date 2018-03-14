@@ -1,6 +1,7 @@
-from randomgen import Xoroshiro128
 import numpy as np
 import numba as nb
+
+from randomgen import Xoroshiro128
 
 x = Xoroshiro128()
 f = x.ctypes.next_uint32
@@ -35,7 +36,6 @@ def bounded_uints(lb, ub, n, state):
 
 bounded_uints(323, 2394691, 10000000, s.value)
 
-
 g = x.cffi.next_double
 cffi_state = x.cffi.state
 state_addr = x.cffi.state_address
@@ -43,33 +43,35 @@ state_addr = x.cffi.state_address
 
 def normals(n, state):
     out = np.empty(n)
-    for i in range(n//2):
-        x1 = 2.0*g(state) - 1.0
-        x2 = 2.0*g(state) - 1.0
-        r2 = x1*x1 + x2*x2
+    for i in range((n + 1) // 2):
+        x1 = 2.0 * g(state) - 1.0
+        x2 = 2.0 * g(state) - 1.0
+        r2 = x1 * x1 + x2 * x2
         while r2 >= 1.0 or r2 == 0.0:
-            x1 = 2.0*g(state) - 1.0
-            x2 = 2.0*g(state) - 1.0
-            r2 = x1*x1 + x2*x2
-        f = np.sqrt(-2.0*np.log(r2)/r2)
-        out[2*i] = f*x1
-        out[2*i+1] = f*x2
-
-    if n % 2 == 1:
-        x1 = 2.0*g(state) - 1.0
-        x2 = 2.0*g(state) - 1.0
-        r2 = x1*x1 + x2*x2
-        while r2 >= 1.0 or r2 == 0.0:
-            x1 = 2.0*g(state) - 1.0
-            x2 = 2.0*g(state) - 1.0
-            r2 = x1*x1 + x2*x2
-        f = np.sqrt(-2.0*np.log(r2)/r2)
-        out[n] = f*x1
+            x1 = 2.0 * g(state) - 1.0
+            x2 = 2.0 * g(state) - 1.0
+            r2 = x1 * x1 + x2 * x2
+        f = np.sqrt(-2.0 * np.log(r2) / r2)
+        out[2 * i] = f * x1
+        if 2 * i + 1 < n:
+            out[2 * i + 1] = f * x2
     return out
 
-
 print(normals(10, cffi_state).var())
-
+# Warm up
 normalsj = nb.jit(normals, nopython=True)
+normalsj(1, state_addr)
+import datetime as dt
 
-print(normalsj(10000000, state_addr).var())
+start = dt.datetime.now()
+normalsj(1000000, state_addr)
+ms = 1000 * (dt.datetime.now() - start).total_seconds()
+print('1,000,000 Box-Muller (numba/Xoroshiro128) randoms in '
+      '{ms:0.1f}ms'.format(ms=ms))
+
+import numpy as np
+
+start = dt.datetime.now()
+np.random.standard_normal(1000000)
+ms = 1000 * (dt.datetime.now() - start).total_seconds()
+print('1,000,000 Box-Muller (NumPy) randoms in {ms:0.1f}ms'.format(ms=ms))

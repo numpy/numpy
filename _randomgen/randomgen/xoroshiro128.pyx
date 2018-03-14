@@ -211,7 +211,7 @@ cdef class Xoroshiro128:
 
     def jump(self, np.npy_intp iter=1):
         """
-        jump(iter = 1)
+        jump(iter=1)
 
         Jumps the state of the random number generator as-if 2**64 random numbers
         have been generated.
