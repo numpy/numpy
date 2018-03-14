@@ -9,8 +9,8 @@ language: python
 
 env:
   global:
-    # Doctr deploy key for bashtage/core-prng
-    - secure: "urckknKH5lkUNjXuVCQGVEZYQfSQrAAvdp8sWAKlYJwJLT8iB439KrCUQu8InzcZAA9chPp3syCoT4E0NGkCVPhtJSs/7+LhG+aY/iU6Jp7bwpn5QHCNHQ5jwdc8A0ryqEoQhTiDauRtdzLWPtG5iliz+hr5SOB22w563Le3cx9w0vw9Jy36q+DHe91KEKeF4l464MHhx8aNTmSTBfxPUYyaPHn7/0Wi227PChKMbqnbtoNRcnRwNPjXbRIEs5w2VKtj9m+pvb+DGVjNeSrRBP7aaPgYY+WH+eBOsXrZNuYwF3LEcKx8edVGcEYf2CUKf1VWC2uug/BStY2PU2ZUu/ij3qh+tk2GKhFCc61OPiq7rpeG8Alp5b7IWyFzEjV8IahpdOwa81uGv8B52KD3REOJf8N28s1/WzPlOqRm/9ne+txUZHFk7abE69JK2cBjWGrhBLPxXZSumzhkrpZDyzNb0qZYQSAuAuxUdWhI1gdUJXhmlf4UUqM9vTp7129SbO4wrUK3TIZDIt+7tUuLJYfIm6pOdJBNfrTk4mtvwLh/hsNezd/Vv1BOqrvZ6ZGPMM9eDBh+tMvAfVBe6T6rDoSLUQzYf3GEfp/yJP+QrH9AD46s/DRNL/rAiyOW4oDhMiS+S5EVb/CEu4Ud82HyIZNFAi42gx0jJNkaK2gN8hE="
+    # Doctr deploy key for bashtage/randomgen
+    - secure: "czwFlflS1lcfbSQ9ktv+pLAPV9/6+wmwiMTyIYyv5xgQVWRL5NRebWH+ZhQ6s2T5x17wFMtlafcAvkdV0CHQZLru34V2UNldCapuEtQ8b32EDHBXHKbs45b7SSkLx4TFXdjiJurleY4ZIKle0gX6BW21zYBwaHJqbN6I8nRv9Rp47XEU1UV1Mdf/PhfTnxY31rFrPYL77xeWJzoFfT8zao39V4gQds+1Ag7FjdNVdSDVKwDduF4kS7tIbKqb4M+jsbc3PIKyP9nyQpEQF5ebJuG7mqXJhVJGEL83rBx8MLFPA/1X3cUzKacgKyp2+Wmlt0EVhwCa1aRf9cSK6I7TbMC7/eGtDnC2ToiRlFJurVRblaEmhzVQS1yQ4Dkooqsj9hNVl6nhu7JfR52GLogns33Ec/yYuRcWcULKSlR5Cerfef/5YijBEhlr9X76SJiOpjvS4lwWFYX+h8xzuVhRLGwIVB9oQNllxYItzcDSGmRx+EOMXWASHmoUDnBOZg4GMVukqOcF5l0ynoepiA1YHLdZlMy6SB3P7BZKF/aNCOn9nXw+N9X4U/yUpkM3Pb7HoGdNrC8RO4SwrNjGrarkdEB6e1lBReK/dqcylaF/mpK9VLpfQszDI8xnR4VCmlEM+le0xOsyHfeGciabdI4KH0i0SfYl4ls5XrN+CaqFWdo="
 
 matrix:
   fast_finish: true
@@ -31,6 +31,7 @@ matrix:
 
 
 before_install:
+  - git fetch --tags
   - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda3.sh; fi
   - if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh; fi
   - chmod +x miniconda3.sh
@@ -69,7 +70,7 @@ script:
       make html
       cd ${BUILD_DIR}
       doctr deploy doc
-      if [[ ${TRAVIS_TAG}} ]]; then
-        doctr deploy doc --no-require-master
+      if [[ -n ${TRAVIS_TAG}} ]]; then
+        doctr deploy . --build-tags
       fi;
     fi;
