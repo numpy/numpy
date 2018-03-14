@@ -1,0 +1,141 @@
+Parallel Random Number Generation
+=================================
+
+There are three strategies implemented that can be used to produce
+repeatable pseudo-random numbers across multiple processes (local
+or distributed).
+
+.. _independent-streams:
+
+Independent Streams
+-------------------
+
+:class:`~randomgen.pcg64.PCG64`, :class:`~randomgen.threefry.ThreeFry`
+and :class:`~randomgen.philox.Philox` support independent streams.  This
+example shows how many streams can be created by passing in different index
+values in the second input while using the same seed in the first.
+
+.. code-block:: python
+
+  from randomgen.entropy import random_entropy
+  from randomgen import PCG64
+
+  entropy = random_entropy(4)
+  # 128-bit number as a seed
+  seed = sum([int(entropy[i]) * 2 ** (32 * i) for i in range(4)])
+  streams = [PCG64(seed, stream) for stream in range(10)]
+
+
+:class:`~randomgen.philox.Philox` and :class:`~randomgen.threefry.ThreeFry` are
+counter-based RNGs which use a counter and key.  Different keys can be used
+to produce independent streams.
+
+.. code-block:: python
+
+  import numpy as np
+  from randomgen import ThreeFry
+
+  key = random_entropy(8)
+  key = key.view(np.uint64)
+  key[0] = 0
+  step = np.zeros(4, dtype=np.uint64)
+  step[0] = 1
+  streams = [ThreeFry(key=key + stream * step) for stream in range(10)]
+
+.. _jump-and-advance:
+
+Jump/Advance the PRNG state
+---------------------------
+
+Jump
+****
+
+``jump`` advances the state of the PRNG *as-if* a large number of random
+numbers have been drawn.  The specific number of draws varies by PRNG, and
+ranges from :math:`2^{64}` to :math:`2^{512}`.  Additionally, the *as-if*
+draws also depend on the size of the default random number produced by the
+specific PRNG.  The PRNGs that support ``jump``, along with the period of
+the PRNG, the size of the jump and the bits in the default unsigned random
+are listed below.
+
++-----------------+-------------------------+-------------------------+-------------------------+
+| PRNG            | Period                  |  Jump Size              | Bits                    |
++=================+=========================+=========================+=========================+
+| DSFMT           | :math:`2^{19937}`       | :math:`2^{128}`         | 53                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| MT19937         | :math:`2^{19937}`       | :math:`2^{128}`         | 32                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| PCG64           | :math:`2^{128}`         | :math:`2^{64}`          | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| Philox          | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| ThreeFry        | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| Xoroshiro128    | :math:`2^{128}`         | :math:`2^{64}`          | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| Xorshift1024    | :math:`2^{1024}`        | :math:`2^{512}`         | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+
+``jump`` can be used to produce long blocks which should be long enough to not
+overlap.
+
+.. code-block:: python
+
+  from randomgen.entropy import random_entropy
+  from randomgen import Xorshift1024
+
+  entropy = random_entropy(2).astype(np.uint64)
+  # 64-bit number as a seed
+  seed = entropy[0] * 2**32 + entropy[1]
+  blocked_rng = []
+  for i in range(10):
+      rng = Xorshift1024(seed)
+      rng.jump(i)
+      blocked_rng.append(rng)
+
+
+Advance
+*******
+``advance`` can be used to jump the state an arbitrary number of steps, and so
+is a more general approach than ``jump``.  :class:`~randomgen.pcg64.PCG64`,
+:class:`~randomgen.threefry.ThreeFry` and :class:`~randomgen.philox.Philox`
+support ``advance``, and since these also support independent
+streams, it is not usually necessary to use ``advance``.
+
+Advancing a PRNG updates the underlying PRNG state as-if a given number of
+calls to the underlying PRNG have been made. In general there is not a
+one-to-one relationship between the number output random values from a
+particular distribution and the number of draws from the core PRNG.
+This occurs for two reasons:
+
+* The random values are simulated using a rejection-based method
+  and so, on average, more than one value from the underlying
+  PRNG is required to generate an single draw.
+* The number of bits required to generate a simulated value
+  differs from the number of bits generated by the underlying
+  PRNG.  For example, two 16-bit integer values can be simulated
+  from a single draw of a 32-bit PRNG.
+
+Advancing the PRNG state resets any pre-computed random numbers. This is
+required to ensure exact reproducibility.
+
+This example uses ``advance`` to advance a :class:`~randomgen.pcg64.PCG64`
+generator 2 ** 127 steps to set a sequence of random number generators.
+
+.. code-block:: python
+
+   from randomgen import PCG64
+   brng = PCG64()
+   brng_copy = PCG64()
+   brng_copy.state = brng.state
+
+   advance = 2**127
+   brngs = [brng]
+   for _ in range(9):
+       brng_copy.advance(advance)
+       brng = PCG64()
+       brng.state = brng_copy.state
+       brngs.append(brng)
+
+.. end block
+

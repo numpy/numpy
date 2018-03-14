@@ -10,6 +10,7 @@ These RNGs will be included in future releases.
    :maxdepth: 1
 
    DSFMT <dsfmt>
+   MT19937 <mt19937>
    PCG64 <pcg64>
    Philox <philox>
    ThreeFry <threefry>
@@ -26,5 +27,5 @@ permanent.
 .. toctree::
    :maxdepth: 1
 
-   ThreeFry32 <threefry32>
    PCG32 <pcg32>
+   ThreeFry32 <threefry32>

@@ -1,2 +1,6 @@
 include versioneer.py
 include randomgen/_version.py
+recursive-include randomgen  *.py *.pyx *.px[di] *.h *.in
+recursive-include randomgen/src *.c
+
+

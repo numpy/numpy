@@ -48,6 +48,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -170,6 +172,15 @@ texinfo_documents = [
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {
+    'statsmodels': ('http://www.statsmodels.org/dev/', None),
+    'matplotlib': ('https://matplotlib.org', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy', None),
+    'np': ('https://docs.scipy.org/doc/numpy', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'pd': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+}
 
 autosummary_generate = True

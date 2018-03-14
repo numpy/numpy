@@ -4,20 +4,22 @@ On *nix, execute in randomgen/src/distributions
 export PYTHON_INCLUDE=#path to Python's include folder, usually ${PYTHON_HOME}/include/python${PYTHON_VERSION}m
 export NUMPY_INCLUDE=#path to numpy's include folder, usually ${PYTHON_HOME}/lib/python${PYTHON_VERSION}/site-packages/numpy/core/include
 gcc -shared -o libdistributions.so -fPIC distributions.c -I${NUMPY_INCLUDE} -I${PYTHON_INCLUDE}
-mv libdistributions.so ../../../examples/numba/
+mv libdistributions.so ../../examples/numba/
 
 On Windows
 
 rem PYTHON_HOME is setup dependent, this is an example
 set PYTHON_HOME=c:\Anaconda
 cl.exe /LD .\distributions.c -DDLL_EXPORT -I%PYTHON_HOME%\lib\site-packages\numpy\core\include -I%PYTHON_HOME%\include %PYTHON_HOME%\libs\python36.lib
-move distributions.dll ../../../examples/numba/
+move distributions.dll ../../examples/numba/
 """
 import os
+
+import numba as nb
 import numpy as np
 from cffi import FFI
+
 from randomgen import Xoroshiro128
-import numba as nb
 
 ffi = FFI()
 if os.path.exists('./distributions.dll'):
@@ -45,7 +47,6 @@ def normals(n, brng):
 
 
 normalsj = nb.jit(normals, nopython=True)
-
 
 # Numba requires a memory address for void *
 # Can also get address from x.ctypes.brng.value

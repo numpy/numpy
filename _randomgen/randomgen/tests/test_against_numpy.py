@@ -4,7 +4,7 @@ from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 import pytest
 
 from randomgen import RandomGenerator, MT19937
-
+import randomgen
 
 def compare_0_input(f1, f2):
     inputs = [(tuple([]), {}), (tuple([]), {'size': 10}),
@@ -532,11 +532,11 @@ class TestAgainstNumPy(object):
         nprs_d.difference_update(excluded)
         assert (len(nprs_d.difference(rs_d)) == 0)
 
-        # npmod = dir(numpy.random)
-        # mod = dir(randomstate)
-        # known_exlcuded = ['__all__', 'Tester', 'info', 'bench',
-        #                  '__RandomState_ctor', 'mtrand', 'test',
-        #                  '__warningregistry__', '_numpy_tester']
-        # mod += known_exlcuded
-        # diff = set(npmod).difference(mod)
-        # assert_equal(len(diff), 0)
+        npmod = dir(numpy.random)
+        mod = dir(randomgen)
+        known_exlcuded = ['__all__', 'Tester', 'info', 'bench',
+                         '__RandomState_ctor', 'mtrand', 'test',
+                         '__warningregistry__', '_numpy_tester']
+        mod += known_exlcuded
+        diff = set(npmod).difference(mod)
+        assert_equal(len(diff), 0)

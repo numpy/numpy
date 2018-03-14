@@ -1,7 +1,7 @@
 # RandomGen
 
-[![Travis Build Status](https://travis-ci.org/bashtage/ng-numpy-randomstate.svg?branch=master)](https://travis-ci.org/bashtage/randomgen) 
-[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true)](https://ci.appveyor.com/project/bashtage/randomgen/branch/master)
+[![Travis Build Status](https://travis-ci.org/bashtage/core-prng.svg?branch=master)](https://travis-ci.org/bashtage/core-prng)
+[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true)](https://ci.appveyor.com/project/bashtage/core-prng/branch/master)
 
 Random Number Generator using settable Basic RNG interface for future
 NumPy RandomState evolution.

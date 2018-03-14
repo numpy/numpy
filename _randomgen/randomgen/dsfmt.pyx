@@ -131,7 +131,7 @@ cdef class DSFMT:
     ----------
     .. [1] Mutsuo Saito and Makoto Matsumoto, "SIMD-oriented Fast Mersenne
            Twister: a 128-bit Pseudorandom Number Generator." Monte Carlo
-           and Quasi-Monte Carlo Methods 2006, Springer, pp. 607 -- 622, 2008.
+           and Quasi-Monte Carlo Methods 2006, Springer, pp. 607--622, 2008.
     .. [2] Hiroshi Haramoto, Makoto Matsumoto, and Pierre L\'Ecuyer, "A Fast
            Jump Ahead Algorithm for Linear Recurrences in a Polynomial Space",
            Sequences and Their Applications - SETA, 290--298, 2008.
@@ -237,9 +237,9 @@ cdef class DSFMT:
                                 <uint32_t *>obj.data,
                                 np.PyArray_DIM(obj, 0))
 
-    def jump(self, np.npy_intp iter):
+    def jump(self, np.npy_intp iter=1):
         """
-        jump(iter = 1)
+        jump(iter=1)
 
         Jumps the state of the random number generator as-if 2**128 random numbers
         have been generated.
