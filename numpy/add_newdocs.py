@@ -3060,8 +3060,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     """
     Number of elements in the array.
 
-    Equivalent to ``np.prod(a.shape)``, i.e., the product of the array's
-    dimensions.
+    Equal to ``np.prod(a.shape)``, i.e., the product of the array's
+    dimensions, except that ``size`` returns an instance of ``int``
+    whereas ``np.prod(a.shape)`` returns an instance of ``np.int_``
+    (e.g. ``np.int64``).
 
     Examples
     --------
