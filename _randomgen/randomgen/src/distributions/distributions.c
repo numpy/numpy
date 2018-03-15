@@ -7,14 +7,34 @@ float random_float(brng_t *brng_state) { return next_float(brng_state); }
 
 double random_double(brng_t *brng_state) { return next_double(brng_state); }
 
+static NPY_INLINE double next_standard_exponential(brng_t *brng_state)
+{
+    return -log(1.0 - next_double(brng_state));
+}
+
 double random_standard_exponential(brng_t *brng_state) {
-  return -log(1.0 - next_double(brng_state));
+  return next_standard_exponential(brng_state);
+}
+
+void random_standard_exponential_fill(brng_t *brng_state, npy_intp cnt, double *out)
+{
+  npy_intp i;
+  for (i = 0; i < cnt; i++) {
+    out[i] = next_standard_exponential(brng_state);
+  }
 }
 
 float random_standard_exponential_f(brng_t *brng_state) {
   return -logf(1.0f - next_float(brng_state));
 }
 
+void random_double_fill(brng_t* brng_state, npy_intp cnt, double *out)
+{
+  npy_intp i;
+  for (i = 0; i < cnt; i++) {
+    out[i] = next_double(brng_state);
+  }
+}
 /*
 double random_gauss(brng_t *brng_state) {
   if (brng_state->has_gauss) {
@@ -99,6 +119,16 @@ double random_standard_exponential_zig(brng_t *brng_state) {
   return standard_exponential_zig(brng_state);
 }
 
+
+void random_standard_exponential_zig_fill(brng_t *brng_state, npy_intp cnt, double *out)
+{
+  npy_intp i;
+  for (i = 0; i < cnt; i++) {
+    out[i] = standard_exponential_zig(brng_state);
+  }
+}
+
+
 static NPY_INLINE float standard_exponential_zig_f(brng_t *brng_state);
 
 static float standard_exponential_zig_unlikely_f(brng_t *brng_state,
@@ -133,7 +163,7 @@ float random_standard_exponential_zig_f(brng_t *brng_state) {
   return standard_exponential_zig_f(brng_state);
 }
 
-double random_gauss_zig(brng_t *brng_state) {
+static NPY_INLINE double next_gauss_zig(brng_t *brng_state) {
   uint64_t r;
   int sign;
   int64_t rabs;
@@ -164,6 +194,17 @@ double random_gauss_zig(brng_t *brng_state) {
            fi_double[idx]) < exp(-0.5 * x * x))
         return x;
     }
+  }
+}
+
+double random_gauss_zig(brng_t *brng_state) {
+  return next_gauss_zig(brng_state);
+}
+
+void random_gauss_zig_fill(brng_t *brng_state, npy_intp cnt, double *out) {
+  npy_intp i;
+  for (i = 0; i < cnt; i++) {
+    out[i] = next_gauss_zig(brng_state);
   }
 }
 

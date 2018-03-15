@@ -70,14 +70,16 @@ cdef check_output(object out, object dtype, object size):
 
 
 cdef object double_fill(void *func, brng_t *state, object size, object lock, object out):
-    cdef random_double_0 random_func = (<random_double_0>func)
+    cdef random_double_fill random_func = (<random_double_fill>func)
+    cdef double out_val
     cdef double *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
     if size is None and out is None:
         with lock:
-            return random_func(state)
+            random_func(state, 1, &out_val)
+            return out_val
 
     if out is not None:
         check_output(out, np.float64, size)
@@ -88,8 +90,7 @@ cdef object double_fill(void *func, brng_t *state, object size, object lock, obj
     n = np.PyArray_SIZE(out_array)
     out_array_data = <double *>np.PyArray_DATA(out_array)
     with lock, nogil:
-        for i in range(n):
-            out_array_data[i] = random_func(state)
+        random_func(state, n, out_array_data)
     return out_array
 
 cdef object float_fill(void *func, brng_t *state, object size, object lock, object out):

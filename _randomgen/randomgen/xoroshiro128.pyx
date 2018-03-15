@@ -291,18 +291,18 @@ cdef class Xoroshiro128:
 
         import ctypes
         
-        self._ctypes = interface(<Py_ssize_t>self.rng_state,
-                         ctypes.c_void_p(<Py_ssize_t>self.rng_state),
-                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint64, 
+        self._ctypes = interface(<uintptr_t>self.rng_state,
+                         ctypes.c_void_p(<uintptr_t>self.rng_state),
+                         ctypes.cast(<uintptr_t>&xoroshiro128_uint64, 
                                      ctypes.CFUNCTYPE(ctypes.c_uint64, 
                                      ctypes.c_void_p)),
-                         ctypes.cast(<Py_ssize_t>&xoroshiro128_uint32, 
+                         ctypes.cast(<uintptr_t>&xoroshiro128_uint32, 
                                      ctypes.CFUNCTYPE(ctypes.c_uint32, 
                                      ctypes.c_void_p)),
-                         ctypes.cast(<Py_ssize_t>&xoroshiro128_double, 
+                         ctypes.cast(<uintptr_t>&xoroshiro128_double, 
                                      ctypes.CFUNCTYPE(ctypes.c_double, 
                                      ctypes.c_void_p)),
-                         ctypes.c_void_p(<Py_ssize_t>self._brng))
+                         ctypes.c_void_p(<uintptr_t>self._brng))
         return self.ctypes
 
     @property
@@ -330,12 +330,12 @@ cdef class Xoroshiro128:
             raise ImportError('cffi is cannot be imported.')
 
         ffi = cffi.FFI()
-        self._cffi = interface(<Py_ssize_t>self.rng_state,
-                         ffi.cast('void *',<Py_ssize_t>self.rng_state),
-                         ffi.cast('uint64_t (*)(void *)',<uint64_t>self._brng.next_uint64),
-                         ffi.cast('uint32_t (*)(void *)',<uint64_t>self._brng.next_uint32),
-                         ffi.cast('double (*)(void *)',<uint64_t>self._brng.next_double),
-                         ffi.cast('void *',<Py_ssize_t>self._brng))
+        self._cffi = interface(<uintptr_t>self.rng_state,
+                         ffi.cast('void *',<uintptr_t>self.rng_state),
+                         ffi.cast('uint64_t (*)(void *)',<uintptr_t>self._brng.next_uint64),
+                         ffi.cast('uint32_t (*)(void *)',<uintptr_t>self._brng.next_uint32),
+                         ffi.cast('double (*)(void *)',<uintptr_t>self._brng.next_double),
+                         ffi.cast('void *',<uintptr_t>self._brng))
         return self.cffi
 
     @property

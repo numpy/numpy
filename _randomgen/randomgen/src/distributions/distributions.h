@@ -95,6 +95,7 @@ static NPY_INLINE double next_double(brng_t *brng_state) {
 
 DECLDIR float random_float(brng_t *brng_state);
 DECLDIR double random_double(brng_t *brng_state);
+DECLDIR void random_double_fill(brng_t* brng_state, npy_intp cnt, double *out);
 
 DECLDIR int64_t random_positive_int64(brng_t *brng_state);
 DECLDIR int32_t random_positive_int32(brng_t *brng_state);
@@ -102,8 +103,10 @@ DECLDIR int64_t random_positive_int(brng_t *brng_state);
 DECLDIR uint64_t random_uint(brng_t *brng_state);
 
 DECLDIR double random_standard_exponential(brng_t *brng_state);
+DECLDIR void random_standard_exponential_fill(brng_t *brng_state, npy_intp cnt, double *out);
 DECLDIR float random_standard_exponential_f(brng_t *brng_state);
 DECLDIR double random_standard_exponential_zig(brng_t *brng_state);
+DECLDIR void random_standard_exponential_zig_fill(brng_t *brng_state, npy_intp cnt, double *out);
 DECLDIR float random_standard_exponential_zig_f(brng_t *brng_state);
 
 /*
@@ -112,6 +115,7 @@ DECLDIR float random_gauss_f(brng_t *brng_state);
 */
 DECLDIR double random_gauss_zig(brng_t *brng_state);
 DECLDIR float random_gauss_zig_f(brng_t *brng_state);
+DECLDIR void random_gauss_zig_fill(brng_t *brng_state, npy_intp cnt, double *out);
 
 /*
 DECLDIR double random_standard_gamma(brng_t *brng_state, double shape);
