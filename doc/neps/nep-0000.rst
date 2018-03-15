@@ -91,8 +91,14 @@ The possible paths of the status of NEPs are as follows:
 
 All NEPs should be created with the ``Draft`` status.
 
-Normally, a NEP is ``Accepted`` by consensus of all
-interested Contributors.
+Normally, a NEP is ``Accepted`` by consensus of all interested
+Contributors. To verify that consensus has been reached, the NEP
+author or another interested party should make a post on the
+numpy-discussion mailing list proposing it for acceptance; if there
+are no substantive objections after one week, the NEP can officially
+be marked ``Accepted``, and a link to this post should be added to the
+NEP for reference.
+
 In unusual cases, the `NumPy Steering Council`_ may be asked to decide whether
 a controversial NEP is ``Accepted``.
 

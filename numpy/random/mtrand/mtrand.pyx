@@ -4514,12 +4514,11 @@ cdef class RandomState:
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
         #
-        # Also check that cov is positive-semidefinite. If so, the u.T and v
+        # Also check that cov is symmetric positive-semidefinite. If so, the u.T and v
         # matrices should be equal up to roundoff error if cov is
-        # symmetrical and the singular value of the corresponding row is
+        # symmetric and the singular value of the corresponding row is
         # not zero. We continue to use the SVD rather than Cholesky in
-        # order to preserve current outputs. Note that symmetry has not
-        # been checked.
+        # order to preserve current outputs.
 
         (u, s, v) = svd(cov)
 
@@ -4530,10 +4529,12 @@ cdef class RandomState:
             psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
             if not psd:
                 if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
-                                  RuntimeWarning)
+                    warnings.warn(
+                        "covariance is not symmetric positive-semidefinite.",
+                        RuntimeWarning)
                 else:
-                    raise ValueError("covariance is not positive-semidefinite.")
+                    raise ValueError(
+                        "covariance is not symmetric positive-semidefinite.")
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean

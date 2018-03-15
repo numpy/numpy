@@ -34,7 +34,24 @@ class TestSetOps(object):
         assert_array_equal(c, ed)
 
         assert_array_equal([], intersect1d([], []))
-
+        
+        #return_indices
+        #unique case
+        a = np.array([1,2,3,4]) 
+        b = np.array([2,1,4,6])
+        c, i1, i2 = intersect1d(a,b,assume_unique=True, return_indices=True)
+        ee = np.array([1,2,4])
+        assert_array_equal(c,ee)
+        assert_array_equal(a[i1],ee)
+        assert_array_equal(b[i2],ee)
+        #non-unique case
+        a=np.array([1,2,2,3,4,3,2])
+        b=np.array([1,8,4,2,2,3,2,3])
+        c,i1,i2 = intersect1d(a,b,return_indices=True)
+        ef = np.array([1,2,3,4])
+        assert_array_equal(c, ef)
+        assert_array_equal(a[i1], ef)
+        assert_array_equal(b[i2], ef)
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])
         b = np.array([2, 4, 3, 1, 5])

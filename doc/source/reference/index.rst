@@ -19,6 +19,7 @@ For learning how to use NumPy, see also :ref:`user`.
    :maxdepth: 2
 
    arrays
+   constants
    ufuncs
    routines
    distutils
