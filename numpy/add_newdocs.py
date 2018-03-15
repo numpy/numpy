@@ -3061,9 +3061,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     Number of elements in the array.
 
     Equal to ``np.prod(a.shape)``, i.e., the product of the array's
-    dimensions, except that ``size`` returns an instance of ``int``
-    whereas ``np.prod(a.shape)`` returns an instance of ``np.int_``
-    (e.g. ``np.int64``).
+    dimensions.
 
     Examples
     --------
@@ -3072,6 +3070,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     30
     >>> np.prod(x.shape)
     30
+    
+    Notes
+    -----
+    `a.size` returns a standard arbitrary precision Python integer. This 
+    may not be the case with other methods of obtaining the same value
+    (like the suggested ``np.prod(a.shape)``, which returns an instance
+    of ``np.int_``), and may be relevant if the value is used further in
+    calculations that may overflow a fixed size integer type.
 
     """))
 
