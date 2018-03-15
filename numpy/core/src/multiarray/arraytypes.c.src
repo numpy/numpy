@@ -998,11 +998,25 @@ VOID_setitem(PyObject *op, void *input, void *vap)
      * undiscerning case: It interprets any object as a buffer
      * and reads as many bytes as possible, padding with 0.
      */
+#if defined(NPY_PY3K)
+    {
+        Py_buffer view;
+
+        if (PyObject_GetBuffer(op, &view, PyBUF_SIMPLE) < 0) {
+            return -1;
+        }
+        memcpy(ip, view.buf, PyArray_MIN(view.len, itemsize));
+        if (itemsize > view.len) {
+            memset(ip + view.len, 0, itemsize - view.len);
+        }
+        PyBuffer_Release(&view);
+    }
+#else
     {
         const void *buffer;
         Py_ssize_t buflen;
-        res = PyObject_AsReadBuffer(op, &buffer, &buflen);
-        if (res == -1) {
+
+        if (PyObject_AsReadBuffer(op, &buffer, &buflen) < 0) {
             return -1;
         }
         memcpy(ip, buffer, PyArray_MIN(buflen, itemsize));
@@ -1010,6 +1024,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             memset(ip + buflen, 0, itemsize - buflen);
         }
     }
+#endif
     return 0;
 }
 
