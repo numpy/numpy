@@ -724,6 +724,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # as median (which is mean of empty slice = nan)
         indexer = [slice(None)] * asorted.ndim
         indexer[axis] = slice(0, 0)
+        indexer = tuple(indexer)
         return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
@@ -1716,7 +1717,7 @@ def notmasked_contiguous(a, axis=None):
     #
     for i in range(a.shape[other]):
         idx[other] = i
-        result.append(flatnotmasked_contiguous(a[idx]) or None)
+        result.append(flatnotmasked_contiguous(a[tuple(idx)]) or None)
     return result
 
 

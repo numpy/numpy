@@ -860,7 +860,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         ni[i], ni[j] = ni[j], ni[i]
 
     # Remove outliers (indices 0 and -1 for each dimension).
-    core = D*[slice(1, -1)]
+    core = D*(slice(1, -1),)
     hist = hist[core]
 
     # Normalize if normed is True
