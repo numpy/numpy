@@ -36,9 +36,13 @@ cdef extern from "src/distributions/distributions.h":
     ctypedef brng brng_t
 
     double random_double(brng_t *brng_state) nogil
+    void random_double_fill(brng_t* brng_state, np.npy_intp cnt, double *out)
     double random_standard_exponential(brng_t *brng_state) nogil
+    void random_standard_exponential_fill(brng_t *brng_state, np.npy_intp cnt, double *out)
     double random_standard_exponential_zig(brng_t *brng_state) nogil
+    void random_standard_exponential_zig_fill(brng_t *brng_state, np.npy_intp cnt, double *out)
     double random_gauss_zig(brng_t* brng_state) nogil
+    void random_gauss_zig_fill(brng_t *brng_state, np.npy_intp count, double *out) nogil
     double random_standard_gamma_zig(brng_t *brng_state, double shape) nogil
 
     float random_float(brng_t *brng_state) nogil
