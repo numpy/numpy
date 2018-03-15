@@ -45,9 +45,9 @@ class TestSetOps(object):
         assert_array_equal(a[i1],ee)
         assert_array_equal(b[i2],ee)
         #non-unique case
-        a=np.array([1,2,2,3,4,3,2])
-        b=np.array([1,8,4,2,2,3,2,3])
-        c,i1,i2 = intersect1d(a,b,return_indices=True)
+        a = np.array([1,2,2,3,4,3,2])
+        b = np.array([1,8,4,2,2,3,2,3])
+        c, i1, i2 = intersect1d(a,b,return_indices=True)
         ef = np.array([1,2,3,4])
         assert_array_equal(c, ef)
         assert_array_equal(a[i1], ef)
