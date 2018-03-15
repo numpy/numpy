@@ -165,10 +165,12 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     }
 
 #if defined(NPY_PY3K)
-    if (PyObject_GetBuffer(obj, &view, PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE) != 0) {
+    if (PyObject_GetBuffer(obj, &view,
+                PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE|PyBUF_SIMPLE) != 0) {
         PyErr_Clear();
         buf->flags &= ~NPY_ARRAY_WRITEABLE;
-        if (PyObject_GetBuffer(obj, &view, PyBUF_ANY_CONTIGUOUS) != 0) {
+        if (PyObject_GetBuffer(obj, &view,
+                PyBUF_ANY_CONTIGUOUS|PyBUF_SIMPLE) != 0) {
             return NPY_FAIL;
         }
     }
@@ -177,8 +179,10 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     buf->len = (npy_intp) view.len;
 
     /*
-     * XXX: PyObject_AsWriteBuffer does also this, but it is unsafe, as there is
-     * no strict guarantee that the buffer sticks around after being released.
+     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+     * up to the object that supplies the buffer to guarantee that the buffer
+     * sticks around after the release.
      */
     PyBuffer_Release(&view);
 

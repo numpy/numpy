@@ -2305,7 +2305,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
         else {
             PyErr_SetString(PyExc_ValueError,
-                            "cannot set aligned flag of mis-"\
+                            "cannot set aligned flag of mis-"
                             "aligned array to True");
             return NULL;
         }
@@ -2315,7 +2315,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (PyObject_IsTrue(uic)) {
             fa->flags = flagback;
             PyErr_SetString(PyExc_ValueError,
-                            "cannot set WRITEBACKIFCOPY "       \
+                            "cannot set WRITEBACKIFCOPY "
                             "flag to True");
             return NULL;
         }
