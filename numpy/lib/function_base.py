@@ -3478,6 +3478,33 @@ def percentile(a, q, axis=None, out=None,
     array([ 7.,  2.])
     >>> assert not np.all(a == b)
 
+    The different types of interpolation can be visualized graphically:
+
+    ..plot::
+        import matplotlib.pyplot as plt
+
+        a = np.arange(4)
+        p = np.linspace(0, 100, 6001)
+        ax = plt.gca()
+        lines = [
+            ('linear', None)
+            ('higher', '--')
+            ('lower', '--')
+            ('nearest', '-.')
+            ('midpoint', '-.')
+        ]
+        for interpolation, style in lines:
+            ax.plot(
+                p, np.percentile(a, p, interpolation=interpolation),
+                label=interpolation, linestyle=style)
+        ax.set(
+            title='Interpolation methods for list: ' + str(a),
+            xlabel='Percentile',
+            ylabel='List item returned',
+            yticks=a)
+        ax.legend()
+        plt.show()
+
     """
     q = np.true_divide(q, 100.0)  # handles the asarray for us too
     if not _quantile_is_valid(q):
