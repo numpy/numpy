@@ -44,15 +44,20 @@ PCG_EMULATED_MATH = False
 
 EXTRA_INCLUDE_DIRS = []
 EXTRA_LINK_ARGS = []
-EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else ['-std=c99']
+# Undef for manylinux
+EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else ['-std=c99', '-U__GNUC_GNU_INLINE__']
 if os.name == 'nt':
     EXTRA_LINK_ARGS = ['/LTCG', '/OPT:REF', 'Advapi32.lib', 'Kernel32.lib']
-    PCG_EMULATED_MATH = True
     if DEBUG:
         EXTRA_LINK_ARGS += ['-debug']
         EXTRA_COMPILE_ARGS += ["-Zi", "/Od"]
     if sys.version_info < (3, 0):
         EXTRA_INCLUDE_DIRS += [join(MOD_DIR, 'src', 'common')]
+PCG64_DEFS = []
+if sys.maxsize < 2 ** 32 or os.name == 'nt':
+    # Force emulated mode here
+    PCG_EMULATED_MATH = True
+    PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
 
 DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
 if USE_SSE2:
@@ -125,6 +130,7 @@ extensions = [Extension('randomgen.entropy',
                                                            join(MOD_DIR, 'src',
                                                                 'pcg64')],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
+                        define_macros=PCG64_DEFS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
               Extension("randomgen.pcg32",

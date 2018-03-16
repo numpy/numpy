@@ -51,7 +51,7 @@ typedef struct {
   uint64_t low;
 } pcg128_t;
 
-inline pcg128_t PCG_128BIT_CONSTANT(uint64_t high, uint64_t low) {
+static inline pcg128_t PCG_128BIT_CONSTANT(uint64_t high, uint64_t low) {
   pcg128_t result;
   result.high = high;
   result.low = low;
@@ -78,13 +78,13 @@ typedef struct {
     , PCG_128BIT_CONSTANT(0x0000000000000001ULL, 0xda3e39cb94b95bdbULL)        \
   }
 
-inline uint64_t pcg_rotr_64(uint64_t value, unsigned int rot) {
+static inline uint64_t pcg_rotr_64(uint64_t value, unsigned int rot) {
   return (value >> rot) | (value << ((-rot) & 63));
 }
 
 #ifdef PCG_EMULATED_128BIT_MATH
 
-inline pcg128_t _pcg128_add(pcg128_t a, pcg128_t b) {
+static inline pcg128_t _pcg128_add(pcg128_t a, pcg128_t b) {
   pcg128_t result;
 
   result.low = a.low + b.low;
@@ -92,7 +92,8 @@ inline pcg128_t _pcg128_add(pcg128_t a, pcg128_t b) {
   return result;
 }
 
-inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1, uint64_t *z0) {
+static inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1,
+                               uint64_t *z0) {
   uint64_t x0, x1, y0, y1;
   uint64_t w0, w1, w2, t;
   /* Lower 64 bits are straightforward clock-arithmetic. */
@@ -110,7 +111,7 @@ inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1, uint64_t *z0) {
   *z1 = x1 * y1 + w2 + (w1 >> 32);
 }
 
-inline pcg128_t _pcg128_mult(pcg128_t a, pcg128_t b) {
+static inline pcg128_t _pcg128_mult(pcg128_t a, pcg128_t b) {
   uint64_t h1;
   pcg128_t result;
 
@@ -120,17 +121,18 @@ inline pcg128_t _pcg128_mult(pcg128_t a, pcg128_t b) {
   return result;
 }
 
-inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng) {
+static inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng) {
   rng->state = _pcg128_add(_pcg128_mult(rng->state, PCG_DEFAULT_MULTIPLIER_128),
                            rng->inc);
 }
 
-inline uint64_t pcg_output_xsl_rr_128_64(pcg128_t state) {
+static inline uint64_t pcg_output_xsl_rr_128_64(pcg128_t state) {
   return pcg_rotr_64(state.high ^ state.low, state.high >> 58u);
 }
 
-inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
-                                     pcg128_t initstate, pcg128_t initseq) {
+static inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
+                                            pcg128_t initstate,
+                                            pcg128_t initseq) {
   rng->state = PCG_128BIT_CONSTANT(0ULL, 0ULL);
   rng->inc.high = initseq.high << 1u;
   rng->inc.high |= initseq.low & 0x800000000000ULL;
@@ -142,17 +144,18 @@ inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
 
 #else /* PCG_EMULATED_128BIT_MATH */
 
-inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng) {
+static inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng) {
   rng->state = rng->state * PCG_DEFAULT_MULTIPLIER_128 + rng->inc;
 }
 
-inline uint64_t pcg_output_xsl_rr_128_64(pcg128_t state) {
+static inline uint64_t pcg_output_xsl_rr_128_64(pcg128_t state) {
   return pcg_rotr_64(((uint64_t)(state >> 64u)) ^ (uint64_t)state,
                      state >> 122u);
 }
 
-inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
-                                     pcg128_t initstate, pcg128_t initseq) {
+static inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
+                                            pcg128_t initstate,
+                                            pcg128_t initseq) {
   rng->state = 0U;
   rng->inc = (initseq << 1u) | 1u;
   pcg_setseq_128_step_r(rng);
@@ -162,12 +165,13 @@ inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
 
 #endif /* PCG_EMULATED_128BIT_MATH */
 
-inline uint64_t pcg_setseq_128_xsl_rr_64_random_r(pcg_state_setseq_128 *rng) {
+static inline uint64_t
+pcg_setseq_128_xsl_rr_64_random_r(pcg_state_setseq_128 *rng) {
   pcg_setseq_128_step_r(rng);
   return pcg_output_xsl_rr_128_64(rng->state);
 }
 
-inline uint64_t
+static inline uint64_t
 pcg_setseq_128_xsl_rr_64_boundedrand_r(pcg_state_setseq_128 *rng,
                                        uint64_t bound) {
   uint64_t threshold = -bound % bound;
@@ -181,8 +185,8 @@ pcg_setseq_128_xsl_rr_64_boundedrand_r(pcg_state_setseq_128 *rng,
 extern pcg128_t pcg_advance_lcg_128(pcg128_t state, pcg128_t delta,
                                     pcg128_t cur_mult, pcg128_t cur_plus);
 
-inline void pcg_setseq_128_advance_r(pcg_state_setseq_128 *rng,
-                                     pcg128_t delta) {
+static inline void pcg_setseq_128_advance_r(pcg_state_setseq_128 *rng,
+                                            pcg128_t delta) {
   rng->state = pcg_advance_lcg_128(rng->state, delta,
                                    PCG_DEFAULT_MULTIPLIER_128, rng->inc);
 }
