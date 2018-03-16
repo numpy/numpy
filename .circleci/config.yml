@@ -54,8 +54,51 @@ jobs:
      #      path: doc/neps/_build/html/
      #      destination: neps
 
-      -  deploy:
+      - add_ssh_keys:
+          fingerprints:
+            - "9f:8c:e5:3f:53:40:0b:ee:c9:c3:0f:fd:0f:3c:cc:55"
+
+      -  run:
+          name: deploy devdocs
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              echo "Deploying on master"
+              touch doc/build/html/.nojekyll
+
+              ./tools/ci/push_docs_to_repo.py doc/build/html \
+                  git@github.com:numpy/devdocs.git \
+                  --committer "numpy-circleci-bot" \
+                  --email "numpy-circleci-bot@nomail" \
+                  --message "Docs build of $CIRCLE_SHA1" \
+                  --force
+            else
+              echo "Not on the master branch; skipping deployment"
+            fi
+
+      - add_ssh_keys:
+          fingerprints:
+            - "11:fb:19:69:80:3a:6d:37:9c:d1:ac:20:17:cd:c8:17"
+
+      - run:
+          name: select SSH key for neps repo
+          command: |
+            cat <<\EOF > ~/.ssh/config
+            Host github.com
+              IdentitiesOnly yes
+              IdentityFile /home/circleci/.ssh/id_rsa_11fb1969803a6d379cd1ac2017cdc817
+            EOF
+
+      -  run:
+          name: deploy neps
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              touch doc/neps/_build/html/.nojekyll
+
+              ./tools/push_to_repo.py doc/neps/_build/html \
+                  git@github.com:numpy/neps.git \
+                  --committer "numpy-circleci-bot" \
+                  --email "numpy-circleci-bot@nomail" \
+                  --message "Docs build of $CIRCLE_SHA1" \
+                  --force
+            else
+              echo "Not on the master branch; skipping deployment"
             fi
