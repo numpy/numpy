@@ -33,16 +33,12 @@ if not os.path.exists(args.dir):
 
 
 def run(cmd, stdout=True):
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    if stdout:
-        for pipe in (p.stdout, p.stderr):
-            for line in pipe:
-                print(line.decode(), end='')
-    p.communicate()
-
-    if p.returncode:
-        print("Error executing: '%s'" % ' '.join(cmd))
+    pipe = None if stdout else subprocess.DEVNULL
+    try:
+        subprocess.check_call(cmd, stdout=pipe, stderr=pipe)
+    except subprocess.CalledProcessError:
+        print("\n! Error executing: `%s;` aborting" % ' '.join(cmd))
+        sys.exit(1)
 
 
 workdir = tempfile.mkdtemp()
