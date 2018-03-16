@@ -8,6 +8,8 @@ import operator
 import numpy as np
 from numpy.compat.py3k import basestring
 
+import warnings
+
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 
 
@@ -318,6 +320,14 @@ def _get_bin_edges(a, bins, range, weights):
 
     else:
         raise ValueError('`bins` must be 1d, when an array')
+
+    # the weights variable is not used at all in the bin edge calculations. a
+    # warning is useful since the histogram_bin_edges docstring says that it
+    # might be used in the future.
+    if weights is not None:
+        warnings.warn("Weights are currently not used by any of the bin edge "
+                      "estimators, but may be in the future.",
+                      FutureWarning, stacklevel=2)
 
     if n_equal_bins is not None:
         # gh-10322 means that type resolution rules are dependent on array
