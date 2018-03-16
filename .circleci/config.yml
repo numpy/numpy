@@ -64,7 +64,7 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               touch doc/build/html/.nojekyll
 
-              ./tools/push_to_repo.py doc/build/html \
+              ./tools/ci/push_docs_to_repo.py doc/build/html \
                   git@github.com:numpy/devdocs.git \
                   --committer "numpy-circleci-bot" \
                   --email "numpy-circleci-bot@nomail" \
