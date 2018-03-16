@@ -349,7 +349,7 @@ def _search_sorted_inclusive(a, v):
 
 
 def histogram_bin_edges(a, bins=10, range=None, weights=None):
-    """
+    r"""
     Function to calculate only the edges of the bins used by the `histogram` function.
 
     Parameters
