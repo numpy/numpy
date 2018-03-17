@@ -78,6 +78,8 @@
     #define NPY_CPU_AARCH64
 #elif defined(__mc68000__)
     #define NPY_CPU_M68K
+#elif defined(__riscv)
+    #define NPY_CPU_RISCV
 #elif defined(__arc__) && defined(__LITTLE_ENDIAN__)
     #define NPY_CPU_ARCEL
 #elif defined(__arc__) && defined(__BIG_ENDIAN__)
