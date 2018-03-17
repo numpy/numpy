@@ -2478,12 +2478,8 @@ def multi_dot(arrays):
         result = _multi_dot(arrays, order, 0, n - 1)
 
     # return proper shape
-    if ndim_first == 1 and ndim_last == 1:
-        return result[0, 0]  # scalar
-    elif ndim_first == 1 or ndim_last == 1:
-        return result.ravel()  # 1-D
-    else:
-        return result
+    
+    return atleast_1d(result)
 
 
 def _multi_dot_three(A, B, C):
