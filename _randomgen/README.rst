@@ -1,7 +1,7 @@
 RandomGen
 =========
 
-|Travis Build Status| |Appveyor Build Status|
+|Travis Build Status| |Appveyor Build Status| |PyPI version|
 
 Random Number Generator using settable Basic RNG interface for future
 NumPy RandomState evolution.
@@ -279,3 +279,5 @@ NumPy's mt19937.
    :target: https://travis-ci.org/bashtage/randomgen
 .. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true
    :target: https://ci.appveyor.com/project/bashtage/randomgen/branch/master
+.. |PyPI version| image:: https://badge.fury.io/py/randomgen.svg
+   :target: https://pypi.org/project/randomgen/

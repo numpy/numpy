@@ -22,8 +22,8 @@ except ImportError:
 try:
     import pypandoc
     # With an input file: it will infer the input format from the filename
-    with open('README.rst', 'w') as readme:
-        readme.write(pypandoc.convert_file('README.md', 'rst'))
+    with open('README.rst', 'wb') as readme:
+        readme.write(pypandoc.convert_file('README.md', 'rst').encode('utf8'))
 except ImportError:
     import warnings
     warnings.warn(
@@ -45,7 +45,8 @@ PCG_EMULATED_MATH = False
 EXTRA_INCLUDE_DIRS = []
 EXTRA_LINK_ARGS = []
 # Undef for manylinux
-EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else ['-std=c99', '-U__GNUC_GNU_INLINE__']
+EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else [
+    '-std=c99', '-U__GNUC_GNU_INLINE__']
 if os.name == 'nt':
     EXTRA_LINK_ARGS = ['/LTCG', '/OPT:REF', 'Advapi32.lib', 'Kernel32.lib']
     if DEBUG:

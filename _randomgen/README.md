@@ -2,13 +2,13 @@
 
 [![Travis Build Status](https://travis-ci.org/bashtage/randomgen.svg?branch=master)](https://travis-ci.org/bashtage/randomgen)
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true)](https://ci.appveyor.com/project/bashtage/randomgen/branch/master)
+[![PyPI version](https://badge.fury.io/py/randomgen.svg)](https://pypi.org/project/randomgen/)
 
 Random Number Generator using settable Basic RNG interface for future
 NumPy RandomState evolution.
 
 This is a library and generic interface for alternative random 
 generators in Python and NumPy.
-
 
 ### Compatibility Warning
 RandomGen no longer supports Box-Muller normal variates and so it not
