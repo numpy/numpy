@@ -1701,54 +1701,77 @@ def test_xerbla_override():
 
 class TestMultiDot(object):
 
-    def test_basic_function_with_three_arguments(self):
+    def test_basic_function_with_three_arguments_2D(self):
         # multi_dot with three arguments uses a fast hand coded algorithm to
-        # determine the optimal order. Therefore test it separately.
+        # determine the optimal order. Therefore test it separately. 
+        # test when all arguments are 2D
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))
         C = np.random.random((6, 2))
 
-        assert_almost_equal(multi_dot([A, B, C]), A.dot(B).dot(C))
-        assert_almost_equal(multi_dot([A, B, C]), np.dot(A, np.dot(B, C)))
+        #assert_almost_equal(multi_dot([A, B, C]), A.matmul(B).matmul(C))
+        assert_almost_equal(multi_dot([A, B, C]), np.matmul(A, np.matmul(B, C)))
+        
+    def test_basic_function_with_three_arguments_ND(self):
+        # multi_dot with three arguments uses a fast hand coded algorithm to
+        # determine the optimal order. Therefore test it separately.
+        # test when N-D (N>2) arguments are used.
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 3, 2, 6))
+        C = np.random.random((3, 6, 2))
 
-    def test_basic_function_with_dynamic_programing_optimization(self):
+        #assert_almost_equal(multi_dot([A, B, C]), A.matmul(B).matmul(C))
+        assert_almost_equal(multi_dot([A, B, C]), np.matmul(A, np.matmul(B, C)))
+
+    def test_basic_function_with_dynamic_programing_optimization_2D(self):
         # multi_dot with four or more arguments uses the dynamic programing
         # optimization and therefore deserve a separate
+        # test when all arguments are 2D
         A = np.random.random((6, 2))
         B = np.random.random((2, 6))
         C = np.random.random((6, 2))
         D = np.random.random((2, 1))
-        assert_almost_equal(multi_dot([A, B, C, D]), A.dot(B).dot(C).dot(D))
+        assert_almost_equal(multi_dot([A, B, C, D]),  np.matmul(A, np.matmul(B, np.matmul(C,D))))
+        
+    def test_basic_function_with_dynamic_programing_optimization_ND(self):
+        # multi_dot with four or more arguments uses the dynamic programing
+        # optimization and therefore deserve a separate
+        # test when N-D (N>2) arguments are used
+        A = np.random.random((6, 2))
+        B = np.random.random((4, 2, 6))
+        C = np.random.random((2, 4, 6, 2))
+        D = np.random.random((2, 1))
+        assert_almost_equal(multi_dot([A, B, C, D]),  np.matmul(A, np.matmul(B, np.matmul(C,D))))
 
     def test_vector_as_first_argument(self):
         # The first argument can be 1-D
         A1d = np.random.random(2)  # 1-D
         B = np.random.random((2, 6))
-        C = np.random.random((6, 2))
+        C = np.random.random((2, 6, 2))
         D = np.random.random((2, 2))
 
-        # the result should be 1-D
-        assert_equal(multi_dot([A1d, B, C, D]).shape, (2,))
+        # the result should be a stack of 1x2 matrices
+        assert_equal(multi_dot([A1d, B, C, D]).shape, (2,1,2))
 
     def test_vector_as_last_argument(self):
         # The last argument can be 1-D
         A = np.random.random((6, 2))
-        B = np.random.random((2, 6))
+        B = np.random.random((3, 2, 6))
         C = np.random.random((6, 2))
         D1d = np.random.random(2)  # 1-D
 
-        # the result should be 1-D
-        assert_equal(multi_dot([A, B, C, D1d]).shape, (6,))
+        # the result should be a stack of 6x1 matrices
+        assert_equal(multi_dot([A, B, C, D1d]).shape, (3, 6,1))
 
     def test_vector_as_first_and_last_argument(self):
         # The first and last arguments can be 1-D
         A1d = np.random.random(2)  # 1-D
-        B = np.random.random((2, 6))
-        C = np.random.random((6, 2))
+        B = np.random.random((2, 2, 6))
+        C = np.random.random((3, 2, 6, 2))
         D1d = np.random.random(2)  # 1-D
 
-        # the result should be a scalar
-        assert_equal(multi_dot([A1d, B, C, D1d]).shape, ())
+        # the result should be a a stack of 1x1 matrices 
+        assert_equal(multi_dot([A1d, B, C, D1d]).shape, (3, 2, 1, 1))
 
     def test_dynamic_programming_logic(self):
         # Test for the dynamic programming part
