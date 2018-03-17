@@ -12,6 +12,10 @@ env:
     # Doctr deploy key for bashtage/randomgen
     - secure: "czwFlflS1lcfbSQ9ktv+pLAPV9/6+wmwiMTyIYyv5xgQVWRL5NRebWH+ZhQ6s2T5x17wFMtlafcAvkdV0CHQZLru34V2UNldCapuEtQ8b32EDHBXHKbs45b7SSkLx4TFXdjiJurleY4ZIKle0gX6BW21zYBwaHJqbN6I8nRv9Rp47XEU1UV1Mdf/PhfTnxY31rFrPYL77xeWJzoFfT8zao39V4gQds+1Ag7FjdNVdSDVKwDduF4kS7tIbKqb4M+jsbc3PIKyP9nyQpEQF5ebJuG7mqXJhVJGEL83rBx8MLFPA/1X3cUzKacgKyp2+Wmlt0EVhwCa1aRf9cSK6I7TbMC7/eGtDnC2ToiRlFJurVRblaEmhzVQS1yQ4Dkooqsj9hNVl6nhu7JfR52GLogns33Ec/yYuRcWcULKSlR5Cerfef/5YijBEhlr9X76SJiOpjvS4lwWFYX+h8xzuVhRLGwIVB9oQNllxYItzcDSGmRx+EOMXWASHmoUDnBOZg4GMVukqOcF5l0ynoepiA1YHLdZlMy6SB3P7BZKF/aNCOn9nXw+N9X4U/yUpkM3Pb7HoGdNrC8RO4SwrNjGrarkdEB6e1lBReK/dqcylaF/mpK9VLpfQszDI8xnR4VCmlEM+le0xOsyHfeGciabdI4KH0i0SfYl4ls5XrN+CaqFWdo="
 
+cache:
+  directories:
+  - $HOME/.cache/pip
+
 matrix:
   fast_finish: true
   include:
@@ -49,6 +53,8 @@ before_install:
   - export BUILD_DIR=${PWD}
   - if [[ ${DOCBUILD} == true ]]; then pip install sphinx sphinx_rtd_theme guzzle_sphinx_theme ipython doctr -q; fi
   - if [[ ${DOCBUILD} == true ]]; then conda install numba pandas matplotlib --quiet; fi
+  - gcc --version || true
+  - clang --version || true
 
 install:
   - python setup.py develop
