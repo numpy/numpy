@@ -6,6 +6,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import assert_, assert_equal, run_module_suite
+import sys, tempfile
 
 
 class TestRealScalars(object):
@@ -44,6 +45,22 @@ class TestRealScalars(object):
         check(1e-4)
         check(1e15)
         check(1e16)
+
+    def test_py2_float_print(self):
+        # gh-10753
+        # In python2, the python float type implements an obsolte method
+        # tp_print, which overrides tp_repr and tp_str when using "print" to
+        # output to a "real file" (ie, not a StringIO). Make sure we don't
+        # inherit it.
+        x = np.double(0.1999999999999)
+        with tempfile.TemporaryFile('r+t') as f:
+            print(x, file=f)
+            f.seek(0)
+            output = f.read()
+        assert_equal(output, str(x) + '\n')
+        # In python2 the value float('0.1999999999999') prints with reduced
+        # precision as '0.2', but we want numpy's np.double('0.1999999999999')
+        # to print the unique value, '0.1999999999999'.
 
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
