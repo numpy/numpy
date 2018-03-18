@@ -10,6 +10,7 @@ from numpy.testing import (
     dec, suppress_warnings, HAS_REFCOUNT,
 )
 
+import warnings
 
 class TestHistogram(object):
 
@@ -158,6 +159,15 @@ class TestHistogram(object):
             np.arange(9), [0, 1, 3, 6, 10],
             weights=[2, 1, 1, 1, 1, 1, 1, 1, 1], density=True)
         assert_almost_equal(a, [.2, .1, .1, .075])
+
+    def test_weights_warning(self):
+        a = np.array([1,2,3,4,5,6,7,8,9,10])
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            hist, bin_edges = np.histogram(a,bins=10, weights=range(len(a)))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, FutureWarning)
+            assert "bin edge estimators" in str(w[-1].message)
 
     def test_exotic_weights(self):
 
