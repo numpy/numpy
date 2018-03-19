@@ -26,6 +26,6 @@ fi
 source venv/bin/activate
 python -V
 pip install --upgrade pip setuptools
-pip install nose pytz cython
+pip install nose pytz cython pytest
 if [ -n "$USE_ASV" ]; then pip install asv; fi
 popd

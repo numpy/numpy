@@ -5,6 +5,7 @@ import platform
 import warnings
 import fnmatch
 import itertools
+import unittest
 
 import numpy.core.umath as ncu
 from numpy.core import umath_tests as ncu_tests
@@ -23,7 +24,7 @@ def on_powerpc():
            platform.machine().startswith('ppc')
 
 
-class _FilterInvalids(object):
+class _FilterInvalids(unittest.TestCase):
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
 
