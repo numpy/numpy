@@ -314,7 +314,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
         *offset += descr->elsize;
 
-        if(PyArray_IsScalar(obj, Generic)) {
+        if (PyArray_IsScalar(obj, Generic)) {
             /* scalars are always natively aligned */
             is_natively_aligned = 1;
         }
