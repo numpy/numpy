@@ -4,13 +4,17 @@
 """
 from __future__ import division, absolute_import, print_function
 
-import code, sys
+import code
+import sys
 import platform
+from tempfile import TemporaryFile
+
 import pytest
 
-from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, suppress_warnings
+from numpy.testing import (
+    assert_, assert_equal, assert_raises, suppress_warnings
+)
 
 class TestRealScalars(object):
     def test_str(self):
@@ -324,3 +328,18 @@ class TestRealScalars(object):
         # gh-2643, gh-6136, gh-6908
         assert_equal(repr(np.float64(0.1)), repr(0.1))
         assert_(repr(np.float64(0.20000000000000004)) != repr(0.2))
+
+    @pytest.mark.parametrize('dt', [
+        np.half,
+        np.single,
+        np.double,
+        np.longdouble,
+    ])
+    def test_hex_oct_float(self, dt):
+        """
+        Test that hex and oct fail on numpy floats just like they do on
+        python ones
+        """
+        f = dt(0.0)
+        assert_raises(TypeError, hex, f)
+        assert_raises(TypeError, oct, f)

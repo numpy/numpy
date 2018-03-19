@@ -1464,12 +1464,10 @@ static NPY_INLINE PyObject *
 /**begin repeat
  *
  * #name = (byte, ubyte, short, ushort, int, uint,
- *             long, ulong, longlong, ulonglong,
- *             half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*2#
- * #oper = oct*17,  hex*17#
- * #kind = (int*5,  long*5,  int*2,  long*2,  int,  long*2)*2#
- * #cap = (Int*5,  Long*5,  Int*2,  Long*2,  Int,  Long*2)*2#
+ *             long, ulong, longlong, ulonglong)*2#
+ * #oper = oct*10,  hex*10#
+ * #kind = (int*5,  long*5)*2#
+ * #cap = (Int*5,  Long*5)*2#
  */
 static PyObject *
 @name@_@oper@(PyObject *obj)
@@ -1483,6 +1481,13 @@ static PyObject *
 }
 /**end repeat**/
 
+/**begin repeat
+ * #name = (half, float, double, longdouble,
+ *          cfloat, cdouble, clongdouble)*2#
+ * #oper = oct*7, hex*7#
+ */
+#define @name@_@oper@ NULL
+/**end repeat**/
 #endif
 
 /**begin repeat

@@ -1079,22 +1079,18 @@ static PyObject *
 
 #if !defined(NPY_PY3K)
 
-/**begin repeat1
- * #name = int, hex, oct#
- */
 static PyObject *
-@char@longdoubletype_@name@(PyObject *self)
+@char@longdoubletype_int(PyObject *self)
 {
     PyObject *ret;
     PyObject *obj = @char@longdoubletype_long(self);
     if (obj == NULL) {
         return NULL;
     }
-    ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
+    ret = Py_TYPE(obj)->tp_as_number->nb_int(obj);
     Py_DECREF(obj);
     return ret;
 }
-/**end repeat1**/
 
 #endif /* !defined(NPY_PY3K) */
 
@@ -4370,8 +4366,6 @@ initialize_numeric_types(void)
 #else
     @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_int;
     @char@longdoubletype_as_number.nb_long = @char@longdoubletype_long;
-    @char@longdoubletype_as_number.nb_hex  = @char@longdoubletype_hex;
-    @char@longdoubletype_as_number.nb_oct  = @char@longdoubletype_oct;
 #endif
 
     Py@CHAR@LongDoubleArrType_Type.tp_as_number = &@char@longdoubletype_as_number;
