@@ -5,17 +5,8 @@ import sys
 import numpy as np
 from numpy.testing import run_module_suite, assert_, assert_equal, dec
 
-# types
-scalars = [
-    np.bool_,
-    np.byte, np.short, np.intc, np.int_, np.longlong,
-    np.ubyte, np.ushort, np.uintc, np.uint, np.longlong,
-    np.half, np.single, np.double, np.longdouble,
-    np.csingle, np.cdouble, np.clongdouble,
-]
-
 # PEP3118 format strings for native (standard alignment and byteorder) types
-scalars_set_code = [
+scalars_and_codes = [
     (np.bool_, '?'),
     (np.byte, 'b'),
     (np.short, 'h'),
@@ -30,11 +21,10 @@ scalars_set_code = [
     (np.half, 'e'),
     (np.single, 'f'),
     (np.double, 'd'),
-    (np.float_, 'd'),
-    (np.longfloat, 'g'),
+    (np.longdouble, 'g'),
     (np.csingle, 'Zf'),
-    (np.complex_, 'Zd'),
-    (np.clongfloat, 'Zg'),
+    (np.cdouble, 'Zd'),
+    (np.clongdouble, 'Zg'),
 ]
 
 
@@ -44,7 +34,7 @@ class TestScalarPEP3118(object):
 
     @skip_if_no_buffer_interface
     def test_scalar_match_array(self):
-        for scalar in scalars:
+        for scalar, _ in scalars_and_codes:
             x = scalar()
             a = np.array([], dtype=np.dtype(scalar))
             mv_x = memoryview(x)
@@ -53,7 +43,7 @@ class TestScalarPEP3118(object):
 
     @skip_if_no_buffer_interface
     def test_scalar_dim(self):
-        for scalar in scalars:
+        for scalar, _ in scalars_and_codes:
             x = scalar()
             mv_x = memoryview(x)
             assert_equal(mv_x.itemsize, np.dtype(scalar).itemsize)
@@ -64,7 +54,7 @@ class TestScalarPEP3118(object):
 
     @skip_if_no_buffer_interface
     def test_scalar_known_code(self):
-        for scalar, code in scalars_set_code:
+        for scalar, code in scalars_and_codes:
             x = scalar()
             mv_x = memoryview(x)
             assert_equal(mv_x.format, code)
