@@ -1,6 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import tempfile
 import sys
 import shutil
@@ -477,6 +482,16 @@ class TestDtypedescr(object):
     def test_byteorders(self):
         assert_(np.dtype('<i4') != np.dtype('>i4'))
         assert_(np.dtype([('a', '<i4')]) != np.dtype([('a', '>i4')]))
+
+    def test_structured_non_void(self):
+        fields = [('a', '<i2'), ('b', '<i2')]
+        dt_int = np.dtype(('i4', fields))
+        assert_equal(str(dt_int), "(numpy.int32, [('a', '<i2'), ('b', '<i2')])")
+
+        # gh-9821
+        arr_int = np.zeros(4, dt_int)
+        assert_equal(repr(arr_int),
+            "array([0, 0, 0, 0], dtype=(numpy.int32, [('a', '<i2'), ('b', '<i2')]))")
 
 
 class TestZeroRank(object):
@@ -1510,9 +1525,9 @@ class TestMethods(object):
             assert_equal(c, ai, msg)
 
         # test sorting of complex arrays requiring byte-swapping, gh-5441
-        for endianess in '<>':
+        for endianness in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
                 c = arr.copy()
                 c.sort()
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
@@ -1732,6 +1747,13 @@ class TestMethods(object):
         assert_equal(r, np.array([('a', 1), ('c', 3), ('b', 255), ('d', 258)],
                                  dtype=mydtype))
 
+    def test_sort_matrix_none(self):
+        a = np.matrix([[2, 1, 0]])
+        actual = np.sort(a, axis=None)
+        expected = np.matrix([[0, 1, 2]])
+        assert_equal(actual, expected)
+        assert_(type(expected) is np.matrix)
+
     def test_argsort(self):
         # all c scalar argsorts use the same code with different types
         # so it suffices to run a quick check with one type. The number
@@ -1761,9 +1783,9 @@ class TestMethods(object):
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
 
         # test argsort of complex arrays requiring byte-swapping, gh-5441
-        for endianess in '<>':
+        for endianness in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
                 msg = 'byte-swapped complex argsort, dtype={0}'.format(dt)
                 assert_equal(arr.argsort(),
                              np.arange(len(arr), dtype=np.intp), msg)
@@ -2476,6 +2498,14 @@ class TestMethods(object):
                 tgt = np.sort(d)[kth]
                 assert_array_equal(np.partition(d, kth)[kth], tgt,
                                    err_msg="data: %r\n kth: %r" % (d, kth))
+
+    def test_partition_matrix_none(self):
+        # gh-4301
+        a = np.matrix([[2, 1, 0]])
+        actual = np.partition(a, 1, axis=None)
+        expected = np.matrix([[0, 1, 2]])
+        assert_equal(actual, expected)
+        assert_(type(expected) is np.matrix)
 
     def test_argpartition_gh5524(self):
         #  A test for functionality of argpartition on lists.
@@ -3331,7 +3361,7 @@ class TestTemporaryElide(object):
         # def incref_elide_l(d):
         #    return l[4] + l[4] # PyNumber_Add without increasing refcount
         from numpy.core.multiarray_tests import incref_elide_l
-        # padding with 1 makes sure the object on the stack is not overwriten
+        # padding with 1 makes sure the object on the stack is not overwritten
         l = [1, 1, 1, 1, np.ones(100000)]
         res = incref_elide_l(l)
         # the return original should not be changed to an inplace operation
@@ -4668,10 +4698,15 @@ class TestRecord(object):
             y['a']
 
         def test_unicode_field_names(self):
-            # Unicode field names are not allowed on Py2
-            title = u'b'
-            assert_raises(TypeError, np.dtype, [(title, int)])
-            assert_raises(TypeError, np.dtype, [(('a', title), int)])
+            # Unicode field names are converted to ascii on Python 2:
+            encodable_name = u'b'
+            assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
+            assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
+
+            # But raises UnicodeEncodeError if it can't be encoded:
+            nonencodable_name = u'\uc3bc'
+            assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
+            assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
@@ -6962,7 +6997,7 @@ class TestHashing(object):
 
     def test_collections_hashable(self):
         x = np.array([])
-        assert_(not isinstance(x, collections.Hashable))
+        assert_(not isinstance(x, collections_abc.Hashable))
 
 
 class TestArrayPriority(object):
@@ -7212,7 +7247,7 @@ class TestWritebackIfCopy(TestCase):
         arr_wb[:] = -100
         npy_resolve(arr_wb)
         assert_equal(arr, -100)
-        # after resolve, the two arrays no longer reference eachother
+        # after resolve, the two arrays no longer reference each other
         assert_(not arr_wb.ctypes.data == 0)
         arr_wb[:] = 100
         assert_equal(arr, -100)

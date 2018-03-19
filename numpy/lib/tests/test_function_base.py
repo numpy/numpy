@@ -11,7 +11,7 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_raises,
     assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex,
-    dec, suppress_warnings, HAS_REFCOUNT,
+    dec, suppress_warnings,
 )
 import numpy.lib.function_base as nfb
 from numpy.random import rand
@@ -1752,7 +1752,9 @@ class TestCov(object):
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
-        assert_allclose(cov(x), np.array([[1., -1.j], [1.j, 1.]]))
+        res = np.array([[1., -1.j], [1.j, 1.]])
+        assert_allclose(cov(x), res)
+        assert_allclose(cov(x, aweights=np.ones(3)), res)
 
     def test_xy(self):
         x = np.array([[1, 2, 3]])
@@ -2141,7 +2143,7 @@ class TestBincount(object):
                             "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @dec._needs_refcount
     def test_dtype_reference_leaks(self):
         # gh-6805
         intp_refcount = sys.getrefcount(np.dtype(np.intp))
@@ -2252,8 +2254,17 @@ class TestInterp(object):
         y = np.linspace(0, 1, 5)
         x0 = np.array(.3)
         assert_almost_equal(np.interp(x0, x, y), x0)
-        x0 = np.array(.3, dtype=object)
-        assert_almost_equal(np.interp(x0, x, y), .3)
+
+        xp = np.array([0, 2, 4])
+        fp = np.array([1, -1, 1])
+
+        actual = np.interp(np.array(1), xp, fp)
+        assert_equal(actual, 0)
+        assert_(isinstance(actual, np.float64))
+
+        actual = np.interp(np.array(4.5), xp, fp, period=4)
+        assert_equal(actual, 0.5)
+        assert_(isinstance(actual, np.float64))
 
     def test_if_len_x_is_small(self):
         xp = np.arange(0, 10, 0.0001)

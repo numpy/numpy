@@ -1,6 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import re
 import sys
 import warnings
@@ -547,7 +552,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     y = zeros(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
-        if not isinstance(item, collections.Callable):
+        if not isinstance(item, collections_abc.Callable):
             y[condlist[k]] = item
         else:
             vals = x[condlist[k]]
@@ -632,7 +637,7 @@ def select(condlist, choicelist, default=0):
                 deprecated_ints = True
             else:
                 raise ValueError(
-                    'invalid entry in choicelist: should be boolean ndarray')
+                    'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
     if deprecated_ints:
         # 2014-02-24, 1.9
@@ -818,9 +823,9 @@ def gradient(f, *varargs, **kwargs):
     Notes
     -----
     Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
-    derivatives) and let be :math:`h_{*}` a non homogeneous stepsize, the
-    spacing the finite difference coefficients are computed by minimising
-    the consistency error :math:`\\eta_{i}`:
+    derivatives) and let :math:`h_{*}` be a non-homogeneous stepsize, we
+    minimize the "consistency error" :math:`\\eta_{i}` between the true gradient
+    and its estimate from a linear combination of the neighboring grid-points:
 
     .. math::
 
@@ -839,7 +844,7 @@ def gradient(f, *varargs, **kwargs):
         \\left\\{
             \\begin{array}{r}
                 \\alpha+\\beta+\\gamma=0 \\\\
-                -\\beta h_{d}+\\gamma h_{s}=1 \\\\
+                \\beta h_{d}-\\gamma h_{s}=1 \\\\
                 \\beta h_{d}^{2}+\\gamma h_{s}^{2}=0
             \\end{array}
         \\right.
@@ -970,7 +975,7 @@ def gradient(f, *varargs, **kwargs):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            out[slice1] = (f[slice4] - f[slice2]) / (2. * ax_dx)
+            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2. * ax_dx)
         else:
             dx1 = ax_dx[0:-1]
             dx2 = ax_dx[1:]
@@ -982,7 +987,7 @@ def gradient(f, *varargs, **kwargs):
             shape[axis] = -1
             a.shape = b.shape = c.shape = shape
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
@@ -991,14 +996,14 @@ def gradient(f, *varargs, **kwargs):
             slice3[axis] = 0
             dx_0 = ax_dx if uniform_spacing else ax_dx[0]
             # 1D equivalent -- out[0] = (f[1] - f[0]) / (x[1] - x[0])
-            out[slice1] = (f[slice2] - f[slice3]) / dx_0
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
             dx_n = ax_dx if uniform_spacing else ax_dx[-1]
             # 1D equivalent -- out[-1] = (f[-1] - f[-2]) / (x[-1] - x[-2])
-            out[slice1] = (f[slice2] - f[slice3]) / dx_n
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
 
         # Numerical differentiation: 2nd order edges
         else:
@@ -1017,7 +1022,7 @@ def gradient(f, *varargs, **kwargs):
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1034,7 +1039,7 @@ def gradient(f, *varargs, **kwargs):
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
         outvals.append(out)
 
@@ -1255,23 +1260,13 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         interp_func = compiled_interp
         input_dtype = np.float64
 
-    if period is None:
-        if isinstance(x, (float, int, number)):
-            return interp_func([x], xp, fp, left, right).item()
-        elif isinstance(x, np.ndarray) and x.ndim == 0:
-            return interp_func([x], xp, fp, left, right).item()
-        else:
-            return interp_func(x, xp, fp, left, right)
-    else:
+    if period is not None:
         if period == 0:
             raise ValueError("period must be a non-zero value")
         period = abs(period)
         left = None
         right = None
-        return_array = True
-        if isinstance(x, (float, int, number)):
-            return_array = False
-            x = [x]
+
         x = np.asarray(x, dtype=np.float64)
         xp = np.asarray(xp, dtype=np.float64)
         fp = np.asarray(fp, dtype=input_dtype)
@@ -1289,10 +1284,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         xp = np.concatenate((xp[-1:]-period, xp, xp[0:1]+period))
         fp = np.concatenate((fp[-1:], fp, fp[0:1]))
 
-        if return_array:
-            return interp_func(x, xp, fp, left, right)
-        else:
-            return interp_func(x, xp, fp, left, right).item()
+    return interp_func(x, xp, fp, left, right)
 
 
 def angle(z, deg=0):
@@ -1385,6 +1377,7 @@ def unwrap(p, discont=pi, axis=-1):
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
+    slice1 = tuple(slice1)
     ddmod = mod(dd + pi, 2*pi) - pi
     _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
     ph_correct = ddmod - dd
@@ -2309,7 +2302,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     else:
         X_T = (X*w).T
     c = dot(X, X_T.conj())
-    c *= 1. / np.float64(fact)
+    c *= np.true_divide(1, fact)
     return c.squeeze()
 
 
@@ -3367,6 +3360,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
+    indexer = tuple(indexer)
 
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
@@ -3485,6 +3479,33 @@ def percentile(a, q, axis=None, out=None,
     >>> np.percentile(b, 50, axis=1, overwrite_input=True)
     array([ 7.,  2.])
     >>> assert not np.all(a == b)
+
+    The different types of interpolation can be visualized graphically:
+
+    ..plot::
+        import matplotlib.pyplot as plt
+
+        a = np.arange(4)
+        p = np.linspace(0, 100, 6001)
+        ax = plt.gca()
+        lines = [
+            ('linear', None)
+            ('higher', '--')
+            ('lower', '--')
+            ('nearest', '-.')
+            ('midpoint', '-.')
+        ]
+        for interpolation, style in lines:
+            ax.plot(
+                p, np.percentile(a, p, interpolation=interpolation),
+                label=interpolation, linestyle=style)
+        ax.set(
+            title='Interpolation methods for list: ' + str(a),
+            xlabel='Percentile',
+            ylabel='List item returned',
+            yticks=a)
+        ax.legend()
+        plt.show()
 
     """
     q = np.true_divide(q, 100.0)  # handles the asarray for us too
@@ -3732,12 +3753,12 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     try:
-        ret = (d * (y[slice1] + y[slice2]) / 2.0).sum(axis)
+        ret = (d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0).sum(axis)
     except ValueError:
         # Operations didn't work, cast to ndarray
         d = np.asarray(d)
         y = np.asarray(y)
-        ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
+        ret = add.reduce(d * (y[tuple(slice1)]+y[tuple(slice2)])/2.0, axis)
     return ret
 
 
@@ -4026,7 +4047,7 @@ def delete(arr, obj, axis=None):
             pass
         else:
             slobj[axis] = slice(None, start)
-            new[slobj] = arr[slobj]
+            new[tuple(slobj)] = arr[tuple(slobj)]
         # copy end chunck
         if stop == N:
             pass
@@ -4034,7 +4055,7 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(stop-numtodel, None)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(stop, None)
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         # copy middle pieces
         if step == 1:
             pass
@@ -4044,9 +4065,9 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(start, stop-numtodel)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(start, stop)
-            arr = arr[slobj2]
+            arr = arr[tuple(slobj2)]
             slobj2[axis] = keep
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         else:
@@ -4073,11 +4094,11 @@ def delete(arr, obj, axis=None):
         newshape[axis] -= 1
         new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, obj)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(obj, None)
         slobj2 = [slice(None)]*ndim
         slobj2[axis] = slice(obj+1, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
     else:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
@@ -4109,7 +4130,7 @@ def delete(arr, obj, axis=None):
 
         keep[obj, ] = False
         slobj[axis] = keep
-        new = arr[slobj]
+        new = arr[tuple(slobj)]
 
     if wrap:
         return wrap(new)
@@ -4280,13 +4301,13 @@ def insert(arr, obj, values, axis=None):
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, index)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(index, index+numnew)
-        new[slobj] = values
+        new[tuple(slobj)] = values
         slobj[axis] = slice(index+numnew, None)
         slobj2 = [slice(None)] * ndim
         slobj2[axis] = slice(index, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         return new
@@ -4315,8 +4336,8 @@ def insert(arr, obj, values, axis=None):
     slobj2 = [slice(None)]*ndim
     slobj[axis] = indices
     slobj2[axis] = old_mask
-    new[slobj] = values
-    new[slobj2] = arr
+    new[tuple(slobj)] = values
+    new[tuple(slobj2)] = arr
 
     if wrap:
         return wrap(new)

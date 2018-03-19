@@ -14,7 +14,6 @@ from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
 from . import _methods
 
-
 _dt_ = nt.sctype2char
 
 # functions that are methods
@@ -26,7 +25,7 @@ __all__ = [
     'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
-    ]
+]
 
 _gentype = types.GeneratorType
 # save away Python sum
@@ -60,6 +59,28 @@ def _wrapfunc(obj, method, *args, **kwds):
     # a downstream library like 'pandas'.
     except (AttributeError, TypeError):
         return _wrapit(obj, method, *args, **kwds)
+
+
+def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
+    passkwargs = {}
+    for k, v in kwargs.items():
+        if v is not np._NoValue:
+            passkwargs[k] = v
+
+    if type(obj) is not mu.ndarray:
+        try:
+            reduction = getattr(obj, method)
+        except AttributeError:
+            pass
+        else:
+            # This branch is needed for reductions like any which don't
+            # support a dtype.
+            if dtype is not None:
+                return reduction(axis=axis, dtype=dtype, out=out, **passkwargs)
+            else:
+                return reduction(axis=axis, out=out, **passkwargs)
+
+    return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
 
 def take(a, indices, axis=None, out=None, mode='raise'):
@@ -657,8 +678,9 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     """
     if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
-        axis = 0
+        axis = -1
     else:
         a = asanyarray(a).copy(order="K")
     a.partition(kth, axis=axis, kind=kind, order=order)
@@ -840,8 +862,9 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     """
     if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
-        axis = 0
+        axis = -1
     else:
         a = asanyarray(a).copy(order="K")
     a.sort(axis=axis, kind=kind, order=order)
@@ -1193,7 +1216,7 @@ def resize(a, new_shape):
         n_copies = n_copies + 1
         extra = Na - extra
 
-    a = concatenate((a,)*n_copies)
+    a = concatenate((a,) * n_copies)
     if extra > 0:
         a = a[:-extra]
 
@@ -1875,73 +1898,14 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     -128
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
     if isinstance(a, _gentype):
         res = _sum_(a)
         if out is not None:
             out[...] = res
             return out
         return res
-    if type(a) is not mu.ndarray:
-        try:
-            sum = a.sum
-        except AttributeError:
-            pass
-        else:
-            return sum(axis=axis, dtype=dtype, out=out, **kwargs)
-    return _methods._sum(a, axis=axis, dtype=dtype,
-                         out=out, **kwargs)
 
-
-def product(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
-    """
-    Return the product of array elements over a given axis.
-
-    See Also
-    --------
-    prod : equivalent function; see for details.
-
-    """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out, **kwargs)
-
-
-def sometrue(a, axis=None, out=None, keepdims=np._NoValue):
-    """
-    Check whether some values are true.
-
-    Refer to `any` for full documentation.
-
-    See Also
-    --------
-    any : equivalent function
-
-    """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.any(axis=axis, out=out, **kwargs)
-
-
-def alltrue(a, axis=None, out=None, keepdims=np._NoValue):
-    """
-    Check if all elements of input array are true.
-
-    See Also
-    --------
-    numpy.all : Equivalent function; see for details.
-
-    """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.all(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.add, 'sum', axis, dtype, out, keepdims=keepdims)
 
 
 def any(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2024,11 +1988,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     (191614240, 191614240)
 
     """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.any(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.logical_or, 'any', axis, None, out, keepdims=keepdims)
 
 
 def all(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2104,11 +2064,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     (28293632, 28293632, array([ True]))
 
     """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.all(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
 
 
 def cumsum(a, axis=None, dtype=None, out=None):
@@ -2176,19 +2132,6 @@ def cumsum(a, axis=None, dtype=None, out=None):
 
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
-
-
-def cumproduct(a, axis=None, dtype=None, out=None):
-    """
-    Return the cumulative product over the given axis.
-
-
-    See Also
-    --------
-    cumprod : equivalent function; see for details.
-
-    """
-    return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
 
 def ptp(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2344,20 +2287,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     4.0
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-
-    if type(a) is not mu.ndarray:
-        try:
-            amax = a.max
-        except AttributeError:
-            pass
-        else:
-            return amax(axis=axis, out=out, **kwargs)
-
-    return _methods._amax(a, axis=axis,
-                          out=out, **kwargs)
+    return _wrapreduction(a, np.maximum, 'max', axis, None, out, keepdims=keepdims)
 
 
 def amin(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2445,19 +2375,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
     0.0
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    if type(a) is not mu.ndarray:
-        try:
-            amin = a.min
-        except AttributeError:
-            pass
-        else:
-            return amin(axis=axis, out=out, **kwargs)
-
-    return _methods._amin(a, axis=axis,
-                          out=out, **kwargs)
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out, keepdims=keepdims)
 
 
 def alen(a):
@@ -2591,19 +2509,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     True
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    if type(a) is not mu.ndarray:
-        try:
-            prod = a.prod
-        except AttributeError:
-            pass
-        else:
-            return prod(axis=axis, dtype=dtype, out=out, **kwargs)
-
-    return _methods._prod(a, axis=axis, dtype=dtype,
-                          out=out, **kwargs)
+    return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out, keepdims=keepdims)
 
 
 def cumprod(a, axis=None, dtype=None, out=None):
@@ -2700,62 +2606,6 @@ def ndim(a):
     0
 
     """
-    try:
-        return a.ndim
-    except AttributeError:
-        return asarray(a).ndim
-
-
-def rank(a):
-    """
-    Return the number of dimensions of an array.
-
-    If `a` is not already an array, a conversion is attempted.
-    Scalars are zero dimensional.
-
-    .. note::
-        This function is deprecated in NumPy 1.9 to avoid confusion with
-        `numpy.linalg.matrix_rank`. The ``ndim`` attribute or function
-        should be used instead.
-
-    Parameters
-    ----------
-    a : array_like
-        Array whose number of dimensions is desired. If `a` is not an array,
-        a conversion is attempted.
-
-    Returns
-    -------
-    number_of_dimensions : int
-        The number of dimensions in the array.
-
-    See Also
-    --------
-    ndim : equivalent function
-    ndarray.ndim : equivalent property
-    shape : dimensions of array
-    ndarray.shape : dimensions of array
-
-    Notes
-    -----
-    In the old Numeric package, `rank` was the term used for the number of
-    dimensions, but in NumPy `ndim` is used instead.
-
-    Examples
-    --------
-    >>> np.rank([1,2,3])
-    1
-    >>> np.rank(np.array([[1,2,3],[4,5,6]]))
-    2
-    >>> np.rank(1)
-    0
-
-    """
-    # 2014-04-12, 1.9
-    warnings.warn(
-        "`rank` is deprecated; use the `ndim` attribute or function instead. "
-        "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning, stacklevel=2)
     try:
         return a.ndim
     except AttributeError:
@@ -3232,3 +3082,78 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                          **kwargs)
+
+
+# Aliases of other functions. These have their own definitions only so that
+# they can have unique docstrings.
+
+def product(*args, **kwargs):
+    """
+    Return the product of array elements over a given axis.
+
+    See Also
+    --------
+    prod : equivalent function; see for details.
+    """
+    return prod(*args, **kwargs)
+
+
+def cumproduct(*args, **kwargs):
+    """
+    Return the cumulative product over the given axis.
+
+    See Also
+    --------
+    cumprod : equivalent function; see for details.
+    """
+    return cumprod(*args, **kwargs)
+
+
+def sometrue(*args, **kwargs):
+    """
+    Check whether some values are true.
+
+    Refer to `any` for full documentation.
+
+    See Also
+    --------
+    any : equivalent function; see for details.
+    """
+    return any(*args, **kwargs)
+
+
+def alltrue(*args, **kwargs):
+    """
+    Check if all elements of input array are true.
+
+    See Also
+    --------
+    numpy.all : Equivalent function; see for details.
+    """
+    return all(*args, **kwargs)
+
+
+def rank(a):
+    """
+    Return the number of dimensions of an array.
+
+    .. note::
+        This function is deprecated in NumPy 1.9 to avoid confusion with
+        `numpy.linalg.matrix_rank`. The ``ndim`` attribute or function
+        should be used instead.
+
+    See Also
+    --------
+    ndim : equivalent non-deprecated function
+
+    Notes
+    -----
+    In the old Numeric package, `rank` was the term used for the number of
+    dimensions, but in NumPy `ndim` is used instead.
+    """
+    # 2014-04-12, 1.9
+    warnings.warn(
+        "`rank` is deprecated; use the `ndim` attribute or function instead. "
+        "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
+        VisibleDeprecationWarning, stacklevel=2)
+    return ndim(a)

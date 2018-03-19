@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
-import sys
+import sys, gc
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_raises, assert_warns
+     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec,
 )
 import textwrap
 
@@ -33,6 +33,88 @@ class TestArrayRepr(object):
             "sub([[(1,), (1,)],\n"
             "     [(1,), (1,)]], dtype=[('a', '<i4')])"
         )
+
+    @dec.knownfailureif(True, "See gh-10544")
+    def test_object_subclass(self):
+        class sub(np.ndarray):
+            def __new__(cls, inp):
+                obj = np.asarray(inp).view(cls)
+                return obj
+
+            def __getitem__(self, ind):
+                ret = super(sub, self).__getitem__(ind)
+                return sub(ret)
+
+        # test that object + subclass is OK:
+        x = sub([None, None])
+        assert_equal(repr(x), 'sub([None, None], dtype=object)')
+        assert_equal(str(x), '[None None]')
+
+        x = sub([None, sub([None, None])])
+        assert_equal(repr(x),
+            'sub([None, sub([None, None], dtype=object)], dtype=object)')
+        assert_equal(str(x), '[None sub([None, None], dtype=object)]')
+
+    def test_0d_object_subclass(self):
+        # make sure that subclasses which return 0ds instead
+        # of scalars don't cause infinite recursion in str
+        class sub(np.ndarray):
+            def __new__(cls, inp):
+                obj = np.asarray(inp).view(cls)
+                return obj
+
+            def __getitem__(self, ind):
+                ret = super(sub, self).__getitem__(ind)
+                return sub(ret)
+
+        x = sub(1)
+        assert_equal(repr(x), 'sub(1)')
+        assert_equal(str(x), '1')
+
+        x = sub([1, 1])
+        assert_equal(repr(x), 'sub([1, 1])')
+        assert_equal(str(x), '[1 1]')
+
+        # check it works properly with object arrays too
+        x = sub(None)
+        assert_equal(repr(x), 'sub(None, dtype=object)')
+        assert_equal(str(x), 'None')
+
+        # plus recursive object arrays (even depth > 1)
+        y = sub(None)
+        x[()] = y
+        y[()] = x
+        assert_equal(repr(x),
+            'sub(sub(sub(..., dtype=object), dtype=object), dtype=object)')
+        assert_equal(str(x), '...')
+
+        # nested 0d-subclass-object
+        x = sub(None)
+        x[()] = sub(None)
+        assert_equal(repr(x), 'sub(sub(None, dtype=object), dtype=object)')
+        assert_equal(str(x), 'None')
+
+        # gh-10663
+        class DuckCounter(np.ndarray):
+            def __getitem__(self, item):
+                result = super(DuckCounter, self).__getitem__(item)
+                if not isinstance(result, DuckCounter):
+                    result = result[...].view(DuckCounter)
+                return result
+
+            def to_string(self):
+                return {0: 'zero', 1: 'one', 2: 'two'}.get(self.item(), 'many')
+
+            def __str__(self):
+                if self.shape == ():
+                    return self.to_string()
+                else:
+                    fmt = {'all': lambda x: x.to_string()}
+                    return np.array2string(self, formatter=fmt)
+
+        dc = np.arange(5).view(DuckCounter)
+        assert_equal(str(dc), "[zero one two many many]")
+        assert_equal(str(dc[0]), "zero")
 
     def test_self_containing(self):
         arr0d = np.array(None)
@@ -306,6 +388,19 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
+    @dec._needs_refcount
+    def test_refcount(self):
+        # make sure we do not hold references to the array due to a recursive
+        # closure (gh-10620)
+        gc.disable()
+        a = np.arange(2)
+        r1 = sys.getrefcount(a)
+        np.array2string(a)
+        np.array2string(a)
+        r2 = sys.getrefcount(a)
+        gc.collect()
+        gc.enable()
+        assert_(r1 == r2)
 
 class TestPrintOptions(object):
     """Test getting and setting global print options."""
@@ -760,7 +855,7 @@ class TestContextManager(object):
         assert_equal(np.get_printoptions(), opts)
 
     def test_ctx_mgr_exceptions(self):
-        # test that print options are restored even if an exeption is raised
+        # test that print options are restored even if an exception is raised
         opts = np.get_printoptions()
         try:
             with np.printoptions(precision=2, linewidth=11):

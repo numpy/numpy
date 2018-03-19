@@ -11,7 +11,7 @@
  * This performs the same task as PyLong_FromDouble, but for long doubles
  * which have a greater range.
  */
-NPY_NO_EXPORT PyObject *
+NPY_VISIBILITY_HIDDEN PyObject *
 npy_longdouble_to_PyLong(npy_longdouble ldval);
 
 #endif

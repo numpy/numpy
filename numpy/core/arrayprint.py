@@ -402,9 +402,6 @@ def _get_format_function(data, **options):
     find the right formatting function for the dtype_
     """
     dtype_ = data.dtype
-    if dtype_.fields is not None:
-        return StructureFormat.from_data(data, **options)
-
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
     if issubclass(dtypeobj, _nt.bool_):
@@ -431,7 +428,10 @@ def _get_format_function(data, **options):
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
     elif issubclass(dtypeobj, _nt.void):
-        return formatdict['void']()
+        if dtype_.names is not None:
+            return StructuredVoidFormat.from_data(data, **options)
+        else:
+            return formatdict['void']()
     else:
         return formatdict['numpystr']()
 
@@ -468,8 +468,12 @@ def _recursive_guard(fillvalue='...'):
 # gracefully handle recursive calls, when object arrays contain themselves
 @_recursive_guard()
 def _array2string(a, options, separator=' ', prefix=""):
-    # The formatter __init__s cannot deal with subclasses yet
+    # The formatter __init__s in _get_format_function cannot deal with
+    # subclasses yet, and we also need to avoid recursion issues in
+    # _formatArray with subclasses which return 0d arrays in place of scalars
     data = asarray(a)
+    if a.shape == ():
+        a = data
 
     if a.size > options['threshold']:
         summary_insert = "..."
@@ -501,7 +505,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     Parameters
     ----------
-    a : ndarray
+    a : array_like
         Input array.
     max_line_width : int, optional
         The maximum number of columns the string should span. Newline
@@ -763,13 +767,14 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             if show_summary:
                 if legacy == '1.13':
-                    # trailing space, fixed number of newlines, and fixed separator
+                    # trailing space, fixed nbr of newlines, and fixed separator
                     s += hanging_indent + summary_insert + ", \n"
                 else:
                     s += hanging_indent + summary_insert + line_sep
 
             for i in range(trailing_items, 1, -1):
-                nested = recurser(index + (-i,), next_hanging_indent, next_width)
+                nested = recurser(index + (-i,), next_hanging_indent,
+                                  next_width)
                 s += hanging_indent + nested + line_sep
 
             nested = recurser(index + (-1,), next_hanging_indent, next_width)
@@ -779,12 +784,16 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         s = '[' + s[len(hanging_indent):] + ']'
         return s
 
-    # invoke the recursive part with an initial index and prefix
-    return recurser(
-        index=(),
-        hanging_indent=next_line_prefix,
-        curr_width=line_width)
-
+    try:
+        # invoke the recursive part with an initial index and prefix
+        return recurser(index=(),
+                        hanging_indent=next_line_prefix,
+                        curr_width=line_width)
+    finally:
+        # recursive closures have a cyclic reference to themselves, which
+        # requires gc to collect (gh-10620). To avoid this problem, for
+        # performance and PyPy friendliness, we break the cycle:
+        recurser = None
 
 def _none_or_positive_arg(x, name):
     if x is None:
@@ -1230,14 +1239,21 @@ class SubArrayFormat(object):
         return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
 
 
-class StructureFormat(object):
+class StructuredVoidFormat(object):
+    """
+    Formatter for structured np.void objects.
+
+    This does not work on structured alias types like np.dtype(('i4', 'i2,i2')),
+    as alias scalars lose their field information, and the implementation
+    relies upon np.void.__getitem__.
+    """
     def __init__(self, format_functions):
         self.format_functions = format_functions
 
     @classmethod
     def from_data(cls, data, **options):
         """
-        This is a second way to initialize StructureFormat, using the raw data
+        This is a second way to initialize StructuredVoidFormat, using the raw data
         as input. Added to avoid changing the signature of __init__.
         """
         format_functions = []
@@ -1258,13 +1274,24 @@ class StructureFormat(object):
         else:
             return "({})".format(", ".join(str_fields))
 
+
+# for backwards compatibility
+class StructureFormat(StructuredVoidFormat):
+    def __init__(self, *args, **kwargs):
+        # NumPy 1.14, 2018-02-14
+        warnings.warn(
+            "StructureFormat has been replaced by StructuredVoidFormat",
+            DeprecationWarning, stacklevel=2)
+        super(StructureFormat, self).__init__(*args, **kwargs)
+
+
 def _void_scalar_repr(x):
     """
     Implements the repr for structured-void scalars. It is called from the
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    return StructureFormat.from_data(array(x), **_format_options)(x)
+    return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
 
 
 _typelessdata = [int_, float_, complex_, bool_]
@@ -1302,6 +1329,11 @@ def dtype_is_implied(dtype):
     dtype = np.dtype(dtype)
     if _format_options['legacy'] == '1.13' and dtype.type == bool_:
         return False
+
+    # not just void types can be structured, and names are not part of the repr
+    if dtype.names is not None:
+        return False
+
     return dtype.type in _typelessdata
 
 
@@ -1314,12 +1346,12 @@ def dtype_short_repr(dtype):
     >>> from numpy import *
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
-    # handle these separately so they don't give garbage like str256
-    if issubclass(dtype.type, flexible):
-        if dtype.names is not None:
-            return "%s" % str(dtype)
-        else:
-            return "'%s'" % str(dtype)
+    if dtype.names is not None:
+        # structured dtypes give a list or tuple repr
+        return str(dtype)
+    elif issubclass(dtype.type, flexible):
+        # handle these separately so they don't give garbage like str256
+        return "'%s'" % str(dtype)
 
     typename = dtype.name
     # quote typenames which can't be represented as python variable names
@@ -1413,6 +1445,8 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
 
     return arr_str + spacer + dtype_str
 
+_guarded_str = _recursive_guard()(str)
+
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """
     Return a string representation of the data in an array.
@@ -1455,7 +1489,10 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     # so floats are not truncated by `precision`, and strings are not wrapped
     # in quotes. So we return the str of the scalar value.
     if a.shape == ():
-        return str(a[()])
+        # obtain a scalar and call str on it, avoiding problems for subclasses
+        # for which indexing with () returns a 0d instead of a scalar by using
+        # ndarray's getindex. Also guard against recursive 0d object arrays.
+        return _guarded_str(np.ndarray.__getitem__(a, ()))
 
     return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 

@@ -845,10 +845,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
     Parameters
     ----------
     shape : int or tuple of int
-        Shape of the empty array
+        Shape of the empty array, e.g., ``(2, 3)`` or ``2``.
     dtype : data-type, optional
-        Desired output data-type.
-    order : {'C', 'F'}, optional
+        Desired output data-type for the array, e.g, `numpy.int8`. Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional, default: 'C'
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
@@ -965,14 +966,15 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     Parameters
     ----------
-    shape : int or sequence of ints
+    shape : int or tuple of ints
         Shape of the new array, e.g., ``(2, 3)`` or ``2``.
     dtype : data-type, optional
         The desired data-type for the array, e.g., `numpy.int8`.  Default is
         `numpy.float64`.
-    order : {'C', 'F'}, optional
-        Whether to store multidimensional data in C- or Fortran-contiguous
-        (row- or column-wise) order in memory.
+    order : {'C', 'F'}, optional, default: 'C'
+        Whether to store multi-dimensional data in row-major
+        (C-style) or column-major (Fortran-style) order in
+        memory.
 
     Returns
     -------
@@ -1775,7 +1777,7 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     kind to which both ``type1`` and ``type2`` may be safely cast.
     The returned data type is always in native byte order.
 
-    This function is symmetric and associative.
+    This function is symmetric, but rarely associative.
 
     Parameters
     ----------
@@ -1816,6 +1818,14 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     >>> np.promote_types('i4', 'S8')
     dtype('S11')
+
+    An example of a non-associative case:
+
+    >>> p = np.promote_types
+    >>> p('S', p('i1', 'u1'))
+    dtype('S6')
+    >>> p(p('S', 'i1'), 'u1')
+    dtype('S4')
 
     """)
 
@@ -3050,8 +3060,16 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     """
     Number of elements in the array.
 
-    Equivalent to ``np.prod(a.shape)``, i.e., the product of the array's
+    Equal to ``np.prod(a.shape)``, i.e., the product of the array's
     dimensions.
+
+    Notes
+    -----
+    `a.size` returns a standard arbitrary precision Python integer. This 
+    may not be the case with other methods of obtaining the same value
+    (like the suggested ``np.prod(a.shape)``, which returns an instance
+    of ``np.int_``), and may be relevant if the value is used further in
+    calculations that may overflow a fixed size integer type.
 
     Examples
     --------

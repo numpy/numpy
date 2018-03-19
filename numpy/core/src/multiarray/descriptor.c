@@ -198,7 +198,7 @@ _check_for_commastring(char *type, Py_ssize_t len)
      * allows commas inside of [], for parameterized dtypes to use.
      */
     sqbracket = 0;
-    for (i = 1; i < len; i++) {
+    for (i = 0; i < len; i++) {
         switch (type[i]) {
             case ',':
                 if (sqbracket == 0) {
@@ -437,7 +437,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         name = PyTuple_GET_ITEM(item, 0);
-        if (PyUString_Check(name)) {
+        if (PyBaseString_Check(name)) {
             title = NULL;
         }
         else if (PyTuple_Check(name)) {
@@ -446,7 +446,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
-            if (!PyUString_Check(name)) {
+            if (!PyBaseString_Check(name)) {
                 goto fail;
             }
         }
@@ -457,6 +457,17 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
+#if !defined(NPY_PY3K)
+        /* convert unicode name to ascii on Python 2 if possible */ 
+        if (PyUnicode_Check(name)) {
+            PyObject *tmp = PyUnicode_AsASCIIString(name);
+            Py_DECREF(name);
+            if (tmp == NULL) { 
+                goto fail;
+            }
+            name = tmp;
+        }
+#endif
         if (PyUString_GET_SIZE(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
@@ -3340,8 +3351,8 @@ arraydescr_struct_str(PyArray_Descr *dtype, int includealignflag)
         sub = arraydescr_struct_dict_str(dtype, includealignflag);
     }
 
-    /* If the data type has a non-void (subclassed) type, show it */
-    if (dtype->type_num == NPY_VOID && dtype->typeobj != &PyVoidArrType_Type) {
+    /* If the data type isn't the default, void, show it */
+    if (dtype->typeobj != &PyVoidArrType_Type) {
         /*
          * Note: We cannot get the type name from dtype->typeobj->tp_name
          * because its value depends on whether the type is dynamically or

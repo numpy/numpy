@@ -1,7 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import pickle
 import warnings
 import textwrap
@@ -252,7 +257,7 @@ class TestFromrecords(object):
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(isinstance(ra.field, collections.Callable))
+        assert_(isinstance(ra.field, collections_abc.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],

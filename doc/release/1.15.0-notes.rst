@@ -20,8 +20,10 @@ New functions
 
     >>> with np.printoptions(precision=2):
     ...     print(np.array([2.0])) / 3
-    [0.67] 
+    [0.67]
 
+  * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
+    without needing to calculate the histogram.
 
 Deprecations
 ============
@@ -58,6 +60,18 @@ These compute the greatest common divisor, and lowest common multiple,
 respectively. These work on all the numpy integer types, as well as the
 builtin arbitrary-precision `Decimal` and `long` types.
 
+Support for cross-platform builds for iOS
+-----------------------------------------
+
+The build system has been modified to add support for the
+``_PYTHON_HOST_PLATFORM`` environment variable, used by ``distutils`` when
+compiling on one platform for another platform. This makes it possible to
+compile NumPy for iOS targets.
+
+This only enables you to compile NumPy for one specific platform at a time.
+Creating a full iOS-compatible NumPy package requires building for the 5
+architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
+combining these 5 compiled builds products into a single "fat" binary.
 
 Improvements
 ============
@@ -113,6 +127,34 @@ code for the simd functions even though rest of the code gets AVX2.
 Previously an array was returned for integer scalar inputs, which is
 inconsistent with the behavior for float inputs, and that of ufuncs in general.
 For all types of scalar or 0d input, the result is now a scalar.
+
+``np.flatnonzero`` works on numpy-convertible types
+---------------------------------------------------
+``np.flatnonzero`` now uses ``np.ravel(a)`` instead of ``a.ravel()``, so it
+works for lists, tuples, etc.
+
+``np.interp`` returns numpy scalars rather than builtin scalars
+---------------------------------------------------------------
+Previously ``np.interp(0.5, [0, 1], [10, 20])`` would return a ``float``, but
+now it returns a ``np.float64`` object, which more closely matches the behavior
+of other functions.
+
+Additionally, the special case of ``np.interp(object_array_0d, ...)`` is no
+longer supported, as ``np.interp(object_array_nd)`` was never supported anyway.
+
+As a result of this change, the ``period`` argument can now be used on 0d
+arrays.
+
+Allow dtype field names to be unicode in Python 2
+---------------------------------------------------------------
+Previously ``np.dtype([(u'name', float)])`` would raise a ``TypeError`` in
+Python 2, as only bytestrings were allowed in field names. Now any unicode
+string field names will be encoded with the ``ascii`` codec, raising a
+``UnicodeEncodeError`` upon failure.
+
+This change makes it easier to write Python 2/3 compatible code using
+``from __future__ import unicode_literals``, which previously would cause
+string literal field names to raise a TypeError in Python 2.
 
 Changes
 =======
