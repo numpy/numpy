@@ -729,13 +729,16 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     /* PEP 3118 buffer interface */
     if (PyObject_CheckBuffer(obj) == 1) {
         memset(&buffer_view, 0, sizeof(Py_buffer));
-        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-            PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
+        if (PyObject_GetBuffer(obj, &buffer_view,
+                    PyBUF_STRIDES|PyBUF_SIMPLE) == 0 ||
+                PyObject_GetBuffer(obj, &buffer_view,
+                    PyBUF_ND|PyBUF_SIMPLE) == 0) {
             int nd = buffer_view.ndim;
+
             if (nd < *maxndim) {
                 *maxndim = nd;
             }
-            for (i=0; i<*maxndim; i++) {
+            for (i = 0; i < *maxndim; i++) {
                 d[i] = buffer_view.shape[i];
             }
             PyBuffer_Release(&buffer_view);
@@ -756,6 +759,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     e = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (e != NULL) {
         int nd = -1;
+
         if (NpyCapsule_Check(e)) {
             PyArrayInterface *inter;
             inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(e);
@@ -2187,7 +2191,11 @@ PyArray_FromInterface(PyObject *origin)
     PyArrayObject *ret;
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#else
     Py_ssize_t buffer_len;
+#endif
     int res, i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
@@ -2217,7 +2225,7 @@ PyArray_FromInterface(PyObject *origin)
     if (PyUnicode_Check(attr)) {
         PyObject *tmp = PyUnicode_AsASCIIString(attr);
         if (tmp == NULL) {
-            goto fail; 
+            goto fail;
         }
         attr = tmp;
     }
@@ -2251,7 +2259,7 @@ PyArray_FromInterface(PyObject *origin)
             dtype = new_dtype;
         }
     }
-  
+
 #if defined(NPY_PY3K)
     Py_DECREF(attr);  /* Pairs with the unicode handling above */
 #endif
@@ -2335,6 +2343,25 @@ PyArray_FromInterface(PyObject *origin)
         else {
             base = origin;
         }
+#if defined(NPY_PY3K)
+        if (PyObject_GetBuffer(base, &view,
+                    PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
+            PyErr_Clear();
+            if (PyObject_GetBuffer(base, &view,
+                        PyBUF_SIMPLE) < 0) {
+                goto fail;
+            }
+            dataflags &= ~NPY_ARRAY_WRITEABLE;
+        }
+        data = (char *)view.buf;
+        /*
+         * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+         * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+         * up to the object that supplies the buffer to guarantee that the buffer
+         * sticks around after the release.
+         */
+        PyBuffer_Release(&view);
+#else
         res = PyObject_AsWriteBuffer(base, (void **)&data, &buffer_len);
         if (res < 0) {
             PyErr_Clear();
@@ -2345,6 +2372,7 @@ PyArray_FromInterface(PyObject *origin)
             }
             dataflags &= ~NPY_ARRAY_WRITEABLE;
         }
+#endif
         /* Get offset number from interface specification */
         attr = PyDict_GetItemString(origin, "offset");
         if (attr) {
@@ -3480,6 +3508,9 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 {
     PyArrayObject *ret;
     char *data;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#endif
     Py_ssize_t ts;
     npy_intp s, n;
     int itemsize;
@@ -3519,6 +3550,26 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         Py_INCREF(buf);
     }
 
+#if defined(NPY_PY3K)
+    if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
+        writeable = 0;
+        PyErr_Clear();
+        if (PyObject_GetBuffer(buf, &view, PyBUF_SIMPLE) < 0) {
+            Py_DECREF(buf);
+            Py_DECREF(type);
+            return NULL;
+        }
+    }
+    data = (char *)view.buf;
+    ts = view.len;
+    /*
+     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+     * up to the object that supplies the buffer to guarantee that the buffer
+     * sticks around after the release.
+     */
+    PyBuffer_Release(&view);
+#else
     if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
         writeable = 0;
         PyErr_Clear();
@@ -3528,6 +3579,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             return NULL;
         }
     }
+#endif
 
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,
