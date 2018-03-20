@@ -129,6 +129,43 @@ def sliding_window_view(x, shape=None):
     -------
     view : ndarray
 
+    Examples
+    --------
+    >>> x = np.arange(12).reshape(3,4)
+    >>> shape = [2,2]
+    >>> np.lib.stride_tricks.sliding_window_view(x, shape)
+    array([[[[ 0,  1],
+         [ 4,  5]],
+        [[ 1,  2],
+         [ 5,  6]],
+        [[ 2,  3],
+         [ 6,  7]]],
+
+       [[[ 4,  5],
+         [ 8,  9]],
+        [[ 5,  6],
+         [ 9, 10]],
+        [[ 6,  7],
+         [10, 11]]]])
+
+    >>> x = np.arange(16).reshape(4,4)
+    >>> shape = [2,3]
+    >>> sliding_window_view(x, shape)
+    array([[[[ 0,  1,  2],
+         [ 4,  5,  6]],
+        [[ 1,  2,  3],
+         [ 5,  6,  7]]],
+
+       [[[ 4,  5,  6],
+         [ 8,  9, 10]],
+        [[ 5,  6,  7],
+         [ 9, 10, 11]]],
+
+       [[[ 8,  9, 10],
+         [12, 13, 14]],
+        [[ 9, 10, 11],
+         [13, 14, 15]]]])
+
     """
     if shape is None:
         shape = x.shape
