@@ -110,6 +110,35 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     return view
 
+def sliding_window_view(x, shape=None):
+    """
+    Create rolling window views of the 2D array with the given shape.
+
+    .. warning:: This function has to be used with extreme care, see notes from 'as_strided'.
+
+    For some cases, there may be more efficient approaches
+
+    Parameters
+    ----------
+    x : ndarray
+        2D array to create rolling window views.
+    shape : sequence of int, optional
+        The shape of the new array. Defaults to ``x.shape``.
+
+    Returns
+    -------
+    view : ndarray
+
+    """
+    if shape is None:
+        shape = x.shape
+    o = np.array(x.shape)  - np.array(shape) + 1 # output shape
+    strides = x.strides
+
+    view_shape = np.concatenate((o, shape), axis=0)
+    view_strides = np.concatenate((strides, strides), axis=0)
+    return np.lib.stride_tricks.as_strided(x ,view_shape, view_strides)
+
 
 def _broadcast_to(array, shape, subok, readonly):
     shape = tuple(shape) if np.iterable(shape) else (shape,)
