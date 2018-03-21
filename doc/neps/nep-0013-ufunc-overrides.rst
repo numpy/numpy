@@ -1,5 +1,3 @@
-.. _neps.ufunc-overrides:
-
 =================================
 A Mechanism for Overriding Ufuncs
 =================================
@@ -18,6 +16,8 @@ A Mechanism for Overriding Ufuncs
 
 :Author: Stephan Hoyer
 :Date: 2017-03-31
+
+:Status: Active
 
 Executive summary
 =================
@@ -154,8 +154,8 @@ Here:
 - *ufunc* is the ufunc object that was called.
 - *method* is a string indicating how the Ufunc was called, either
   ``"__call__"`` to indicate it was called directly, or one of its
-  :ref:`methods<ufuncs.methods>`: ``"reduce"``, ``"accumulate"``,
-  ``"reduceat"``, ``"outer"``, or ``"at"``.
+  methods: ``"reduce"``, ``"accumulate"``,  ``"reduceat"``, ``"outer"``,
+  or ``"at"``.
 - *inputs* is a tuple of the input arguments to the ``ufunc``
 - *kwargs* contains any optional or keyword arguments passed to the
   function. This includes any ``out`` arguments, which are always

@@ -4,7 +4,7 @@ NEP Template and Instructions
 
 :Author: <list of authors' real names and optionally, email addresses>
 :Status: <Draft | Active | Accepted | Deferred | Rejected | Withdrawn | Final | Superseded>
-:Type: <Standards Track | Informational | Process>
+:Type: <Standards Track | Process>
 :Created: <date created on, in yyyy-mm-dd format>
 
 

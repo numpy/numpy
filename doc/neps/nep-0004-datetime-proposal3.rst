@@ -7,7 +7,7 @@
 :Author: Ivan Vilata i Balaguer
 :Contact: ivan@selidor.net
 :Date: 2008-07-30
-
+:Status: Deferred
 
 Executive summary
 =================
