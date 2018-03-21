@@ -1526,8 +1526,12 @@ const npy_float SQRT_MIN = 1.0842022e-19f;
 const npy_double SQRT_MIN = 1.4916681462400413e-154; /* sqrt(DBL_MIN) */
 #endif
 #if @precision@ == 3
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+const npy_longdouble SQRT_MIN = 1.4916681462400413e-154; /* sqrt(DBL_MIN) */
+#else
 /* this is correct for 80 bit long doubles */
 const npy_longdouble SQRT_MIN = 1.8336038675548471656e-2466l;
+#endif
 #endif
     /* Avoid underflow when y is small. */
     if (y < SQRT_MIN) {
