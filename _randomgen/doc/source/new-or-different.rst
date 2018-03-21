@@ -29,29 +29,24 @@ What's New or Different
 * The basic random number generators can be used in downstream projects via
   Cython.
 
-.. ipython:: python
-
-  from randomgen import Xoroshiro128
-  rg = Xoroshiro128().generator
-  %timeit rg.standard_normal(1000000)
-  from numpy.random import standard_normal
-  %timeit standard_normal(1000000)
 
 .. ipython:: python
 
   from randomgen import Xoroshiro128
+  import numpy.random
   rg = Xoroshiro128().generator
-  %timeit rg.standard_exponential(1000000)
-  from numpy.random import standard_exponential
-  %timeit standard_exponential(1000000)
+  %timeit rg.standard_normal(100000)
+  %timeit numpy.random.standard_normal(100000)
 
 .. ipython:: python
 
-  from randomgen import Xoroshiro128
-  rg = Xoroshiro128().generator
-  %timeit rg.standard_gamma(3.0, 1000000)
-  from numpy.random import standard_gamma
-  %timeit standard_gamma(3.0, 1000000)
+  %timeit rg.standard_exponential(100000)
+  %timeit numpy.random.standard_exponential(100000)
+
+.. ipython:: python
+
+  %timeit rg.standard_gamma(3.0, 100000)
+  %timeit numpy.random.standard_gamma(3.0, 100000)
 
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
   to produce either single or double prevision uniform random variables for
@@ -66,8 +61,6 @@ What's New or Different
 
 .. ipython:: python
 
-  from randomgen import Xoroshiro128
-  rg = Xoroshiro128().generator
   rg.seed(0)
   rg.random_sample(3, dtype='d')
   rg.seed(0)
@@ -86,8 +79,6 @@ What's New or Different
 
 .. ipython:: python
 
-  from randomgen import Xoroshiro128
-  rg = Xoroshiro128(0).generator
   existing = np.zeros(4)
   rg.random_sample(out=existing[:2])
   print(existing)

@@ -20,11 +20,11 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      env: [PYTHON=2.7, NUMPY=1.10, CYTHON=0.24]
+      env: [PYTHON=2.7, NUMPY=1.10, CYTHON=0.26]
     - os: linux
       env: [PYTHON=3.5, NUMPY=1.11]
     - os: linux
-      env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.25]
+      env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.27]
     - os: linux
       env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.26]
     - os: linux

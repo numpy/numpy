@@ -204,6 +204,16 @@ extensions = [Extension('randomgen.entropy',
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
+              Extension("randomgen.legacy.legacy",
+                        ["randomgen/legacy/legacy.pyx",
+                         join(MOD_DIR, 'src', 'legacy',
+                              'distributions-boxmuller.c'),
+                         join(MOD_DIR, 'src', 'distributions', 'distributions.c')],
+                        include_dirs=EXTRA_INCLUDE_DIRS +
+                        [np.get_include()] + [join(MOD_DIR, 'legacy')],
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS
+                        ),
               ]
 
 

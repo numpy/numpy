@@ -5,6 +5,7 @@ from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 
 import randomgen
 from randomgen import RandomGenerator, MT19937
+from randomgen.legacy import LegacyGenerator
 
 
 def compare_0_input(f1, f2):
@@ -88,6 +89,7 @@ class TestAgainstNumPy(object):
         cls.brng = MT19937
         cls.seed = [2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
         cls.rg = RandomGenerator(cls.brng(*cls.seed))
+        cls.lg = LegacyGenerator(cls.brng(*cls.seed))
         cls.nprs = cls.np.RandomState(*cls.seed)
         cls.initial_state = cls.rg.state
         cls._set_common_state()
@@ -103,11 +105,30 @@ class TestAgainstNumPy(object):
         st[4] = 0.0
         cls.nprs.set_state(st)
 
+    @classmethod
+    def _set_common_state_legacy(cls):
+        state = cls.lg.state
+        st = [[]] * 5
+        st[0] = 'MT19937'
+        st[1] = state['state']['key']
+        st[2] = state['state']['pos']
+        st[3] = state['has_gauss']
+        st[4] = state['gauss']
+        cls.nprs.set_state(st)
+
     def _is_state_common(self):
         state = self.nprs.get_state()
         state2 = self.rg.state
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
+
+    def _is_state_common_legacy(self):
+        state = self.nprs.get_state()
+        state2 = self.lg.state
+        assert (state[1] == state2['state']['key']).all()
+        assert (state[2] == state2['state']['pos'])
+        assert (state[3] == state2['has_gauss'])
+        assert (state[4] == state2['gauss'])
 
     def test_common_seed(self):
         self.rg.seed(1234)
@@ -162,37 +183,6 @@ class TestAgainstNumPy(object):
                         self.rg.tomaxint)
         self._is_state_common()
 
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_chisquare(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_1_input(self.nprs.chisquare,
-                        self.rg.chisquare)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_standard_gamma(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_1_input(self.nprs.standard_gamma,
-                        self.rg.standard_gamma)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_standard_t(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_1_input(self.nprs.standard_t,
-                        self.rg.standard_t)
-        self._is_state_common()
-
-    def test_pareto(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_1_input(self.nprs.pareto,
-                        self.rg.pareto)
-        self._is_state_common()
-
     def test_poisson(self):
         self._set_common_state()
         self._is_state_common()
@@ -200,25 +190,11 @@ class TestAgainstNumPy(object):
                         self.rg.poisson)
         self._is_state_common()
 
-    def test_power(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_1_input(self.nprs.power,
-                        self.rg.power)
-        self._is_state_common()
-
     def test_rayleigh(self):
         self._set_common_state()
         self._is_state_common()
         compare_1_input(self.nprs.rayleigh,
                         self.rg.rayleigh)
-        self._is_state_common()
-
-    def test_weibull(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_1_input(self.nprs.weibull,
-                        self.rg.weibull)
         self._is_state_common()
 
     def test_zipf(self):
@@ -244,37 +220,6 @@ class TestAgainstNumPy(object):
                         is_small=True)
         self._is_state_common()
 
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_beta(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.beta,
-                        self.rg.beta)
-        self._is_state_common()
-
-    def test_exponential(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_1_input(self.nprs.exponential,
-                        self.rg.exponential)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_f(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.f,
-                        self.rg.f)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_gamma(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.gamma,
-                        self.rg.gamma)
-        self._is_state_common()
-
     def test_logistic(self):
         self._set_common_state()
         self._is_state_common()
@@ -296,30 +241,6 @@ class TestAgainstNumPy(object):
                         self.rg.laplace)
         self._is_state_common()
 
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_lognormal(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.lognormal,
-                        self.rg.lognormal)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_noncentral_chisquare(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.noncentral_chisquare,
-                        self.rg.noncentral_chisquare)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_normal(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.normal,
-                        self.rg.normal)
-        self._is_state_common()
-
     def test_uniform(self):
         self._set_common_state()
         self._is_state_common()
@@ -332,14 +253,6 @@ class TestAgainstNumPy(object):
         self._is_state_common()
         compare_2_input(self.nprs.vonmises,
                         self.rg.vonmises)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_wald(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.wald,
-                        self.rg.wald)
         self._is_state_common()
 
     def test_random_integers(self):
@@ -358,22 +271,6 @@ class TestAgainstNumPy(object):
                         is_np=True)
         self._is_state_common()
 
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_negative_binomial(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_2_input(self.nprs.negative_binomial,
-                        self.rg.negative_binomial,
-                        is_np=True)
-        self._is_state_common()
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_randn(self):
-        f = self.rg.randn
-        g = self.nprs.randn
-        assert_allclose(f(10), g(10))
-        assert_allclose(f(3, 4, 5), g(3, 4, 5))
-
     def test_rand(self):
         self._set_common_state()
         self._is_state_common()
@@ -384,23 +281,6 @@ class TestAgainstNumPy(object):
 
     def test_poisson_lam_max(self):
         assert_allclose(self.rg.poisson_lam_max, self.nprs.poisson_lam_max)
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_dirichlet(self):
-        f = self.rg.dirichlet
-        g = self.nprs.dirichlet
-        a = [3, 4, 5, 6, 7, 10]
-        assert_allclose(f(a), g(a))
-        assert_allclose(f(np.array(a), 10), g(np.array(a), 10))
-        assert_allclose(f(np.array(a), (3, 37)), g(np.array(a), (3, 37)))
-
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_noncentral_f(self):
-        self._set_common_state()
-        self._is_state_common()
-        compare_3_input(self.nprs.noncentral_f,
-                        self.rg.noncentral_f)
-        self._is_state_common()
 
     def test_triangular(self):
         self._set_common_state()
@@ -473,22 +353,6 @@ class TestAgainstNumPy(object):
         assert_equal(fa, ga)
         self._is_state_common()
 
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
-    def test_multivariate_normal(self):
-        self._set_common_state()
-        self._is_state_common()
-        mu = [1, 2, 3]
-        cov = [[1, .2, .3], [.2, 4, 1], [.3, 1, 10]]
-        f = self.rg.multivariate_normal
-        g = self.nprs.multivariate_normal
-        assert_allclose(f(mu, cov), g(mu, cov))
-        assert_allclose(f(np.array(mu), cov), g(np.array(mu), cov))
-        assert_allclose(f(np.array(mu), np.array(cov)),
-                        g(np.array(mu), np.array(cov)))
-        assert_allclose(f(np.array(mu), np.array(cov), size=(7, 31)),
-                        g(np.array(mu), np.array(cov), size=(7, 31)))
-        self._is_state_common()
-
     def test_randint(self):
         self._set_common_state()
         self._is_state_common()
@@ -546,3 +410,152 @@ class TestAgainstNumPy(object):
         diff = set(npmod).difference(mod)
         print(diff)
         assert_equal(len(diff), 0)
+
+    # Tests using legacy generator
+    def test_chisquare(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_1_input(self.nprs.chisquare,
+                        self.lg.chisquare)
+        self._is_state_common_legacy()
+
+    def test_standard_gamma(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_1_input(self.nprs.standard_gamma,
+                        self.lg.standard_gamma)
+        self._is_state_common_legacy()
+
+    def test_standard_t(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_1_input(self.nprs.standard_t,
+                        self.lg.standard_t)
+        self._is_state_common_legacy()
+
+    def test_pareto(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_1_input(self.nprs.pareto,
+                        self.lg.pareto)
+        self._is_state_common_legacy()
+
+    def test_power(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_1_input(self.nprs.power,
+                        self.lg.power)
+        self._is_state_common_legacy()
+
+    def test_weibull(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_1_input(self.nprs.weibull,
+                        self.lg.weibull)
+        self._is_state_common_legacy()
+
+    def test_beta(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.beta,
+                        self.lg.beta)
+        self._is_state_common_legacy()
+
+    def test_exponential(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_1_input(self.nprs.exponential,
+                        self.lg.exponential)
+        self._is_state_common_legacy()
+
+    def test_f(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.f,
+                        self.lg.f)
+        self._is_state_common_legacy()
+
+    def test_gamma(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.gamma,
+                        self.lg.gamma)
+        self._is_state_common_legacy()
+
+    def test_lognormal(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.lognormal,
+                        self.lg.lognormal)
+        self._is_state_common_legacy()
+
+    def test_noncentral_chisquare(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.noncentral_chisquare,
+                        self.lg.noncentral_chisquare)
+        self._is_state_common_legacy()
+
+    def test_normal(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.normal,
+                        self.lg.normal)
+        self._is_state_common_legacy()
+
+    def test_wald(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.wald,
+                        self.lg.wald)
+        self._is_state_common_legacy()
+
+    def test_negative_binomial(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_2_input(self.nprs.negative_binomial,
+                        self.lg.negative_binomial,
+                        is_np=True)
+        self._is_state_common_legacy()
+
+    def test_randn(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        f = self.lg.randn
+        g = self.nprs.randn
+        assert_allclose(f(10), g(10))
+        assert_allclose(f(3, 4, 5), g(3, 4, 5))
+        self._is_state_common_legacy()
+
+    def test_dirichlet(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        f = self.lg.dirichlet
+        g = self.nprs.dirichlet
+        a = [3, 4, 5, 6, 7, 10]
+        assert_allclose(f(a), g(a))
+        assert_allclose(f(np.array(a), 10), g(np.array(a), 10))
+        assert_allclose(f(np.array(a), (3, 37)), g(np.array(a), (3, 37)))
+        self._is_state_common_legacy()
+
+    def test_noncentral_f(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        compare_3_input(self.nprs.noncentral_f,
+                        self.lg.noncentral_f)
+        self._is_state_common_legacy()
+
+    def test_multivariate_normal(self):
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
+        mu = [1, 2, 3]
+        cov = [[1, .2, .3], [.2, 4, 1], [.3, 1, 10]]
+        f = self.lg.multivariate_normal
+        g = self.nprs.multivariate_normal
+        assert_allclose(f(mu, cov), g(mu, cov))
+        assert_allclose(f(np.array(mu), cov), g(np.array(mu), cov))
+        assert_allclose(f(np.array(mu), np.array(cov)),
+                        g(np.array(mu), np.array(cov)))
+        assert_allclose(f(np.array(mu), np.array(cov), size=(7, 31)),
+                        g(np.array(mu), np.array(cov), size=(7, 31)))
+        self._is_state_common_legacy()
