@@ -5,7 +5,10 @@ Discrete Fourier Transforms - helper.py
 from __future__ import division, absolute_import, print_function
 
 import collections
-import threading
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
 from numpy.compat import integer_types
 from numpy.core import integer, empty, arange, asarray, roll
 
