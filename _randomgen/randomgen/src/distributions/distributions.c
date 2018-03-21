@@ -7,17 +7,16 @@ float random_float(brng_t *brng_state) { return next_float(brng_state); }
 
 double random_double(brng_t *brng_state) { return next_double(brng_state); }
 
-static NPY_INLINE double next_standard_exponential(brng_t *brng_state)
-{
-    return -log(1.0 - next_double(brng_state));
+static NPY_INLINE double next_standard_exponential(brng_t *brng_state) {
+  return -log(1.0 - next_double(brng_state));
 }
 
 double random_standard_exponential(brng_t *brng_state) {
   return next_standard_exponential(brng_state);
 }
 
-void random_standard_exponential_fill(brng_t *brng_state, npy_intp cnt, double *out)
-{
+void random_standard_exponential_fill(brng_t *brng_state, npy_intp cnt,
+                                      double *out) {
   npy_intp i;
   for (i = 0; i < cnt; i++) {
     out[i] = next_standard_exponential(brng_state);
@@ -28,8 +27,7 @@ float random_standard_exponential_f(brng_t *brng_state) {
   return -logf(1.0f - next_float(brng_state));
 }
 
-void random_double_fill(brng_t* brng_state, npy_intp cnt, double *out)
-{
+void random_double_fill(brng_t *brng_state, npy_intp cnt, double *out) {
   npy_intp i;
   for (i = 0; i < cnt; i++) {
     out[i] = next_double(brng_state);
@@ -119,15 +117,13 @@ double random_standard_exponential_zig(brng_t *brng_state) {
   return standard_exponential_zig(brng_state);
 }
 
-
-void random_standard_exponential_zig_fill(brng_t *brng_state, npy_intp cnt, double *out)
-{
+void random_standard_exponential_zig_fill(brng_t *brng_state, npy_intp cnt,
+                                          double *out) {
   npy_intp i;
   for (i = 0; i < cnt; i++) {
     out[i] = standard_exponential_zig(brng_state);
   }
 }
-
 
 static NPY_INLINE float standard_exponential_zig_f(brng_t *brng_state);
 
@@ -502,7 +498,7 @@ double random_normal_zig(brng_t *brng_state, double loc, double scale) {
 }
 
 double random_exponential(brng_t *brng_state, double scale) {
-  return scale * random_standard_exponential(brng_state);
+  return scale * standard_exponential_zig(brng_state);
 }
 
 double random_uniform(brng_t *brng_state, double lower, double range) {
@@ -565,15 +561,15 @@ double random_standard_cauchy(brng_t *brng_state) {
 }
 
 double random_pareto(brng_t *brng_state, double a) {
-  return exp(random_standard_exponential(brng_state) / a) - 1;
+  return exp(standard_exponential_zig(brng_state) / a) - 1;
 }
 
 double random_weibull(brng_t *brng_state, double a) {
-  return pow(random_standard_exponential(brng_state), 1. / a);
+  return pow(standard_exponential_zig(brng_state), 1. / a);
 }
 
 double random_power(brng_t *brng_state, double a) {
-  return pow(1 - exp(-random_standard_exponential(brng_state)), 1. / a);
+  return pow(1 - exp(-standard_exponential_zig(brng_state)), 1. / a);
 }
 
 double random_laplace(brng_t *brng_state, double loc, double scale) {

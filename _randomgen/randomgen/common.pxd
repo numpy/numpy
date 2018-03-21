@@ -32,20 +32,20 @@ cdef extern from "src/aligned_malloc/aligned_malloc.h":
     cdef void PyArray_free_aligned(void *p);
 
 ctypedef double (*random_double_fill)(brng_t *state, np.npy_intp count, double* out) nogil
-ctypedef double (*random_double_0)(brng_t *state) nogil
-ctypedef double (*random_double_1)(brng_t *state, double a) nogil
-ctypedef double (*random_double_2)(brng_t *state, double a, double b) nogil
-ctypedef double (*random_double_3)(brng_t *state, double a, double b, double c) nogil
+ctypedef double (*random_double_0)(void *state) nogil
+ctypedef double (*random_double_1)(void *state, double a) nogil
+ctypedef double (*random_double_2)(void *state, double a, double b) nogil
+ctypedef double (*random_double_3)(void *state, double a, double b, double c) nogil
 
 ctypedef float (*random_float_0)(brng_t *state) nogil
 ctypedef float (*random_float_1)(brng_t *state, float a) nogil
 
-ctypedef int64_t (*random_uint_0)(brng_t *state) nogil
-ctypedef int64_t (*random_uint_d)(brng_t *state, double a) nogil
-ctypedef int64_t (*random_uint_dd)(brng_t *state, double a, double b) nogil
-ctypedef int64_t (*random_uint_di)(brng_t *state, double a, uint64_t b) nogil
-ctypedef int64_t (*random_uint_i)(brng_t *state, int64_t a) nogil
-ctypedef int64_t (*random_uint_iii)(brng_t *state, int64_t a, int64_t b, int64_t c) nogil
+ctypedef int64_t (*random_uint_0)(void *state) nogil
+ctypedef int64_t (*random_uint_d)(void *state, double a) nogil
+ctypedef int64_t (*random_uint_dd)(void *state, double a, double b) nogil
+ctypedef int64_t (*random_uint_di)(void *state, double a, uint64_t b) nogil
+ctypedef int64_t (*random_uint_i)(void *state, int64_t a) nogil
+ctypedef int64_t (*random_uint_iii)(void *state, int64_t a, int64_t b, int64_t c) nogil
 
 ctypedef uint32_t (*random_uint_0_32)(brng_t *state) nogil
 ctypedef uint32_t (*random_uint_1_i_32)(brng_t *state, uint32_t a) nogil
@@ -66,13 +66,13 @@ cdef object float_fill_from_double(void *func, brng_t *state, object size, objec
 
 cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size)
 
-cdef object cont(void *func, brng_t *state, object size, object lock, int narg,
+cdef object cont(void *func, void *state, object size, object lock, int narg,
                  object a, object a_name, constraint_type a_constraint,
                  object b, object b_name, constraint_type b_constraint,
                  object c, object c_name, constraint_type c_constraint,
                  object out)
 
-cdef object disc(void *func, brng_t *state, object size, object lock,
+cdef object disc(void *func, void *state, object size, object lock,
                  int narg_double, int narg_int64,
                  object a, object a_name, constraint_type a_constraint,
                  object b, object b_name, constraint_type b_constraint,
@@ -82,12 +82,12 @@ cdef object cont_f(void *func, brng_t *state, object size, object lock,
                    object a, object a_name, constraint_type a_constraint,
                    object out)
 
-cdef object cont_broadcast_3(void *func, brng_t *state, object size, object lock,
+cdef object cont_broadcast_3(void *func, void *state, object size, object lock,
                              np.ndarray a_arr, object a_name, constraint_type a_constraint,
                              np.ndarray b_arr, object b_name, constraint_type b_constraint,
                              np.ndarray c_arr, object c_name, constraint_type c_constraint)
 
-cdef object discrete_broadcast_iii(void *func, brng_t *state, object size, object lock,
+cdef object discrete_broadcast_iii(void *func, void *state, object size, object lock,
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint,
                                   np.ndarray c_arr, object c_name, constraint_type c_constraint)

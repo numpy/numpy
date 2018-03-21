@@ -15,7 +15,7 @@ This example shows how numba can be used to produce Box-Muller normals using
 a pure Python implementation which is then compiled.  The random numbers are
 provided by ``ctypes.next_double``.
 
-.. ipython:: python
+.. code-block:: python
 
     from randomgen import Xoroshiro128
     import numpy as np

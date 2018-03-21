@@ -146,7 +146,7 @@ Building requires:
 
   * Python (2.7, 3.4, 3.5, 3.6)
   * NumPy (1.10, 1.11, 1.12, 1.13, 1.14)
-  * Cython (0.25+)
+  * Cython (0.26+)
   * tempita (0.5+), if not provided by Cython
  
 Testing requires pytest (3.0+).

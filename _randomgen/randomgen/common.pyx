@@ -200,7 +200,7 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
 
     return 0
 
-cdef object cont_broadcast_1(void *func, brng_t *state, object size, object lock,
+cdef object cont_broadcast_1(void *func, void *state, object size, object lock,
                              np.ndarray a_arr, object a_name, constraint_type a_constraint,
                              object out):
 
@@ -234,7 +234,7 @@ cdef object cont_broadcast_1(void *func, brng_t *state, object size, object lock
 
     return randoms
 
-cdef object cont_broadcast_2(void *func, brng_t *state, object size, object lock,
+cdef object cont_broadcast_2(void *func, void *state, object size, object lock,
                  np.ndarray a_arr, object a_name, constraint_type a_constraint,
                  np.ndarray b_arr, object b_name, constraint_type b_constraint):
     cdef np.ndarray randoms
@@ -272,7 +272,7 @@ cdef object cont_broadcast_2(void *func, brng_t *state, object size, object lock
 
     return randoms
 
-cdef object cont_broadcast_3(void *func, brng_t *state, object size, object lock,
+cdef object cont_broadcast_3(void *func, void *state, object size, object lock,
                              np.ndarray a_arr, object a_name, constraint_type a_constraint,
                              np.ndarray b_arr, object b_name, constraint_type b_constraint,
                              np.ndarray c_arr, object c_name, constraint_type c_constraint):
@@ -314,7 +314,7 @@ cdef object cont_broadcast_3(void *func, brng_t *state, object size, object lock
 
     return randoms
 
-cdef object cont(void *func, brng_t *state, object size, object lock, int narg,
+cdef object cont(void *func, void *state, object size, object lock, int narg,
                  object a, object a_name, constraint_type a_constraint,
                  object b, object b_name, constraint_type b_constraint,
                  object c, object c_name, constraint_type c_constraint,
@@ -410,7 +410,7 @@ cdef object cont(void *func, brng_t *state, object size, object lock, int narg,
     else:
         return out
 
-cdef object discrete_broadcast_d(void *func, brng_t *state, object size, object lock,
+cdef object discrete_broadcast_d(void *func, void *state, object size, object lock,
                                  np.ndarray a_arr, object a_name, constraint_type a_constraint):
 
     cdef np.ndarray randoms
@@ -441,7 +441,7 @@ cdef object discrete_broadcast_d(void *func, brng_t *state, object size, object 
 
     return randoms
 
-cdef object discrete_broadcast_dd(void *func, brng_t *state, object size, object lock,
+cdef object discrete_broadcast_dd(void *func, void *state, object size, object lock,
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint):
     cdef np.ndarray randoms
@@ -476,7 +476,7 @@ cdef object discrete_broadcast_dd(void *func, brng_t *state, object size, object
 
     return randoms
 
-cdef object discrete_broadcast_di(void *func, brng_t *state, object size, object lock,
+cdef object discrete_broadcast_di(void *func, void *state, object size, object lock,
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint):
     cdef np.ndarray randoms
@@ -512,7 +512,7 @@ cdef object discrete_broadcast_di(void *func, brng_t *state, object size, object
 
     return randoms
 
-cdef object discrete_broadcast_iii(void *func, brng_t *state, object size, object lock,
+cdef object discrete_broadcast_iii(void *func, void *state, object size, object lock,
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint,
                                   np.ndarray c_arr, object c_name, constraint_type c_constraint):
@@ -552,7 +552,7 @@ cdef object discrete_broadcast_iii(void *func, brng_t *state, object size, objec
 
     return randoms
 
-cdef object discrete_broadcast_i(void *func, brng_t *state, object size, object lock,
+cdef object discrete_broadcast_i(void *func, void *state, object size, object lock,
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint):
     cdef np.ndarray randoms
     cdef int64_t *randoms_data
@@ -582,7 +582,7 @@ cdef object discrete_broadcast_i(void *func, brng_t *state, object size, object 
     return randoms
 
 # Needs double <vec>, double-double <vec>, double-int64_t<vec>, int64_t <vec>, int64_t-int64_t-int64_t
-cdef object disc(void *func, brng_t *state, object size, object lock,
+cdef object disc(void *func, void *state, object size, object lock,
                  int narg_double, int narg_int64,
                  object a, object a_name, constraint_type a_constraint,
                  object b, object b_name, constraint_type b_constraint,

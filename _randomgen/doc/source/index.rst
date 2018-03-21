@@ -174,7 +174,8 @@ Random Generator
 .. toctree::
    :maxdepth: 1
 
-   Random Generator <generator>
+   Random Generation <generator>
+   legacy
 
 Basic Random Number Generators
 ------------------------------

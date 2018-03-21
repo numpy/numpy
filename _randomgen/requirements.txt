@@ -1,4 +1,4 @@
 numpy>=1.10
-cython>=0.24
+cython>=0.26
 setuptools
 wheel
