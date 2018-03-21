@@ -1,6 +1,6 @@
-=======================
-NEP Purpose and Process
-=======================
+===================
+Purpose and Process
+===================
 
 :Author: Jarrod Millman <millman@berkeley.edu>
 :Status: Draft

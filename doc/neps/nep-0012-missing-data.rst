@@ -6,6 +6,7 @@ Missing Data Functionality in NumPy
 :Copyright: Copyright 2011 by Enthought, Inc
 :License: CC By-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
 :Date: 2011-06-23
+:Status: Deferred
 
 *****************
 Table of Contents

@@ -2,9 +2,9 @@
 A Simple File Format for NumPy Arrays
 =====================================
 
-Author: Robert Kern <robert.kern@gmail.com>
-Status: Draft
-Created: 20-Dec-2007
+:Author: Robert Kern <robert.kern@gmail.com>
+:Status: Active
+:Created: 20-Dec-2007
 
 
 Abstract
