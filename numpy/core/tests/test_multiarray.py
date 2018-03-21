@@ -23,7 +23,6 @@ if sys.version_info[0] >= 3:
 else:
     import __builtin__ as builtins
 from decimal import Decimal
-from unittest import TestCase
 
 import numpy as np
 from numpy.compat import strchar, unicode
@@ -5355,8 +5354,6 @@ class TestDot(object):
 class MatmulCommon(object):
     """Common tests for '@' operator and numpy.matmul.
 
-    Do not derive from TestCase to avoid nose running it.
-
     """
     # Should work with these types. Will want to add
     # "O" at some point
@@ -7173,7 +7170,7 @@ class TestCTypes(object):
             _internal.ctypes = ctypes
 
 
-class TestWritebackIfCopy(TestCase):
+class TestWritebackIfCopy(object):
     # all these tests use the WRITEBACKIFCOPY mechanism
     def test_argmax_with_out(self):
         mat = np.eye(5)
