@@ -4732,10 +4732,10 @@ static struct PyModuleDef moduledef = {
 
 /* Initialization function for the module */
 #if defined(NPY_PY3K)
-#define RETVAL m
+#define RETVAL(x) x
 PyMODINIT_FUNC PyInit_multiarray(void) {
 #else
-#define RETVAL
+#define RETVAL(x)
 PyMODINIT_FUNC initmultiarray(void) {
 #endif
     PyObject *m, *d, *s;
@@ -4763,6 +4763,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     /* Initialize access to the PyDateTime API */
     numpy_pydatetime_import();
 
+    if (PyErr_Occurred()) {
+        goto err;
+    }
+
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {
@@ -4776,7 +4780,7 @@ PyMODINIT_FUNC initmultiarray(void) {
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
     if (PyType_Ready(&PyArray_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (setup_scalartypes(d) < 0) {
         goto err;
@@ -4786,32 +4790,32 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_free = PyArray_free;
     if (PyType_Ready(&PyArrayIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&PyArrayMapIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&NpyIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
 
     c_api = NpyCapsule_FromVoidPtr((void *)PyArray_API, NULL);
@@ -4897,12 +4901,13 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-    return RETVAL;
+
+    return RETVAL(m);
 
  err:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
-    return RETVAL;
+    return RETVAL(NULL);
 }
