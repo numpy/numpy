@@ -310,10 +310,10 @@ static struct PyModuleDef moduledef = {
 #include <stdio.h>
 
 #if defined(NPY_PY3K)
-#define RETVAL m
+#define RETVAL(x) x
 PyMODINIT_FUNC PyInit_umath(void)
 #else
-#define RETVAL
+#define RETVAL(x)
 PyMODINIT_FUNC initumath(void)
 #endif
 {
@@ -330,7 +330,7 @@ PyMODINIT_FUNC initumath(void)
     m = Py_InitModule("umath", methods);
 #endif
     if (!m) {
-        return RETVAL;
+        goto err;
     }
 
     /* Import the array */
@@ -339,12 +339,12 @@ PyMODINIT_FUNC initumath(void)
             PyErr_SetString(PyExc_ImportError,
                             "umath failed: Could not import array core.");
         }
-        return RETVAL;
+        goto err;
     }
 
     /* Initialize the types */
     if (PyType_Ready(&PyUFunc_Type) < 0)
-        return RETVAL;
+        goto err;
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
@@ -426,7 +426,7 @@ PyMODINIT_FUNC initumath(void)
         goto err;
     }
 
-    return RETVAL;
+    return RETVAL(m);
 
  err:
     /* Check for errors */
@@ -434,5 +434,5 @@ PyMODINIT_FUNC initumath(void)
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load umath module.");
     }
-    return RETVAL;
+    return RETVAL(NULL);
 }
