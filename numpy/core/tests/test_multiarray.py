@@ -101,8 +101,10 @@ class TestFlags(object):
             assert_equal(self.a.flags.updateifcopy, False)
         with assert_warns(DeprecationWarning):
             assert_equal(self.a.flags['U'], False)
+            assert_equal(self.a.flags['UPDATEIFCOPY'], False)
         assert_equal(self.a.flags.writebackifcopy, False)
         assert_equal(self.a.flags['X'], False)
+        assert_equal(self.a.flags['WRITEBACKIFCOPY'], False)
 
 
     def test_string_align(self):
