@@ -134,6 +134,7 @@
 #define PyArray_QUICKSORT   NPY_QUICKSORT
 #define PyArray_HEAPSORT    NPY_HEAPSORT
 #define PyArray_MERGESORT   NPY_MERGESORT
+#define PyArray_STABLESORT  NPY_STABLESORT
 #define PyArray_SORTKIND    NPY_SORTKIND
 #define PyArray_NSORTS      NPY_NSORTS
 
