@@ -63,6 +63,12 @@ def nep_metadata():
             replaced_by = int(tags['Replaced-By'])
             replacement_nep = neps[replaced_by]
 
+            if not 'Replaces' in replacement_nep:
+                raise RuntimeError(
+                    f'NEP {nr} is superseded by {replaced_by}, but that NEP has '
+                    f"no Replaces tag."
+                )
+
             if not int(replacement_nep['Replaces']) == nr:
                 raise RuntimeError(
                     f'NEP {nr} is superseded by {replaced_by}, but that NEP has a '
