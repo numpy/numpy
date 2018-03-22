@@ -2,7 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True
 
 from collections import namedtuple
-from cpython cimport PyInt_AsLong, PyFloat_AsDouble
+from cpython cimport PyFloat_AsDouble
 import sys
 import numpy as np
 cimport numpy as np
@@ -642,20 +642,20 @@ cdef object disc(void *func, brng_t *state, object size, object lock,
             if b_constraint != CONS_NONE and is_scalar:
                 check_constraint(_db, b_name, b_constraint)
         elif narg_int64 == 1:
-            _ib = PyInt_AsLong(b)
+            _ib = <int64_t>b
             if b_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ib, b_name, b_constraint)
     else:
         if narg_int64 > 0:
-            _ia = PyInt_AsLong(a)
+            _ia = <int64_t>a
             if a_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ia, a_name, a_constraint)
         if narg_int64 > 1:
-            _ib = PyInt_AsLong(b)
+            _ib = <int64_t>b
             if b_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ib, b_name, b_constraint)
         if narg_int64 > 2 :
-            _ic = PyInt_AsLong(c)
+            _ic = <int64_t>c
             if c_constraint != CONS_NONE and is_scalar:
                 check_constraint(<double>_ic, c_name, c_constraint)
 
