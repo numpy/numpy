@@ -26,7 +26,6 @@ from decimal import Decimal
 
 import numpy as np
 from numpy.compat import strchar, unicode
-from numpy.core.tests.test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
     test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
@@ -38,6 +37,7 @@ from numpy.testing import (
     assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
     assert_array_less, runstring, dec, SkipTest, temppath, suppress_warnings
     )
+from ._locales import CommaDecimalPointLocale
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -4475,14 +4475,15 @@ class TestIO(object):
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
     def test_locale(self):
-        in_foreign_locale(self.test_numbers)()
-        in_foreign_locale(self.test_nan)()
-        in_foreign_locale(self.test_inf)()
-        in_foreign_locale(self.test_counted_string)()
-        in_foreign_locale(self.test_ascii)()
-        in_foreign_locale(self.test_malformed)()
-        in_foreign_locale(self.test_tofile_sep)()
-        in_foreign_locale(self.test_tofile_format)()
+        with CommaDecimalPointLocale():
+            self.test_numbers()
+            self.test_nan()
+            self.test_inf()
+            self.test_counted_string()
+            self.test_ascii()
+            self.test_malformed()
+            self.test_tofile_sep()
+            self.test_tofile_format()
 
 
 class TestFromBuffer(object):
