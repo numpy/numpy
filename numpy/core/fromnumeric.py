@@ -1278,9 +1278,14 @@ def squeeze(a, axis=None):
         return _wrapit(a, 'squeeze')
     
     if axis is None:  # the default, and only thing supported by older classes
-        return squeeze()
+        return squeeze(a)
+	elif axis==0:
+		#raises error
+		print ('Error: axis cannot be equal to 0')
     else:
-        return squeeze(axis=axis)
+        return squeeze(a,axis=axis)
+
+	
 
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
