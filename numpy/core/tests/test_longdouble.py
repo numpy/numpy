@@ -7,7 +7,7 @@ from numpy.testing import (
     run_module_suite, assert_, assert_equal, dec, assert_raises,
     assert_array_equal, temppath,
 )
-from .test_print import in_foreign_locale
+from ._locales import CommaDecimalPointLocale
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
@@ -50,23 +50,10 @@ def test_bytes():
     np.longdouble(b"1.2")
 
 
-@in_foreign_locale
-def test_fromstring_foreign_repr():
-    f = 1.234
-    a = np.fromstring(repr(f), dtype=float, sep=" ")
-    assert_equal(a[0], f)
-
-
 @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
 def test_repr_roundtrip_bytes():
     o = 1 + LD_INFO.eps
     assert_equal(np.longdouble(repr(o).encode("ascii")), o)
-
-
-@in_foreign_locale
-def test_repr_roundtrip_foreign():
-    o = 1.5
-    assert_equal(o, np.longdouble(repr(o)))
 
 
 def test_bogus_string():
@@ -81,18 +68,6 @@ def test_fromstring():
     a = np.array([o]*5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
                  err_msg="reading '%s'" % s)
-
-
-@in_foreign_locale
-def test_fromstring_best_effort_float():
-    assert_equal(np.fromstring("1,234", dtype=float, sep=" "),
-                 np.array([1.]))
-
-
-@in_foreign_locale
-def test_fromstring_best_effort():
-    assert_equal(np.fromstring("1,234", dtype=np.longdouble, sep=" "),
-                 np.array([1.]))
 
 
 def test_fromstring_bogus():
@@ -155,26 +130,6 @@ class TestFileBased(object):
         assert_equal(res, self.tgt)
 
 
-@in_foreign_locale
-def test_fromstring_foreign():
-    s = "1.234"
-    a = np.fromstring(s, dtype=np.longdouble, sep=" ")
-    assert_equal(a[0], np.longdouble(s))
-
-
-@in_foreign_locale
-def test_fromstring_foreign_sep():
-    a = np.array([1, 2, 3, 4])
-    b = np.fromstring("1,2,3,4,", dtype=np.longdouble, sep=",")
-    assert_array_equal(a, b)
-
-
-@in_foreign_locale
-def test_fromstring_foreign_value():
-    b = np.fromstring("1,234", dtype=np.longdouble, sep=" ")
-    assert_array_equal(b[0], 1)
-
-
 # Conversions long double -> string
 
 
@@ -206,6 +161,43 @@ def test_array_repr():
     if not np.all(a != b):
         raise ValueError("precision loss creating arrays")
     assert_(repr(a) != repr(b))
+
+#
+# Locale tests: scalar types formatting should be independent of the locale
+#
+
+class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
+
+    def test_repr_roundtrip_foreign(self):
+        o = 1.5
+        assert_equal(o, np.longdouble(repr(o)))
+
+    def test_fromstring_foreign_repr(self):
+        f = 1.234
+        a = np.fromstring(repr(f), dtype=float, sep=" ")
+        assert_equal(a[0], f)
+
+    def test_fromstring_best_effort_float(self):
+        assert_equal(np.fromstring("1,234", dtype=float, sep=" "),
+                     np.array([1.]))
+
+    def test_fromstring_best_effort(self):
+        assert_equal(np.fromstring("1,234", dtype=np.longdouble, sep=" "),
+                     np.array([1.]))
+
+    def test_fromstring_foreign(self):
+        s = "1.234"
+        a = np.fromstring(s, dtype=np.longdouble, sep=" ")
+        assert_equal(a[0], np.longdouble(s))
+
+    def test_fromstring_foreign_sep(self):
+        a = np.array([1, 2, 3, 4])
+        b = np.fromstring("1,2,3,4,", dtype=np.longdouble, sep=",")
+        assert_array_equal(a, b)
+
+    def test_fromstring_foreign_value(self):
+        b = np.fromstring("1,234", dtype=np.longdouble, sep=" ")
+        assert_array_equal(b[0], 1)
 
 
 if __name__ == "__main__":
