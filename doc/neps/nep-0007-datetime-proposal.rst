@@ -14,7 +14,7 @@ Revised only slightly from the third proposal by
 :Contact: ivan@selidor.net
 :Date: 2008-07-30
 
-:Status: Active
+:Status: Final
 
 Executive summary
 =================
