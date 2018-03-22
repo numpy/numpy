@@ -17,7 +17,7 @@ A Mechanism for Overriding Ufuncs
 :Author: Stephan Hoyer
 :Date: 2017-03-31
 
-:Status: Active
+:Status: Final
 
 Executive summary
 =================

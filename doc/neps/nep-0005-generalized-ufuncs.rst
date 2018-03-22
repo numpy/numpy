@@ -2,7 +2,7 @@
 Generalized Universal Functions
 ===============================
 
-:Status: Active
+:Status: Final
 
 There is a general need for looping over not only functions on scalars
 but also over functions on vectors (or arrays), as explained on
