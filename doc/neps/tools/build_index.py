@@ -21,7 +21,7 @@ def nep_metadata():
     sources = sorted(glob.glob(r'nep-*.rst'))
     sources = [s for s in sources if not s in ignore]
 
-    meta_re = r':([a-zA-Z]*): (.*)'
+    meta_re = r':([a-zA-Z\-]*): (.*)'
 
     neps = {}
     print('Loading metadata for:')
@@ -40,7 +40,43 @@ def nep_metadata():
             tags['Title'] = lines[1].strip()
             tags['Filename'] = source
 
+
+        if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
+            if not 'Resolution' in tags:
+                raise RuntimeError(
+                    f'NEP {nr} is Accepted/Rejected/Withdrawn but '
+                    'has no Resolution tag'
+                )
+
         neps[nr] = tags
+
+    # Now that we have all of the NEP metadata, do some global consistency
+    # checks
+
+    for nr, tags in neps.items():
+        if tags['Status'] == 'Superseded':
+            if not 'Replaced-By' in tags:
+                raise RuntimeError(
+                    f'NEP {nr} has been Superseded, but has no Replaced-By tag'
+                )
+
+            replaced_by = int(tags['Replaced-By'])
+            replacement_nep = neps[replaced_by]
+
+            if not int(replacement_nep['Replaces']) == nr:
+                raise RuntimeError(
+                    f'NEP {nr} is superseded by {replaced_by}, but that NEP has a '
+                    f"Replaces tag of `{replacement_nep['Replaces']}`."
+                )
+
+        if 'Replaces' in tags:
+            replaced_nep = int(tags['Replaces'])
+            replaced_nep_tags = neps[replaced_nep]
+            if not replaced_nep_tags['Status'] == 'Superseded':
+                raise RuntimeError(
+                    f'NEP {nr} replaces {replaced_nep}, but that NEP has not '
+                    f'been set to Superseded'
+                )
 
     return {'neps': neps}
 
