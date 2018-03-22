@@ -1281,7 +1281,7 @@ def squeeze(a, axis=None):
         return squeeze(a)
     elif axis==0:
 	#raises error
-	print 'Error: axis cannot be equal to 0'
+	print ('Error: axis cannot be equal to 0')
     else:
         return squeeze(a,axis=axis)
 
