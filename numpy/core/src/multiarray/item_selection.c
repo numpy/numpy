@@ -1130,6 +1130,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 case NPY_HEAPSORT:
                     sort = npy_heapsort;
                     break;
+                case NPY_STABLESORT:
                 case NPY_MERGESORT:
                     sort = npy_mergesort;
                     break;
@@ -1281,6 +1282,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 case NPY_HEAPSORT:
                     argsort = npy_aheapsort;
                     break;
+                case NPY_STABLESORT:
                 case NPY_MERGESORT:
                     argsort = npy_amergesort;
                     break;

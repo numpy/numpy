@@ -419,6 +419,9 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     else if (str[0] == 'm' || str[0] == 'M') {
         *sortkind = NPY_MERGESORT;
     }
+    else if (str[0] == 's' || str[0] == 'S') {
+        *sortkind = NPY_STABLESORT;
+    }
     else {
         PyErr_Format(PyExc_ValueError,
                      "%s is an unrecognized kind of sort",

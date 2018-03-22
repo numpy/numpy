@@ -764,7 +764,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -797,9 +797,10 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     =========== ======= ============= ============ =======
        kind      speed   worst case    work space  stable
     =========== ======= ============= ============ =======
-    'quicksort'    1     O(n^2)            0          no
-    'mergesort'    2     O(n*log(n))      ~n/2        yes
-    'heapsort'     3     O(n*log(n))       0          no
+    'quicksort'    1     O(n^2)            0         no
+    'mergesort'    2     O(n*log(n))      ~n/2       yes
+    'stable'       2     O(n*log(n))      ~n/2       yes
+    'heapsort'     3     O(n*log(n))       0         no
     =========== ======= ============= ============ =======
 
     All the sort algorithms make temporary copies of the data when
@@ -886,7 +887,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort.  The default is -1 (the last axis). If None,
         the flattened array is used.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies

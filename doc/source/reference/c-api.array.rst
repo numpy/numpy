@@ -2979,7 +2979,8 @@ to.
 
     Convert Python strings into one of :c:data:`NPY_QUICKSORT` (starts
     with 'q' or 'Q') , :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
-    or :c:data:`NPY_MERGESORT` (starts with 'm' or 'M').
+    :c:data:`NPY_MERGESORT` (starts with 'm' or 'M'), or :c:data:`NPY_STABLESORT`
+    (starts with 's' or 'S').
 
 .. c:function:: int PyArray_SearchsideConverter( \
         PyObject* obj, NPY_SEARCHSIDE* side)
@@ -3515,7 +3516,7 @@ Enumerated Types
     A special variable-type which can take on the values :c:data:`NPY_{KIND}`
     where ``{KIND}`` is
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT**
+        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **STABLESORT**
 
     .. c:var:: NPY_NSORTS
 
