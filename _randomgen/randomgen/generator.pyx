@@ -4,7 +4,7 @@ import operator
 import warnings
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from cpython cimport (Py_INCREF, PyComplex_RealAsDouble, PyInt_AsLong,
+from cpython cimport (Py_INCREF, PyComplex_RealAsDouble, 
     PyComplex_ImagAsDouble, PyComplex_FromDoubles, PyFloat_AsDouble)
 from common cimport *
 from distributions cimport *
@@ -3237,7 +3237,7 @@ cdef class RandomGenerator:
             return randoms
 
         _dp = PyFloat_AsDouble(p)
-        _in = PyInt_AsLong(n)
+        _in = <int64_t>n
         check_constraint(_dp, 'p', CONS_BOUNDED_0_1_NOTNAN)
         check_constraint(<double>_in, 'n', CONS_NON_NEGATIVE)
 
@@ -3632,9 +3632,9 @@ cdef class RandomGenerator:
 
         if np.PyArray_NDIM(ongood) == np.PyArray_NDIM(onbad) == np.PyArray_NDIM(onsample) == 0:
 
-            lngood = PyInt_AsLong(ngood)
-            lnbad = PyInt_AsLong(nbad)
-            lnsample = PyInt_AsLong(nsample)
+            lngood = <int64_t>ngood
+            lnbad = <int64_t>nbad
+            lnsample = <int64_t>nsample
 
             if lngood < 0:
                 raise ValueError("ngood < 0")
