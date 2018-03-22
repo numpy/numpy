@@ -1279,7 +1279,7 @@ def squeeze(a, axis=None):
     
     if axis is None:  # the default, and only thing supported by older classes
         return squeeze(a)
-	elif axis==0:
+    elif axis==0:
 		#raises error
 		print 'Error: axis cannot be equal to 0'
     else:
