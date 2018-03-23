@@ -26,11 +26,7 @@ from decimal import Decimal
 
 import numpy as np
 from numpy.compat import strchar, unicode
-from numpy.core._multiarray_tests import (
-    test_neighborhood_iterator, test_neighborhood_iterator_oob,
-    test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
-    test_inplace_increment, get_buffer_info, test_as_c_array,
-    )
+import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
     run_module_suite, assert_, assert_raises, assert_warns,
     assert_equal, assert_almost_equal, assert_array_equal, assert_raises_regex,
@@ -5807,24 +5803,24 @@ class TestNeighborhoodIter(object):
              np.array([[0, 0, 0], [0, 1, 0]], dtype=dt),
              np.array([[0, 0, 1], [0, 2, 3]], dtype=dt),
              np.array([[0, 1, 0], [2, 3, 0]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
-                NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], x[0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt),
              np.array([[1, 1, 1], [0, 1, 1]], dtype=dt),
              np.array([[1, 0, 1], [1, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 1]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
-                NEIGH_MODE['one'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], x[0], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
         r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt),
              np.array([[4, 4, 4], [0, 1, 4]], dtype=dt),
              np.array([[4, 0, 1], [4, 2, 3]], dtype=dt),
              np.array([[0, 1, 4], [2, 3, 4]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], 4,
-                NEIGH_MODE['constant'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
     def test_simple2d(self):
@@ -5839,8 +5835,8 @@ class TestNeighborhoodIter(object):
              np.array([[0, 1, 1], [0, 1, 1]], dtype=dt),
              np.array([[0, 0, 1], [2, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 3]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
-                NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
     def test_mirror2d(self):
@@ -5854,15 +5850,18 @@ class TestNeighborhoodIter(object):
         # Test padding with constant values
         x = np.linspace(1, 5, 5).astype(dt)
         r = [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 0]]
-        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 1], x[0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         r = [[1, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 1]]
-        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['one'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 1], x[0], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
         r = [[x[4], 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, x[4]]]
-        l = test_neighborhood_iterator(x, [-1, 1], x[4], NEIGH_MODE['constant'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 1], x[4], NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
     def test_simple_float(self):
@@ -5876,7 +5875,8 @@ class TestNeighborhoodIter(object):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[2, 1, 1, 2, 3], [1, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 5], [3, 4, 5, 5, 4]], dtype=dt)
-        l = test_neighborhood_iterator(x, [-2, 2], x[1], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-2, 2], x[1], NEIGH_MODE['mirror'])
         assert_([i.dtype == dt for i in l])
         assert_array_equal(l, r)
 
@@ -5891,7 +5891,8 @@ class TestNeighborhoodIter(object):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[4, 5, 1, 2, 3], [5, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 1], [3, 4, 5, 1, 2]], dtype=dt)
-        l = test_neighborhood_iterator(x, [-2, 2], x[0], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-2, 2], x[0], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
     def test_circular(self):
@@ -5914,8 +5915,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([3], dtype=dt),
              np.array([0], dtype=dt),
              np.array([0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-2, 4], NEIGH_MODE['zero'],
-                [0, 0], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-2, 4], NEIGH_MODE['zero'], [0, 0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         r = [np.array([1, 0, 1], dtype=dt),
@@ -5923,8 +5924,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 0], dtype=dt),
              np.array([3, 0, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-1, 1], NEIGH_MODE['one'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-1, 1], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
     # 2nd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
@@ -5938,8 +5939,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 3], dtype=dt),
              np.array([3, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['mirror'],
-                [-1, 1], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['mirror'], [-1, 1], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero
@@ -5949,8 +5950,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2], dtype=dt),
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 0], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 2nd
@@ -5960,8 +5961,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([2, 3, 0], dtype=dt),
              np.array([3, 0, 0], dtype=dt),
              np.array([0, 0, 3], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [0, 2], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [0, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 3rd
@@ -5971,8 +5972,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2, 3, 0], dtype=dt),
              np.array([1, 2, 3, 0, 0], dtype=dt),
              np.array([2, 3, 0, 0, 3], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 2], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
     # 3rd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
@@ -5986,8 +5987,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 1], dtype=dt),
              np.array([3, 1, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['circular'],
-                [-1, 1], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['circular'], [-1, 1], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero
@@ -5997,8 +5998,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2], dtype=dt),
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 0], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 0], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 2nd
@@ -6008,8 +6009,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([2, 3, 0], dtype=dt),
              np.array([3, 0, 0], dtype=dt),
              np.array([0, 0, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [0, 2], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [0, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 3rd
@@ -6019,8 +6020,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2, 3, 0], dtype=dt),
              np.array([1, 2, 3, 0, 0], dtype=dt),
              np.array([2, 3, 0, 0, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 2], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
     # 4th simple, 1d test: stacking 2 neigh iterators, but with lower iterator
@@ -6031,24 +6032,24 @@ class TestStackedNeighborhoodIter(object):
         # array
         x = np.array([1, 2, 3], dtype=dt)
         r = [np.array([1, 2, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
-                [-1, 2], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [1, 1], NEIGH_MODE['zero'], [-1, 2], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero, first neighborhood strictly inside the
         # array
         x = np.array([1, 2, 3], dtype=dt)
         r = [np.array([1, 2, 3, 3], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
-                [-1, 2], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [1, 1], NEIGH_MODE['zero'], [-1, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero, first neighborhood strictly inside the
         # array
         x = np.array([1, 2, 3], dtype=dt)
         r = [np.array([1, 2, 3, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
-                [-1, 2], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [1, 1], NEIGH_MODE['zero'], [-1, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
 class TestWarnings(object):
@@ -6432,7 +6433,9 @@ class TestNewBufferProtocol(object):
 
     def test_export_flags(self):
         # Check SIMPLE flag, see also gh-3613 (exception should be BufferError)
-        assert_raises(ValueError, get_buffer_info, np.arange(5)[::2], ('SIMPLE',))
+        assert_raises(ValueError,
+                      _multiarray_tests.get_buffer_info,
+                       np.arange(5)[::2], ('SIMPLE',))
 
     def test_padding(self):
         for j in range(8):
@@ -6488,10 +6491,12 @@ class TestNewBufferProtocol(object):
 
         arr = np.ones((1, 10))
         if arr.flags.f_contiguous:
-            shape, strides = get_buffer_info(arr, ['F_CONTIGUOUS'])
+            shape, strides = _multiarray_tests.get_buffer_info(
+                    arr, ['F_CONTIGUOUS'])
             assert_(strides[0] == 8)
             arr = np.ones((10, 1), order='F')
-            shape, strides = get_buffer_info(arr, ['C_CONTIGUOUS'])
+            shape, strides = _multiarray_tests.get_buffer_info(
+                    arr, ['C_CONTIGUOUS'])
             assert_(strides[-1] == 8)
 
     def test_out_of_order_fields(self):
@@ -6634,13 +6639,13 @@ class TestMemEventHook(object):
     def test_mem_seteventhook(self):
         # The actual tests are within the C code in
         # multiarray/_multiarray_tests.c.src
-        test_pydatamem_seteventhook_start()
+        _multiarray_tests.test_pydatamem_seteventhook_start()
         # force an allocation and free of a numpy array
         # needs to be larger then limit of small memory cacher in ctors.c
         a = np.zeros(1000)
         del a
         gc.collect()
-        test_pydatamem_seteventhook_end()
+        _multiarray_tests.test_pydatamem_seteventhook_end()
 
 class TestMapIter(object):
     def test_mapiter(self):
@@ -6652,7 +6657,7 @@ class TestMapIter(object):
                  [0, 0, 2, 3])
         vals = [50, 50, 30, 16]
 
-        test_inplace_increment(a, index, vals)
+        _multiarray_tests.test_inplace_increment(a, index, vals)
         assert_equal(a, [[0.00, 1., 2.0, 19.],
                          [104., 5., 6.0, 7.0],
                          [8.00, 9., 40., 11.]])
@@ -6660,24 +6665,24 @@ class TestMapIter(object):
         b = np.arange(6).astype(float)
         index = (np.array([1, 2, 0]),)
         vals = [50, 4, 100.1]
-        test_inplace_increment(b, index, vals)
+        _multiarray_tests.test_inplace_increment(b, index, vals)
         assert_equal(b, [100.1,  51.,   6.,   3.,   4.,   5.])
 
 
 class TestAsCArray(object):
     def test_1darray(self):
         array = np.arange(24, dtype=np.double)
-        from_c = test_as_c_array(array, 3)
+        from_c = _multiarray_tests.test_as_c_array(array, 3)
         assert_equal(array[3], from_c)
 
     def test_2darray(self):
         array = np.arange(24, dtype=np.double).reshape(3, 8)
-        from_c = test_as_c_array(array, 2, 4)
+        from_c = _multiarray_tests.test_as_c_array(array, 2, 4)
         assert_equal(array[2, 4], from_c)
 
     def test_3darray(self):
         array = np.arange(24, dtype=np.double).reshape(2, 3, 4)
-        from_c = test_as_c_array(array, 1, 2, 3)
+        from_c = _multiarray_tests.test_as_c_array(array, 1, 2, 3)
         assert_equal(array[1, 2, 3], from_c)
 
 
