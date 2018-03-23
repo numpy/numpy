@@ -1156,10 +1156,54 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def raises(*args,**kwargs):
-    nose = import_nose()
-    return nose.tools.raises(*args,**kwargs)
+def raises(*args):
+    """Decorator to check for raised exceptions.
 
+    The decorated test function must raise one of the passed exceptions to
+    pass.  If you want to test many assertions about exceptions in a single
+    test, you may want to use `assert_raises` instead.
+
+    .. warning::
+       This decorator is nose specific, do not use it if you are using a
+       different test framework.
+
+    Parameters
+    ----------
+    args : exceptions
+        The test passes if any of the passed exceptions is raised.
+
+    Raises
+    ------
+    AssertionError
+
+    Examples
+    --------
+
+    Usage::
+
+        @raises(TypeError, ValueError)
+        def test_raises_type_error():
+            raise TypeError("This test passes")
+
+        @raises(Exception)
+        def test_that_fails_by_passing():
+            pass
+
+    """
+    nose = import_nose()
+    return nose.tools.raises(*args)
+
+#
+# assert_raises and assert_raises_regex are taken from unittest.
+#
+import unittest
+
+
+class _Dummy(unittest.TestCase):
+    def nop(self):
+        pass
+
+_d = _Dummy('nop')
 
 def assert_raises(*args, **kwargs):
     """
@@ -1187,8 +1231,7 @@ def assert_raises(*args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    nose = import_nose()
-    return nose.tools.assert_raises(*args,**kwargs)
+    return _d.assertRaises(*args,**kwargs)
 
 
 def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
@@ -1212,13 +1255,12 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    nose = import_nose()
 
     if sys.version_info.major >= 3:
-        funcname = nose.tools.assert_raises_regex
+        funcname = _d.assertRaisesRegex
     else:
         # Only present in Python 2.7, missing from unittest in 2.6
-        funcname = nose.tools.assert_raises_regexp
+        funcname = _d.assertRaisesRegexp
 
     return funcname(exception_class, expected_regexp, *args, **kwargs)
 
