@@ -325,7 +325,7 @@ class FPUModeCheckPlugin(Plugin):
     """
 
     def prepareTestCase(self, test):
-        from numpy.core.multiarray_tests import get_fpu_mode
+        from numpy.core._multiarray_tests import get_fpu_mode
 
         def run(result):
             old_mode = get_fpu_mode()

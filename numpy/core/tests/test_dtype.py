@@ -5,7 +5,7 @@ import sys
 import operator
 
 import numpy as np
-from numpy.core.test_rational import rational
+from numpy.core._rational_tests import rational
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
     dec

@@ -56,7 +56,7 @@ static void add_uint64_triplet(char **args, npy_intp *dimensions,
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "struct_ufunc_test",
+    "_struct_ufunc_tests",
     NULL,
     -1,
     StructUfuncTestMethods,
@@ -68,9 +68,9 @@ static struct PyModuleDef moduledef = {
 #endif
 
 #if defined(NPY_PY3K)
-PyMODINIT_FUNC PyInit_struct_ufunc_test(void)
+PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
 #else
-PyMODINIT_FUNC initstruct_ufunc_test(void)
+PyMODINIT_FUNC init_struct_ufunc_tests(void)
 #endif
 {
     PyObject *m, *add_triplet, *d;
@@ -81,7 +81,7 @@ PyMODINIT_FUNC initstruct_ufunc_test(void)
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule("struct_ufunc_test", StructUfuncTestMethods);
+    m = Py_InitModule("_struct_ufunc_tests", StructUfuncTestMethods);
 #endif
 
     if (m == NULL) {

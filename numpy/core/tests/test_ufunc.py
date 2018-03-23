@@ -4,9 +4,9 @@ import warnings
 import itertools
 
 import numpy as np
-import numpy.core.umath_tests as umt
-import numpy.core.operand_flag_tests as opflag_tests
-from numpy.core.test_rational import rational, test_add, test_add_rationals
+import numpy.core._umath_tests as umt
+import numpy.core._operand_flag_tests as opflag_tests
+from numpy.core._rational_tests import rational, test_add, test_add_rationals
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
@@ -42,7 +42,7 @@ class TestUfunc(object):
         assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
 
         # Check that ufunc not defined in the top level numpy namespace such as
-        # numpy.core.test_rational.test_add can also be pickled
+        # numpy.core._rational_tests.test_add can also be pickled
         assert_(pickle.loads(pickle.dumps(test_add)) is test_add)
 
     def test_pickle_withstring(self):
@@ -1167,7 +1167,7 @@ class TestUfunc(object):
         assert_equal(a, 10)
 
     def test_struct_ufunc(self):
-        import numpy.core.struct_ufunc_test as struct_ufunc
+        import numpy.core._struct_ufunc_tests as struct_ufunc
 
         a = np.array([(1, 2, 3)], dtype='u8,u8,u8')
         b = np.array([(1, 2, 3)], dtype='u8,u8,u8')

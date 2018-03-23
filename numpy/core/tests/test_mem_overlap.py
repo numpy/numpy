@@ -7,8 +7,8 @@ import numpy as np
 from numpy.testing import (run_module_suite, assert_, assert_raises, assert_equal,
                            assert_array_equal, assert_allclose, dec)
 
-from numpy.core.multiarray_tests import solve_diophantine, internal_overlap
-from numpy.core import umath_tests
+from numpy.core._multiarray_tests import solve_diophantine, internal_overlap
+from numpy.core import _umath_tests
 from numpy.lib.stride_tricks import as_strided
 from numpy.compat import long
 
@@ -749,7 +749,7 @@ class TestUFunc(object):
 
     def test_unary_gufunc_fuzz(self):
         shapes = [7, 13, 8, 21, 29, 32]
-        gufunc = umath_tests.euclidean_pdist
+        gufunc = _umath_tests.euclidean_pdist
 
         rng = np.random.RandomState(1234)
 

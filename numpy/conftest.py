@@ -8,7 +8,7 @@ import pytest
 import numpy
 import importlib
 
-from numpy.core.multiarray_tests import get_fpu_mode
+from numpy.core._multiarray_tests import get_fpu_mode
 
 
 _old_fpu_mode = None
@@ -21,7 +21,7 @@ def pytest_itemcollected(item):
     Check FPU precision mode was not changed during test collection.
 
     The clumsy way we do it here is mainly necessary because numpy
-    still uses yield tests, which can execute code at test collection 
+    still uses yield tests, which can execute code at test collection
     time.
     """
     global _old_fpu_mode
