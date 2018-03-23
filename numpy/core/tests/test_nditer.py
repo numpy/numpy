@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 from numpy import array, arange, nditer, all
-from numpy.core.multiarray_tests import test_nditer_too_large
+from numpy.core._multiarray_tests import test_nditer_too_large
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_raises, assert_warns, dec, HAS_REFCOUNT, suppress_warnings

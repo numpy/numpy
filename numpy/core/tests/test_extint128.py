@@ -6,7 +6,7 @@ import contextlib
 import operator
 
 import numpy as np
-import numpy.core.multiarray_tests as mt
+import numpy.core._multiarray_tests as mt
 from numpy.compat import long
 
 from numpy.testing import assert_raises, assert_equal, dec

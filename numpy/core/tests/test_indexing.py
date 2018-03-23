@@ -6,7 +6,7 @@ import functools
 import operator
 
 import numpy as np
-from numpy.core.multiarray_tests import array_indexing
+from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,

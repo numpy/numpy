@@ -26,7 +26,7 @@ from decimal import Decimal
 
 import numpy as np
 from numpy.compat import strchar, unicode
-from numpy.core.multiarray_tests import (
+from numpy.core._multiarray_tests import (
     test_neighborhood_iterator, test_neighborhood_iterator_oob,
     test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
     test_inplace_increment, get_buffer_info, test_as_c_array,
@@ -193,7 +193,7 @@ class TestAttributes(object):
             assert_equal(isinstance(numpy_int, int), True)
 
             # ... and fast-path checks on C-API level should also work
-            from numpy.core.multiarray_tests import test_int_subclass
+            from numpy.core._multiarray_tests import test_int_subclass
             assert_equal(test_int_subclass(numpy_int), True)
 
     def test_stridesattr(self):
@@ -3344,7 +3344,7 @@ class TestTemporaryElide(object):
         # def incref_elide(a):
         #    d = input.copy() # refcount 1
         #    return d, d + d # PyNumber_Add without increasing refcount
-        from numpy.core.multiarray_tests import incref_elide
+        from numpy.core._multiarray_tests import incref_elide
         d = np.ones(100000)
         orig, res = incref_elide(d)
         d + d
@@ -3359,7 +3359,7 @@ class TestTemporaryElide(object):
         #
         # def incref_elide_l(d):
         #    return l[4] + l[4] # PyNumber_Add without increasing refcount
-        from numpy.core.multiarray_tests import incref_elide_l
+        from numpy.core._multiarray_tests import incref_elide_l
         # padding with 1 makes sure the object on the stack is not overwritten
         l = [1, 1, 1, 1, np.ones(100000)]
         res = incref_elide_l(l)
@@ -3438,7 +3438,7 @@ class TestTemporaryElide(object):
 
 class TestCAPI(object):
     def test_IsPythonScalar(self):
-        from numpy.core.multiarray_tests import IsPythonScalar
+        from numpy.core._multiarray_tests import IsPythonScalar
         assert_(IsPythonScalar(b'foobar'))
         assert_(IsPythonScalar(1))
         assert_(IsPythonScalar(2**80))
@@ -6633,7 +6633,7 @@ def test_scalar_element_deletion():
 class TestMemEventHook(object):
     def test_mem_seteventhook(self):
         # The actual tests are within the C code in
-        # multiarray/multiarray_tests.c.src
+        # multiarray/_multiarray_tests.c.src
         test_pydatamem_seteventhook_start()
         # force an allocation and free of a numpy array
         # needs to be larger then limit of small memory cacher in ctors.c
@@ -6645,7 +6645,7 @@ class TestMemEventHook(object):
 class TestMapIter(object):
     def test_mapiter(self):
         # The actual tests are within the C code in
-        # multiarray/multiarray_tests.c.src
+        # multiarray/_multiarray_tests.c.src
 
         a = np.arange(12).reshape((3, 4)).astype(float)
         index = ([1, 1, 2, 0],
@@ -7237,7 +7237,7 @@ class TestWritebackIfCopy(object):
         assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
 
     def test_view_assign(self):
-        from numpy.core.multiarray_tests import npy_create_writebackifcopy, npy_resolve
+        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_resolve
         arr = np.arange(9).reshape(3, 3).T
         arr_wb = npy_create_writebackifcopy(arr)
         assert_(arr_wb.flags.writebackifcopy)
@@ -7307,7 +7307,7 @@ def test_equal_override():
 
 def test_npymath_complex():
     # Smoketest npymath functions
-    from numpy.core.multiarray_tests import (
+    from numpy.core._multiarray_tests import (
         npy_cabs, npy_carg)
 
     funcs = {npy_cabs: np.absolute,
@@ -7326,7 +7326,7 @@ def test_npymath_complex():
 
 def test_npymath_real():
     # Smoketest npymath functions
-    from numpy.core.multiarray_tests import (
+    from numpy.core._multiarray_tests import (
         npy_log10, npy_cosh, npy_sinh, npy_tan, npy_tanh)
 
     funcs = {npy_log10: np.log10,
