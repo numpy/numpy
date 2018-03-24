@@ -95,7 +95,8 @@ setup_chroot()
 
   # install needed packages
   sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python-dev python-nose python-pip cython"
+    libatlas-base-dev gfortran python-dev python-nose python-pip cython \
+    python-pytest"
 }
 
 run_test()
@@ -147,7 +148,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   pip install --pre --no-index --upgrade --find-links=. numpy
-  pip install nose
+  pip install nose pytest
   popd
   run_test
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
@@ -164,7 +165,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   pip install numpy*
-  pip install nose
+  pip install nose pytest
   popd
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
