@@ -110,7 +110,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     return view
 
-def sliding_window_view(x, shape=None):
+def sliding_window_view(x, shape=None, step_size=None):
     """
     Create rolling window views of the 2D array with the given shape.
 
@@ -121,9 +121,11 @@ def sliding_window_view(x, shape=None):
     Parameters
     ----------
     x : ndarray
-        2D array to create rolling window views.
+        Array to create rolling window views.
     shape : sequence of int, optional
         The shape of the new array. Defaults to ``x.shape``.
+    step_size: sequence of int, optional
+        The step size of sliding window for each dimension of input.
 
     Returns
     -------
@@ -136,45 +138,60 @@ def sliding_window_view(x, shape=None):
     >>> np.lib.stride_tricks.sliding_window_view(x, shape)
     array([[[[ 0,  1],
          [ 4,  5]],
+
         [[ 1,  2],
          [ 5,  6]],
+
         [[ 2,  3],
          [ 6,  7]]],
 
+
        [[[ 4,  5],
          [ 8,  9]],
+
         [[ 5,  6],
          [ 9, 10]],
+
         [[ 6,  7],
          [10, 11]]]])
 
-    >>> x = np.arange(16).reshape(4,4)
-    >>> shape = [2,3]
-    >>> sliding_window_view(x, shape)
-    array([[[[ 0,  1,  2],
-         [ 4,  5,  6]],
-        [[ 1,  2,  3],
-         [ 5,  6,  7]]],
 
-       [[[ 4,  5,  6],
-         [ 8,  9, 10]],
-        [[ 5,  6,  7],
-         [ 9, 10, 11]]],
+    >>> x = np.arange(12).reshape(3,4)
+    >>> shape = [2,2]
+    >>> step_size = [1,2]
+    >>> sliding_window_view(x, shape, step_size)
+    array([[[[ 0,  1],
+         [ 4,  5]],
 
-       [[[ 8,  9, 10],
-         [12, 13, 14]],
-        [[ 9, 10, 11],
-         [13, 14, 15]]]])
+        [[ 2,  3],
+         [ 6,  7]]],
+
+
+       [[[ 4,  5],
+         [ 8,  9]],
+
+        [[ 6,  7],
+         [10, 11]]]])
 
     """
     if shape is None:
         shape = x.shape
-    o = np.array(x.shape)  - np.array(shape) + 1 # output shape
+    else:
+        shape = np.array(shape)
+
+    if step_size is None:
+        step_size = np.ones(len(x.shape), np.int)
+    else:
+        step_size = np.array(step_size)
+
+    o = (np.array(x.shape)  - shape) // step_size + 1 # output shape
     strides = x.strides
+    view_strides = strides * step_size
 
     view_shape = np.concatenate((o, shape), axis=0)
-    view_strides = np.concatenate((strides, strides), axis=0)
-    return np.lib.stride_tricks.as_strided(x ,view_shape, view_strides)
+    view_strides = np.concatenate((view_strides, strides), axis=0)
+    view = np.lib.stride_tricks.as_strided(x ,view_shape, view_strides)
+    return np.squeeze(view)
 
 
 def _broadcast_to(array, shape, subok, readonly):
