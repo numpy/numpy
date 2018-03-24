@@ -114,8 +114,6 @@ def sliding_window_view(x, shape=None, step_size=None):
     """
     Create rolling window views of the 2D array with the given shape.
 
-    .. warning:: This function has to be used with extreme care, see notes from 'as_strided'.
-
     For some cases, there may be more efficient approaches
 
     Parameters
@@ -175,16 +173,24 @@ def sliding_window_view(x, shape=None, step_size=None):
 
     """
     if shape is None:
-        shape = x.shape
+        shape = np.array(x.shape, np.int)
     else:
-        shape = np.array(shape)
+        shape = np.array(shape, np.int)
 
     if step_size is None:
         step_size = np.ones(len(x.shape), np.int)
     else:
-        step_size = np.array(step_size)
+        step_size = np.array(step_size, np.int)
+
+    assert len(x.shape) == len(shape) == len(step_size),\
+    "view shape or step_size dimension doesn't match with input array "
+    assert np.all(shape > 0) and np.all(step_size > 0),\
+    "view shape or step_size cannot contain non-positive number"
 
     o = (np.array(x.shape)  - shape) // step_size + 1 # output shape
+    assert np.all(o > 0),\
+    "view shape cannot larger than input array shape"
+
     strides = x.strides
     view_strides = strides * step_size
 
