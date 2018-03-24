@@ -110,7 +110,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     return view
 
-def sliding_window_view(x, shape, step_size=None):
+def sliding_window_view(x, shape, step=None):
     """
     Create rolling window views of the 2D array with the given shape.
 
@@ -122,8 +122,8 @@ def sliding_window_view(x, shape, step_size=None):
         Array to create rolling window views.
     shape : sequence of int
         The shape of the new array.
-    step_size: sequence of int, optional
-        The step size of sliding window for each dimension of input. Defaults to 1 on all dimensions.
+    step: sequence of int, optional
+        The sliding step of view window for each dimension of input. Defaults to 1 on all dimensions.
 
     Returns
     -------
@@ -156,8 +156,8 @@ def sliding_window_view(x, shape, step_size=None):
 
     >>> x = np.arange(12).reshape(3,4)
     >>> shape = [2,2]
-    >>> step_size = [1,2]
-    >>> sliding_window_view(x, shape, step_size)
+    >>> step = [1,2]
+    >>> sliding_window_view(x, shape, step)
     array([[[[ 0,  1],
          [ 4,  5]],
 
@@ -174,26 +174,26 @@ def sliding_window_view(x, shape, step_size=None):
     """
     shape = np.array(shape, np.int)
 
-    if step_size is None:
-        step_size = np.ones(len(x.shape), np.int)
+    if step is None:
+        step = np.ones(len(x.shape), np.int)
     else:
-        step_size = np.array(step_size, np.int)
+        step = np.array(step, np.int)
 
-    assert len(x.shape) == len(shape) == len(step_size),\
-    "view shape or step_size dimension doesn't match with input array "
-    assert np.all(shape > 0) and np.all(step_size > 0),\
-    "view shape or step_size cannot contain non-positive number"
+    assert len(x.shape) == len(shape) == len(step),\
+    "view shape or step dimension doesn't match with input array "
+    assert np.all(shape > 0) and np.all(step > 0),\
+    "view shape or step cannot contain non-positive number"
 
-    o = (np.array(x.shape)  - shape) // step_size + 1 # output shape
+    o = (np.array(x.shape)  - shape) // step + 1 # output shape
     assert np.all(o > 0),\
     "view shape cannot larger than input array shape"
 
     strides = x.strides
-    view_strides = strides * step_size
+    view_strides = strides * step
 
     view_shape = np.concatenate((o, shape), axis=0)
     view_strides = np.concatenate((view_strides, strides), axis=0)
-    view = np.lib.stride_tricks.as_strided(x ,view_shape, view_strides)
+    view = np.lib.stride_tricks.as_strided(x, view_shape, view_strides)
     return np.squeeze(view)
 
 
