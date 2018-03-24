@@ -7,7 +7,7 @@ import fnmatch
 import itertools
 
 import numpy.core.umath as ncu
-from numpy.core import umath_tests as ncu_tests
+from numpy.core import _umath_tests as ncu_tests
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,

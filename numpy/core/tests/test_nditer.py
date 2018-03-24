@@ -4,8 +4,8 @@ import sys
 import warnings
 
 import numpy as np
+import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
-from numpy.core.multiarray_tests import test_nditer_too_large
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
     assert_raises, assert_warns, dec, HAS_REFCOUNT, suppress_warnings
@@ -2697,18 +2697,19 @@ def test_iter_too_large_with_multiindex():
     # arrays are now too large to be broadcast. The different modes test
     # different nditer functionality with or without GIL.
     for mode in range(6):
-        assert_raises(ValueError, test_nditer_too_large, arrays, -1, mode)
+        with assert_raises(ValueError):
+            _multiarray_tests.test_nditer_too_large(arrays, -1, mode)
     # but if we do nothing with the nditer, it can be constructed:
-    test_nditer_too_large(arrays, -1, 7)
+    _multiarray_tests.test_nditer_too_large(arrays, -1, 7)
 
     # When an axis is removed, things should work again (half the time):
     for i in range(num):
         for mode in range(6):
             # an axis with size 1024 is removed:
-            test_nditer_too_large(arrays, i*2, mode)
+            _multiarray_tests.test_nditer_too_large(arrays, i*2, mode)
             # an axis with size 1 is removed:
-            assert_raises(ValueError, test_nditer_too_large,
-                          arrays, i*2 + 1, mode)
+            with assert_raises(ValueError):
+                _multiarray_tests.test_nditer_too_large(arrays, i*2 + 1, mode)
 
 
 if __name__ == "__main__":

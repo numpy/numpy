@@ -429,7 +429,7 @@ class TestNonNumericConjugate(_DeprecationTestCase):
 class TestNPY_CHAR(_DeprecationTestCase):
     # 2017-05-03, 1.13.0
     def test_npy_char_deprecation(self):
-        from numpy.core.multiarray_tests import npy_char_deprecation
+        from numpy.core._multiarray_tests import npy_char_deprecation
         self.assert_deprecated(npy_char_deprecation)
         assert_(npy_char_deprecation() == 'S1')
 
@@ -440,11 +440,11 @@ class Test_UPDATEIFCOPY(_DeprecationTestCase):
     WRITEBACKIFCOPY instead
     """
     def test_npy_updateifcopy_deprecation(self):
-        from numpy.core.multiarray_tests import npy_updateifcopy_deprecation
+        from numpy.core._multiarray_tests import npy_updateifcopy_deprecation
         arr = np.arange(9).reshape(3, 3)
         v = arr.T
         self.assert_deprecated(npy_updateifcopy_deprecation, args=(v,))
-    
+
 
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
