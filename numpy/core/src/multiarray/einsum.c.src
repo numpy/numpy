@@ -1829,9 +1829,10 @@ parse_operand_subscripts(char *subscripts, int length,
                 break;
             }
             else {
-                PyErr_SetString(PyExc_ValueError,
+                PyErr_Format(PyExc_ValueError,
                             "einstein sum subscripts string contains a "
-                            "'.' that is not part of an ellipsis ('...')");
+                            "'.' that is not part of an ellipsis ('...') in "
+                            "operand %d", iop);
                 return 0;
 
             }
@@ -1887,6 +1888,12 @@ parse_operand_subscripts(char *subscripts, int length,
                                 "too many subscripts for operand %d", iop);
                     return 0;
                 }
+            }
+            else if (label == '.') {
+                PyErr_Format(PyExc_ValueError,
+                            "einstein sum subscripts string contains a "
+                            "'.' that is not part of an ellipsis ('...') in "
+                            "operand %d", iop);
             }
             else if (label != ' ') {
                 PyErr_Format(PyExc_ValueError,
@@ -2011,7 +2018,8 @@ parse_output_subscripts(char *subscripts, int length,
             else {
                 PyErr_SetString(PyExc_ValueError,
                             "einstein sum subscripts string contains a "
-                            "'.' that is not part of an ellipsis ('...')");
+                            "'.' that is not part of an ellipsis ('...') "
+                            "in the output");
                 return -1;
 
             }
@@ -2037,8 +2045,15 @@ parse_output_subscripts(char *subscripts, int length,
     if (i > 0) {
         for (i = 0; i < length; ++i) {
             label = subscripts[i];
+            if (label == '.') {
+                PyErr_SetString(PyExc_ValueError,
+                            "einstein sum subscripts string contains a "
+                            "'.' that is not part of an ellipsis ('...') "
+                            "in the output");
+                return -1;
+            }
             /* A label for an axis */
-            if (label != '.' && label != ' ') {
+            else if (label != ' ') {
                 if (idim < ndim_left) {
                     out_labels[idim++] = label;
                 }
@@ -2048,12 +2063,6 @@ parse_output_subscripts(char *subscripts, int length,
                                 "too many subscripts for the output");
                     return -1;
                 }
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError,
-                            "einstein sum subscripts string contains a "
-                            "'.' that is not part of an ellipsis ('...')");
-                return -1;
             }
         }
     }
