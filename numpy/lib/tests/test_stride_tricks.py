@@ -394,6 +394,34 @@ def test_as_strided():
     assert_equal(a.dtype, a_view.dtype)
     assert_array_equal([r] * 3, a_view)
 
+def test_sliding_window_view():
+    from ...stride_tricks import sliding_window_view
+    arr = np.array([None])
+    arr_view = sliding_window_view(arr)
+    expected = np.array([[None]])
+    assert_array_equal(arr, arr_view)
+
+    arr = np.arange(12).reshape(3,4)
+    shape = np.array([2,2])
+    arr_view = sliding_window_view(arr, shape)
+    expected = np.array([[[[ 0,  1],[ 4,  5]],
+                        [[ 1,  2],[ 5,  6]],
+                        [[ 2,  3],[ 6,  7]]],
+                        [[[ 4,  5],[ 8,  9]],
+                        [[ 5,  6],[ 9, 10]],
+                        [[ 6,  7],[10, 11]]]])
+    assert_array_equal(arr, arr_view)
+
+    arr = np.arange(16).reshape(4,4)
+    shape = [2,3]
+    arr_view = sliding_window_view(arr, shape)
+    expected = np.array([[[[ 0,  1,  2],[ 4,  5,  6]],
+                        [[ 1,  2,  3],[ 5,  6,  7]]],
+                        [[[ 4,  5,  6],[ 8,  9, 10]],
+                        [[ 5,  6,  7],[ 9, 10, 11]]],
+                        [[[ 8,  9, 10],[12, 13, 14]],
+                        [[ 9, 10, 11],[13, 14, 15]]]])
+
 def as_strided_writeable():
     arr = np.ones(10)
     view = as_strided(arr, writeable=False)
