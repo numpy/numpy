@@ -1,5 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
+import itertools
+
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
@@ -917,6 +919,13 @@ class TestEinSumPath(object):
         noopt = np.einsum(*path_test, optimize=False)
         opt = np.einsum(*path_test, optimize=exp_path)
         assert_almost_equal(noopt, opt)
+
+    def test_spaces(self):
+        #gh-10794
+        arr = np.array([[1]])
+        for sp in itertools.product(['', ' '], repeat=4):
+            # no error for any spacing
+            np.einsum('{}...a{}->{}...a{}'.format(*sp), arr)
 
 
 if __name__ == "__main__":
