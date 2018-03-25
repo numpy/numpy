@@ -791,6 +791,12 @@ class TestEinSum(object):
         self.optimize_compare('dba,ead,cad->bce')
         self.optimize_compare('aef,fbc,dca->bde')
 
+    def test_combined_views_mapping(self):
+        # gh-10792
+        a = np.arange(9).reshape(1, 1, 3, 1, 3)
+        b = np.einsum('bbcdc->d', a)
+        assert_equal(b, [12])
+
 
 class TestEinSumPath(object):
     def build_operands(self, string, size_dict=global_size_dict):
