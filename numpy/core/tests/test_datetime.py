@@ -5,9 +5,10 @@ import pickle
 import numpy
 import numpy as np
 import datetime
+import pytest
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, dec, suppress_warnings
+    assert_warns, suppress_warnings
 )
 
 # Use pytz to test out various time zones if available
@@ -1487,7 +1488,7 @@ class TestDateTime(object):
                 np.datetime64('2032-01-01T00:00:00', 'us'), unit='auto'),
                 '2032-01-01')
 
-    @dec.skipif(not _has_pytz, "The pytz module is not available.")
+    @pytest.mark.skipif(not _has_pytz, reason="The pytz module is not available.")
     def test_datetime_as_string_timezone(self):
         # timezone='local' vs 'UTC'
         a = np.datetime64('2010-03-15T06:30', 'm')

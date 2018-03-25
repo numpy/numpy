@@ -1,8 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import pytest
 
-from numpy.testing import run_module_suite, assert_, dec
+from numpy.testing import run_module_suite, assert_
 from . import util
 
 
@@ -17,7 +18,7 @@ class TestAssumedShapeSumExample(util.F2PyTest):
                _path('src', 'assumed_shape', 'foo_mod.f90'),
                ]
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         r = self.module.fsum([1, 2])
         assert_(r == 3, repr(r))

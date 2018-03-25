@@ -16,10 +16,11 @@ import atexit
 import textwrap
 import re
 import random
+import pytest
 import numpy.f2py
 
 from numpy.compat import asbytes, asstr
-from numpy.testing import SkipTest, temppath, dec
+from numpy.testing import SkipTest, temppath
 from importlib import import_module
 
 try:
@@ -319,8 +320,10 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def setup(self):
+        if sys.platform == 'win32':
+            raise SkipTest('Fails with MinGW64 Gfortran (Issue #9673)')
+
         if self.module is not None:
             return
 

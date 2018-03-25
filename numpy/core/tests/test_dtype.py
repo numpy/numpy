@@ -3,12 +3,12 @@ from __future__ import division, absolute_import, print_function
 import pickle
 import sys
 import operator
+import pytest
 
 import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    dec
+    run_module_suite, assert_, assert_equal, assert_raises
 )
 
 def assert_dtype_equal(a, b):
@@ -593,7 +593,7 @@ class TestString(object):
         assert_equal(repr(dt),
                     "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
 
-    @dec.skipif(sys.version_info[0] >= 3)
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
     def test_dtype_str_with_long_in_shape(self):
         # Pull request #376, should not error
         np.dtype('(1L,)i4')

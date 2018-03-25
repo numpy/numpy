@@ -5,6 +5,7 @@ import sys
 import os
 import itertools
 import textwrap
+import pytest
 
 import numpy as np
 from numpy.testing import (
@@ -659,7 +660,7 @@ class TestArrayAssertLess(object):
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
 
-
+@pytest.mark.skip(reason="The raises decorator depends on Nose")
 class TestRaises(object):
 
     def setup(self):

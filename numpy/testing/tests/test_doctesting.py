@@ -3,6 +3,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
+#FIXME: None of these tests is run, because 'check' is not a recognized
+# testing prefix.
+
 # try the #random directive on the output line
 def check_random_directive():
     '''

@@ -4,12 +4,13 @@ import sys
 import itertools
 import contextlib
 import operator
+import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as mt
 from numpy.compat import long
 
-from numpy.testing import assert_raises, assert_equal, dec
+from numpy.testing import assert_raises, assert_equal
 
 
 INT64_MAX = np.iinfo(np.int64).max
@@ -183,7 +184,7 @@ def test_gt_128():
                 assert_equal(d, c)
 
 
-@dec.slow
+@pytest.mark.slow
 def test_divmod_128_64():
     with exc_iter(INT128_VALUES, INT64_POS_VALUES) as it:
         for a, b in it:
