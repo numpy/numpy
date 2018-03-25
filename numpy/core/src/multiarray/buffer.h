@@ -9,4 +9,7 @@ _array_dealloc_buffer_info(PyArrayObject *self);
 NPY_NO_EXPORT PyArray_Descr*
 _descriptor_from_pep3118_format(char *s);
 
+NPY_NO_EXPORT int
+gentype_getbuffer(PyObject *obj, Py_buffer *view, int flags);
+
 #endif

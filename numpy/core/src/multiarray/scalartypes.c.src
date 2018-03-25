@@ -28,6 +28,7 @@
 #include "npy_import.h"
 #include "dragon4.h"
 #include "npy_longdouble.h"
+#include "buffer.h"
 
 #include <stdlib.h>
 
@@ -2525,22 +2526,6 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
     }
 }
 #endif /* !defined(NPY_PY3K) */
-
-
-static int
-gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
-{
-    Py_ssize_t len;
-    void *buf;
-
-    /* FIXME: XXX: the format is not implemented! -- this needs more work */
-
-    len = gentype_getreadbuf(self, 0, &buf);
-    return PyBuffer_FillInfo(view, self, buf, len, 1, flags);
-}
-
-/* releasebuffer is not needed */
-
 
 static PyBufferProcs gentype_as_buffer = {
 #if !defined(NPY_PY3K)
