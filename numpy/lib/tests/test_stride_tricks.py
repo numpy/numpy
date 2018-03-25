@@ -6,7 +6,7 @@ from numpy.testing import (
     )
 from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to,
-    broadcast_shapes,
+    broadcast_shapes, sliding_window_view,
     )
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -394,15 +394,16 @@ def test_as_strided():
     assert_equal(a.dtype, a_view.dtype)
     assert_array_equal([r] * 3, a_view)
 
+
 def test_sliding_window_view():
-    from ...stride_tricks import sliding_window_view
     arr = np.array([None])
-    arr_view = sliding_window_view(arr)
-    expected = np.array([[None]])
-    assert_array_equal(arr, arr_view)
+    shape = [1]
+    arr_view = sliding_window_view(arr, shape)
+    expected = np.array([None])
+    assert_array_equal(arr_view, expected)
 
     arr = np.arange(12).reshape(3,4)
-    shape = np.array([2,2])
+    shape = [2,2]
     arr_view = sliding_window_view(arr, shape)
     expected = np.array([[[[ 0,  1],[ 4,  5]],
                         [[ 1,  2],[ 5,  6]],
@@ -410,7 +411,7 @@ def test_sliding_window_view():
                         [[[ 4,  5],[ 8,  9]],
                         [[ 5,  6],[ 9, 10]],
                         [[ 6,  7],[10, 11]]]])
-    assert_array_equal(arr, arr_view)
+    assert_array_equal(arr_view, expected)
 
     arr = np.arange(16).reshape(4,4)
     shape = [2,3]
@@ -421,6 +422,31 @@ def test_sliding_window_view():
                         [[ 5,  6,  7],[ 9, 10, 11]]],
                         [[[ 8,  9, 10],[12, 13, 14]],
                         [[ 9, 10, 11],[13, 14, 15]]]])
+
+    arr = np.arange(12).reshape(3,4)
+    shape = [2,2]
+    step = [1,2]
+    arr_view = sliding_window_view(arr, shape, step)
+    expected = np.array([[[[ 0,  1],[ 4,  5]],
+            [[ 2,  3],[ 6,  7]]],
+           [[[ 4,  5],[ 8,  9]],
+            [[ 6,  7],[10, 11]]]])
+    assert_array_equal(arr_view, expected)
+
+    x = np.arange(36).reshape(3, 3, 4)
+    step = [1,1,2]
+    shape = [2,2,2]
+    arr_view = sliding_window_view(x, shape, step)
+    expected = np.array([[[[[[ 0,  1],[ 4,  5]],[[12, 13],[16, 17]]],
+             [[[ 2,  3],[ 6,  7]],[[14, 15],[18, 19]]]],
+            [[[[ 4,  5],[ 8,  9]],[[16, 17],[20, 21]]],
+             [[[ 6,  7],[10, 11]],[[18, 19],[22, 23]]]]],
+           [[[[[12, 13],[16, 17]],[[24, 25],[28, 29]]],
+             [[[14, 15],[18, 19]],[[26, 27],[30, 31]]]],
+            [[[[16, 17],[20, 21]],[[28, 29],[32, 33]]],
+             [[[18, 19],[22, 23]],[[30, 31],[34, 35]]]]]])
+    assert_array_equal(arr_view, expected)
+
 
 def as_strided_writeable():
     arr = np.ones(10)
