@@ -132,44 +132,44 @@ def sliding_window_view(x, shape, step=None):
     Examples
     --------
     >>> x = np.arange(12).reshape(3,4)
-    >>> shape = [2,2]
+    >>> shape = (2,2)
     >>> np.lib.stride_tricks.sliding_window_view(x, shape)
     array([[[[ 0,  1],
-         [ 4,  5]],
+             [ 4,  5]],
 
-        [[ 1,  2],
-         [ 5,  6]],
+            [[ 1,  2],
+             [ 5,  6]],
 
-        [[ 2,  3],
-         [ 6,  7]]],
+            [[ 2,  3],
+             [ 6,  7]]],
 
 
-       [[[ 4,  5],
-         [ 8,  9]],
+           [[[ 4,  5],
+             [ 8,  9]],
 
-        [[ 5,  6],
-         [ 9, 10]],
+            [[ 5,  6],
+             [ 9, 10]],
 
-        [[ 6,  7],
-         [10, 11]]]])
+            [[ 6,  7],
+             [10, 11]]]])
 
 
     >>> x = np.arange(12).reshape(3,4)
-    >>> shape = [2,2]
-    >>> step = [1,2]
+    >>> shape = (2,2)
+    >>> step = (1,2)
     >>> sliding_window_view(x, shape, step)
     array([[[[ 0,  1],
-         [ 4,  5]],
+             [ 4,  5]],
 
-        [[ 2,  3],
-         [ 6,  7]]],
+            [[ 2,  3],
+             [ 6,  7]]],
 
 
-       [[[ 4,  5],
-         [ 8,  9]],
+           [[[ 4,  5],
+             [ 8,  9]],
 
-        [[ 6,  7],
-         [10, 11]]]])
+            [[ 6,  7],
+             [10, 11]]]])
 
     """
     shape = np.array(shape, np.int)
@@ -179,14 +179,14 @@ def sliding_window_view(x, shape, step=None):
     else:
         step = np.array(step, np.int)
 
-    assert len(x.shape) == len(shape) == len(step),\
-    "view shape or step dimension doesn't match with input array "
-    assert np.all(shape > 0) and np.all(step > 0),\
-    "view shape or step cannot contain non-positive number"
+    if len(x.shape) != len(shape) or len(shape) != len(step):
+        raise ValueError("view shape or step dimension doesn't match with input array")
+    if np.any(shape <= 0) and np.any(step <= 0):
+        raise ValueError('view shape or step cannot contain non-positive value')
 
     o = (np.array(x.shape)  - shape) // step + 1 # output shape
-    assert np.all(o > 0),\
-    "view shape cannot larger than input array shape"
+    if np.any(o <= 0):
+        raise ValueError('view shape cannot larger than input array shape')
 
     strides = x.strides
     view_strides = strides * step
