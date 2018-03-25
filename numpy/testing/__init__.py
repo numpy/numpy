@@ -9,7 +9,10 @@ from __future__ import division, absolute_import, print_function
 
 from unittest import TestCase
 
-from . import decorators as dec
-from .nosetester import run_module_suite, NoseTester as Tester, _numpy_tester
 from .utils import *
+from . import decorators as dec
+
+# Note: remove import of _numpy_tester from this import to avoid a nose
+# dependency. All the others have lazy imports.
+from .nosetester import run_module_suite, NoseTester as Tester, _numpy_tester
 test = _numpy_tester().test
