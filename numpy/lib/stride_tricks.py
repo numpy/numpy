@@ -121,7 +121,7 @@ def sliding_window_view(x, shape, step=None):
     x : ndarray
         Array to create rolling window views.
     shape : sequence of int
-        The shape of the new array.
+        The shape of the sliding window.
     step: sequence of int, optional
         The sliding step of view window for each dimension of input. Defaults to 1 on all dimensions.
 
