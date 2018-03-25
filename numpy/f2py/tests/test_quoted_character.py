@@ -1,16 +1,16 @@
 from __future__ import division, absolute_import, print_function
 
-from . import util
-
-from numpy.testing import run_module_suite, assert_equal, dec
-
 import sys
+import pytest
+
+from numpy.testing import run_module_suite, assert_equal
+from . import util
 
 class TestQuotedCharacter(util.F2PyTest):
     code = """
       SUBROUTINE FOO(OUT1, OUT2, OUT3, OUT4, OUT5, OUT6)
       CHARACTER SINGLE, DOUBLE, SEMICOL, EXCLA, OPENPAR, CLOSEPAR
-      PARAMETER (SINGLE="'", DOUBLE='"', SEMICOL=';', EXCLA="!", 
+      PARAMETER (SINGLE="'", DOUBLE='"', SEMICOL=';', EXCLA="!",
      1           OPENPAR="(", CLOSEPAR=")")
       CHARACTER OUT1, OUT2, OUT3, OUT4, OUT5, OUT6
 Cf2py intent(out) OUT1, OUT2, OUT3, OUT4, OUT5, OUT6
@@ -24,7 +24,8 @@ Cf2py intent(out) OUT1, OUT2, OUT3, OUT4, OUT5, OUT6
       END
     """
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_quoted_character(self):
         assert_equal(self.module.foo(), (b"'", b'"', b';', b'!', b'(', b')'))
 

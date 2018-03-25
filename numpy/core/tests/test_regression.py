@@ -7,6 +7,7 @@ import platform
 import gc
 import warnings
 import tempfile
+import pytest
 from os import path
 from io import BytesIO
 from itertools import chain
@@ -15,7 +16,7 @@ import numpy as np
 from numpy.testing import (
         run_module_suite, assert_, assert_equal, IS_PYPY,
         assert_almost_equal, assert_array_equal, assert_array_almost_equal,
-        assert_raises, assert_warns, dec, suppress_warnings,
+        assert_raises, assert_warns, suppress_warnings,
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long
@@ -600,7 +601,8 @@ class TestRegression(object):
 
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
-    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
+    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
+                        reason="Using relaxed stride checking")
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2]  # not contiguous
@@ -859,7 +861,8 @@ class TestRegression(object):
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous,
     # 0-sized reshape itself is tested elsewhere.
-    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
+    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
+                        reason="Using relaxed stride checking")
     def test_copy_detection_corner_case2(self):
         # Ticket #771: strides are not set correctly when reshaping 0-sized
         # arrays
@@ -1424,7 +1427,7 @@ class TestRegression(object):
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_structured_arrays_with_objects2(self):
         # Ticket #1299 second test
         stra = 'aaaa'
@@ -1537,7 +1540,7 @@ class TestRegression(object):
         y = np.add(x, x, x)
         assert_equal(id(x), id(y))
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_take_refcount(self):
         # ticket #939
         a = np.arange(16, dtype=float)
@@ -1937,7 +1940,7 @@ class TestRegression(object):
             a = np.empty((100000000,), dtype='i1')
             del a
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_ufunc_reduce_memoryleak(self):
         a = np.arange(6)
         acnt = sys.getrefcount(a)
@@ -2167,7 +2170,7 @@ class TestRegression(object):
         assert_equal(uf(a), ())
         assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_leak_in_structured_dtype_comparison(self):
         # gh-6250
         recordtype = np.dtype([('a', np.float64),

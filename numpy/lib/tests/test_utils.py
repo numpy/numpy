@@ -1,9 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import pytest
+
 from numpy.core import arange
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises_regex, dec
+    run_module_suite, assert_, assert_equal, assert_raises_regex
     )
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
@@ -14,7 +16,7 @@ else:
     from StringIO import StringIO
 
 
-@dec.skipif(sys.flags.optimize == 2)
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
 def test_lookfor():
     out = StringIO()
     utils.lookfor('eigenvalue', module='numpy', output=out,

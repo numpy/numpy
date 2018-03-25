@@ -2,12 +2,13 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import platform
+import pytest
 
 import numpy as np
 import numpy.core.umath as ncu
 from numpy.testing import (
     run_module_suite, assert_raises, assert_equal, assert_array_equal,
-    assert_almost_equal, dec
+    assert_almost_equal
 )
 
 # TODO: branch cuts (use Pauli code)
@@ -17,17 +18,17 @@ from numpy.testing import (
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
+#FIXME: this will probably change when we require full C99 campatibility
 with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(np.NZERO, 0)).imag != np.pi))
 # TODO: replace with a check on whether platform-provided C99 funcs are used
-skip_complex_tests = (not sys.platform.startswith('linux') or functions_seem_flaky)
+xfail_complex_tests = (not sys.platform.startswith('linux') or functions_seem_flaky)
 
-def platform_skip(func):
-    return dec.skipif(skip_complex_tests,
-        "Numpy is using complex functions (e.g. sqrt) provided by your"
-        "platform's C library. However, they do not seem to behave according"
-        "to C99 -- so C99 tests are skipped.")(func)
+# TODO This can be xfail when the generator functions are got rid of.
+platform_skip = pytest.mark.skipif(xfail_complex_tests,
+                                   reason="Inadequate C99 complex support")
+
 
 
 class TestCexp(object):
@@ -120,14 +121,15 @@ class TestCexp(object):
         # cexp(nan + nani) is nan + nani
         yield check, f, np.nan, np.nan, np.nan, np.nan
 
-    @dec.knownfailureif(True, "cexp(nan + 0I) is wrong on most implementations")
+    # TODO This can be xfail when the generator functions are got rid of.
+    @pytest.mark.skip(reason="cexp(nan + 0I) is wrong on most platforms")
     def test_special_values2(self):
         # XXX: most implementations get it wrong here (including glibc <= 2.10)
         # cexp(nan + 0i) is nan + 0i
         check = check_complex_value
         f = np.exp
 
-        yield check, f, np.nan, 0, np.nan, 0
+        check(f, np.nan, 0, np.nan, 0)
 
 class TestClog(object):
     def test_simple(self):
@@ -138,7 +140,7 @@ class TestClog(object):
             assert_almost_equal(y[i], y_r[i])
 
     @platform_skip
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+    @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_special_values(self):
         xl = []
         yl = []
@@ -460,32 +462,33 @@ class TestCarg(object):
         check_real_value(ncu._arg, 1, 1, 0.25*np.pi, False)
         check_real_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO)
 
-    @dec.knownfailureif(True,
-        "Complex arithmetic with signed zero is buggy on most implementation")
+    # TODO This can be xfail when the generator functions are got rid of.
+    @pytest.mark.skip(
+        reason="Complex arithmetic with signed zero fails on most platforms")
     def test_zero(self):
         # carg(-0 +- 0i) returns +- pi
-        yield check_real_value, ncu._arg, np.NZERO, np.PZERO,  np.pi, False
-        yield check_real_value, ncu._arg, np.NZERO, np.NZERO, -np.pi, False
+        check_real_value(ncu._arg, np.NZERO, np.PZERO,  np.pi, False)
+        check_real_value(ncu._arg, np.NZERO, np.NZERO, -np.pi, False)
 
         # carg(+0 +- 0i) returns +- 0
-        yield check_real_value, ncu._arg, np.PZERO, np.PZERO, np.PZERO
-        yield check_real_value, ncu._arg, np.PZERO, np.NZERO, np.NZERO
+        check_real_value(ncu._arg, np.PZERO, np.PZERO, np.PZERO)
+        check_real_value(ncu._arg, np.PZERO, np.NZERO, np.NZERO)
 
         # carg(x +- 0i) returns +- 0 for x > 0
-        yield check_real_value, ncu._arg, 1, np.PZERO, np.PZERO, False
-        yield check_real_value, ncu._arg, 1, np.NZERO, np.NZERO, False
+        check_real_value(ncu._arg, 1, np.PZERO, np.PZERO, False)
+        check_real_value(ncu._arg, 1, np.NZERO, np.NZERO, False)
 
         # carg(x +- 0i) returns +- pi for x < 0
-        yield check_real_value, ncu._arg, -1, np.PZERO,  np.pi, False
-        yield check_real_value, ncu._arg, -1, np.NZERO, -np.pi, False
+        check_real_value(ncu._arg, -1, np.PZERO,  np.pi, False)
+        check_real_value(ncu._arg, -1, np.NZERO, -np.pi, False)
 
         # carg(+- 0 + yi) returns pi/2 for y > 0
-        yield check_real_value, ncu._arg, np.PZERO, 1, 0.5 * np.pi, False
-        yield check_real_value, ncu._arg, np.NZERO, 1, 0.5 * np.pi, False
+        check_real_value(ncu._arg, np.PZERO, 1, 0.5 * np.pi, False)
+        check_real_value(ncu._arg, np.NZERO, 1, 0.5 * np.pi, False)
 
         # carg(+- 0 + yi) returns -pi/2 for y < 0
-        yield check_real_value, ncu._arg, np.PZERO, -1, 0.5 * np.pi, False
-        yield check_real_value, ncu._arg, np.NZERO, -1, -0.5 * np.pi, False
+        check_real_value(ncu._arg, np.PZERO, -1, 0.5 * np.pi, False)
+        check_real_value(ncu._arg, np.NZERO, -1, -0.5 * np.pi, False)
 
     #def test_branch_cuts(self):
     #    _check_branch_cut(ncu._arg, -1, 1j, -1, 1)

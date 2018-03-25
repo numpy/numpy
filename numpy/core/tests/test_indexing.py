@@ -4,13 +4,14 @@ import sys
 import warnings
 import functools
 import operator
+import pytest
 
 import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_warns, dec, HAS_REFCOUNT, suppress_warnings,
+    assert_array_equal, assert_warns, HAS_REFCOUNT, suppress_warnings,
 )
 
 
@@ -608,7 +609,7 @@ class TestSubclasses(object):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_slice_decref_getsetslice(self):
         # See gh-10066, a temporary slice object should be discarted.
         # This test is only really interesting on Python 2 since

@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+# doctest
 r''' Test the .npy file format.
 
 Set up:
@@ -275,18 +276,18 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-
 import sys
 import os
 import shutil
 import tempfile
 import warnings
+import pytest
 from io import BytesIO
 
 import numpy as np
 from numpy.testing import (
     run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    dec, SkipTest
+    SkipTest
     )
 from numpy.lib import format
 
@@ -477,7 +478,7 @@ def test_long_str():
     assert_array_equal(long_str_arr, long_str_arr2)
 
 
-@dec.slow
+@pytest.mark.slow
 def test_memmap_roundtrip():
     # Fixme: test crashes nose on windows.
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
@@ -628,7 +629,7 @@ def test_version_2_0():
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
-@dec.slow
+@pytest.mark.slow
 def test_version_2_0_memmap():
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
@@ -832,8 +833,9 @@ def test_large_file_support():
     assert_array_equal(r, d)
 
 
-@dec.slow
-@dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
+@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
+                    reason="test requires 64-bit system")
+@pytest.mark.slow
 def test_large_archive():
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.

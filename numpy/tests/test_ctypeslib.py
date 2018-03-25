@@ -1,11 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import pytest
 
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library
 from numpy.distutils.misc_util import get_shared_lib_extension
-from numpy.testing import run_module_suite, assert_, assert_raises, dec
+from numpy.testing import run_module_suite, assert_, assert_raises
 
 try:
     cdll = None
@@ -21,10 +22,10 @@ except ImportError:
     _HAS_CTYPE = False
 
 class TestLoadLibrary(object):
-    @dec.skipif(not _HAS_CTYPE,
-                "ctypes not available on this python installation")
-    @dec.knownfailureif(sys.platform ==
-                        'cygwin', "This test is known to fail on cygwin")
+    @pytest.mark.skipif(not _HAS_CTYPE,
+                        reason="ctypes not available in this python")
+    @pytest.mark.skipif(sys.platform == 'cygwin',
+                        reason="Known to fail on cygwin")
     def test_basic(self):
         try:
             # Should succeed
@@ -34,10 +35,10 @@ class TestLoadLibrary(object):
                    " (import error was: %s)" % str(e))
             print(msg)
 
-    @dec.skipif(not _HAS_CTYPE,
-                "ctypes not available on this python installation")
-    @dec.knownfailureif(sys.platform ==
-                        'cygwin', "This test is known to fail on cygwin")
+    @pytest.mark.skipif(not _HAS_CTYPE,
+                        reason="ctypes not available in this python")
+    @pytest.mark.skipif(sys.platform == 'cygwin',
+                        reason="Known to fail on cygwin")
     def test_basic2(self):
         # Regression for #801: load_library with a full library name
         # (including extension) does not work.

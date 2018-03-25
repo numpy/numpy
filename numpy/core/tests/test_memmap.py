@@ -3,8 +3,9 @@ from __future__ import division, absolute_import, print_function
 import sys
 import os
 import shutil
-from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 import mmap
+import pytest
+from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
@@ -13,7 +14,7 @@ from numpy.compat import Path
 from numpy import arange, allclose, asarray
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_array_equal,
-    dec, suppress_warnings
+    suppress_warnings
 )
 
 class TestMemmap(object):
@@ -76,7 +77,7 @@ class TestMemmap(object):
         del b
         del fp
 
-    @dec.skipif(Path is None, "No pathlib.Path")
+    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_path(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
@@ -94,7 +95,8 @@ class TestMemmap(object):
                     shape=self.shape)
         assert_equal(fp.filename, self.tmpfp.name)
 
-    @dec.knownfailureif(sys.platform == 'gnu0', "This test is known to fail on hurd")
+    @pytest.mark.skipif(sys.platform == 'gnu0',
+                        reason="Known to fail on hurd")
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)

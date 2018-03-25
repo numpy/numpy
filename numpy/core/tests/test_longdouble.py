@@ -1,10 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-import locale
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, dec, assert_raises,
+    run_module_suite, assert_, assert_equal, assert_raises,
     assert_array_equal, temppath,
 )
 from ._locales import CommaDecimalPointLocale
@@ -30,8 +30,8 @@ def test_scalar_extraction():
 # 0.1 not exactly representable in base 2 floating point.
 repr_precision = len(repr(np.longdouble(0.1)))
 # +2 from macro block starting around line 842 in scalartypes.c.src.
-@dec.skipif(LD_INFO.precision + 2 >= repr_precision,
-            "repr precision not enough to show eps")
+@pytest.mark.skipif(LD_INFO.precision + 2 >= repr_precision,
+                    reason="repr precision not enough to show eps")
 def test_repr_roundtrip():
     # We will only see eps in repr if within printing precision.
     o = 1 + LD_INFO.eps
@@ -50,7 +50,7 @@ def test_bytes():
     np.longdouble(b"1.2")
 
 
-@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+@pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
 def test_repr_roundtrip_bytes():
     o = 1 + LD_INFO.eps
     assert_equal(np.longdouble(repr(o).encode("ascii")), o)
@@ -61,7 +61,7 @@ def test_bogus_string():
     assert_raises(ValueError, np.longdouble, "1.0 flub")
 
 
-@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+@pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
 def test_fromstring():
     o = 1 + LD_INFO.eps
     s = (" " + repr(o))*5
@@ -98,7 +98,8 @@ class TestFileBased(object):
             res = np.fromfile(path, dtype=float, sep=" ")
         assert_equal(res, np.array([1., 2., 3.]))
 
-    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+    @pytest.mark.skipif(string_to_longdouble_inaccurate,
+                        reason="Need strtold_l")
     def test_fromfile(self):
         with temppath() as path:
             with open(path, 'wt') as f:
@@ -106,7 +107,8 @@ class TestFileBased(object):
             res = np.fromfile(path, dtype=np.longdouble, sep="\n")
         assert_equal(res, self.tgt)
 
-    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+    @pytest.mark.skipif(string_to_longdouble_inaccurate,
+                        reason="Need strtold_l")
     def test_genfromtxt(self):
         with temppath() as path:
             with open(path, 'wt') as f:
@@ -114,7 +116,8 @@ class TestFileBased(object):
             res = np.genfromtxt(path, dtype=np.longdouble)
         assert_equal(res, self.tgt)
 
-    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+    @pytest.mark.skipif(string_to_longdouble_inaccurate,
+                        reason="Need strtold_l")
     def test_loadtxt(self):
         with temppath() as path:
             with open(path, 'wt') as f:
@@ -122,7 +125,8 @@ class TestFileBased(object):
             res = np.loadtxt(path, dtype=np.longdouble)
         assert_equal(res, self.tgt)
 
-    @dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+    @pytest.mark.skipif(string_to_longdouble_inaccurate,
+                        reason="Need strtold_l")
     def test_tofile_roundtrip(self):
         with temppath() as path:
             self.tgt.tofile(path, sep=" ")
@@ -138,22 +142,26 @@ def test_repr_exact():
     assert_(repr(o) != '1')
 
 
-@dec.knownfailureif(longdouble_longer_than_double, "BUG #2376")
-@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+@pytest.mark.skipif(longdouble_longer_than_double, reason="BUG #2376")
+@pytest.mark.skipif(string_to_longdouble_inaccurate,
+                    reason="Need strtold_l")
 def test_format():
     o = 1 + LD_INFO.eps
     assert_("{0:.40g}".format(o) != '1')
 
 
-@dec.knownfailureif(longdouble_longer_than_double, "BUG #2376")
-@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+@pytest.mark.skipif(longdouble_longer_than_double, reason="BUG #2376")
+@pytest.mark.skipif(string_to_longdouble_inaccurate,
+                    reason="Need strtold_l")
 def test_percent():
     o = 1 + LD_INFO.eps
     assert_("%.40g" % o != '1')
 
 
-@dec.knownfailureif(longdouble_longer_than_double, "array repr problem")
-@dec.knownfailureif(string_to_longdouble_inaccurate, "Need strtold_l")
+@pytest.mark.skipif(longdouble_longer_than_double,
+                    reason="array repr problem")
+@pytest.mark.skipif(string_to_longdouble_inaccurate,
+                    reason="Need strtold_l")
 def test_array_repr():
     o = 1 + LD_INFO.eps
     a = np.array([o])
