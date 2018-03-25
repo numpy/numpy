@@ -52,7 +52,7 @@ def check_fpu_mode(request):
     if collect_result is not None:
         old_mode, new_mode = collect_result
         raise AssertionError("FPU precision mode changed from {0:#x} to {1:#x}"
-                             " when collecting the test".format(old_mode, 
+                             " when collecting the test".format(old_mode,
                                                                 new_mode))
 
 
@@ -77,8 +77,7 @@ def add_np(doctest_namespace):
 
 
 for module, replacement in {
-    'numpy.testing.decorators': 'numpy.testing.pytest_tools.decorators',
-    'numpy.testing.utils': 'numpy.testing.pytest_tools.utils',
+    'numpy.testing.decorators': 'numpy.testing.pytestdecorators',
 }.items():
     module = importlib.import_module(module)
     replacement = importlib.import_module(replacement)
