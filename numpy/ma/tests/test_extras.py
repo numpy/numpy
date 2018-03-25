@@ -368,23 +368,32 @@ class TestNotMasked(object):
         a = masked_array(np.arange(24).reshape(3, 8),
                          mask=[[0, 0, 0, 0, 1, 1, 1, 1],
                                [1, 1, 1, 1, 1, 1, 1, 1],
-                               [0, 0, 0, 0, 0, 0, 1, 0], ])
+                               [0, 0, 0, 0, 0, 0, 1, 0]])
         tmp = notmasked_contiguous(a, None)
-        assert_equal(tmp[-1], slice(23, 24, None))
-        assert_equal(tmp[-2], slice(16, 22, None))
-        assert_equal(tmp[-3], slice(0, 4, None))
-        #
+        assert_equal(tmp, [
+            slice(0, 4, None),
+            slice(16, 22, None),
+            slice(23, 24, None)
+        ])
+
         tmp = notmasked_contiguous(a, 0)
-        assert_(len(tmp[-1]) == 1)
-        assert_(tmp[-2] is None)
-        assert_equal(tmp[-3], tmp[-1])
-        assert_(len(tmp[0]) == 2)
+        assert_equal(tmp, [
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(2, 3, None)],
+            [slice(2, 3, None)],
+            None,
+            [slice(2, 3, None)]
+        ])
         #
         tmp = notmasked_contiguous(a, 1)
-        assert_equal(tmp[0][-1], slice(0, 4, None))
-        assert_(tmp[1] is None)
-        assert_equal(tmp[2][-1], slice(7, 8, None))
-        assert_equal(tmp[2][-2], slice(0, 6, None))
+        assert_equal(tmp, [
+            [slice(0, 4, None)],
+            None,
+            [slice(0, 6, None), slice(7, 8, None)]
+        ])
 
 
 class TestCompressFunctions(object):
