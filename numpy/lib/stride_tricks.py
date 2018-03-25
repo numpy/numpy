@@ -196,7 +196,7 @@ def sliding_window_view(x, shape, step=None):
     view_shape = np.concatenate((o, shape), axis=0)
     view_strides = np.concatenate((view_strides, strides), axis=0)
     view = np.lib.stride_tricks.as_strided(x, view_shape, view_strides)
-    return np.squeeze(view)
+    return view
 
 
 def _broadcast_to(array, shape, subok, readonly):
