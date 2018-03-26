@@ -881,18 +881,21 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         edge_dt = float
     # Create edge arrays
     for i in np.arange(D):
-        if np.isscalar(bins[i]):
+        if np.ndim(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
             edges[i] = np.linspace(smin[i], smax[i], bins[i] + 1, dtype=edge_dt)
-        else:
+        elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i], edge_dt)
             # not just monotonic, due to the use of mindiff below
             if np.any(edges[i][:-1] >= edges[i][1:]):
                 raise ValueError(
                     '`bins[{}]` must be strictly increasing, when an array'
                     .format(i))
+        else:
+            raise ValueError(
+                '`bins[{}]` must be a scalar or 1d array'.format(i))
 
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
