@@ -779,10 +779,18 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     Parameters
     ----------
-    sample : array_like
-        The data to be histogrammed. It must be an (N,D) array or data
-        that can be converted to such. The rows of the resulting array
-        are the coordinates of points in a D dimensional polytope.
+    sample : (N, D) array, or (D, N) array_like
+        The data to be histogrammed.
+
+        Note the unusual interpretation of sample when an array_like:
+
+        * When an array, each row is a coordinate in a D-dimensional space -
+          such as ``histogramgramdd(np.array([p1, p2, p3]))``.
+        * When an array_like, each element is the list of values for single
+          coordinate - such as ``histogramgramdd((X, Y, Z))``.
+
+        The first form should be preferred.
+
     bins : sequence or int, optional
         The bin specification:
 
