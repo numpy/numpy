@@ -60,6 +60,14 @@ These compute the greatest common divisor, and lowest common multiple,
 respectively. These work on all the numpy integer types, as well as the
 builtin arbitrary-precision `Decimal` and `long` types.
 
+New keyword ``return_indices'' added for ``np.intersect1d`` 
+
+--------------------------------------------------------------------
+The new keyword ``return_indices'' now allows one to retrieve the 
+indices of the inital arrays that correspond to the common elements
+of the two arrays.
+
+
 Support for cross-platform builds for iOS
 -----------------------------------------
 
