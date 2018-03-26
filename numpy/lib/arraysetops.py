@@ -314,6 +314,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     return_indices : bool
         If True, the indices which correspond to the interesction of the 
         two arrays are returned. Default is False.
+    
+        .. versionadded:: 1.15.0    
+        
     Returns
     -------
     intersect1d : ndarray
