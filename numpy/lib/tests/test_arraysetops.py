@@ -34,6 +34,7 @@ class TestSetOps(object):
         assert_array_equal(c, ed)
 
         assert_array_equal([], intersect1d([], []))
+        
     def test_intersect1d_indices(self):
         #return_indices
         #unique case
@@ -118,7 +119,7 @@ class TestSetOps(object):
 
         #array-likes as both arguments
         c = [(9, 8), (7, 6)]
-        d = (9, 7)
+        d = (9, 7) 
         assert_isin_equal(c, d)
 
         #zero-d array:
