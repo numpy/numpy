@@ -8,6 +8,7 @@ def configuration(parent_package='',top_path=None):
 
     config.add_subpackage('nose_tools')
     config.add_subpackage('pytest_tools')
+    config.add_subpackage('_private')
     config.add_data_dir('tests')
     return config
 
