@@ -885,11 +885,10 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             if bins[i] < 1:
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
-            nbin[i] = bins[i] + 2  # +2 for outlier bins
-            edges[i] = np.linspace(smin[i], smax[i], nbin[i]-1, dtype=edge_dt)
+            edges[i] = np.linspace(smin[i], smax[i], bins[i] + 1, dtype=edge_dt)
         else:
             edges[i] = np.asarray(bins[i], edge_dt)
-            nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
+        nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
         # not just monotonic, due to the use of mindiff below
         if np.any(np.asarray(dedges[i]) <= 0):
