@@ -53,6 +53,7 @@ class TestSetOps(object):
         assert_array_equal(c, ef)
         assert_array_equal(a[i1], ef)
         assert_array_equal(b[i2], ef)
+        
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])
         b = np.array([2, 4, 3, 1, 5])
