@@ -319,9 +319,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     intersect1d : ndarray
         Sorted 1D array of common and unique elements.
     comm1 : ndarray
-        Indices of common points in first array.
+        Indices of common elements in first array.
     comm2 : ndarray
-        Indices of common points in second array.
+        Indices of common elements in second array.
 
     See Also
     --------
@@ -341,10 +341,14 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     
     To return the indices of the values common to the input arrays
     along with the intersected values:
-    
-    >>> np.intersect1d([1,2,3,4], [2,1,4,6], return_indices=True)
-    (array([1,2,4]), array([0,1,3]), array([1,0,2]))
-    >>> np.intersect1d([1,2,2,3,4,3,2],[1,8,4,2,2,3,2,3],return_indices=True)
+    >>> x = np.array([1, 1, 2, 3, 4])
+    >>> y = np.array([2, 1, 4, 6])
+    >>> xy, x_ind, y_ind = np.intersect1d(x, y, return_indices=True)
+    >>> x_ind, y_ind
+    (array([0, 2, 4]), array([1, 0, 2]))
+    >>> xy, x[x_ind], y[y_ind]
+    (array([1, 2, 4]), array([1, 2, 4]), array([1, 2, 4]))
+    >>> np.intersect1d([1, 2, 2, 3, 4, 3, 2],[1, 8, 4, 2, 2, 3, 2, 3], return_indices=True)
     (array([1, 2, 3, 4]), array([0, 1, 3, 4]), array([0, 3, 5, 2]))
     
     """
