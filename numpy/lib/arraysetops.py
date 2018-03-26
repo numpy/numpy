@@ -348,8 +348,6 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     (array([0, 2, 4]), array([1, 0, 2]))
     >>> xy, x[x_ind], y[y_ind]
     (array([1, 2, 4]), array([1, 2, 4]), array([1, 2, 4]))
-    >>> np.intersect1d([1, 2, 2, 3, 4, 3, 2],[1, 8, 4, 2, 2, 3, 2, 3], return_indices=True)
-    (array([1, 2, 3, 4]), array([0, 1, 3, 4]), array([0, 3, 5, 2]))
     
     """
     if not assume_unique:
