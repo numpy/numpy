@@ -888,13 +888,14 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             edges[i] = np.linspace(smin[i], smax[i], bins[i] + 1, dtype=edge_dt)
         else:
             edges[i] = np.asarray(bins[i], edge_dt)
+            # not just monotonic, due to the use of mindiff below
+            if np.any(edges[i][:-1] >= edges[i][1:]):
+                raise ValueError(
+                    '`bins[{}]` must be strictly increasing, when an array'
+                    .format(i))
+
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
-        # not just monotonic, due to the use of mindiff below
-        if np.any(np.asarray(dedges[i]) <= 0):
-            raise ValueError(
-                '`bins[{}]` must be strictly increasing, when an array'
-                .format(i))
 
     nbin = np.asarray(nbin)
 
