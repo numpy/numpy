@@ -119,7 +119,7 @@ class TestSetOps(object):
 
         #array-likes as both arguments
         c = [(9, 8), (7, 6)]
-        d = (9, 7) 
+        d = (9, 7)
         assert_isin_equal(c, d)
 
         #zero-d array:
