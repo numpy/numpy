@@ -71,6 +71,14 @@ Creating a full iOS-compatible NumPy package requires building for the 5
 architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
 combining these 5 compiled builds products into a single "fat" binary.
 
+``return_indices'' keyword added for ``np.intersect1d''
+-----------------------------------------
+
+New keyword ``return_indices'' returns the indices of the two input arrays
+that correspond to the common elements. The first instance of a value is 
+used if there are multiple.
+
+
 Improvements
 ============
 
