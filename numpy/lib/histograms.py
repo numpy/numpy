@@ -927,7 +927,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
-    xy = np.zeros(N, int)
+    xy = np.zeros(N, np.intp)
     for i in np.arange(0, D-1):
         xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
     xy += Ncount[ni[-1]]
