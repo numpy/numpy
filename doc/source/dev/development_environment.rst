@@ -203,7 +203,7 @@ typically packaged as ``python-dbg``) is highly recommended.
 
 .. _DebuggingWithGdb: https://wiki.python.org/moin/DebuggingWithGdb
 
-.. _tox: http://tox.testrun.org
+.. _tox: https://tox.readthedocs.io/
 
 .. _virtualenv: http://www.virtualenv.org/
 
