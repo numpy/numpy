@@ -3,7 +3,10 @@ Back compatibility utils module. It will import the appropriate
 set of tools
 
 """
-import os
+import warnings
+
+warnings.warn(ImportWarning,
+    "Import from numpy.testing, not numpy.testing.utils")
 
 from ._private.utils import *
 
