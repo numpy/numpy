@@ -5,7 +5,7 @@ set of tools
 """
 import os
 
-from .nose_tools.nosetester import *
+from ._private.nosetester import *
 
 
 __all__ = ['get_package_name', 'run_module_suite', 'NoseTester',

@@ -5,4 +5,4 @@ set of tools
 """
 import os
 
-from .nose_tools.decorators import *
+from ._private.decorators import *
