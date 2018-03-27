@@ -128,7 +128,7 @@ class TestAgainstNumPy(object):
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
         assert (state[3] == state2['has_gauss'])
-        assert (state[4] == state2['gauss'])
+        assert_allclose(state[4], state2['gauss'], atol=1e-10)
 
     def test_common_seed(self):
         self.rg.seed(1234)
