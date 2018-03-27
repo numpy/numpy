@@ -4315,9 +4315,6 @@ standard_exponential = _random_generator.standard_exponential
 standard_gamma = _random_generator.standard_gamma
 standard_normal = _random_generator.standard_normal
 standard_t = _random_generator.standard_t
-get_state = lambda: _random_generator.state
-def set_state(state):
-    _random_generator.state = state
 tomaxint = _random_generator.tomaxint
 triangular = _random_generator.triangular
 uniform = _random_generator.uniform
