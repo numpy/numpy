@@ -18,7 +18,7 @@ from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
 from nose.util import src
 from .nosetester import get_package_name
-from .utils import KnownFailureException, KnownFailureTest
+from ..utils import KnownFailureException, KnownFailureTest
 
 
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish

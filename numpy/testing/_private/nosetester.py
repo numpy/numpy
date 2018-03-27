@@ -12,7 +12,7 @@ import warnings
 from numpy.compat import basestring
 import numpy as np
 
-from .utils import import_nose, suppress_warnings
+from ..utils import import_nose, suppress_warnings
 
 
 __all__ = ['get_package_name', 'run_module_suite', 'NoseTester',
@@ -399,7 +399,7 @@ class NoseTester(object):
         # cap verbosity at 3 because nose becomes *very* verbose beyond that
         verbose = min(verbose, 3)
 
-        from . import utils
+        from .. import utils
         utils.verbose = verbose
 
         argv, plugins = self.prepare_test_args(

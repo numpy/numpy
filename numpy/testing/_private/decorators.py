@@ -22,7 +22,7 @@ try:
 except ImportError:
     import collections as collections_abc
 
-from .utils import SkipTest, assert_warns, HAS_REFCOUNT
+from ..utils import SkipTest, assert_warns, HAS_REFCOUNT
 
 __all__ = ['slow', 'setastest', 'skipif', 'knownfailureif', 'deprecated',
            'parametrize', '_needs_refcount',]
