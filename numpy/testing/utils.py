@@ -5,7 +5,7 @@ set of tools
 """
 import os
 
-from .nose_tools.utils import *
+from ._private.utils import *
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
