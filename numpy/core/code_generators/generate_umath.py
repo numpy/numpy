@@ -966,7 +966,7 @@ def make_arrays(funcdict):
                     for vt in t.simd:
                         code2list.append(textwrap.dedent("""\
                         #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-                        if (NPY_CPU_SUPPORTS_{ISA}) {{
+                        if (npy_cpu_supports("{ISA}")) {{
                             {fname}_functions[{idx}] = {type}_{fname}_{isa};
                         }}
                         #endif
@@ -1073,7 +1073,7 @@ def make_code(funcdict, filename):
 
         Please make changes to the code generator program (%s)
     **/
-
+    #include "cpuid.h"
     %s
 
     static int

@@ -101,22 +101,6 @@
 #endif
 #endif
 
-#ifdef HAVE___BUILTIN_CPU_SUPPORTS
-  #ifdef HAVE_ATTRIBUTE_TARGET_AVX2
-    #define NPY_CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
-  #else
-    #define NPY_CPU_SUPPORTS_AVX2 0
-  #endif
-  #ifdef HAVE_ATTRIBUTE_TARGET_AVX
-    #define NPY_CPU_SUPPORTS_AVX __builtin_cpu_supports("avx")
-  #else
-    #define NPY_CPU_SUPPORTS_AVX 0
-  #endif
-#else
-  #define NPY_CPU_SUPPORTS_AVX 0
-  #define NPY_CPU_SUPPORTS_AVX2 0
-#endif
-
 #if defined(_MSC_VER)
         #define NPY_INLINE __inline
 #elif defined(__GNUC__)
