@@ -92,11 +92,14 @@ What's New or Different
 ~~~~~~~~~~~~~~~~~~~~~~~
 .. warning::
 
-  The Box-Muller method used to produce NumPy's normals is no longer available.
-  It is not possible to exactly reproduce the random values produced from NumPy
+  The Box-Muller method used to produce NumPy's normals is no longer available
+  in :class:`~randomgen.generator.RandomGenerator`.  It is not possible to 
+  reproduce the random values using :class:`~randomgen.generator.RandomGenerator` 
   for the normal distribution or any other distribution that relies on the
-  normal such as the gamma or student's t.
-
+  normal such as the gamma or student's t. If you require backward compatibility, a 
+  legacy generator, :class:`~randomgen.legacy.LegacyGenerator`, has been created
+  which can fully reproduce the sequence produced by NumPy.
+  
 * The normal, exponential and gamma generators use 256-step Ziggurat
   methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
   implementations.

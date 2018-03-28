@@ -10,11 +10,14 @@ NumPy RandomState evolution.
 This is a library and generic interface for alternative random 
 generators in Python and NumPy.
 
-### Compatibility Warning
-RandomGen no longer supports Box-Muller normal variates and so it not
+## Compatibility Warning
+
+`RandomGenerator` does notsupports Box-Muller normal variates and so it not
 100% compatible with NumPy (or randomstate). Box-Muller normals are slow
 to generate and all functions which previously relied on Box-Muller
-normals now use the faster Ziggurat implementation.
+normals now use the faster Ziggurat implementation. If you require backward
+compatibility, a legacy generator, ``LegacyGenerator``, has been created
+which can fully reproduce the sequence produced by NumPy.
 
 ## Features
 

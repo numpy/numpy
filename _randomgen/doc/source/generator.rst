@@ -17,6 +17,14 @@ changed by passing an instantized basic RNG to
 .. autoclass::
    RandomGenerator
 
+Seed and State Manipulation
+==================
+.. autosummary::
+   :toctree: generated/
+
+   ~RandomGenerator.seed
+   ~RandomGenerator.state
+
 Simple random data
 ==================
 .. autosummary::
