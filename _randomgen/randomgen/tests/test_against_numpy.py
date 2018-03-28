@@ -408,7 +408,6 @@ class TestAgainstNumPy(object):
                           'print_function', 'RandomState']
         mod += known_exlcuded
         diff = set(npmod).difference(mod)
-        print(diff)
         assert_equal(len(diff), 0)
 
     # Tests using legacy generator

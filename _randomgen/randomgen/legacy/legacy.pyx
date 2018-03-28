@@ -108,7 +108,7 @@ cdef class LegacyGenerator:
         return self.__str__() + ' at 0x{:X}'.format(id(self))
 
     def __str__(self):
-        return 'RandomGenerator(' + self._basicrng.__class__.__name__ + ')'
+        return self.__class__.__name__ + '(' + self._basicrng.__class__.__name__ + ')'
 
     # Pickling support:
     def __getstate__(self):
@@ -131,7 +131,33 @@ cdef class LegacyGenerator:
         Reseed the basic RNG.
 
         Parameters depend on the basic RNG used.
+
+        Notes
+        -----
+        Arguments are directly passed to the basic RNG. This is a convenience
+        function. 
+
+        The best method to access seed is to directly use a basic RNG instance.
+        This example demonstrates this best practice.
+
+        >>> from randomgen import MT19937
+        >>> from randomgen.legacy import LegacyGenerator
+        >>> brng = MT19937(123456789)
+        >>> lg = brng.generator
+        >>> brng.seed(987654321)
+
+        The method used to create the generator is not important.
+
+        >>> brng = MT19937(123456789)
+        >>> lg = LegacyGenerator(brng)
+        >>> brng.seed(987654321)
+        
+        These best practice examples are equivalent to 
+
+        >>> lg = LegacyGenerator(MT19937(123456789))
+        >>> lg.seed(987654321)
         """
+
         # TODO: Should this remain
         self._basicrng.seed(*args, **kwargs)
         self._reset_gauss()
@@ -168,7 +194,6 @@ cdef class LegacyGenerator:
                 st['has_gauss'] = value[3]
                 st['gauss'] = value[4]
             value = st
-                
         self._aug_state.gauss = value.get('gauss', 0.0)
         self._aug_state.has_gauss = value.get('has_gauss', 0)
         self._basicrng.state = value
