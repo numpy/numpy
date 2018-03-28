@@ -47,7 +47,7 @@ when accessing the state so that these extra values are saved.
    lg.standard_exponential()
    
 
-.. currentmodule:: randomgen.legacy
+.. currentmodule:: randomgen.legacy.legacy
 
 .. autoclass::
    LegacyGenerator

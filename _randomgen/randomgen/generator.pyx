@@ -135,6 +135,30 @@ cdef class RandomGenerator:
         Reseed the basic RNG.
 
         Parameters depend on the basic RNG used.
+
+        Notes
+        -----
+        Arguments are directly passed to the basic RNG. This is a convenience
+        function. 
+
+        The best method to access seed is to directly use a basic RNG instance.
+        This example demonstrates this best practice.
+
+        >>> from randomgen import RandomGenerator, PCG64
+        >>> brng = PCG64(1234567891011)
+        >>> rg = brng.generator
+        >>> brng.seed(1110987654321)
+
+        The method used to create the generator is not important.
+
+        >>> brng = PCG64(1234567891011)
+        >>> rg = RandomGenerator(brng)
+        >>> brng.seed(1110987654321)
+        
+        These best practice examples are equivalent to 
+
+        >>> rg = RandomGenerator(PCG64(1234567891011))
+        >>> rg.seed(1110987654321)
         """
         # TODO: Should this remain
         self._basicrng.seed(*args, **kwargs)
@@ -150,6 +174,11 @@ cdef class RandomGenerator:
         state : dict
             Dictionary containing the information required to describe the
             state of the Basic RNG
+        
+        Notes
+        -----
+        This is a trivial pass-through function.  RandomGenerator does not 
+        directly contain or manipulate the basic RNG's state.
         """
         return self._basicrng.state
 
