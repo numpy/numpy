@@ -114,7 +114,9 @@ cdef class RandomGenerator:
         return self.__str__() + ' at 0x{:X}'.format(id(self))
 
     def __str__(self):
-        return 'RandomGenerator(' + self._basicrng.__class__.__name__ + ')'
+        _str = self.__class__.__name__
+        _str += '(' + self._basicrng.__class__.__name__ + ')'
+        return _str
 
     # Pickling support:
     def __getstate__(self):
