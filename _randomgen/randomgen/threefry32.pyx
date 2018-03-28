@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import numpy as np
 from cpython.pycapsule cimport PyCapsule_New
 from distributions cimport brng_t

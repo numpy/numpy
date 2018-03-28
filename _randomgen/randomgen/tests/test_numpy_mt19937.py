@@ -56,7 +56,8 @@ class TestBinomial(object):
         # This test addresses issue #3480.
         zeros = np.zeros(2, dtype='int')
         for p in [0, .5, 1]:
-            assert_(random.binomial(0, p) == 0)
+            val = random.binomial(0, p)
+            assert val == 0
             assert_array_equal(random.binomial(zeros, p), zeros)
 
     def test_p_is_nan(self):
