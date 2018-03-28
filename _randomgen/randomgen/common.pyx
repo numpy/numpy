@@ -1,5 +1,6 @@
 #!python
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True
+from __future__ import absolute_import
 
 from collections import namedtuple
 from cpython cimport PyFloat_AsDouble

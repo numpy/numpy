@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from libc.stdlib cimport malloc, free
 from cpython.pycapsule cimport PyCapsule_New
 
