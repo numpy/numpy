@@ -18,7 +18,7 @@ changed by passing an instantized basic RNG to
    RandomGenerator
 
 Seed and State Manipulation
-==================
+===========================
 .. autosummary::
    :toctree: generated/
 
