@@ -2923,7 +2923,11 @@ npyiter_allocate_arrays(NpyIter *iter,
             /* If the data will be written to, set UPDATEIFCOPY */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
                 Py_INCREF(op[iop]);
+#if AVOID_UPDATEIFCOPY
+                if (PyArray_SetWritebackIfCopyBase(temp, op[iop]) < 0) {
+#else
                 if (PyArray_SetUpdateIfCopyBase(temp, op[iop]) < 0) {
+#endif
                     Py_DECREF(temp);
                     return 0;
                 }
