@@ -1323,35 +1323,45 @@ class  TestFiniteChecks(object):
     def test_object(self):
         x = np.array([
             42, 4.2, float('inf'), float('-inf'), float('nan'),
-            complex(4.2, -2.4),
-            complex(float('inf'), 2.2), complex(4.4, float('-inf')), complex(float('-inf'), float('inf')),
-            complex(-4.2, float('nan')), complex(float('nan'), 2.4), complex(float('nan'), float('nan')),
-            complex(float('inf'), float('nan')), complex(float('nan'), float('-inf')),
-            _CustomFloat(42), _CustomFloat('inf'), _CustomFloat('-inf'), _CustomFloat('nan'),
-            _CustomComplex(4, 2), _CustomComplex(4, 'inf'), _CustomComplex('-inf', 2), _CustomComplex('inf', '-inf'),
-            _CustomComplex(4, 'nan'), _CustomComplex('nan', 2), _CustomComplex('nan', 'nan'),
-            _CustomComplex('-inf', 'nan'),
-            _CustomMixed(42, 'nan', 'inf'), _CustomMixed('inf', 4, 2), _CustomMixed('nan', 4, 2),
-            _CustomMixed('-inf', 'nan', 'nan'), _CustomMixed('nan', 'inf', '-inf'),
+            complex(4.2, -2.4), complex(float('inf'), 2.2),
+            complex(4.4, float('-inf')), complex(float('-inf'), float('inf')),
+            complex(-4.2, float('nan')), complex(float('nan'), 2.4),
+            complex(float('nan'), float('nan')),
+            complex(float('inf'), float('nan')),
+            complex(float('nan'), float('-inf')), _CustomFloat(42),
+            _CustomFloat('inf'), _CustomFloat('-inf'), _CustomFloat('nan'),
+            _CustomComplex(4, 2), _CustomComplex(4, 'inf'),
+            _CustomComplex('-inf', 2), _CustomComplex('inf', '-inf'),
+            _CustomComplex(4, 'nan'), _CustomComplex('nan', 2),
+            _CustomComplex('nan', 'nan'), _CustomComplex('-inf', 'nan'),
+            _CustomMixed(42, 'nan', 'inf'), _CustomMixed('inf', 4, 2),
+            _CustomMixed('nan', 4, 2), _CustomMixed('-inf', 'nan', 'nan'),
+            _CustomMixed('nan', 'inf', '-inf'),
         ], dtype=np.object)
         expected_inf = np.array([
-            False, False, True, True, False, False, True, True, True, False, False, False, True, True,
-            False, True, True, False, False, True, True, True, False, False, False, True,
-            False, True, False, True, False,
+            False, False, True, True, False, False, True, True, True, False,
+            False, False, True, True, False, True, True, False, False, True,
+            True, True, False, False, False, True, False, True, False, True,
+            False,
         ])
         expected_nan = np.array([
-            False, False, False, False, True, False, False, False, False, True, True, True, True, True,
-            False, False, False, True, False, False, False, False, True, True, True, True,
-            False, False, True, False, True,
+            False, False, False, False, True, False, False, False, False, True,
+            True, True, True, True, False, False, False, True, False, False,
+            False, False, True, True, True, True, False, False, True, False,
+            True,
         ])
         expected_finite = np.array([
-            True, True, False, False, False, True, False, False, False, False, False, False, False, False,
-            True, False, False, False, True, False, False, False, False, False, False, False,
-            True, False, False, False, False,
+            True, True, False, False, False, True, False, False, False, False,
+            False, False, False, False, True, False, False, False, True, False,
+            False, False, False, False, False, False, True, False, False, False,
+            False,
         ])
-        assert_array_equal(np.isinf(x), expected_inf, err_msg='Incorrect result in isinf')
-        assert_array_equal(np.isnan(x), expected_nan, err_msg='Incorrect result in isnan')
-        assert_array_equal(np.isfinite(x), expected_finite, err_msg='Incorrect result in isfinite')
+        assert_array_equal(np.isinf(x), expected_inf,
+                           err_msg='Incorrect result in isinf')
+        assert_array_equal(np.isnan(x), expected_nan,
+                           err_msg='Incorrect result in isnan')
+        assert_array_equal(np.isfinite(x), expected_finite,
+                           err_msg='Incorrect result in isfinite')
 
     def test_object_err(self):
         x = np.array([object()], dtype=np.object)
