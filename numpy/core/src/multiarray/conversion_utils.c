@@ -420,7 +420,8 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
         *sortkind = NPY_MERGESORT;
     }
     else if (str[0] == 's' || str[0] == 'S') {
-        *sortkind = NPY_STABLESORT;
+        /* mergesort is the only stable sorting method in numpy */
+        *sortkind = NPY_MERGESORT;
     }
     else {
         PyErr_Format(PyExc_ValueError,
