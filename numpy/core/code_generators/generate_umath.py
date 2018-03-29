@@ -807,7 +807,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           None,
-          TD(inexact, out='?'),
+          TD(noint, out='?'),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -819,13 +819,13 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           None,
-          TD(inexact, out='?'),
+          TD(noint, out='?'),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           None,
-          TD(inexact, out='?'),
+          TD(noint, out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,
