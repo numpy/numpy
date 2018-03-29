@@ -1733,7 +1733,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Should we take the first values as names ?
     if names is True:
         fval = first_values[0].strip()
-	if comments is not None:
+        if comments is not None:
             if fval in comments:
                 del first_values[0]
 
