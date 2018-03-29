@@ -73,7 +73,6 @@ __all__ += einsumfunc.__all__
 
 from numpy.testing import _numpy_tester
 test = _numpy_tester().test
-bench = _numpy_tester().bench
 
 # Make it possible so that ufuncs can be pickled
 #  Here are the loading and unloading functions
