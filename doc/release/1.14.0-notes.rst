@@ -347,6 +347,11 @@ in the c-api_ documentation and the example in how-to-extend_.
 
 .. _c-api: https://github.com/numpy/numpy/blob/master/doc/source/reference/c-api.array.rst
 .. _how-to-extend: https://github.com/numpy/numpy/blob/master/doc/source/user/c-info.how-to-extend.rst
+Support for ``dtype=object`` in ``isinf``, ``isnan``, ``isfinite``
+------------------------------------------------------------------
+New inner loops added to handle any Python float or complex object (or object
+whose type implements ``__float__`` or ``__complex__`` consistently with how
+the corresponding numpy types are handled.
 
 
 New Features
