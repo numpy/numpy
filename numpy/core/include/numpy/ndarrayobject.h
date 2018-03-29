@@ -170,14 +170,19 @@ extern "C" CONFUSE_EMACS
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
+/* Move to arrayobject.c once PyArray_XDECREF_ERR is removed */
 static NPY_INLINE void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
     if (arr != NULL) {
+        PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
         if ((PyArray_FLAGS(arr) & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY)) {
-            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(arr);
-            PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
+            if (fa->base) {
+                PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
+                Py_DECREF(fa->base);
+                fa->base = NULL;
+            }
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
         }
