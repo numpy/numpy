@@ -44,7 +44,7 @@ class TypeDescription(object):
     astype : dict or None, optional
         If astype['x'] is 'y', uses PyUFunc_x_x_As_y_y/PyUFunc_xx_x_As_yy_y
         instead of PyUFunc_x_x/PyUFunc_xx_x.
-    simd: list
+    simd : list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
     """
@@ -1091,7 +1091,6 @@ def make_code(funcdict, filename):
 
 if __name__ == "__main__":
     filename = __file__
-    fid = open('__umath_generated.c', 'w')
     code = make_code(defdict, filename)
-    fid.write(code)
-    fid.close()
+    with open('__umath_generated.c', 'w') as fid:
+        fid.write(code)
