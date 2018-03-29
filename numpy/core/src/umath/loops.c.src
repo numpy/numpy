@@ -2899,43 +2899,6 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
     Py_XDECREF(zero);
 }
 
-/**begin repeat1
- * #kind = isnan, isinf, isfinite#
- * #func = npy_isnan, npy_isinf, npy_isfinite#
- * #OP = ||, ||, &&#
- **/
-NPY_NO_EXPORT void
-OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
-{
-    double dbl;
-    Py_complex cplx;
-    int v;
-
-    UNARY_LOOP {
-        PyObject *in1 = *(PyObject **)ip1;
-        // Try as float
-        dbl = PyFloat_AsDouble(in1);
-        if (dbl == -1.0 && PyErr_Occurred()) {
-            PyErr_Clear();
-            // Try as complex
-            cplx = PyComplex_AsCComplex(in1);
-            if (cplx.real == -1.0 && cplx.imag == 0.0 && PyErr_Occurred()) {
-                PyErr_Format(PyExc_TypeError, "must be real or complex number, not %s",
-                             Py_TYPE(in1)->tp_name);
-                break;
-            }
-            else {
-                v = (@func@(cplx.real) != 0 @OP@ @func@(cplx.imag) != 0);
-            }
-        }
-        else {
-            v = @func@(dbl) != 0;
-        }
-        *((npy_bool *)op1) = v;
-    }
-}
-/**end repeat**/
-
 /*
  *****************************************************************************
  **                              END LOOPS                                  **

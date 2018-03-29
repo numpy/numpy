@@ -1313,53 +1313,153 @@ class _CustomComplex(object):
         return self.cval
 
 
-class _CustomMixed(_CustomFloat, _CustomComplex):
+class _CustomInt(object):
+    def __init__(self, value):
+        self.ival = value
+    def __int__(self):
+        return self.ival
+
+
+class _CustomMixedFC(_CustomFloat, _CustomComplex):
     def __init__(self, value, real, imag):
         _CustomFloat.__init__(self, value)
         _CustomComplex.__init__(self, real, imag)
 
 
+class _CustomMixedFI(_CustomFloat, _CustomInt):
+    def __init__(self, fvalue, ivalue):
+        _CustomFloat.__init__(self, fvalue)
+        _CustomInt.__init__(self, ivalue)
+
+
+class _CustomMixedCI(_CustomComplex, _CustomInt):
+    def __init__(self, real, imag, value):
+        _CustomComplex.__init__(self, real, imag)
+        _CustomInt.__init__(self, value)
+
+
+class _CustomMixedFCI(_CustomFloat, _CustomComplex, _CustomInt):
+    def __init__(self, fvalue, real, imag, ivalue):
+        _CustomFloat.__init__(self, fvalue)
+        _CustomComplex.__init__(self, real, imag)
+        _CustomInt.__init__(self, ivalue)
+
+
 class  TestFiniteChecks(object):
     def test_object(self):
         x = np.array([
+            # float
             42, 4.2, float('inf'), float('-inf'), float('nan'),
+            # complex
             complex(4.2, -2.4), complex(float('inf'), 2.2),
             complex(4.4, float('-inf')), complex(float('-inf'), float('inf')),
             complex(-4.2, float('nan')), complex(float('nan'), 2.4),
             complex(float('nan'), float('nan')),
             complex(float('inf'), float('nan')),
-            complex(float('nan'), float('-inf')), _CustomFloat(42),
+            complex(float('nan'), float('-inf')),
+            # _CustomFloat
+            _CustomFloat(42),
             _CustomFloat('inf'), _CustomFloat('-inf'), _CustomFloat('nan'),
+            # _CustomComplex
             _CustomComplex(4, 2), _CustomComplex(4, 'inf'),
             _CustomComplex('-inf', 2), _CustomComplex('inf', '-inf'),
             _CustomComplex(4, 'nan'), _CustomComplex('nan', 2),
             _CustomComplex('nan', 'nan'), _CustomComplex('-inf', 'nan'),
-            _CustomMixed(42, 'nan', 'inf'), _CustomMixed('inf', 4, 2),
-            _CustomMixed('nan', 4, 2), _CustomMixed('-inf', 'nan', 'nan'),
-            _CustomMixed('nan', 'inf', '-inf'),
+            # _CustomInt
+            _CustomInt(42),
+            # _CustomMixedFC
+            _CustomMixedFC(42, 'nan', 'inf'), _CustomMixedFC('inf', 4, 2),
+            _CustomMixedFC('nan', 4, 2), _CustomMixedFC('-inf', 'nan', 'nan'),
+            _CustomMixedFC('nan', 'inf', '-inf'),
+            # _CustomMixedFI
+            _CustomMixedFI(4, 2), _CustomMixedFI(4, 'inf'),
+            _CustomMixedFI(4, 'nan'), _CustomMixedFI('-inf', 2),
+            _CustomMixedFI('nan', 2), _CustomMixedFI('inf', 'nan'),
+            _CustomMixedFI('nan', '-inf'),
+            # _CustomMixedCI
+            _CustomMixedCI(4, 2, 0), _CustomMixedCI(2, 'inf', 42),
+            _CustomMixedCI('nan', 2, 42), _CustomMixedCI('nan', '-inf', 0),
+            # _CustomMixedFCI
+            _CustomMixedFCI(4.0, 2.0, 4.0, 2),
+            _CustomMixedFCI(4.0, 'inf', 4.0, 2),
+            _CustomMixedFCI(4.0, 2.0, 'nan', 2),
+            _CustomMixedFCI(4.0, 'nan', '-inf', 2),
+            _CustomMixedFCI('nan', 2.0, 4.0, 2),
+            _CustomMixedFCI('inf', 2.0, 4.0, 2),
+            _CustomMixedFCI('-inf', 2.0, 4.0, 2),
         ], dtype=np.object)
-        expected_inf = np.array([
-            False, False, True, True, False, False, True, True, True, False,
-            False, False, True, True, False, True, True, False, False, True,
-            True, True, False, False, False, True, False, True, False, True,
-            False,
-        ])
         expected_nan = np.array([
-            False, False, False, False, True, False, False, False, False, True,
-            True, True, True, True, False, False, False, True, False, False,
-            False, False, True, True, True, True, False, False, True, False,
-            True,
+            # float
+            False, False, False, False, True,
+            # complex: either can be nan
+            False, False, False, False, True, True, True, True, True,
+            # _CustomFloat: same as regular float
+            False, False, False, True,
+            # _CustomComplex: same as regular complex
+            False, False, False, False, True, True, True, True,
+            # _CustomInt: never nan
+            False,
+            # _CustomMixedFC: only float part matters
+            False, False, True, False, True,
+            # _CustomMixedFI: only float part matters
+            False, False, False, False, True, False, True,
+            # _CustomMixedCI: only complex part matters
+            False, False, True, True,
+            # _CustomMixedFCI: only float part matters
+            False, False, False, False, True, False, False,
+        ])
+        expected_inf = np.array([
+            # float
+            False, False, True, True, False,
+            # complex: either can be inf
+            False, True, True, True, False, False, False, True, True,
+            # _CustomFloat: same as regular float
+            False, True, True, False,
+            # _CustomComplex: same as regular complex
+            False, True, True, True, False, False, False, True,
+            # _CustomInt: never inf
+            False,
+            # _CustomMixedFC: only float part matters
+            False, True, False, True, False,
+            # _CustomMixedFI: only float part matters
+            False, False, False, True, False, True, False,
+            # _CustomMixedCI: only complex part matters
+            False, True, False, True,
+            # _CustomMixedFCI: only float part matters
+            False, False, False, False, False, True, True,
         ])
         expected_finite = np.array([
-            True, True, False, False, False, True, False, False, False, False,
-            False, False, False, False, True, False, False, False, True, False,
-            False, False, False, False, False, False, True, False, False, False,
-            False,
+            # float
+            True, True, False, False, False,
+            # complex: both must be finite
+            True, False, False, False, False, False, False, False, False,
+            # _CustomFloat: same as regular float
+            True, False, False, False,
+            # _CustomComplex: same as regular complex
+            True, False, False, False, False, False, False, False,
+            # _CustomInt: always finite
+            True,
+            # _CustomMixedFC: only float part matters
+            True, False, False, False, False,
+            # _CustomMixedFI: only float part matters
+            True, True, True, False, False, False, False,
+            # _CustomMixedCI: only complex part matters
+            True, False, False, False,
+            # _CustomMixedFCI: only float part matters
+            True, True, True, True, False, False, False,
         ])
-        assert_array_equal(np.isinf(x), expected_inf,
-                           err_msg='Incorrect result in isinf')
+        actual_nan = np.isnan(x)
+        actual_inf = np.isinf(x)
+        actual_finite = np.isfinite(x)
+
+        assert_(isinstance(actual_nan, np.object))
+        assert_(isinstance(actual_inf, np.object))
+        assert_(isinstance(actual_finite, np.object))
+
         assert_array_equal(np.isnan(x), expected_nan,
                            err_msg='Incorrect result in isnan')
+        assert_array_equal(np.isinf(x), expected_inf,
+                           err_msg='Incorrect result in isinf')
         assert_array_equal(np.isfinite(x), expected_finite,
                            err_msg='Incorrect result in isfinite')
 
