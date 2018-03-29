@@ -7275,8 +7275,31 @@ class TestWritebackIfCopy(TestCase):
         assert_equal(arr, -100)
         # after resolve, the two arrays no longer reference eachother
         assert_(not arr_wb.ctypes.data == 0)
+        assert_equal(arr_wb.base, None)
         arr_wb[:] = 100
         assert_equal(arr, -100)
+
+
+    def test_view_discard_refcount(self):
+        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_discard
+        arr = np.arange(9).reshape(3, 3).T
+        orig = arr.copy()
+        if HAS_REFCOUNT:
+            arr_cnt = sys.getrefcount(arr)
+        arr_wb = npy_create_writebackifcopy(arr)
+        assert_(arr_wb.flags.writebackifcopy)
+        assert_(arr_wb.base is arr)
+        arr_wb[:] = -100
+        npy_discard(arr_wb)
+        # arr remains unchanged after discard
+        assert_equal(arr, orig)
+        # after discard, the two arrays no longer reference each other
+        assert_(not arr_wb.ctypes.data == 0)
+        assert_equal(arr_wb.base, None)
+        if HAS_REFCOUNT:
+            assert_equal(arr_cnt, sys.getrefcount(arr))
+        arr_wb[:] = 100
+        assert_equal(arr, orig)
 
 
 class TestArange(object):
