@@ -2,4 +2,10 @@
 Back compatibility noseclasses module. It will import the appropriate
 set of tools
 """
-from .nose_tools.noseclasses import *
+import warnings
+
+warnings.warn(ImportWarning,
+    "Import from numpy.testing, not numpy.testing.noseclasses")
+
+from ._private.noseclasses import *
+

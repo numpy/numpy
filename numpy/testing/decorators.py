@@ -3,6 +3,9 @@ Back compatibility decorators module. It will import the appropriate
 set of tools
 
 """
-import os
+import warnings
 
-from .nose_tools.decorators import *
+warnings.warn(ImportWarning,
+    "Import from numpy.testing, not numpy.testing.decorators")
+
+from ._private.decorators import *

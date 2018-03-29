@@ -3,9 +3,12 @@ Back compatibility utils module. It will import the appropriate
 set of tools
 
 """
-import os
+import warnings
 
-from .nose_tools.utils import *
+warnings.warn(ImportWarning,
+    "Import from numpy.testing, not numpy.testing.utils")
+
+from ._private.utils import *
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
