@@ -1731,10 +1731,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
 
     # Should we take the first values as names ?
-    if (names is True) and (comments is not None):
+    if names is True:
         fval = first_values[0].strip()
-        if fval in comments:
-            del first_values[0]
+	if comments is not None:
+            if fval in comments:
+                del first_values[0]
 
     # Check the columns to use: make sure `usecols` is a list
     if usecols is not None:
