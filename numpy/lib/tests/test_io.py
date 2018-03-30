@@ -1275,8 +1275,6 @@ M   33  21.99
     def test_names_and_comments_none(self):
         #tests case when names is true but comments is None
         data = TextIO('col1 col2\n 1 2\n 3 4')
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
         test = np.genfromtxt(data, dtype=(int, int), comments=None, names=True)
         control = np.array([(1, 2), (3, 4)], dtype=[('col1', int), ('col2', int)])
         assert_equal(test, control)
