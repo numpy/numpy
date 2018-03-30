@@ -5,7 +5,7 @@ set of tools
 """
 import warnings
 
-warnings.warn(ImportWarning,
-    "Import from numpy.testing, not numpy.testing.decorators")
+warnings.warn("Import from numpy.testing, not numpy.testing.decorators",
+              ImportWarning)
 
 from ._private.decorators import *
