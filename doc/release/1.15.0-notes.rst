@@ -55,6 +55,16 @@ All downstream users seem to use detect the `None` result from
 ``flatnotmasked_contiguous`` and replace it with ``[]``.
 These callers will continue to work as before.
 
+``np.squeeze`` now respects the API expectation of objects that do not handle an ``axis`` argument
+--------------------------------------------------------------------------------------------------
+Prior to version ``1.7.0`` ``np.squeeze`` did not have an ``axis`` argument and all empty axes were removed
+by default. After incorporation of an ``axis`` argument, it was possible to selectively squeeze single
+or multiple empty axes, but the old API expectation was not respected because the axes could still be
+selectively removed (silent success) in an object depending on the old API. The silent success is no
+longer possible, and objects expecting the old API are respected. The silent success was prevented
+by removing the interception of an otherwise-normal Exception when ``axis`` was provided to an object
+using the old API.
+
 
 C API changes
 =============
