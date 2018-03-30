@@ -374,7 +374,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     }
 
     /* Leading '-' sign for negative year */
-    if (*substr == '-') {
+    if (*substr == '-' || *substr == '+') {
         ++substr;
         --sublen;
     }

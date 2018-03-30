@@ -1255,10 +1255,17 @@ class TestDateTime(object):
         # Allow space instead of 'T' between date and time
         assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8[s]')),
                      np.array(['1980-02-29 01:02:03'], np.dtype('M8[s]')))
+        # Allow positive years
+        assert_equal(np.array(['+1980-02-29T01:02:03'], np.dtype('M8[s]')),
+                     np.array(['+1980-02-29 01:02:03'], np.dtype('M8[s]')))
         # Allow negative years
         assert_equal(np.array(['-1980-02-29T01:02:03'], np.dtype('M8[s]')),
                      np.array(['-1980-02-29 01:02:03'], np.dtype('M8[s]')))
         # UTC specifier
+        with assert_warns(DeprecationWarning):
+            assert_equal(
+                np.array(['+1980-02-29T01:02:03'], np.dtype('M8[s]')),
+                np.array(['+1980-02-29 01:02:03Z'], np.dtype('M8[s]')))
         with assert_warns(DeprecationWarning):
             assert_equal(
                 np.array(['-1980-02-29T01:02:03'], np.dtype('M8[s]')),
