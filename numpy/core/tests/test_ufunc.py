@@ -626,7 +626,7 @@ class TestUfunc(object):
         assert_array_equal(c, (a * b).sum(0))
         c = in1d(a, b, axes=[0, 2])
         assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
-        # Check errors for inproperly constructed axes arguments.
+        # Check errors for improperly constructed axes arguments.
         # should have list.
         assert_raises(TypeError, in1d, a, b, axes=-1)
         # needs enough elements
@@ -671,7 +671,7 @@ class TestUfunc(object):
         d = mm(a, b, out=c, axes=[(-2, -1), (-2, -1), (3, 0)])
         assert_(c is d)
         assert_array_equal(c, np.matmul(a, b).transpose(3, 0, 1, 2))
-        # Check errors for inproperly constructed axes arguments.
+        # Check errors for improperly constructed axes arguments.
         # wrong argument
         assert_raises(TypeError, mm, a, b, axis=1)
         # axes should be list
