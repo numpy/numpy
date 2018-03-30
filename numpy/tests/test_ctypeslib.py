@@ -135,3 +135,7 @@ class TestAsArray(object):
         a = as_array(p, (10,))
         assert_(a.shape == (10,))
         assert_array_equal(a, np.array(range(10)))
+        a = as_array(p, (3, 2))
+        assert_(a.shape == (3, 2))
+        assert_array_equal(a, np.array([[0, 1], [2, 3], [4, 5]]))
+        assert_raises(TypeError, as_array, p)
