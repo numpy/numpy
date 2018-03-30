@@ -5,8 +5,8 @@ set of tools
 """
 import warnings
 
-warnings.warn(ImportWarning,
-    "Import from numpy.testing, not numpy.testing.nosetester")
+warnings.warn("Import from numpy.testing, not numpy.testing.nosetester",
+              ImportWarning)
 
 from ._private.nosetester import *
 

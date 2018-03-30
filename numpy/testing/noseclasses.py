@@ -4,8 +4,8 @@ set of tools
 """
 import warnings
 
-warnings.warn(ImportWarning,
-    "Import from numpy.testing, not numpy.testing.noseclasses")
+warnings.warn("Import from numpy.testing, not numpy.testing.noseclasses",
+              ImportWarning)
 
 from ._private.noseclasses import *
 
