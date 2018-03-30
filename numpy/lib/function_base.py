@@ -4401,7 +4401,7 @@ def append(arr, values, axis=None):
 
 
 def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
-            axis=None, return_params=False, out=None):
+            axis=None, return_params=False):
     """Linearly scale non-NaN values in array to the specified interval.
 
     .. versionadded:: 1.15.0
@@ -4431,8 +4431,6 @@ def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
         If True, also return `offset` and `scale` parameters so that
         ``offset + scale * x`` maps ``x`` from input interval onto
         output interval.
-    out : array_like, optional
-        Array of the same shape as `arr`, in which to store the result.
 
     Returns
     -------
@@ -4483,11 +4481,6 @@ def rescale(arr, out_min=0, out_max=1, in_min=None, in_max=None,
 
     res = arr * scale + offset
 
-    if out is None:
-        out = res
-    else:
-        out[...] = res
-
     if return_params:
-        return out, offset, scale
-    return out
+        return res, offset, scale
+    return res

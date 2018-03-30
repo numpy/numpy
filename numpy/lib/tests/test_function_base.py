@@ -3030,11 +3030,6 @@ class TestRescale(object):
         assert_equal(offset, np.c_[0, -2/3].T)
         assert_equal(scale, np.c_[1/3, 1/3].T)
 
-    def test_out(self):
-        out = np.zeros_like(self.arr)
-        assert_equal(rescale(self.arr, self.arr.min(), self.arr.max(), out=out),
-                     self.arr)
-
     def test_nan(self):
         arr = np.array([[1, 2],
                         [1, 1]])
