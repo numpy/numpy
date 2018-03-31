@@ -22,12 +22,6 @@
 #include "numpy/npy_math.h"
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
-#if !defined(_MSC_VER) || _MSC_VER >= 1600
-#include <immintrin.h>
-#else
-#undef __AVX2__
-#undef __AVX512F__
-#endif
 #endif
 #include <assert.h>
 #include <stdlib.h>
@@ -399,11 +393,7 @@ static NPY_INLINE npy_double sse2_horizontal_@VOP@___m128d(__m128d v)
  *  #scalarf = npy_sqrtf, npy_sqrt#
  *  #c = f, #
  *  #vtype = __m128, __m128d#
- *  #vtype256 = __m256, __m256d#
- *  #vtype512 = __m512, __m512d#
  *  #vpre = _mm, _mm#
- *  #vpre256 = _mm256, _mm256#
- *  #vpre512 = _mm512, _mm512#
  *  #vsuf = ps, pd#
  *  #vsufs = ss, sd#
  *  #nan = NPY_NANF, NPY_NAN#
@@ -422,115 +412,6 @@ static NPY_INLINE npy_double sse2_horizontal_@VOP@___m128d(__m128d v)
 static void
 sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-#ifdef  __AVX512F__
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, 64)
-        op[i] = ip1[i] @OP@ ip2[i];
-    /* lots of specializations, to squeeze out max performance */
-    if (npy_is_aligned(&ip1[i], 64) && npy_is_aligned(&ip2[i], 64)) {
-        if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, 64) {
-                @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
-                @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, a);
-                @vpre512@_store_@vsuf@(&op[i], c);
-            }
-        }
-        else {
-            LOOP_BLOCKED(@type@, 64) {
-                @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
-                @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
-                @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-                @vpre512@_store_@vsuf@(&op[i], c);
-            }
-        }
-    }
-    else if (npy_is_aligned(&ip1[i], 64)) {
-        LOOP_BLOCKED(@type@, 64) {
-            @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
-            @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
-            @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-            @vpre512@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else if (npy_is_aligned(&ip2[i], 64)) {
-        LOOP_BLOCKED(@type@, 64) {
-            @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
-            @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
-            @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-            @vpre512@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else {
-        if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, 64) {
-                @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
-                @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, a);
-                @vpre512@_store_@vsuf@(&op[i], c);
-            }
-        }
-        else {
-            LOOP_BLOCKED(@type@, 64) {
-                @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
-                @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
-                @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-                @vpre512@_store_@vsuf@(&op[i], c);
-            }
-        }
-    }
-#elif __AVX2__
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, 32)
-        op[i] = ip1[i] @OP@ ip2[i];
-    /* lots of specializations, to squeeze out max performance */
-    if (npy_is_aligned(&ip1[i], 32) && npy_is_aligned(&ip2[i], 32)) {
-        if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, 32) {
-                @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
-                @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, a);
-                @vpre256@_store_@vsuf@(&op[i], c);
-            }
-        }
-        else {
-            LOOP_BLOCKED(@type@, 32) {
-                @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
-                @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
-                @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-                @vpre256@_store_@vsuf@(&op[i], c);
-            }
-        }
-    }
-    else if (npy_is_aligned(&ip1[i], 32)) {
-        LOOP_BLOCKED(@type@, 32) {
-            @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
-            @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
-            @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-            @vpre256@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else if (npy_is_aligned(&ip2[i], 32)) {
-        LOOP_BLOCKED(@type@, 32) {
-            @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
-            @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
-            @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-            @vpre256@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else {
-        if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, 32) {
-                @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
-                @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, a);
-                @vpre256@_store_@vsuf@(&op[i], c);
-            }
-        }
-        else {
-            LOOP_BLOCKED(@type@, 32) {
-                @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
-                @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
-                @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-                @vpre256@_store_@vsuf@(&op[i], c);
-            }
-        }
-    }
-#else
     LOOP_BLOCK_ALIGN_VAR(op, @type@, 16)
         op[i] = ip1[i] @OP@ ip2[i];
     /* lots of specializations, to squeeze out max performance */
@@ -584,7 +465,6 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             }
         }
     }
-#endif
     LOOP_BLOCKED_END {
         op[i] = ip1[i] @OP@ ip2[i];
     }
@@ -594,45 +474,6 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 static void
 sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-#ifdef __AVX512F__
-    const @vtype512@ a = @vpre512@_set1_@vsuf@(ip1[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, 64)
-        op[i] = ip1[0] @OP@ ip2[i];
-    if (npy_is_aligned(&ip2[i], 64)) {
-        LOOP_BLOCKED(@type@, 64) {
-            @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
-            @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-            @vpre512@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else {
-        LOOP_BLOCKED(@type@, 64) {
-            @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
-            @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-            @vpre512@_store_@vsuf@(&op[i], c);
-        }
-    }
-
-
-#elif __AVX2__
-    const @vtype256@ a = @vpre256@_set1_@vsuf@(ip1[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, 32)
-        op[i] = ip1[0] @OP@ ip2[i];
-    if (npy_is_aligned(&ip2[i], 32)) {
-        LOOP_BLOCKED(@type@, 32) {
-            @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
-            @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-            @vpre256@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else {
-        LOOP_BLOCKED(@type@, 32) {
-            @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
-            @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-            @vpre256@_store_@vsuf@(&op[i], c);
-        }
-    }
-#else
     const @vtype@ a = @vpre@_set1_@vsuf@(ip1[0]);
     LOOP_BLOCK_ALIGN_VAR(op, @type@, 16)
         op[i] = ip1[0] @OP@ ip2[i];
@@ -650,7 +491,6 @@ sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
             @vpre@_store_@vsuf@(&op[i], c);
         }
     }
-#endif
     LOOP_BLOCKED_END {
         op[i] = ip1[0] @OP@ ip2[i];
     }
@@ -660,44 +500,6 @@ sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
 static void
 sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
-#ifdef __AVX512F__
-    const @vtype512@ b = @vpre512@_set1_@vsuf@(ip2[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, 64)
-        op[i] = ip1[i] @OP@ ip2[0];
-    if (npy_is_aligned(&ip1[i], 64)) {
-        LOOP_BLOCKED(@type@, 64) {
-            @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
-            @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-            @vpre512@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else {
-        LOOP_BLOCKED(@type@, 64) {
-            @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
-            @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
-            @vpre512@_store_@vsuf@(&op[i], c);
-        }
-    }
-
-#elif __AVX2__
-    const @vtype256@ b = @vpre256@_set1_@vsuf@(ip2[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, 32)
-        op[i] = ip1[i] @OP@ ip2[0];
-    if (npy_is_aligned(&ip1[i], 32)) {
-        LOOP_BLOCKED(@type@, 32) {
-            @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
-            @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-            @vpre256@_store_@vsuf@(&op[i], c);
-        }
-    }
-    else {
-        LOOP_BLOCKED(@type@, 32) {
-            @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
-            @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
-            @vpre256@_store_@vsuf@(&op[i], c);
-        }
-    }
-#else
     const @vtype@ b = @vpre@_set1_@vsuf@(ip2[0]);
     LOOP_BLOCK_ALIGN_VAR(op, @type@, 16)
         op[i] = ip1[i] @OP@ ip2[0];
@@ -715,7 +517,6 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
             @vpre@_store_@vsuf@(&op[i], c);
         }
     }
-#endif
     LOOP_BLOCKED_END {
         op[i] = ip1[i] @OP@ ip2[0];
     }

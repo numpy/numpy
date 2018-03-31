@@ -245,11 +245,6 @@ As a result, ``np.ma.mr_`` now works correctly on the ``masked`` constant.
 This means it takes all the same arguments, making more code written for
 ndarray work for masked array too.
 
-Enable AVX2/AVX512 at compile time
--------------------------------------------------------------
-Change to simd.inc.src to use AVX2 or AVX512 at compile time. Solving the gap
-that if compile numpy for avx2 (or 512) with -march=native, still get the SSE
-code for the simd functions even though rest of the code gets AVX2.
 
 ``nan_to_num`` always returns scalars when receiving scalar or 0d inputs
 ------------------------------------------------------------------------
