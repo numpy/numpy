@@ -1743,8 +1743,17 @@ pairwise_sum_@TYPE@(char *a, npy_intp n, npy_intp stride)
  * # OP = +, -, *, /#
  * # PW = 1, 0, 0, 0#
  */
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+
+/**begin repeat2
+ * #isa = , _avx#
+ * #ISA = , AVX#
+ * #CHK = 1, HAVE_ATTRIBUTE_TARGET_AVX#
+ * #ATTR = , NPY_GCC_TARGET_AVX#
+ */
+
+#if @CHK@
+NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
+@TYPE@_@kind@@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if (IS_BINARY_REDUCE) {
 #if @PW@
@@ -1759,14 +1768,12 @@ NPY_NO_EXPORT void
         *((@type@ *)iop1) = io1;
 #endif
     }
-    else if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((@type@ *)op1) = in1 @OP@ in2;
-        }
+    else {
+        BINARY_LOOP_FAST(@type@, @type@, *out = in1 @OP@ in2);
     }
 }
+#endif
+/**end repeat2**/
 /**end repeat1**/
 
 /**begin repeat1

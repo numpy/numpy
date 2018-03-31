@@ -176,8 +176,15 @@ NPY_NO_EXPORT void
  * # kind = add, subtract, multiply, divide#
  * # OP = +, -, *, /#
  */
+
+/**begin repeat2
+ * #isa = , _avx#
+ */
+
 NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+@TYPE@_@kind@@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat2**/
 /**end repeat1**/
 
 /**begin repeat1
