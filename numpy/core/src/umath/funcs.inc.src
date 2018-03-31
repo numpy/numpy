@@ -226,6 +226,84 @@ npy_ObjectLCM(PyObject *i1, PyObject *i2)
     return PyNumber_Absolute(tmp);
 }
 
+/* Utility used to check if a number is an integer or has an __int__/__long__ method */
+static int check_int(PyObject *obj)
+{
+    long lng;
+    int over;
+
+    lng = PyLong_AsLongAndOverflow(obj, &over);
+    if(lng == -1L && over == 0 && PyErr_Occurred()) {
+        PyErr_Clear();
+#if defined(NPY_PY3K)
+        return 0;
+#else
+        lng = PyInt_AsLong(obj);
+        if(lng == -1L && PyErr_Occurred()) {
+            PyErr_Clear();
+            return 0;
+        }
+#endif
+    }
+    return 1;
+}
+
+
+/* Emulates numpy's isinf, isnan, isfinite behavior for Python objects */
+
+/**begin repeat
+ * #label = IsNaN, IsInf, IsFinite#
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #OP = ||, ||, &&#
+ * #intval = 0, 0, 1#
+ */
+static PyObject *
+npy_Object@label@(PyObject *i1)
+{
+    double dbl;
+    Py_complex cplx;
+    int v;
+    PyObject *ret;
+
+    if(i1 == NULL) {
+        return NULL;
+    }
+    else {
+        /* Try as float */
+        dbl = PyFloat_AsDouble(i1);
+        if (dbl == -1.0 && PyErr_Occurred()) {
+            PyErr_Clear();
+            /* Try as complex */
+            cplx = PyComplex_AsCComplex(i1);
+            if (cplx.real == -1.0 && cplx.imag == 0.0 && PyErr_Occurred()) {
+                PyErr_Clear();
+                /* Last effort: try as int/long */
+                if(check_int(i1)) {
+                    v = @intval@;
+                }
+                else {
+                    PyErr_Format(
+                        PyExc_TypeError, "must be real, complex or integer number, not %s",
+                        Py_TYPE(i1)->tp_name);
+                    return NULL;
+                }
+            }
+            else {
+                v = (@func@(cplx.real) != 0 @OP@ @func@(cplx.imag) != 0);
+            }
+        }
+        else {
+            v = @func@(dbl) != 0;
+        }
+        ret = v ? Py_True : Py_False;
+        Py_INCREF(ret);
+        return ret;
+    }
+}
+/**end repeat**/
+
+
 /*
  *****************************************************************************
  **                           COMPLEX FUNCTIONS                             **

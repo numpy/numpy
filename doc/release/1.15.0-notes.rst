@@ -82,6 +82,13 @@ Creating a full iOS-compatible NumPy package requires building for the 5
 architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
 combining these 5 compiled builds products into a single "fat" binary.
 
+Support for ``dtype=object`` in ``isnan``, ``isinf``, ``isfinite``
+------------------------------------------------------------------
+Support added for any object types that define ``__float__``, ``__complex__``,
+or ``__int__``/``__long__``. The return value for ``object`` inputs contains
+Python ``bool``s and is of type ``object``.
+
+
 Improvements
 ============
 

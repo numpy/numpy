@@ -1588,6 +1588,15 @@ add_newdoc('numpy.core.umath', 'isfinite',
     second argument is also supplied when `x` is a scalar input, or if
     first and second arguments have different shapes.
 
+    `isfinite` now accepts inputs with ``dtype=object`` and returns an
+    array of Python ``bool``s, also with ``dtype=object``. The behavior
+    for objects is consistent with numpy, which handles complex and pure
+    integer types, rather than Python, which does not. Any type that
+    does not implement `__float__`, `__complex` or `__int__` will raise
+    a `TypeError`.
+
+    .. versionadded:: 1.14.0
+
     Examples
     --------
     >>> np.isfinite(1)
@@ -1654,6 +1663,15 @@ add_newdoc('numpy.core.umath', 'isinf',
     argument is a scalar, or if the first and second arguments have
     different shapes.
 
+    `isinf` now accepts inputs with ``dtype=object`` and returns an
+    array of Python ``bool``s, also with ``dtype=object``. The behavior
+    for objects is consistent with numpy, which handles complex and pure
+    integer types, rather than Python, which does not. Any type that
+    does not implement `__float__`, `__complex` or `__int__` will raise
+    a `TypeError`.
+
+    .. versionadded:: 1.14.0
+
     Examples
     --------
     >>> np.isinf(np.inf)
@@ -1703,6 +1721,15 @@ add_newdoc('numpy.core.umath', 'isnan',
     -----
     NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754). This means that Not a Number is not equivalent to infinity.
+
+    `isnan` now accepts inputs with ``dtype=object`` and returns an
+    array of Python ``bool``s, also with ``dtype=object``. The behavior
+    for objects is consistent with numpy, which handles complex and pure
+    integer types, rather than Python, which does not. Any type that
+    does not implement `__float__`, `__complex` or `__int__` will raise
+    a `TypeError`.
+
+    .. versionadded:: 1.14.0
 
     Examples
     --------
