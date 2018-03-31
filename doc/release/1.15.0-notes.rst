@@ -165,5 +165,19 @@ This change makes it easier to write Python 2/3 compatible code using
 ``from __future__ import unicode_literals``, which previously would cause
 string literal field names to raise a TypeError in Python 2.
 
+``sort`` functions accept ``kind='stable'``
+-------------------------------------------
+Up until now, to perform a stable sort on the data, the user must do::
+
+    >>> np.sort([5, 2, 6, 2, 1], kind='mergesort')
+    [1, 2, 2, 5, 6]
+
+because merge sort is the only stable sorting algorithm available in
+NumPy. However, having kind='mergesort' does not make it explicit that
+the user wants to perform a stable sort thus harming the readability.
+
+This change allows the user to specify kind='stable' thus clarifying
+the intent.
+
 Changes
 =======
