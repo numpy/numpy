@@ -17,6 +17,7 @@
  *              NPY_CPU_SH_BE
  *              NPY_CPU_ARCEL
  *              NPY_CPU_ARCEB
+ *              NPY_CPU_RISCV64
  */
 #ifndef _NPY_CPUARCH_H_
 #define _NPY_CPUARCH_H_
@@ -82,6 +83,8 @@
     #define NPY_CPU_ARCEL
 #elif defined(__arc__) && defined(__BIG_ENDIAN__)
     #define NPY_CPU_ARCEB
+#elif defined(__riscv) && defined(__riscv_xlen) && __riscv_xlen == 64
+    #define NPY_CPU_RISCV64
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
