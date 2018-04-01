@@ -48,4 +48,3 @@ __all__ += histograms.__all__
 
 from numpy.testing import _numpy_tester
 test = _numpy_tester().test
-bench = _numpy_tester().bench
