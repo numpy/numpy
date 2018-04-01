@@ -5,6 +5,7 @@
 :Author: Travis Oliphant
 :Contact: oliphant@enthought.com
 :Date: 2010-04-27
+:Status: Deferred
 
 
 Executive summary
@@ -22,9 +23,9 @@ Example Use Case
 ================
 Suppose you have a NumPy structured array containing information about
 the number of purchases at several stores over multiple days.  To be clear, the
-structured array data-type is:
+structured array data-type is::
 
-dt = [('year', i2), ('month', i1), ('day', i1), ('time', float),
+  dt = [('year', i2), ('month', i1), ('day', i1), ('time', float),
       ('store', i4), ('SKU', 'S6'), ('number', i4)]
 
 Suppose there is a 1-d NumPy array of this data-type and you would like
@@ -98,14 +99,5 @@ reduceby::
 Functions proposed
 ==================
 
-segment::
-
-
-edges::
-
-
-.. Local Variables:
-.. mode: rst
-.. coding: utf-8
-.. fill-column: 72
-.. End:
+- segment
+- edges

@@ -5,6 +5,7 @@
 :Author: Travis Oliphant
 :Contact: oliphant@enthought.com
 :Date: 2009-06-09
+:Status: Final
 
 Revised only slightly from the third proposal by
 
@@ -13,7 +14,6 @@ Revised only slightly from the third proposal by
 :Author: Ivan Vilata i Balaguer
 :Contact: ivan@selidor.net
 :Date: 2008-07-30
-
 
 Executive summary
 =================
