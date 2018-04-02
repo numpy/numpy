@@ -7,7 +7,8 @@ from cpython cimport PyFloat_AsDouble
 import sys
 import numpy as np
 cimport numpy as np
-from common cimport *
+
+from randomgen.common cimport *
 
 np.import_array()
 

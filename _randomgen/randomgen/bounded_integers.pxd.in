@@ -1,9 +1,12 @@
+from __future__ import absolute_import
+
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int8_t, int16_t, int32_t, int64_t, intptr_t)
-from common cimport brng_t
 import numpy as np
 cimport numpy as np 
 ctypedef np.npy_bool bool_t
+
+from randomgen.common cimport brng_t
 
 _randint_types = {'bool': (0, 2),
                  'int8': (-2**7, 2**7),
