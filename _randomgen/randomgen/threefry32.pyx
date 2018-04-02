@@ -2,13 +2,13 @@ from __future__ import absolute_import
 
 import numpy as np
 from cpython.pycapsule cimport PyCapsule_New
-from distributions cimport brng_t
 from libc.stdlib cimport malloc, free
 
-import randomgen.pickle
-from common cimport *
-from common import interface
+from randomgen.common import interface
+from randomgen.common cimport *
+from randomgen.distributions cimport brng_t
 from randomgen.entropy import random_entropy, seed_by_array
+import randomgen.pickle
 
 np.import_array()
 

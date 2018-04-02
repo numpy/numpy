@@ -8,9 +8,6 @@ import warnings
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyComplex_RealAsDouble, 
     PyComplex_ImagAsDouble, PyComplex_FromDoubles, PyFloat_AsDouble)
-from common cimport *
-from distributions cimport *
-from bounded_integers cimport *
 from libc cimport string
 from libc.stdlib cimport malloc, free
 cimport numpy as np
@@ -22,6 +19,9 @@ try:
 except ImportError:
     from dummy_threading import Lock
 
+from randomgen.bounded_integers cimport *
+from randomgen.common cimport *
+from randomgen.distributions cimport *
 from randomgen.xoroshiro128 import Xoroshiro128
 import randomgen.pickle
 

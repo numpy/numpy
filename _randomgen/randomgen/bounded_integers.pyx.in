@@ -4,7 +4,9 @@ from __future__ import absolute_import
 
 import numpy as np
 cimport numpy as np
-from distributions cimport *
+
+from randomgen.distributions cimport *
+
 np.import_array()
 
 {{

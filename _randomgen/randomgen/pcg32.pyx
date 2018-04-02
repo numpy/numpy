@@ -6,9 +6,9 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 cimport numpy as np
 
-from common import interface
-from common cimport *
-from distributions cimport brng_t
+from randomgen.common import interface
+from randomgen.common cimport *
+from randomgen.distributions cimport brng_t
 from randomgen.entropy import random_entropy
 import randomgen.pickle
 
