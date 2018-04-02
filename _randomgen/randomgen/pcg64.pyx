@@ -386,7 +386,7 @@ cdef class PCG64:
     @property
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------

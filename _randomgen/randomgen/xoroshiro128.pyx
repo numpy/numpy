@@ -273,7 +273,7 @@ cdef class Xoroshiro128:
     @property
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------

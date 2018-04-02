@@ -61,7 +61,7 @@ cdef class MT19937:
     Notes
     -----
     ``MT19937`` directly provides generators for doubles, and unsigned 32 and 64-
-    bit integers [1]_ . These are not firectly available and must be consumed
+    bit integers [1]_ . These are not directly available and must be consumed
     via a ``RandomGenerator`` object.
 
     The Python stdlib module "random" also contains a Mersenne Twister
@@ -299,7 +299,7 @@ cdef class MT19937:
     @property
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------
