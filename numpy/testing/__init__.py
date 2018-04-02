@@ -12,9 +12,11 @@ from unittest import TestCase
 from ._private.utils import *
 from ._private import decorators as dec
 from ._private.nosetester import (
-    run_module_suite, NoseTester as Tester, _numpy_tester,
+    run_module_suite, NoseTester as Tester
     )
 
 __all__ = _private.utils.__all__ + ['TestCase', 'run_module_suite']
 
-test = _numpy_tester().test
+from ._private.pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

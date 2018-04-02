@@ -146,11 +146,6 @@ else:
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
-    # We don't actually use this ourselves anymore, but I'm not 100% sure that
-    # no-one else in the world is using it (though I hope not)
-    from .testing import Tester, _numpy_tester
-    test = _numpy_tester().test
-
     # Allow distributors to run custom init code
     from . import _distributor_init
 
@@ -186,13 +181,16 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
-
-    # Filter annoying Cython warnings that serve no good purpose.
-    warnings.filterwarnings("ignore", message="numpy.dtype size changed")
-    warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
-    warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-
     # oldnumeric and numarray were removed in 1.9. In case some packages import
     # but do not use them, we define them here for backward compatibility.
     oldnumeric = 'removed'
     numarray = 'removed'
+
+    # We don't actually use this ourselves anymore, but I'm not 100% sure that
+    # no-one else in the world is using it (though I hope not)
+    from .testing import Tester
+
+    # Pytest testing
+    from numpy.testing._private.pytesttester import PytestTester
+    test = PytestTester(__name__)
+    del PytestTester

@@ -17,8 +17,9 @@ try:
     # Normally numpy is installed if the above import works, but an interrupted
     # in-place build could also have left a __config__.py.  In that case the
     # next import may still fail, so keep it inside the try block.
-    from numpy.testing import _numpy_tester
-    test = _numpy_tester().test
+    from numpy.testing._private.pytesttester import PytestTester
+    test = PytestTester(__name__)
+    del PytestTester
 except ImportError:
     pass
 
