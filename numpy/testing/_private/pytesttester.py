@@ -32,6 +32,7 @@ import os
 __all__ = ['PytestTester']
 
 
+
 def _show_numpy_info():
     import numpy as np
 
@@ -68,8 +69,8 @@ class PytestTester(object):
     def __init__(self, module_name):
         self.module_name = module_name
 
-    def test(self, label='fast', verbose=1, extra_argv=None,
-             doctests=False, coverage=False, timer=0, tests=None):
+    def __call__(self, label='fast', verbose=1, extra_argv=None,
+                 doctests=False, coverage=False, durations=-1, tests=None):
         """
         Run tests for module using pytest.
 
@@ -88,9 +89,9 @@ class PytestTester(object):
         coverage : bool, optional
             If True, report coverage of NumPy code. Default is False.
             Requires installation of (pip) pytest-cov.
-        timer : int, optional
-            If > 0, report the time of the slowest `timer` tests. Default is 0.
-
+        durations : int, optional
+            If < 0, do nothing, If 0, report time of all tests, if > 0,
+            report the time of the slowest `timer` tests. Default is -1.
         tests : test or list of tests
             Tests to be executed with pytest '--pyargs'
 
@@ -122,6 +123,7 @@ class PytestTester(object):
 
         """
         import pytest
+        import warnings
 
         #FIXME This is no longer needed? Assume it was for use in tests.
         # cap verbosity at 3, which is equivalent to the pytest '-vv' option
@@ -134,7 +136,26 @@ class PytestTester(object):
         module_path = os.path.abspath(module.__path__[0])
 
         # setup the pytest arguments
-        pytest_args = ['-l']
+        pytest_args = ["-l"]
+
+        # offset verbosity. The "-q" cancels a "-v".
+        pytest_args += ["-q"]
+
+        # Filter out distutils cpu warnings (could be localized to
+        # distutils tests). ASV has problems with top level import,
+        # so fetch module for suppression here.
+        with warnings.catch_warnings():
+            warnings.simplefilter("always")
+            from numpy.distutils import cpuinfo
+
+        # Filter out annoying import messages. Want these in both develop and
+        # release mode.
+        pytest_args += [
+            "-W ignore:Not importing directory",
+            "-W ignore:numpy.dtype size changed",
+            "-W ignore:numpy.ufunc size changed",
+            "-W ignore::UserWarning:cpuinfo",
+            ]
 
         if doctests:
             raise ValueError("Doctests not supported")
@@ -144,8 +165,6 @@ class PytestTester(object):
 
         if verbose > 1:
             pytest_args += ["-" + "v"*(verbose - 1)]
-        else:
-            pytest_args += ["-q"]
 
         if coverage:
             pytest_args += ["--cov=" + module_path]
@@ -155,13 +174,13 @@ class PytestTester(object):
         elif label != "full":
             pytest_args += ["-m", label]
 
-        if timer > 0:
-            pytest_args += ["--durations=%s" % timer]
+        if durations >= 0:
+            pytest_args += ["--durations=%s" % durations]
 
         if tests is None:
             tests = [self.module_name]
 
-        pytest_args += ['--pyargs'] + list(tests)
+        pytest_args += ["--pyargs"] + list(tests)
 
 
         # run tests.
