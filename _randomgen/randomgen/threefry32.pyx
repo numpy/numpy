@@ -382,7 +382,7 @@ cdef class ThreeFry32:
 
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------

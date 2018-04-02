@@ -327,7 +327,7 @@ cdef class PCG32:
     @property
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------

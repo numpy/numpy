@@ -12,7 +12,7 @@ generators in Python and NumPy.
 Compatibility Warning
 ---------------------
 
-``RandomGenerator`` does notsupports Box-Muller normal variates and so
+``RandomGenerator`` does not support Box-Muller normal variates and so
 it not 100% compatible with NumPy (or randomstate). Box-Muller normals
 are slow to generate and all functions which previously relied on
 Box-Muller normals now use the faster Ziggurat implementation. If you
@@ -140,7 +140,7 @@ Version
 -------
 
 The version matched the latest version of NumPy where
-``RandoMGenerator(MT19937())`` passes all NumPy test.
+``RandomGenerator(MT19937())`` passes all NumPy test.
 
 Documentation
 -------------

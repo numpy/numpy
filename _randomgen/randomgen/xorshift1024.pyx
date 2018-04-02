@@ -306,7 +306,7 @@ cdef class Xorshift1024:
     @property
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------

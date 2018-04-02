@@ -32,9 +32,9 @@ cdef class LegacyGenerator:
 
     ``LegacyGenerator`` exposes a number of methods for generating random
     numbers for a set of distributions where the method used to produce random
-    samples has changed. Three core generators have changed: normals, exponentials
-    and gammas. These have been replaced by fster Ziggurat-based methds in 
-    ``RadnomGenerator``. ``LegacyGenerator`` retains the slower methods
+    samples has changed. Three core generators have changed: normal, exponential
+    and gamma. These have been replaced by faster Ziggurat-based methods in 
+    ``RandomGenerator``. ``_LegacyGenerator`` retains the slower methods
     to produce samples from these distributions as well as from distributions
     that depend on these such as the Chi-square, power or Weibull.
      

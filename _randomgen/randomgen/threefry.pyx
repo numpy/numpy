@@ -99,8 +99,8 @@ cdef class ThreeFry:
     ``ThreeFry`` can be used in parallel applications by
     calling the method ``jump`` which advances the state as-if
     :math:`2^{128}` random numbers have been generated. Alternatively,
-    ``advance`` can be used to advance the counter for an abritrary number of
-    positive steps in [0, 2**256). When using ``jump``, all generators should
+    ``advance`` can be used to advance the counter for an any 
+    positive step in [0, 2**256). When using ``jump``, all generators should
     be initialized with the same seed to ensure that the segments come from
     the same sequence. Alternatively, ``ThreeFry`` can be used
     in parallel applications by using a sequence of distinct keys where each
@@ -387,7 +387,7 @@ cdef class ThreeFry:
 
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------

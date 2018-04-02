@@ -85,7 +85,7 @@ cdef class RandomGenerator:
     >>> from randomgen import MT19937
     >>> rg = RandomGenerator(MT19937())
 
-    The generator is also directly avialable from basic RNGs
+    The generator is also directly available from basic RNGs
 
     >>> rg = MT19937().generator
     >>> rg.standard_normal()
@@ -375,7 +375,7 @@ cdef class RandomGenerator:
         .. math:: f(x; a,b) = \\frac{1}{B(\\alpha, \\beta)} x^{\\alpha - 1}
                                                          (1 - x)^{\\beta - 1},
 
-        where the normalisation, B, is the beta function,
+        where the normalization, B, is the beta function,
 
         .. math:: B(\\alpha, \\beta) = \\int_0^1 t^{\\alpha - 1}
                                      (1 - t)^{\\beta - 1} dt.

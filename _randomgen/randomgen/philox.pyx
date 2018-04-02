@@ -394,7 +394,7 @@ cdef class Philox:
 
     def ctypes(self):
         """
-        Cytpes interface
+        Ctypes interface
 
         Returns
         -------
