@@ -29,12 +29,6 @@ ELSE:
 
 cdef extern from "src/pcg64/pcg64.h":
 
-    ctypedef struct pcg128_t:
-        uint64_t high
-        uint64_t low        
-
-cdef extern from "src/pcg64/pcg64.h":
-
     cdef struct pcg_state_setseq_128:
         pcg128_t state
         pcg128_t inc
