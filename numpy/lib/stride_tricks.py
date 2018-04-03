@@ -112,18 +112,18 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
 def sliding_window_view(x, shape, step=None):
     """
-    Create rolling window views of the 2D array with the given shape.
+    Create sliding window views of the N dimensions array with the given window shape.
 
-    For some cases, there may be more efficient approaches
+    For some cases, there may be more efficient approaches.
 
     Parameters
     ----------
     x : ndarray
-        Array to create rolling window views.
+        Array to create sliding window views.
     shape : sequence of int
         The shape of the sliding window.
     step: sequence of int, optional
-        The sliding step of view window for each dimension of input. Defaults to 1 on all dimensions.
+        The step of sliding window shifts for each dimension of input array each time. Defaults to 1 on all dimensions.
 
     Returns
     -------
