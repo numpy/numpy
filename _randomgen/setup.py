@@ -1,5 +1,6 @@
 import os
 import glob
+import platform
 import struct
 import sys
 from os.path import join
@@ -36,7 +37,16 @@ with open('requirements.txt') as f:
 
 Cython.Compiler.Options.annotate = True
 
-USE_SSE2 = True if not '--no-sse2' in sys.argv else False
+# Make a guess as to whether SSE2 is present for now, TODO: Improve
+USE_SSE2 = False
+for k in platform.uname():
+    for val in ('x86', 'i686', 'i386', 'amd64'):
+        USE_SSE2 = USE_SSE2 or val in k.lower()
+print('Building with SSE?: {0}'.format(USE_SSE2))
+if '--no-sse2' in sys.argv:
+    USE_SSE2 = False
+    sys.argv.remove('--no-sse2')
+
 MOD_DIR = './randomgen'
 
 DEBUG = False
