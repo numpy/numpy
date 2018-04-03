@@ -19,7 +19,7 @@ New functions
   for the scope of the ``with`` block::
 
     >>> with np.printoptions(precision=2):
-    ...     print(np.array([2.0])) / 3
+    ...     print(np.array([2.0]) / 3)
     [0.67]
 
   * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
