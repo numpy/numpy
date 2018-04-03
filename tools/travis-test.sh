@@ -95,7 +95,8 @@ setup_chroot()
 
   # install needed packages
   sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python-dev python-nose python-pip cython"
+    libatlas-base-dev gfortran python-dev python-nose python-pip cython \
+    python-pytest"
 }
 
 run_test()
@@ -112,9 +113,11 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
-    $PYTHON ../tools/test-installed-numpy.py --mode=full
+    $PYTHON ../tools/test-installed-numpy.py -v --mode=full -- \
+            --disable-pytest-warnings
   else
-    $PYTHON ../tools/test-installed-numpy.py
+    $PYTHON ../tools/test-installed-numpy.py -v -- \
+            --disable-pytest-warnings
   fi
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
@@ -147,7 +150,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   pip install --pre --no-index --upgrade --find-links=. numpy
-  pip install nose
+  pip install nose pytest
   popd
   run_test
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
@@ -164,7 +167,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   pip install numpy*
-  pip install nose
+  pip install nose pytest
   popd
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
