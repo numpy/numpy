@@ -9,8 +9,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_equal, assert_almost_equal, assert_raises,
-    assert_warns,
+    assert_equal, assert_almost_equal, assert_raises, assert_warns,
     )
 
 class TestFromString(object):
@@ -64,7 +63,3 @@ class TestFromInt(object):
 
     def test_uint64_from_negative(self):
         assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
-
-
-if __name__ == "__main__":
-    run_module_suite()

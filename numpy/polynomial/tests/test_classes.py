@@ -13,7 +13,7 @@ from numpy.polynomial import (
     Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite)
+    )
 from numpy.compat import long
 
 
@@ -606,7 +606,3 @@ class TestInterpolate(object):
             for t in range(0, deg + 1):
                 p = Chebyshev.interpolate(powx, deg, domain=[0, 2], args=(t,))
                 assert_almost_equal(p(x), powx(x, t), decimal=12)
-
-
-if __name__ == "__main__":
-    run_module_suite()

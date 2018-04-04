@@ -29,10 +29,10 @@ import numpy as np
 from numpy.compat import strchar, unicode
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_warns,
-    assert_equal, assert_almost_equal, assert_array_equal, assert_raises_regex,
-    assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
-    assert_array_less, runstring, SkipTest, temppath, suppress_warnings
+    assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
+    assert_array_equal, assert_raises_regex, assert_array_almost_equal,
+    assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
+    SkipTest, temppath, suppress_warnings
     )
 from ._locales import CommaDecimalPointLocale
 
@@ -7352,7 +7352,3 @@ def test_npymath_real():
                 got = fun(z)
                 expected = npfun(z)
                 assert_allclose(got, expected)
-
-
-if __name__ == "__main__":
-    run_module_suite()

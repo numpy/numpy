@@ -4,14 +4,14 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import (
-    run_module_suite, assert_equal, assert_array_equal, assert_array_max_ulp,
+    assert_equal, assert_array_equal, assert_array_max_ulp,
     assert_array_almost_equal, assert_raises,
     )
 
 from numpy import (
-    arange, add, fliplr, flipud, zeros, ones, eye, array, diag,
-    histogram2d, tri, mask_indices, triu_indices, triu_indices_from,
-    tril_indices, tril_indices_from, vander,
+    arange, add, fliplr, flipud, zeros, ones, eye, array, diag, histogram2d,
+    tri, mask_indices, triu_indices, triu_indices_from, tril_indices,
+    tril_indices_from, vander,
     )
 
 import numpy as np
@@ -507,7 +507,3 @@ class TestVander(object):
         # so assert_array_equal *should* be safe here (rather than, say,
         # assert_array_almost_equal).
         yield (assert_array_equal, v, expected)
-
-
-if __name__ == "__main__":
-    run_module_suite()

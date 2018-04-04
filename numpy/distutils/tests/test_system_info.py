@@ -8,9 +8,7 @@ from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
 from numpy.distutils import ccompiler, customized_ccompiler
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal
-    )
+from numpy.testing import assert_, assert_equal
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 
@@ -235,7 +233,3 @@ class TestSystemInfoReading(object):
             assert_(os.path.isfile(self._src2.replace('.c', '.o')))
         finally:
             os.chdir(previousDir)
-
-
-if __name__ == '__main__':
-    run_module_suite()

@@ -11,10 +11,10 @@ import numpy as np
 from numpy.core import umath
 from numpy.random import rand, randint, randn
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, suppress_warnings, HAS_REFCOUNT
-)
+    assert_, assert_equal, assert_raises, assert_raises_regex,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    suppress_warnings, HAS_REFCOUNT
+    )
 
 
 class TestResize(object):
@@ -2734,7 +2734,3 @@ class TestTensordot(object):
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))
-
-
-if __name__ == "__main__":
-    run_module_suite()

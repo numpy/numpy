@@ -12,7 +12,6 @@ if sys.version_info >= (3, 4):
     import ast
     import tokenize
     import numpy
-    from numpy.testing import run_module_suite
 
     class ParseCall(ast.NodeVisitor):
         def __init__(self):
@@ -77,7 +76,3 @@ if sys.version_info >= (3, 4):
             with tokenize.open(str(path)) as file:
                 tree = ast.parse(file.read())
                 FindFuncs(path).visit(tree)
-
-
-    if __name__ == "__main__":
-        run_module_suite()

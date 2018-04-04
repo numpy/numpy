@@ -4,9 +4,7 @@ import sys
 import pytest
 
 from numpy.core import arange
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises_regex
-    )
+from numpy.testing import assert_, assert_equal, assert_raises_regex
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
 
@@ -67,7 +65,3 @@ def test_byte_bounds():
 def test_assert_raises_regex_context_manager():
     with assert_raises_regex(ValueError, 'no deprecation warning'):
         raise ValueError('no deprecation warning')
-
-
-if __name__ == "__main__":
-    run_module_suite()

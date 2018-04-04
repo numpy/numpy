@@ -3,9 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, SkipTest
-    )
+from numpy.testing import assert_, assert_equal, SkipTest
 from ._locales import CommaDecimalPointLocale
 
 
@@ -214,7 +212,3 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
 
     def test_locale_longdouble(self):
         assert_equal(str(np.longdouble('1.2')), str(float(1.2)))
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -6,9 +6,7 @@ import numpy as np
 import numpy.ma as ma
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
-from numpy.testing import (
-    run_module_suite, assert_, assert_raises,
-    )
+from numpy.testing import assert_, assert_raises
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
@@ -831,6 +829,3 @@ class TestAppendFieldsObj(object):
         control = np.array([(obj, 1.0, 10), (obj, 2.0, 20)],
                            dtype=[('A', object), ('B', float), ('C', int)])
         assert_equal(test, control)
-
-if __name__ == '__main__':
-    run_module_suite()

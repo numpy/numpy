@@ -9,11 +9,10 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite,
-    assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal,
-    IS_PYPY, suppress_warnings, _gen_alignment_data, assert_warns
-)
+    assert_, assert_equal, assert_raises, assert_almost_equal, assert_allclose,
+    assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
+    assert_warns
+    )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -665,7 +664,3 @@ class TestAbs(object):
 
     def test_numpy_abs(self):
         self._test_abs_func(np.abs)
-
-
-if __name__ == "__main__":
-    run_module_suite()

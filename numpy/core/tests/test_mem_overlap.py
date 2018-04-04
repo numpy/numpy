@@ -10,8 +10,7 @@ from numpy.core import _umath_tests
 from numpy.lib.stride_tricks import as_strided
 from numpy.compat import long
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_equal, assert_array_equal,
-    assert_allclose
+    assert_, assert_raises, assert_equal, assert_array_equal, assert_allclose
     )
 
 if sys.version_info[0] >= 3:
@@ -949,7 +948,3 @@ class TestUFunc(object):
 
         x += x.T
         assert_array_equal(x - x.T, 0)
-
-
-if __name__ == "__main__":
-    run_module_suite()

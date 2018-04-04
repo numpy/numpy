@@ -4,9 +4,8 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_array_equal,
-     assert_raises, HAS_REFCOUNT
-)
+     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT
+    )
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
@@ -512,6 +511,3 @@ def test_broadcast_arrays():
     result = np.broadcast_arrays(a, b)
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
-
-if __name__ == "__main__":
-    run_module_suite()

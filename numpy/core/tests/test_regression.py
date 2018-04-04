@@ -14,10 +14,9 @@ from itertools import chain
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, assert_, assert_equal, IS_PYPY,
-        assert_almost_equal, assert_array_equal, assert_array_almost_equal,
-        assert_raises, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT,
+        assert_, assert_equal, IS_PYPY, assert_almost_equal,
+        assert_array_equal, assert_array_almost_equal, assert_raises,
+        assert_warns, suppress_warnings, _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long
 
@@ -2333,6 +2332,3 @@ class TestRegression(object):
         #va[0] = b'\xff\xff\xff\xff'
         #del va
         #assert_equal(x, b'\x00\x00\x00\x00')
-
-if __name__ == "__main__":
-    run_module_suite()
