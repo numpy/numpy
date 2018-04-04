@@ -3,10 +3,14 @@ Back compatibility utils module. It will import the appropriate
 set of tools
 
 """
+from __future__ import division, absolute_import, print_function
+
 import warnings
 
-warnings.warn("Import from numpy.testing, not numpy.testing.utils",
-              ImportWarning)
+# 2018-04-04, numpy 1.15.0
+warnings.warn("Importing from numpy.testing.utils is deprecated, "
+              "import from numpy.testing instead.",
+              ImportWarning, stacklevel=2)
 
 from ._private.utils import *
 
