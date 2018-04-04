@@ -8,7 +8,6 @@ import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 
@@ -609,6 +608,3 @@ class TestMisc(object):
         assert_almost_equal(cheb.chebpts2(4), tgt)
         tgt = [-1.0, -0.707106781187, 0, 0.707106781187, 1.0]
         assert_almost_equal(cheb.chebpts2(5), tgt)
-
-if __name__ == "__main__":
-    run_module_suite()

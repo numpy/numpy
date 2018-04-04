@@ -6,7 +6,7 @@ import re
 import pytest
 
 from numpy.linalg import lapack_lite
-from numpy.testing import run_module_suite, assert_
+from numpy.testing import assert_
 
 
 class FindDependenciesLdd(object):
@@ -53,7 +53,3 @@ class TestF77Mismatch(object):
                          """Both g77 and gfortran runtimes linked in lapack_lite ! This is likely to
 cause random crashes and wrong results. See numpy INSTALL.txt for more
 information.""")
-
-
-if __name__ == '__main__':
-    run_module_suite()

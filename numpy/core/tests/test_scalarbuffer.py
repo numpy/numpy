@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pytest
 
-from numpy.testing import run_module_suite, assert_, assert_equal
+from numpy.testing import assert_, assert_equal
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_and_codes = [
@@ -77,6 +77,3 @@ class TestScalarPEP3118(object):
         mv_a = memoryview(a)
         assert_equal(mv_x.itemsize, mv_a.itemsize)
         assert_equal(mv_x.format, mv_a.format)
-
-if __name__ == "__main__":
-    run_module_suite()

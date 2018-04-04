@@ -7,9 +7,8 @@ import pytest
 import numpy as np
 import numpy.core.umath as ncu
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_equal, assert_array_equal,
-    assert_almost_equal
-)
+    assert_raises, assert_equal, assert_array_equal, assert_almost_equal
+    )
 
 # TODO: branch cuts (use Pauli code)
 # TODO: conj 'symmetry'
@@ -536,6 +535,3 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
             assert_equal(f(z1), z2)
         else:
             assert_almost_equal(f(z1), z2)
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import run_module_suite, assert_, assert_equal
+from numpy.testing import assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -433,7 +433,3 @@ class TestHalf(object):
         c = np.array(b)
         assert_(c.dtype == float16)
         assert_equal(a, c)
-
-
-if __name__ == "__main__":
-    run_module_suite()

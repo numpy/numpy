@@ -5,7 +5,7 @@ import math
 import pytest
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_raises, assert_equal
+from numpy.testing import assert_raises, assert_equal
 
 from . import util
 
@@ -117,7 +117,3 @@ class TestParameters(util.F2PyTest):
         x = np.arange(3, dtype=np.float64)
         self.module.foo_sum(x)
         assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
-
-
-if __name__ == "__main__":
-    run_module_suite()

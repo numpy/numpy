@@ -8,7 +8,7 @@ from __future__ import division, absolute_import, print_function
 from numpy.core.machar import MachAr
 import numpy.core.numerictypes as ntypes
 from numpy import errstate, array
-from numpy.testing import run_module_suite
+
 
 class TestMachAr(object):
     def _run_machar_highprec(self):
@@ -30,7 +30,3 @@ class TestMachAr(object):
             except FloatingPointError as e:
                 msg = "Caught %s exception, should not have been raised." % e
                 raise AssertionError(msg)
-
-
-if __name__ == "__main__":
-    run_module_suite()

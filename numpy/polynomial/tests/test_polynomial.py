@@ -7,7 +7,6 @@ import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 
@@ -566,7 +565,3 @@ class TestMisc(object):
 
     def test_polyline(self):
         assert_equal(poly.polyline(3, 4), [3, 4])
-
-
-if __name__ == "__main__":
-    run_module_suite()

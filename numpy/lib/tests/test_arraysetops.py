@@ -6,9 +6,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import sys
 
-from numpy.testing import (
-    run_module_suite, assert_array_equal, assert_equal, assert_raises,
-    )
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
@@ -504,7 +502,3 @@ class TestUnique(object):
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
-
-
-if __name__ == "__main__":
-    run_module_suite()

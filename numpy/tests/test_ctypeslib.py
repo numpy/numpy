@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library
 from numpy.distutils.misc_util import get_shared_lib_extension
-from numpy.testing import run_module_suite, assert_, assert_raises
+from numpy.testing import assert_, assert_raises
 
 try:
     cdll = None
@@ -113,7 +113,3 @@ class TestNdpointer(object):
         a1 = ndpointer(dtype=np.float64)
         a2 = ndpointer(dtype=np.float64)
         assert_(a1 == a2)
-
-
-if __name__ == "__main__":
-    run_module_suite()

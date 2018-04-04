@@ -5,7 +5,7 @@ import math
 import pytest
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_raises, assert_equal
+from numpy.testing import assert_raises, assert_equal
 
 from . import util
 
@@ -28,7 +28,3 @@ class TestIntentInOut(util.F2PyTest):
         x = np.arange(3, dtype=np.float32)
         self.module.foo(x)
         assert_equal(x, [3, 1, 2])
-
-
-if __name__ == "__main__":
-    run_module_suite()

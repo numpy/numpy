@@ -8,8 +8,7 @@ from numpy.lib.shape_base import (
     vsplit, dstack, column_stack, kron, tile, expand_dims,
     )
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal, assert_raises,
-    assert_warns
+    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
 
 
@@ -569,7 +568,3 @@ class TestMayShareMemory(object):
 def compare_results(res, desired):
     for i in range(len(desired)):
         assert_array_equal(res[i], desired[i])
-
-
-if __name__ == "__main__":
-    run_module_suite()

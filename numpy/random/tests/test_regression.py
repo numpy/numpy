@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 from numpy.testing import (
-    run_module_suite, assert_, assert_array_equal, assert_raises,
+    assert_, assert_array_equal, assert_raises,
     )
 from numpy import random
 from numpy.compat import long
@@ -133,6 +133,3 @@ class TestRegression(object):
         # Force Garbage Collection - should not segfault.
         import gc
         gc.collect()
-
-if __name__ == "__main__":
-    run_module_suite()

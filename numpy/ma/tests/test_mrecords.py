@@ -14,7 +14,7 @@ import numpy as np
 import numpy.ma as ma
 from numpy import recarray
 from numpy.ma import masked, nomask
-from numpy.testing import run_module_suite, temppath
+from numpy.testing import temppath
 from numpy.core.records import (
     fromrecords as recfromrecords, fromarrays as recfromarrays
     )
@@ -494,7 +494,3 @@ def test_record_array_with_object_field():
         dtype=[('a', int), ('b', object)])
     # getting an item used to fail
     y[1]
-
-
-if __name__ == "__main__":
-    run_module_suite()

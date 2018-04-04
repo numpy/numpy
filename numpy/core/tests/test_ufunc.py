@@ -8,10 +8,10 @@ import numpy.core._umath_tests as umt
 import numpy.core._operand_flag_tests as opflag_tests
 import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings, assert_allclose,
-)
+    assert_, assert_equal, assert_raises, assert_array_equal,
+    assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
+    assert_allclose,
+    )
 
 
 class TestUfuncKwargs(object):
@@ -1490,7 +1490,3 @@ class TestUfunc(object):
     def test_no_doc_string(self):
         # gh-9337
         assert_('\n' not in umt.inner1d_no_doc.__doc__)
-
-
-if __name__ == "__main__":
-    run_module_suite()

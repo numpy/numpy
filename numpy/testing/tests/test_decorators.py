@@ -8,8 +8,7 @@ import warnings
 import pytest
 
 from numpy.testing import (
-    assert_, assert_raises, run_module_suite, dec, SkipTest,
-    KnownFailureException,
+    assert_, assert_raises, dec, SkipTest, KnownFailureException,
     )
 
 
@@ -215,7 +214,3 @@ class TestNoseDecorators(object):
             test[0](*test[1:])
             count += 1
         assert_(count == 3)
-
-
-if __name__ == '__main__':
-    run_module_suite()

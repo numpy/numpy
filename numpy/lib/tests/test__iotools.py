@@ -6,7 +6,7 @@ from datetime import date
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_allclose, assert_raises,
+    assert_, assert_equal, assert_allclose, assert_raises,
     )
 from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
@@ -346,6 +346,3 @@ class TestMiscFunctions(object):
         dt = np.dtype([(("a", "A"), "f8"), (("b", "B"), "f8")])
         dt_flat = flatten_dtype(dt)
         assert_equal(dt_flat, [float, float])
-
-if __name__ == "__main__":
-    run_module_suite()

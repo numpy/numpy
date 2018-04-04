@@ -6,7 +6,7 @@ from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 from numpy.distutils.exec_command import get_pythonexe
-from numpy.testing import run_module_suite, tempdir, assert_
+from numpy.testing import tempdir, assert_
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to
 # emulate them import StringIO from the io module.
@@ -213,7 +213,3 @@ class TestExecCommand(object):
                     self.check_nt(use_tee=1)
                 self.check_execute_in(use_tee=0)
                 self.check_execute_in(use_tee=1)
-
-
-if __name__ == "__main__":
-    run_module_suite()

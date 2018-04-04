@@ -5,7 +5,7 @@ Copied from fftpack.helper by Pearu Peterson, October 2005
 """
 from __future__ import division, absolute_import, print_function
 import numpy as np
-from numpy.testing import run_module_suite, assert_array_almost_equal, assert_equal
+from numpy.testing import assert_array_almost_equal, assert_equal
 from numpy import fft, pi
 from numpy.fft.helper import _FFTCache
 
@@ -246,7 +246,3 @@ class TestFFTCache(object):
         # Another big item - should now be the only item in the cache.
         c.put_twiddle_factors(6, np.ones(4000, dtype=np.float32))
         assert_equal(list(c._dict.keys()), [6])
-
-
-if __name__ == "__main__":
-    run_module_suite()

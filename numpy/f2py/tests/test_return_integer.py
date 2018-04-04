@@ -4,7 +4,7 @@ import pytest
 
 from numpy import array
 from numpy.compat import long
-from numpy.testing import run_module_suite, assert_, assert_raises
+from numpy.testing import assert_, assert_raises
 from . import util
 
 
@@ -177,6 +177,3 @@ end module f90_return_integer
     def test_all(self):
         for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
             self.check_function(getattr(self.module.f90_return_integer, name))
-
-if __name__ == "__main__":
-    run_module_suite()

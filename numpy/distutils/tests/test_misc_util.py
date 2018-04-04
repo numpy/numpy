@@ -4,10 +4,10 @@ from os.path import join, sep, dirname
 
 from numpy.distutils.misc_util import (
     appendpath, minrelpath, gpaths, get_shared_lib_extension, get_info
-)
+    )
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal
-)
+    assert_, assert_equal
+    )
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
@@ -79,7 +79,3 @@ def test_installed_npymath_ini():
     # Regression test for gh-7707.  If npymath.ini wasn't installed, then this
     # will give an error.
     info = get_info('npymath')
-
-
-if __name__ == "__main__":
-    run_module_suite()

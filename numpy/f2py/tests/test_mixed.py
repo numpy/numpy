@@ -4,7 +4,7 @@ import os
 import textwrap
 import pytest
 
-from numpy.testing import run_module_suite, assert_, assert_equal
+from numpy.testing import assert_, assert_equal
 from . import util
 
 
@@ -36,6 +36,3 @@ class TestMixed(util.F2PyTest):
         """
         assert_equal(self.module.bar11.__doc__,
                      textwrap.dedent(expected).lstrip())
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -6,7 +6,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_equal
+from numpy.testing import assert_, assert_equal
 from . import util
 
 
@@ -163,7 +163,3 @@ cf2py  intent(out) a
         f = getattr(self.module, 'string_callback_array')
         res = f(callback, cu, len(cu))
         assert_(res == 0, repr(res))
-
-
-if __name__ == "__main__":
-    run_module_suite()

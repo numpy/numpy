@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy.polynomial as poly
-from numpy.testing import run_module_suite, assert_equal
+from numpy.testing import assert_equal
 
 
 class TestStr(object):
@@ -66,9 +66,3 @@ class TestRepr(object):
         res = repr(poly.Laguerre([0, 1]))
         tgt = 'Laguerre([0., 1.], domain=[0, 1], window=[0, 1])'
         assert_equal(res, tgt)
-
-
-#
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -221,7 +221,3 @@ def test_ceildiv_128_64():
 
             if c != d:
                 assert_equal(d, c)
-
-
-if __name__ == "__main__":
-    run_module_suite()

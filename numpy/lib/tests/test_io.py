@@ -21,9 +21,9 @@ from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    run_module_suite, assert_warns, assert_, SkipTest, assert_raises_regex,
-    assert_raises, assert_allclose, assert_array_equal, temppath, tempdir,
-    IS_PYPY, HAS_REFCOUNT, suppress_warnings,
+    assert_warns, assert_, SkipTest, assert_raises_regex, assert_raises,
+    assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
+    HAS_REFCOUNT, suppress_warnings,
     )
 
 
@@ -2380,6 +2380,3 @@ def test_load_refcount():
     finally:
         gc.enable()
     assert_equal(n_objects_in_cycles, 0)
-
-if __name__ == "__main__":
-    run_module_suite()

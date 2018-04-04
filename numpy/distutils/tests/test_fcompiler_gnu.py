@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import assert_, run_module_suite
+from numpy.testing import assert_
 
 import numpy.distutils.fcompiler
 
@@ -55,7 +55,3 @@ class TestGFortranVersions(object):
         for vs, _ in g77_version_strings:
             v = fc.version_match(vs)
             assert_(v is None, (vs, v))
-
-
-if __name__ == '__main__':
-    run_module_suite()

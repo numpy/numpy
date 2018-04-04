@@ -5,9 +5,7 @@ import sys
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises, SkipTest,
-    )
+from numpy.testing import assert_, assert_equal, assert_raises, SkipTest
 import numpy.lib._datasource as datasource
 
 if sys.version_info[0] >= 3:
@@ -342,7 +340,3 @@ class TestOpenFunc(object):
         fp = datasource.open(local_file)
         assert_(fp)
         fp.close()
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -4,9 +4,7 @@ import sys
 import itertools
 
 import numpy as np
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises
-)
+from numpy.testing import assert_, assert_equal, assert_raises
 
 # This is the structure of the table used for plain objects:
 #
@@ -408,6 +406,3 @@ class TestIsSubDType(object):
         for w1, w2 in itertools.product(self.wrappers, repeat=2):
             assert_(not np.issubdtype(w1(np.float32), w2(np.float64)))
             assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
-
-if __name__ == "__main__":
-    run_module_suite()

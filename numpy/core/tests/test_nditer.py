@@ -8,8 +8,8 @@ import numpy as np
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_raises, assert_warns, HAS_REFCOUNT, suppress_warnings
+    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
+    HAS_REFCOUNT, suppress_warnings
     )
 
 
@@ -2711,7 +2711,3 @@ def test_iter_too_large_with_multiindex():
             # an axis with size 1 is removed:
             with assert_raises(ValueError):
                 _multiarray_tests.test_nditer_too_large(arrays, i*2 + 1, mode)
-
-
-if __name__ == "__main__":
-    run_module_suite()

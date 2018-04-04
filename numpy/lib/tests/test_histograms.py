@@ -4,11 +4,10 @@ import numpy as np
 
 from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex,
-    suppress_warnings,
-)
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    )
 
 
 class TestHistogram(object):
@@ -643,7 +642,3 @@ class TestHistogramdd(object):
                       range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
         assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
-
-
-if __name__ == "__main__":
-    run_module_suite()

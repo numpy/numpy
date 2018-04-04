@@ -4,8 +4,8 @@ import itertools
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_raises, suppress_warnings
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_raises, suppress_warnings
     )
 
 # Setup for optimize einsum
@@ -932,7 +932,3 @@ class TestEinSumPath(object):
         for sp in itertools.product(['', ' '], repeat=4):
             # no error for any spacing
             np.einsum('{}...a{}->{}...a{}'.format(*sp), arr)
-
-
-if __name__ == "__main__":
-    run_module_suite()

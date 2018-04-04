@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import pytest
 
-from numpy.testing import run_module_suite, assert_
+from numpy.testing import assert_
 from . import util
 
 
@@ -31,6 +31,3 @@ class TestAssumedShapeSumExample(util.F2PyTest):
         assert_(r == 3, repr(r))
         r = self.module.mod.fsum([1, 2])
         assert_(r == 3, repr(r))
-
-if __name__ == "__main__":
-    run_module_suite()

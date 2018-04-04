@@ -3,11 +3,11 @@ from __future__ import division, absolute_import, print_function
 import os
 import pytest
 
-from numpy.testing import run_module_suite, assert_
+from numpy.testing import assert_
 from numpy.f2py.crackfortran import (
     _selected_int_kind_func as selected_int_kind,
     _selected_real_kind_func as selected_real_kind
-)
+    )
 from . import util
 
 
@@ -32,6 +32,3 @@ class TestKind(util.F2PyTest):
             assert_(selectedrealkind(i) in [selected_real_kind(i), -1],
                     'selectedrealkind(%s): expected %r but got %r' %
                     (i, selected_real_kind(i), selectedrealkind(i)))
-
-if __name__ == "__main__":
-    run_module_suite()

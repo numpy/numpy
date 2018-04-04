@@ -6,11 +6,11 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
-from numpy.testing import (
-    run_module_suite, assert_equal, assert_, assert_raises
-)
-from numpy.core.getlimits import (_discovered_machar, _float16_ma, _float32_ma,
-                                  _float64_ma, _float128_ma, _float80_ma)
+from numpy.testing import assert_equal, assert_, assert_raises
+from numpy.core.getlimits import (
+    _discovered_machar, _float16_ma, _float32_ma, _float64_ma, _float128_ma,
+    _float80_ma
+    )
 
 ##################################################
 
@@ -124,7 +124,3 @@ def test_plausible_finfo():
         assert_(info.nmant > 1)
         assert_(info.minexp < -1)
         assert_(info.maxexp > 1)
-
-
-if __name__ == "__main__":
-    run_module_suite()

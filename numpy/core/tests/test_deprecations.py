@@ -13,8 +13,9 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, assert_no_warnings,
-    assert_array_equal, assert_)
+    assert_raises, assert_warns, assert_no_warnings, assert_array_equal,
+    assert_
+    )
 
 try:
     import pytz
@@ -487,7 +488,3 @@ class TestGeneratorSum(_DeprecationTestCase):
     # 2018-02-25, 1.15.0
     def test_generator_sum(self):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
-
-
-if __name__ == "__main__":
-    run_module_suite()

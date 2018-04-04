@@ -7,8 +7,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises, assert_warns,
-    HAS_REFCOUNT,
+    assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
     )
 import textwrap
 
@@ -872,7 +871,3 @@ class TestContextManager(object):
         with np.printoptions(**opts) as ctx:
             saved_opts = ctx.copy()
         assert_equal({k: saved_opts[k] for k in opts}, opts)
-
-
-if __name__ == "__main__":
-    run_module_suite()

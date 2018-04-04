@@ -1090,7 +1090,3 @@ class TestTypeError1(object):
         kwargs = dict(mode='mean', stat_length=(3, ))
         assert_raises(TypeError, pad, arr, ((2, 3, 4), (3, 2)),
                       **kwargs)
-
-
-if __name__ == "__main__":
-    np.testing.run_module_suite()

@@ -7,10 +7,8 @@ import copy
 
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
-)
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, SkipTest
-)
+    )
+from numpy.testing import assert_, assert_equal, SkipTest
 from numpy.core.multiarray import typeinfo
 from . import util
 
@@ -584,7 +582,3 @@ class TestGen_%s(_test_shared_memory):
         self.type = Type(%r)
     array = lambda self,dims,intent,obj: Array(Type(%r),dims,intent,obj)
 ''' % (t, t, t))
-
-if __name__ == "__main__":
-    setup_module()
-    run_module_suite()

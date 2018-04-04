@@ -10,9 +10,9 @@ import numpy as np
 from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_warns, HAS_REFCOUNT, suppress_warnings,
-)
+    assert_, assert_equal, assert_raises, assert_array_equal, assert_warns,
+    HAS_REFCOUNT, suppress_warnings,
+    )
 
 
 class TestIndexing(object):
@@ -1299,7 +1299,3 @@ class TestCApiAccess(object):
         a = a.reshape(5, 2)
         assign(a, 4, 10)
         assert_array_equal(a[-1], [10, 10])
-
-
-if __name__ == "__main__":
-    run_module_suite()

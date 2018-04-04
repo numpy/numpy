@@ -2,11 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import numpy as np
-from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
-                        block, vstack, hstack, newaxis, concatenate, stack)
-from numpy.testing import (assert_, assert_raises,
-                           assert_array_equal, assert_equal, run_module_suite,
-                           assert_raises_regex, assert_almost_equal)
+from numpy.core import (
+    array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
+    newaxis, concatenate, stack
+    )
+from numpy.testing import (
+    assert_, assert_raises, assert_array_equal, assert_equal,
+    assert_raises_regex, assert_almost_equal
+    )
 
 from numpy.compat import long
 
@@ -581,7 +584,3 @@ class TestBlock(object):
                               [3., 3., 3.]]])
 
         assert_equal(result, expected)
-
-
-if __name__ == "__main__":
-    run_module_suite()

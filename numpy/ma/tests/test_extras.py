@@ -14,7 +14,7 @@ import itertools
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_warns, suppress_warnings, assert_raises,
+    assert_warns, suppress_warnings, assert_raises,
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -1689,7 +1689,3 @@ class TestStack(object):
         assert_equal(c.shape, c_shp)
         assert_array_equal(a1.mask, c[..., 0].mask)
         assert_array_equal(a2.mask, c[..., 1].mask)
-
-
-if __name__ == "__main__":
-    run_module_suite()

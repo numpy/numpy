@@ -7,9 +7,8 @@ import numpy as np
 import datetime
 import pytest
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, suppress_warnings
-)
+    assert_, assert_equal, assert_raises, assert_warns, suppress_warnings
+    )
 
 # Use pytz to test out various time zones if available
 try:
@@ -1979,6 +1978,3 @@ class TestDateTimeData(object):
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
-
-if __name__ == "__main__":
-    run_module_suite()

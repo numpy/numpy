@@ -1,11 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy import (logspace, linspace, geomspace, dtype, array, sctypes,
-                   arange, isnan, ndarray, sqrt, nextafter)
+from numpy import (
+    logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
+    ndarray, sqrt, nextafter
+    )
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_allclose, suppress_warnings
-)
+    assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
+    suppress_warnings
+    )
 
 
 class PhysicalQuantity(float):
@@ -319,7 +321,3 @@ class TestLinspace(object):
                 assert_(isinstance(y, tuple) and len(y) == 2 and
                         len(y[0]) == num and isnan(y[1]),
                         'num={0}, endpoint={1}'.format(num, ept))
-
-
-if __name__ == "__main__":
-    run_module_suite()

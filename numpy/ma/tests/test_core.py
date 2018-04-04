@@ -24,7 +24,7 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, suppress_warnings
+    assert_raises, assert_warns, suppress_warnings
     )
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
@@ -5119,8 +5119,3 @@ def test_astype():
     x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
     assert_(x_f2.flags.f_contiguous)
     assert_(x_f2.mask.flags.f_contiguous)
-
-
-###############################################################################
-if __name__ == "__main__":
-    run_module_suite()

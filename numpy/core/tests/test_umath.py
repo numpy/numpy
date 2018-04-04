@@ -11,11 +11,11 @@ import numpy.core.umath as ncu
 from numpy.core import _umath_tests as ncu_tests
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_allclose, assert_no_warnings,
-    suppress_warnings, _gen_alignment_data,
-)
+    assert_, assert_equal, assert_raises, assert_raises_regex,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    assert_allclose, assert_no_warnings, suppress_warnings,
+    _gen_alignment_data,
+    )
 
 
 def on_powerpc():
@@ -2779,7 +2779,3 @@ def test_signaling_nan_exceptions():
     with assert_no_warnings():
         a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
         np.isnan(a)
-
-
-if __name__ == "__main__":
-    run_module_suite()
