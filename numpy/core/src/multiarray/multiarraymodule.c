@@ -4594,10 +4594,9 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
 
-    /* Datetime doesn't fit in any category */
-    SINGLE_INHERIT(Datetime, Generic);
-    /* Timedelta is an integer with an associated unit */
-    SINGLE_INHERIT(Timedelta, SignedInteger);
+    SINGLE_INHERIT(Timebase, Generic);
+    SINGLE_INHERIT(Datetime, Timebase);
+    SINGLE_INHERIT(Timedelta, Timebase);
 
     /*
        fprintf(stderr,

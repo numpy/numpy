@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, dec, suppress_warnings
+    assert_raises_regex, assert_warns, dec, suppress_warnings
 )
 
 # Use pytz to test out various time zones if available
@@ -496,6 +496,19 @@ class TestDateTime(object):
         assert_(np.dtype('M8[us]') != np.dtype('M8[ms]'))
         assert_(np.dtype('M8[2D]') != np.dtype('M8[D]'))
         assert_(np.dtype('M8[D]') != np.dtype('M8[2D]'))
+
+    def test_type_hierarchy(self):
+        assert_equal(np.timebase.mro(), [np.timebase, np.generic, object])
+        assert_equal(np.datetime64.mro(),
+                     [np.datetime64, np.timebase, np.generic, object])
+        assert_equal(np.timedelta64.mro(),
+                     [np.timedelta64, np.timebase, np.generic, object])
+
+    def test_base_class(self):
+        assert_(issubclass(np.datetime64, np.timebase))
+        assert_(issubclass(np.timedelta64, np.timebase))
+        with assert_raises_regex(TypeError, 'cannot create'):
+            np.timebase()
 
     def test_pydatetime_creation(self):
         a = np.array(['1960-03-12', datetime.date(1960, 3, 12)], dtype='M8[D]')
