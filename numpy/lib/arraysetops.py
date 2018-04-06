@@ -313,7 +313,8 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         can speed up the calculation.  Default is False.
     return_indices : bool
         If True, the indices which correspond to the intersection of the 
-        two arrays are returned. Default is False.
+        two arrays are returned. The first instance of avalue is used 
+        if there are multiple. Default is False. 
     
         .. versionadded:: 1.15.0    
         
@@ -322,7 +323,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     intersect1d : ndarray
         Sorted 1D array of common and unique elements.
     comm1 : ndarray
-        Indices of common elements in arr1.
+        Indices of common elements in arr1. 
     comm2 : ndarray
         Indices of common elements in arr2.
 
