@@ -521,6 +521,10 @@ def average(a, axis=None, weights=None, returned=False):
     """
     Return the weighted average of array over the given axis.
 
+    .. math:: \\bar{x} = \\frac{ \\sum_{i=1}^n w_i x_i}{\\sum_{i=1}^n w_i}
+
+    with :math:`\\sum_{i=1}^n w_i > 0`
+    
     Parameters
     ----------
     a : array_like
@@ -533,6 +537,7 @@ def average(a, axis=None, weights=None, returned=False):
         The importance that each element has in the computation of the average.
         The weights array can either be 1-D (in which case its length must be
         the size of `a` along the given axis) or of the same shape as `a`.
+        The sum of weights should be positive.
         If ``weights=None``, then all data in `a` are assumed to have a
         weight equal to one.   If `weights` is complex, the imaginary parts
         are ignored.
@@ -605,7 +610,11 @@ def average(a, axis=None, weights=None, returned=False):
             wgt = wgt*(~a.mask)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
-        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
+        if((axis is None and scl <= 0.0) or 
+           (m is nomask and np.any(scl <= 0.0)) or
+           (m is not nomask and np.any(scl[np.any(~a.mask, axis=axis)] <= 0.0))):
+            raise ValueError("Sum of weights should be positive.")
+        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis) / scl
 
     if returned:
         if scl.shape != avg.shape:

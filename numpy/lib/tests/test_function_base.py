@@ -265,6 +265,10 @@ class TestAverage(object):
         actual = average(y, weights=w)
         desired = (np.arange(10) ** 2).sum() * 1. / np.arange(10).sum()
         assert_almost_equal(actual, desired)
+        
+        assert_raises(ValueError, average, y, weights=-w)
+        assert_raises(ValueError, average, y, weights=np.zeros_like(w))
+        assert_raises(ValueError, average, y, weights=w - w.mean())
 
         y1 = np.array([[1, 2, 3], [4, 5, 6]])
         w0 = [1, 2]
@@ -281,7 +285,7 @@ class TestAverage(object):
         # assert_equal(average(y1, weights=w1), 9./2.)
 
         # 2D Case
-        w2 = [[0, 0, 1], [0, 0, 2]]
+        w2 = np.array([[0, 0, 1], [0, 0, 2]])
         desired = np.array([3., 6.])
         assert_array_equal(average(y1, weights=w2, axis=1), desired)
         assert_equal(average(y1, weights=w2), 5.)
@@ -290,6 +294,10 @@ class TestAverage(object):
         w3 = rand(5).astype(np.float64)
 
         assert_(np.average(y3, weights=w3).dtype == np.result_type(y3, w3))
+
+        assert_raises(ValueError, average, y1, weights=-w2)
+        assert_raises(ValueError, average, y1, weights=np.zeros_like(w2))
+        assert_raises(ValueError, average, y1, weights=w2 - w2.mean())
 
     def test_returned(self):
         y = np.array([[1, 2, 3], [4, 5, 6]])

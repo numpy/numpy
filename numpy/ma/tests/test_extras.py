@@ -17,7 +17,8 @@ from numpy.testing import (
     run_module_suite, assert_warns, suppress_warnings, assert_raises,
     )
 from numpy.ma.testutils import (
-    assert_, assert_array_equal, assert_equal, assert_almost_equal
+    assert_, assert_array_equal, assert_equal, assert_almost_equal, 
+    assert_raises
     )
 from numpy.ma.core import (
     array, arange, masked, MaskedArray, masked_array, getmaskarray, shape,
@@ -165,17 +166,24 @@ class TestAverage(object):
 
     def test_testAverage2(self):
         # More tests of average.
-        w1 = [0, 1, 1, 1, 1, 0]
-        w2 = [[0, 1, 1, 1, 1, 0], [1, 0, 0, 0, 0, 1]]
+        w1 = np.asarray([0., 1., 1., 1., 1., 0.])
+        w2 = np.asarray([[0., 1., 1., 1., 1., 0.], [1., 0., 0., 0., 0., 1.]])
         x = arange(6, dtype=np.float_)
         assert_equal(average(x, axis=0), 2.5)
-        assert_equal(average(x, axis=0, weights=w1), 2.5)
+        assert_equal(average(x, axis=0, weights=w1), 2.5)        
+        assert_raises(ValueError, average, x, weights=-w1)
+        assert_raises(ValueError, average, x, weights=np.zeros_like(w1))
+        assert_raises(ValueError, average, x, weights=w1 - 1.1 * w1.mean())
+        
         y = array([arange(6, dtype=np.float_), 2.0 * arange(6)])
         assert_equal(average(y, None), np.add.reduce(np.arange(6)) * 3. / 12.)
         assert_equal(average(y, axis=0), np.arange(6) * 3. / 2.)
         assert_equal(average(y, axis=1),
                      [average(x, axis=0), average(x, axis=0) * 2.0])
         assert_equal(average(y, None, weights=w2), 20. / 6.)
+        assert_raises(ValueError, average, y, weights=-w2)
+        assert_raises(ValueError, average, y, weights=np.zeros_like(w2))
+        assert_raises(ValueError, average, y, weights=w2 - 1.1 * w2.mean())
         assert_equal(average(y, axis=0, weights=w2),
                      [0., 1., 2., 3., 4., 10.])
         assert_equal(average(y, axis=1),
@@ -196,6 +204,17 @@ class TestAverage(object):
         assert_equal(average(z, axis=1), [2.5, 5.0])
         assert_equal(average(z, axis=0, weights=w2),
                      [0., 1., 99., 99., 4.0, 10.0])
+        w3 = w2.copy()
+        w3[~z.mask] *= -1
+        assert_raises(ValueError, average, z, weights=w3)
+        w3 = w2.copy()
+        w3[~z.mask] = 0
+        assert_raises(ValueError, average, z, weights=w3)
+        w3 = w2.copy()
+        w3[~z.mask] -= 1.1 * w3[~z.mask].mean()
+        assert_raises(ValueError, average, z, weights=w3)
+
+
 
     def test_testAverage3(self):
         # Yet more tests of average!

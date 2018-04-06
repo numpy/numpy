@@ -248,6 +248,10 @@ def iterable(y):
 def average(a, axis=None, weights=None, returned=False):
     """
     Compute the weighted average along the specified axis.
+    
+    .. math:: \\bar{x} = \\frac{ \\sum_{i=1}^n w_i x_i}{\\sum_{i=1}^n w_i}
+
+    with :math:`\\sum_{i=1}^n w_i > 0`
 
     Parameters
     ----------
@@ -265,12 +269,13 @@ def average(a, axis=None, weights=None, returned=False):
         specified in the tuple instead of a single axis or all the axes as
         before.
     weights : array_like, optional
-        An array of weights associated with the values in `a`. Each value in
-        `a` contributes to the average according to its associated weight.
-        The weights array can either be 1-D (in which case its length must be
-        the size of `a` along the given axis) or of the same shape as `a`.
-        If `weights=None`, then all data in `a` are assumed to have a
-        weight equal to one.
+        An array of weights associated with the values in `a`.
+        Each value in `a` contributes to the average according to its
+        associated weight. The weights array can either be 1-D (in which case
+        its length must be the size of `a` along the given axis) or of the same
+        shape as `a`. The sum of weights should be positive.
+        If `weights=None`, then all data in `a` are assumed to have a weight
+        equal to one.
     returned : bool, optional
         Default is `False`. If `True`, the tuple (`average`, `sum_of_weights`)
         is returned, otherwise only the average is returned.
@@ -357,11 +362,10 @@ def average(a, axis=None, weights=None, returned=False):
             wgt = wgt.swapaxes(-1, axis)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
-        if np.any(scl == 0.0):
-            raise ZeroDivisionError(
-                "Weights sum to zero, can't be normalized")
+        if np.any(scl <= 0.0):
+            raise ValueError("Sum of weights should be positive.")
 
-        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
+        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis) / scl
 
     if returned:
         if scl.shape != avg.shape:
