@@ -1667,7 +1667,7 @@ fail:
 }
 
 static PyObject *
-unpack_bits(PyObject *input, int axis)
+unpack_bits(PyObject *input, int axis, PyObject *count_obj)
 {
     static int unpack_init = 0;
     static char unpack_lookup[256][8];
@@ -1677,7 +1677,7 @@ unpack_bits(PyObject *input, int axis)
     npy_intp outdims[NPY_MAXDIMS];
     int i;
     PyArrayIterObject *it, *ot;
-    npy_intp n_in, in_stride, out_stride;
+    npy_intp count, in_n, in_tail, out_pad, in_stride, out_stride;
     NPY_BEGIN_THREADS_DEF;
 
     inp = (PyArrayObject *)PyArray_FROM_O(input);
@@ -1706,20 +1706,37 @@ unpack_bits(PyObject *input, int axis)
 
         newdim.ptr = &shape;
         temp = (PyArrayObject *)PyArray_Newshape(new, &newdim, NPY_CORDER);
-        if (temp == NULL) {
-            goto fail;
-        }
         Py_DECREF(new);
+        if (temp == NULL) {
+            return NULL;
+        }
         new = temp;
     }
 
     /* Setup output shape */
-    for (i=0; i<PyArray_NDIM(new); i++) {
+    for (i = 0; i < PyArray_NDIM(new); i++) {
         outdims[i] = PyArray_DIM(new, i);
     }
 
     /* Multiply axis dimension by 8 */
-    outdims[axis] <<= 3;
+    outdims[axis] *= 8;
+    if (count_obj != Py_None) {
+        count = PyArray_PyIntAsIntp(count_obj);
+        if (error_converting(count)) {
+            goto fail;
+        }
+        if (count < 0) {
+            outdims[axis] += count;
+            if (outdims[axis] < 0) {
+                PyErr_Format(PyExc_ValueError,
+                             "-count larger than number of elements");
+                goto fail;
+            }
+        }
+        else {
+            outdims[axis] = count;
+        }
+    }
 
     /* Create output array */
     out = (PyArrayObject *)PyArray_NewFromDescr(
@@ -1729,6 +1746,7 @@ unpack_bits(PyObject *input, int axis)
     if (out == NULL) {
         goto fail;
     }
+
     /* Setup iterators to iterate over all but given axis */
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
     ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
@@ -1760,11 +1778,22 @@ unpack_bits(PyObject *input, int axis)
         unpack_init = 1;
     }
 
-    NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(new, axis));
+    count = PyArray_DIM(new, axis) * 8;
+    if (outdims[axis] > count) {
+        in_n = count / 8;
+        in_tail = 0;
+        out_pad = outdims[axis] - count;
+    }
+    else {
+        in_n = outdims[axis] / 8;
+        in_tail = outdims[axis] % 8;
+        out_pad = 0;
+    }
 
-    n_in = PyArray_DIM(new, axis);
     in_stride = PyArray_STRIDE(new, axis);
     out_stride = PyArray_STRIDE(out, axis);
+
+    NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
     while (PyArray_ITER_NOTDONE(it)) {
         npy_intp index;
@@ -1773,22 +1802,41 @@ unpack_bits(PyObject *input, int axis)
 
         if (out_stride == 1) {
             /* for unity stride we can just copy out of the lookup table */
-            for (index = 0; index < n_in; index++) {
+            for (index = 0; index < in_n; index++) {
                 memcpy(outptr, unpack_lookup[*inptr], 8);
                 outptr += 8;
                 inptr += in_stride;
             }
+            /* Clean up the tail portion */
+            if (in_tail) {
+                memcpy(outptr, unpack_lookup[*inptr], in_tail);
+            }
+            /* Add padding */
+            else if (out_pad) {
+                memset(outptr, 0, out_pad);
+            }
         }
         else {
-            for (index = 0; index < n_in; index++) {
-                unsigned char mask = 128;
+            unsigned char mask;
 
-                for (i = 0; i < 8; i++) {
+            for (index = 0; index < in_n; index++) {
+                for (mask = 128; mask; mask >>= 1) {
                     *outptr = ((mask & (*inptr)) != 0);
                     outptr += out_stride;
-                    mask >>= 1;
                 }
                 inptr += in_stride;
+            }
+            /* Clean up the tail portion */
+            mask = 128;
+            for (i = 0; i < in_tail; i++) {
+                *outptr = ((mask & (*inptr)) != 0);
+                outptr += out_stride;
+                mask >>= 1;
+            }
+            /* Add padding */
+            for (index = 0; index < out_pad; index++) {
+                *outptr = 0;
+                outptr += out_stride;
             }
         }
         PyArray_ITER_NEXT(it);
@@ -1814,25 +1862,28 @@ io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     int axis = NPY_MAXDIMS;
-    static char *kwlist[] = {"in", "axis", NULL};
+    static char *kwlist[] = {"a", "axis", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&:pack" , kwlist,
-                &obj, PyArray_AxisConverter, &axis)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:pack" , kwlist,
+                                     &obj, PyArray_AxisConverter, &axis)) {
         return NULL;
     }
     return pack_bits(obj, axis);
 }
+
 
 NPY_NO_EXPORT PyObject *
 io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     int axis = NPY_MAXDIMS;
-    static char *kwlist[] = {"in", "axis", NULL};
+    PyObject *count = Py_None;
+    static char *kwlist[] = {"a", "axis", "count", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&:unpack" , kwlist,
-                &obj, PyArray_AxisConverter, &axis)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:unpack" , kwlist,
+                                     &obj, PyArray_AxisConverter, &axis,
+                                     &count)) {
         return NULL;
     }
-    return unpack_bits(obj, axis);
+    return unpack_bits(obj, axis, count);
 }
