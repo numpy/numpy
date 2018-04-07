@@ -4,9 +4,8 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, temppath,
-)
+    assert_, assert_equal, assert_raises, assert_array_equal, temppath,
+    )
 from ._locales import CommaDecimalPointLocale
 
 LD_INFO = np.finfo(np.longdouble)
@@ -206,7 +205,3 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
     def test_fromstring_foreign_value(self):
         b = np.fromstring("1,234", dtype=np.longdouble, sep=" ")
         assert_array_equal(b[0], 1)
-
-
-if __name__ == "__main__":
-    run_module_suite()

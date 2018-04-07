@@ -4,7 +4,7 @@ import platform
 import pytest
 
 import numpy as np
-from numpy.testing import assert_, run_module_suite
+from numpy.testing import assert_
 
 
 class TestErrstate(object):
@@ -47,7 +47,3 @@ class TestErrstate(object):
             with np.errstate(call=None):
                 assert_(np.geterrcall() is None, 'call is not None')
         assert_(np.geterrcall() is olderrcall, 'call is not olderrcall')
-
-
-if __name__ == "__main__":
-    run_module_suite()

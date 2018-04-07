@@ -2,9 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_raises_regex
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_raises_regex
     )
 from numpy.lib.index_tricks import (
     mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
@@ -394,7 +393,3 @@ def test_ndindex():
     # Make sure 0-sized ndindex works correctly
     x = list(ndindex(*[0]))
     assert_equal(x, [])
-
-
-if __name__ == "__main__":
-    run_module_suite()

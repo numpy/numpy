@@ -7,9 +7,7 @@ import pytest
 
 import numpy as np
 from numpy.core._rational_tests import rational
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises
-)
+from numpy.testing import assert_, assert_equal, assert_raises
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -722,7 +720,3 @@ def test_dtypes_are_true():
 def test_invalid_dtype_string():
     # test for gh-10440
     assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
-
-
-if __name__ == "__main__":
-    run_module_suite()

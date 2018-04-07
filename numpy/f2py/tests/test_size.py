@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import pytest
 
-from numpy.testing import run_module_suite, assert_equal
+from numpy.testing import assert_equal
 from . import util
 
 
@@ -49,6 +49,3 @@ class TestSizeSumExample(util.F2PyTest):
 
         r = self.module.flatten([[1, 2, 3], [4, 5, 6]])
         assert_equal(r, [1, 2, 3, 4, 5, 6], repr(r))
-
-if __name__ == "__main__":
-    run_module_suite()

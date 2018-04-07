@@ -8,7 +8,6 @@ import numpy.polynomial.legendre as leg
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 L0 = np.array([1])
@@ -546,7 +545,3 @@ class TestMisc(object):
         tgt = 1.
         res = leg.legweight(x)
         assert_almost_equal(res, tgt)
-
-
-if __name__ == "__main__":
-    run_module_suite()

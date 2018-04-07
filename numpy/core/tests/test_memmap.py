@@ -13,9 +13,8 @@ from numpy.compat import Path
 
 from numpy import arange, allclose, asarray
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    suppress_warnings
-)
+    assert_, assert_equal, assert_array_equal, suppress_warnings
+    )
 
 class TestMemmap(object):
     def setup(self):
@@ -197,6 +196,3 @@ class TestMemmap(object):
         offset = mmap.ALLOCATIONGRANULARITY + 1
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_(fp.offset == offset)
-
-if __name__ == "__main__":
-    run_module_suite()

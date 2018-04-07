@@ -18,8 +18,7 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, run_module_suite,
-    SkipTest, suppress_warnings
+    assert_almost_equal, assert_allclose, SkipTest, suppress_warnings
     )
 
 
@@ -1784,7 +1783,3 @@ class TestMultiDot(object):
     def test_too_few_input_arrays(self):
         assert_raises(ValueError, multi_dot, [])
         assert_raises(ValueError, multi_dot, [np.random.random((3, 3))])
-
-
-if __name__ == "__main__":
-    run_module_suite()

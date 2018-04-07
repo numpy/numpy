@@ -286,8 +286,7 @@ from io import BytesIO
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    SkipTest
+    assert_, assert_array_equal, assert_raises, raises, SkipTest
     )
 from numpy.lib import format
 
@@ -853,7 +852,3 @@ def test_large_archive():
         new_a = np.load(f)["arr"]
 
     assert_(a.shape == new_a.shape)
-
-
-if __name__ == "__main__":
-    run_module_suite()

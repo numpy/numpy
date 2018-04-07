@@ -4,9 +4,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import tempfile
 import numpy as np
-from numpy.testing import assert_, assert_equal, run_module_suite
-import sys, tempfile
+from numpy.testing import assert_, assert_equal
 
 
 class TestRealScalars(object):
@@ -230,6 +230,3 @@ class TestRealScalars(object):
         # gh-2643, gh-6136, gh-6908
         assert_equal(repr(np.float64(0.1)), repr(0.1))
         assert_(repr(np.float64(0.20000000000000004)) != repr(0.2))
-
-if __name__ == "__main__":
-    run_module_suite()

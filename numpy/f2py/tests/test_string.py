@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import pytest
 
-from numpy.testing import run_module_suite, assert_array_equal
+from numpy.testing import assert_array_equal
 import numpy as np
 from . import util
 
@@ -22,6 +22,3 @@ class TestString(util.F2PyTest):
         expected = strings.copy()
         expected[1, :] = 'AAA'
         assert_array_equal(out, expected)
-
-if __name__ == "__main__":
-    run_module_suite()
