@@ -35,11 +35,11 @@ class TestCexp(object):
         check = check_complex_value
         f = np.exp
 
-        yield check, f, 1, 0, np.exp(1), 0, False
-        yield check, f, 0, 1, np.cos(1), np.sin(1), False
+        check(f, 1, 0, np.exp(1), 0, False)
+        check(f, 0, 1, np.cos(1), np.sin(1), False)
 
         ref = np.exp(1) * complex(np.cos(1), np.sin(1))
-        yield check, f, 1, 1, ref.real, ref.imag, False
+        check(f, 1, 1, ref.real, ref.imag, False)
 
     @platform_skip
     def test_special_values(self):
@@ -49,25 +49,25 @@ class TestCexp(object):
         f = np.exp
 
         # cexp(+-0 + 0i) is 1 + 0i
-        yield check, f, np.PZERO, 0, 1, 0, False
-        yield check, f, np.NZERO, 0, 1, 0, False
+        check(f, np.PZERO, 0, 1, 0, False)
+        check(f, np.NZERO, 0, 1, 0, False)
 
         # cexp(x + infi) is nan + nani for finite x and raises 'invalid' FPU
         # exception
-        yield check, f,  1, np.inf, np.nan, np.nan
-        yield check, f, -1, np.inf, np.nan, np.nan
-        yield check, f,  0, np.inf, np.nan, np.nan
+        check(f,  1, np.inf, np.nan, np.nan)
+        check(f, -1, np.inf, np.nan, np.nan)
+        check(f,  0, np.inf, np.nan, np.nan)
 
         # cexp(inf + 0i) is inf + 0i
-        yield check, f,  np.inf, 0, np.inf, 0
+        check(f,  np.inf, 0, np.inf, 0)
 
         # cexp(-inf + yi) is +0 * (cos(y) + i sin(y)) for finite y
-        yield check, f,  -np.inf, 1, np.PZERO, np.PZERO
-        yield check, f,  -np.inf, 0.75 * np.pi, np.NZERO, np.PZERO
+        check(f,  -np.inf, 1, np.PZERO, np.PZERO)
+        check(f,  -np.inf, 0.75 * np.pi, np.NZERO, np.PZERO)
 
         # cexp(inf + yi) is +inf * (cos(y) + i sin(y)) for finite y
-        yield check, f,  np.inf, 1, np.inf, np.inf
-        yield check, f,  np.inf, 0.75 * np.pi, -np.inf, np.inf
+        check(f,  np.inf, 1, np.inf, np.inf)
+        check(f,  np.inf, 0.75 * np.pi, -np.inf, np.inf)
 
         # cexp(-inf + inf i) is +-0 +- 0i (signs unspecified)
         def _check_ninf_inf(dummy):
@@ -77,7 +77,7 @@ class TestCexp(object):
                 if z.real != 0 or z.imag != 0:
                     raise AssertionError(msgform % (z.real, z.imag))
 
-        yield _check_ninf_inf, None
+        _check_ninf_inf(None)
 
         # cexp(inf + inf i) is +-inf + NaNi and raised invalid FPU ex.
         def _check_inf_inf(dummy):
@@ -87,7 +87,7 @@ class TestCexp(object):
                 if not np.isinf(z.real) or not np.isnan(z.imag):
                     raise AssertionError(msgform % (z.real, z.imag))
 
-        yield _check_inf_inf, None
+        _check_inf_inf(None)
 
         # cexp(-inf + nan i) is +-0 +- 0i
         def _check_ninf_nan(dummy):
@@ -97,7 +97,7 @@ class TestCexp(object):
                 if z.real != 0 or z.imag != 0:
                     raise AssertionError(msgform % (z.real, z.imag))
 
-        yield _check_ninf_nan, None
+        _check_ninf_nan(None)
 
         # cexp(inf + nan i) is +-inf + nan
         def _check_inf_nan(dummy):
@@ -107,18 +107,18 @@ class TestCexp(object):
                 if not np.isinf(z.real) or not np.isnan(z.imag):
                     raise AssertionError(msgform % (z.real, z.imag))
 
-        yield _check_inf_nan, None
+        _check_inf_nan(None)
 
         # cexp(nan + yi) is nan + nani for y != 0 (optional: raises invalid FPU
         # ex)
-        yield check, f, np.nan, 1, np.nan, np.nan
-        yield check, f, np.nan, -1, np.nan, np.nan
+        check(f, np.nan, 1, np.nan, np.nan)
+        check(f, np.nan, -1, np.nan, np.nan)
 
-        yield check, f, np.nan,  np.inf, np.nan, np.nan
-        yield check, f, np.nan, -np.inf, np.nan, np.nan
+        check(f, np.nan,  np.inf, np.nan, np.nan)
+        check(f, np.nan, -np.inf, np.nan, np.nan)
 
         # cexp(nan + nani) is nan + nani
-        yield check, f, np.nan, np.nan, np.nan, np.nan
+        check(f, np.nan, np.nan, np.nan, np.nan)
 
     # TODO This can be xfail when the generator functions are got rid of.
     @pytest.mark.skip(reason="cexp(nan + 0I) is wrong on most platforms")
@@ -274,24 +274,28 @@ class TestClog(object):
             for i in range(len(xa)):
                 assert_almost_equal(np.log(xa[i].conj()), ya[i].conj())
 
+
 class TestCsqrt(object):
 
     def test_simple(self):
         # sqrt(1)
-        yield check_complex_value, np.sqrt, 1, 0, 1, 0
+        check_complex_value(np.sqrt, 1, 0, 1, 0)
 
         # sqrt(1i)
-        yield check_complex_value, np.sqrt, 0, 1, 0.5*np.sqrt(2), 0.5*np.sqrt(2), False
+        rres = 0.5*np.sqrt(2)
+        ires = rres
+        check_complex_value(np.sqrt, 0, 1, rres, ires, False)
 
         # sqrt(-1)
-        yield check_complex_value, np.sqrt, -1, 0, 0, 1
+        check_complex_value(np.sqrt, -1, 0, 0, 1)
 
     def test_simple_conjugate(self):
         ref = np.conj(np.sqrt(complex(1, 1)))
 
         def f(z):
             return np.sqrt(np.conj(z))
-        yield check_complex_value, f, 1, 1, ref.real, ref.imag, False
+
+        check_complex_value(f, 1, 1, ref.real, ref.imag, False)
 
     #def test_branch_cut(self):
     #    _check_branch_cut(f, -1, 0, 1, -1)
@@ -304,29 +308,29 @@ class TestCsqrt(object):
         f = np.sqrt
 
         # csqrt(+-0 + 0i) is 0 + 0i
-        yield check, f, np.PZERO, 0, 0, 0
-        yield check, f, np.NZERO, 0, 0, 0
+        check(f, np.PZERO, 0, 0, 0)
+        check(f, np.NZERO, 0, 0, 0)
 
         # csqrt(x + infi) is inf + infi for any x (including NaN)
-        yield check, f,  1, np.inf, np.inf, np.inf
-        yield check, f, -1, np.inf, np.inf, np.inf
+        check(f,  1, np.inf, np.inf, np.inf)
+        check(f, -1, np.inf, np.inf, np.inf)
 
-        yield check, f, np.PZERO, np.inf, np.inf, np.inf
-        yield check, f, np.NZERO, np.inf, np.inf, np.inf
-        yield check, f,   np.inf, np.inf, np.inf, np.inf
-        yield check, f,  -np.inf, np.inf, np.inf, np.inf
-        yield check, f,  -np.nan, np.inf, np.inf, np.inf
+        check(f, np.PZERO, np.inf, np.inf, np.inf)
+        check(f, np.NZERO, np.inf, np.inf, np.inf)
+        check(f,   np.inf, np.inf, np.inf, np.inf)
+        check(f,  -np.inf, np.inf, np.inf, np.inf)
+        check(f,  -np.nan, np.inf, np.inf, np.inf)
 
         # csqrt(x + nani) is nan + nani for any finite x
-        yield check, f,  1, np.nan, np.nan, np.nan
-        yield check, f, -1, np.nan, np.nan, np.nan
-        yield check, f,  0, np.nan, np.nan, np.nan
+        check(f,  1, np.nan, np.nan, np.nan)
+        check(f, -1, np.nan, np.nan, np.nan)
+        check(f,  0, np.nan, np.nan, np.nan)
 
         # csqrt(-inf + yi) is +0 + infi for any finite y > 0
-        yield check, f, -np.inf, 1, np.PZERO, np.inf
+        check(f, -np.inf, 1, np.PZERO, np.inf)
 
         # csqrt(inf + yi) is +inf + 0i for any finite y > 0
-        yield check, f, np.inf, 1, np.inf, np.PZERO
+        check(f, np.inf, 1, np.inf, np.PZERO)
 
         # csqrt(-inf + nani) is nan +- infi (both +i infi are valid)
         def _check_ninf_nan(dummy):
@@ -337,16 +341,16 @@ class TestCsqrt(object):
                 if not (np.isnan(z.real) and np.isinf(z.imag)):
                     raise AssertionError(msgform % (z.real, z.imag))
 
-        yield _check_ninf_nan, None
+        _check_ninf_nan(None)
 
         # csqrt(+inf + nani) is inf + nani
-        yield check, f, np.inf, np.nan, np.inf, np.nan
+        check(f, np.inf, np.nan, np.inf, np.nan)
 
         # csqrt(nan + yi) is nan + nani for any finite y (infinite handled in x
         # + nani)
-        yield check, f, np.nan,       0, np.nan, np.nan
-        yield check, f, np.nan,       1, np.nan, np.nan
-        yield check, f, np.nan,  np.nan, np.nan, np.nan
+        check(f, np.nan,       0, np.nan, np.nan)
+        check(f, np.nan,       1, np.nan, np.nan)
+        check(f, np.nan,  np.nan, np.nan, np.nan)
 
         # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
         # cuts first)
@@ -425,21 +429,21 @@ class TestCabs(object):
         # cabs(+-nan + nani) returns nan
         x.append(np.nan)
         y.append(np.nan)
-        yield check_real_value, np.abs,  np.nan, np.nan, np.nan
+        check_real_value(np.abs,  np.nan, np.nan, np.nan)
 
         x.append(np.nan)
         y.append(-np.nan)
-        yield check_real_value, np.abs, -np.nan, np.nan, np.nan
+        check_real_value(np.abs, -np.nan, np.nan, np.nan)
 
         # According to C99 standard, if exactly one of the real/part is inf and
         # the other nan, then cabs should return inf
         x.append(np.inf)
         y.append(np.nan)
-        yield check_real_value, np.abs,  np.inf, np.nan, np.inf
+        check_real_value(np.abs,  np.inf, np.nan, np.inf)
 
         x.append(-np.inf)
         y.append(np.nan)
-        yield check_real_value, np.abs, -np.inf, np.nan, np.inf
+        check_real_value(np.abs, -np.inf, np.nan, np.inf)
 
         # cabs(conj(z)) == conj(cabs(z)) (= cabs(z))
         def f(a):
@@ -451,7 +455,7 @@ class TestCabs(object):
         xa = np.array(x, dtype=complex)
         for i in range(len(xa)):
             ref = g(x[i], y[i])
-            yield check_real_value, f, x[i], y[i], ref
+            check_real_value(f, x[i], y[i], ref)
 
 class TestCarg(object):
     def test_simple(self):
@@ -494,31 +498,32 @@ class TestCarg(object):
 
     def test_special_values(self):
         # carg(-np.inf +- yi) returns +-pi for finite y > 0
-        yield check_real_value, ncu._arg, -np.inf,  1,  np.pi, False
-        yield check_real_value, ncu._arg, -np.inf, -1, -np.pi, False
+        check_real_value(ncu._arg, -np.inf,  1,  np.pi, False)
+        check_real_value(ncu._arg, -np.inf, -1, -np.pi, False)
 
         # carg(np.inf +- yi) returns +-0 for finite y > 0
-        yield check_real_value, ncu._arg, np.inf,  1, np.PZERO, False
-        yield check_real_value, ncu._arg, np.inf, -1, np.NZERO, False
+        check_real_value(ncu._arg, np.inf,  1, np.PZERO, False)
+        check_real_value(ncu._arg, np.inf, -1, np.NZERO, False)
 
         # carg(x +- np.infi) returns +-pi/2 for finite x
-        yield check_real_value, ncu._arg, 1,  np.inf,  0.5 * np.pi, False
-        yield check_real_value, ncu._arg, 1, -np.inf, -0.5 * np.pi, False
+        check_real_value(ncu._arg, 1,  np.inf,  0.5 * np.pi, False)
+        check_real_value(ncu._arg, 1, -np.inf, -0.5 * np.pi, False)
 
         # carg(-np.inf +- np.infi) returns +-3pi/4
-        yield check_real_value, ncu._arg, -np.inf,  np.inf,  0.75 * np.pi, False
-        yield check_real_value, ncu._arg, -np.inf, -np.inf, -0.75 * np.pi, False
+        check_real_value(ncu._arg, -np.inf,  np.inf,  0.75 * np.pi, False)
+        check_real_value(ncu._arg, -np.inf, -np.inf, -0.75 * np.pi, False)
 
         # carg(np.inf +- np.infi) returns +-pi/4
-        yield check_real_value, ncu._arg, np.inf,  np.inf,  0.25 * np.pi, False
-        yield check_real_value, ncu._arg, np.inf, -np.inf, -0.25 * np.pi, False
+        check_real_value(ncu._arg, np.inf,  np.inf,  0.25 * np.pi, False)
+        check_real_value(ncu._arg, np.inf, -np.inf, -0.25 * np.pi, False)
 
         # carg(x + yi) returns np.nan if x or y is nan
-        yield check_real_value, ncu._arg, np.nan,      0, np.nan, False
-        yield check_real_value, ncu._arg,      0, np.nan, np.nan, False
+        check_real_value(ncu._arg, np.nan,      0, np.nan, False)
+        check_real_value(ncu._arg,      0, np.nan, np.nan, False)
 
-        yield check_real_value, ncu._arg, np.nan, np.inf, np.nan, False
-        yield check_real_value, ncu._arg, np.inf, np.nan, np.nan, False
+        check_real_value(ncu._arg, np.nan, np.inf, np.nan, False)
+        check_real_value(ncu._arg, np.inf, np.nan, np.nan, False)
+
 
 def check_real_value(f, x1, y1, x, exact=True):
     z1 = np.array([complex(x1, y1)])
@@ -526,6 +531,7 @@ def check_real_value(f, x1, y1, x, exact=True):
         assert_equal(f(z1), x)
     else:
         assert_almost_equal(f(z1), x)
+
 
 def check_complex_value(f, x1, y1, x2, y2, exact=True):
     z1 = np.array([complex(x1, y1)])
