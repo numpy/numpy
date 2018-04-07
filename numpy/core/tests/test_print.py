@@ -1,14 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import locale
-import contextlib
-import nose
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, SkipTest, dec
-)
+    run_module_suite, assert_, assert_equal, SkipTest
+    )
 from ._locales import CommaDecimalPointLocale
 
 

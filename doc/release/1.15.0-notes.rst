@@ -6,6 +6,8 @@ NumPy 1.15.0 Release Notes
 Highlights
 ==========
 
+* NumPy has switched to pytest for testing.
+
 
 New functions
 =============
@@ -37,6 +39,13 @@ Deprecations
   * `np.ma.loads`, `np.ma.dumps`
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
+* Direct imports from the following modules is deprecated. All testing related
+  imports should come from `numpy.testing`.
+  * `np.testing.utils`
+  * `np.testing.decorators`
+  * `np.testing.nosetester`
+  * `np.testing.noseclasses`
+  * `np.core.umath_tests`
 
 * Giving a generator to `np.sum` is now deprecated. This was undocumented, but
   worked. Previously, it would calculate the sum of the generator expression.
@@ -50,6 +59,16 @@ Future Changes
 
 Compatibility notes
 ===================
+
+Numpy has switched to using pytest instead of nose for testing
+--------------------------------------------------------------
+The last nose release was 1.3.7 in June, 2015, and development of that tool has
+ended, consequently NumPy has now switched to using pytest. The old decorators
+and nose tools that were previously used by some downstream projects remain
+available, but will not be maintained. The standard testing utilities,
+`assert_almost_equal` and such, are not be affected by this change except for
+the nose specific functions `import_nose` and `raises`. Those functions are
+not used in numpy, but are kept for downstream compatibility.
 
 ``np.ma.notmasked_contiguous`` and ``np.ma.flatnotmasked_contiguous`` always return lists
 -----------------------------------------------------------------------------------------
@@ -86,7 +105,6 @@ builtin arbitrary-precision `Decimal` and `long` types.
 
 Support for cross-platform builds for iOS
 -----------------------------------------
-
 The build system has been modified to add support for the
 ``_PYTHON_HOST_PLATFORM`` environment variable, used by ``distutils`` when
 compiling on one platform for another platform. This makes it possible to

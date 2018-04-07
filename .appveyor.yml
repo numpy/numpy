@@ -8,10 +8,6 @@ max_jobs: 100
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
 
-matrix:
-  allow_failures:
-    - USE_PYTEST: true
-
 environment:
   global:
       MINGW_32: C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
@@ -27,7 +23,7 @@ environment:
     - PYTHON: C:\Python34-x64
       PYTHON_VERSION: 3.4
       PYTHON_ARCH: 64
-      USE_PYTEST: true
+      TEST_MODE: fast
 
     - PYTHON: C:\Python36
       PYTHON_VERSION: 3.6
@@ -107,30 +103,27 @@ build_script:
   # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
   # We then use the import library from the DLL to compile with MSVC
   - ps: |
-      If ($env:USE_PYTEST -eq "true") {
-          pip install -e .
-      } Else {
-          pip wheel -v -v -v --wheel-dir=dist .
+      pip wheel -v -v -v --wheel-dir=dist .
 
-          # For each wheel that pip has placed in the "dist" directory
-          # First, upload the wheel to the "artifacts" tab and then
-          # install the wheel. If we have only built numpy (as is the case here),
-          # then there will be one wheel to install.
-          
-          # This method is more representative of what will be distributed,
-          # because it actually tests what the built wheels will be rather than
-          # what 'setup.py install' will do and at it uploads the wheels so that
-          # they can be inspected.
+      # For each wheel that pip has placed in the "dist" directory
+      # First, upload the wheel to the "artifacts" tab and then
+      # install the wheel. If we have only built numpy (as is the case here),
+      # then there will be one wheel to install.
 
-          ls dist -r | Foreach-Object {
-              appveyor PushArtifact $_.FullName
-              pip install $_.FullName
-          }
+      # This method is more representative of what will be distributed,
+      # because it actually tests what the built wheels will be rather than
+      # what 'setup.py install' will do and at it uploads the wheels so that
+      # they can be inspected.
+
+      ls dist -r | Foreach-Object {
+          Push-AppveyorArtifact $_.FullName
+          pip install $_.FullName
       }
 
 test_script:
-  - if [%USE_PYTEST%]==[true] pytest -n3 --junitxml=junit-results.xml
-  - if [%USE_PYTEST%]==[] python runtests.py -v -n -m %TEST_MODE%
+  #- if [%USE_PYTEST%]==[true] pytest -n3 --junitxml=junit-results.xml
+  #- if [%USE_PYTEST%]==[] python runtests.py -v -n -m %TEST_MODE%
+  python runtests.py -v -n -m %TEST_MODE% -- --disable-pytest-warnings
 
 after_build:
   # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.

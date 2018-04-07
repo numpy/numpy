@@ -4,6 +4,7 @@ import sys
 import warnings
 import itertools
 import platform
+import pytest
 from decimal import Decimal
 
 import numpy as np
@@ -12,7 +13,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     run_module_suite, assert_, assert_equal, assert_raises,
     assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, dec, suppress_warnings
+    assert_array_almost_equal, suppress_warnings, HAS_REFCOUNT
 )
 
 
@@ -467,7 +468,7 @@ class TestSeterr(object):
             np.seterr(**old)
             assert_(np.geterr() == old)
 
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+    @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_divide_err(self):
         with np.errstate(divide='raise'):
             try:
@@ -551,7 +552,7 @@ class TestFloatExceptions(object):
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
-    @dec.knownfailureif(True, "See ticket #2350")
+    @pytest.mark.xfail(reason="See ticket #2350")
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
@@ -2092,7 +2093,7 @@ class TestCreationFuncs(object):
         self.check_function(np.full, 0)
         self.check_function(np.full, 1)
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_for_reference_leak(self):
         # Make sure we have an object for reference
         dim = 1

@@ -46,5 +46,6 @@ __all__ += financial.__all__
 __all__ += nanfunctions.__all__
 __all__ += histograms.__all__
 
-from numpy.testing import _numpy_tester
-test = _numpy_tester().test
+from numpy.testing._private.pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

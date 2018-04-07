@@ -9,7 +9,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_raises, dec
+from numpy.testing import run_module_suite, assert_, assert_raises
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
     array, arange, masked, MaskedArray, masked_array, log, add, hypot,

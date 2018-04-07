@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
-import sys, gc
+import sys
+import gc
+import pytest
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec,
-)
+    run_module_suite, assert_, assert_equal, assert_raises, assert_warns,
+    HAS_REFCOUNT,
+    )
 import textwrap
 
 class TestArrayRepr(object):
@@ -34,7 +37,7 @@ class TestArrayRepr(object):
             "     [(1,), (1,)]], dtype=[('a', '<i4')])"
         )
 
-    @dec.knownfailureif(True, "See gh-10544")
+    @pytest.mark.xfail(reason="See gh-10544")
     def test_object_subclass(self):
         class sub(np.ndarray):
             def __new__(cls, inp):
@@ -388,7 +391,7 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
         # closure (gh-10620)

@@ -2,13 +2,14 @@ from __future__ import division, print_function
 
 import os
 import shutil
+import pytest
 from tempfile import mkstemp, mkdtemp
 from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
 from numpy.distutils import ccompiler, customized_ccompiler
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, dec
+    run_module_suite, assert_, assert_equal
     )
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
@@ -201,7 +202,7 @@ class TestSystemInfoReading(object):
         extra = tsi.calc_extra_info()
         assert_equal(extra['extra_link_args'], ['-Wl,-rpath=' + self._lib2])
 
-    @dec.skipif(not HAVE_COMPILER)
+    @pytest.mark.skipif(not HAVE_COMPILER, reason="Missing compiler")
     def test_compile1(self):
         # Compile source and link the first source
         c = customized_ccompiler()
@@ -216,8 +217,9 @@ class TestSystemInfoReading(object):
         finally:
             os.chdir(previousDir)
 
-    @dec.skipif(not HAVE_COMPILER)
-    @dec.skipif('msvc' in repr(ccompiler.new_compiler()))
+    @pytest.mark.skipif(not HAVE_COMPILER, reason="Missing compiler")
+    @pytest.mark.skipif('msvc' in repr(ccompiler.new_compiler()),
+                         reason="Fails with MSVC compiler ")
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2

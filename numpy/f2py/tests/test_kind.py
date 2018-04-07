@@ -1,8 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import pytest
 
-from numpy.testing import run_module_suite, assert_, dec
+from numpy.testing import run_module_suite, assert_
 from numpy.f2py.crackfortran import (
     _selected_int_kind_func as selected_int_kind,
     _selected_real_kind_func as selected_real_kind
@@ -17,7 +18,7 @@ def _path(*a):
 class TestKind(util.F2PyTest):
     sources = [_path('src', 'kind', 'foo.f90')]
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         selectedrealkind = self.module.selectedrealkind
         selectedintkind = self.module.selectedintkind
