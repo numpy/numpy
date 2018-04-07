@@ -174,15 +174,12 @@ extern "C" CONFUSE_EMACS
 static NPY_INLINE void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
-    if (arr != NULL) {
-        PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
-        if ((PyArray_FLAGS(arr) & NPY_ARRAY_WRITEBACKIFCOPY) ||
-            (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY)) {
-            if (fa->base) {
-                PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
-                Py_DECREF(fa->base);
-                fa->base = NULL;
-            }
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
+    if (fa && fa->base) {
+        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) || (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
+            PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
+            Py_DECREF(fa->base);
+            fa->base = NULL;
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
         }
