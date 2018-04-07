@@ -288,11 +288,11 @@ def test_tril_triu_ndim2():
         a = np.ones((2, 2), dtype=dtype)
         b = np.tril(a)
         c = np.triu(a)
-        yield assert_array_equal, b, [[1, 0], [1, 1]]
-        yield assert_array_equal, c, b.T
+        assert_array_equal(b, [[1, 0], [1, 1]])
+        assert_array_equal(c, b.T)
         # should return the same dtype as the original array
-        yield assert_equal, b.dtype, a.dtype
-        yield assert_equal, c.dtype, a.dtype
+        assert_equal(b.dtype, a.dtype)
+        assert_equal(c.dtype, a.dtype)
 
 
 def test_tril_triu_ndim3():
@@ -314,10 +314,10 @@ def test_tril_triu_ndim3():
             ], dtype=dtype)
         a_triu_observed = np.triu(a)
         a_tril_observed = np.tril(a)
-        yield assert_array_equal, a_triu_observed, a_triu_desired
-        yield assert_array_equal, a_tril_observed, a_tril_desired
-        yield assert_equal, a_triu_observed.dtype, a.dtype
-        yield assert_equal, a_tril_observed.dtype, a.dtype
+        assert_array_equal(a_triu_observed, a_triu_desired)
+        assert_array_equal(a_tril_observed, a_tril_desired)
+        assert_equal(a_triu_observed.dtype, a.dtype)
+        assert_equal(a_tril_observed.dtype, a.dtype)
 
 def test_tril_triu_with_inf():
     # Issue 4859
@@ -484,12 +484,12 @@ class TestVander(object):
                            [16, -8, 4, -2, 1],
                            [81, 27, 9, 3, 1]])
         # Check default value of N:
-        yield (assert_array_equal, v, powers[:, 1:])
+        assert_array_equal(v, powers[:, 1:])
         # Check a range of N values, including 0 and 5 (greater than default)
         m = powers.shape[1]
         for n in range(6):
             v = vander(c, N=n)
-            yield (assert_array_equal, v, powers[:, m-n:m])
+            assert_array_equal(v, powers[:, m-n:m])
 
     def test_dtypes(self):
         c = array([11, -12, 13], dtype=np.int8)
@@ -497,7 +497,7 @@ class TestVander(object):
         expected = np.array([[121, 11, 1],
                              [144, -12, 1],
                              [169, 13, 1]])
-        yield (assert_array_equal, v, expected)
+        assert_array_equal(v, expected)
 
         c = array([1.0+1j, 1.0-1j])
         v = vander(c, N=3)
@@ -506,4 +506,4 @@ class TestVander(object):
         # The data is floating point, but the values are small integers,
         # so assert_array_equal *should* be safe here (rather than, say,
         # assert_array_almost_equal).
-        yield (assert_array_equal, v, expected)
+        assert_array_equal(v, expected)
