@@ -2332,3 +2332,13 @@ class TestRegression(object):
         #va[0] = b'\xff\xff\xff\xff'
         #del va
         #assert_equal(x, b'\x00\x00\x00\x00')
+
+    def test_structarray_title(self):
+        # The following used to segfault on pypy, due to NPY_TITLE_KEY
+        # not working properly and resulting to double-decref of the
+        # structured array field items:
+        # See: https://bitbucket.org/pypy/pypy/issues/2789
+        for j in range(5):
+            structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
+            structure[0]['x'] = np.array([2])
+            gc.collect()
