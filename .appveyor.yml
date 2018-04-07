@@ -121,9 +121,7 @@ build_script:
       }
 
 test_script:
-  #- if [%USE_PYTEST%]==[true] pytest -n3 --junitxml=junit-results.xml
-  #- if [%USE_PYTEST%]==[] python runtests.py -v -n -m %TEST_MODE%
-  python runtests.py -v -n -m %TEST_MODE% -- --disable-pytest-warnings
+  python runtests.py -v -n -m %TEST_MODE%
 
 after_build:
   # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.
