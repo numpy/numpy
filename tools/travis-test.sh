@@ -113,11 +113,9 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full -- \
-            --disable-pytest-warnings
+    $PYTHON ../tools/test-installed-numpy.py -v --mode=full
   else
-    $PYTHON ../tools/test-installed-numpy.py -v -- \
-            --disable-pytest-warnings
+    $PYTHON ../tools/test-installed-numpy.py -v
   fi
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
