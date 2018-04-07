@@ -146,6 +146,12 @@ as usual with `errstate`.
 Dates, times, and timedeltas can now be histogrammed. The bin edges must be
 passed explicitly, and are not yet computed automatically.
 
+``histogramdd`` allows explicit ranges to be given in a subset of axes
+----------------------------------------------------------------------
+The ``range`` argument of `histogramdd` can now contain ``None`` values to
+indicate that the range for the corresponding axis should be computed from the
+data. Previously, this could not be specified on a per-axis basis.
+
 ``np.r_`` works with 0d arrays, and ``np.ma.mr_` works with ``np.ma.masked``
 ----------------------------------------------------------------------------
 0d arrays passed to the `r_` and `mr_` concatenation helpers are now treated as

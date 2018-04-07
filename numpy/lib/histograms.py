@@ -779,10 +779,18 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     Parameters
     ----------
-    sample : array_like
-        The data to be histogrammed. It must be an (N,D) array or data
-        that can be converted to such. The rows of the resulting array
-        are the coordinates of points in a D dimensional polytope.
+    sample : (N, D) array, or (D, N) array_like
+        The data to be histogrammed.
+
+        Note the unusual interpretation of sample when an array_like:
+
+        * When an array, each row is a coordinate in a D-dimensional space -
+          such as ``histogramgramdd(np.array([p1, p2, p3]))``.
+        * When an array_like, each element is the list of values for single
+          coordinate - such as ``histogramgramdd((X, Y, Z))``.
+
+        The first form should be preferred.
+
     bins : sequence or int, optional
         The bin specification:
 
@@ -791,9 +799,12 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         * The number of bins for all dimensions (nx=ny=...=bins).
 
     range : sequence, optional
-        A sequence of lower and upper bin edges to be used if the edges are
-        not given explicitly in `bins`. Defaults to the minimum and maximum
-        values along each dimension.
+        A sequence of length D, each an optional (lower, upper) tuple giving
+        the outer bin edges to be used if the edges are not given explicitly in
+        `bins`.
+        An entry of None in the sequence results in the minimum and maximum
+        values being used for the corresponding dimension.
+        The default, None, is equivalent to passing a tuple of D None values.
     normed : bool, optional
         If False, returns the number of samples in each bin. If True,
         returns the bin density ``bin_count / sample_count / bin_volume``.
@@ -849,53 +860,39 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         # bins is an integer
         bins = D*[bins]
 
-    # Select range for each dimension
-    # Used only if number of bins is given.
-    if range is None:
-        # Handle empty input. Range can't be determined in that case, use 0-1.
-        if N == 0:
-            smin = np.zeros(D)
-            smax = np.ones(D)
-        else:
-            smin = np.atleast_1d(np.array(sample.min(0), float))
-            smax = np.atleast_1d(np.array(sample.max(0), float))
-    else:
-        if not np.all(np.isfinite(range)):
-            raise ValueError(
-                'range parameter must be finite.')
-        smin = np.zeros(D)
-        smax = np.zeros(D)
-        for i in np.arange(D):
-            smin[i], smax[i] = range[i]
-
-    # Make sure the bins have a finite width.
-    for i in np.arange(len(smin)):
-        if smin[i] == smax[i]:
-            smin[i] = smin[i] - .5
-            smax[i] = smax[i] + .5
-
     # avoid rounding issues for comparisons when dealing with inexact types
     if np.issubdtype(sample.dtype, np.inexact):
         edge_dt = sample.dtype
     else:
         edge_dt = float
+
+    # normalize the range argument
+    if range is None:
+        range = (None,) * D
+    elif len(range) != D:
+        raise ValueError('range argument must have one entry per dimension')
+
     # Create edge arrays
     for i in np.arange(D):
-        if np.isscalar(bins[i]):
+        if np.ndim(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
-                    "Element at index %s in `bins` should be a positive "
-                    "integer." % i)
-            nbin[i] = bins[i] + 2  # +2 for outlier bins
-            edges[i] = np.linspace(smin[i], smax[i], nbin[i]-1, dtype=edge_dt)
-        else:
+                    '`bins[{}]` must be positive, when an integer'.format(i))
+            smin, smax = _get_outer_edges(sample[:,i], range[i])
+            edges[i] = np.linspace(smin, smax, bins[i] + 1, dtype=edge_dt)
+        elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i], edge_dt)
-            nbin[i] = len(edges[i]) + 1  # +1 for outlier bins
-        dedges[i] = np.diff(edges[i])
-        if np.any(np.asarray(dedges[i]) <= 0):
+            # not just monotonic, due to the use of mindiff below
+            if np.any(edges[i][:-1] >= edges[i][1:]):
+                raise ValueError(
+                    '`bins[{}]` must be strictly increasing, when an array'
+                    .format(i))
+        else:
             raise ValueError(
-                "Found bin edge of size <= 0. Did you specify `bins` with"
-                "non-monotonic sequence?")
+                '`bins[{}]` must be a scalar or 1d array'.format(i))
+
+        nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
+        dedges[i] = np.diff(edges[i])
 
     nbin = np.asarray(nbin)
 
@@ -930,7 +927,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
-    xy = np.zeros(N, int)
+    xy = np.zeros(N, np.intp)
     for i in np.arange(0, D-1):
         xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
     xy += Ncount[ni[-1]]
