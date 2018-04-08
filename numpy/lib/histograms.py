@@ -926,11 +926,9 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     hist = np.zeros(nbin, float).reshape(-1)
 
     # Compute the sample indices in the flattened histogram matrix.
-    ni = nbin.argsort()
     xy = np.zeros(N, np.intp)
-    for i in np.arange(0, D-1):
-        xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
-    xy += Ncount[ni[-1]]
+    for i in np.arange(0, D):
+        xy += Ncount[i] * nbin[i+1:].prod()
 
     # Compute the number of repetitions in xy and assign it to the
     # flattened histmat.
@@ -942,11 +940,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     hist[a] = flatcount
 
     # Shape into a proper matrix
-    hist = hist.reshape(np.sort(nbin))
-    for i in np.arange(nbin.size):
-        j = ni.argsort()[i]
-        hist = hist.swapaxes(i, j)
-        ni[i], ni[j] = ni[j], ni[i]
+    hist = hist.reshape(nbin)
 
     # Remove outliers (indices 0 and -1 for each dimension).
     core = D*(slice(1, -1),)
