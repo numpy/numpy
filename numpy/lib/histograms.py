@@ -919,23 +919,19 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             # Shift these points one bin to the left.
             Ncount[i][on_edge & not_smaller_than_edge] -= 1
 
-    # Flattened histogram matrix (1D)
-    # Reshape is used so that overlarge arrays
-    # will raise an error.
-    hist = np.zeros(nbin, float).reshape(-1)
-
     # Compute the sample indices in the flattened histogram matrix.
     # This raises an error if the array is too large.
     xy = np.ravel_multi_index(Ncount, nbin)
 
     # Compute the number of repetitions in xy and assign it to the
     # flattened histmat.
-    flatcount = np.bincount(xy, weights)
-    a = np.arange(len(flatcount))
-    hist[a] = flatcount
+    hist = np.bincount(xy, weights, minlength=nbin.prod())
 
     # Shape into a proper matrix
     hist = hist.reshape(nbin)
+
+    # This preserves the (bad) behavior observed in gh-7845, for now.
+    hist = hist.astype(float, casting='safe')
 
     # Remove outliers (indices 0 and -1 for each dimension).
     core = D*(slice(1, -1),)
