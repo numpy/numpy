@@ -894,8 +894,6 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
 
-    nbin = np.asarray(nbin)
-
     # Handle empty input.
     if N == 0:
         return np.zeros(nbin-2), edges
