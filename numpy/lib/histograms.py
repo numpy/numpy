@@ -932,9 +932,6 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Compute the number of repetitions in xy and assign it to the
     # flattened histmat.
-    if len(xy) == 0:
-        return np.zeros(nbin-2, int), edges
-
     flatcount = np.bincount(xy, weights)
     a = np.arange(len(flatcount))
     hist[a] = flatcount
