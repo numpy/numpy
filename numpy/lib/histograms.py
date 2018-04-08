@@ -10,6 +10,10 @@ from numpy.compat.py3k import basestring
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 
+# range is a keyword argument to many functions, so save the builtin so they can
+# use it.
+_range = range
+
 
 def _hist_bin_sqrt(x):
     """
@@ -693,7 +697,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # large arrays, it is actually faster (for example for a 10^8 array it
         # is 2x as fast) and it results in a memory footprint 3x lower in the
         # limit of large arrays.
-        for i in np.arange(0, len(a), BLOCK):
+        for i in _range(0, len(a), BLOCK):
             tmp_a = a[i:i+BLOCK]
             if weights is None:
                 tmp_w = None
@@ -741,12 +745,12 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # Compute via cumulative histogram
         cum_n = np.zeros(bin_edges.shape, ntype)
         if weights is None:
-            for i in np.arange(0, len(a), BLOCK):
+            for i in _range(0, len(a), BLOCK):
                 sa = np.sort(a[i:i+BLOCK])
                 cum_n += _search_sorted_inclusive(sa, bin_edges)
         else:
             zero = np.zeros(1, dtype=ntype)
-            for i in np.arange(0, len(a), BLOCK):
+            for i in _range(0, len(a), BLOCK):
                 tmp_a = a[i:i+BLOCK]
                 tmp_w = weights[i:i+BLOCK]
                 sorting_index = np.argsort(tmp_a)
@@ -873,7 +877,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         raise ValueError('range argument must have one entry per dimension')
 
     # Create edge arrays
-    for i in np.arange(D):
+    for i in _range(D):
         if np.ndim(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
@@ -901,13 +905,13 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Compute the bin number each sample falls into.
     Ncount = tuple(
         np.digitize(sample[:, i], edges[i])
-        for i in np.arange(D)
+        for i in _range(D)
     )
 
     # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right edge to be
     # counted in the last bin, and not as an outlier.
-    for i in np.arange(D):
+    for i in _range(D):
         # Rounding precision
         mindiff = dedges[i].min()
         if not np.isinf(mindiff):
@@ -940,7 +944,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Normalize if normed is True
     if normed:
         s = hist.sum()
-        for i in np.arange(D):
+        for i in _range(D):
             shape = np.ones(D, int)
             shape[i] = nbin[i] - 2
             hist = hist / dedges[i].reshape(shape)
