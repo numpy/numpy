@@ -613,8 +613,6 @@ class TestHistogramdd(object):
         assert_raises(ValueError, np.histogramdd, x, bins=[-1, 2, 4, 5])
         assert_raises(ValueError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
         assert_raises(
-            ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 2, 3]])
-        assert_raises(
             ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
         assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
 
@@ -646,7 +644,7 @@ class TestHistogramdd(object):
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
         assert_(hist[0] == 0.0)
-        assert_(hist[1] == 1.)
+        assert_(hist[1] == 0.0)
         x = [1.0001]
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
@@ -660,3 +658,28 @@ class TestHistogramdd(object):
                       range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
         assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
+
+    def test_equal_edges(self):
+        """ Test that adjacent entries in an edge array can be equal """
+        x = np.array([0, 1, 2])
+        y = np.array([0, 1, 2])
+        x_edges = np.array([0, 2, 2])
+        y_edges = 1
+        hist, edges = histogramdd((x, y), bins=(x_edges, y_edges))
+
+        hist_expected = np.array([
+            [2.],
+            [1.],  # x == 2 falls in the final bin
+        ])
+        assert_equal(hist, hist_expected)
+
+    def test_edge_dtype(self):
+        """ Test that if an edge array is input, its type is preserved """
+        x = np.array([0, 10, 20])
+        y = x / 10
+        x_edges = np.array([0, 5, 15, 20])
+        y_edges = x_edges / 10
+        hist, edges = histogramdd((x, y), bins=(x_edges, y_edges))
+
+        assert_equal(edges[0].dtype, x_edges.dtype)
+        assert_equal(edges[1].dtype, y_edges.dtype)
