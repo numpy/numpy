@@ -899,9 +899,10 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         return np.zeros(nbin-2), edges
 
     # Compute the bin number each sample falls into.
-    Ncount = {}
-    for i in np.arange(D):
-        Ncount[i] = np.digitize(sample[:, i], edges[i])
+    Ncount = tuple(
+        np.digitize(sample[:, i], edges[i])
+        for i in np.arange(D)
+    )
 
     # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right edge to be
