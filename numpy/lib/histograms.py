@@ -925,9 +925,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     hist = np.zeros(nbin, float).reshape(-1)
 
     # Compute the sample indices in the flattened histogram matrix.
-    xy = np.zeros(N, np.intp)
-    for i in np.arange(0, D):
-        xy += Ncount[i] * nbin[i+1:].prod()
+    # This raises an error if the array is too large.
+    xy = np.ravel_multi_index(Ncount, nbin)
 
     # Compute the number of repetitions in xy and assign it to the
     # flattened histmat.
