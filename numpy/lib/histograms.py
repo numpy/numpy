@@ -10,6 +10,10 @@ from numpy.compat.py3k import basestring
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 
+# range is a keyword argument to many functions, so save the builtin so they can
+# use it.
+_range = range
+
 
 def _hist_bin_sqrt(x):
     """
@@ -693,7 +697,7 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # large arrays, it is actually faster (for example for a 10^8 array it
         # is 2x as fast) and it results in a memory footprint 3x lower in the
         # limit of large arrays.
-        for i in np.arange(0, len(a), BLOCK):
+        for i in _range(0, len(a), BLOCK):
             tmp_a = a[i:i+BLOCK]
             if weights is None:
                 tmp_w = None
@@ -741,12 +745,12 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         # Compute via cumulative histogram
         cum_n = np.zeros(bin_edges.shape, ntype)
         if weights is None:
-            for i in np.arange(0, len(a), BLOCK):
+            for i in _range(0, len(a), BLOCK):
                 sa = np.sort(a[i:i+BLOCK])
                 cum_n += _search_sorted_inclusive(sa, bin_edges)
         else:
             zero = np.zeros(1, dtype=ntype)
-            for i in np.arange(0, len(a), BLOCK):
+            for i in _range(0, len(a), BLOCK):
                 tmp_a = a[i:i+BLOCK]
                 tmp_w = weights[i:i+BLOCK]
                 sorting_index = np.argsort(tmp_a)
@@ -873,7 +877,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         raise ValueError('range argument must have one entry per dimension')
 
     # Create edge arrays
-    for i in np.arange(D):
+    for i in _range(D):
         if np.ndim(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
@@ -894,21 +898,20 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
 
-    nbin = np.asarray(nbin)
-
     # Handle empty input.
     if N == 0:
         return np.zeros(nbin-2), edges
 
     # Compute the bin number each sample falls into.
-    Ncount = {}
-    for i in np.arange(D):
-        Ncount[i] = np.digitize(sample[:, i], edges[i])
+    Ncount = tuple(
+        np.digitize(sample[:, i], edges[i])
+        for i in _range(D)
+    )
 
     # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right edge to be
     # counted in the last bin, and not as an outlier.
-    for i in np.arange(D):
+    for i in _range(D):
         # Rounding precision
         mindiff = dedges[i].min()
         if not np.isinf(mindiff):
@@ -918,35 +921,21 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             on_edge = (np.around(sample[:, i], decimal) ==
                        np.around(edges[i][-1], decimal))
             # Shift these points one bin to the left.
-            Ncount[i][np.nonzero(on_edge & not_smaller_than_edge)[0]] -= 1
-
-    # Flattened histogram matrix (1D)
-    # Reshape is used so that overlarge arrays
-    # will raise an error.
-    hist = np.zeros(nbin, float).reshape(-1)
+            Ncount[i][on_edge & not_smaller_than_edge] -= 1
 
     # Compute the sample indices in the flattened histogram matrix.
-    ni = nbin.argsort()
-    xy = np.zeros(N, np.intp)
-    for i in np.arange(0, D-1):
-        xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
-    xy += Ncount[ni[-1]]
+    # This raises an error if the array is too large.
+    xy = np.ravel_multi_index(Ncount, nbin)
 
     # Compute the number of repetitions in xy and assign it to the
     # flattened histmat.
-    if len(xy) == 0:
-        return np.zeros(nbin-2, int), edges
-
-    flatcount = np.bincount(xy, weights)
-    a = np.arange(len(flatcount))
-    hist[a] = flatcount
+    hist = np.bincount(xy, weights, minlength=nbin.prod())
 
     # Shape into a proper matrix
-    hist = hist.reshape(np.sort(nbin))
-    for i in np.arange(nbin.size):
-        j = ni.argsort()[i]
-        hist = hist.swapaxes(i, j)
-        ni[i], ni[j] = ni[j], ni[i]
+    hist = hist.reshape(nbin)
+
+    # This preserves the (bad) behavior observed in gh-7845, for now.
+    hist = hist.astype(float, casting='safe')
 
     # Remove outliers (indices 0 and -1 for each dimension).
     core = D*(slice(1, -1),)
@@ -955,7 +944,7 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Normalize if normed is True
     if normed:
         s = hist.sum()
-        for i in np.arange(D):
+        for i in _range(D):
             shape = np.ones(D, int)
             shape[i] = nbin[i] - 2
             hist = hist / dedges[i].reshape(shape)
