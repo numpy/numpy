@@ -871,9 +871,6 @@ add_newdoc('numpy.core.multiarray', 'empty',
     See Also
     --------
     empty_like : Return an empty array with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
-    zeros_like : Return an array of zeros with shape and type of input.
-    full_like : Return a new array with shape of input filled with value.
     ones : Return a new array setting values to one.
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
@@ -937,9 +934,6 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
     zeros_like : Return an array of zeros with shape and type of input.
     full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
-    ones : Return a new array setting values to one.
-    zeros : Return a new array setting values to zero.
-    full : Return a new array of given shape filled with value.
 
     Notes
     -----
@@ -1000,10 +994,7 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     See Also
     --------
-    empty_like : Return an empty array with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
     zeros_like : Return an array of zeros with shape and type of input.
-    full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
     ones : Return a new array setting values to one.
     full : Return a new array of given shape filled with value.

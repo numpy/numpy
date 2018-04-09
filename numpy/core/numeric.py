@@ -126,10 +126,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     empty_like : Return an empty array with shape and type of input.
     ones_like : Return an array of ones with shape and type of input.
     full_like : Return a new array with shape of input filled with value.
-    empty : Return a new uninitialized array.
-    ones : Return a new array setting values to one.
     zeros : Return a new array setting values to zero.
-    full : Return a new array of given shape filled with value.
 
     Examples
     --------
@@ -179,10 +176,7 @@ def ones(shape, dtype=None, order='C'):
 
     See Also
     --------
-    empty_like : Return an empty array with shape and type of input.
     ones_like : Return an array of ones with shape and type of input.
-    zeros_like : Return an array of zeros with shape and type of input.
-    full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
@@ -246,10 +240,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     empty_like : Return an empty array with shape and type of input.
     zeros_like : Return an array of zeros with shape and type of input.
     full_like : Return a new array with shape of input filled with value.
-    empty : Return a new uninitialized array.
     ones : Return a new array setting values to one.
-    zeros : Return a new array setting values to zero.
-    full : Return a new array of given shape filled with value.
 
     Examples
     --------
@@ -298,9 +289,6 @@ def full(shape, fill_value, dtype=None, order='C'):
 
     See Also
     --------
-    empty_like : Return an empty array with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
-    zeros_like : Return an array of zeros with shape and type of input.
     full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
     ones : Return a new array setting values to one.
@@ -356,9 +344,6 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
     empty_like : Return an empty array with shape and type of input.
     ones_like : Return an array of ones with shape and type of input.
     zeros_like : Return an array of zeros with shape and type of input.
-    empty : Return a new uninitialized array.
-    ones : Return a new array setting values to one.
-    zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
 
     Examples
