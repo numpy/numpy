@@ -146,6 +146,11 @@ as usual with `errstate`.
 Dates, times, and timedeltas can now be histogrammed. The bin edges must be
 passed explicitly, and are not yet computed automatically.
 
+``histogram`` "auto" estimator handles limited variance better
+------------------------------------------------------------------------
+No longer does an IQR of 0 result in `n_bins=1`, rather the number of bins
+chosen is related to the data size in this situation
+
 ``histogramdd`` allows explicit ranges to be given in a subset of axes
 ----------------------------------------------------------------------
 The ``range`` argument of `histogramdd` can now contain ``None`` values to
