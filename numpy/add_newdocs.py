@@ -1589,7 +1589,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
     """
     lexsort(keys, axis=-1)
 
-    Perform an indirect sort using a sequence of keys.
+    Perform an indirect stable sort using a sequence of keys.
 
     Given multiple sorting keys, which can be interpreted as columns in a
     spreadsheet, lexsort returns an array of integer indices that describes
