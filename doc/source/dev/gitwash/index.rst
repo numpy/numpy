@@ -11,4 +11,5 @@ Contents:
    git_intro
    following_latest
    git_development
+   development_workflow
    git_resources
