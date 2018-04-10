@@ -1,3 +1,5 @@
+.. _howto-build-docs:
+
 =========================================
 Building the NumPy API and reference docs
 =========================================
@@ -26,8 +28,7 @@ additional parts required for building the documentation::
 
 In addition, building the documentation requires the Sphinx extension
 `plot_directive`, which is shipped with Matplotlib_. This Sphinx extension can
-be installed with or without completely installing Matplotlib: see the
-Matplotlib documentation for more information.
+be installed by installing Matplotlib. You will also need python3.6.
 
 Since large parts of the main documentation are stored in
 docstrings, you will need to first build NumPy, and install it so
