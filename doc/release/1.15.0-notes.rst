@@ -122,6 +122,11 @@ Added experimental support for the 64-bit RISC-V architecture.
 Improvements
 ============
 
+``np.flip`` can operate over multiple axes
+------------------------------------------
+``np.flip`` now accepts accepts None, or tuples of int, in its ``axis`` argument. If
+axis is None, it will flip over all the axes.
+
 ``histogram`` and ``histogramdd` functions have moved to ``np.lib.histograms``
 ------------------------------------------------------------------------------
 These were originally found in ``np.lib.function_base``. They are still
