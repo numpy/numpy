@@ -135,6 +135,11 @@ Improvements
 -------------------------------------------------------------
 This means it takes all the same arguments, making more code written for
 ndarray work for masked array too.
+``np.flip`` can operate over multiple axes
+------------------------------------------
+``np.flip`` now accepts accepts None, or tuples of int, in its ``axis`` argument. If
+axis is None, it will flip over all the axes.
+
 ``histogram`` and ``histogramdd` functions have moved to ``np.lib.histograms``
 ------------------------------------------------------------------------------
 These were originally found in ``np.lib.function_base``. They are still
