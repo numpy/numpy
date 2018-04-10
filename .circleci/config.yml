@@ -31,6 +31,7 @@ jobs:
             pip install --upgrade pip setuptools
             pip install cython
             pip install .
+            pip install scipy
 
       - run:
           name: build devdocs
