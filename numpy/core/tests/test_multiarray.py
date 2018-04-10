@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:
@@ -17,6 +17,7 @@ import functools
 import ctypes
 import os
 import gc
+import pytest
 from contextlib import contextmanager
 if sys.version_info[0] >= 3:
     import builtins
@@ -28,10 +29,10 @@ import numpy as np
 from numpy.compat import strchar, unicode
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_warns,
-    assert_equal, assert_almost_equal, assert_array_equal, assert_raises_regex,
-    assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
-    assert_array_less, runstring, dec, SkipTest, temppath, suppress_warnings
+    assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
+    assert_array_equal, assert_raises_regex, assert_array_almost_equal,
+    assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
+    SkipTest, temppath, suppress_warnings
     )
 from ._locales import CommaDecimalPointLocale
 
@@ -726,7 +727,7 @@ class TestCreation(object):
             d = np.zeros(2, dtype='(2,4)i4, (2,4)i4')
             assert_equal(np.count_nonzero(d), 0)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_zeros_big(self):
         # test big array as they might be allocated different by the system
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
@@ -797,7 +798,7 @@ class TestCreation(object):
         assert_equal(np.array([[1j, 1j],[1, 1]]).dtype, complex)
         assert_equal(np.array([[1, 1, 1],[1, 1j, 1.], [1, 1, 1]]).dtype, complex)
 
-    @dec.skipif(sys.version_info[0] >= 3)
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
     def test_sequence_long(self):
         assert_equal(np.array([long(4), long(4)]).dtype, np.long)
         assert_equal(np.array([long(4), 2**80]).dtype, object)
@@ -1216,7 +1217,7 @@ class TestBool(object):
         # covers most cases of the 16 byte unrolled code
         self.check_count_nonzero(12, 17)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_count_nonzero_all(self):
         # check all combinations in a length 17 array
         # covers all cases of the 16 byte unrolled code
@@ -1255,11 +1256,11 @@ class TestBool(object):
     def test_cast_from_void(self):
         self._test_cast_from_flexible(np.void)
 
-    @dec.knownfailureif(True, "See gh-9847")
+    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_unicode(self):
         self._test_cast_from_flexible(np.unicode_)
 
-    @dec.knownfailureif(True, "See gh-9847")
+    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_bytes(self):
         self._test_cast_from_flexible(np.bytes_)
 
@@ -4385,7 +4386,7 @@ class TestIO(object):
                          np.array([1, 2, 3, 4]),
                          dtype='<f4')
 
-    @dec.slow  # takes > 1 minute on mechanical hard drive
+    @pytest.mark.slow  # takes > 1 minute on mechanical hard drive
     def test_big_binary(self):
         """Test workarounds for 32-bit limited fwrite, fseek, and ftell
         calls in windows. These normally would hang doing something like this.
@@ -7351,7 +7352,3 @@ def test_npymath_real():
                 got = fun(z)
                 expected = npfun(z)
                 assert_allclose(got, expected)
-
-
-if __name__ == "__main__":
-    run_module_suite()

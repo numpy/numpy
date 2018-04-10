@@ -4,8 +4,8 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_no_warnings, assert_raises, assert_array_equal, suppress_warnings
+    assert_, assert_equal, assert_almost_equal, assert_no_warnings,
+    assert_raises, assert_array_equal, suppress_warnings
     )
 
 
@@ -886,7 +886,3 @@ class TestNanFunctions_Percentile(object):
 
         megamat = np.ones((3, 4, 5, 6))
         assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
-
-
-if __name__ == "__main__":
-    run_module_suite()

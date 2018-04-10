@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:
@@ -14,8 +14,8 @@ from os import path
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
+    assert_raises, assert_warns
     )
 
 
@@ -414,6 +414,7 @@ class TestRecord(object):
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
         assert_raises(ValueError, lambda: arr[['nofield']])
 
+
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
     assert_(np.rec.find_duplicate(l1) == [])
@@ -426,6 +427,3 @@ def test_find_duplicate():
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
     assert_(np.rec.find_duplicate(l3) == [2, 1])
-
-if __name__ == "__main__":
-    run_module_suite()

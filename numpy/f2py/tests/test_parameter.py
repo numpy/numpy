@@ -2,9 +2,10 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import math
+import pytest
 
 import numpy as np
-from numpy.testing import run_module_suite, dec, assert_raises, assert_equal
+from numpy.testing import assert_raises, assert_equal
 
 from . import util
 
@@ -22,7 +23,7 @@ class TestParameters(util.F2PyTest):
                _path('src', 'parameter', 'constant_non_compound.f90'),
     ]
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_real_single(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.float32)[::2]
@@ -33,7 +34,7 @@ class TestParameters(util.F2PyTest):
         self.module.foo_single(x)
         assert_equal(x, [0 + 1 + 2*3, 1, 2])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_real_double(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.float64)[::2]
@@ -44,7 +45,7 @@ class TestParameters(util.F2PyTest):
         self.module.foo_double(x)
         assert_equal(x, [0 + 1 + 2*3, 1, 2])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_compound_int(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.int32)[::2]
@@ -55,14 +56,14 @@ class TestParameters(util.F2PyTest):
         self.module.foo_compound_int(x)
         assert_equal(x, [0 + 1 + 2*6, 1, 2])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_non_compound_int(self):
         # check values
         x = np.arange(4, dtype=np.int32)
         self.module.foo_non_compound_int(x)
         assert_equal(x, [0 + 1 + 2 + 3*4, 1, 2, 3])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_integer_int(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.int32)[::2]
@@ -73,7 +74,7 @@ class TestParameters(util.F2PyTest):
         self.module.foo_int(x)
         assert_equal(x, [0 + 1 + 2*3, 1, 2])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_integer_long(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.int64)[::2]
@@ -84,7 +85,7 @@ class TestParameters(util.F2PyTest):
         self.module.foo_long(x)
         assert_equal(x, [0 + 1 + 2*3, 1, 2])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_both(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.float64)[::2]
@@ -95,7 +96,7 @@ class TestParameters(util.F2PyTest):
         self.module.foo(x)
         assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_no(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.float64)[::2]
@@ -106,7 +107,7 @@ class TestParameters(util.F2PyTest):
         self.module.foo_no(x)
         assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
 
-    @dec.slow
+    @pytest.mark.slow
     def test_constant_sum(self):
         # non-contiguous should raise error
         x = np.arange(6, dtype=np.float64)[::2]
@@ -116,7 +117,3 @@ class TestParameters(util.F2PyTest):
         x = np.arange(3, dtype=np.float64)
         self.module.foo_sum(x)
         assert_equal(x, [0 + 1*3*3 + 2*3*3, 1*3, 2*3])
-
-
-if __name__ == "__main__":
-    run_module_suite()

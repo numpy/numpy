@@ -9,7 +9,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_raises, dec
+from numpy.testing import assert_, assert_raises
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
     array, arange, masked, MaskedArray, masked_array, log, add, hypot,
@@ -370,8 +370,3 @@ class TestSubclassing(object):
         diff2 = arr1 - arr2
         assert_('info' in diff2._optinfo)
         assert_(diff2._optinfo['info'] == 'test')
-
-
-###############################################################################
-if __name__ == '__main__':
-    run_module_suite()

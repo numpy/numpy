@@ -4174,6 +4174,37 @@ initialize_casting_tables(void)
     }
 }
 
+#ifndef NPY_PY3K
+/*
+ * In python2, the `float` and `complex` types still implement the obsolete
+ * "tp_print" method, which uses CPython's float-printing routines to print the
+ * float.  Numpy's float_/cfloat inherit from Python float/complex, but
+ * override its tp_repr and tp_str methods. In order to avoid an inconsistency
+ * with the inherited tp_print, we need to override it too.
+ *
+ * In python3 the tp_print method is reserved/unused.
+ */
+static int
+doubletype_print(PyObject *o, FILE *fp, int flags)
+{
+    int ret;
+    PyObject *to_print;
+    if (flags & Py_PRINT_RAW) {
+        to_print = PyObject_Str(o);
+    }
+    else {
+        to_print = PyObject_Repr(o);
+    }
+
+    if (to_print == NULL) {
+        return -1;
+    }
+
+    ret = PyObject_Print(to_print, fp, flags);
+    Py_DECREF(to_print);
+    return ret;
+}
+#endif
 
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
@@ -4225,6 +4256,12 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
 
     /**end repeat**/
+
+#ifndef NPY_PY3K
+    PyDoubleArrType_Type.tp_print = &doubletype_print;
+    PyCDoubleArrType_Type.tp_print = &doubletype_print;
+#endif
+
 
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 

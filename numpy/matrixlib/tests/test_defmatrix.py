@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:
@@ -10,9 +10,9 @@ except ImportError:
 import numpy as np
 from numpy import matrix, asmatrix, bmat
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_array_equal, assert_array_almost_equal, assert_raises
-)
+    assert_, assert_equal, assert_almost_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises
+    )
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.matrixlib import mat
 
@@ -458,7 +458,3 @@ class TestShape(object):
     def test_matrix_memory_sharing(self):
         assert_(np.may_share_memory(self.m, self.m.ravel()))
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
-
-
-if __name__ == "__main__":
-    run_module_suite()

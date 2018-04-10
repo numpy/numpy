@@ -1,8 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 from numpy import array
 from numpy.compat import long
-from numpy.testing import run_module_suite, assert_, assert_raises, dec
+from numpy.testing import assert_, assert_raises
 from . import util
 
 
@@ -110,7 +112,7 @@ c         t8 = value
 c       end
     """
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         for name in "t0,t1,t2,t4,s0,s1,s2,s4".split(","):
             self.check_function(getattr(self.module, name))
@@ -180,10 +182,7 @@ module f90_return_logical
 end module f90_return_logical
     """
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
             self.check_function(getattr(self.module.f90_return_logical, name))
-
-if __name__ == "__main__":
-    run_module_suite()

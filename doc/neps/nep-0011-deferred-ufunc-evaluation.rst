@@ -5,6 +5,7 @@ Deferred UFunc Evaluation
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Content-Type: text/x-rst
 :Created: 30-Nov-2010
+:Status: Deferred
 
 ********
 Abstract
