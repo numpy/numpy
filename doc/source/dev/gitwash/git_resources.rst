@@ -1,8 +1,8 @@
 .. _git-resources:
 
-================
- git_ resources
-================
+=========================
+Additional Git_ Resources
+=========================
 
 Tutorials and summaries
 =======================

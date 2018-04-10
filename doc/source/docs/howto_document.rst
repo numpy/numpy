@@ -1,3 +1,5 @@
+.. _howto-document:
+
 ====================================
 A Guide to NumPy/SciPy Documentation
 ====================================
