@@ -167,12 +167,22 @@ def _hist_bin_fd(x):
 def _hist_bin_auto(x):
     """
     Histogram bin estimator that uses the minimum width of the
-    Freedman-Diaconis and Sturges estimators.
+    Freedman-Diaconis and Sturges estimators if the FD bandwidth is non zero
+    and the Sturges estimator if the FD bandwidth is 0.
 
     The FD estimator is usually the most robust method, but its width
-    estimate tends to be too large for small `x`. The Sturges estimator
-    is quite good for small (<1000) datasets and is the default in the R
-    language. This method gives good off the shelf behaviour.
+    estimate tends to be too large for small `x` and bad for data with limited
+    variance. The Sturges estimator is quite good for small (<1000) datasets
+    and is the default in the R language. This method gives good off the shelf
+    behaviour.
+
+    .. versionchanged:: 1.15.0
+    If there is limited variance the IQR can be 0, which results in the
+    FD bin width being 0 too. This is not a valid bin width, so
+    ``np.histogram_bin_edges`` chooses 1 bin instead, which may not be optimal.
+    If the IQR is 0, it's unlikely any variance based estimators will be of
+    use, so we revert to the sturges estimator, which only uses the size of the
+    dataset in its calculation.
 
     Parameters
     ----------
@@ -188,10 +198,13 @@ def _hist_bin_auto(x):
     --------
     _hist_bin_fd, _hist_bin_sturges
     """
-    # There is no need to check for zero here. If ptp is, so is IQR and
-    # vice versa. Either both are zero or neither one is.
-    return min(_hist_bin_fd(x), _hist_bin_sturges(x))
-
+    fd_bw = _hist_bin_fd(x)
+    sturges_bw = _hist_bin_sturges(x)
+    if fd_bw:
+        return min(fd_bw, sturges_bw)
+    else:
+        # limited variance, so we return a len dependent bw estimator
+        return sturges_bw
 
 # Private dict initialized at module load time
 _hist_bin_selectors = {'auto': _hist_bin_auto,
@@ -440,7 +453,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     below, :math:`h` is the binwidth and :math:`n_h` is the number of
     bins. All estimators that compute bin counts are recast to bin width
     using the `ptp` of the data. The final bin count is obtained from
-    ``np.round(np.ceil(range / h))`.
+    ``np.round(np.ceil(range / h))``.
 
     'Auto' (maximum of the 'Sturges' and 'FD' estimators)
         A compromise to get a good value. For small datasets the Sturges
