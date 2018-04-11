@@ -121,7 +121,7 @@ build_script:
       }
 
 test_script:
-  python runtests.py -v -n -m %TEST_MODE%
+  python runtests.py -v -n -m %TEST_MODE% -- --junitxml=%cd%\junit-results.xml
 
 after_build:
   # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.
