@@ -415,8 +415,8 @@ The sections of the docstring are:
       >>> np.add([1, 2], [3, 4])
       array([4, 6])
 
-    An instruction may be split across multiple lines, with each line after
-    the first starting with '...'::
+    The example code may be split across multiple lines, with each line after
+    the first starting with '... '::
 
       >>> np.add([[1, 2], [3, 4]],
       ...        [[5, 6], [7, 8]])
