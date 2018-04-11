@@ -63,7 +63,7 @@ Glossary
          (3,)
 
    big-endian
-       When storing a multi-byte value in memory as a sequence of bytes. the
+       When storing a multi-byte value in memory as a sequence of bytes, the
        sequence addresses/sends/stores the most significant byte first (lowest
        address) and the least significant byte last (highest address). Common in
        micro-processors and used for transmission of data over network protocols.
@@ -237,7 +237,7 @@ Glossary
        type (key-value), see *dictionary*.
 
    little-endian
-       When storing a multi-byte value in memory as a sequence of bytes. the
+       When storing a multi-byte value in memory as a sequence of bytes, the
        sequence addresses/sends/stores the least significant byte first (lowest
        address) and the most significant byte last (highest address). Common in
        x86 processors.
