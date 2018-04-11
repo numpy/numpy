@@ -323,9 +323,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     intersect1d : ndarray
         Sorted 1D array of common and unique elements.
     comm1 : ndarray
-        Indices of common elements in arr1. 
+        Indices of common elements in ar1. 
     comm2 : ndarray
-        Indices of common elements in arr2.
+        Indices of common elements in ar2.
 
     See Also
     --------
