@@ -284,7 +284,7 @@ the desired underlying dtype, and fields and flags will be copied from
 ``dtype``. This dtype is similar to a 'union' in C.
 
 Indexing and Assignment to Structured arrays
-=============================================
+============================================
 
 Assigning data to a Structured Array
 ------------------------------------
@@ -293,7 +293,7 @@ There are a number of ways to assign values to a structured array: Using python
 tuples, using scalar values, or using other structured arrays.
 
 Assignment from Python Native Types (Tuples)
-```````````````````````````````````````````
+````````````````````````````````````````````
 
 The simplest way to assign values to a structured array is using python tuples.
 Each assigned value should be a tuple of length equal to the number of fields
