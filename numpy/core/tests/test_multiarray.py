@@ -6204,7 +6204,10 @@ class TestPEP3118Dtype(object):
         self._check('i', 'i')
         self._check('i:f0:', [('f0', 'i')])
 
+
 class TestNewBufferProtocol(object):
+    """ Test PEP3118 buffers """
+
     def _check_roundtrip(self, obj):
         obj = np.asarray(obj)
         x = memoryview(obj)
@@ -6514,6 +6517,31 @@ class TestNewBufferProtocol(object):
         arr = np.empty(1, dt)
         with assert_raises(ValueError):
             memoryview(arr)
+
+    def test_max_dims(self):
+        a = np.empty((1,) * 32)
+        self._check_roundtrip(a)
+
+    def test_error_too_many_dims(self):
+        # construct a memoryview with 33 dimensions
+        ct = ctypes.c_uint8
+        for i in range(33):
+            ct = 1 * ct
+        m = memoryview(ct())
+        assert_equal(m.ndim, 33)
+
+        assert_raises_regex(
+            RuntimeError, "ndim",
+            np.array, m)
+
+    def test_error_pointer_type(self):
+        # gh-6741
+        m = memoryview(ctypes.pointer(ctypes.c_uint8()))
+        assert_('&' in m.format)
+
+        assert_raises_regex(
+            ValueError, "format string",
+            np.array, m)
 
 
 class TestArrayAttributeDeletion(object):
