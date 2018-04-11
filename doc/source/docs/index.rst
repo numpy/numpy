@@ -1,6 +1,6 @@
 .. _documentation:
 
-Numpy's Documentation
+NumPy's Documentation
 =====================
 
 .. toctree::
