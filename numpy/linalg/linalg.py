@@ -1984,7 +1984,7 @@ def lstsq(a, b, rcond="warn"):
            [ 2.,  1.],
            [ 3.,  1.]])
 
-    >>> m, c = np.linalg.lstsq(A, y)[0]
+    >>> m, c = np.linalg.lstsq(A, y, rcond=None)[0]
     >>> print(m, c)
     1.0 -0.95
 
