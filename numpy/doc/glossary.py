@@ -48,7 +48,7 @@ Glossary
          array([(1, 2.0), (3, 4.0)],
                dtype=[('x', '<i4'), ('y', '<f8')])
 
-       Fast element-wise operations, called :term:`ufuncs`, operate on arrays.
+       Fast element-wise operations, called a :term:`ufunc`, operate on arrays.
 
    array_like
        Any sequence that can be interpreted as an ndarray.  This includes
@@ -61,6 +61,12 @@ Glossary
          >>> x = np.array([1, 2, 3])
          >>> x.shape
          (3,)
+
+   big-endian
+       When storing a multi-byte value in memory as a sequence of bytes. the
+       sequence addresses/sends/stores the most significant byte first (lowest
+       address) and the least significant byte last (highest address). Common in
+       micro-processors and used for transmission of data over network protocols.
 
    BLAS
        `Basic Linear Algebra Subprograms <http://en.wikipedia.org/wiki/BLAS>`_
@@ -158,6 +164,12 @@ Glossary
        Collapsed to a one-dimensional array. See `numpy.ndarray.flatten`
        for details.
 
+   homogenous
+       Describes a block of memory comprised of blocks, each block comprised of 
+       items and of the same size, and blocks are interpreted in exactly the
+       same way. In the simplest case each block contains a single item, for
+       instance int32 or float64.
+
    immutable
        An object that cannot be modified after execution is called
        immutable.  Two common examples are strings and tuples.
@@ -224,6 +236,12 @@ Glossary
        tutorial <http://docs.python.org/tut>`_.  For a mapping
        type (key-value), see *dictionary*.
 
+   little-endian
+       When storing a multi-byte value in memory as a sequence of bytes. the
+       sequence addresses/sends/stores the least significant byte first (lowest
+       address) and the most significant byte last (highest address). Common in
+       x86 processors.
+
    mask
        A boolean array, used to select only certain elements for an operation::
 
@@ -285,7 +303,7 @@ Glossary
        See *array*.
 
    record array
-       An :term:`ndarray` with :term:`structured data type`_ which has been
+       An :term:`ndarray` with :term:`structured data type` which has been
        subclassed as ``np.recarray`` and whose dtype is of type ``np.record``,
        making the fields of its data type to be accessible by attribute.
 
