@@ -11,3 +11,4 @@ Contents:
 
    development_setup
    configure_git
+   dot2_dot3
