@@ -40,7 +40,7 @@ Note that you can eg. install NumPy to a temporary location and set
 the PYTHONPATH environment variable appropriately.
 
 After NumPy is installed, install scipy since some of the plots in the random
-module require `scipy.scpecial` to display properly. Now you are ready to
+module require `scipy.special` to display properly. Now you are ready to
 generate the docs, so write::
 
     make html

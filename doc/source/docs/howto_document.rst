@@ -31,8 +31,7 @@ A Guide to NumPy/SciPy Documentation
 
    Details of how to use it can be found `here
    <https://github.com/numpy/numpydoc/blob/master/README.rst>`__ and
-   `here
-   <https://github.com/numpy/numpy/blob/master/doc/HOWTO_BUILD_DOCS.rst.txt>`__
+   here :ref:`howto_build_docs`
 
 Overview
 --------
@@ -644,16 +643,10 @@ followed.
 Conclusion
 ----------
 
-`An example <http://github.com/numpy/numpy/blob/master/doc/example.py>`_ of the
-format shown here is available.  Refer to `How to Build API/Reference
-Documentation
-<http://github.com/numpy/numpy/blob/master/doc/HOWTO_BUILD_DOCS.rst.txt>`_
-on how to use Sphinx_ to build the manual.
-
-This document itself was written in ReStructuredText, and may be converted to
-HTML using::
-
-  $ rst2html HOWTO_DOCUMENT.txt HOWTO_DOCUMENT.html
+`An example <http://github.com/numpy/numpy/blob/master/doc/example.py>` of the
+format shown here is available.  Refer to
+:ref:`howto-build-docs` on how to use Sphinx_ to build
+the manual.
 
 .. _SciPy: http://www.scipy.org
 .. _numpy-discussion list: http://scipy.org/scipylib/mailing-lists.html
