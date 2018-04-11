@@ -1589,7 +1589,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
     """
     lexsort(keys, axis=-1)
 
-    Perform an indirect sort using a sequence of keys.
+    Perform an indirect stable sort using a sequence of keys.
 
     Given multiple sorting keys, which can be interpreted as columns in a
     spreadsheet, lexsort returns an array of integer indices that describes
@@ -3060,8 +3060,16 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     """
     Number of elements in the array.
 
-    Equivalent to ``np.prod(a.shape)``, i.e., the product of the array's
+    Equal to ``np.prod(a.shape)``, i.e., the product of the array's
     dimensions.
+
+    Notes
+    -----
+    `a.size` returns a standard arbitrary precision Python integer. This 
+    may not be the case with other methods of obtaining the same value
+    (like the suggested ``np.prod(a.shape)``, which returns an instance
+    of ``np.int_``), and may be relevant if the value is used further in
+    calculations that may overflow a fixed size integer type.
 
     Examples
     --------
@@ -4486,7 +4494,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies

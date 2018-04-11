@@ -1,6 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import itertools
 import operator
 import sys
@@ -1084,7 +1089,7 @@ def outer(a, b, out=None):
 
     References
     ----------
-    .. [1] : G. H. Golub and C. F. van Loan, *Matrix Computations*, 3rd
+    .. [1] : G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
              ed., Baltimore, MD, Johns Hopkins University Press, 1996,
              pg. 8.
 
@@ -2758,8 +2763,8 @@ def seterrcall(func):
     {'over': 'log', 'divide': 'log', 'invalid': 'log', 'under': 'log'}
 
     """
-    if func is not None and not isinstance(func, collections.Callable):
-        if not hasattr(func, 'write') or not isinstance(func.write, collections.Callable):
+    if func is not None and not isinstance(func, collections_abc.Callable):
+        if not hasattr(func, 'write') or not isinstance(func.write, collections_abc.Callable):
             raise ValueError("Only callable can be used as callback")
     pyvals = umath.geterrobj()
     old = geterrcall()

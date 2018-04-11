@@ -5,9 +5,9 @@ import sys
 import numpy as np
 from numpy.core.multiarray import _vec_string
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal, assert_raises,
+    assert_, assert_equal, assert_array_equal, assert_raises,
     suppress_warnings,
-)
+    )
 
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
@@ -700,7 +700,3 @@ def test_empty_indexing():
     # empty chararray instead of a chararray with a single empty string in it.
     s = np.chararray((4,))
     assert_(s[[]].size == 0)
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -69,13 +69,13 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         if s[axis] > n:
             index = [slice(None)]*len(s)
             index[axis] = slice(0, n)
-            a = a[index]
+            a = a[tuple(index)]
         else:
             index = [slice(None)]*len(s)
             index[axis] = slice(0, s[axis])
             s[axis] = n
             z = zeros(s, a.dtype.char)
-            z[index] = a
+            z[tuple(index)] = a
             a = z
 
     if axis != -1:

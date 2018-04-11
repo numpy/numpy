@@ -13,6 +13,7 @@ from functools import partial, wraps
 import shutil
 import contextlib
 from tempfile import mkdtemp, mkstemp
+from unittest.case import SkipTest
 
 from numpy.core import(
      float32, empty, arange, array_repr, ndarray, isnat, array)
@@ -39,36 +40,11 @@ __all__ = [
 
 
 class KnownFailureException(Exception):
-    """Raise this exception to mark a test as a known failing test.
-
-    """
-    def __new__(cls, *args, **kwargs):
-        # import _pytest here to avoid hard dependency
-        import _pytest
-        return _pytest.skipping.xfail(*args, **kwargs)
-
-
-class SkipTest(Exception):
-    """Raise this exception to mark a skipped test.
-
-    """
-    def __new__(cls, *args, **kwargs):
-        # import _pytest here to avoid hard dependency
-        import _pytest
-        return _pytest.runner.Skipped(*args, **kwargs)
-
-
-class IgnoreException(Exception):
-    """Ignoring this exception due to disabled feature
-
-    This exception seems unused and can be removed.
-
-    """
+    '''Raise this exception to mark a test as a known failing test.'''
     pass
 
 
 KnownFailureTest = KnownFailureException  # backwards compat
-
 verbose = 0
 
 IS_PYPY = '__pypy__' in sys.modules
@@ -76,10 +52,25 @@ HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
 
 
 def import_nose():
-    """ Not wanted for pytest, make it a dummy function
-
+    """ Import nose only when needed.
     """
-    pass
+    nose_is_good = True
+    minimum_nose_version = (1, 0, 0)
+    try:
+        import nose
+    except ImportError:
+        nose_is_good = False
+    else:
+        if nose.__versioninfo__ < minimum_nose_version:
+            nose_is_good = False
+
+    if not nose_is_good:
+        msg = ('Need nose >= %d.%d.%d for tests - see '
+               'http://nose.readthedocs.io' %
+               minimum_nose_version)
+        raise ImportError(msg)
+
+    return nose
 
 
 def assert_(val, msg=''):
@@ -386,44 +377,45 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
 
     # Inf/nan/negative zero handling
     try:
-        # If one of desired/actual is not finite, handle it specially here:
-        # check that both are nan if any is a nan, and test for equality
-        # otherwise
-        if not (gisfinite(desired) and gisfinite(actual)):
-            isdesnan = gisnan(desired)
-            isactnan = gisnan(actual)
-            if isdesnan or isactnan:
-                if not (isdesnan and isactnan):
-                    raise AssertionError(msg)
-            else:
-                if not desired == actual:
-                    raise AssertionError(msg)
-            return
-        elif desired == 0 and actual == 0:
+        isdesnan = gisnan(desired)
+        isactnan = gisnan(actual)
+        if isdesnan and isactnan:
+            return  # both nan, so equal
+
+        # handle signed zero specially for floats
+        if desired == 0 and actual == 0:
             if not signbit(desired) == signbit(actual):
                 raise AssertionError(msg)
-    # If TypeError or ValueError raised while using isnan and co, just handle
-    # as before
+
     except (TypeError, ValueError, NotImplementedError):
         pass
 
     try:
-        # If both are NaT (and have the same dtype -- datetime or timedelta)
-        # they are considered equal.
-        if (isnat(desired) == isnat(actual) and
-                array(desired).dtype.type == array(actual).dtype.type):
-            return
-        else:
-            raise AssertionError(msg)
+        isdesnat = isnat(desired)
+        isactnat = isnat(actual)
+        dtypes_match = array(desired).dtype.type == array(actual).dtype.type
+        if isdesnat and isactnat:
+            # If both are NaT (and have the same dtype -- datetime or
+            # timedelta) they are considered equal.
+            if dtypes_match:
+                return
+            else:
+                raise AssertionError(msg)
 
-    # If TypeError or ValueError raised while using isnan and co, just handle
-    # as before
     except (TypeError, ValueError, NotImplementedError):
         pass
 
-    # Explicitly use __eq__ for comparison, ticket #2552
-    if not (desired == actual):
-        raise AssertionError(msg)
+    try:
+        # Explicitly use __eq__ for comparison, gh-2552
+        if not (desired == actual):
+            raise AssertionError(msg)
+
+    except (DeprecationWarning, FutureWarning) as e:
+        # this handles the case when the two types are not even comparable
+        if 'elementwise == comparison' in e.args[0]:
+            raise AssertionError(msg)
+        else:
+            raise
 
 
 def print_assert_equal(test_string, actual, desired):
@@ -784,8 +776,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 + '\n(mismatch %s%%)' % (match,),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            if not cond:
-                raise AssertionError(msg)
+            raise AssertionError(msg)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
@@ -1165,29 +1156,56 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def raises(*exceptions):
-    """
-    This is actually a decorator and belongs in decorators.py.
+def raises(*args):
+    """Decorator to check for raised exceptions.
+
+    The decorated test function must raise one of the passed exceptions to
+    pass.  If you want to test many assertions about exceptions in a single
+    test, you may want to use `assert_raises` instead.
+
+    .. warning::
+       This decorator is nose specific, do not use it if you are using a
+       different test framework.
+
+    Parameters
+    ----------
+    args : exceptions
+        The test passes if any of the passed exceptions is raised.
+
+    Raises
+    ------
+    AssertionError
+
+    Examples
+    --------
+
+    Usage::
+
+        @raises(TypeError, ValueError)
+        def test_raises_type_error():
+            raise TypeError("This test passes")
+
+        @raises(Exception)
+        def test_that_fails_by_passing():
+            pass
 
     """
-    import pytest
+    nose = import_nose()
+    return nose.tools.raises(*args)
 
-    def raises_decorator(f):
-
-        def raiser(*args, **kwargs):
-            try:
-                f(*args, **kwargs)
-            except exceptions:
-                return
-            raise AssertionError()
-
-        return raiser
-
-    
-    return raises_decorator
+#
+# assert_raises and assert_raises_regex are taken from unittest.
+#
+import unittest
 
 
-def assert_raises(exception_class, fn=None, *args, **kwargs):
+class _Dummy(unittest.TestCase):
+    def nop(self):
+        pass
+
+_d = _Dummy('nop')
+
+def assert_raises(*args, **kwargs):
     """
     assert_raises(exception_class, callable, *args, **kwargs)
     assert_raises(exception_class)
@@ -1212,16 +1230,8 @@ def assert_raises(exception_class, fn=None, *args, **kwargs):
     >>> assert_raises(ZeroDivisionError, div, 1, 0)
 
     """
-    import pytest
-
     __tracebackhide__ = True  # Hide traceback for py.test
-    
-    if fn is not None:
-        pytest.raises(exception_class, fn, *args,**kwargs)
-    else:
-        assert not kwargs
-
-        return pytest.raises(exception_class)
+    return _d.assertRaises(*args,**kwargs)
 
 
 def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
@@ -1244,23 +1254,13 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
     .. versionadded:: 1.9.0
 
     """
-    import pytest
-    import unittest
-
-    class Dummy(unittest.TestCase):
-        def do_nothing(self):
-            pass
-
-    tmp = Dummy('do_nothing')
-
     __tracebackhide__ = True  # Hide traceback for py.test
-    res = pytest.raises(exception_class, *args, **kwargs)
 
     if sys.version_info.major >= 3:
-        funcname = tmp.assertRaisesRegex
+        funcname = _d.assertRaisesRegex
     else:
         # Only present in Python 2.7, missing from unittest in 2.6
-        funcname = tmp.assertRaisesRegexp
+        funcname = _d.assertRaisesRegexp
 
     return funcname(exception_class, expected_regexp, *args, **kwargs)
 
@@ -1890,6 +1890,10 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 yield inp1()[:-1], inp1()[:-1], inp2()[1:], bfmt % \
                     (o, o, o + 1, s - 1, dtype, 'aliased')
 
+
+class IgnoreException(Exception):
+    "Ignoring this exception due to disabled feature"
+    pass
 
 
 @contextlib.contextmanager

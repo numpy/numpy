@@ -26,6 +26,7 @@ import sys
 import operator
 import warnings
 import textwrap
+import re
 from functools import reduce
 
 if sys.version_info[0] >= 3:
@@ -132,19 +133,17 @@ def doc_note(initialdoc, note):
     if note is None:
         return initialdoc
 
-    # FIXME: disable this function for the moment until we figure out what to
-    # do with it. Currently it may result in duplicate Notes sections or Notes
-    # sections in the wrong place
-    return initialdoc
+    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', initialdoc)
 
-    newdoc = """
-    %s
-
-    Notes
+    notedoc = """\
+Notes
     -----
-    %s
-    """
-    return newdoc % (initialdoc, note)
+    %s""" % note
+
+    if len(notesplit) > 1:
+        notedoc = '\n\n    ' + notedoc + '\n'
+
+    return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
 def get_object_signature(obj):
@@ -5318,7 +5317,7 @@ class MaskedArray(ndarray):
                 originally intended.
                 Until then, the axis should be given explicitly when
                 ``arr.ndim > 1``, to avoid a FutureWarning.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
@@ -5469,7 +5468,7 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the array is flattened before
             sorting. The default is -1, which sorts along the last axis.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm. Default is 'quicksort'.
         order : list, optional
             When `a` is a structured array, this argument specifies which fields
@@ -5538,6 +5537,7 @@ class MaskedArray(ndarray):
         else:
             idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
             idx[axis] = sidx
+            idx = tuple(idx)
 
         self[...] = self[idx]
 

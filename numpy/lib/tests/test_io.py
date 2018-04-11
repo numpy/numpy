@@ -4,15 +4,16 @@ import sys
 import gzip
 import os
 import threading
-from tempfile import NamedTemporaryFile
 import time
 import warnings
 import gc
 import io
+import re
+import pytest
+from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
-import re
 
 import numpy as np
 import numpy.ma as ma
@@ -20,10 +21,10 @@ from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    run_module_suite, assert_warns, assert_, SkipTest,
-    assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal, temppath, tempdir, dec, IS_PYPY, suppress_warnings,
-)
+    assert_warns, assert_, SkipTest, assert_raises_regex, assert_raises,
+    assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
+    HAS_REFCOUNT, suppress_warnings,
+    )
 
 
 class TextIO(BytesIO):
@@ -156,7 +157,7 @@ class RoundtripTest(object):
         a = np.array([1, 2, 3, 4], int)
         self.roundtrip(a)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Fail on Win32")
+    @pytest.mark.skipif(sys.platform == 'win32', reason="Fails on Win32")
     def test_mmap(self):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
@@ -168,7 +169,7 @@ class RoundtripTest(object):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         self.check_roundtrips(a)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_format_2_0(self):
         dt = [(("%d" % i) * 100, float) for i in range(500)]
         a = np.ones(1000, dtype=dt)
@@ -200,8 +201,8 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
-    @dec.skipif(not IS_64BIT, "Works only with 64bit systems")
-    @dec.slow
+    @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
+    @pytest.mark.slow
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
@@ -277,7 +278,8 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    @dec.skipif(IS_PYPY, "context manager required on PyPy")
+    #FIXME: Is this still true?
+    @pytest.mark.skipif(IS_PYPY, reason="Missing context manager on PyPy")
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -540,15 +542,17 @@ class LoadTxtBase(object):
                     assert_array_equal(res, wanted)
 
     # Python2 .open does not support encoding
-    @dec.skipif(MAJVER == 2)
+    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(gzip.open, ('.gz',))
 
-    @dec.skipif(MAJVER == 2 or not HAS_BZ2)
+    @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
+    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
-    @dec.skipif(MAJVER == 2 or not HAS_LZMA)
+    @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
+    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
@@ -599,11 +603,11 @@ class LoadTxtBase(object):
 class TestLoadTxt(LoadTxtBase):
     loadfunc = staticmethod(np.loadtxt)
 
-    def setUp(self):
+    def setup(self):
         # lower chunksize for testing
         self.orig_chunk = np.lib.npyio._loadtxt_chunksize
         np.lib.npyio._loadtxt_chunksize = 1
-    def tearDown(self):
+    def teardown(self):
         np.lib.npyio._loadtxt_chunksize = self.orig_chunk
 
     def test_record(self):
@@ -1007,7 +1011,8 @@ class TestLoadTxt(LoadTxtBase):
         dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
-    @dec.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968')
+    @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
+                        reason="Wrong preferred encoding")
     def test_binary_load(self):
         butf8 = b"5,6,7,\xc3\x95scarscar\n\r15,2,3,hello\n\r"\
                 b"20,2,3,\xc3\x95scar\n\r"
@@ -1984,7 +1989,6 @@ M   33  21.99
         # encoding of io.open. Will need to change this for PyTest, maybe
         # using pytest.mark.xfail(raises=***).
         try:
-            import locale
             encoding = locale.getpreferredencoding()
             utf8.encode(encoding)
         except (UnicodeError, ImportError):
@@ -2189,9 +2193,9 @@ M   33  21.99
         assert_equal(test['f2'], 1024)
 
 
+@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
 class TestPathUsage(object):
     # Test that pathlib.Path can be used
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_loadtxt(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2200,7 +2204,6 @@ class TestPathUsage(object):
             x = np.loadtxt(path)
             assert_array_equal(x, a)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_save_load(self):
         # Test that pathlib.Path instances can be used with savez.
         with temppath(suffix='.npy') as path:
@@ -2210,7 +2213,6 @@ class TestPathUsage(object):
             data = np.load(path)
             assert_array_equal(data, a)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_savez_load(self):
         # Test that pathlib.Path instances can be used with savez.
         with temppath(suffix='.npz') as path:
@@ -2218,8 +2220,7 @@ class TestPathUsage(object):
             np.savez(path, lab='place holder')
             with np.load(path) as data:
                 assert_array_equal(data['lab'], 'place holder')
-
-    @dec.skipif(Path is None, "No pathlib.Path")
+    
     def test_savez_compressed_load(self):
         # Test that pathlib.Path instances can be used with savez.
         with temppath(suffix='.npz') as path:
@@ -2229,7 +2230,6 @@ class TestPathUsage(object):
             assert_array_equal(data['lab'], 'place holder')
             data.close()
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_genfromtxt(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2238,7 +2238,6 @@ class TestPathUsage(object):
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_ndfromtxt(self):
         # Test outputting a standard ndarray
         with temppath(suffix='.txt') as path:
@@ -2250,7 +2249,6 @@ class TestPathUsage(object):
             test = np.ndfromtxt(path, dtype=int)
             assert_array_equal(test, control)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_mafromtxt(self):
         # From `test_fancy_dtype_alt` above
         with temppath(suffix='.txt') as path:
@@ -2262,7 +2260,6 @@ class TestPathUsage(object):
             control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
             assert_equal(test, control)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_recfromtxt(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2276,7 +2273,6 @@ class TestPathUsage(object):
             assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_recfromcsv(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2364,7 +2360,7 @@ def test_npzfile_dict():
     assert_('x' in z.keys())
 
 
-@dec._needs_refcount
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.
@@ -2384,6 +2380,3 @@ def test_load_refcount():
     finally:
         gc.enable()
     assert_equal(n_objects_in_cycles, 0)
-
-if __name__ == "__main__":
-    run_module_suite()

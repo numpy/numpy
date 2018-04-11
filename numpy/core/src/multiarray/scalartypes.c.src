@@ -28,6 +28,7 @@
 #include "npy_import.h"
 #include "dragon4.h"
 #include "npy_longdouble.h"
+#include "buffer.h"
 
 #include <stdlib.h>
 
@@ -1842,6 +1843,9 @@ static PyObject *
 gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     PyObject *ret = NULL, *obj = NULL, *mod = NULL;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#endif
     const char *buffer;
     Py_ssize_t buflen;
 
@@ -1850,18 +1854,35 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
+
 #if defined(NPY_PY3K)
     if (PyArray_IsScalar(self, Unicode)) {
         /* Unicode on Python 3 does not expose the buffer interface */
         buffer = PyUnicode_AS_DATA(self);
         buflen = PyUnicode_GET_DATA_SIZE(self);
     }
-    else
-#endif
+    else if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
+        buffer = view.buf;
+        buflen = view.len;
+        /*
+         * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+         * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+         * up to the object that supplies the buffer to guarantee that the buffer
+         * sticks around after the release.
+         */
+        PyBuffer_Release(&view);
+    }
+    else {
+        Py_DECREF(ret);
+        return NULL;
+    }
+#else
     if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
         Py_DECREF(ret);
         return NULL;
     }
+#endif
+
     mod = PyImport_ImportModule("numpy.core.multiarray");
     if (mod == NULL) {
         return NULL;
@@ -2505,22 +2526,6 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
     }
 }
 #endif /* !defined(NPY_PY3K) */
-
-
-static int
-gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
-{
-    Py_ssize_t len;
-    void *buf;
-
-    /* FIXME: XXX: the format is not implemented! -- this needs more work */
-
-    len = gentype_getreadbuf(self, 0, &buf);
-    return PyBuffer_FillInfo(view, self, buf, len, 1, flags);
-}
-
-/* releasebuffer is not needed */
-
 
 static PyBufferProcs gentype_as_buffer = {
 #if !defined(NPY_PY3K)
@@ -4169,6 +4174,37 @@ initialize_casting_tables(void)
     }
 }
 
+#ifndef NPY_PY3K
+/*
+ * In python2, the `float` and `complex` types still implement the obsolete
+ * "tp_print" method, which uses CPython's float-printing routines to print the
+ * float.  Numpy's float_/cfloat inherit from Python float/complex, but
+ * override its tp_repr and tp_str methods. In order to avoid an inconsistency
+ * with the inherited tp_print, we need to override it too.
+ *
+ * In python3 the tp_print method is reserved/unused.
+ */
+static int
+doubletype_print(PyObject *o, FILE *fp, int flags)
+{
+    int ret;
+    PyObject *to_print;
+    if (flags & Py_PRINT_RAW) {
+        to_print = PyObject_Str(o);
+    }
+    else {
+        to_print = PyObject_Repr(o);
+    }
+
+    if (to_print == NULL) {
+        return -1;
+    }
+
+    ret = PyObject_Print(to_print, fp, flags);
+    Py_DECREF(to_print);
+    return ret;
+}
+#endif
 
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
@@ -4220,6 +4256,12 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
 
     /**end repeat**/
+
+#ifndef NPY_PY3K
+    PyDoubleArrType_Type.tp_print = &doubletype_print;
+    PyCDoubleArrType_Type.tp_print = &doubletype_print;
+#endif
+
 
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 

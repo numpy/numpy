@@ -1,6 +1,6 @@
 
 from numpy.distutils.from_template import process_str
-from numpy.testing import assert_equal, run_module_suite
+from numpy.testing import assert_equal
 
 
 pyf_src = """
@@ -42,7 +42,3 @@ def test_from_template():
     normalized_pyf = normalize_whitespace(pyf)
     normalized_expected_pyf = normalize_whitespace(expected_pyf)
     assert_equal(normalized_pyf, normalized_expected_pyf)
-
-
-if __name__ == "__main__":
-    run_module_suite()

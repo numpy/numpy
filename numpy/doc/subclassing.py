@@ -562,7 +562,7 @@ pass on to ``A.__array_ufunc__``, the ``super`` call in ``A`` would go to
 
 Prior to numpy 1.13, the behaviour of ufuncs could only be tuned using
 ``__array_wrap__`` and ``__array_prepare__``. These two allowed one to
-change the output type of a ufunc, but, in constrast to
+change the output type of a ufunc, but, in contrast to
 ``__array_ufunc__``, did not allow one to make any changes to the inputs.
 It is hoped to eventually deprecate these, but ``__array_wrap__`` is also
 used by other numpy functions and methods, such as ``squeeze``, so at the

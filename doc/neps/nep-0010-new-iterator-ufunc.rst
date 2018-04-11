@@ -5,6 +5,7 @@ Optimizing Iterator/UFunc Performance
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Content-Type: text/x-rst
 :Created: 25-Nov-2010
+:Status: Final
 
 *****************
 Table of Contents

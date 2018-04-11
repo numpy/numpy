@@ -80,8 +80,8 @@ poly1d([ 2.])
 '''
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises, rundocs
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, rundocs
     )
 
 
@@ -243,7 +243,3 @@ class TestDocs(object):
 
         p.coeffs[2] += 10
         assert_equal(p.coeffs, [1, 2, 3])
-
-
-if __name__ == "__main__":
-    run_module_suite()
