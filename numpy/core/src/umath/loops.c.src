@@ -2840,10 +2840,14 @@ NPY_NO_EXPORT void
  * #OP = EQ, NE, GT, GE, LT, LE#
  * #identity = NPY_TRUE, NPY_FALSE, -1*4#
  */
+
+/**begin repeat1
+ * #suffix = , _OO_O#
+ * #as_bool = 1, 0#
+ */
 NPY_NO_EXPORT void
-OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
+OBJECT@suffix@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
     BINARY_LOOP {
-        int ret;
         PyObject *ret_obj;
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
@@ -2860,14 +2864,21 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         if (ret_obj == NULL) {
             return;
         }
-        ret = PyObject_IsTrue(ret_obj);
-        Py_DECREF(ret_obj);
-        if (ret == -1) {
-            return;
+#if @as_bool@
+        {
+            int ret = PyObject_IsTrue(ret_obj);
+            Py_DECREF(ret_obj);
+            if (ret == -1) {
+                return;
+            }
+            *((npy_bool *)op1) = (npy_bool)ret;
         }
-        *((npy_bool *)op1) = (npy_bool)ret;
+#else
+        *((PyObject **)op1) = ret_obj;
+#endif
     }
 }
+/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT void
