@@ -6522,12 +6522,20 @@ class TestNewBufferProtocol(object):
         a = np.empty((1,) * 32)
         self._check_roundtrip(a)
 
+    def _make_ctype(shape, scalar_type):
+        t = scalar_type
+        for dim in shape[::-1]:
+            t = dim * t
+        return t
+
+    # This creates deeply nested reference cycles that cause
+    # np.lib.tests.test_io.test_load_refcount to erroneously fail (gh-10891).
+    # Not making it a local ensure that the GC doesn't touch it during the tests
+    c_u8_33d = _make_ctype((1,)*33, ctypes.c_uint8)
+
     def test_error_too_many_dims(self):
         # construct a memoryview with 33 dimensions
-        ct = ctypes.c_uint8
-        for i in range(33):
-            ct = 1 * ct
-        m = memoryview(ct())
+        m = memoryview(self.c_u8_33d())
         assert_equal(m.ndim, 33)
 
         assert_raises_regex(
