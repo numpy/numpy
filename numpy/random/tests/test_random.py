@@ -463,8 +463,7 @@ class TestRandomDist(object):
                                           [("a", object, 1),
                                            ("b", np.int32, 1)])]:
             np.random.seed(self.seed)
-            alist = conv([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
-            np.random.shuffle(alist)
+            alist = np.random.shuffle(conv([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]))
             actual = alist
             desired = conv([0, 1, 9, 6, 2, 4, 5, 8, 7, 3])
             assert_array_equal(actual, desired)
