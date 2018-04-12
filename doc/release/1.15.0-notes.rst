@@ -233,5 +233,13 @@ the user wants to perform a stable sort thus harming the readability.
 This change allows the user to specify kind='stable' thus clarifying
 the intent.
 
+Do not make temporary copies for in-place accumulation
+------------------------------------------------------
+When ufuncs perform accumulation they no longer make temporary copies because
+of the overlap between input an output, that is, the next element accumulated
+is added before the accumulated result is stored in its place, hence the
+overlap is safe. Avoiding the copy results in faster execution.
+
+
 Changes
 =======
