@@ -4797,6 +4797,8 @@ cdef class RandomState:
         x
             A reference to the input sequence.
 
+            .. versionadded:: 1.15.0
+
         Examples
         --------
         >>> arr = np.arange(10)
