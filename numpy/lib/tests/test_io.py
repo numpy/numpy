@@ -23,7 +23,7 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, SkipTest, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings,
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles,
     )
 
 
@@ -2416,14 +2416,5 @@ def test_load_refcount():
     np.savez(f, [1, 2, 3])
     f.seek(0)
 
-    assert_(gc.isenabled())
-    gc.disable()
-    try:
-        gc.collect()
+    with assert_no_gc_cycles():
         np.load(f)
-        # gc.collect returns the number of unreachable objects in cycles that
-        # were found -- we are checking that no cycles were created by np.load
-        n_objects_in_cycles = gc.collect()
-    finally:
-        gc.enable()
-    assert_equal(n_objects_in_cycles, 0)

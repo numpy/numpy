@@ -7,6 +7,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import re
+import gc
 import operator
 import warnings
 from functools import partial, wraps
@@ -35,7 +36,7 @@ __all__ = [
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
-        '_assert_valid_refcount', '_gen_alignment_data',
+        '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
         ]
 
 
@@ -2272,3 +2273,64 @@ class suppress_warnings(object):
                 return func(*args, **kwargs)
 
         return new_func
+
+
+@contextlib.contextmanager
+def _assert_no_gc_cycles_context(name=None):
+    __tracebackhide__ = True  # Hide traceback for py.test
+
+    # not meaningful to test if there is no refcounting
+    if not HAS_REFCOUNT:
+        return
+
+    assert_(gc.isenabled())
+    gc.disable()
+    try:
+        gc.collect()
+        yield
+        # gc.collect returns the number of unreachable objects in cycles that
+        # were found -- we are checking that no cycles were created in the context
+        n_objects_in_cycles = gc.collect()
+    finally:
+        gc.enable()
+
+    if n_objects_in_cycles:
+        name_str = " when calling %s" % name if name is not None else ""
+        raise AssertionError(
+            "Reference cycles were found{}: {} objects were collected"
+            .format(name_str, n_objects_in_cycles))
+
+
+def assert_no_gc_cycles(*args, **kwargs):
+    """
+    Fail if the given callable produces any reference cycles.
+
+    If called with all arguments omitted, may be used as a context manager:
+
+        with assert_no_gc_cycles():
+            do_something()
+
+    .. versionadded:: 1.15.0
+
+    Parameters
+    ----------
+    func : callable
+        The callable to test.
+    \\*args : Arguments
+        Arguments passed to `func`.
+    \\*\\*kwargs : Kwargs
+        Keyword arguments passed to `func`.
+
+    Returns
+    -------
+    Nothing. The result is deliberately discarded to ensure that all cycles
+    are found.
+
+    """
+    if not args:
+        return _assert_no_gc_cycles_context()
+
+    func = args[0]
+    args = args[1:]
+    with _assert_no_gc_cycles_context(name=func.__name__):
+        func(*args, **kwargs)
