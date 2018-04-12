@@ -233,5 +233,10 @@ the user wants to perform a stable sort thus harming the readability.
 This change allows the user to specify kind='stable' thus clarifying
 the intent.
 
+``np.random.shuffle`` returns the input array
+---------------------------------------------
+This allows for arrays to be created and shuffled in one line instead of two.
+
+
 Changes
 =======
