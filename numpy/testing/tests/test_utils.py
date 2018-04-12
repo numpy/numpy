@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_raises, assert_warns, assert_no_warnings, assert_allclose,
     assert_approx_equal, assert_array_almost_equal_nulp, assert_array_max_ulp,
     clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
-    tempdir, temppath,
+    tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
 
 
@@ -1360,3 +1360,30 @@ def test_clear_and_catch_warnings_inherit():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_assert_no_gc_cycles():
+
+    def no_cycle():
+        b = []
+        b.append([])
+        return b
+
+    with assert_no_gc_cycles():
+        no_cycle()
+
+    assert_no_gc_cycles(no_cycle)
+
+    def make_cycle():
+        a = []
+        a.append(a)
+        a.append(a)
+        return a
+
+    with assert_raises(AssertionError):
+        with assert_no_gc_cycles():
+            make_cycle()
+
+    with assert_raises(AssertionError):
+        assert_no_gc_cycles(make_cycle)
