@@ -80,7 +80,7 @@ def atleast_2d(*arys):
 
     See Also
     --------
-    atleast_1d, atleast_3d
+    atleast_1d, atleast_3d, atleast_nd
 
     Examples
     --------
@@ -134,7 +134,7 @@ def atleast_3d(*arys):
 
     See Also
     --------
-    atleast_1d, atleast_2d
+    atleast_1d, atleast_2d, atleast_nd
 
     Examples
     --------
@@ -177,6 +177,86 @@ def atleast_3d(*arys):
         return res[0]
     else:
         return res
+
+
+def atleast_nd(arr, n, front=False):
+    r"""
+    View inputs as arrays with at least n dimensions.
+
+    Parameters
+    ----------
+    arr : array_like
+        One array-like object.  Non-array inputs are converted to arrays.
+        Arrays that already have n or more dimensions are preserved.
+
+    n : int
+        number of dimensions to ensure
+
+    front : bool
+        if True new dimensions are added to the front of the array.  otherwise
+        they are added to the back.
+
+    Returns
+    -------
+        ndarray :
+            An array with ``a.ndim >= n``.  Copies are avoided where possible,
+            and views with three or more dimensions are returned.  For example,
+            a 1-D array of shape ``(N,)`` becomes a view of shape
+            ``(1, N, 1)``, and a 2-D array of shape ``(M, N)`` becomes a view
+            of shape ``(M, N, 1)``.
+
+    See Also
+    ---------
+    atleast_1d, atleast_2d, atleast_3d
+
+    Examples
+    --------
+    >>> for n in range(0, 5):
+    ...    print(np.atleast_nd(3.0, n))
+    3.0
+    [3.]
+    [[3.]]
+    [[[3.]]]
+    [[[[3.]]]]
+
+    >>> arr = [[1, 2, 3], [4, 5, 6]]
+    >>> for n in range(0, 5):
+    ...    new = np.atleast_nd(arr, n, front=False)
+    ...    print(new.tolist())
+    [[1, 2, 3], [4, 5, 6]]
+    [[1, 2, 3], [4, 5, 6]]
+    [[1, 2, 3], [4, 5, 6]]
+    [[[1], [2], [3]], [[4], [5], [6]]]
+    [[[[1]], [[2]], [[3]]], [[[4]], [[5]], [[6]]]]
+
+    >>> arr = [[1, 2, 3], [4, 5, 6]]
+    >>> for n in range(0, 5):
+    ...    new = np.atleast_nd(arr, n, front=True)
+    ...    print(new.tolist())
+    [[1, 2, 3], [4, 5, 6]]
+    [[1, 2, 3], [4, 5, 6]]
+    [[1, 2, 3], [4, 5, 6]]
+    [[[1, 2, 3], [4, 5, 6]]]
+    [[[[1, 2, 3], [4, 5, 6]]]]
+
+    >>> x = np.arange(12.0).reshape(4,3)
+    >>> np.atleast_nd(x, 5, front=False).shape
+    (4, 3, 1, 1, 1)
+    >>> np.atleast_nd(x, 5, front=True).shape
+    (1, 1, 1, 4, 3)
+    >>> np.atleast_nd(x, 5, front=False).base is x.base  # x is a reshape, so not base itself
+    True
+    """
+    arr_ = asanyarray(arr)
+    ndims = len(arr_.shape)
+    if n is not None and ndims <  n:
+        # append the required number of dimensions to the front or back
+        if front:
+            expander = (None,) * (n - ndims) + (Ellipsis,)
+        else:
+            expander = (Ellipsis,) + (None,) * (n - ndims)
+        arr_ = arr_[expander]
+    return arr_
 
 
 def vstack(tup):
