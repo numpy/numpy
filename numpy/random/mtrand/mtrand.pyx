@@ -4794,7 +4794,8 @@ cdef class RandomState:
 
         Returns
         -------
-        None
+        x
+            A reference to the input sequence.
 
         Examples
         --------
@@ -4854,6 +4855,8 @@ cdef class RandomState:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
                     x[i], x[j] = x[j], x[i]
+
+        return x
 
     cdef inline _shuffle_raw(self, npy_intp n, npy_intp itemsize,
                              npy_intp stride, char* data, char* buf):

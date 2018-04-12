@@ -63,8 +63,7 @@ class TestRegression(object):
                   [1, (2, 2), (3, 3), None],
                   [(1, 1), 2, 3, None]]:
             np.random.seed(12345)
-            shuffled = list(t)
-            random.shuffle(shuffled)
+            shuffled = random.shuffle(list(t))
             assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
 
     def test_call_within_randomstate(self):
