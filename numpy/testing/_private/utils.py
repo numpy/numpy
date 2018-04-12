@@ -15,6 +15,7 @@ import shutil
 import contextlib
 from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
+import pprint
 
 from numpy.core import(
      float32, empty, arange, array_repr, ndarray, isnat, array)
@@ -2285,20 +2286,38 @@ def _assert_no_gc_cycles_context(name=None):
 
     assert_(gc.isenabled())
     gc.disable()
+    gc_debug = gc.get_debug()
     try:
         gc.collect()
+        gc.set_debug(gc.DEBUG_SAVEALL)
         yield
         # gc.collect returns the number of unreachable objects in cycles that
         # were found -- we are checking that no cycles were created in the context
         n_objects_in_cycles = gc.collect()
+        objects_in_cycles = gc.garbage[:]
     finally:
+        del gc.garbage[:]
+        gc.set_debug(gc_debug)
         gc.enable()
 
     if n_objects_in_cycles:
         name_str = " when calling %s" % name if name is not None else ""
         raise AssertionError(
-            "Reference cycles were found{}: {} objects were collected"
-            .format(name_str, n_objects_in_cycles))
+            "Reference cycles were found{}: {} objects were collected, "
+            "of which {} are shown below:{}"
+            .format(
+                name_str,
+                n_objects_in_cycles,
+                len(objects_in_cycles),
+                ''.join(
+                    "\n  {} object with id={}:\n    {}".format(
+                        type(o).__name__,
+                        id(o),
+                        pprint.pformat(o).replace('\n', '\n    ')
+                    ) for o in objects_in_cycles
+                )
+            )
+        )
 
 
 def assert_no_gc_cycles(*args, **kwargs):
