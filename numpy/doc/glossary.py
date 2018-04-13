@@ -157,6 +157,11 @@ Glossary
        For more information on dictionaries, read the
        `Python tutorial <http://docs.python.org/tut>`_.
 
+   field
+       In a :term:`structured data type`, each sub-type is called a `field`.
+       The `field` has a name (a string), a type (any valid :term:`dtype`, and
+       an optional `title`. See :ref:`arrays.dtypes`
+
    Fortran order
        See `column-major`
 
@@ -367,6 +372,9 @@ Glossary
 
          >>> x[:, 1]
          array([2, 4])
+
+   structure
+       See :term:`structured data type`
 
    structured data type
        A data type composed of other datatypes
