@@ -89,6 +89,12 @@ longer possible, and objects expecting the old API are respected. The silent suc
 by removing the interception of an otherwise-normal Exception when ``axis`` was provided to an object
 using the old API.
 
+unstructured void array's ``.item`` method now returns a bytes object
+---------------------------------------------------------------------
+``.item`` now returns a ``bytes`` object instead of a buffer or byte array.
+This may affect code which assumed the return value was mutable, which is no
+longer the case.
+
 
 C API changes
 =============
