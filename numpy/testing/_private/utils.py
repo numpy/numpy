@@ -2288,7 +2288,14 @@ def _assert_no_gc_cycles_context(name=None):
     gc.disable()
     gc_debug = gc.get_debug()
     try:
-        gc.collect()
+        for i in range(100):
+            if gc.collect() == 0:
+                break
+        else:
+            raise RuntimeError(
+                "Unable to fully collect garbage - perhaps a __del__ method is "
+                "creating more reference cycles?")
+
         gc.set_debug(gc.DEBUG_SAVEALL)
         yield
         # gc.collect returns the number of unreachable objects in cycles that
