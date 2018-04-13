@@ -6,6 +6,7 @@ import os
 import itertools
 import textwrap
 import pytest
+import weakref
 
 import numpy as np
 from numpy.testing import (
@@ -1363,27 +1364,73 @@ def test_clear_and_catch_warnings_inherit():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-def test_assert_no_gc_cycles():
+class TestAssertNoGcCycles(object):
+    """ Test assert_no_gc_cycles """
+    def test_passes(self):
+        def no_cycle():
+            b = []
+            b.append([])
+            return b
 
-    def no_cycle():
-        b = []
-        b.append([])
-        return b
-
-    with assert_no_gc_cycles():
-        no_cycle()
-
-    assert_no_gc_cycles(no_cycle)
-
-    def make_cycle():
-        a = []
-        a.append(a)
-        a.append(a)
-        return a
-
-    with assert_raises(AssertionError):
         with assert_no_gc_cycles():
-            make_cycle()
+            no_cycle()
 
-    with assert_raises(AssertionError):
-        assert_no_gc_cycles(make_cycle)
+        assert_no_gc_cycles(no_cycle)
+
+
+    def test_asserts(self):
+        def make_cycle():
+            a = []
+            a.append(a)
+            a.append(a)
+            return a
+
+        with assert_raises(AssertionError):
+            with assert_no_gc_cycles():
+                make_cycle()
+
+        with assert_raises(AssertionError):
+            assert_no_gc_cycles(make_cycle)
+
+
+    def test_fails(self):
+        """
+        Test that in cases where the garbage cannot be collected, we raise an
+        error, instead of hanging forever trying to clear it.
+        """
+
+        class ReferenceCycleInDel(object):
+            """
+            An object that not only contains a reference cycle, but creates new
+            cycles whenever it's garbage-collected and its __del__ runs
+            """
+            make_cycle = True
+
+            def __init__(self):
+                self.cycle = self
+
+            def __del__(self):
+                # break the current cycle so that `self` can be freed
+                self.cycle = None
+
+                if ReferenceCycleInDel.make_cycle:
+                    # but create a new one so that the garbage collector has more
+                    # work to do.
+                    ReferenceCycleInDel()
+
+        try:
+            w = weakref.ref(ReferenceCycleInDel())
+            try:
+                with assert_raises(RuntimeError):
+                    # this will be unable to get a baseline empty garbage
+                    assert_no_gc_cycles(lambda: None)
+            except AssertionError:
+                # the above test is only necessary if the GC actually tried to free
+                # our object anyway, which python 2.7 does not.
+                if w() is not None:
+                    pytest.skip("GC does not call __del__ on cyclic objects")
+                    raise
+
+        finally:
+            # make sure that we stop creating reference cycles
+            ReferenceCycleInDel.make_cycle = False
