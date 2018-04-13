@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 extensions = ['sphinx.ext.autodoc', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'sphinx.ext.graphviz',
+              'sphinx.ext.graphviz', 'sphinx.ext.ifconfig',
               'matplotlib.sphinxext.plot_directive']
 
 if sphinx.__version__ >= "1.4":
@@ -39,7 +39,7 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2017, The SciPy community'
+copyright = '2008-2018, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -82,6 +82,9 @@ add_function_parentheses = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+def setup(app):
+    # add a config value for `ifconfig` directives
+    app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
 
 # -----------------------------------------------------------------------------
 # HTML output
