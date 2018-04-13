@@ -54,6 +54,14 @@ class TestFromrecords(object):
 
         assert_equal(r1, r2)
 
+    def test_fromrecords_list_of_lists(self):
+        # gh-10870 : For numpy 1.14 we keep the deprecated behavior
+        # that 1d list-of-lists input is accepted by fromrecords
+        expected = np.rec.array([(1,  1.5), (2,  2.5)], dtype='i8,f8')
+        with assert_warns(FutureWarning):
+            r = np.rec.fromrecords([[1, 1.5], [2, 2.5]], dtype='i8,f8')
+        assert_equal(r, expected)
+
     def test_method_array(self):
         r = np.rec.array(b'abcdefg' * 100, formats='i2,a3,i4', shape=3, byteorder='big')
         assert_equal(r[1].item(), (25444, b'efg', 1633837924))

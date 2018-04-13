@@ -676,32 +676,40 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     else:
         descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
-    try:
-        retval = sb.array(recList, dtype=descr)
-    except (TypeError, ValueError):
-        if (shape is None or shape == 0):
-            shape = len(recList)
-        if isinstance(shape, (int, long)):
-            shape = (shape,)
-        if len(shape) > 1:
-            raise ValueError("Can only deal with 1-d array.")
-        _array = recarray(shape, descr)
-        for k in range(_array.size):
-            _array[k] = tuple(recList[k])
-        # list of lists instead of list of tuples ?
-        # 2018-02-07, 1.14.1
-        warnings.warn(
-            "fromrecords expected a list of tuples, may have received a list "
-            "of lists instead. In the future that will raise an error",
-            FutureWarning, stacklevel=2)
-        return _array
-    else:
-        if shape is not None and retval.shape != shape:
-            retval.shape = shape
+    # deprecated back-compat block for numpy 1.14, to be removed in a later
+    # release. This converts list-of-list input to list-of-tuples in some
+    # cases, as done in numpy <= 1.13. In the future we will require tuples.
+    if (isinstance(recList, list) and len(recList) > 0
+            and isinstance(recList[0], list) and len(recList[0]) > 0
+            and not isinstance(recList[0][0], (list, tuple))):
 
-    res = retval.view(recarray)
+        try: 
+            memoryview(recList[0][0]) 
+        except:
+            if (shape is None or shape == 0):
+                shape = len(recList)
+            if isinstance(shape, (int, long)):
+                shape = (shape,)
+            if len(shape) > 1:
+                raise ValueError("Can only deal with 1-d array.")
+            _array = recarray(shape, descr)
+            for k in range(_array.size):
+                _array[k] = tuple(recList[k])
+            # list of lists instead of list of tuples ?
+            # 2018-02-07, 1.14.1
+            warnings.warn(
+                "fromrecords expected a list of tuples, may have received a "
+                "list of lists instead. In the future that will raise an error",
+                FutureWarning, stacklevel=2)
+            return _array
+        else:
+            pass
 
-    return res
+    retval = sb.array(recList, dtype=descr)
+    if shape is not None and retval.shape != shape:
+        retval.shape = shape
+
+    return retval.view(recarray)
 
 
 def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
