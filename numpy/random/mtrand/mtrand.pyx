@@ -1457,7 +1457,7 @@ cdef class RandomState:
 
         See Also
         --------
-        random.randint : Similar to `random_integers`, only for the half-open
+        randint : Similar to `random_integers`, only for the half-open
             interval [`low`, `high`), and 0 is the lowest value if `high` is
             omitted.
 
