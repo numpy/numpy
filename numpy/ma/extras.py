@@ -681,6 +681,10 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
            fill_value = 1e+20)
 
     """
+
+    if isinstance(a, list):
+        a = np.ma.asarray(a)
+
     if not hasattr(a, 'mask'):
         m = np.median(getdata(a, subok=True), axis=axis,
                       out=out, overwrite_input=overwrite_input,
