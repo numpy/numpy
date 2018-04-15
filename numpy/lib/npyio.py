@@ -758,7 +758,7 @@ def _getconv(dtype):
     elif issubclass(typ, np.floating):
         return floatconv
     elif issubclass(typ, complex):
-        return lambda x: complex(asstr(x))
+        return lambda x: complex(asstr(x).replace('+-', '-'))
     elif issubclass(typ, np.bytes_):
         return asbytes
     elif issubclass(typ, np.unicode_):
@@ -1377,7 +1377,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 for number in row:
                     row2.append(number.real)
                     row2.append(number.imag)
-                fh.write(format % tuple(row2) + newline)
+                s = format % tuple(row2) + newline
+                fh.write(s.replace('+-', '-'))
         else:
             for row in X:
                 try:

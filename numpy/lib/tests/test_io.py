@@ -468,6 +468,26 @@ class TestSaveTxt(object):
             [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
              b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n'])
 
+    def test_complex_negative_exponent(self):
+        # Previous to 1.15, some formats generated x+-yj, gh 7895
+        ncols = 2
+        nrows = 2
+        a = np.zeros((ncols, nrows), dtype=np.complex128)
+        re = np.pi
+        im = np.e
+        a[:] = re - 1.0j * im
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%.3e')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(
+            lines,
+            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n',
+             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
+
+
+        
+
     def test_custom_writer(self):
 
         class CustomWriter(list):
@@ -915,6 +935,26 @@ class TestLoadTxt(LoadTxtBase):
         c.seek(0)
         res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
+
+    def test_complex_misformatted(self):
+        # test for backward compatability
+        # some complex formats used to generate x+-yj
+        a = np.zeros((2, 2), dtype=np.complex128)
+        re = np.pi
+        im = np.e
+        a[:] = re - 1.0j * im
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%.16e')
+        c.seek(0)
+        txt = c.read()
+        c.seek(0)
+        # misformat the sign on the imaginary part, gh 7895
+        txt_bad = txt.replace(b'e+00-', b'e00+-')
+        assert_(txt_bad != txt)
+        c.write(txt_bad)
+        c.seek(0)
+        res = np.loadtxt(c, dtype=complex)
+        assert_equal(res, a)
 
     def test_universal_newline(self):
         with temppath() as name:
