@@ -1,3 +1,5 @@
+import datetime as dt
+
 import numpy as np
 import numba as nb
 
@@ -31,7 +33,7 @@ bounded_uint(323, 2394691, s.value)
 def bounded_uints(lb, ub, n, state):
     out = np.empty(n, dtype=np.uint32)
     for i in range(n):
-        bounded_uint(lb, ub, state)
+        out[i] = bounded_uint(lb, ub, state)
 
 
 bounded_uints(323, 2394691, 10000000, s.value)
@@ -57,19 +59,17 @@ def normals(n, state):
             out[2 * i + 1] = f * x2
     return out
 
+
 print(normals(10, cffi_state).var())
 # Warm up
 normalsj = nb.jit(normals, nopython=True)
 normalsj(1, state_addr)
-import datetime as dt
 
 start = dt.datetime.now()
 normalsj(1000000, state_addr)
 ms = 1000 * (dt.datetime.now() - start).total_seconds()
 print('1,000,000 Box-Muller (numba/Xoroshiro128) randoms in '
       '{ms:0.1f}ms'.format(ms=ms))
-
-import numpy as np
 
 start = dt.datetime.now()
 np.random.standard_normal(1000000)
