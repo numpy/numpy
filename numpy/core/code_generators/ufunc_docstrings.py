@@ -957,26 +957,26 @@ add_newdoc('numpy.core.umath', 'heaviside',
 
     The Heaviside step function is defined as::
 
-                              0   if x1 < 0
-        heaviside(x1, h0) =  h0   if x1 == 0
-                              1   if x1 > 0
+                              0   if x < 0
+        heaviside(x1, h0) =  h0   if x == 0
+                              1   if x > 0
 
-    where `h0` is the return value for x1==0. It is often taken to be 0.5,
+    where `h0` is the return value for x==0. It is often taken to be 0.5,
     but 0 and 1 are also sometimes used.
 
     Parameters
     ----------
-    x1 : array_like
+    x : array_like
         Input values.
     h0 : array_like
-        The value of the function when x1 is 0.
+        The value of the function when x is 0.
     $PARAMS
 
     Returns
     -------
     out : ndarray or scalar
-        The output array, element-wise Heaviside step function of `x1`.
-        $OUT_SCALAR_2
+        The output array, element-wise Heaviside step function of `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
