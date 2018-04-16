@@ -127,11 +127,14 @@ marker(s) is simply ignored::
    ... 9, 0
    ... """
    >>> np.genfromtxt(BytesIO(data), comments="#", delimiter=",")
-   [[ 1.  2.]
+   [[ 1.  2.
     [ 3.  4.]
     [ 5.  6.]
     [ 7.  8.]
     [ 9.  0.]]
+
+.. versionadded:: 1.7.0
+    When ``comments`` is set to ``None``, no lines are treated as comments.
 
 .. note::
 
