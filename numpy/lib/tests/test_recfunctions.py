@@ -1,12 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
 import numpy.ma as ma
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
-from numpy.testing import (
-    run_module_suite, assert_, assert_raises, dec
-    )
+from numpy.testing import assert_, assert_raises
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by
@@ -687,7 +687,7 @@ class TestJoinBy(object):
         b = np.ones(3, dtype=[('c', 'u1'), ('b', 'f4'), ('a', 'i4')])
         assert_raises(ValueError, join_by, ['a', 'b', 'b'], a, b)
 
-    @dec.knownfailureif(True)
+    @pytest.mark.xfail(reason="See comment at gh-9343")
     def test_same_name_different_dtypes_key(self):
         a_dtype = np.dtype([('key', 'S5'), ('value', '<f4')])
         b_dtype = np.dtype([('key', 'S10'), ('value', '<f4')])
@@ -829,6 +829,3 @@ class TestAppendFieldsObj(object):
         control = np.array([(obj, 1.0, 10), (obj, 2.0, 20)],
                            dtype=[('A', object), ('B', float), ('C', int)])
         assert_equal(test, control)
-
-if __name__ == '__main__':
-    run_module_suite()

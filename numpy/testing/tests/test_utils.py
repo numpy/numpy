@@ -5,16 +5,16 @@ import sys
 import os
 import itertools
 import textwrap
+import pytest
 
 import numpy as np
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_array_less, build_err_msg,
-    raises, assert_raises, assert_warns, assert_no_warnings,
-    assert_allclose, assert_approx_equal,
-    assert_array_almost_equal_nulp, assert_array_max_ulp,
-    clear_and_catch_warnings, suppress_warnings, run_module_suite,
-    assert_string_equal, assert_, tempdir, temppath,
+    assert_array_almost_equal, assert_array_less, build_err_msg, raises,
+    assert_raises, assert_warns, assert_no_warnings, assert_allclose,
+    assert_approx_equal, assert_array_almost_equal_nulp, assert_array_max_ulp,
+    clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
+    tempdir, temppath,
     )
 
 
@@ -659,7 +659,7 @@ class TestArrayAssertLess(object):
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
 
-
+@pytest.mark.skip(reason="The raises decorator depends on Nose")
 class TestRaises(object):
 
     def setup(self):
@@ -1360,7 +1360,3 @@ def test_clear_and_catch_warnings_inherit():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
-
-
-if __name__ == '__main__':
-    run_module_suite()

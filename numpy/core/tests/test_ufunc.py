@@ -8,10 +8,10 @@ import numpy.core._umath_tests as umt
 import numpy.core._operand_flag_tests as opflag_tests
 import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings, assert_allclose,
-)
+    assert_, assert_equal, assert_raises, assert_array_equal,
+    assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
+    assert_allclose,
+    )
 
 
 class TestUfuncKwargs(object):
@@ -626,7 +626,7 @@ class TestUfunc(object):
         assert_array_equal(c, (a * b).sum(0))
         c = in1d(a, b, axes=[0, 2])
         assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
-        # Check errors for inproperly constructed axes arguments.
+        # Check errors for improperly constructed axes arguments.
         # should have list.
         assert_raises(TypeError, in1d, a, b, axes=-1)
         # needs enough elements
@@ -671,7 +671,7 @@ class TestUfunc(object):
         d = mm(a, b, out=c, axes=[(-2, -1), (-2, -1), (3, 0)])
         assert_(c is d)
         assert_array_equal(c, np.matmul(a, b).transpose(3, 0, 1, 2))
-        # Check errors for inproperly constructed axes arguments.
+        # Check errors for improperly constructed axes arguments.
         # wrong argument
         assert_raises(TypeError, mm, a, b, axis=1)
         # axes should be list
@@ -813,6 +813,21 @@ class TestUfunc(object):
 
         assert_equal(np.logical_or.reduce(a), 3)
         assert_equal(np.logical_and.reduce(a), None)
+
+    def test_object_comparison(self):
+        class HasComparisons(object):
+            def __eq__(self, other):
+                return '=='
+
+        arr0d = np.array(HasComparisons())
+        assert_equal(arr0d == arr0d, True)
+        assert_equal(np.equal(arr0d, arr0d), True)  # normal behavior is a cast
+        assert_equal(np.equal(arr0d, arr0d, dtype=object), '==')
+
+        arr1d = np.array([HasComparisons()])
+        assert_equal(arr1d == arr1d, np.array([True]))
+        assert_equal(np.equal(arr1d, arr1d), np.array([True]))  # normal behavior is a cast
+        assert_equal(np.equal(arr1d, arr1d, dtype=object), np.array(['==']))
 
     def test_object_array_reduction(self):
         # Reductions on object arrays
@@ -1490,7 +1505,3 @@ class TestUfunc(object):
     def test_no_doc_string(self):
         # gh-9337
         assert_('\n' not in umt.inner1d_no_doc.__doc__)
-
-
-if __name__ == "__main__":
-    run_module_suite()

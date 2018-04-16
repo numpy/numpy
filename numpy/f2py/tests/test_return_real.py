@@ -1,8 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 from numpy import array
 from numpy.compat import long
-from numpy.testing import run_module_suite, assert_, assert_raises, dec
+from numpy.testing import assert_, assert_raises
 from . import util
 
 
@@ -82,7 +84,7 @@ end interface
 end python module c_ext_return_real
     """
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         for name in "t4,t8,s4,s8".split(","):
             self.check_function(getattr(self.module, name))
@@ -137,7 +139,7 @@ cf2py    intent(out) td
        end
     """
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
             self.check_function(getattr(self.module, name))
@@ -196,11 +198,7 @@ module f90_return_real
 end module f90_return_real
     """
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         for name in "t0,t4,t8,td,s0,s4,s8,sd".split(","):
             self.check_function(getattr(self.module.f90_return_real, name))
-
-
-if __name__ == "__main__":
-    run_module_suite()

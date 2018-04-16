@@ -3,7 +3,9 @@ Test scalar buffer interface adheres to PEP 3118
 """
 import sys
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_equal, dec
+import pytest
+
+from numpy.testing import assert_, assert_equal
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_and_codes = [
@@ -28,11 +30,10 @@ scalars_and_codes = [
 ]
 
 
+@pytest.mark.skipif(sys.version_info.major < 3,
+                    reason="Python 2 scalars lack a buffer interface")
 class TestScalarPEP3118(object):
-    skip_if_no_buffer_interface = dec.skipif(sys.version_info.major < 3,
-                "scalars do not implement buffer interface in Python 2")
 
-    @skip_if_no_buffer_interface
     def test_scalar_match_array(self):
         for scalar, _ in scalars_and_codes:
             x = scalar()
@@ -41,7 +42,6 @@ class TestScalarPEP3118(object):
             mv_a = memoryview(a)
             assert_equal(mv_x.format, mv_a.format)
 
-    @skip_if_no_buffer_interface
     def test_scalar_dim(self):
         for scalar, _ in scalars_and_codes:
             x = scalar()
@@ -52,14 +52,12 @@ class TestScalarPEP3118(object):
             assert_equal(mv_x.strides, ())
             assert_equal(mv_x.suboffsets, ())
 
-    @skip_if_no_buffer_interface
     def test_scalar_known_code(self):
         for scalar, code in scalars_and_codes:
             x = scalar()
             mv_x = memoryview(x)
             assert_equal(mv_x.format, code)
 
-    @skip_if_no_buffer_interface
     def test_void_scalar_structured_data(self):
         dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
         x = np.array(('ndarray_scalar', (1.2, 3.0)), dtype=dt)[()]
@@ -79,6 +77,3 @@ class TestScalarPEP3118(object):
         mv_a = memoryview(a)
         assert_equal(mv_x.itemsize, mv_a.itemsize)
         assert_equal(mv_x.format, mv_a.format)
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -420,36 +420,42 @@ defdict = {
           docstrings.get('numpy.core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'greater_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'not_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'logical_and':
     Ufunc(2, 1, One,
@@ -966,7 +972,7 @@ def make_arrays(funcdict):
                     for vt in t.simd:
                         code2list.append(textwrap.dedent("""\
                         #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-                        if (NPY_CPU_SUPPORTS_{ISA}) {{
+                        if (npy_cpu_supports("{ISA}")) {{
                             {fname}_functions[{idx}] = {type}_{fname}_{isa};
                         }}
                         #endif
@@ -1073,7 +1079,7 @@ def make_code(funcdict, filename):
 
         Please make changes to the code generator program (%s)
     **/
-
+    #include "cpuid.h"
     %s
 
     static int

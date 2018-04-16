@@ -2,13 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import warnings
+import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_raises, assert_warns, dec, HAS_REFCOUNT, suppress_warnings
+    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
+    HAS_REFCOUNT, suppress_warnings
     )
 
 
@@ -33,7 +34,7 @@ def iter_iterindices(i):
         i.iternext()
     return ret
 
-@dec._needs_refcount
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_iter_refcount():
     # Make sure the iterator doesn't leak
 
@@ -2082,7 +2083,7 @@ def test_iter_buffering_growinner():
     assert_equal(i[0].size, a.size)
 
 
-@dec.slow
+@pytest.mark.slow
 def test_iter_buffered_reduce_reuse():
     # large enough array for all views, including negative strides.
     a = np.arange(2*3**5)[3**5:3**5+1]
@@ -2710,7 +2711,3 @@ def test_iter_too_large_with_multiindex():
             # an axis with size 1 is removed:
             with assert_raises(ValueError):
                 _multiarray_tests.test_nditer_too_large(arrays, i*2 + 1, mode)
-
-
-if __name__ == "__main__":
-    run_module_suite()

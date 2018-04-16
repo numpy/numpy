@@ -21,6 +21,8 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install cython sphinx matplotlib
+            sudo apt-get update
+            sudo apt-get install -y graphviz
 
       - run:
           name: build numpy
@@ -93,7 +95,7 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               touch doc/neps/_build/html/.nojekyll
 
-              ./tools/push_to_repo.py doc/neps/_build/html \
+              ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
                   git@github.com:numpy/neps.git \
                   --committer "numpy-circleci-bot" \
                   --email "numpy-circleci-bot@nomail" \

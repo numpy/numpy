@@ -13,8 +13,9 @@ import warnings
 import pickle
 import operator
 import itertools
-import sys
 import textwrap
+import pytest
+
 from functools import reduce
 
 
@@ -23,7 +24,7 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, suppress_warnings, dec
+    assert_raises, assert_warns, suppress_warnings
     )
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
@@ -49,7 +50,6 @@ from numpy.ma.core import (
     ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
-from numpy.testing import dec
 
 pi = np.pi
 
@@ -3200,6 +3200,12 @@ class TestMaskedArrayMethods(object):
         assert_equal(sortedx._data, [1, 2, -2, -1, 0])
         assert_equal(sortedx._mask, [1, 1, 0, 0, 0])
 
+    def test_stable_sort(self):
+        x = array([1, 2, 3, 1, 2, 3], dtype=np.uint8)
+        expected = array([0, 3, 1, 4, 2, 5])
+        computed = argsort(x, kind='stable')
+        assert_equal(computed, expected)
+
     def test_argsort_matches_sort(self):
         x = array([1, 4, 2, 3], mask=[0, 1, 0, 0], dtype=np.uint8)
 
@@ -3722,8 +3728,8 @@ class TestMaskedArrayMathMethods(object):
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
-    @dec.knownfailureif(sys.platform=='win32' and sys.version_info < (3, 6),
-                        msg='Fails on Python < 3.6 (Issue #9671)')
+    @pytest.mark.skipif(sys.platform=='win32' and sys.version_info < (3, 6),
+                        reason='Fails on Python < 3.6 on Windows, gh-9671')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
@@ -4951,7 +4957,8 @@ class TestMaskedConstant(object):
         assert_raises(MaskError, operator.setitem, a_i, (), np.ma.masked)
         assert_raises(MaskError, int, np.ma.masked)
 
-    @dec.skipif(sys.version_info.major == 3, "long doesn't exist in Python 3")
+    @pytest.mark.skipif(sys.version_info.major == 3,
+                        reason="long doesn't exist in Python 3")
     def test_coercion_long(self):
         assert_raises(MaskError, long, np.ma.masked)
 
@@ -4960,13 +4967,13 @@ class TestMaskedConstant(object):
         assert_warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)
         assert_(np.isnan(a_f[()]))
 
-    @dec.knownfailureif(True, "See gh-9750")
+    @pytest.mark.xfail(reason="See gh-9750")
     def test_coercion_unicode(self):
         a_u = np.zeros((), 'U10')
         a_u[()] = np.ma.masked
         assert_equal(a_u[()], u'--')
 
-    @dec.knownfailureif(True, "See gh-9750")
+    @pytest.mark.xfail(reason="See gh-9750")
     def test_coercion_bytes(self):
         a_b = np.zeros((), 'S10')
         a_b[()] = np.ma.masked
@@ -5112,8 +5119,3 @@ def test_astype():
     x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
     assert_(x_f2.flags.f_contiguous)
     assert_(x_f2.mask.flags.f_contiguous)
-
-
-###############################################################################
-if __name__ == "__main__":
-    run_module_suite()

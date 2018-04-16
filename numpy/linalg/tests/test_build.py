@@ -3,9 +3,10 @@ from __future__ import division, absolute_import, print_function
 from subprocess import PIPE, Popen
 import sys
 import re
+import pytest
 
 from numpy.linalg import lapack_lite
-from numpy.testing import run_module_suite, assert_, dec
+from numpy.testing import assert_
 
 
 class FindDependenciesLdd(object):
@@ -42,8 +43,8 @@ class FindDependenciesLdd(object):
 
 class TestF77Mismatch(object):
 
-    @dec.skipif(not(sys.platform[:5] == 'linux'),
-                "Skipping fortran compiler mismatch on non Linux platform")
+    @pytest.mark.skipif(not(sys.platform[:5] == 'linux'),
+                        reason="no fortran compiler on non-Linux platform")
     def test_lapack(self):
         f = FindDependenciesLdd()
         deps = f.grep_dependencies(lapack_lite.__file__,
@@ -52,6 +53,3 @@ class TestF77Mismatch(object):
                          """Both g77 and gfortran runtimes linked in lapack_lite ! This is likely to
 cause random crashes and wrong results. See numpy INSTALL.txt for more
 information.""")
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -888,6 +888,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
+            join('src', 'umath', 'cpuid.c'),
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),

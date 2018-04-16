@@ -18,23 +18,36 @@ def get(name):
     return docdict.get(name)
 
 # common parameter text to all ufuncs
-_params_text = textwrap.dedent("""
-    out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If provided, it must have
-        a shape that the inputs broadcast to. If not provided or `None`,
-        a freshly-allocated array is returned. A tuple (possible only as a
-        keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-        Values of True indicate to calculate the ufunc at that position, values
-        of False indicate to leave the value in the output alone.
-    **kwargs
-        For other keyword-only arguments, see the
-        :ref:`ufunc docs <ufuncs.kwargs>`.
-""").strip()
+subst = {
+    'PARAMS': textwrap.dedent("""
+        out : ndarray, None, or tuple of ndarray and None, optional
+            A location into which the result is stored. If provided, it must have
+            a shape that the inputs broadcast to. If not provided or `None`,
+            a freshly-allocated array is returned. A tuple (possible only as a
+            keyword argument) must have length equal to the number of outputs.
+        where : array_like, optional
+            Values of True indicate to calculate the ufunc at that position, values
+            of False indicate to leave the value in the output alone.
+        **kwargs
+            For other keyword-only arguments, see the
+            :ref:`ufunc docs <ufuncs.kwargs>`.
+    """).strip(),
+    'OUT_SCALAR_1': "This is a scalar if `x` is a scalar.",
+    'OUT_SCALAR_2': "This is a scalar if both `x1` and `x2` are scalars.",
+}
 
 def add_newdoc(place, name, doc):
     doc = textwrap.dedent(doc).strip()
-    doc = doc.replace('$PARAMS', _params_text)
+
+    if name[0] != '_':
+        if '\nx :' in doc:
+            assert '$OUT_SCALAR_1' in doc, "in {}".format(name)
+        elif '\nx2 :' in doc or '\nx1, x2 :' in doc:
+            assert '$OUT_SCALAR_2' in doc, "in {}".format(name)
+        else:
+            assert False, "Could not detect number of inputs in {}".format(name)
+    for k, v in subst.items():
+        doc = doc.replace('$' + k, v)
 
     docdict['.'.join((place, name))] = doc
 
@@ -57,6 +70,7 @@ add_newdoc('numpy.core.umath', 'absolute',
         An ndarray containing the absolute value of
         each element in `x`.  For complex input, ``a + ib``, the
         absolute value is :math:`\\sqrt{ a^2 + b^2 }`.
+        $OUT_SCALAR_1
 
     Examples
     --------
@@ -97,8 +111,8 @@ add_newdoc('numpy.core.umath', 'add',
     Returns
     -------
     add : ndarray or scalar
-        The sum of `x1` and `x2`, element-wise.  Returns a scalar if
-        both  `x1` and `x2` are scalars.
+        The sum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -134,9 +148,8 @@ add_newdoc('numpy.core.umath', 'arccos',
     -------
     angle : ndarray
         The angle of the ray intersecting the unit circle at the given
-        `x`-coordinate in radians [0, pi]. If `x` is a scalar then a
-        scalar is returned, otherwise an array of the same shape as `x`
-        is returned.
+        `x`-coordinate in radians [0, pi].
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -194,6 +207,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     -------
     arccosh : ndarray
         Array of the same shape as `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -244,8 +258,8 @@ add_newdoc('numpy.core.umath', 'arcsin',
     -------
     angle : ndarray
         The inverse sine of each element in `x`, in radians and in the
-        closed interval ``[-pi/2, pi/2]``.  If `x` is a scalar, a scalar
-        is returned, otherwise an array.
+        closed interval ``[-pi/2, pi/2]``.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -296,8 +310,9 @@ add_newdoc('numpy.core.umath', 'arcsinh',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Array of the same shape as `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -342,10 +357,10 @@ add_newdoc('numpy.core.umath', 'arctan',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Out has the same shape as `x`.  Its real part is in
         ``[-pi/2, pi/2]`` (``arctan(+/-inf)`` returns ``+/-pi/2``).
-        It is a scalar if `x` is a scalar.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -424,6 +439,7 @@ add_newdoc('numpy.core.umath', 'arctan2',
     -------
     angle : ndarray
         Array of angles in radians, in the range ``[-pi, pi]``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -490,8 +506,9 @@ add_newdoc('numpy.core.umath', 'arctanh',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Array of the same shape as `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -543,8 +560,9 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -595,8 +613,9 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -652,8 +671,9 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -703,6 +723,7 @@ add_newdoc('numpy.core.umath', 'ceil',
     -------
     y : ndarray or scalar
         The ceiling of each element in `x`, with `float` dtype.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -734,6 +755,7 @@ add_newdoc('numpy.core.umath', 'trunc',
     -------
     y : ndarray or scalar
         The truncated value of each element in `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -768,6 +790,7 @@ add_newdoc('numpy.core.umath', 'conjugate',
     -------
     y : ndarray
         The complex conjugate of `x`, with same dtype as `y`.
+        $OUT_SCALAR_1
 
     Examples
     --------
@@ -795,6 +818,7 @@ add_newdoc('numpy.core.umath', 'cos',
     -------
     y : ndarray
         The corresponding cosine values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -838,8 +862,9 @@ add_newdoc('numpy.core.umath', 'cosh',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Output array of same shape as `x`.
+        $OUT_SCALAR_1
 
     Examples
     --------
@@ -870,6 +895,7 @@ add_newdoc('numpy.core.umath', 'degrees',
     y : ndarray of floats
         The corresponding degree values; if `out` was supplied this is a
         reference to it.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -905,6 +931,7 @@ add_newdoc('numpy.core.umath', 'rad2deg',
     -------
     y : ndarray
         The corresponding angle in degrees.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -946,8 +973,9 @@ add_newdoc('numpy.core.umath', 'heaviside',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         The output array, element-wise Heaviside step function of `x1`.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -981,8 +1009,8 @@ add_newdoc('numpy.core.umath', 'divide',
     Returns
     -------
     y : ndarray or scalar
-        The quotient ``x1/x2``, element-wise. Returns a scalar if
-        both ``x1`` and ``x2`` are scalars.
+        The quotient ``x1/x2``, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1049,8 +1077,10 @@ add_newdoc('numpy.core.umath', 'equal',
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools, or a single bool if x1 and x2 are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1081,8 +1111,9 @@ add_newdoc('numpy.core.umath', 'exp',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Output array, element-wise exponential of `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1145,8 +1176,9 @@ add_newdoc('numpy.core.umath', 'exp2',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Element-wise 2 to the power `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1177,8 +1209,9 @@ add_newdoc('numpy.core.umath', 'expm1',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Element-wise exponential minus one: ``out = exp(x) - 1``.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1222,6 +1255,7 @@ add_newdoc('numpy.core.umath', 'fabs',
     -------
     y : ndarray or scalar
         The absolute values of `x`, the returned values are always floats.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1253,6 +1287,7 @@ add_newdoc('numpy.core.umath', 'floor',
     -------
     y : ndarray or scalar
         The floor of each element in `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1291,7 +1326,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     -------
     y : ndarray
         y = floor(`x1`/`x2`)
-
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1322,15 +1357,16 @@ add_newdoc('numpy.core.umath', 'fmod',
     Parameters
     ----------
     x1 : array_like
-      Dividend.
+        Dividend.
     x2 : array_like
-      Divisor.
+        Divisor.
     $PARAMS
 
     Returns
     -------
     y : array_like
-      The remainder of the division of `x1` by `x2`.
+        The remainder of the division of `x1` by `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1380,8 +1416,10 @@ add_newdoc('numpy.core.umath', 'greater',
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
 
     See Also
@@ -1417,7 +1455,9 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     Returns
     -------
     out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1449,6 +1489,7 @@ add_newdoc('numpy.core.umath', 'hypot',
     -------
     z : ndarray
         The hypotenuse of the triangle(s).
+        $OUT_SCALAR_2
 
     Examples
     --------
@@ -1489,8 +1530,9 @@ add_newdoc('numpy.core.umath', 'invert',
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         Result.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1562,15 +1604,9 @@ add_newdoc('numpy.core.umath', 'isfinite',
     Returns
     -------
     y : ndarray, bool
-        For scalar input, the result is a new boolean with value True
-        if the input is finite; otherwise the value is False (input is
-        either positive infinity, negative infinity or Not a Number).
-
-        For array input, the result is a boolean array with the same
-        dimensions as the input and the values are True if the
-        corresponding element of the input is finite; otherwise the values
-        are False (element is either positive infinity, negative infinity
-        or Not a Number).
+        True where ``x`` is not positive infinity, negative infinity,
+        or NaN; false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1628,18 +1664,8 @@ add_newdoc('numpy.core.umath', 'isinf',
     Returns
     -------
     y : bool (scalar) or boolean ndarray
-        For scalar input, the result is a new boolean with value True if
-        the input is positive or negative infinity; otherwise the value is
-        False.
-
-        For array input, the result is a boolean array with the same shape
-        as the input and the values are True where the corresponding
-        element of the input is positive or negative infinity; elsewhere
-        the values are False.  If a second argument was supplied the result
-        is stored there.  If the type of that array is a numeric type the
-        result is represented as zeros and ones, if the type is boolean
-        then as False and True, respectively.  The return value `y` is then
-        a reference to that array.
+        True where ``x`` is positive or negative infinity, false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1687,13 +1713,8 @@ add_newdoc('numpy.core.umath', 'isnan',
     Returns
     -------
     y : ndarray or bool
-        For scalar input, the result is a new boolean with value True if
-        the input is NaN; otherwise the value is False.
-
-        For array input, the result is a boolean array of the same
-        dimensions as the input and the values are True if the
-        corresponding element of the input is NaN; otherwise the values are
-        False.
+        True where ``x`` is NaN, false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1728,13 +1749,8 @@ add_newdoc('numpy.core.umath', 'isnat',
     Returns
     -------
     y : ndarray or bool
-        For scalar input, the result is a new boolean with value True if
-        the input is NaT; otherwise the value is False.
-
-        For array input, the result is a boolean array of the same
-        dimensions as the input and the values are True if the
-        corresponding element of the input is NaT; otherwise the values are
-        False.
+        True where ``x`` is NaT, false otherwise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1771,6 +1787,7 @@ add_newdoc('numpy.core.umath', 'left_shift',
     -------
     out : array of integer type
         Return `x1` with bits shifted `x2` times to the left.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1806,8 +1823,10 @@ add_newdoc('numpy.core.umath', 'less',
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1834,8 +1853,10 @@ add_newdoc('numpy.core.umath', 'less_equal',
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools, or a single bool if `x1` and `x2` are scalars.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -1866,6 +1887,7 @@ add_newdoc('numpy.core.umath', 'log',
     -------
     y : ndarray
         The natural logarithm of `x`, element-wise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1914,6 +1936,7 @@ add_newdoc('numpy.core.umath', 'log10',
     y : ndarray
         The logarithm to the base 10 of `x`, element-wise. NaNs are
         returned where x is negative.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -1961,6 +1984,7 @@ add_newdoc('numpy.core.umath', 'log2',
     -------
     y : ndarray
         Base-2 logarithm of `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2015,6 +2039,7 @@ add_newdoc('numpy.core.umath', 'logaddexp',
     -------
     result : ndarray
         Logarithm of ``exp(x1) + exp(x2)``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2056,6 +2081,7 @@ add_newdoc('numpy.core.umath', 'logaddexp2',
     -------
     result : ndarray
         Base-2 logarithm of ``2**x1 + 2**x2``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2093,6 +2119,7 @@ add_newdoc('numpy.core.umath', 'log1p',
     -------
     y : ndarray
         Natural logarithm of `1 + x`, element-wise.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2146,6 +2173,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
     y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         AND operation on corresponding elements of `x1` and `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2180,6 +2208,7 @@ add_newdoc('numpy.core.umath', 'logical_not',
     y : bool or ndarray of bool
         Boolean result with the same shape as `x` of the NOT operation
         on elements of `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2214,6 +2243,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
     y : ndarray or bool
         Boolean result with the same shape as `x1` and `x2` of the logical
         OR operation on elements of `x1` and `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2250,6 +2280,7 @@ add_newdoc('numpy.core.umath', 'logical_xor',
         Boolean result of the logical XOR operation applied to the elements
         of `x1` and `x2`; the shape is determined by whether or not
         broadcasting of one or both arrays was required.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2295,8 +2326,8 @@ add_newdoc('numpy.core.umath', 'maximum',
     Returns
     -------
     y : ndarray or scalar
-        The maximum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The maximum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2354,8 +2385,8 @@ add_newdoc('numpy.core.umath', 'minimum',
     Returns
     -------
     y : ndarray or scalar
-        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The minimum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2413,8 +2444,8 @@ add_newdoc('numpy.core.umath', 'fmax',
     Returns
     -------
     y : ndarray or scalar
-        The maximum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The maximum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2471,8 +2502,8 @@ add_newdoc('numpy.core.umath', 'fmin',
     Returns
     -------
     y : ndarray or scalar
-        The minimum of `x1` and `x2`, element-wise.  Returns scalar if
-        both  `x1` and `x2` are scalars.
+        The minimum of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2525,8 +2556,10 @@ add_newdoc('numpy.core.umath', 'modf',
     -------
     y1 : ndarray
         Fractional part of `x`.
+        $OUT_SCALAR_1
     y2 : ndarray
         Integral part of `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -2560,7 +2593,8 @@ add_newdoc('numpy.core.umath', 'multiply',
     -------
     y : ndarray
         The product of `x1` and `x2`, element-wise. Returns a scalar if
-        both  `x1` and `x2` are scalars.
+        both `x1` and `x2` are scalars.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -2594,6 +2628,7 @@ add_newdoc('numpy.core.umath', 'negative',
     -------
     y : ndarray or scalar
         Returned array or scalar: `y = -x`.
+        $OUT_SCALAR_1
 
     Examples
     --------
@@ -2617,6 +2652,7 @@ add_newdoc('numpy.core.umath', 'positive',
     -------
     y : ndarray or scalar
         Returned array or scalar: `y = +x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -2632,15 +2668,15 @@ add_newdoc('numpy.core.umath', 'not_equal',
     Parameters
     ----------
     x1, x2 : array_like
-      Input arrays.
+        Input arrays.
     $PARAMS
 
     Returns
     -------
-    not_equal : ndarray bool, scalar bool
-      For each element in `x1, x2`, return True if `x1` is not equal
-      to `x2` and False otherwise.
-
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2688,6 +2724,7 @@ add_newdoc('numpy.core.umath', 'power',
     -------
     y : ndarray
         The bases in `x1` raised to the exponents in `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2746,6 +2783,7 @@ add_newdoc('numpy.core.umath', 'float_power',
     -------
     y : ndarray
         The bases in `x1` raised to the exponents in `x2`.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2793,6 +2831,7 @@ add_newdoc('numpy.core.umath', 'radians',
     -------
     y : ndarray
         The corresponding radian values.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2829,6 +2868,7 @@ add_newdoc('numpy.core.umath', 'deg2rad',
     -------
     y : ndarray
         The corresponding angle in radians.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -2864,6 +2904,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
     -------
     y : ndarray
         Return array.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -2914,7 +2955,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     -------
     y : ndarray
         The element-wise remainder of the quotient ``floor_divide(x1, x2)``.
-        Returns a scalar if both  `x1` and `x2` are scalars.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2959,8 +3000,10 @@ add_newdoc('numpy.core.umath', 'divmod',
     -------
     out1 : ndarray
         Element-wise quotient resulting from floor division.
+        $OUT_SCALAR_2
     out2 : ndarray
         Element-wise remainder from floor division.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -2996,6 +3039,7 @@ add_newdoc('numpy.core.umath', 'right_shift',
     -------
     out : ndarray, int
         Return `x1` with bits shifted `x2` times to the right.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -3031,6 +3075,7 @@ add_newdoc('numpy.core.umath', 'rint',
     -------
     out : ndarray or scalar
         Output array is same shape and type as `x`.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3059,13 +3104,14 @@ add_newdoc('numpy.core.umath', 'sign',
     Parameters
     ----------
     x : array_like
-      Input values.
+        Input values.
     $PARAMS
 
     Returns
     -------
     y : ndarray
-      The sign of `x`.
+        The sign of `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3098,6 +3144,7 @@ add_newdoc('numpy.core.umath', 'signbit',
     -------
     result : ndarray of bool
         Output array, or reference to `out` if that was supplied.
+        $OUT_SCALAR_1
 
     Examples
     --------
@@ -3126,8 +3173,9 @@ add_newdoc('numpy.core.umath', 'copysign',
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         The values of `x1` with the sign of `x2`.
+        $OUT_SCALAR_2
 
     Examples
     --------
@@ -3159,8 +3207,9 @@ add_newdoc('numpy.core.umath', 'nextafter',
 
     Returns
     -------
-    out : array_like
+    out : ndarray or scalar
         The next representable values of `x1` in the direction of `x2`.
+        $OUT_SCALAR_2
 
     Examples
     --------
@@ -3184,8 +3233,9 @@ add_newdoc('numpy.core.umath', 'spacing',
 
     Returns
     -------
-    out : array_like
-        The spacing of values of `x1`.
+    out : ndarray or scalar
+        The spacing of values of `x`.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3217,6 +3267,7 @@ add_newdoc('numpy.core.umath', 'sin',
     -------
     y : array_like
         The sine of each element of x.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3277,6 +3328,7 @@ add_newdoc('numpy.core.umath', 'sinh',
     -------
     y : ndarray
         The corresponding hyperbolic sine values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3330,6 +3382,7 @@ add_newdoc('numpy.core.umath', 'sqrt',
         negative reals are calculated).  If all of the elements in `x`
         are real, so is `y`, with negative elements returning ``nan``.
         If `out` was provided, `y` is a reference to it.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3374,6 +3427,7 @@ add_newdoc('numpy.core.umath', 'cbrt',
         An array of the same shape as `x`, containing the cube
         cube-root of each element in `x`.
         If `out` was provided, `y` is a reference to it.
+        $OUT_SCALAR_1
 
 
     Examples
@@ -3395,9 +3449,9 @@ add_newdoc('numpy.core.umath', 'square',
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or scalar
         Element-wise `x*x`, of the same shape and dtype as `x`.
-        Returns scalar if `x` is a scalar.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3425,8 +3479,8 @@ add_newdoc('numpy.core.umath', 'subtract',
     Returns
     -------
     y : ndarray
-        The difference of `x1` and `x2`, element-wise.  Returns a scalar if
-        both  `x1` and `x2` are scalars.
+        The difference of `x1` and `x2`, element-wise.
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -3455,13 +3509,14 @@ add_newdoc('numpy.core.umath', 'tan',
     Parameters
     ----------
     x : array_like
-      Input array.
+        Input array.
     $PARAMS
 
     Returns
     -------
     y : ndarray
-      The corresponding tangent values.
+        The corresponding tangent values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3509,6 +3564,7 @@ add_newdoc('numpy.core.umath', 'tanh',
     -------
     y : ndarray
         The corresponding hyperbolic tangent values.
+        $OUT_SCALAR_1
 
     Notes
     -----
@@ -3561,8 +3617,8 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     Returns
     -------
-    out : ndarray
-        Result is scalar if both inputs are scalar, ndarray otherwise.
+    out : ndarray or scalar
+        $OUT_SCALAR_2
 
     Notes
     -----
@@ -3614,9 +3670,12 @@ add_newdoc('numpy.core.umath', 'frexp',
 
     Returns
     -------
-    (mantissa, exponent) : tuple of ndarrays, (float, int)
-        `mantissa` is a float array with values between -1 and 1.
-        `exponent` is an int array which represents the exponent of 2.
+    mantissa : ndarray
+        Floating values between -1 and 1.
+        $OUT_SCALAR_1
+    exponent : ndarray
+        Integer exponents of 2.
+        $OUT_SCALAR_1
 
     See Also
     --------
@@ -3659,6 +3718,7 @@ add_newdoc('numpy.core.umath', 'ldexp',
     -------
     y : ndarray or scalar
         The result of ``x1 * 2**x2``.
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -3695,6 +3755,7 @@ add_newdoc('numpy.core.umath', 'gcd',
     -------
     y : ndarray or scalar
         The greatest common divisor of the absolute value of the inputs
+        $OUT_SCALAR_2
 
     See Also
     --------
@@ -3724,6 +3785,7 @@ add_newdoc('numpy.core.umath', 'lcm',
     -------
     y : ndarray or scalar
         The lowest common multiple of the absolute value of the inputs
+        $OUT_SCALAR_2
 
     See Also
     --------

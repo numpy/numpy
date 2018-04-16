@@ -30,6 +30,16 @@
  */
 #define PW_BLOCKSIZE    128
 
+
+/*
+ * largest simd vector size in bytes numpy supports
+ * it is currently a extremely large value as it is only used for memory
+ * overlap checks
+ */
+#ifndef NPY_MAX_SIMD_SIZE
+#define NPY_MAX_SIMD_SIZE 1024
+#endif
+
 /*
  * include vectorized functions and dispatchers
  * this file is safe to include also for generic builds
@@ -180,10 +190,12 @@
     do { \
     /* condition allows compiler to optimize the generic macro */ \
     if (IS_BINARY_CONT(tin, tout)) { \
-        if (args[2] == args[0]) { \
+        if (abs_ptrdiff(args[2], args[0]) == 0 && \
+                abs_ptrdiff(args[2], args[1]) >= NPY_MAX_SIMD_SIZE) { \
             BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
-        else if (args[2] == args[1]) { \
+        else if (abs_ptrdiff(args[2], args[1]) == 0 && \
+                     abs_ptrdiff(args[2], args[0]) >= NPY_MAX_SIMD_SIZE) { \
             BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
         else { \
@@ -191,7 +203,7 @@
         } \
     } \
     else if (IS_BINARY_CONT_S1(tin, tout)) { \
-        if (args[1] == args[2]) { \
+        if (abs_ptrdiff(args[2], args[1]) == 0) { \
             BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
         } \
         else { \
@@ -199,7 +211,7 @@
         } \
     } \
     else if (IS_BINARY_CONT_S2(tin, tout)) { \
-        if (args[0] == args[2]) { \
+        if (abs_ptrdiff(args[2], args[0]) == 0) { \
             BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
         } \
         else { \
@@ -2828,10 +2840,14 @@ NPY_NO_EXPORT void
  * #OP = EQ, NE, GT, GE, LT, LE#
  * #identity = NPY_TRUE, NPY_FALSE, -1*4#
  */
+
+/**begin repeat1
+ * #suffix = , _OO_O#
+ * #as_bool = 1, 0#
+ */
 NPY_NO_EXPORT void
-OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
+OBJECT@suffix@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
     BINARY_LOOP {
-        int ret;
         PyObject *ret_obj;
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
@@ -2848,14 +2864,21 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         if (ret_obj == NULL) {
             return;
         }
-        ret = PyObject_IsTrue(ret_obj);
-        Py_DECREF(ret_obj);
-        if (ret == -1) {
-            return;
+#if @as_bool@
+        {
+            int ret = PyObject_IsTrue(ret_obj);
+            Py_DECREF(ret_obj);
+            if (ret == -1) {
+                return;
+            }
+            *((npy_bool *)op1) = (npy_bool)ret;
         }
-        *((npy_bool *)op1) = (npy_bool)ret;
+#else
+        *((PyObject **)op1) = ret_obj;
+#endif
     }
 }
+/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT void

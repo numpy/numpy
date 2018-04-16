@@ -784,7 +784,15 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     See Also
     --------
-    empty, empty_like, zeros, zeros_like, ones, ones_like, full, full_like
+    empty_like : Return an empty array with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    zeros_like : Return an array of zeros with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
+    empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
+    full : Return a new array of given shape filled with value.
+
 
     Notes
     -----
@@ -862,7 +870,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
     See Also
     --------
-    empty_like, zeros, ones
+    empty_like : Return an empty array with shape and type of input.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
+    full : Return a new array of given shape filled with value.
+
 
     Notes
     -----
@@ -920,9 +932,8 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
     --------
     ones_like : Return an array of ones with shape and type of input.
     zeros_like : Return an array of zeros with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
-    ones : Return a new array setting values to one.
-    zeros : Return a new array setting values to zero.
 
     Notes
     -----
@@ -984,10 +995,9 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     See Also
     --------
     zeros_like : Return an array of zeros with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
-    empty_like : Return an empty array with shape and type of input.
-    ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    full : Return a new array of given shape filled with value.
 
     Examples
     --------
@@ -1589,7 +1599,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
     """
     lexsort(keys, axis=-1)
 
-    Perform an indirect sort using a sequence of keys.
+    Perform an indirect stable sort using a sequence of keys.
 
     Given multiple sorting keys, which can be interpreted as columns in a
     spreadsheet, lexsort returns an array of integer indices that describes
@@ -4494,7 +4504,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
