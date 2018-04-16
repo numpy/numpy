@@ -134,13 +134,13 @@ marker(s) is simply ignored::
     [ 9.  0.]]
 
 .. versionadded:: 1.7.0
+
     When ``comments`` is set to ``None``, no lines are treated as comments.
 
 .. note::
 
    There is one notable exception to this behavior: if the optional argument
    ``names=True``, the first commented line will be examined for names.
-
 
 
 Skipping lines and choosing columns
