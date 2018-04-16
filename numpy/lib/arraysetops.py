@@ -323,9 +323,12 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     intersect1d : ndarray
         Sorted 1D array of common and unique elements.
     comm1 : ndarray
-        Indices of common elements in ar1. 
+        The indices of the first occurrences of the common values in `ar1`.
+        Only provided if `return_indices` is True.
     comm2 : ndarray
-        Indices of common elements in ar2.
+        The indices of the first occurrences of the common values in `ar2`. 
+        Only provided if `return_indices` is True.
+
 
     See Also
     --------
@@ -359,11 +362,13 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
             ar1, ind1 = unique(ar1, return_index=True)
             ar2, ind2 = unique(ar2, return_index=True)
         else:
-            ar1 = ar1.ravel()
-            ar2 = ar2.ravel()
-
+            ar1 = unique(ar1)
+            ar2 = unique(ar2)
+    else:
+        ar1 = ar1.ravel()
+        ar2 = ar2.ravel()
+        
     aux = np.concatenate((ar1, ar2))
-
     if return_indices:
         aux_sort_indices = np.argsort(aux, kind='mergesort')
         aux = aux[aux_sort_indices]
