@@ -2529,7 +2529,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Notes
     -----
-    The floating-point exceptions are defined in the IEEE 754 standard [1]:
+    The floating-point exceptions are defined in the IEEE 754 standard [1]_:
 
     - Division by zero: infinite result obtained from finite numbers.
     - Overflow: result too large to be expressed.
