@@ -1,16 +1,21 @@
 r"""
 On *nix, execute in randomgen/src/distributions
 
-export PYTHON_INCLUDE=#path to Python's include folder, usually ${PYTHON_HOME}/include/python${PYTHON_VERSION}m
-export NUMPY_INCLUDE=#path to numpy's include folder, usually ${PYTHON_HOME}/lib/python${PYTHON_VERSION}/site-packages/numpy/core/include
-gcc -shared -o libdistributions.so -fPIC distributions.c -I${NUMPY_INCLUDE} -I${PYTHON_INCLUDE}
+export PYTHON_INCLUDE=#path to Python's include folder, usually \
+    ${PYTHON_HOME}/include/python${PYTHON_VERSION}m
+export NUMPY_INCLUDE=#path to numpy's include folder, usually \
+    ${PYTHON_HOME}/lib/python${PYTHON_VERSION}/site-packages/numpy/core/include
+gcc -shared -o libdistributions.so -fPIC distributions.c -I${NUMPY_INCLUDE} \
+    -I${PYTHON_INCLUDE}
 mv libdistributions.so ../../examples/numba/
 
 On Windows
 
 rem PYTHON_HOME is setup dependent, this is an example
 set PYTHON_HOME=c:\Anaconda
-cl.exe /LD .\distributions.c -DDLL_EXPORT -I%PYTHON_HOME%\lib\site-packages\numpy\core\include -I%PYTHON_HOME%\include %PYTHON_HOME%\libs\python36.lib
+cl.exe /LD .\distributions.c -DDLL_EXPORT \
+    -I%PYTHON_HOME%\lib\site-packages\numpy\core\include \ 
+    -I%PYTHON_HOME%\include %PYTHON_HOME%\libs\python36.lib
 move distributions.dll ../../examples/numba/
 """
 import os

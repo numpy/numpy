@@ -314,7 +314,7 @@ cdef class LegacyGenerator:
 
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(s, bins=100, normed=True)
+        >>> h = plt.hist(s, bins=100, density=True)
 
         For a one-sided t-test, how far out in the distribution does the t
         statistic appear?
@@ -403,7 +403,7 @@ cdef class LegacyGenerator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='mid')
+        >>> count, bins, ignored = plt.hist(s, 100, density=True, align='mid')
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
         >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
@@ -425,7 +425,7 @@ cdef class LegacyGenerator:
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
-        >>> count, bins, ignored = plt.hist(b, 100, normed=True, align='mid')
+        >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
         >>> sigma = np.std(np.log(b))
         >>> mu = np.mean(np.log(b))
 
@@ -501,7 +501,7 @@ cdef class LegacyGenerator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(randomgen.wald(3, 2, 100000), bins=200, normed=True)
+        >>> h = plt.hist(randomgen.wald(3, 2, 100000), bins=200, density=True)
         >>> plt.show()
 
         """
@@ -597,7 +597,7 @@ cdef class LegacyGenerator:
         density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 100, normed=True)
+        >>> count, bins, _ = plt.hist(s, 100, density=True)
         >>> fit = a*m**a / bins**(a+1)
         >>> plt.plot(bins, max(count)*fit/max(fit), linewidth=2, color='r')
         >>> plt.show()
@@ -765,9 +765,9 @@ cdef class LegacyGenerator:
         >>> dfden = 20 # within groups degrees of freedom
         >>> nonc = 3.0
         >>> nc_vals = randomgen.noncentral_f(dfnum, dfden, nonc, 1000000)
-        >>> NF = np.histogram(nc_vals, bins=50, normed=True)
+        >>> NF = np.histogram(nc_vals, bins=50, density=True)
         >>> c_vals = randomgen.f(dfnum, dfden, 1000000)
-        >>> F = np.histogram(c_vals, bins=50, normed=True)
+        >>> F = np.histogram(c_vals, bins=50, density=True)
         >>> plt.plot(F[1][1:], F[0])
         >>> plt.plot(NF[1][1:], NF[0])
         >>> plt.show()
@@ -903,7 +903,7 @@ cdef class LegacyGenerator:
 
         >>> import matplotlib.pyplot as plt
         >>> values = plt.hist(randomgen.noncentral_chisquare(3, 20, 100000),
-        ...                   bins=200, normed=True)
+        ...                   bins=200, density=True)
         >>> plt.show()
 
         Draw values from a noncentral chisquare with very small noncentrality,
@@ -911,9 +911,9 @@ cdef class LegacyGenerator:
 
         >>> plt.figure()
         >>> values = plt.hist(randomgen.noncentral_chisquare(3, .0000001, 100000),
-        ...                   bins=np.arange(0., 25, .1), normed=True)
+        ...                   bins=np.arange(0., 25, .1), density=True)
         >>> values2 = plt.hist(randomgen.chisquare(3, 100000),
-        ...                    bins=np.arange(0., 25, .1), normed=True)
+        ...                    bins=np.arange(0., 25, .1), density=True)
         >>> plt.plot(values[1][0:-1], values[0]-values2[0], 'ob')
         >>> plt.show()
 
@@ -922,7 +922,7 @@ cdef class LegacyGenerator:
 
         >>> plt.figure()
         >>> values = plt.hist(randomgen.noncentral_chisquare(3, 20, 100000),
-        ...                   bins=200, normed=True)
+        ...                   bins=200, density=True)
         >>> plt.show()
 
         """
@@ -1058,7 +1058,7 @@ cdef class LegacyGenerator:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
-        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/ \\
         ...                       (sps.gamma(shape) * scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')
@@ -1136,7 +1136,7 @@ cdef class LegacyGenerator:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
-        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1)*(np.exp(-bins/scale) /
         ...                      (sps.gamma(shape)*scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')
@@ -1362,7 +1362,7 @@ cdef class LegacyGenerator:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
@@ -1390,7 +1390,7 @@ cdef class LegacyGenerator:
         argument is provided.
 
         This is a convenience function.  If you want an interface that takes a
-        tuple as the first argument, use `numpy.random.standard_normal` instead.
+        tuple as the first argument, use `standard_normal` instead.
 
         Parameters
         ----------
@@ -1407,7 +1407,7 @@ cdef class LegacyGenerator:
 
         See Also
         --------
-        random.standard_normal : Similar, but takes a tuple as its argument.
+        standard_normal : Similar, but takes a tuple as its argument.
 
         Notes
         -----
@@ -1770,24 +1770,26 @@ cdef class LegacyGenerator:
         #
         # Also check that cov is positive-semidefinite. If so, the u.T and v
         # matrices should be equal up to roundoff error if cov is
-        # symmetrical and the singular value of the corresponding row is
+        # symmetric and the singular value of the corresponding row is
         # not zero. We continue to use the SVD rather than Cholesky in
-        # order to preserve current outputs. Note that symmetry has not
-        # been checked.
+        # order to preserve current outputs. 
 
         (u, s, v) = svd(cov)
 
         if check_valid != 'ignore':
             if check_valid != 'warn' and check_valid != 'raise':
-                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
+                raise ValueError(
+                    "check_valid must equal 'warn', 'raise', or 'ignore'")
 
             psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
             if not psd:
                 if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
-                                  RuntimeWarning)
+                    warnings.warn(
+                        "covariance is not positive-semidefinite.",
+                        RuntimeWarning)
                 else:
-                    raise ValueError("covariance is not positive-semidefinite.")
+                    raise ValueError(
+                        "covariance is not positive-semidefinite.")
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
@@ -1959,17 +1961,17 @@ cdef class LegacyGenerator:
         >>> powpdf = stats.powerlaw.pdf(xx,5)
 
         >>> plt.figure()
-        >>> plt.hist(rvs, bins=50, normed=True)
+        >>> plt.hist(rvs, bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('randomgen.power(5)')
 
         >>> plt.figure()
-        >>> plt.hist(1./(1.+rvsp), bins=50, normed=True)
+        >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('inverse of 1 + randomgen.pareto(5)')
 
         >>> plt.figure()
-        >>> plt.hist(1./(1.+rvsp), bins=50, normed=True)
+        >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('inverse of stats.pareto(5)')
 

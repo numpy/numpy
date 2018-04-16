@@ -424,10 +424,8 @@ class RNG(object):
         assert_equal(vals, self.rg.standard_normal((10, 10, 10)))
 
         state = self.rg.state
-        vals_inv = self.rg.randn(10, 10, 10)
+        self.rg.randn(10, 10, 10)
         self.rg.state = state
-        vals_zig = self.rg.randn(10, 10, 10)
-
         vals = self.rg.randn(10, 10, 10, dtype=np.float32)
         assert_(vals.shape == (10, 10, 10))
 

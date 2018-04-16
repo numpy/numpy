@@ -10,7 +10,8 @@ extending = Extension("extending",
                       include_dirs=[np.get_include()])
 distributions = Extension("extending_distributions",
                           sources=['extending_distributions.pyx',
-                                   join('..', '..', 'randomgen', 'src', 'distributions', 'distributions.c')],
+                                   join('..', '..', 'randomgen', 'src',
+                                        'distributions', 'distributions.c')],
                           include_dirs=[np.get_include()])
 
 extensions = [extending, distributions]

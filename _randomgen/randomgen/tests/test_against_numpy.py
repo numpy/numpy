@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.random
-import pytest
 from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 
 import randomgen
@@ -9,9 +8,15 @@ from randomgen.legacy import LegacyGenerator
 
 
 def compare_0_input(f1, f2):
-    inputs = [(tuple([]), {}), (tuple([]), {'size': 10}),
+    inputs = [(tuple([]), {}),
+              (tuple([]), {'size': 10}),
               (tuple([]), {'size': (20, 31)}),
               (tuple([]), {'size': (20, 31, 5)})]
+
+    for i in inputs:
+        v1 = f1(*i[0], **i[1])
+        v2 = f2(*i[0], **i[1])
+        assert_allclose(v1, v2)
 
 
 def compare_1_input(f1, f2, is_small=False):
@@ -156,25 +161,25 @@ class TestAgainstNumPy(object):
         assert_array_equal(v1, v2)
 
     def test_standard_normal(self):
-        self._set_common_state()
-        self._is_state_common()
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
         compare_0_input(self.nprs.standard_normal,
-                        self.rg.standard_normal)
-        self._is_state_common()
+                        self.lg.standard_normal)
+        self._is_state_common_legacy()
 
     def test_standard_cauchy(self):
-        self._set_common_state()
-        self._is_state_common()
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
         compare_0_input(self.nprs.standard_cauchy,
-                        self.rg.standard_cauchy)
-        self._is_state_common()
+                        self.lg.standard_cauchy)
+        self._is_state_common_legacy()
 
     def test_standard_exponential(self):
-        self._set_common_state()
-        self._is_state_common()
+        self._set_common_state_legacy()
+        self._is_state_common_legacy()
         compare_0_input(self.nprs.standard_exponential,
-                        self.rg.standard_exponential)
-        self._is_state_common()
+                        self.lg.standard_exponential)
+        self._is_state_common_legacy()
 
     def test_tomaxint(self):
         self._set_common_state()
