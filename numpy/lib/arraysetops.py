@@ -307,7 +307,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     Parameters
     ----------
     ar1, ar2 : array_like
-        Input arrays.
+        Input arrays. Will be flattened if not already 1D.
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
@@ -359,8 +359,8 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
             ar1, ind1 = unique(ar1, return_index=True)
             ar2, ind2 = unique(ar2, return_index=True)
         else:
-            ar1 = unique(ar1)
-            ar2 = unique(ar2)
+            ar1 = ar1.ravel()
+            ar2 = ar2.ravel()
 
     aux = np.concatenate((ar1, ar2))
 
