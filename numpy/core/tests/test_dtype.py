@@ -205,6 +205,14 @@ class TestRecord(object):
         assert_equal(dt3.itemsize, 11)
         assert_equal(dt1, dt2)
         assert_equal(dt2, dt3)
+        # Array of subtype should preserve alignment
+        dt1 = np.dtype([('a', '|i1'),
+                        ('b', [('f0', '<i2'),
+                        ('f1', '<f4')], 2)], align=True)
+        assert_equal(dt1.descr, [('a', '|i1'), ('', '|V3'),
+                                 ('b', [('f0', '<i2'), ('', '|V2'),
+                                 ('f1', '<f4')], (2,))])
+        
 
     def test_union_struct(self):
         # Should be able to create union dtypes
