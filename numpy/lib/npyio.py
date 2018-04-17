@@ -1166,13 +1166,14 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
-            a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-               like `' (%s+%sj)' % (fmt, fmt)`
-            b) a full string specifying every real and imaginary part, e.g.
-               `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
-            c) a list of specifiers, one per column - in this case, the real
-               and imaginary part must have separate specifiers,
-               e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+
+        * a single specifier, `fmt='%.4e'`, resulting in numbers formatted
+          like `' (%s+%sj)' % (fmt, fmt)`
+        * a full string specifying every real and imaginary part, e.g.
+          `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+        * a list of specifiers, one per column - in this case, the real
+          and imaginary part must have separate specifiers,
+          e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
