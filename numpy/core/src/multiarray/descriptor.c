@@ -243,7 +243,7 @@ is_datetime_typestr(char *type, Py_ssize_t len)
 }
 
 static PyArray_Descr *
-_convert_from_tuple(PyObject *obj)
+_convert_from_tuple(PyObject *obj, int align)
 {
     PyArray_Descr *type, *res;
     PyObject *val;
@@ -252,9 +252,16 @@ _convert_from_tuple(PyObject *obj)
     if (PyTuple_GET_SIZE(obj) != 2) {
         return NULL;
     }
-    if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) {
-        return NULL;
+    if (align) {
+        if (!PyArray_DescrAlignConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
     }
+    else {
+        if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
+    }    
     val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
     res = _use_inherit(type, val, &errflag);
@@ -1547,7 +1554,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
-        *at = _convert_from_tuple(obj);
+        *at = _convert_from_tuple(obj, 0);
         if (*at == NULL){
             if (PyErr_Occurred()) {
                 return NPY_FAIL;
@@ -2927,6 +2934,9 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
         tmp = PyUnicode_AsASCIIString(obj);
         *at = _convert_from_commastring(tmp, 1);
         Py_DECREF(tmp);
+    }
+    else if (PyTuple_Check(obj)) {
+        *at = _convert_from_tuple(obj, 1);
     }
     else if (PyList_Check(obj)) {
         *at = _convert_from_array_descr(obj, 1);
