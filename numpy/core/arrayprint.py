@@ -990,7 +990,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         * 'k' : keep trailing zeros, keep decimal point (no trimming)
         * '.' : trim all trailing zeros, leave decimal point
         * '0' : trim all but the zero before the decimal point. Insert the
-           zero if it is missing.
+          zero if it is missing.
         * '-' : trim trailing zeros and any trailing decimal point
     sign : boolean, optional
         Whether to show the sign for positive values.
@@ -1060,11 +1060,11 @@ def format_float_positional(x, precision=None, unique=True,
     trim : one of 'k', '.', '0', '-', optional
         Controls post-processing trimming of trailing digits, as follows:
 
-        'k' : keep trailing zeros, keep decimal point (no trimming)
-        '.' : trim all trailing zeros, leave decimal point
-        '0' : trim all but the zero before the decimal point. Insert the
-            zero if it is missing.
-        '-' : trim trailing zeros and any trailing decimal point
+        * 'k' : keep trailing zeros, keep decimal point (no trimming)
+        * '.' : trim all trailing zeros, leave decimal point
+        * '0' : trim all but the zero before the decimal point. Insert the
+          zero if it is missing.
+        * '-' : trim trailing zeros and any trailing decimal point
     sign : boolean, optional
         Whether to show the sign for positive values.
     pad_left : non-negative integer, optional
