@@ -1720,7 +1720,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     try:
         while not first_values:
             first_line = _decode_line(next(fhd), encoding)
-            if names is True:
+            if (names is True) and (comments is not None):
                 if comments in first_line:
                     first_line = (
                         ''.join(first_line.split(comments)[1:]))
@@ -1734,8 +1734,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Should we take the first values as names ?
     if names is True:
         fval = first_values[0].strip()
-        if fval in comments:
-            del first_values[0]
+        if comments is not None:
+            if fval in comments:
+                del first_values[0]
 
     # Check the columns to use: make sure `usecols` is a list
     if usecols is not None:
