@@ -800,7 +800,7 @@ Copies and Views
 
 When operating and manipulating arrays, their data is sometimes copied
 into a new array and sometimes not. This is often a source of confusion
-for beginners. There are three cases::
+for beginners. There are three cases:
 
 No Copy at All
 --------------

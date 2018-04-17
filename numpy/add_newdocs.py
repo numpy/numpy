@@ -6153,10 +6153,10 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     Performs unbuffered in place operation on operand 'a' for elements
     specified by 'indices'. For addition ufunc, this method is equivalent to
-    `a[indices] += b`, except that results are accumulated for elements that
-    are indexed more than once. For example, `a[[0,0]] += 1` will only
+    ``a[indices] += b``, except that results are accumulated for elements that
+    are indexed more than once. For example, ``a[[0,0]] += 1`` will only
     increment the first element once because of buffering, whereas
-    `add.at(a, [0,0], 1)` will increment the first element twice.
+    ``add.at(a, [0,0], 1)`` will increment the first element twice.
 
     .. versionadded:: 1.8.0
 
@@ -6181,16 +6181,12 @@ add_newdoc('numpy.core', 'ufunc', ('at',
     >>> print(a)
     array([-1, -2, 3, 4])
 
-    ::
-
     Increment items 0 and 1, and increment item 2 twice:
 
     >>> a = np.array([1, 2, 3, 4])
     >>> np.add.at(a, [0, 1, 2, 2], 1)
     >>> print(a)
     array([2, 3, 5, 4])
-
-    ::
 
     Add items 0 and 1 in first array to second array,
     and store results in first array:
@@ -6978,7 +6974,7 @@ add_newdoc('numpy.core.multiarray', 'datetime_as_string',
     arr : array_like of datetime64
         The array of UTC timestamps to format.
     unit : str
-        One of None, 'auto', or a datetime unit.
+        One of None, 'auto', or a :ref:`datetime unit <arrays.dtypes.dateunits>`.
     timezone : {'naive', 'UTC', 'local'} or tzinfo
         Timezone information to use when displaying the datetime. If 'UTC', end
         with a Z to indicate UTC time. If 'local', convert to the local timezone
@@ -7006,13 +7002,13 @@ add_newdoc('numpy.core.multiarray', 'datetime_as_string',
            '2002-10-27T07:30Z'], dtype='<U35')
 
     Note that we picked datetimes that cross a DST boundary. Passing in a
-    ``pytz`` timezone object will print the appropriate offset::
+    ``pytz`` timezone object will print the appropriate offset
 
     >>> np.datetime_as_string(d, timezone=pytz.timezone('US/Eastern'))
     array(['2002-10-27T00:30-0400', '2002-10-27T01:30-0400',
            '2002-10-27T01:30-0500', '2002-10-27T02:30-0500'], dtype='<U39')
 
-    Passing in a unit will change the precision::
+    Passing in a unit will change the precision
 
     >>> np.datetime_as_string(d, unit='h')
     array(['2002-10-27T04', '2002-10-27T05', '2002-10-27T06', '2002-10-27T07'],
@@ -7021,7 +7017,7 @@ add_newdoc('numpy.core.multiarray', 'datetime_as_string',
     array(['2002-10-27T04:30:00', '2002-10-27T05:30:00', '2002-10-27T06:30:00',
            '2002-10-27T07:30:00'], dtype='<U38')
 
-    But can be made to not lose precision::
+    'casting' can be used to specify whether precision can be changed
 
     >>> np.datetime_as_string(d, unit='h', casting='safe')
     TypeError: Cannot create a datetime string as units 'h' from a NumPy
