@@ -502,6 +502,16 @@ class TestEinSum(object):
                                          optimize=optimize),
                                np.full((1, 5), 5))
 
+        # Cases which were failing (gh-10899)
+        x = np.eye(2, dtype=dtype)
+        y = np.ones(2, dtype=dtype)
+        assert_array_equal(np.einsum("ji,i->", x, y, optimize=optimize),
+                           [2.])  # contig_contig_outstride0_two
+        assert_array_equal(np.einsum("i,ij->", y, x, optimize=optimize),
+                           [2.])  # stride0_contig_outstride0_two
+        assert_array_equal(np.einsum("ij,i->", x, y, optimize=optimize),
+                           [2.])  # contig_stride0_outstride0_two
+
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1')
 
