@@ -1317,6 +1317,13 @@ M   33  21.99
             assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test, ctrl)
 
+    def test_names_and_comments_none(self):
+        # Tests case when names is true but comments is None (gh-10780)
+        data = TextIO('col1 col2\n 1 2\n 3 4')
+        test = np.genfromtxt(data, dtype=(int, int), comments=None, names=True)
+        control = np.array([(1, 2), (3, 4)], dtype=[('col1', int), ('col2', int)])
+        assert_equal(test, control)
+
     def test_autonames_and_usecols(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
