@@ -1,7 +1,7 @@
 """Tests for the array padding functions.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,)

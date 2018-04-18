@@ -1,7 +1,7 @@
 """ Modified version of build_scripts that handles building scripts from functions.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from distutils.command.build_scripts import build_scripts as old_build_scripts
 from numpy.distutils import log

@@ -9,7 +9,7 @@ for the ufuncs in numpy.core at the C level when the ufuncs are created
 at compile time.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 import textwrap
 
 docdict = {}

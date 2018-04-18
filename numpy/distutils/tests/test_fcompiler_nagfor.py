@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from numpy.testing import assert_
 import numpy.distutils.fcompiler

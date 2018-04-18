@@ -1,7 +1,7 @@
 """Tests for laguerre module.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import numpy as np
 import numpy.polynomial.laguerre as lag

@@ -436,4 +436,4 @@ converted to an array as a list would be. As an example: ::
  40
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _

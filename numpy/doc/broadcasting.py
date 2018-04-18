@@ -175,4 +175,4 @@ See `this article <http://wiki.scipy.org/EricsBroadcastingDoc>`_
 for illustrations of broadcasting concepts.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _

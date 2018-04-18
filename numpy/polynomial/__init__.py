@@ -13,7 +13,7 @@ implemented as operations on the coefficients.  Additional (module-specific)
 information can be found in the docstring for the module of interest.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from .polynomial import Polynomial
 from .chebyshev import Chebyshev

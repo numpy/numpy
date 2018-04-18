@@ -1,7 +1,7 @@
 """Machine limits for Float32 and Float64 and (long double) if available...
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 __all__ = ['finfo', 'iinfo']
 

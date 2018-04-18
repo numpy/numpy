@@ -13,7 +13,7 @@ $Date: 2005/07/20 11:27:58 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from . import __version__
 from .auxfuncs import (

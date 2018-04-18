@@ -160,4 +160,4 @@ when accessing elements of an array. Granted, it goes against the grain, but
 it is more in line with Python semantics and the natural order of the data.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _

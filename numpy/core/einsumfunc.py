@@ -2,7 +2,7 @@
 Implementation of optimized einsum.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from numpy.compat import basestring
 from numpy.core.multiarray import c_einsum

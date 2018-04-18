@@ -15,7 +15,7 @@ Similarly, `sqrt`, other base logarithms, `power` and trig functions are
 correctly handled.  See their respective docstrings for specific examples.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import numpy.core.numeric as nx
 import numpy.core.numerictypes as nt

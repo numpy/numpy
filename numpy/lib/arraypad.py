@@ -3,7 +3,7 @@ The arraypad module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import numpy as np
 

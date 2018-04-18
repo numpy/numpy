@@ -25,7 +25,7 @@ To do: Optionally return indices analogously to unique for all functions.
 :Author: Robert Cimrman
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import numpy as np
 

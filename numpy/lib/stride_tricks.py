@@ -5,7 +5,7 @@ An explanation of strides can be found in the "ndarray.rst" file in the
 NumPy reference guide.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import numpy as np
 

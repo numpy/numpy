@@ -11,7 +11,7 @@ Requires the following to be on the path:
  * patch
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import sys
 import os

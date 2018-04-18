@@ -80,7 +80,7 @@ Exported symbols include:
      \\-> object_ (not used much)                (kind=O)
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import types as _types
 import sys

@@ -2,7 +2,7 @@
 unixccompiler - can handle very long argument lists for ar.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import os
 

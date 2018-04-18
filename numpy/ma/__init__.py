@@ -39,7 +39,7 @@ may now proceed to calculate the mean of the other values:
 .. moduleauthor:: Jarrod Millman
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from . import core
 from .core import *

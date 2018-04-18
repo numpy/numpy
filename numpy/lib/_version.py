@@ -5,7 +5,7 @@ The LooseVersion and StrictVersion classes that distutils provides don't
 work; they don't recognize anything like alpha/beta/rc/dev versions.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import re
 

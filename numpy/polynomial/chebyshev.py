@@ -86,7 +86,7 @@ References
   (preprint: http://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import numbers
 import warnings

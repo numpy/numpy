@@ -14,7 +14,7 @@ $Date: 2005/07/24 19:01:55 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import pprint
 import sys

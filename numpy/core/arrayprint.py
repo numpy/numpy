@@ -3,7 +3,7 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 __all__ = ["array2string", "array_str", "array_repr", "set_string_function",
            "set_printoptions", "get_printoptions", "printoptions",
