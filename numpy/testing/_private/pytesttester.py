@@ -24,7 +24,7 @@ In practice, tests run from the numpy repo are run in develop mode. That
 includes the standard ``python runtests.py`` invocation.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import sys
 import os

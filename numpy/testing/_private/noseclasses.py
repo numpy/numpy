@@ -4,7 +4,7 @@
 # Because this module imports nose directly, it should not
 # be used except by nosetester.py to avoid a general NumPy
 # dependency on nose.
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import os
 import sys

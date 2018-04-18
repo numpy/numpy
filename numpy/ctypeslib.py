@@ -49,7 +49,7 @@ Then, we're ready to call ``foo_func``:
 >>> _lib.foo_func(out, len(out))                #doctest: +SKIP
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
            'c_intp', 'as_ctypes', 'as_array']

@@ -13,7 +13,7 @@ function name, setup and teardown functions and so on - see
 ``nose.tools`` for more information.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 try:
     # Accessing collections abstract classes from collections

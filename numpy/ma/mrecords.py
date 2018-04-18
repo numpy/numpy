@@ -8,7 +8,7 @@ and the masking of individual fields.
 .. moduleauthor:: Pierre Gerard-Marchant
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 #  We should make sure that no field is called '_mask','mask','_fieldmask',
 #  or whatever restricted keywords.  An idea would be to no bother in the

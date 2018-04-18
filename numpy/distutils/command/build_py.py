@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from distutils.command.build_py import build_py as old_build_py
 from numpy.distutils.misc_util import is_string

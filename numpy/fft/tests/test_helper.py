@@ -3,7 +3,7 @@
 Copied from fftpack.helper by Pearu Peterson, October 2005
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_equal
 from numpy import fft, pi

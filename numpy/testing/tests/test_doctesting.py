@@ -1,7 +1,7 @@
 """ Doctests for NumPy-specific nose/doctest modifications
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 #FIXME: None of these tests is run, because 'check' is not a recognized
 # testing prefix.

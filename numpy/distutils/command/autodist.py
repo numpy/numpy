@@ -1,7 +1,7 @@
 """This module implements additional tests ala autoconf which can be useful.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 
 # We put them here since they could be easily reused outside numpy.distutils

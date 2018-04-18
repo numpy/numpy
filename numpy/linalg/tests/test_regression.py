@@ -1,6 +1,6 @@
 """ Test functions for linalg module
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import warnings
 

@@ -15,7 +15,7 @@ That was not the case when the singleton classes were defined in the numpy
 motivated this module.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 
 __ALL__ = [

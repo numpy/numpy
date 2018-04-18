@@ -5,7 +5,7 @@ Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 from numpy.core import (
     array, asarray, absolute, add, subtract, multiply, divide,

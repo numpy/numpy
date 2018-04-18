@@ -5,7 +5,7 @@ summarize.py
 Show a summary about which NumPy functions are documented and which are not.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import os, glob, re, sys, inspect, optparse
 try:

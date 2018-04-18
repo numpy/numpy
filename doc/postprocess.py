@@ -6,7 +6,7 @@ Post-processes HTML and Latex files output by Sphinx.
 MODE is either 'html' or 'tex'.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import re
 import optparse

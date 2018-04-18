@@ -8,7 +8,7 @@ A collection of utilities for `numpy.ma`.
 :version: $Id: extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 __all__ = [
     'apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',

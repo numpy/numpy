@@ -7,7 +7,7 @@ were accepted before. For instance, '\(' was previously accepted but must now
 be written as '\\(' or r'\('.
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import sys
 

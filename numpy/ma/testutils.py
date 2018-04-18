@@ -5,7 +5,7 @@
 :version: $Id: testutils.py 3529 2007-11-13 08:01:14Z jarrod.millman $
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import operator
 

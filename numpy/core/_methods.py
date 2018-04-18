@@ -3,7 +3,7 @@ Array methods which are called by both the C-code for the method
 and the Python code for the NumPy-namespace function
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import warnings
 

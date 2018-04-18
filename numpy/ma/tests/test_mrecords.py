@@ -5,7 +5,7 @@
 :contact: pierregm_at_uga_dot_edu
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import warnings
 import pickle

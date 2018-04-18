@@ -7,7 +7,7 @@ Adapted from the original test_ma by Pierre Gerard-Marchant
 :version: $Id: test_extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-from __future__ import division, absolute_import, print_function
+from __future__ import division as _, absolute_import as _, print_function as _
 
 import warnings
 import itertools
