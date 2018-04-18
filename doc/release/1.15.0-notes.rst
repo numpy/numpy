@@ -124,10 +124,10 @@ Improvements
 
 ``np.flip`` can operate over multiple axes
 ------------------------------------------
-``np.flip`` now accepts accepts None, or tuples of int, in its ``axis`` argument. If
+``np.flip`` now accepts None, or tuples of int, in its ``axis`` argument. If
 axis is None, it will flip over all the axes.
 
-``histogram`` and ``histogramdd` functions have moved to ``np.lib.histograms``
+``histogram`` and ``histogramdd`` functions have moved to ``np.lib.histograms``
 ------------------------------------------------------------------------------
 These were originally found in ``np.lib.function_base``. They are still
 available under their un-scoped ``np.histogram(dd)`` names, and
@@ -139,7 +139,7 @@ with the new location, and should consider not using ``import *`` in future.
 ``histogram`` will accept NaN values when explicit bins are given
 -----------------------------------------------------------------
 Previously it would fail when trying to compute a finite range for the data.
-Since the range is ignored anyway when the bins are given explcitly, this error
+Since the range is ignored anyway when the bins are given explicitly, this error
 was needless.
 
 Note that calling `histogram` on NaN values continues to raise the
@@ -154,7 +154,7 @@ passed explicitly, and are not yet computed automatically.
 ``histogram`` "auto" estimator handles limited variance better
 ------------------------------------------------------------------------
 No longer does an IQR of 0 result in `n_bins=1`, rather the number of bins
-chosen is related to the data size in this situation
+chosen is related to the data size in this situation.
 
 ``histogramdd`` allows explicit ranges to be given in a subset of axes
 ----------------------------------------------------------------------
@@ -162,7 +162,7 @@ The ``range`` argument of `histogramdd` can now contain ``None`` values to
 indicate that the range for the corresponding axis should be computed from the
 data. Previously, this could not be specified on a per-axis basis.
 
-``np.r_`` works with 0d arrays, and ``np.ma.mr_` works with ``np.ma.masked``
+``np.r_`` works with 0d arrays, and ``np.ma.mr_`` works with ``np.ma.masked``
 ----------------------------------------------------------------------------
 0d arrays passed to the `r_` and `mr_` concatenation helpers are now treated as
 though they are arrays of length 1. Previously, passing these was an error.
@@ -226,7 +226,7 @@ operators to return expressions, to be compared elementwise with
 
 ``sort`` functions accept ``kind='stable'``
 -------------------------------------------
-Up until now, to perform a stable sort on the data, the user must do::
+Up until now, to perform a stable sort on the data, the user must do:
 
     >>> np.sort([5, 2, 6, 2, 1], kind='mergesort')
     [1, 2, 2, 5, 6]
