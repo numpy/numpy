@@ -523,6 +523,15 @@ def test_compressed_roundtrip():
     assert_array_equal(arr, arr1)
 
 
+def test_load_aligned_dtype():
+    dt1 = np.dtype('i1, i4, i1', align=True)
+    arr = np.zeros(1, dt1)
+    npz_file = os.path.join(tempdir, 'aligned.npz')
+    np.savez(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
+
+
 def test_python2_python3_interoperability():
     if sys.version_info[0] >= 3:
         fname = 'win64python2.npy'

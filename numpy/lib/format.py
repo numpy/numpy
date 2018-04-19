@@ -152,6 +152,7 @@ from __future__ import division, absolute_import, print_function
 import numpy
 import sys
 import io
+import re
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, asstr, isfileobj, long, basestring
@@ -496,6 +497,10 @@ def _read_array_header(fp, version):
     #   "descr" : dtype.descr
     header = _filter_header(header)
     try:
+        old_header = header
+        # replace paddings like ('', '|V4')
+        header = re.sub(r"\s*,*\s*\(\s*''\s*,\s*'\|*V\d'\s*\)", '', header)
+        aligned = header != old_header
         d = safe_eval(header)
     except SyntaxError as e:
         msg = "Cannot parse header: %r\nException: %r"
@@ -517,7 +522,7 @@ def _read_array_header(fp, version):
         msg = "fortran_order is not a valid bool: %r"
         raise ValueError(msg % (d['fortran_order'],))
     try:
-        dtype = numpy.dtype(d['descr'])
+        dtype = numpy.dtype(d['descr'], align=aligned)
     except TypeError as e:
         msg = "descr is not a valid dtype descriptor: %r"
         raise ValueError(msg % (d['descr'],))
