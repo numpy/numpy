@@ -42,6 +42,7 @@
  */
 
 #include "distributions.h"
+#include <signal.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -718,12 +719,33 @@ double rk_wald(rk_state *state, double mean, double scale)
     }
 }
 
+static void kb_interrupt_handler(int signum) {
+    /* signal handlers are extremely limited
+     * and attempting to raise a Python
+     * KeyboardInterrupt via the Python
+     * C API here causes a segfault
+     */
+    printf("\nCaught Keyboard Interrupt\n");
+    exit(1);
+}
+
 long rk_zipf(rk_state *state, double a)
 {
     double am1, b;
 
     am1 = a - 1.0;
     b = pow(2.0, am1);
+
+    /* using PyErr_CheckSignals() from
+     * the Python C API would allow
+     * for keyboard interrupt handling
+     * BUT results in a segfault
+     * after Ctrl+C, so an alternative
+     * approach is used here;
+     * Related to Issue #9829
+     */
+    signal(SIGINT, kb_interrupt_handler);
+
     while (1) {
         double T, U, V, X;
 

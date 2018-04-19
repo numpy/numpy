@@ -10,6 +10,10 @@ from numpy.testing import (
 from numpy import random
 import sys
 import warnings
+import signal
+import pytest
+import subprocess
+import os
 
 
 class TestSeed(object):
@@ -1634,3 +1638,23 @@ class TestSingleEltArrayInput(object):
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
+
+def test_zipf_interrupt(tmpdir):
+    # test that zipf can be interrupted
+    # with i.e., KeyboardInterrupt
+    # for pathological inputs
+    # related to Issue #9829
+    p = str(tmpdir.mkdir("sub").join("zipf_pathological.py"))
+
+    with open(p, 'w') as tempfile:
+        tempfile.write("import numpy as np\n")
+        tempfile.write("np.random.zipf(1.0000000000001)\n")
+
+        process = subprocess.Popen(["python", "{script}".format(script=p)])
+        if os.name == 'nt':
+            process.send_signal(signal.CTRL_C_EVENT)
+        else:
+            process.send_signal(signal.SIGINT)
+        process.communicate()
+        ret_code = process.returncode
+        assert ret_code != 0
