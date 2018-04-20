@@ -403,6 +403,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      */
     if (!npyiter_allocate_arrays(iter, flags, op_dtype, subtype, op_flags,
                             op_itflags, op_axes)) {
+        NpyIter_Close(iter);
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -464,12 +465,14 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     /* If buffering is set without delayed allocation */
     if (itflags & NPY_ITFLAG_BUFFER) {
         if (!npyiter_allocate_transfer_functions(iter)) {
+            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return NULL;
         }
         if (!(itflags & NPY_ITFLAG_DELAYBUF)) {
             /* Allocate the buffers */
             if (!npyiter_allocate_buffers(iter, NULL)) {
+                NpyIter_Close(iter);
                 NpyIter_Deallocate(iter);
                 return NULL;
             }
@@ -2716,7 +2719,7 @@ npyiter_allocate_arrays(NpyIter *iter,
          *
          * If any write operand has memory overlap with any read operand,
          * eliminate all overlap by making temporary copies, by enabling
-         * NPY_OP_ITFLAG_FORCECOPY for the write operand to force UPDATEIFCOPY.
+         * NPY_OP_ITFLAG_FORCECOPY for the write operand to force WRITEBACKIFCOPY.
          *
          * Operands with NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE enabled are not
          * considered overlapping if the arrays are exactly the same. In this
@@ -2920,13 +2923,15 @@ npyiter_allocate_arrays(NpyIter *iter,
                     return 0;
                 }
             }
-            /* If the data will be written to, set UPDATEIFCOPY */
+            /* If the data will be written to, set WRITEBACKIFCOPY
+               and require a context manager */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
                 Py_INCREF(op[iop]);
-                if (PyArray_SetUpdateIfCopyBase(temp, op[iop]) < 0) {
+                if (PyArray_SetWritebackIfCopyBase(temp, op[iop]) < 0) {
                     Py_DECREF(temp);
                     return 0;
                 }
+                op_itflags[iop] |= NPY_OP_ITFLAG_HAS_WRITEBACK;
             }
 
             Py_DECREF(op[iop]);

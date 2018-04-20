@@ -123,9 +123,12 @@ def _broadcast_to(array, shape, subok, readonly):
     needs_writeable = not readonly and array.flags.writeable
     extras = ['reduce_ok'] if needs_writeable else []
     op_flag = 'readwrite' if needs_writeable else 'readonly'
-    broadcast = np.nditer(
+    it = np.nditer(
         (array,), flags=['multi_index', 'refs_ok', 'zerosize_ok'] + extras,
-        op_flags=[op_flag], itershape=shape, order='C').itviews[0]
+        op_flags=[op_flag], itershape=shape, order='C')
+    with it:
+        # never really has writebackifcopy semantics
+        broadcast = it.itviews[0]
     result = _maybe_view_as_subclass(array, broadcast)
     if needs_writeable and not result.flags.writeable:
         result.flags.writeable = True

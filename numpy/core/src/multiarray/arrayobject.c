@@ -86,16 +86,6 @@ NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
     int ret;
-#ifdef PYPY_VERSION
-  #ifndef DEPRECATE_UPDATEIFCOPY
-    #define DEPRECATE_UPDATEIFCOPY
-  #endif
-#endif
-
-#ifdef DEPRECATE_UPDATEIFCOPY 
-    /* TODO: enable this once a solution for UPDATEIFCOPY
-     *  and nditer are resolved, also pending the fix for GH7054
-     */
     /* 2017-Nov-10 1.14 */
     if (DEPRECATE("PyArray_SetUpdateIfCopyBase is deprecated, use "
               "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
@@ -104,7 +94,6 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
               "error, PyArray_DiscardWritebackIfCopy may be called instead to "
               "throw away the scratch buffer.") < 0)
         return -1;
-#endif
     ret = PyArray_SetWritebackIfCopyBase(arr, base);
     if (ret >=0) {
         PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
@@ -453,6 +442,27 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 
 /*********************** end C-API functions **********************/
 
+
+/* dealloc must not raise an error, best effort try to write
+   to stderr and clear the error
+*/
+
+static NPY_INLINE void
+WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
+    if (PyErr_WarnEx(warning, msg, 1) < 0) {
+        PyObject * s;
+
+        s = PyUString_FromString("array_dealloc");
+        if (s) {
+            PyErr_WriteUnraisable(s);
+            Py_DECREF(s);
+        }
+        else {
+            PyErr_WriteUnraisable(Py_None);
+        }
+    }
+};
+
 /* array object functions */
 
 static void
@@ -469,17 +479,15 @@ array_dealloc(PyArrayObject *self)
         int retval;
         if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
         {
-            char * msg = "WRITEBACKIFCOPY requires a call to "
-                "PyArray_ResolveWritebackIfCopy or "
-                "PyArray_DiscardWritebackIfCopy before array_dealloc is "
-                "called.";
-            /* 2017-Nov-10 1.14 */
-            if (DEPRECATE(msg) < 0) {
-                /* dealloc cannot raise an error, best effort try to write
-                   to stderr and clear the error
-                */
-                PyErr_WriteUnraisable((PyObject *)&PyArray_Type);
-            }
+            char const * msg = "WRITEBACKIFCOPY detected in array_dealloc. "
+                " Required call to PyArray_ResolveWritebackIfCopy or "
+                "PyArray_DiscardWritebackIfCopy is missing. This could also "
+                "be caused by using a nditer without a context manager";
+            Py_INCREF(self); /* hold on to self in next call  since if
+                              * refcount == 0 it will recurse back into
+                              *array_dealloc
+                              */
+            WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
             if (retval < 0)
             {
@@ -489,10 +497,15 @@ array_dealloc(PyArrayObject *self)
         }
         if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
             /* DEPRECATED, remove once the flag is removed */
+            char const * msg = "ERROR: UPDATEIFCOPY detected in array_dealloc. "
+                " Required call to PyArray_ResolveWritebackIfCopy or "
+                "PyArray_DiscardWritebackIfCopy is missing";
             Py_INCREF(self); /* hold on to self in next call  since if
-                              * refcount == 0 it will recurse back into 
+                              * refcount == 0 it will recurse back into
                               *array_dealloc
                               */
+            /* 2017-Nov-10 1.14 */
+            WARN_IN_DEALLOC(PyExc_DeprecationWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
             if (retval < 0)
             {
@@ -501,7 +514,7 @@ array_dealloc(PyArrayObject *self)
             }
         }
         /*
-         * In any case base is pointing to something that we need
+         * If fa->base is non-NULL, it is something
          * to DECREF -- either a view or a buffer object
          */
         Py_XDECREF(fa->base);
