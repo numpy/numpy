@@ -2330,8 +2330,7 @@ class TestIterNested(object):
         assert_equal(vals, [[0, 1, 2], [3, 4, 5]])
         vals = None
 
-        # writebackifcopy
-        # XXX ugly - is there a better way? np.nested_iter returns a tuple
+        # writebackifcopy - using conext manager
         a = arange(6, dtype='f4').reshape(2, 3)
         i, j = np.nested_iters(a, [[0], [1]],
                             op_flags=['readwrite', 'updateifcopy'],
@@ -2344,6 +2343,22 @@ class TestIterNested(object):
                     y[...] += 1
             assert_equal(a, [[0, 1, 2], [3, 4, 5]])
         assert_equal(a, [[1, 2, 3], [4, 5, 6]])
+
+        # writebackifcopy - using close()
+        a = arange(6, dtype='f4').reshape(2, 3)
+        i, j = np.nested_iters(a, [[0], [1]],
+                            op_flags=['readwrite', 'updateifcopy'],
+                            casting='same_kind',
+                            op_dtypes='f8')
+        assert_equal(j[0].dtype, np.dtype('f8'))
+        for x in i:
+            for y in j:
+                y[...] += 1
+        assert_equal(a, [[0, 1, 2], [3, 4, 5]])
+        i.close()
+        j.close()
+        assert_equal(a, [[1, 2, 3], [4, 5, 6]])
+
 
     def test_dtype_buffered(self):
         # Test nested iteration with buffering to change dtype
@@ -2833,7 +2848,17 @@ def test_writebacks():
     assert_raises(ValueError, enter)
 
 def test_close():
-    def iter_add_py(x, y, out=None):
+    ''' using a context amanger and using nditer.close are equivalent
+    '''
+    def add_close(x, y, out=None):
+        addop = np.add
+        it = np.nditer([x, y, out], [],
+                    [['readonly'], ['readonly'], ['writeonly','allocate']])
+        for (a, b, c) in it:
+            addop(a, b, out=c)
+        it.close()
+        return it.operands[2]
+    def add_context(x, y, out=None):
         addop = np.add
         it = np.nditer([x, y, out], [],
                     [['readonly'], ['readonly'], ['writeonly','allocate']])
@@ -2841,7 +2866,10 @@ def test_close():
             for (a, b, c) in it:
                 addop(a, b, out=c)
             return it.operands[2]
-    z = iter_add_py(range(5), range(5))
+    z = add_close(range(5), range(5))
+    assert_equal(z, range(0, 10, 2))
+    z = add_context(range(5), range(5))
+    assert_equal(z, range(0, 10, 2))
 
 def test_warn_noclose():
     a = np.arange(6, dtype='f4')

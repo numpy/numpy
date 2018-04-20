@@ -553,7 +553,7 @@ add_newdoc('numpy.core', 'nditer', ('close',
     """
     close()
 
-    Resolve all writeback semantics in operands.
+    Resolve all writeback semantics in writeable operands.
 
     """))
 
