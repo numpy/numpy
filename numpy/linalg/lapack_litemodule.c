@@ -331,10 +331,10 @@ static struct PyModuleDef moduledef = {
 
 /* Initialization function for the module */
 #if PY_MAJOR_VERSION >= 3
-#define RETVAL m
+#define RETVAL(x) x
 PyMODINIT_FUNC PyInit_lapack_lite(void)
 #else
-#define RETVAL
+#define RETVAL(x)
 PyMODINIT_FUNC
 initlapack_lite(void)
 #endif
@@ -347,12 +347,12 @@ initlapack_lite(void)
                        "", (PyObject*)NULL,PYTHON_API_VERSION);
 #endif
     if (m == NULL) {
-        return RETVAL;
+        return RETVAL(NULL);
     }
     import_array();
     d = PyModule_GetDict(m);
     LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
 
-    return RETVAL;
+    return RETVAL(m);
 }
