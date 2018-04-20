@@ -2421,19 +2421,26 @@ npyiter_enter(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
+npyiter_close(NewNpyArrayIterObject *self)
 {
-    int retval;
+    NpyIter *iter = self->iter;
+    int ret;
     if (self->iter == NULL) {
         Py_RETURN_NONE;
     }
-    self->managed = CONTEXT_EXITED;
-    /* even if called via exception handling, writeback any data */
-    retval = NpyIter_Close(self->iter);
-    if (retval < 0) {
+    ret = NpyIter_Close(iter);
+    if (ret < 0) {
         return NULL;
     }
     Py_RETURN_NONE;
+}
+
+static PyObject *
+npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
+{
+    self->managed = CONTEXT_EXITED;
+    /* even if called via exception handling, writeback any data */
+    return npyiter_close(self);
 }
 
 static PyMethodDef npyiter_methods[] = {
@@ -2464,6 +2471,8 @@ static PyMethodDef npyiter_methods[] = {
     {"__enter__", (PyCFunction)npyiter_enter,
          METH_NOARGS,  NULL},
     {"__exit__",  (PyCFunction)npyiter_exit,
+         METH_VARARGS, NULL},
+    {"close",  (PyCFunction)npyiter_close,
          METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL},
 };

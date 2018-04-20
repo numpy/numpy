@@ -85,9 +85,12 @@ By default, the :class:`nditer` treats the input array as a read-only
 object. To modify the array elements, you must specify either read-write
 or write-only mode. This is controlled with per-operand flags. The
 operands may be created as views into the original data with the 
-`WRITEBACKIFCOPY` flag. In this case the iterator must be used as a context
-manager, and the temporary data will be written back to the original array
-when the `__exit__` function is called.
+`WRITEBACKIFCOPY` flag. In this case the iterator must either
+
+- be used as a context manager, and the temporary data will be written back
+  to the original array when the `__exit__` function is called.
+- have a call to the iterator's `close` function to ensure the modified data
+  is written back to the original array.
 
 Regular assignment in Python simply changes a reference in the local or
 global variable dictionary instead of modifying an existing variable in
