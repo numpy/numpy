@@ -3817,7 +3817,7 @@ cdef class RandomState:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` trials and `p` probability of success where `n` is an
+        parameters, `n` successes and `p` probability of success where `n` is an
         integer > 0 and `p` is in the interval [0, 1].
 
         Parameters
@@ -3837,21 +3837,19 @@ cdef class RandomState:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized negative binomial distribution,
-            where each sample is equal to N, the number of trials it took to
-            achieve n - 1 successes, N - (n - 1) failures, and a success on the,
-            (N + n)th trial.
+            where each sample is equal to N, the number of failures that
+            occurred before a total of n successes was reached.
 
         Notes
         -----
         The probability density for the negative binomial distribution is
 
-        .. math:: P(N;n,p) = \\binom{N+n-1}{n-1}p^{n}(1-p)^{N},
+        .. math:: P(N;n,p) = \\binom{N+n-1}{N}p^{n}(1-p)^{N},
 
-        where :math:`n-1` is the number of successes, :math:`p` is the
-        probability of success, and :math:`N+n-1` is the number of trials.
-        The negative binomial distribution gives the probability of n-1
-        successes and N failures in N+n-1 trials, and success on the (N+n)th
-        trial.
+        where :math:`n` is the number of successes, :math:`p` is the
+        probability of success, and :math:`N+n` is the number of trials.
+        The negative binomial distribution gives the probability of N
+        failures given n successes, with a success on the last trial.
 
         If one throws a die repeatedly until the third time a "1" appears,
         then the probability distribution of the number of non-"1"s that
