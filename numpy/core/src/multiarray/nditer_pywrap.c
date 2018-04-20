@@ -20,12 +20,17 @@
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
+enum NPYITER_CONTEXT {CONTEXT_NOTENTERED, CONTEXT_INSIDE, CONTEXT_EXITED};
+
 struct NewNpyArrayIterObject_tag {
     PyObject_HEAD
     /* The iterator */
     NpyIter *iter;
     /* Flag indicating iteration started/stopped */
     char started, finished;
+    /* iter must used as a context manager if writebackifcopy semantics used */
+    char needs_context_manager;
+    char managed;
     /* Child to update for nested iteration */
     NewNpyArrayIterObject *nested_child;
     /* Cached values from the iterator */
@@ -85,6 +90,8 @@ npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     if (self != NULL) {
         self->iter = NULL;
         self->nested_child = NULL;
+        self->managed = CONTEXT_NOTENTERED;
+        self->needs_context_manager = 0;
     }
 
     return (PyObject *)self;
@@ -704,7 +711,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                     PyErr_SetString(PyExc_TypeError,
                             "Iterator operand is flagged as writeable, "
                             "but is an object which cannot be written "
-                            "back to via UPDATEIFCOPY");
+                            "back to via WRITEBACKIFCOPY");
                 }
                 for (iop = 0; iop < nop; ++iop) {
                     Py_DECREF(op[iop]);
@@ -818,6 +825,13 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
     if (self->iter == NULL) {
         goto fail;
+    }
+
+    for (iop = 0; iop < nop; ++iop) {
+        if (op_flags[iop] & NPY_ITER_READWRITE) {
+            self->needs_context_manager = 1;
+        }
+
     }
 
     /* Cache some values for the member functions to use */
@@ -1414,6 +1428,12 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
         ret = npyiter_seq_item(self, 0);
     }
     else {
+        if (self->managed == CONTEXT_EXITED) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator is closed");
+            return NULL;
+        }
+
         ret = PyTuple_New(nop);
         if (ret == NULL) {
             return NULL;
@@ -1443,6 +1463,11 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
+        return NULL;
+    }
 
     nop = NpyIter_GetNOp(self->iter);
     operands = self->operands;
@@ -1470,6 +1495,12 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is invalid");
+        return NULL;
+    }
+
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
         return NULL;
     }
 
@@ -1890,6 +1921,12 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
+        return NULL;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
@@ -1986,6 +2023,12 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         return NULL;
     }
 
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
+        return NULL;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
 
     /* Negative indexing */
@@ -2070,6 +2113,12 @@ npyiter_seq_slice(NewNpyArrayIterObject *self,
         return NULL;
     }
 
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
+        return NULL;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -2127,6 +2176,12 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         PyErr_SetString(PyExc_ValueError,
                 "Iterator construction used delayed buffer allocation, "
                 "and no reset has been done yet");
+        return -1;
+    }
+
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
         return -1;
     }
 
@@ -2204,6 +2259,12 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
         return -1;
     }
 
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
+        return -1;
+    }
+
     nop = NpyIter_GetNOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -2252,6 +2313,12 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
         PyErr_SetString(PyExc_ValueError,
                 "Iterator construction used delayed buffer allocation, "
                 "and no reset has been done yet");
+        return NULL;
+    }
+
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
         return NULL;
     }
 
@@ -2304,6 +2371,12 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
         return -1;
     }
 
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator is closed");
+        return -1;
+    }
+
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
@@ -2331,6 +2404,38 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     return -1;
 }
 
+static PyObject *
+npyiter_enter(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "operation on non-initialized iterator");
+        return NULL;
+    }
+    if (self->managed == CONTEXT_EXITED) {
+        PyErr_SetString(PyExc_ValueError, "cannot reuse iterator after exit");
+        return NULL;
+    }
+    self->managed = CONTEXT_INSIDE;
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+static PyObject *
+npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
+{
+    int retval;
+    if (self->iter == NULL) {
+        Py_RETURN_NONE;
+    }
+    self->managed = CONTEXT_EXITED;
+    /* even if called via exception handling, writeback any data */
+    retval = NpyIter_Close(self->iter);
+    if (retval < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef npyiter_methods[] = {
     {"reset",
         (PyCFunction)npyiter_reset,
@@ -2356,6 +2461,10 @@ static PyMethodDef npyiter_methods[] = {
     {"debug_print",
         (PyCFunction)npyiter_debug_print,
         METH_NOARGS, NULL},
+    {"__enter__", (PyCFunction)npyiter_enter,
+         METH_NOARGS,  NULL},
+    {"__exit__",  (PyCFunction)npyiter_exit,
+         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 

@@ -1014,7 +1014,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
     else {
         fa->flags = (flags & ~NPY_ARRAY_WRITEBACKIFCOPY);
-        fa->flags = (fa->flags & ~NPY_ARRAY_UPDATEIFCOPY);
+        fa->flags &= ~NPY_ARRAY_UPDATEIFCOPY;
     }
     fa->descr = descr;
     fa->base = (PyObject *)NULL;

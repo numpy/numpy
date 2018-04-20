@@ -1391,6 +1391,47 @@ NpyIter_GetInnerLoopSizePtr(NpyIter *iter)
 }
 
 /*NUMPY_API
+ * Resolves all writebackifcopy scratch buffers, not safe to use iterator
+ * operands after this call, in this iterator as well as any copies.
+ * Returns 0 on success, -1 on failure
+ */
+NPY_NO_EXPORT int
+NpyIter_Close(NpyIter *iter)
+{
+    int ret=0, iop, nop;
+    PyArrayObject ** operands;
+    npyiter_opitflags *op_itflags;
+    if (iter == NULL) {
+        return 0;
+    }
+    nop = NIT_NOP(iter);
+    operands = NIT_OPERANDS(iter);
+    op_itflags = NIT_OPITFLAGS(iter);
+    /* If NPY_OP_ITFLAG_HAS_WRITEBACK flag set on operand, resolve it.
+     * If the resolution fails (should never happen), continue from the
+     * next operand and discard the writeback scratch buffers, and return
+     * failure status
+     */
+    for (iop=0; iop<nop; iop++) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
+            op_itflags[iop] &= ~NPY_OP_ITFLAG_HAS_WRITEBACK;
+            if (PyArray_ResolveWritebackIfCopy(operands[iop]) < 0) {
+                ret = -1;
+                iop++;
+                break;
+            }
+        }
+    }
+    for (; iop<nop; iop++) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
+            op_itflags[iop] &= ~NPY_OP_ITFLAG_HAS_WRITEBACK;
+            PyArray_DiscardWritebackIfCopy(operands[iop]);
+        }
+    }
+    return ret;
+}
+
+/*NUMPY_API
  * For debugging
  */
 NPY_NO_EXPORT void
@@ -2799,5 +2840,4 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     }
     return count * (*reduce_innersize);
 }
-
 #undef NPY_ITERATOR_IMPLEMENTATION_CODE

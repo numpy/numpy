@@ -7258,6 +7258,13 @@ class TestWritebackIfCopy(object):
         arr_wb[:] = 100
         assert_equal(arr, -100)
 
+    def test_dealloc_warning(self):
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            arr = np.arange(9).reshape(3, 3)
+            v = arr.T
+            _multiarray_tests.npy_abuse_writebackifcopy(v)
+            assert len(sup.log) == 1
 
 class TestArange(object):
     def test_infinite(self):

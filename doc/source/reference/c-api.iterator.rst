@@ -110,6 +110,7 @@ number of non-zero elements in an array.
             /* Increment the iterator to the next inner loop */
         } while(iternext(iter));
 
+        NpyIter_Close(iter) /* best practice, not strictly required in this case */
         NpyIter_Deallocate(iter);
 
         return nonzero_count;
@@ -194,6 +195,7 @@ is used to control the memory layout of the allocated result, typically
         ret = NpyIter_GetOperandArray(iter)[1];
         Py_INCREF(ret);
 
+        NpyIter_Close(iter);
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_DECREF(ret);
             return NULL;
@@ -490,7 +492,10 @@ Construction and Destruction
 
             Indicate how the user of the iterator will read or write
             to ``op[i]``.  Exactly one of these flags must be specified
-            per operand.
+            per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
+            for a user-provided operand may trigger `WRITEBACKIFCOPY``
+            semantics. The data will be written back to the original array
+            when ``NpyIter_Close`` is called.
 
         .. c:var:: NPY_ITER_COPY
 
@@ -502,12 +507,12 @@ Construction and Destruction
 
             Triggers :c:data:`NPY_ITER_COPY`, and when an array operand
             is flagged for writing and is copied, causes the data
-            in a copy to be copied back to ``op[i]`` when the iterator
-            is destroyed.
+            in a copy to be copied back to ``op[i]`` when ``NpyIter_Close`` is
+            called.
 
             If the operand is flagged as write-only and a copy is needed,
             an uninitialized temporary array will be created and then copied
-            to back to ``op[i]`` on destruction, instead of doing
+            to back to ``op[i]`` on calling ``NpyIter_Close``, instead of doing
             the unnecessary copy operation.
 
         .. c:var:: NPY_ITER_NBO
@@ -754,10 +759,21 @@ Construction and Destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
+.. c:function:: int NpyIter_Close(NpyIter* iter)
+
+    Resolves any needed writeback resolution. Must be called before
+    ``NpyIter_Deallocate``. After this call it is not safe to use the operands.
+
+    Returns ``0`` or ``-1`` if unsuccessful.
+
 .. c:function:: int NpyIter_Deallocate(NpyIter* iter)
 
-    Deallocates the iterator object.  This additionally frees any
-    copies made, triggering UPDATEIFCOPY behavior where necessary.
+    Deallocates the iterator object.  
+
+    `NpyIter_Close` should be called before this. If not, and if writeback is
+    needed, it will be performed at this point in order to maintain
+    backward-compatibility with older code, and a deprecation warning will be
+    emmitted. Old code shuold be updated to call `NpyIter_Close` beforehand.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 

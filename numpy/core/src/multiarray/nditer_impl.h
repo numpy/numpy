@@ -124,6 +124,8 @@
 #define NPY_OP_ITFLAG_USINGBUFFER  0x0100
 /* The operand must be copied (with UPDATEIFCOPY if also ITFLAG_WRITE) */
 #define NPY_OP_ITFLAG_FORCECOPY    0x0200
+/* The operand has temporary data, write it back at dealloc */
+#define NPY_OP_ITFLAG_HAS_WRITEBACK 0x0400
 
 /*
  * The data layout of the iterator is fully specified by
