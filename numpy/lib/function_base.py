@@ -3424,17 +3424,19 @@ def percentile(a, q, axis=None, out=None,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
+
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
         This optional parameter specifies the interpolation method to
         use when the desired quantile lies between two data points
         ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+
+        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * 'lower': ``i``.
+        * 'higher': ``j``.
+        * 'nearest': ``i`` or ``j``, whichever is nearest.
+        * 'midpoint': ``(i + j) / 2``.
 
         .. versionadded:: 1.9.0
     keepdims : bool, optional
@@ -3503,18 +3505,19 @@ def percentile(a, q, axis=None, out=None,
 
     The different types of interpolation can be visualized graphically:
 
-    ..plot::
+    .. plot::
+
         import matplotlib.pyplot as plt
 
         a = np.arange(4)
         p = np.linspace(0, 100, 6001)
         ax = plt.gca()
         lines = [
-            ('linear', None)
-            ('higher', '--')
-            ('lower', '--')
-            ('nearest', '-.')
-            ('midpoint', '-.')
+            ('linear', None),
+            ('higher', '--'),
+            ('lower', '--'),
+            ('nearest', '-.'),
+            ('midpoint', '-.'),
         ]
         for interpolation, style in lines:
             ax.plot(
