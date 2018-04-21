@@ -392,10 +392,11 @@ add_newdoc('numpy.core', 'nditer',
         ...        [['writeonly', 'updateifcopy']],
         ...        casting='unsafe',
         ...        op_dtypes=[np.dtype('f4')]) as i:
-        ...    i.operands[0][:] = [-1, -2, -3]
+        ...    x = i.operands[0]
+        ...    x[:] = [-1, -2, -3]
         ...    # a still unchanged here
-        >>> a
-        array([-1, -2, -3])
+        >>> a, x
+        array([-1, -2, -3]), array([-1, -2, -3])
 
     It is important to note that once the iterator is exited, dangling
     references (like `x` in the example) may or may not share data with

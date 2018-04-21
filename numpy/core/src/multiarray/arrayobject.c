@@ -497,7 +497,7 @@ array_dealloc(PyArrayObject *self)
         }
         if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
             /* DEPRECATED, remove once the flag is removed */
-            char const * msg = "ERROR: UPDATEIFCOPY detected in array_dealloc. "
+            char const * msg = "UPDATEIFCOPY detected in array_dealloc. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing";
             Py_INCREF(self); /* hold on to self in next call  since if
