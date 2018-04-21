@@ -42,10 +42,6 @@ Our main means of communication are:
 
 More information about the development of NumPy can be found at our `Developer Zone <https://scipy.scipy.org/scipylib/dev-zone.html>`__.
 
-If you want to fix issues in this documentation, the easiest way
-is to participate in `our ongoing documentation marathon
-<http://scipy.org/Developer_Zone/DocMarathon2008>`__.
-
 
 About this documentation
 ========================
