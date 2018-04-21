@@ -3306,7 +3306,7 @@ static void
                     for (i = 0; i < nrhs; i++) {
                         @ftyp@ *vector = components + i*m;
                         /* Numpy and fortran floating types are the same size,
-                         * so this case is safe */
+                         * so this cast is safe */
                         @basetyp@ abs2 = @TYPE@_abs2((@typ@ *)vector, excess);
                         memcpy(
                             resid + i*r_out.column_strides,
