@@ -385,10 +385,11 @@ add_newdoc('numpy.core', 'nditer',
         array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
     If operand flags `"writeonly"` or `"readwrite"` are used the operands may
-    be views into the original data with the WRITEBACKIFCOPY flag. In this case
-    nditer must be used as a context manager. The temporary
-    data will be written back to the original data when the `` __exit__``
-    function is called but not before::
+    be views into the original data with the `WRITEBACKIFCOPY` flag. In this case
+    nditer must be used as a context manager or the nditer.close
+    method must be called before using the result. The temporary
+    data will be written back to the original data when the `__exit__`
+    function is called but not before:
 
         >>> a = np.arange(6, dtype='i4')[::-2]
         >>> with nditer(a, [],
@@ -405,7 +406,7 @@ add_newdoc('numpy.core', 'nditer',
     references (like `x` in the example) may or may not share data with
     the original data `a`. If writeback semantics were active, i.e. if
     `x.base.flags.writebackifcopy` is `True`, then exiting the iterator
-     will sever the connection between `x` and `a`, writing to `x` will
+    will sever the connection between `x` and `a`, writing to `x` will
     no longer write to `a`. If writeback semantics are not active, then
     `x.data` will still point at some part of `a.data`, and writing to
     one will affect the other.
@@ -565,6 +566,11 @@ add_newdoc('numpy.core', 'nditer', ('close',
     close()
 
     Resolve all writeback semantics in writeable operands.
+
+    See Also
+    --------
+
+    :ref:`nditer-context-manager`
 
     """))
 
