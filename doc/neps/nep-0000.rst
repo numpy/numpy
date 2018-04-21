@@ -206,7 +206,7 @@ References and Footnotes
 .. _issue tracker: https://github.com/numpy/numpy/issues
 
 .. _NumPy Steering Council:
-   https://docs.scipy.org/doc/numpy-dev/dev/governance/governance.html
+   https://docs.scipy.org/doc/numpy/dev/governance/governance.html
 
 .. _`GitHub pull request`: https://github.com/numpy/numpy/pulls
 
