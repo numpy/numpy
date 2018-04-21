@@ -29,7 +29,6 @@ struct NewNpyArrayIterObject_tag {
     /* Flag indicating iteration started/stopped */
     char started, finished;
     /* iter must used as a context manager if writebackifcopy semantics used */
-    char needs_context_manager;
     char managed;
     /* Child to update for nested iteration */
     NewNpyArrayIterObject *nested_child;
@@ -91,7 +90,6 @@ npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         self->iter = NULL;
         self->nested_child = NULL;
         self->managed = CONTEXT_NOTENTERED;
-        self->needs_context_manager = 0;
     }
 
     return (PyObject *)self;
@@ -825,13 +823,6 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
     if (self->iter == NULL) {
         goto fail;
-    }
-
-    for (iop = 0; iop < nop; ++iop) {
-        if (op_flags[iop] & NPY_ITER_READWRITE) {
-            self->needs_context_manager = 1;
-        }
-
     }
 
     /* Cache some values for the member functions to use */
