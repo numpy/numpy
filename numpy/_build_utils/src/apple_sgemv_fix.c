@@ -25,6 +25,9 @@
 #include "Python.h"
 #include "numpy/arrayobject.h"
 
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
 #include <string.h>
 #include <dlfcn.h>
 #include <stdlib.h>
@@ -66,12 +69,23 @@ static int AVX_and_10_9 = 0;
 /* Dynamic check for AVX support
  * __builtin_cpu_supports("avx") is available in gcc 4.8,
  * but clang and icc do not currently support it. */
-#define cpu_supports_avx()\
-(system("sysctl -n machdep.cpu.features | grep -q AVX") == 0)
+int cpu_supports_avx(void)
+{
+    int enabled;
+    npy_uintp length = sizeof(enabled);
+    int r = sysctlbyname("hw.optional.avx1_0", &enabled, &length, NULL, 0);
+    return r == 0 && enabled != 0;
+}
 
 /* Check if we are using MacOS X version 10.9 */
-#define using_mavericks()\
-(system("sw_vers -productVersion | grep -q 10\\.9\\.") == 0)
+int using_mavericks(void)
+{
+    char osrelease[256];
+    npy_uintp length = sizeof(osrelease);
+    int r = sysctlbyname("kern.osrelease", osrelease, &length, NULL, 0);
+    static const char* MAVERICKS_VERSION_PREFIX = "13.";
+    return r == 0 && strncmp(MAVERICKS_VERSION_PREFIX, osrelease, strlen(MAVERICKS_VERSION_PREFIX)) == 0;
+}
 
 __attribute__((destructor))
 static void unloadlib(void)
