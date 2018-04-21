@@ -52,6 +52,17 @@ Deprecations
   In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
   or the built-in Python `sum` instead.
 
+* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or 
+  ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
+  flag set, before the array is deallocated. A deprecation warning will be
+  emitted if those calls are not used when needed.
+
+* Users of ``nditer`` should use the nditer object as a context manager
+  anytime one of the iterator operands is writeable, so that numpy can
+  manage writeback semantics, or should call ``it.close()``. A
+ `RuntimeWarning` will be emitted otherwise in these cases. Users of the C-API
+  should call ``NpyIter_Close`` before ``NpyIter_Dealloc``.
+
 
 Future Changes
 ==============
@@ -59,6 +70,19 @@ Future Changes
 
 Compatibility notes
 ===================
+
+Under certain conditions, nditer must be used in a context manager
+------------------------------------------------------------------
+When using an nditer with the ``"writeonly"`` or ``"readwrite"`` flags, there
+are some circumstances where nditer doesn't actually give you a view onto the
+writable array. Instead, it gives you a copy, and if you make changes to the
+copy, nditer later writes those changes back into your actual array. Currently,
+this writeback occurs when the array objects are garbage collected, which makes
+this API error-prone on CPython and entirely broken on PyPy. Therefore, 
+``nditer`` should now be used as a context manager whenever using ``nditer``
+with writeable arrays (``with np.nditer(...) as it: ...``). You may also
+explicitly call ``it.close()`` for cases where a context manager is unusable,
+for instance in generator expressions.
 
 Numpy has switched to using pytest instead of nose for testing
 --------------------------------------------------------------
@@ -93,6 +117,8 @@ using the old API.
 C API changes
 =============
 
+``NpyIter_Close`` has been added and should be called before
+``NpyIter_Dealloc`` to resolve possible writeback-enabled arrays.
 
 New Features
 ============

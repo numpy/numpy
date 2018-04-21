@@ -319,8 +319,9 @@ add_newdoc('numpy.core', 'nditer',
             addop = np.add
             it = np.nditer([x, y, out], [],
                         [['readonly'], ['readonly'], ['writeonly','allocate']])
-            for (a, b, c) in it:
-                addop(a, b, out=c)
+            with it:
+                for (a, b, c) in it:
+                    addop(a, b, out=c)
             return it.operands[2]
 
     Here is the same function, but following the C-style pattern::
@@ -344,13 +345,12 @@ add_newdoc('numpy.core', 'nditer',
 
             it = np.nditer([x, y, out], ['external_loop'],
                     [['readonly'], ['readonly'], ['writeonly', 'allocate']],
-                    op_axes=[range(x.ndim)+[-1]*y.ndim,
-                             [-1]*x.ndim+range(y.ndim),
+                    op_axes=[list(range(x.ndim)) + [-1] * y.ndim,
+                             [-1] * x.ndim + list(range(y.ndim)),
                              None])
-
-            for (a, b, c) in it:
-                mulop(a, b, out=c)
-
+            with it:
+                for (a, b, c) in it:
+                    mulop(a, b, out=c)
             return it.operands[2]
 
         >>> a = np.arange(2)+1
@@ -380,6 +380,32 @@ add_newdoc('numpy.core', 'nditer',
         >>> b = np.ones(5)
         >>> luf(lambda i,j:i*i + j/2, a, b)
         array([  0.5,   1.5,   4.5,   9.5,  16.5])
+
+    If operand flags `"writeonly"` or `"readwrite"` are used the operands may
+    be views into the original data with the WRITEBACKIFCOPY flag. In this case
+    nditer must be used as a context manager. The temporary
+    data will be written back to the original data when the `` __exit__``
+    function is called but not before::
+
+        >>> a = np.arange(6, dtype='i4')[::-2]
+        >>> with nditer(a, [],
+        ...        [['writeonly', 'updateifcopy']],
+        ...        casting='unsafe',
+        ...        op_dtypes=[np.dtype('f4')]) as i:
+        ...    x = i.operands[0]
+        ...    x[:] = [-1, -2, -3]
+        ...    # a still unchanged here
+        >>> a, x
+        array([-1, -2, -3]), array([-1, -2, -3])
+
+    It is important to note that once the iterator is exited, dangling
+    references (like `x` in the example) may or may not share data with
+    the original data `a`. If writeback semantics were active, i.e. if
+    `x.base.flags.writebackifcopy` is `True`, then exiting the iterator
+     will sever the connection between `x` and `a`, writing to `x` will
+    no longer write to `a`. If writeback semantics are not active, then
+    `x.data` will still point at some part of `a.data`, and writing to
+    one will affect the other.
 
     """)
 
@@ -524,6 +550,13 @@ add_newdoc('numpy.core', 'nested_iters',
 
     """)
 
+add_newdoc('numpy.core', 'nditer', ('close',
+    """
+    close()
+
+    Resolve all writeback semantics in writeable operands.
+
+    """))
 
 
 ###############################################################################
