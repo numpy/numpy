@@ -61,7 +61,7 @@ Deprecations
   anytime one of the iterator operands is writeable, so that numpy can
   manage writeback semantics, or should call ``it.close()``. A
  `RuntimeWarning` will be emitted otherwise in these cases. Users of the C-API
-  should call ``NpyIter_Close`` before ``NpyIter_Dealloc``.
+  should call ``NpyIter_Close`` before ``NpyIter_Deallocate``.
 
 
 Future Changes
@@ -117,8 +117,8 @@ using the old API.
 C API changes
 =============
 
-``NpyIter_Close`` has been added and should be called before
-``NpyIter_Dealloc`` to resolve possible writeback-enabled arrays.
+* ``NpyIter_Close`` has been added and should be called before
+  ``NpyIter_Deallocate`` to resolve possible writeback-enabled arrays.
 
 New Features
 ============

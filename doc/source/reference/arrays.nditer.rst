@@ -78,27 +78,28 @@ order='C' for C order and order='F' for Fortran order.
     ...
     0 3 1 4 2 5
 
+.. _nditer-context-manager:
+
 Modifying Array Values
 ----------------------
 
-By default, the :class:`nditer` treats the input array as a read-only
-object. To modify the array elements, you must specify either read-write
-or write-only mode. This is controlled with per-operand flags. The
-operands may be created as views into the original data with the 
-`WRITEBACKIFCOPY` flag. In this case the iterator must either
+By default, the :class:`nditer` treats the input operand as a read-only
+object. To be able to modify the array elements, you must specify either
+read-write or write-only mode using the `'readwrite'` or `'writeonly'`
+per-operand flags.
 
-- be used as a context manager, and the temporary data will be written back
-  to the original array when the `__exit__` function is called.
-- have a call to the iterator's `close` function to ensure the modified data
-  is written back to the original array.
+The nditer will then yield writeable buffer arrays which you may modify. However,
+because  the nditer must copy this buffer data back to the original array once
+iteration is finished, you must signal when the iteration is ended, by one of two
+methods. You may either:
 
-Regular assignment in Python simply changes a reference in the local or
-global variable dictionary instead of modifying an existing variable in
-place.  This means that simply assigning to `x` will not place the value
-into the element of the array, but rather switch `x` from being an array
-element reference to being a reference to the value you assigned. To
-actually modify the element of the array, `x` should be indexed with
-the ellipsis.
+ - used the nditer as a context manager using the `with` statement, and
+   the temporary data will be written back when the context is exited.
+ - call the iterator's `close` method once finished iterating, which will trigger
+   the write-back.
+
+The nditer can no longer be iterated once either `close` is called or its
+context is exited.
 
 .. admonition:: Example
 
@@ -186,7 +187,7 @@ construct in order to be more readable.
     0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
     >>> it = np.nditer(a, flags=['multi_index'], op_flags=['writeonly'])
-    >>> with it: 
+    >>> with it:
     ....    while not it.finished:
     ...         it[0] = it.multi_index[1] - it.multi_index[0]
     ...         it.iternext()
