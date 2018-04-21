@@ -20,7 +20,7 @@
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
-enum NPYITER_CONTEXT {CONTEXT_NOTENTERED, CONTEXT_INSIDE, CONTEXT_EXITED};
+enum NPYITER_CONTEXT {CONTEXT_NOTENTERED, CONTEXT_INSIDE, CLOSED};
 
 struct NewNpyArrayIterObject_tag {
     PyObject_HEAD
@@ -1419,7 +1419,7 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
         ret = npyiter_seq_item(self, 0);
     }
     else {
-        if (self->managed == CONTEXT_EXITED) {
+        if (self->managed == CLOSED) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator is closed");
             return NULL;
@@ -1454,7 +1454,7 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return NULL;
@@ -1489,7 +1489,7 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return NULL;
@@ -1517,7 +1517,8 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
-    if (self->iter == NULL || self->iternext == NULL || self->finished) {
+    if (self->iter == NULL || self->iternext == NULL ||
+                self->finished || (self->managed == CLOSED)) {
         return NULL;
     }
 
@@ -1912,7 +1913,7 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return NULL;
@@ -2014,7 +2015,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         return NULL;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return NULL;
@@ -2104,7 +2105,7 @@ npyiter_seq_slice(NewNpyArrayIterObject *self,
         return NULL;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return NULL;
@@ -2170,7 +2171,7 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         return -1;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return -1;
@@ -2250,7 +2251,7 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
         return -1;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return -1;
@@ -2307,7 +2308,7 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
         return NULL;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return NULL;
@@ -2362,7 +2363,7 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
         return -1;
     }
 
-    if (self->managed == CONTEXT_EXITED) {
+    if (self->managed == CLOSED) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is closed");
         return -1;
@@ -2402,8 +2403,8 @@ npyiter_enter(NewNpyArrayIterObject *self)
         PyErr_SetString(PyExc_RuntimeError, "operation on non-initialized iterator");
         return NULL;
     }
-    if (self->managed == CONTEXT_EXITED) {
-        PyErr_SetString(PyExc_ValueError, "cannot reuse iterator after exit");
+    if (self->managed == CLOSED) {
+        PyErr_SetString(PyExc_ValueError, "cannot reuse closed iterator");
         return NULL;
     }
     self->managed = CONTEXT_INSIDE;
@@ -2420,6 +2421,7 @@ npyiter_close(NewNpyArrayIterObject *self)
         Py_RETURN_NONE;
     }
     ret = NpyIter_Close(iter);
+    self->managed = CLOSED;
     if (ret < 0) {
         return NULL;
     }
@@ -2429,7 +2431,7 @@ npyiter_close(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
 {
-    self->managed = CONTEXT_EXITED;
+    self->managed = CLOSED;
     /* even if called via exception handling, writeback any data */
     return npyiter_close(self);
 }

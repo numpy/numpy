@@ -2847,7 +2847,7 @@ def test_writebacks():
     enter = it.__enter__
     assert_raises(ValueError, enter)
 
-def test_close():
+def test_close_equivalent():
     ''' using a context amanger and using nditer.close are equivalent
     '''
     def add_close(x, y, out=None):
@@ -2856,8 +2856,10 @@ def test_close():
                     [['readonly'], ['readonly'], ['writeonly','allocate']])
         for (a, b, c) in it:
             addop(a, b, out=c)
+        ret = it.operands[2]
         it.close()
-        return it.operands[2]
+        return ret
+
     def add_context(x, y, out=None):
         addop = np.add
         it = np.nditer([x, y, out], [],
@@ -2870,6 +2872,13 @@ def test_close():
     assert_equal(z, range(0, 10, 2))
     z = add_context(range(5), range(5))
     assert_equal(z, range(0, 10, 2))
+
+def test_close_raises():
+    it = np.nditer(np.arange(3))
+    assert_equal (next(it), 0)
+    it.close()
+    assert_raises(StopIteration, next, it)
+    assert_raises(ValueError, getattr, it, 'operands')
 
 def test_warn_noclose():
     a = np.arange(6, dtype='f4')
