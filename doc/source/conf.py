@@ -115,7 +115,7 @@ else:
         "scipy_org_logo": False,
         "rootlinks": []
     }
-    html_sidebars = {'index': 'indexsidebar.html'}
+    html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
 
 html_additional_pages = {
     'index': 'indexcontent.html',
