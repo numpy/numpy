@@ -800,7 +800,7 @@ Copies and Views
 
 When operating and manipulating arrays, their data is sometimes copied
 into a new array and sometimes not. This is often a source of confusion
-for beginners. There are three cases::
+for beginners. There are three cases:
 
 No Copy at All
 --------------
@@ -1451,10 +1451,10 @@ that ``pylab.hist`` plots the histogram automatically, while
     >>> mu, sigma = 2, 0.5
     >>> v = np.random.normal(mu,sigma,10000)
     >>> # Plot a normalized histogram with 50 bins
-    >>> plt.hist(v, bins=50, normed=1)       # matplotlib version (plot)
+    >>> plt.hist(v, bins=50, density=1)       # matplotlib version (plot)
     >>> plt.show()
     >>> # Compute the histogram with numpy and then plot it
-    >>> (n, bins) = np.histogram(v, bins=50, normed=True)  # NumPy version (no plot)
+    >>> (n, bins) = np.histogram(v, bins=50, density=True)  # NumPy version (no plot)
     >>> plt.plot(.5*(bins[1:]+bins[:-1]), n)
     >>> plt.show()
 

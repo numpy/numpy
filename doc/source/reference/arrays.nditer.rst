@@ -83,7 +83,14 @@ Modifying Array Values
 
 By default, the :class:`nditer` treats the input array as a read-only
 object. To modify the array elements, you must specify either read-write
-or write-only mode. This is controlled with per-operand flags.
+or write-only mode. This is controlled with per-operand flags. The
+operands may be created as views into the original data with the 
+`WRITEBACKIFCOPY` flag. In this case the iterator must either
+
+- be used as a context manager, and the temporary data will be written back
+  to the original array when the `__exit__` function is called.
+- have a call to the iterator's `close` function to ensure the modified data
+  is written back to the original array.
 
 Regular assignment in Python simply changes a reference in the local or
 global variable dictionary instead of modifying an existing variable in
@@ -99,8 +106,9 @@ the ellipsis.
     >>> a
     array([[0, 1, 2],
            [3, 4, 5]])
-    >>> for x in np.nditer(a, op_flags=['readwrite']):
-    ...     x[...] = 2 * x
+    >>> with np.nditer(a, op_flags=['readwrite']) as it:
+    ...    for x in it:
+    ...        x[...] = 2 * x
     ...
     >>> a
     array([[ 0,  2,  4],
@@ -178,9 +186,10 @@ construct in order to be more readable.
     0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
     >>> it = np.nditer(a, flags=['multi_index'], op_flags=['writeonly'])
-    >>> while not it.finished:
-    ...     it[0] = it.multi_index[1] - it.multi_index[0]
-    ...     it.iternext()
+    >>> with it: 
+    ....    while not it.finished:
+    ...         it[0] = it.multi_index[1] - it.multi_index[0]
+    ...         it.iternext()
     ...
     >>> a
     array([[ 0,  1,  2],
@@ -426,9 +435,10 @@ reasons.
     ...             flags = ['external_loop', 'buffered'],
     ...             op_flags = [['readonly'],
     ...                         ['writeonly', 'allocate', 'no_broadcast']])
-    ...     for x, y in it:
-    ...         y[...] = x*x
-    ...     return it.operands[1]
+    ...     with it:
+    ...         for x, y in it:
+    ...             y[...] = x*x
+    ...         return it.operands[1]
     ...
 
     >>> square([1,2,3])
@@ -505,9 +515,10 @@ For a simple example, consider taking the sum of all elements in an array.
 
     >>> a = np.arange(24).reshape(2,3,4)
     >>> b = np.array(0)
-    >>> for x, y in np.nditer([a, b], flags=['reduce_ok', 'external_loop'],
-    ...                     op_flags=[['readonly'], ['readwrite']]):
-    ...     y[...] += x
+    >>> with np.nditer([a, b], flags=['reduce_ok', 'external_loop'],
+    ...                     op_flags=[['readonly'], ['readwrite']]) as it:
+    ...     for x,y in it:
+    ...         y[...] += x
     ...
     >>> b
     array(276)
@@ -525,11 +536,12 @@ sums along the last axis of `a`.
     >>> it = np.nditer([a, None], flags=['reduce_ok', 'external_loop'],
     ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...             op_axes=[None, [0,1,-1]])
-    >>> it.operands[1][...] = 0
-    >>> for x, y in it:
-    ...     y[...] += x
+    >>> with it:
+    ...     it.operands[1][...] = 0
+    ...     for x, y in it:
+    ...         y[...] += x
     ...
-    >>> it.operands[1]
+    ...     it.operands[1]
     array([[ 6, 22, 38],
            [54, 70, 86]])
     >>> np.sum(a, axis=2)
@@ -558,12 +570,13 @@ buffering.
     ...                                  'buffered', 'delay_bufalloc'],
     ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...             op_axes=[None, [0,1,-1]])
-    >>> it.operands[1][...] = 0
-    >>> it.reset()
-    >>> for x, y in it:
-    ...     y[...] += x
+    >>> with it:
+    ...     it.operands[1][...] = 0
+    ...     it.reset()
+    ...     for x, y in it:
+    ...         y[...] += x
     ...
-    >>> it.operands[1]
+    ...     it.operands[1]
     array([[ 6, 22, 38],
            [54, 70, 86]])
 
@@ -609,11 +622,12 @@ Here's how this looks.
     ...                 op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...                 op_axes=[None, axeslist],
     ...                 op_dtypes=['float64', 'float64'])
-    ...     it.operands[1][...] = 0
-    ...     it.reset()
-    ...     for x, y in it:
-    ...         y[...] += x*x
-    ...     return it.operands[1]
+    ...     with it:
+    ...         it.operands[1][...] = 0
+    ...         it.reset()
+    ...         for x, y in it:
+    ...             y[...] += x*x
+    ...         return it.operands[1]
     ...
     >>> a = np.arange(6).reshape(2,3)
     >>> sum_squares_py(a)
@@ -661,16 +675,17 @@ Here's the listing of sum_squares.pyx::
                     op_flags=[['readonly'], ['readwrite', 'allocate']],
                     op_axes=[None, axeslist],
                     op_dtypes=['float64', 'float64'])
-        it.operands[1][...] = 0
-        it.reset()
-        for xarr, yarr in it:
-            x = xarr
-            y = yarr
-            size = x.shape[0]
-            for i in range(size):
-               value = x[i]
-               y[i] = y[i] + value * value
-        return it.operands[1]
+        with it:
+            it.operands[1][...] = 0
+            it.reset()
+            for xarr, yarr in it:
+                x = xarr
+                y = yarr
+                size = x.shape[0]
+                for i in range(size):
+                   value = x[i]
+                   y[i] = y[i] + value * value
+            return it.operands[1]
 
 On this machine, building the .pyx file into a module looked like the
 following, but you may have to find some Cython tutorials to tell you

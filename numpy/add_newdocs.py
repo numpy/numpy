@@ -319,8 +319,9 @@ add_newdoc('numpy.core', 'nditer',
             addop = np.add
             it = np.nditer([x, y, out], [],
                         [['readonly'], ['readonly'], ['writeonly','allocate']])
-            for (a, b, c) in it:
-                addop(a, b, out=c)
+            with it:
+                for (a, b, c) in it:
+                    addop(a, b, out=c)
             return it.operands[2]
 
     Here is the same function, but following the C-style pattern::
@@ -344,13 +345,12 @@ add_newdoc('numpy.core', 'nditer',
 
             it = np.nditer([x, y, out], ['external_loop'],
                     [['readonly'], ['readonly'], ['writeonly', 'allocate']],
-                    op_axes=[range(x.ndim)+[-1]*y.ndim,
-                             [-1]*x.ndim+range(y.ndim),
+                    op_axes=[list(range(x.ndim)) + [-1] * y.ndim,
+                             [-1] * x.ndim + list(range(y.ndim)),
                              None])
-
-            for (a, b, c) in it:
-                mulop(a, b, out=c)
-
+            with it:
+                for (a, b, c) in it:
+                    mulop(a, b, out=c)
             return it.operands[2]
 
         >>> a = np.arange(2)+1
@@ -380,6 +380,32 @@ add_newdoc('numpy.core', 'nditer',
         >>> b = np.ones(5)
         >>> luf(lambda i,j:i*i + j/2, a, b)
         array([  0.5,   1.5,   4.5,   9.5,  16.5])
+
+    If operand flags `"writeonly"` or `"readwrite"` are used the operands may
+    be views into the original data with the WRITEBACKIFCOPY flag. In this case
+    nditer must be used as a context manager. The temporary
+    data will be written back to the original data when the `` __exit__``
+    function is called but not before::
+
+        >>> a = np.arange(6, dtype='i4')[::-2]
+        >>> with nditer(a, [],
+        ...        [['writeonly', 'updateifcopy']],
+        ...        casting='unsafe',
+        ...        op_dtypes=[np.dtype('f4')]) as i:
+        ...    x = i.operands[0]
+        ...    x[:] = [-1, -2, -3]
+        ...    # a still unchanged here
+        >>> a, x
+        array([-1, -2, -3]), array([-1, -2, -3])
+
+    It is important to note that once the iterator is exited, dangling
+    references (like `x` in the example) may or may not share data with
+    the original data `a`. If writeback semantics were active, i.e. if
+    `x.base.flags.writebackifcopy` is `True`, then exiting the iterator
+     will sever the connection between `x` and `a`, writing to `x` will
+    no longer write to `a`. If writeback semantics are not active, then
+    `x.data` will still point at some part of `a.data`, and writing to
+    one will affect the other.
 
     """)
 
@@ -524,6 +550,13 @@ add_newdoc('numpy.core', 'nested_iters',
 
     """)
 
+add_newdoc('numpy.core', 'nditer', ('close',
+    """
+    close()
+
+    Resolve all writeback semantics in writeable operands.
+
+    """))
 
 
 ###############################################################################
@@ -784,7 +817,15 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     See Also
     --------
-    empty, empty_like, zeros, zeros_like, ones, ones_like, full, full_like
+    empty_like : Return an empty array with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    zeros_like : Return an array of zeros with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
+    empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
+    full : Return a new array of given shape filled with value.
+
 
     Notes
     -----
@@ -845,10 +886,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
     Parameters
     ----------
     shape : int or tuple of int
-        Shape of the empty array
+        Shape of the empty array, e.g., ``(2, 3)`` or ``2``.
     dtype : data-type, optional
-        Desired output data-type.
-    order : {'C', 'F'}, optional
+        Desired output data-type for the array, e.g, `numpy.int8`. Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional, default: 'C'
         Whether to store multi-dimensional data in row-major
         (C-style) or column-major (Fortran-style) order in
         memory.
@@ -861,7 +903,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
 
     See Also
     --------
-    empty_like, zeros, ones
+    empty_like : Return an empty array with shape and type of input.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
+    full : Return a new array of given shape filled with value.
+
 
     Notes
     -----
@@ -919,9 +965,8 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
     --------
     ones_like : Return an array of ones with shape and type of input.
     zeros_like : Return an array of zeros with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
-    ones : Return a new array setting values to one.
-    zeros : Return a new array setting values to zero.
 
     Notes
     -----
@@ -965,14 +1010,15 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     Parameters
     ----------
-    shape : int or sequence of ints
+    shape : int or tuple of ints
         Shape of the new array, e.g., ``(2, 3)`` or ``2``.
     dtype : data-type, optional
         The desired data-type for the array, e.g., `numpy.int8`.  Default is
         `numpy.float64`.
-    order : {'C', 'F'}, optional
-        Whether to store multidimensional data in C- or Fortran-contiguous
-        (row- or column-wise) order in memory.
+    order : {'C', 'F'}, optional, default: 'C'
+        Whether to store multi-dimensional data in row-major
+        (C-style) or column-major (Fortran-style) order in
+        memory.
 
     Returns
     -------
@@ -982,10 +1028,9 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     See Also
     --------
     zeros_like : Return an array of zeros with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
-    empty_like : Return an empty array with shape and type of input.
-    ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    full : Return a new array of given shape filled with value.
 
     Examples
     --------
@@ -1587,7 +1632,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
     """
     lexsort(keys, axis=-1)
 
-    Perform an indirect sort using a sequence of keys.
+    Perform an indirect stable sort using a sequence of keys.
 
     Given multiple sorting keys, which can be interpreted as columns in a
     spreadsheet, lexsort returns an array of integer indices that describes
@@ -1775,7 +1820,7 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     kind to which both ``type1`` and ``type2`` may be safely cast.
     The returned data type is always in native byte order.
 
-    This function is symmetric and associative.
+    This function is symmetric, but rarely associative.
 
     Parameters
     ----------
@@ -1816,6 +1861,14 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     >>> np.promote_types('i4', 'S8')
     dtype('S11')
+
+    An example of a non-associative case:
+
+    >>> p = np.promote_types
+    >>> p('S', p('i1', 'u1'))
+    dtype('S6')
+    >>> p(p('S', 'i1'), 'u1')
+    dtype('S4')
 
     """)
 
@@ -3050,8 +3103,16 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('size',
     """
     Number of elements in the array.
 
-    Equivalent to ``np.prod(a.shape)``, i.e., the product of the array's
+    Equal to ``np.prod(a.shape)``, i.e., the product of the array's
     dimensions.
+
+    Notes
+    -----
+    `a.size` returns a standard arbitrary precision Python integer. This 
+    may not be the case with other methods of obtaining the same value
+    (like the suggested ``np.prod(a.shape)``, which returns an instance
+    of ``np.int_``), and may be relevant if the value is used further in
+    calculations that may overflow a fixed size integer type.
 
     Examples
     --------
@@ -4476,7 +4537,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -6125,10 +6186,10 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     Performs unbuffered in place operation on operand 'a' for elements
     specified by 'indices'. For addition ufunc, this method is equivalent to
-    `a[indices] += b`, except that results are accumulated for elements that
-    are indexed more than once. For example, `a[[0,0]] += 1` will only
+    ``a[indices] += b``, except that results are accumulated for elements that
+    are indexed more than once. For example, ``a[[0,0]] += 1`` will only
     increment the first element once because of buffering, whereas
-    `add.at(a, [0,0], 1)` will increment the first element twice.
+    ``add.at(a, [0,0], 1)`` will increment the first element twice.
 
     .. versionadded:: 1.8.0
 
@@ -6153,16 +6214,12 @@ add_newdoc('numpy.core', 'ufunc', ('at',
     >>> print(a)
     array([-1, -2, 3, 4])
 
-    ::
-
     Increment items 0 and 1, and increment item 2 twice:
 
     >>> a = np.array([1, 2, 3, 4])
     >>> np.add.at(a, [0, 1, 2, 2], 1)
     >>> print(a)
     array([2, 3, 5, 4])
-
-    ::
 
     Add items 0 and 1 in first array to second array,
     and store results in first array:
@@ -6950,7 +7007,7 @@ add_newdoc('numpy.core.multiarray', 'datetime_as_string',
     arr : array_like of datetime64
         The array of UTC timestamps to format.
     unit : str
-        One of None, 'auto', or a datetime unit.
+        One of None, 'auto', or a :ref:`datetime unit <arrays.dtypes.dateunits>`.
     timezone : {'naive', 'UTC', 'local'} or tzinfo
         Timezone information to use when displaying the datetime. If 'UTC', end
         with a Z to indicate UTC time. If 'local', convert to the local timezone
@@ -6978,13 +7035,13 @@ add_newdoc('numpy.core.multiarray', 'datetime_as_string',
            '2002-10-27T07:30Z'], dtype='<U35')
 
     Note that we picked datetimes that cross a DST boundary. Passing in a
-    ``pytz`` timezone object will print the appropriate offset::
+    ``pytz`` timezone object will print the appropriate offset
 
     >>> np.datetime_as_string(d, timezone=pytz.timezone('US/Eastern'))
     array(['2002-10-27T00:30-0400', '2002-10-27T01:30-0400',
            '2002-10-27T01:30-0500', '2002-10-27T02:30-0500'], dtype='<U39')
 
-    Passing in a unit will change the precision::
+    Passing in a unit will change the precision
 
     >>> np.datetime_as_string(d, unit='h')
     array(['2002-10-27T04', '2002-10-27T05', '2002-10-27T06', '2002-10-27T07'],
@@ -6993,7 +7050,7 @@ add_newdoc('numpy.core.multiarray', 'datetime_as_string',
     array(['2002-10-27T04:30:00', '2002-10-27T05:30:00', '2002-10-27T06:30:00',
            '2002-10-27T07:30:00'], dtype='<U38')
 
-    But can be made to not lose precision::
+    'casting' can be used to specify whether precision can be changed
 
     >>> np.datetime_as_string(d, unit='h', casting='safe')
     TypeError: Cannot create a datetime string as units 'h' from a NumPy

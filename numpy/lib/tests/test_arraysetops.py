@@ -4,9 +4,9 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import (
-    run_module_suite, assert_array_equal, assert_equal, assert_raises,
-    )
+import sys
+
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
@@ -453,6 +453,15 @@ class TestUnique(object):
         assert_array_equal(v.data, v2.data, msg)
         assert_array_equal(v.mask, v2.mask, msg)
 
+    def test_unique_sort_order_with_axis(self):
+        # These tests fail if sorting along axis is done by treating subarrays
+        # as unsigned byte strings.  See gh-10495.
+        fmt = "sort order incorrect for integer type '%s'"
+        for dt in 'bhilq':
+            a = np.array([[-1],[0]], dt)
+            b = np.unique(a, axis=0)
+            assert_array_equal(a, b, fmt % dt)
+
     def _run_axis_tests(self, dtype):
         data = np.array([[0, 1, 0, 0],
                          [1, 0, 0, 0],
@@ -493,7 +502,3 @@ class TestUnique(object):
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
-
-
-if __name__ == "__main__":
-    run_module_suite()

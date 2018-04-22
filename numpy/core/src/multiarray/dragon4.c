@@ -896,7 +896,7 @@ BigInt_ShiftLeft(BigInt *result, npy_uint32 shift)
     if (shiftBits == 0) {
         npy_uint32 i;
 
-        /* copy blcoks from high to low */
+        /* copy blocks from high to low */
         for (pInCur = result->blocks + result->length,
                  pOutCur = pInCur + shiftBlocks;
                  pInCur >= pInBlocks;
@@ -1588,12 +1588,12 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
                  npy_int32 digits_right)
 {
     npy_int32 printExponent;
-    npy_int32 numDigits, numWholeDigits, has_sign=0;
+    npy_int32 numDigits, numWholeDigits=0, has_sign=0;
 
     npy_int32 maxPrintLen = (npy_int32)bufferSize - 1, pos = 0;
 
     /* track the # of digits past the decimal point that have been printed */
-    npy_int32 numFractionDigits = 0;
+    npy_int32 numFractionDigits = 0, desiredFractionalDigits;
 
     DEBUG_ASSERT(bufferSize > 0);
 
@@ -1711,6 +1711,11 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
         buffer[pos++] = '.';
     }
 
+    desiredFractionalDigits = precision;
+    if (cutoff_mode == CutoffMode_TotalLength && precision >= 0) {
+        desiredFractionalDigits = precision - numWholeDigits;
+    }
+
     if (trim_mode == TrimMode_LeaveOneZero) {
         /* if we didn't print any fractional digits, add a trailing 0 */
         if (numFractionDigits == 0 && pos < maxPrintLen) {
@@ -1719,11 +1724,12 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
         }
     }
     else if (trim_mode == TrimMode_None &&
-            digit_mode != DigitMode_Unique &&
-            precision > numFractionDigits && pos < maxPrintLen) {
+             digit_mode != DigitMode_Unique &&
+             desiredFractionalDigits > numFractionDigits &&
+             pos < maxPrintLen) {
         /* add trailing zeros up to precision length */
         /* compute the number of trailing zeros needed */
-        npy_int32 count = precision - numFractionDigits;
+        npy_int32 count = desiredFractionalDigits - numFractionDigits;
         if (pos + count > maxPrintLen) {
             count = maxPrintLen - pos;
         }

@@ -3,9 +3,10 @@ from __future__ import division, absolute_import, print_function
 import math
 import textwrap
 import sys
+import pytest
 
 import numpy as np
-from numpy.testing import run_module_suite, assert_, assert_equal, dec
+from numpy.testing import assert_, assert_equal
 from . import util
 
 
@@ -60,12 +61,12 @@ cf2py  intent(out) a
        end
     """
 
-    @dec.slow
+    @pytest.mark.slow
     def test_all(self):
         for name in "t,t2".split(","):
             self.check_function(name)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_docstring(self):
         expected = """
         a = t(fun,[fun_extra_args])
@@ -130,8 +131,8 @@ cf2py  intent(out) a
         r = t(a.mth)
         assert_(r == 9, repr(r))
 
-    @dec.knownfailureif(sys.platform=='win32',
-                        msg='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback(self):
 
         def callback(code):
@@ -144,8 +145,8 @@ cf2py  intent(out) a
         r = f(callback)
         assert_(r == 0, repr(r))
 
-    @dec.knownfailureif(sys.platform=='win32',
-                        msg='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback_array(self):
         # See gh-10027
         cu = np.zeros((1, 8), 'S1')
@@ -162,7 +163,3 @@ cf2py  intent(out) a
         f = getattr(self.module, 'string_callback_array')
         res = f(callback, cu, len(cu))
         assert_(res == 0, repr(res))
-
-
-if __name__ == "__main__":
-    run_module_suite()

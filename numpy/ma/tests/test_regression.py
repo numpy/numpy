@@ -4,8 +4,7 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_array_equal, assert_allclose, run_module_suite,
-    suppress_warnings
+    assert_, assert_array_equal, assert_allclose, suppress_warnings
     )
 
 
@@ -75,6 +74,3 @@ class TestRegression(object):
             r1 = np.ma.corrcoef(x, y, ddof=1)
             # ddof should not have an effect (it gets cancelled out)
             assert_allclose(r0.data, r1.data)
-
-if __name__ == "__main__":
-    run_module_suite()

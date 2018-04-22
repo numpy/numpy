@@ -26,6 +26,7 @@ import sys
 import operator
 import warnings
 import textwrap
+import re
 from functools import reduce
 
 if sys.version_info[0] >= 3:
@@ -131,14 +132,18 @@ def doc_note(initialdoc, note):
         return
     if note is None:
         return initialdoc
-    newdoc = """
-    %s
 
-    Notes
+    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', initialdoc)
+
+    notedoc = """\
+Notes
     -----
-    %s
-    """
-    return newdoc % (initialdoc, note)
+    %s""" % note
+
+    if len(notesplit) > 1:
+        notedoc = '\n\n    ' + notedoc + '\n'
+
+    return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
 def get_object_signature(obj):
@@ -5312,7 +5317,7 @@ class MaskedArray(ndarray):
                 originally intended.
                 Until then, the axis should be given explicitly when
                 ``arr.ndim > 1``, to avoid a FutureWarning.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
@@ -5463,7 +5468,7 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the array is flattened before
             sorting. The default is -1, which sorts along the last axis.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm. Default is 'quicksort'.
         order : list, optional
             When `a` is a structured array, this argument specifies which fields
@@ -5532,6 +5537,7 @@ class MaskedArray(ndarray):
         else:
             idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
             idx[axis] = sidx
+            idx = tuple(idx)
 
         self[...] = self[idx]
 
@@ -7472,11 +7478,7 @@ def inner(a, b):
     Returns the inner product of a and b for arrays of floating point types.
 
     Like the generic NumPy equivalent the product sum is over the last dimension
-    of a and b.
-
-    Notes
-    -----
-    The first argument is not conjugated.
+    of a and b. The first argument is not conjugated.
 
     """
     fa = filled(a, 0)

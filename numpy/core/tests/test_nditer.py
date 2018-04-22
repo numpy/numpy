@@ -2,13 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import warnings
+import pytest
 
 import numpy as np
+import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
-from numpy.core.multiarray_tests import test_nditer_too_large
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_raises, assert_warns, dec, HAS_REFCOUNT, suppress_warnings
+    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
+    HAS_REFCOUNT, suppress_warnings
     )
 
 
@@ -33,7 +34,7 @@ def iter_iterindices(i):
         i.iternext()
     return ret
 
-@dec.skipif(not HAS_REFCOUNT, "python does not have sys.getrefcount")
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_iter_refcount():
     # Make sure the iterator doesn't leak
 
@@ -42,13 +43,14 @@ def test_iter_refcount():
     dt = np.dtype('f4').newbyteorder()
     rc_a = sys.getrefcount(a)
     rc_dt = sys.getrefcount(dt)
-    it = nditer(a, [],
+    with nditer(a, [],
                 [['readwrite', 'updateifcopy']],
                 casting='unsafe',
-                op_dtypes=[dt])
-    assert_(not it.iterationneedsapi)
-    assert_(sys.getrefcount(a) > rc_a)
-    assert_(sys.getrefcount(dt) > rc_dt)
+                op_dtypes=[dt]) as it:
+        assert_(not it.iterationneedsapi)
+        assert_(sys.getrefcount(a) > rc_a)
+        assert_(sys.getrefcount(dt) > rc_dt)
+    # del 'it'
     it = None
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
@@ -765,12 +767,32 @@ def test_iter_flags_errors():
 def test_iter_slice():
     a, b, c = np.arange(3), np.arange(3), np.arange(3.)
     i = nditer([a, b, c], [], ['readwrite'])
-    i[0:2] = (3, 3)
-    assert_equal(a, [3, 1, 2])
-    assert_equal(b, [3, 1, 2])
-    assert_equal(c, [0, 1, 2])
-    i[1] = 12
-    assert_equal(i[0:2], [3, 12])
+    with i:
+        i[0:2] = (3, 3)
+        assert_equal(a, [3, 1, 2])
+        assert_equal(b, [3, 1, 2])
+        assert_equal(c, [0, 1, 2])
+        i[1] = 12
+        assert_equal(i[0:2], [3, 12])
+
+def test_iter_assign_mapping():
+    a = np.arange(24, dtype='f8').reshape(2, 3, 4).T
+    it = np.nditer(a, [], [['readwrite', 'updateifcopy']],
+                       casting='same_kind', op_dtypes=[np.dtype('f4')])
+    with it:
+        it.operands[0][...] = 3
+        it.operands[0][...] = 14
+    assert_equal(a, 14)
+    it = np.nditer(a, [], [['readwrite', 'updateifcopy']],
+                       casting='same_kind', op_dtypes=[np.dtype('f4')])
+    with it:
+        x = it.operands[0][-1:1]
+        x[...] = 14
+        it.operands[0][...] = -1234
+    assert_equal(a, -1234)
+    # check for no warnings on dealloc
+    x = None
+    it = None
 
 def test_iter_nbo_align_contig():
     # Check that byte order, alignment, and contig changes work
@@ -782,23 +804,26 @@ def test_iter_nbo_align_contig():
     i = nditer(au, [], [['readwrite', 'updateifcopy']],
                         casting='equiv',
                         op_dtypes=[np.dtype('f4')])
-    assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0], a)
-    i.operands[0][:] = 2
-    i = None
+    with i:
+        # context manager triggers UPDATEIFCOPY on i at exit
+        assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0], a)
+        i.operands[0][:] = 2
     assert_equal(au, [2]*6)
-
+    i = None # should not raise a DeprecationWarning
     # Byte order change by requesting NBO
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
     assert_(a.dtype.byteorder != au.dtype.byteorder)
-    i = nditer(au, [], [['readwrite', 'updateifcopy', 'nbo']], casting='equiv')
-    assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
-    assert_equal(i.operands[0], a)
-    i.operands[0][:] = 2
-    i = None
+    with nditer(au, [], [['readwrite', 'updateifcopy', 'nbo']],
+                        casting='equiv') as i:
+        # context manager triggers UPDATEIFCOPY on i at exit
+        assert_equal(i.dtypes[0].byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0].dtype.byteorder, a.dtype.byteorder)
+        assert_equal(i.operands[0], a)
+        i.operands[0][:] = 12345
+        i.operands[0][:] = 2
     assert_equal(au, [2]*6)
 
     # Unaligned input
@@ -811,11 +836,11 @@ def test_iter_nbo_align_contig():
     assert_(not i.operands[0].flags.aligned)
     assert_equal(i.operands[0], a)
     # With 'aligned', should make a copy
-    i = nditer(a, [], [['readwrite', 'updateifcopy', 'aligned']])
-    assert_(i.operands[0].flags.aligned)
-    assert_equal(i.operands[0], a)
-    i.operands[0][:] = 3
-    i = None
+    with nditer(a, [], [['readwrite', 'updateifcopy', 'aligned']]) as i:
+        assert_(i.operands[0].flags.aligned)
+        # context manager triggers UPDATEIFCOPY on i at exit
+        assert_equal(i.operands[0], a)
+        i.operands[0][:] = 3
     assert_equal(a, [3]*6)
 
     # Discontiguous input
@@ -837,16 +862,17 @@ def test_iter_array_cast():
     # No cast 'f4' -> 'f4'
     a = np.arange(6, dtype='f4').reshape(2, 3)
     i = nditer(a, [], [['readwrite']], op_dtypes=[np.dtype('f4')])
-    assert_equal(i.operands[0], a)
-    assert_equal(i.operands[0].dtype, np.dtype('f4'))
+    with i:
+        assert_equal(i.operands[0], a)
+        assert_equal(i.operands[0].dtype, np.dtype('f4'))
 
     # Byte-order cast '<f4' -> '>f4'
     a = np.arange(6, dtype='<f4').reshape(2, 3)
-    i = nditer(a, [], [['readwrite', 'updateifcopy']],
+    with nditer(a, [], [['readwrite', 'updateifcopy']],
             casting='equiv',
-            op_dtypes=[np.dtype('>f4')])
-    assert_equal(i.operands[0], a)
-    assert_equal(i.operands[0].dtype, np.dtype('>f4'))
+            op_dtypes=[np.dtype('>f4')]) as i:
+        assert_equal(i.operands[0], a)
+        assert_equal(i.operands[0].dtype, np.dtype('>f4'))
 
     # Safe case 'f4' -> 'f8'
     a = np.arange(24, dtype='f4').reshape(2, 3, 4).swapaxes(1, 2)
@@ -868,30 +894,28 @@ def test_iter_array_cast():
 
     # Same-kind cast 'f8' -> 'f4' -> 'f8'
     a = np.arange(24, dtype='f8').reshape(2, 3, 4).T
-    i = nditer(a, [],
+    with nditer(a, [],
             [['readwrite', 'updateifcopy']],
             casting='same_kind',
-            op_dtypes=[np.dtype('f4')])
-    assert_equal(i.operands[0], a)
-    assert_equal(i.operands[0].dtype, np.dtype('f4'))
-    assert_equal(i.operands[0].strides, (4, 16, 48))
-    # Check that UPDATEIFCOPY is activated
-    i.operands[0][2, 1, 1] = -12.5
-    assert_(a[2, 1, 1] != -12.5)
-    i = None
+            op_dtypes=[np.dtype('f4')]) as i:
+        assert_equal(i.operands[0], a)
+        assert_equal(i.operands[0].dtype, np.dtype('f4'))
+        assert_equal(i.operands[0].strides, (4, 16, 48))
+        # Check that WRITEBACKIFCOPY is activated at exit
+        i.operands[0][2, 1, 1] = -12.5
+        assert_(a[2, 1, 1] != -12.5)
     assert_equal(a[2, 1, 1], -12.5)
 
     a = np.arange(6, dtype='i4')[::-2]
-    i = nditer(a, [],
+    with nditer(a, [],
             [['writeonly', 'updateifcopy']],
             casting='unsafe',
-            op_dtypes=[np.dtype('f4')])
-    assert_equal(i.operands[0].dtype, np.dtype('f4'))
-    # Even though the stride was negative in 'a', it
-    # becomes positive in the temporary
-    assert_equal(i.operands[0].strides, (4,))
-    i.operands[0][:] = [1, 2, 3]
-    i = None
+            op_dtypes=[np.dtype('f4')]) as i:
+        assert_equal(i.operands[0].dtype, np.dtype('f4'))
+        # Even though the stride was negative in 'a', it
+        # becomes positive in the temporary
+        assert_equal(i.operands[0].strides, (4,))
+        i.operands[0][:] = [1, 2, 3]
     assert_equal(a, [1, 2, 3])
 
 def test_iter_array_cast_errors():
@@ -1026,9 +1050,10 @@ def test_iter_object_arrays_basic():
 
     i = nditer(a.reshape(2, 2).T, ['refs_ok', 'buffered'],
                         ['readwrite'], order='C')
-    for x in i:
-        x[...] = None
-    vals, i, x = [None]*3
+    with i:
+        for x in i:
+            x[...] = None
+        vals, i, x = [None]*3
     if HAS_REFCOUNT:
         assert_(sys.getrefcount(obj) == rc-1)
     assert_equal(a, np.array([None]*4, dtype='O'))
@@ -1038,15 +1063,17 @@ def test_iter_object_arrays_conversions():
     a = np.arange(6, dtype='O')
     i = nditer(a, ['refs_ok', 'buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='i4')
-    for x in i:
-        x[...] += 1
+    with i:
+        for x in i:
+            x[...] += 1
     assert_equal(a, np.arange(6)+1)
 
     a = np.arange(6, dtype='i4')
     i = nditer(a, ['refs_ok', 'buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='O')
-    for x in i:
-        x[...] += 1
+    with i:
+        for x in i:
+            x[...] += 1
     assert_equal(a, np.arange(6)+1)
 
     # Non-contiguous object array
@@ -1055,8 +1082,9 @@ def test_iter_object_arrays_conversions():
     a[:] = np.arange(6)
     i = nditer(a, ['refs_ok', 'buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='i4')
-    for x in i:
-        x[...] += 1
+    with i:
+        for x in i:
+            x[...] += 1
     assert_equal(a, np.arange(6)+1)
 
     #Non-contiguous value array
@@ -1065,11 +1093,12 @@ def test_iter_object_arrays_conversions():
     a[:] = np.arange(6) + 98172488
     i = nditer(a, ['refs_ok', 'buffered'], ['readwrite'],
                     casting='unsafe', op_dtypes='O')
-    ob = i[0][()]
-    if HAS_REFCOUNT:
-        rc = sys.getrefcount(ob)
-    for x in i:
-        x[...] += 1
+    with i:
+        ob = i[0][()]
+        if HAS_REFCOUNT:
+            rc = sys.getrefcount(ob)
+        for x in i:
+            x[...] += 1
     if HAS_REFCOUNT:
         assert_(sys.getrefcount(ob) == rc-1)
     assert_equal(a, np.arange(6)+98172489)
@@ -1145,14 +1174,15 @@ def test_iter_copy_if_overlap():
     for flag in ['readonly', 'writeonly', 'readwrite']:
         a = arange(10)
         i = nditer([a], ['copy_if_overlap'], [[flag]])
-        assert_(i.operands[0] is a)
+        with i:
+            assert_(i.operands[0] is a)
 
     # Copy needed, 2 ops, read-write overlap
     x = arange(10)
     a = x[1:]
     b = x[:-1]
-    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']])
-    assert_(not np.shares_memory(*i.operands))
+    with nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']]) as i:
+        assert_(not np.shares_memory(*i.operands))
 
     # Copy not needed with elementwise, 2 ops, exactly same arrays
     x = arange(10)
@@ -1160,9 +1190,10 @@ def test_iter_copy_if_overlap():
     b = x
     i = nditer([a, b], ['copy_if_overlap'], [['readonly', 'overlap_assume_elementwise'],
                                              ['readwrite', 'overlap_assume_elementwise']])
-    assert_(i.operands[0] is a and i.operands[1] is b)
-    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']])
-    assert_(i.operands[0] is a and not np.shares_memory(i.operands[1], b))
+    with i:
+        assert_(i.operands[0] is a and i.operands[1] is b)
+    with nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']]) as i:
+        assert_(i.operands[0] is a and not np.shares_memory(i.operands[1], b))
 
     # Copy not needed, 2 ops, no overlap
     x = arange(10)
@@ -1175,8 +1206,8 @@ def test_iter_copy_if_overlap():
     x = arange(4, dtype=np.int8)
     a = x[3:]
     b = x.view(np.int32)[:1]
-    i = nditer([a, b], ['copy_if_overlap'], [['readonly'], ['writeonly']])
-    assert_(not np.shares_memory(*i.operands))
+    with nditer([a, b], ['copy_if_overlap'], [['readonly'], ['writeonly']]) as i:
+        assert_(not np.shares_memory(*i.operands))
 
     # Copy needed, 3 ops, read-write overlap
     for flag in ['writeonly', 'readwrite']:
@@ -1184,11 +1215,11 @@ def test_iter_copy_if_overlap():
         a = x
         b = x.T
         c = x
-        i = nditer([a, b, c], ['copy_if_overlap'],
-                   [['readonly'], ['readonly'], [flag]])
-        a2, b2, c2 = i.operands
-        assert_(not np.shares_memory(a2, c2))
-        assert_(not np.shares_memory(b2, c2))
+        with nditer([a, b, c], ['copy_if_overlap'],
+                   [['readonly'], ['readonly'], [flag]]) as i:
+            a2, b2, c2 = i.operands
+            assert_(not np.shares_memory(a2, c2))
+            assert_(not np.shares_memory(b2, c2))
 
     # Copy not needed, 3 ops, read-only overlap
     x = np.ones([10, 10])
@@ -1323,17 +1354,15 @@ def test_iter_copy():
     assert_equal([x[()] for x in i], [x[()] for x in j])
 
     # Casting iterator
-    i = nditer(a, ['buffered'], order='F', casting='unsafe',
-                op_dtypes='f8', buffersize=5)
-    j = i.copy()
-    i = None
+    with nditer(a, ['buffered'], order='F', casting='unsafe',
+                op_dtypes='f8', buffersize=5) as i:
+        j = i.copy()
     assert_equal([x[()] for x in j], a.ravel(order='F'))
 
     a = arange(24, dtype='<i4').reshape(2, 3, 4)
-    i = nditer(a, ['buffered'], order='F', casting='unsafe',
-                op_dtypes='>f8', buffersize=5)
-    j = i.copy()
-    i = None
+    with nditer(a, ['buffered'], order='F', casting='unsafe',
+                op_dtypes='>f8', buffersize=5) as i:
+        j = i.copy()
     assert_equal([x[()] for x in j], a.ravel(order='F'))
 
 def test_iter_allocate_output_simple():
@@ -1352,11 +1381,12 @@ def test_iter_allocate_output_buffered_readwrite():
     a = arange(6)
     i = nditer([a, None], ['buffered', 'delay_bufalloc'],
                         [['readonly'], ['allocate', 'readwrite']])
-    i.operands[1][:] = 1
-    i.reset()
-    for x in i:
-        x[1][...] += x[0][...]
-    assert_equal(i.operands[1], a+1)
+    with i:
+        i.operands[1][:] = 1
+        i.reset()
+        for x in i:
+            x[1][...] += x[0][...]
+        assert_equal(i.operands[1], a+1)
 
 def test_iter_allocate_output_itorder():
     # The allocated output should match the iteration order
@@ -1651,10 +1681,11 @@ def test_iter_write_buffering():
                    order='C',
                    buffersize=16)
     x = 0
-    while not i.finished:
-        i[0] = x
-        x += 1
-        i.iternext()
+    with i:
+        while not i.finished:
+            i[0] = x
+            x += 1
+            i.iternext()
     assert_equal(a.ravel(order='C'), np.arange(24))
 
 def test_iter_buffering_delayed_alloc():
@@ -1678,10 +1709,11 @@ def test_iter_buffering_delayed_alloc():
     i.reset()
     assert_(not i.has_delayed_bufalloc)
     assert_equal(i.multi_index, (0,))
-    assert_equal(i[0], 0)
-    i[1] = 1
-    assert_equal(i[0:2], [0, 1])
-    assert_equal([[x[0][()], x[1][()]] for x in i], list(zip(range(6), [1]*6)))
+    with i:
+        assert_equal(i[0], 0)
+        i[1] = 1
+        assert_equal(i[0:2], [0, 1])
+        assert_equal([[x[0][()], x[1][()]] for x in i], list(zip(range(6), [1]*6)))
 
 def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast
@@ -1692,8 +1724,9 @@ def test_iter_buffered_cast_simple():
                    casting='same_kind',
                    op_dtypes=[np.dtype('f8')],
                    buffersize=3)
-    for v in i:
-        v[...] *= 2
+    with i:
+        for v in i:
+            v[...] *= 2
 
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
@@ -1706,8 +1739,9 @@ def test_iter_buffered_cast_byteswapped():
                    casting='same_kind',
                    op_dtypes=[np.dtype('f8').newbyteorder()],
                    buffersize=3)
-    for v in i:
-        v[...] *= 2
+    with i:
+        for v in i:
+            v[...] *= 2
 
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
@@ -1720,8 +1754,9 @@ def test_iter_buffered_cast_byteswapped():
                        casting='unsafe',
                        op_dtypes=[np.dtype('c8').newbyteorder()],
                        buffersize=3)
-        for v in i:
-            v[...] *= 2
+        with i:
+            for v in i:
+                v[...] *= 2
 
         assert_equal(a, 2*np.arange(10, dtype='f8'))
 
@@ -1735,8 +1770,9 @@ def test_iter_buffered_cast_byteswapped_complex():
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
-    for v in i:
-        v[...] *= 2
+    with i:
+        for v in i:
+            v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype='c8') + 4j)
 
     a = np.arange(10, dtype='c8')
@@ -1746,8 +1782,9 @@ def test_iter_buffered_cast_byteswapped_complex():
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16').newbyteorder()],
                    buffersize=3)
-    for v in i:
-        v[...] *= 2
+    with i:
+        for v in i:
+            v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype='c8') + 4j)
 
     a = np.arange(10, dtype=np.clongdouble).newbyteorder().byteswap()
@@ -1757,8 +1794,9 @@ def test_iter_buffered_cast_byteswapped_complex():
                    casting='same_kind',
                    op_dtypes=[np.dtype('c16')],
                    buffersize=3)
-    for v in i:
-        v[...] *= 2
+    with i:
+        for v in i:
+            v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype=np.clongdouble) + 4j)
 
     a = np.arange(10, dtype=np.longdouble).newbyteorder().byteswap()
@@ -1767,8 +1805,9 @@ def test_iter_buffered_cast_byteswapped_complex():
                    casting='same_kind',
                    op_dtypes=[np.dtype('f4')],
                    buffersize=7)
-    for v in i:
-        v[...] *= 2
+    with i:
+        for v in i:
+            v[...] *= 2
     assert_equal(a, 2*np.arange(10, dtype=np.longdouble))
 
 def test_iter_buffered_cast_structured_type():
@@ -1879,12 +1918,13 @@ def test_iter_buffered_cast_subarray():
     i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
                     casting='unsafe',
                     op_dtypes=sdt2)
-    assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
-        assert_(np.all(x['a'] == count))
-        x['a'][0] += 2
-        count += 1
+    with i:
+        assert_equal(i[0].dtype, np.dtype(sdt2))
+        count = 0
+        for x in i:
+            assert_(np.all(x['a'] == count))
+            x['a'][0] += 2
+            count += 1
     assert_equal(a['a'], np.arange(6).reshape(6, 1, 1)+2)
 
     # many -> one element -> back (copies just element 0)
@@ -1895,12 +1935,13 @@ def test_iter_buffered_cast_subarray():
     i = nditer(a, ['buffered', 'refs_ok'], ['readwrite'],
                     casting='unsafe',
                     op_dtypes=sdt2)
-    assert_equal(i[0].dtype, np.dtype(sdt2))
-    count = 0
-    for x in i:
-        assert_equal(x['a'], count)
-        x['a'] += 2
-        count += 1
+    with i:
+        assert_equal(i[0].dtype, np.dtype(sdt2))
+        count = 0
+        for x in i:
+            assert_equal(x['a'], count)
+            x['a'] += 2
+            count += 1
     assert_equal(a['a'], np.arange(6).reshape(6, 1, 1, 1)*np.ones((1, 3, 2, 2))+2)
 
     # many -> one element -> back (copies just element 0)
@@ -2082,7 +2123,7 @@ def test_iter_buffering_growinner():
     assert_equal(i[0].size, a.size)
 
 
-@dec.slow
+@pytest.mark.slow
 def test_iter_buffered_reduce_reuse():
     # large enough array for all views, including negative strides.
     a = np.arange(2*3**5)[3**5:3**5+1]
@@ -2108,27 +2149,29 @@ def test_iter_buffered_reduce_reuse():
         nditer2 = np.nditer([arr.copy(), None],
                             op_axes=op_axes, flags=flags, op_flags=op_flags,
                             op_dtypes=op_dtypes)
-        nditer2.operands[-1][...] = 0
-        nditer2.reset()
-        nditer2.iterindex = skip
+        with nditer2:
+            nditer2.operands[-1][...] = 0
+            nditer2.reset()
+            nditer2.iterindex = skip
 
-        for (a2_in, b2_in) in nditer2:
-            b2_in += a2_in.astype(np.int_)
+            for (a2_in, b2_in) in nditer2:
+                b2_in += a2_in.astype(np.int_)
 
-        comp_res = nditer2.operands[-1]
+            comp_res = nditer2.operands[-1]
 
         for bufsize in range(0, 3**3):
             nditer1 = np.nditer([arr, None],
                                 op_axes=op_axes, flags=flags, op_flags=op_flags,
                                 buffersize=bufsize, op_dtypes=op_dtypes)
-            nditer1.operands[-1][...] = 0
-            nditer1.reset()
-            nditer1.iterindex = skip
+            with nditer1:
+                nditer1.operands[-1][...] = 0
+                nditer1.reset()
+                nditer1.iterindex = skip
 
-            for (a1_in, b1_in) in nditer1:
-                b1_in += a1_in.astype(np.int_)
+                for (a1_in, b1_in) in nditer1:
+                    b1_in += a1_in.astype(np.int_)
 
-            res = nditer1.operands[-1]
+                res = nditer1.operands[-1]
             assert_array_equal(res, comp_res)
 
 
@@ -2287,7 +2330,21 @@ class TestIterNested(object):
         assert_equal(vals, [[0, 1, 2], [3, 4, 5]])
         vals = None
 
-        # updateifcopy
+        # writebackifcopy - using conext manager
+        a = arange(6, dtype='f4').reshape(2, 3)
+        i, j = np.nested_iters(a, [[0], [1]],
+                            op_flags=['readwrite', 'updateifcopy'],
+                            casting='same_kind',
+                            op_dtypes='f8')
+        with i, j:
+            assert_equal(j[0].dtype, np.dtype('f8'))
+            for x in i:
+                for y in j:
+                    y[...] += 1
+            assert_equal(a, [[0, 1, 2], [3, 4, 5]])
+        assert_equal(a, [[1, 2, 3], [4, 5, 6]])
+
+        # writebackifcopy - using close()
         a = arange(6, dtype='f4').reshape(2, 3)
         i, j = np.nested_iters(a, [[0], [1]],
                             op_flags=['readwrite', 'updateifcopy'],
@@ -2298,8 +2355,10 @@ class TestIterNested(object):
             for y in j:
                 y[...] += 1
         assert_equal(a, [[0, 1, 2], [3, 4, 5]])
-        i, j, x, y = (None,)*4  # force the updateifcopy
+        i.close()
+        j.close()
         assert_equal(a, [[1, 2, 3], [4, 5, 6]])
+
 
     def test_dtype_buffered(self):
         # Test nested iteration with buffering to change dtype
@@ -2337,6 +2396,21 @@ class TestIterNested(object):
                 vals.append([z for z in k])
         assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
+    def test_iter_nested_iters_dtype_buffered(self):
+        # Test nested iteration with buffering to change dtype
+
+        a = arange(6, dtype='f4').reshape(2, 3)
+        i, j = np.nested_iters(a, [[0], [1]],
+                            flags=['buffered'],
+                            op_flags=['readwrite'],
+                            casting='same_kind',
+                            op_dtypes='f8')
+        with i, j:
+            assert_equal(j[0].dtype, np.dtype('f8'))
+            for x in i:
+                for y in j:
+                    y[...] += 1
+        assert_equal(a, [[1, 2, 3], [4, 5, 6]])
 
 def test_iter_reduction_error():
 
@@ -2358,33 +2432,35 @@ def test_iter_reduction():
                     [['readonly'], ['readwrite', 'allocate']],
                     op_axes=[[0], [-1]])
     # Need to initialize the output operand to the addition unit
-    i.operands[1][...] = 0
-    # Do the reduction
-    for x, y in i:
-        y[...] += x
-    # Since no axes were specified, should have allocated a scalar
-    assert_equal(i.operands[1].ndim, 0)
-    assert_equal(i.operands[1], np.sum(a))
+    with i:
+        i.operands[1][...] = 0
+        # Do the reduction
+        for x, y in i:
+            y[...] += x
+        # Since no axes were specified, should have allocated a scalar
+        assert_equal(i.operands[1].ndim, 0)
+        assert_equal(i.operands[1], np.sum(a))
 
     a = np.arange(6).reshape(2, 3)
     i = nditer([a, None], ['reduce_ok', 'external_loop'],
                     [['readonly'], ['readwrite', 'allocate']],
                     op_axes=[[0, 1], [-1, -1]])
     # Need to initialize the output operand to the addition unit
-    i.operands[1][...] = 0
-    # Reduction shape/strides for the output
-    assert_equal(i[1].shape, (6,))
-    assert_equal(i[1].strides, (0,))
-    # Do the reduction
-    for x, y in i:
-        # Use a for loop instead of ``y[...] += x``
-        # (equivalent to ``y[...] = y[...].copy() + x``),
-        # because y has zero strides we use for the reduction
-        for j in range(len(y)):
-            y[j] += x[j]
-    # Since no axes were specified, should have allocated a scalar
-    assert_equal(i.operands[1].ndim, 0)
-    assert_equal(i.operands[1], np.sum(a))
+    with i:
+        i.operands[1][...] = 0
+        # Reduction shape/strides for the output
+        assert_equal(i[1].shape, (6,))
+        assert_equal(i[1].strides, (0,))
+        # Do the reduction
+        for x, y in i:
+            # Use a for loop instead of ``y[...] += x``
+            # (equivalent to ``y[...] = y[...].copy() + x``),
+            # because y has zero strides we use for the reduction
+            for j in range(len(y)):
+                y[j] += x[j]
+        # Since no axes were specified, should have allocated a scalar
+        assert_equal(i.operands[1].ndim, 0)
+        assert_equal(i.operands[1], np.sum(a))
 
     # This is a tricky reduction case for the buffering double loop
     # to handle
@@ -2396,15 +2472,16 @@ def test_iter_reduction():
                             'buffered', 'delay_bufalloc'],
                     [['readonly'], ['readwrite', 'allocate']],
                     op_axes=[None, [0, -1, 1]], buffersize=10)
-    it1.operands[1].fill(0)
-    it2.operands[1].fill(0)
-    it2.reset()
-    for x in it1:
-        x[1][...] += x[0]
-    for x in it2:
-        x[1][...] += x[0]
-    assert_equal(it1.operands[1], it2.operands[1])
-    assert_equal(it2.operands[1].sum(), a.size)
+    with it1, it2:
+        it1.operands[1].fill(0)
+        it2.operands[1].fill(0)
+        it2.reset()
+        for x in it1:
+            x[1][...] += x[0]
+        for x in it2:
+            x[1][...] += x[0]
+        assert_equal(it1.operands[1], it2.operands[1])
+        assert_equal(it2.operands[1].sum(), a.size)
 
 def test_iter_buffering_reduction():
     # Test doing buffered reductions with the iterator
@@ -2414,11 +2491,12 @@ def test_iter_buffering_reduction():
     i = nditer([a, b], ['reduce_ok', 'buffered'],
                     [['readonly'], ['readwrite', 'nbo']],
                     op_axes=[[0], [-1]])
-    assert_equal(i[1].dtype, np.dtype('f8'))
-    assert_(i[1].dtype != b.dtype)
-    # Do the reduction
-    for x, y in i:
-        y[...] += x
+    with i:
+        assert_equal(i[1].dtype, np.dtype('f8'))
+        assert_(i[1].dtype != b.dtype)
+        # Do the reduction
+        for x, y in i:
+            y[...] += x
     # Since no axes were specified, should have allocated a scalar
     assert_equal(b, np.sum(a))
 
@@ -2428,15 +2506,16 @@ def test_iter_buffering_reduction():
                     [['readonly'], ['readwrite', 'nbo']],
                     op_axes=[[0, 1], [0, -1]])
     # Reduction shape/strides for the output
-    assert_equal(i[1].shape, (3,))
-    assert_equal(i[1].strides, (0,))
-    # Do the reduction
-    for x, y in i:
-        # Use a for loop instead of ``y[...] += x``
-        # (equivalent to ``y[...] = y[...].copy() + x``),
-        # because y has zero strides we use for the reduction
-        for j in range(len(y)):
-            y[j] += x[j]
+    with i:
+        assert_equal(i[1].shape, (3,))
+        assert_equal(i[1].strides, (0,))
+        # Do the reduction
+        for x, y in i:
+            # Use a for loop instead of ``y[...] += x``
+            # (equivalent to ``y[...] = y[...].copy() + x``),
+            # because y has zero strides we use for the reduction
+            for j in range(len(y)):
+                y[j] += x[j]
     assert_equal(b, np.sum(a, axis=1))
 
     # Iterator inner double loop was wrong on this one
@@ -2446,9 +2525,10 @@ def test_iter_buffering_reduction():
             [['readonly'], ['readwrite', 'allocate']],
             op_axes=[[-1, 0], [-1, -1]],
             itershape=(2, 2))
-    it.operands[1].fill(0)
-    it.reset()
-    assert_equal(it[0], [1, 2, 1, 2])
+    with it:
+        it.operands[1].fill(0)
+        it.reset()
+        assert_equal(it[0], [1, 2, 1, 2])
 
     # Iterator inner loop should take argument contiguity into account
     x = np.ones((7, 13, 8), np.int8)[4:6,1:11:6,1:5].transpose(1, 2, 0)
@@ -2460,8 +2540,9 @@ def test_iter_buffering_reduction():
     it = np.nditer([y, x],
                    ['buffered', 'external_loop', 'reduce_ok'],
                    [['readwrite'], ['readonly']])
-    for a, b in it:
-        a.fill(2)
+    with it:
+        for a, b in it:
+            a.fill(2)
 
     assert_equal(y_base[1::2], y_base_copy[1::2])
     assert_equal(y_base[::2], 2)
@@ -2478,8 +2559,9 @@ def test_iter_buffering_reduction_reuse_reduce_loops():
                     buffersize=5)
 
     bufsizes = []
-    for x, y in it:
-        bufsizes.append(x.shape[0])
+    with it:
+        for x, y in it:
+            bufsizes.append(x.shape[0])
     assert_equal(bufsizes, [5, 2, 5, 2])
     assert_equal(sum(bufsizes), a.size)
 
@@ -2558,8 +2640,9 @@ def test_iter_writemasked():
     it = np.nditer([a, msk], [],
                 [['readwrite', 'writemasked'],
                  ['readonly', 'arraymask']])
-    for x, m in it:
-        x[...] = 1
+    with it:
+        for x, m in it:
+            x[...] = 1
     # Because we violated the semantics, all the values became 1
     assert_equal(a, [1, 1, 1])
 
@@ -2568,8 +2651,9 @@ def test_iter_writemasked():
     it = np.nditer([a, msk], ['buffered'],
                 [['readwrite', 'writemasked'],
                  ['readonly', 'arraymask']])
-    for x, m in it:
-        x[...] = 2.5
+    with it:
+        for x, m in it:
+            x[...] = 2.5
     # Because we violated the semantics, all the values became 2.5
     assert_equal(a, [2.5, 2.5, 2.5])
 
@@ -2581,8 +2665,9 @@ def test_iter_writemasked():
                  ['readonly', 'arraymask']],
                 op_dtypes=['i8', None],
                 casting='unsafe')
-    for x, m in it:
-        x[...] = 3
+    with it:
+        for x, m in it:
+            x[...] = 3
     # Even though we violated the semantics, only the selected values
     # were copied back
     assert_equal(a, [3, 3, 2.5])
@@ -2697,19 +2782,101 @@ def test_iter_too_large_with_multiindex():
     # arrays are now too large to be broadcast. The different modes test
     # different nditer functionality with or without GIL.
     for mode in range(6):
-        assert_raises(ValueError, test_nditer_too_large, arrays, -1, mode)
+        with assert_raises(ValueError):
+            _multiarray_tests.test_nditer_too_large(arrays, -1, mode)
     # but if we do nothing with the nditer, it can be constructed:
-    test_nditer_too_large(arrays, -1, 7)
+    _multiarray_tests.test_nditer_too_large(arrays, -1, 7)
 
     # When an axis is removed, things should work again (half the time):
     for i in range(num):
         for mode in range(6):
             # an axis with size 1024 is removed:
-            test_nditer_too_large(arrays, i*2, mode)
+            _multiarray_tests.test_nditer_too_large(arrays, i*2, mode)
             # an axis with size 1 is removed:
-            assert_raises(ValueError, test_nditer_too_large,
-                          arrays, i*2 + 1, mode)
+            with assert_raises(ValueError):
+                _multiarray_tests.test_nditer_too_large(arrays, i*2 + 1, mode)
 
+def test_writebacks():
+    a = np.arange(6, dtype='f4')
+    au = a.byteswap().newbyteorder()
+    assert_(a.dtype.byteorder != au.dtype.byteorder)
+    it = nditer(au, [], [['readwrite', 'updateifcopy']],
+                        casting='equiv', op_dtypes=[np.dtype('f4')])
+    with it:
+        it.operands[0][:] = 100
+    assert_equal(au, 100)
+    # do it again, this time raise an error,
+    it = nditer(au, [], [['readwrite', 'updateifcopy']],
+                        casting='equiv', op_dtypes=[np.dtype('f4')])
+    try:
+        with it:
+            assert_equal(au.flags.writeable, False)
+            it.operands[0][:] = 0
+            raise ValueError('exit context manager on exception')
+    except:
+        pass
+    assert_equal(au, 0)
+    assert_equal(au.flags.writeable, True)
+    # cannot reuse i outside context manager
+    assert_raises(ValueError, getattr, it, 'operands')
 
-if __name__ == "__main__":
-    run_module_suite()
+    it = nditer(au, [], [['readwrite', 'updateifcopy']],
+                        casting='equiv', op_dtypes=[np.dtype('f4')])
+    with it:
+        x = it.operands[0]
+        x[:] = 6
+        assert_(x.flags.writebackifcopy)
+    assert_equal(au, 6)
+    assert_(not x.flags.writebackifcopy)
+    x[:] = 123 # x.data still valid
+    assert_equal(au, 6) # but not connected to au
+
+    do_close = 1
+    # test like above, only in C, and with an option to skip the NpyIter_Close
+    _multiarray_tests.test_nditer_writeback(3, do_close, au, op_dtypes=[np.dtype('f4')])
+    assert_equal(au, 3)
+    it = nditer(au, [],
+                 [['readwrite', 'updateifcopy']],
+                 casting='equiv', op_dtypes=[np.dtype('f4')])
+    au = None
+    # do not crash if original data array is decrefed
+    with it:
+        for x in it:
+            x[...] = 123
+    # make sure we cannot reenter the iterand
+    enter = it.__enter__
+    assert_raises(ValueError, enter)
+
+def test_close():
+    ''' using a context amanger and using nditer.close are equivalent
+    '''
+    def add_close(x, y, out=None):
+        addop = np.add
+        it = np.nditer([x, y, out], [],
+                    [['readonly'], ['readonly'], ['writeonly','allocate']])
+        for (a, b, c) in it:
+            addop(a, b, out=c)
+        it.close()
+        return it.operands[2]
+    def add_context(x, y, out=None):
+        addop = np.add
+        it = np.nditer([x, y, out], [],
+                    [['readonly'], ['readonly'], ['writeonly','allocate']])
+        with it:
+            for (a, b, c) in it:
+                addop(a, b, out=c)
+            return it.operands[2]
+    z = add_close(range(5), range(5))
+    assert_equal(z, range(0, 10, 2))
+    z = add_context(range(5), range(5))
+    assert_equal(z, range(0, 10, 2))
+
+def test_warn_noclose():
+    a = np.arange(6, dtype='f4')
+    au = a.byteswap().newbyteorder()
+    do_close = 0
+    with suppress_warnings() as sup:
+        sup.record(RuntimeWarning)
+        # test like above, only in C, and with an option to skip the NpyIter_Close
+        _multiarray_tests.test_nditer_writeback(3, do_close, au, op_dtypes=[np.dtype('f4')])
+        assert len(sup.log) == 1

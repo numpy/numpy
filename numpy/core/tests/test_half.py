@@ -1,10 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import platform
+import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import run_module_suite, assert_, assert_equal, dec
+from numpy.testing import assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -355,7 +356,8 @@ class TestHalf(object):
         assert_equal(np.power(b32, a16).dtype, float16)
         assert_equal(np.power(b32, b16).dtype, float32)
 
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+    @pytest.mark.skipif(platform.machine() == "armv5tel",
+                        reason="See gh-413.")
     def test_half_fpe(self):
         with np.errstate(all='raise'):
             sx16 = np.array((1e-4,), dtype=float16)
@@ -431,7 +433,3 @@ class TestHalf(object):
         c = np.array(b)
         assert_(c.dtype == float16)
         assert_equal(a, c)
-
-
-if __name__ == "__main__":
-    run_module_suite()

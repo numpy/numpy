@@ -198,7 +198,7 @@ _check_for_commastring(char *type, Py_ssize_t len)
      * allows commas inside of [], for parameterized dtypes to use.
      */
     sqbracket = 0;
-    for (i = 1; i < len; i++) {
+    for (i = 0; i < len; i++) {
         switch (type[i]) {
             case ',':
                 if (sqbracket == 0) {
@@ -243,7 +243,7 @@ is_datetime_typestr(char *type, Py_ssize_t len)
 }
 
 static PyArray_Descr *
-_convert_from_tuple(PyObject *obj)
+_convert_from_tuple(PyObject *obj, int align)
 {
     PyArray_Descr *type, *res;
     PyObject *val;
@@ -252,9 +252,16 @@ _convert_from_tuple(PyObject *obj)
     if (PyTuple_GET_SIZE(obj) != 2) {
         return NULL;
     }
-    if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) {
-        return NULL;
+    if (align) {
+        if (!PyArray_DescrAlignConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
     }
+    else {
+        if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
+    }    
     val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
     res = _use_inherit(type, val, &errflag);
@@ -437,7 +444,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         name = PyTuple_GET_ITEM(item, 0);
-        if (PyUString_Check(name)) {
+        if (PyBaseString_Check(name)) {
             title = NULL;
         }
         else if (PyTuple_Check(name)) {
@@ -446,7 +453,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
-            if (!PyUString_Check(name)) {
+            if (!PyBaseString_Check(name)) {
                 goto fail;
             }
         }
@@ -457,6 +464,17 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
+#if !defined(NPY_PY3K)
+        /* convert unicode name to ascii on Python 2 if possible */ 
+        if (PyUnicode_Check(name)) {
+            PyObject *tmp = PyUnicode_AsASCIIString(name);
+            Py_DECREF(name);
+            if (tmp == NULL) { 
+                goto fail;
+            }
+            name = tmp;
+        }
+#endif
         if (PyUString_GET_SIZE(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
@@ -1536,7 +1554,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
-        *at = _convert_from_tuple(obj);
+        *at = _convert_from_tuple(obj, 0);
         if (*at == NULL){
             if (PyErr_Occurred()) {
                 return NPY_FAIL;
@@ -2917,6 +2935,9 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
         *at = _convert_from_commastring(tmp, 1);
         Py_DECREF(tmp);
     }
+    else if (PyTuple_Check(obj)) {
+        *at = _convert_from_tuple(obj, 1);
+    }
     else if (PyList_Check(obj)) {
         *at = _convert_from_array_descr(obj, 1);
     }
@@ -3340,8 +3361,8 @@ arraydescr_struct_str(PyArray_Descr *dtype, int includealignflag)
         sub = arraydescr_struct_dict_str(dtype, includealignflag);
     }
 
-    /* If the data type has a non-void (subclassed) type, show it */
-    if (dtype->type_num == NPY_VOID && dtype->typeobj != &PyVoidArrType_Type) {
+    /* If the data type isn't the default, void, show it */
+    if (dtype->typeobj != &PyVoidArrType_Type) {
         /*
          * Note: We cannot get the type name from dtype->typeobj->tp_name
          * because its value depends on whether the type is dynamically or

@@ -4,14 +4,14 @@ import warnings
 import itertools
 
 import numpy as np
-import numpy.core.umath_tests as umt
-import numpy.core.operand_flag_tests as opflag_tests
-from numpy.core.test_rational import rational, test_add, test_add_rationals
+import numpy.core._umath_tests as umt
+import numpy.core._operand_flag_tests as opflag_tests
+import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_no_warnings, assert_allclose,
-)
+    assert_, assert_equal, assert_raises, assert_array_equal,
+    assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
+    assert_allclose,
+    )
 
 
 class TestUfuncKwargs(object):
@@ -42,8 +42,9 @@ class TestUfunc(object):
         assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
 
         # Check that ufunc not defined in the top level numpy namespace such as
-        # numpy.core.test_rational.test_add can also be pickled
-        assert_(pickle.loads(pickle.dumps(test_add)) is test_add)
+        # numpy.core._rational_tests.test_add can also be pickled
+        res = pickle.loads(pickle.dumps(_rational_tests.test_add))
+        assert_(res is _rational_tests.test_add)
 
     def test_pickle_withstring(self):
         import pickle
@@ -597,6 +598,105 @@ class TestUfunc(object):
         umt.inner1d(a, b, out=c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a*b, axis=-1), err_msg=msg)
 
+    def test_axes_argument(self):
+        # inner1d signature: '(i),(i)->()'
+        in1d = umt.inner1d
+        a = np.arange(27.).reshape((3, 3, 3))
+        b = np.arange(10., 19.).reshape((3, 1, 3))
+        # basic tests on inputs (outputs tested below with matrix_multiply).
+        c = in1d(a, b)
+        assert_array_equal(c, (a * b).sum(-1))
+        # default
+        c = in1d(a, b, axes=[(-1,), (-1,), ()])
+        assert_array_equal(c, (a * b).sum(-1))
+        # integers ok for single axis.
+        c = in1d(a, b, axes=[-1, -1, ()])
+        assert_array_equal(c, (a * b).sum(-1))
+        # mix fine
+        c = in1d(a, b, axes=[(-1,), -1, ()])
+        assert_array_equal(c, (a * b).sum(-1))
+        # can omit last axis.
+        c = in1d(a, b, axes=[-1, -1])
+        assert_array_equal(c, (a * b).sum(-1))
+        # can pass in other types of integer (with __index__ protocol)
+        c = in1d(a, b, axes=[np.int8(-1), np.array(-1, dtype=np.int32)])
+        assert_array_equal(c, (a * b).sum(-1))
+        # swap some axes
+        c = in1d(a, b, axes=[0, 0])
+        assert_array_equal(c, (a * b).sum(0))
+        c = in1d(a, b, axes=[0, 2])
+        assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
+        # Check errors for improperly constructed axes arguments.
+        # should have list.
+        assert_raises(TypeError, in1d, a, b, axes=-1)
+        # needs enough elements
+        assert_raises(ValueError, in1d, a, b, axes=[-1])
+        # should pass in indices.
+        assert_raises(TypeError, in1d, a, b, axes=[-1.0, -1.0])
+        assert_raises(TypeError, in1d, a, b, axes=[(-1.0,), -1])
+        assert_raises(TypeError, in1d, a, b, axes=[None, 1])
+        # cannot pass an index unless there is only one dimension
+        # (output is wrong in this case)
+        assert_raises(TypeError, in1d, a, b, axes=[-1, -1, -1])
+        # or pass in generally the wrong number of axes
+        assert_raises(ValueError, in1d, a, b, axes=[-1, -1, (-1,)])
+        assert_raises(ValueError, in1d, a, b, axes=[-1, (-2, -1), ()])
+        # axes need to have same length.
+        assert_raises(ValueError, in1d, a, b, axes=[0, 1])
+
+        # matrix_multiply signature: '(m,n),(n,p)->(m,p)'
+        mm = umt.matrix_multiply
+        a = np.arange(12).reshape((2, 3, 2))
+        b = np.arange(8).reshape((2, 2, 2, 1)) + 1
+        # Sanity check.
+        c = mm(a, b)
+        assert_array_equal(c, np.matmul(a, b))
+        # Default axes.
+        c = mm(a, b, axes=[(-2, -1), (-2, -1), (-2, -1)])
+        assert_array_equal(c, np.matmul(a, b))
+        # Default with explicit axes.
+        c = mm(a, b, axes=[(1, 2), (2, 3), (2, 3)])
+        assert_array_equal(c, np.matmul(a, b))
+        # swap some axes.
+        c = mm(a, b, axes=[(0, -1), (1, 2), (-2, -1)])
+        assert_array_equal(c, np.matmul(a.transpose(1, 0, 2),
+                                        b.transpose(0, 3, 1, 2)))
+        # Default with output array.
+        c = np.empty((2, 2, 3, 1))
+        d = mm(a, b, out=c, axes=[(1, 2), (2, 3), (2, 3)])
+        assert_(c is d)
+        assert_array_equal(c, np.matmul(a, b))
+        # Transposed output array
+        c = np.empty((1, 2, 2, 3))
+        d = mm(a, b, out=c, axes=[(-2, -1), (-2, -1), (3, 0)])
+        assert_(c is d)
+        assert_array_equal(c, np.matmul(a, b).transpose(3, 0, 1, 2))
+        # Check errors for improperly constructed axes arguments.
+        # wrong argument
+        assert_raises(TypeError, mm, a, b, axis=1)
+        # axes should be list
+        assert_raises(TypeError, mm, a, b, axes=1)
+        assert_raises(TypeError, mm, a, b, axes=((-2, -1), (-2, -1), (-2, -1)))
+        # list needs to have right length
+        assert_raises(ValueError, mm, a, b, axes=[])
+        assert_raises(ValueError, mm, a, b, axes=[(-2, -1)])
+        # list should contain tuples for multiple axes
+        assert_raises(TypeError, mm, a, b, axes=[-1, -1, -1])
+        assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
+        assert_raises(TypeError,
+                      mm, a, b, axes=[[-2, -1], [-2, -1], [-2, -1]])
+        assert_raises(TypeError,
+                      mm, a, b, axes=[(-2, -1), (-2, -1), [-2, -1]])
+        assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), None])
+        # tuples should not have duplicated values
+        assert_raises(ValueError, mm, a, b, axes=[(-2, -1), (-2, -1), (-2, -2)])
+        # arrays should have enough axes.
+        z = np.zeros((2, 2))
+        assert_raises(ValueError, mm, z, z[0])
+        assert_raises(ValueError, mm, z, z, out=z[:, 0])
+        assert_raises(ValueError, mm, z[1], z, axes=[0, 1])
+        assert_raises(ValueError, mm, z, z, out=z[0], axes=[0, 1])
+
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
         b = np.arange(10, 16).reshape((2, 3))
@@ -713,6 +813,21 @@ class TestUfunc(object):
 
         assert_equal(np.logical_or.reduce(a), 3)
         assert_equal(np.logical_and.reduce(a), None)
+
+    def test_object_comparison(self):
+        class HasComparisons(object):
+            def __eq__(self, other):
+                return '=='
+
+        arr0d = np.array(HasComparisons())
+        assert_equal(arr0d == arr0d, True)
+        assert_equal(np.equal(arr0d, arr0d), True)  # normal behavior is a cast
+        assert_equal(np.equal(arr0d, arr0d, dtype=object), '==')
+
+        arr1d = np.array([HasComparisons()])
+        assert_equal(arr1d == arr1d, np.array([True]))
+        assert_equal(np.equal(arr1d, arr1d), np.array([True]))  # normal behavior is a cast
+        assert_equal(np.equal(arr1d, arr1d, dtype=object), np.array(['==']))
 
     def test_object_array_reduction(self):
         # Reductions on object arrays
@@ -1044,15 +1159,17 @@ class TestUfunc(object):
 
         a = np.array([0, 1, 2], dtype='i8')
         b = np.array([0, 1, 2], dtype='i8')
-        c = np.empty(3, dtype=rational)
+        c = np.empty(3, dtype=_rational_tests.rational)
 
         # Output must be specified so numpy knows what
         # ufunc signature to look for
-        result = test_add(a, b, c)
-        assert_equal(result, np.array([0, 2, 4], dtype=rational))
+        result = _rational_tests.test_add(a, b, c)
+        target = np.array([0, 2, 4], dtype=_rational_tests.rational)
+        assert_equal(result, target)
 
         # no output type should raise TypeError
-        assert_raises(TypeError, test_add, a, b)
+        with assert_raises(TypeError):
+            _rational_tests.test_add(a, b)
 
     def test_operand_flags(self):
         a = np.arange(16, dtype='l').reshape(4, 4)
@@ -1068,7 +1185,7 @@ class TestUfunc(object):
         assert_equal(a, 10)
 
     def test_struct_ufunc(self):
-        import numpy.core.struct_ufunc_test as struct_ufunc
+        import numpy.core._struct_ufunc_tests as struct_ufunc
 
         a = np.array([(1, 2, 3)], dtype='u8,u8,u8')
         b = np.array([(1, 2, 3)], dtype='u8,u8,u8')
@@ -1077,20 +1194,30 @@ class TestUfunc(object):
         assert_equal(result, np.array([(2, 4, 6)], dtype='u8,u8,u8'))
 
     def test_custom_ufunc(self):
-        a = np.array([rational(1, 2), rational(1, 3), rational(1, 4)],
-            dtype=rational)
-        b = np.array([rational(1, 2), rational(1, 3), rational(1, 4)],
-            dtype=rational)
+        a = np.array(
+            [_rational_tests.rational(1, 2),
+             _rational_tests.rational(1, 3),
+             _rational_tests.rational(1, 4)],
+            dtype=_rational_tests.rational)
+        b = np.array(
+            [_rational_tests.rational(1, 2),
+             _rational_tests.rational(1, 3),
+             _rational_tests.rational(1, 4)],
+            dtype=_rational_tests.rational)
 
-        result = test_add_rationals(a, b)
-        expected = np.array([rational(1), rational(2, 3), rational(1, 2)],
-            dtype=rational)
+        result = _rational_tests.test_add_rationals(a, b)
+        expected = np.array(
+            [_rational_tests.rational(1),
+             _rational_tests.rational(2, 3),
+             _rational_tests.rational(1, 2)],
+            dtype=_rational_tests.rational)
         assert_equal(result, expected)
 
     def test_custom_ufunc_forced_sig(self):
         # gh-9351 - looking for a non-first userloop would previously hang
-        assert_raises(TypeError,
-            np.multiply, rational(1), 1, signature=(rational, int, None))
+        with assert_raises(TypeError):
+            np.multiply(_rational_tests.rational(1), 1,
+                        signature=(_rational_tests.rational, int, None))
 
     def test_custom_array_like(self):
 
@@ -1378,7 +1505,3 @@ class TestUfunc(object):
     def test_no_doc_string(self):
         # gh-9337
         assert_('\n' not in umt.inner1d_no_doc.__doc__)
-
-
-if __name__ == "__main__":
-    run_module_suite()

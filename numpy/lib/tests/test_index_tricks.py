@@ -2,9 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_raises_regex
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_raises_regex
     )
 from numpy.lib.index_tricks import (
     mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
@@ -285,71 +284,77 @@ def test_c_():
     assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
 
 
-def test_fill_diagonal():
-    a = np.zeros((3, 3), int)
-    fill_diagonal(a, 5)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5]]))
+class TestFillDiagonal(object):
+    def test_basic(self):
+        a = np.zeros((3, 3), int)
+        fill_diagonal(a, 5)
+        assert_array_equal(
+            a, np.array([[5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5]])
+            )
 
-    #Test tall matrix
-    a = np.zeros((10, 3), int)
-    fill_diagonal(a, 5)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0]]))
+    def test_tall_matrix(self):
+        a = np.zeros((10, 3), int)
+        fill_diagonal(a, 5)
+        assert_array_equal(
+            a, np.array([[5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0]])
+            )
 
-    #Test tall matrix wrap
-    a = np.zeros((10, 3), int)
-    fill_diagonal(a, 5, True)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5],
-                  [0, 0, 0],
-                  [5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5],
-                  [0, 0, 0],
-                  [5, 0, 0],
-                  [0, 5, 0]]))
+    def test_tall_matrix_wrap(self):
+        a = np.zeros((10, 3), int)
+        fill_diagonal(a, 5, True)
+        assert_array_equal(
+            a, np.array([[5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5],
+                         [0, 0, 0],
+                         [5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5],
+                         [0, 0, 0],
+                         [5, 0, 0],
+                         [0, 5, 0]])
+            )
 
-    #Test wide matrix
-    a = np.zeros((3, 10), int)
-    fill_diagonal(a, 5)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                  [0, 5, 0, 0, 0, 0, 0, 0, 0, 0],
-                  [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]]))
+    def test_wide_matrix(self):
+        a = np.zeros((3, 10), int)
+        fill_diagonal(a, 5)
+        assert_array_equal(
+            a, np.array([[5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                         [0, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+                         [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]])
+            )
 
-    # The same function can operate on a 4-d array:
-    a = np.zeros((3, 3, 3, 3), int)
-    fill_diagonal(a, 4)
-    i = np.array([0, 1, 2])
-    yield (assert_equal, np.where(a != 0), (i, i, i, i))
+    def test_operate_4d_array(self):
+        a = np.zeros((3, 3, 3, 3), int)
+        fill_diagonal(a, 4)
+        i = np.array([0, 1, 2])
+        assert_equal(np.where(a != 0), (i, i, i, i))
 
 
 def test_diag_indices():
     di = diag_indices(4)
     a = np.array([[1, 2, 3, 4],
-               [5, 6, 7, 8],
-               [9, 10, 11, 12],
-               [13, 14, 15, 16]])
+                  [5, 6, 7, 8],
+                  [9, 10, 11, 12],
+                  [13, 14, 15, 16]])
     a[di] = 100
-    yield (assert_array_equal, a,
-           np.array([[100, 2, 3, 4],
-                  [5, 100, 7, 8],
-                  [9, 10, 100, 12],
-                  [13, 14, 15, 100]]))
+    assert_array_equal(
+        a, np.array([[100, 2, 3, 4],
+                     [5, 100, 7, 8],
+                     [9, 10, 100, 12],
+                     [13, 14, 15, 100]])
+        )
 
     # Now, we create indices to manipulate a 3-d array:
     d3 = diag_indices(2, 3)
@@ -357,12 +362,12 @@ def test_diag_indices():
     # And use it to set the diagonal of a zeros array to 1:
     a = np.zeros((2, 2, 2), int)
     a[d3] = 1
-    yield (assert_array_equal, a,
-           np.array([[[1, 0],
-                   [0, 0]],
-
-                  [[0, 0],
-                   [0, 1]]]))
+    assert_array_equal(
+        a, np.array([[[1, 0],
+                      [0, 0]],
+                     [[0, 0],
+                      [0, 1]]])
+        )
 
 
 def test_diag_indices_from():
@@ -394,7 +399,3 @@ def test_ndindex():
     # Make sure 0-sized ndindex works correctly
     x = list(ndindex(*[0]))
     assert_equal(x, [])
-
-
-if __name__ == "__main__":
-    run_module_suite()

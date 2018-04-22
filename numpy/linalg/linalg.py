@@ -24,7 +24,7 @@ from numpy.core import (
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
     broadcast, atleast_2d, intp, asanyarray, object_, ones, matmul,
-    swapaxes, divide, count_nonzero
+    swapaxes, divide, count_nonzero, ndarray, isnan
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
@@ -96,6 +96,9 @@ def _raise_linalgerror_eigenvalues_nonconvergence(err, flag):
 
 def _raise_linalgerror_svd_nonconvergence(err, flag):
     raise LinAlgError("SVD did not converge")
+
+def _raise_linalgerror_lstsq(err, flag):
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
 
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)  # make a copy
@@ -1538,11 +1541,40 @@ def cond(x, p=None):
 
     """
     x = asarray(x)  # in case we have a matrix
-    if p is None:
+    if p is None or p == 2 or p == -2:
         s = svd(x, compute_uv=False)
-        return s[..., 0]/s[..., -1]
+        with errstate(all='ignore'):
+            if p == -2:
+                r = s[..., -1] / s[..., 0]
+            else:
+                r = s[..., 0] / s[..., -1]
     else:
-        return norm(x, p, axis=(-2, -1)) * norm(inv(x), p, axis=(-2, -1))
+        # Call inv(x) ignoring errors. The result array will
+        # contain nans in the entries where inversion failed.
+        _assertRankAtLeast2(x)
+        _assertNdSquareness(x)
+        t, result_t = _commonType(x)
+        signature = 'D->D' if isComplexType(t) else 'd->d'
+        with errstate(all='ignore'):
+            invx = _umath_linalg.inv(x, signature=signature)
+            r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
+        r = r.astype(result_t, copy=False)
+
+    # Convert nans to infs unless the original array had nan entries
+    r = asarray(r)
+    nan_mask = isnan(r)
+    if nan_mask.any():
+        nan_mask &= ~isnan(x).any(axis=(-2, -1))
+        if r.ndim > 0:
+            r[nan_mask] = Inf
+        elif nan_mask:
+            r[()] = Inf
+
+    # Convention is to return scalars instead of 0d arrays
+    if r.ndim == 0:
+        r = r[()]
+
+    return r
 
 
 def matrix_rank(M, tol=None, hermitian=False):
@@ -1955,7 +1987,7 @@ def lstsq(a, b, rcond="warn"):
            [ 2.,  1.],
            [ 3.,  1.]])
 
-    >>> m, c = np.linalg.lstsq(A, y)[0]
+    >>> m, c = np.linalg.lstsq(A, y, rcond=None)[0]
     >>> print(m, c)
     1.0 -0.95
 
@@ -1968,7 +2000,6 @@ def lstsq(a, b, rcond="warn"):
     >>> plt.show()
 
     """
-    import math
     a, _ = _makearray(a)
     b, wrap = _makearray(b)
     is_1d = b.ndim == 1
@@ -1979,7 +2010,6 @@ def lstsq(a, b, rcond="warn"):
     m  = a.shape[0]
     n  = a.shape[1]
     n_rhs = b.shape[1]
-    ldb = max(n, m)
     if m != b.shape[0]:
         raise LinAlgError('Incompatible dimensions')
 
@@ -1999,61 +2029,16 @@ def lstsq(a, b, rcond="warn"):
                       FutureWarning, stacklevel=2)
         rcond = -1
     if rcond is None:
-        rcond = finfo(t).eps * ldb
+        rcond = finfo(t).eps * max(n, m)
 
-    bstar = zeros((ldb, n_rhs), t)
-    bstar[:m, :n_rhs] = b
-    a, bstar = _fastCopyAndTranspose(t, a, bstar)
-    a, bstar = _to_native_byte_order(a, bstar)
-    s = zeros((min(m, n),), real_t)
-    # This line:
-    #  * is incorrect, according to the LAPACK documentation
-    #  * raises a ValueError if min(m,n) == 0
-    #  * should not be calculated here anyway, as LAPACK should calculate
-    #    `liwork` for us. But that only works if our version of lapack does
-    #    not have this bug:
-    #      http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg00899.html
-    #    Lapack_lite does have that bug...
-    nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
-    iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgelsd
-        lwork = 1
-        rwork = zeros((lwork,), real_t)
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, -1, rwork, iwork, 0)
-        lrwork = int(rwork[0])
-        lwork = int(work[0].real)
-        work = zeros((lwork,), t)
-        rwork = zeros((lrwork,), real_t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, lwork, rwork, iwork, 0)
+    if m <= n:
+        gufunc = _umath_linalg.lstsq_m
     else:
-        lapack_routine = lapack_lite.dgelsd
-        lwork = 1
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, -1, iwork, 0)
-        lwork = int(work[0])
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, lwork, iwork, 0)
-    if results['info'] > 0:
-        raise LinAlgError('SVD did not converge in Linear Least Squares')
+        gufunc = _umath_linalg.lstsq_n
 
-    # undo transpose imposed by fortran-order arrays
-    b_out = bstar.T
-
-    # b_out contains both the solution and the components of the residuals
-    x = b_out[:n,:]
-    r_parts = b_out[n:,:]
-    if isComplexType(t):
-        resids = sum(abs(r_parts)**2, axis=-2)
-    else:
-        resids = sum(r_parts**2, axis=-2)
-
-    rank = results['rank']
+    signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_lstsq)
+    x, resids, rank, s = gufunc(a, b, rcond, signature=signature, extobj=extobj)
 
     # remove the axis we added
     if is_1d:

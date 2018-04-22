@@ -16,8 +16,12 @@
 #define Treal float
 #endif
 
-
 #define ref(u,a) u[a]
+
+/* Macros for accurate calculation of the twiddle factors. */
+#define TWOPI 6.283185307179586476925286766559005768391
+#define cos2pi(m, n) cos((TWOPI * (m)) / (n))
+#define sin2pi(m, n) sin((TWOPI * (m)) / (n))
 
 #define MAXFAC 13    /* maximum number of factors in factorization of n */
 #define NSPECIAL 4   /* number of factors for which we have special-case routines */
@@ -26,6 +30,54 @@
 extern "C" {
 #endif
 
+static void sincos2pi(int m, int n, Treal* si, Treal* co)
+/* Calculates sin(2pi * m/n) and cos(2pi * m/n). It is more accurate
+ * than the naive calculation as the fraction m/n is reduced to [0, 1/8) first.
+ * Due to the symmetry of sin(x) and cos(x) the values for all x can be
+ * determined from the function values of the reduced argument in the first
+ * octant.
+ */
+    {
+        int n8, m8, octant;
+        n8 = 8 * n;
+        m8 = (8 * m) % n8;
+        octant = m8 / n;
+        m8 = m8 % n;
+        switch(octant) {
+            case 0:
+                *co = cos2pi(m8, n8);
+                *si = sin2pi(m8, n8);
+                break;
+            case 1:
+                *co = sin2pi(n-m8, n8);
+                *si = cos2pi(n-m8, n8);
+                break;
+            case 2:
+                *co = -sin2pi(m8, n8);
+                *si = cos2pi(m8, n8);
+                break;
+            case 3:
+                *co = -cos2pi(n-m8, n8);
+                *si = sin2pi(n-m8, n8);
+                break;
+            case 4:
+                *co = -cos2pi(m8, n8);
+                *si = -sin2pi(m8, n8);
+                break;
+            case 5:
+                *co = -sin2pi(n-m8, n8);
+                *si = -cos2pi(n-m8, n8);
+                break;
+            case 6:
+                *co = sin2pi(m8, n8);
+                *si = -cos2pi(m8, n8);
+                break;
+            case 7:
+                *co = cos2pi(n-m8, n8);
+                *si = -sin2pi(n-m8, n8);
+                break;
+        }
+    }
 
 /* ----------------------------------------------------------------------
    passf2, passf3, passf4, passf5, passf. Complex FFT passes fwd and bwd.
@@ -67,7 +119,7 @@ static void passf3(int ido, int l1, const Treal cc[], Treal ch[],
   /* isign==+1 for backward transform */
   {
     static const Treal taur = -0.5;
-    static const Treal taui = 0.866025403784439;
+    static const Treal taui = 0.86602540378443864676;
     int i, k, ac, ah;
     Treal ci2, ci3, di2, di3, cr2, cr3, dr2, dr3, ti2, tr2;
     if (ido == 2) {
@@ -180,10 +232,10 @@ static void passf5(int ido, int l1, const Treal cc[], Treal ch[],
       const Treal wa1[], const Treal wa2[], const Treal wa3[], const Treal wa4[], int isign)
   /* isign == -1 for forward transform and +1 for backward transform */
   {
-    static const Treal tr11 = 0.309016994374947;
-    static const Treal ti11 = 0.951056516295154;
-    static const Treal tr12 = -0.809016994374947;
-    static const Treal ti12 = 0.587785252292473;
+    static const Treal tr11 = 0.3090169943749474241;
+    static const Treal ti11 = 0.95105651629515357212;
+    static const Treal tr12 = -0.8090169943749474241;
+    static const Treal ti12 = 0.58778525229247312917;
     int i, k, ac, ah;
     Treal ci2, ci3, ci4, ci5, di3, di4, di5, di2, cr2, cr3, cr5, cr4, ti2, ti3,
         ti4, ti5, dr3, dr4, dr5, dr2, tr2, tr3, tr4, tr5;
@@ -469,7 +521,7 @@ static void radf3(int ido, int l1, const Treal cc[], Treal ch[],
       const Treal wa1[], const Treal wa2[])
   {
     static const Treal taur = -0.5;
-    static const Treal taui = 0.866025403784439;
+    static const Treal taui = 0.86602540378443864676;
     int i, k, ic;
     Treal ci2, di2, di3, cr2, dr2, dr3, ti2, ti3, tr2, tr3;
     for (k=0; k<l1; k++) {
@@ -508,7 +560,7 @@ static void radb3(int ido, int l1, const Treal cc[], Treal ch[],
       const Treal wa1[], const Treal wa2[])
   {
     static const Treal taur = -0.5;
-    static const Treal taui = 0.866025403784439;
+    static const Treal taui = 0.86602540378443864676;
     int i, k, ic;
     Treal ci2, ci3, di2, di3, cr2, cr3, dr2, dr3, ti2, tr2;
     for (k=0; k<l1; k++) {
@@ -547,7 +599,7 @@ static void radb3(int ido, int l1, const Treal cc[], Treal ch[],
 static void radf4(int ido, int l1, const Treal cc[], Treal ch[],
       const Treal wa1[], const Treal wa2[], const Treal wa3[])
   {
-    static const Treal hsqt2 = 0.7071067811865475;
+    static const Treal hsqt2 = 0.70710678118654752440;
     int i, k, ic;
     Treal ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4;
     for (k=0; k<l1; k++) {
@@ -607,7 +659,7 @@ static void radf4(int ido, int l1, const Treal cc[], Treal ch[],
 static void radb4(int ido, int l1, const Treal cc[], Treal ch[],
       const Treal wa1[], const Treal wa2[], const Treal wa3[])
   {
-    static const Treal sqrt2 = 1.414213562373095;
+    static const Treal sqrt2 = 1.41421356237309504880;
     int i, k, ic;
     Treal ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4;
     for (k = 0; k < l1; k++) {
@@ -667,10 +719,10 @@ static void radb4(int ido, int l1, const Treal cc[], Treal ch[],
 static void radf5(int ido, int l1, const Treal cc[], Treal ch[],
       const Treal wa1[], const Treal wa2[], const Treal wa3[], const Treal wa4[])
   {
-    static const Treal tr11 = 0.309016994374947;
-    static const Treal ti11 = 0.951056516295154;
-    static const Treal tr12 = -0.809016994374947;
-    static const Treal ti12 = 0.587785252292473;
+    static const Treal tr11 = 0.3090169943749474241;
+    static const Treal ti11 = 0.95105651629515357212;
+    static const Treal tr12 = -0.8090169943749474241;
+    static const Treal ti12 = 0.58778525229247312917;
     int i, k, ic;
     Treal ci2, di2, ci4, ci5, di3, di4, di5, ci3, cr2, cr3, dr2, dr3, dr4, dr5,
         cr5, cr4, ti2, ti3, ti5, ti4, tr2, tr3, tr4, tr5;
@@ -731,10 +783,10 @@ static void radf5(int ido, int l1, const Treal cc[], Treal ch[],
 static void radb5(int ido, int l1, const Treal cc[], Treal ch[],
       const Treal wa1[], const Treal wa2[], const Treal wa3[], const Treal wa4[])
   {
-    static const Treal tr11 = 0.309016994374947;
-    static const Treal ti11 = 0.951056516295154;
-    static const Treal tr12 = -0.809016994374947;
-    static const Treal ti12 = 0.587785252292473;
+    static const Treal tr11 = 0.3090169943749474241;
+    static const Treal ti11 = 0.95105651629515357212;
+    static const Treal tr12 = -0.8090169943749474241;
+    static const Treal ti12 = 0.58778525229247312917;
     int i, k, ic;
     Treal ci2, ci3, ci4, ci5, di3, di4, di5, di2, cr2, cr3, cr5, cr4, ti2, ti3,
         ti4, ti5, dr3, dr4, dr5, dr2, tr2, tr3, tr4, tr5;
@@ -801,12 +853,9 @@ static void radb5(int ido, int l1, const Treal cc[], Treal ch[],
 static void radfg(int ido, int ip, int l1, int idl1,
       Treal cc[], Treal ch[], const Treal wa[])
   {
-    static const Treal twopi = 6.28318530717959;
-    int idij, ipph, i, j, k, l, j2, ic, jc, lc, ik, is, nbd;
-    Treal dc2, ai1, ai2, ar1, ar2, ds2, dcp, arg, dsp, ar1h, ar2h;
-    arg = twopi / ip;
-    dcp = cos(arg);
-    dsp = sin(arg);
+    int idij, ipph, i, j, k, l, j2, ic, jc, lc, ik, is, nbd;    
+    Treal dc2, ai1, ai2, ar1, ar2, ds2, dcp, dsp, ar1h, ar2h;
+    sincos2pi(1, ip, &dsp, &dcp);
     ipph = (ip + 1) / 2;
     nbd = (ido - 1) / 2;
     if (ido != 1) {
@@ -883,7 +932,7 @@ static void radfg(int ido, int ip, int l1, int idl1,
     }
 
     ar1 = 1;
-    ai1 = 0;
+    ai1 = 0;    
     for (l=1; l<ipph; l++) {
       lc = ip - l;
       ar1h = dcp*ar1 - dsp*ai1;
@@ -908,6 +957,7 @@ static void radfg(int ido, int ip, int l1, int idl1,
         }
       }
     }
+    
     for (j=1; j<ipph; j++)
       for (ik=0; ik<idl1; ik++)
         ch[ik] += cc[ik + j*idl1];
@@ -971,14 +1021,11 @@ static void radfg(int ido, int ip, int l1, int idl1,
 static void radbg(int ido, int ip, int l1, int idl1,
       Treal cc[], Treal ch[], const Treal wa[])
   {
-    static const Treal twopi = 6.28318530717959;
     int idij, ipph, i, j, k, l, j2, ic, jc, lc, ik, is;
     Treal dc2, ai1, ai2, ar1, ar2, ds2;
     int nbd;
-    Treal dcp, arg, dsp, ar1h, ar2h;
-    arg = twopi / ip;
-    dcp = cos(arg);
-    dsp = sin(arg);
+    Treal dcp, dsp, ar1h, ar2h;
+    sincos2pi(1, ip, &dsp, &dcp);
     nbd = (ido - 1) / 2;
     ipph = (ip + 1) / 2;
     if (ido >= l1) {
@@ -1258,9 +1305,7 @@ startloop:
 
 static void cffti1(int n, Treal wa[], int ifac[MAXFAC+2])
   {
-    static const Treal twopi = 6.28318530717959;
-    Treal arg, argh, argld, fi;
-    int idot, i, j;
+    int fi, idot, i, j;
     int i1, k1, l1, l2;
     int ld, ii, nf, ip;
     int ido, ipm;
@@ -1270,7 +1315,6 @@ static void cffti1(int n, Treal wa[], int ifac[MAXFAC+2])
 
     factorize(n,ifac,ntryh);
     nf = ifac[1];
-    argh = twopi/(Treal)n;
     i = 1;
     l1 = 1;
     for (k1=1; k1<=nf; k1++) {
@@ -1286,13 +1330,10 @@ static void cffti1(int n, Treal wa[], int ifac[MAXFAC+2])
         wa[i] = 0;
         ld += l1;
         fi = 0;
-        argld = ld*argh;
         for (ii=4; ii<=idot; ii+=2) {
           i+= 2;
           fi+= 1;
-          arg = fi*argld;
-          wa[i-1] = cos(arg);
-          wa[i] = sin(arg);
+          sincos2pi(fi*ld, n, wa+i, wa+i-1);
         }
         if (ip > 5) {
           wa[i1-1] = wa[i-1];
@@ -1450,9 +1491,7 @@ NPY_VISIBILITY_HIDDEN void npy_rfftb(int n, Treal r[], Treal wsave[])
 
 static void rffti1(int n, Treal wa[], int ifac[MAXFAC+2])
   {
-    static const Treal twopi = 6.28318530717959;
-    Treal arg, argh, argld, fi;
-    int i, j;
+    int fi, i, j;
     int k1, l1, l2;
     int ld, ii, nf, ip, is;
     int ido, ipm, nfm1;
@@ -1460,7 +1499,6 @@ static void rffti1(int n, Treal wa[], int ifac[MAXFAC+2])
       4,2,3,5    }; /* Do not change the order of these. */
     factorize(n,ifac,ntryh);
     nf = ifac[1];
-    argh = twopi / n;
     is = 0;
     nfm1 = nf - 1;
     l1 = 1;
@@ -1474,14 +1512,11 @@ static void rffti1(int n, Treal wa[], int ifac[MAXFAC+2])
       for (j = 1; j <= ipm; ++j) {
         ld += l1;
         i = is;
-        argld = (Treal) ld*argh;
         fi = 0;
         for (ii = 3; ii <= ido; ii += 2) {
           i += 2;
           fi += 1;
-          arg = fi*argld;
-          wa[i - 2] = cos(arg);
-          wa[i - 1] = sin(arg);
+          sincos2pi(fi*ld, n, wa+i-1, wa+i-2);
         }
         is += ido;
       }

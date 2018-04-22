@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, assert_, assert_raises, assert_equal, assert_warns,
+        assert_, assert_raises, assert_equal, assert_warns,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
         suppress_warnings
         )
@@ -1634,6 +1634,3 @@ class TestSingleEltArrayInput(object):
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
-
-if __name__ == "__main__":
-    run_module_suite()

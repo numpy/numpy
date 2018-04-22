@@ -4,8 +4,7 @@ import sys
 
 import numpy as np
 from numpy.compat import unicode
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal)
+from numpy.testing import assert_, assert_equal, assert_array_equal
 
 # Guess the UCS length for this python interpreter
 if sys.version_info[:2] >= (3, 3):
@@ -395,7 +394,3 @@ class TestByteorder_1009_UCS4(ByteorderValues):
     """Check the byteorder in unicode (size 1009, UCS4 values)"""
     ulen = 1009
     ucs_value = ucs4_value
-
-
-if __name__ == "__main__":
-    run_module_suite()

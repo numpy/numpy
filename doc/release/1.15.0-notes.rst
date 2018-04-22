@@ -6,6 +6,8 @@ NumPy 1.15.0 Release Notes
 Highlights
 ==========
 
+* NumPy has switched to pytest for testing.
+
 
 New functions
 =============
@@ -19,9 +21,11 @@ New functions
   for the scope of the ``with`` block::
 
     >>> with np.printoptions(precision=2):
-    ...     print(np.array([2.0])) / 3
-    [0.67] 
+    ...     print(np.array([2.0]) / 3)
+    [0.67]
 
+  * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
+    without needing to calculate the histogram.
 
 Deprecations
 ============
@@ -35,6 +39,29 @@ Deprecations
   * `np.ma.loads`, `np.ma.dumps`
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
+* Direct imports from the following modules is deprecated. All testing related
+  imports should come from `numpy.testing`.
+  * `np.testing.utils`
+  * `np.testing.decorators`
+  * `np.testing.nosetester`
+  * `np.testing.noseclasses`
+  * `np.core.umath_tests`
+
+* Giving a generator to `np.sum` is now deprecated. This was undocumented, but
+  worked. Previously, it would calculate the sum of the generator expression.
+  In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
+  or the built-in Python `sum` instead.
+
+* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or 
+  ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
+  flag set, before the array is deallocated. A deprecation warning will be
+  emitted if those calls are not used when needed.
+
+* Users of ``nditer`` should use the nditer object as a context manager
+  anytime one of the iterator operands is writeable, so that numpy can
+  manage writeback semantics, or should call ``it.close()``. A
+ `RuntimeWarning` will be emitted otherwise in these cases. Users of the C-API
+  should call ``NpyIter_Close`` before ``NpyIter_Dealloc``.
 
 
 Future Changes
@@ -54,10 +81,53 @@ deprecated, and ``.keys()`` and ``.items()`` now return views and not lists.
 This is consistent with how the builtin ``dict`` type changed between python 2
 and python 3.
 
+Under certain conditions, nditer must be used in a context manager
+------------------------------------------------------------------
+When using an nditer with the ``"writeonly"`` or ``"readwrite"`` flags, there
+are some circumstances where nditer doesn't actually give you a view onto the
+writable array. Instead, it gives you a copy, and if you make changes to the
+copy, nditer later writes those changes back into your actual array. Currently,
+this writeback occurs when the array objects are garbage collected, which makes
+this API error-prone on CPython and entirely broken on PyPy. Therefore, 
+``nditer`` should now be used as a context manager whenever using ``nditer``
+with writeable arrays (``with np.nditer(...) as it: ...``). You may also
+explicitly call ``it.close()`` for cases where a context manager is unusable,
+for instance in generator expressions.
+
+Numpy has switched to using pytest instead of nose for testing
+--------------------------------------------------------------
+The last nose release was 1.3.7 in June, 2015, and development of that tool has
+ended, consequently NumPy has now switched to using pytest. The old decorators
+and nose tools that were previously used by some downstream projects remain
+available, but will not be maintained. The standard testing utilities,
+`assert_almost_equal` and such, are not be affected by this change except for
+the nose specific functions `import_nose` and `raises`. Those functions are
+not used in numpy, but are kept for downstream compatibility.
+
+``np.ma.notmasked_contiguous`` and ``np.ma.flatnotmasked_contiguous`` always return lists
+-----------------------------------------------------------------------------------------
+This was always the documented behavior, but in reality the result used to be
+any of slice, None, or list.
+
+All downstream users seem to use detect the `None` result from
+``flatnotmasked_contiguous`` and replace it with ``[]``.
+These callers will continue to work as before.
+
+``np.squeeze`` now respects the API expectation of objects that do not handle an ``axis`` argument
+--------------------------------------------------------------------------------------------------
+Prior to version ``1.7.0`` ``np.squeeze`` did not have an ``axis`` argument and all empty axes were removed
+by default. After incorporation of an ``axis`` argument, it was possible to selectively squeeze single
+or multiple empty axes, but the old API expectation was not respected because the axes could still be
+selectively removed (silent success) in an object depending on the old API. The silent success is no
+longer possible, and objects expecting the old API are respected. The silent success was prevented
+by removing the interception of an otherwise-normal Exception when ``axis`` was provided to an object
+using the old API.
 
 C API changes
 =============
 
+``NpyIter_Close`` has been added and should be called before
+``NpyIter_Dealloc`` to resolve possible writeback-enabled arrays.
 
 New Features
 ============
@@ -68,11 +138,31 @@ These compute the greatest common divisor, and lowest common multiple,
 respectively. These work on all the numpy integer types, as well as the
 builtin arbitrary-precision `Decimal` and `long` types.
 
+Support for cross-platform builds for iOS
+-----------------------------------------
+The build system has been modified to add support for the
+``_PYTHON_HOST_PLATFORM`` environment variable, used by ``distutils`` when
+compiling on one platform for another platform. This makes it possible to
+compile NumPy for iOS targets.
+
+This only enables you to compile NumPy for one specific platform at a time.
+Creating a full iOS-compatible NumPy package requires building for the 5
+architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
+combining these 5 compiled builds products into a single "fat" binary.
+
+Build system
+------------
+Added experimental support for the 64-bit RISC-V architecture.
 
 Improvements
 ============
 
-``histogram`` and ``histogramdd` functions have moved to ``np.lib.histograms``
+``np.flip`` can operate over multiple axes
+------------------------------------------
+``np.flip`` now accepts None, or tuples of int, in its ``axis`` argument. If
+axis is None, it will flip over all the axes.
+
+``histogram`` and ``histogramdd`` functions have moved to ``np.lib.histograms``
 ------------------------------------------------------------------------------
 These were originally found in ``np.lib.function_base``. They are still
 available under their un-scoped ``np.histogram(dd)`` names, and
@@ -84,7 +174,7 @@ with the new location, and should consider not using ``import *`` in future.
 ``histogram`` will accept NaN values when explicit bins are given
 -----------------------------------------------------------------
 Previously it would fail when trying to compute a finite range for the data.
-Since the range is ignored anyway when the bins are given explcitly, this error
+Since the range is ignored anyway when the bins are given explicitly, this error
 was needless.
 
 Note that calling `histogram` on NaN values continues to raise the
@@ -96,7 +186,18 @@ as usual with `errstate`.
 Dates, times, and timedeltas can now be histogrammed. The bin edges must be
 passed explicitly, and are not yet computed automatically.
 
-``np.r_`` works with 0d arrays, and ``np.ma.mr_` works with ``np.ma.masked``
+``histogram`` "auto" estimator handles limited variance better
+------------------------------------------------------------------------
+No longer does an IQR of 0 result in `n_bins=1`, rather the number of bins
+chosen is related to the data size in this situation.
+
+``histogramdd`` allows explicit ranges to be given in a subset of axes
+----------------------------------------------------------------------
+The ``range`` argument of `histogramdd` can now contain ``None`` values to
+indicate that the range for the corresponding axis should be computed from the
+data. Previously, this could not be specified on a per-axis basis.
+
+``np.r_`` works with 0d arrays, and ``np.ma.mr_`` works with ``np.ma.masked``
 ----------------------------------------------------------------------------
 0d arrays passed to the `r_` and `mr_` concatenation helpers are now treated as
 though they are arrays of length 1. Previously, passing these was an error.
@@ -123,6 +224,62 @@ code for the simd functions even though rest of the code gets AVX2.
 Previously an array was returned for integer scalar inputs, which is
 inconsistent with the behavior for float inputs, and that of ufuncs in general.
 For all types of scalar or 0d input, the result is now a scalar.
+
+``np.flatnonzero`` works on numpy-convertible types
+---------------------------------------------------
+``np.flatnonzero`` now uses ``np.ravel(a)`` instead of ``a.ravel()``, so it
+works for lists, tuples, etc.
+
+``np.interp`` returns numpy scalars rather than builtin scalars
+---------------------------------------------------------------
+Previously ``np.interp(0.5, [0, 1], [10, 20])`` would return a ``float``, but
+now it returns a ``np.float64`` object, which more closely matches the behavior
+of other functions.
+
+Additionally, the special case of ``np.interp(object_array_0d, ...)`` is no
+longer supported, as ``np.interp(object_array_nd)`` was never supported anyway.
+
+As a result of this change, the ``period`` argument can now be used on 0d
+arrays.
+
+Allow dtype field names to be unicode in Python 2
+---------------------------------------------------------------
+Previously ``np.dtype([(u'name', float)])`` would raise a ``TypeError`` in
+Python 2, as only bytestrings were allowed in field names. Now any unicode
+string field names will be encoded with the ``ascii`` codec, raising a
+``UnicodeEncodeError`` upon failure.
+
+This change makes it easier to write Python 2/3 compatible code using
+``from __future__ import unicode_literals``, which previously would cause
+string literal field names to raise a TypeError in Python 2.
+
+Comparison ufuncs accept ``dtype=object``, overriding the default ``bool``
+--------------------------------------------------------------------------
+This allows object arrays of symbolic types, which override ``==`` and other
+operators to return expressions, to be compared elementwise with
+``np.equal(a, b, dtype=object)``.
+
+``sort`` functions accept ``kind='stable'``
+-------------------------------------------
+Up until now, to perform a stable sort on the data, the user must do:
+
+    >>> np.sort([5, 2, 6, 2, 1], kind='mergesort')
+    [1, 2, 2, 5, 6]
+
+because merge sort is the only stable sorting algorithm available in
+NumPy. However, having kind='mergesort' does not make it explicit that
+the user wants to perform a stable sort thus harming the readability.
+
+This change allows the user to specify kind='stable' thus clarifying
+the intent.
+
+Do not make temporary copies for in-place accumulation
+------------------------------------------------------
+When ufuncs perform accumulation they no longer make temporary copies because
+of the overlap between input an output, that is, the next element accumulated
+is added before the accumulated result is stored in its place, hence the
+overlap is safe. Avoiding the copy results in faster execution.
+
 
 Changes
 =======

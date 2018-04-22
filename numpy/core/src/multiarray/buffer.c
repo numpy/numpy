@@ -15,6 +15,7 @@
 #include "common.h"
 #include "numpyos.h"
 #include "arrayobject.h"
+#include "scalartypes.h"
 
 /*************************************************************************
  ****************   Implement Buffer Protocol ****************************
@@ -176,7 +177,7 @@ _is_natively_aligned_at(PyArray_Descr *descr,
 
 static int
 _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
-                      PyArrayObject* arr, Py_ssize_t *offset,
+                      PyObject* obj, Py_ssize_t *offset,
                       char *active_byteorder)
 {
     int k;
@@ -223,7 +224,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         Py_DECREF(subarray_tuple);
 
         old_offset = *offset;
-        ret = _buffer_format_string(descr->subarray->base, str, arr, offset,
+        ret = _buffer_format_string(descr->subarray->base, str, obj, offset,
                                     active_byteorder);
         *offset = old_offset + (*offset - old_offset) * total_count;
         return ret;
@@ -265,7 +266,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             }
 
             /* Insert child item */
-            _buffer_format_string(child, str, arr, offset,
+            _buffer_format_string(child, str, obj, offset,
                                   active_byteorder);
 
             /* Insert field name */
@@ -302,6 +303,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
     }
     else {
         int is_standard_size = 1;
+        int is_natively_aligned;
         int is_native_only_type = (descr->type_num == NPY_LONGDOUBLE ||
                                    descr->type_num == NPY_CLONGDOUBLE);
         if (sizeof(npy_longlong) != 8) {
@@ -312,8 +314,16 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
         *offset += descr->elsize;
 
-        if (descr->byteorder == '=' &&
-                _is_natively_aligned_at(descr, arr, *offset)) {
+        if (PyArray_IsScalar(obj, Generic)) {
+            /* scalars are always natively aligned */
+            is_natively_aligned = 1;
+        }
+        else {
+            is_natively_aligned = _is_natively_aligned_at(descr,
+                                              (PyArrayObject*)obj, *offset);
+        }
+
+        if (descr->byteorder == '=' && is_natively_aligned) {
             /* Prefer native types, to cater for Cython */
             is_standard_size = 0;
             if (*active_byteorder != '@') {
@@ -448,43 +458,61 @@ static PyObject *_buffer_info_cache = NULL;
 
 /* Fill in the info structure */
 static _buffer_info_t*
-_buffer_info_new(PyArrayObject *arr)
+_buffer_info_new(PyObject *obj)
 {
     _buffer_info_t *info;
     _tmp_string_t fmt = {NULL, 0, 0};
     int k;
+    PyArray_Descr *descr = NULL;
+    int err = 0;
 
     info = malloc(sizeof(_buffer_info_t));
     if (info == NULL) {
         goto fail;
     }
 
+    if (PyArray_IsScalar(obj, Generic)) {
+        descr = PyArray_DescrFromScalar(obj);
+        if (descr == NULL) {
+            goto fail;
+        }
+        info->ndim = 0;
+        info->shape = NULL;
+        info->strides = NULL;
+    }
+    else {
+        PyArrayObject * arr = (PyArrayObject *)obj;
+        descr = PyArray_DESCR(arr);
+        /* Fill in shape and strides */
+        info->ndim = PyArray_NDIM(arr);
+
+        if (info->ndim == 0) {
+            info->shape = NULL;
+            info->strides = NULL;
+        }
+        else {
+            info->shape = malloc(sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2 + 1);
+            if (info->shape == NULL) {
+                goto fail;
+            }
+            info->strides = info->shape + PyArray_NDIM(arr);
+            for (k = 0; k < PyArray_NDIM(arr); ++k) {
+                info->shape[k] = PyArray_DIMS(arr)[k];
+                info->strides[k] = PyArray_STRIDES(arr)[k];
+            }
+        }
+        Py_INCREF(descr);
+    }
+
     /* Fill in format */
-    if (_buffer_format_string(PyArray_DESCR(arr), &fmt, arr, NULL, NULL) != 0) {
+    err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
+    Py_DECREF(descr);
+    if (err != 0) {
         free(fmt.s);
         goto fail;
     }
     _append_char(&fmt, '\0');
     info->format = fmt.s;
-
-    /* Fill in shape and strides */
-    info->ndim = PyArray_NDIM(arr);
-
-    if (info->ndim == 0) {
-        info->shape = NULL;
-        info->strides = NULL;
-    }
-    else {
-        info->shape = malloc(sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2 + 1);
-        if (info->shape == NULL) {
-            goto fail;
-        }
-        info->strides = info->shape + PyArray_NDIM(arr);
-        for (k = 0; k < PyArray_NDIM(arr); ++k) {
-            info->shape[k] = PyArray_DIMS(arr)[k];
-            info->strides[k] = PyArray_STRIDES(arr)[k];
-        }
-    }
 
     return info;
 
@@ -530,7 +558,7 @@ _buffer_info_free(_buffer_info_t *info)
 
 /* Get buffer info from the global dictionary */
 static _buffer_info_t*
-_buffer_get_info(PyObject *arr)
+_buffer_get_info(PyObject *obj)
 {
     PyObject *key = NULL, *item_list = NULL, *item = NULL;
     _buffer_info_t *info = NULL, *old_info = NULL;
@@ -543,13 +571,13 @@ _buffer_get_info(PyObject *arr)
     }
 
     /* Compute information */
-    info = _buffer_info_new((PyArrayObject*)arr);
+    info = _buffer_info_new(obj);
     if (info == NULL) {
         return NULL;
     }
 
     /* Check if it is identical with an old one; reuse old one, if yes */
-    key = PyLong_FromVoidPtr((void*)arr);
+    key = PyLong_FromVoidPtr((void*)obj);
     if (key == NULL) {
         goto fail;
     }
@@ -627,9 +655,8 @@ _buffer_clear_info(PyObject *arr)
 }
 
 /*
- * Retrieving buffers
+ * Retrieving buffers for ndarray
  */
-
 static int
 array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 {
@@ -751,6 +778,62 @@ fail:
     return -1;
 }
 
+/*
+ * Retrieving buffers for scalars
+ */
+int
+gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+    _buffer_info_t *info = NULL;
+    PyArray_Descr *descr = NULL;
+    int elsize;
+
+    if (flags & PyBUF_WRITABLE) {
+        PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
+        goto fail;
+    }
+
+    /* Fill in information */
+    info = _buffer_get_info(self);
+    if (info == NULL) {
+        PyErr_SetString(PyExc_BufferError,
+                        "could not get scalar buffer information");
+        goto fail;
+    }
+
+    view->ndim = info->ndim;
+    view->shape = info->shape;
+    view->strides = info->strides;
+
+    if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
+        view->format = info->format;
+    } else {
+        view->format = NULL;
+    }
+
+    descr = PyArray_DescrFromScalar(self);
+    view->buf = (void *)scalar_value(self, descr);
+    elsize = descr->elsize;
+#ifndef Py_UNICODE_WIDE
+    if (descr->type_num == NPY_UNICODE) {
+        elsize >>= 1;
+    }
+#endif
+    view->len = elsize;
+    view->itemsize = elsize;
+
+    Py_DECREF(descr);
+
+    view->readonly = 1;
+    view->suboffsets = NULL;
+    view->obj = self;
+    Py_INCREF(self);
+    return 0;
+
+fail:
+    view->obj = NULL;
+    return -1;
+}
 
 /*
  * NOTE: for backward compatibility (esp. with PyArg_ParseTuple("s#", ...))
@@ -834,6 +917,7 @@ _descriptor_from_pep3118_format(char *s)
     /* Strip whitespace, except from field names */
     buf = malloc(strlen(s) + 1);
     if (buf == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
     p = buf;

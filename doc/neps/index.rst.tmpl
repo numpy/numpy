@@ -1,0 +1,51 @@
+===========================
+NumPy Enhancement Proposals
+===========================
+
+NumPy Enhancement Proposals (NEPs) describe proposed changes to NumPy.
+NEPs are modeled on Python Enhancement Proposals (PEPs), and are typically
+written up when large changes to NumPy are proposed.
+
+This page provides an overview of all NEPs.
+
+Meta-NEPs (NEPs about NEPs or Processes)
+----------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Type'] == 'Process' %}
+   NEP {{ nep }} — {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
+
+   nep-template
+
+Accepted NEPs, implementation in progress
+-----------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Accepted' %}
+   NEP {{ nep }} — {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
+
+Implemented NEPs
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Final' %}
+   NEP {{ nep }} — {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
+
+Defunct NEPs
+------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Deferred' %}
+   NEP {{ nep }} — {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}

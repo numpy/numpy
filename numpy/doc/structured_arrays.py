@@ -246,7 +246,7 @@ alias for the field. The title may be used to index an array, just like a
 field name.
 
 To add titles when using the list-of-tuples form of dtype specification, the
-field name may be be specified as a tuple of two strings instead of a single
+field name may be specified as a tuple of two strings instead of a single
 string, which will be the field's title and field name respectively. For
 example::
 
@@ -284,7 +284,7 @@ the desired underlying dtype, and fields and flags will be copied from
 ``dtype``. This dtype is similar to a 'union' in C.
 
 Indexing and Assignment to Structured arrays
-=============================================
+============================================
 
 Assigning data to a Structured Array
 ------------------------------------
@@ -293,7 +293,7 @@ There are a number of ways to assign values to a structured array: Using python
 tuples, using scalar values, or using other structured arrays.
 
 Assignment from Python Native Types (Tuples)
-```````````````````````````````````````````
+````````````````````````````````````````````
 
 The simplest way to assign values to a structured array is using python tuples.
 Each assigned value should be a tuple of length equal to the number of fields

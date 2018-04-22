@@ -263,7 +263,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
 
     result = realloc(ptr, size);
     if (result != ptr) {
-	PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+        PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     }
     PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (_PyDataMem_eventhook != NULL) {

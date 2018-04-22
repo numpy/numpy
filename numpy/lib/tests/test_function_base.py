@@ -4,15 +4,16 @@ import operator
 import warnings
 import sys
 import decimal
+import pytest
 
 import numpy as np
 from numpy import ma
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex,
-    dec, suppress_warnings, HAS_REFCOUNT,
-)
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    HAS_REFCOUNT,
+    )
 import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import (
@@ -21,7 +22,7 @@ from numpy.lib import (
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
     piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
     unwrap, unique, vectorize
-)
+    )
 
 from numpy.compat import long
 
@@ -103,9 +104,10 @@ class TestRot90(object):
 class TestFlip(object):
 
     def test_axes(self):
-        assert_raises(ValueError, np.flip, np.ones(4), axis=1)
-        assert_raises(ValueError, np.flip, np.ones((4, 4)), axis=2)
-        assert_raises(ValueError, np.flip, np.ones((4, 4)), axis=-3)
+        assert_raises(np.AxisError, np.flip, np.ones(4), axis=1)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=2)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=-3)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=(0, 3))
 
     def test_basic_lr(self):
         a = get_mat(4)
@@ -171,6 +173,35 @@ class TestFlip(object):
         for i in range(a.ndim):
             assert_equal(np.flip(a, i),
                          np.flipud(a.swapaxes(0, i)).swapaxes(i, 0))
+
+    def test_default_axis(self):
+        a = np.array([[1, 2, 3],
+                      [4, 5, 6]])
+        b = np.array([[6, 5, 4],
+                      [3, 2, 1]])
+        assert_equal(np.flip(a), b)
+
+    def test_multiple_axes(self):
+        a = np.array([[[0, 1],
+                       [2, 3]],
+                      [[4, 5],
+                       [6, 7]]])
+
+        assert_equal(np.flip(a, axis=()), a)
+
+        b = np.array([[[5, 4],
+                       [7, 6]],
+                      [[1, 0],
+                       [3, 2]]])
+
+        assert_equal(np.flip(a, axis=(0, 2)), b)
+
+        c = np.array([[[3, 2],
+                       [1, 0]],
+                      [[7, 6],
+                       [5, 4]]])
+
+        assert_equal(np.flip(a, axis=(1, 2)), c)
 
 
 class TestAny(object):
@@ -1752,7 +1783,9 @@ class TestCov(object):
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
-        assert_allclose(cov(x), np.array([[1., -1.j], [1.j, 1.]]))
+        res = np.array([[1., -1.j], [1.j, 1.]])
+        assert_allclose(cov(x), res)
+        assert_allclose(cov(x, aweights=np.ones(3)), res)
 
     def test_xy(self):
         x = np.array([[1, 2, 3]])
@@ -2141,7 +2174,7 @@ class TestBincount(object):
                             "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_dtype_reference_leaks(self):
         # gh-6805
         intp_refcount = sys.getrefcount(np.dtype(np.intp))
@@ -2252,8 +2285,17 @@ class TestInterp(object):
         y = np.linspace(0, 1, 5)
         x0 = np.array(.3)
         assert_almost_equal(np.interp(x0, x, y), x0)
-        x0 = np.array(.3, dtype=object)
-        assert_almost_equal(np.interp(x0, x, y), .3)
+
+        xp = np.array([0, 2, 4])
+        fp = np.array([1, -1, 1])
+
+        actual = np.interp(np.array(1), xp, fp)
+        assert_equal(actual, 0)
+        assert_(isinstance(actual, np.float64))
+
+        actual = np.interp(np.array(4.5), xp, fp, period=4)
+        assert_equal(actual, 0.5)
+        assert_(isinstance(actual, np.float64))
 
     def test_if_len_x_is_small(self):
         xp = np.arange(0, 10, 0.0001)
@@ -2976,14 +3018,10 @@ class TestAdd_newdoc_ufunc(object):
 
 class TestAdd_newdoc(object):
 
-    @dec.skipif(sys.flags.optimize == 2)
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     def test_add_doc(self):
         # test np.add_newdoc
         tgt = "Current flat index into the array."
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
-
-
-if __name__ == "__main__":
-    run_module_suite()

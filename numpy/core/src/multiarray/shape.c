@@ -1078,7 +1078,7 @@ build_shape_string(npy_intp n, npy_intp *vals)
  * WARNING: If an axis flagged for removal has a shape equal to zero,
  *          the array will point to invalid memory. The caller must
  *          validate this!
- *          If an axis flagged for removal has a shape larger then one,
+ *          If an axis flagged for removal has a shape larger than one,
  *          the aligned flag (and in the future the contiguous flags),
  *          may need explicit update.
  *          (check also NPY_RELAXED_STRIDES_CHECKING)

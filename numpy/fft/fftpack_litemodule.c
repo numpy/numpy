@@ -330,10 +330,10 @@ static struct PyModuleDef moduledef = {
 
 /* Initialization function for the module */
 #if PY_MAJOR_VERSION >= 3
-#define RETVAL m
+#define RETVAL(x) x
 PyMODINIT_FUNC PyInit_fftpack_lite(void)
 #else
-#define RETVAL
+#define RETVAL(x)
 PyMODINIT_FUNC
 initfftpack_lite(void)
 #endif
@@ -348,6 +348,9 @@ initfftpack_lite(void)
             fftpack_module_documentation,
             (PyObject*)NULL,PYTHON_API_VERSION);
 #endif
+    if (m == NULL) {
+        return RETVAL(NULL);
+    }
 
     /* Import the array object */
     import_array();
@@ -359,5 +362,5 @@ initfftpack_lite(void)
 
     /* XXXX Add constants here */
 
-    return RETVAL;
+    return RETVAL(m);
 }

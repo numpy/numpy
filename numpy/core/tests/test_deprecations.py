@@ -9,11 +9,13 @@ import datetime
 import sys
 import operator
 import warnings
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, assert_no_warnings,
-    assert_array_equal, assert_, dec)
+    assert_raises, assert_warns, assert_no_warnings, assert_array_equal,
+    assert_
+    )
 
 try:
     import pytz
@@ -242,7 +244,8 @@ class TestDatetime64Timezone(_DeprecationTestCase):
         self.assert_deprecated(np.datetime64, args=('2000-01-01T00+01',))
         self.assert_deprecated(np.datetime64, args=('2000-01-01T00Z',))
 
-    @dec.skipif(not _has_pytz, "The pytz module is not available.")
+    @pytest.mark.skipif(not _has_pytz,
+                        reason="The pytz module is not available.")
     def test_datetime(self):
         tz = pytz.timezone('US/Eastern')
         dt = datetime.datetime(2000, 1, 1, 0, 0, tzinfo=tz)
@@ -429,7 +432,7 @@ class TestNonNumericConjugate(_DeprecationTestCase):
 class TestNPY_CHAR(_DeprecationTestCase):
     # 2017-05-03, 1.13.0
     def test_npy_char_deprecation(self):
-        from numpy.core.multiarray_tests import npy_char_deprecation
+        from numpy.core._multiarray_tests import npy_char_deprecation
         self.assert_deprecated(npy_char_deprecation)
         assert_(npy_char_deprecation() == 'S1')
 
@@ -440,11 +443,11 @@ class Test_UPDATEIFCOPY(_DeprecationTestCase):
     WRITEBACKIFCOPY instead
     """
     def test_npy_updateifcopy_deprecation(self):
-        from numpy.core.multiarray_tests import npy_updateifcopy_deprecation
+        from numpy.core._multiarray_tests import npy_updateifcopy_deprecation
         arr = np.arange(9).reshape(3, 3)
         v = arr.T
         self.assert_deprecated(npy_updateifcopy_deprecation, args=(v,))
-    
+
 
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
@@ -481,5 +484,7 @@ class TestBincount(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
 
 
-if __name__ == "__main__":
-    run_module_suite()
+class TestGeneratorSum(_DeprecationTestCase):
+    # 2018-02-25, 1.15.0
+    def test_generator_sum(self):
+        self.assert_deprecated(np.sum, args=((i for i in range(5)),))
