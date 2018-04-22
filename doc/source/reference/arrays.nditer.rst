@@ -394,10 +394,10 @@ parameter support.
 .. admonition:: Example
 
     >>> def square(a):
-    ...     it = np.nditer([a, None])
-    ...     for x, y in it:
-    ...          y[...] = x*x
-    ...     return it.operands[1]
+    ...     with np.nditer([a, None]) as it:
+    ...         for x, y in it:
+    ...             y[...] = x*x
+    ...         return it.operands[1]
     ...
     >>> square([1,2,3])
     array([1, 4, 9])
@@ -490,16 +490,21 @@ Everything to do with the outer product is handled by the iterator setup.
     >>> b = np.arange(8).reshape(2,4)
     >>> it = np.nditer([a, b, None], flags=['external_loop'],
     ...             op_axes=[[0, -1, -1], [-1, 0, 1], None])
-    >>> for x, y, z in it:
-    ...     z[...] = x*y
+    >>> with it:
+    ...     for x, y, z in it:
+    ...         z[...] = x*y
+    ...     result = it.operands[2]  # same as z
     ...
-    >>> it.operands[2]
+    >>> result
     array([[[ 0,  0,  0,  0],
             [ 0,  0,  0,  0]],
            [[ 0,  1,  2,  3],
             [ 4,  5,  6,  7]],
            [[ 0,  2,  4,  6],
             [ 8, 10, 12, 14]]])
+
+Note that once the iterator is closed we can not access :func:`operands <nditer.operands>`
+and must use a reference created inside the context manager.
 
 Reduction Iteration
 -------------------
@@ -540,8 +545,9 @@ sums along the last axis of `a`.
     ...     it.operands[1][...] = 0
     ...     for x, y in it:
     ...         y[...] += x
+    ...     result = it.operands[1]
     ...
-    ...     it.operands[1]
+    >>> result
     array([[ 6, 22, 38],
            [54, 70, 86]])
     >>> np.sum(a, axis=2)
@@ -575,8 +581,9 @@ buffering.
     ...     it.reset()
     ...     for x, y in it:
     ...         y[...] += x
+    ...     result = it.operands[1]
     ...
-    ...     it.operands[1]
+    >>> result
     array([[ 6, 22, 38],
            [54, 70, 86]])
 
