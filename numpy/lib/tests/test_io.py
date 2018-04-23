@@ -937,7 +937,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_equal(res, tgt)
 
     def test_complex_misformatted(self):
-        # test for backward compatability
+        # test for backward compatibility
         # some complex formats used to generate x+-yj
         a = np.zeros((2, 2), dtype=np.complex128)
         re = np.pi
