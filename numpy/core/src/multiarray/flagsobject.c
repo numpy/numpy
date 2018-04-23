@@ -575,7 +575,7 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
             return arrayflags_fortran_get(self);
         }
         break;
-    case 14:
+    case 15:
         if (strncmp(key, "WRITEBACKIFCOPY", n) == 0) {
             return arrayflags_writebackifcopy_get(self);
         }
