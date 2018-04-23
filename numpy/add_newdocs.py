@@ -257,6 +257,7 @@ add_newdoc('numpy.core', 'nditer',
     dtypes : tuple of dtype(s)
         The data types of the values provided in `value`. This may be
         different from the operand data types if buffering is enabled.
+        Valid only before the iterator is closed.
     finished : bool
         Whether the iteration over the operands is finished or not.
     has_delayed_bufalloc : bool
@@ -282,7 +283,8 @@ add_newdoc('numpy.core', 'nditer',
         Size of the iterator.
     itviews
         Structured view(s) of `operands` in memory, matching the reordered
-        and optimized iterator access pattern.
+        and optimized iterator access pattern. Valid only before the iterator
+        is closed.
     multi_index
         When the "multi_index" flag was used, this property
         provides access to the index. Raises a ValueError if accessed
@@ -292,7 +294,8 @@ add_newdoc('numpy.core', 'nditer',
     nop : int
         The number of iterator operands.
     operands : tuple of operand(s)
-        The array(s) to be iterated over.
+        The array(s) to be iterated over. Valid only before the iterator is
+        closed.
     shape : tuple of ints
         Shape tuple, the shape of the iterator.
     value
@@ -331,12 +334,12 @@ add_newdoc('numpy.core', 'nditer',
 
             it = np.nditer([x, y, out], [],
                         [['readonly'], ['readonly'], ['writeonly','allocate']])
+            with it:
+                while not it.finished:
+                    addop(it[0], it[1], out=it[2])
+                    it.iternext()
 
-            while not it.finished:
-                addop(it[0], it[1], out=it[2])
-                it.iternext()
-
-            return it.operands[2]
+                return it.operands[2]
 
     Here is an example outer product function::
 
@@ -351,7 +354,7 @@ add_newdoc('numpy.core', 'nditer',
             with it:
                 for (a, b, c) in it:
                     mulop(a, b, out=c)
-            return it.operands[2]
+                return it.operands[2]
 
         >>> a = np.arange(2)+1
         >>> b = np.arange(3)+1
@@ -374,7 +377,7 @@ add_newdoc('numpy.core', 'nditer',
             while not it.finished:
                 it[0] = lamdaexpr(*it[1:])
                 it.iternext()
-            return it.operands[0]
+                return it.operands[0]
 
         >>> a = np.arange(5)
         >>> b = np.ones(5)
@@ -428,6 +431,13 @@ add_newdoc('numpy.core', 'nditer', ('copy',
     >>> it2.next()
     (array(1), array(2))
 
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('operands',
+    """
+    operands[`Slice`]
+
+    The array(s) to be iterated over. Valid only before the iterator is closed.
     """))
 
 add_newdoc('numpy.core', 'nditer', ('debug_print',
