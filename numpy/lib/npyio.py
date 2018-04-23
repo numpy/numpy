@@ -936,7 +936,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if encoding is not None:
         fencoding = encoding
     # we must assume local encoding
-    # TOOD emit portability warning?
+    # TODO emit portability warning?
     elif fencoding is None:
         import locale
         fencoding = locale.getpreferredencoding()
