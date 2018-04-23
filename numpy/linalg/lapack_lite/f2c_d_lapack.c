@@ -9176,7 +9176,7 @@ L140:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurrence the dimension of the
+          the Z vector.  For each such occurence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine DLAED2.
 
@@ -11646,7 +11646,7 @@ L60:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurrence the dimension of the
+          the Z vector.  For each such occurence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine DLAED8.
 
@@ -12172,7 +12172,7 @@ L30:
 /* L40: */
     }
 
-/*     Calculate the allowable deflation tolerance */
+/*     Calculate the allowable deflation tolerence */
 
     imax = idamax_(n, &z__[1], &c__1);
     jmax = idamax_(n, &d__[1], &c__1);
@@ -16423,7 +16423,7 @@ L90:
 
     N1     (input) INTEGER
     N2     (input) INTEGER
-           These arguments contain the respective lengths of the two
+           These arguements contain the respective lengths of the two
            sorted lists to be merged.
 
     A      (input) DOUBLE PRECISION array, dimension (N1+N2)
@@ -24434,7 +24434,7 @@ L10:
 
        The first stage consists of deflating the size of the problem
        when there are multiple singular values or when there are zeros in
-       the Z vector.  For each such occurrence the dimension of the
+       the Z vector.  For each such occurence the dimension of the
        secular equation problem is reduced by one.  This stage is
        performed by the routine DLASD2.
 
@@ -26902,7 +26902,7 @@ L240:
 
           The first stage consists of deflating the size of the problem
           when there are multiple singular values or if there is a zero
-          in the Z vector. For each such occurrence the dimension of the
+          in the Z vector. For each such occurence the dimension of the
           secular equation problem is reduced by one. This stage is
           performed by the routine DLASD7.
 
@@ -27460,7 +27460,7 @@ L240:
 /* L50: */
     }
 
-/*     Calculate the allowable deflation tolerance */
+/*     Calculate the allowable deflation tolerence */
 
     eps = EPSILON;
 /* Computing MAX */
@@ -31388,7 +31388,7 @@ L80:
     =====================================================================
 
 
-       Test the input parameters.
+       Test the input paramters.
 */
 
     /* Parameter adjustments */
