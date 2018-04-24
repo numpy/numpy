@@ -488,6 +488,8 @@ class TestPrintOptions(object):
                                          np.array(1.), style=repr)
         # but not in legacy mode
         np.array2string(np.array(1.), style=repr, legacy='1.13')
+        # gh-10934 style was broken in legacy mode, check it works
+        np.array2string(np.array(1.), legacy='1.13')
 
     def test_float_spacing(self):
         x = np.array([1., 2., 3.])
