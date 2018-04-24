@@ -36,11 +36,14 @@ static void **PyUFunc_API=NULL;
 static NPY_INLINE int
 _import_umath(void)
 {
-  PyObject *numpy = PyImport_ImportModule("numpy.core.umath");
+  PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {
-      PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import");
+      numpy = PyImport_ImportModule("_multiarray");
+  }
+  if (numpy == NULL) {
+      PyErr_SetString(PyExc_ImportError, "numpy.core._multiarray_umath failed to import (tried also as '_multiarray'");
       return -1;
   }
   c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");

@@ -66,6 +66,9 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "get_attr_string.h"
 
+#include "numpy/ufuncobject.h"
+#include "ufunc_object.h"
+
 /*
  * global variable to determine if legacy printing is enabled, accessible from
  * C. For simplicity the mode is encoded as an integer where '0' means no
@@ -4181,6 +4184,11 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     return PyInt_FromLong(axis);
 }
 
+/* declarations from umathmodule.c */
+PyObject * add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args);
+PyObject * ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds));
+int initumath(PyObject *m);
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
@@ -4364,6 +4372,18 @@ static struct PyMethodDef array_module_methods[] = {
     {"normalize_axis_index", (PyCFunction)normalize_axis_index,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
+        METH_VARARGS, NULL},
+    /* from umath */
+    {"frompyfunc",
+        (PyCFunction) ufunc_frompyfunc,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"seterrobj",
+        (PyCFunction) ufunc_seterr,
+        METH_VARARGS, NULL},
+    {"geterrobj",
+        (PyCFunction) ufunc_geterr,
+        METH_VARARGS, NULL},
+    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
@@ -4624,7 +4644,7 @@ intern_strings(void)
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        "multiarray",
+        "_multiarray_umath",
         NULL,
         -1,
         array_module_methods,
@@ -4638,10 +4658,10 @@ static struct PyModuleDef moduledef = {
 /* Initialization function for the module */
 #if defined(NPY_PY3K)
 #define RETVAL(x) x
-PyMODINIT_FUNC PyInit_multiarray(void) {
+PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 #else
 #define RETVAL(x)
-PyMODINIT_FUNC initmultiarray(void) {
+PyMODINIT_FUNC init_multiarray_umath(void) {
 #endif
     PyObject *m, *d, *s;
     PyObject *c_api;
@@ -4650,7 +4670,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule("multiarray", array_module_methods);
+    m = Py_InitModule("_multiarray_umath", array_module_methods);
 #endif
     if (!m) {
         goto err;
@@ -4806,7 +4826,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-
+    if (initumath(m) != 0) {
+        goto err;
+    }
     return RETVAL(m);
 
  err:

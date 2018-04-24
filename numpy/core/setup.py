@@ -710,7 +710,7 @@ def configuration(parent_package='',top_path=None):
                        include_dirs=[])
 
     #######################################################################
-    #                        multiarray module                            #
+    #             _multiarray_umath module - multiarray part              #
     #######################################################################
 
     multiarray_deps = [
@@ -842,19 +842,8 @@ def configuration(parent_package='',top_path=None):
     else:
         extra_info = {}
 
-    config.add_extension('multiarray',
-                         sources=multiarray_src +
-                                 [generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api,
-                                  join(codegen_dir, 'generate_numpy_api.py'),
-                                  join('*.py')],
-                         depends=deps + multiarray_deps,
-                         libraries=['npymath', 'npysort'],
-                         extra_info=extra_info)
-
     #######################################################################
-    #                           umath module                              #
+    #             _multiarray_umath module - umath part                   #
     #######################################################################
 
     def generate_umath_c(ext, build_dir):
@@ -883,9 +872,10 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
-            join('src', 'private', 'mem_overlap.c'),
-            join('src', 'private', 'npy_longdouble.c'),
-            join('src', 'private', 'ufunc_override.c')]
+            # join('src', 'private', 'mem_overlap.c'),
+            # join('src', 'private', 'npy_longdouble.c'),
+            # join('src', 'private', 'ufunc_override.c'),
+            ]
 
     umath_deps = [
             generate_umath_py,
@@ -902,15 +892,19 @@ def configuration(parent_package='',top_path=None):
             join('src', 'private', 'ufunc_override.h'),
             join('src', 'private', 'binop_override.h')] + npymath_sources
 
-    config.add_extension('umath',
-                         sources=umath_src +
+    config.add_extension('_multiarray_umath',
+                         sources=multiarray_src + umath_src +
                                  [generate_config_h,
-                                 generate_numpyconfig_h,
-                                 generate_umath_c,
-                                 generate_ufunc_api],
-                         depends=deps + umath_deps,
-                         libraries=['npymath'],
-                         )
+                                  generate_numpyconfig_h,
+                                  generate_numpy_api,
+                                  join(codegen_dir, 'generate_numpy_api.py'),
+                                  join('*.py'),
+                                  generate_umath_c,
+                                  generate_ufunc_api,
+                                 ],
+                         depends=deps + multiarray_deps + umath_deps,
+                         libraries=['npymath', 'npysort'],
+                         extra_info=extra_info)
 
     #######################################################################
     #                        umath_tests module                           #
