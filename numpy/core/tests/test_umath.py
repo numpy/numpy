@@ -1759,7 +1759,7 @@ class TestSpecialMethods(object):
 
         # reduce, kwargs
         res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
-                                 keepdims='keep0')
+                                 keepdims='keep0', initial='init0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
@@ -1767,7 +1767,8 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'dtype':'dtype0',
                               'out': ('out0',),
                               'keepdims': 'keep0',
-                              'axis': 'axis0'})
+                              'axis': 'axis0',
+                              'initial': 'init0'})
 
         # reduce, output equal to None removed, but not other explicit ones,
         # even if they are at their default value.
@@ -1777,6 +1778,14 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'axis': 0, 'keepdims': True})
         res = np.multiply.reduce(a, None, out=(None,), dtype=None)
         assert_equal(res[4], {'axis': None, 'dtype': None})
+        res = np.multiply.reduce(a, 0, None, None, False, 2)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': 2})
+        # np._NoValue ignored for initial.
+        res = np.multiply.reduce(a, 0, None, None, False, np._NoValue)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False})
+        # None kept for initial.
+        res = np.multiply.reduce(a, 0, None, None, False, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': None})
 
         # reduce, wrong args
         assert_raises(ValueError, np.multiply.reduce, a, out=())

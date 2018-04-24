@@ -3019,19 +3019,24 @@ finish_loop:
  */
 static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
-        int naxes, int *axes, PyArray_Descr *odtype, int keepdims)
+        int naxes, int *axes, PyArray_Descr *odtype, int keepdims,
+        PyObject *initial)
 {
     int iaxes, ndim;
     npy_bool reorderable;
     npy_bool axis_flags[NPY_MAXDIMS];
     PyArray_Descr *dtype;
     PyArrayObject *result;
-    PyObject *identity = NULL;
+    PyObject *identity;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
+    static PyObject *NoValue = NULL;
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s.reduce\n", ufunc_name);
+
+    npy_cache_import("numpy", "_NoValue", &NoValue);
+    if (NoValue == NULL) return NULL;
 
     ndim = PyArray_NDIM(arr);
 
@@ -3056,19 +3061,28 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     if (identity == NULL) {
         return NULL;
     }
-    /*
-     * The identity for a dynamic dtype like
-     * object arrays can't be used in general
-     */
-    if (identity != Py_None && PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+
+    /* Get the initial value */
+    if (initial == NULL || initial == NoValue) {
+        initial = identity;
+
+        /*
+        * The identity for a dynamic dtype like
+        * object arrays can't be used in general
+        */
+        if (initial != Py_None && PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+            Py_DECREF(initial);
+            initial = Py_None;
+            Py_INCREF(initial);
+        }
+    } else {
         Py_DECREF(identity);
-        identity = Py_None;
-        Py_INCREF(identity);
+        Py_INCREF(initial);  /* match the reference count in the if above */
     }
 
     /* Get the reduction dtype */
     if (reduce_type_resolver(ufunc, arr, odtype, &dtype) < 0) {
-        Py_DECREF(identity);
+        Py_DECREF(initial);
         return NULL;
     }
 
@@ -3076,12 +3090,12 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                    NPY_UNSAFE_CASTING,
                                    axis_flags, reorderable,
                                    keepdims, 0,
-                                   identity,
+                                   initial,
                                    reduce_loop,
                                    ufunc, buffersize, ufunc_name, errormask);
 
     Py_DECREF(dtype);
-    Py_DECREF(identity);
+    Py_DECREF(initial);
     return result;
 }
 
@@ -3845,8 +3859,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyArray_Descr *otype = NULL;
     PyArrayObject *out = NULL;
     int keepdims = 0;
+    PyObject *initial = NULL;
     static char *reduce_kwlist[] = {
-            "array", "axis", "dtype", "out", "keepdims", NULL};
+            "array", "axis", "dtype", "out", "keepdims", "initial", NULL};
     static char *accumulate_kwlist[] = {
             "array", "axis", "dtype", "out", NULL};
     static char *reduceat_kwlist[] = {
@@ -3918,13 +3933,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i:reduce",
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&iO:reduce",
                                         reduce_kwlist,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out,
-                                        &keepdims)) {
+                                        &keepdims, &initial)) {
             goto fail;
         }
     }
@@ -4055,7 +4070,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     switch(operation) {
     case UFUNC_REDUCE:
         ret = PyUFunc_Reduce(ufunc, mp, out, naxes, axes,
-                                          otype, keepdims);
+                                          otype, keepdims, initial);
         break;
     case UFUNC_ACCUMULATE:
         if (naxes != 1) {
