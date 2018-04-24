@@ -176,7 +176,8 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
     if (fa && fa->base) {
-        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) || (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
+        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) ||
+                (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
             PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
             Py_DECREF(fa->base);
             fa->base = NULL;
