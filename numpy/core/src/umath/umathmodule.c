@@ -82,7 +82,7 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
     return 0;
 }
 
-static PyObject *
+PyObject *
 ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
     /* Keywords are ignored for now */
 
@@ -179,7 +179,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
 }
 
 /* docstring in numpy.add_newdocs.py */
-static PyObject *
+PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyUFuncObject *ufunc;
@@ -273,7 +273,7 @@ intern_strings(void)
 /* Setup the umath module */
 /* Remove for time being, it is declared in __ufunc_api.h */
 /*static PyTypeObject PyUFunc_Type;*/
-
+/*
 static struct PyMethodDef methods[] = {
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -286,62 +286,33 @@ static struct PyMethodDef methods[] = {
         METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
-    {NULL, NULL, 0, NULL}                /* sentinel */
+    {NULL, NULL, 0, NULL}
 };
-
-
-#if defined(NPY_PY3K)
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "umath",
-        NULL,
-        -1,
-        methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
-#endif
+*/
 
 #include <stdio.h>
 
-#if defined(NPY_PY3K)
-#define RETVAL(x) x
-PyMODINIT_FUNC PyInit_umath(void)
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC initumath(void)
-#endif
+int initumath(PyObject *m)
 {
-    PyObject *m, *d, *s, *s2, *c_api;
+    PyObject *d, *s, *s2, *c_api;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
-    /* Create the module and add the functions */
-#if defined(NPY_PY3K)
-    m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("umath", methods);
-#endif
-    if (!m) {
-        goto err;
-    }
-
-    /* Import the array */
+    /* No need to import the array, only called via import in the first place
     if (_import_array() < 0) {
         if (!PyErr_Occurred()) {
             PyErr_SetString(PyExc_ImportError,
                             "umath failed: Could not import array core.");
         }
-        goto err;
+        return -1;
     }
+    */
 
     /* Initialize the types */
     if (PyType_Ready(&PyUFunc_Type) < 0)
-        goto err;
+        return -1;
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
@@ -423,13 +394,13 @@ PyMODINIT_FUNC initumath(void)
         goto err;
     }
 
-    return RETVAL(m);
+    return 0;
 
  err:
     /* Check for errors */
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load umath module.");
+                        "cannot load umath part of _multiarray_umath.");
     }
-    return RETVAL(NULL);
+    return -1;
 }

@@ -26,7 +26,7 @@ from .financial import *
 from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
-from numpy.core.multiarray import tracemalloc_domain
+from numpy.core._multiarray_umath import tracemalloc_domain
 
 __all__ = ['emath', 'math', 'tracemalloc_domain']
 __all__ += type_check.__all__

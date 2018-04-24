@@ -46,11 +46,11 @@ static int
 _import_array(void)
 {
   int st;
-  PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
+  PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {
-      PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
+      PyErr_SetString(PyExc_ImportError, "numpy.core._multiarray_umath failed to import");
       return -1;
   }
   c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
