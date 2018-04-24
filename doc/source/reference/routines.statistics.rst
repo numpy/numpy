@@ -17,6 +17,8 @@ Order statistics
    ptp
    percentile
    nanpercentile
+   quantile
+   nanquantile
 
 Averages and variances
 ----------------------
