@@ -21,11 +21,12 @@ try:
 except ImportError:
     _HAS_CTYPE = False
 
+
+@pytest.mark.skipif(not _HAS_CTYPE,
+                    reason="ctypes not available in this python")
+@pytest.mark.skipif(sys.platform == 'cygwin',
+                    reason="Known to fail on cygwin")
 class TestLoadLibrary(object):
-    @pytest.mark.skipif(not _HAS_CTYPE,
-                        reason="ctypes not available in this python")
-    @pytest.mark.skipif(sys.platform == 'cygwin',
-                        reason="Known to fail on cygwin")
     def test_basic(self):
         try:
             # Should succeed
@@ -35,10 +36,6 @@ class TestLoadLibrary(object):
                    " (import error was: %s)" % str(e))
             print(msg)
 
-    @pytest.mark.skipif(not _HAS_CTYPE,
-                        reason="ctypes not available in this python")
-    @pytest.mark.skipif(sys.platform == 'cygwin',
-                        reason="Known to fail on cygwin")
     def test_basic2(self):
         # Regression for #801: load_library with a full library name
         # (including extension) does not work.
@@ -53,6 +50,7 @@ class TestLoadLibrary(object):
             msg = ("ctypes is not available on this python: skipping the test"
                    " (import error was: %s)" % str(e))
             print(msg)
+
 
 class TestNdpointer(object):
     def test_dtype(self):
@@ -114,9 +112,10 @@ class TestNdpointer(object):
         a2 = ndpointer(dtype=np.float64)
         assert_(a1 == a2)
 
+
+@pytest.mark.skipif(not _HAS_CTYPE,
+                    reason="ctypes not available on this python installation")
 class TestAsArray(object):
-    @pytest.mark.skipif(not _HAS_CTYPE,
-                        reason="ctypes not available on this python installation")
     def test_array(self):
         from ctypes import c_int
         at = c_int * 2
@@ -127,8 +126,6 @@ class TestAsArray(object):
         assert_equal(a.shape, (3, 2))
         assert_array_equal(a, np.array([[1, 2], [3, 4], [5, 6]]))
 
-    @pytest.mark.skipif(not _HAS_CTYPE,
-                        reason="ctypes not available on this python installation")
     def test_pointer(self):
         from ctypes import c_int, cast, POINTER
         p = cast((c_int * 10)(*range(10)), POINTER(c_int))
