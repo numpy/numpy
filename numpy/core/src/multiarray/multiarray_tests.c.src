@@ -667,6 +667,18 @@ npy_resolve(PyObject* NPY_UNUSED(self), PyObject* args)
     Py_RETURN_NONE;
 }
 
+/* resolve WRITEBACKIFCOPY */
+static PyObject*
+npy_discard(PyObject* NPY_UNUSED(self), PyObject* args)
+{
+    if (!PyArray_Check(args)) {
+        PyErr_SetString(PyExc_TypeError, "test needs ndarray input");
+        return NULL;
+    }
+    PyArray_DiscardWritebackIfCopy((PyArrayObject*)args);
+    Py_RETURN_NONE;
+}
+
 #if !defined(NPY_PY3K)
 static PyObject *
 int_subclass(PyObject *dummy, PyObject *args)
@@ -1764,6 +1776,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_O, NULL},
     {"npy_resolve",
         npy_resolve,
+        METH_O, NULL},
+    {"npy_discard",
+        npy_discard,
         METH_O, NULL},
 #if !defined(NPY_PY3K)
     {"test_int_subclass",
