@@ -779,7 +779,7 @@ Construction and Destruction
     :c:func:`NpyIter_Close` should be called before this. If not, and if
     writeback is needed, it will be performed at this point in order to maintain
     backward-compatibility with older code, and a deprecation warning will be
-    emmitted. Old code should be updated to call `NpyIter_Close` beforehand.
+    emitted. Old code should be updated to call `NpyIter_Close` beforehand.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
