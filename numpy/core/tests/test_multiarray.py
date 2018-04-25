@@ -7284,7 +7284,7 @@ class TestWritebackIfCopy(TestCase):
 
 
     def test_view_discard_refcount(self):
-        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_discard
+        from numpy.core.multiarray_tests import npy_create_writebackifcopy, npy_discard
 
         arr = np.arange(9).reshape(3, 3).T
         orig = arr.copy()
