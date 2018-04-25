@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library, as_array
 from numpy.distutils.misc_util import get_shared_lib_extension
-from numpy.testing import assert_, assert_array_equal, assert_raises
+from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
 
 try:
     cdll = None
@@ -121,10 +121,10 @@ class TestAsArray(object):
         from ctypes import c_int
         at = c_int * 2
         a = as_array(at(1, 2))
-        assert_(a.shape == (2,))
+        assert_equal(a.shape, (2,))
         assert_array_equal(a, np.array([1, 2]))
         a = as_array((at * 3)(at(1, 2), at(3, 4), at(5, 6)))
-        assert_(a.shape == (3, 2))
+        assert_equal(a.shape, (3, 2))
         assert_array_equal(a, np.array([[1, 2], [3, 4], [5, 6]]))
 
     @pytest.mark.skipif(not _HAS_CTYPE,
@@ -133,5 +133,5 @@ class TestAsArray(object):
         from ctypes import c_int, cast, POINTER
         p = cast((c_int * 10)(*range(10)), POINTER(c_int))
         a = as_array(p, (10,))
-        assert_(a.shape == (10,))
+        assert_equal(a.shape, (10,))
         assert_array_equal(a, np.array(range(10)))
