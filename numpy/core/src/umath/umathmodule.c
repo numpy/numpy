@@ -16,12 +16,12 @@
  * __ufunc_api.c
  */
 #define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 
 #include "npy_config.h"
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
