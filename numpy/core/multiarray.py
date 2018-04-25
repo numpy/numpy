@@ -1,9 +1,9 @@
 from . import _multiarray_umath
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (_fastCopyAndTranspose, _flagdict, _insert,
-     _reconstruct, _vec_string)
+     _reconstruct, _vec_string, _ARRAY_API)
 
-__all__ = ['ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
+__all__ = ['_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
     'ITEM_HASOBJECT', 'ITEM_IS_POINTER', 'LIST_PICKLE', 'MAXDIMS',
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
