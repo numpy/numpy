@@ -402,9 +402,15 @@ if ctypes is not None:
         attach an __array_interface__ property to it if it does not
         yet have one.
         """
-        try: pointer_obj.__array_interface__
-        except AttributeError: pass
-        else: return
+        try:
+            inter = pointer_obj.__array_interface__
+        except AttributeError:
+            pass
+        else:
+            # update shape if possible
+            try: inter['shape'] = shape
+            except TypeError: pass
+            return
 
         contents = pointer_obj.contents
         dtype = _dtype(type(contents))
@@ -423,8 +429,8 @@ if ctypes is not None:
         """Create a numpy array from a ctypes array or a ctypes POINTER.
         The numpy array shares the memory with the ctypes object.
 
-        The size parameter must be given if converting from a ctypes POINTER.
-        The size parameter is ignored if converting from a ctypes array
+        The shape parameter must be given if converting from a ctypes POINTER.
+        The shape parameter is ignored if converting from a ctypes array
         """
         tp = type(obj)
         try: tp.__array_interface__
