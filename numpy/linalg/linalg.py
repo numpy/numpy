@@ -23,8 +23,8 @@ from numpy.core import (
     csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
     add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
     finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, object_, ones, matmul,
-    swapaxes, divide, count_nonzero, ndarray, isnan
+    broadcast, atleast_2d, atleast_1d, intp, asanyarray, object_, ones, matmul,
+    swapaxes, divide, count_nonzero, ndarray, isnan, prod
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.lib import triu, asfarray
@@ -196,6 +196,7 @@ def _assertRank2(*arrays):
         if a.ndim != 2:
             raise LinAlgError('%d-dimensional array given. Array must be '
                     'two-dimensional' % a.ndim)
+
 
 def _assertRankAtLeast2(*arrays):
     for a in arrays:
@@ -2332,17 +2333,19 @@ def multi_dot(arrays):
     Compute the dot product of two or more arrays in a single function call,
     while automatically selecting the fastest evaluation order.
 
-    `multi_dot` chains `numpy.dot` and uses optimal parenthesization
+    `multi_dot` chains `numpy.matmul` and uses optimal parenthesization
     of the matrices [1]_ [2]_. Depending on the shapes of the matrices,
     this can speed up the multiplication a lot.
 
     If the first argument is 1-D it is treated as a row vector.
     If the last argument is 1-D it is treated as a column vector.
-    The other arguments must be 2-D.
+    All arguments other than the first and last must be atleast 2-D.
+    If any of the arguments is N-D, N>2, it is treated as a stack of matrices and broadcast accordingly
+    
 
     Think of `multi_dot` as::
 
-        def multi_dot(arrays): return functools.reduce(np.dot, arrays)
+        def multi_dot(arrays): return functools.reduce(np.matmul, arrays)
 
 
     Parameters
@@ -2350,16 +2353,18 @@ def multi_dot(arrays):
     arrays : sequence of array_like
         If the first argument is 1-D it is treated as row vector.
         If the last argument is 1-D it is treated as column vector.
-        The other arguments must be 2-D.
+        All arguments other than the first and last must be atleast 2-D.
+        If any of the arguments is N-D, N>2, it is treated as a stack of matrices and broadcast accordingly
+        
 
     Returns
     -------
     output : ndarray
-        Returns the dot product of the supplied arrays.
+        Returns the product of the supplied arrays.
 
     See Also
     --------
-    dot : dot multiplication with two arguments.
+    matmul : matrix multiplication with two arguments.
 
     References
     ----------
@@ -2408,19 +2413,18 @@ def multi_dot(arrays):
     if n < 2:
         raise ValueError("Expecting at least two arrays.")
     elif n == 2:
-        return dot(arrays[0], arrays[1])
+        return matmul(arrays[0], arrays[1])
 
     arrays = [asanyarray(a) for a in arrays]
 
     # save original ndim to reshape the result array into the proper form later
     ndim_first, ndim_last = arrays[0].ndim, arrays[-1].ndim
     # Explicitly convert vectors to 2D arrays to keep the logic of the internal
-    # _multi_dot_* functions as simple as possible.
+    #_multi_dot_* functions as simple as possible.
     if arrays[0].ndim == 1:
         arrays[0] = atleast_2d(arrays[0])
     if arrays[-1].ndim == 1:
         arrays[-1] = atleast_2d(arrays[-1]).T
-    _assertRank2(*arrays)
 
     # _multi_dot_three is much faster than _multi_dot_matrix_chain_order
     if n == 3:
@@ -2430,33 +2434,27 @@ def multi_dot(arrays):
         result = _multi_dot(arrays, order, 0, n - 1)
 
     # return proper shape
-    if ndim_first == 1 and ndim_last == 1:
-        return result[0, 0]  # scalar
-    elif ndim_first == 1 or ndim_last == 1:
-        return result.ravel()  # 1-D
-    else:
-        return result
+    
+    return atleast_1d(result)
 
 
 def _multi_dot_three(A, B, C):
     """
     Find the best order for three arrays and do the multiplication.
 
-    For three arguments `_multi_dot_three` is approximately 15 times faster
-    than `_multi_dot_matrix_chain_order`
-
     """
-    a0, a1b0 = A.shape
-    b1c0, c1 = C.shape
+    a0, a1b0 = A.shape[-2:]
+    b1c0, c1 = C.shape[-2:]
+    dim = [prod(A.shape[:-2]), prod(B.shape[:-2]), prod(B.shape[:-2]) ]
     # cost1 = cost((AB)C) = a0*a1b0*b1c0 + a0*b1c0*c1
-    cost1 = a0 * b1c0 * (a1b0 + c1)
+    cost1 = a0 * b1c0 * max(dim[0:2]) * (a1b0 + c1 * dim[2])
     # cost2 = cost(A(BC)) = a1b0*b1c0*c1 + a0*a1b0*c1
-    cost2 = a1b0 * c1 * (a0 + b1c0)
+    cost2 = a1b0 * c1 * dim[0] * (a0 + b1c0 * max(dim[1:3]))
 
     if cost1 < cost2:
-        return dot(dot(A, B), C)
+        return matmul(matmul(A, B), C)
     else:
-        return dot(A, dot(B, C))
+        return matmul(A, matmul(B, C))
 
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
@@ -2468,18 +2466,12 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
 
     Also return the cost matrix if `return_costs` is `True`
 
-    The implementation CLOSELY follows Cormen, "Introduction to Algorithms",
-    Chapter 15.2, p. 370-378.  Note that Cormen uses 1-based indices.
-
-        cost[i, j] = min([
-            cost[prefix] + cost[suffix] + cost_mult(prefix, suffix)
-            for k in range(i, j)])
-
     """
     n = len(arrays)
     # p stores the dimensions of the matrices
     # Example for p: A_{10x100}, B_{100x5}, C_{5x50} --> p = [10, 100, 5, 50]
-    p = [a.shape[0] for a in arrays] + [arrays[-1].shape[1]]
+    p = [a.shape[-2] for a in arrays] + [arrays[-1].shape[1]]
+    dim = [prod(a.shape[:-2]) for a in arrays]
     # m is a matrix of costs of the subproblems
     # m[i,j]: min number of scalar multiplications needed to compute A_{i..j}
     m = zeros((n, n), dtype=double)
@@ -2492,7 +2484,7 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
             j = i + l
             m[i, j] = Inf
             for k in range(i, j):
-                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]
+                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]*max(dim[i:j+1])
                 if q < m[i, j]:
                     m[i, j] = q
                     s[i, j] = k  # Note that Cormen uses 1-based index
@@ -2505,5 +2497,5 @@ def _multi_dot(arrays, order, i, j):
     if i == j:
         return arrays[i]
     else:
-        return dot(_multi_dot(arrays, order, i, order[i, j]),
+        return matmul(_multi_dot(arrays, order, i, order[i, j]),
                    _multi_dot(arrays, order, order[i, j] + 1, j))
