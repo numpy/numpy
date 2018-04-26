@@ -3089,7 +3089,7 @@ class MaskedArray(ndarray):
             returned object (this is equivalent to setting the ``type``
             parameter).
         type : Python type, optional
-            Type of the returned view, e.g., ndarray or matrix.  Again, the
+            Type of the returned view, either ndarray or a subclass.  The
             default None results in type preservation.
 
         Notes
@@ -3673,14 +3673,14 @@ class MaskedArray(ndarray):
         >>> type(x.filled())
         <type 'numpy.ndarray'>
 
-        Subclassing is preserved. This means that if the data part of the masked
-        array is a matrix, `filled` returns a matrix:
+        Subclassing is preserved. This means that if, e.g., the data part of
+        the masked array is a recarray, `filled` returns a recarray:
 
-        >>> x = np.ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
-        >>> x.filled()
-        matrix([[     1, 999999],
-                [999999,      4]])
-
+        >>> x = np.array([(-1, 2), (-3, 4)], dtype='i8,i8').view(np.recarray)
+        >>> m = np.ma.array(x, mask=[(True, False), (False, True)])
+        >>> m.filled()
+        rec.array([(999999,      2), (    -3, 999999)],
+                  dtype=[('f0', '<i8'), ('f1', '<i8')])
         """
         m = self._mask
         if m is nomask:

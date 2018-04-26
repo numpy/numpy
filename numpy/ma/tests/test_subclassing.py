@@ -75,27 +75,6 @@ class MSubArray(SubArray, MaskedArray):
 msubarray = MSubArray
 
 
-class MMatrix(MaskedArray, np.matrix,):
-
-    def __new__(cls, data, mask=nomask):
-        mat = np.matrix(data)
-        _data = MaskedArray.__new__(cls, data=mat, mask=mask)
-        return _data
-
-    def __array_finalize__(self, obj):
-        np.matrix.__array_finalize__(self, obj)
-        MaskedArray.__array_finalize__(self, obj)
-        return
-
-    def _get_series(self):
-        _view = self.view(MaskedArray)
-        _view._sharedmask = False
-        return _view
-    _series = property(fget=_get_series)
-
-mmatrix = MMatrix
-
-
 # Also a subclass that overrides __str__, __repr__ and __setitem__, disallowing
 # setting to non-class values (and thus np.ma.core.masked_print_option)
 # and overrides __array_wrap__, updating the info dict, to check that this
@@ -180,7 +159,7 @@ class TestSubclassing(object):
 
     def setup(self):
         x = np.arange(5, dtype='float')
-        mx = mmatrix(x, mask=[0, 1, 0, 0, 0])
+        mx = msubarray(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
 
     def test_data_subclassing(self):
@@ -196,34 +175,34 @@ class TestSubclassing(object):
     def test_maskedarray_subclassing(self):
         # Tests subclassing MaskedArray
         (x, mx) = self.data
-        assert_(isinstance(mx._data, np.matrix))
+        assert_(isinstance(mx._data, subarray))
 
     def test_masked_unary_operations(self):
         # Tests masked_unary_operation
         (x, mx) = self.data
         with np.errstate(divide='ignore'):
-            assert_(isinstance(log(mx), mmatrix))
+            assert_(isinstance(log(mx), msubarray))
             assert_equal(log(x), np.log(x))
 
     def test_masked_binary_operations(self):
         # Tests masked_binary_operation
         (x, mx) = self.data
-        # Result should be a mmatrix
-        assert_(isinstance(add(mx, mx), mmatrix))
-        assert_(isinstance(add(mx, x), mmatrix))
+        # Result should be a msubarray
+        assert_(isinstance(add(mx, mx), msubarray))
+        assert_(isinstance(add(mx, x), msubarray))
         # Result should work
         assert_equal(add(mx, x), mx+x)
-        assert_(isinstance(add(mx, mx)._data, np.matrix))
-        assert_(isinstance(add.outer(mx, mx), mmatrix))
-        assert_(isinstance(hypot(mx, mx), mmatrix))
-        assert_(isinstance(hypot(mx, x), mmatrix))
+        assert_(isinstance(add(mx, mx)._data, subarray))
+        assert_(isinstance(add.outer(mx, mx), msubarray))
+        assert_(isinstance(hypot(mx, mx), msubarray))
+        assert_(isinstance(hypot(mx, x), msubarray))
 
     def test_masked_binary_operations2(self):
         # Tests domained_masked_binary_operation
         (x, mx) = self.data
         xmx = masked_array(mx.data.__array__(), mask=mx.mask)
-        assert_(isinstance(divide(mx, mx), mmatrix))
-        assert_(isinstance(divide(mx, x), mmatrix))
+        assert_(isinstance(divide(mx, mx), msubarray))
+        assert_(isinstance(divide(mx, x), msubarray))
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
     def test_attributepropagation(self):
