@@ -5850,7 +5850,7 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, keepdims=False)
+    reduce(a, axis=0, dtype=None, out=None, keepdims=False, initial)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
@@ -5906,6 +5906,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         the result will broadcast correctly against the original `arr`.
 
         .. versionadded:: 1.7.0
+    initial : scalar, optional
+        The value with which to start the reduction.
+        If the ufunc has no identity or the dtype is object, this defaults
+        to None - otherwise it defaults to ufunc.identity.
+        If ``None`` is given, the first element of the reduction is used,
+        and an error is thrown if the reduction is empty.
+        
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -5937,7 +5945,24 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     >>> np.add.reduce(X, 2)
     array([[ 1,  5],
            [ 9, 13]])
-
+           
+    You can use the ``initial`` keyword argument to initialize the reduction with a
+    different value.
+    
+    >>> np.add.reduce([10], initial=5)
+    15
+    >>> np.add.reduce(np.ones((2, 2, 2)), axis=(0, 2), initializer=10)
+    array([14., 14.])
+    
+    Allows reductions of empty arrays where they would normally fail, i.e.
+    for ufuncs without an identity.
+    
+    >>> np.minimum.reduce([], initial=np.inf)
+    inf
+    >>> np.minimum.reduce([])
+    Traceback (most recent call last):
+        ...
+    ValueError: zero-size array to reduction operation minimum which has no identity
     """))
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',

@@ -494,6 +494,17 @@ class TestUfunc(object):
             d += d
             assert_almost_equal(d, 2. + 2j)
 
+    def test_sum_initial(self):
+        # Integer, single axis
+        assert_equal(np.sum([3], initial=2), 5)
+
+        # Floating point
+        assert_almost_equal(np.sum([0.2], initial=0.1), 0.3)
+
+        # Multiple non-adjacent axes
+        assert_equal(np.sum(np.ones((2, 3, 5), dtype=np.int64), axis=(0, 2), initial=2),
+                     [12, 12, 12])
+
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
         assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1))
@@ -844,6 +855,7 @@ class TestUfunc(object):
         assert_equal(np.min(a), False)
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
+        assert_equal(np.array([1], dtype=object).sum(initial=1), 2)
 
     def test_object_array_accumulate_inplace(self):
         # Checks that in-place accumulates work, see also gh-7402
@@ -987,7 +999,7 @@ class TestUfunc(object):
         assert_equal(np.sqrt(a, where=m), [1])
 
     def check_identityless_reduction(self, a):
-        # np.minimum.reduce is a identityless reduction
+        # np.minimum.reduce is an identityless reduction
 
         # Verify that it sees the zero at various positions
         a[...] = 1
@@ -1055,6 +1067,35 @@ class TestUfunc(object):
         a.shape = (3, 4, 5)
         a = a[1:, 1:, 1:]
         self.check_identityless_reduction(a)
+
+    def test_initial_reduction(self):
+        # np.minimum.reduce is an identityless reduction
+
+        # For cases like np.maximum(np.abs(...), initial=0)
+        # More generally, a supremum over non-negative numbers.
+        assert_equal(np.maximum.reduce([], initial=0), 0)
+
+        # For cases like reduction of an empty array over the reals.
+        assert_equal(np.minimum.reduce([], initial=np.inf), np.inf)
+        assert_equal(np.maximum.reduce([], initial=-np.inf), -np.inf)
+
+        # Random tests
+        assert_equal(np.minimum.reduce([5], initial=4), 4)
+        assert_equal(np.maximum.reduce([4], initial=5), 5)
+        assert_equal(np.maximum.reduce([5], initial=4), 5)
+        assert_equal(np.minimum.reduce([4], initial=5), 4)
+
+        # Check initial=None raises ValueError for both types of ufunc reductions
+        assert_raises(ValueError, np.minimum.reduce, [], initial=None)
+        assert_raises(ValueError, np.add.reduce, [], initial=None)
+
+        # Check that np._NoValue gives default behavior.
+        assert_equal(np.add.reduce([], initial=np._NoValue), 0)
+
+        # Check that initial kwarg behaves as intended for dtype=object
+        a = np.array([10], dtype=object)
+        res = np.add.reduce(a, initial=5)
+        assert_equal(res, 15)
 
     def test_identityless_reduction_nonreorderable(self):
         a = np.array([[8.0, 2.0, 2.0], [1.0, 0.5, 0.25]])
@@ -1407,15 +1448,18 @@ class TestUfunc(object):
         assert_equal(f(d, 0, None, None), r)
         assert_equal(f(d, 0, None, None, keepdims=False), r)
         assert_equal(f(d, 0, None, None, True), r.reshape((1,) + r.shape))
+        assert_equal(f(d, 0, None, None, False, 0), r)
+        assert_equal(f(d, 0, None, None, False, initial=0), r)
         # multiple keywords
         assert_equal(f(d, axis=0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, None, out=None, keepdims=False), r)
+        assert_equal(f(d, 0, None, out=None, keepdims=False, initial=0), r)
 
         # too little
         assert_raises(TypeError, f)
         # too much
-        assert_raises(TypeError, f, d, 0, None, None, False, 1)
+        assert_raises(TypeError, f, d, 0, None, None, False, 0, 1)
         # invalid axis
         assert_raises(TypeError, f, d, "invalid")
         assert_raises(TypeError, f, d, axis="invalid")
