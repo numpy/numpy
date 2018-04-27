@@ -1124,6 +1124,10 @@ class _TestNorm(object):
         assert_equal(norm([]), 0.0)
         assert_equal(norm(array([], dtype=self.dt)), 0.0)
         assert_equal(norm(atleast_2d(array([], dtype=self.dt))), 0.0)
+        assert_equal(norm([], ord=np.inf), 0.0)
+        assert_equal(norm([], ord=-np.inf), np.inf)
+        assert_equal(norm(np.empty((0, 1), dtype=self.dt), ord=np.inf), 0.0)
+        assert_equal(norm(np.empty((0, 1), dtype=self.dt), ord=-np.inf), np.inf)
 
     def test_vector_return_type(self):
         a = np.array([1, 0, 1])

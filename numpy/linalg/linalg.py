@@ -2260,9 +2260,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     if len(axis) == 1:
         if ord == Inf:
-            return abs(x).max(axis=axis, keepdims=keepdims)
+            return abs(x).max(axis=axis, keepdims=keepdims, initial=0)
         elif ord == -Inf:
-            return abs(x).min(axis=axis, keepdims=keepdims)
+            return abs(x).min(axis=axis, keepdims=keepdims, initial=Inf)
         elif ord == 0:
             # Zero norm
             return (x != 0).astype(x.real.dtype).sum(axis=axis, keepdims=keepdims)
@@ -2296,19 +2296,19 @@ def norm(x, ord=None, axis=None, keepdims=False):
         elif ord == 1:
             if col_axis > row_axis:
                 col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
+            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis, initial=0)
         elif ord == Inf:
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
+            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis, initial=0)
         elif ord == -1:
             if col_axis > row_axis:
                 col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
+            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis, initial=Inf)
         elif ord == -Inf:
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
+            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis, initial=Inf)
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
         elif ord == 'nuc':
