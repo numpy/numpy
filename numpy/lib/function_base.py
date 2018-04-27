@@ -1633,9 +1633,9 @@ def disp(mesg, device=None, linefeed=True):
     Besides ``sys.stdout``, a file-like object can also be used as it has
     both required methods:
 
-    >>> from StringIO import StringIO
+    >>> from io import StringIO
     >>> buf = StringIO()
-    >>> np.disp('"Display" in a file', device=buf)
+    >>> np.disp(u'"Display" in a file', device=buf)
     >>> buf.getvalue()
     '"Display" in a file\\n'
 
