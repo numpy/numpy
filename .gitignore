@@ -100,6 +100,10 @@ Icon?
 ehthumbs.db
 Thumbs.db
 
+# pytest generated files #
+##########################
+/.pytest_cache
+
 # Things specific to this project #
 ###################################
 numpy/core/__svn_version__.py
