@@ -4360,13 +4360,16 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         int j = ufunc->nin+i;
         PyObject *wrap = wraparr[i];
 
-        if (wrap != NULL) {
+        if (wrap == NULL) {
+            /* default behavior */
+            retobj[i] = PyArray_Return(mps[j]);
+        }
+        else if (wrap == Py_None) {
+            Py_DECREF(wrap);
+            retobj[i] = (PyObject *)mps[j];
+        }
+        else {
             PyObject *args_tup;
-            if (wrap == Py_None) {
-                Py_DECREF(wrap);
-                retobj[i] = (PyObject *)mps[j];
-                continue;
-            }
 
             /* Call the method with appropriate context */
             args_tup = _get_wrap_prepare_args(full_args);
@@ -4386,15 +4389,9 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             if (res == NULL) {
                 goto fail;
             }
-            else {
-                Py_DECREF(mps[j]);
-                retobj[i] = res;
-                continue;
-            }
-        }
-        else {
-            /* default behavior */
-            retobj[i] = PyArray_Return(mps[j]);
+
+            Py_DECREF(mps[j]);
+            retobj[i] = res;
         }
     }
 
