@@ -30,20 +30,6 @@
 
 #include "numpy/npy_math.h"
 
-/*
- *****************************************************************************
- **                    INCLUDE GENERATED CODE                               **
- *****************************************************************************
- */
-#include "funcs.inc"
-#include "loops.h"
-#include "ufunc_object.h"
-#include "ufunc_type_resolution.h"
-#include "__umath_generated.c"
-#include "__ufunc_api.c"
-
-NPY_NO_EXPORT int initscalarmath(PyObject *);
-
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
@@ -294,7 +280,7 @@ static struct PyMethodDef methods[] = {
 
 int initumath(PyObject *m)
 {
-    PyObject *d, *s, *s2, *c_api;
+    PyObject *d, *s, *s2;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
@@ -316,21 +302,6 @@ int initumath(PyObject *m)
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
-
-    c_api = NpyCapsule_FromVoidPtr((void *)PyUFunc_API, NULL);
-    if (PyErr_Occurred()) {
-        goto err;
-    }
-    PyDict_SetItemString(d, "_UFUNC_API", c_api);
-    Py_DECREF(c_api);
-    if (PyErr_Occurred()) {
-        goto err;
-    }
-
-    /* Load the ufunc operators into the array module's namespace */
-    if (InitOperators(d) < 0) {
-        goto err;
-    }
 
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
@@ -387,8 +358,6 @@ int initumath(PyObject *m)
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
-
-    initscalarmath(m);
 
     if (!intern_strings()) {
         goto err;
