@@ -19,6 +19,7 @@
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -68,6 +69,19 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "numpy/ufuncobject.h"
 #include "ufunc_object.h"
+/*
+ *****************************************************************************
+ **                    INCLUDE GENERATED CODE                               **
+ *****************************************************************************
+ */
+#include "funcs.inc"
+#include "loops.h"
+#include "ufunc_object.h"
+#include "ufunc_type_resolution.h"
+#include "__umath_generated.c"
+#include "__ufunc_api.c"
+
+NPY_NO_EXPORT int initscalarmath(PyObject *);
 
 /*
  * global variable to determine if legacy printing is enabled, accessible from
@@ -4402,9 +4416,6 @@ static struct PyMethodDef array_module_methods[] = {
 static int
 setup_scalartypes(PyObject *NPY_UNUSED(dict))
 {
-    initialize_casting_tables();
-    initialize_numeric_types();
-
     if (PyType_Ready(&PyBool_Type) < 0) {
         return -1;
     }
@@ -4704,6 +4715,17 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
      * static structure slots with functions from the Python C_API.
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
+
+    /* Load the ufunc operators into the array module's namespace */
+    if (InitOperators(d) < 0) {
+        goto err;
+    }
+
+    initialize_casting_tables();
+    initialize_numeric_types();
+    if(initscalarmath(m) < 0)
+        goto err;
+
     if (PyType_Ready(&PyArray_Type) < 0) {
         goto err;
     }
@@ -4749,6 +4771,16 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     }
     PyDict_SetItemString(d, "_ARRAY_API", c_api);
     Py_DECREF(c_api);
+
+    c_api = NpyCapsule_FromVoidPtr((void *)PyUFunc_API, NULL);
+    if (c_api == NULL) {
+        goto err;
+    }
+    PyDict_SetItemString(d, "_UFUNC_API", c_api);
+    Py_DECREF(c_api);
+    if (PyErr_Occurred()) {
+        goto err;
+    }
 
     /*
      * PyExc_Exception should catch all the standard errors that are
