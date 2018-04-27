@@ -11,7 +11,7 @@ import warnings
 import pytest
 
 import numpy as np
-from numpy import array, single, double, csingle, cdouble, dot, identity
+from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
@@ -446,8 +446,7 @@ def identity_like_generalized(a):
     a = asarray(a)
     if a.ndim >= 3:
         r = np.empty(a.shape, dtype=a.dtype)
-        for c in itertools.product(*map(range, a.shape[:-2])):
-            r[c] = identity(a.shape[-2])
+        r[...] = identity(a.shape[-2])
         return r
     else:
         return identity(a.shape[0])
@@ -907,16 +906,21 @@ class TestMatrixPower(object):
     R90 = array([[0, 1], [-1, 0]])
     Arb22 = array([[4, -7], [-2, 10]])
     noninv = array([[1, 0], [0, 0]])
-    arbfloat = array([[0.1, 3.2], [1.2, 0.7]])
+    arbfloat = array([[[0.1, 3.2], [1.2, 0.7]],
+                      [[0.2, 6.4], [2.4, 1.4]]])
 
     large = identity(10)
     t = large[1, :].copy()
-    large[1, :] = large[0,:]
+    large[1, :] = large[0, :]
     large[0, :] = t
 
     def test_large_power(self):
         assert_equal(
             matrix_power(self.R90, 2 ** 100 + 2 ** 10 + 2 ** 5 + 1), self.R90)
+        assert_equal(
+            matrix_power(self.R90, 2 ** 100 + 2 ** 10 + 1), self.R90)
+        assert_equal(
+            matrix_power(self.R90, 2 ** 100 + 2 + 1), -self.R90)
 
     def test_large_power_trailing_zero(self):
         assert_equal(
@@ -925,7 +929,7 @@ class TestMatrixPower(object):
     def testip_zero(self):
         def tz(M):
             mz = matrix_power(M, 0)
-            assert_equal(mz, identity(M.shape[0]))
+            assert_equal(mz, identity_like_generalized(M))
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
             tz(M)
@@ -941,7 +945,7 @@ class TestMatrixPower(object):
     def testip_two(self):
         def tz(M):
             mz = matrix_power(M, 2)
-            assert_equal(mz, dot(M, M))
+            assert_equal(mz, matmul(M, M))
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
             tz(M)
@@ -949,14 +953,19 @@ class TestMatrixPower(object):
     def testip_invert(self):
         def tz(M):
             mz = matrix_power(M, -1)
-            assert_almost_equal(identity(M.shape[0]), dot(mz, M))
+            assert_almost_equal(matmul(mz, M), identity_like_generalized(M))
         for M in [self.R90, self.Arb22, self.arbfloat, self.large]:
             tz(M)
 
     def test_invert_noninvertible(self):
-        import numpy.linalg
-        assert_raises(numpy.linalg.linalg.LinAlgError,
-                      lambda: matrix_power(self.noninv, -1))
+        assert_raises(LinAlgError, matrix_power, self.noninv, -1)
+
+    def test_invalid(self):
+        assert_raises(TypeError, matrix_power, self.R90, 1.5)
+        assert_raises(TypeError, matrix_power, self.R90, [1])
+        assert_raises(LinAlgError, matrix_power, np.array([1]), 1)
+        assert_raises(LinAlgError, matrix_power, np.array([[1], [2]]), 1)
+        assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2)), 1)
 
 
 class TestBoolPower(object):
