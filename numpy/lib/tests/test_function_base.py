@@ -308,8 +308,11 @@ class TestAverage(object):
         desired = np.array([3., 6.])
         assert_almost_equal(actual, desired)
 
-        # This should raise an error. Can we test for that ?
-        # assert_equal(average(y1, weights=w1), 9./2.)
+        with assert_raises_regex(TypeError, "Axis must be specified"):
+            average(y1, weights=w1)
+        with assert_raises_regex(
+            ValueError, "Length of weights not compatible with specified axis"):
+            average(y1, weights=w1, axis=0)
 
         # 2D Case
         w2 = [[0, 0, 1], [0, 0, 2]]
@@ -321,6 +324,30 @@ class TestAverage(object):
         w3 = rand(5).astype(np.float64)
 
         assert_(np.average(y3, weights=w3).dtype == np.result_type(y3, w3))
+
+    def test_tuple_axis(self):
+        y = np.arange(6).reshape((1, 3, 2))
+        w = [0, 1]
+        # 1D weights incompatible with 2 axes
+        with assert_raises_regex(
+            TypeError, "ndim of weights should equal len of axis"):
+            average(y, weights=w, axis=(0, 1))
+
+        w1 = [w]
+        # 3D input, 2D weights, 2 axes
+        actual = average(y, weights=w1, axis=(0, 2))
+        desired = np.array([1., 3., 5.])
+        assert_almost_equal(actual, desired)
+
+        with assert_raises_regex(
+            ValueError, "Length of weights not compatible with specified axis"):
+            average(y, weights=w1, axis=(2, 0))
+
+        w2 = y.copy()
+        # 3D input, 3D weights, 2 axes
+        actual = average(y, weights=w2, axis=(0, 1))
+        desired = np.array([3.33333333, 3.88888889])
+        assert_almost_equal(actual, desired)
 
     def test_returned(self):
         y = np.array([[1, 2, 3], [4, 5, 6]])
