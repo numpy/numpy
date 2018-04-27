@@ -292,8 +292,9 @@ def average(a, axis=None, weights=None, returned=False):
     weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the average according to its associated weight.
-        The weights array can either be 1-D (in which case its length must be
-        the size of `a` along the given axis) or of the same shape as `a`.
+        The weights array can either be x-D (in which case its ndim x must
+        equal the length of `axis`. And the length of each dimension must be the
+        size of `a` along the corresponding axis) or of the same shape as `a`.
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
     returned : bool, optional
@@ -318,8 +319,11 @@ def average(a, axis=None, weights=None, returned=False):
         When all weights along axis are zero. See `numpy.ma.average` for a
         version robust to this type of error.
     TypeError
-        When the length of 1D `weights` is not the same as the shape of `a`
-        along axis.
+        When the ndim of `weights` is not the same as the length of `axis`.
+        When `axis` is None and the shapes of `weights` and `a` differ.
+    ValueError
+        When the length of `weights` is not the same as the shape of `a`
+        along correponding axis.
 
     See Also
     --------
@@ -349,7 +353,18 @@ def average(a, axis=None, weights=None, returned=False):
     Traceback (most recent call last):
     ...
     TypeError: Axis must be specified when shapes of a and weights differ.
-
+    
+    >>> data = np.arange(6).reshape((1, 3, 2))
+    >>> np.average(data, weights=[[0, 1]], axis=(0, 2))
+    array([1., 3., 5.])
+    >>> np.average(data, weights=[0, 1], axis=(0, 2))
+    Traceback (most recent call last):
+    ...
+    TypeError: ndim of weights should equal len of axis.
+    >>> np.average(data, weights=[[0, 1]], axis=(2, 0))
+    Traceback (most recent call last):
+    ...
+    ValueError: Length of weights not compatible with specified axis.
     """
     a = np.asanyarray(a)
 
