@@ -17,8 +17,8 @@ Creating a new universal function
 Before reading this, it may help to familiarize yourself with the basics
 of C extensions for Python by reading/skimming the tutorials in Section 1
 of `Extending and Embedding the Python Interpreter
-<http://docs.python.org/extending/index.html>`_ and in `How to extend
-NumPy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
+<http://docs.python.org/extending/index.html>`_ and in :doc:`How to extend
+NumPy <c-info.how-to-extend>`
 
 The umath module is a computer-generated C-module that creates many
 ufuncs. It provides a great many examples of how to create a universal
