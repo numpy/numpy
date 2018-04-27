@@ -55,7 +55,7 @@ Deprecations
   In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
   or the built-in Python `sum` instead.
 
-* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or 
+* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
   ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
   flag set, before the array is deallocated. A deprecation warning will be
   emitted if those calls are not used when needed.
@@ -81,7 +81,7 @@ are some circumstances where nditer doesn't actually give you a view onto the
 writable array. Instead, it gives you a copy, and if you make changes to the
 copy, nditer later writes those changes back into your actual array. Currently,
 this writeback occurs when the array objects are garbage collected, which makes
-this API error-prone on CPython and entirely broken on PyPy. Therefore, 
+this API error-prone on CPython and entirely broken on PyPy. Therefore,
 ``nditer`` should now be used as a context manager whenever using ``nditer``
 with writeable arrays (``with np.nditer(...) as it: ...``). You may also
 explicitly call ``it.close()`` for cases where a context manager is unusable,
@@ -287,6 +287,13 @@ of the overlap between input an output, that is, the next element accumulated
 is added before the accumulated result is stored in its place, hence the
 overlap is safe. Avoiding the copy results in faster execution.
 
+``linalg.matrix_power`` can now handle stacks of matrices
+---------------------------------------------------------
+Like other functions in ``linalg``, ``matrix_power`` can now deal with arrays
+of dimension larger than 2, which are treated as stacks of matrices. As part
+of the change, to further improve consistency, the name of the first argument
+has been changed to ``a`` (from ``M``), and the exceptions for non-square
+matrices have been changed to ``LinAlgError`` (from ``ValueError``).
 
 Changes
 =======
