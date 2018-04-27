@@ -811,7 +811,7 @@ def test_iter_nbo_align_contig():
         assert_equal(i.operands[0], a)
         i.operands[0][:] = 2
     assert_equal(au, [2]*6)
-    i = None # should not raise a DeprecationWarning
+    del i  # should not raise a warning
     # Byte order change by requesting NBO
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
@@ -2838,12 +2838,30 @@ def test_writebacks():
     it = nditer(au, [],
                  [['readwrite', 'updateifcopy']],
                  casting='equiv', op_dtypes=[np.dtype('f4')])
-    au = None
+    # reentering works
+    with it:
+        with it:
+            for x in it:
+                x[...] = 123
+
+    it = nditer(au, [],
+                 [['readwrite', 'updateifcopy']],
+                 casting='equiv', op_dtypes=[np.dtype('f4')])
+    # make sure exiting the inner context manager closes the iterator
+    with it:
+        with it:
+            for x in it:
+                x[...] = 123
+        assert_raises(ValueError, getattr, it, 'operands')
     # do not crash if original data array is decrefed
+    it = nditer(au, [],
+                 [['readwrite', 'updateifcopy']],
+                 casting='equiv', op_dtypes=[np.dtype('f4')])
+    del au
     with it:
         for x in it:
             x[...] = 123
-    # make sure we cannot reenter the iterand
+    # make sure we cannot reenter the closed iterator
     enter = it.__enter__
     assert_raises(ValueError, enter)
 
