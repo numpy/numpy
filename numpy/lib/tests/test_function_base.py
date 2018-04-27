@@ -339,6 +339,10 @@ class TestAverage(object):
         desired = np.array([1., 3., 5.])
         assert_almost_equal(actual, desired)
 
+        # axis: list(not tuple) of ints
+        actual = average(y, weights=w1, axis=[0, 2])
+        assert_almost_equal(actual, desired)
+
         with assert_raises_regex(
             ValueError, "Length of weights not compatible with specified axis"):
             average(y, weights=w1, axis=(2, 0))
