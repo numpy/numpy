@@ -4282,11 +4282,9 @@ static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     int i;
-    PyTupleObject *ret;
     PyArrayObject *mps[NPY_MAXARGS];
     PyObject *retobj[NPY_MAXARGS];
     PyObject *wraparr[NPY_MAXARGS];
-    PyObject *res;
     PyObject *override = NULL;
     ufunc_full_args full_args = {NULL, NULL};
     int errval;
@@ -4372,6 +4370,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             retobj[i] = (PyObject *)mps[j];
         }
         else {
+            PyObject *res;
             PyObject *args_tup;
 
             /* Call the method with appropriate context */
@@ -4405,6 +4404,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return retobj[0];
     }
     else {
+        PyTupleObject *ret;
+
         ret = (PyTupleObject *)PyTuple_New(ufunc->nout);
         for (i = 0; i < ufunc->nout; i++) {
             PyTuple_SET_ITEM(ret, i, retobj[i]);
