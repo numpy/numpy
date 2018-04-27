@@ -1,0 +1,27 @@
+
+Contributors
+============
+
+A total of 6 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Charles Harris
+* Jonathan March +
+* Malcolm Smith +
+* Matti Picus
+* Pauli Virtanen
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#10862 <https://github.com/numpy/numpy/pull/10862>`__: BUG: floating types should override tp_print (1.14 backport)
+* `#10905 <https://github.com/numpy/numpy/pull/10905>`__: BUG: for 1.14 back-compat, accept list-of-lists in fromrecords
+* `#10947 <https://github.com/numpy/numpy/pull/10947>`__: BUG: 'style' arg to array2string broken in legacy mode (1.14...
+* `#10959 <https://github.com/numpy/numpy/pull/10959>`__: BUG: test, fix for missing flags['WRITEBACKIFCOPY'] key
+* `#10960 <https://github.com/numpy/numpy/pull/10960>`__: BUG: Add missing underscore to prototype in check_embedded_lapack
+* `#10961 <https://github.com/numpy/numpy/pull/10961>`__: BUG: Fix encoding regression in ma/bench.py (Issue #10868)
+* `#10962 <https://github.com/numpy/numpy/pull/10962>`__: BUG: core: fix NPY_TITLE_KEY macro on pypy
+* `#10974 <https://github.com/numpy/numpy/pull/10974>`__: BUG: test, fix PyArray_DiscardWritebackIfCopy...
