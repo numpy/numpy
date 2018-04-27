@@ -13,7 +13,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_raises
     )
-from numpy.matrixlib.defmatrix import matrix_power
+from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
 
 class TestCtor(object):
