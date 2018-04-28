@@ -110,9 +110,11 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     return view
 
-def sliding_window_view(x, shape, step=None):
+def sliding_window_view(x, shape, step=None, writeable=False):
     """
-    Create sliding window views of the N dimensions array with the given window shape.
+    Create sliding window views of the N dimensions array with the given window
+    shape. Window slides across each dimension of `x` and extract subsets of `x`
+    at any window position.
 
     For some cases, there may be more efficient approaches.
 
@@ -121,13 +123,19 @@ def sliding_window_view(x, shape, step=None):
     x : ndarray
         Array to create sliding window views.
     shape : sequence of int
-        The shape of the sliding window.
+        The shape of the window. Must have same length as number of input array dimensions.
     step: sequence of int, optional
-        The step of sliding window shifts for each dimension of input array each time. Defaults to 1 on all dimensions.
+        The steps of window shifts for each dimension on input array at a time.
+        If given, must have same length as number of input array dimensions.
+        Defaults to 1 on all dimensions.
+    writeable : bool, optional
+        If set to False, the returned array will always be readonly.
+        Otherwise it will be writable if the original array was.
 
     Returns
     -------
     view : ndarray
+        Sliding window views of `x`. view.shape = (x.shape - shape) // step + 1
 
     Examples
     --------
@@ -182,20 +190,20 @@ def sliding_window_view(x, shape, step=None):
         step = np.array(step, np.int)
 
     if len(x.shape) != len(shape) or len(shape) != len(step):
-        raise ValueError("view shape or step dimension doesn't match with input array")
+        raise ValueError("window shape or step dimension doesn't match with input array")
     if np.any(shape <= 0) and np.any(step <= 0):
-        raise ValueError('view shape or step cannot contain non-positive value')
+        raise ValueError('window shape or step cannot contain non-positive value')
 
     o = (np.array(x.shape)  - shape) // step + 1 # output shape
     if np.any(o <= 0):
-        raise ValueError('view shape cannot larger than input array shape')
+        raise ValueError('window shape cannot larger than input array shape')
 
     strides = x.strides
     view_strides = strides * step
 
     view_shape = np.concatenate((o, shape), axis=0)
     view_strides = np.concatenate((view_strides, strides), axis=0)
-    view = np.lib.stride_tricks.as_strided(x, view_shape, view_strides)
+    view = as_strided(x, view_shape, view_strides, writeable=writeable)
     return view
 
 
