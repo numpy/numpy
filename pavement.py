@@ -98,8 +98,8 @@ finally:
 RELEASE_NOTES = 'doc/release/1.14.3-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'v1.14.2'
-LOG_END = 'v1.14.3'
+LOG_START = 'v1.14.3'
+LOG_END = 'maintenance/1.14.x'
 
 
 #-------------------------------------------------------
