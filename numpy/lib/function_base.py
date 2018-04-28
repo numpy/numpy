@@ -395,13 +395,13 @@ def average(a, axis=None, weights=None, returned=False):
                         "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            exepted_shape = [1,] * a.ndim
+            weights_shape = [1,] * a.ndim
             for i, ax in enumerate(axis):
-                exepted_shape[ax] = wgt.shape[i]
-            wgt = wgt.reshape(exepted_shape)
-
-        if axis is not None:
+                weights_shape[ax] = wgt.shape[i]
+            wgt = wgt.reshape(weights_shape)
+        elif axis is not None:
             axis = _nx.normalize_axis_tuple(axis, a.ndim)
+
         scl = wgt.sum(axis=axis, dtype=result_dtype)
         if np.any(scl == 0.0):
             raise ZeroDivisionError(
