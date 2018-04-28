@@ -156,10 +156,6 @@ def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
     views is readonly. Bear in mind, return copies (writeable=True), could possibly
     take memory multiple amount of origin array, due to overlapping windows.
 
-    For these reasons it is advisable to use ``writeable=False``. Otherwise,
-    multiple write operations shall be avoided. For more warning details,
-    see Notes from ``as_strided``.
-
     For some cases, there may be more efficient approaches, such as FFT based algo discussed in #7753.
 
     Examples
