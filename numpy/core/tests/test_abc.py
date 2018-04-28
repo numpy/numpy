@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import assert_, run_module_suite
+from numpy.testing import assert_
 
 import numbers
 
@@ -54,7 +54,3 @@ class TestABC(object):
                     "{0} is not instance of Integral".format(t.__name__))
             assert_(issubclass(t, numbers.Integral),
                     "{0} is not subclass of Integral".format(t.__name__))
-
-
-if __name__ == "__main__":
-    run_module_suite()

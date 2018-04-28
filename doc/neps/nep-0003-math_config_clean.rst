@@ -5,6 +5,7 @@ Cleaning the math configuration of numpy.core
 :Author: David Cournapeau
 :Contact: david@ar.media.kyoto-u.ac.jp
 :Date: 2008-09-04
+:Status: Deferred
 
 Executive summary
 =================

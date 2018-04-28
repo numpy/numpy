@@ -4,11 +4,10 @@ import numpy as np
 
 from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex,
-    dec, suppress_warnings, HAS_REFCOUNT,
-)
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    )
 
 
 class TestHistogram(object):
@@ -444,6 +443,24 @@ class TestHistogramOptimBinNums(object):
             assert_equal(len(a), numbins, err_msg="{0} estimator, "
                          "No Variance test".format(estimator))
 
+    def test_limited_variance(self):
+        """
+        Check when IQR is 0, but variance exists, we return the sturges value
+        and not the fd value.
+        """
+        lim_var_data = np.ones(1000)
+        lim_var_data[:3] = 0
+        lim_var_data[-4:] = 100
+
+        edges_auto = histogram_bin_edges(lim_var_data, 'auto')
+        assert_equal(edges_auto, np.linspace(0, 100, 12))
+
+        edges_fd = histogram_bin_edges(lim_var_data, 'fd')
+        assert_equal(edges_fd, np.array([0, 100]))
+
+        edges_sturges = histogram_bin_edges(lim_var_data, 'sturges')
+        assert_equal(edges_sturges, np.linspace(0, 100, 12))
+
     def test_outlier(self):
         """
         Check the FD, Scott and Doane with outliers.
@@ -643,7 +660,3 @@ class TestHistogramdd(object):
                       range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
         assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
-
-
-if __name__ == "__main__":
-    run_module_suite()

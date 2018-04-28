@@ -764,7 +764,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -794,13 +794,13 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     order. The three available algorithms have the following
     properties:
 
-    =========== ======= ============= ============ =======
-       kind      speed   worst case    work space  stable
-    =========== ======= ============= ============ =======
+    =========== ======= ============= ============ ========
+       kind      speed   worst case    work space   stable
+    =========== ======= ============= ============ ========
     'quicksort'    1     O(n^2)            0          no
     'mergesort'    2     O(n*log(n))      ~n/2        yes
     'heapsort'     3     O(n*log(n))       0          no
-    =========== ======= ============= ============ =======
+    =========== ======= ============= ============ ========
 
     All the sort algorithms make temporary copies of the data when
     sorting along any but the last axis.  Consequently, sorting along
@@ -828,6 +828,10 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     quicksort has been changed to an introsort which will switch
     heapsort when it does not make enough progress. This makes its
     worst case O(n*log(n)).
+
+    'stable' automatically choses the best stable sorting algorithm
+    for the data type being sorted. It is currently mapped to
+    merge sort.
 
     Examples
     --------
@@ -886,7 +890,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort.  The default is -1 (the last axis). If None,
         the flattened array is used.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -1276,13 +1280,10 @@ def squeeze(a, axis=None):
         squeeze = a.squeeze
     except AttributeError:
         return _wrapit(a, 'squeeze')
-    try:
-        # First try to use the new axis= parameter
-        return squeeze(axis=axis)
-    except TypeError:
-        # For backwards compatibility
+    if axis is None:
         return squeeze()
-
+    else:
+        return squeeze(axis=axis)
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
     """
@@ -1811,7 +1812,7 @@ def clip(a, a_min, a_max, out=None):
     return _wrapfunc(a, 'clip', a_min, a_max, out=out)
 
 
-def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
+def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Sum of array elements over a given axis.
 
@@ -1850,6 +1851,10 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+    initial : scalar, optional
+        Starting value for the sum. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -1897,15 +1902,26 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.ones(128, dtype=np.int8).sum(dtype=np.int8)
     -128
 
+    You can also start the sum with a value other than zero:
+
+    >>> np.sum([10], initial=5)
+    15
     """
     if isinstance(a, _gentype):
+        # 2018-02-25, 1.15.0
+        warnings.warn(
+            "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
+            "Use np.sum(np.from_iter(generator)) or the python sum builtin instead.",
+            DeprecationWarning, stacklevel=2)
+
         res = _sum_(a)
         if out is not None:
             out[...] = res
             return out
         return res
 
-    return _wrapreduction(a, np.add, 'sum', axis, dtype, out, keepdims=keepdims)
+    return _wrapreduction(a, np.add, 'sum', axis, dtype, out, keepdims=keepdims,
+                          initial=initial)
 
 
 def any(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2202,7 +2218,7 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
-def amax(a, axis=None, out=None, keepdims=np._NoValue):
+def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis.
 
@@ -2233,6 +2249,13 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    initial : scalar, optional
+        The minimum value of an output element. Must be present to allow
+        computation on empty slice. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
+
 
     Returns
     -------
@@ -2286,11 +2309,26 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.nanmax(b)
     4.0
 
+    You can use an initial value to compute the maximum of an empty slice, or
+    to initialize it to a different value:
+
+    >>> np.max([[-50], [10]], axis=-1, initial=0)
+    array([ 0, 10])
+
+    Notice that the initial value is used as one of the elements for which the
+    maximum is determined, unlike for the default argument Python's max
+    function, which is only used for empty iterables.
+
+    >>> np.max([5], initial=6)
+    6
+    >>> max([5], default=6)
+    5
     """
-    return _wrapreduction(a, np.maximum, 'max', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.maximum, 'max', axis, None, out, keepdims=keepdims,
+                          initial=initial)
 
 
-def amin(a, axis=None, out=None, keepdims=np._NoValue):
+def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -2321,6 +2359,12 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    initial : scalar, optional
+        The maximum value of an output element. Must be present to allow
+        computation on empty slice. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -2374,8 +2418,22 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.nanmin(b)
     0.0
 
+    >>> np.min([[-50], [10]], axis=-1, initial=0)
+    array([-50,   0])
+
+    Notice that the initial value is used as one of the elements for which the
+    minimum is determined, unlike for the default argument Python's max
+    function, which is only used for empty iterables.
+
+    Notice that this isn't the same as Python's ``default`` argument.
+
+    >>> np.min([6], initial=5)
+    5
+    >>> min([6], default=5)
+    6
     """
-    return _wrapreduction(a, np.minimum, 'min', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out, keepdims=keepdims,
+                          initial=initial)
 
 
 def alen(a):
@@ -2411,7 +2469,7 @@ def alen(a):
         return len(array(a, ndmin=1))
 
 
-def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
+def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the product of array elements over a given axis.
 
@@ -2451,6 +2509,10 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+    initial : scalar, optional
+        The starting value for this product. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -2508,8 +2570,13 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.prod(x).dtype == int
     True
 
+    You can also start the product with a value other than one:
+
+    >>> np.prod([1, 2], initial=5)
+    10
     """
-    return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out, keepdims=keepdims)
+    return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out, keepdims=keepdims,
+                          initial=initial)
 
 
 def cumprod(a, axis=None, dtype=None, out=None):

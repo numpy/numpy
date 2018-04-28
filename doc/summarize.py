@@ -9,7 +9,7 @@ from __future__ import division, absolute_import, print_function
 
 import os, glob, re, sys, inspect, optparse
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:

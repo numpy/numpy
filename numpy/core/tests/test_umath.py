@@ -5,16 +5,17 @@ import platform
 import warnings
 import fnmatch
 import itertools
+import pytest
 
 import numpy.core.umath as ncu
-from numpy.core import umath_tests as ncu_tests
+from numpy.core import _umath_tests as ncu_tests
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, dec, assert_allclose, assert_no_warnings,
-    suppress_warnings, _gen_alignment_data,
-)
+    assert_, assert_equal, assert_raises, assert_raises_regex,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    assert_allclose, assert_no_warnings, suppress_warnings,
+    _gen_alignment_data,
+    )
 
 
 def on_powerpc():
@@ -24,10 +25,10 @@ def on_powerpc():
 
 
 class _FilterInvalids(object):
-    def setUp(self):
+    def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def tearDown(self):
+    def teardown(self):
         np.seterr(**self.olderr)
 
 
@@ -1412,6 +1413,57 @@ class TestSpecialMethods(object):
         assert_equal(args[1], a)
         assert_equal(i, 0)
 
+    def test_wrap_and_prepare_out(self):
+        # Calling convention for out should not affect how special methods are
+        # called
+
+        class StoreArrayPrepareWrap(np.ndarray):
+            _wrap_args = None
+            _prepare_args = None
+            def __new__(cls):
+                return np.empty(()).view(cls)
+            def __array_wrap__(self, obj, context):
+                self._wrap_args = context[1]
+                return obj
+            def __array_prepare__(self, obj, context):
+                self._prepare_args = context[1]
+                return obj
+            @property
+            def args(self):
+                # We need to ensure these are fetched at the same time, before
+                # any other ufuncs are calld by the assertions
+                return (self._prepare_args, self._wrap_args)
+            def __repr__(self):
+                return "a"  # for short test output
+
+        def do_test(f_call, f_expected):
+            a = StoreArrayPrepareWrap()
+            f_call(a)
+            p, w = a.args
+            expected = f_expected(a)
+            try:
+                assert_equal(p, expected)
+                assert_equal(w, expected)
+            except AssertionError as e:
+                # assert_equal produces truly useless error messages
+                raise AssertionError("\n".join([
+                    "Bad arguments passed in ufunc call",
+                    " expected:              {}".format(expected),
+                    " __array_prepare__ got: {}".format(p),
+                    " __array_wrap__ got:    {}".format(w)
+                ]))
+
+        # method not on the out argument
+        do_test(lambda a: np.add(a, 0),              lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, None),        lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, out=None),    lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, out=(None,)), lambda a: (a, 0))
+
+        # method on the out argument
+        do_test(lambda a: np.add(0, 0, a),           lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=a),       lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=(a,)),    lambda a: (0, 0, a))
+
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
 
@@ -1758,7 +1810,7 @@ class TestSpecialMethods(object):
 
         # reduce, kwargs
         res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
-                                 keepdims='keep0')
+                                 keepdims='keep0', initial='init0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
@@ -1766,7 +1818,8 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'dtype':'dtype0',
                               'out': ('out0',),
                               'keepdims': 'keep0',
-                              'axis': 'axis0'})
+                              'axis': 'axis0',
+                              'initial': 'init0'})
 
         # reduce, output equal to None removed, but not other explicit ones,
         # even if they are at their default value.
@@ -1776,6 +1829,14 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'axis': 0, 'keepdims': True})
         res = np.multiply.reduce(a, None, out=(None,), dtype=None)
         assert_equal(res[4], {'axis': None, 'dtype': None})
+        res = np.multiply.reduce(a, 0, None, None, False, 2)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': 2})
+        # np._NoValue ignored for initial.
+        res = np.multiply.reduce(a, 0, None, None, False, np._NoValue)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False})
+        # None kept for initial.
+        res = np.multiply.reduce(a, 0, None, None, False, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': None})
 
         # reduce, wrong args
         assert_raises(ValueError, np.multiply.reduce, a, out=())
@@ -2491,7 +2552,8 @@ class TestComplexFunctions(object):
         for dtype in [np.complex64, np.complex_]:
             self.check_loss_of_precision(dtype)
 
-    @dec.knownfailureif(is_longdouble_finfo_bogus(), "Bogus long double finfo")
+    @pytest.mark.skipif(is_longdouble_finfo_bogus(),
+                        reason="Bogus long double finfo")
     def test_loss_of_precision_longcomplex(self):
         self.check_loss_of_precision(np.longcomplex)
 
@@ -2611,13 +2673,18 @@ def _test_nextafter(t):
 def test_nextafter():
     return _test_nextafter(np.float64)
 
+
 def test_nextafterf():
     return _test_nextafter(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32',
-            "Long double support buggy on win32, ticket 1664.")
+
+@pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+                    reason="long double is same as double")
+@pytest.mark.skipif(platform.machine().startswith("ppc64"),
+                    reason="IBM double double")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
+
 
 def test_nextafter_0():
     for t, direction in itertools.product(np.sctypes['float'], (1, -1)):
@@ -2643,8 +2710,11 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32',
-            "Long double support buggy on win32, ticket 1664.")
+
+@pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+                    reason="long double is same as double")
+@pytest.mark.skipif(platform.machine().startswith("ppc64"),
+                    reason="IBM double double")
 def test_spacingl():
     return _test_spacing(np.longdouble)
 
@@ -2769,7 +2839,3 @@ def test_signaling_nan_exceptions():
     with assert_no_warnings():
         a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
         np.isnan(a)
-
-
-if __name__ == "__main__":
-    run_module_suite()

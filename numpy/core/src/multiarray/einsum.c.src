@@ -591,7 +591,7 @@ finish_after_unrolled_loop:
             accum += @from@(data0[@i@]) * @from@(data1[@i@]);
 /**end repeat2**/
         case 0:
-            *(@type@ *)dataptr[2] += @to@(accum);
+            *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + accum);
             return;
     }
 
@@ -749,7 +749,7 @@ finish_after_unrolled_loop:
             accum += @from@(data1[@i@]);
 /**end repeat2**/
         case 0:
-            *(@type@ *)dataptr[2] += @to@(value0 * accum);
+            *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + value0 * accum);
             return;
     }
 
@@ -848,7 +848,7 @@ finish_after_unrolled_loop:
             accum += @from@(data0[@i@]);
 /**end repeat2**/
         case 0:
-            *(@type@ *)dataptr[2] += @to@(accum * value1);
+            *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + accum * value1);
             return;
     }
 
@@ -1829,9 +1829,10 @@ parse_operand_subscripts(char *subscripts, int length,
                 break;
             }
             else {
-                PyErr_SetString(PyExc_ValueError,
+                PyErr_Format(PyExc_ValueError,
                             "einstein sum subscripts string contains a "
-                            "'.' that is not part of an ellipsis ('...')");
+                            "'.' that is not part of an ellipsis ('...') in "
+                            "operand %d", iop);
                 return 0;
 
             }
@@ -1887,6 +1888,12 @@ parse_operand_subscripts(char *subscripts, int length,
                                 "too many subscripts for operand %d", iop);
                     return 0;
                 }
+            }
+            else if (label == '.') {
+                PyErr_Format(PyExc_ValueError,
+                            "einstein sum subscripts string contains a "
+                            "'.' that is not part of an ellipsis ('...') in "
+                            "operand %d", iop);
             }
             else if (label != ' ') {
                 PyErr_Format(PyExc_ValueError,
@@ -2011,7 +2018,8 @@ parse_output_subscripts(char *subscripts, int length,
             else {
                 PyErr_SetString(PyExc_ValueError,
                             "einstein sum subscripts string contains a "
-                            "'.' that is not part of an ellipsis ('...')");
+                            "'.' that is not part of an ellipsis ('...') "
+                            "in the output");
                 return -1;
 
             }
@@ -2037,8 +2045,15 @@ parse_output_subscripts(char *subscripts, int length,
     if (i > 0) {
         for (i = 0; i < length; ++i) {
             label = subscripts[i];
+            if (label == '.') {
+                PyErr_SetString(PyExc_ValueError,
+                            "einstein sum subscripts string contains a "
+                            "'.' that is not part of an ellipsis ('...') "
+                            "in the output");
+                return -1;
+            }
             /* A label for an axis */
-            if (label != '.' && label != ' ') {
+            else if (label != ' ') {
                 if (idim < ndim_left) {
                     out_labels[idim++] = label;
                 }
@@ -2048,12 +2063,6 @@ parse_output_subscripts(char *subscripts, int length,
                                 "too many subscripts for the output");
                     return -1;
                 }
-            }
-            else {
-                PyErr_SetString(PyExc_ValueError,
-                            "einstein sum subscripts string contains a "
-                            "'.' that is not part of an ellipsis ('...')");
-                return -1;
             }
         }
     }
@@ -2185,7 +2194,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
 {
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp new_dims[NPY_MAXDIMS];
-    int i, idim, ndim, icombine, combineoffset, label;
+    int idim, ndim, icombine, combineoffset;
     int icombinemap[NPY_MAXDIMS];
 
     PyArrayObject *ret = NULL;
@@ -2205,7 +2214,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
          * The char type may be either signed or unsigned, we
          * need it to be signed here.
          */
-        label = (signed char)labels[idim];
+        int label = (signed char)labels[idim];
         /* If this label says to merge axes, get the actual label */
         if (label < 0) {
             combineoffset = label;
@@ -2225,7 +2234,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
         }
         else {
             /* Update the combined axis dimensions and strides */
-            i = idim + combineoffset;
+            int i = icombinemap[idim + combineoffset];
             if (combineoffset < 0 && new_dims[i] != 0 &&
                         new_dims[i] != PyArray_DIM(op, idim)) {
                 PyErr_Format(PyExc_ValueError,
@@ -2235,7 +2244,6 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
                         (int)PyArray_DIM(op, idim));
                 return NULL;
             }
-            i = icombinemap[i];
             new_dims[i] = PyArray_DIM(op, idim);
             new_strides[i] += PyArray_STRIDE(op, idim);
         }

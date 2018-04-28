@@ -40,7 +40,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000a - 1.12.x
 # 0x0000000b - 1.13.x
 # 0x0000000c - 1.14.x
-C_API_VERSION = 0x0000000c
+# 0x0000000d - 1.15.x
+C_API_VERSION = 0x0000000d
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -146,6 +147,7 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX"),
                        ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
                         "stdio.h", "LINK_AVX2"),
+                       ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
 # function attributes

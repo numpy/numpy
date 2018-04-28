@@ -132,6 +132,8 @@ Supplying additional compiler flags
 
 Additional compiler flags can be supplied by setting the ``OPT``,
 ``FOPT`` (for Fortran), and ``CC`` environment variables.
+When providing options that should improve the performance of the code ensure
+that you also set ``-DNDEBUG`` so that debugging code is not executed.
 
 
 Building with ATLAS support

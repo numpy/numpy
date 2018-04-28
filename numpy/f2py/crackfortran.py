@@ -612,7 +612,7 @@ multilinepattern = re.compile(
 def split_by_unquoted(line, characters):
     """
     Splits the line into (line[:i], line[i:]),
-    where i is the index of first occurence of one of the characters
+    where i is the index of first occurrence of one of the characters
     not within quotes, or len(line) if no such index exists
     """
     assert not (set('"\'') & set(characters)), "cannot split by unquoted quotes"

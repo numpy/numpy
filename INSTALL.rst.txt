@@ -41,7 +41,7 @@ nose__ http://nose.readthedocs.io
 
    If you want to build NumPy in order to work on NumPy itself, use
    ``runtests.py``.  For more details, see
-   http://docs.scipy.org/doc/numpy-dev/dev/development_environment.html
+   http://docs.scipy.org/doc/numpy/dev/development_environment.html
 
 .. note::
 

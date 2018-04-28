@@ -8,6 +8,7 @@ import sys
 import itertools
 import traceback
 import warnings
+import pytest
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity
@@ -17,9 +18,8 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, run_module_suite,
-    dec, SkipTest, suppress_warnings
-)
+    assert_almost_equal, assert_allclose, SkipTest, suppress_warnings
+    )
 
 
 def ifthen(a, b):
@@ -388,35 +388,35 @@ class HermitianTestCase(object):
 
 class LinalgGeneralizedSquareTestCase(object):
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_sq_cases(self):
         _check_cases(self.do, require={'generalized', 'square'}, exclude={'size-0'})
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_empty_sq_cases(self):
         _check_cases(self.do, require={'generalized', 'square', 'size-0'})
 
 
 class LinalgGeneralizedNonsquareTestCase(object):
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_nonsq_cases(self):
         _check_cases(self.do, require={'generalized', 'nonsquare'}, exclude={'size-0'})
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_empty_nonsq_cases(self):
         _check_cases(self.do, require={'generalized', 'nonsquare', 'size-0'})
 
 
 class HermitianGeneralizedTestCase(object):
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_herm_cases(self):
         _check_cases(self.do,
             require={'generalized', 'hermitian'},
             exclude={'size-0'})
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_empty_herm_cases(self):
         _check_cases(self.do,
             require={'generalized', 'hermitian', 'size-0'},
@@ -1783,7 +1783,3 @@ class TestMultiDot(object):
     def test_too_few_input_arrays(self):
         assert_raises(ValueError, multi_dot, [])
         assert_raises(ValueError, multi_dot, [np.random.random((3, 3))])
-
-
-if __name__ == "__main__":
-    run_module_suite()

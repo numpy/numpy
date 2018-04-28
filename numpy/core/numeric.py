@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:
@@ -123,11 +123,10 @@ def zeros_like(a, dtype=None, order='K', subok=True):
 
     See Also
     --------
-    ones_like : Return an array of ones with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
     zeros : Return a new array setting values to zero.
-    ones : Return a new array setting values to one.
-    empty : Return a new uninitialized array.
 
     Examples
     --------
@@ -177,7 +176,11 @@ def ones(shape, dtype=None, order='C'):
 
     See Also
     --------
-    zeros, ones_like
+    ones_like : Return an array of ones with shape and type of input.
+    empty : Return a new uninitialized array.
+    zeros : Return a new array setting values to zero.
+    full : Return a new array of given shape filled with value.
+
 
     Examples
     --------
@@ -234,11 +237,10 @@ def ones_like(a, dtype=None, order='K', subok=True):
 
     See Also
     --------
-    zeros_like : Return an array of zeros with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
-    zeros : Return a new array setting values to zero.
+    zeros_like : Return an array of zeros with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
     ones : Return a new array setting values to one.
-    empty : Return a new uninitialized array.
 
     Examples
     --------
@@ -287,13 +289,10 @@ def full(shape, fill_value, dtype=None, order='C'):
 
     See Also
     --------
-    zeros_like : Return an array of zeros with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
-    empty_like : Return an empty array with shape and type of input.
-    full_like : Fill an array with shape and type of input.
-    zeros : Return a new array setting values to zero.
-    ones : Return a new array setting values to one.
+    full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
 
     Examples
     --------
@@ -342,13 +341,10 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
 
     See Also
     --------
-    zeros_like : Return an array of zeros with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
-    zeros : Return a new array setting values to zero.
-    ones : Return a new array setting values to one.
-    empty : Return a new uninitialized array.
-    full : Fill a new array.
+    ones_like : Return an array of ones with shape and type of input.
+    zeros_like : Return an array of zeros with shape and type of input.
+    full : Return a new array of given shape filled with value.
 
     Examples
     --------
@@ -1089,7 +1085,7 @@ def outer(a, b, out=None):
 
     References
     ----------
-    .. [1] : G. H. Golub and C. F. van Loan, *Matrix Computations*, 3rd
+    .. [1] : G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
              ed., Baltimore, MD, Johns Hopkins University Press, 1996,
              pg. 8.
 
@@ -2533,7 +2529,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Notes
     -----
-    The floating-point exceptions are defined in the IEEE 754 standard [1]:
+    The floating-point exceptions are defined in the IEEE 754 standard [1]_:
 
     - Division by zero: infinite result obtained from finite numbers.
     - Overflow: result too large to be expressed.

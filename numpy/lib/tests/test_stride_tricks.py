@@ -1,10 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.core.test_rational import rational
+from numpy.core._rational_tests import rational
 from numpy.testing import (
-    run_module_suite, assert_equal, assert_array_equal,
-    assert_raises, assert_
+    assert_equal, assert_array_equal, assert_raises, assert_
     )
 from numpy.lib.stride_tricks import (
     as_strided, sliding_window_view, broadcast_arrays, _broadcast_shape,
@@ -495,7 +494,3 @@ def test_reference_types():
 
     actual, _ = broadcast_arrays(input_array, np.ones(3))
     assert_array_equal(expected, actual)
-
-
-if __name__ == "__main__":
-    run_module_suite()

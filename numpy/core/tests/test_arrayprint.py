@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
-import sys, gc
+import sys
+import gc
+import pytest
 
 import numpy as np
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_raises, assert_warns, dec,
-)
+    assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
+    )
 import textwrap
 
 class TestArrayRepr(object):
@@ -34,7 +36,7 @@ class TestArrayRepr(object):
             "     [(1,), (1,)]], dtype=[('a', '<i4')])"
         )
 
-    @dec.knownfailureif(True, "See gh-10544")
+    @pytest.mark.xfail(reason="See gh-10544")
     def test_object_subclass(self):
         class sub(np.ndarray):
             def __new__(cls, inp):
@@ -388,7 +390,7 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
-    @dec._needs_refcount
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
         # closure (gh-10620)
@@ -489,6 +491,8 @@ class TestPrintOptions(object):
                                          np.array(1.), style=repr)
         # but not in legacy mode
         np.array2string(np.array(1.), style=repr, legacy='1.13')
+        # gh-10934 style was broken in legacy mode, check it works
+        np.array2string(np.array(1.), legacy='1.13')
 
     def test_float_spacing(self):
         x = np.array([1., 2., 3.])
@@ -869,7 +873,3 @@ class TestContextManager(object):
         with np.printoptions(**opts) as ctx:
             saved_opts = ctx.copy()
         assert_equal({k: saved_opts[k] for k in opts}, opts)
-
-
-if __name__ == "__main__":
-    run_module_suite()

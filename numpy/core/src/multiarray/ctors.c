@@ -1014,7 +1014,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
     else {
         fa->flags = (flags & ~NPY_ARRAY_WRITEBACKIFCOPY);
-        fa->flags = (fa->flags & ~NPY_ARRAY_UPDATEIFCOPY);
+        fa->flags &= ~NPY_ARRAY_UPDATEIFCOPY;
     }
     fa->descr = descr;
     fa->base = (PyObject *)NULL;
@@ -1276,42 +1276,31 @@ PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
 }
 
 
-NPY_NO_EXPORT int
-_array_from_buffer_3118(PyObject *obj, PyObject **out)
+/* Steals a reference to the memory view */
+NPY_NO_EXPORT PyObject *
+_array_from_buffer_3118(PyObject *memoryview)
 {
     /* PEP 3118 */
-    PyObject *memoryview;
     Py_buffer *view;
     PyArray_Descr *descr = NULL;
-    PyObject *r;
-    int nd, flags, k;
+    PyObject *r = NULL;
+    int nd, flags;
     Py_ssize_t d;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
-
-    memoryview = PyMemoryView_FromObject(obj);
-    if (memoryview == NULL) {
-        PyErr_Clear();
-        return -1;
-    }
 
     view = PyMemoryView_GET_BUFFER(memoryview);
     if (view->format != NULL) {
         descr = _descriptor_from_pep3118_format(view->format);
         if (descr == NULL) {
-            PyObject *msg;
-            msg = PyBytes_FromFormat("Invalid PEP 3118 format string: '%s'",
-                                     view->format);
-            PyErr_WarnEx(PyExc_RuntimeWarning, PyBytes_AS_STRING(msg), 0);
-            Py_DECREF(msg);
             goto fail;
         }
 
         /* Sanity check */
         if (descr->elsize != view->itemsize) {
-            PyErr_WarnEx(PyExc_RuntimeWarning,
-                         "Item size computed from the PEP 3118 buffer format "
-                         "string does not match the actual item size.",
-                         0);
+            PyErr_SetString(
+                    PyExc_RuntimeError,
+                    "Item size computed from the PEP 3118 buffer format "
+                    "string does not match the actual item size.");
             goto fail;
         }
     }
@@ -1322,13 +1311,13 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
 
     nd = view->ndim;
     if (view->shape != NULL) {
-        if (nd >= NPY_MAXDIMS || nd < 0) {
+        int k;
+        if (nd > NPY_MAXDIMS || nd < 0) {
+            PyErr_Format(PyExc_RuntimeError,
+                "PEP3118 dimensions do not satisfy 0 <= ndim <= NPY_MAXDIMS");
             goto fail;
         }
         for (k = 0; k < nd; ++k) {
-            if (k >= NPY_MAXDIMS) {
-                goto fail;
-            }
             shape[k] = view->shape[k];
         }
         if (view->strides != NULL) {
@@ -1352,10 +1341,9 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
             strides[0] = view->itemsize;
         }
         else if (nd > 1) {
-            PyErr_WarnEx(PyExc_RuntimeWarning,
-                         "ndim computed from the PEP 3118 buffer format "
-                         "is greater than 1, but shape is NULL.",
-                         0);
+            PyErr_SetString(PyExc_RuntimeError,
+                           "ndim computed from the PEP 3118 buffer format "
+                           "is greater than 1, but shape is NULL.");
             goto fail;
         }
     }
@@ -1364,21 +1352,21 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
     r = PyArray_NewFromDescr(&PyArray_Type, descr,
                              nd, shape, strides, view->buf,
                              flags, NULL);
-    if (r == NULL ||
-            PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
-        Py_XDECREF(r);
-        Py_DECREF(memoryview);
-        return -1;
+    if (r == NULL) {
+        goto fail;
+    }
+    if (PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
+        goto fail;
     }
     PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
 
-    *out = r;
-    return 0;
+    return r;
 
 fail:
+    Py_XDECREF(r);
     Py_XDECREF(descr);
     Py_DECREF(memoryview);
-    return -1;
+    return NULL;
 
 }
 
@@ -1490,14 +1478,25 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     }
 
     /* If op supports the PEP 3118 buffer interface */
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
-             _array_from_buffer_3118(op, (PyObject **)out_arr) == 0) {
-        if (writeable
-            && PyArray_FailUnlessWriteable(*out_arr, "PEP 3118 buffer") < 0) {
-            Py_DECREF(*out_arr);
-            return -1;
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
+
+        PyObject *memoryview = PyMemoryView_FromObject(op);
+        if (memoryview == NULL) {
+            PyErr_Clear();
         }
-        return (*out_arr) == NULL ? -1 : 0;
+        else {
+            PyObject *arr = _array_from_buffer_3118(memoryview);
+            if (arr == NULL) {
+                return -1;
+            }
+            if (writeable
+                    && PyArray_FailUnlessWriteable((PyArrayObject *)arr, "PEP 3118 buffer") < 0) {
+                Py_DECREF(arr);
+                return -1;
+            }
+            *out_arr = (PyArrayObject *)arr;
+            return 0;
+        }
     }
 
     /* If op supports the __array_struct__ or __array_interface__ interface */

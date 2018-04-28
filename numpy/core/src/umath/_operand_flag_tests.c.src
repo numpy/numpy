@@ -42,7 +42,7 @@ static void *data[1] = {NULL};
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "operand_flag_tests",
+    "_operand_flag_tests",
     NULL,
     -1,
     TestMethods,
@@ -53,11 +53,11 @@ static struct PyModuleDef moduledef = {
 };
 
 #define RETVAL m
-PyMODINIT_FUNC PyInit_operand_flag_tests(void)
+PyMODINIT_FUNC PyInit__operand_flag_tests(void)
 {
 #else
 #define RETVAL
-PyMODINIT_FUNC initoperand_flag_tests(void)
+PyMODINIT_FUNC init_operand_flag_tests(void)
 {
 #endif
     PyObject *m = NULL;
@@ -66,7 +66,7 @@ PyMODINIT_FUNC initoperand_flag_tests(void)
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule("operand_flag_tests", TestMethods);
+    m = Py_InitModule("_operand_flag_tests", TestMethods);
 #endif
     if (m == NULL) {
         goto fail;
@@ -92,7 +92,7 @@ PyMODINIT_FUNC initoperand_flag_tests(void)
 fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load operand_flag_tests module.");
+                        "cannot load _operand_flag_tests module.");
     }
 #if defined(NPY_PY3K)
     if (m) {

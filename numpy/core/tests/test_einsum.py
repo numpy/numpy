@@ -1,9 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
+import itertools
+
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_raises, suppress_warnings
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_raises, suppress_warnings
     )
 
 # Setup for optimize einsum
@@ -500,6 +502,16 @@ class TestEinSum(object):
                                          optimize=optimize),
                                np.full((1, 5), 5))
 
+        # Cases which were failing (gh-10899)
+        x = np.eye(2, dtype=dtype)
+        y = np.ones(2, dtype=dtype)
+        assert_array_equal(np.einsum("ji,i->", x, y, optimize=optimize),
+                           [2.])  # contig_contig_outstride0_two
+        assert_array_equal(np.einsum("i,ij->", y, x, optimize=optimize),
+                           [2.])  # stride0_contig_outstride0_two
+        assert_array_equal(np.einsum("ij,i->", x, y, optimize=optimize),
+                           [2.])  # contig_stride0_outstride0_two
+
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1')
 
@@ -791,6 +803,12 @@ class TestEinSum(object):
         self.optimize_compare('dba,ead,cad->bce')
         self.optimize_compare('aef,fbc,dca->bde')
 
+    def test_combined_views_mapping(self):
+        # gh-10792
+        a = np.arange(9).reshape(1, 1, 3, 1, 3)
+        b = np.einsum('bbcdc->d', a)
+        assert_equal(b, [12])
+
 
 class TestEinSumPath(object):
     def build_operands(self, string, size_dict=global_size_dict):
@@ -918,6 +936,9 @@ class TestEinSumPath(object):
         opt = np.einsum(*path_test, optimize=exp_path)
         assert_almost_equal(noopt, opt)
 
-
-if __name__ == "__main__":
-    run_module_suite()
+    def test_spaces(self):
+        #gh-10794
+        arr = np.array([[1]])
+        for sp in itertools.product(['', ' '], repeat=4):
+            # no error for any spacing
+            np.einsum('{}...a{}->{}...a{}'.format(*sp), arr)

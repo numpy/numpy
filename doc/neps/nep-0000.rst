@@ -1,6 +1,6 @@
-=======================
-NEP Purpose and Process
-=======================
+===================
+Purpose and Process
+===================
 
 :Author: Jarrod Millman <millman@berkeley.edu>
 :Status: Draft
@@ -121,9 +121,12 @@ updated accordingly. In addition to updating the status field, at the very
 least the ``Resolution`` header should be added with a link to the relevant
 post in the mailing list archives.
 
-NEPs can also be ``Replaced`` by a different NEP, rendering the original
-obsolete.  Process NEPs may also have a status of
-``Active`` if they are never meant to be completed.  E.g. NEP 0 (this NEP).
+NEPs can also be ``Superseded`` by a different NEP, rendering the
+original obsolete.  The ``Replaced-By`` and ``Replaces`` headers
+should be added to the original and new NEPs respectively.
+
+Process NEPs may also have a status of ``Active`` if they are never
+meant to be completed, e.g. NEP 0 (this NEP).
 
 
 Maintenance
@@ -203,7 +206,7 @@ References and Footnotes
 .. _issue tracker: https://github.com/numpy/numpy/issues
 
 .. _NumPy Steering Council:
-   https://docs.scipy.org/doc/numpy-dev/dev/governance/governance.html
+   https://docs.scipy.org/doc/numpy/dev/governance/governance.html
 
 .. _`GitHub pull request`: https://github.com/numpy/numpy/pulls
 

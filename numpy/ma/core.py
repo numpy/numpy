@@ -5317,7 +5317,7 @@ class MaskedArray(ndarray):
                 originally intended.
                 Until then, the axis should be given explicitly when
                 ``arr.ndim > 1``, to avoid a FutureWarning.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
@@ -5468,7 +5468,7 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the array is flattened before
             sorting. The default is -1, which sorts along the last axis.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm. Default is 'quicksort'.
         order : list, optional
             When `a` is a structured array, this argument specifies which fields

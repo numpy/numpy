@@ -3,13 +3,11 @@ from __future__ import division, absolute_import, print_function
 import pickle
 import sys
 import operator
+import pytest
 
 import numpy as np
-from numpy.core.test_rational import rational
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    dec
-)
+from numpy.core._rational_tests import rational
+from numpy.testing import assert_, assert_equal, assert_raises
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -207,6 +205,14 @@ class TestRecord(object):
         assert_equal(dt3.itemsize, 11)
         assert_equal(dt1, dt2)
         assert_equal(dt2, dt3)
+        # Array of subtype should preserve alignment
+        dt1 = np.dtype([('a', '|i1'),
+                        ('b', [('f0', '<i2'),
+                        ('f1', '<f4')], 2)], align=True)
+        assert_equal(dt1.descr, [('a', '|i1'), ('', '|V3'),
+                                 ('b', [('f0', '<i2'), ('', '|V2'),
+                                 ('f1', '<f4')], (2,))])
+        
 
     def test_union_struct(self):
         # Should be able to create union dtypes
@@ -593,7 +599,7 @@ class TestString(object):
         assert_equal(repr(dt),
                     "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
 
-    @dec.skipif(sys.version_info[0] >= 3)
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
     def test_dtype_str_with_long_in_shape(self):
         # Pull request #376, should not error
         np.dtype('(1L,)i4')
@@ -722,7 +728,3 @@ def test_dtypes_are_true():
 def test_invalid_dtype_string():
     # test for gh-10440
     assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
-
-
-if __name__ == "__main__":
-    run_module_suite()

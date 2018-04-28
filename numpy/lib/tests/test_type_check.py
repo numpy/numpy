@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.compat import long
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, run_module_suite, assert_raises
+    assert_, assert_equal, assert_array_equal, assert_raises
     )
 from numpy.lib.type_check import (
     common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
@@ -440,7 +440,3 @@ class TestArrayConversion(object):
         # other numpy function
         assert_raises(TypeError,
             asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))
-
-
-if __name__ == "__main__":
-    run_module_suite()
