@@ -110,32 +110,55 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     return view
 
-def sliding_window_view(x, shape, step=None, writeable=False):
+def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
     """
     Create sliding window views of the N dimensions array with the given window
     shape. Window slides across each dimension of `x` and extract subsets of `x`
     at any window position.
 
-    For some cases, there may be more efficient approaches.
-
     Parameters
     ----------
     x : ndarray
         Array to create sliding window views.
+
     shape : sequence of int
         The shape of the window. Must have same length as number of input array dimensions.
+
     step: sequence of int, optional
         The steps of window shifts for each dimension on input array at a time.
         If given, must have same length as number of input array dimensions.
         Defaults to 1 on all dimensions.
+
+    subok : bool, optional
+        If True, then sub-classes will be passed-through, otherwise the returned
+        array will be forced to be a base-class array (default).
+
     writeable : bool, optional
         If set to False, the returned array will always be readonly.
-        Otherwise it will be writable if the original array was.
+        Otherwise it will be writable if the original array was.It
+        is advisable to set this to False if possible (see Notes).
 
     Returns
     -------
     view : ndarray
-        Sliding window views of `x`. view.shape = (x.shape - shape) // step + 1
+        Sliding window VIEWS of `x`. view.shape = (x.shape - shape) // step + 1
+
+    See also
+    --------
+    as_strided: Create a view into the array with the given shape and strides.
+    broadcast_to: broadcast an array to a given shape.
+
+    Notes
+    -----
+    ``sliding_window_view`` create sliding window views of the N dimensions array
+    with the given window shape and its implementation based on ``as_strided``.
+    Please note that the return is views, not copies of input array.
+
+    For these reasons it is advisable to use ``writeable=False``. Otherwise,
+    multiple write operations shall be avoided. For more warning details,
+    see Notes from ``as_strided``.
+
+    For some cases, there may be more efficient approaches, such as FFT based algo discussed in #7753.
 
     Examples
     --------
@@ -182,17 +205,35 @@ def sliding_window_view(x, shape, step=None, writeable=False):
              [22, 23]]]])
 
     """
-    shape = np.array(shape, np.int)
+    # first convert input to array, possibly keeping subclass
+    x = np.array(x, copy=False, subok=subok)
+
+    try:
+        shape = np.array(shape, np.int)
+    except:
+        raise TypeError('`shape` must be a sequence of integer')
+    else:
+        if shape.ndim > 1:
+            raise ValueError('`shape` must be one-dimensional sequence of integer')
+        if len(x.shape) != len(shape):
+            raise ValueError("`shape` length doesn't match with input array dimensions")
+        if np.any(shape <= 0):
+            raise ValueError('`shape` cannot contain non-positive value')
 
     if step is None:
-        step = np.ones(len(x.shape), np.int)
+        step = np.ones(len(x.shape), np.intp)
     else:
-        step = np.array(step, np.int)
-
-    if len(x.shape) != len(shape) or len(shape) != len(step):
-        raise ValueError("window shape or step dimension doesn't match with input array")
-    if np.any(shape <= 0) and np.any(step <= 0):
-        raise ValueError('window shape or step cannot contain non-positive value')
+        try:
+            step = np.array(step, np.intp)
+        except:
+            raise TypeError('`step` must be a sequence of integer')
+        else:
+            if step.ndim > 1:
+                raise ValueError('`step` must be one-dimensional sequence of integer')
+            if len(x.shape)!= len(step):
+                raise ValueError("`step` length doesn't match with input array dimensions")
+            if np.any(step <= 0):
+                raise ValueError('`step` cannot contain non-positive value')
 
     o = (np.array(x.shape)  - shape) // step + 1 # output shape
     if np.any(o <= 0):
@@ -203,7 +244,7 @@ def sliding_window_view(x, shape, step=None, writeable=False):
 
     view_shape = np.concatenate((o, shape), axis=0)
     view_strides = np.concatenate((view_strides, strides), axis=0)
-    view = as_strided(x, view_shape, view_strides, writeable=writeable)
+    view = as_strided(x, view_shape, view_strides, subok=subok, writeable=writeable)
     return view
 
 
