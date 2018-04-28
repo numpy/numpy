@@ -134,14 +134,13 @@ def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
         array will be forced to be a base-class array (default).
 
     writeable : bool, optional
-        If set to False, the returned array will always be readonly.
-        Otherwise it will be writable if the original array was.It
-        is advisable to set this to False if possible (see Notes).
+        If set to False, the returned array will always be readonly view.
+        Otherwise it will return writable copies(see Notes).
 
     Returns
     -------
     view : ndarray
-        Sliding window VIEWS of `x`. view.shape = (x.shape - shape) // step + 1
+        Sliding window views (or copies) of `x`. view.shape = (x.shape - shape) // step + 1
 
     See also
     --------
@@ -152,7 +151,10 @@ def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
     -----
     ``sliding_window_view`` create sliding window views of the N dimensions array
     with the given window shape and its implementation based on ``as_strided``.
-    Please note that the return is views, not copies of input array.
+    Please note that if writeable set to False, the return is views, not copies
+    of array. In this case, write operations could be unpredictable, so the return
+    views is readonly. Bear in mind, return copies (writeable=True), could possibly
+    take memory multiple amount of origin array, due to overlapping windows.
 
     For these reasons it is advisable to use ``writeable=False``. Otherwise,
     multiple write operations shall be avoided. For more warning details,
@@ -245,7 +247,11 @@ def sliding_window_view(x, shape, step=None, subok=False, writeable=False):
     view_shape = np.concatenate((o, shape), axis=0)
     view_strides = np.concatenate((view_strides, strides), axis=0)
     view = as_strided(x, view_shape, view_strides, subok=subok, writeable=writeable)
-    return view
+
+    if writeable:
+        return view.copy()
+    else:
+        return view
 
 
 def _broadcast_to(array, shape, subok, readonly):
