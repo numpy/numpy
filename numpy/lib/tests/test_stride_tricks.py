@@ -6,8 +6,7 @@ from numpy.testing import (
     assert_equal, assert_array_equal, assert_raises, assert_
     )
 from numpy.lib.stride_tricks import (
-    as_strided, sliding_window_view, broadcast_arrays, _broadcast_shape,
-    broadcast_to
+    as_strided, broadcast_arrays, _broadcast_shape, broadcast_to, sliding_window_view
 )
 
 def assert_shapes_correct(input_shapes, expected_shape):
