@@ -9,6 +9,7 @@ from numpy.lib.stride_tricks import (
     broadcast_shapes, sliding_window_view,
     )
 
+
 def assert_shapes_correct(input_shapes, expected_shape):
     # Broadcast a list of arrays with the given input shapes and check the
     # common output shape.
