@@ -93,6 +93,16 @@ def _slice_last(shape, n, axis):
     return _slice_at_axis(shape, slice(dim - n, dim), axis=axis)
 
 
+def _do_prepend(arr, pad_chunk, axis):
+    return np.concatenate(
+        (pad_chunk.astype(arr.dtype, copy=False), arr), axis=axis)
+
+
+def _do_append(arr, pad_chunk, axis):
+    return np.concatenate(
+        (arr, pad_chunk.astype(arr.dtype, copy=False)), axis=axis)
+
+
 def _prepend_const(arr, pad_amt, val, axis=-1):
     """
     Prepend constant `val` along `axis` of `arr`.
@@ -119,8 +129,7 @@ def _prepend_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    return np.concatenate((np.full(padshape, val, dtype=arr.dtype), arr),
-                          axis=axis)
+    return _do_prepend(arr, np.full(padshape, val, dtype=arr.dtype), axis)
 
 
 def _append_const(arr, pad_amt, val, axis=-1):
@@ -149,8 +158,8 @@ def _append_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    return np.concatenate((arr, np.full(padshape, val, dtype=arr.dtype)),
-                          axis=axis)
+    return _do_append(arr, np.full(padshape, val, dtype=arr.dtype), axis)
+
 
 
 def _prepend_edge(arr, pad_amt, axis=-1):
@@ -177,8 +186,7 @@ def _prepend_edge(arr, pad_amt, axis=-1):
 
     edge_slice = _slice_first(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
-    return np.concatenate((edge_arr.repeat(pad_amt, axis=axis), arr),
-                          axis=axis)
+    return _do_prepend(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
 
 
 def _append_edge(arr, pad_amt, axis=-1):
@@ -206,8 +214,7 @@ def _append_edge(arr, pad_amt, axis=-1):
 
     edge_slice = _slice_last(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
-    return np.concatenate((arr, edge_arr.repeat(pad_amt, axis=axis)),
-                          axis=axis)
+    return _do_append(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
 
 
 def _prepend_ramp(arr, pad_amt, end, axis=-1):
@@ -257,7 +264,7 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
     _round_ifneeded(ramp_arr, arr.dtype)
 
     # Ramp values will most likely be float, cast them to the same type as arr
-    return np.concatenate((ramp_arr.astype(arr.dtype), arr), axis=axis)
+    return _do_prepend(arr, ramp_arr, axis)
 
 
 def _append_ramp(arr, pad_amt, end, axis=-1):
@@ -307,7 +314,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     _round_ifneeded(ramp_arr, arr.dtype)
 
     # Ramp values will most likely be float, cast them to the same type as arr
-    return np.concatenate((arr, ramp_arr.astype(arr.dtype)), axis=axis)
+    return _do_append(arr, ramp_arr, axis)
 
 
 def _prepend_max(arr, pad_amt, num, axis=-1):
@@ -353,8 +360,7 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
     max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((max_chunk.repeat(pad_amt, axis=axis), arr),
-                          axis=axis)
+    return _do_prepend(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
 
 
 def _append_max(arr, pad_amt, num, axis=-1):
@@ -402,8 +408,7 @@ def _append_max(arr, pad_amt, num, axis=-1):
     max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((arr, max_chunk.repeat(pad_amt, axis=axis)),
-                          axis=axis)
+    return _do_append(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
 
 
 def _prepend_mean(arr, pad_amt, num, axis=-1):
@@ -449,8 +454,7 @@ def _prepend_mean(arr, pad_amt, num, axis=-1):
     _round_ifneeded(mean_chunk, arr.dtype)
 
     # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((mean_chunk.repeat(pad_amt, axis).astype(arr.dtype),
-                           arr), axis=axis)
+    return _do_prepend(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _append_mean(arr, pad_amt, num, axis=-1):
@@ -499,8 +503,7 @@ def _append_mean(arr, pad_amt, num, axis=-1):
     _round_ifneeded(mean_chunk, arr.dtype)
 
     # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate(
-        (arr, mean_chunk.repeat(pad_amt, axis).astype(arr.dtype)), axis=axis)
+    return _do_append(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _prepend_med(arr, pad_amt, num, axis=-1):
@@ -546,8 +549,7 @@ def _prepend_med(arr, pad_amt, num, axis=-1):
     _round_ifneeded(med_chunk, arr.dtype)
 
     # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate(
-        (med_chunk.repeat(pad_amt, axis).astype(arr.dtype), arr), axis=axis)
+    return _do_prepend(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _append_med(arr, pad_amt, num, axis=-1):
@@ -596,8 +598,7 @@ def _append_med(arr, pad_amt, num, axis=-1):
     _round_ifneeded(med_chunk, arr.dtype)
 
     # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate(
-        (arr, med_chunk.repeat(pad_amt, axis).astype(arr.dtype)), axis=axis)
+    return _do_append(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _prepend_min(arr, pad_amt, num, axis=-1):
@@ -643,8 +644,7 @@ def _prepend_min(arr, pad_amt, num, axis=-1):
     min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((min_chunk.repeat(pad_amt, axis=axis), arr),
-                          axis=axis)
+    return _do_prepend(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _append_min(arr, pad_amt, num, axis=-1):
@@ -692,8 +692,7 @@ def _append_min(arr, pad_amt, num, axis=-1):
     min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((arr, min_chunk.repeat(pad_amt, axis=axis)),
-                          axis=axis)
+    return _do_append(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
