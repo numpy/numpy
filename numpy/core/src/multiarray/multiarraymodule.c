@@ -197,7 +197,7 @@ PyArray_CompareLists(npy_intp *l1, npy_intp *l2, int n)
 }
 
 /*
- * simulates a C-style 1-3 dimensional array which can be accesed using
+ * simulates a C-style 1-3 dimensional array which can be accessed using
  * ptr[i]  or ptr[i][j] or ptr[i][j][k] -- requires pointer allocation
  * for 2-d and 3-d.
  *
@@ -3605,7 +3605,7 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 
 /*
- * Prints floating-point scalars usign the Dragon4 algorithm, scientific mode.
+ * Prints floating-point scalars using the Dragon4 algorithm, scientific mode.
  * See docstring of `np.format_float_scientific` for description of arguments.
  * The differences is that a value of -1 is valid for pad_left, exp_digits,
  * precision, which is equivalent to `None`.
@@ -3661,7 +3661,7 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 
 /*
- * Prints floating-point scalars usign the Dragon4 algorithm, positional mode.
+ * Prints floating-point scalars using the Dragon4 algorithm, positional mode.
  * See docstring of `np.format_float_positional` for description of arguments.
  * The differences is that a value of -1 is valid for pad_left, pad_right,
  * precision, which is equivalent to `None`.

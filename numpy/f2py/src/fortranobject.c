@@ -539,7 +539,7 @@ void f2py_report_on_exit(int exit_flag,void *name) {
     fprintf(stderr,"(d) f2py call-back interface, %6d calls  : %8d msec\n",
             cb_passed_counter,cb_passed_time);
 
-    fprintf(stderr,"(e) wrapped (Fortran/C) functions (acctual) : %8d msec\n\n",
+    fprintf(stderr,"(e) wrapped (Fortran/C) functions (actual) : %8d msec\n\n",
             passed_call_time-cb_passed_call_time-cb_passed_time);
     fprintf(stderr,"Use -DF2PY_REPORT_ATEXIT_DISABLE to disable this message.\n");
     fprintf(stderr,"Exit status: %d\n",exit_flag);
