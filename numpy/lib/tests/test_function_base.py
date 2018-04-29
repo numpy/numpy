@@ -287,9 +287,6 @@ class TestAverage(object):
         assert_almost_equal(y5.mean(0), average(y5, 0))
         assert_almost_equal(y5.mean(1), average(y5, 1))
 
-        y6 = np.matrix(rand(5, 5))
-        assert_array_equal(y6.mean(0), average(y6, 0))
-
     def test_weights(self):
         y = np.arange(10)
         w = np.arange(10)
@@ -356,14 +353,6 @@ class TestAverage(object):
 
         assert_equal(type(np.average(a)), subclass)
         assert_equal(type(np.average(a, weights=w)), subclass)
-
-        # also test matrices
-        a = np.matrix([[1,2],[3,4]])
-        w = np.matrix([[1,2],[3,4]])
-
-        r = np.average(a, axis=0, weights=w)
-        assert_equal(type(r), np.matrix)
-        assert_equal(r, [[2.5, 10.0/3]])
 
     def test_upcasting(self):
         types = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
@@ -1622,16 +1611,6 @@ class TestTrapz(object):
 
         xm = np.ma.array(x, mask=mask)
         assert_almost_equal(trapz(y, xm), r)
-
-    def test_matrix(self):
-        # Test to make sure matrices give the same answer as ndarrays
-        x = np.linspace(0, 5)
-        y = x * x
-        r = trapz(y, x)
-        mx = np.matrix(x)
-        my = np.matrix(y)
-        mr = trapz(my, mx)
-        assert_almost_equal(mr, r)
 
 
 class TestSinc(object):

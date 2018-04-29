@@ -4,9 +4,12 @@ Note that tests with MaskedArray and linalg are done in separate files.
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
+
 import numpy as np
 from numpy.testing import (assert_, assert_equal, assert_raises,
-                           assert_raises_regex)
+                           assert_raises_regex, assert_array_equal,
+                           assert_almost_equal)
 
 
 def test_fancy_indexing():
@@ -30,7 +33,7 @@ def test_polynomial_mapdomain():
     dom1 = [0, 4]
     dom2 = [1, 3]
     x = np.matrix([dom1, dom1])
-    res = np.polynomial.mapdomain(x, dom1, dom2)
+    res = np.polynomial.polyutils.mapdomain(x, dom1, dom2)
     assert_(isinstance(res, np.matrix))
 
 
@@ -72,7 +75,7 @@ def test_inner_scalar_and_matrix():
         assert_equal(np.inner(sca, arr), desired)
 
 
-def test_inner_scalar_and_matrix_of_objects(self):
+def test_inner_scalar_and_matrix_of_objects():
     # Ticket #4482
     # 2018-04-29: moved here from core.tests.test_multiarray
     arr = np.matrix([1, 2], dtype=object)
@@ -153,3 +156,166 @@ def test_object_scalar_multiply():
     desired = np.matrix([[3, 6]], dtype=object)
     assert_equal(np.multiply(arr, 3), desired)
     assert_equal(np.multiply(3, arr), desired)
+
+
+def test_nanfunctions_matrices():
+    # Check that it works and that type and
+    # shape are preserved
+    # 2018-04-29: moved here from core.tests.test_nanfunctions
+    mat = np.matrix(np.eye(3))
+    for f in [np.nanmin, np.nanmax]:
+        res = f(mat, axis=0)
+        assert_(isinstance(res, np.matrix))
+        assert_(res.shape == (1, 3))
+        res = f(mat, axis=1)
+        assert_(isinstance(res, np.matrix))
+        assert_(res.shape == (3, 1))
+        res = f(mat)
+        assert_(np.isscalar(res))
+    # check that rows of nan are dealt with for subclasses (#4628)
+    mat[1] = np.nan
+    for f in [np.nanmin, np.nanmax]:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            res = f(mat, axis=0)
+            assert_(isinstance(res, np.matrix))
+            assert_(not np.any(np.isnan(res)))
+            assert_(len(w) == 0)
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            res = f(mat, axis=1)
+            assert_(isinstance(res, np.matrix))
+            assert_(np.isnan(res[1, 0]) and not np.isnan(res[0, 0])
+                    and not np.isnan(res[2, 0]))
+            assert_(len(w) == 1, 'no warning raised')
+            assert_(issubclass(w[0].category, RuntimeWarning))
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            res = f(mat)
+            assert_(np.isscalar(res))
+            assert_(res != np.nan)
+            assert_(len(w) == 0)
+
+
+def test_nanfunctions_matrices_general():
+    # Check that it works and that type and
+    # shape are preserved
+    # 2018-04-29: moved here from core.tests.test_nanfunctions
+    mat = np.matrix(np.eye(3))
+    for f in (np.nanargmin, np.nanargmax, np.nansum, np.nanprod,
+              np.nanmean, np.nanvar, np.nanstd):
+        res = f(mat, axis=0)
+        assert_(isinstance(res, np.matrix))
+        assert_(res.shape == (1, 3))
+        res = f(mat, axis=1)
+        assert_(isinstance(res, np.matrix))
+        assert_(res.shape == (3, 1))
+        res = f(mat)
+        assert_(np.isscalar(res))
+
+    for f in np.nancumsum, np.nancumprod:
+        res = f(mat, axis=0)
+        assert_(isinstance(res, np.matrix))
+        assert_(res.shape == (3, 3))
+        res = f(mat, axis=1)
+        assert_(isinstance(res, np.matrix))
+        assert_(res.shape == (3, 3))
+        res = f(mat)
+        assert_(isinstance(res, np.matrix))
+        assert_(res.shape == (1, 3*3))
+
+
+def test_average_matrix():
+    # 2018-04-29: moved here from core.tests.test_function_base.
+    y = np.matrix(np.random.rand(5, 5))
+    assert_array_equal(y.mean(0), np.average(y, 0))
+
+    a = np.matrix([[1, 2], [3, 4]])
+    w = np.matrix([[1, 2], [3, 4]])
+
+    r = np.average(a, axis=0, weights=w)
+    assert_equal(type(r), np.matrix)
+    assert_equal(r, [[2.5, 10.0/3]])
+
+
+def test_trapz_matrix():
+    # Test to make sure matrices give the same answer as ndarrays
+    # 2018-04-29: moved here from core.tests.test_function_base.
+    x = np.linspace(0, 5)
+    y = x * x
+    r = np.trapz(y, x)
+    mx = np.matrix(x)
+    my = np.matrix(y)
+    mr = np.trapz(my, mx)
+    assert_almost_equal(mr, r)
+
+
+def test_ediff1d_matrix():
+    # 2018-04-29: moved here from core.tests.test_arraysetops.
+    assert(isinstance(np.ediff1d(np.matrix(1)), np.matrix))
+    assert(isinstance(np.ediff1d(np.matrix(1), to_begin=1), np.matrix))
+
+
+def test_apply_along_axis_matrix():
+    # this test is particularly malicious because matrix
+    # refuses to become 1d
+    # 2018-04-29: moved here from core.tests.test_shape_base.
+    def double(row):
+        return row * 2
+
+    m = np.matrix([[0, 1], [2, 3]])
+    expected = np.matrix([[0, 2], [4, 6]])
+
+    result = np.apply_along_axis(double, 0, m)
+    assert_(isinstance(result, np.matrix))
+    assert_array_equal(result, expected)
+
+    result = np.apply_along_axis(double, 1, m)
+    assert_(isinstance(result, np.matrix))
+    assert_array_equal(result, expected)
+
+
+def test_kron_matrix():
+    # 2018-04-29: moved here from core.tests.test_shape_base.
+    a = np.ones([2, 2])
+    m = np.asmatrix(a)
+    assert_equal(type(np.kron(a, a)), np.ndarray)
+    assert_equal(type(np.kron(m, m)), np.matrix)
+    assert_equal(type(np.kron(a, m)), np.matrix)
+    assert_equal(type(np.kron(m, a)), np.matrix)
+
+
+class TestConcatenatorMatrix(object):
+    # 2018-04-29: moved here from core.tests.test_index_tricks.
+    def test_matrix(self):
+        a = [1, 2]
+        b = [3, 4]
+
+        ab_r = np.r_['r', a, b]
+        ab_c = np.r_['c', a, b]
+
+        assert_equal(type(ab_r), np.matrix)
+        assert_equal(type(ab_c), np.matrix)
+
+        assert_equal(np.array(ab_r), [[1, 2, 3, 4]])
+        assert_equal(np.array(ab_c), [[1], [2], [3], [4]])
+
+        assert_raises(ValueError, lambda: np.r_['rc', a, b])
+
+    def test_matrix_scalar(self):
+        r = np.r_['r', [1, 2], 3]
+        assert_equal(type(r), np.matrix)
+        assert_equal(np.array(r), [[1, 2, 3]])
+
+    def test_matrix_builder(self):
+        a = np.array([1])
+        b = np.array([2])
+        c = np.array([3])
+        d = np.array([4])
+        actual = np.r_['a, b; c, d']
+        expected = np.bmat([[a, b], [c, d]])
+
+        assert_equal(actual, expected)
+        assert_equal(type(actual), type(expected))
