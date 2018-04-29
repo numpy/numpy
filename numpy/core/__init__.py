@@ -15,14 +15,35 @@ for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
 try:
     from . import multiarray
 except ImportError as exc:
+    import sys
     msg = """
+
+IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
+
 Importing the multiarray numpy extension module failed.  Most
 likely you are trying to import a failed build of numpy.
-If you're working with a numpy git repo, try `git clean -xdf` (removes all
-files not under version control).  Otherwise reinstall numpy.
+Here is how to proceed:
+- If you're working with a numpy git repository, try `git clean -xdf`
+  (removes all files not under version control) and rebuild numpy.
+- If you are simply trying to use the numpy version that you have installed:
+  your installation is broken - please reinstall numpy.
+- If you have already reinstalled and that did not fix the problem, then:
+  1. Check that you are using the Python you expect (you're using %s),
+     and that you have no directories in your PATH or PYTHONPATH that can
+     interfere with the Python and numpy versions you're trying to use.
+  2. If (1) looks fine, you can open a new issue at
+     https://github.com/numpy/numpy/issues.  Please include details on:
+     - how you installed Python
+     - how you installed numpy
+     - your operating system
+     - whether or not you have multiple versions of Python installed
+     - if you built from source, your compiler versions and ideally a build log
+
+     Note: this error has many possible causes, so please don't comment on
+     an existing issue about this - open a new one instead.
 
 Original error was: %s
-""" % (exc,)
+""" % (sys.executable, exc)
     raise ImportError(msg)
 finally:
     for envkey in env_added:
