@@ -555,7 +555,7 @@ def arctanh(x):
     --------
     >>> np.set_printoptions(precision=4)
 
-    >>> np.emath.arctanh(np.matrix(np.eye(2)))
+    >>> np.emath.arctanh(np.eye(2))
     array([[ Inf,   0.],
            [  0.,  Inf]])
     >>> np.emath.arctanh([1j])
