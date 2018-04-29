@@ -1664,13 +1664,16 @@ class TestSpecialMethods(object):
         assert_equal(ncu.maximum(a, C()), 0)
 
     def test_ufunc_override(self):
-
+        # check override works even with instance with high priority.
         class A(object):
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return self, func, method, inputs, kwargs
 
+        class MyNDArray(np.ndarray):
+            __array_priority__ = 100
+
         a = A()
-        b = np.matrix([1])
+        b = np.array([1]).view(MyNDArray)
         res0 = np.multiply(a, b)
         res1 = np.multiply(b, b, out=a)
 

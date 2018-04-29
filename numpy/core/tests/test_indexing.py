@@ -576,19 +576,6 @@ class TestSubclasses(object):
         assert_(isinstance(s[[0, 1, 2]], SubClass))
         assert_(isinstance(s[s > 0], SubClass))
 
-    def test_matrix_fancy(self):
-        # The matrix class messes with the shape. While this is always
-        # weird (getitem is not used, it does not have setitem nor knows
-        # about fancy indexing), this tests gh-3110
-        m = np.matrix([[1, 2], [3, 4]])
-
-        assert_(isinstance(m[[0,1,0], :], np.matrix))
-
-        # gh-3110. Note the transpose currently because matrices do *not*
-        # support dimension fixing for fancy indexing correctly.
-        x = np.asmatrix(np.arange(50).reshape(5,10))
-        assert_equal(x[:2, np.array(-1)], x[:2, -1].T)
-
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.
         class SubClass(np.ndarray):
