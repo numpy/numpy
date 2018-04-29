@@ -4,12 +4,13 @@ Note that tests with MaskedArray and linalg are done in separate files.
 """
 from __future__ import division, absolute_import, print_function
 
+import textwrap
 import warnings
 
 import numpy as np
 from numpy.testing import (assert_, assert_equal, assert_raises,
                            assert_raises_regex, assert_array_equal,
-                           assert_almost_equal)
+                           assert_almost_equal, assert_array_almost_equal)
 
 
 def test_fancy_indexing():
@@ -319,3 +320,42 @@ class TestConcatenatorMatrix(object):
 
         assert_equal(actual, expected)
         assert_equal(type(actual), type(expected))
+
+
+def test_array_equal_error_message_matrix():
+    # 2018-04-29: moved here from testing.tests.test_utils.
+    try:
+        assert_equal(np.array([1, 2]), np.matrix([1, 2]))
+    except AssertionError as e:
+        msg = str(e)
+        msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
+        msg_reference = textwrap.dedent("""\
+
+        Arrays are not equal
+
+        (shapes (2,), (1, 2) mismatch)
+         x: array([1, 2])
+         y: matrix([[1, 2]])""")
+        try:
+            assert_equal(msg, msg_reference)
+        except AssertionError:
+            assert_equal(msg2, msg_reference)
+    else:
+        raise AssertionError("Did not raise")
+
+
+def test_array_almost_equal_matrix():
+    # Matrix slicing keeps things 2-D, while array does not necessarily.
+    # See gh-8452.
+    # 2018-04-29: moved here from testing.tests.test_utils.
+    m1 = np.matrix([[1., 2.]])
+    m2 = np.matrix([[1., np.nan]])
+    m3 = np.matrix([[1., -np.inf]])
+    m4 = np.matrix([[np.nan, np.inf]])
+    m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
+    for assert_func in assert_array_almost_equal, assert_almost_equal:
+        for m in m1, m2, m3, m4, m5:
+            assert_func(m, m)
+            a = np.array(m)
+            assert_func(a, m)
+            assert_func(m, a)
