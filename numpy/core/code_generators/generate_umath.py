@@ -28,7 +28,7 @@ class FuncNameSuffix(object):
         self.suffix = suffix
 
 class TypeDescription(object):
-    """Type signature for a ufunc.
+    """Types signature for a ufunc
 
     Attributes
     ----------
@@ -62,7 +62,7 @@ class TypeDescription(object):
         self.out = out
         self.simd = simd
 
-    def finish_signature(self, nin, nout):
+    def finish_types(self, nin, nout):
         if self.in_ is None:
             self.in_ = self.type * nin
         assert len(self.in_) == nin
@@ -122,9 +122,10 @@ class Ufunc(object):
     identity : identity element for a two-argument function
     docstring : docstring for the ufunc
     type_descriptions : list of TypeDescription objects
+    signature: optional string description of input output shape relationship
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
-                 *type_descriptions):
+                 *type_descriptions, **kwds):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -132,11 +133,12 @@ class Ufunc(object):
         self.identity = identity
         self.docstring = docstring
         self.typereso = typereso
+        self.signature = kwds.get('signature', 'NULL')
         self.type_descriptions = []
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
-            td.finish_signature(self.nin, self.nout)
+            td.finish_types(self.nin, self.nout)
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -182,7 +184,7 @@ def english_upper(s):
 #name: [string of chars for which it is defined,
 #       string of characters using func interface,
 #       tuple of strings giving funcs for data,
-#       (in, out), or (instr, outstr) giving the signature as character codes,
+#       (in, out), or (instr, outstr) the types argument as character codes,
 #       identity,
 #       docstring,
 #       output specification (optional)
@@ -256,7 +258,7 @@ for code in 'bhilq':
         break
 
 # This dictionary describes all the ufunc implementations, generating
-# all the function names and their corresponding ufunc signatures.  TD is
+# all the function names and their corresponding ufunc types.  TD is
 # an object which expands a list of character codes into an array of
 # TypeDescriptions.
 defdict = {
@@ -934,7 +936,7 @@ chartotype2 = {'e': 'ee_e',
                'O': 'OO_O',
                'P': 'OO_O_method'}
 #for each name
-# 1) create functions, data, and signature
+# 1) create functions, data, types, and signature
 # 2) fill in functions and data in InitOperators
 # 3) add function.
 
@@ -1022,7 +1024,7 @@ def make_arrays(funcdict):
                          % (name, funcnames))
         code1list.append("static void * %s_data[] = {%s};"
                          % (name, datanames))
-        code1list.append("static char %s_signatures[] = {%s};"
+        code1list.append("static char %s_types[] = {%s};"
                          % (name, signames))
     return "\n".join(code1list), "\n".join(code2list)
 
@@ -1047,17 +1049,18 @@ def make_ufuncs(funcdict):
         # do not play well with \n
         docstring = '\\n\"\"'.join(docstring.split(r"\n"))
         fmt = textwrap.dedent("""\
-            f = PyUFunc_FromFuncAndData(
-                {name}_functions, {name}_data, {name}_signatures, {nloops},
+            f = PyUFunc_FromFuncAndDataAndSignature(
+                {name}_functions, {name}_data, {name}_types, {nloops},
                 {nin}, {nout}, {identity}, "{name}",
-                "{doc}", 0
+                "{doc}", 0, {signature}
             );
             if (f == NULL) {{
                 return -1;
             }}""")
         mlist.append(fmt.format(
             name=name, nloops=len(uf.type_descriptions),
-            nin=uf.nin, nout=uf.nout, identity=uf.identity, doc=docstring
+            nin=uf.nin, nout=uf.nout, identity=uf.identity, doc=docstring,
+            signature=uf.signature,
         ))
         if uf.typereso is not None:
             mlist.append(

@@ -1178,6 +1178,13 @@ static PyObject *
 
 #endif
 
+static PyObject *
+@name@_matrix_multiply(PyObject *a, PyObject *b)
+{
+    Py_INCREF(Py_NotImplemented);
+    return Py_NotImplemented;
+}
+
 /**end repeat**/
 #undef _IS_ZERO
 
@@ -1633,6 +1640,10 @@ static PyNumberMethods @name@_as_number = {
     0,                                          /*nb_inplace_floor_divide*/
     0,                                          /*nb_inplace_true_divide*/
     (unaryfunc)NULL,                            /*nb_index*/
+#if PY_VERSION_HEX >= 0x03050000
+    (binaryfunc)@name@_matrix_multiply,          /*nb_matrix_multiply*/
+    0,                                           /*nb_inplace_matrix_multiply*/
+#endif
 };
 /**end repeat**/
 

@@ -129,10 +129,11 @@ Functions
         int nin, int nout, int identity, char* name, char* doc, int unused, char *signature)
 
    This function is very similar to PyUFunc_FromFuncAndData above, but has
-   an extra *signature* argument, to define generalized universal functions.
+   an extra *signature* argument, to define a
+   :ref:`generalized universal functions <c-api.generalized-ufuncs>`.
    Similarly to how ufuncs are built around an element-by-element operation,
-   gufuncs are around subarray-by-subarray operations, the signature defining
-   the subarrays to operate on.
+   gufuncs are around subarray-by-subarray operations, the
+   :ref:`signature <details-of-signature>` defining the subarrays to operate on.
 
    :param signature:
         The signature for the new gufunc. Setting it to NULL is equivalent

@@ -284,11 +284,45 @@ class TestUfunc(object):
 
     def test_signature(self):
         # the arguments to test_signature are: nin, nout, core_signature
-        # pass
-        assert_equal(umt.test_signature(2, 1, "(i),(i)->()"), 1)
+        enabled, num_dims, ixs, szs,flex = umt.test_signature(2, 1, "(i),(i)->()")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1,  1,  0))
+        assert_equal(ixs, (0, 0))
+        assert_equal(szs, (-1,))
 
-        # pass. empty core signature; treat as plain ufunc (with trivial core)
-        assert_equal(umt.test_signature(2, 1, "(),()->()"), 0)
+        # empty core signature; treat as plain ufunc (with trivial core)
+        enabled, num_dims, ixs, szs,flex = umt.test_signature(2, 1, "(),()->()")
+        assert_equal(enabled, 0)
+        assert_equal(num_dims, (0,  0,  0))
+        assert_equal(ixs, ())
+        assert_equal(szs, ())
+
+        enabled, num_dims, ixs, szs,flex = umt.test_signature(2, 1, "(n,k),(k,m)->(n,m)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 2, 2))
+        assert_equal(ixs, (0, 1, 1, 2, 0, 2))
+        assert_equal(szs, (-1, -1, -1))
+
+        # more complicated names for variables
+        enabled, num_dims, ixs, szs,flex = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 1))
+        assert_equal(ixs, (0, 1, 2, 3))
+        assert_equal(szs, (-1, -1, -1, -1))
+
+        enabled, num_dims, ixs, szs,flex = umt.test_signature(2, 1, u"(i1, i12),   (J_1)->(i12, i2)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 2))
+        assert_equal(ixs, (0, 1, 2, 1, 3))
+        assert_equal(szs, (-1, -1, -1, -1))
+        assert_equal(flex, (0, 0, 0, 0))
+
+        enabled, num_dims, ixs, szs,flex = umt.test_signature(2, 1, "(n?,k),(k,m?)->(n?,m?)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 2, 2))
+        assert_equal(ixs, (0, 1, 1, 2, 0, 2))
+        assert_equal(szs, (-1, -1, -1))
+        assert_equal(flex, (1, 0, 1))
 
         # in the following calls, a ValueError should be raised because
         # of error in core signature
@@ -325,9 +359,6 @@ class TestUfunc(object):
             assert_equal(ret, None, err_msg=msg)
         except ValueError:
             pass
-
-        # more complicated names for variables
-        assert_equal(umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)"), 1)
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
