@@ -452,9 +452,10 @@ static PyObject *
 UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int nin, nout, i;
-    PyObject *signature, *sig_str;
-    PyUFuncObject *f = NULL;
-    PyObject *core_num_dims = NULL, *core_dim_ixs = NULL;
+    PyObject *signature=NULL, *sig_str=NULL;
+    PyUFuncObject *f=NULL;
+    PyObject *core_num_dims=NULL, *core_dim_ixs=NULL, *core_dim_szs=NULL;
+    PyObject *core_dim_flexible=NULL;
     int core_enabled;
     int core_num_ixs = 0;
 
@@ -517,13 +518,44 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_INCREF(Py_None);
         core_dim_ixs = Py_None;
     }
+    if (f->core_dim_szs != NULL) {
+        core_dim_szs = PyTuple_New(f->core_num_dim_ix);
+        if (core_num_dims == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < f->core_num_dim_ix; i++) {
+            PyObject * val = PyLong_FromLong(f->core_dim_szs[i]);
+            PyTuple_SET_ITEM(core_dim_szs, i, val);
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_dim_szs = Py_None;
+    }
+    if (f->core_num_dim_ix != NULL) {
+        core_dim_flexible = PyTuple_New(f->core_num_dim_ix);
+        if (core_dim_flexible == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < f->core_num_dim_ix; i++) {
+            PyObject * val = PyLong_FromLong(f->core_dim_flexible[i]);
+            PyTuple_SET_ITEM(core_dim_flexible, i, val);
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_dim_flexible = Py_None;
+    }
     Py_DECREF(f);
-    return Py_BuildValue("iOO", core_enabled, core_num_dims, core_dim_ixs);
+    return Py_BuildValue("iOOOO", core_enabled, core_num_dims,
+                         core_dim_ixs, core_dim_szs, core_dim_flexible);
 
 fail:
     Py_XDECREF(f);
     Py_XDECREF(core_num_dims);
     Py_XDECREF(core_dim_ixs);
+    Py_XDECREF(core_dim_szs);
+    Py_XDECREF(core_dim_flexible);
     return NULL;
 }
 

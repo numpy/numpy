@@ -213,9 +213,15 @@ typedef struct _tagPyUFuncObject {
         /* New in version 1 and above */
 
         /*
-         * sizes of frozen core dimensions, or -1 if unset
+         * sizes of `frozen` core dimensions, -1 if unset (not frozen)
          */
-         npy_intp *core_dim_szs;
+        npy_intp *core_dim_szs;
+
+        /*
+         * for each core_num_dim_ix, 1 for flexible (signature has ?) 0 otherwise
+         */
+        int *core_dim_flexible;
+
 } PyUFuncObject;
 
 #include "arrayobject.h"
