@@ -360,6 +360,17 @@ advanced usage and will not typically be used.
     and for generalized ufuncs for which all outputs are scalars, the output
     tuples can be omitted.
 
+*axis*
+
+    .. versionadded:: 1.15
+
+    A single axis over which a generalized ufunc should operate. This is a
+    short-cut for ufuncs that operate over a single, shared core dimension,
+    equivalent to passing in ``axes`` with entries of ``(axis,)`` for each
+    single-core-dimension argument and ``()`` for all others.  For instance,
+    for a signature ``(i),(i)->()``, it is equivalent to passing in
+    ``axes=[(axis,), (axis,), ()]``.
+
 *keepdims*
 
     .. versionadded:: 1.15
@@ -370,7 +381,7 @@ advanced usage and will not typically be used.
     ufuncs that operate on inputs that all have the same number of core
     dimensions and with outputs that have no core dimensions , i.e., with
     signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
-    the dimensions in the output can be controlled with ``axes``.
+    the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
 *casting*
 
