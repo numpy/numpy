@@ -15,7 +15,8 @@
  * amd64 is not harmed much by the bloat as the system provides 16 byte
  * alignment by default.
  */
-#if (defined NPY_CPU_X86 || defined _WIN32)
+#if (defined NPY_CPU_X86 || defined _WIN32 || defined NPY_CPU_ARMEL_AARCH32 ||\
+     defined NPY_CPU_ARMEB_AARCH32)
 #define NPY_MAX_COPY_ALIGNMENT 8
 #else
 #define NPY_MAX_COPY_ALIGNMENT 16
