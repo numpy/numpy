@@ -335,12 +335,8 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
     max_slice = tuple(slice(None) if i != axis else slice(num)
                       for (i, x) in enumerate(arr.shape))
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate max, reshape to add singleton dimension back
-    max_chunk = arr[max_slice].max(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate max
+    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
     return np.concatenate((max_chunk.repeat(pad_amt, axis=axis), arr),
@@ -391,12 +387,8 @@ def _append_max(arr, pad_amt, num, axis=-1):
     else:
         max_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate max, reshape to add singleton dimension back
-    max_chunk = arr[max_slice].max(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate max
+    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
     return np.concatenate((arr, max_chunk.repeat(pad_amt, axis=axis)),
@@ -442,12 +434,8 @@ def _prepend_mean(arr, pad_amt, num, axis=-1):
     mean_slice = tuple(slice(None) if i != axis else slice(num)
                        for (i, x) in enumerate(arr.shape))
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate mean, reshape to add singleton dimension back
-    mean_chunk = arr[mean_slice].mean(axis).reshape(pad_singleton)
+    # Extract slice, calculate mean
+    mean_chunk = arr[mean_slice].mean(axis, keepdims=True)
     _round_ifneeded(mean_chunk, arr.dtype)
 
     # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
@@ -499,12 +487,8 @@ def _append_mean(arr, pad_amt, num, axis=-1):
     else:
         mean_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate mean, reshape to add singleton dimension back
-    mean_chunk = arr[mean_slice].mean(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate mean
+    mean_chunk = arr[mean_slice].mean(axis=axis, keepdims=True)
     _round_ifneeded(mean_chunk, arr.dtype)
 
     # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
@@ -551,12 +535,8 @@ def _prepend_med(arr, pad_amt, num, axis=-1):
     med_slice = tuple(slice(None) if i != axis else slice(num)
                       for (i, x) in enumerate(arr.shape))
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate median, reshape to add singleton dimension back
-    med_chunk = np.median(arr[med_slice], axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate median
+    med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
     _round_ifneeded(med_chunk, arr.dtype)
 
     # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
@@ -608,12 +588,8 @@ def _append_med(arr, pad_amt, num, axis=-1):
     else:
         med_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate median, reshape to add singleton dimension back
-    med_chunk = np.median(arr[med_slice], axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate median
+    med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
     _round_ifneeded(med_chunk, arr.dtype)
 
     # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
@@ -661,12 +637,8 @@ def _prepend_min(arr, pad_amt, num, axis=-1):
     min_slice = tuple(slice(None) if i != axis else slice(num)
                       for (i, x) in enumerate(arr.shape))
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate min, reshape to add singleton dimension back
-    min_chunk = arr[min_slice].min(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate min
+    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
     return np.concatenate((min_chunk.repeat(pad_amt, axis=axis), arr),
@@ -717,12 +689,8 @@ def _append_min(arr, pad_amt, num, axis=-1):
     else:
         min_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate min, reshape to add singleton dimension back
-    min_chunk = arr[min_slice].min(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate min
+    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
     return np.concatenate((arr, min_chunk.repeat(pad_amt, axis=axis)),
