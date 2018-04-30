@@ -379,13 +379,16 @@ def average(a, axis=None, weights=None, returned=False):
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
 
+        # normalize axis
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim)
+
         # Sanity checks
         if a.shape != wgt.shape:
             if axis is None:
                 raise TypeError(
                     "Axis must be specified when shapes of a and weights "
                     "differ.")
-            axis = _nx.normalize_axis_tuple(axis, a.ndim)
             if len(axis) != wgt.ndim:
                 raise TypeError(
                     "ndim of weights should equal len of axis.")
@@ -399,8 +402,6 @@ def average(a, axis=None, weights=None, returned=False):
             for i, ax in enumerate(axis):
                 weights_shape[ax] = wgt.shape[i]
             wgt = wgt.reshape(weights_shape)
-        elif axis is not None:
-            axis = _nx.normalize_axis_tuple(axis, a.ndim)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
         if np.any(scl == 0.0):
