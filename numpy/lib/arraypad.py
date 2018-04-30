@@ -74,6 +74,18 @@ def _round_ifneeded(arr, dtype):
         arr.round(out=arr)
 
 
+def _slice_first(shape, n, axis):
+    """ Construct a slice tuple to take the first n elements along axis """
+    return tuple(slice(None) if i != axis else slice(0, n)
+                 for (i, x) in enumerate(shape))
+
+
+def _slice_last(shape, n, axis):
+    """ Construct a slice tuple to take the last n elements along axis """
+    return tuple(slice(None) if i != axis else slice(x - n, x)
+                 for (i, x) in enumerate(shape))
+
+
 def _prepend_const(arr, pad_amt, val, axis=-1):
     """
     Prepend constant `val` along `axis` of `arr`.
@@ -156,8 +168,7 @@ def _prepend_edge(arr, pad_amt, axis=-1):
     if pad_amt == 0:
         return arr
 
-    edge_slice = tuple(slice(None) if i != axis else slice(0, 1)
-                       for (i, x) in enumerate(arr.shape))
+    edge_slice = _slice_first(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
     return np.concatenate((edge_arr.repeat(pad_amt, axis=axis), arr),
                           axis=axis)
@@ -186,8 +197,7 @@ def _append_edge(arr, pad_amt, axis=-1):
     if pad_amt == 0:
         return arr
 
-    edge_slice = tuple(slice(None) if i != axis else slice(x - 1, x)
-                       for (i, x) in enumerate(arr.shape))
+    edge_slice = _slice_last(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
     return np.concatenate((arr, edge_arr.repeat(pad_amt, axis=axis)),
                           axis=axis)
@@ -228,8 +238,7 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
                                reverse=True).astype(np.float64)
 
     # Appropriate slicing to extract n-dimensional edge along `axis`
-    edge_slice = tuple(slice(None) if i != axis else slice(0, 1)
-                       for (i, x) in enumerate(arr.shape))
+    edge_slice = _slice_first(arr.shape, 1, axis=axis)
 
     # Extract edge, and extend along `axis`
     edge_pad = arr[edge_slice].repeat(pad_amt, axis)
@@ -279,8 +288,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
                                reverse=False).astype(np.float64)
 
     # Slice a chunk from the edge to calculate stats on
-    edge_slice = tuple(slice(None) if i != axis else slice(x - 1, x)
-                       for (i, x) in enumerate(arr.shape))
+    edge_slice = _slice_last(arr.shape, 1, axis=axis)
 
     # Extract edge, and extend along `axis`
     edge_pad = arr[edge_slice].repeat(pad_amt, axis)
@@ -332,8 +340,7 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    max_slice = tuple(slice(None) if i != axis else slice(num)
-                      for (i, x) in enumerate(arr.shape))
+    max_slice = _slice_first(arr.shape, num, axis=axis)
 
     # Extract slice, calculate max
     max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
@@ -379,11 +386,8 @@ def _append_max(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        max_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        max_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         max_slice = tuple(slice(None) for x in arr.shape)
 
@@ -431,8 +435,7 @@ def _prepend_mean(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    mean_slice = tuple(slice(None) if i != axis else slice(num)
-                       for (i, x) in enumerate(arr.shape))
+    mean_slice = _slice_first(arr.shape, num, axis=axis)
 
     # Extract slice, calculate mean
     mean_chunk = arr[mean_slice].mean(axis, keepdims=True)
@@ -479,11 +482,8 @@ def _append_mean(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        mean_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        mean_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         mean_slice = tuple(slice(None) for x in arr.shape)
 
@@ -532,8 +532,7 @@ def _prepend_med(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    med_slice = tuple(slice(None) if i != axis else slice(num)
-                      for (i, x) in enumerate(arr.shape))
+    med_slice = _slice_first(arr.shape, num, axis=axis)
 
     # Extract slice, calculate median
     med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
@@ -580,11 +579,8 @@ def _append_med(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        med_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        med_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         med_slice = tuple(slice(None) for x in arr.shape)
 
@@ -634,8 +630,7 @@ def _prepend_min(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    min_slice = tuple(slice(None) if i != axis else slice(num)
-                      for (i, x) in enumerate(arr.shape))
+    min_slice = _slice_first(arr.shape, num, axis=axis)
 
     # Extract slice, calculate min
     min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
@@ -681,11 +676,8 @@ def _append_min(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        min_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        min_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         min_slice = tuple(slice(None) for x in arr.shape)
 
@@ -744,8 +736,7 @@ def _pad_ref(arr, pad_amt, method, axis=-1):
 
     # Memory/computationally more expensive, only do this if `method='odd'`
     if 'odd' in method and pad_amt[0] > 0:
-        edge_slice1 = tuple(slice(None) if i != axis else slice(0, 1)
-                            for (i, x) in enumerate(arr.shape))
+        edge_slice1 = _slice_first(arr.shape, 1, axis=axis)
         edge_chunk = arr[edge_slice1]
         ref_chunk1 = 2 * edge_chunk - ref_chunk1
         del edge_chunk
@@ -763,8 +754,7 @@ def _pad_ref(arr, pad_amt, method, axis=-1):
     ref_chunk2 = arr[ref_slice][rev_idx]
 
     if 'odd' in method:
-        edge_slice2 = tuple(slice(None) if i != axis else slice(x - 1, x)
-                            for (i, x) in enumerate(arr.shape))
+        edge_slice2 = _slice_last(arr.shape, 1, axis=axis)
         edge_chunk = arr[edge_slice2]
         ref_chunk2 = 2 * edge_chunk - ref_chunk2
         del edge_chunk
@@ -813,16 +803,14 @@ def _pad_sym(arr, pad_amt, method, axis=-1):
     # Prepended region
 
     # Slice off a reverse indexed chunk from near edge to pad `arr` before
-    sym_slice = tuple(slice(None) if i != axis else slice(0, pad_amt[0])
-                      for (i, x) in enumerate(arr.shape))
+    sym_slice = _slice_first(arr.shape, pad_amt[0], axis=axis)
     rev_idx = tuple(slice(None) if i != axis else slice(None, None, -1)
                     for (i, x) in enumerate(arr.shape))
     sym_chunk1 = arr[sym_slice][rev_idx]
 
     # Memory/computationally more expensive, only do this if `method='odd'`
     if 'odd' in method and pad_amt[0] > 0:
-        edge_slice1 = tuple(slice(None) if i != axis else slice(0, 1)
-                            for (i, x) in enumerate(arr.shape))
+        edge_slice1 = _slice_first(arr.shape, 1, axis=axis)
         edge_chunk = arr[edge_slice1]
         sym_chunk1 = 2 * edge_chunk - sym_chunk1
         del edge_chunk
@@ -831,15 +819,11 @@ def _pad_sym(arr, pad_amt, method, axis=-1):
     # Appended region
 
     # Slice off a reverse indexed chunk from far edge to pad `arr` after
-    start = arr.shape[axis] - pad_amt[1]
-    end = arr.shape[axis]
-    sym_slice = tuple(slice(None) if i != axis else slice(start, end)
-                      for (i, x) in enumerate(arr.shape))
+    sym_slice = _slice_last(arr.shape, pad_amt[1], axis=axis)
     sym_chunk2 = arr[sym_slice][rev_idx]
 
     if 'odd' in method:
-        edge_slice2 = tuple(slice(None) if i != axis else slice(x - 1, x)
-                            for (i, x) in enumerate(arr.shape))
+        edge_slice2 = _slice_last(arr.shape, 1, axis=axis)
         edge_chunk = arr[edge_slice2]
         sym_chunk2 = 2 * edge_chunk - sym_chunk2
         del edge_chunk
@@ -885,18 +869,14 @@ def _pad_wrap(arr, pad_amt, axis=-1):
     # Prepended region
 
     # Slice off a reverse indexed chunk from near edge to pad `arr` before
-    start = arr.shape[axis] - pad_amt[0]
-    end = arr.shape[axis]
-    wrap_slice = tuple(slice(None) if i != axis else slice(start, end)
-                       for (i, x) in enumerate(arr.shape))
+    wrap_slice = _slice_last(arr.shape, pad_amt[0], axis=axis)
     wrap_chunk1 = arr[wrap_slice]
 
     ##########################################################################
     # Appended region
 
     # Slice off a reverse indexed chunk from far edge to pad `arr` after
-    wrap_slice = tuple(slice(None) if i != axis else slice(0, pad_amt[1])
-                       for (i, x) in enumerate(arr.shape))
+    wrap_slice = _slice_first(arr.shape, pad_amt[1], axis=axis)
     wrap_chunk2 = arr[wrap_slice]
 
     # Concatenate `arr` with both chunks, extending along `axis`
