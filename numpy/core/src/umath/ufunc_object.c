@@ -4678,7 +4678,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     }
     PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
 
-    ufunc->reserved1 = 0;
+    ufunc->version = 1;  /* NumPy 1.16 and up */
     ufunc->reserved2 = NULL;
 
     ufunc->nin = nin;
