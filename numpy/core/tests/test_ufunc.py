@@ -285,10 +285,16 @@ class TestUfunc(object):
     def test_signature(self):
         # the arguments to test_signature are: nin, nout, core_signature
         # pass
-        assert_equal(umt.test_signature(2, 1, "(i),(i)->()"), 1)
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i),(i)->()")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1,  1,  0))
+        assert_equal(ixs, (0, 0))
 
-        # pass. empty core signature; treat as plain ufunc (with trivial core)
-        assert_equal(umt.test_signature(2, 1, "(),()->()"), 0)
+        # empty core signature; treat as plain ufunc (with trivial core)
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(),()->()")
+        assert_equal(enabled, 0)
+        assert_equal(num_dims, (0,  0,  0))
+        assert_equal(ixs, ())
 
         # in the following calls, a ValueError should be raised because
         # of error in core signature
@@ -327,7 +333,10 @@ class TestUfunc(object):
             pass
 
         # more complicated names for variables
-        assert_equal(umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)"), 1)
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 1))
+        assert_equal(ixs, (0, 1, 2, 3))
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
