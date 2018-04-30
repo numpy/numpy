@@ -565,11 +565,12 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                     NPY_ORDER *out_order,
                     NPY_CASTING *out_casting,
                     PyObject **out_extobj,
-                    PyObject **out_typetup,
-                    int *out_subok,
-                    PyArrayObject **out_wheremask,
-                    PyObject **out_axes,
-                    int *out_keepdims)
+                    PyObject **out_typetup,  /* tuple of dtype */
+                    int *out_subok,  /* bool */
+                    PyArrayObject **out_wheremask, /* PyArray of bool */
+                    PyObject **out_axes,  /* type: List[Tuple[T]] */
+                    PyObject **out_axis,  /* type: T */
+                    int *out_keepdims)  /* bool */
 {
     int i, nargs;
     int nin = ufunc->nin;
@@ -826,8 +827,21 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 case 'a':
                     /* possible axes argument for generalized ufunc */
                     if (out_axes != NULL && strcmp(str, "axes") == 0) {
+                        if (out_axis != NULL && *out_axis != NULL) {
+                            PyErr_SetString(PyExc_RuntimeError,
+                                "cannot specify both 'axis' and 'axes'");
+                            goto fail;
+                        }
                         *out_axes = value;
-
+                        bad_arg = 0;
+                    }
+                    else if (out_axis != NULL && strcmp(str, "axis") == 0) {
+                        if (out_axes != NULL && *out_axes != NULL) {
+                            PyErr_SetString(PyExc_RuntimeError,
+                                "cannot specify both 'axis' and 'axes'");
+                            goto fail;
+                        }
+                        *out_axis = value;
                         bad_arg = 0;
                     }
                     break;
@@ -1881,6 +1895,27 @@ _has_output_coredims(PyUFuncObject *ufunc) {
 }
 
 /*
+ * Check whether the gufunc can be used with axis, i.e., that there is only
+ * a single, shared core dimension (which means that operands either have
+ * that dimension, or have no core dimensions).  Returns 0 if all is fine,
+ * and sets an error and returns -1 if not.
+ */
+static int
+_check_axis_support(PyUFuncObject *ufunc) {
+    if (ufunc->core_num_dim_ix != 1) {
+        PyErr_Format(PyExc_TypeError,
+                     "%s: axis can only be used with a single shared core "
+                     "dimension, not with the %d distinct ones implied by "
+                     "signature %s.",
+                     ufunc_get_name_cstr(ufunc),
+                     ufunc->core_num_dim_ix,
+                     ufunc->core_signature);
+        return -1;
+    }
+    return 0;
+}
+
+/*
  * Check whether the gufunc can be used with keepdims, i.e., that all its
  * input arguments have the same number of core dimension, and all output
  * arguments have no core dimensions. Returns 0 if all is fine, and sets
@@ -1895,7 +1930,7 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
         if (ufunc->core_num_dims[i] != (i < nin ? input_core_dims : 0)) {
             PyErr_Format(PyExc_TypeError,
                 "%s does not support keepdims: its signature %s requires "
-                "that %s %d has %d core dimensions, but keepdims can only "
+                "%s %d to have %d core dimensions, but keepdims can only "
                 "be used when all inputs have the same number of core "
                 "dimensions and all outputs have no core dimensions.",
                 ufunc_get_name_cstr(ufunc),
@@ -1907,6 +1942,42 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
         }
     }
     return 0;
+}
+
+/*
+ * Translate axis to axes list of the form [(axis,), ...], with an
+ * empty tuple for operands without core dimensions.
+ * Returns an axes tuple or NULL on failure.
+ */
+static PyObject*
+_build_axes_tuple_from_axis(PyObject *axis, int core_num_dims[], int nop) {
+    int i;
+    PyObject *axes = NULL, *axis_tuple = NULL, *tuple;
+    PyObject *empty_tuple = PyTuple_New(0);  /* cannot realistically fail */
+
+    axes = PyList_New(nop);
+    if (axes == NULL) {
+        return NULL;
+    }
+    axis_tuple = PyTuple_Pack(1, axis);
+    if (axis_tuple == NULL) {
+        goto fail;
+    }
+
+    for (i = 0; i < nop; i++) {
+        tuple = core_num_dims[i] == 1 ? axis_tuple : empty_tuple;
+        Py_INCREF(tuple);
+        PyList_SET_ITEM(axes, i, tuple);
+    }
+    Py_DECREF(axis_tuple);
+    Py_DECREF(empty_tuple);
+    return axes;
+
+fail:
+    Py_XDECREF(axis_tuple);
+    Py_XDECREF(axes);
+    Py_DECREF(empty_tuple);
+    return NULL;
 }
 
 /*
@@ -2235,8 +2306,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     NPY_ORDER order = NPY_KEEPORDER;
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
-    /* When provided, extobj, typetup, and axes contain borrowed references */
-    PyObject *extobj = NULL, *type_tup = NULL, *axes = NULL;
+    /* other possible keyword arguments */
+    PyObject *extobj = NULL, *type_tup = NULL, *axes=NULL, *axis = NULL;
     int keepdims = -1;
 
     if (ufunc == NULL) {
@@ -2261,10 +2332,17 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT("Getting arguments\n");
 
-    /* Get all the arguments */
+    /*
+     * Get all the arguments.
+     *
+     * Here, when provided, extobj, typetup, axes, and axis contain borrowed
+     * references; axes, however, may be set internally (from axis), and thus
+     * is XDECREF'd at the end. Hence, if passed in, we get our own reference.
+     */
     retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, NULL, &axes, &keepdims);
+                &type_tup, &subok, NULL, &axes, &axis, &keepdims);
+    Py_XINCREF(axes);
     if (retval < 0) {
         goto fail;
     }
@@ -2275,6 +2353,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     if (keepdims != -1) {
         retval = _check_keepdims_support(ufunc);
+        if (retval < 0) {
+            goto fail;
+        }
+    }
+    if (axis != NULL) {
+        retval = _check_axis_support(ufunc);
         if (retval < 0) {
             goto fail;
         }
@@ -2344,6 +2428,19 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                     ufunc_name);
         retval = -1;
         goto fail;
+    }
+
+    /*
+     * Translate axis to axes list of the form [(axis,), ...], with an
+     * empty tuple for operands without core dimensions.
+     */
+    if (axis) {
+        assert(axes == NULL);  /* parser prevents passing in both axis & axes */
+        axes = _build_axes_tuple_from_axis(axis, core_num_dims, nop);
+        if (axes == NULL) {
+            retval = -1;
+            goto fail;
+        }
     }
 
     /* Possibly remap axes. */
@@ -2705,6 +2802,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(type_tup);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
+    Py_XDECREF(axes);
 
     NPY_UF_DBG_PRINT("Returning Success\n");
 
@@ -2724,6 +2822,7 @@ fail:
     Py_XDECREF(type_tup);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
+    Py_XDECREF(axes);
     PyArray_free(remap_axis_memory);
     PyArray_free(remap_axis);
     return retval;
@@ -2800,7 +2899,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     /* Get all the arguments */
     retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, &wheremask, NULL, NULL);
+                &type_tup, &subok, &wheremask, NULL, NULL, NULL);
     if (retval < 0) {
         goto fail;
     }
