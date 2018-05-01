@@ -1373,7 +1373,7 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
 /*
  * Advanded indexing iteration of arrays when there is a single indexing
  * array which has the same memory order as the value array and both
- * can be trivally iterated (single stride, aligned, no casting necessary).
+ * can be trivially iterated (single stride, aligned, no casting necessary).
  */
 NPY_NO_EXPORT int
 mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
@@ -1747,7 +1747,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                 }
                 else {
                     /*
-                     * faster resetting if the subspace iteration is trival.
+                     * faster resetting if the subspace iteration is trivial.
                      * reset_offsets are zero for positive strides,
                      * for negative strides this shifts the pointer to the last
                      * item.
