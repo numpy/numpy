@@ -51,6 +51,26 @@ class TestSetOps(object):
         assert_array_equal(c, ef)
         assert_array_equal(a[i1], ef)
         assert_array_equal(b[i2], ef)
+                
+        #non1d, unique inputs
+        a = np.array([[2,4,5,6],[7,8,2,15]])
+        b = np.array([[3,2,7,6],[10,12,8,9]])
+        c,i1,i2 = intersect1d(a,b,return_indices=True)
+        ui1 = np.unravel_index(i1,a.shape)
+        ui2 = np.unravel_index(i2,b.shape)
+        ea = np.array([2, 6, 7 ,8])
+        assert_array_equal(ea,a[ui1])
+        assert_array_equal(ea,b[ui2])
+    
+        #non1d, not assumed to be uniqueinputs
+        a = np.array([[2,4,5,6,6],[4,7,8,7,2]])
+        b = np.array([[3,2,7,7],[10,12,8,7]])
+        c,i1,i2 = intersect1d(a,b,return_indices=True)
+        ui1 = np.unravel_index(i1,a.shape)
+        ui2 = np.unravel_index(i2,b.shape)
+        ea = np.array([2, 7 ,8])
+        assert_array_equal(ea,a[ui1])
+        assert_array_equal(ea,b[ui2])
         
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])
