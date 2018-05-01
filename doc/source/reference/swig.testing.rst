@@ -22,7 +22,7 @@ typemaps are working as expected.
 Testing Organization
 --------------------
 
-There are three indepedent testing frameworks supported, for one-,
+There are three independent testing frameworks supported, for one-,
 two-, and three-dimensional arrays respectively.  For one-dimensional
 arrays, there are two C++ files, a header and a source, named::
 

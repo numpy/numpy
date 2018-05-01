@@ -908,8 +908,8 @@ if sys.version_info[0] >= 3:
     del defdict['divide']
 
 def indent(st, spaces):
-    indention = ' '*spaces
-    indented = indention + st.replace('\n', '\n'+indention)
+    indentation = ' '*spaces
+    indented = indentation + st.replace('\n', '\n'+indentation)
     # trim off any trailing spaces
     indented = re.sub(r' +$', r'', indented)
     return indented

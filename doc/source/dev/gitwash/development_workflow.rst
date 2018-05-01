@@ -396,7 +396,7 @@ collaborator:
 
 Now all those people can do::
 
-    git clone git@githhub.com:your-user-name/numpy.git
+    git clone git@github.com:your-user-name/numpy.git
 
 Remember that links starting with ``git@`` use the ssh protocol and are
 read-write; links starting with ``git://`` are read-only.

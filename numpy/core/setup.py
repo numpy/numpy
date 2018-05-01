@@ -664,7 +664,7 @@ def configuration(parent_package='',top_path=None):
     def get_mathlib_info(*args):
         # Another ugly hack: the mathlib info is known once build_src is run,
         # but we cannot use add_installed_pkg_config here either, so we only
-        # update the substition dictionary during npymath build
+        # update the substitution dictionary during npymath build
         config_cmd = config.get_config_cmd()
 
         # Check that the toolchain works, to fail early if it doesn't

@@ -1525,9 +1525,9 @@ class TestDigitize(object):
 class TestUnwrap(object):
 
     def test_simple(self):
-        # check that unwrap removes jumps greather that 2*pi
+        # check that unwrap removes jumps greater that 2*pi
         assert_array_equal(unwrap([1, 1 + 2 * np.pi]), [1, 1])
-        # check that unwrap maintans continuity
+        # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
 
 
@@ -2759,7 +2759,7 @@ class TestQuantile(object):
         assert_equal(np.quantile(x, 0.5), 1.75)
 
     def test_no_p_overwrite(self):
-        # this is worth retesting, beause quantile does not make a copy
+        # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
         p = p0.copy()
         np.quantile(np.arange(100.), p, interpolation="midpoint")
