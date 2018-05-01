@@ -906,7 +906,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Compute the bin number each sample falls into.
     Ncount = tuple(
-        np.digitize(sample[:, i], edges[i])
+        # avoid np.digitize to work around gh-11022
+        np.searchsorted(edges[i], sample[:, i], side='right')
         for i in _range(D)
     )
 
