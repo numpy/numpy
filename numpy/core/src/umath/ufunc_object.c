@@ -4521,7 +4521,7 @@ PyUFunc_FromFuncAndData(PyUFuncGenericFunction *func, void **data,
                         const char *name, const char *doc, int unused)
 {
     return PyUFunc_FromFuncAndDataAndSignature(func, data, types, ntypes,
-        nin, nout, identity, name, doc, 0, NULL);
+        nin, nout, identity, name, doc, unused, NULL);
 }
 
 /*UFUNC_API*/
