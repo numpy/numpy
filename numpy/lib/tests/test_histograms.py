@@ -683,3 +683,15 @@ class TestHistogramdd(object):
 
         assert_equal(edges[0].dtype, x_edges.dtype)
         assert_equal(edges[1].dtype, y_edges.dtype)
+
+    def test_large_integers(self):
+        big = 2**60  # Too large to represent with a full precision float
+
+        x = np.array([0], np.int64)
+        x_edges = np.array([-1, +1], np.int64)
+        y = big + x
+        y_edges = big + x_edges
+
+        hist, edges = histogramdd((x, y), bins=(x_edges, y_edges))
+
+        assert_equal(hist[0, 0], 1)
