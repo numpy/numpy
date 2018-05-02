@@ -100,12 +100,8 @@ def _prepend_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    if val == 0:
-        return np.concatenate((np.zeros(padshape, dtype=arr.dtype), arr),
-                              axis=axis)
-    else:
-        return np.concatenate(((np.zeros(padshape) + val).astype(arr.dtype),
-                               arr), axis=axis)
+    return np.concatenate((np.full(padshape, val, dtype=arr.dtype), arr),
+                          axis=axis)
 
 
 def _append_const(arr, pad_amt, val, axis=-1):
@@ -134,12 +130,8 @@ def _append_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    if val == 0:
-        return np.concatenate((arr, np.zeros(padshape, dtype=arr.dtype)),
-                              axis=axis)
-    else:
-        return np.concatenate(
-            (arr, (np.zeros(padshape) + val).astype(arr.dtype)), axis=axis)
+    return np.concatenate((arr, np.full(padshape, val, dtype=arr.dtype)),
+                          axis=axis)
 
 
 def _prepend_edge(arr, pad_amt, axis=-1):
