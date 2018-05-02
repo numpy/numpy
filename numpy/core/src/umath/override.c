@@ -51,6 +51,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp nin = ufunc->nin;
     npy_intp nout = ufunc->nout;
     npy_intp nargs = PyTuple_GET_SIZE(args);
+    npy_intp nkwds = PyDict_Size(*normal_kwds);
     PyObject *obj;
 
     if (nargs < nin) {
@@ -74,7 +75,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
 
     /* If we have more args than nin, they must be the output variables.*/
     if (nargs > nin) {
-        if(PyDict_GetItemString(*normal_kwds, "out")) {
+        if(nkwds > 0 && PyDict_GetItemString(*normal_kwds, "out")) {
             PyErr_Format(PyExc_TypeError,
                          "argument given by name ('out') and position "
                          "(%"NPY_INTP_FMT")", nin);
@@ -112,8 +113,15 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
             Py_DECREF(obj);
         }
     }
+    /* gufuncs accept either 'axes' or 'axis', but not both */
+    if (nkwds >= 2 && (PyDict_GetItemString(*normal_kwds, "axis") &&
+                       PyDict_GetItemString(*normal_kwds, "axes"))) {
+        PyErr_SetString(PyExc_TypeError,
+                        "cannot specify both 'axis' and 'axes'");
+        return -1;
+    }
     /* finally, ufuncs accept 'sig' or 'signature' normalize to 'signature' */
-    return normalize_signature_keyword(*normal_kwds);
+    return nkwds == 0 ? 0 : normalize_signature_keyword(*normal_kwds);
 }
 
 static int
