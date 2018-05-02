@@ -1810,6 +1810,7 @@ class TestSpecialMethods(object):
         assert_raises(TypeError, np.multiply, a)
         assert_raises(TypeError, np.multiply, a, a, a, a)
         assert_raises(TypeError, np.multiply, a, a, sig='a', signature='a')
+        assert_raises(TypeError, ncu_tests.inner1d, a, a, axis=0, axes=[0, 0])
 
         # reduce, positional args
         res = np.multiply.reduce(a, 'axis0', 'dtype0', 'out0', 'keep0')
