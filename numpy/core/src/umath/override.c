@@ -29,7 +29,10 @@ normalize_signature_keyword(PyObject *normal_kwds)
                             "cannot specify both 'sig' and 'signature'");
             return -1;
         }
-        Py_INCREF(obj);
+        /*
+         * No INCREF or DECREF needed: got a borrowed reference above,
+         * and, unlike e.g. PyList_SetItem, PyDict_SetItem INCREF's it.
+         */
         PyDict_SetItemString(normal_kwds, "signature", obj);
         PyDict_DelItemString(normal_kwds, "sig");
     }
@@ -291,7 +294,6 @@ normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
     if (*normal_args == NULL) {
         return -1;
     }
-
     /* ufuncs accept 'sig' or 'signature' normalize to 'signature' */
     return normalize_signature_keyword(*normal_kwds);
 }
