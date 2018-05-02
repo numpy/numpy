@@ -1940,6 +1940,7 @@ class TestSpecialMethods(object):
         # outer, wrong args
         assert_raises(TypeError, np.multiply.outer, a)
         assert_raises(TypeError, np.multiply.outer, a, a, a, a)
+        assert_raises(TypeError, np.multiply.outer, a, a, sig='a', signature='a')
 
         # at
         res = np.multiply.at(a, [4, 2], 'b0')
