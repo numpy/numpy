@@ -54,6 +54,7 @@ PCG_EMULATED_MATH = False
 
 EXTRA_INCLUDE_DIRS = []
 EXTRA_LINK_ARGS = []
+EXTRA_LIBRARIES = ['m'] if os.name != 'nt' else []
 # Undef for manylinux
 EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else [
     '-std=c99', '-U__GNUC_GNU_INLINE__']
@@ -64,6 +65,7 @@ if os.name == 'nt':
         EXTRA_COMPILE_ARGS += ["-Zi", "/Od"]
     if sys.version_info < (3, 0):
         EXTRA_INCLUDE_DIRS += [join(MOD_DIR, 'src', 'common')]
+
 PCG64_DEFS = []
 if sys.maxsize < 2 ** 32 or os.name == 'nt':
     # Force emulated mode here
@@ -100,6 +102,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'entropy')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -111,6 +114,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'dsfmt')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS,
                         define_macros=DSFMT_DEFS,
@@ -122,6 +126,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'mt19937')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -131,6 +136,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'philox')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -140,6 +146,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'pcg64')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         define_macros=PCG64_DEFS,
                         extra_link_args=EXTRA_LINK_ARGS
@@ -150,6 +157,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'pcg32')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -159,6 +167,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'threefry')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -168,6 +177,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'threefry32')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -179,6 +189,7 @@ extensions = [Extension('randomgen.entropy',
                                                            join(
                                                                MOD_DIR, 'src',
                                                                'xoroshiro128')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -189,6 +200,7 @@ extensions = [Extension('randomgen.entropy',
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include(),
                                                            join(MOD_DIR, 'src',
                                                                 'xorshift1024')],
+                        libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
@@ -196,12 +208,14 @@ extensions = [Extension('randomgen.entropy',
                         ["randomgen/generator.pyx",
                          join(MOD_DIR, 'src', 'distributions',
                               'distributions.c')],
+                        libraries=EXTRA_LIBRARIES,
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
                         ),
               Extension("randomgen.common",
                         ["randomgen/common.pyx"],
+                        libraries=EXTRA_LIBRARIES,
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
@@ -210,6 +224,7 @@ extensions = [Extension('randomgen.entropy',
                         ["randomgen/bounded_integers.pyx",
                          join(MOD_DIR, 'src', 'distributions',
                               'distributions.c')],
+                        libraries=EXTRA_LIBRARIES,
                         include_dirs=EXTRA_INCLUDE_DIRS + [np.get_include()],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS
@@ -219,6 +234,7 @@ extensions = [Extension('randomgen.entropy',
                          join(MOD_DIR, 'src', 'legacy',
                               'distributions-boxmuller.c'),
                          join(MOD_DIR, 'src', 'distributions', 'distributions.c')],
+                        libraries=EXTRA_LIBRARIES,
                         include_dirs=EXTRA_INCLUDE_DIRS +
                         [np.get_include()] + [join(MOD_DIR, 'legacy')],
                         extra_compile_args=EXTRA_COMPILE_ARGS,
