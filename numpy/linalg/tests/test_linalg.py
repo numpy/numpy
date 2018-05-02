@@ -8,6 +8,7 @@ import sys
 import itertools
 import traceback
 import warnings
+import pytest
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity
@@ -17,9 +18,8 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, run_module_suite,
-    dec, SkipTest, suppress_warnings
-)
+    assert_almost_equal, assert_allclose, SkipTest, suppress_warnings
+    )
 
 
 def ifthen(a, b):
@@ -388,35 +388,35 @@ class HermitianTestCase(object):
 
 class LinalgGeneralizedSquareTestCase(object):
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_sq_cases(self):
         _check_cases(self.do, require={'generalized', 'square'}, exclude={'size-0'})
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_empty_sq_cases(self):
         _check_cases(self.do, require={'generalized', 'square', 'size-0'})
 
 
 class LinalgGeneralizedNonsquareTestCase(object):
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_nonsq_cases(self):
         _check_cases(self.do, require={'generalized', 'nonsquare'}, exclude={'size-0'})
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_empty_nonsq_cases(self):
         _check_cases(self.do, require={'generalized', 'nonsquare', 'size-0'})
 
 
 class HermitianGeneralizedTestCase(object):
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_herm_cases(self):
         _check_cases(self.do,
             require={'generalized', 'hermitian'},
             exclude={'size-0'})
 
-    @dec.slow
+    @pytest.mark.slow
     def test_generalized_empty_herm_cases(self):
         _check_cases(self.do,
             require={'generalized', 'hermitian', 'size-0'},
@@ -465,7 +465,7 @@ class TestSolve(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
             assert_equal(linalg.solve(x, x).dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
@@ -532,7 +532,7 @@ class TestInv(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
             assert_equal(linalg.inv(x).dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -565,7 +565,7 @@ class TestEigvals(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
             assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -608,7 +608,7 @@ class TestEig(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(v.dtype, get_complex_dtype(dtype))
 
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -658,7 +658,7 @@ class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(s.dtype, get_real_dtype(dtype))
 
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         # These raise errors currently
@@ -671,45 +671,112 @@ class TestSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         assert_raises(linalg.LinAlgError, linalg.svd, a)
 
 
-class TestCondSVD(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
+class TestCond(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
+    # cond(x, p) for p in (None, 2, -2)
 
     def do(self, a, b, tags):
         c = asarray(a)  # a might be a matrix
         if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.svd, c, compute_uv=False)
+            assert_raises(LinAlgError, linalg.cond, c)
             return
+
+        # +-2 norms
         s = linalg.svd(c, compute_uv=False)
         assert_almost_equal(
-            s[..., 0] / s[..., -1], linalg.cond(a),
+            linalg.cond(a), s[..., 0] / s[..., -1],
             single_decimal=5, double_decimal=11)
-
-    def test_stacked_arrays_explicitly(self):
-        A = np.array([[1., 2., 1.], [0, -2., 0], [6., 2., 3.]])
-        assert_equal(linalg.cond(A), linalg.cond(A[None, ...])[0])
-
-
-class TestCond2(LinalgSquareTestCase):
-
-    def do(self, a, b, tags):
-        c = asarray(a)  # a might be a matrix
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.svd, c, compute_uv=False)
-            return
-        s = linalg.svd(c, compute_uv=False)
         assert_almost_equal(
-            s[..., 0] / s[..., -1], linalg.cond(a, 2),
+            linalg.cond(a, 2), s[..., 0] / s[..., -1],
+            single_decimal=5, double_decimal=11)
+        assert_almost_equal(
+            linalg.cond(a, -2), s[..., -1] / s[..., 0],
             single_decimal=5, double_decimal=11)
 
-    def test_stacked_arrays_explicitly(self):
-        A = np.array([[1., 2., 1.], [0, -2., 0], [6., 2., 3.]])
-        assert_equal(linalg.cond(A, 2), linalg.cond(A[None, ...], 2)[0])
+        # Other norms
+        cinv = np.linalg.inv(c)
+        assert_almost_equal(
+            linalg.cond(a, 1),
+            abs(c).sum(-2).max(-1) * abs(cinv).sum(-2).max(-1),
+            single_decimal=5, double_decimal=11)
+        assert_almost_equal(
+            linalg.cond(a, -1),
+            abs(c).sum(-2).min(-1) * abs(cinv).sum(-2).min(-1),
+            single_decimal=5, double_decimal=11)
+        assert_almost_equal(
+            linalg.cond(a, np.inf),
+            abs(c).sum(-1).max(-1) * abs(cinv).sum(-1).max(-1),
+            single_decimal=5, double_decimal=11)
+        assert_almost_equal(
+            linalg.cond(a, -np.inf),
+            abs(c).sum(-1).min(-1) * abs(cinv).sum(-1).min(-1),
+            single_decimal=5, double_decimal=11)
+        assert_almost_equal(
+            linalg.cond(a, 'fro'),
+            np.sqrt((abs(c)**2).sum(-1).sum(-1)
+                    * (abs(cinv)**2).sum(-1).sum(-1)),
+            single_decimal=5, double_decimal=11)
 
+    def test_basic_nonsvd(self):
+        # Smoketest the non-svd norms
+        A = array([[1., 0, 1], [0, -2., 0], [0, 0, 3.]])
+        assert_almost_equal(linalg.cond(A, inf), 4)
+        assert_almost_equal(linalg.cond(A, -inf), 2/3)
+        assert_almost_equal(linalg.cond(A, 1), 4)
+        assert_almost_equal(linalg.cond(A, -1), 0.5)
+        assert_almost_equal(linalg.cond(A, 'fro'), np.sqrt(265 / 12))
 
-class TestCondInf(object):
+    def test_singular(self):
+        # Singular matrices have infinite condition number for
+        # positive norms, and negative norms shouldn't raise
+        # exceptions
+        As = [np.zeros((2, 2)), np.ones((2, 2))]
+        p_pos = [None, 1, 2, 'fro']
+        p_neg = [-1, -2]
+        for A, p in itertools.product(As, p_pos):
+            # Inversion may not hit exact infinity, so just check the
+            # number is large
+            assert_(linalg.cond(A, p) > 1e15)
+        for A, p in itertools.product(As, p_neg):
+            linalg.cond(A, p)
 
-    def test(self):
-        A = array([[1., 0, 0], [0, -2., 0], [0, 0, 3.]])
-        assert_almost_equal(linalg.cond(A, inf), 3.)
+    def test_nan(self):
+        # nans should be passed through, not converted to infs
+        ps = [None, 1, -1, 2, -2, 'fro']
+        p_pos = [None, 1, 2, 'fro']
+
+        A = np.ones((2, 2))
+        A[0,1] = np.nan
+        for p in ps:
+            c = linalg.cond(A, p)
+            assert_(isinstance(c, np.float_))
+            assert_(np.isnan(c))
+
+        A = np.ones((3, 2, 2))
+        A[1,0,1] = np.nan
+        for p in ps:
+            c = linalg.cond(A, p)
+            assert_(np.isnan(c[1]))
+            if p in p_pos:
+                assert_(c[0] > 1e15)
+                assert_(c[2] > 1e15)
+            else:
+                assert_(not np.isnan(c[0]))
+                assert_(not np.isnan(c[2]))
+
+    def test_stacked_singular(self):
+        # Check behavior when only some of the stacked matrices are
+        # singular
+        np.random.seed(1234)
+        A = np.random.rand(2, 2, 2, 2)
+        A[0,0] = 0
+        A[1,1] = 0
+
+        for p in (None, 1, 2, 'fro', -1, -2):
+            c = linalg.cond(A, p)
+            assert_equal(c[0,0], np.inf)
+            assert_equal(c[1,1], np.inf)
+            assert_(np.isfinite(c[0,1]))
+            assert_(np.isfinite(c[1,0]))
 
 
 class TestPinv(LinalgSquareTestCase,
@@ -765,7 +832,7 @@ class TestDet(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
             assert_equal(s.dtype, get_real_dtype(dtype))
             assert_equal(ph.dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_0_size(self):
         a = np.zeros((0, 0), dtype=np.complex64)
@@ -861,7 +928,7 @@ class TestMatrixPower(object):
             assert_equal(mz, identity(M.shape[0]))
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def testip_one(self):
         def tz(M):
@@ -869,7 +936,7 @@ class TestMatrixPower(object):
             assert_equal(mz, M)
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def testip_two(self):
         def tz(M):
@@ -877,14 +944,14 @@ class TestMatrixPower(object):
             assert_equal(mz, dot(M, M))
             assert_equal(mz.dtype, M.dtype)
         for M in [self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def testip_invert(self):
         def tz(M):
             mz = matrix_power(M, -1)
             assert_almost_equal(identity(M.shape[0]), dot(mz, M))
         for M in [self.R90, self.Arb22, self.arbfloat, self.large]:
-            yield tz, M
+            tz(M)
 
     def test_invert_noninvertible(self):
         import numpy.linalg
@@ -918,7 +985,7 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase):
             w = np.linalg.eigvalsh(x)
             assert_equal(w.dtype, get_real_dtype(dtype))
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -995,7 +1062,7 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase):
             assert_equal(w.dtype, get_real_dtype(dtype))
             assert_equal(v.dtype, dtype)
         for dtype in [single, double, csingle, cdouble]:
-            yield check, dtype
+            check(dtype)
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -1365,36 +1432,36 @@ class TestMatrixRank(object):
 
     def test_matrix_rank(self):
         # Full rank matrix
-        yield assert_equal, 4, matrix_rank(np.eye(4))
+        assert_equal(4, matrix_rank(np.eye(4)))
         # rank deficient matrix
         I = np.eye(4)
         I[-1, -1] = 0.
-        yield assert_equal, matrix_rank(I), 3
+        assert_equal(matrix_rank(I), 3)
         # All zeros - zero rank
-        yield assert_equal, matrix_rank(np.zeros((4, 4))), 0
+        assert_equal(matrix_rank(np.zeros((4, 4))), 0)
         # 1 dimension - rank 1 unless all 0
-        yield assert_equal, matrix_rank([1, 0, 0, 0]), 1
-        yield assert_equal, matrix_rank(np.zeros((4,))), 0
+        assert_equal(matrix_rank([1, 0, 0, 0]), 1)
+        assert_equal(matrix_rank(np.zeros((4,))), 0)
         # accepts array-like
-        yield assert_equal, matrix_rank([1]), 1
+        assert_equal(matrix_rank([1]), 1)
         # greater than 2 dimensions treated as stacked matrices
         ms = np.array([I, np.eye(4), np.zeros((4,4))])
-        yield assert_equal, matrix_rank(ms), np.array([3, 4, 0])
+        assert_equal(matrix_rank(ms), np.array([3, 4, 0]))
         # works on scalar
-        yield assert_equal, matrix_rank(1), 1
+        assert_equal(matrix_rank(1), 1)
 
     def test_symmetric_rank(self):
-        yield assert_equal, 4, matrix_rank(np.eye(4), hermitian=True)
-        yield assert_equal, 1, matrix_rank(np.ones((4, 4)), hermitian=True)
-        yield assert_equal, 0, matrix_rank(np.zeros((4, 4)), hermitian=True)
+        assert_equal(4, matrix_rank(np.eye(4), hermitian=True))
+        assert_equal(1, matrix_rank(np.ones((4, 4)), hermitian=True))
+        assert_equal(0, matrix_rank(np.zeros((4, 4)), hermitian=True))
         # rank deficient matrix
         I = np.eye(4)
         I[-1, -1] = 0.
-        yield assert_equal, 3, matrix_rank(I, hermitian=True)
+        assert_equal(3, matrix_rank(I, hermitian=True))
         # manually supplied tolerance
         I[-1, -1] = 1e-8
-        yield assert_equal, 4, matrix_rank(I, hermitian=True, tol=0.99e-8)
-        yield assert_equal, 3, matrix_rank(I, hermitian=True, tol=1.01e-8)
+        assert_equal(4, matrix_rank(I, hermitian=True, tol=0.99e-8))
+        assert_equal(3, matrix_rank(I, hermitian=True, tol=1.01e-8))
 
 
 def test_reduced_rank():
@@ -1716,7 +1783,3 @@ class TestMultiDot(object):
     def test_too_few_input_arrays(self):
         assert_raises(ValueError, multi_dot, [])
         assert_raises(ValueError, multi_dot, [np.random.random((3, 3))])
-
-
-if __name__ == "__main__":
-    run_module_suite()

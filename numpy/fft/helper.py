@@ -5,12 +5,12 @@ Discrete Fourier Transforms - helper.py
 from __future__ import division, absolute_import, print_function
 
 import collections
-import threading
-
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
 from numpy.compat import integer_types
-from numpy.core import (
-        asarray, concatenate, arange, take, integer, empty
-        )
+from numpy.core import integer, empty, arange, asarray, roll
 
 # Created by Pearu Peterson, September 2002
 
@@ -63,19 +63,16 @@ def fftshift(x, axes=None):
            [-1., -3., -2.]])
 
     """
-    tmp = asarray(x)
-    ndim = tmp.ndim
+    x = asarray(x)
     if axes is None:
-        axes = list(range(ndim))
+        axes = tuple(range(x.ndim))
+        shift = [dim // 2 for dim in x.shape]
     elif isinstance(axes, integer_types):
-        axes = (axes,)
-    y = tmp
-    for k in axes:
-        n = tmp.shape[k]
-        p2 = (n+1)//2
-        mylist = concatenate((arange(p2, n), arange(p2)))
-        y = take(y, mylist, k)
-    return y
+        shift = x.shape[axes] // 2
+    else:
+        shift = [x.shape[ax] // 2 for ax in axes]
+
+    return roll(x, shift, axes)
 
 
 def ifftshift(x, axes=None):
@@ -112,19 +109,16 @@ def ifftshift(x, axes=None):
            [-3., -2., -1.]])
 
     """
-    tmp = asarray(x)
-    ndim = tmp.ndim
+    x = asarray(x)
     if axes is None:
-        axes = list(range(ndim))
+        axes = tuple(range(x.ndim))
+        shift = [-(dim // 2) for dim in x.shape]
     elif isinstance(axes, integer_types):
-        axes = (axes,)
-    y = tmp
-    for k in axes:
-        n = tmp.shape[k]
-        p2 = n-(n+1)//2
-        mylist = concatenate((arange(p2, n), arange(p2)))
-        y = take(y, mylist, k)
-    return y
+        shift = -(x.shape[axes] // 2)
+    else:
+        shift = [-(x.shape[ax] // 2) for ax in axes]
+
+    return roll(x, shift, axes)
 
 
 def fftfreq(n, d=1.0):

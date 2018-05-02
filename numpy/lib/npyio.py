@@ -477,7 +477,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     -----
     For a description of the ``.npy`` format, see the module docstring
     of `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     Examples
     --------
@@ -563,7 +563,7 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see `numpy.lib.format` or the
     NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -644,7 +644,7 @@ def savez_compressed(file, *args, **kwds):
     ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
     in ``.npy`` format. For a description of the ``.npy`` format, see
     `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://docs.scipy.org/doc/numpy/neps/npy-format.html
+    http://numpy.github.io/neps/npy-format.html
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -758,7 +758,7 @@ def _getconv(dtype):
     elif issubclass(typ, np.floating):
         return floatconv
     elif issubclass(typ, complex):
-        return lambda x: complex(asstr(x))
+        return lambda x: complex(asstr(x).replace('+-', '-'))
     elif issubclass(typ, np.bytes_):
         return asbytes
     elif issubclass(typ, np.unicode_):
@@ -797,22 +797,23 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
     converters : dict, optional
-        A dictionary mapping column number to a function that will convert
-        that column to a float.  E.g., if column 0 is a date string:
-        ``converters = {0: datestr2num}``.  Converters can also be used to
-        provide a default value for missing data (but see also `genfromtxt`):
-        ``converters = {3: lambda s: float(s.strip() or 0)}``.  Default: None.
+        A dictionary mapping column number to a function that will parse the
+        column string into the desired value.  E.g., if column 0 is a date
+        string: ``converters = {0: datestr2num}``.  Converters can also be
+        used to provide a default value for missing data (but see also
+        `genfromtxt`): ``converters = {3: lambda s: float(s.strip() or 0)}``.
+        Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines; default: 0.
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
-        usecols = (1,4,5) will extract the 2nd, 5th and 6th columns.
+        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
 
         .. versionchanged:: 1.11.0
             When a single column has to be read it is possible to use
             an integer instead of a tuple. E.g ``usecols = 3`` reads the
-            fourth column the same way as `usecols = (3,)`` would.
+            fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a structured
@@ -827,7 +828,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Encoding used to decode the inputfile. Does not apply to input streams.
         The special value 'bytes' enables backward compatibility workarounds
         that ensures you receive byte arrays as results if possible and passes
-        latin1 encoded strings to converters. Override this value to receive
+        'latin1' encoded strings to converters. Override this value to receive
         unicode arrays and pass strings as input to converters.  If set to None
         the system default is used. The default value is 'bytes'.
 
@@ -858,18 +859,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     Examples
     --------
     >>> from io import StringIO   # StringIO behaves like a file object
-    >>> c = StringIO("0 1\\n2 3")
+    >>> c = StringIO(u"0 1\\n2 3")
     >>> np.loadtxt(c)
     array([[ 0.,  1.],
            [ 2.,  3.]])
 
-    >>> d = StringIO("M 21 72\\nF 35 58")
+    >>> d = StringIO(u"M 21 72\\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
     array([('M', 21, 72.0), ('F', 35, 58.0)],
           dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
 
-    >>> c = StringIO("1,0,2\\n3,0,4")
+    >>> c = StringIO(u"1,0,2\\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
     array([ 1.,  3.])
@@ -935,7 +936,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if encoding is not None:
         fencoding = encoding
     # we must assume local encoding
-    # TOOD emit portability warning?
+    # TODO emit portability warning?
     elif fencoding is None:
         import locale
         fencoding = locale.getpreferredencoding()
@@ -1103,11 +1104,16 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 nshape = list(X.shape)
                 pos = nshape[0]
                 nshape[0] += len(x)
-                X.resize(nshape)
+                X.resize(nshape, refcheck=False)
                 X[pos:, ...] = x
     finally:
         if fown:
             fh.close()
+        # recursive closures have a cyclic reference to themselves, which
+        # requires gc to collect (gh-10620). To avoid this problem, for
+        # performance and PyPy friendliness, we break the cycle:
+        flatten_dtype_internal = None
+        pack_items = None
 
     if X is None:
         X = np.array([], dtype)
@@ -1160,13 +1166,14 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
-            a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-               like `' (%s+%sj)' % (fmt, fmt)`
-            b) a full string specifying every real and imaginary part, e.g.
-               `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
-            c) a list of specifiers, one per column - in this case, the real
-               and imaginary part must have separate specifiers,
-               e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+
+        * a single specifier, `fmt='%.4e'`, resulting in numbers formatted
+          like `' (%s+%sj)' % (fmt, fmt)`
+        * a full string specifying every real and imaginary part, e.g.
+          `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+        * a list of specifiers, one per column - in this case, the real
+          and imaginary part must have separate specifiers,
+          e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
@@ -1371,7 +1378,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 for number in row:
                     row2.append(number.real)
                     row2.append(number.imag)
-                fh.write(format % tuple(row2) + newline)
+                s = format % tuple(row2) + newline
+                fh.write(s.replace('+-', '-'))
         else:
             for row in X:
                 try:
@@ -1459,9 +1467,9 @@ def fromregex(file, regexp, dtype, encoding=None):
             dtype = np.dtype(dtype)
 
         content = file.read()
-        if isinstance(content, bytes) and not isinstance(regexp, bytes):
+        if isinstance(content, bytes) and isinstance(regexp, np.unicode):
             regexp = asbytes(regexp)
-        elif not isinstance(content, bytes) and isinstance(regexp, bytes):
+        elif isinstance(content, np.unicode) and isinstance(regexp, bytes):
             regexp = asstr(regexp)
 
         if not hasattr(regexp, 'match'):
@@ -1624,7 +1632,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Comma delimited file with mixed dtype
 
-    >>> s = StringIO("1,1.3,abcde")
+    >>> s = StringIO(u"1,1.3,abcde")
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
@@ -1651,7 +1659,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     An example with fixed-width columns
 
-    >>> s = StringIO("11.3abcde")
+    >>> s = StringIO(u"11.3abcde")
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
@@ -1713,7 +1721,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     try:
         while not first_values:
             first_line = _decode_line(next(fhd), encoding)
-            if names is True:
+            if (names is True) and (comments is not None):
                 if comments in first_line:
                     first_line = (
                         ''.join(first_line.split(comments)[1:]))
@@ -1727,8 +1735,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Should we take the first values as names ?
     if names is True:
         fval = first_values[0].strip()
-        if fval in comments:
-            del first_values[0]
+        if comments is not None:
+            if fval in comments:
+                del first_values[0]
 
     # Check the columns to use: make sure `usecols` is a list
     if usecols is not None:
@@ -2049,7 +2058,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         strcolidx = [i for (i, v) in enumerate(column_types)
                      if v == np.unicode_]
 
-        type_str = np.unicode_
         if byte_converters and strcolidx:
             # convert strings back to bytes for backward compatibility
             warnings.warn(
@@ -2065,33 +2073,37 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
             try:
                 data = [encode_unicode_cols(r) for r in data]
-                type_str = np.bytes_
             except UnicodeEncodeError:
                 pass
+            else:
+                for i in strcolidx:
+                    column_types[i] = np.bytes_
 
+        # Update string types to be the right length
+        sized_column_types = column_types[:]
+        for i, col_type in enumerate(column_types):
+            if np.issubdtype(col_type, np.character):
+                n_chars = max(len(row[i]) for row in data)
+                sized_column_types[i] = (col_type, n_chars)
 
-        # ... and take the largest number of chars.
-        for i in strcolidx:
-            max_line_length = max(len(row[i]) for row in data)
-            column_types[i] = np.dtype((type_str, max_line_length))
-        #
         if names is None:
-            # If the dtype is uniform, don't define names, else use ''
-            base = set([c.type for c in converters if c._checked])
+            # If the dtype is uniform (before sizing strings)
+            base = set([
+                c_type
+                for c, c_type in zip(converters, column_types)
+                if c._checked])
             if len(base) == 1:
-                if strcolidx:
-                    (ddtype, mdtype) = (type_str, bool)
-                else:
-                    (ddtype, mdtype) = (list(base)[0], bool)
+                uniform_type, = base
+                (ddtype, mdtype) = (uniform_type, bool)
             else:
                 ddtype = [(defaultfmt % i, dt)
-                          for (i, dt) in enumerate(column_types)]
+                          for (i, dt) in enumerate(sized_column_types)]
                 if usemask:
                     mdtype = [(defaultfmt % i, bool)
-                              for (i, dt) in enumerate(column_types)]
+                              for (i, dt) in enumerate(sized_column_types)]
         else:
-            ddtype = list(zip(names, column_types))
-            mdtype = list(zip(names, [bool] * len(column_types)))
+            ddtype = list(zip(names, sized_column_types))
+            mdtype = list(zip(names, [bool] * len(sized_column_types)))
         output = np.array(data, dtype=ddtype)
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)

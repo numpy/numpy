@@ -1396,11 +1396,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     *view = NULL;
 
     /* first check for a single field name */
-#if defined(NPY_PY3K)
-    if (PyUnicode_Check(ind)) {
-#else
-    if (PyString_Check(ind) || PyUnicode_Check(ind)) {
-#endif
+    if (PyBaseString_Check(ind)) {
         PyObject *tup;
         PyArray_Descr *fieldtype;
         npy_intp offset;
@@ -1477,11 +1473,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 return -1;
             }
 
-#if defined(NPY_PY3K)
-            if (!PyUnicode_Check(name)) {
-#else
-            if (!PyString_Check(name) && !PyUnicode_Check(name)) {
-#endif
+            if (!PyBaseString_Check(name)) {
                 Py_DECREF(name);
                 Py_DECREF(fields);
                 Py_DECREF(names);
@@ -1521,7 +1513,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyObject *errmsg = PyUString_FromString(
                                        "duplicate field of name ");
                 PyUString_ConcatAndDel(&errmsg, name);
-                PyErr_SetObject(PyExc_KeyError, errmsg);
+                PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
                 Py_DECREF(fields);
                 Py_DECREF(names);
@@ -3382,6 +3374,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
+    PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
     Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);

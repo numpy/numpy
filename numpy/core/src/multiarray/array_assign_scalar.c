@@ -233,7 +233,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
          * Use a static buffer to store the aligned/cast version,
          * or allocate some memory if more space is needed.
          */
-        if (sizeof(scalarbuffer) >= PyArray_DESCR(dst)->elsize) {
+        if ((int)sizeof(scalarbuffer) >= PyArray_DESCR(dst)->elsize) {
             tmp_src_data = (char *)&scalarbuffer[0];
         }
         else {

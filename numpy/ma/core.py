@@ -26,6 +26,7 @@ import sys
 import operator
 import warnings
 import textwrap
+import re
 from functools import reduce
 
 if sys.version_info[0] >= 3:
@@ -131,14 +132,18 @@ def doc_note(initialdoc, note):
         return
     if note is None:
         return initialdoc
-    newdoc = """
-    %s
 
-    Notes
+    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', initialdoc)
+
+    notedoc = """\
+Notes
     -----
-    %s
-    """
-    return newdoc % (initialdoc, note)
+    %s""" % note
+
+    if len(notesplit) > 1:
+        notedoc = '\n\n    ' + notedoc + '\n'
+
+    return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
 def get_object_signature(obj):
@@ -3029,18 +3034,16 @@ class MaskedArray(ndarray):
 
         if context is not None:
             result._mask = result._mask.copy()
-            (func, args, _) = context
-            m = reduce(mask_or, [getmaskarray(arg) for arg in args])
+            func, args, out_i = context
+            # args sometimes contains outputs (gh-10459), which we don't want
+            input_args = args[:func.nin]
+            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func, None)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
-                if len(args) > 2:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(reduce(domain, args), True)
-                else:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(domain(*args), True)
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    d = filled(domain(*input_args), True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
@@ -3086,7 +3089,7 @@ class MaskedArray(ndarray):
             returned object (this is equivalent to setting the ``type``
             parameter).
         type : Python type, optional
-            Type of the returned view, e.g., ndarray or matrix.  Again, the
+            Type of the returned view, either ndarray or a subclass.  The
             default None results in type preservation.
 
         Notes
@@ -3670,14 +3673,14 @@ class MaskedArray(ndarray):
         >>> type(x.filled())
         <type 'numpy.ndarray'>
 
-        Subclassing is preserved. This means that if the data part of the masked
-        array is a matrix, `filled` returns a matrix:
+        Subclassing is preserved. This means that if, e.g., the data part of
+        the masked array is a recarray, `filled` returns a recarray:
 
-        >>> x = np.ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
-        >>> x.filled()
-        matrix([[     1, 999999],
-                [999999,      4]])
-
+        >>> x = np.array([(-1, 2), (-3, 4)], dtype='i8,i8').view(np.recarray)
+        >>> m = np.ma.array(x, mask=[(True, False), (False, True)])
+        >>> m.filled()
+        rec.array([(999999,      2), (    -3, 999999)],
+                  dtype=[('f0', '<i8'), ('f1', '<i8')])
         """
         m = self._mask
         if m is nomask:
@@ -4285,7 +4288,7 @@ class MaskedArray(ndarray):
         Convert to long.
         """
         if self.size > 1:
-            raise TypeError("Only length-1 arrays can be conveted "
+            raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python long.')
@@ -5314,7 +5317,7 @@ class MaskedArray(ndarray):
                 originally intended.
                 Until then, the axis should be given explicitly when
                 ``arr.ndim > 1``, to avoid a FutureWarning.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
@@ -5465,7 +5468,7 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the array is flattened before
             sorting. The default is -1, which sorts along the last axis.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm. Default is 'quicksort'.
         order : list, optional
             When `a` is a structured array, this argument specifies which fields
@@ -5534,6 +5537,7 @@ class MaskedArray(ndarray):
         else:
             idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
             idx[axis] = sidx
+            idx = tuple(idx)
 
         self[...] = self[idx]
 
@@ -5721,7 +5725,7 @@ class MaskedArray(ndarray):
             np.copyto(out, np.nan, where=newmask)
         return out
 
-    def ptp(self, axis=None, out=None, fill_value=None):
+    def ptp(self, axis=None, out=None, fill_value=None, keepdims=False):
         """
         Return (maximum - minimum) along the given dimension
         (i.e. peak-to-peak value).
@@ -5746,11 +5750,15 @@ class MaskedArray(ndarray):
 
         """
         if out is None:
-            result = self.max(axis=axis, fill_value=fill_value)
-            result -= self.min(axis=axis, fill_value=fill_value)
+            result = self.max(axis=axis, fill_value=fill_value,
+                              keepdims=keepdims)
+            result -= self.min(axis=axis, fill_value=fill_value,
+                               keepdims=keepdims)
             return result
-        out.flat = self.max(axis=axis, out=out, fill_value=fill_value)
-        min_value = self.min(axis=axis, fill_value=fill_value)
+        out.flat = self.max(axis=axis, out=out, fill_value=fill_value,
+                            keepdims=keepdims)
+        min_value = self.min(axis=axis, fill_value=fill_value,
+                             keepdims=keepdims)
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
@@ -6309,6 +6317,18 @@ class MaskedConstant(MaskedArray):
         # precedent for this with `np.bool_` scalars.
         return self
 
+    def __setattr__(self, attr, value):
+        if not self.__has_singleton():
+            # allow the singleton to be initialized
+            return super(MaskedConstant, self).__setattr__(attr, value)
+        elif self is self.__singleton:
+            raise AttributeError(
+                "attributes of {!r} are not writeable".format(self))
+        else:
+            # duplicate instance - we can end up here from __array_finalize__,
+            # where we set the __class__ attribute
+            return super(MaskedConstant, self).__setattr__(attr, value)
+
 
 masked = masked_singleton = MaskedConstant()
 masked_array = MaskedArray
@@ -6489,17 +6509,15 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
-def ptp(obj, axis=None, out=None, fill_value=None):
-    """
-    a.ptp(axis=None) =  a.max(axis) - a.min(axis)
-
-    """
+def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
-        return obj.ptp(axis, out=out, fill_value=fill_value)
+        return obj.ptp(axis, out=out, fill_value=fill_value, **kwargs)
     except (AttributeError, TypeError):
         # If obj doesn't have a ptp method or if the method doesn't accept
         # a fill_value argument
-        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
+        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value,
+                                   out=out, **kwargs)
 ptp.__doc__ = MaskedArray.ptp.__doc__
 
 
@@ -7460,11 +7478,7 @@ def inner(a, b):
     Returns the inner product of a and b for arrays of floating point types.
 
     Like the generic NumPy equivalent the product sum is over the last dimension
-    of a and b.
-
-    Notes
-    -----
-    The first argument is not conjugated.
+    of a and b. The first argument is not conjugated.
 
     """
     fa = filled(a, 0)

@@ -7,16 +7,16 @@ import platform
 import gc
 import warnings
 import tempfile
+import pytest
 from os import path
 from io import BytesIO
 from itertools import chain
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, assert_, assert_equal, IS_PYPY,
-        assert_almost_equal, assert_array_equal, assert_array_almost_equal,
-        assert_raises, assert_warns, dec, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT,
+        assert_, assert_equal, IS_PYPY, assert_almost_equal,
+        assert_array_equal, assert_array_almost_equal, assert_raises,
+        assert_warns, suppress_warnings, _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long
 
@@ -636,7 +636,8 @@ class TestRegression(object):
 
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
-    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
+    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
+                        reason="Using relaxed stride checking")
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2]  # not contiguous
@@ -895,7 +896,8 @@ class TestRegression(object):
     # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
     # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous,
     # 0-sized reshape itself is tested elsewhere.
-    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
+    @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
+                        reason="Using relaxed stride checking")
     def test_copy_detection_corner_case2(self):
         # Ticket #771: strides are not set correctly when reshaping 0-sized
         # arrays
@@ -1460,7 +1462,7 @@ class TestRegression(object):
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_structured_arrays_with_objects2(self):
         # Ticket #1299 second test
         stra = 'aaaa'
@@ -1573,7 +1575,7 @@ class TestRegression(object):
         y = np.add(x, x, x)
         assert_equal(id(x), id(y))
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_take_refcount(self):
         # ticket #939
         a = np.arange(16, dtype=float)
@@ -1710,6 +1712,67 @@ class TestRegression(object):
         assert_(a.flags.c_contiguous)
         assert_(a.flags.f_contiguous)
         assert_(b.flags.f_contiguous)
+
+    def test_squeeze_axis_handling(self):
+        # Issue #10779
+        # Ensure proper handling of objects
+        # that don't support axis specification
+        # when squeezing
+
+        class OldSqueeze(np.ndarray):
+
+            def __new__(cls,
+                        input_array):
+                obj = np.asarray(input_array).view(cls)
+                return obj
+
+            # it is perfectly reasonable that prior
+            # to numpy version 1.7.0 a subclass of ndarray
+            # might have been created that did not expect
+            # squeeze to have an axis argument
+            # NOTE: this example is somewhat artificial;
+            # it is designed to simulate an old API
+            # expectation to guard against regression
+            def squeeze(self):
+                return super(OldSqueeze, self).squeeze()
+
+        oldsqueeze = OldSqueeze(np.array([[1],[2],[3]]))
+
+        # if no axis argument is specified the old API
+        # expectation should give the correct result
+        assert_equal(np.squeeze(oldsqueeze),
+                     np.array([1,2,3]))
+
+        # likewise, axis=None should work perfectly well
+        # with the old API expectation
+        assert_equal(np.squeeze(oldsqueeze, axis=None),
+                     np.array([1,2,3]))
+
+        # however, specification of any particular axis
+        # should raise a TypeError in the context of the
+        # old API specification, even when using a valid
+        # axis specification like 1 for this array
+        with assert_raises(TypeError):
+            # this would silently succeed for array
+            # subclasses / objects that did not support
+            # squeeze axis argument handling before fixing
+            # Issue #10779
+            np.squeeze(oldsqueeze, axis=1)
+
+        # check for the same behavior when using an invalid
+        # axis specification -- in this case axis=0 does not
+        # have size 1, but the priority should be to raise
+        # a TypeError for the axis argument and NOT a
+        # ValueError for squeezing a non-empty dimension
+        with assert_raises(TypeError):
+            np.squeeze(oldsqueeze, axis=0)
+
+        # the new API knows how to handle the axis
+        # argument and will return a ValueError if
+        # attempting to squeeze an axis that is not
+        # of length 1
+        with assert_raises(ValueError):
+            np.squeeze(np.array([[1],[2],[3]]), axis=0)
 
     def test_reduce_contiguous(self):
         # GitHub issue #387
@@ -1973,7 +2036,7 @@ class TestRegression(object):
             a = np.empty((100000000,), dtype='i1')
             del a
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_ufunc_reduce_memoryleak(self):
         a = np.arange(6)
         acnt = sys.getrefcount(a)
@@ -2203,7 +2266,7 @@ class TestRegression(object):
         assert_equal(uf(a), ())
         assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_leak_in_structured_dtype_comparison(self):
         # gh-6250
         recordtype = np.dtype([('a', np.float64),
@@ -2306,5 +2369,12 @@ class TestRegression(object):
         #del va
         #assert_equal(x, b'\x00\x00\x00\x00')
 
-if __name__ == "__main__":
-    run_module_suite()
+    def test_structarray_title(self):
+        # The following used to segfault on pypy, due to NPY_TITLE_KEY
+        # not working properly and resulting to double-decref of the
+        # structured array field items:
+        # See: https://bitbucket.org/pypy/pypy/issues/2789
+        for j in range(5):
+            structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
+            structure[0]['x'] = np.array([2])
+            gc.collect()

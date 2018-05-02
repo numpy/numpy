@@ -219,21 +219,21 @@ if sys.platform == 'win32':
     _lib_dirs = [
         'lib',
     ]
-    
+
     _include_dirs = [d.replace('/', os.sep) for d in _include_dirs]
     _lib_dirs = [d.replace('/', os.sep) for d in _lib_dirs]
     def add_system_root(library_root):
         """Add a package manager root to the include directories"""
         global default_lib_dirs
         global default_include_dirs
-        
+
         library_root = os.path.normpath(library_root)
- 
+
         default_lib_dirs.extend(
             os.path.join(library_root, d) for d in _lib_dirs)
         default_include_dirs.extend(
             os.path.join(library_root, d) for d in _include_dirs)
-    
+
     if sys.version_info >= (3, 3):
         # VCpkg is the de-facto package manager on windows for C/C++
         # libraries. If it is on the PATH, then we append its paths here.
@@ -247,7 +247,7 @@ if sys.platform == 'win32':
             else:
                 specifier = 'x64'
 
-            vcpkg_installed = os.path.join(vcpkg_dir, 'installed') 
+            vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
             for vcpkg_root in [
                 os.path.join(vcpkg_installed, specifier + '-windows'),
                 os.path.join(vcpkg_installed, specifier + '-windows-static'),
@@ -260,7 +260,7 @@ if sys.platform == 'win32':
             conda_dir = os.path.dirname(conda)
             add_system_root(os.path.join(conda_dir, '..', 'Library'))
             add_system_root(os.path.join(conda_dir, 'Library'))
-                        
+
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
@@ -804,6 +804,8 @@ class system_info(object):
                 # doesn't seem correct
                 if ext == '.dll.a':
                     lib += '.dll'
+                if ext == '.lib':
+                    lib = prefix + lib
                 return lib
 
         return False
@@ -1549,7 +1551,9 @@ class lapack_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas')
 
-        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
+        if sys.platform == 'darwin' \
+                and not os.getenv('_PYTHON_HOST_PLATFORM', None) \
+                and not (atlas_info or openblas_info or
                                              lapack_mkl_info):
             # Use the system lapack from Accelerate or vecLib under OSX
             args = []
@@ -1655,7 +1659,9 @@ class blas_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
+        if sys.platform == 'darwin' \
+                and not os.getenv('_PYTHON_HOST_PLATFORM', None) \
+                and not (atlas_info or openblas_info or
                                              blas_mkl_info or blis_info):
             # Use the system BLAS from Accelerate or vecLib under OSX
             args = []
@@ -1876,7 +1882,7 @@ class openblas_lapack_info(openblas_info):
         c = customized_ccompiler()
 
         tmpdir = tempfile.mkdtemp()
-        s = """void zungqr();
+        s = """void zungqr_();
         int main(int argc, const char *argv[])
         {
             zungqr_();

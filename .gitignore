@@ -27,6 +27,7 @@ GPATH
 GRTAGS
 GSYMS
 GTAGS
+.cache
 
 # Compiled source #
 ###################
@@ -98,6 +99,10 @@ Icon?
 .gdb_history
 ehthumbs.db
 Thumbs.db
+
+# pytest generated files #
+##########################
+/.pytest_cache
 
 # Things specific to this project #
 ###################################

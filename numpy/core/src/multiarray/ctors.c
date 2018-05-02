@@ -729,13 +729,16 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     /* PEP 3118 buffer interface */
     if (PyObject_CheckBuffer(obj) == 1) {
         memset(&buffer_view, 0, sizeof(Py_buffer));
-        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-            PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
+        if (PyObject_GetBuffer(obj, &buffer_view,
+                    PyBUF_STRIDES|PyBUF_SIMPLE) == 0 ||
+                PyObject_GetBuffer(obj, &buffer_view,
+                    PyBUF_ND|PyBUF_SIMPLE) == 0) {
             int nd = buffer_view.ndim;
+
             if (nd < *maxndim) {
                 *maxndim = nd;
             }
-            for (i=0; i<*maxndim; i++) {
+            for (i = 0; i < *maxndim; i++) {
                 d[i] = buffer_view.shape[i];
             }
             PyBuffer_Release(&buffer_view);
@@ -756,6 +759,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     e = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (e != NULL) {
         int nd = -1;
+
         if (NpyCapsule_Check(e)) {
             PyArrayInterface *inter;
             inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(e);
@@ -1010,7 +1014,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
     else {
         fa->flags = (flags & ~NPY_ARRAY_WRITEBACKIFCOPY);
-        fa->flags = (fa->flags & ~NPY_ARRAY_UPDATEIFCOPY);
+        fa->flags &= ~NPY_ARRAY_UPDATEIFCOPY;
     }
     fa->descr = descr;
     fa->base = (PyObject *)NULL;
@@ -1272,42 +1276,31 @@ PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
 }
 
 
-NPY_NO_EXPORT int
-_array_from_buffer_3118(PyObject *obj, PyObject **out)
+/* Steals a reference to the memory view */
+NPY_NO_EXPORT PyObject *
+_array_from_buffer_3118(PyObject *memoryview)
 {
     /* PEP 3118 */
-    PyObject *memoryview;
     Py_buffer *view;
     PyArray_Descr *descr = NULL;
-    PyObject *r;
-    int nd, flags, k;
+    PyObject *r = NULL;
+    int nd, flags;
     Py_ssize_t d;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
-
-    memoryview = PyMemoryView_FromObject(obj);
-    if (memoryview == NULL) {
-        PyErr_Clear();
-        return -1;
-    }
 
     view = PyMemoryView_GET_BUFFER(memoryview);
     if (view->format != NULL) {
         descr = _descriptor_from_pep3118_format(view->format);
         if (descr == NULL) {
-            PyObject *msg;
-            msg = PyBytes_FromFormat("Invalid PEP 3118 format string: '%s'",
-                                     view->format);
-            PyErr_WarnEx(PyExc_RuntimeWarning, PyBytes_AS_STRING(msg), 0);
-            Py_DECREF(msg);
             goto fail;
         }
 
         /* Sanity check */
         if (descr->elsize != view->itemsize) {
-            PyErr_WarnEx(PyExc_RuntimeWarning,
-                         "Item size computed from the PEP 3118 buffer format "
-                         "string does not match the actual item size.",
-                         0);
+            PyErr_SetString(
+                    PyExc_RuntimeError,
+                    "Item size computed from the PEP 3118 buffer format "
+                    "string does not match the actual item size.");
             goto fail;
         }
     }
@@ -1318,13 +1311,13 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
 
     nd = view->ndim;
     if (view->shape != NULL) {
-        if (nd >= NPY_MAXDIMS || nd < 0) {
+        int k;
+        if (nd > NPY_MAXDIMS || nd < 0) {
+            PyErr_Format(PyExc_RuntimeError,
+                "PEP3118 dimensions do not satisfy 0 <= ndim <= NPY_MAXDIMS");
             goto fail;
         }
         for (k = 0; k < nd; ++k) {
-            if (k >= NPY_MAXDIMS) {
-                goto fail;
-            }
             shape[k] = view->shape[k];
         }
         if (view->strides != NULL) {
@@ -1348,10 +1341,9 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
             strides[0] = view->itemsize;
         }
         else if (nd > 1) {
-            PyErr_WarnEx(PyExc_RuntimeWarning,
-                         "ndim computed from the PEP 3118 buffer format "
-                         "is greater than 1, but shape is NULL.",
-                         0);
+            PyErr_SetString(PyExc_RuntimeError,
+                           "ndim computed from the PEP 3118 buffer format "
+                           "is greater than 1, but shape is NULL.");
             goto fail;
         }
     }
@@ -1360,21 +1352,21 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
     r = PyArray_NewFromDescr(&PyArray_Type, descr,
                              nd, shape, strides, view->buf,
                              flags, NULL);
-    if (r == NULL ||
-            PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
-        Py_XDECREF(r);
-        Py_DECREF(memoryview);
-        return -1;
+    if (r == NULL) {
+        goto fail;
+    }
+    if (PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
+        goto fail;
     }
     PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
 
-    *out = r;
-    return 0;
+    return r;
 
 fail:
+    Py_XDECREF(r);
     Py_XDECREF(descr);
     Py_DECREF(memoryview);
-    return -1;
+    return NULL;
 
 }
 
@@ -1486,14 +1478,25 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     }
 
     /* If op supports the PEP 3118 buffer interface */
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
-             _array_from_buffer_3118(op, (PyObject **)out_arr) == 0) {
-        if (writeable
-            && PyArray_FailUnlessWriteable(*out_arr, "PEP 3118 buffer") < 0) {
-            Py_DECREF(*out_arr);
-            return -1;
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
+
+        PyObject *memoryview = PyMemoryView_FromObject(op);
+        if (memoryview == NULL) {
+            PyErr_Clear();
         }
-        return (*out_arr) == NULL ? -1 : 0;
+        else {
+            PyObject *arr = _array_from_buffer_3118(memoryview);
+            if (arr == NULL) {
+                return -1;
+            }
+            if (writeable
+                    && PyArray_FailUnlessWriteable((PyArrayObject *)arr, "PEP 3118 buffer") < 0) {
+                Py_DECREF(arr);
+                return -1;
+            }
+            *out_arr = (PyArrayObject *)arr;
+            return 0;
+        }
     }
 
     /* If op supports the __array_struct__ or __array_interface__ interface */
@@ -1843,7 +1846,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * NPY_ARRAY_WRITEBACKIFCOPY flag sets this flag in the returned
  * array if a copy is made and the base argument points to the (possibly)
  * misbehaved array. Before returning to python, PyArray_ResolveWritebackIfCopy
- * must be called to update the contents of the orignal array from the copy.
+ * must be called to update the contents of the original array from the copy.
  *
  * NPY_ARRAY_FORCECAST will cause a cast to occur regardless of whether or not
  * it is safe.
@@ -2181,14 +2184,17 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *origin)
 {
-    PyObject *tmp = NULL;
     PyObject *iface = NULL;
     PyObject *attr = NULL;
     PyObject *base = NULL;
     PyArrayObject *ret;
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#else
     Py_ssize_t buffer_len;
+#endif
     int res, i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
@@ -2216,8 +2222,14 @@ PyArray_FromInterface(PyObject *origin)
 #if defined(NPY_PY3K)
     /* Allow unicode type strings */
     if (PyUnicode_Check(attr)) {
-        tmp = PyUnicode_AsASCIIString(attr);
+        PyObject *tmp = PyUnicode_AsASCIIString(attr);
+        if (tmp == NULL) {
+            goto fail;
+        }
         attr = tmp;
+    }
+    else {
+        Py_INCREF(attr);
     }
 #endif
     if (!PyBytes_Check(attr)) {
@@ -2227,11 +2239,6 @@ PyArray_FromInterface(PyObject *origin)
     }
     /* Get dtype from type string */
     dtype = _array_typedescr_fromstr(PyString_AS_STRING(attr));
-#if defined(NPY_PY3K)
-    if (tmp == attr) {
-        Py_DECREF(tmp);
-    }
-#endif
     if (dtype == NULL) {
         goto fail;
     }
@@ -2251,6 +2258,10 @@ PyArray_FromInterface(PyObject *origin)
             dtype = new_dtype;
         }
     }
+
+#if defined(NPY_PY3K)
+    Py_DECREF(attr);  /* Pairs with the unicode handling above */
+#endif
 
     /* Get shape tuple from interface specification */
     attr = PyDict_GetItemString(iface, "shape");
@@ -2278,7 +2289,7 @@ PyArray_FromInterface(PyObject *origin)
     else {
         n = PyTuple_GET_SIZE(attr);
         for (i = 0; i < n; i++) {
-            tmp = PyTuple_GET_ITEM(attr, i);
+            PyObject *tmp = PyTuple_GET_ITEM(attr, i);
             dims[i] = PyArray_PyIntAsIntp(tmp);
             if (error_converting(dims[i])) {
                 goto fail;
@@ -2331,6 +2342,25 @@ PyArray_FromInterface(PyObject *origin)
         else {
             base = origin;
         }
+#if defined(NPY_PY3K)
+        if (PyObject_GetBuffer(base, &view,
+                    PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
+            PyErr_Clear();
+            if (PyObject_GetBuffer(base, &view,
+                        PyBUF_SIMPLE) < 0) {
+                goto fail;
+            }
+            dataflags &= ~NPY_ARRAY_WRITEABLE;
+        }
+        data = (char *)view.buf;
+        /*
+         * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+         * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+         * up to the object that supplies the buffer to guarantee that the buffer
+         * sticks around after the release.
+         */
+        PyBuffer_Release(&view);
+#else
         res = PyObject_AsWriteBuffer(base, (void **)&data, &buffer_len);
         if (res < 0) {
             PyErr_Clear();
@@ -2341,6 +2371,7 @@ PyArray_FromInterface(PyObject *origin)
             }
             dataflags &= ~NPY_ARRAY_WRITEABLE;
         }
+#endif
         /* Get offset number from interface specification */
         attr = PyDict_GetItemString(origin, "offset");
         if (attr) {
@@ -2395,7 +2426,7 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
         for (i = 0; i < n; i++) {
-            tmp = PyTuple_GET_ITEM(attr, i);
+            PyObject *tmp = PyTuple_GET_ITEM(attr, i);
             strides[i] = PyArray_PyIntAsIntp(tmp);
             if (error_converting(strides[i])) {
                 Py_DECREF(ret);
@@ -3520,6 +3551,9 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 {
     PyArrayObject *ret;
     char *data;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#endif
     Py_ssize_t ts;
     npy_intp s, n;
     int itemsize;
@@ -3559,6 +3593,26 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         Py_INCREF(buf);
     }
 
+#if defined(NPY_PY3K)
+    if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
+        writeable = 0;
+        PyErr_Clear();
+        if (PyObject_GetBuffer(buf, &view, PyBUF_SIMPLE) < 0) {
+            Py_DECREF(buf);
+            Py_DECREF(type);
+            return NULL;
+        }
+    }
+    data = (char *)view.buf;
+    ts = view.len;
+    /*
+     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+     * up to the object that supplies the buffer to guarantee that the buffer
+     * sticks around after the release.
+     */
+    PyBuffer_Release(&view);
+#else
     if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
         writeable = 0;
         PyErr_Clear();
@@ -3568,6 +3622,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             return NULL;
         }
     }
+#endif
 
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,

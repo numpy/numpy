@@ -8,8 +8,7 @@ from numpy.lib.shape_base import (
     vsplit, dstack, column_stack, kron, tile, expand_dims,
     )
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal, assert_raises,
-    assert_warns
+    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
 
 
@@ -80,7 +79,7 @@ class TestApplyAlongAxis(object):
 
     def test_axis_insertion(self, cls=np.ndarray):
         def f1to2(x):
-            """produces an assymmetric non-square matrix from x"""
+            """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
             return (x[::-1] * x[1:,None]).view(cls)
 
@@ -124,7 +123,7 @@ class TestApplyAlongAxis(object):
 
     def test_axis_insertion_ma(self):
         def f1to2(x):
-            """produces an assymmetric non-square matrix from x"""
+            """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
             res = x[::-1] * x[1:,None]
             return np.ma.masked_where(res%5==0, res)
@@ -569,7 +568,3 @@ class TestMayShareMemory(object):
 def compare_results(res, desired):
     for i in range(len(desired)):
         assert_array_equal(res[i], desired[i])
-
-
-if __name__ == "__main__":
-    run_module_suite()

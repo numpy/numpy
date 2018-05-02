@@ -38,6 +38,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import os
+import warnings
 
 from . import numeric as sb
 from . import numerictypes as nt
@@ -223,10 +224,14 @@ class record(nt.void):
     __module__ = 'numpy'
 
     def __repr__(self):
-        return self.__str__()
+        if get_printoptions()['legacy'] == '1.13':
+            return self.__str__()
+        return super(record, self).__repr__()
 
     def __str__(self):
-        return str(self.item())
+        if get_printoptions()['legacy'] == '1.13':
+            return str(self.item())
+        return super(record, self).__str__()
 
     def __getattribute__(self, attr):
         if attr in ['setfield', 'getfield', 'dtype']:
@@ -673,7 +678,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     try:
         retval = sb.array(recList, dtype=descr)
-    except TypeError:  # list of lists instead of list of tuples
+    except (TypeError, ValueError):
         if (shape is None or shape == 0):
             shape = len(recList)
         if isinstance(shape, (int, long)):
@@ -683,6 +688,12 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         _array = recarray(shape, descr)
         for k in range(_array.size):
             _array[k] = tuple(recList[k])
+        # list of lists instead of list of tuples ?
+        # 2018-02-07, 1.14.1
+        warnings.warn(
+            "fromrecords expected a list of tuples, may have received a list "
+            "of lists instead. In the future that will raise an error",
+            FutureWarning, stacklevel=2)
         return _array
     else:
         if shape is not None and retval.shape != shape:

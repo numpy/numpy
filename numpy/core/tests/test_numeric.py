@@ -4,16 +4,17 @@ import sys
 import warnings
 import itertools
 import platform
+import pytest
 from decimal import Decimal
 
 import numpy as np
 from numpy.core import umath
 from numpy.random import rand, randint, randn
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, dec, HAS_REFCOUNT, suppress_warnings
-)
+    assert_, assert_equal, assert_raises, assert_raises_regex,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    suppress_warnings, HAS_REFCOUNT
+    )
 
 
 class TestResize(object):
@@ -467,7 +468,7 @@ class TestSeterr(object):
             np.seterr(**old)
             assert_(np.geterr() == old)
 
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+    @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_divide_err(self):
         with np.errstate(divide='raise'):
             try:
@@ -551,7 +552,7 @@ class TestFloatExceptions(object):
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
-    @dec.knownfailureif(True, "See ticket #2350")
+    @pytest.mark.xfail(reason="See ticket #2350")
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
@@ -1796,7 +1797,7 @@ class TestAllclose(object):
                 (np.inf, [np.inf])]
 
         for (x, y) in data:
-            yield (self.tst_allclose, x, y)
+            self.tst_allclose(x, y)
 
     def test_ip_not_allclose(self):
         # Parametric test factory.
@@ -1817,7 +1818,7 @@ class TestAllclose(object):
                 (np.array([np.inf, 1]), np.array([0, np.inf]))]
 
         for (x, y) in data:
-            yield (self.tst_not_allclose, x, y)
+            self.tst_not_allclose(x, y)
 
     def test_no_parameter_modification(self):
         x = np.array([np.inf, 1])
@@ -1901,7 +1902,7 @@ class TestIsclose(object):
         tests = self.some_close_tests
         results = self.some_close_results
         for (x, y), result in zip(tests, results):
-            yield (assert_array_equal, np.isclose(x, y), result)
+            assert_array_equal(np.isclose(x, y), result)
 
     def tst_all_isclose(self, x, y):
         assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
@@ -1921,19 +1922,19 @@ class TestIsclose(object):
     def test_ip_all_isclose(self):
         self.setup()
         for (x, y) in self.all_close_tests:
-            yield (self.tst_all_isclose, x, y)
+            self.tst_all_isclose(x, y)
 
     def test_ip_none_isclose(self):
         self.setup()
         for (x, y) in self.none_close_tests:
-            yield (self.tst_none_isclose, x, y)
+            self.tst_none_isclose(x, y)
 
     def test_ip_isclose_allclose(self):
         self.setup()
         tests = (self.all_close_tests + self.none_close_tests +
                  self.some_close_tests)
         for (x, y) in tests:
-            yield (self.tst_isclose_allclose, x, y)
+            self.tst_isclose_allclose(x, y)
 
     def test_equal_nan(self):
         assert_array_equal(np.isclose(np.nan, np.nan, equal_nan=True), [True])
@@ -2092,7 +2093,7 @@ class TestCreationFuncs(object):
         self.check_function(np.full, 0)
         self.check_function(np.full, 1)
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_for_reference_leak(self):
         # Make sure we have an object for reference
         dim = 1
@@ -2640,7 +2641,7 @@ class TestRequire(object):
         fd = [None, 'f8', 'c16']
         for idtype, fdtype, flag in itertools.product(id, fd, self.flag_names):
             a = self.generate_all_false(idtype)
-            yield self.set_and_check_flag, flag, fdtype,  a
+            self.set_and_check_flag(flag, fdtype,  a)
 
     def test_unknown_requirement(self):
         a = self.generate_all_false('f8')
@@ -2672,7 +2673,7 @@ class TestRequire(object):
 
         for flag in self.flag_names:
             a = ArraySubclass((2, 2))
-            yield self.set_and_check_flag, flag, None, a
+            self.set_and_check_flag(flag, None, a)
 
 
 class TestBroadcast(object):
@@ -2733,7 +2734,3 @@ class TestTensordot(object):
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))
-
-
-if __name__ == "__main__":
-    run_module_suite()

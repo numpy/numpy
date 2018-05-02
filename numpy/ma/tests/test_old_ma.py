@@ -6,7 +6,7 @@ import numpy as np
 import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_equal,
+    assert_, assert_raises, assert_equal,
     )
 from numpy.ma.testutils import assert_array_equal
 from numpy.ma import (
@@ -854,6 +854,3 @@ def eqmask(m1, m2):
     if m2 is nomask:
         return m1 is nomask
     return (m1 == m2).all()
-
-if __name__ == "__main__":
-    run_module_suite()

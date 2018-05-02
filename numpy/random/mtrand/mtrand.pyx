@@ -1284,7 +1284,7 @@ cdef class RandomState:
         probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 15, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 15, density=True)
         >>> plt.plot(bins, np.ones_like(bins), linewidth=2, color='r')
         >>> plt.show()
 
@@ -1394,7 +1394,7 @@ cdef class RandomState:
 
         See Also
         --------
-        random.standard_normal : Similar, but takes a tuple as its argument.
+        standard_normal : Similar, but takes a tuple as its argument.
 
         Notes
         -----
@@ -1457,7 +1457,7 @@ cdef class RandomState:
 
         See Also
         --------
-        random.randint : Similar to `random_integers`, only for the half-open
+        randint : Similar to `random_integers`, only for the half-open
             interval [`low`, `high`), and 0 is the lowest value if `high` is
             omitted.
 
@@ -1495,7 +1495,7 @@ cdef class RandomState:
         Display results as a histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(dsums, 11, normed=True)
+        >>> count, bins, ignored = plt.hist(dsums, 11, density=True)
         >>> plt.show()
 
         """
@@ -1631,7 +1631,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
@@ -1874,7 +1874,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
-        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/ \\
         ...                       (sps.gamma(shape) * scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')
@@ -1964,7 +1964,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
-        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1)*(np.exp(-bins/scale) /
         ...                      (sps.gamma(shape)*scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')
@@ -2164,9 +2164,9 @@ cdef class RandomState:
         >>> dfden = 20 # within groups degrees of freedom
         >>> nonc = 3.0
         >>> nc_vals = np.random.noncentral_f(dfnum, dfden, nonc, 1000000)
-        >>> NF = np.histogram(nc_vals, bins=50, normed=True)
+        >>> NF = np.histogram(nc_vals, bins=50, density=True)
         >>> c_vals = np.random.f(dfnum, dfden, 1000000)
-        >>> F = np.histogram(c_vals, bins=50, normed=True)
+        >>> F = np.histogram(c_vals, bins=50, density=True)
         >>> plt.plot(F[1][1:], F[0])
         >>> plt.plot(NF[1][1:], NF[0])
         >>> plt.show()
@@ -2342,7 +2342,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
-        ...                   bins=200, normed=True)
+        ...                   bins=200, density=True)
         >>> plt.show()
 
         Draw values from a noncentral chisquare with very small noncentrality,
@@ -2350,9 +2350,9 @@ cdef class RandomState:
 
         >>> plt.figure()
         >>> values = plt.hist(np.random.noncentral_chisquare(3, .0000001, 100000),
-        ...                   bins=np.arange(0., 25, .1), normed=True)
+        ...                   bins=np.arange(0., 25, .1), density=True)
         >>> values2 = plt.hist(np.random.chisquare(3, 100000),
-        ...                    bins=np.arange(0., 25, .1), normed=True)
+        ...                    bins=np.arange(0., 25, .1), density=True)
         >>> plt.plot(values[1][0:-1], values[0]-values2[0], 'ob')
         >>> plt.show()
 
@@ -2361,7 +2361,7 @@ cdef class RandomState:
 
         >>> plt.figure()
         >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
-        ...                   bins=200, normed=True)
+        ...                   bins=200, density=True)
         >>> plt.show()
 
         """
@@ -2529,7 +2529,7 @@ cdef class RandomState:
 
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(s, bins=100, normed=True)
+        >>> h = plt.hist(s, bins=100, density=True)
 
         For a one-sided t-test, how far out in the distribution does the t
         statistic appear?
@@ -2630,7 +2630,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> from scipy.special import i0
-        >>> plt.hist(s, 50, normed=True)
+        >>> plt.hist(s, 50, density=True)
         >>> x = np.linspace(-np.pi, np.pi, num=51)
         >>> y = np.exp(kappa*np.cos(x-mu))/(2*np.pi*i0(kappa))
         >>> plt.plot(x, y, linewidth=2, color='r')
@@ -2744,7 +2744,7 @@ cdef class RandomState:
         density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 100, normed=True)
+        >>> count, bins, _ = plt.hist(s, 100, density=True)
         >>> fit = a*m**a / bins**(a+1)
         >>> plt.plot(bins, max(count)*fit/max(fit), linewidth=2, color='r')
         >>> plt.show()
@@ -2957,17 +2957,17 @@ cdef class RandomState:
         >>> powpdf = stats.powerlaw.pdf(xx,5)
 
         >>> plt.figure()
-        >>> plt.hist(rvs, bins=50, normed=True)
+        >>> plt.hist(rvs, bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('np.random.power(5)')
 
         >>> plt.figure()
-        >>> plt.hist(1./(1.+rvsp), bins=50, normed=True)
+        >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('inverse of 1 + np.random.pareto(5)')
 
         >>> plt.figure()
-        >>> plt.hist(1./(1.+rvsp), bins=50, normed=True)
+        >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('inverse of stats.pareto(5)')
 
@@ -3055,7 +3055,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> x = np.arange(-8., 8., .01)
         >>> pdf = np.exp(-abs(x-loc)/scale)/(2.*scale)
         >>> plt.plot(x, pdf)
@@ -3171,7 +3171,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
         ...          * np.exp( -np.exp( -(bins - mu) /beta) ),
         ...          linewidth=2, color='r')
@@ -3186,7 +3186,7 @@ cdef class RandomState:
         ...    a = np.random.normal(mu, beta, 1000)
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
-        >>> count, bins, ignored = plt.hist(maxima, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(maxima, 30, density=True)
         >>> beta = np.std(maxima) * np.sqrt(6) / np.pi
         >>> mu = np.mean(maxima) - 0.57721*beta
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
@@ -3381,7 +3381,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='mid')
+        >>> count, bins, ignored = plt.hist(s, 100, density=True, align='mid')
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
         >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
@@ -3403,7 +3403,7 @@ cdef class RandomState:
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
-        >>> count, bins, ignored = plt.hist(b, 100, normed=True, align='mid')
+        >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
         >>> sigma = np.std(np.log(b))
         >>> mu = np.mean(np.log(b))
 
@@ -3480,7 +3480,7 @@ cdef class RandomState:
         --------
         Draw values from the distribution and plot the histogram
 
-        >>> values = hist(np.random.rayleigh(3, 100000), bins=200, normed=True)
+        >>> values = hist(np.random.rayleigh(3, 100000), bins=200, density=True)
 
         Wave heights tend to follow a Rayleigh distribution. If the mean wave
         height is 1 meter, what fraction of waves are likely to be larger than 3
@@ -3572,7 +3572,7 @@ cdef class RandomState:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.wald(3, 2, 100000), bins=200, normed=True)
+        >>> h = plt.hist(np.random.wald(3, 2, 100000), bins=200, density=True)
         >>> plt.show()
 
         """
@@ -3659,7 +3659,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> h = plt.hist(np.random.triangular(-3, 0, 8, 100000), bins=200,
-        ...              normed=True)
+        ...              density=True)
         >>> plt.show()
 
         """
@@ -3817,7 +3817,7 @@ cdef class RandomState:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` trials and `p` probability of success where `n` is an
+        parameters, `n` successes and `p` probability of success where `n` is an
         integer > 0 and `p` is in the interval [0, 1].
 
         Parameters
@@ -3837,21 +3837,19 @@ cdef class RandomState:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized negative binomial distribution,
-            where each sample is equal to N, the number of trials it took to
-            achieve n - 1 successes, N - (n - 1) failures, and a success on the,
-            (N + n)th trial.
+            where each sample is equal to N, the number of failures that
+            occurred before a total of n successes was reached.
 
         Notes
         -----
         The probability density for the negative binomial distribution is
 
-        .. math:: P(N;n,p) = \\binom{N+n-1}{n-1}p^{n}(1-p)^{N},
+        .. math:: P(N;n,p) = \\binom{N+n-1}{N}p^{n}(1-p)^{N},
 
-        where :math:`n-1` is the number of successes, :math:`p` is the
-        probability of success, and :math:`N+n-1` is the number of trials.
-        The negative binomial distribution gives the probability of n-1
-        successes and N failures in N+n-1 trials, and success on the (N+n)th
-        trial.
+        where :math:`n` is the number of successes, :math:`p` is the
+        probability of success, and :math:`N+n` is the number of trials.
+        The negative binomial distribution gives the probability of N
+        failures given n successes, with a success on the last trial.
 
         If one throws a die repeatedly until the third time a "1" appears,
         then the probability distribution of the number of non-"1"s that
@@ -3969,7 +3967,7 @@ cdef class RandomState:
         Display histogram of the sample:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 14, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 14, density=True)
         >>> plt.show()
 
         Draw each 100 values for lambda 100 and 500:
@@ -4066,7 +4064,7 @@ cdef class RandomState:
 
         Truncate s values at 50 so plot is interesting:
 
-        >>> count, bins, ignored = plt.hist(s[s<50], 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s[s<50], 50, density=True)
         >>> x = np.arange(1., 50.)
         >>> y = x**(-a) / special.zetac(a)
         >>> plt.plot(x, y/max(y), linewidth=2, color='r')
@@ -4514,12 +4512,11 @@ cdef class RandomState:
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
         #
-        # Also check that cov is positive-semidefinite. If so, the u.T and v
+        # Also check that cov is symmetric positive-semidefinite. If so, the u.T and v
         # matrices should be equal up to roundoff error if cov is
-        # symmetrical and the singular value of the corresponding row is
+        # symmetric and the singular value of the corresponding row is
         # not zero. We continue to use the SVD rather than Cholesky in
-        # order to preserve current outputs. Note that symmetry has not
-        # been checked.
+        # order to preserve current outputs.
 
         (u, s, v) = svd(cov)
 
@@ -4530,10 +4527,12 @@ cdef class RandomState:
             psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
             if not psd:
                 if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
-                                  RuntimeWarning)
+                    warnings.warn(
+                        "covariance is not symmetric positive-semidefinite.",
+                        RuntimeWarning)
                 else:
-                    raise ValueError("covariance is not positive-semidefinite.")
+                    raise ValueError(
+                        "covariance is not symmetric positive-semidefinite.")
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean

@@ -170,14 +170,17 @@ extern "C" CONFUSE_EMACS
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
+/* Move to arrayobject.c once PyArray_XDECREF_ERR is removed */
 static NPY_INLINE void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
-    if (arr != NULL) {
-        if ((PyArray_FLAGS(arr) & NPY_ARRAY_WRITEBACKIFCOPY) ||
-            (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY)) {
-            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(arr);
-            PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
+    if (fa && fa->base) {
+        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) ||
+                (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
+            PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
+            Py_DECREF(fa->base);
+            fa->base = NULL;
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
         }
@@ -232,9 +235,36 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
    dict.
 */
 
-#define NPY_TITLE_KEY(key, value) ((PyTuple_GET_SIZE((value))==3) && \
-                                   (PyTuple_GET_ITEM((value), 2) == (key)))
+static NPY_INLINE int
+NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
+{
+    PyObject *title;
+    if (PyTuple_GET_SIZE(value) != 3) {
+        return 0;
+    }
+    title = PyTuple_GET_ITEM(value, 2);
+    if (key == title) {
+        return 1;
+    }
+#ifdef PYPY_VERSION
+    /*
+     * On PyPy, dictionary keys do not always preserve object identity.
+     * Fall back to comparison by value.
+     */
+    if (PyUnicode_Check(title) && PyUnicode_Check(key)) {
+        return PyUnicode_Compare(title, key) == 0 ? 1 : 0;
+    }
+#if PY_VERSION_HEX < 0x03000000
+    if (PyString_Check(title) && PyString_Check(key)) {
+        return PyObject_Compare(title, key) == 0 ? 1 : 0;
+    }
+#endif
+#endif
+    return 0;
+}
 
+/* Macro, for backward compat with "if NPY_TITLE_KEY(key, value) { ..." */
+#define NPY_TITLE_KEY(key, value) (NPY_TITLE_KEY_check((key), (value)))
 
 #define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
 #define DEPRECATE_FUTUREWARNING(msg) PyErr_WarnEx(PyExc_FutureWarning,msg,1)

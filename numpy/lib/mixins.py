@@ -74,8 +74,8 @@ class NDArrayOperatorsMixin(object):
 
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
-    arrays as described in :ref:`A Mechanism for Overriding Ufuncs
-    <neps.ufunc-overrides>`.
+    arrays as described in `A Mechanism for Overriding Ufuncs
+    <../../neps/nep-0013-ufunc-overrides.html>`_.
 
     As an trivial example, consider this implementation of an ``ArrayLike``
     class that simply wraps a NumPy array and ensures that the result of any
@@ -137,6 +137,8 @@ class NDArrayOperatorsMixin(object):
     Note that unlike ``numpy.ndarray``, ``ArrayLike`` does not allow operations
     with arbitrary, unrecognized types. This ensures that interactions with
     ArrayLike preserve a well-defined casting hierarchy.
+
+    .. versionadded:: 1.13
     """
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.

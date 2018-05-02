@@ -305,7 +305,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         memset(&buffer_view, 0, sizeof(Py_buffer));
         if (PyObject_GetBuffer(obj, &buffer_view,
                                PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-            PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
+            PyObject_GetBuffer(obj, &buffer_view,
+                               PyBUF_FORMAT|PyBUF_SIMPLE) == 0) {
 
             PyErr_Clear();
             dtype = _descriptor_from_pep3118_format(buffer_view.format);
@@ -588,7 +589,7 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
-    unsigned int i;
+    int i;
     npy_uintp aligned;
     npy_uintp alignment = PyArray_DESCR(ap)->alignment;
 
@@ -633,8 +634,12 @@ NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {
     PyObject *base=PyArray_BASE(ap);
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#else
     void *dummy;
     Py_ssize_t n;
+#endif
 
     /* If we own our own data, then no-problem */
     if ((base == NULL) || (PyArray_FLAGS(ap) & NPY_ARRAY_OWNDATA)) {
@@ -668,9 +673,18 @@ _IsWriteable(PyArrayObject *ap)
     if (PyString_Check(base)) {
         return NPY_TRUE;
     }
-    if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
+#if defined(NPY_PY3K)
+    if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
+        PyErr_Clear();
         return NPY_FALSE;
     }
+    PyBuffer_Release(&view);
+#else
+    if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
+        PyErr_Clear();
+        return NPY_FALSE;
+    }
+#endif
     return NPY_TRUE;
 }
 

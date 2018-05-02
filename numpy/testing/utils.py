@@ -3,9 +3,16 @@ Back compatibility utils module. It will import the appropriate
 set of tools
 
 """
-import os
+from __future__ import division, absolute_import, print_function
 
-from .nose_tools.utils import *
+import warnings
+
+# 2018-04-04, numpy 1.15.0
+warnings.warn("Importing from numpy.testing.utils is deprecated, "
+              "import from numpy.testing instead.",
+              ImportWarning, stacklevel=2)
+
+from ._private.utils import *
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -18,5 +25,5 @@ __all__ = [
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
-        '_assert_valid_refcount', '_gen_alignment_data',
+        '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles'
         ]

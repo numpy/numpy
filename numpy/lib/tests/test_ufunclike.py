@@ -4,7 +4,7 @@ import numpy as np
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_warns
     )
 
 
@@ -91,6 +91,3 @@ class TestUfunclike(object):
         out = np.array(0.0)
         actual = np.fix(x, out=out)
         assert_(actual is out)
-
-if __name__ == "__main__":
-    run_module_suite()

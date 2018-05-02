@@ -1,8 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import pickle
 
-from numpy.testing import assert_raises, assert_, run_module_suite
+from numpy.testing import assert_raises, assert_, assert_equal
 
 if sys.version_info[:2] >= (3, 4):
     from importlib import reload
@@ -29,6 +30,7 @@ def test_numpy_reloading():
     assert_(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
     assert_(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
 
-
-if __name__ == "__main__":
-    run_module_suite()
+def test_novalue():
+    import numpy as np
+    assert_equal(repr(np._NoValue), '<no value>')
+    assert_(pickle.loads(pickle.dumps(np._NoValue)) is np._NoValue)

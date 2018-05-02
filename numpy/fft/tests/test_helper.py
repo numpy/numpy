@@ -4,13 +4,9 @@ Copied from fftpack.helper by Pearu Peterson, October 2005
 
 """
 from __future__ import division, absolute_import, print_function
-
 import numpy as np
-from numpy.testing import (
-        run_module_suite, assert_array_almost_equal, assert_equal,
-        )
-from numpy import fft
-from numpy import pi
+from numpy.testing import assert_array_almost_equal, assert_equal
+from numpy import fft, pi
 from numpy.fft.helper import _FFTCache
 
 
@@ -36,10 +32,108 @@ class TestFFTShift(object):
         shifted = [[-1, -3, -2], [2, 0, 1], [-4, 3, 4]]
         assert_array_almost_equal(fft.fftshift(freqs, axes=(0, 1)), shifted)
         assert_array_almost_equal(fft.fftshift(freqs, axes=0),
-                fft.fftshift(freqs, axes=(0,)))
+                                  fft.fftshift(freqs, axes=(0,)))
         assert_array_almost_equal(fft.ifftshift(shifted, axes=(0, 1)), freqs)
         assert_array_almost_equal(fft.ifftshift(shifted, axes=0),
-                fft.ifftshift(shifted, axes=(0,)))
+                                  fft.ifftshift(shifted, axes=(0,)))
+
+        assert_array_almost_equal(fft.fftshift(freqs), shifted)
+        assert_array_almost_equal(fft.ifftshift(shifted), freqs)
+
+    def test_uneven_dims(self):
+        """ Test 2D input, which has uneven dimension sizes """
+        freqs = [
+            [0, 1],
+            [2, 3],
+            [4, 5]
+        ]
+
+        # shift in dimension 0
+        shift_dim0 = [
+            [4, 5],
+            [0, 1],
+            [2, 3]
+        ]
+        assert_array_almost_equal(fft.fftshift(freqs, axes=0), shift_dim0)
+        assert_array_almost_equal(fft.ifftshift(shift_dim0, axes=0), freqs)
+        assert_array_almost_equal(fft.fftshift(freqs, axes=(0,)), shift_dim0)
+        assert_array_almost_equal(fft.ifftshift(shift_dim0, axes=[0]), freqs)
+
+        # shift in dimension 1
+        shift_dim1 = [
+            [1, 0],
+            [3, 2],
+            [5, 4]
+        ]
+        assert_array_almost_equal(fft.fftshift(freqs, axes=1), shift_dim1)
+        assert_array_almost_equal(fft.ifftshift(shift_dim1, axes=1), freqs)
+
+        # shift in both dimensions
+        shift_dim_both = [
+            [5, 4],
+            [1, 0],
+            [3, 2]
+        ]
+        assert_array_almost_equal(fft.fftshift(freqs, axes=(0, 1)), shift_dim_both)
+        assert_array_almost_equal(fft.ifftshift(shift_dim_both, axes=(0, 1)), freqs)
+        assert_array_almost_equal(fft.fftshift(freqs, axes=[0, 1]), shift_dim_both)
+        assert_array_almost_equal(fft.ifftshift(shift_dim_both, axes=[0, 1]), freqs)
+
+        # axes=None (default) shift in all dimensions
+        assert_array_almost_equal(fft.fftshift(freqs, axes=None), shift_dim_both)
+        assert_array_almost_equal(fft.ifftshift(shift_dim_both, axes=None), freqs)
+        assert_array_almost_equal(fft.fftshift(freqs), shift_dim_both)
+        assert_array_almost_equal(fft.ifftshift(shift_dim_both), freqs)
+
+    def test_equal_to_original(self):
+        """ Test that the new (>=v1.15) implementation (see #10073) is equal to the original (<=v1.14) """
+        from numpy.compat import integer_types
+        from numpy.core import asarray, concatenate, arange, take
+
+        def original_fftshift(x, axes=None):
+            """ How fftshift was implemented in v1.14"""
+            tmp = asarray(x)
+            ndim = tmp.ndim
+            if axes is None:
+                axes = list(range(ndim))
+            elif isinstance(axes, integer_types):
+                axes = (axes,)
+            y = tmp
+            for k in axes:
+                n = tmp.shape[k]
+                p2 = (n + 1) // 2
+                mylist = concatenate((arange(p2, n), arange(p2)))
+                y = take(y, mylist, k)
+            return y
+
+        def original_ifftshift(x, axes=None):
+            """ How ifftshift was implemented in v1.14 """
+            tmp = asarray(x)
+            ndim = tmp.ndim
+            if axes is None:
+                axes = list(range(ndim))
+            elif isinstance(axes, integer_types):
+                axes = (axes,)
+            y = tmp
+            for k in axes:
+                n = tmp.shape[k]
+                p2 = n - (n + 1) // 2
+                mylist = concatenate((arange(p2, n), arange(p2)))
+                y = take(y, mylist, k)
+            return y
+
+        # create possible 2d array combinations and try all possible keywords
+        # compare output to original functions
+        for i in range(16):
+            for j in range(16):
+                for axes_keyword in [0, 1, None, (0,), (0, 1)]:
+                    inp = np.random.rand(i, j)
+
+                    assert_array_almost_equal(fft.fftshift(inp, axes_keyword),
+                                              original_fftshift(inp, axes_keyword))
+
+                    assert_array_almost_equal(fft.ifftshift(inp, axes_keyword),
+                                              original_ifftshift(inp, axes_keyword))
 
 
 class TestFFTFreq(object):
@@ -152,7 +246,3 @@ class TestFFTCache(object):
         # Another big item - should now be the only item in the cache.
         c.put_twiddle_factors(6, np.ones(4000, dtype=np.float32))
         assert_equal(list(c._dict.keys()), [6])
-
-
-if __name__ == "__main__":
-    run_module_suite()

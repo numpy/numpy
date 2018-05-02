@@ -1,15 +1,21 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import pickle
 import warnings
+import textwrap
 from os import path
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
+    assert_raises, assert_warns
     )
 
 
@@ -103,7 +109,7 @@ class TestFromrecords(object):
 
     def test_recarray_repr(self):
         a = np.array([(1, 0.1), (2, 0.2)],
-                     dtype=[('foo', int), ('bar', float)])
+                     dtype=[('foo', '<i4'), ('bar', '<f8')])
         a = np.rec.array(a)
         assert_equal(
             repr(a),
@@ -111,6 +117,31 @@ class TestFromrecords(object):
             rec.array([(1, 0.1), (2, 0.2)],
                       dtype=[('foo', '<i4'), ('bar', '<f8')])""")
         )
+
+        # make sure non-structured dtypes also show up as rec.array
+        a = np.array(np.ones(4, dtype='f8'))
+        assert_(repr(np.rec.array(a)).startswith('rec.array'))
+
+        # check that the 'np.record' part of the dtype isn't shown
+        a = np.rec.array(np.ones(3, dtype='i4,i4'))
+        assert_equal(repr(a).find('numpy.record'), -1)
+        a = np.rec.array(np.ones(3, dtype='i4'))
+        assert_(repr(a).find('dtype=int32') != -1)
+
+    def test_0d_recarray_repr(self):
+        arr_0d = np.rec.array((1, 2.0, '2003'), dtype='<i4,<f8,<M8[Y]')
+        assert_equal(repr(arr_0d), textwrap.dedent("""\
+            rec.array((1, 2., '2003'),
+                      dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])"""))
+
+        record = arr_0d[()]
+        assert_equal(repr(record), "(1, 2., '2003')")
+        # 1.13 converted to python scalars before the repr
+        try:
+            np.set_printoptions(legacy='1.13')
+            assert_equal(repr(record), '(1, 2.0, datetime.date(2003, 1, 1))')
+        finally:
+            np.set_printoptions(legacy=False)
 
     def test_recarray_from_repr(self):
         a = np.array([(1,'ABC'), (2, "DEF")],
@@ -197,17 +228,6 @@ class TestFromrecords(object):
             assert_equal(arr2.dtype.type, arr.dtype.type)
             assert_equal(type(arr2), type(arr))
 
-    def test_recarray_repr(self):
-        # make sure non-structured dtypes also show up as rec.array
-        a = np.array(np.ones(4, dtype='f8'))
-        assert_(repr(np.rec.array(a)).startswith('rec.array'))
-
-        # check that the 'np.record' part of the dtype isn't shown
-        a = np.rec.array(np.ones(3, dtype='i4,i4'))
-        assert_equal(repr(a).find('numpy.record'), -1)
-        a = np.rec.array(np.ones(3, dtype='i4'))
-        assert_(repr(a).find('dtype=int32') != -1)
-
     def test_recarray_from_names(self):
         ra = np.rec.array([
             (1, 'abc', 3.7000002861022949, 0),
@@ -237,7 +257,7 @@ class TestFromrecords(object):
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(isinstance(ra.field, collections.Callable))
+        assert_(isinstance(ra.field, collections_abc.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
@@ -340,6 +360,19 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
+    def test_out_of_order_fields(self):
+        # names in the same order, padding added to descr
+        x = self.data[['col1', 'col2']]
+        assert_equal(x.dtype.names, ('col1', 'col2'))
+        assert_equal(x.dtype.descr,
+                     [('col1', '<i4'), ('col2', '<i4'), ('', '|V4')])
+
+        # names change order to match indexing, as of 1.14 - descr can't
+        # represent that
+        y = self.data[['col2', 'col1']]
+        assert_equal(y.dtype.names, ('col2', 'col1'))
+        assert_raises(ValueError, lambda: y.dtype.descr)
+
     def test_pickle_1(self):
         # Issue #1529
         a = np.array([(1, [])], dtype=[('a', np.int32), ('b', np.int32, 0)])
@@ -381,6 +414,7 @@ class TestRecord(object):
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
         assert_raises(ValueError, lambda: arr[['nofield']])
 
+
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
     assert_(np.rec.find_duplicate(l1) == [])
@@ -393,6 +427,3 @@ def test_find_duplicate():
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
     assert_(np.rec.find_duplicate(l3) == [2, 1])
-
-if __name__ == "__main__":
-    run_module_suite()

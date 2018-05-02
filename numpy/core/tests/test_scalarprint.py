@@ -4,8 +4,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import tempfile
 import numpy as np
-from numpy.testing import assert_, assert_equal, run_module_suite
+from numpy.testing import assert_, assert_equal
 
 
 class TestRealScalars(object):
@@ -44,6 +45,22 @@ class TestRealScalars(object):
         check(1e-4)
         check(1e15)
         check(1e16)
+
+    def test_py2_float_print(self):
+        # gh-10753
+        # In python2, the python float type implements an obsolte method
+        # tp_print, which overrides tp_repr and tp_str when using "print" to
+        # output to a "real file" (ie, not a StringIO). Make sure we don't
+        # inherit it.
+        x = np.double(0.1999999999999)
+        with tempfile.TemporaryFile('r+t') as f:
+            print(x, file=f)
+            f.seek(0)
+            output = f.read()
+        assert_equal(output, str(x) + '\n')
+        # In python2 the value float('0.1999999999999') prints with reduced
+        # precision as '0.2', but we want numpy's np.double('0.1999999999999')
+        # to print the unique value, '0.1999999999999'.
 
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
@@ -152,6 +169,8 @@ class TestRealScalars(object):
         assert_equal(fpos64('1.5', unique=False, precision=3), "1.500")
         assert_equal(fsci32('1.5', unique=False, precision=3), "1.500e+00")
         assert_equal(fsci64('1.5', unique=False, precision=3), "1.500e+00")
+        # gh-10713
+        assert_equal(fpos64('324', unique=False, precision=5, fractional=False), "324.00")
 
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
@@ -211,6 +230,3 @@ class TestRealScalars(object):
         # gh-2643, gh-6136, gh-6908
         assert_equal(repr(np.float64(0.1)), repr(0.1))
         assert_(repr(np.float64(0.20000000000000004)) != repr(0.2))
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -17,6 +17,7 @@
 
 #include "shape.h"
 
+#include "multiarraymodule.h" /* for interned strings */
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"
@@ -339,7 +340,9 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
     }
     else {
         npy_intp i;
-        for (i = 0; i < dtype->elsize / sizeof(zero); i++) {
+        npy_intp nsize = dtype->elsize / sizeof(zero);
+
+        for (i = 0; i < nsize; i++) {
             Py_INCREF(zero);
             NPY_COPY_PYOBJECT_PTR(optr, &zero);
             optr += sizeof(zero);
@@ -646,20 +649,10 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
     int n = PyArray_NDIM(ap);
     int i;
 
-    if (a1 < 0) {
-        a1 += n;
-    }
-    if (a2 < 0) {
-        a2 += n;
-    }
-    if ((a1 < 0) || (a1 >= n)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "bad axis1 argument to swapaxes");
+    if (check_and_adjust_axis_msg(&a1, n, npy_ma_str_axis1) < 0) {
         return NULL;
     }
-    if ((a2 < 0) || (a2 >= n)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "bad axis2 argument to swapaxes");
+    if (check_and_adjust_axis_msg(&a2, n, npy_ma_str_axis2) < 0) {
         return NULL;
     }
 
@@ -1085,7 +1078,7 @@ build_shape_string(npy_intp n, npy_intp *vals)
  * WARNING: If an axis flagged for removal has a shape equal to zero,
  *          the array will point to invalid memory. The caller must
  *          validate this!
- *          If an axis flagged for removal has a shape larger then one,
+ *          If an axis flagged for removal has a shape larger than one,
  *          the aligned flag (and in the future the contiguous flags),
  *          may need explicit update.
  *          (check also NPY_RELAXED_STRIDES_CHECKING)

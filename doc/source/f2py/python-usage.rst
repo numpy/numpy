@@ -215,7 +215,7 @@ Sometimes a Fortran package may require that users provide routines
 that the package will use. F2PY can construct an interface to such
 routines so that Python functions could be called from Fortran.
 
-Consider the following `Fortran 77 subroutine`__ that takes an array
+Consider the following Fortran 77 subroutine that takes an array
 and applies a function ``func`` to its elements.
 
   .. include:: calculate.f

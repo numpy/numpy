@@ -274,9 +274,6 @@ static void
  * #type = npy_float, npy_double, npy_longdouble#
  * #c = f, , l#
  */
-static @type@ (*_basic_@name@_sqrt)(@type@);
-static @type@ (*_basic_@name@_fmod)(@type@, @type@);
-
 #define @name@_ctype_add(a, b, outp) *(outp) = (a) + (b)
 #define @name@_ctype_subtract(a, b, outp) *(outp) = (a) - (b)
 #define @name@_ctype_multiply(a, b, outp) *(outp) = (a) * (b)
@@ -305,9 +302,6 @@ static void
 
 
 /**end repeat**/
-
-static npy_half (*_basic_half_sqrt)(npy_half);
-static npy_half (*_basic_half_fmod)(npy_half, npy_half);
 
 #define half_ctype_add(a, b, outp) *(outp) = \
         npy_float_to_half(npy_half_to_float(a) + npy_half_to_float(b))
@@ -1424,7 +1418,11 @@ static PyObject *
 
 #ifndef NPY_PY3K
     /* Invoke long.__int__ to try to downcast */
-    long_result = Py_TYPE(long_result)->tp_as_number->nb_int(long_result);
+    {
+        PyObject *before_downcast = long_result;
+        long_result = Py_TYPE(long_result)->tp_as_number->nb_int(long_result);
+        Py_DECREF(before_downcast);
+    }
 #endif
 
     return long_result;
@@ -1689,49 +1687,6 @@ get_functions(PyObject * mm)
     _basic_clongdouble_pow = funcdata[j + 5];
     Py_DECREF(obj);
 
-    /* Get the sqrt functions */
-    obj = PyObject_GetAttrString(mm, "sqrt");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    /*
-     * sqrt ufunc is specialized for double and float loops in
-     * generate_umath.py, the first to go into FLOAT/DOUBLE_sqrt
-     * they have the same signature as the scalar variants so we need to skip
-     * over them
-     * also skip float16 copy placed before
-     */
-    i = 6;
-    j = 3;
-    while (signatures[i] != NPY_FLOAT) {
-        i += 2; j++;
-    }
-    _basic_half_sqrt = funcdata[j - 1];
-    _basic_float_sqrt = funcdata[j];
-    _basic_double_sqrt = funcdata[j + 1];
-    _basic_longdouble_sqrt = funcdata[j + 2];
-    Py_DECREF(obj);
-
-    /* Get the fmod functions */
-    obj = PyObject_GetAttrString(mm, "fmod");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-    i = 0;
-    j = 0;
-    while (signatures[i] != NPY_FLOAT) {
-        i += 3;
-        j++;
-    }
-    _basic_half_fmod = funcdata[j - 1];
-    _basic_float_fmod = funcdata[j];
-    _basic_double_fmod = funcdata[j + 1];
-    _basic_longdouble_fmod = funcdata[j + 2];
-    Py_DECREF(obj);
     return ret = 0;
 
  fail:

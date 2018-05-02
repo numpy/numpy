@@ -664,7 +664,7 @@ def configuration(parent_package='',top_path=None):
     def get_mathlib_info(*args):
         # Another ugly hack: the mathlib info is known once build_src is run,
         # but we cannot use add_installed_pkg_config here either, so we only
-        # update the substition dictionary during npymath build
+        # update the substitution dictionary during npymath build
         config_cmd = config.get_config_cmd()
 
         # Check that the toolchain works, to fail early if it doesn't
@@ -750,6 +750,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'sequence.h'),
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'strfuncs.h'),
+            join('src', 'multiarray', 'typeinfo.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
@@ -827,6 +828,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'scalartypes.c.src'),
             join('src', 'multiarray', 'strfuncs.c'),
             join('src', 'multiarray', 'temp_elide.c'),
+            join('src', 'multiarray', 'typeinfo.c'),
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
@@ -886,6 +888,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
+            join('src', 'umath', 'cpuid.c'),
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
@@ -922,29 +925,29 @@ def configuration(parent_package='',top_path=None):
     #                        umath_tests module                           #
     #######################################################################
 
-    config.add_extension('umath_tests',
-                    sources=[join('src', 'umath', 'umath_tests.c.src')])
+    config.add_extension('_umath_tests',
+                    sources=[join('src', 'umath', '_umath_tests.c.src')])
 
     #######################################################################
     #                   custom rational dtype module                      #
     #######################################################################
 
-    config.add_extension('test_rational',
-                    sources=[join('src', 'umath', 'test_rational.c.src')])
+    config.add_extension('_rational_tests',
+                    sources=[join('src', 'umath', '_rational_tests.c.src')])
 
     #######################################################################
     #                        struct_ufunc_test module                     #
     #######################################################################
 
-    config.add_extension('struct_ufunc_test',
-                    sources=[join('src', 'umath', 'struct_ufunc_test.c.src')])
+    config.add_extension('_struct_ufunc_tests',
+                    sources=[join('src', 'umath', '_struct_ufunc_tests.c.src')])
 
     #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
 
-    config.add_extension('multiarray_tests',
-                    sources=[join('src', 'multiarray', 'multiarray_tests.c.src'),
+    config.add_extension('_multiarray_tests',
+                    sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
                              join('src', 'private', 'mem_overlap.c')],
                     depends=[join('src', 'private', 'mem_overlap.h'),
                              join('src', 'private', 'npy_extint128.h')],
@@ -954,8 +957,8 @@ def configuration(parent_package='',top_path=None):
     #                        operand_flag_tests module                    #
     #######################################################################
 
-    config.add_extension('operand_flag_tests',
-                    sources=[join('src', 'umath', 'operand_flag_tests.c.src')])
+    config.add_extension('_operand_flag_tests',
+                    sources=[join('src', 'umath', '_operand_flag_tests.c.src')])
 
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')

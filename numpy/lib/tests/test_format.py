@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+# doctest
 r''' Test the .npy file format.
 
 Set up:
@@ -275,18 +276,17 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-
 import sys
 import os
 import shutil
 import tempfile
 import warnings
+import pytest
 from io import BytesIO
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    dec, SkipTest
+    assert_, assert_array_equal, assert_raises, raises, SkipTest
     )
 from numpy.lib import format
 
@@ -454,20 +454,20 @@ def assert_equal_(o1, o2):
 def test_roundtrip():
     for arr in basic_arrays + record_arrays:
         arr2 = roundtrip(arr)
-        yield assert_array_equal, arr, arr2
+        assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_randsize():
     for arr in basic_arrays + record_arrays:
         if arr.dtype != object:
             arr2 = roundtrip_randsize(arr)
-            yield assert_array_equal, arr, arr2
+            assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_truncated():
     for arr in basic_arrays:
         if arr.dtype != object:
-            yield assert_raises, ValueError, roundtrip_truncated, arr
+            assert_raises(ValueError, roundtrip_truncated, arr)
 
 
 def test_long_str():
@@ -477,7 +477,7 @@ def test_long_str():
     assert_array_equal(long_str_arr, long_str_arr2)
 
 
-@dec.slow
+@pytest.mark.slow
 def test_memmap_roundtrip():
     # Fixme: test crashes nose on windows.
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
@@ -508,7 +508,7 @@ def test_memmap_roundtrip():
             fp = open(mfn, 'rb')
             memmap_bytes = fp.read()
             fp.close()
-            yield assert_equal_, normal_bytes, memmap_bytes
+            assert_equal_(normal_bytes, memmap_bytes)
 
             # Check that reading the file using memmap works.
             ma = format.open_memmap(nfn, mode='r')
@@ -628,7 +628,7 @@ def test_version_2_0():
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
-@dec.slow
+@pytest.mark.slow
 def test_version_2_0_memmap():
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
@@ -728,13 +728,13 @@ def test_read_magic():
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_magic), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_array), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_bad_magic_args():
@@ -832,8 +832,9 @@ def test_large_file_support():
     assert_array_equal(r, d)
 
 
-@dec.slow
-@dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
+@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
+                    reason="test requires 64-bit system")
+@pytest.mark.slow
 def test_large_archive():
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.
@@ -851,7 +852,3 @@ def test_large_archive():
         new_a = np.load(f)["arr"]
 
     assert_(a.shape == new_a.shape)
-
-
-if __name__ == "__main__":
-    run_module_suite()

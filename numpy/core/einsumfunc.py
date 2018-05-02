@@ -4,6 +4,7 @@ Implementation of optimized einsum.
 """
 from __future__ import division, absolute_import, print_function
 
+from numpy.compat import basestring
 from numpy.core.multiarray import c_einsum
 from numpy.core.numeric import asarray, asanyarray, result_type, tensordot, dot
 
@@ -399,7 +400,7 @@ def _parse_einsum_input(operands):
     if len(operands) == 0:
         raise ValueError("No input operands")
 
-    if isinstance(operands[0], str):
+    if isinstance(operands[0], basestring):
         subscripts = operands[0].replace(" ", "")
         operands = [asanyarray(v) for v in operands[1:]]
 
@@ -595,7 +596,7 @@ def einsum_path(*operands, **kwargs):
     --------
 
     We can begin with a chain dot example. In this case, it is optimal to
-    contract the ``b`` and ``c`` tensors first as reprsented by the first
+    contract the ``b`` and ``c`` tensors first as represented by the first
     element of the path ``(1, 2)``. The resulting tensor is added to the end
     of the contraction and the remaining contraction ``(0, 1)`` is then
     completed.
@@ -665,7 +666,7 @@ def einsum_path(*operands, **kwargs):
     memory_limit = None
 
     # No optimization or a named path algorithm
-    if (path_type is False) or isinstance(path_type, str):
+    if (path_type is False) or isinstance(path_type, basestring):
         pass
 
     # Given an explicit path
@@ -673,7 +674,7 @@ def einsum_path(*operands, **kwargs):
         pass
 
     # Path tuple with memory limit
-    elif ((len(path_type) == 2) and isinstance(path_type[0], str) and
+    elif ((len(path_type) == 2) and isinstance(path_type[0], basestring) and
             isinstance(path_type[1], (int, float))):
         memory_limit = int(path_type[1])
         path_type = path_type[0]
@@ -700,14 +701,18 @@ def einsum_path(*operands, **kwargs):
         sh = operands[tnum].shape
         if len(sh) != len(term):
             raise ValueError("Einstein sum subscript %s does not contain the "
-                             "correct number of indices for operand %d.",
-                             input_subscripts[tnum], tnum)
+                             "correct number of indices for operand %d."
+                             % (input_subscripts[tnum], tnum))
         for cnum, char in enumerate(term):
             dim = sh[cnum]
             if char in dimension_dict.keys():
-                if dimension_dict[char] != dim:
-                    raise ValueError("Size of label '%s' for operand %d does "
-                                     "not match previous terms.", char, tnum)
+                # For broadcasting cases we always want the largest dim size
+                if dimension_dict[char] == 1:
+                    dimension_dict[char] = dim
+                elif dim not in (1, dimension_dict[char]):
+                    raise ValueError("Size of label '%s' for operand %d (%d) "
+                                     "does not match previous terms (%d)."
+                                     % (char, tnum, dimension_dict[char], dim))
             else:
                 dimension_dict[char] = dim
 
@@ -1056,8 +1061,8 @@ def einsum(*operands, **kwargs):
 
     """
 
-    # Grab non-einsum kwargs
-    optimize_arg = kwargs.pop('optimize', True)
+    # Grab non-einsum kwargs; never optimize 2-argument case.
+    optimize_arg = kwargs.pop('optimize', len(operands) > 3)
 
     # If no optimization, run pure einsum
     if optimize_arg is False:
@@ -1099,13 +1104,22 @@ def einsum(*operands, **kwargs):
         if specified_out and ((num + 1) == len(contraction_list)):
             handle_out = True
 
-        # Call tensordot
+        # Handle broadcasting vs BLAS cases
         if blas:
-
             # Checks have already been handled
             input_str, results_index = einsum_str.split('->')
             input_left, input_right = input_str.split(',')
+            if 1 in tmp_operands[0] or 1 in tmp_operands[1]:
+                left_dims = {dim: size for dim, size in
+                             zip(input_left, tmp_operands[0].shape)}
+                right_dims = {dim: size for dim, size in
+                              zip(input_right, tmp_operands[1].shape)}
+                # If dims do not match we are broadcasting, BLAS off
+                if any(left_dims[ind] != right_dims[ind] for ind in idx_rm):
+                    blas = False
 
+        # Call tensordot if still possible
+        if blas:
             tensor_result = input_left + input_right
             for s in idx_rm:
                 tensor_result = tensor_result.replace(s, "")
@@ -1134,7 +1148,7 @@ def einsum(*operands, **kwargs):
             # Do the contraction
             new_view = c_einsum(einsum_str, *tmp_operands, **einsum_kwargs)
 
-        # Append new items and derefernce what we can
+        # Append new items and dereference what we can
         operands.append(new_view)
         del tmp_operands, new_view
 

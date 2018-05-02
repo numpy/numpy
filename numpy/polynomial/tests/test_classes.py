@@ -8,53 +8,29 @@ from __future__ import division, absolute_import, print_function
 import operator as op
 from numbers import Number
 
+import pytest
 import numpy as np
 from numpy.polynomial import (
     Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite)
+    )
 from numpy.compat import long
 
 
+#
+# fixtures
+#
+
 classes = (
     Polynomial, Legendre, Chebyshev, Laguerre,
-    Hermite, HermiteE)
+    Hermite, HermiteE
+    )
+classids = tuple(cls.__name__ for cls in classes)
 
-
-def test_class_methods():
-    for Poly1 in classes:
-        for Poly2 in classes:
-            yield check_conversion, Poly1, Poly2
-            yield check_cast, Poly1, Poly2
-    for Poly in classes:
-        yield check_call, Poly
-        yield check_identity, Poly
-        yield check_basis, Poly
-        yield check_fromroots, Poly
-        yield check_fit, Poly
-        yield check_equal, Poly
-        yield check_not_equal, Poly
-        yield check_add, Poly
-        yield check_sub, Poly
-        yield check_mul, Poly
-        yield check_floordiv, Poly
-        yield check_truediv, Poly
-        yield check_mod, Poly
-        yield check_divmod, Poly
-        yield check_pow, Poly
-        yield check_integ, Poly
-        yield check_deriv, Poly
-        yield check_roots, Poly
-        yield check_linspace, Poly
-        yield check_mapparms, Poly
-        yield check_degree, Poly
-        yield check_copy, Poly
-        yield check_cutdeg, Poly
-        yield check_truncate, Poly
-        yield check_trim, Poly
-        yield check_ufunc_override, Poly
-
+@pytest.fixture(params=classes, ids=classids)
+def Poly(request):
+    return request.param
 
 #
 # helper functions
@@ -73,11 +49,14 @@ def assert_poly_almost_equal(p1, p2, msg=""):
 
 
 #
-# conversion methods that depend on two classes
+# Test conversion methods that depend on combinations of two classes.
 #
 
+Poly1 = Poly
+Poly2 = Poly
 
-def check_conversion(Poly1, Poly2):
+
+def test_conversion(Poly1, Poly2):
     x = np.linspace(0, 1, 10)
     coef = random((3,))
 
@@ -94,7 +73,7 @@ def check_conversion(Poly1, Poly2):
     assert_almost_equal(p2(x), p1(x))
 
 
-def check_cast(Poly1, Poly2):
+def test_cast(Poly1, Poly2):
     x = np.linspace(0, 1, 10)
     coef = random((3,))
 
@@ -112,11 +91,11 @@ def check_cast(Poly1, Poly2):
 
 
 #
-# methods that depend on one class
+# test methods that depend on one class
 #
 
 
-def check_identity(Poly):
+def test_identity(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
     x = np.linspace(d[0], d[1], 11)
@@ -126,7 +105,7 @@ def check_identity(Poly):
     assert_almost_equal(p(x), x)
 
 
-def check_basis(Poly):
+def test_basis(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
     p = Poly.basis(5, domain=d, window=w)
@@ -135,7 +114,7 @@ def check_basis(Poly):
     assert_equal(p.coef, [0]*5 + [1])
 
 
-def check_fromroots(Poly):
+def test_fromroots(Poly):
     # check that requested roots are zeros of a polynomial
     # of correct degree, domain, and window.
     d = Poly.domain + random((2,))*.25
@@ -154,7 +133,7 @@ def check_fromroots(Poly):
     assert_almost_equal(p2.coef[-1], 1)
 
 
-def check_fit(Poly):
+def test_fit(Poly):
 
     def f(x):
         return x*(x - 1)*(x - 2)
@@ -198,7 +177,7 @@ def check_fit(Poly):
     assert_almost_equal(p2(x), p3(x))
 
 
-def check_equal(Poly):
+def test_equal(Poly):
     p1 = Poly([1, 2, 3], domain=[0, 1], window=[2, 3])
     p2 = Poly([1, 1, 1], domain=[0, 1], window=[2, 3])
     p3 = Poly([1, 2, 3], domain=[1, 2], window=[2, 3])
@@ -209,7 +188,7 @@ def check_equal(Poly):
     assert_(not p1 == p4)
 
 
-def check_not_equal(Poly):
+def test_not_equal(Poly):
     p1 = Poly([1, 2, 3], domain=[0, 1], window=[2, 3])
     p2 = Poly([1, 1, 1], domain=[0, 1], window=[2, 3])
     p3 = Poly([1, 2, 3], domain=[1, 2], window=[2, 3])
@@ -220,7 +199,7 @@ def check_not_equal(Poly):
     assert_(p1 != p4)
 
 
-def check_add(Poly):
+def test_add(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -242,7 +221,7 @@ def check_add(Poly):
         assert_raises(TypeError, op.add, p1, Polynomial([0]))
 
 
-def check_sub(Poly):
+def test_sub(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -264,7 +243,7 @@ def check_sub(Poly):
         assert_raises(TypeError, op.sub, p1, Polynomial([0]))
 
 
-def check_mul(Poly):
+def test_mul(Poly):
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
     p1 = Poly(c1)
@@ -287,7 +266,7 @@ def check_mul(Poly):
         assert_raises(TypeError, op.mul, p1, Polynomial([0]))
 
 
-def check_floordiv(Poly):
+def test_floordiv(Poly):
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
     c3 = list(random((2,)) + .5)
@@ -315,7 +294,7 @@ def check_floordiv(Poly):
         assert_raises(TypeError, op.floordiv, p1, Polynomial([0]))
 
 
-def check_truediv(Poly):
+def test_truediv(Poly):
     # true division is valid only if the denominator is a Number and
     # not a python bool.
     p1 = Poly([1,2,3])
@@ -342,7 +321,7 @@ def check_truediv(Poly):
         assert_raises(TypeError, op.truediv, p2, ptype(1))
 
 
-def check_mod(Poly):
+def test_mod(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -369,7 +348,7 @@ def check_mod(Poly):
         assert_raises(TypeError, op.mod, p1, Polynomial([0]))
 
 
-def check_divmod(Poly):
+def test_divmod(Poly):
     # This checks commutation, not numerical correctness
     c1 = list(random((4,)) + .5)
     c2 = list(random((3,)) + .5)
@@ -414,10 +393,10 @@ def check_divmod(Poly):
         assert_raises(TypeError, divmod, p1, Polynomial([0]))
 
 
-def check_roots(Poly):
-    d = Poly.domain + random((2,))*.25
-    w = Poly.window + random((2,))*.25
-    tgt = np.sort(random((5,)))
+def test_roots(Poly):
+    d = Poly.domain * 1.25 + .25
+    w = Poly.window
+    tgt = np.linspace(d[0], d[1], 5)
     res = np.sort(Poly.fromroots(tgt, domain=d, window=w).roots())
     assert_almost_equal(res, tgt)
     # default domain and window
@@ -425,12 +404,12 @@ def check_roots(Poly):
     assert_almost_equal(res, tgt)
 
 
-def check_degree(Poly):
+def test_degree(Poly):
     p = Poly.basis(5)
     assert_equal(p.degree(), 5)
 
 
-def check_copy(Poly):
+def test_copy(Poly):
     p1 = Poly.basis(5)
     p2 = p1.copy()
     assert_(p1 == p2)
@@ -440,7 +419,7 @@ def check_copy(Poly):
     assert_(p1.window is not p2.window)
 
 
-def check_integ(Poly):
+def test_integ(Poly):
     P = Polynomial
     # Check defaults
     p0 = Poly.cast(P([1*2, 2*3, 3*4]))
@@ -469,7 +448,7 @@ def check_integ(Poly):
     assert_poly_almost_equal(p2, P([0, 0, 1, 1, 1]))
 
 
-def check_deriv(Poly):
+def test_deriv(Poly):
     # Check that the derivative is the inverse of integration. It is
     # assumes that the integration has been checked elsewhere.
     d = Poly.domain + random((2,))*.25
@@ -487,7 +466,7 @@ def check_deriv(Poly):
     assert_almost_equal(p2.deriv(2).coef, p1.coef)
 
 
-def check_linspace(Poly):
+def test_linspace(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
     p = Poly([1, 2, 3], domain=d, window=w)
@@ -505,7 +484,7 @@ def check_linspace(Poly):
     assert_almost_equal(yres, ytgt)
 
 
-def check_pow(Poly):
+def test_pow(Poly):
     d = Poly.domain + random((2,))*.25
     w = Poly.window + random((2,))*.25
     tgt = Poly([1], domain=d, window=w)
@@ -524,7 +503,7 @@ def check_pow(Poly):
     assert_raises(ValueError, op.pow, tgt, -1)
 
 
-def check_call(Poly):
+def test_call(Poly):
     P = Polynomial
     d = Poly.domain
     x = np.linspace(d[0], d[1], 11)
@@ -536,7 +515,7 @@ def check_call(Poly):
     assert_almost_equal(res, tgt)
 
 
-def check_cutdeg(Poly):
+def test_cutdeg(Poly):
     p = Poly([1, 2, 3])
     assert_raises(ValueError, p.cutdeg, .5)
     assert_raises(ValueError, p.cutdeg, -1)
@@ -546,7 +525,7 @@ def check_cutdeg(Poly):
     assert_equal(len(p.cutdeg(0)), 1)
 
 
-def check_truncate(Poly):
+def test_truncate(Poly):
     p = Poly([1, 2, 3])
     assert_raises(ValueError, p.truncate, .5)
     assert_raises(ValueError, p.truncate, 0)
@@ -556,7 +535,7 @@ def check_truncate(Poly):
     assert_equal(len(p.truncate(1)), 1)
 
 
-def check_trim(Poly):
+def test_trim(Poly):
     c = [1, 1e-6, 1e-12, 0]
     p = Poly(c)
     assert_equal(p.trim().coef, c[:3])
@@ -564,7 +543,7 @@ def check_trim(Poly):
     assert_equal(p.trim(1e-5).coef, c[:1])
 
 
-def check_mapparms(Poly):
+def test_mapparms(Poly):
     # check with defaults. Should be identity.
     d = Poly.domain
     w = Poly.window
@@ -576,11 +555,16 @@ def check_mapparms(Poly):
     assert_almost_equal([1, 2], p.mapparms())
 
 
-def check_ufunc_override(Poly):
+def test_ufunc_override(Poly):
     p = Poly([1, 2, 3])
     x = np.ones(3)
     assert_raises(TypeError, np.add, p, x)
     assert_raises(TypeError, np.add, x, p)
+
+
+#
+# Test class method that only exists for some classes
+#
 
 
 class TestInterpolate(object):
@@ -606,7 +590,3 @@ class TestInterpolate(object):
             for t in range(0, deg + 1):
                 p = Chebyshev.interpolate(powx, deg, domain=[0, 2], args=(t,))
                 assert_almost_equal(p(x), powx(x, t), decimal=12)
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -215,6 +215,13 @@ Matrix objects
 .. index::
    single: matrix
 
+.. note::
+   It is strongly advised *not* to use the matrix subclass.  As described
+   below, it makes writing functions that deal consistently with matrices
+   and regular arrays very difficult. Currently, they are mainly used for
+   interacting with ``scipy.sparse``. We hope to provide an alternative
+   for this use, however, and eventually remove the ``matrix`` subclass.
+
 :class:`matrix` objects inherit from the ndarray and therefore, they
 have the same attributes and methods of ndarrays. There are six
 important differences of matrix objects, however, that may lead to

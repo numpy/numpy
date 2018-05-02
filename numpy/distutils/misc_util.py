@@ -1218,15 +1218,15 @@ class Configuration(object):
           #. file.txt -> (., file.txt)-> parent/file.txt
           #. foo/file.txt -> (foo, foo/file.txt) -> parent/foo/file.txt
           #. /foo/bar/file.txt -> (., /foo/bar/file.txt) -> parent/file.txt
-          #. *.txt -> parent/a.txt, parent/b.txt
-          #. foo/*.txt -> parent/foo/a.txt, parent/foo/b.txt
-          #. */*.txt -> (*, */*.txt) -> parent/c/a.txt, parent/d/b.txt
+          #. ``*``.txt -> parent/a.txt, parent/b.txt
+          #. foo/``*``.txt`` -> parent/foo/a.txt, parent/foo/b.txt
+          #. ``*/*.txt`` -> (``*``, ``*``/``*``.txt) -> parent/c/a.txt, parent/d/b.txt
           #. (sun, file.txt) -> parent/sun/file.txt
           #. (sun, bar/file.txt) -> parent/sun/file.txt
           #. (sun, /foo/bar/file.txt) -> parent/sun/file.txt
-          #. (sun, *.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun, bar/*.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun/*, */*.txt) -> parent/sun/c/a.txt, parent/d/b.txt
+          #. (sun, ``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun, bar/``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun/``*``, ``*``/``*``.txt) -> parent/sun/c/a.txt, parent/d/b.txt
 
         An additional feature is that the path to a data-file can actually be
         a function that takes no arguments and returns the actual path(s) to
@@ -2289,10 +2289,26 @@ def generate_config_py(target):
 
     # For gfortran+msvc combination, extra shared libraries may exist
     f.write("""
+
 import os
-extra_dll_dir = os.path.join(os.path.dirname(__file__), 'extra-dll')
-if os.path.isdir(extra_dll_dir):
-    os.environ["PATH"] += os.pathsep + extra_dll_dir
+import sys
+
+extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
+
+if os.path.isdir(extra_dll_dir) and sys.platform == 'win32':
+    try:
+        from ctypes import windll, c_wchar_p
+        _AddDllDirectory = windll.kernel32.AddDllDirectory
+        _AddDllDirectory.argtypes = [c_wchar_p]
+        # Needed to initialize AddDllDirectory modifications
+        windll.kernel32.SetDefaultDllDirectories(0x1000)
+    except AttributeError:
+        def _AddDllDirectory(dll_directory):
+            os.environ.setdefault('PATH', '')
+            os.environ['PATH'] += os.pathsep + dll_directory
+
+    _AddDllDirectory(extra_dll_dir)
+
 """)
 
     for k, i in system_info.saved_results.items():

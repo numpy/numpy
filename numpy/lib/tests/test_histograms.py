@@ -2,13 +2,12 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 
-from numpy.lib.histograms import histogram, histogramdd
+from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex,
-    dec, suppress_warnings, HAS_REFCOUNT,
-)
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    )
 
 
 class TestHistogram(object):
@@ -238,6 +237,128 @@ class TestHistogram(object):
         with assert_raises(ValueError):
             hist, edges = np.histogram(arr, bins=bins)
 
+    def test_object_array_of_0d(self):
+        # gh-7864
+        assert_raises(ValueError,
+            histogram, [np.array([0.4]) for i in range(10)] + [-np.inf])
+        assert_raises(ValueError,
+            histogram, [np.array([0.4]) for i in range(10)] + [np.inf])
+
+        # these should not crash
+        np.histogram([np.array([0.5]) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array([0.5]) for i in range(10)] + [.5])
+
+    def test_some_nan_values(self):
+        # gh-7503
+        one_nan = np.array([0, 1, np.nan])
+        all_nan = np.array([np.nan, np.nan])
+
+        # the internal comparisons with NaN give warnings
+        sup = suppress_warnings()
+        sup.filter(RuntimeWarning)
+        with sup:
+            # can't infer range with nan
+            assert_raises(ValueError, histogram, one_nan, bins='auto')
+            assert_raises(ValueError, histogram, all_nan, bins='auto')
+
+            # explicit range solves the problem
+            h, b = histogram(one_nan, bins='auto', range=(0, 1))
+            assert_equal(h.sum(), 2)  # nan is not counted
+            h, b = histogram(all_nan, bins='auto', range=(0, 1))
+            assert_equal(h.sum(), 0)  # nan is not counted
+
+            # as does an explicit set of bins
+            h, b = histogram(one_nan, bins=[0, 1])
+            assert_equal(h.sum(), 2)  # nan is not counted
+            h, b = histogram(all_nan, bins=[0, 1])
+            assert_equal(h.sum(), 0)  # nan is not counted
+
+    def test_datetime(self):
+        begin = np.datetime64('2000-01-01', 'D')
+        offsets = np.array([0, 0, 1, 1, 2, 3, 5, 10, 20])
+        bins = np.array([0, 2, 7, 20])
+        dates = begin + offsets
+        date_bins = begin + bins
+
+        td = np.dtype('timedelta64[D]')
+
+        # Results should be the same for integer offsets or datetime values.
+        # For now, only explicit bins are supported, since linspace does not
+        # work on datetimes or timedeltas
+        d_count, d_edge = histogram(dates, bins=date_bins)
+        t_count, t_edge = histogram(offsets.astype(td), bins=bins.astype(td))
+        i_count, i_edge = histogram(offsets, bins=bins)
+
+        assert_equal(d_count, i_count)
+        assert_equal(t_count, i_count)
+
+        assert_equal((d_edge - begin).astype(int), i_edge)
+        assert_equal(t_edge.astype(int), i_edge)
+
+        assert_equal(d_edge.dtype, dates.dtype)
+        assert_equal(t_edge.dtype, td)
+
+    def do_precision_lower_bound(self, float_small, float_large):
+        eps = np.finfo(float_large).eps
+
+        arr = np.array([1.0], float_small)
+        range = np.array([1.0 + eps, 2.0], float_large)
+
+        # test is looking for behavior when the bounds change between dtypes
+        if range.astype(float_small)[0] != 1:
+            return
+
+        # previously crashed
+        count, x_loc = np.histogram(arr, bins=1, range=range)
+        assert_equal(count, [1])
+
+        # gh-10322 means that the type comes from arr - this may change
+        assert_equal(x_loc.dtype, float_small)
+
+    def do_precision_upper_bound(self, float_small, float_large):
+        eps = np.finfo(float_large).eps
+
+        arr = np.array([1.0], float_small)
+        range = np.array([0.0, 1.0 - eps], float_large)
+
+        # test is looking for behavior when the bounds change between dtypes
+        if range.astype(float_small)[-1] != 1:
+            return
+
+        # previously crashed
+        count, x_loc = np.histogram(arr, bins=1, range=range)
+        assert_equal(count, [1])
+
+        # gh-10322 means that the type comes from arr - this may change
+        assert_equal(x_loc.dtype, float_small)
+
+    def do_precision(self, float_small, float_large):
+        self.do_precision_lower_bound(float_small, float_large)
+        self.do_precision_upper_bound(float_small, float_large)
+
+    def test_precision(self):
+        # not looping results in a useful stack trace upon failure
+        self.do_precision(np.half, np.single)
+        self.do_precision(np.half, np.double)
+        self.do_precision(np.half, np.longdouble)
+        self.do_precision(np.single, np.double)
+        self.do_precision(np.single, np.longdouble)
+        self.do_precision(np.double, np.longdouble)
+
+    def test_histogram_bin_edges(self):
+        hist, e = histogram([1, 2, 3, 4], [1, 2])
+        edges = histogram_bin_edges([1, 2, 3, 4], [1, 2])
+        assert_array_equal(edges, e)
+
+        arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
+        hist, e = histogram(arr, bins=30, range=(-0.5, 5))
+        edges = histogram_bin_edges(arr, bins=30, range=(-0.5, 5))
+        assert_array_equal(edges, e)
+
+        hist, e = histogram(arr, bins='auto', range=(0, 1))
+        edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
+        assert_array_equal(edges, e)
+
 
 class TestHistogramOptimBinNums(object):
     """
@@ -321,6 +442,24 @@ class TestHistogramOptimBinNums(object):
             a, b = np.histogram(novar_dataset, estimator)
             assert_equal(len(a), numbins, err_msg="{0} estimator, "
                          "No Variance test".format(estimator))
+
+    def test_limited_variance(self):
+        """
+        Check when IQR is 0, but variance exists, we return the sturges value
+        and not the fd value.
+        """
+        lim_var_data = np.ones(1000)
+        lim_var_data[:3] = 0
+        lim_var_data[-4:] = 100
+
+        edges_auto = histogram_bin_edges(lim_var_data, 'auto')
+        assert_equal(edges_auto, np.linspace(0, 100, 12))
+
+        edges_fd = histogram_bin_edges(lim_var_data, 'fd')
+        assert_equal(edges_fd, np.array([0, 100]))
+
+        edges_sturges = histogram_bin_edges(lim_var_data, 'sturges')
+        assert_equal(edges_sturges, np.linspace(0, 100, 12))
 
     def test_outlier(self):
         """
@@ -521,7 +660,3 @@ class TestHistogramdd(object):
                       range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
         assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
-
-
-if __name__ == "__main__":
-    run_module_suite()

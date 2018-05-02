@@ -30,6 +30,16 @@
  */
 #define PW_BLOCKSIZE    128
 
+
+/*
+ * largest simd vector size in bytes numpy supports
+ * it is currently a extremely large value as it is only used for memory
+ * overlap checks
+ */
+#ifndef NPY_MAX_SIMD_SIZE
+#define NPY_MAX_SIMD_SIZE 1024
+#endif
+
 /*
  * include vectorized functions and dispatchers
  * this file is safe to include also for generic builds
@@ -180,10 +190,12 @@
     do { \
     /* condition allows compiler to optimize the generic macro */ \
     if (IS_BINARY_CONT(tin, tout)) { \
-        if (args[2] == args[0]) { \
+        if (abs_ptrdiff(args[2], args[0]) == 0 && \
+                abs_ptrdiff(args[2], args[1]) >= NPY_MAX_SIMD_SIZE) { \
             BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
-        else if (args[2] == args[1]) { \
+        else if (abs_ptrdiff(args[2], args[1]) == 0 && \
+                     abs_ptrdiff(args[2], args[0]) >= NPY_MAX_SIMD_SIZE) { \
             BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
         else { \
@@ -191,7 +203,7 @@
         } \
     } \
     else if (IS_BINARY_CONT_S1(tin, tout)) { \
-        if (args[1] == args[2]) { \
+        if (abs_ptrdiff(args[2], args[1]) == 0) { \
             BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
         } \
         else { \
@@ -199,7 +211,7 @@
         } \
     } \
     else if (IS_BINARY_CONT_S2(tin, tout)) { \
-        if (args[0] == args[2]) { \
+        if (abs_ptrdiff(args[2], args[0]) == 0) { \
             BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
         } \
         else { \
@@ -1653,11 +1665,12 @@ NPY_NO_EXPORT void
  * when updating also update similar complex floats summation
  */
 static @type@
-pairwise_sum_@TYPE@(char *a, npy_uintp n, npy_intp stride)
+pairwise_sum_@TYPE@(char *a, npy_intp n, npy_intp stride)
 {
     if (n < 8) {
         npy_intp i;
         @type@ res = 0.;
+
         for (i = 0; i < n; i++) {
             res += @trf@(*((@dtype@*)(a + i * stride)));
         }
@@ -1683,7 +1696,7 @@ pairwise_sum_@TYPE@(char *a, npy_uintp n, npy_intp stride)
 
         for (i = 8; i < n - (n % 8); i += 8) {
             /* small blocksizes seems to mess with hardware prefetch */
-            NPY_PREFETCH(a + (i + 512 / sizeof(@dtype@)) * stride, 0, 3);
+            NPY_PREFETCH(a + (i + 512/(npy_intp)sizeof(@dtype@))*stride, 0, 3);
             r[0] += @trf@(*((@dtype@ *)(a + (i + 0) * stride)));
             r[1] += @trf@(*((@dtype@ *)(a + (i + 1) * stride)));
             r[2] += @trf@(*((@dtype@ *)(a + (i + 2) * stride)));
@@ -1706,7 +1719,8 @@ pairwise_sum_@TYPE@(char *a, npy_uintp n, npy_intp stride)
     }
     else {
         /* divide by two but avoid non-multiples of unroll factor */
-        npy_uintp n2 = n / 2;
+        npy_intp n2 = n / 2;
+
         n2 -= n2 % 8;
         return pairwise_sum_@TYPE@(a, n2, stride) +
                pairwise_sum_@TYPE@(a + n2 * stride, n - n2, stride);
@@ -2425,12 +2439,13 @@ HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 
 /* similar to pairwise sum of real floats */
 static void
-pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, char * a, npy_uintp n,
+pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, char * a, npy_intp n,
                     npy_intp stride)
 {
     assert(n % 2 == 0);
     if (n < 8) {
         npy_intp i;
+
         *rr = 0.;
         *ri = 0.;
         for (i = 0; i < n; i += 2) {
@@ -2459,7 +2474,7 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, char * a, npy_uintp n,
 
         for (i = 8; i < n - (n % 8); i += 8) {
             /* small blocksizes seems to mess with hardware prefetch */
-            NPY_PREFETCH(a + (i + 512 / sizeof(@ftype@)) * stride, 0, 3);
+            NPY_PREFETCH(a + (i + 512/(npy_intp)sizeof(@ftype@))*stride, 0, 3);
             r[0] += *((@ftype@ *)(a + (i + 0) * stride));
             r[1] += *((@ftype@ *)(a + (i + 0) * stride + sizeof(@ftype@)));
             r[2] += *((@ftype@ *)(a + (i + 2) * stride));
@@ -2484,7 +2499,8 @@ pairwise_sum_@TYPE@(@ftype@ *rr, @ftype@ * ri, char * a, npy_uintp n,
     else {
         /* divide by two but avoid non-multiples of unroll factor */
         @ftype@ rr1, ri1, rr2, ri2;
-        npy_uintp n2 = n / 2;
+        npy_intp n2 = n / 2;
+
         n2 -= n2 % 8;
         pairwise_sum_@TYPE@(&rr1, &ri1, a, n2, stride);
         pairwise_sum_@TYPE@(&rr2, &ri2, a + n2 * stride, n - n2, stride);
@@ -2824,10 +2840,14 @@ NPY_NO_EXPORT void
  * #OP = EQ, NE, GT, GE, LT, LE#
  * #identity = NPY_TRUE, NPY_FALSE, -1*4#
  */
+
+/**begin repeat1
+ * #suffix = , _OO_O#
+ * #as_bool = 1, 0#
+ */
 NPY_NO_EXPORT void
-OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
+OBJECT@suffix@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
     BINARY_LOOP {
-        int ret;
         PyObject *ret_obj;
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
@@ -2844,14 +2864,21 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         if (ret_obj == NULL) {
             return;
         }
-        ret = PyObject_IsTrue(ret_obj);
-        Py_DECREF(ret_obj);
-        if (ret == -1) {
-            return;
+#if @as_bool@
+        {
+            int ret = PyObject_IsTrue(ret_obj);
+            Py_DECREF(ret_obj);
+            if (ret == -1) {
+                return;
+            }
+            *((npy_bool *)op1) = (npy_bool)ret;
         }
-        *((npy_bool *)op1) = (npy_bool)ret;
+#else
+        *((PyObject **)op1) = ret_obj;
+#endif
     }
 }
+/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT void

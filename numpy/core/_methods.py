@@ -11,6 +11,7 @@ from numpy.core import multiarray as mu
 from numpy.core import umath as um
 from numpy.core.numeric import asanyarray
 from numpy.core import numerictypes as nt
+from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!
 umr_maximum = um.maximum.reduce
@@ -22,17 +23,21 @@ umr_all = um.logical_and.reduce
 
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very
 # small reductions
-def _amax(a, axis=None, out=None, keepdims=False):
-    return umr_maximum(a, axis, None, out, keepdims)
+def _amax(a, axis=None, out=None, keepdims=False,
+          initial=_NoValue):
+    return umr_maximum(a, axis, None, out, keepdims, initial)
 
-def _amin(a, axis=None, out=None, keepdims=False):
-    return umr_minimum(a, axis, None, out, keepdims)
+def _amin(a, axis=None, out=None, keepdims=False,
+          initial=_NoValue):
+    return umr_minimum(a, axis, None, out, keepdims, initial)
 
-def _sum(a, axis=None, dtype=None, out=None, keepdims=False):
-    return umr_sum(a, axis, dtype, out, keepdims)
+def _sum(a, axis=None, dtype=None, out=None, keepdims=False,
+         initial=_NoValue):
+    return umr_sum(a, axis, dtype, out, keepdims, initial)
 
-def _prod(a, axis=None, dtype=None, out=None, keepdims=False):
-    return umr_prod(a, axis, dtype, out, keepdims)
+def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
+          initial=_NoValue):
+    return umr_prod(a, axis, dtype, out, keepdims, initial)
 
 def _any(a, axis=None, dtype=None, out=None, keepdims=False):
     return umr_any(a, axis, dtype, out, keepdims)
@@ -142,3 +147,10 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         ret = um.sqrt(ret)
 
     return ret
+
+def _ptp(a, axis=None, out=None, keepdims=False):
+    return um.subtract(
+        umr_maximum(a, axis, None, out, keepdims),
+        umr_minimum(a, axis, None, None, keepdims),
+        out
+    )

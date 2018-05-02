@@ -1,9 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
+import itertools
+
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_raises, suppress_warnings
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_raises, suppress_warnings
     )
 
 # Setup for optimize einsum
@@ -481,6 +483,35 @@ class TestEinSum(object):
         r = np.arange(4).reshape(2, 2) + 7
         assert_equal(np.einsum('z,mz,zm->', p, q, r), 253)
 
+        # singleton dimensions broadcast (gh-10343)
+        p = np.ones((10,2))
+        q = np.ones((1,2))
+        assert_array_equal(np.einsum('ij,ij->j', p, q, optimize=True),
+                           np.einsum('ij,ij->j', p, q, optimize=False))
+        assert_array_equal(np.einsum('ij,ij->j', p, q, optimize=True),
+                           [10.] * 2)
+
+        p = np.ones((1, 5))
+        q = np.ones((5, 5))
+        for optimize in (True, False):
+            assert_array_equal(np.einsum("...ij,...jk->...ik", p, p,
+                                         optimize=optimize),
+                               np.einsum("...ij,...jk->...ik", p, q,
+                                         optimize=optimize))
+            assert_array_equal(np.einsum("...ij,...jk->...ik", p, q,
+                                         optimize=optimize),
+                               np.full((1, 5), 5))
+
+        # Cases which were failing (gh-10899)
+        x = np.eye(2, dtype=dtype)
+        y = np.ones(2, dtype=dtype)
+        assert_array_equal(np.einsum("ji,i->", x, y, optimize=optimize),
+                           [2.])  # contig_contig_outstride0_two
+        assert_array_equal(np.einsum("i,ij->", y, x, optimize=optimize),
+                           [2.])  # stride0_contig_outstride0_two
+        assert_array_equal(np.einsum("ij,i->", x, y, optimize=optimize),
+                           [2.])  # contig_stride0_outstride0_two
+
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1')
 
@@ -537,6 +568,13 @@ class TestEinSum(object):
         b = np.ones((2, 2, 1))
         assert_equal(np.einsum('ij...,j...->i...', a, b), [[[2], [2]]])
         assert_equal(np.einsum('ij...,j...->i...', a, b, optimize=True), [[[2], [2]]])
+
+        # Regression test for issue #10369 (test unicode inputs with Python 2)
+        assert_equal(np.einsum(u'ij...,j...->i...', a, b), [[[2], [2]]])
+        assert_equal(np.einsum('...i,...i', [1, 2, 3], [2, 3, 4]), 20)
+        assert_equal(np.einsum(u'...i,...i', [1, 2, 3], [2, 3, 4]), 20)
+        assert_equal(np.einsum('...i,...i', [1, 2, 3], [2, 3, 4],
+                               optimize=u'greedy'), 20)
 
         # The iterator had an issue with buffering this reduction
         a = np.ones((5, 12, 4, 2, 3), np.int64)
@@ -765,6 +803,12 @@ class TestEinSum(object):
         self.optimize_compare('dba,ead,cad->bce')
         self.optimize_compare('aef,fbc,dca->bde')
 
+    def test_combined_views_mapping(self):
+        # gh-10792
+        a = np.arange(9).reshape(1, 1, 3, 1, 3)
+        b = np.einsum('bbcdc->d', a)
+        assert_equal(b, [12])
+
 
 class TestEinSumPath(object):
     def build_operands(self, string, size_dict=global_size_dict):
@@ -892,6 +936,9 @@ class TestEinSumPath(object):
         opt = np.einsum(*path_test, optimize=exp_path)
         assert_almost_equal(noopt, opt)
 
-
-if __name__ == "__main__":
-    run_module_suite()
+    def test_spaces(self):
+        #gh-10794
+        arr = np.array([[1]])
+        for sp in itertools.product(['', ' '], repeat=4):
+            # no error for any spacing
+            np.einsum('{}...a{}->{}...a{}'.format(*sp), arr)

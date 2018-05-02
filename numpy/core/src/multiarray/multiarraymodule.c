@@ -62,6 +62,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "compiled_base.h"
 #include "mem_overlap.h"
 #include "alloc.h"
+#include "typeinfo.h"
 
 #include "get_attr_string.h"
 
@@ -196,7 +197,7 @@ PyArray_CompareLists(npy_intp *l1, npy_intp *l2, int n)
 }
 
 /*
- * simulates a C-style 1-3 dimensional array which can be accesed using
+ * simulates a C-style 1-3 dimensional array which can be accessed using
  * ptr[i]  or ptr[i][j] or ptr[i][j][k] -- requires pointer allocation
  * for 2-d and 3-d.
  *
@@ -236,7 +237,8 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         n = PyArray_DIMS(ap)[0];
         ptr2 = (char **)PyArray_malloc(n * sizeof(char *));
         if (!ptr2) {
-            goto fail;
+            PyErr_NoMemory();
+            return -1;
         }
         for (i = 0; i < n; i++) {
             ptr2[i] = PyArray_BYTES(ap) + i*PyArray_STRIDES(ap)[0];
@@ -248,7 +250,8 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         m = PyArray_DIMS(ap)[1];
         ptr3 = (char ***)PyArray_malloc(n*(m+1) * sizeof(char *));
         if (!ptr3) {
-            goto fail;
+            PyErr_NoMemory();
+            return -1;
         }
         for (i = 0; i < n; i++) {
             ptr3[i] = (char **) &ptr3[n + m * i];
@@ -261,10 +264,6 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
     memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
     *op = (PyObject *)ap;
     return 0;
-
-fail:
-    PyErr_SetString(PyExc_MemoryError, "no memory");
-    return -1;
 }
 
 /* Deprecated --- Use PyArray_AsCArray instead */
@@ -1328,6 +1327,7 @@ _pyarray_revert(PyArrayObject *ret)
     else {
         char *tmp = PyArray_malloc(PyArray_DESCR(ret)->elsize);
         if (tmp == NULL) {
+            PyErr_NoMemory();
             return -1;
         }
         sw2 = op + (length - 1) * os;
@@ -3605,7 +3605,7 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 
 /*
- * Prints floating-point scalars usign the Dragon4 algorithm, scientific mode.
+ * Prints floating-point scalars using the Dragon4 algorithm, scientific mode.
  * See docstring of `np.format_float_scientific` for description of arguments.
  * The differences is that a value of -1 is valid for pad_left, exp_digits,
  * precision, which is equivalent to `None`.
@@ -3661,7 +3661,7 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 
 /*
- * Prints floating-point scalars usign the Dragon4 algorithm, positional mode.
+ * Prints floating-point scalars using the Dragon4 algorithm, positional mode.
  * See docstring of `np.format_float_positional` for description of arguments.
  * The differences is that a value of -1 is valid for pad_left, pad_right,
  * precision, which is equivalent to `None`.
@@ -4689,6 +4689,8 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
 
 static int
 intern_strings(void)
@@ -4703,12 +4705,14 @@ intern_strings(void)
     npy_ma_str_copy = PyUString_InternFromString("copy");
     npy_ma_str_dtype = PyUString_InternFromString("dtype");
     npy_ma_str_ndmin = PyUString_InternFromString("ndmin");
+    npy_ma_str_axis1 = PyUString_InternFromString("axis1");
+    npy_ma_str_axis2 = PyUString_InternFromString("axis2");
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
            npy_ma_str_buffer && npy_ma_str_ufunc &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
-           npy_ma_str_ndmin;
+           npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }
 
 
@@ -4728,10 +4732,10 @@ static struct PyModuleDef moduledef = {
 
 /* Initialization function for the module */
 #if defined(NPY_PY3K)
-#define RETVAL m
+#define RETVAL(x) x
 PyMODINIT_FUNC PyInit_multiarray(void) {
 #else
-#define RETVAL
+#define RETVAL(x)
 PyMODINIT_FUNC initmultiarray(void) {
 #endif
     PyObject *m, *d, *s;
@@ -4759,6 +4763,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     /* Initialize access to the PyDateTime API */
     numpy_pydatetime_import();
 
+    if (PyErr_Occurred()) {
+        goto err;
+    }
+
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {
@@ -4772,7 +4780,7 @@ PyMODINIT_FUNC initmultiarray(void) {
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
     if (PyType_Ready(&PyArray_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (setup_scalartypes(d) < 0) {
         goto err;
@@ -4782,32 +4790,32 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_free = PyArray_free;
     if (PyType_Ready(&PyArrayIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&PyArrayMapIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&NpyIter_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
 
     c_api = NpyCapsule_FromVoidPtr((void *)PyArray_API, NULL);
@@ -4879,6 +4887,13 @@ PyMODINIT_FUNC initmultiarray(void) {
                             (PyObject *)&NpyBusDayCalendar_Type);
     set_flaginfo(d);
 
+    /* Create the typeinfo types */
+    typeinfo_init_structsequences();
+    PyDict_SetItemString(d,
+        "typeinfo", (PyObject *)&PyArray_typeinfoType);
+    PyDict_SetItemString(d,
+        "typeinforanged", (PyObject *)&PyArray_typeinforangedType);
+
     if (!intern_strings()) {
         goto err;
     }
@@ -4886,12 +4901,13 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-    return RETVAL;
+
+    return RETVAL(m);
 
  err:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
-    return RETVAL;
+    return RETVAL(NULL);
 }

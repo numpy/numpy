@@ -1722,7 +1722,7 @@ static PyMethodDef arraymultiter_methods[] = {
     {"reset",
         (PyCFunction) arraymultiter_reset,
         METH_VARARGS, NULL},
-    {NULL, NULL, 0, NULL},      /* sentinal */
+    {NULL, NULL, 0, NULL},      /* sentinel */
 };
 
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {

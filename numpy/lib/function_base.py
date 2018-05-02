@@ -1,6 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import re
 import sys
 import warnings
@@ -49,7 +54,8 @@ __all__ = [
     'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'quantile'
     ]
 
 
@@ -140,7 +146,7 @@ def rot90(m, k=1, axes=(0,1)):
         return flip(transpose(m, axes_list), axes[1])
 
 
-def flip(m, axis):
+def flip(m, axis=None):
     """
     Reverse the order of elements in an array along the given axis.
 
@@ -152,9 +158,16 @@ def flip(m, axis):
     ----------
     m : array_like
         Input array.
-    axis : integer
-        Axis in array, which entries are reversed.
+    axis : None or int or tuple of ints, optional
+         Axis or axes along which to flip over. The default,
+         axis=None, will flip over all of the axes of the input array.
+         If axis is negative it counts from the last to the first axis.
 
+         If axis is a tuple of ints, flipping is performed on all of the axes
+         specified in the tuple.
+
+         .. versionchanged:: 1.15.0
+            None and tuples of axes are supported
 
     Returns
     -------
@@ -170,8 +183,16 @@ def flip(m, axis):
     Notes
     -----
     flip(m, 0) is equivalent to flipud(m).
+
     flip(m, 1) is equivalent to fliplr(m).
+
     flip(m, n) corresponds to ``m[...,::-1,...]`` with ``::-1`` at position n.
+
+    flip(m) corresponds to ``m[::-1,::-1,...,::-1]`` with ``::-1`` at all
+    positions.
+
+    flip(m, (0, 1)) corresponds to ``m[::-1,::-1,...]`` with ``::-1`` at
+    position 0 and position 1.
 
     Examples
     --------
@@ -179,37 +200,43 @@ def flip(m, axis):
     >>> A
     array([[[0, 1],
             [2, 3]],
-
            [[4, 5],
             [6, 7]]])
-
     >>> flip(A, 0)
     array([[[4, 5],
             [6, 7]],
-
            [[0, 1],
             [2, 3]]])
-
     >>> flip(A, 1)
     array([[[2, 3],
             [0, 1]],
-
            [[6, 7],
             [4, 5]]])
-
+    >>> np.flip(A)
+    array([[[7, 6],
+            [5, 4]],
+           [[3, 2],
+            [1, 0]]])
+    >>> np.flip(A, (0, 2))
+    array([[[5, 4],
+            [7, 6]],
+           [[1, 0],
+            [3, 2]]])
     >>> A = np.random.randn(3,4,5)
     >>> np.all(flip(A,2) == A[:,:,::-1,...])
     True
     """
     if not hasattr(m, 'ndim'):
         m = asarray(m)
-    indexer = [slice(None)] * m.ndim
-    try:
-        indexer[axis] = slice(None, None, -1)
-    except IndexError:
-        raise ValueError("axis=%i is invalid for the %i-dimensional input array"
-                         % (axis, m.ndim))
-    return m[tuple(indexer)]
+    if axis is None:
+        indexer = (np.s_[::-1],) * m.ndim
+    else:
+        axis = _nx.normalize_axis_tuple(axis, m.ndim)
+        indexer = [np.s_[:]] * m.ndim
+        for ax in axis:
+            indexer[ax] = np.s_[::-1]
+        indexer = tuple(indexer)
+    return m[indexer]
 
 
 def iterable(y):
@@ -547,7 +574,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     y = zeros(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
-        if not isinstance(item, collections.Callable):
+        if not isinstance(item, collections_abc.Callable):
             y[condlist[k]] = item
         else:
             vals = x[condlist[k]]
@@ -632,7 +659,7 @@ def select(condlist, choicelist, default=0):
                 deprecated_ints = True
             else:
                 raise ValueError(
-                    'invalid entry in choicelist: should be boolean ndarray')
+                    'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
     if deprecated_ints:
         # 2014-02-24, 1.9
@@ -818,9 +845,9 @@ def gradient(f, *varargs, **kwargs):
     Notes
     -----
     Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
-    derivatives) and let be :math:`h_{*}` a non homogeneous stepsize, the
-    spacing the finite difference coefficients are computed by minimising
-    the consistency error :math:`\\eta_{i}`:
+    derivatives) and let :math:`h_{*}` be a non-homogeneous stepsize, we
+    minimize the "consistency error" :math:`\\eta_{i}` between the true gradient
+    and its estimate from a linear combination of the neighboring grid-points:
 
     .. math::
 
@@ -839,7 +866,7 @@ def gradient(f, *varargs, **kwargs):
         \\left\\{
             \\begin{array}{r}
                 \\alpha+\\beta+\\gamma=0 \\\\
-                -\\beta h_{d}+\\gamma h_{s}=1 \\\\
+                \\beta h_{d}-\\gamma h_{s}=1 \\\\
                 \\beta h_{d}^{2}+\\gamma h_{s}^{2}=0
             \\end{array}
         \\right.
@@ -970,7 +997,7 @@ def gradient(f, *varargs, **kwargs):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            out[slice1] = (f[slice4] - f[slice2]) / (2. * ax_dx)
+            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2. * ax_dx)
         else:
             dx1 = ax_dx[0:-1]
             dx2 = ax_dx[1:]
@@ -982,7 +1009,7 @@ def gradient(f, *varargs, **kwargs):
             shape[axis] = -1
             a.shape = b.shape = c.shape = shape
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
@@ -991,14 +1018,14 @@ def gradient(f, *varargs, **kwargs):
             slice3[axis] = 0
             dx_0 = ax_dx if uniform_spacing else ax_dx[0]
             # 1D equivalent -- out[0] = (f[1] - f[0]) / (x[1] - x[0])
-            out[slice1] = (f[slice2] - f[slice3]) / dx_0
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
             dx_n = ax_dx if uniform_spacing else ax_dx[-1]
             # 1D equivalent -- out[-1] = (f[-1] - f[-2]) / (x[-1] - x[-2])
-            out[slice1] = (f[slice2] - f[slice3]) / dx_n
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
 
         # Numerical differentiation: 2nd order edges
         else:
@@ -1017,7 +1044,7 @@ def gradient(f, *varargs, **kwargs):
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1034,7 +1061,7 @@ def gradient(f, *varargs, **kwargs):
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
         outvals.append(out)
 
@@ -1236,7 +1263,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     >>> np.interp(x, xp, fp, period=360)
     array([7.5, 5., 8.75, 6.25, 3., 3.25, 3.5, 3.75])
 
-    Complex interpolation
+    Complex interpolation:
+
     >>> x = [1.5, 4.0]
     >>> xp = [2,3,5]
     >>> fp = [1.0j, 0, 2+3j]
@@ -1254,23 +1282,13 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         interp_func = compiled_interp
         input_dtype = np.float64
 
-    if period is None:
-        if isinstance(x, (float, int, number)):
-            return interp_func([x], xp, fp, left, right).item()
-        elif isinstance(x, np.ndarray) and x.ndim == 0:
-            return interp_func([x], xp, fp, left, right).item()
-        else:
-            return interp_func(x, xp, fp, left, right)
-    else:
+    if period is not None:
         if period == 0:
             raise ValueError("period must be a non-zero value")
         period = abs(period)
         left = None
         right = None
-        return_array = True
-        if isinstance(x, (float, int, number)):
-            return_array = False
-            x = [x]
+
         x = np.asarray(x, dtype=np.float64)
         xp = np.asarray(xp, dtype=np.float64)
         fp = np.asarray(fp, dtype=input_dtype)
@@ -1288,10 +1306,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         xp = np.concatenate((xp[-1:]-period, xp, xp[0:1]+period))
         fp = np.concatenate((fp[-1:], fp, fp[0:1]))
 
-        if return_array:
-            return interp_func(x, xp, fp, left, right)
-        else:
-            return interp_func(x, xp, fp, left, right).item()
+    return interp_func(x, xp, fp, left, right)
 
 
 def angle(z, deg=0):
@@ -1384,6 +1399,7 @@ def unwrap(p, discont=pi, axis=-1):
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
+    slice1 = tuple(slice1)
     ddmod = mod(dd + pi, 2*pi) - pi
     _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
     ph_correct = ddmod - dd
@@ -1617,9 +1633,9 @@ def disp(mesg, device=None, linefeed=True):
     Besides ``sys.stdout``, a file-like object can also be used as it has
     both required methods:
 
-    >>> from StringIO import StringIO
+    >>> from io import StringIO
     >>> buf = StringIO()
-    >>> np.disp('"Display" in a file', device=buf)
+    >>> np.disp(u'"Display" in a file', device=buf)
     >>> buf.getvalue()
     '"Display" in a file\\n'
 
@@ -2308,7 +2324,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     else:
         X_T = (X*w).T
     c = dot(X, X_T.conj())
-    c *= 1. / np.float64(fact)
+    c *= np.true_divide(1, fact)
     return c.squeeze()
 
 
@@ -3195,7 +3211,7 @@ def _ureduce(a, func, **kwargs):
         Input array or object that can be converted to an array.
     func : callable
         Reduction function capable of receiving a single axis argument.
-        It is is called with `a` as first argument followed by `kwargs`.
+        It is called with `a` as first argument followed by `kwargs`.
     kwargs : keyword arguments
         additional keyword arguments to pass to `func`.
 
@@ -3366,6 +3382,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
+    indexer = tuple(indexer)
 
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
@@ -3408,17 +3425,19 @@ def percentile(a, q, axis=None, out=None,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
+
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
         This optional parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
+        use when the desired percentile lies between two data points
         ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+
+        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * 'lower': ``i``.
+        * 'higher': ``j``.
+        * 'nearest': ``i`` or ``j``, whichever is nearest.
+        * 'midpoint': ``(i + j) / 2``.
 
         .. versionadded:: 1.9.0
     keepdims : bool, optional
@@ -3445,6 +3464,7 @@ def percentile(a, q, axis=None, out=None,
     mean
     median : equivalent to ``percentile(..., 50)``
     nanpercentile
+    quantile : equivalent to percentile, except with q in the range [0, 1].
 
     Notes
     -----
@@ -3485,9 +3505,150 @@ def percentile(a, q, axis=None, out=None,
     array([ 7.,  2.])
     >>> assert not np.all(a == b)
 
+    The different types of interpolation can be visualized graphically:
+
+    .. plot::
+
+        import matplotlib.pyplot as plt
+
+        a = np.arange(4)
+        p = np.linspace(0, 100, 6001)
+        ax = plt.gca()
+        lines = [
+            ('linear', None),
+            ('higher', '--'),
+            ('lower', '--'),
+            ('nearest', '-.'),
+            ('midpoint', '-.'),
+        ]
+        for interpolation, style in lines:
+            ax.plot(
+                p, np.percentile(a, p, interpolation=interpolation),
+                label=interpolation, linestyle=style)
+        ax.set(
+            title='Interpolation methods for list: ' + str(a),
+            xlabel='Percentile',
+            ylabel='List item returned',
+            yticks=a)
+        ax.legend()
+        plt.show()
+
     """
-    q = array(q, dtype=np.float64, copy=True)
-    r, k = _ureduce(a, func=_percentile, q=q, axis=axis, out=out,
+    q = np.true_divide(q, 100.0)  # handles the asarray for us too
+    if not _quantile_is_valid(q):
+        raise ValueError("Percentiles must be in the range [0, 100]")
+    return _quantile_unchecked(
+        a, q, axis, out, overwrite_input, interpolation, keepdims)
+
+
+def quantile(a, q, axis=None, out=None,
+             overwrite_input=False, interpolation='linear', keepdims=False):
+    """
+    Compute the `q`th quantile of the data along the specified axis.
+    ..versionadded:: 1.15.0
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    q : array_like of float
+        Quantile or sequence of quantiles to compute, which must be between
+        0 and 1 inclusive.
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the quantiles are computed. The
+        default is to compute the quantile(s) along a flattened
+        version of the array.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+        If True, then allow the input array `a` to be modified by intermediate
+        calculations, to save memory. In this case, the contents of the input
+        `a` after this function completes is undefined.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to
+        use when the desired quantile lies between two data points
+        ``i < j``:
+            * linear: ``i + (j - i) * fraction``, where ``fraction``
+              is the fractional part of the index surrounded by ``i``
+              and ``j``.
+            * lower: ``i``.
+            * higher: ``j``.
+            * nearest: ``i`` or ``j``, whichever is nearest.
+            * midpoint: ``(i + j) / 2``.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
+
+    Returns
+    -------
+    quantile : scalar or ndarray
+        If `q` is a single quantile and `axis=None`, then the result
+        is a scalar. If multiple quantiles are given, first axis of
+        the result corresponds to the quantiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    See Also
+    --------
+    mean
+    percentile : equivalent to quantile, but with q in the range [0, 100].
+    median : equivalent to ``quantile(..., 0.5)``
+    nanquantile
+
+    Notes
+    -----
+    Given a vector ``V`` of length ``N``, the ``q``-th quantile of
+    ``V`` is the value ``q`` of the way from the minimum to the
+    maximum in a sorted copy of ``V``. The values and distances of
+    the two nearest neighbors as well as the `interpolation` parameter
+    will determine the quantile if the normalized ranking does not
+    match the location of ``q`` exactly. This function is the same as
+    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
+    same as the maximum if ``q=1.0``.
+
+    Examples
+    --------
+    >>> a = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
+    >>> np.quantile(a, 0.5)
+    3.5
+    >>> np.quantile(a, 0.5, axis=0)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> np.quantile(a, 0.5, axis=1)
+    array([ 7.,  2.])
+    >>> np.quantile(a, 0.5, axis=1, keepdims=True)
+    array([[ 7.],
+           [ 2.]])
+    >>> m = np.quantile(a, 0.5, axis=0)
+    >>> out = np.zeros_like(m)
+    >>> np.quantile(a, 0.5, axis=0, out=out)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> m
+    array([[ 6.5,  4.5,  2.5]])
+    >>> b = a.copy()
+    >>> np.quantile(b, 0.5, axis=1, overwrite_input=True)
+    array([ 7.,  2.])
+    >>> assert not np.all(a == b)
+    """
+    q = np.asanyarray(q)
+    if not _quantile_is_valid(q):
+        raise ValueError("Quantiles must be in the range [0, 1]")
+    return _quantile_unchecked(
+        a, q, axis, out, overwrite_input, interpolation, keepdims)
+
+
+def _quantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
+                        interpolation='linear', keepdims=False):
+    """Assumes that q is in [0, 1], and is an ndarray"""
+    r, k = _ureduce(a, func=_quantile_ureduce_func, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
                     interpolation=interpolation)
     if keepdims:
@@ -3496,8 +3657,21 @@ def percentile(a, q, axis=None, out=None,
         return r
 
 
-def _percentile(a, q, axis=None, out=None,
-                overwrite_input=False, interpolation='linear', keepdims=False):
+def _quantile_is_valid(q):
+    # avoid expensive reductions, relevant for arrays with < O(1000) elements
+    if q.ndim == 1 and q.size < 10:
+        for i in range(q.size):
+            if q[i] < 0.0 or q[i] > 1.0:
+                return False
+    else:
+        # faster than any()
+        if np.count_nonzero(q < 0.0) or np.count_nonzero(q > 1.0):
+            return False
+    return True
+
+
+def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
+                           interpolation='linear', keepdims=False):
     a = asarray(a)
     if q.ndim == 0:
         # Do not allow 0-d arrays because following code fails for scalar
@@ -3506,19 +3680,7 @@ def _percentile(a, q, axis=None, out=None,
     else:
         zerod = False
 
-    # avoid expensive reductions, relevant for arrays with < O(1000) elements
-    if q.size < 10:
-        for i in range(q.size):
-            if q[i] < 0. or q[i] > 100.:
-                raise ValueError("Percentiles must be in the range [0,100]")
-            q[i] /= 100.
-    else:
-        # faster than any()
-        if np.count_nonzero(q < 0.) or np.count_nonzero(q > 100.):
-            raise ValueError("Percentiles must be in the range [0,100]")
-        q /= 100.
-
-    # prepare a for partioning
+    # prepare a for partitioning
     if overwrite_input:
         if axis is None:
             ap = a.ravel()
@@ -3721,12 +3883,12 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     try:
-        ret = (d * (y[slice1] + y[slice2]) / 2.0).sum(axis)
+        ret = (d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0).sum(axis)
     except ValueError:
         # Operations didn't work, cast to ndarray
         d = np.asarray(d)
         y = np.asarray(y)
-        ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
+        ret = add.reduce(d * (y[tuple(slice1)]+y[tuple(slice2)])/2.0, axis)
     return ret
 
 
@@ -4015,7 +4177,7 @@ def delete(arr, obj, axis=None):
             pass
         else:
             slobj[axis] = slice(None, start)
-            new[slobj] = arr[slobj]
+            new[tuple(slobj)] = arr[tuple(slobj)]
         # copy end chunck
         if stop == N:
             pass
@@ -4023,7 +4185,7 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(stop-numtodel, None)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(stop, None)
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         # copy middle pieces
         if step == 1:
             pass
@@ -4033,9 +4195,9 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(start, stop-numtodel)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(start, stop)
-            arr = arr[slobj2]
+            arr = arr[tuple(slobj2)]
             slobj2[axis] = keep
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         else:
@@ -4062,11 +4224,11 @@ def delete(arr, obj, axis=None):
         newshape[axis] -= 1
         new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, obj)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(obj, None)
         slobj2 = [slice(None)]*ndim
         slobj2[axis] = slice(obj+1, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
     else:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
@@ -4098,7 +4260,7 @@ def delete(arr, obj, axis=None):
 
         keep[obj, ] = False
         slobj[axis] = keep
-        new = arr[slobj]
+        new = arr[tuple(slobj)]
 
     if wrap:
         return wrap(new)
@@ -4269,13 +4431,13 @@ def insert(arr, obj, values, axis=None):
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, index)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(index, index+numnew)
-        new[slobj] = values
+        new[tuple(slobj)] = values
         slobj[axis] = slice(index+numnew, None)
         slobj2 = [slice(None)] * ndim
         slobj2[axis] = slice(index, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         return new
@@ -4304,8 +4466,8 @@ def insert(arr, obj, values, axis=None):
     slobj2 = [slice(None)]*ndim
     slobj[axis] = indices
     slobj2[axis] = old_mask
-    new[slobj] = values
-    new[slobj2] = arr
+    new[tuple(slobj)] = values
+    new[tuple(slobj2)] = arr
 
     if wrap:
         return wrap(new)

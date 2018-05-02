@@ -1,13 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import locale
-import nose
 
 import numpy as np
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, SkipTest
-)
+from numpy.testing import assert_, assert_equal, SkipTest
+from ._locales import CommaDecimalPointLocale
 
 
 if sys.version_info[0] >= 3:
@@ -40,7 +37,7 @@ def test_float_types():
 
     """
     for t in [np.float32, np.double, np.longdouble]:
-        yield check_float_type, t
+        check_float_type(t)
 
 def check_nan_inf_float(tp):
     for x in [np.inf, -np.inf, np.nan]:
@@ -56,7 +53,7 @@ def test_nan_inf_float():
 
     """
     for t in [np.float32, np.double, np.longdouble]:
-        yield check_nan_inf_float, t
+        check_nan_inf_float(t)
 
 def check_complex_type(tp):
     for x in [0, 1, -1, 1e20]:
@@ -84,7 +81,7 @@ def test_complex_types():
 
     """
     for t in [np.complex64, np.cdouble, np.clongdouble]:
-        yield check_complex_type, t
+        check_complex_type(t)
 
 def test_complex_inf_nan():
     """Check inf/nan formatting of complex types."""
@@ -108,7 +105,7 @@ def test_complex_inf_nan():
     }
     for tp in [np.complex64, np.cdouble, np.clongdouble]:
         for c, s in TESTS.items():
-            yield _check_complex_inf_nan, c, s, tp
+            _check_complex_inf_nan(c, s, tp)
 
 def _check_complex_inf_nan(c, s, dtype):
     assert_equal(str(dtype(c)), s)
@@ -164,12 +161,12 @@ def check_complex_type_print(tp):
 def test_float_type_print():
     """Check formatting when using print """
     for t in [np.float32, np.double, np.longdouble]:
-        yield check_float_type_print, t
+        check_float_type_print(t)
 
 def test_complex_type_print():
     """Check formatting when using print """
     for t in [np.complex64, np.cdouble, np.clongdouble]:
-        yield check_complex_type_print, t
+        check_complex_type_print(t)
 
 def test_scalar_format():
     """Test the str.format method with NumPy scalar types"""
@@ -201,46 +198,17 @@ def test_scalar_format():
                             (fmat, repr(val), repr(valtype), str(e)))
 
 
+#
 # Locale tests: scalar types formatting should be independent of the locale
-def in_foreign_locale(func):
-    """
-    Swap LC_NUMERIC locale to one in which the decimal point is ',' and not '.'
-    If not possible, raise SkipTest
+#
 
-    """
-    if sys.platform == 'win32':
-        locales = ['FRENCH']
-    else:
-        locales = ['fr_FR', 'fr_FR.UTF-8', 'fi_FI', 'fi_FI.UTF-8']
+class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
 
-    def wrapper(*args, **kwargs):
-        curloc = locale.getlocale(locale.LC_NUMERIC)
-        try:
-            for loc in locales:
-                try:
-                    locale.setlocale(locale.LC_NUMERIC, loc)
-                    break
-                except locale.Error:
-                    pass
-            else:
-                raise SkipTest("Skipping locale test, because "
-                                "French locale not found")
-            return func(*args, **kwargs)
-        finally:
-            locale.setlocale(locale.LC_NUMERIC, locale=curloc)
-    return nose.tools.make_decorator(func)(wrapper)
+    def test_locale_single(self):
+        assert_equal(str(np.float32(1.2)), str(float(1.2)))
 
-@in_foreign_locale
-def test_locale_single():
-    assert_equal(str(np.float32(1.2)), str(float(1.2)))
+    def test_locale_double(self):
+        assert_equal(str(np.double(1.2)), str(float(1.2)))
 
-@in_foreign_locale
-def test_locale_double():
-    assert_equal(str(np.double(1.2)), str(float(1.2)))
-
-@in_foreign_locale
-def test_locale_longdouble():
-    assert_equal(str(np.longdouble('1.2')), str(float(1.2)))
-
-if __name__ == "__main__":
-    run_module_suite()
+    def test_locale_longdouble(self):
+        assert_equal(str(np.longdouble('1.2')), str(float(1.2)))

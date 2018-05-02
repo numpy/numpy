@@ -215,7 +215,7 @@ def iscomplex(x):
     if issubclass(ax.dtype.type, _nx.complexfloating):
         return ax.imag != 0
     res = zeros(ax.shape, bool)
-    return +res  # convet to array-scalar if needed
+    return +res  # convert to array-scalar if needed
 
 def isreal(x):
     """
@@ -330,7 +330,7 @@ def _getmaxmin(t):
 
 def nan_to_num(x, copy=True):
     """
-    Replace nan with zero and inf with large finite numbers.
+    Replace NaN with zero and infinity with large finite numbers.
 
     If `x` is inexact, NaN is replaced by zero, and infinity and -infinity
     replaced by the respectively largest and most negative finite floating
@@ -343,7 +343,7 @@ def nan_to_num(x, copy=True):
 
     Parameters
     ----------
-    x : array_like
+    x : scalar or array_like
         Input data.
     copy : bool, optional
         Whether to create a copy of `x` (True) or to replace values
@@ -374,6 +374,12 @@ def nan_to_num(x, copy=True):
 
     Examples
     --------
+    >>> np.nan_to_num(np.inf)
+    1.7976931348623157e+308
+    >>> np.nan_to_num(-np.inf)
+    -1.7976931348623157e+308
+    >>> np.nan_to_num(np.nan)
+    0.0
     >>> x = np.array([np.inf, -np.inf, np.nan, -128, 128])
     >>> np.nan_to_num(x)
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000,
@@ -386,20 +392,21 @@ def nan_to_num(x, copy=True):
     """
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
-    if not issubclass(xtype, _nx.inexact):
-        return x
 
-    iscomplex = issubclass(xtype, _nx.complexfloating)
     isscalar = (x.ndim == 0)
 
-    x = x[None] if isscalar else x
+    if not issubclass(xtype, _nx.inexact):
+        return x[()] if isscalar else x
+
+    iscomplex = issubclass(xtype, _nx.complexfloating)
+
     dest = (x.real, x.imag) if iscomplex else (x,)
     maxf, minf = _getmaxmin(x.real.dtype)
     for d in dest:
         _nx.copyto(d, 0.0, where=isnan(d))
         _nx.copyto(d, maxf, where=isposinf(d))
         _nx.copyto(d, minf, where=isneginf(d))
-    return x[0] if isscalar else x
+    return x[()] if isscalar else x
 
 #-----------------------------------------------------------------------------
 
@@ -579,7 +586,7 @@ def common_type(*arrays):
     an integer array, the minimum precision type that is returned is a
     64-bit floating point dtype.
 
-    All input arrays except int64 and uint64 can be safely cast to the 
+    All input arrays except int64 and uint64 can be safely cast to the
     returned dtype without loss of information.
 
     Parameters
