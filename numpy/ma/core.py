@@ -6317,6 +6317,16 @@ class MaskedConstant(MaskedArray):
         # precedent for this with `np.bool_` scalars.
         return self
 
+	def __deepcopy__(self, memo=None):
+		from copy import deepcopy
+		copied = MaskedArray.__new__(type(self), self, copy=True)
+		if memo is None:
+			memo = {}
+		memo[id(self)] = copied
+		for (k, v) in self.__dict__.items():
+			copied.__dict__[k] = deepcopy(v, memo)
+		return copied
+
     def __setattr__(self, attr, value):
         if not self.__has_singleton():
             # allow the singleton to be initialized
