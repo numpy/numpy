@@ -5,7 +5,7 @@
 #include "numpy/ufuncobject.h"
 
 NPY_NO_EXPORT int
-PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
+PyUFunc_CheckOverride(PyUFuncBaseObject *ufunc, char *method,
                       PyObject *args, PyObject *kwds,
                       PyObject **result);
 #endif

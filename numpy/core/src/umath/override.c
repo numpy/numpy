@@ -37,7 +37,7 @@ normalize_signature_keyword(PyObject *normal_kwds)
 }
 
 static int
-normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
+normalize___call___args(PyUFuncBaseObject *ufunc, PyObject *args,
                         PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
@@ -114,7 +114,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 static int
-normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
+normalize_reduce_args(PyUFuncBaseObject *ufunc, PyObject *args,
                       PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
@@ -169,7 +169,7 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 static int
-normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
+normalize_accumulate_args(PyUFuncBaseObject *ufunc, PyObject *args,
                           PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
@@ -215,7 +215,7 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 static int
-normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
+normalize_reduceat_args(PyUFuncBaseObject *ufunc, PyObject *args,
                     PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
@@ -263,7 +263,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 static int
-normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
+normalize_outer_args(PyUFuncBaseObject *ufunc, PyObject *args,
                      PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
@@ -297,7 +297,7 @@ normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 static int
-normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
+normalize_at_args(PyUFuncBaseObject *ufunc, PyObject *args,
                   PyObject **normal_args, PyObject **normal_kwds)
 {
     /* ufunc.at(a, indices[, b]) */
@@ -325,7 +325,7 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
  * result of the operation, if any. If *result is NULL, there is no override.
  */
 NPY_NO_EXPORT int
-PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
+PyUFunc_CheckOverride(PyUFuncBaseObject *ufunc, char *method,
                       PyObject *args, PyObject *kwds,
                       PyObject **result)
 {

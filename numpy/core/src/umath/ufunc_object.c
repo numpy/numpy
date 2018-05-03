@@ -4368,7 +4368,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     ufunc_full_args full_args = {NULL, NULL};
     int errval;
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
+    errval = PyUFunc_CheckOverride((PyUFuncBaseObject*)ufunc, "__call__",
+                                    args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5055,7 +5056,8 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
 
-    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
+    errval = PyUFunc_CheckOverride((PyUFuncBaseObject*)ufunc, "outer",
+                                   args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5151,7 +5153,8 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override);
+    errval = PyUFunc_CheckOverride((PyUFuncBaseObject*)ufunc, "reduce",
+                                   args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5167,7 +5170,8 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override);
+    errval = PyUFunc_CheckOverride((PyUFuncBaseObject*)ufunc, "accumulate",
+                                   args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5183,7 +5187,8 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override);
+    errval = PyUFunc_CheckOverride((PyUFuncBaseObject*)ufunc, "reduceat",
+                                   args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5247,7 +5252,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override);
+    errval = PyUFunc_CheckOverride((PyUFuncBaseObject*)ufunc, "at",
+                                   args, NULL, &override);
     if (errval) {
         return NULL;
     }
@@ -5727,7 +5733,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                          /* ob_size */
 #endif
-    "numpy.ufunc",                              /* tp_name */
+    "numpy.ufuunc",                              /* tp_name */
     sizeof(PyUFuncObject),                      /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
@@ -5781,3 +5787,146 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
 };
 
 /* End of code for ufunc objects */
+
+typedef struct {
+    UFUNC_BASE;
+    PyObject * func;
+    PyMethodDef func_def;
+} PyUFuncWrapperObject;
+
+static void
+ufuncwrapper_dealloc(PyUFuncWrapperObject *ufunc)
+{
+    Py_XDECREF(ufunc->func);
+    Py_TYPE(ufunc)->tp_free(ufunc);
+}
+
+static PyObject *
+ufuncwrapper_repr(PyUFuncWrapperObject *ufunc)
+{
+    PyObject * name = NULL;
+    PyObject * str;
+    if (ufunc->func) {
+        name = PyObject_GetAttrString(ufunc->func, "__name__");
+    }
+    if (name != NULL) {
+        str =  PyUString_FromFormat("<ufunc '%s'>", PyString_AsString(name));
+    }
+    else {
+        str =  PyUString_FromFormat("<ufunc '%s'>", "?");
+    }
+    Py_XDECREF(name);
+    return str;
+}
+
+static PyObject * myfunc(PyObject* self, PyObject * a) { return a; };
+
+static PyObject *
+ufuncwrapper_call(PyObject *self, PyObject *args, PyObject *kwargs) {
+    PyObject * meth;
+    if (!PyArg_ParseTuple(args, "O", &meth))
+        return NULL;
+    PyCFunction ml_meth = (PyCFunction)myfunc;
+    PyUFuncWrapperObject *s = (PyUFuncWrapperObject*)self;
+    s->func_def.ml_name = "wrapped ufunc";
+    s->func_def.ml_meth = ml_meth;
+    s->func_def.ml_flags = METH_VARARGS | METH_KEYWORDS;
+    s->func_def.ml_doc = "documentation for method";
+    return PyCFunction_New(&s->func_def, args);
+}
+
+static PyObject *ufuncwrapper_new(PyTypeObject *t, PyObject *a, PyObject *k)
+{
+    PyObject *o;
+    o = t->tp_alloc(t, 0);
+    return o;
+}
+
+static int
+ufuncwrapper_init(PyUFuncWrapperObject * self, PyObject *args, PyObject *kwargs)
+{
+    if (!PyArg_ParseTuple(args, "ii", &self->nin, &self->nout))
+        return NULL;
+
+    self->nargs = self->nin + self->nout;
+    self->func = 0;
+    return 0;
+}
+
+static PyGetSetDef ufuncwrapper_getset[] = {
+    {"nin",
+        (getter)ufunc_get_nin,
+        NULL, NULL, NULL},
+    {"nout",
+        (getter)ufunc_get_nout,
+        NULL, NULL, NULL},
+    {"nargs",
+        (getter)ufunc_get_nargs,
+        NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
+};
+
+/******************************************************************************
+ ***                    UFUNC_WRAPPER TYPE OBJECT                               ***
+ *****************************************************************************/
+
+NPY_NO_EXPORT PyTypeObject PyUFuncWrapper_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,                                          /* ob_size */
+#endif
+    "numpy.ufunc_wrapper",                      /* tp_name */
+    sizeof(PyUFuncWrapperObject),               /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    (destructor)ufuncwrapper_dealloc,           /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    (reprfunc)ufuncwrapper_repr,                /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    (ternaryfunc)ufuncwrapper_call,             /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    ufuncwrapper_getset,                        /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)ufuncwrapper_init,                /* tp_init */
+    0,                                          /* tp_alloc */
+    ufuncwrapper_new,                           /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+    0,                                          /* tp_version_tag */
+};
+
