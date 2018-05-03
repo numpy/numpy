@@ -1026,8 +1026,13 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
     assert(n < (stride) || npy_is_aligned(&ip[i], 16));
     if (i + 3 * stride <= n) {
         /* load the first elements */
-        @vtype@ c1 = @vpre@_load_@vsuf@((@type@*)&ip[i]);
-        @vtype@ c2 = @vpre@_load_@vsuf@((@type@*)&ip[i + stride]);
+        /*
+         * TODO: find a more explicit way to prevent optimization
+         * compilers reorder npy_get_floatstatus to before minps
+         * volatile seems  to be sufficient but is brittle and opaque
+         */
+        volatile @vtype@ c1 = @vpre@_load_@vsuf@((@type@*)&ip[i]);
+        volatile @vtype@ c2 = @vpre@_load_@vsuf@((@type@*)&ip[i + stride]);
         i += 2 * stride;
 
         /* minps/minpd will set invalid flag if nan is encountered */

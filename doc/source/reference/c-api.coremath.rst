@@ -183,6 +183,9 @@ Those can be useful for precise floating point comparison.
     * NPY_FPE_UNDERFLOW
     * NPY_FPE_INVALID
 
+    If used in conjunction with intrisic functions, optimizing compilers can
+    reorder the call and put it before the intrisics, defeating the check.
+
     .. versionadded:: 1.9.0
 
 .. c:function:: int npy_clear_floatstatus()

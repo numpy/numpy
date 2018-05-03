@@ -2342,3 +2342,13 @@ class TestRegression(object):
             structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
             structure[0]['x'] = np.array([2])
             gc.collect()
+
+    def test_floatstatus_reordering(self):
+        # gh 10370 Some compilers reorder the call to npy_getfloatstatus and
+        # put it before the call to an intrisic function that causes invalid
+        # status to be set
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            result = np.min(np.diagflat([np.nan]*8), axis=1)
+        expected = np.full(8, np.nan)
+        assert_equal(result, expected)
