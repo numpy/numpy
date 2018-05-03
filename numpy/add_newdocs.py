@@ -6277,6 +6277,27 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     """))
 
+
+##############################################################################
+#
+# Documentation for ufunc_wrapper
+#
+##############################################################################
+
+add_newdoc('numpy.core', 'ufunc_wraper',
+    """
+    Decorator class to allow a ufunc-like class method to use the `__array_ufunc__`
+    mechanism
+
+    Examples
+    --------
+
+    >>> class ArrayLike:
+    ...     pass
+
+
+
+    """)
 ##############################################################################
 #
 # Documentation for dtype attributes and methods

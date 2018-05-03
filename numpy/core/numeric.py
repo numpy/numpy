@@ -28,7 +28,8 @@ if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
 
 from . import umath
-from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
+from .umath import (multiply, invert, sin, ufunc_wrapper,
+                    UFUNC_BUFSIZE_DEFAULT,
                     ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
                     ERR_LOG, ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
@@ -36,6 +37,7 @@ from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._internal import TooHardError, AxisError
 
 bitwise_not = invert
+# TODO properly export ufunc from umath
 ufunc = type(sin)
 newaxis = None
 

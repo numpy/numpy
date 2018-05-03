@@ -253,6 +253,7 @@ intern_strings(void)
 /* Setup the umath module */
 /* Remove for time being, it is declared in __ufunc_api.h */
 /*static PyTypeObject PyUFunc_Type;*/
+extern PyTypeObject PyUFuncWrapper_Type;
 
 static struct PyMethodDef methods[] = {
     {"frompyfunc",
@@ -323,6 +324,10 @@ PyMODINIT_FUNC initumath(void)
     if (PyType_Ready(&PyUFunc_Type) < 0)
         goto err;
 
+    if (PyType_Ready(&PyUFuncWrapper_Type) < 0)
+        goto err;
+
+    PyModule_AddObject(m,"ufunc_wrapper",(PyObject*)&PyUFuncWrapper_Type);
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 

@@ -113,7 +113,7 @@ typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
 
 /* used in both ufunc and ufunc_wrapper */
 #define UFUNC_BASE \
-    PyObject_HEAD; /*
+    PyObject_HEAD /*
          * nin: Number of inputs
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)

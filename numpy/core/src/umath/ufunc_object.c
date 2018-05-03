@@ -5789,7 +5789,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
 /* End of code for ufunc objects */
 
 typedef struct {
-    UFUNC_BASE;
+    UFUNC_BASE
     PyObject * func;
     PyMethodDef func_def;
 } PyUFuncWrapperObject;
