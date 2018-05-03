@@ -4826,6 +4826,16 @@ class TestMaskedConstant(object):
             np.ma.masked.copy() is np.ma.masked,
             np.True_.copy() is np.True_)
 
+    def test__copy(self):
+        assert_equal(
+            copy.copy(np.ma.masked) is np.ma.masked,
+            copy.copy(np.True_) is np.True_)
+
+    def test__deepcopy(self):
+        assert_equal(
+            copy.deepcopy(np.ma.masked) is np.ma.masked,
+            copy.deepcopy(np.True_) is np.True_)
+
     def test_immutable(self):
         orig = np.ma.masked
         assert_raises(np.ma.core.MaskError, operator.setitem, orig, (), 1)
