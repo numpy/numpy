@@ -6317,6 +6317,9 @@ class MaskedConstant(MaskedArray):
         # precedent for this with `np.bool_` scalars.
         return self
 
+	def __deepcopy__(self, *args, **kwargs):
+		return self
+	
     def __setattr__(self, attr, value):
         if not self.__has_singleton():
             # allow the singleton to be initialized
