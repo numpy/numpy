@@ -3105,6 +3105,12 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
     }
 
     next_is_nonzero = PyObject_RichCompareBool(*next, zero, Py_NE);
+    if (next_is_nonzero == -1) {
+      Py_DECREF(zero);
+      Py_DECREF(*next);
+      *next = NULL;
+      return -1;
+    }
     val = PyNumber_TrueDivide(*next, step);
     Py_DECREF(*next);
     *next = NULL;
@@ -3116,6 +3122,10 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 
     val_is_zero = PyObject_RichCompareBool(val, zero, Py_EQ);
     Py_DECREF(zero);
+    if (val_is_zero == -1) {
+      Py_DECREF(val);
+      return -1;
+    }
 
     if (cmplx && PyComplex_Check(val)) {
         value = PyComplex_RealAsDouble(val);
