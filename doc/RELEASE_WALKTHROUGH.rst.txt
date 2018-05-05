@@ -44,7 +44,7 @@ may have been accessed and changed by someone else and a push will fail::
     $ cd ../numpy-wheels
     $ git pull origin master
     $ git branch <new version>  # only when starting new numpy version
-    $ git checkout v1.14.x  # v1.14.x already existed for the 1.14.1 release
+    $ git checkout v1.14.x  # v1.14.x already existed for the 1.14.3 release
 
 Edit the ``.travis.yml`` and ``appveyor.yml`` files to make sure they have the
 correct version, and put in the commit hash for the ``REL`` commit created
