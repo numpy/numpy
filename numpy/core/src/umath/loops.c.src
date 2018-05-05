@@ -1822,6 +1822,9 @@ NPY_NO_EXPORT void
                 const @type@ in2 = *(@type@ *)ip2;
                 io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
             }
+            if (npy_isnan(io1)) {
+                npy_set_floatstatus_invalid();
+            }
             *((@type@ *)iop1) = io1;
         }
     }
