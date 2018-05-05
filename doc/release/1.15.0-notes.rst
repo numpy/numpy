@@ -55,7 +55,7 @@ Deprecations
   In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
   or the built-in Python `sum` instead.
 
-* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or 
+* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
   ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
   flag set, before the array is deallocated. A deprecation warning will be
   emitted if those calls are not used when needed.
@@ -81,7 +81,7 @@ are some circumstances where nditer doesn't actually give you a view onto the
 writable array. Instead, it gives you a copy, and if you make changes to the
 copy, nditer later writes those changes back into your actual array. Currently,
 this writeback occurs when the array objects are garbage collected, which makes
-this API error-prone on CPython and entirely broken on PyPy. Therefore, 
+this API error-prone on CPython and entirely broken on PyPy. Therefore,
 ``nditer`` should now be used as a context manager whenever using ``nditer``
 with writeable arrays (``with np.nditer(...) as it: ...``). You may also
 explicitly call ``it.close()`` for cases where a context manager is unusable,
@@ -122,6 +122,16 @@ C API changes
 
 * ``NpyIter_Close`` has been added and should be called before
   ``NpyIter_Deallocate`` to resolve possible writeback-enabled arrays.
+
+* ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier`` have
+  been added, they should be used instead of ``npy_get_floatstatus`` and
+  ``npy_clear_status`` respectively. Optimizing compilers like GCC 8.1 and
+  Clang rearrange the order of operations when calling a function near SIMD
+  operations. The earlier versions of theses functions were thus moved around,
+  changing the results of ``do simd operation, check floatstatus flags`` to
+  ``check floatstatus flags, simd operation`` leading to wrong results. The new
+  forms of these functions accept a pointer to a local variable, and by
+  assigning to that value within the function prevent the reordering.
 
 New Features
 ============

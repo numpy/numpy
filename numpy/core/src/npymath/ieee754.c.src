@@ -6,6 +6,7 @@
  */
 #include "npy_math_common.h"
 #include "npy_math_private.h"
+#include "numpy/utils.h"
 
 #ifndef HAVE_COPYSIGN
 double npy_copysign(double x, double y)
@@ -557,6 +558,15 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 }
 #endif
 
+int npy_clear_floatstatus() {
+    char x=0;
+    return npy_clear_floatstatus_barrier(&x);
+}
+int npy_get_floatstatus() {
+    char x=0;
+    return npy_get_floatstatus_barrier(&x);
+}
+
 /*
  * Functions to set the floating point status word.
  * keep in sync with NO_FLOATING_POINT_SUPPORT in ufuncobject.h
@@ -574,8 +584,12 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
     defined(__NetBSD__)
 #include <ieeefp.h>
 
-int npy_get_floatstatus(void)
+int npy_get_floatstatus_barrier(char * param))
 {
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    volatile char c = *(char*)param;
     int fpstatus = fpgetsticky();
     return ((FP_X_DZ  & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
            ((FP_X_OFL & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
@@ -583,9 +597,9 @@ int npy_get_floatstatus(void)
            ((FP_X_INV & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus(void)
+int npy_clear_floatstatus_barrier(char * param)
 {
-    int fpstatus = npy_get_floatstatus();
+    int fpstatus = npy_get_floatstatus_barrier(param);
     fpsetsticky(0);
 
     return fpstatus;
@@ -617,8 +631,12 @@ void npy_set_floatstatus_invalid(void)
       (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
 #  include <fenv.h>
 
-int npy_get_floatstatus(void)
+int npy_get_floatstatus_barrier(char* param)
 {
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    volatile char NPY_UNUSED(c) = *(char*)param;
     int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
                                 FE_UNDERFLOW | FE_INVALID);
 
@@ -628,10 +646,10 @@ int npy_get_floatstatus(void)
            ((FE_INVALID    & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus(void)
+int npy_clear_floatstatus_barrier(char * param)
 {
     /* testing float status is 50-100 times faster than clearing on x86 */
-    int fpstatus = npy_get_floatstatus();
+    int fpstatus = npy_get_floatstatus_barrier(param);
     if (fpstatus != 0) {
         feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |
                       FE_UNDERFLOW | FE_INVALID);
@@ -665,8 +683,12 @@ void npy_set_floatstatus_invalid(void)
 #include <float.h>
 #include <fpxcp.h>
 
-int npy_get_floatstatus(void)
+int npy_get_floatstatus_barrier(char *param)
 {
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    volatile char c = *(char*)param;
     int fpstatus = fp_read_flag();
     return ((FP_DIV_BY_ZERO & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
            ((FP_OVERFLOW & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
@@ -674,9 +696,9 @@ int npy_get_floatstatus(void)
            ((FP_INVALID & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus(void)
+int npy_clear_floatstatus_barrier(char * param)
 {
-    int fpstatus = npy_get_floatstatus();
+    int fpstatus = npy_get_floatstatus_barrier(param);
     fp_swap_flag(0);
 
     return fpstatus;
@@ -710,8 +732,12 @@ void npy_set_floatstatus_invalid(void)
 #include <float.h>
 
 
-int npy_get_floatstatus(void)
+int npy_get_floatstatus_barrier(char *param)
 {
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    volatile char c = *(char*)param;
 #if defined(_WIN64)
     int fpstatus = _statusfp();
 #else
@@ -726,9 +752,9 @@ int npy_get_floatstatus(void)
            ((SW_INVALID & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus(void)
+int npy_clear_floatstatus_barrier(char *param)
 {
-    int fpstatus = npy_get_floatstatus();
+    int fpstatus = npy_get_floatstatus_barrier(param);
     _clearfp();
 
     return fpstatus;
@@ -739,8 +765,12 @@ int npy_clear_floatstatus(void)
 
 #include <machine/fpu.h>
 
-int npy_get_floatstatus(void)
+int npy_get_floatstatus_barrier(char *param)
 {
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    volatile char c = *(char*)param;
     unsigned long fpstatus = ieee_get_fp_control();
     return  ((IEEE_STATUS_DZE & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
             ((IEEE_STATUS_OVF & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
@@ -748,9 +778,9 @@ int npy_get_floatstatus(void)
             ((IEEE_STATUS_INV & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus(void)
+int npy_clear_floatstatus_barrier(char *param)
 {
-    long fpstatus = npy_get_floatstatus();
+    int fpstatus = npy_get_floatstatus_barrier(param);
     /* clear status bits as well as disable exception mode if on */
     ieee_set_fp_control(0);
 
@@ -759,13 +789,18 @@ int npy_clear_floatstatus(void)
 
 #else
 
-int npy_get_floatstatus(void)
+int npy_get_floatstatus_barrier(char *param)
 {
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    volatile char c = *(char*)param;
     return 0;
 }
 
-int npy_clear_floatstatus(void)
+int npy_clear_floatstatus_barrier(char *param)
 {
+    int fpstatus = npy_get_floatstatus_barrier(param);
     return 0;
 }
 

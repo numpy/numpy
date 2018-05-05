@@ -100,7 +100,8 @@ PyUFunc_getfperr(void)
      * non-clearing get was only added in 1.9 so this function always cleared
      * keep it so just in case third party code relied on the clearing
      */
-    return npy_clear_floatstatus();
+    char param = 0;
+    return npy_clear_floatstatus_barrier(&param);
 }
 
 #define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
@@ -133,7 +134,8 @@ NPY_NO_EXPORT int
 PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
     /* clearing is done for backward compatibility */
-    int retstatus = npy_clear_floatstatus();
+    int retstatus;
+    retstatus = npy_clear_floatstatus_barrier((char*)&retstatus);
 
     return PyUFunc_handlefperr(errmask, errobj, retstatus, first);
 }
@@ -144,7 +146,8 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 NPY_NO_EXPORT void
 PyUFunc_clearfperr()
 {
-    npy_clear_floatstatus();
+    char param = 0;
+    npy_clear_floatstatus_barrier(&param);
 }
 
 /*
