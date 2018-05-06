@@ -791,8 +791,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the data-type.
     comments : str or sequence of str, optional
         The characters or list of characters used to indicate the start of a
-        comment. For backwards compatibility, byte strings will be decoded as
-        'latin1'. The default is '#'.
+        comment. None implies no comments. For backwards compatibility, byte
+        strings will be decoded as 'latin1'. The default is '#'.
     delimiter : str, optional
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
