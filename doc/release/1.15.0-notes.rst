@@ -287,6 +287,10 @@ of the overlap between input an output, that is, the next element accumulated
 is added before the accumulated result is stored in its place, hence the
 overlap is safe. Avoiding the copy results in faster execution.
 
+Increased performance in ``random.permutation`` for multidimensional arrays
+---------------------------------------------------------------------------
+``permutation`` uses the fast path in ``random.shuffle`` for all input
+array dimensions.  Previously the fast path was only used for 1-d arrays.
 
 Changes
 =======
