@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 from numpy.testing import assert_, assert_equal, SkipTest
-from ._locales import CommaDecimalPointLocale
+from numpy.core.tests._locales import CommaDecimalPointLocale
 
 
 if sys.version_info[0] >= 3:

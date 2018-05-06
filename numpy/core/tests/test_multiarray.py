@@ -34,7 +34,7 @@ from numpy.testing import (
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
     SkipTest, temppath, suppress_warnings
     )
-from ._locales import CommaDecimalPointLocale
+from numpy.core.tests._locales import CommaDecimalPointLocale
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
