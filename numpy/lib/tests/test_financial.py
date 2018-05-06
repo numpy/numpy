@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 from decimal import Decimal
 
 import numpy as np
+import unittest
 from numpy.testing import (
     assert_, assert_almost_equal, assert_allclose, assert_equal, assert_raises
     )
@@ -338,3 +339,7 @@ class TestFinancial(object):
                                     Decimal('0'), [Decimal('0'), Decimal('0'), Decimal('1'), 'end', 'begin']),
                             [Decimal('-74.998201'), Decimal('-75.62318601'), Decimal('-75.62318601'),
                              Decimal('-76.88882405'), Decimal('-76.88882405')], 4)
+
+    def test_capm(self):
+        self.assertAlmostEequal(np.capm(0.07, 1.2, 0.10), 0.106)
+        self.assertAlmostEequal(np.capm(0.02, 2, 10), 0.18)

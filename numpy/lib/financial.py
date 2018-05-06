@@ -759,3 +759,51 @@ def mirr(values, finance_rate, reinvest_rate):
     numer = np.abs(npv(reinvest_rate, values*pos))
     denom = np.abs(npv(finance_rate, values*neg))
     return (numer/denom)**(1/(n - 1))*(1 + reinvest_rate) - 1
+
+def capm(rf, beta, rm):
+    """
+    calculate the minimum rate of return using CAPM 
+    (Capital Asset Pricing Model).
+
+    parameters:
+    -----------
+    rf: The risk free rate of retun.
+    beta: The company's beta factor which measures the sensitivity
+             of an investment return to market movement
+    rm: market rate of return
+
+    Notes.
+    ------
+    The CAPM is an alternative method of calculating cost of equity
+    capital for an investment. it is made up of two sides; Risk free
+    rate i.e. the basic rate which all projects must earn if 
+    it is completely free from risk. and the Risk Premium which
+    is gotten after applying the project
+    beta to the difference between market return and risk rate of return.
+
+    Example:
+    --------
+    XYZ limited wants to determine its minimum required rate of return if 
+    the risk free rate is 7%, market rate of return is 10% and the company
+    has a beta factor of 12.
+
+        Solution
+        --------
+        rf = 0.07, beta = 12, rm = 0.10
+        
+        min.required rate of return = 0.07 + 1.2(0.10 - 0.07)
+                                    =0.106
+                                    =10.6%
+
+    """
+    try:
+        rf >= 1 or rm >= 1:
+            return "values cannot be greater than or equals 1"
+        else:
+            ke = rf + beta * (rm - rf)
+            return ke
+    except Exception as e:
+        raise e
+
+    
+    
