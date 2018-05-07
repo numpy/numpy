@@ -2342,4 +2342,3 @@ class TestRegression(object):
             structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
             structure[0]['x'] = np.array([2])
             gc.collect()
-
