@@ -3378,6 +3378,19 @@ class TestBinop(object):
             def T(self):
                 return 4
 
+            @property
+            def T(self):
+                raise TypeError('__array_ufunc__ override not successful')
+
+        class InstanceOverrider():
+            # old style class on Python2, will warn and not override
+            def __array_ufunc__(self, ufunc, method, *args, **kwargs):
+                return method
+
+            @property
+            def T(self):
+                return 4
+
         s = np.arange(12).reshape(3,4).view(Solver)
         a = np.arange(11, -1, -1).reshape(3,4).T
         o = Overrider()
@@ -3394,6 +3407,18 @@ class TestBinop(object):
                 assert len(sup.log) == 1
             else:
                 assert_equal(s.solve(o), ('solve', '__call__'))
+                assert len(sup.log) == 0
+
+        i = InstanceOverrider()
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            ISPY2 = sys.version_info[0] < 3
+            if ISPY2:
+                # did not override via __array_ufunc__
+                assert_equal(s.solve(i), (s + 4) / 2.0)
+                assert len(sup.log) == 1
+            else:
+                assert_equal(s.solve(o), '__call__')
                 assert len(sup.log) == 0
 
 class TestTemporaryElide(object):

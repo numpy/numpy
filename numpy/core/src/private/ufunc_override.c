@@ -41,6 +41,12 @@ get_non_default_array_ufunc(PyObject *obj)
         return NULL;
     }
     /* does the class define __array_ufunc__? */
+#if PY_VERSION_HEX < 0x03000000
+    if (Py_TYPE(obj) == &PyInstance_Type) {
+       PyErr_Warn(PyExc_RuntimeWarning,
+                   "cannot lookup __array_ufunc__ on old-style classes");
+    }
+#endif
     cls_array_ufunc = PyArray_LookupSpecial(obj, "__array_ufunc__");
     if (cls_array_ufunc == NULL) {
         return NULL;
