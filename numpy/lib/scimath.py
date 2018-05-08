@@ -31,6 +31,10 @@ __all__ = [
 
 _ln2 = nx.log(2.0)
 
+def _makearray(a):
+    new = asarray(a)
+    wrap = getattr(a, "__array_wrap__", new.__array_wrap__)
+    return new, wrap
 
 def _tocomplex(arr):
     """Convert its input `arr` to a complex array.
@@ -116,10 +120,10 @@ def _fix_real_lt_zero(x):
     array([-1.+0.j,  2.+0.j])
 
     """
-    x = asarray(x)
+    x, wrap = _makearray(x)
     if any(isreal(x) & (x < 0)):
         x = _tocomplex(x)
-    return x
+    return wrap(x)
 
 def _fix_int_lt_zero(x):
     """Convert `x` to double if it has real, negative components.
@@ -142,10 +146,10 @@ def _fix_int_lt_zero(x):
     >>> np.lib.scimath._fix_int_lt_zero([-1,2])
     array([-1.,  2.])
     """
-    x = asarray(x)
+    x, wrap = _makearray(x)
     if any(isreal(x) & (x < 0)):
         x = x * 1.0
-    return x
+    return wrap(x)
 
 def _fix_real_abs_gt_1(x):
     """Convert `x` to complex if it has real components x_i with abs(x_i)>1.
@@ -168,10 +172,10 @@ def _fix_real_abs_gt_1(x):
     >>> np.lib.scimath._fix_real_abs_gt_1([0,2])
     array([ 0.+0.j,  2.+0.j])
     """
-    x = asarray(x)
+    x, wrap = _makearray(x)
     if any(isreal(x) & (abs(x) > 1)):
         x = _tocomplex(x)
-    return x
+    return wrap(x)
 
 def sqrt(x):
     """
