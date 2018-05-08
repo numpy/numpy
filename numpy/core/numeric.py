@@ -71,6 +71,8 @@ class UFuncWrapper(ufunc_wrapper):
             return meth(*args, **kwds)
         wrap.__name__ = meth.__name__
         wrap.__doc__ = meth.__doc__
+        self.__name__ = meth.__name__
+        self.__doc__ = meth.__doc__
         return wrap
 
 
