@@ -5733,7 +5733,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                          /* ob_size */
 #endif
-    "numpy.ufuunc",                              /* tp_name */
+    "numpy.ufunc",                              /* tp_name */
     sizeof(PyUFuncObject),                      /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
@@ -5790,14 +5790,13 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
 
 typedef struct {
     UFUNC_BASE
-    PyObject * func;
-    PyMethodDef func_def;
+    PyObject * class;
 } PyUFuncWrapperObject;
 
 static void
 ufuncwrapper_dealloc(PyUFuncWrapperObject *ufunc)
 {
-    Py_XDECREF(ufunc->func);
+    Py_XDECREF(ufunc->class);
     Py_TYPE(ufunc)->tp_free(ufunc);
 }
 
@@ -5806,8 +5805,8 @@ ufuncwrapper_repr(PyUFuncWrapperObject *ufunc)
 {
     PyObject * name = NULL;
     PyObject * str;
-    if (ufunc->func) {
-        name = PyObject_GetAttrString(ufunc->func, "__name__");
+    if (ufunc->class) {
+        name = PyObject_GetAttrString(ufunc->class, "__name__");
     }
     if (name != NULL) {
         str =  PyUString_FromFormat("<ufunc '%s'>", PyString_AsString(name));
@@ -5819,21 +5818,34 @@ ufuncwrapper_repr(PyUFuncWrapperObject *ufunc)
     return str;
 }
 
+#if 0
 static PyObject * myfunc(PyObject* self, PyObject * a) { return a; };
 
 static PyObject *
 ufuncwrapper_call(PyObject *self, PyObject *args, PyObject *kwargs) {
-    PyObject * meth;
-    if (!PyArg_ParseTuple(args, "O", &meth))
-        return NULL;
-    PyCFunction ml_meth = (PyCFunction)myfunc;
+    /* Not yet working, moved the code to pure python in numeric.py */
+    PyFunctionObject * meth;
+    PyObject *x;
     PyUFuncWrapperObject *s = (PyUFuncWrapperObject*)self;
-    s->func_def.ml_name = "wrapped ufunc";
-    s->func_def.ml_meth = ml_meth;
-    s->func_def.ml_flags = METH_VARARGS | METH_KEYWORDS;
-    s->func_def.ml_doc = "documentation for method";
-    return PyCFunction_New(&s->func_def, args);
+    PyMethodDef methdef;
+    if (!PyArg_ParseTuple(args, "O", &meth)) {
+        return NULL;
+    }
+    if (!PyCallable_Check((PyObject*)meth)) {
+        PyErr_SetString(PyExc_TypeError, "wrapped object must be a bound class method");
+        return NULL;
+    }
+    //methdef.ml_name = PyBytes_AsString(meth->func_name);
+    methdef.ml_name = "wrapped function";
+    methdef.ml_flags = METH_VARARGS | METH_KEYWORDS;
+    methdef.ml_meth = myfunc;
+    methdef.ml_doc = meth->func_doc;
+    x = PyCFunction_New(&methdef, NULL);
+    meth = PyMethod_New(x, s->class);
+    Py_DECREF(s);
+    return meth;
 }
+#endif
 
 static PyObject *ufuncwrapper_new(PyTypeObject *t, PyObject *a, PyObject *k)
 {
@@ -5846,12 +5858,35 @@ static int
 ufuncwrapper_init(PyUFuncWrapperObject * self, PyObject *args, PyObject *kwargs)
 {
     if (!PyArg_ParseTuple(args, "ii", &self->nin, &self->nout))
-        return NULL;
+        return -1;
 
     self->nargs = self->nin + self->nout;
-    self->func = 0;
     return 0;
 }
+
+static PyObject *
+ufunc_check_override(PyObject *self, PyObject *args, PyObject *kwds) {
+    PyUFuncBaseObject *ufunc = (PyUFuncBaseObject*)self;
+    char * method = "__call__";
+    PyObject * result = NULL;
+    int status;
+    status = PyUFunc_CheckOverride(ufunc, method, args, kwds, &result);
+    if (status) {
+        return NULL;
+    }
+    else if (result) {
+        return result;
+    }
+    Py_RETURN_NONE;
+}
+
+static struct PyMethodDef ufuncwrapper_methods[] = {
+    {"check_override",
+        (PyCFunction)ufunc_check_override,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL, NULL, 0, NULL}           /* sentinel */
+};
+
 
 static PyGetSetDef ufuncwrapper_getset[] = {
     {"nin",
@@ -5895,12 +5930,12 @@ NPY_NO_EXPORT PyTypeObject PyUFuncWrapper_Type = {
     0,                                          /* tp_as_sequence */
     0,                                          /* tp_as_mapping */
     0,                                          /* tp_hash */
-    (ternaryfunc)ufuncwrapper_call,             /* tp_call */
+    0,                                          /* tp_call */
     0,                                          /* tp_str */
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    Py_TPFLAGS_DEFAULT |Py_TPFLAGS_BASETYPE,    /* tp_flags */
     0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
@@ -5908,7 +5943,7 @@ NPY_NO_EXPORT PyTypeObject PyUFuncWrapper_Type = {
     0,                                          /* tp_weaklistoffset */
     0,                                          /* tp_iter */
     0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
+    ufuncwrapper_methods,                       /* tp_methods */
     0,                                          /* tp_members */
     ufuncwrapper_getset,                        /* tp_getset */
     0,                                          /* tp_base */

@@ -369,13 +369,36 @@ array_divmod(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 {
-    static PyObject *matmul = NULL;
-
-    npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
-    if (matmul == NULL) {
-        return NULL;
+    static PyObject *matmul=NULL, *wrapper=NULL, *ufunc=NULL, *checker=NULL;
+    PyObject *result=NULL;
+    if (ufunc == NULL) {
+        PyObject *s;
+        npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
+        if (matmul == NULL) {
+            return NULL;
+        }
+        npy_cache_import("numpy.core.umath", "ufunc_wrapper", &wrapper);
+        if (wrapper == NULL) {
+            return NULL;
+        }
+        checker = PyObject_GetAttrString(wrapper, "check_override");
+        if (checker == NULL) {
+            return NULL;
+        }
+        s = Py_BuildValue("ii", 2, 1);
+        ufunc = PyObject_CallObject(wrapper, s);
+        Py_DECREF(s);
+        if (ufunc == NULL) {
+            return NULL;
+        }
     }
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_matrix_multiply, array_matrix_multiply);
+    result = PyObject_CallFunctionObjArgs(checker, ufunc, m1, m2, NULL);
+    if (result && result != Py_None) {
+        return result;
+    }
+    if (PyErr_Occurred())
+        return NULL;
     return PyArray_GenericBinaryFunction(m1, m2, matmul);
 }
 

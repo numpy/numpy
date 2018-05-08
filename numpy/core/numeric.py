@@ -50,6 +50,30 @@ else:
     import __builtin__ as builtins
 
 
+# TODO: rewrite the __call__ in C?
+class UFuncWrapper(ufunc_wrapper):
+    ''' A decorator to wrap ufunc-like class methods and enable the
+        __array_ufunc__ protocol
+
+        Use as
+
+        class MyArray(ndarray):
+            @UFuncWrapper(2, 1) # nin, nout
+            def solve(self, other):
+                ...
+                return result
+    '''
+    def __call__(self, meth):
+        def wrap(obj, *args, **kwds):
+            r = self.check_override(*((self,) + args), **kwds)
+            if r:
+                return r
+            return meth(obj, *args, **kwds)
+        wrap.__name__ = meth.__name__
+        wrap.__doc__ = meth.__doc__
+        return wrap
+
+
 def loads(*args, **kwargs):
     # NumPy 1.15.0, 2017-12-10
     warnings.warn(
@@ -76,7 +100,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError', 'UFuncWrapper']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
