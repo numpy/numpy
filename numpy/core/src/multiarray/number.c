@@ -370,7 +370,8 @@ static PyObject *
 array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 {
     static PyObject *matmul=NULL, *wrapper=NULL, *ufunc=NULL, *checker=NULL;
-    PyObject *result=NULL;
+    PyObject *result = Py_None, *res_tuple;
+    int status;
     if (ufunc == NULL) {
         PyObject *s;
         npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
@@ -393,10 +394,17 @@ array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
         }
     }
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_matrix_multiply, array_matrix_multiply);
-    result = PyObject_CallFunctionObjArgs(checker, ufunc, m1, m2, NULL);
-    if (result && result != Py_None) {
+    res_tuple = PyObject_CallFunctionObjArgs(checker, ufunc, m1, m2, NULL);
+    if (PyArg_ParseTuple(res_tuple, "iO", &status, &result) < 0) {
+        Py_DECREF(res_tuple);
+        return NULL;
+    }
+    if (status > 0) {
+        Py_INCREF(result);
+        Py_DECREF(res_tuple);
         return result;
     }
+    Py_DECREF(res_tuple);
     if (PyErr_Occurred())
         return NULL;
     return PyArray_GenericBinaryFunction(m1, m2, matmul);

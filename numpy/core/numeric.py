@@ -64,11 +64,11 @@ class UFuncWrapper(ufunc_wrapper):
                 return result
     '''
     def __call__(self, meth):
-        def wrap(obj, *args, **kwds):
-            r = self.check_override(*((self,) + args), **kwds)
-            if r:
+        def wrap(*args, **kwds):
+            (status, r) = self.check_override(*args, **kwds)
+            if status > 0:
                 return r
-            return meth(obj, *args, **kwds)
+            return meth(*args, **kwds)
         wrap.__name__ = meth.__name__
         wrap.__doc__ = meth.__doc__
         return wrap

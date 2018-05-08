@@ -5875,9 +5875,9 @@ ufunc_check_override(PyObject *self, PyObject *args, PyObject *kwds) {
         return NULL;
     }
     else if (result) {
-        return result;
+        return Py_BuildValue("iO", 1, result);
     }
-    Py_RETURN_NONE;
+    return Py_BuildValue("iO", 0, Py_None);
 }
 
 static struct PyMethodDef ufuncwrapper_methods[] = {
