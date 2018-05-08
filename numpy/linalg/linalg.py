@@ -107,7 +107,7 @@ def get_linalg_error_extobj(callback):
 
 def _makearray(a):
     new = asarray(a)
-    wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
+    wrap = getattr(a, "__array_wrap__", new.__array_wrap__)
     return new, wrap
 
 def isComplexType(t):
