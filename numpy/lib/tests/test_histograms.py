@@ -660,3 +660,64 @@ class TestHistogramdd(object):
                       range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
         assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
+
+    def test_datetime_simple(self):
+        # 4 consective days with a single
+        # observation each should produce
+        # a resultant histogram
+        # with all ones in the third column and zeros
+        # elsewhere if 4 bins are specified
+
+        # shape of histogram should be (4, 4)
+        # shapes of the edges should be (5,) each
+
+        x = np.arange('today', 4, dtype=np.datetime64)
+        y = np.ones(4, np.float64)
+
+        H, edges = np.histogramdd((x,y), bins=4)
+
+        assert H.shape == (4, 4)
+        assert H[..., 2] == y
+        assert edges[0].shape == (5,)
+        assert edges[1].shape == (5,)
+        # the type check for datetime edge data
+        # happens below; only checking the
+        # type of the observations (y) here
+        assert edges[1].dtype == np.float64
+
+        # the edges will actually have to subdivide
+        # individual days into time values (perhaps
+        # in i.e., microseconds from reference time?)
+        # should be the following multiples of days
+        # for x edges: [0, 0.75, 1.5, 2.25, 3.]
+
+        # NOTE: the decision as to default handling
+        # of the interconversion between datetime
+        # unit types for histogramdd may require
+        # careful consideration; draft only
+
+        # let's say the default casting for bins
+        # happens to be microseconds for the epoch-
+        # standardized units
+
+        epoch_ref = np.datetime64('1970-01-01T00:00:00Z', 'us')
+        day_0 = np.datetime64(x[0], 'us')
+        day_1 = np.datetime64(x[1], 'us')
+
+        us_since_epoch = day_0 - epoch_ref
+
+        # for calculating expected bin edge "timestamps"
+        # note that Issue #4440 means that we
+        # can't cast timedelta values from
+        # floats
+        delta_bin = (day_1 - day_0) * 0.75
+
+        # verify that bin edges contain the correct number
+        # of microseconds since the epoch & that they
+        # have the correct type
+        for edge_index, day_fraction_edge in enumerate(edges[0]):
+            expected_us_since_epoch = us_since_epoch + (delta_bin * edge_index)
+            assert day_fraction_edge == expected_us_since_epoch
+            # NOTE: should probably refine the type check to
+            # the specific units of datetime64?
+            assert isinstance(day_fraction_edge, np.datetime64)
