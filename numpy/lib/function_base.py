@@ -1760,7 +1760,7 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes):
 
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
+    vectorize(pyfunc=None, otypes=None, doc=None, excluded=None, cache=False,
               signature=None)
 
     Generalized function class.
@@ -1777,8 +1777,11 @@ class vectorize(object):
 
     Parameters
     ----------
-    pyfunc : callable
+    pyfunc : callable, optional
         A python function or method.
+
+        .. versionchanged:: 1.14.0
+        Can be omitted to produce a decorator with keyword arguments.
     otypes : str or list of dtypes, optional
         The output data type. It must be specified as either a string of
         typecode characters or a list of data type specifiers. There should
@@ -1810,8 +1813,9 @@ class vectorize(object):
 
     Returns
     -------
-    vectorized : callable
-        Vectorized function.
+    out : callable
+        If pyfunc was provided, the vectorized function.
+        Otherwise, a decorator which takes ``pyfunc`` as its sole argument.
 
     Examples
     --------
@@ -1885,6 +1889,22 @@ class vectorize(object):
            [ 0.,  0.,  1.,  2.,  1.,  0.],
            [ 0.,  0.,  0.,  1.,  2.,  1.]])
 
+    Decorator syntax is supported.  The decorator can be called as
+    a function to provide keyword arguments.
+
+    >>> @np.vectorize
+    ... def identity(x):
+    ...     return x
+    ...
+    >>> @np.vectorize(otypes=[float])
+    ... def as_float(x):
+    ...     return x
+    ...
+    >>> identity([0, 1, 2, 3])
+    array([0, 1, 2, 3])
+    >>> as_float([0, 1, 2, 3])
+    array([0., 1., 2., 3.])
+
     See Also
     --------
     frompyfunc : Takes an arbitrary Python function and returns a ufunc
@@ -1909,6 +1929,26 @@ class vectorize(object):
     .. [1] NumPy Reference, section `Generalized Universal Function API
            <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
+
+    # __new__ is overriden as a clean way to provide decorator-with-keywords
+    # syntax while allowing 'vectorize' to remain as the type of vectorized
+    # functions.
+    def __new__(cls, pyfunc=None, *args, **kwargs):
+
+        def vectorize_decorator(pyfunc):
+            """ ``vectorize`` with presupplied keyword arguments. """
+            # prevent an edge case where None would produce another decorator
+            if not hasattr(pyfunc, '__call__'):
+                raise TypeError('the wrapped object must be callable')
+            return cls(pyfunc, *args, **kwargs)
+
+        # For backwards compatibility, subclasses must not use the overloaded
+        # __new__, as vectorize.__new__ and subclass.__init__ will receive the
+        # same arguments.
+        if cls is vectorize and pyfunc is None:
+            return vectorize_decorator
+        else:
+            return object.__new__(cls)
 
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
