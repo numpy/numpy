@@ -93,12 +93,18 @@ Functions
         the corresponding 1-d loop function in the func array.
 
     :param types:
-        Must be of length (*nin* + *nout*) \* *ntypes*, and it
-        contains the data-types (built-in only) that the corresponding
-        function in the *func* array can deal with.
+        Int8 of length `(nin + nout) * ntypes` It encodes the :ref:`dtype.num`
+        (built-in only) that the corresponding function in the `func` array
+        accepts. For a ufunc with two `ntypes`, one `nin` and one `nout` where
+        the first function accepts and returns `int32` and the second accepts
+        and returns `int64`, `types` would be `\05\05\07\07` since `int32.num`
+        is 5 and `int64.num` is 7.
+
+        :ref:`casting-rules` will be used at runtime to find the first `func` callable
+        by the input/output provided.
 
     :param ntypes:
-        How many different data-type "signatures" the ufunc has implemented.
+        How many different data-type-specific functions the ufunc has implemented.
 
     :param nin:
         The number of inputs to this operation.
