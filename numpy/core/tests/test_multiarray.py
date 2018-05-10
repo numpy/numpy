@@ -3332,11 +3332,18 @@ class TestBinop(object):
         with assert_raises(NotImplementedError):
             a ** 2
 
-    def test_fast_scalar_pow(self):
-        # test for fast exponentiation on arrays
+    def test_pow_array_object_dtype(self):
+        # test pow on arrays of object dtype
         class SomeClass(object):
             def __init__(self, num=None):
                 self.num = num
+
+            # want to ensure a fast pow path is not taken
+            def __mul__(self, other):
+                raise AssertionError('__mul__ should not be called')
+
+            def __div__(self, other):
+                raise AssertionError('__div__ should not be called')
             
             def __pow__(self, exp):
                 return SomeClass(num=self.num ** exp)
@@ -3350,18 +3357,7 @@ class TestBinop(object):
         def pow_for(exp, arr):
             return np.array([x ** exp for x in arr])
 
-        num_arr = np.array(range(1, 10), dtype=np.float64)
         obj_arr = np.array([SomeClass(1), SomeClass(2), SomeClass(3)])
-
-        assert_equal(num_arr ** 0.5, pow_for(0.5, num_arr))
-        assert_equal(num_arr ** 0, pow_for(0, num_arr))
-        assert_equal(num_arr ** 1, pow_for(1, num_arr))
-        assert_equal(num_arr ** -1, pow_for(-1, num_arr))
-        assert_equal(num_arr ** 2, pow_for(2, num_arr))
-
-        # fast pow operations should only be invoked on arrays of numeric dtype
-        with assert_raises(TypeError):
-            np.square(obj_arr)
 
         assert_equal(obj_arr ** 0.5, pow_for(0.5, obj_arr))
         assert_equal(obj_arr ** 0, pow_for(0, obj_arr))
