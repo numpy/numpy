@@ -183,12 +183,19 @@ Those can be useful for precise floating point comparison.
     * NPY_FPE_UNDERFLOW
     * NPY_FPE_INVALID
 
+    Note that :c:func:`npy_get_floatstatus_barrier` is preferable as it prevents
+    agressive compiler optimizations reordering the call relative to
+    the code setting the status, which could lead to incorrect results.
+
     .. versionadded:: 1.9.0
 
 .. c:function:: int npy_get_floatstatus_barrier(char*)
 
     Get floating point status. A pointer to a local variable is passed in to
-    prevent aggresive compiler optimizations from reodering this function call.
+    prevent aggresive compiler optimizations from reodering this function call
+    relative to the code setting the status, which could lead to incorrect
+    results.
+
     Returns a bitmask with following possible flags:
 
     * NPY_FPE_DIVIDEBYZERO
@@ -202,9 +209,13 @@ Those can be useful for precise floating point comparison.
 
     Clears the floating point status. Returns the previous status mask.
 
+    Note that :c:func:`npy_clear_floatstatus_barrier` is preferable as it
+    prevents agressive compiler optimizations reordering the call relative to
+    the code setting the status, which could lead to incorrect results.
+
     .. versionadded:: 1.9.0
 
-.. c:function:: int npy_clear_floatstatus(char*)
+.. c:function:: int npy_clear_floatstatus_barrier(char*)
 
     Clears the floating point status. A pointer to a local variable is passed in to
     prevent aggresive compiler optimizations from reodering this function call.
