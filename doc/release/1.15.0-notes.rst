@@ -20,15 +20,18 @@ New functions
 * ``nanquantile`` function, an interface to ``nanpercentile`` without factors
   of 100
 
-* `np.printoptions`, the context manager which sets print options temporarily
+* `np.printoptions`, a context manager that sets print options temporarily
   for the scope of the ``with`` block::
 
     >>> with np.printoptions(precision=2):
     ...     print(np.array([2.0]) / 3)
     [0.67]
 
-  * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
-    without needing to calculate the histogram.
+* `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
+  without needing to calculate the histogram.
+    
+* `npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier`` have been added to
+  deal with compiler optimization changing the order of operations. See below for details.
 
 Deprecations
 ============
@@ -42,6 +45,7 @@ Deprecations
   * `np.ma.loads`, `np.ma.dumps`
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
+
 * Direct imports from the following modules is deprecated. All testing related
   imports should come from `numpy.testing`.
   * `np.testing.utils`
@@ -55,7 +59,7 @@ Deprecations
   In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
   or the built-in Python `sum` instead.
 
-* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or 
+* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
   ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
   flag set, before the array is deallocated. A deprecation warning will be
   emitted if those calls are not used when needed.
@@ -81,7 +85,7 @@ are some circumstances where nditer doesn't actually give you a view onto the
 writable array. Instead, it gives you a copy, and if you make changes to the
 copy, nditer later writes those changes back into your actual array. Currently,
 this writeback occurs when the array objects are garbage collected, which makes
-this API error-prone on CPython and entirely broken on PyPy. Therefore, 
+this API error-prone on CPython and entirely broken on PyPy. Therefore,
 ``nditer`` should now be used as a context manager whenever using ``nditer``
 with writeable arrays (``with np.nditer(...) as it: ...``). You may also
 explicitly call ``it.close()`` for cases where a context manager is unusable,
@@ -122,6 +126,14 @@ C API changes
 
 * ``NpyIter_Close`` has been added and should be called before
   ``NpyIter_Deallocate`` to resolve possible writeback-enabled arrays.
+
+* Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
+  have been added and should be used in place of the ``npy_get_floatstatus``and
+  ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
+  were rearranging the order of operations when the previous functions were
+  used in the ufunc SIMD functions, resulting in the floatstatus flags being '
+  checked before the operation whose status we wanted to check was run.  
+  See `#10339 <https://github.com/numpy/numpy/issues/10370>`__.
 
 New Features
 ============
