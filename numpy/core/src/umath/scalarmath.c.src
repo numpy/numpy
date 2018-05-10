@@ -848,7 +848,7 @@ static PyObject *
     }
 
 #if @fperr@
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&out);
 #endif
 
     /*
@@ -863,7 +863,7 @@ static PyObject *
 
 #if @fperr@
     /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
+    retstatus = npy_get_floatstatus_barrier((char*)&out);
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
@@ -993,7 +993,7 @@ static PyObject *
         return Py_NotImplemented;
     }
 
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&out);
 
     /*
      * here we do the actual calculation with arg1 and arg2
@@ -1008,7 +1008,7 @@ static PyObject *
     }
 
     /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
+    retstatus = npy_get_floatstatus_barrier((char*)&out);
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
@@ -1072,7 +1072,7 @@ static PyObject *
         return Py_NotImplemented;
     }
 
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&out);
 
     /*
      * here we do the actual calculation with arg1 and arg2
@@ -1136,7 +1136,7 @@ static PyObject *
         return Py_NotImplemented;
     }
 
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&out);
 
     /*
      * here we do the actual calculation with arg1 and arg2
@@ -1150,7 +1150,7 @@ static PyObject *
     }
 
     /* Check status flag.  If it is set, then look up what to do */
-    retstatus = PyUFunc_getfperr();
+    retstatus = npy_get_floatstatus_barrier((char*)&out);
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
