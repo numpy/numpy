@@ -4901,10 +4901,24 @@ cdef class RandomState:
         """
         if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
-        else:
-            arr = np.array(x)
-        self.shuffle(arr)
-        return arr
+            self.shuffle(arr)
+            return arr
+
+        arr = np.asarray(x)
+    
+        # shuffle has fast-path for 1-d
+        if arr.ndim == 1:
+            # must return a copy
+            if arr is x:
+                arr = np.array(arr)
+            self.shuffle(arr)
+            return arr
+
+        # Shuffle index array, dtype to ensure fast path
+        idx = np.arange(arr.shape[0], dtype=np.intp)
+        self.shuffle(idx)
+        return arr[idx]
+        
 
 _rand = RandomState()
 seed = _rand.seed
