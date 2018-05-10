@@ -20,15 +20,18 @@ New functions
 * ``nanquantile`` function, an interface to ``nanpercentile`` without factors
   of 100
 
-* `np.printoptions`, the context manager which sets print options temporarily
+* `np.printoptions`, a context manager that sets print options temporarily
   for the scope of the ``with`` block::
 
     >>> with np.printoptions(precision=2):
     ...     print(np.array([2.0]) / 3)
     [0.67]
 
-  * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
-    without needing to calculate the histogram.
+* `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
+  without needing to calculate the histogram.
+    
+* `npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier`` have been added to
+  deal with compiler optimization changing the order of operations. See below for details.
 
 Deprecations
 ============
@@ -42,6 +45,7 @@ Deprecations
   * `np.ma.loads`, `np.ma.dumps`
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
+
 * Direct imports from the following modules is deprecated. All testing related
   imports should come from `numpy.testing`.
   * `np.testing.utils`
@@ -123,15 +127,13 @@ C API changes
 * ``NpyIter_Close`` has been added and should be called before
   ``NpyIter_Deallocate`` to resolve possible writeback-enabled arrays.
 
-* ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier`` have
-  been added, they should be used instead of ``npy_get_floatstatus`` and
-  ``npy_clear_status`` respectively. Optimizing compilers like GCC 8.1 and
-  Clang rearrange the order of operations when calling a function near SIMD
-  operations. The earlier versions of theses functions were thus moved around,
-  changing the results of ``do simd operation, check floatstatus flags`` to
-  ``check floatstatus flags, simd operation`` leading to wrong results. The new
-  forms of these functions accept a pointer to a local variable, and by
-  assigning to that value within the function prevent the reordering.
+* Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
+  have been added and should be used in place of the ``npy_get_floatstatus``and
+  ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
+  were rearranging the order of operations when the previous functions were
+  used in the ufunc SIMD functions, resulting in the floatstatus flags being '
+  checked before the operation whose status we wanted to check was run.  
+  See `#10339 <https://github.com/numpy/numpy/issues/10370>`__.
 
 New Features
 ============
