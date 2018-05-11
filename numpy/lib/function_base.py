@@ -2328,7 +2328,8 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue,
+             fweights=None, aweights=None):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -2362,6 +2363,18 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
         Has no effect, do not use.
 
         .. deprecated:: 1.10.0
+    fweights : array_like, int, optional
+        1-D array of integer frequency weights; the number of times each
+        observation vector should be repeated.
+
+        .. versionadded:: 1.15
+    aweights : array_like, optional
+        1-D array of observation vector weights. These relative weights are
+        typically large for observations considered "important" and smaller for
+        observations considered less "important". If ``ddof=0`` the array of
+        weights can be used to assign probabilities to observation vectors.
+
+        .. versionadded:: 1.15
 
     Returns
     -------
@@ -2390,7 +2403,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=2)
-    c = cov(x, y, rowvar)
+    c = cov(x, y, rowvar, fweights=fweights, aweights=aweights)
     try:
         d = diag(c)
     except ValueError:

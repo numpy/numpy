@@ -304,5 +304,10 @@ Increased performance in ``random.permutation`` for multidimensional arrays
 ``permutation`` uses the fast path in ``random.shuffle`` for all input
 array dimensions.  Previously the fast path was only used for 1-d arrays.
 
+``corrcoef`` accepts ``fweights`` and ``aweights``
+--------------------------------------------------
+Like ``cov``, ``corrcoef`` now accepts ``fweights`` and ``aweights`` to specify
+frequency and vector weights respectively
+
 Changes
 =======
