@@ -24,9 +24,13 @@ class Random(Benchmark):
 class Shuffle(Benchmark):
     def setup(self):
         self.a = np.arange(100000)
+        self.b = np.random.randn(50000, 2)
 
     def time_100000(self):
         np.random.shuffle(self.a)
+
+    def time_2d(self):
+        np.random.shuffle(self.b)
 
 
 class Randint(Benchmark):
@@ -47,7 +51,7 @@ class Randint_dtype(Benchmark):
         'uint16': 2**15,
         'uint32': 2**31,
         'uint64': 2**63
-        }
+    }
 
     param_names = ['dtype']
     params = ['bool', 'uint8', 'uint16', 'uint32', 'uint64']
@@ -71,12 +75,12 @@ class Permutation(Benchmark):
         self.n = 10000
         self.a_1d = np.random.random_sample(self.n)
         self.a_2d = np.random.random_sample((self.n, 2))
-    
+
     def time_permutation_1d(self):
         np.random.permutation(self.a_1d)
 
     def time_permutation_2d(self):
-        np.random.permutation(self.a_2d)        
+        np.random.permutation(self.a_2d)
 
     def time_permutation_int(self):
         np.random.permutation(self.n)

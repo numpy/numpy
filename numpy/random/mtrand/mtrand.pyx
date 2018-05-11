@@ -727,7 +727,7 @@ cdef class RandomState:
         cdef ndarray state "arrayObject_state"
         state = <ndarray>np.empty(624, np.uint)
         with self.lock:
-            memcpy(<void*>PyArray_DATA(state), <void*>(self.internal_state.key), 624*sizeof(long))
+            string.memcpy(<void*>PyArray_DATA(state), <void*>(self.internal_state.key), 624*sizeof(long))
             has_gauss = self.internal_state.has_gauss
             gauss = self.internal_state.gauss
             pos = self.internal_state.pos
@@ -800,7 +800,7 @@ cdef class RandomState:
         if PyArray_DIM(obj, 0) != 624:
             raise ValueError("state must be 624 longs")
         with self.lock:
-            memcpy(<void*>(self.internal_state.key), <void*>PyArray_DATA(obj), 624*sizeof(long))
+            string.memcpy(<void*>(self.internal_state.key), <void*>PyArray_DATA(obj), 624*sizeof(long))
             self.internal_state.pos = pos
             self.internal_state.has_gauss = has_gauss
             self.internal_state.gauss = cached_gaussian
@@ -4812,9 +4812,10 @@ cdef class RandomState:
 
         """
         cdef:
-            npy_intp i, j, n = len(x), stride, itemsize
+            npy_intp i, j, n = len(x), stride, itemsize, buffer_size
             char* x_ptr
             char* buf_ptr
+            int fast_buffer_copy = 0
 
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
@@ -4838,11 +4839,24 @@ cdef class RandomState:
                 else:
                     self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
         elif isinstance(x, np.ndarray) and x.ndim > 1 and x.size:
-            # Multidimensional ndarrays require a bounce buffer.
+            # Fast path for dense arrays ndarrays
+            if (PyArray_CheckExact(x) and 
+                   PyArray_CHKFLAGS(<ndarray>x, NPY_ARRAY_CARRAY)):
+                # Ensure buffer isn't object to avoid decrementing
+                buf = np.empty(x[0].nbytes, dtype=np.int8)
+                buffer_size = buf.nbytes
+                x_ptr = <char*>PyArray_DATA(<ndarray>x)
+                buf_ptr = <char*>PyArray_DATA(<ndarray>buf)
+                self._shuffle_raw(n, buffer_size, buffer_size, x_ptr, buf_ptr)
+                return
+
+            # Slow path for strided or other formats
+            # General ndarrays require a bounce buffer.
             buf = np.empty_like(x[0])
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
+                    if i == j : continue
                     buf[...] = x[j]
                     x[j] = x[i]
                     x[i] = buf
@@ -4851,6 +4865,7 @@ cdef class RandomState:
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
+                    if i == j : continue
                     x[i], x[j] = x[j], x[i]
 
     cdef inline _shuffle_raw(self, npy_intp n, npy_intp itemsize,

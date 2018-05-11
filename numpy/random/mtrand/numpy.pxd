@@ -106,12 +106,15 @@ cdef extern from "numpy/arrayobject.h":
     dtype PyArray_DescrFromTypeNum(NPY_TYPES type_num)
     object PyArray_SimpleNew(int ndims, npy_intp* dims, NPY_TYPES type_num)
     int PyArray_Check(object obj)
+    int PyArray_CheckExact(object obj)
     object PyArray_ContiguousFromAny(object obj, NPY_TYPES type,
         int mindim, int maxdim)
     object PyArray_ContiguousFromObject(object obj, NPY_TYPES type,
         int mindim, int maxdim)
     npy_intp PyArray_SIZE(ndarray arr)
     npy_intp PyArray_NBYTES(ndarray arr)
+    int PyArray_CHKFLAGS(ndarray arr, int flags)
+
     object PyArray_FromAny(object obj, dtype newtype, int mindim, int maxdim,
                             int requirements, object context)
     object PyArray_FROMANY(object obj, NPY_TYPES type_num, int min,
