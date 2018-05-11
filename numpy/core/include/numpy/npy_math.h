@@ -528,10 +528,13 @@ int npy_clear_floatstatus_barrier(char*);
 int npy_get_floatstatus_barrier(char*);
 /*
  * use caution with these - clang and gcc8.1 are known to reorder calls
- * to this form of the function which can defeat the check
+ * to this form of the function which can defeat the check. The _barrier
+ * form of the call is preferable, where the argument is
+ * (char*)&local_variable
  */
 int npy_clear_floatstatus(void);
 int npy_get_floatstatus(void);
+
 void npy_set_floatstatus_divbyzero(void);
 void npy_set_floatstatus_overflow(void);
 void npy_set_floatstatus_underflow(void);
