@@ -53,9 +53,9 @@ class TestSetOps(object):
         assert_array_equal(b[i2], ef)
                 
         #non1d, unique inputs
-        a = np.array([[2, 4, 5, 6], [7, 8, 2, 15]])
+        a = np.array([[2, 4, 5, 6], [7, 8, 1, 15]])
         b = np.array([[3, 2, 7, 6], [10, 12, 8, 9]])
-        c, i1, i2 = intersect1d(a,b,return_indices=True)
+        c, i1, i2 = intersect1d(a, b, assume_unique=True, return_indices=True)
         ui1 = np.unravel_index(i1, a.shape)
         ui2 = np.unravel_index(i2, b.shape)
         ea = np.array([2, 6, 7, 8])
