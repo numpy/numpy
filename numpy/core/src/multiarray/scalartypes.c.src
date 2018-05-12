@@ -1607,7 +1607,8 @@ static PyGetSetDef gentype_getsets[] = {
 
 /* 0-dim array from scalar object */
 
-static char doc_getarray[] = "sc.__array__(|type) return 0-dim array";
+static char doc_getarray[] = "sc.__array__(dtype) return 0-dim array from "
+                             "scalar with specified dtype";
 
 static PyObject *
 gentype_getarray(PyObject *scalar, PyObject *args)

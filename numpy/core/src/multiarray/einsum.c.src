@@ -591,7 +591,7 @@ finish_after_unrolled_loop:
             accum += @from@(data0[@i@]) * @from@(data1[@i@]);
 /**end repeat2**/
         case 0:
-            *(@type@ *)dataptr[2] += @to@(accum);
+            *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + accum);
             return;
     }
 
@@ -749,7 +749,7 @@ finish_after_unrolled_loop:
             accum += @from@(data1[@i@]);
 /**end repeat2**/
         case 0:
-            *(@type@ *)dataptr[2] += @to@(value0 * accum);
+            *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + value0 * accum);
             return;
     }
 
@@ -848,7 +848,7 @@ finish_after_unrolled_loop:
             accum += @from@(data0[@i@]);
 /**end repeat2**/
         case 0:
-            *(@type@ *)dataptr[2] += @to@(accum * value1);
+            *(@type@ *)dataptr[2] = @to@(@from@(*(@type@ *)dataptr[2]) + accum * value1);
             return;
     }
 

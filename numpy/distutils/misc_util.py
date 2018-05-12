@@ -1218,15 +1218,15 @@ class Configuration(object):
           #. file.txt -> (., file.txt)-> parent/file.txt
           #. foo/file.txt -> (foo, foo/file.txt) -> parent/foo/file.txt
           #. /foo/bar/file.txt -> (., /foo/bar/file.txt) -> parent/file.txt
-          #. *.txt -> parent/a.txt, parent/b.txt
-          #. foo/*.txt -> parent/foo/a.txt, parent/foo/b.txt
-          #. */*.txt -> (*, */*.txt) -> parent/c/a.txt, parent/d/b.txt
+          #. ``*``.txt -> parent/a.txt, parent/b.txt
+          #. foo/``*``.txt`` -> parent/foo/a.txt, parent/foo/b.txt
+          #. ``*/*.txt`` -> (``*``, ``*``/``*``.txt) -> parent/c/a.txt, parent/d/b.txt
           #. (sun, file.txt) -> parent/sun/file.txt
           #. (sun, bar/file.txt) -> parent/sun/file.txt
           #. (sun, /foo/bar/file.txt) -> parent/sun/file.txt
-          #. (sun, *.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun, bar/*.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun/*, */*.txt) -> parent/sun/c/a.txt, parent/d/b.txt
+          #. (sun, ``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun, bar/``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun/``*``, ``*``/``*``.txt) -> parent/sun/c/a.txt, parent/d/b.txt
 
         An additional feature is that the path to a data-file can actually be
         a function that takes no arguments and returns the actual path(s) to

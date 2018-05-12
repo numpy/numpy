@@ -1328,6 +1328,17 @@ class TestMinMax(object):
         assert_equal(d.max(), d[0])
         assert_equal(d.min(), d[0])
 
+    def test_reduce_warns(self):
+        # gh 10370, 11029 Some compilers reorder the call to npy_getfloatstatus
+        # and put it before the call to an intrisic function that causes
+        # invalid status to be set. Also make sure warnings are emitted
+        for n in (2, 4, 8, 16, 32):
+            with suppress_warnings() as sup:
+                sup.record(RuntimeWarning)
+                for r in np.diagflat([np.nan] * n):
+                    assert_equal(np.min(r), np.nan)
+                assert_equal(len(sup.log), n)
+
 
 class TestAbsoluteNegative(object):
     def test_abs_neg_blocked(self):
@@ -1412,6 +1423,57 @@ class TestSpecialMethods(object):
         assert_equal(args[0], a)
         assert_equal(args[1], a)
         assert_equal(i, 0)
+
+    def test_wrap_and_prepare_out(self):
+        # Calling convention for out should not affect how special methods are
+        # called
+
+        class StoreArrayPrepareWrap(np.ndarray):
+            _wrap_args = None
+            _prepare_args = None
+            def __new__(cls):
+                return np.empty(()).view(cls)
+            def __array_wrap__(self, obj, context):
+                self._wrap_args = context[1]
+                return obj
+            def __array_prepare__(self, obj, context):
+                self._prepare_args = context[1]
+                return obj
+            @property
+            def args(self):
+                # We need to ensure these are fetched at the same time, before
+                # any other ufuncs are calld by the assertions
+                return (self._prepare_args, self._wrap_args)
+            def __repr__(self):
+                return "a"  # for short test output
+
+        def do_test(f_call, f_expected):
+            a = StoreArrayPrepareWrap()
+            f_call(a)
+            p, w = a.args
+            expected = f_expected(a)
+            try:
+                assert_equal(p, expected)
+                assert_equal(w, expected)
+            except AssertionError as e:
+                # assert_equal produces truly useless error messages
+                raise AssertionError("\n".join([
+                    "Bad arguments passed in ufunc call",
+                    " expected:              {}".format(expected),
+                    " __array_prepare__ got: {}".format(p),
+                    " __array_wrap__ got:    {}".format(w)
+                ]))
+
+        # method not on the out argument
+        do_test(lambda a: np.add(a, 0),              lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, None),        lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, out=None),    lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, out=(None,)), lambda a: (a, 0))
+
+        # method on the out argument
+        do_test(lambda a: np.add(0, 0, a),           lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=a),       lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=(a,)),    lambda a: (0, 0, a))
 
     def test_wrap_with_iterable(self):
         # test fix for bug #1026:
@@ -1759,7 +1821,7 @@ class TestSpecialMethods(object):
 
         # reduce, kwargs
         res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
-                                 keepdims='keep0')
+                                 keepdims='keep0', initial='init0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
@@ -1767,7 +1829,8 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'dtype':'dtype0',
                               'out': ('out0',),
                               'keepdims': 'keep0',
-                              'axis': 'axis0'})
+                              'axis': 'axis0',
+                              'initial': 'init0'})
 
         # reduce, output equal to None removed, but not other explicit ones,
         # even if they are at their default value.
@@ -1777,6 +1840,14 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'axis': 0, 'keepdims': True})
         res = np.multiply.reduce(a, None, out=(None,), dtype=None)
         assert_equal(res[4], {'axis': None, 'dtype': None})
+        res = np.multiply.reduce(a, 0, None, None, False, 2)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': 2})
+        # np._NoValue ignored for initial.
+        res = np.multiply.reduce(a, 0, None, None, False, np._NoValue)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False})
+        # None kept for initial.
+        res = np.multiply.reduce(a, 0, None, None, False, None)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': None})
 
         # reduce, wrong args
         assert_raises(ValueError, np.multiply.reduce, a, out=())

@@ -23,7 +23,7 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, SkipTest, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings,
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles,
     )
 
 
@@ -467,6 +467,26 @@ class TestSaveTxt(object):
             lines,
             [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
              b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n'])
+
+    def test_complex_negative_exponent(self):
+        # Previous to 1.15, some formats generated x+-yj, gh 7895
+        ncols = 2
+        nrows = 2
+        a = np.zeros((ncols, nrows), dtype=np.complex128)
+        re = np.pi
+        im = np.e
+        a[:] = re - 1.0j * im
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%.3e')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(
+            lines,
+            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n',
+             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
+
+
+        
 
     def test_custom_writer(self):
 
@@ -916,6 +936,26 @@ class TestLoadTxt(LoadTxtBase):
         res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
 
+    def test_complex_misformatted(self):
+        # test for backward compatibility
+        # some complex formats used to generate x+-yj
+        a = np.zeros((2, 2), dtype=np.complex128)
+        re = np.pi
+        im = np.e
+        a[:] = re - 1.0j * im
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%.16e')
+        c.seek(0)
+        txt = c.read()
+        c.seek(0)
+        # misformat the sign on the imaginary part, gh 7895
+        txt_bad = txt.replace(b'e+00-', b'e00+-')
+        assert_(txt_bad != txt)
+        c.write(txt_bad)
+        c.seek(0)
+        res = np.loadtxt(c, dtype=complex)
+        assert_equal(res, a)
+
     def test_universal_newline(self):
         with temppath() as name:
             with open(name, 'w') as f:
@@ -1276,6 +1316,13 @@ M   33  21.99
             test = np.genfromtxt(data, names=True, dtype=None)
             assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test, ctrl)
+
+    def test_names_and_comments_none(self):
+        # Tests case when names is true but comments is None (gh-10780)
+        data = TextIO('col1 col2\n 1 2\n 3 4')
+        test = np.genfromtxt(data, dtype=(int, int), comments=None, names=True)
+        control = np.array([(1, 2), (3, 4)], dtype=[('col1', int), ('col2', int)])
+        assert_equal(test, control)
 
     def test_autonames_and_usecols(self):
         # Tests names and usecols
@@ -2369,14 +2416,5 @@ def test_load_refcount():
     np.savez(f, [1, 2, 3])
     f.seek(0)
 
-    assert_(gc.isenabled())
-    gc.disable()
-    try:
-        gc.collect()
+    with assert_no_gc_cycles():
         np.load(f)
-        # gc.collect returns the number of unreachable objects in cycles that
-        # were found -- we are checking that no cycles were created by np.load
-        n_objects_in_cycles = gc.collect()
-    finally:
-        gc.enable()
-    assert_equal(n_objects_in_cycles, 0)

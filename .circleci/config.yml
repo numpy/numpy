@@ -22,7 +22,7 @@ jobs:
             . venv/bin/activate
             pip install cython sphinx matplotlib
             sudo apt-get update
-            sudo apt-get install -y graphviz
+            sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
 
       - run:
           name: build numpy
@@ -31,6 +31,7 @@ jobs:
             pip install --upgrade pip setuptools
             pip install cython
             pip install .
+            pip install scipy
 
       - run:
           name: build devdocs

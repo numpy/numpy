@@ -253,7 +253,7 @@ class TestHistogram(object):
         one_nan = np.array([0, 1, np.nan])
         all_nan = np.array([np.nan, np.nan])
 
-        # the internal commparisons with NaN give warnings
+        # the internal comparisons with NaN give warnings
         sup = suppress_warnings()
         sup.filter(RuntimeWarning)
         with sup:

@@ -420,36 +420,42 @@ defdict = {
           docstrings.get('numpy.core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'greater_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'not_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'logical_and':
     Ufunc(2, 1, One,
@@ -902,8 +908,8 @@ if sys.version_info[0] >= 3:
     del defdict['divide']
 
 def indent(st, spaces):
-    indention = ' '*spaces
-    indented = indention + st.replace('\n', '\n'+indention)
+    indentation = ' '*spaces
+    indented = indentation + st.replace('\n', '\n'+indentation)
     # trim off any trailing spaces
     indented = re.sub(r' +$', r'', indented)
     return indented

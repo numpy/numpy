@@ -311,6 +311,9 @@ class TestConcatenator(object):
         assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
 
     def test_matrix(self):
+        # Test consistency with unmasked version.  If we ever deprecate
+        # matrix, this test should either still pass, or both actual and
+        # expected should fail to be build.
         actual = mr_['r', 1, 2, 3]
         expected = np.ma.array(np.r_['r', 1, 2, 3])
         assert_array_equal(actual, expected)

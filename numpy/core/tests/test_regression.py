@@ -2325,13 +2325,10 @@ class TestRegression(object):
 
     def test_void_item_memview(self):
         va = np.zeros(10, 'V4')
-        # for now, there is just a futurewarning
-        assert_warns(FutureWarning, va[:1].item)
-        # in the future, test we got a bytes copy:
-        #x = va[:1].item()
-        #va[0] = b'\xff\xff\xff\xff'
-        #del va
-        #assert_equal(x, b'\x00\x00\x00\x00')
+        x = va[:1].item()
+        va[0] = b'\xff\xff\xff\xff'
+        del va
+        assert_equal(x, b'\x00\x00\x00\x00')
 
     def test_structarray_title(self):
         # The following used to segfault on pypy, due to NPY_TITLE_KEY

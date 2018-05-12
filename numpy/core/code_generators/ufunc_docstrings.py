@@ -1077,8 +1077,9 @@ add_newdoc('numpy.core.umath', 'equal',
 
     Returns
     -------
-    out : ndarray or bool
-        Output array of bools.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1415,8 +1416,9 @@ add_newdoc('numpy.core.umath', 'greater',
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
         $OUT_SCALAR_2
 
 
@@ -1453,7 +1455,8 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     Returns
     -------
     out : bool or ndarray of bool
-        Array of bools.
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1820,8 +1823,9 @@ add_newdoc('numpy.core.umath', 'less',
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1849,8 +1853,9 @@ add_newdoc('numpy.core.umath', 'less_equal',
 
     Returns
     -------
-    out : bool or ndarray of bool
-        Array of bools.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -2668,11 +2673,10 @@ add_newdoc('numpy.core.umath', 'not_equal',
 
     Returns
     -------
-    not_equal : ndarray bool, scalar bool
-        For each element in `x1, x2`, return True if `x1` is not equal
-        to `x2` and False otherwise.
+    out : ndarray or scalar
+        Output array, element-wise comparison of `x1` and `x2`.
+        Typically of type bool, unless ``dtype=object`` is passed.
         $OUT_SCALAR_2
-
 
     See Also
     --------
@@ -3740,7 +3744,7 @@ add_newdoc('numpy.core.umath', 'ldexp',
 
 add_newdoc('numpy.core.umath', 'gcd',
     """
-    Returns the greatest common divisor of |x1| and |x2|
+    Returns the greatest common divisor of ``|x1|`` and ``|x2|``
 
     Parameters
     ----------
@@ -3770,7 +3774,7 @@ add_newdoc('numpy.core.umath', 'gcd',
 
 add_newdoc('numpy.core.umath', 'lcm',
     """
-    Returns the lowest common multiple of |x1| and |x2|
+    Returns the lowest common multiple of ``|x1|`` and ``|x2|``
 
     Parameters
     ----------

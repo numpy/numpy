@@ -34,7 +34,7 @@ from numpy.testing import (
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
     SkipTest, temppath, suppress_warnings
     )
-from ._locales import CommaDecimalPointLocale
+from numpy.core.tests._locales import CommaDecimalPointLocale
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -6204,7 +6204,10 @@ class TestPEP3118Dtype(object):
         self._check('i', 'i')
         self._check('i:f0:', [('f0', 'i')])
 
+
 class TestNewBufferProtocol(object):
+    """ Test PEP3118 buffers """
+
     def _check_roundtrip(self, obj):
         obj = np.asarray(obj)
         x = memoryview(obj)
@@ -6514,6 +6517,35 @@ class TestNewBufferProtocol(object):
         arr = np.empty(1, dt)
         with assert_raises(ValueError):
             memoryview(arr)
+
+    def test_max_dims(self):
+        a = np.empty((1,) * 32)
+        self._check_roundtrip(a)
+
+    def test_error_too_many_dims(self):
+        def make_ctype(shape, scalar_type):
+            t = scalar_type
+            for dim in shape[::-1]:
+                t = dim * t
+            return t
+
+        # construct a memoryview with 33 dimensions
+        c_u8_33d = make_ctype((1,)*33, ctypes.c_uint8)
+        m = memoryview(c_u8_33d())
+        assert_equal(m.ndim, 33)
+
+        assert_raises_regex(
+            RuntimeError, "ndim",
+            np.array, m)
+
+    def test_error_pointer_type(self):
+        # gh-6741
+        m = memoryview(ctypes.pointer(ctypes.c_uint8()))
+        assert_('&' in m.format)
+
+        assert_raises_regex(
+            ValueError, "format string",
+            np.array, m)
 
 
 class TestArrayAttributeDeletion(object):
@@ -7246,17 +7278,52 @@ class TestWritebackIfCopy(object):
 
     def test_view_assign(self):
         from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_resolve
+
         arr = np.arange(9).reshape(3, 3).T
         arr_wb = npy_create_writebackifcopy(arr)
         assert_(arr_wb.flags.writebackifcopy)
         assert_(arr_wb.base is arr)
-        arr_wb[:] = -100
+        arr_wb[...] = -100
         npy_resolve(arr_wb)
+        # arr changes after resolve, even though we assigned to arr_wb
         assert_equal(arr, -100)
         # after resolve, the two arrays no longer reference each other
-        assert_(not arr_wb.ctypes.data == 0)
-        arr_wb[:] = 100
+        assert_(arr_wb.ctypes.data != 0)
+        assert_equal(arr_wb.base, None)
+        # assigning to arr_wb does not get transferred to arr
+        arr_wb[...] = 100
         assert_equal(arr, -100)
+
+    def test_dealloc_warning(self):
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            arr = np.arange(9).reshape(3, 3)
+            v = arr.T
+            _multiarray_tests.npy_abuse_writebackifcopy(v)
+            assert len(sup.log) == 1
+
+    def test_view_discard_refcount(self):
+        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_discard
+
+        arr = np.arange(9).reshape(3, 3).T
+        orig = arr.copy()
+        if HAS_REFCOUNT:
+            arr_cnt = sys.getrefcount(arr)
+        arr_wb = npy_create_writebackifcopy(arr)
+        assert_(arr_wb.flags.writebackifcopy)
+        assert_(arr_wb.base is arr)
+        arr_wb[...] = -100
+        npy_discard(arr_wb)
+        # arr remains unchanged after discard
+        assert_equal(arr, orig)
+        # after discard, the two arrays no longer reference each other
+        assert_(arr_wb.ctypes.data != 0)
+        assert_equal(arr_wb.base, None)
+        if HAS_REFCOUNT:
+            assert_equal(arr_cnt, sys.getrefcount(arr))
+        # assigning to arr_wb does not get transferred to arr
+        arr_wb[...] = 100
+        assert_equal(arr, orig)
 
 
 class TestArange(object):

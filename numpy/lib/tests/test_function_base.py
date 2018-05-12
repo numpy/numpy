@@ -104,9 +104,10 @@ class TestRot90(object):
 class TestFlip(object):
 
     def test_axes(self):
-        assert_raises(ValueError, np.flip, np.ones(4), axis=1)
-        assert_raises(ValueError, np.flip, np.ones((4, 4)), axis=2)
-        assert_raises(ValueError, np.flip, np.ones((4, 4)), axis=-3)
+        assert_raises(np.AxisError, np.flip, np.ones(4), axis=1)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=2)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=-3)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=(0, 3))
 
     def test_basic_lr(self):
         a = get_mat(4)
@@ -172,6 +173,35 @@ class TestFlip(object):
         for i in range(a.ndim):
             assert_equal(np.flip(a, i),
                          np.flipud(a.swapaxes(0, i)).swapaxes(i, 0))
+
+    def test_default_axis(self):
+        a = np.array([[1, 2, 3],
+                      [4, 5, 6]])
+        b = np.array([[6, 5, 4],
+                      [3, 2, 1]])
+        assert_equal(np.flip(a), b)
+
+    def test_multiple_axes(self):
+        a = np.array([[[0, 1],
+                       [2, 3]],
+                      [[4, 5],
+                       [6, 7]]])
+
+        assert_equal(np.flip(a, axis=()), a)
+
+        b = np.array([[[5, 4],
+                       [7, 6]],
+                      [[1, 0],
+                       [3, 2]]])
+
+        assert_equal(np.flip(a, axis=(0, 2)), b)
+
+        c = np.array([[[3, 2],
+                       [1, 0]],
+                      [[7, 6],
+                       [5, 4]]])
+
+        assert_equal(np.flip(a, axis=(1, 2)), c)
 
 
 class TestAny(object):
@@ -1495,9 +1525,9 @@ class TestDigitize(object):
 class TestUnwrap(object):
 
     def test_simple(self):
-        # check that unwrap removes jumps greather that 2*pi
+        # check that unwrap removes jumps greater that 2*pi
         assert_array_equal(unwrap([1, 1 + 2 * np.pi]), [1, 1])
-        # check that unwrap maintans continuity
+        # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
 
 
@@ -2717,6 +2747,28 @@ class TestPercentile(object):
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.percentile(
                 a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
+
+
+class TestQuantile(object):
+    # most of this is already tested by TestPercentile
+
+    def test_basic(self):
+        x = np.arange(8) * 0.5
+        assert_equal(np.quantile(x, 0), 0.)
+        assert_equal(np.quantile(x, 1), 3.5)
+        assert_equal(np.quantile(x, 0.5), 1.75)
+
+    def test_no_p_overwrite(self):
+        # this is worth retesting, because quantile does not make a copy
+        p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
+        p = p0.copy()
+        np.quantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
+
+        p0 = p0.tolist()
+        p = p.tolist()
+        np.quantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
 
 
 class TestMedian(object):

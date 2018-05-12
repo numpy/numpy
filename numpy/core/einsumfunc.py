@@ -1148,7 +1148,7 @@ def einsum(*operands, **kwargs):
             # Do the contraction
             new_view = c_einsum(einsum_str, *tmp_operands, **einsum_kwargs)
 
-        # Append new items and derefernce what we can
+        # Append new items and dereference what we can
         operands.append(new_view)
         del tmp_operands, new_view
 

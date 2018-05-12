@@ -54,7 +54,8 @@ __all__ = [
     'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'quantile'
     ]
 
 
@@ -145,7 +146,7 @@ def rot90(m, k=1, axes=(0,1)):
         return flip(transpose(m, axes_list), axes[1])
 
 
-def flip(m, axis):
+def flip(m, axis=None):
     """
     Reverse the order of elements in an array along the given axis.
 
@@ -157,9 +158,16 @@ def flip(m, axis):
     ----------
     m : array_like
         Input array.
-    axis : integer
-        Axis in array, which entries are reversed.
+    axis : None or int or tuple of ints, optional
+         Axis or axes along which to flip over. The default,
+         axis=None, will flip over all of the axes of the input array.
+         If axis is negative it counts from the last to the first axis.
 
+         If axis is a tuple of ints, flipping is performed on all of the axes
+         specified in the tuple.
+
+         .. versionchanged:: 1.15.0
+            None and tuples of axes are supported
 
     Returns
     -------
@@ -175,8 +183,16 @@ def flip(m, axis):
     Notes
     -----
     flip(m, 0) is equivalent to flipud(m).
+
     flip(m, 1) is equivalent to fliplr(m).
+
     flip(m, n) corresponds to ``m[...,::-1,...]`` with ``::-1`` at position n.
+
+    flip(m) corresponds to ``m[::-1,::-1,...,::-1]`` with ``::-1`` at all
+    positions.
+
+    flip(m, (0, 1)) corresponds to ``m[::-1,::-1,...]`` with ``::-1`` at
+    position 0 and position 1.
 
     Examples
     --------
@@ -186,32 +202,41 @@ def flip(m, axis):
             [2, 3]],
            [[4, 5],
             [6, 7]]])
-
     >>> flip(A, 0)
     array([[[4, 5],
             [6, 7]],
            [[0, 1],
             [2, 3]]])
-
     >>> flip(A, 1)
     array([[[2, 3],
             [0, 1]],
            [[6, 7],
             [4, 5]]])
-
+    >>> np.flip(A)
+    array([[[7, 6],
+            [5, 4]],
+           [[3, 2],
+            [1, 0]]])
+    >>> np.flip(A, (0, 2))
+    array([[[5, 4],
+            [7, 6]],
+           [[1, 0],
+            [3, 2]]])
     >>> A = np.random.randn(3,4,5)
     >>> np.all(flip(A,2) == A[:,:,::-1,...])
     True
     """
     if not hasattr(m, 'ndim'):
         m = asarray(m)
-    indexer = [slice(None)] * m.ndim
-    try:
-        indexer[axis] = slice(None, None, -1)
-    except IndexError:
-        raise ValueError("axis=%i is invalid for the %i-dimensional input array"
-                         % (axis, m.ndim))
-    return m[tuple(indexer)]
+    if axis is None:
+        indexer = (np.s_[::-1],) * m.ndim
+    else:
+        axis = _nx.normalize_axis_tuple(axis, m.ndim)
+        indexer = [np.s_[:]] * m.ndim
+        for ax in axis:
+            indexer[ax] = np.s_[::-1]
+        indexer = tuple(indexer)
+    return m[indexer]
 
 
 def iterable(y):
@@ -1608,9 +1633,9 @@ def disp(mesg, device=None, linefeed=True):
     Besides ``sys.stdout``, a file-like object can also be used as it has
     both required methods:
 
-    >>> from StringIO import StringIO
+    >>> from io import StringIO
     >>> buf = StringIO()
-    >>> np.disp('"Display" in a file', device=buf)
+    >>> np.disp(u'"Display" in a file', device=buf)
     >>> buf.getvalue()
     '"Display" in a file\\n'
 
@@ -3400,17 +3425,19 @@ def percentile(a, q, axis=None, out=None,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
+
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
         This optional parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
+        use when the desired percentile lies between two data points
         ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+
+        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * 'lower': ``i``.
+        * 'higher': ``j``.
+        * 'nearest': ``i`` or ``j``, whichever is nearest.
+        * 'midpoint': ``(i + j) / 2``.
 
         .. versionadded:: 1.9.0
     keepdims : bool, optional
@@ -3437,6 +3464,7 @@ def percentile(a, q, axis=None, out=None,
     mean
     median : equivalent to ``percentile(..., 50)``
     nanpercentile
+    quantile : equivalent to percentile, except with q in the range [0, 1].
 
     Notes
     -----
@@ -3479,18 +3507,19 @@ def percentile(a, q, axis=None, out=None,
 
     The different types of interpolation can be visualized graphically:
 
-    ..plot::
+    .. plot::
+
         import matplotlib.pyplot as plt
 
         a = np.arange(4)
         p = np.linspace(0, 100, 6001)
         ax = plt.gca()
         lines = [
-            ('linear', None)
-            ('higher', '--')
-            ('lower', '--')
-            ('nearest', '-.')
-            ('midpoint', '-.')
+            ('linear', None),
+            ('higher', '--'),
+            ('lower', '--'),
+            ('nearest', '-.'),
+            ('midpoint', '-.'),
         ]
         for interpolation, style in lines:
             ax.plot(
@@ -3508,6 +3537,110 @@ def percentile(a, q, axis=None, out=None,
     q = np.true_divide(q, 100.0)  # handles the asarray for us too
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+    return _quantile_unchecked(
+        a, q, axis, out, overwrite_input, interpolation, keepdims)
+
+
+def quantile(a, q, axis=None, out=None,
+             overwrite_input=False, interpolation='linear', keepdims=False):
+    """
+    Compute the `q`th quantile of the data along the specified axis.
+    ..versionadded:: 1.15.0
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    q : array_like of float
+        Quantile or sequence of quantiles to compute, which must be between
+        0 and 1 inclusive.
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the quantiles are computed. The
+        default is to compute the quantile(s) along a flattened
+        version of the array.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+        If True, then allow the input array `a` to be modified by intermediate
+        calculations, to save memory. In this case, the contents of the input
+        `a` after this function completes is undefined.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to
+        use when the desired quantile lies between two data points
+        ``i < j``:
+            * linear: ``i + (j - i) * fraction``, where ``fraction``
+              is the fractional part of the index surrounded by ``i``
+              and ``j``.
+            * lower: ``i``.
+            * higher: ``j``.
+            * nearest: ``i`` or ``j``, whichever is nearest.
+            * midpoint: ``(i + j) / 2``.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
+
+    Returns
+    -------
+    quantile : scalar or ndarray
+        If `q` is a single quantile and `axis=None`, then the result
+        is a scalar. If multiple quantiles are given, first axis of
+        the result corresponds to the quantiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    See Also
+    --------
+    mean
+    percentile : equivalent to quantile, but with q in the range [0, 100].
+    median : equivalent to ``quantile(..., 0.5)``
+    nanquantile
+
+    Notes
+    -----
+    Given a vector ``V`` of length ``N``, the ``q``-th quantile of
+    ``V`` is the value ``q`` of the way from the minimum to the
+    maximum in a sorted copy of ``V``. The values and distances of
+    the two nearest neighbors as well as the `interpolation` parameter
+    will determine the quantile if the normalized ranking does not
+    match the location of ``q`` exactly. This function is the same as
+    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
+    same as the maximum if ``q=1.0``.
+
+    Examples
+    --------
+    >>> a = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
+    >>> np.quantile(a, 0.5)
+    3.5
+    >>> np.quantile(a, 0.5, axis=0)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> np.quantile(a, 0.5, axis=1)
+    array([ 7.,  2.])
+    >>> np.quantile(a, 0.5, axis=1, keepdims=True)
+    array([[ 7.],
+           [ 2.]])
+    >>> m = np.quantile(a, 0.5, axis=0)
+    >>> out = np.zeros_like(m)
+    >>> np.quantile(a, 0.5, axis=0, out=out)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> m
+    array([[ 6.5,  4.5,  2.5]])
+    >>> b = a.copy()
+    >>> np.quantile(b, 0.5, axis=1, overwrite_input=True)
+    array([ 7.,  2.])
+    >>> assert not np.all(a == b)
+    """
+    q = np.asanyarray(q)
+    if not _quantile_is_valid(q):
+        raise ValueError("Quantiles must be in the range [0, 1]")
     return _quantile_unchecked(
         a, q, axis, out, overwrite_input, interpolation, keepdims)
 

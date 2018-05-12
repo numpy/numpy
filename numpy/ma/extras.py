@@ -1465,9 +1465,14 @@ class MAxisConcatenator(AxisConcatenator):
     """
     concatenate = staticmethod(concatenate)
 
-    @staticmethod
-    def makemat(arr):
-        return array(arr.data.view(np.matrix), mask=arr.mask)
+    @classmethod
+    def makemat(cls, arr):
+        # There used to be a view as np.matrix here, but we may eventually
+        # deprecate that class. In preparation, we use the unmasked version
+        # to construct the matrix (with copy=False for backwards compatibility
+        # with the .view)
+        data = super(MAxisConcatenator, cls).makemat(arr.data, copy=False)
+        return array(data, mask=arr.mask)
 
     def __getitem__(self, key):
         # matrix builder syntax, like 'a, b; c, d'

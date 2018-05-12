@@ -385,6 +385,7 @@ def get_info(name, notfound_action=0):
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
+          'accelerate': accelerate_info,      # use blas_opt instead
           'x11': x11_info,
           'fft_opt': fft_opt_info,
           'fftw': fftw_info,
@@ -1551,39 +1552,10 @@ class lapack_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas')
 
-        if sys.platform == 'darwin' \
-                and not os.getenv('_PYTHON_HOST_PLATFORM', None) \
-                and not (atlas_info or openblas_info or
-                                             lapack_mkl_info):
-            # Use the system lapack from Accelerate or vecLib under OSX
-            args = []
-            link_args = []
-            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
-               'x86_64' in get_platform() or \
-               'i386' in platform.platform():
-                intel = 1
-            else:
-                intel = 0
-            if os.path.exists('/System/Library/Frameworks'
-                              '/Accelerate.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
-            elif os.path.exists('/System/Library/Frameworks'
-                                '/vecLib.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
-            if args:
-                self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3),
-                                             ('HAVE_CBLAS', None)])
-                return
+        accelerate_info = get_info('accelerate')
+        if accelerate_info and not atlas_info:
+            self.set_info(**accelerate_info)
+            return
 
         need_lapack = 0
         need_blas = 0
@@ -1659,43 +1631,10 @@ class blas_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin' \
-                and not os.getenv('_PYTHON_HOST_PLATFORM', None) \
-                and not (atlas_info or openblas_info or
-                                             blas_mkl_info or blis_info):
-            # Use the system BLAS from Accelerate or vecLib under OSX
-            args = []
-            link_args = []
-            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
-               'x86_64' in get_platform() or \
-               'i386' in platform.platform():
-                intel = 1
-            else:
-                intel = 0
-            if os.path.exists('/System/Library/Frameworks'
-                              '/Accelerate.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
-            elif os.path.exists('/System/Library/Frameworks'
-                                '/vecLib.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
-            if args:
-                self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3),
-                                             ('HAVE_CBLAS', None)])
-                return
+        accelerate_info = get_info('accelerate')
+        if accelerate_info and not atlas_info:
+            self.set_info(**accelerate_info)
+            return
 
         need_blas = 0
         info = {}
@@ -1882,7 +1821,7 @@ class openblas_lapack_info(openblas_info):
         c = customized_ccompiler()
 
         tmpdir = tempfile.mkdtemp()
-        s = """void zungqr();
+        s = """void zungqr_();
         int main(int argc, const char *argv[])
         {
             zungqr_();
@@ -1939,6 +1878,58 @@ class blis_info(blas_info):
                     include_dirs=incl_dirs)
         self.set_info(**info)
 
+class accelerate_info(system_info):
+    section = 'accelerate'
+    notfounderror = BlasNotFoundError
+
+    def calc_info(self):
+        # Make possible to enable/disable from config file/env var
+        libraries = os.environ.get('ACCELERATE')
+        if libraries:
+            libraries = [libraries]
+        else:
+            libraries = self.get_libs('libraries', ['accelerate', 'veclib'])
+        libraries = [lib.strip().lower() for lib in libraries]
+
+        if (sys.platform == 'darwin' and
+                not os.getenv('_PYTHON_HOST_PLATFORM', None)):
+            # Use the system BLAS from Accelerate or vecLib under OSX
+            args = []
+            link_args = []
+            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+               'x86_64' in get_platform() or \
+               'i386' in platform.platform():
+                intel = 1
+            else:
+                intel = 0
+            if (os.path.exists('/System/Library/Frameworks'
+                              '/Accelerate.framework/') and
+                    'accelerate' in libraries):
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
+                args.extend([
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
+                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
+            elif (os.path.exists('/System/Library/Frameworks'
+                                 '/vecLib.framework/') and
+                      'veclib' in libraries):
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
+                args.extend([
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
+                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
+
+            if args:
+                self.set_info(extra_compile_args=args,
+                              extra_link_args=link_args,
+                              define_macros=[('NO_ATLAS_INFO', 3),
+                                             ('HAVE_CBLAS', None)])
+
+        return
 
 class blas_src_info(system_info):
     section = 'blas_src'
