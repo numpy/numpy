@@ -29,12 +29,12 @@ Building NumPy requires the following software installed:
 
 2) Cython >= 0.19 (for development versions of numpy, not for released
                    versions)
-3) nose__ (optional) 1.0 or later
+3) pytest__ (optional) 1.15 or later
 
    This is required for testing numpy, but not for using it.
 
-Python__ https://www.python.org
-nose__ https://nose.readthedocs.io
+Python__ http://www.python.org
+pytest__ http://pytest.readthedocs.io
 
 
 .. note:: 
