@@ -4201,7 +4201,7 @@ doubletype_print(PyObject *o, FILE *fp, int flags)
         return -1;
     }
 
-    ret = PyObject_Print(to_print, fp, flags);
+    ret = PyObject_Print(to_print, fp, Py_PRINT_RAW);
     Py_DECREF(to_print);
     return ret;
 }
