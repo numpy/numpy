@@ -327,6 +327,13 @@ advanced usage and will not typically be used.
     multiple outputs is deprecated, and will raise a warning in numpy 1.10,
     and an error in a future release.
 
+    If 'out' is None (the default), a uninitialized return array is created.
+    The output array is then filled with the results of the ufunc in the places
+    that the broadcast 'where' is True. If 'where' is the scalar True (the
+    default), then this corresponds to the entire output being filled.
+    Note that outputs not explicitly filled are left with their
+    uninitialized values.
+
 *where*
 
     .. versionadded:: 1.7
