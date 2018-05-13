@@ -1,4 +1,7 @@
 """
+
+.. _binary-serialization:
+
 Binary Serialization
 ====================
 
