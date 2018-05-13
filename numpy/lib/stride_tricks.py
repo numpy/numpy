@@ -112,17 +112,17 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
 def sliding_window_view(x, shape, subok=False, readonly=True):
     """
-    Create sliding window views of the N dimensions array with the given window
+    Creates sliding window views of the N dimensional array with the given window
     shape. Window slides across each dimension of `x` and extract subsets of `x`
     at any window position.
 
     Parameters
     ----------
-    x : ndarray
-        Array to create sliding window views.
+    x : array_like
+        Array to create sliding window views of.
 
     shape : sequence of int
-        The shape of the window. Must have same length as number of input array dimensions.
+        The shape of the window. Must have same length as the number of input array dimensions.
 
     subok : bool, optional
         If True, then sub-classes will be passed-through, otherwise the returned
@@ -135,7 +135,7 @@ def sliding_window_view(x, shape, subok=False, readonly=True):
     Returns
     -------
     view : ndarray
-        Sliding window views (or copies) of `x`. view.shape = x.shape - shape  + 1
+        Sliding window views (or copies) of `x`. view.shape = x.shape - shape + 1
 
     See also
     --------
@@ -146,13 +146,13 @@ def sliding_window_view(x, shape, subok=False, readonly=True):
     -----
     ``sliding_window_view`` create sliding window views of the N dimensions array
     with the given window shape and its implementation based on ``as_strided``.
-    Please note that if readonly set to True, the return is views, not copies
-    of array. In this case, write operations could be unpredictable, so the return
-    views is readonly. Bear in mind, return copies (readonly=False), could possibly
-    take memory multiple amount of origin array, due to overlapping windows.
+    Please note that if readonly set to True, views are returned, not copies
+    of array. In this case, write operations could be unpredictable, so the returned
+    views are readonly. Bear in mind that returned copies (readonly=False) will
+    take more memory than the original array, due to overlapping windows.
 
     For some cases there may be more efficient approaches to calculate transformations
-    across multi-dimensional arrays, for instance scipy.signal.fftconvolve, where combining
+    across multi-dimensional arrays, for instance `scipy.signal.fftconvolve`, where combining
     the iterating step with the calculation itself while storing partial results can result
     in significant speedups.
 
