@@ -479,7 +479,7 @@ def test_long_str():
 
 @pytest.mark.slow
 def test_memmap_roundtrip():
-    # Fixme: test crashes nose on windows.
+    # Fixme: used to crash on windows
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
         for arr in basic_arrays + record_arrays:
             if arr.dtype.hasobject:
