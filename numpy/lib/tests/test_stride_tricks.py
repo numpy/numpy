@@ -419,6 +419,7 @@ def test_sliding_window_view():
                           [[11, 12, 13], [21, 22, 23]]],
                          [[[20, 21, 22], [30, 31, 32]],
                           [[21, 22, 23], [31, 32, 33]]]])
+    assert_array_equal(arr_view, expected)
 
 
 def as_strided_writeable():
