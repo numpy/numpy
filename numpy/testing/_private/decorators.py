@@ -34,7 +34,7 @@ def slow(t):
 
     The exact definition of a slow test is obviously both subjective and
     hardware-dependent, but in general any individual test that requires more
-    than a second or two should be labeled as slow (the whole suite consits of
+    than a second or two should be labeled as slow (the whole suite consists of
     thousands of tests, so even a second is significant).
 
     Parameters

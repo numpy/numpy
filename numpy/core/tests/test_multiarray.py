@@ -34,7 +34,7 @@ from numpy.testing import (
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
     SkipTest, temppath, suppress_warnings
     )
-from ._locales import CommaDecimalPointLocale
+from numpy.core.tests._locales import CommaDecimalPointLocale
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -7290,7 +7290,7 @@ class TestWritebackIfCopy(object):
         # after resolve, the two arrays no longer reference each other
         assert_(arr_wb.ctypes.data != 0)
         assert_equal(arr_wb.base, None)
-        # assigning to arr_wb does not get transfered to arr
+        # assigning to arr_wb does not get transferred to arr
         arr_wb[...] = 100
         assert_equal(arr, -100)
 
@@ -7321,7 +7321,7 @@ class TestWritebackIfCopy(object):
         assert_equal(arr_wb.base, None)
         if HAS_REFCOUNT:
             assert_equal(arr_cnt, sys.getrefcount(arr))
-        # assigning to arr_wb does not get transfered to arr
+        # assigning to arr_wb does not get transferred to arr
         arr_wb[...] = 100
         assert_equal(arr, orig)
 

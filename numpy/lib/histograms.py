@@ -877,12 +877,6 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         # bins is an integer
         bins = D*[bins]
 
-    # avoid rounding issues for comparisons when dealing with inexact types
-    if np.issubdtype(sample.dtype, np.inexact):
-        edge_dt = sample.dtype
-    else:
-        edge_dt = float
-
     # normalize the range argument
     if range is None:
         range = (None,) * D
@@ -896,13 +890,12 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
             smin, smax = _get_outer_edges(sample[:,i], range[i])
-            edges[i] = np.linspace(smin, smax, bins[i] + 1, dtype=edge_dt)
+            edges[i] = np.linspace(smin, smax, bins[i] + 1)
         elif np.ndim(bins[i]) == 1:
-            edges[i] = np.asarray(bins[i], edge_dt)
-            # not just monotonic, due to the use of mindiff below
-            if np.any(edges[i][:-1] >= edges[i][1:]):
+            edges[i] = np.asarray(bins[i])
+            if np.any(edges[i][:-1] > edges[i][1:]):
                 raise ValueError(
-                    '`bins[{}]` must be strictly increasing, when an array'
+                    '`bins[{}]` must be monotonically increasing, when an array'
                     .format(i))
         else:
             raise ValueError(
@@ -913,7 +906,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Compute the bin number each sample falls into.
     Ncount = tuple(
-        np.digitize(sample[:, i], edges[i])
+        # avoid np.digitize to work around gh-11022
+        np.searchsorted(edges[i], sample[:, i], side='right')
         for i in _range(D)
     )
 
@@ -921,16 +915,10 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # For the rightmost bin, we want values equal to the right edge to be
     # counted in the last bin, and not as an outlier.
     for i in _range(D):
-        # Rounding precision
-        mindiff = dedges[i].min()
-        if not np.isinf(mindiff):
-            decimal = int(-np.log10(mindiff)) + 6
-            # Find which points are on the rightmost edge.
-            not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
-            on_edge = (np.around(sample[:, i], decimal) ==
-                       np.around(edges[i][-1], decimal))
-            # Shift these points one bin to the left.
-            Ncount[i][on_edge & not_smaller_than_edge] -= 1
+        # Find which points are on the rightmost edge.
+        on_edge = (sample[:, i] == edges[i][-1])
+        # Shift these points one bin to the left.
+        Ncount[i][on_edge] -= 1
 
     # Compute the sample indices in the flattened histogram matrix.
     # This raises an error if the array is too large.

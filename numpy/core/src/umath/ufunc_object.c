@@ -100,7 +100,8 @@ PyUFunc_getfperr(void)
      * non-clearing get was only added in 1.9 so this function always cleared
      * keep it so just in case third party code relied on the clearing
      */
-    return npy_clear_floatstatus();
+    char param = 0;
+    return npy_clear_floatstatus_barrier(&param);
 }
 
 #define HANDLEIT(NAME, str) {if (retstatus & NPY_FPE_##NAME) {          \
@@ -133,7 +134,8 @@ NPY_NO_EXPORT int
 PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 {
     /* clearing is done for backward compatibility */
-    int retstatus = npy_clear_floatstatus();
+    int retstatus;
+    retstatus = npy_clear_floatstatus_barrier((char*)&retstatus);
 
     return PyUFunc_handlefperr(errmask, errobj, retstatus, first);
 }
@@ -144,7 +146,8 @@ PyUFunc_checkfperr(int errmask, PyObject *errobj, int *first)
 NPY_NO_EXPORT void
 PyUFunc_clearfperr()
 {
-    npy_clear_floatstatus();
+    char param = 0;
+    npy_clear_floatstatus_barrier(&param);
 }
 
 /*
@@ -2537,7 +2540,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 #endif
 
     /* Start with the floating-point exception flags cleared */
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&iter);
 
     NPY_UF_DBG_PRINT("Executing inner loop\n");
 
@@ -2782,7 +2785,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     }
 
     /* Start with the floating-point exception flags cleared */
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&ufunc);
 
     /* Do the ufunc loop */
     if (need_fancy) {
@@ -3563,7 +3566,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
     int i, idim, ndim, otype_final;
-    int need_outer_iterator;
+    int need_outer_iterator = 0;
 
     NpyIter *iter = NULL;
 
@@ -4279,11 +4282,9 @@ static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     int i;
-    PyTupleObject *ret;
     PyArrayObject *mps[NPY_MAXARGS];
     PyObject *retobj[NPY_MAXARGS];
     PyObject *wraparr[NPY_MAXARGS];
-    PyObject *res;
     PyObject *override = NULL;
     ufunc_full_args full_args = {NULL, NULL};
     int errval;
@@ -4360,13 +4361,17 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         int j = ufunc->nin+i;
         PyObject *wrap = wraparr[i];
 
-        if (wrap != NULL) {
+        if (wrap == NULL) {
+            /* default behavior */
+            retobj[i] = PyArray_Return(mps[j]);
+        }
+        else if (wrap == Py_None) {
+            Py_DECREF(wrap);
+            retobj[i] = (PyObject *)mps[j];
+        }
+        else {
+            PyObject *res;
             PyObject *args_tup;
-            if (wrap == Py_None) {
-                Py_DECREF(wrap);
-                retobj[i] = (PyObject *)mps[j];
-                continue;
-            }
 
             /* Call the method with appropriate context */
             args_tup = _get_wrap_prepare_args(full_args);
@@ -4386,15 +4391,9 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             if (res == NULL) {
                 goto fail;
             }
-            else {
-                Py_DECREF(mps[j]);
-                retobj[i] = res;
-                continue;
-            }
-        }
-        else {
-            /* default behavior */
-            retobj[i] = PyArray_Return(mps[j]);
+
+            Py_DECREF(mps[j]);
+            retobj[i] = res;
         }
     }
 
@@ -4405,6 +4404,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return retobj[0];
     }
     else {
+        PyTupleObject *ret;
+
         ret = (PyTupleObject *)PyTuple_New(ufunc->nout);
         for (i = 0; i < ufunc->nout; i++) {
             PyTuple_SET_ITEM(ret, i, retobj[i]);

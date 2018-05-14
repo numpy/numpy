@@ -79,7 +79,7 @@ class TestApplyAlongAxis(object):
 
     def test_axis_insertion(self, cls=np.ndarray):
         def f1to2(x):
-            """produces an assymmetric non-square matrix from x"""
+            """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
             return (x[::-1] * x[1:,None]).view(cls)
 
@@ -123,7 +123,7 @@ class TestApplyAlongAxis(object):
 
     def test_axis_insertion_ma(self):
         def f1to2(x):
-            """produces an assymmetric non-square matrix from x"""
+            """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
             res = x[::-1] * x[1:,None]
             return np.ma.masked_where(res%5==0, res)
