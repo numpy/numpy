@@ -1,9 +1,8 @@
 """
+Binary serialization
 
-.. _binary-serialization:
-
-Binary Serialization
-====================
+NPY format
+==========
 
 A simple format for saving numpy arrays to disk with the full
 information about them.
