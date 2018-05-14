@@ -101,8 +101,12 @@ Original exception was: %s, and the Compiler class was %s
         return ret
 
     def _compile (self, body, headers, include_dirs, lang):
-        return self._wrap_method(old_config._compile, lang,
-                                 (body, headers, include_dirs, lang))
+        src, obj = self._wrap_method(old_config._compile, lang,
+                                     (body, headers, include_dirs, lang))
+        # _compile in unixcompiler.py sometimes creates .d dependency files.
+        # Clean them up.
+        self.temp_files.append(obj + '.d')
+        return src, obj
 
     def _link (self, body,
                headers, include_dirs,
