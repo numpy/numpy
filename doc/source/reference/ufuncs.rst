@@ -360,6 +360,18 @@ advanced usage and will not typically be used.
     and for generalized ufuncs for which all outputs are scalars, the output
     tuples can be omitted.
 
+*keepdims*
+
+    .. versionadded:: 1.15
+
+    If this is set to `True`, axes which are reduced over will be left in the
+    result as a dimension with size one, so that the result will broadcast
+    correctly against the inputs. This option can only be used for generalized
+    ufuncs that operate on inputs that all have the same number of core
+    dimensions and with outputs that have no core dimensions , i.e., with
+    signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
+    the dimensions in the output can be controlled with ``axes``.
+
 *casting*
 
     .. versionadded:: 1.6
