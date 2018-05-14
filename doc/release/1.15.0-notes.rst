@@ -312,10 +312,19 @@ of the overlap between input an output, that is, the next element accumulated
 is added before the accumulated result is stored in its place, hence the
 overlap is safe. Avoiding the copy results in faster execution.
 
+``linalg.matrix_power`` can now handle stacks of matrices
+---------------------------------------------------------
+Like other functions in ``linalg``, ``matrix_power`` can now deal with arrays
+of dimension larger than 2, which are treated as stacks of matrices. As part
+of the change, to further improve consistency, the name of the first argument
+has been changed to ``a`` (from ``M``), and the exceptions for non-square
+matrices have been changed to ``LinAlgError`` (from ``ValueError``).
+
 Increased performance in ``random.permutation`` for multidimensional arrays
 ---------------------------------------------------------------------------
 ``permutation`` uses the fast path in ``random.shuffle`` for all input
 array dimensions.  Previously the fast path was only used for 1-d arrays.
+
 
 Changes
 =======
