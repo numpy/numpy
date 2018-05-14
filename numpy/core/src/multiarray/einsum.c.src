@@ -1786,8 +1786,7 @@ parse_operand_subscripts(char *subscripts, int length,
                         int iop, char *out_labels,
                         char *out_label_counts,
                         int *out_min_label,
-                        int *out_max_label,
-                        int *out_num_labels)
+                        int *out_max_label)
 {
     int i, idim, ndim_left, label;
     int ellipsis = 0;
@@ -1806,10 +1805,6 @@ parse_operand_subscripts(char *subscripts, int length,
                 }
                 if (label > *out_max_label) {
                     *out_max_label = label;
-                }
-                /* If it's the first time we see this label, count it */
-                if (out_label_counts[label] == 0) {
-                    (*out_num_labels)++;
                 }
                 out_label_counts[label]++;
             }
@@ -1875,10 +1870,6 @@ parse_operand_subscripts(char *subscripts, int length,
                     }
                     if (label > *out_max_label) {
                         *out_max_label = label;
-                    }
-                    /* If it's the first time we see this label, count it */
-                    if (out_label_counts[label] == 0) {
-                        (*out_num_labels)++;
                     }
                     out_label_counts[label]++;
                 }
@@ -2613,7 +2604,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                     NPY_ORDER order, NPY_CASTING casting,
                     PyArrayObject *out)
 {
-    int iop, label, min_label = 127, max_label = 0, num_labels;
+    int iop, label, min_label = 127, max_label = 0;
     char label_counts[128];
     char op_labels[NPY_MAXARGS][NPY_MAXDIMS];
     char output_labels[NPY_MAXDIMS], *iter_labels;
@@ -2644,7 +2635,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     /* Parse the subscripts string into label_counts and op_labels */
     memset(label_counts, 0, sizeof(label_counts));
-    num_labels = 0;
     for (iop = 0; iop < nop; ++iop) {
         int length = (int)strcspn(subscripts, ",-");
 
@@ -2664,7 +2654,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         if (!parse_operand_subscripts(subscripts, length,
                         PyArray_NDIM(op_in[iop]),
                         iop, op_labels[iop], label_counts,
-                        &min_label, &max_label, &num_labels)) {
+                        &min_label, &max_label)) {
             return NULL;
         }
 
