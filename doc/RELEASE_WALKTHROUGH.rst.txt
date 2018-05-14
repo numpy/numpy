@@ -1,12 +1,12 @@
-This file contains a walkthrough of the NumPy 1.12.0 release on Fedora Linux.
+This file contains a walkthrough of the NumPy 1.14.3 release on Linux.
 The commands can be copied into the command line, but be sure to
-replace 1.12.0 by the correct version.
+replace 1.14.3 by the correct version.
 
 Release  Walkthrough
 ====================
 
-Building the release
---------------------
+Prepare the release commit
+--------------------------
 
 Checkout the branch for the release, make sure it is up to date, and clean the
 repository::
@@ -16,44 +16,39 @@ repository::
     $ git submodule update
     $ git clean -xdf
 
-Look at the git log to get the hash of the last commit in the release, then
-check it out::
-
-    $ git log
-    $ git checkout 7849751173fb47a5f17761b3515b42b4d8ce1197
-
 Edit pavement.py and setup.py as detailed in HOWTO_RELEASE::
 
     $ gvim pavement.py setup.py
-    $ git commit -a -m"REL: NumPy 1.14.1 release."
+    $ git commit -a -m"REL: NumPy 1.14.3 release."
 
 Sanity check::
 
     $ python runtests.py -m "full"
     $ python3 runtests.py -m "full"
 
-Tag it,and build the source distribution archives::
+Push this release directly onto the end of the maintenance branch. This
+requires write permission to the numpy repository::
 
-    $ git tag -s v1.14.1
-    $ paver sdist # sdist will do a git clean -xdf, so we omit that
+    $ git push upstream maintenance/1.14.x
 
-Check that the files in ``release/installers`` have the correct versions, then
-push the tag upstream; generation of the wheels for PyPI needs it::
+As an example, see the 1.14.3 REL commit: `<https://github.com/numpy/numpy/commit/73299826729be58cec179b52c656adfcaefada93>`_.
 
-    $ git push upstream v1.14.1
+Build wheels
+------------
 
-Trigger the wheels build. This can take a while. The numpy-wheels repository is
-cloned from `<https://github.com/MacPython/numpy-wheels>`_. Start with a pull
-as the repo may have been accessed and changed by someone else and a push will
-fail.
+Trigger the wheels build by pointing the numpy-wheels repository at this
+commit. This can take a while. The numpy-wheels repository is cloned from
+`<https://github.com/MacPython/numpy-wheels>`_. Start with a pull as the repo
+may have been accessed and changed by someone else and a push will fail::
 
     $ cd ../numpy-wheels
     $ git pull origin master
     $ git branch <new version>  # only when starting new numpy version
-    $ git checkout v1.14.x  # v1.14.x already existed for the 1.14.1 release
+    $ git checkout v1.14.x  # v1.14.x already existed for the 1.14.3 release
 
-The ``.travis.yml`` and ``appveyor.yml`` files need to be edited to make
-sure they have the correct version, search for ``BUILD_COMMIT``.
+Edit the ``.travis.yml`` and ``appveyor.yml`` files to make sure they have the
+correct version, and put in the commit hash for the ``REL`` commit created
+above for ``BUILD_COMMIT``. See `<https://github.com/MacPython/numpy-wheels/commit/fed9c04629c155e7804282eb803d81097244598d>`_ for an example::
 
     $ gvim .travis.yml appveyor.yml
     $ git commit -a
@@ -66,7 +61,6 @@ and appveyor build status. Check if all the needed wheels have been built and
 uploaded before proceeding. There should currently be 22 of them at
 `<https://wheels.scipy.org>`_, 4 for Mac, 8 for Windows, and 10 for Linux.
 
-
 Download wheels
 ---------------
 
@@ -75,7 +69,7 @@ in the ``terryfy`` repository.  The terryfy repository may be cloned from
 `<https://github.com/MacPython/terryfy>`_ if you don't already have it.  The
 wheels can also be uploaded using the ``wheel-uploader``, but we prefer to
 download all the wheels to the ``../numpy/release/installers`` directory and
-upload later using ``twine``.
+upload later using ``twine``::
 
     $ cd ../terryfy
     $ git pull origin master
@@ -88,14 +82,56 @@ upload later using ``twine``.
 If you do this often, consider making CDN_URL and NPY_WHLS part of your default
 environment.
 
+Tag the release
+---------------
+
+Once the wheels have been built and downloaded without errors, go back to your
+numpy repository in the maintenance branch and tag the ``REL`` commit, signing
+it with your gpg key, and build the source distribution archives::
+
+    $ git tag -s v1.14.3
+    $ paver sdist # sdist will do a git clean -xdf, so we omit that
+
+You should upload your public gpg key to github, so that the tag will appear
+"verified" there.
+
+Check that the files in ``release/installers`` have the correct versions, then
+push the tag upstream::
+
+    $ git push upstream v1.14.3
+
+We wait until this point to push the tag because it is very difficult to change
+the tag after it has been pushed.
+
+Reset the maintenance branch into a development state
+-----------------------------------------------------
+
+Add another ``REL`` commit to the numpy maintenance branch, which resets the
+``ISREALEASED`` flag to ``False`` and increments the version counter::
+
+    $ gvim pavement.py setup.py
+    $ git commit -a -m"REL: prepare 1.14.x for further development"
+    $ git push upstream maintenance/1.14.x
+
+This strategy is copied from the scipy release procedure and was used in numpy
+for the first time in 1.14.3. It needed to be modified a little since numpy
+has more strict requirements for the version number. It was acheived in two
+commits:
+`<https://github.com/numpy/numpy/commit/b8df705bdcce92d3e2c6f050eb4414192cf0df04>`_
+`<https://github.com/numpy/numpy/commit/29e175269624493114f77cceff93486271f9efff>`_.
 
 Upload to PyPI
 --------------
 
-Upload to PyPI using ``twine``.  The choice here is to sign the files, so will
-need to sign every file separately when they are uploaded, keeping the gpg pass
-phrase in the clipboard and pasting it in will make that easier. We may chose
-to forgo the signing in the future::
+Upload to PyPI using ``twine``.
+
+In the past, we signed the wheels files, but after 1.14.3 wheels should no
+longer support or need signing. The instructions below still sign.
+
+For the 1.14.3 release we signed every file when it was uploaded. On systems
+which do not cache the gpg passphrase for a few minutes, keeping the it in the
+clipboard and pasting it in will make that easier. We may chose to forgo the
+signing in the future::
 
     $ cd ../numpy
     $ twine upload -s release/installers/*.whl
@@ -120,15 +156,15 @@ Generate the ``release/README`` files::
     $ rm release/installers/*.asc
     $ paver write_release_and_log
 
-Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.14.1
+Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.14.3
 tag``, click on it and hit the edit button for that tag. There are two ways to
 add files, using an editable text window and as binary uploads.
 
 - Cut and paste the ``release/README.md`` file contents into the text window.
-- Upload ``release/installers/numpy-1.12.0.tar.gz`` as a binary file.
-- Upload ``release/installers/numpy-1.12.0.zip`` as a binary file.
+- Upload ``release/installers/numpy-1.14.3.tar.gz`` as a binary file.
+- Upload ``release/installers/numpy-1.14.3.zip`` as a binary file.
 - Upload ``release/README`` as a binary file.
-- Upload ``doc/changelog/1.14.1-changelog.rst`` as a binary file.
+- Upload ``doc/changelog/1.14.3-changelog.rst`` as a binary file.
 - Check the pre-release button if this is a pre-releases.
 - Hit the ``{Publish,Update} release`` button at the bottom.
 
@@ -143,7 +179,7 @@ upload the documentation. Otherwise::
 
     $ pushd doc
     $ make dist
-    $ make upload USERNAME=<yourname> RELEASE=v1.14.1
+    $ make upload USERNAME=<yourname> RELEASE=v1.14.3
     $ popd
 
 If the release series is a new one, you will need to rebuild and upload the
@@ -164,7 +200,7 @@ This assumes that you have forked `<https://github.com/scipy/scipy.org>`_::
     $ cd ../scipy.org
     $ git checkout master
     $ git pull upstream master
-    $ git checkout -b numpy-1.14.1
+    $ git checkout -b numpy-1.14.3
     $ gvim www/index.rst # edit the News section
     $ git commit -a
     $ git push origin HEAD
@@ -180,7 +216,7 @@ announcements for the basic template. The contributor list can be generated as
 follows::
 
     $ cd ../numpy
-    $ ./tools/changelog.py  $GITHUB v1.14.0..v1.14.1 > tmp.rst
+    $ ./tools/changelog.py  $GITHUB v1.14.2..v1.14.3 > tmp.rst
 
 The contents of ``tmp.rst`` can then be cut and pasted into the announcement
 email.
