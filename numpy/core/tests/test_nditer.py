@@ -1486,7 +1486,7 @@ def test_iter_allocate_output_subtype():
                [['readonly'], ['readonly'],
                 ['writeonly', 'allocate', 'no_subtype']])
     assert_equal(type(b), type(i.operands[2]))
-    assert_(type(a) is not (i.operands[2]))
+    assert_(type(a) is not type(i.operands[2]))
     assert_equal(i.operands[2].shape, (2, 2))
 
 def test_iter_allocate_output_errors():
