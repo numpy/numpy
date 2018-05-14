@@ -2652,21 +2652,31 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
         /* Subscript */
         else if (PyInt_Check(item) || PyLong_Check(item)) {
             long s = PyInt_AsLong(item);
-            if ( s < 0 || s > (2*26 - 1) ) {
+            npy_bool bad_input = 0;
+
+            if (subindex + 1 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
-                        "subscript is not within the valid range [0, 52]");
+                        "subscripts list is too long");
                 Py_DECREF(obj);
                 return -1;
             }
-            if (s < 26) {
-                subscripts[subindex++] = 'A' + s;
+
+            if ( s < 0 ) {
+                bad_input = 1;
+            }
+            else if (s < 26) {
+                subscripts[subindex++] = 'A' + (char)s;
+            }
+            else if (s < 2*26) {
+                subscripts[subindex++] = 'a' + (char)s - 26;
             }
             else {
-                subscripts[subindex++] = 'a' + s - 26;
+                bad_input = 1;
             }
-            if (subindex >= subsize) {
+
+            if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
-                        "subscripts list is too long");
+                        "subscript is not within the valid range [0, 52]");
                 Py_DECREF(obj);
                 return -1;
             }
