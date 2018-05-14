@@ -110,6 +110,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     return view
 
+
 def sliding_window_view(x, shape, subok=False, readonly=True):
     """
     Creates sliding window views of the N dimensional array with the given window
