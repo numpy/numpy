@@ -343,6 +343,9 @@ advanced usage and will not typically be used.
     of False indicate to leave the value in the output alone. This argument
     cannot be used for generalized ufuncs as those take non-scalar input.
 
+    Note that if an uninitialized return array is created, values of False
+    will leave those values **uninitialized**.
+
 *axes*
 
     .. versionadded:: 1.15
