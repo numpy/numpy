@@ -2652,21 +2652,18 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     }
 
     /*
-     * If there is no output signature, create one using each label
-     * that appeared once, in alphabetical order
+     * If there is no output signature, fill output_labels and ndim_output
+     * using each label that appeared once, in alphabetical order.
      */
     if (subscripts[0] == '\0') {
-        char outsubscripts[NPY_MAXDIMS + 3];
-        int length;
-        /* If no output was specified, always broadcast left (like normal) */
-        outsubscripts[0] = '.';
-        outsubscripts[1] = '.';
-        outsubscripts[2] = '.';
-        length = 3;
+        /* If no output was specified, always broadcast left, as usual. */
+        for (ndim_output = 0; ndim_output < ndim_broadcast; ++ndim_output) {
+            output_labels[ndim_output] = 0;
+        }
         for (label = min_label; label <= max_label; ++label) {
             if (label_counts[label] == 1) {
-                if (length < NPY_MAXDIMS-1) {
-                    outsubscripts[length++] = label;
+                if (ndim_output < NPY_MAXDIMS) {
+                    output_labels[ndim_output++] = label;
                 }
                 else {
                     PyErr_SetString(PyExc_ValueError,
@@ -2676,10 +2673,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                 }
             }
         }
-        /* Parse the output subscript string */
-        ndim_output = parse_output_subscripts(outsubscripts, length,
-                                        ndim_broadcast, label_counts,
-                                        output_labels);
     }
     else {
         if (subscripts[0] != '-' || subscripts[1] != '>') {
@@ -2690,13 +2683,13 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         }
         subscripts += 2;
 
-        /* Parse the output subscript string */
+        /* Parse the output subscript string. */
         ndim_output = parse_output_subscripts(subscripts, strlen(subscripts),
                                         ndim_broadcast, label_counts,
                                         output_labels);
-    }
-    if (ndim_output < 0) {
-        return NULL;
+        if (ndim_output < 0) {
+            return NULL;
+        }
     }
 
     if (out != NULL && PyArray_NDIM(out) != ndim_output) {
