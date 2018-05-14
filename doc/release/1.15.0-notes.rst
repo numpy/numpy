@@ -198,6 +198,13 @@ passed explicitly, and are not yet computed automatically.
 No longer does an IQR of 0 result in `n_bins=1`, rather the number of bins
 chosen is related to the data size in this situation.
 
+``histogram`` and ``histogramdd`` return edges matching the float type of the data
+----------------------------------------------------------------------------------
+When passed ``float16``, ``np.float32``, or ``np.longdouble`` data, the
+returned edges are now of the same dtype. Previously, ``histogram`` would only
+return the same type if explicit bins were given, and ``histogram`` would
+produce ``float64`` bins no matter what the inputs.
+
 ``histogramdd`` allows explicit ranges to be given in a subset of axes
 ----------------------------------------------------------------------
 The ``range`` argument of `histogramdd` can now contain ``None`` values to
