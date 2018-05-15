@@ -1336,10 +1336,11 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D and not a `matrix`, a 1-D array of the same type as `a`
-        containing the diagonal is returned. If `a` is a `matrix`, a 1-D
-        array containing the diagonal is returned in order to maintain
-        backward compatibility.
+        If `a` is 2-D, then a 1-D array containing the diagonal and of the
+        same type as `a` is returned unless `a` is a `matrix`, in which case
+        a 1-D array rather than a (2-D) `matrix` is returned in order to
+        maintain backward compatibility.
+        
         If ``a.ndim > 2``, then the dimensions specified by `axis1` and `axis2`
         are removed, and a new axis inserted at the end corresponding to the
         diagonal.
@@ -1496,10 +1497,9 @@ def ravel(a, order='C'):
     Returns
     -------
     y : array_like
-        If `a` is a matrix, y is a 1-D ndarray, otherwise y is an array of
-        the same subtype as `a`. The shape of the returned array is
-        ``(a.size,)``. Matrices are special cased for backward
-        compatibility.
+        y is an array of the same subtype as `a`, with shape ``(a.size,)``.
+        Note that matrices are special cased for backward compatibility, if `a`
+        is a matrix, then y is a 1-D ndarray.
 
     See Also
     --------

@@ -29,19 +29,21 @@ class TestApplyAlongAxis(object):
                            [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
 
     def test_preserve_subclass(self):
-        # this test is particularly malicious because matrix
-        # refuses to become 1d
         def double(row):
             return row * 2
-        m = np.matrix([[0, 1], [2, 3]])
-        expected = np.matrix([[0, 2], [4, 6]])
+
+        class MyNDArray(np.ndarray):
+            pass
+
+        m = np.array([[0, 1], [2, 3]]).view(MyNDArray)
+        expected = np.array([[0, 2], [4, 6]]).view(MyNDArray)
 
         result = apply_along_axis(double, 0, m)
-        assert_(isinstance(result, np.matrix))
+        assert_(isinstance(result, MyNDArray))
         assert_array_equal(result, expected)
 
         result = apply_along_axis(double, 1, m)
-        assert_(isinstance(result, np.matrix))
+        assert_(isinstance(result, MyNDArray))
         assert_array_equal(result, expected)
 
     def test_subclass(self):
@@ -492,16 +494,10 @@ class TestSqueeze(object):
 
 class TestKron(object):
     def test_return_type(self):
-        a = np.ones([2, 2])
-        m = np.asmatrix(a)
-        assert_equal(type(kron(a, a)), np.ndarray)
-        assert_equal(type(kron(m, m)), np.matrix)
-        assert_equal(type(kron(a, m)), np.matrix)
-        assert_equal(type(kron(m, a)), np.matrix)
-
         class myarray(np.ndarray):
             __array_priority__ = 0.0
 
+        a = np.ones([2, 2])
         ma = myarray(a.shape, a.dtype, a.data)
         assert_equal(type(kron(a, a)), np.ndarray)
         assert_equal(type(kron(ma, ma)), myarray)

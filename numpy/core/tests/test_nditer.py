@@ -1469,26 +1469,25 @@ def test_iter_allocate_output_types_scalar():
 
 def test_iter_allocate_output_subtype():
     # Make sure that the subtype with priority wins
+    class MyNDArray(np.ndarray):
+        __array_priority__ = 15
 
-    # matrix vs ndarray
-    a = np.matrix([[1, 2], [3, 4]])
+    # subclass vs ndarray
+    a = np.array([[1, 2], [3, 4]]).view(MyNDArray)
     b = np.arange(4).reshape(2, 2).T
     i = nditer([a, b, None], [],
-                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
+               [['readonly'], ['readonly'], ['writeonly', 'allocate']])
     assert_equal(type(a), type(i.operands[2]))
-    assert_(type(b) != type(i.operands[2]))
+    assert_(type(b) is not type(i.operands[2]))
     assert_equal(i.operands[2].shape, (2, 2))
 
-    # matrix always wants things to be 2D
-    b = np.arange(4).reshape(1, 2, 2)
-    assert_raises(RuntimeError, nditer, [a, b, None], [],
-                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
-    # but if subtypes are disabled, the result can still work
+    # If subtypes are disabled, we should get back an ndarray.
     i = nditer([a, b, None], [],
-            [['readonly'], ['readonly'], ['writeonly', 'allocate', 'no_subtype']])
+               [['readonly'], ['readonly'],
+                ['writeonly', 'allocate', 'no_subtype']])
     assert_equal(type(b), type(i.operands[2]))
-    assert_(type(a) != type(i.operands[2]))
-    assert_equal(i.operands[2].shape, (1, 2, 2))
+    assert_(type(a) is not type(i.operands[2]))
+    assert_equal(i.operands[2].shape, (2, 2))
 
 def test_iter_allocate_output_errors():
     # Check that the iterator will throw errors for bad output allocations

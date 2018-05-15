@@ -286,7 +286,7 @@ class TestEqual(TestArrayEqual):
 
     def test_error_message(self):
         try:
-            self._assert_func(np.array([1, 2]), np.matrix([1, 2]))
+            self._assert_func(np.array([1, 2]), np.array([[1, 2]]))
         except AssertionError as e:
             msg = str(e)
             msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
@@ -296,7 +296,7 @@ class TestEqual(TestArrayEqual):
 
             (shapes (2,), (1, 2) mismatch)
              x: array([1, 2])
-             y: matrix([[1, 2]])""")
+             y: array([[1, 2]])""")
             try:
                 assert_equal(msg, msg_reference)
             except AssertionError:
@@ -365,20 +365,6 @@ class TestArrayAlmostEqual(_GenericTest):
         self._assert_func(a, b)
         self._assert_func(b, a)
         self._assert_func(b, b)
-
-    def test_matrix(self):
-        # Matrix slicing keeps things 2-D, while array does not necessarily.
-        # See gh-8452.
-        m1 = np.matrix([[1., 2.]])
-        m2 = np.matrix([[1., np.nan]])
-        m3 = np.matrix([[1., -np.inf]])
-        m4 = np.matrix([[np.nan, np.inf]])
-        m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
-        for m in m1, m2, m3, m4, m5:
-            self._assert_func(m, m)
-            a = np.array(m)
-            self._assert_func(a, m)
-            self._assert_func(m, a)
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
@@ -478,20 +464,6 @@ class TestAlmostEqual(_GenericTest):
         except AssertionError as e:
             # remove anything that's not the array string
             assert_equal(str(e).split('%)\n ')[1], b)
-
-    def test_matrix(self):
-        # Matrix slicing keeps things 2-D, while array does not necessarily.
-        # See gh-8452.
-        m1 = np.matrix([[1., 2.]])
-        m2 = np.matrix([[1., np.nan]])
-        m3 = np.matrix([[1., -np.inf]])
-        m4 = np.matrix([[np.nan, np.inf]])
-        m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
-        for m in m1, m2, m3, m4, m5:
-            self._assert_func(m, m)
-            a = np.array(m)
-            self._assert_func(a, m)
-            self._assert_func(m, a)
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
