@@ -2404,6 +2404,8 @@ Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
     }
 }
 
+#if !(defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) || \
+      defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE))
 static npy_uint32
 Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
                       npy_bool scientific, DigitMode digit_mode,
@@ -2499,6 +2501,7 @@ Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
                                 digits_left, digits_right);
     }
 }
+#endif /* DOUBLE_DOUBLE */
 
 PyObject *
 Dragon4_Positional_AnySize(void *val, size_t size, DigitMode digit_mode,
@@ -2510,15 +2513,21 @@ Dragon4_Positional_AnySize(void *val, size_t size, DigitMode digit_mode,
      * 16384 should be enough to uniquely print any float128, which goes up
      * to about 10^4932 */
     static char repr[16384];
+#if !(defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) || \
+      defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE))
     FloatVal128 val128;
+#ifdef NPY_FLOAT128
+    FloatUnion128 buf128;
+#endif
+#else /* DOUBLE_DOUBLE */
+    PyObject *out, *ret;
+#endif /* DOUBLE_DOUBLE */
+
 #ifdef NPY_FLOAT80
     FloatUnion80 buf80;;
 #endif
 #ifdef NPY_FLOAT96
     FloatUnion96 buf96;
-#endif
-#ifdef NPY_FLOAT128
-    FloatUnion128 buf128;
 #endif
 
     switch (size) {
@@ -2559,14 +2568,29 @@ Dragon4_Positional_AnySize(void *val, size_t size, DigitMode digit_mode,
 #endif
 #ifdef NPY_FLOAT128
         case 16:
+/* Numpy 1.14 does not support the DOUBLE_DOUBLE format properly */
+#if defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) || \
+    defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE)
+            PyOS_snprintf(repr, sizeof(repr), "%.*Lf", precision,
+                          *(npy_float128*)val);
+            out = PyUString_FromString(repr);
+            if (out == NULL) {
+                return out;
+            }
+            /* strip trailing zeros to roughly emulate normal behavior */
+            ret = PyObject_CallMethod(out, "rstrip", "s", "0");
+            Py_DECREF(out);
+            return ret;
+#else
             buf128.floatingPoint = *(npy_float128*)val;
             val128.integer[0] = buf128.integer.a;
             val128.integer[1] = buf128.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
                                   0, digit_mode, cutoff_mode, precision,
                                   sign, trim, pad_left, pad_right, -1);
+#endif /* DOUBLE_DOUBLE */
             break;
-#endif
+#endif /* NPY_FLOAT128 */
         default:
             PyErr_Format(PyExc_ValueError, "unexpected itemsize %zu", size);
             return NULL;
@@ -2623,15 +2647,19 @@ Dragon4_Scientific_AnySize(void *val, size_t size, DigitMode digit_mode,
 {
     /* use a very large buffer in case anyone tries to output a large precision */
     static char repr[4096];
+#if !(defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) || \
+      defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE))
     FloatVal128 val128;
+#ifdef NPY_FLOAT128
+    FloatUnion128 buf128;
+#endif
+#endif /* DOUBLE_DOUBLE */
+
 #ifdef NPY_FLOAT80
     FloatUnion80 buf80;;
 #endif
 #ifdef NPY_FLOAT96
     FloatUnion96 buf96;
-#endif
-#ifdef NPY_FLOAT128
-    FloatUnion128 buf128;
 #endif
 
     /* dummy, is ignored in scientific mode */
@@ -2675,14 +2703,21 @@ Dragon4_Scientific_AnySize(void *val, size_t size, DigitMode digit_mode,
 #endif
 #ifdef NPY_FLOAT128
         case 16:
+/* Numpy 1.14 does not support the DOUBLE_DOUBLE format properly */
+#if defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE) || \
+    defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_LE)
+            PyOS_snprintf(repr, sizeof(repr), "%.*Le", precision,
+                          *(npy_float128*)val);
+#else
             buf128.floatingPoint = *(npy_float128*)val;
             val128.integer[0] = buf128.integer.a;
             val128.integer[1] = buf128.integer.b;
             Dragon4_PrintFloat128(repr, sizeof(repr), val128,
                                   1, digit_mode, cutoff_mode, precision, sign,
                                   trim, pad_left, -1, exp_digits);
+#endif /* DOUBLE_DOUBLE */
             break;
-#endif
+#endif /* NPY_FLOAT128 */
         default:
             PyErr_Format(PyExc_ValueError, "unexpected itemsize %zu", size);
             return NULL;
