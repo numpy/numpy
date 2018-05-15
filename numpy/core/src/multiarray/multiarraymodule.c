@@ -2676,7 +2676,7 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
 
             if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
-                        "subscript is not within the valid range [0, 52]");
+                        "subscript is not within the valid range [0, 52)");
                 Py_DECREF(obj);
                 return -1;
             }
