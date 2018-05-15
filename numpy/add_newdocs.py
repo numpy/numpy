@@ -5647,10 +5647,13 @@ add_newdoc('numpy.core', 'ufunc',
         Alternate array object(s) in which to put the result; if provided, it
         must have a shape that the inputs broadcast to. A tuple of arrays
         (possible only as a keyword argument) must have length equal to the
-        number of outputs; use `None` for outputs to be allocated by the ufunc.
+        number of outputs; use `None` for uninitialized outputs to be
+        allocated by the ufunc.
     where : array_like, optional
         Values of True indicate to calculate the ufunc at that position, values
-        of False indicate to leave the value in the output alone.
+        of False indicate to leave the value in the output alone.  Note that if
+        an uninitialized return array is created via the default ``out=None``,
+        then the elements where the values are False will remain uninitialized.
     **kwargs
         For other keyword-only arguments, see the :ref:`ufunc docs <ufuncs.kwargs>`.
 
@@ -5658,7 +5661,8 @@ add_newdoc('numpy.core', 'ufunc',
     -------
     r : ndarray or tuple of ndarray
         `r` will have the shape that the arrays in `x` broadcast to; if `out` is
-        provided, `r` will be equal to `out`. If the function has more than one
+        provided, it will be returned. If not, `r` will be allocated and
+        may contain uninitialized values. If the function has more than one
         output, then the result will be a tuple of arrays.
 
     """)
