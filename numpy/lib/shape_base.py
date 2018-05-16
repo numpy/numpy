@@ -23,11 +23,11 @@ __all__ = [
 
 def _make_along_axis_idx(arr, indices, axis):
 	# compute dimensions to iterate over
-    if arr.ndim != indices.ndim:
-        raise ValueError(
-            "`indices` and `arr` must have the same number of dimensions")
     shape_ones = (1,) * indices.ndim
-    dest_dims = list(range(axis)) + [None] + list(range(axis+1, indices.ndim))
+    ins_ndim = indices.ndim - (arr.ndim - 1)  # inserted dimensions
+    if ins_ndim < 0:
+        raise ValueError("`indices` must have ndim >= arr.ndim - 1")
+    dest_dims = list(range(axis)) + [None] + list(range(axis+ins_ndim, indices.ndim))
 
     # build a fancy index, consisting of orthogonal aranges, with the
     # requested index inserted at the right location
@@ -51,26 +51,25 @@ def take_along_axis(arr, indices, axis):
     and other `arg` functions.
 
     This is equivalent to (but faster than) the following use of `ndindex` and
-    `s_`, which sets each of ``ii`` and ``kk`` to a tuple of indices::
+    `s_`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of indices::
 
+        # extract the subshapes as labelled in the docs below
         Ni, Nk = a.shape[:axis], a.shape[axis+1:]
-        J = indices.shape[axis]
+        Nj = indices.shape[len(Ni):indices.ndim - len(Nk)]
 
         for ii in ndindex(Ni):
-            for j in range(J):
+            for jj in ndindex(Nj):
                 for kk in ndindex(Nk):
-                    a_1d = a[ii + s_[j,] + kk]
-                    out[ii + s_[j,] + kk] = a_1d[indices[ii + s_[j,] + kk]]
+                    a_1d = a[ii + s_[:,] + kk]
+                    out[ii + jj + kk] = a_1d[indices[ii + jj + kk]]
 
     Equivalently, eliminating the inner loop, this can be expressed as::
 
         Ni, Nk = a.shape[:axis], a.shape[axis+1:]
-        J = indices.shape[axis]
-
         for ii in ndindex(Ni):
             for kk in ndindex(Nk):
                 a_1d = a[ii + s_[:,] + kk]
-                out[ii + s_[:,] + kk] = a_1d[indices[ii + s_[:,] + kk]]
+                out[ii + s_[...,] + kk] = a_1d[indices[ii + s_[...,] + kk]]
 
     .. versionadded:: 1.15.0
 
@@ -78,14 +77,14 @@ def take_along_axis(arr, indices, axis):
     ----------
     arr: array_like (Ni..., M, Nk...)
         source array
-    indices: array_like (Ni..., J, Nk...)
+    indices: array_like (Ni..., Nj..., Nk...)
         indices to take along each 1d slice of `arr`
     axis: int
         the axis to take 1d slices along
 
     Returns
     -------
-    out: ndarray (Ni..., J, Nk...)
+    out: ndarray (Ni..., Nj..., Nk...)
         The indexed result, as described above.
 
     See Also
@@ -104,33 +103,31 @@ def take_along_axis(arr, indices, axis):
     >>> np.sort(a, axis=1)
     array([[10, 20, 30],
            [40, 50, 60]])
-    >>> ai = np.argsort(a, axis=1); ai
+    >>> ai = np.argsort(a, axis=1)
+    >>> ai
     array([[0, 2, 1],
            [1, 2, 0]], dtype=int64)
     >>> np.take_along_axis(a, ai, axis=1)
     array([[10, 20, 30],
            [40, 50, 60]])
 
-    The same works for max and min, if you expand the dimensions:
+    The same works for max and min:
 
-    >>> np.expand_dims(np.max(a, axis=1), axis=1)
-    array([[30],
-           [60]])
-    >>> ai = np.expand_dims(np.argmax(a, axis=1), axis=1)
+    >>> np.max(a, axis=1)
+    array([30, 60])
+    >>> ai = np.argmax(a, axis=1)
     >>> ai
-    array([[1],
-           [0], dtype=int64)
+    array([1, 0], dtype=int64)
     >>> np.take_along_axis(a, ai, axis=1)
-    array([[30],
-           [60]])
+    array([30, 60])
 
     If we want to get the max and min at the same time, we can stack the
     indices first
 
-    >>> ai_min = np.expand_dims(np.argmin(a, axis=1), axis=1)
-    >>> ai_max = np.expand_dims(np.argmax(a, axis=1), axis=1)
-    >>> ai = np.concatenate([ai_min, ai_max], axis=axis)
-    >> ai
+    >>> ai_min = np.argmin(a, axis=1)
+    >>> ai_max = np.argmax(a, axis=1)
+    >>> ai = np.stack([ai_min, ai_max], axis=axis)
+    >>> ai
     array([[0, 1],
            [1, 0]], dtype=int64)
     >>> np.take_along_axis(a, ai, axis=1)
@@ -161,17 +158,17 @@ def put_along_axis(arr, indices, values, axis):
     and other `arg` functions.
 
     This is equivalent to (but faster than) the following use of `ndindex` and
-    `s_`, which sets each of ``ii`` and ``kk`` to a tuple of indices::
+    `s_`, which sets each of ``ii``, ``jj``, and ``kk`` to a tuple of indices::
 
         # extract the subshapes as labelled in the docs below
         Ni, Nk = a.shape[:axis], a.shape[axis+1:]
-        J = indices.shape[axis]
+        Nj = indices.shape[len(Ni):indices.ndim - len(Nk)]
 
         for ii in ndindex(Ni):
-            for j in range(J):
+            for jj in ndindex(Nj):
                 for kk in ndindex(Nk):
-                    a_1d = a[ii + s_[j,] + kk]
-                    a_1d[indices[ii + s_[j,] + kk]] = values[ii + s_[j,] + kk]
+                    a_1d = a[ii + s_[:,] + kk]
+                    a_1d[indices[ii + jj + kk]] = values[ii + jj + kk]
 
     Equivalently, eliminating the inner loop, this can be expressed as::
 
@@ -179,7 +176,7 @@ def put_along_axis(arr, indices, values, axis):
         for ii in ndindex(Ni):
             for kk in ndindex(Nk):
                 a_1d = a[ii + s_[:,] + kk]
-                a_1d[indices[ii + s_[:,] + kk]] = values[ii + s_[:,] + kk]
+                a_1d[indices[ii + s_[...,] + kk]] = values[ii + s_[...,] + kk]
 
     .. versionadded:: 1.15.0
 
@@ -187,9 +184,9 @@ def put_along_axis(arr, indices, values, axis):
     ----------
     arr: array_like (Ni..., M, Nk...)
         source array
-    indices: array_like (Ni..., J, Nk...)
+    indices: array_like (Ni..., Nj..., Nk...)
         indices to change along each 1d slice of `arr`
-    values: array_like (Ni..., J, Nk...)
+    values: array_like (Ni..., Nj..., Nk...)
         values to insert at those indices. Its shape and dimension are
         broadcast to match that of `indices`.
     axis: int

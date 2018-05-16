@@ -2,7 +2,6 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import warnings
-import functools
 
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
@@ -13,15 +12,6 @@ from numpy.testing import (
     )
 
 
-def _add_keepdims(func):
-    """ hack in a keepdims argument into a function taking an axis """
-    @functools.wraps(func)
-    def wrapped(a, axis, **kwargs):
-        res = func(a, axis=axis, **kwargs)
-        return np.expand_dims(res, axis=axis)
-    return wrapped
-
-
 class TestTakeAlongAxis(object):
     def test_argequivalent(self):
         """ Test it translates from arg<func> to <func> """
@@ -30,8 +20,8 @@ class TestTakeAlongAxis(object):
 
         funcs = [
             (np.sort, np.argsort, dict()),
-            (_add_keepdims(np.min), _add_keepdims(np.argmin), dict()),
-            (_add_keepdims(np.max), _add_keepdims(np.argmax), dict()),
+            (np.min, np.argmin, dict()),
+            (np.max, np.argmax, dict()),
             (np.partition, np.argpartition, dict(kth=2)),
         ]
 
@@ -40,6 +30,20 @@ class TestTakeAlongAxis(object):
                 a_func = func(a, axis=axis, **kwargs)
                 ai_func = argfunc(a, axis=axis, **kwargs)
                 assert_equal(a_func, take_along_axis(a, ai_func, axis=axis))
+
+    def test_insert_dimensions(self):
+        """ Test that inserting dimensions before or after is the same """
+        from numpy.random import rand
+        a = rand(3, 4, 5)
+        for axis in range(a.ndim):
+            # here we're emulating a keepdims argument to argmin
+            ai = np.argmin(a, axis=axis)
+            ai_exp = np.expand_dims(ai, axis=axis)
+            ai_val = np.take_along_axis(a, ai, axis=axis)
+            ai_val_exp = np.expand_dims(ai_val, axis=axis)
+            ai_exp_val = np.take_along_axis(a, ai_exp, axis=axis)
+
+            assert_equal(ai_val_exp, ai_exp_val)
 
     def test_invalid(self):
         """ Test it errors when indices has too few dimensions """
@@ -66,12 +70,18 @@ class TestTakeAlongAxis(object):
         actual = take_along_axis(a, ai, axis=1)
         assert_equal(actual.shape, ai.shape)
 
+        a  = np.ones((3, 4,       5))
+        ai = np.ones((3, 0, 1, 0, 5), dtype=np.intp)
+
+        actual = take_along_axis(a, ai, axis=1)
+        assert_equal(actual.shape, ai.shape)
+
     def test_broadcast(self):
         """ Test that non-indexing dimensions are broadcast """
-        a  = np.ones((3, 4, 1))
-        ai = np.ones((1, 2, 5), dtype=np.intp)
+        a  = np.ones((3, 4,    1))
+        ai = np.ones((1, 2, 6, 5), dtype=np.intp)
         actual = take_along_axis(a, ai, axis=1)
-        assert_equal(actual.shape, (3, 2, 5))
+        assert_equal(actual.shape, (3, 2, 6, 5))
 
 
 class TestApplyAlongAxis(object):
