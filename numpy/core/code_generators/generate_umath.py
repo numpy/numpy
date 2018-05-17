@@ -972,7 +972,7 @@ def make_arrays(funcdict):
                     for vt in t.simd:
                         code2list.append(textwrap.dedent("""\
                         #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-                        if (npy_cpu_supports("{ISA}")) {{
+                        if (npy_cpu_supports("{isa}")) {{
                             {fname}_functions[{idx}] = {type}_{fname}_{isa};
                         }}
                         #endif
