@@ -29,7 +29,7 @@ New functions
 
 * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
   without needing to calculate the histogram.
-    
+
 * `npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier`` have been added to
   deal with compiler optimization changing the order of operations. See below for details.
 
@@ -138,7 +138,7 @@ C API changes
   ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
   were rearranging the order of operations when the previous functions were
   used in the ufunc SIMD functions, resulting in the floatstatus flags being '
-  checked before the operation whose status we wanted to check was run.  
+  checked before the operation whose status we wanted to check was run.
   See `#10339 <https://github.com/numpy/numpy/issues/10370>`__.
 
 New Features
@@ -325,6 +325,31 @@ Increased performance in ``random.permutation`` for multidimensional arrays
 ``permutation`` uses the fast path in ``random.shuffle`` for all input
 array dimensions.  Previously the fast path was only used for 1-d arrays.
 
+Generalized ufuncs now accept ``axes`` and ``keepdims`` arguments
+-----------------------------------------------------------------
+One can control over which axes a generalized ufunc operates by passing in an
+``axes`` argument, a list of tuples with indices of particular axes.  For
+instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate for matrix
+multiplication, the base elements are two-dimensional matrices and these are
+taken to be stored in the two last axes of each argument.  The corresponding
+axes keyword would be ``[(-2, -1), (-2, -1), (-2, -1)]``. If one wanted to
+use leading dimensions instead, one would pass in ``[(0, 1), (0, 1), (0, 1)]``.
+
+For simplicity, for generalized ufuncs that operate on 1-dimensional arrays
+(vectors), a single integer is accepted instead of a single-element tuple, and
+for generalized ufuncs for which all outputs are scalars, the (empty) output
+tuples can be omitted.  Hence, for a signature of ``(i),(i)->()`` appropriate
+for an inner product, one could pass in ``axes=[0, 0]`` to indicate that the
+vectors are stored in the first dimensions of the two inputs arguments.
+
+Furthermore, like for reductions, for generalized ufuncs that have inputs that
+all have the same number of core dimensions and outputs with no core dimension,
+one can pass in ``keepdims`` to leave a dimension with size 1 in the outputs,
+thus allowing proper broadcasting against the original inputs. The location of
+the extra dimension can be controlled with ``axes``. For instance, for the
+inner-product example, ``keepdims=True, axes=[-2, -2, -2]`` would act on the
+one-but-last dimension of the input arguments, and leave a size 1 dimension in
+that place in the output.
 
 Changes
 =======
