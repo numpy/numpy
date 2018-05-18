@@ -52,7 +52,7 @@ class TestSetOps(object):
         assert_array_equal(a[i1], ef)
         assert_array_equal(b[i2], ef)
                 
-        #non1d, unique inputs
+        # non1d, unique inputs
         a = np.array([[2, 4, 5, 6], [7, 8, 1, 15]])
         b = np.array([[3, 2, 7, 6], [10, 12, 8, 9]])
         c, i1, i2 = intersect1d(a, b, assume_unique=True, return_indices=True)
@@ -62,7 +62,7 @@ class TestSetOps(object):
         assert_array_equal(ea, a[ui1])
         assert_array_equal(ea, b[ui2])
     
-        #non1d, not assumed to be uniqueinputs
+        # non1d, not assumed to be uniqueinputs
         a = np.array([[2, 4, 5, 6, 6], [4, 7, 8, 7, 2]])
         b = np.array([[3, 2, 7, 7], [10, 12, 8, 7]])
         c, i1, i2 = intersect1d(a, b, return_indices=True)
