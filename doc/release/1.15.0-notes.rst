@@ -141,6 +141,12 @@ C API changes
   checked before the operation whose status we wanted to check was run.  
   See `#10339 <https://github.com/numpy/numpy/issues/10370>`__.
 
+* ``PyArray_GetDTypeTransferFunction`` now defaults to using user-defined
+  ``copyswapn`` / ``copyswap`` for user-defined dtypes. If this causes a
+  significant performance hit, consider implementing ``copyswapn`` to reflect
+  the implementation of ``PyArray_GetStridedCopyFn``.
+  See `#10898 <https://github.com/numpy/numpy/pull/10898>`__.
+
 New Features
 ============
 
