@@ -2035,7 +2035,7 @@ def binary_repr(num, width=None):
     '11101'
 
     """
-    def warn_if_insufficient(width, binwdith):
+    def warn_if_insufficient(width, binwidth):
         if width is not None and width < binwidth:
             warnings.warn(
                 "Insufficient bit width provided. This behavior "
