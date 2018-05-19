@@ -151,6 +151,17 @@ class TestArrayEqual(_GenericTest):
             self._test_not_equal(c, b)
             assert_equal(len(l), 1)
 
+    def test_masked_nan_inf(self):
+        # Regression test for gh-11121
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[False, True, False])
+        b = np.array([3., np.nan, 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[True, False, False])
+        b = np.array([np.inf, 4., 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+
 
 class TestBuildErrorMessage(object):
 
@@ -649,6 +660,7 @@ class TestArrayAssertLess(object):
         assert_raises(AssertionError, lambda: self._assert_func(-x, -ainf))
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
+
 
 @pytest.mark.skip(reason="The raises decorator depends on Nose")
 class TestRaises(object):
