@@ -378,6 +378,38 @@ npy_PyFile_CloseFile(PyObject *file)
     return 0;
 }
 
+
+/* This is a copy of _PyErr_ChainExceptions, with:
+ *  - a minimal implementation for python 2
+ *  - __cause__ used instead of __context__
+ */
+static NPY_INLINE void
+npy_PyErr_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
+{
+    if (exc == NULL)
+        return;
+
+    if (PyErr_Occurred()) {
+        /* only py3 supports this anyway */
+        #ifdef NPY_PY3K
+            PyObject *exc2, *val2, *tb2;
+            PyErr_Fetch(&exc2, &val2, &tb2);
+            PyErr_NormalizeException(&exc, &val, &tb);
+            if (tb != NULL) {
+                PyException_SetTraceback(val, tb);
+                Py_DECREF(tb);
+            }
+            Py_DECREF(exc);
+            PyErr_NormalizeException(&exc2, &val2, &tb2);
+            PyException_SetCause(val2, val);
+            PyErr_Restore(exc2, val2, tb2);
+        #endif
+    }
+    else {
+        PyErr_Restore(exc, val, tb);
+    }
+}
+
 /*
  * PyObject_Cmp
  */
