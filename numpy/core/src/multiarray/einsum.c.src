@@ -1992,12 +1992,13 @@ parse_output_subscripts(char *subscripts, int length,
 
 
 /*
- * When there's just one operand and no reduction, we
- * can return a view into op.  This calculates the view
- * if possible.
+ * When there's just one operand and no reduction we can return a view
+ * into 'op'.  This calculates the view and stores it in 'ret', if
+ * possible.  Returns -1 on error, 0 otherwise.  Note that a 0 return
+ * does not mean that a view was successfully created.
  */
 static int
-get_single_op_view(PyArrayObject *op, int  iop, char *labels,
+get_single_op_view(PyArrayObject *op, char *labels,
                    int ndim_output, char *output_labels,
                    PyArrayObject **ret)
 {
@@ -2052,13 +2053,11 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
             }
             /* Update the dimensions and strides of the output */
             i = out_label - output_labels;
-            if (new_dims[i] != 0 &&
-                    new_dims[i] != PyArray_DIM(op, idim)) {
+            if (new_dims[i] != 0 && new_dims[i] != PyArray_DIM(op, idim)) {
                 PyErr_Format(PyExc_ValueError,
-                        "dimensions in operand %d for collapsing "
+                        "dimensions in single operand for collapsing "
                         "index '%c' don't match (%d != %d)",
-                        iop, label, (int)new_dims[i],
-                        (int)PyArray_DIM(op, idim));
+                        label, (int)new_dims[i], (int)PyArray_DIM(op, idim));
                 return -1;
             }
             new_dims[i] = PyArray_DIM(op, idim);
@@ -2620,6 +2619,24 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         return NULL;
     }
 
+    /*
+     * If there's just one operand and no output parameter,
+     * first try remapping the axes to the output to return
+     * a view instead of a copy.
+     */
+    if (nop == 1 && out == NULL) {
+        ret = NULL;
+
+        if (get_single_op_view(op_in[0], op_labels[0], ndim_output,
+                               output_labels, &ret) < 0) {
+            return NULL;
+        }
+
+        if (ret != NULL) {
+            return ret;
+        }
+    }
+
     /* Set all the op references to NULL */
     for (iop = 0; iop < nop; ++iop) {
         op[iop] = NULL;
@@ -2634,26 +2651,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         int combine, ndim;
 
         ndim = PyArray_NDIM(op_in[iop]);
-
-        /*
-         * If there's just one operand and no output parameter,
-         * first try remapping the axes to the output to return
-         * a view instead of a copy.
-         */
-        if (iop == 0 && nop == 1 && out == NULL) {
-            ret = NULL;
-
-            if (get_single_op_view(op_in[iop], iop, labels,
-                                   ndim_output, output_labels,
-                                   &ret) < 0) {
-                return NULL;
-            }
-
-            if (ret != NULL) {
-                return ret;
-            }
-        }
-
         /*
          * Check whether any dimensions need to be combined
          *
