@@ -771,7 +771,11 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             reduced = val.ravel()
             cond = reduced.all()
             reduced = reduced.tolist()
-        if not cond:
+        # The below comparison is a hack to ensure that fully masked
+        # results, for which val.ravel().all() returns np.ma.masked,
+        # do not trigger a failure (np.ma.masked != True evaluates as
+        # np.ma.masked, which is falsy).
+        if cond != True:
             match = 100-100.0*reduced.count(1)/len(reduced)
             msg = build_err_msg([x, y],
                                 err_msg

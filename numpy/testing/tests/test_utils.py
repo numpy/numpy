@@ -366,6 +366,24 @@ class TestArrayAlmostEqual(_GenericTest):
         self._assert_func(b, a)
         self._assert_func(b, b)
 
+        # Test fully masked as well (see gh-11123).
+        a = np.ma.MaskedArray(3.5, mask=True)
+        b = np.array([3., 4., 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.masked
+        b = np.array([3., 4., 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[True, True, True])
+        b = np.array([1., 2., 3.])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[True, True, True])
+        b = np.array(1.)
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
