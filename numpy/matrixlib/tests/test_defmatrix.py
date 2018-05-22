@@ -1,5 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
+# As we are testing matrices, we ignore its PendingDeprecationWarnings
+try:
+    import pytest
+    pytestmark = pytest.mark.filterwarnings(
+        'ignore:the matrix subclass is not:PendingDeprecationWarning')
+except ImportError:
+    pass
+
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
