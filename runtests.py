@@ -311,6 +311,8 @@ def build_project(args):
 
     """
 
+    import distutils.sysconfig
+
     root_ok = [os.path.exists(os.path.join(ROOT_DIR, fn))
                for fn in PROJECT_ROOT_FILES]
     if not all(root_ok):
@@ -325,14 +327,18 @@ def build_project(args):
 
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
-
+    cvars = distutils.sysconfig.get_config_vars()
+    if 'gcc' in cvars['CC']:
+        # add flags used as werrors tools/travis-test.sh
+        warnings_as_errors = (' -Werror=declaration-after-statement -Werror=vla'
+                              ' -Werror=nonnull -Werror=pointer-arith'
+                              ' -Wlogical-op')
+        env['CFLAGS'] = warnings_as_errors + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'
         env['FOPT'] = '-O0 -ggdb'
         if args.gcov:
-            import distutils.sysconfig
-            cvars = distutils.sysconfig.get_config_vars()
             env['OPT'] = '-O0 -ggdb'
             env['FOPT'] = '-O0 -ggdb'
             env['CC'] = cvars['CC'] + ' --coverage'
