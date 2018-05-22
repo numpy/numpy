@@ -82,8 +82,8 @@ The RNGs include:
   generating doubles
 * [xoroshiro128+](http://xoroshiro.di.unimi.it/) and
   [xorshift1024*φ](http://xorshift.di.unimi.it/)
-* [PCG64](http:w//www.pcg-random.org/)
-* ThreeFry and Philox from [Random123](https://www.deshawrsearch.com/resources_random123.html)
+* [PCG64](http://www.pcg-random.org/)
+* ThreeFry and Philox from [Random123](https://www.deshawresearch.com/resources_random123.html)
 ## Differences from `numpy.random.RandomState`
 
 ### New Features
