@@ -4759,6 +4759,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     machines with different endianness. Some of these problems can be overcome
     by outputting the data as text files, at the expense of speed and file
     size.
+    
+    When fid is a file object, array contents are directly written to the
+    file, bypassing the file object's ``write`` method. As a result, tofile
+    cannot be used with files objects supporting compression (e.g., GzipFile)
+    or file-like objects that do not support ``fileno()`` (e.g., BytesIO).
 
     """))
 
