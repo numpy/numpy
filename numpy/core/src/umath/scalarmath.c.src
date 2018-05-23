@@ -1178,12 +1178,14 @@ static PyObject *
 
 #endif
 
+#if PY_VERSION_HEX >= 0x03050000
 static PyObject *
 @name@_matrix_multiply(PyObject *a, PyObject *b)
 {
     Py_INCREF(Py_NotImplemented);
     return Py_NotImplemented;
 }
+#endif
 
 /**end repeat**/
 #undef _IS_ZERO
