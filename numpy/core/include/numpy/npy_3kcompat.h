@@ -61,6 +61,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
 #endif
 
+/* <2.7.11 and <3.4.4 have the wrong argument type for Py_EnterRecursiveCall */
+#if (PY_VERSION_HEX < 0x02070B00) || \
+    ((0x03000000 <= PY_VERSION_HEX) && (PY_VERSION_HEX < 0x03040400))
+    #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall((char *)(x))
+#else
+    #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
+#endif
+
 /*
  * PyString -> PyBytes
  */

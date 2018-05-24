@@ -3721,19 +3721,21 @@ recursive_find_object_datetime64_type(PyObject *obj,
         }
 
         for (i = 0; i < len; ++i) {
+            int ret;
             PyObject *f = PySequence_GetItem(obj, i);
             if (f == NULL) {
                 return -1;
             }
-            if (f == obj) {
-                Py_DECREF(f);
-                return 0;
-            }
-            if (recursive_find_object_datetime64_type(f, meta) < 0) {
+            if (Npy_EnterRecursiveCall(" in recursive_find_object_datetime64_type") != 0) {
                 Py_DECREF(f);
                 return -1;
             }
+            ret = recursive_find_object_datetime64_type(f, meta);
+            Py_LeaveRecursiveCall();
             Py_DECREF(f);
+            if (ret < 0) {
+                return ret;
+            }
         }
 
         return 0;
@@ -3823,19 +3825,21 @@ recursive_find_object_timedelta64_type(PyObject *obj,
         }
 
         for (i = 0; i < len; ++i) {
+            int ret;
             PyObject *f = PySequence_GetItem(obj, i);
             if (f == NULL) {
                 return -1;
             }
-            if (f == obj) {
-                Py_DECREF(f);
-                return 0;
-            }
-            if (recursive_find_object_timedelta64_type(f, meta) < 0) {
+            if (Npy_EnterRecursiveCall(" in recursive_find_object_timedelta64_type") != 0) {
                 Py_DECREF(f);
                 return -1;
             }
+            ret = recursive_find_object_timedelta64_type(f, meta);
+            Py_LeaveRecursiveCall();
             Py_DECREF(f);
+            if (ret < 0) {
+                return ret;
+            }
         }
 
         return 0;
