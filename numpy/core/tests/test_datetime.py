@@ -327,6 +327,12 @@ class TestDateTime(object):
         a = datetime.timedelta(seconds=3)
         assert_raises(TypeError, np.timedelta64, a, 'M')
         assert_raises(TypeError, np.timedelta64, a, 'Y')
+        a = datetime.timedelta(weeks=3)
+        assert_raises(TypeError, np.timedelta64, a, 'M')
+        assert_raises(TypeError, np.timedelta64, a, 'Y')
+        a = datetime.timedelta()
+        assert_raises(TypeError, np.timedelta64, a, 'M')
+        assert_raises(TypeError, np.timedelta64, a, 'Y')
 
     def test_timedelta_object_array_conversion(self):
         # Regression test for gh-11096
