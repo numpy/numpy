@@ -16,15 +16,6 @@
 
 #include "binop_override.h"
 
-/* <2.7.11 and <3.4.4 have the wrong argument type for Py_EnterRecursiveCall */
-#if (PY_VERSION_HEX < 0x02070B00) || \
-    ((0x03000000 <= PY_VERSION_HEX) && (PY_VERSION_HEX < 0x03040400))
-    #define _Py_EnterRecursiveCall(x) Py_EnterRecursiveCall((char *)(x))
-#else
-    #define _Py_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
-#endif
-
-
 /*************************************************************************
  ****************   Implement Number Protocol ****************************
  *************************************************************************/
@@ -796,7 +787,7 @@ _array_nonzero(PyArrayObject *mp)
     n = PyArray_SIZE(mp);
     if (n == 1) {
         int res;
-        if (_Py_EnterRecursiveCall(" while converting array to bool")) {
+        if (Npy_EnterRecursiveCall(" while converting array to bool")) {
             return -1;
         }
         res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
@@ -850,7 +841,7 @@ array_scalar_forward(PyArrayObject *v,
     /* Need to guard against recursion if our array holds references */
     if (PyDataType_REFCHK(PyArray_DESCR(v))) {
         PyObject *res;
-        if (_Py_EnterRecursiveCall(where) != 0) {
+        if (Npy_EnterRecursiveCall(where) != 0) {
             Py_DECREF(scalar);
             return NULL;
         }
