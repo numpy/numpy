@@ -124,7 +124,7 @@ class TestDateTime(object):
         assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
     def test_compare_generic_nat(self):
-        # regression tests for GH6452
+        # regression tests for gh-6452
         assert_equal(np.datetime64('NaT'),
                      np.datetime64('2000') + np.timedelta64('NaT'))
         # nb. we may want to make NaT != NaT true in the future
@@ -324,6 +324,15 @@ class TestDateTime(object):
         a = np.timedelta64(1, 'Y')
         assert_raises(TypeError, np.timedelta64, a, 'D')
         assert_raises(TypeError, np.timedelta64, a, 'm')
+
+    def test_timedelta_object_array_conversion(self):
+        # Regression test for GH11096
+        inputs = [datetime.timedelta(28),
+                  datetime.timedelta(30),
+                  datetime.timedelta(31)]
+        expected = np.array([28, 30, 31], dtype='timedelta64[D]')
+        actual = np.array(inputs, dtype='timedelta64[D]')
+        assert_equal(expected, actual)
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
