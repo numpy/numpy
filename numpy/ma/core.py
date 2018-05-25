@@ -6317,7 +6317,7 @@ class MaskedConstant(MaskedArray):
         # precedent for this with `np.bool_` scalars.
         return self
 
-    def __copy__(self, memo):
+    def __copy__(self):
         return self
 		
     def __deepcopy__(self, memo):
