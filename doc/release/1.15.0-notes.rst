@@ -162,6 +162,11 @@ Creating a full iOS-compatible NumPy package requires building for the 5
 architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
 combining these 5 compiled builds products into a single "fat" binary.
 
+``return_indices`` keyword added for ``np.intersect1d``
+-------------------------------------------------------
+New keyword ``return_indices`` returns the indices of the two input arrays
+that correspond to the common elements. 
+
 ``np.quantile`` and ``np.nanquantile``
 --------------------------------------
 Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
@@ -172,6 +177,7 @@ around ``np.quantile`` with the extra step of dividing by 100.
 Build system
 ------------
 Added experimental support for the 64-bit RISC-V architecture.
+
 
 Improvements
 ============
