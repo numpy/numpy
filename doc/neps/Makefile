@@ -1,6 +1,5 @@
 # Minimal makefile for Sphinx documentation
 #
-PYVER = 3.6
 
 # You can set these variables from the command line.
 SPHINXOPTS    = -W
@@ -16,7 +15,7 @@ help:
 .PHONY: help Makefile index
 
 index:
-	python${PYVER} tools/build_index.py
+	python tools/build_index.py
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
