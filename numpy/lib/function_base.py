@@ -3672,7 +3672,7 @@ def _quantile_is_valid(q):
 
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
                            interpolation='linear', keepdims=False):
-    a = asarray(a)
+    a = asanyarray(a)
     if q.ndim == 0:
         # Do not allow 0-d arrays because following code fails for scalar
         zerod = True
