@@ -1328,6 +1328,17 @@ class TestMinMax(object):
         assert_equal(d.max(), d[0])
         assert_equal(d.min(), d[0])
 
+    def test_reduce_warns(self):
+        # gh 10370, 11029 Some compilers reorder the call to npy_getfloatstatus
+        # and put it before the call to an intrisic function that causes
+        # invalid status to be set. Also make sure warnings are emitted
+        for n in (2, 4, 8, 16, 32):
+            with suppress_warnings() as sup:
+                sup.record(RuntimeWarning)
+                for r in np.diagflat([np.nan] * n):
+                    assert_equal(np.min(r), np.nan)
+                assert_equal(len(sup.log), n)
+
 
 class TestAbsoluteNegative(object):
     def test_abs_neg_blocked(self):
@@ -1664,13 +1675,16 @@ class TestSpecialMethods(object):
         assert_equal(ncu.maximum(a, C()), 0)
 
     def test_ufunc_override(self):
-
+        # check override works even with instance with high priority.
         class A(object):
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return self, func, method, inputs, kwargs
 
+        class MyNDArray(np.ndarray):
+            __array_priority__ = 100
+
         a = A()
-        b = np.matrix([1])
+        b = np.array([1]).view(MyNDArray)
         res0 = np.multiply(a, b)
         res1 = np.multiply(b, b, out=a)
 

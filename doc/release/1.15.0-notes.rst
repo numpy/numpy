@@ -20,15 +20,18 @@ New functions
 * ``nanquantile`` function, an interface to ``nanpercentile`` without factors
   of 100
 
-* `np.printoptions`, the context manager which sets print options temporarily
+* `np.printoptions`, a context manager that sets print options temporarily
   for the scope of the ``with`` block::
 
     >>> with np.printoptions(precision=2):
     ...     print(np.array([2.0]) / 3)
     [0.67]
 
-  * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
-    without needing to calculate the histogram.
+* `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
+  without needing to calculate the histogram.
+
+* `npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier`` have been added to
+  deal with compiler optimization changing the order of operations. See below for details.
 
 Deprecations
 ============
@@ -42,6 +45,7 @@ Deprecations
   * `np.ma.loads`, `np.ma.dumps`
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
+
 * Direct imports from the following modules is deprecated. All testing related
   imports should come from `numpy.testing`.
   * `np.testing.utils`
@@ -55,7 +59,7 @@ Deprecations
   In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
   or the built-in Python `sum` instead.
 
-* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or 
+* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
   ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
   flag set, before the array is deallocated. A deprecation warning will be
   emitted if those calls are not used when needed.
@@ -81,7 +85,7 @@ are some circumstances where nditer doesn't actually give you a view onto the
 writable array. Instead, it gives you a copy, and if you make changes to the
 copy, nditer later writes those changes back into your actual array. Currently,
 this writeback occurs when the array objects are garbage collected, which makes
-this API error-prone on CPython and entirely broken on PyPy. Therefore, 
+this API error-prone on CPython and entirely broken on PyPy. Therefore,
 ``nditer`` should now be used as a context manager whenever using ``nditer``
 with writeable arrays (``with np.nditer(...) as it: ...``). You may also
 explicitly call ``it.close()`` for cases where a context manager is unusable,
@@ -116,6 +120,12 @@ longer possible, and objects expecting the old API are respected. The silent suc
 by removing the interception of an otherwise-normal Exception when ``axis`` was provided to an object
 using the old API.
 
+unstructured void array's ``.item`` method now returns a bytes object
+---------------------------------------------------------------------
+``.item`` now returns a ``bytes`` object instead of a buffer or byte array.
+This may affect code which assumed the return value was mutable, which is no
+longer the case.
+
 ``copy.copy`` and ``copy.deepcopy`` no longer turn ``masked`` into an array
 ----------------------------------------------------------------------------
 Since ``np.ma.masked`` is a readonly scalar, copying should be a no-op. These
@@ -127,6 +137,14 @@ C API changes
 
 * ``NpyIter_Close`` has been added and should be called before
   ``NpyIter_Deallocate`` to resolve possible writeback-enabled arrays.
+
+* Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
+  have been added and should be used in place of the ``npy_get_floatstatus``and
+  ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
+  were rearranging the order of operations when the previous functions were
+  used in the ufunc SIMD functions, resulting in the floatstatus flags being '
+  checked before the operation whose status we wanted to check was run.
+  See `#10339 <https://github.com/numpy/numpy/issues/10370>`__.
 
 New Features
 ============
@@ -202,6 +220,13 @@ passed explicitly, and are not yet computed automatically.
 ------------------------------------------------------------------------
 No longer does an IQR of 0 result in `n_bins=1`, rather the number of bins
 chosen is related to the data size in this situation.
+
+``histogram`` and ``histogramdd`` return edges matching the float type of the data
+----------------------------------------------------------------------------------
+When passed ``float16``, ``np.float32``, or ``np.longdouble`` data, the
+returned edges are now of the same dtype. Previously, ``histogram`` would only
+return the same type if explicit bins were given, and ``histogram`` would
+produce ``float64`` bins no matter what the inputs.
 
 ``histogramdd`` allows explicit ranges to be given in a subset of axes
 ----------------------------------------------------------------------
@@ -292,6 +317,44 @@ of the overlap between input an output, that is, the next element accumulated
 is added before the accumulated result is stored in its place, hence the
 overlap is safe. Avoiding the copy results in faster execution.
 
+``linalg.matrix_power`` can now handle stacks of matrices
+---------------------------------------------------------
+Like other functions in ``linalg``, ``matrix_power`` can now deal with arrays
+of dimension larger than 2, which are treated as stacks of matrices. As part
+of the change, to further improve consistency, the name of the first argument
+has been changed to ``a`` (from ``M``), and the exceptions for non-square
+matrices have been changed to ``LinAlgError`` (from ``ValueError``).
+
+Increased performance in ``random.permutation`` for multidimensional arrays
+---------------------------------------------------------------------------
+``permutation`` uses the fast path in ``random.shuffle`` for all input
+array dimensions.  Previously the fast path was only used for 1-d arrays.
+
+Generalized ufuncs now accept ``axes`` and ``keepdims`` arguments
+-----------------------------------------------------------------
+One can control over which axes a generalized ufunc operates by passing in an
+``axes`` argument, a list of tuples with indices of particular axes.  For
+instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate for matrix
+multiplication, the base elements are two-dimensional matrices and these are
+taken to be stored in the two last axes of each argument.  The corresponding
+axes keyword would be ``[(-2, -1), (-2, -1), (-2, -1)]``. If one wanted to
+use leading dimensions instead, one would pass in ``[(0, 1), (0, 1), (0, 1)]``.
+
+For simplicity, for generalized ufuncs that operate on 1-dimensional arrays
+(vectors), a single integer is accepted instead of a single-element tuple, and
+for generalized ufuncs for which all outputs are scalars, the (empty) output
+tuples can be omitted.  Hence, for a signature of ``(i),(i)->()`` appropriate
+for an inner product, one could pass in ``axes=[0, 0]`` to indicate that the
+vectors are stored in the first dimensions of the two inputs arguments.
+
+Furthermore, like for reductions, for generalized ufuncs that have inputs that
+all have the same number of core dimensions and outputs with no core dimension,
+one can pass in ``keepdims`` to leave a dimension with size 1 in the outputs,
+thus allowing proper broadcasting against the original inputs. The location of
+the extra dimension can be controlled with ``axes``. For instance, for the
+inner-product example, ``keepdims=True, axes=[-2, -2, -2]`` would act on the
+one-but-last dimension of the input arguments, and leave a size 1 dimension in
+that place in the output.
 
 Changes
 =======

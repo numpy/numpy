@@ -113,11 +113,6 @@ def poly(seq_of_zeros):
     >>> np.poly(P)
     array([ 1.        ,  0.        ,  0.16666667])
 
-    Or a square matrix object:
-
-    >>> np.poly(np.matrix(P))
-    array([ 1.        ,  0.        ,  0.16666667])
-
     Note how in all cases the leading coefficient is always 1.
 
     """

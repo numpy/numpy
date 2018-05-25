@@ -771,7 +771,11 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             reduced = val.ravel()
             cond = reduced.all()
             reduced = reduced.tolist()
-        if not cond:
+        # The below comparison is a hack to ensure that fully masked
+        # results, for which val.ravel().all() returns np.ma.masked,
+        # do not trigger a failure (np.ma.masked != True evaluates as
+        # np.ma.masked, which is falsy).
+        if cond != True:
             match = 100-100.0*reduced.count(1)/len(reduced)
             msg = build_err_msg([x, y],
                                 err_msg
@@ -1369,16 +1373,20 @@ def _assert_valid_refcount(op):
     """
     if not HAS_REFCOUNT:
         return True
-    import numpy as np
+    import numpy as np, gc
 
     b = np.arange(100*100).reshape(100, 100)
     c = b
     i = 1
 
-    rc = sys.getrefcount(i)
-    for j in range(15):
-        d = op(b, c)
-    assert_(sys.getrefcount(i) >= rc)
+    gc.disable()
+    try:
+        rc = sys.getrefcount(i)
+        for j in range(15):
+            d = op(b, c)
+        assert_(sys.getrefcount(i) >= rc)
+    finally:
+        gc.enable()
     del d  # for pyflakes
 
 
