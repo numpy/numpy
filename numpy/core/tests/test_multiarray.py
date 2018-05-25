@@ -6517,6 +6517,7 @@ class TestNewBufferProtocol(object):
         a = np.empty((1,) * 32)
         self._check_roundtrip(a)
 
+    @pytest.mark.skipif(sys.version_info < (2, 7, 7), reason="See gh-11115")
     def test_error_too_many_dims(self):
         def make_ctype(shape, scalar_type):
             t = scalar_type
