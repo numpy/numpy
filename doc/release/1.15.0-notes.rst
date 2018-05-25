@@ -116,6 +116,11 @@ longer possible, and objects expecting the old API are respected. The silent suc
 by removing the interception of an otherwise-normal Exception when ``axis`` was provided to an object
 using the old API.
 
+``copy.copy`` and ``copy.deepcopy`` no longer turn ``masked`` into an array
+----------------------------------------------------------------------------
+Since ``np.ma.masked`` is a readonly scalar, copying should be a no-op. These
+functions now behave consistently with ``np.copy()``.
+
 
 C API changes
 =============
