@@ -3679,11 +3679,11 @@ recursive_find_object_datetime64_type(PyObject *obj,
 
         return 0;
     }
-    /* Python date object -> 'D' */
-    else if (PyDate_Check(obj)) {
+    /* Python datetime object -> 'us' */
+    else if (PyDateTime_Check(obj)) {
         PyArray_DatetimeMetaData tmp_meta;
 
-        tmp_meta.base = NPY_FR_D;
+        tmp_meta.base = NPY_FR_us;
         tmp_meta.num = 1;
 
         /* Combine it with 'meta' */
@@ -3694,11 +3694,11 @@ recursive_find_object_datetime64_type(PyObject *obj,
 
         return 0;
     }
-    /* Python datetime object -> 'us' */
-    else if (PyDateTime_Check(obj)) {
+    /* Python date object -> 'D' */
+    else if (PyDate_Check(obj)) {
         PyArray_DatetimeMetaData tmp_meta;
 
-        tmp_meta.base = NPY_FR_us;
+        tmp_meta.base = NPY_FR_D;
         tmp_meta.num = 1;
 
         /* Combine it with 'meta' */
