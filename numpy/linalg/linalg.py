@@ -16,20 +16,20 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError', 'multi_dot']
 
+import operator
 import warnings
 
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
-    add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
-    finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, object_, ones, matmul,
-    swapaxes, divide, count_nonzero, ndarray, isnan
+    csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
+    add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
+    finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
+    atleast_2d, intp, asanyarray, object_, matmul,
+    swapaxes, divide, count_nonzero, isnan
 )
 from numpy.core.multiarray import normalize_axis_index
-from numpy.lib import triu, asfarray
+from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import lapack_lite, _umath_linalg
-from numpy.matrixlib.defmatrix import matrix_power
 
 # For Python2/3 compatibility
 _N = b'N'
@@ -96,6 +96,9 @@ def _raise_linalgerror_eigenvalues_nonconvergence(err, flag):
 
 def _raise_linalgerror_svd_nonconvergence(err, flag):
     raise LinAlgError("SVD did not converge")
+
+def _raise_linalgerror_lstsq(err, flag):
+    raise LinAlgError("SVD did not converge in Linear Least Squares")
 
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)  # make a copy
@@ -527,6 +530,109 @@ def inv(a):
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
     return wrap(ainv.astype(result_t, copy=False))
+
+
+def matrix_power(a, n):
+    """
+    Raise a square matrix to the (integer) power `n`.
+
+    For positive integers `n`, the power is computed by repeated matrix
+    squarings and matrix multiplications. If ``n == 0``, the identity matrix
+    of the same shape as M is returned. If ``n < 0``, the inverse
+    is computed and then raised to the ``abs(n)``.
+
+    Parameters
+    ----------
+    a : (..., M, M) array_like
+        Matrix to be "powered."
+    n : int
+        The exponent can be any integer or long integer, positive,
+        negative, or zero.
+
+    Returns
+    -------
+    a**n : (..., M, M) ndarray or matrix object
+        The return value is the same shape and type as `M`;
+        if the exponent is positive or zero then the type of the
+        elements is the same as those of `M`. If the exponent is
+        negative the elements are floating-point.
+
+    Raises
+    ------
+    LinAlgError
+        For matrices that are not square or that (for negative powers) cannot
+        be inverted numerically.
+
+    Examples
+    --------
+    >>> from numpy.linalg import matrix_power
+    >>> i = np.array([[0, 1], [-1, 0]]) # matrix equiv. of the imaginary unit
+    >>> matrix_power(i, 3) # should = -i
+    array([[ 0, -1],
+           [ 1,  0]])
+    >>> matrix_power(i, 0)
+    array([[1, 0],
+           [0, 1]])
+    >>> matrix_power(i, -3) # should = 1/(-i) = i, but w/ f.p. elements
+    array([[ 0.,  1.],
+           [-1.,  0.]])
+
+    Somewhat more sophisticated example
+
+    >>> q = np.zeros((4, 4))
+    >>> q[0:2, 0:2] = -i
+    >>> q[2:4, 2:4] = i
+    >>> q # one of the three quaternion units not equal to 1
+    array([[ 0., -1.,  0.,  0.],
+           [ 1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.],
+           [ 0.,  0., -1.,  0.]])
+    >>> matrix_power(q, 2) # = -np.eye(4)
+    array([[-1.,  0.,  0.,  0.],
+           [ 0., -1.,  0.,  0.],
+           [ 0.,  0., -1.,  0.],
+           [ 0.,  0.,  0., -1.]])
+
+    """
+    a = asanyarray(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
+
+    try:
+        n = operator.index(n)
+    except TypeError:
+        raise TypeError("exponent must be an integer")
+
+    if n == 0:
+        a = empty_like(a)
+        a[...] = eye(a.shape[-2], dtype=a.dtype)
+        return a
+
+    elif n < 0:
+        a = inv(a)
+        n = abs(n)
+
+    # short-cuts.
+    if n == 1:
+        return a
+
+    elif n == 2:
+        return matmul(a, a)
+
+    elif n == 3:
+        return matmul(matmul(a, a), a)
+
+    # Use binary decomposition to reduce the number of matrix multiplications.
+    # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
+    # increasing powers of 2, and multiply into the result as needed.
+    z = result = None
+    while n > 0:
+        z = a if z is None else matmul(z, z)
+        n, bit = divmod(n, 2)
+        if bit:
+            result = z if result is None else matmul(result, z)
+
+    return result
 
 
 # Cholesky decomposition
@@ -1984,7 +2090,7 @@ def lstsq(a, b, rcond="warn"):
            [ 2.,  1.],
            [ 3.,  1.]])
 
-    >>> m, c = np.linalg.lstsq(A, y)[0]
+    >>> m, c = np.linalg.lstsq(A, y, rcond=None)[0]
     >>> print(m, c)
     1.0 -0.95
 
@@ -1997,7 +2103,6 @@ def lstsq(a, b, rcond="warn"):
     >>> plt.show()
 
     """
-    import math
     a, _ = _makearray(a)
     b, wrap = _makearray(b)
     is_1d = b.ndim == 1
@@ -2008,7 +2113,6 @@ def lstsq(a, b, rcond="warn"):
     m  = a.shape[0]
     n  = a.shape[1]
     n_rhs = b.shape[1]
-    ldb = max(n, m)
     if m != b.shape[0]:
         raise LinAlgError('Incompatible dimensions')
 
@@ -2028,61 +2132,16 @@ def lstsq(a, b, rcond="warn"):
                       FutureWarning, stacklevel=2)
         rcond = -1
     if rcond is None:
-        rcond = finfo(t).eps * ldb
+        rcond = finfo(t).eps * max(n, m)
 
-    bstar = zeros((ldb, n_rhs), t)
-    bstar[:m, :n_rhs] = b
-    a, bstar = _fastCopyAndTranspose(t, a, bstar)
-    a, bstar = _to_native_byte_order(a, bstar)
-    s = zeros((min(m, n),), real_t)
-    # This line:
-    #  * is incorrect, according to the LAPACK documentation
-    #  * raises a ValueError if min(m,n) == 0
-    #  * should not be calculated here anyway, as LAPACK should calculate
-    #    `liwork` for us. But that only works if our version of lapack does
-    #    not have this bug:
-    #      http://icl.cs.utk.edu/lapack-forum/archives/lapack/msg00899.html
-    #    Lapack_lite does have that bug...
-    nlvl = max( 0, int( math.log( float(min(m, n))/2. ) ) + 1 )
-    iwork = zeros((3*min(m, n)*nlvl+11*min(m, n),), fortran_int)
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgelsd
-        lwork = 1
-        rwork = zeros((lwork,), real_t)
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, -1, rwork, iwork, 0)
-        lrwork = int(rwork[0])
-        lwork = int(work[0].real)
-        work = zeros((lwork,), t)
-        rwork = zeros((lrwork,), real_t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, lwork, rwork, iwork, 0)
+    if m <= n:
+        gufunc = _umath_linalg.lstsq_m
     else:
-        lapack_routine = lapack_lite.dgelsd
-        lwork = 1
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, -1, iwork, 0)
-        lwork = int(work[0])
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, n_rhs, a, m, bstar, ldb, s, rcond,
-                                 0, work, lwork, iwork, 0)
-    if results['info'] > 0:
-        raise LinAlgError('SVD did not converge in Linear Least Squares')
+        gufunc = _umath_linalg.lstsq_n
 
-    # undo transpose imposed by fortran-order arrays
-    b_out = bstar.T
-
-    # b_out contains both the solution and the components of the residuals
-    x = b_out[:n,:]
-    r_parts = b_out[n:,:]
-    if isComplexType(t):
-        resids = sum(abs(r_parts)**2, axis=-2)
-    else:
-        resids = sum(r_parts**2, axis=-2)
-
-    rank = results['rank']
+    signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_lstsq)
+    x, resids, rank, s = gufunc(a, b, rcond, signature=signature, extobj=extobj)
 
     # remove the axis we added
     if is_1d:

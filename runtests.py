@@ -9,11 +9,10 @@ Examples::
     $ python runtests.py
     $ python runtests.py -s {SAMPLE_SUBMODULE}
     $ python runtests.py -t {SAMPLE_TEST}
-    $ python runtests.py -t {SAMPLE_TEST} -- {SAMPLE_NOSE_ARGUMENTS}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
-    $ python runtests.py --timer 20
+    $ python runtests.py --durations 20
 
 Run a debugger:
 
@@ -37,7 +36,6 @@ PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
-SAMPLE_NOSE_ARGUMENTS = "--pdb"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
               '/usr/local/lib/ccache', '/usr/local/lib/f90cache']
@@ -75,11 +73,13 @@ def main(argv):
                         help="just build, do not run any tests")
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
+    #parser.add_argument("--refguide-check", action="store_true", default=False,
+                        #help="Run refguide check (do not run regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
-    parser.add_argument("--timer", action="store", default=0, type=int,
-                        help=("Time N slowest test"))
+    parser.add_argument("--durations", action="store", default=-1, type=int,
+                        help=("Time N slowest tests, time all if 0, time none if < 0"))
     parser.add_argument("--gcov", action="store_true", default=False,
                         help=("enable C code coverage via gcov (requires GCC). "
                               "gcov output goes to build/**/*.gc*"))
@@ -111,25 +111,17 @@ def main(argv):
     parser.add_argument("--bench", action="store_true",
                         help="Run benchmark suite instead of test suite")
     parser.add_argument("--bench-compare", action="store", metavar="COMMIT",
-                        help=("Compare benchmark results to COMMIT. "
-                              "Note that you need to commit your changes first!"))
-    parser.add_argument("--raise-warnings", default=None, type=str,
-                        choices=('develop', 'release'),
-                        help=("if 'develop', warnings are treated as errors; "
-                              "defaults to 'develop' in development versions."))
+                        help=("Compare benchmark results of current HEAD to "
+                              "BEFORE. Use an additional "
+                              "--bench-compare=COMMIT to override HEAD with "
+                              "COMMIT. Note that you need to commit your "
+                              "changes first!"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
 
-    if args.timer == 0:
-        timer = False
-    elif args.timer == -1:
-        timer = True
-    elif args.timer > 0:
-        timer = int(args.timer)
-    else:
-        raise ValueError("--timer value should be an integer, -1 or >0")
-    args.timer = timer
+    if args.durations < 0:
+        args.durations = -1
 
     if args.bench_compare:
         args.bench = True
@@ -208,8 +200,7 @@ def main(argv):
         fn = os.path.join(dst_dir, 'coverage_html.js')
         if os.path.isdir(dst_dir) and os.path.isfile(fn):
             shutil.rmtree(dst_dir)
-        extra_argv += ['--cover-html',
-                       '--cover-html-dir='+dst_dir]
+        extra_argv += ['--cov-report=html:' + dst_dir]
 
     if args.bench:
         # Run ASV
@@ -264,48 +255,29 @@ def main(argv):
 
     if args.build_only:
         sys.exit(0)
-    elif args.submodule:
-        modname = PROJECT_MODULE + '.' + args.submodule
-        try:
-            __import__(modname)
-            test = sys.modules[modname].test
-        except (ImportError, KeyError, AttributeError):
-            print("Cannot run tests for %s" % modname)
-            sys.exit(2)
-    elif args.tests:
-        def fix_test_path(x):
-            # fix up test path
-            p = x.split(':')
-            p[0] = os.path.join(site_dir, p[0])
-            return ':'.join(p)
-
-        tests = [fix_test_path(x) for x in args.tests]
-
-        def test(*a, **kw):
-            extra_argv = kw.pop('extra_argv', ())
-            extra_argv = extra_argv + tests[1:]
-            kw['extra_argv'] = extra_argv
-            import numpy as np
-            from numpy.testing import Tester
-            if kw["raise_warnings"] is None:
-                if hasattr(np, "__version__") and ".dev0" in np.__version__:
-                    kw["raise_warnings"] = "develop"
-                else:
-                    kw["raise_warnings"] = "release"
-            return Tester(tests[0]).test(*a, **kw)
     else:
         __import__(PROJECT_MODULE)
         test = sys.modules[PROJECT_MODULE].test
 
+    if args.submodule:
+        tests = [PROJECT_MODULE + "." + args.submodule]
+    elif args.tests:
+        tests = args.tests
+    else:
+        tests = None
+
+
     # Run the tests under build/test
-    try:
-        shutil.rmtree(test_dir)
-    except OSError:
-        pass
-    try:
-        os.makedirs(test_dir)
-    except OSError:
-        pass
+
+    if not args.no_build:
+        test_dir = site_dir
+    else:
+        test_dir = os.path.join(ROOT_DIR, 'build', 'test')
+        if not os.path.isdir(test_dir):
+            os.makedirs(test_dir)
+
+    shutil.copyfile(os.path.join(ROOT_DIR, '.coveragerc'),
+                    os.path.join(test_dir, '.coveragerc'))
 
     cwd = os.getcwd()
     try:
@@ -314,13 +286,15 @@ def main(argv):
                       verbose=args.verbose,
                       extra_argv=extra_argv,
                       doctests=args.doctests,
-                      raise_warnings=args.raise_warnings,
                       coverage=args.coverage,
-                      timer=args.timer)
+                      durations=args.durations,
+                      tests=tests)
     finally:
         os.chdir(cwd)
 
-    if result.wasSuccessful():
+    if isinstance(result, bool):
+        sys.exit(0 if result else 1)
+    elif result.wasSuccessful():
         sys.exit(0)
     else:
         sys.exit(1)
@@ -337,6 +311,8 @@ def build_project(args):
 
     """
 
+    import distutils.sysconfig
+
     root_ok = [os.path.exists(os.path.join(ROOT_DIR, fn))
                for fn in PROJECT_ROOT_FILES]
     if not all(root_ok):
@@ -351,14 +327,18 @@ def build_project(args):
 
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
-
+    cvars = distutils.sysconfig.get_config_vars()
+    if 'gcc' in cvars['CC']:
+        # add flags used as werrors tools/travis-test.sh
+        warnings_as_errors = (' -Werror=declaration-after-statement -Werror=vla'
+                              ' -Werror=nonnull -Werror=pointer-arith'
+                              ' -Wlogical-op')
+        env['CFLAGS'] = warnings_as_errors + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'
         env['FOPT'] = '-O0 -ggdb'
         if args.gcov:
-            import distutils.sysconfig
-            cvars = distutils.sysconfig.get_config_vars()
             env['OPT'] = '-O0 -ggdb'
             env['FOPT'] = '-O0 -ggdb'
             env['CC'] = cvars['CC'] + ' --coverage'

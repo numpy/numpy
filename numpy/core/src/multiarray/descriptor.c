@@ -18,6 +18,7 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "descriptor.h"
 #include "alloc.h"
+#include "assert.h"
 
 /*
  * offset:    A starting offset.
@@ -198,7 +199,7 @@ _check_for_commastring(char *type, Py_ssize_t len)
      * allows commas inside of [], for parameterized dtypes to use.
      */
     sqbracket = 0;
-    for (i = 1; i < len; i++) {
+    for (i = 0; i < len; i++) {
         switch (type[i]) {
             case ',':
                 if (sqbracket == 0) {
@@ -243,7 +244,7 @@ is_datetime_typestr(char *type, Py_ssize_t len)
 }
 
 static PyArray_Descr *
-_convert_from_tuple(PyObject *obj)
+_convert_from_tuple(PyObject *obj, int align)
 {
     PyArray_Descr *type, *res;
     PyObject *val;
@@ -252,9 +253,16 @@ _convert_from_tuple(PyObject *obj)
     if (PyTuple_GET_SIZE(obj) != 2) {
         return NULL;
     }
-    if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) {
-        return NULL;
+    if (align) {
+        if (!PyArray_DescrAlignConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
     }
+    else {
+        if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
+    }    
     val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
     res = _use_inherit(type, val, &errflag);
@@ -437,7 +445,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         name = PyTuple_GET_ITEM(item, 0);
-        if (PyUString_Check(name)) {
+        if (PyBaseString_Check(name)) {
             title = NULL;
         }
         else if (PyTuple_Check(name)) {
@@ -446,7 +454,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
-            if (!PyUString_Check(name)) {
+            if (!PyBaseString_Check(name)) {
                 goto fail;
             }
         }
@@ -457,6 +465,17 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
+#if !defined(NPY_PY3K)
+        /* convert unicode name to ascii on Python 2 if possible */ 
+        if (PyUnicode_Check(name)) {
+            PyObject *tmp = PyUnicode_AsASCIIString(name);
+            Py_DECREF(name);
+            if (tmp == NULL) { 
+                goto fail;
+            }
+            name = tmp;
+        }
+#endif
         if (PyUString_GET_SIZE(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
@@ -1536,7 +1555,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
-        *at = _convert_from_tuple(obj);
+        *at = _convert_from_tuple(obj, 0);
         if (*at == NULL){
             if (PyErr_Occurred()) {
                 return NPY_FAIL;
@@ -1920,33 +1939,26 @@ arraydescr_shape_get(PyArray_Descr *self)
     if (!PyDataType_HASSUBARRAY(self)) {
         return PyTuple_New(0);
     }
-    /*TODO
-     * self->subarray->shape should always be a tuple,
-     * so this check should be unnecessary
-     */
-    if (PyTuple_Check(self->subarray->shape)) {
-        Py_INCREF(self->subarray->shape);
-        return (PyObject *)(self->subarray->shape);
-    }
-    return Py_BuildValue("(O)", self->subarray->shape);
+    assert(PyTuple_Check(self->subarray->shape));
+    Py_INCREF(self->subarray->shape);
+    return self->subarray->shape;
 }
 
 static PyObject *
 arraydescr_ndim_get(PyArray_Descr *self)
 {
+    Py_ssize_t ndim;
+
     if (!PyDataType_HASSUBARRAY(self)) {
         return PyInt_FromLong(0);
     }
-    /*TODO
-     * self->subarray->shape should always be a tuple,
-     * so this check should be unnecessary
+
+    /*
+     * PyTuple_Size has built in check
+     * for tuple argument
      */
-    if (PyTuple_Check(self->subarray->shape)) {
-        Py_ssize_t ndim = PyTuple_Size(self->subarray->shape);
-        return PyInt_FromLong(ndim);
-    }
-    /* consistent with arraydescr_shape_get */
-    return PyInt_FromLong(1);
+    ndim = PyTuple_Size(self->subarray->shape);
+    return PyInt_FromLong(ndim);
 }
 
 
@@ -2916,6 +2928,9 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
         tmp = PyUnicode_AsASCIIString(obj);
         *at = _convert_from_commastring(tmp, 1);
         Py_DECREF(tmp);
+    }
+    else if (PyTuple_Check(obj)) {
+        *at = _convert_from_tuple(obj, 1);
     }
     else if (PyList_Check(obj)) {
         *at = _convert_from_array_descr(obj, 1);

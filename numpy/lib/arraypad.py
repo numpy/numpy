@@ -74,6 +74,35 @@ def _round_ifneeded(arr, dtype):
         arr.round(out=arr)
 
 
+def _slice_at_axis(shape, sl, axis):
+    """
+    Construct a slice tuple the length of shape, with sl at the specified axis
+    """
+    slice_tup = (slice(None),)
+    return slice_tup * axis + (sl,) + slice_tup * (len(shape) - axis - 1)
+
+
+def _slice_first(shape, n, axis):
+    """ Construct a slice tuple to take the first n elements along axis """
+    return _slice_at_axis(shape, slice(0, n), axis=axis)
+
+
+def _slice_last(shape, n, axis):
+    """ Construct a slice tuple to take the last n elements along axis """
+    dim = shape[axis]  # doing this explicitly makes n=0 work
+    return _slice_at_axis(shape, slice(dim - n, dim), axis=axis)
+
+
+def _do_prepend(arr, pad_chunk, axis):
+    return np.concatenate(
+        (pad_chunk.astype(arr.dtype, copy=False), arr), axis=axis)
+
+
+def _do_append(arr, pad_chunk, axis):
+    return np.concatenate(
+        (arr, pad_chunk.astype(arr.dtype, copy=False)), axis=axis)
+
+
 def _prepend_const(arr, pad_amt, val, axis=-1):
     """
     Prepend constant `val` along `axis` of `arr`.
@@ -100,12 +129,7 @@ def _prepend_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    if val == 0:
-        return np.concatenate((np.zeros(padshape, dtype=arr.dtype), arr),
-                              axis=axis)
-    else:
-        return np.concatenate(((np.zeros(padshape) + val).astype(arr.dtype),
-                               arr), axis=axis)
+    return _do_prepend(arr, np.full(padshape, val, dtype=arr.dtype), axis)
 
 
 def _append_const(arr, pad_amt, val, axis=-1):
@@ -134,12 +158,8 @@ def _append_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    if val == 0:
-        return np.concatenate((arr, np.zeros(padshape, dtype=arr.dtype)),
-                              axis=axis)
-    else:
-        return np.concatenate(
-            (arr, (np.zeros(padshape) + val).astype(arr.dtype)), axis=axis)
+    return _do_append(arr, np.full(padshape, val, dtype=arr.dtype), axis)
+
 
 
 def _prepend_edge(arr, pad_amt, axis=-1):
@@ -164,15 +184,9 @@ def _prepend_edge(arr, pad_amt, axis=-1):
     if pad_amt == 0:
         return arr
 
-    edge_slice = tuple(slice(None) if i != axis else 0
-                       for (i, x) in enumerate(arr.shape))
-
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-    edge_arr = arr[edge_slice].reshape(pad_singleton)
-    return np.concatenate((edge_arr.repeat(pad_amt, axis=axis), arr),
-                          axis=axis)
+    edge_slice = _slice_first(arr.shape, 1, axis=axis)
+    edge_arr = arr[edge_slice]
+    return _do_prepend(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
 
 
 def _append_edge(arr, pad_amt, axis=-1):
@@ -198,15 +212,9 @@ def _append_edge(arr, pad_amt, axis=-1):
     if pad_amt == 0:
         return arr
 
-    edge_slice = tuple(slice(None) if i != axis else arr.shape[axis] - 1
-                       for (i, x) in enumerate(arr.shape))
-
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-    edge_arr = arr[edge_slice].reshape(pad_singleton)
-    return np.concatenate((arr, edge_arr.repeat(pad_amt, axis=axis)),
-                          axis=axis)
+    edge_slice = _slice_last(arr.shape, 1, axis=axis)
+    edge_arr = arr[edge_slice]
+    return _do_append(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
 
 
 def _prepend_ramp(arr, pad_amt, end, axis=-1):
@@ -244,15 +252,10 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
                                reverse=True).astype(np.float64)
 
     # Appropriate slicing to extract n-dimensional edge along `axis`
-    edge_slice = tuple(slice(None) if i != axis else 0
-                       for (i, x) in enumerate(arr.shape))
+    edge_slice = _slice_first(arr.shape, 1, axis=axis)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract edge, reshape to original rank, and extend along `axis`
-    edge_pad = arr[edge_slice].reshape(pad_singleton).repeat(pad_amt, axis)
+    # Extract edge, and extend along `axis`
+    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
 
     # Linear ramp
     slope = (end - edge_pad) / float(pad_amt)
@@ -261,7 +264,7 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
     _round_ifneeded(ramp_arr, arr.dtype)
 
     # Ramp values will most likely be float, cast them to the same type as arr
-    return np.concatenate((ramp_arr.astype(arr.dtype), arr), axis=axis)
+    return _do_prepend(arr, ramp_arr, axis)
 
 
 def _append_ramp(arr, pad_amt, end, axis=-1):
@@ -299,15 +302,10 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
                                reverse=False).astype(np.float64)
 
     # Slice a chunk from the edge to calculate stats on
-    edge_slice = tuple(slice(None) if i != axis else -1
-                       for (i, x) in enumerate(arr.shape))
+    edge_slice = _slice_last(arr.shape, 1, axis=axis)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract edge, reshape to original rank, and extend along `axis`
-    edge_pad = arr[edge_slice].reshape(pad_singleton).repeat(pad_amt, axis)
+    # Extract edge, and extend along `axis`
+    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
 
     # Linear ramp
     slope = (end - edge_pad) / float(pad_amt)
@@ -316,7 +314,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     _round_ifneeded(ramp_arr, arr.dtype)
 
     # Ramp values will most likely be float, cast them to the same type as arr
-    return np.concatenate((arr, ramp_arr.astype(arr.dtype)), axis=axis)
+    return _do_append(arr, ramp_arr, axis)
 
 
 def _prepend_max(arr, pad_amt, num, axis=-1):
@@ -356,19 +354,13 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    max_slice = tuple(slice(None) if i != axis else slice(num)
-                      for (i, x) in enumerate(arr.shape))
+    max_slice = _slice_first(arr.shape, num, axis=axis)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate max, reshape to add singleton dimension back
-    max_chunk = arr[max_slice].max(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate max
+    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((max_chunk.repeat(pad_amt, axis=axis), arr),
-                          axis=axis)
+    return _do_prepend(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
 
 
 def _append_max(arr, pad_amt, num, axis=-1):
@@ -407,24 +399,16 @@ def _append_max(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        max_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        max_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         max_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate max, reshape to add singleton dimension back
-    max_chunk = arr[max_slice].max(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate max
+    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((arr, max_chunk.repeat(pad_amt, axis=axis)),
-                          axis=axis)
+    return _do_append(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
 
 
 def _prepend_mean(arr, pad_amt, num, axis=-1):
@@ -463,20 +447,14 @@ def _prepend_mean(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    mean_slice = tuple(slice(None) if i != axis else slice(num)
-                       for (i, x) in enumerate(arr.shape))
+    mean_slice = _slice_first(arr.shape, num, axis=axis)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate mean, reshape to add singleton dimension back
-    mean_chunk = arr[mean_slice].mean(axis).reshape(pad_singleton)
+    # Extract slice, calculate mean
+    mean_chunk = arr[mean_slice].mean(axis, keepdims=True)
     _round_ifneeded(mean_chunk, arr.dtype)
 
     # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((mean_chunk.repeat(pad_amt, axis).astype(arr.dtype),
-                           arr), axis=axis)
+    return _do_prepend(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _append_mean(arr, pad_amt, num, axis=-1):
@@ -515,25 +493,17 @@ def _append_mean(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        mean_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        mean_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         mean_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate mean, reshape to add singleton dimension back
-    mean_chunk = arr[mean_slice].mean(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate mean
+    mean_chunk = arr[mean_slice].mean(axis=axis, keepdims=True)
     _round_ifneeded(mean_chunk, arr.dtype)
 
     # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate(
-        (arr, mean_chunk.repeat(pad_amt, axis).astype(arr.dtype)), axis=axis)
+    return _do_append(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _prepend_med(arr, pad_amt, num, axis=-1):
@@ -572,20 +542,14 @@ def _prepend_med(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    med_slice = tuple(slice(None) if i != axis else slice(num)
-                      for (i, x) in enumerate(arr.shape))
+    med_slice = _slice_first(arr.shape, num, axis=axis)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate median, reshape to add singleton dimension back
-    med_chunk = np.median(arr[med_slice], axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate median
+    med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
     _round_ifneeded(med_chunk, arr.dtype)
 
     # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate(
-        (med_chunk.repeat(pad_amt, axis).astype(arr.dtype), arr), axis=axis)
+    return _do_prepend(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _append_med(arr, pad_amt, num, axis=-1):
@@ -624,25 +588,17 @@ def _append_med(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        med_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        med_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         med_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate median, reshape to add singleton dimension back
-    med_chunk = np.median(arr[med_slice], axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate median
+    med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
     _round_ifneeded(med_chunk, arr.dtype)
 
     # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate(
-        (arr, med_chunk.repeat(pad_amt, axis).astype(arr.dtype)), axis=axis)
+    return _do_append(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _prepend_min(arr, pad_amt, num, axis=-1):
@@ -682,19 +638,13 @@ def _prepend_min(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    min_slice = tuple(slice(None) if i != axis else slice(num)
-                      for (i, x) in enumerate(arr.shape))
+    min_slice = _slice_first(arr.shape, num, axis=axis)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate min, reshape to add singleton dimension back
-    min_chunk = arr[min_slice].min(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate min
+    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((min_chunk.repeat(pad_amt, axis=axis), arr),
-                          axis=axis)
+    return _do_prepend(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _append_min(arr, pad_amt, num, axis=-1):
@@ -733,24 +683,16 @@ def _append_min(arr, pad_amt, num, axis=-1):
             num = None
 
     # Slice a chunk from the edge to calculate stats on
-    end = arr.shape[axis] - 1
     if num is not None:
-        min_slice = tuple(
-            slice(None) if i != axis else slice(end, end - num, -1)
-            for (i, x) in enumerate(arr.shape))
+        min_slice = _slice_last(arr.shape, num, axis=axis)
     else:
         min_slice = tuple(slice(None) for x in arr.shape)
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-
-    # Extract slice, calculate min, reshape to add singleton dimension back
-    min_chunk = arr[min_slice].min(axis=axis).reshape(pad_singleton)
+    # Extract slice, calculate min
+    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
     # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return np.concatenate((arr, min_chunk.repeat(pad_amt, axis=axis)),
-                          axis=axis)
+    return _do_append(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -793,22 +735,14 @@ def _pad_ref(arr, pad_amt, method, axis=-1):
     # Prepended region
 
     # Slice off a reverse indexed chunk from near edge to pad `arr` before
-    ref_slice = tuple(slice(None) if i != axis else slice(pad_amt[0], 0, -1)
-                      for (i, x) in enumerate(arr.shape))
+    ref_slice = _slice_at_axis(arr.shape, slice(pad_amt[0], 0, -1), axis=axis)
 
     ref_chunk1 = arr[ref_slice]
 
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-    if pad_amt[0] == 1:
-        ref_chunk1 = ref_chunk1.reshape(pad_singleton)
-
     # Memory/computationally more expensive, only do this if `method='odd'`
     if 'odd' in method and pad_amt[0] > 0:
-        edge_slice1 = tuple(slice(None) if i != axis else 0
-                            for (i, x) in enumerate(arr.shape))
-        edge_chunk = arr[edge_slice1].reshape(pad_singleton)
+        edge_slice1 = _slice_first(arr.shape, 1, axis=axis)
+        edge_chunk = arr[edge_slice1]
         ref_chunk1 = 2 * edge_chunk - ref_chunk1
         del edge_chunk
 
@@ -818,19 +752,13 @@ def _pad_ref(arr, pad_amt, method, axis=-1):
     # Slice off a reverse indexed chunk from far edge to pad `arr` after
     start = arr.shape[axis] - pad_amt[1] - 1
     end = arr.shape[axis] - 1
-    ref_slice = tuple(slice(None) if i != axis else slice(start, end)
-                      for (i, x) in enumerate(arr.shape))
-    rev_idx = tuple(slice(None) if i != axis else slice(None, None, -1)
-                    for (i, x) in enumerate(arr.shape))
+    ref_slice = _slice_at_axis(arr.shape, slice(start, end), axis=axis)
+    rev_idx = _slice_at_axis(arr.shape, slice(None, None, -1), axis=axis)
     ref_chunk2 = arr[ref_slice][rev_idx]
 
-    if pad_amt[1] == 1:
-        ref_chunk2 = ref_chunk2.reshape(pad_singleton)
-
     if 'odd' in method:
-        edge_slice2 = tuple(slice(None) if i != axis else -1
-                            for (i, x) in enumerate(arr.shape))
-        edge_chunk = arr[edge_slice2].reshape(pad_singleton)
+        edge_slice2 = _slice_last(arr.shape, 1, axis=axis)
+        edge_chunk = arr[edge_slice2]
         ref_chunk2 = 2 * edge_chunk - ref_chunk2
         del edge_chunk
 
@@ -878,23 +806,14 @@ def _pad_sym(arr, pad_amt, method, axis=-1):
     # Prepended region
 
     # Slice off a reverse indexed chunk from near edge to pad `arr` before
-    sym_slice = tuple(slice(None) if i != axis else slice(0, pad_amt[0])
-                      for (i, x) in enumerate(arr.shape))
-    rev_idx = tuple(slice(None) if i != axis else slice(None, None, -1)
-                    for (i, x) in enumerate(arr.shape))
+    sym_slice = _slice_first(arr.shape, pad_amt[0], axis=axis)
+    rev_idx = _slice_at_axis(arr.shape, slice(None, None, -1), axis=axis)
     sym_chunk1 = arr[sym_slice][rev_idx]
-
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-    if pad_amt[0] == 1:
-        sym_chunk1 = sym_chunk1.reshape(pad_singleton)
 
     # Memory/computationally more expensive, only do this if `method='odd'`
     if 'odd' in method and pad_amt[0] > 0:
-        edge_slice1 = tuple(slice(None) if i != axis else 0
-                            for (i, x) in enumerate(arr.shape))
-        edge_chunk = arr[edge_slice1].reshape(pad_singleton)
+        edge_slice1 = _slice_first(arr.shape, 1, axis=axis)
+        edge_chunk = arr[edge_slice1]
         sym_chunk1 = 2 * edge_chunk - sym_chunk1
         del edge_chunk
 
@@ -902,19 +821,12 @@ def _pad_sym(arr, pad_amt, method, axis=-1):
     # Appended region
 
     # Slice off a reverse indexed chunk from far edge to pad `arr` after
-    start = arr.shape[axis] - pad_amt[1]
-    end = arr.shape[axis]
-    sym_slice = tuple(slice(None) if i != axis else slice(start, end)
-                      for (i, x) in enumerate(arr.shape))
+    sym_slice = _slice_last(arr.shape, pad_amt[1], axis=axis)
     sym_chunk2 = arr[sym_slice][rev_idx]
 
-    if pad_amt[1] == 1:
-        sym_chunk2 = sym_chunk2.reshape(pad_singleton)
-
     if 'odd' in method:
-        edge_slice2 = tuple(slice(None) if i != axis else -1
-                            for (i, x) in enumerate(arr.shape))
-        edge_chunk = arr[edge_slice2].reshape(pad_singleton)
+        edge_slice2 = _slice_last(arr.shape, 1, axis=axis)
+        edge_chunk = arr[edge_slice2]
         sym_chunk2 = 2 * edge_chunk - sym_chunk2
         del edge_chunk
 
@@ -959,28 +871,15 @@ def _pad_wrap(arr, pad_amt, axis=-1):
     # Prepended region
 
     # Slice off a reverse indexed chunk from near edge to pad `arr` before
-    start = arr.shape[axis] - pad_amt[0]
-    end = arr.shape[axis]
-    wrap_slice = tuple(slice(None) if i != axis else slice(start, end)
-                       for (i, x) in enumerate(arr.shape))
+    wrap_slice = _slice_last(arr.shape, pad_amt[0], axis=axis)
     wrap_chunk1 = arr[wrap_slice]
-
-    # Shape to restore singleton dimension after slicing
-    pad_singleton = tuple(x if i != axis else 1
-                          for (i, x) in enumerate(arr.shape))
-    if pad_amt[0] == 1:
-        wrap_chunk1 = wrap_chunk1.reshape(pad_singleton)
 
     ##########################################################################
     # Appended region
 
     # Slice off a reverse indexed chunk from far edge to pad `arr` after
-    wrap_slice = tuple(slice(None) if i != axis else slice(0, pad_amt[1])
-                       for (i, x) in enumerate(arr.shape))
+    wrap_slice = _slice_first(arr.shape, pad_amt[1], axis=axis)
     wrap_chunk2 = arr[wrap_slice]
-
-    if pad_amt[1] == 1:
-        wrap_chunk2 = wrap_chunk2.reshape(pad_singleton)
 
     # Concatenate `arr` with both chunks, extending along `axis`
     return np.concatenate((wrap_chunk1, arr, wrap_chunk2), axis=axis)

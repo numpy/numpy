@@ -2,11 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import numpy as np
-from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
-                        block, vstack, hstack, newaxis, concatenate, stack)
-from numpy.testing import (assert_, assert_raises,
-                           assert_array_equal, assert_equal, run_module_suite,
-                           assert_raises_regex, assert_almost_equal)
+from numpy.core import (
+    array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
+    newaxis, concatenate, stack
+    )
+from numpy.testing import (
+    assert_, assert_raises, assert_array_equal, assert_equal,
+    assert_raises_regex, assert_almost_equal
+    )
 
 from numpy.compat import long
 
@@ -361,10 +364,6 @@ def test_stack():
                         stack, [np.zeros((3, 3)), np.zeros(3)], axis=1)
     assert_raises_regex(ValueError, 'must have the same shape',
                         stack, [np.arange(2), np.arange(3)])
-    # np.matrix
-    m = np.matrix([[1, 2], [3, 4]])
-    assert_raises_regex(ValueError, 'shape too large to be a matrix',
-                        stack, [m, m])
 
 
 class TestBlock(object):
@@ -581,7 +580,3 @@ class TestBlock(object):
                               [3., 3., 3.]]])
 
         assert_equal(result, expected)
-
-
-if __name__ == "__main__":
-    run_module_suite()

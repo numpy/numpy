@@ -14,7 +14,6 @@ from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
 from . import _methods
 
-
 _dt_ = nt.sctype2char
 
 # functions that are methods
@@ -26,7 +25,7 @@ __all__ = [
     'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
-    ]
+]
 
 _gentype = types.GeneratorType
 # save away Python sum
@@ -60,6 +59,28 @@ def _wrapfunc(obj, method, *args, **kwds):
     # a downstream library like 'pandas'.
     except (AttributeError, TypeError):
         return _wrapit(obj, method, *args, **kwds)
+
+
+def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
+    passkwargs = {}
+    for k, v in kwargs.items():
+        if v is not np._NoValue:
+            passkwargs[k] = v
+
+    if type(obj) is not mu.ndarray:
+        try:
+            reduction = getattr(obj, method)
+        except AttributeError:
+            pass
+        else:
+            # This branch is needed for reductions like any which don't
+            # support a dtype.
+            if dtype is not None:
+                return reduction(axis=axis, dtype=dtype, out=out, **passkwargs)
+            else:
+                return reduction(axis=axis, out=out, **passkwargs)
+
+    return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
 
 def take(a, indices, axis=None, out=None, mode='raise'):
@@ -657,8 +678,9 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     """
     if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
-        axis = 0
+        axis = -1
     else:
         a = asanyarray(a).copy(order="K")
     a.partition(kth, axis=axis, kind=kind, order=order)
@@ -742,7 +764,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -772,13 +794,13 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     order. The three available algorithms have the following
     properties:
 
-    =========== ======= ============= ============ =======
-       kind      speed   worst case    work space  stable
-    =========== ======= ============= ============ =======
+    =========== ======= ============= ============ ========
+       kind      speed   worst case    work space   stable
+    =========== ======= ============= ============ ========
     'quicksort'    1     O(n^2)            0          no
     'mergesort'    2     O(n*log(n))      ~n/2        yes
     'heapsort'     3     O(n*log(n))       0          no
-    =========== ======= ============= ============ =======
+    =========== ======= ============= ============ ========
 
     All the sort algorithms make temporary copies of the data when
     sorting along any but the last axis.  Consequently, sorting along
@@ -806,6 +828,10 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     quicksort has been changed to an introsort which will switch
     heapsort when it does not make enough progress. This makes its
     worst case O(n*log(n)).
+
+    'stable' automatically choses the best stable sorting algorithm
+    for the data type being sorted. It is currently mapped to
+    merge sort.
 
     Examples
     --------
@@ -840,8 +866,9 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     """
     if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
-        axis = 0
+        axis = -1
     else:
         a = asanyarray(a).copy(order="K")
     a.sort(axis=axis, kind=kind, order=order)
@@ -863,7 +890,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort.  The default is -1 (the last axis). If None,
         the flattened array is used.
-    kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -1193,7 +1220,7 @@ def resize(a, new_shape):
         n_copies = n_copies + 1
         extra = Na - extra
 
-    a = concatenate((a,)*n_copies)
+    a = concatenate((a,) * n_copies)
     if extra > 0:
         a = a[:-extra]
 
@@ -1253,13 +1280,10 @@ def squeeze(a, axis=None):
         squeeze = a.squeeze
     except AttributeError:
         return _wrapit(a, 'squeeze')
-    try:
-        # First try to use the new axis= parameter
-        return squeeze(axis=axis)
-    except TypeError:
-        # For backwards compatibility
+    if axis is None:
         return squeeze()
-
+    else:
+        return squeeze(axis=axis)
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
     """
@@ -1312,10 +1336,11 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D and not a `matrix`, a 1-D array of the same type as `a`
-        containing the diagonal is returned. If `a` is a `matrix`, a 1-D
-        array containing the diagonal is returned in order to maintain
-        backward compatibility.
+        If `a` is 2-D, then a 1-D array containing the diagonal and of the
+        same type as `a` is returned unless `a` is a `matrix`, in which case
+        a 1-D array rather than a (2-D) `matrix` is returned in order to
+        maintain backward compatibility.
+        
         If ``a.ndim > 2``, then the dimensions specified by `axis1` and `axis2`
         are removed, and a new axis inserted at the end corresponding to the
         diagonal.
@@ -1472,10 +1497,9 @@ def ravel(a, order='C'):
     Returns
     -------
     y : array_like
-        If `a` is a matrix, y is a 1-D ndarray, otherwise y is an array of
-        the same subtype as `a`. The shape of the returned array is
-        ``(a.size,)``. Matrices are special cased for backward
-        compatibility.
+        y is an array of the same subtype as `a`, with shape ``(a.size,)``.
+        Note that matrices are special cased for backward compatibility, if `a`
+        is a matrix, then y is a 1-D ndarray.
 
     See Also
     --------
@@ -1788,7 +1812,7 @@ def clip(a, a_min, a_max, out=None):
     return _wrapfunc(a, 'clip', a_min, a_max, out=out)
 
 
-def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
+def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Sum of array elements over a given axis.
 
@@ -1827,6 +1851,10 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+    initial : scalar, optional
+        Starting value for the sum. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -1874,74 +1902,26 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.ones(128, dtype=np.int8).sum(dtype=np.int8)
     -128
 
+    You can also start the sum with a value other than zero:
+
+    >>> np.sum([10], initial=5)
+    15
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
     if isinstance(a, _gentype):
+        # 2018-02-25, 1.15.0
+        warnings.warn(
+            "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
+            "Use np.sum(np.from_iter(generator)) or the python sum builtin instead.",
+            DeprecationWarning, stacklevel=2)
+
         res = _sum_(a)
         if out is not None:
             out[...] = res
             return out
         return res
-    if type(a) is not mu.ndarray:
-        try:
-            sum = a.sum
-        except AttributeError:
-            pass
-        else:
-            return sum(axis=axis, dtype=dtype, out=out, **kwargs)
-    return _methods._sum(a, axis=axis, dtype=dtype,
-                         out=out, **kwargs)
 
-
-def product(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
-    """
-    Return the product of array elements over a given axis.
-
-    See Also
-    --------
-    prod : equivalent function; see for details.
-
-    """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out, **kwargs)
-
-
-def sometrue(a, axis=None, out=None, keepdims=np._NoValue):
-    """
-    Check whether some values are true.
-
-    Refer to `any` for full documentation.
-
-    See Also
-    --------
-    any : equivalent function
-
-    """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.any(axis=axis, out=out, **kwargs)
-
-
-def alltrue(a, axis=None, out=None, keepdims=np._NoValue):
-    """
-    Check if all elements of input array are true.
-
-    See Also
-    --------
-    numpy.all : Equivalent function; see for details.
-
-    """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.all(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.add, 'sum', axis, dtype, out, keepdims=keepdims,
+                          initial=initial)
 
 
 def any(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2024,11 +2004,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     (191614240, 191614240)
 
     """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.any(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.logical_or, 'any', axis, None, out, keepdims=keepdims)
 
 
 def all(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2104,11 +2080,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     (28293632, 28293632, array([ True]))
 
     """
-    arr = asanyarray(a)
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    return arr.all(axis=axis, out=out, **kwargs)
+    return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
 
 
 def cumsum(a, axis=None, dtype=None, out=None):
@@ -2176,19 +2148,6 @@ def cumsum(a, axis=None, dtype=None, out=None):
 
     """
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
-
-
-def cumproduct(a, axis=None, dtype=None, out=None):
-    """
-    Return the cumulative product over the given axis.
-
-
-    See Also
-    --------
-    cumprod : equivalent function; see for details.
-
-    """
-    return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
 
 def ptp(a, axis=None, out=None, keepdims=np._NoValue):
@@ -2259,7 +2218,7 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
-def amax(a, axis=None, out=None, keepdims=np._NoValue):
+def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis.
 
@@ -2290,6 +2249,13 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    initial : scalar, optional
+        The minimum value of an output element. Must be present to allow
+        computation on empty slice. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
+
 
     Returns
     -------
@@ -2343,24 +2309,26 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.nanmax(b)
     4.0
 
+    You can use an initial value to compute the maximum of an empty slice, or
+    to initialize it to a different value:
+
+    >>> np.max([[-50], [10]], axis=-1, initial=0)
+    array([ 0, 10])
+
+    Notice that the initial value is used as one of the elements for which the
+    maximum is determined, unlike for the default argument Python's max
+    function, which is only used for empty iterables.
+
+    >>> np.max([5], initial=6)
+    6
+    >>> max([5], default=6)
+    5
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-
-    if type(a) is not mu.ndarray:
-        try:
-            amax = a.max
-        except AttributeError:
-            pass
-        else:
-            return amax(axis=axis, out=out, **kwargs)
-
-    return _methods._amax(a, axis=axis,
-                          out=out, **kwargs)
+    return _wrapreduction(a, np.maximum, 'max', axis, None, out, keepdims=keepdims,
+                          initial=initial)
 
 
-def amin(a, axis=None, out=None, keepdims=np._NoValue):
+def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -2391,6 +2359,12 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    initial : scalar, optional
+        The maximum value of an output element. Must be present to allow
+        computation on empty slice. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -2444,20 +2418,22 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.nanmin(b)
     0.0
 
-    """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    if type(a) is not mu.ndarray:
-        try:
-            amin = a.min
-        except AttributeError:
-            pass
-        else:
-            return amin(axis=axis, out=out, **kwargs)
+    >>> np.min([[-50], [10]], axis=-1, initial=0)
+    array([-50,   0])
 
-    return _methods._amin(a, axis=axis,
-                          out=out, **kwargs)
+    Notice that the initial value is used as one of the elements for which the
+    minimum is determined, unlike for the default argument Python's max
+    function, which is only used for empty iterables.
+
+    Notice that this isn't the same as Python's ``default`` argument.
+
+    >>> np.min([6], initial=5)
+    5
+    >>> min([6], default=5)
+    6
+    """
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out, keepdims=keepdims,
+                          initial=initial)
 
 
 def alen(a):
@@ -2493,7 +2469,7 @@ def alen(a):
         return len(array(a, ndmin=1))
 
 
-def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
+def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the product of array elements over a given axis.
 
@@ -2533,6 +2509,10 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+    initial : scalar, optional
+        The starting value for this product. See `~numpy.ufunc.reduce` for details.
+
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -2590,20 +2570,13 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.prod(x).dtype == int
     True
 
-    """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    if type(a) is not mu.ndarray:
-        try:
-            prod = a.prod
-        except AttributeError:
-            pass
-        else:
-            return prod(axis=axis, dtype=dtype, out=out, **kwargs)
+    You can also start the product with a value other than one:
 
-    return _methods._prod(a, axis=axis, dtype=dtype,
-                          out=out, **kwargs)
+    >>> np.prod([1, 2], initial=5)
+    10
+    """
+    return _wrapreduction(a, np.multiply, 'prod', axis, dtype, out, keepdims=keepdims,
+                          initial=initial)
 
 
 def cumprod(a, axis=None, dtype=None, out=None):
@@ -2700,62 +2673,6 @@ def ndim(a):
     0
 
     """
-    try:
-        return a.ndim
-    except AttributeError:
-        return asarray(a).ndim
-
-
-def rank(a):
-    """
-    Return the number of dimensions of an array.
-
-    If `a` is not already an array, a conversion is attempted.
-    Scalars are zero dimensional.
-
-    .. note::
-        This function is deprecated in NumPy 1.9 to avoid confusion with
-        `numpy.linalg.matrix_rank`. The ``ndim`` attribute or function
-        should be used instead.
-
-    Parameters
-    ----------
-    a : array_like
-        Array whose number of dimensions is desired. If `a` is not an array,
-        a conversion is attempted.
-
-    Returns
-    -------
-    number_of_dimensions : int
-        The number of dimensions in the array.
-
-    See Also
-    --------
-    ndim : equivalent function
-    ndarray.ndim : equivalent property
-    shape : dimensions of array
-    ndarray.shape : dimensions of array
-
-    Notes
-    -----
-    In the old Numeric package, `rank` was the term used for the number of
-    dimensions, but in NumPy `ndim` is used instead.
-
-    Examples
-    --------
-    >>> np.rank([1,2,3])
-    1
-    >>> np.rank(np.array([[1,2,3],[4,5,6]]))
-    2
-    >>> np.rank(1)
-    0
-
-    """
-    # 2014-04-12, 1.9
-    warnings.warn(
-        "`rank` is deprecated; use the `ndim` attribute or function instead. "
-        "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning, stacklevel=2)
     try:
         return a.ndim
     except AttributeError:
@@ -3232,3 +3149,78 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                          **kwargs)
+
+
+# Aliases of other functions. These have their own definitions only so that
+# they can have unique docstrings.
+
+def product(*args, **kwargs):
+    """
+    Return the product of array elements over a given axis.
+
+    See Also
+    --------
+    prod : equivalent function; see for details.
+    """
+    return prod(*args, **kwargs)
+
+
+def cumproduct(*args, **kwargs):
+    """
+    Return the cumulative product over the given axis.
+
+    See Also
+    --------
+    cumprod : equivalent function; see for details.
+    """
+    return cumprod(*args, **kwargs)
+
+
+def sometrue(*args, **kwargs):
+    """
+    Check whether some values are true.
+
+    Refer to `any` for full documentation.
+
+    See Also
+    --------
+    any : equivalent function; see for details.
+    """
+    return any(*args, **kwargs)
+
+
+def alltrue(*args, **kwargs):
+    """
+    Check if all elements of input array are true.
+
+    See Also
+    --------
+    numpy.all : Equivalent function; see for details.
+    """
+    return all(*args, **kwargs)
+
+
+def rank(a):
+    """
+    Return the number of dimensions of an array.
+
+    .. note::
+        This function is deprecated in NumPy 1.9 to avoid confusion with
+        `numpy.linalg.matrix_rank`. The ``ndim`` attribute or function
+        should be used instead.
+
+    See Also
+    --------
+    ndim : equivalent non-deprecated function
+
+    Notes
+    -----
+    In the old Numeric package, `rank` was the term used for the number of
+    dimensions, but in NumPy `ndim` is used instead.
+    """
+    # 2014-04-12, 1.9
+    warnings.warn(
+        "`rank` is deprecated; use the `ndim` attribute or function instead. "
+        "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
+        VisibleDeprecationWarning, stacklevel=2)
+    return ndim(a)

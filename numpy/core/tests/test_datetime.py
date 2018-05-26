@@ -5,10 +5,10 @@ import pickle
 import numpy
 import numpy as np
 import datetime
+import pytest
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_warns, dec, suppress_warnings
-)
+    assert_, assert_equal, assert_raises, assert_warns, suppress_warnings
+    )
 
 # Use pytz to test out various time zones if available
 try:
@@ -236,17 +236,24 @@ class TestDateTime(object):
         # find "supertype" for non-dates and dates
 
         b = np.bool_(True)
-        dt = np.datetime64('1970-01-01', 'M')
-        arr = np.array([b, dt])
-        assert_equal(arr.dtype, np.dtype('O'))
-
-        dt = datetime.date(1970, 1, 1)
-        arr = np.array([b, dt])
-        assert_equal(arr.dtype, np.dtype('O'))
-
+        dm = np.datetime64('1970-01-01', 'M')
+        d = datetime.date(1970, 1, 1)
         dt = datetime.datetime(1970, 1, 1, 12, 30, 40)
+
+        arr = np.array([b, dm])
+        assert_equal(arr.dtype, np.dtype('O'))
+
+        arr = np.array([b, d])
+        assert_equal(arr.dtype, np.dtype('O'))
+
         arr = np.array([b, dt])
         assert_equal(arr.dtype, np.dtype('O'))
+
+        arr = np.array([d, d]).astype('datetime64')
+        assert_equal(arr.dtype, np.dtype('M8[D]'))
+
+        arr = np.array([dt, dt]).astype('datetime64')
+        assert_equal(arr.dtype, np.dtype('M8[us]'))
 
     def test_timedelta_scalar_construction(self):
         # Construct with different units
@@ -1255,10 +1262,17 @@ class TestDateTime(object):
         # Allow space instead of 'T' between date and time
         assert_equal(np.array(['1980-02-29T01:02:03'], np.dtype('M8[s]')),
                      np.array(['1980-02-29 01:02:03'], np.dtype('M8[s]')))
+        # Allow positive years
+        assert_equal(np.array(['+1980-02-29T01:02:03'], np.dtype('M8[s]')),
+                     np.array(['+1980-02-29 01:02:03'], np.dtype('M8[s]')))
         # Allow negative years
         assert_equal(np.array(['-1980-02-29T01:02:03'], np.dtype('M8[s]')),
                      np.array(['-1980-02-29 01:02:03'], np.dtype('M8[s]')))
         # UTC specifier
+        with assert_warns(DeprecationWarning):
+            assert_equal(
+                np.array(['+1980-02-29T01:02:03'], np.dtype('M8[s]')),
+                np.array(['+1980-02-29 01:02:03Z'], np.dtype('M8[s]')))
         with assert_warns(DeprecationWarning):
             assert_equal(
                 np.array(['-1980-02-29T01:02:03'], np.dtype('M8[s]')),
@@ -1480,7 +1494,7 @@ class TestDateTime(object):
                 np.datetime64('2032-01-01T00:00:00', 'us'), unit='auto'),
                 '2032-01-01')
 
-    @dec.skipif(not _has_pytz, "The pytz module is not available.")
+    @pytest.mark.skipif(not _has_pytz, reason="The pytz module is not available.")
     def test_datetime_as_string_timezone(self):
         # timezone='local' vs 'UTC'
         a = np.datetime64('2010-03-15T06:30', 'm')
@@ -1971,6 +1985,3 @@ class TestDateTimeData(object):
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
         assert_equal(np.datetime_data(a.dtype), ('D', 1))
-
-if __name__ == "__main__":
-    run_module_suite()

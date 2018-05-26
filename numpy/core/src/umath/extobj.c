@@ -284,7 +284,7 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     if (!errmask) {
         return 0;
     }
-    fperr = PyUFunc_getfperr();
+    fperr = npy_get_floatstatus_barrier((char*)extobj);
     if (!fperr) {
         return 0;
     }

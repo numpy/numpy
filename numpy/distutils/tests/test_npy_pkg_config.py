@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import os
 
 from numpy.distutils.npy_pkg_config import read_config, parse_flags
-from numpy.testing import run_module_suite, temppath, assert_
+from numpy.testing import temppath, assert_
 
 simple = """\
 [meta]
@@ -84,7 +84,3 @@ class TestParseFlags(object):
         d = parse_flags("-L /usr/lib -lfoo -L/usr/lib -lbar")
         assert_(d['library_dirs'] == ['/usr/lib', '/usr/lib'])
         assert_(d['libraries'] == ['foo', 'bar'])
-
-
-if __name__ == '__main__':
-    run_module_suite()

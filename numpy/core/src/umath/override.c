@@ -123,11 +123,16 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp nargs = PyTuple_GET_SIZE(args);
     npy_intp i;
     PyObject *obj;
-    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
+    static PyObject *NoValue = NULL;
+    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims",
+        "initial"};
 
-    if (nargs < 1 || nargs > 5) {
+    npy_cache_import("numpy", "_NoValue", &NoValue);
+    if (NoValue == NULL) return -1;
+
+    if (nargs < 1 || nargs > 6) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc.reduce() takes from 1 to 5 positional "
+                     "ufunc.reduce() takes from 1 to 6 positional "
                      "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
@@ -150,6 +155,10 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
                 continue;
             }
             obj = PyTuple_GetSlice(args, 3, 4);
+        }
+        /* Remove initial=np._NoValue */
+        if (i == 5 && obj == NoValue) {
+            continue;
         }
         PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
         if (i == 3) {
@@ -210,7 +219,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
                     PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
-     * ufunc.reduceat(a, indicies[, axis, dtype, out])
+     * ufunc.reduceat(a, indices[, axis, dtype, out])
      * the number of arguments has been checked in PyUFunc_GenericReduction.
      */
     npy_intp i;
@@ -224,7 +233,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
                      "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
-    /* a and indicies */
+    /* a and indices */
     *normal_args = PyTuple_GetSlice(args, 0, 2);
     if (*normal_args == NULL) {
         return -1;

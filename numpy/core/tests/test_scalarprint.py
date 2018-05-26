@@ -4,8 +4,10 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import code, sys
+from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, run_module_suite
+from numpy.testing import assert_, assert_equal, suppress_warnings
 
 
 class TestRealScalars(object):
@@ -44,6 +46,53 @@ class TestRealScalars(object):
         check(1e-4)
         check(1e15)
         check(1e16)
+
+    def test_py2_float_print(self):
+        # gh-10753
+        # In python2, the python float type implements an obsolte method
+        # tp_print, which overrides tp_repr and tp_str when using "print" to
+        # output to a "real file" (ie, not a StringIO). Make sure we don't
+        # inherit it.
+        x = np.double(0.1999999999999)
+        with TemporaryFile('r+t') as f:
+            print(x, file=f)
+            f.seek(0)
+            output = f.read()
+        assert_equal(output, str(x) + '\n')
+        # In python2 the value float('0.1999999999999') prints with reduced
+        # precision as '0.2', but we want numpy's np.double('0.1999999999999')
+        # to print the unique value, '0.1999999999999'.
+
+        # gh-11031
+        # Only in the python2 interactive shell and when stdout is a "real"
+        # file, the output of the last command is printed to stdout without
+        # Py_PRINT_RAW (unlike the print statement) so `>>> x` and `>>> print
+        # x` are potentially different. Make sure they are the same. The only
+        # way I found to get prompt-like output is using an actual prompt from
+        # the 'code' module. Again, must use tempfile to get a "real" file.
+
+        # dummy user-input which enters one line and then ctrl-Ds.
+        def userinput():
+            yield 'np.sqrt(2)'
+            raise EOFError
+        gen = userinput()
+        input_func = lambda prompt="": next(gen)
+
+        with TemporaryFile('r+t') as fo, TemporaryFile('r+t') as fe:
+            orig_stdout, orig_stderr = sys.stdout, sys.stderr
+            sys.stdout, sys.stderr = fo, fe
+
+            # py2 code.interact sends irrelevant internal DeprecationWarnings
+            with suppress_warnings() as sup:
+                sup.filter(DeprecationWarning)
+                code.interact(local={'np': np}, readfunc=input_func, banner='')
+
+            sys.stdout, sys.stderr = orig_stdout, orig_stderr
+
+            fo.seek(0)
+            capture = fo.read().strip()
+
+        assert_equal(capture, repr(np.sqrt(2)))
 
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
@@ -152,6 +201,8 @@ class TestRealScalars(object):
         assert_equal(fpos64('1.5', unique=False, precision=3), "1.500")
         assert_equal(fsci32('1.5', unique=False, precision=3), "1.500e+00")
         assert_equal(fsci64('1.5', unique=False, precision=3), "1.500e+00")
+        # gh-10713
+        assert_equal(fpos64('324', unique=False, precision=5, fractional=False), "324.00")
 
     def test_dragon4_interface(self):
         tps = [np.float16, np.float32, np.float64]
@@ -211,6 +262,3 @@ class TestRealScalars(object):
         # gh-2643, gh-6136, gh-6908
         assert_equal(repr(np.float64(0.1)), repr(0.1))
         assert_(repr(np.float64(0.20000000000000004)) != repr(0.2))
-
-if __name__ == "__main__":
-    run_module_suite()

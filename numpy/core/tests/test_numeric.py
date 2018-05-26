@@ -4,16 +4,17 @@ import sys
 import warnings
 import itertools
 import platform
+import pytest
 from decimal import Decimal
 
 import numpy as np
 from numpy.core import umath
 from numpy.random import rand, randint, randn
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_raises_regex, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, dec, HAS_REFCOUNT, suppress_warnings
-)
+    assert_, assert_equal, assert_raises, assert_raises_regex,
+    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
+    suppress_warnings, HAS_REFCOUNT
+    )
 
 
 class TestResize(object):
@@ -467,7 +468,7 @@ class TestSeterr(object):
             np.seterr(**old)
             assert_(np.geterr() == old)
 
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+    @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_divide_err(self):
         with np.errstate(divide='raise'):
             try:
@@ -551,7 +552,6 @@ class TestFloatExceptions(object):
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
-    @dec.knownfailureif(True, "See ticket #2350")
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
@@ -904,7 +904,7 @@ class TestTypes(object):
             fi = np.finfo(dt)
             assert_(np.can_cast(fi.min, dt))
             assert_(np.can_cast(fi.max, dt))
-            
+
 
 # Custom exception class to test exception propagation in fromiter
 class NIterError(Exception):
@@ -2092,7 +2092,7 @@ class TestCreationFuncs(object):
         self.check_function(np.full, 0)
         self.check_function(np.full, 1)
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_for_reference_leak(self):
         # Make sure we have an object for reference
         dim = 1
@@ -2200,13 +2200,16 @@ class TestLikeFuncs(object):
             self.compare_array_value(dz, value, fill_value)
 
         # Test the 'subok' parameter
-        a = np.matrix([[1, 2], [3, 4]])
+        class MyNDArray(np.ndarray):
+            pass
+
+        a = np.array([[1, 2], [3, 4]]).view(MyNDArray)
 
         b = like_function(a, **fill_kwarg)
-        assert_(type(b) is np.matrix)
+        assert_(type(b) is MyNDArray)
 
         b = like_function(a, subok=False, **fill_kwarg)
-        assert_(type(b) is not np.matrix)
+        assert_(type(b) is not MyNDArray)
 
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)
@@ -2733,7 +2736,3 @@ class TestTensordot(object):
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))
-
-
-if __name__ == "__main__":
-    run_module_suite()

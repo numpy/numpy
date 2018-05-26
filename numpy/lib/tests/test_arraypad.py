@@ -489,6 +489,19 @@ class TestConstant(object):
         )
         assert_allclose(test, expected)
 
+    def test_check_large_integers(self):
+        uint64_max = 2 ** 64 - 1
+        arr = np.full(5, uint64_max, dtype=np.uint64)
+        test = np.pad(arr, 1, mode="constant", constant_values=arr.min())
+        expected = np.full(7, uint64_max, dtype=np.uint64)
+        assert_array_equal(test, expected)
+
+        int64_max = 2 ** 63 - 1
+        arr = np.full(5, int64_max, dtype=np.int64)
+        test = np.pad(arr, 1, mode="constant", constant_values=arr.min())
+        expected = np.full(7, int64_max, dtype=np.int64)
+        assert_array_equal(test, expected)
+
 
 class TestLinearRamp(object):
     def test_check_simple(self):
@@ -1090,7 +1103,3 @@ class TestTypeError1(object):
         kwargs = dict(mode='mean', stat_length=(3, ))
         assert_raises(TypeError, pad, arr, ((2, 3, 4), (3, 2)),
                       **kwargs)
-
-
-if __name__ == "__main__":
-    np.testing.run_module_suite()

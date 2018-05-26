@@ -6,9 +6,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import sys
 
-from numpy.testing import (
-    run_module_suite, assert_array_equal, assert_equal, assert_raises,
-    )
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
@@ -34,7 +32,46 @@ class TestSetOps(object):
         assert_array_equal(c, ed)
 
         assert_array_equal([], intersect1d([], []))
-
+        
+    def test_intersect1d_indices(self):
+        # unique inputs
+        a = np.array([1, 2, 3, 4]) 
+        b = np.array([2, 1, 4, 6])
+        c, i1, i2 = intersect1d(a, b, assume_unique=True, return_indices=True)
+        ee = np.array([1, 2, 4])
+        assert_array_equal(c, ee)
+        assert_array_equal(a[i1], ee)
+        assert_array_equal(b[i2], ee)
+        
+        # non-unique inputs
+        a = np.array([1, 2, 2, 3, 4, 3, 2])
+        b = np.array([1, 8, 4, 2, 2, 3, 2, 3])
+        c, i1, i2 = intersect1d(a, b, return_indices=True)
+        ef = np.array([1, 2, 3, 4])
+        assert_array_equal(c, ef)
+        assert_array_equal(a[i1], ef)
+        assert_array_equal(b[i2], ef)
+                
+        # non1d, unique inputs
+        a = np.array([[2, 4, 5, 6], [7, 8, 1, 15]])
+        b = np.array([[3, 2, 7, 6], [10, 12, 8, 9]])
+        c, i1, i2 = intersect1d(a, b, assume_unique=True, return_indices=True)
+        ui1 = np.unravel_index(i1, a.shape)
+        ui2 = np.unravel_index(i2, b.shape)
+        ea = np.array([2, 6, 7, 8])
+        assert_array_equal(ea, a[ui1])
+        assert_array_equal(ea, b[ui2])
+    
+        # non1d, not assumed to be uniqueinputs
+        a = np.array([[2, 4, 5, 6, 6], [4, 7, 8, 7, 2]])
+        b = np.array([[3, 2, 7, 7], [10, 12, 8, 7]])
+        c, i1, i2 = intersect1d(a, b, return_indices=True)
+        ui1 = np.unravel_index(i1, a.shape)
+        ui2 = np.unravel_index(i2, b.shape)
+        ea = np.array([2, 7, 8])
+        assert_array_equal(ea, a[ui1])
+        assert_array_equal(ea, b[ui2])
+        
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])
         b = np.array([2, 4, 3, 1, 5])
@@ -76,8 +113,6 @@ class TestSetOps(object):
         assert_array_equal([1,7,8], ediff1d(two_elem, to_end=[7,8]))
         assert_array_equal([7,1], ediff1d(two_elem, to_begin=7))
         assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
-        assert(isinstance(ediff1d(np.matrix(1)), np.matrix))
-        assert(isinstance(ediff1d(np.matrix(1), to_begin=1), np.matrix))
 
     def test_isin(self):
         # the tests for in1d cover most of isin's behavior
@@ -504,7 +539,3 @@ class TestUnique(object):
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
-
-
-if __name__ == "__main__":
-    run_module_suite()

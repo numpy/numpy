@@ -655,9 +655,7 @@ VOID_getitem(void *input, void *vap)
 {
     PyArrayObject *ap = vap;
     char *ip = input;
-    PyArrayObject *u = NULL;
     PyArray_Descr* descr;
-    int itemsize;
 
     descr = PyArray_DESCR(ap);
     if (PyDataType_HASFIELDS(descr)) {
@@ -731,68 +729,7 @@ VOID_getitem(void *input, void *vap)
         return (PyObject *)ret;
     }
 
-    /* 2017-11-26, 1.14 */
-    if (DEPRECATE_FUTUREWARNING(
-            "the `.item()` method of unstructured void types will return an "
-            "immutable `bytes` object in the near future, the same as "
-            "returned by `bytes(void_obj)`, instead of the mutable memoryview "
-            "or integer array returned in numpy 1.13.") < 0) {
-        return NULL;
-    }
-    /*
-     * In the future all the code below will be replaced by
-     *
-     *       For unstructured void types like V4, return a bytes object (copy).
-     *     return PyBytes_FromStringAndSize(PyArray_DATA(ap), descr->elsize);
-     */
-
-    if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
-            || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
-        PyErr_SetString(PyExc_ValueError,
-                "tried to get void-array with object members as buffer.");
-        return NULL;
-    }
-    itemsize = PyArray_DESCR(ap)->elsize;
-
-#if defined(NPY_PY3K)
-    /*
-     * Return a byte array; there are no plain buffer objects on Py3
-     */
-    {
-        npy_intp dims[1], strides[1];
-        dims[0] = itemsize;
-        strides[0] = 1;
-        descr = PyArray_DescrNewFromType(NPY_BYTE);
-        u = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                             descr, 1, dims, strides, ip,
-                             PyArray_ISWRITEABLE(ap) ? NPY_ARRAY_WRITEABLE : 0,
-                             NULL);
-        Py_INCREF(ap);
-        if (PyArray_SetBaseObject(u, (PyObject *)ap) < 0) {
-            Py_DECREF(u);
-            return NULL;
-        }
-    }
-#else
-    /*
-     * default is to return buffer object pointing to
-     * current item a view of it
-     */
-    if (PyArray_ISWRITEABLE(ap)) {
-        if (array_might_be_written(ap) < 0) {
-            return NULL;
-        }
-        u = (PyArrayObject *)PyBuffer_FromReadWriteMemory(ip, itemsize);
-    }
-    else {
-        u = (PyArrayObject *)PyBuffer_FromMemory(ip, itemsize);
-    }
-#endif
-
-    if (u == NULL) {
-        return NULL;
-    }
-    return (PyObject *)u;
+    return PyBytes_FromStringAndSize(PyArray_DATA(ap), descr->elsize);
 }
 
 
@@ -998,11 +935,25 @@ VOID_setitem(PyObject *op, void *input, void *vap)
      * undiscerning case: It interprets any object as a buffer
      * and reads as many bytes as possible, padding with 0.
      */
+#if defined(NPY_PY3K)
+    {
+        Py_buffer view;
+
+        if (PyObject_GetBuffer(op, &view, PyBUF_SIMPLE) < 0) {
+            return -1;
+        }
+        memcpy(ip, view.buf, PyArray_MIN(view.len, itemsize));
+        if (itemsize > view.len) {
+            memset(ip + view.len, 0, itemsize - view.len);
+        }
+        PyBuffer_Release(&view);
+    }
+#else
     {
         const void *buffer;
         Py_ssize_t buflen;
-        res = PyObject_AsReadBuffer(op, &buffer, &buflen);
-        if (res == -1) {
+
+        if (PyObject_AsReadBuffer(op, &buffer, &buflen) < 0) {
             return -1;
         }
         memcpy(ip, buffer, PyArray_MIN(buflen, itemsize));
@@ -1010,6 +961,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             memset(ip + buflen, 0, itemsize - buflen);
         }
     }
+#endif
     return 0;
 }
 

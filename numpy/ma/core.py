@@ -26,6 +26,7 @@ import sys
 import operator
 import warnings
 import textwrap
+import re
 from functools import reduce
 
 if sys.version_info[0] >= 3:
@@ -132,19 +133,17 @@ def doc_note(initialdoc, note):
     if note is None:
         return initialdoc
 
-    # FIXME: disable this function for the moment until we figure out what to
-    # do with it. Currently it may result in duplicate Notes sections or Notes
-    # sections in the wrong place
-    return initialdoc
+    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', initialdoc)
 
-    newdoc = """
-    %s
-
-    Notes
+    notedoc = """\
+Notes
     -----
-    %s
-    """
-    return newdoc % (initialdoc, note)
+    %s""" % note
+
+    if len(notesplit) > 1:
+        notedoc = '\n\n    ' + notedoc + '\n'
+
+    return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
 def get_object_signature(obj):
@@ -3090,7 +3089,7 @@ class MaskedArray(ndarray):
             returned object (this is equivalent to setting the ``type``
             parameter).
         type : Python type, optional
-            Type of the returned view, e.g., ndarray or matrix.  Again, the
+            Type of the returned view, either ndarray or a subclass.  The
             default None results in type preservation.
 
         Notes
@@ -3674,14 +3673,14 @@ class MaskedArray(ndarray):
         >>> type(x.filled())
         <type 'numpy.ndarray'>
 
-        Subclassing is preserved. This means that if the data part of the masked
-        array is a matrix, `filled` returns a matrix:
+        Subclassing is preserved. This means that if, e.g., the data part of
+        the masked array is a recarray, `filled` returns a recarray:
 
-        >>> x = np.ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
-        >>> x.filled()
-        matrix([[     1, 999999],
-                [999999,      4]])
-
+        >>> x = np.array([(-1, 2), (-3, 4)], dtype='i8,i8').view(np.recarray)
+        >>> m = np.ma.array(x, mask=[(True, False), (False, True)])
+        >>> m.filled()
+        rec.array([(999999,      2), (    -3, 999999)],
+                  dtype=[('f0', '<i8'), ('f1', '<i8')])
         """
         m = self._mask
         if m is nomask:
@@ -5318,7 +5317,7 @@ class MaskedArray(ndarray):
                 originally intended.
                 Until then, the axis should be given explicitly when
                 ``arr.ndim > 1``, to avoid a FutureWarning.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
@@ -5469,7 +5468,7 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the array is flattened before
             sorting. The default is -1, which sorts along the last axis.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm. Default is 'quicksort'.
         order : list, optional
             When `a` is a structured array, this argument specifies which fields
@@ -6316,6 +6315,12 @@ class MaskedConstant(MaskedArray):
         """ Copy is a no-op on the maskedconstant, as it is a scalar """
         # maskedconstant is a scalar, so copy doesn't need to copy. There's
         # precedent for this with `np.bool_` scalars.
+        return self
+
+    def __copy__(self):
+        return self
+		
+    def __deepcopy__(self, memo):
         return self
 
     def __setattr__(self, attr, value):

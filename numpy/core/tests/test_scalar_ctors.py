@@ -1,17 +1,16 @@
 """
-Test the scalar contructors, which also do type-coercion
+Test the scalar constructors, which also do type-coercion
 """
 from __future__ import division, absolute_import, print_function
 
 import sys
 import platform
-import numpy as np
+import pytest
 
+import numpy as np
 from numpy.testing import (
-    run_module_suite,
     assert_equal, assert_almost_equal, assert_raises, assert_warns,
-    dec
-)
+    )
 
 class TestFromString(object):
     def test_floating(self):
@@ -43,11 +42,11 @@ class TestFromString(object):
         flongdouble = assert_warns(RuntimeWarning, np.longdouble, '-1e10000')
         assert_equal(flongdouble, -np.inf)
 
-    @dec.knownfailureif((sys.version_info[0] >= 3) or
-                        (sys.platform == "win32" and
-                         platform.architecture()[0] == "64bit"),
-                        "numpy.intp('0xff', 16) not supported on Py3, "
-                        "as it does not inherit from Python int")
+    @pytest.mark.skipif((sys.version_info[0] >= 3)
+                        or (sys.platform == "win32"
+                            and platform.architecture()[0] == "64bit"),
+                        reason="numpy.intp('0xff', 16) not supported on Py3 "
+                               "or 64 bit Windows")
     def test_intp(self):
         # Ticket #99
         i_width = np.int_(0).nbytes*2 - 1
@@ -64,7 +63,3 @@ class TestFromInt(object):
 
     def test_uint64_from_negative(self):
         assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
-
-
-if __name__ == "__main__":
-    run_module_suite()

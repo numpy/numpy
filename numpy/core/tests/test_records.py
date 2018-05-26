@@ -1,7 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import pickle
 import warnings
 import textwrap
@@ -9,8 +14,8 @@ from os import path
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
+    assert_raises, assert_warns
     )
 
 
@@ -252,7 +257,7 @@ class TestFromrecords(object):
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(isinstance(ra.field, collections.Callable))
+        assert_(isinstance(ra.field, collections_abc.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
@@ -409,6 +414,7 @@ class TestRecord(object):
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
         assert_raises(ValueError, lambda: arr[['nofield']])
 
+
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
     assert_(np.rec.find_duplicate(l1) == [])
@@ -421,6 +427,3 @@ def test_find_duplicate():
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
     assert_(np.rec.find_duplicate(l3) == [2, 1])
-
-if __name__ == "__main__":
-    run_module_suite()

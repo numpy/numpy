@@ -4,28 +4,15 @@ import sys
 import warnings
 import functools
 import operator
+import pytest
 
 import numpy as np
-from numpy.core.multiarray_tests import array_indexing
+from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_warns, dec, HAS_REFCOUNT, suppress_warnings,
-)
-
-
-try:
-    cdll = None
-    if hasattr(sys, 'gettotalrefcount'):
-        try:
-            cdll = np.ctypeslib.load_library('multiarray_d', np.core.multiarray.__file__)
-        except OSError:
-            pass
-    if cdll is None:
-        cdll = np.ctypeslib.load_library('multiarray', np.core.multiarray.__file__)
-    _HAS_CTYPE = True
-except ImportError:
-    _HAS_CTYPE = False
+    assert_, assert_equal, assert_raises, assert_array_equal, assert_warns,
+    HAS_REFCOUNT, suppress_warnings,
+    )
 
 
 class TestIndexing(object):
@@ -589,19 +576,6 @@ class TestSubclasses(object):
         assert_(isinstance(s[[0, 1, 2]], SubClass))
         assert_(isinstance(s[s > 0], SubClass))
 
-    def test_matrix_fancy(self):
-        # The matrix class messes with the shape. While this is always
-        # weird (getitem is not used, it does not have setitem nor knows
-        # about fancy indexing), this tests gh-3110
-        m = np.matrix([[1, 2], [3, 4]])
-
-        assert_(isinstance(m[[0,1,0], :], np.matrix))
-
-        # gh-3110. Note the transpose currently because matrices do *not*
-        # support dimension fixing for fancy indexing correctly.
-        x = np.asmatrix(np.arange(50).reshape(5,10))
-        assert_equal(x[:2, np.array(-1)], x[:2, -1].T)
-
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.
         class SubClass(np.ndarray):
@@ -622,7 +596,7 @@ class TestSubclasses(object):
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-    @dec.skipif(not HAS_REFCOUNT)
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_slice_decref_getsetslice(self):
         # See gh-10066, a temporary slice object should be discarted.
         # This test is only really interesting on Python 2 since
@@ -808,7 +782,7 @@ class TestMultiIndexingAutomated(object):
             `arr[indices]` should be identical.
         no_copy : bool
             Whether the indexing operation requires a copy. If this is `True`,
-            `np.may_share_memory(arr, arr[indicies])` should be `True` (with
+            `np.may_share_memory(arr, arr[indices])` should be `True` (with
             some exceptions for scalars and possibly 0-d arrays).
 
         Notes
@@ -1312,7 +1286,3 @@ class TestCApiAccess(object):
         a = a.reshape(5, 2)
         assign(a, 4, 10)
         assert_array_equal(a[-1], [10, 10])
-
-
-if __name__ == "__main__":
-    run_module_suite()

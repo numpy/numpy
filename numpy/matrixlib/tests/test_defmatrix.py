@@ -1,14 +1,19 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 
 import numpy as np
 from numpy import matrix, asmatrix, bmat
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_array_equal, assert_array_almost_equal, assert_raises
-)
-from numpy.matrixlib.defmatrix import matrix_power
+    assert_, assert_equal, assert_almost_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises
+    )
+from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
 
 class TestCtor(object):
@@ -302,7 +307,7 @@ class TestMatrixReturn(object):
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
             f = getattr(a, attrib)
-            if isinstance(f, collections.Callable):
+            if isinstance(f, collections_abc.Callable):
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)
@@ -453,7 +458,3 @@ class TestShape(object):
     def test_matrix_memory_sharing(self):
         assert_(np.may_share_memory(self.m, self.m.ravel()))
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
-
-
-if __name__ == "__main__":
-    run_module_suite()

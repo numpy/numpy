@@ -3387,6 +3387,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
+    PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
     Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);
