@@ -288,7 +288,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1,  1,  0))
         assert_equal(ixs, (0, 0))
-        assert_equal(flags, (0,))
+        assert_equal(flags, (0, 0))
         assert_equal(sizes, (-1,))
 
         # empty core signature; treat as plain ufunc (with trivial core)
@@ -303,7 +303,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 2, 2))
         assert_equal(ixs, (0, 1, 1, 2, 0, 2))
-        assert_equal(flags, (0, 0, 0))
+        assert_equal(flags, (0, 0, 0, 0, 0, 0))
         assert_equal(sizes, (-1, -1, -1))
 
         # more complicated names for variables
@@ -318,14 +318,14 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 1, 2))
         assert_equal(ixs, (0, 1, 2, 1, 3))
-        assert_equal(flags, (0, 0, 0, 0))
+        assert_equal(flags, (0, 0, 0, 0, 0))
         assert_equal(sizes, (-1, -1, -1, -1))
 
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(2, 1, "(n?,k),(k,m?)->(n?,m?)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 2, 2))
         assert_equal(ixs, (0, 1, 1, 2, 0, 2))
-        assert_equal(flags, (2, 0, 2))
+        assert_equal(flags, (2, 0, 0, 2, 2, 2))
         assert_equal(sizes, (-1, -1, -1))
 
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(1, 1, "(3)->()")
@@ -339,14 +339,14 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 2, 1, 1))
         assert_equal(ixs, (0, 0, 0, 1, 2))
-        assert_equal(flags, (1, 0, 1))
+        assert_equal(flags, (1, 1, 1, 0, 1))
         assert_equal(sizes, (3, -1, 9))
 
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(3, 1, "(3?),(3?,3?),(n)->(9)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 2, 1, 1))
         assert_equal(ixs, (0, 0, 0, 1, 2))
-        assert_equal(flags, (3, 0, 1))
+        assert_equal(flags, (3, 3, 3, 0, 1))
         assert_equal(sizes, (3, -1, 9))
 
         # in the following calls, a ValueError should be raised because
