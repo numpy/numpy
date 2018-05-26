@@ -2808,9 +2808,12 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 us_meta.base = NPY_FR_m;
             }
             else if (td % (24*60*60*1000000LL) != 0) {
-                us_meta.base = NPY_FR_D;
+                us_meta.base = NPY_FR_h;
             }
             else if (td % (7*24*60*60*1000000LL) != 0) {
+                us_meta.base = NPY_FR_D;
+            }
+            else {
                 us_meta.base = NPY_FR_W;
             }
             us_meta.num = 1;
