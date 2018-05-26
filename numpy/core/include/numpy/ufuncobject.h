@@ -213,18 +213,28 @@ typedef struct _tagPyUFuncObject {
         /* New in version 1 and above */
 
         /*
-         * sizes of `frozen` core dimensions, -1 if unset (not frozen)
+         * for each core_num_dim_ix distinct dimension names,
+         * the possible "frozen" size (-1 if not frozen).
          */
-        npy_intp *core_dim_szs;
+        npy_intp *core_dim_sizes;
 
         /*
-         * for each core_num_dim_ix, 1 for flexible (signature has ?) 0 otherwise
+         * for each distinct core dimension, a set of flags OR'd together
+         * e.g., UFUNC_CORE_DIM_CAN_IGNORE if signature has ?
+         *       UFUNC_CORE_DIM_SIZE_UNSET for non-frozen dimensions.
          */
-        int *core_dim_flexible;
+        npy_uint32 *core_dim_flags;
 
 } PyUFuncObject;
 
 #include "arrayobject.h"
+/* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
+/* the core dimension's size will be determined by the operands. */
+#define UFUNC_CORE_DIM_SIZE_UNSET 0x0002
+/* the core dimension may be absent */
+#define UFUNC_CORE_DIM_CAN_IGNORE 0x0004
+/* flags inferred during execution */
+#define UFUNC_CORE_DIM_MISSING 0x00040000
 
 #define UFUNC_ERR_IGNORE 0
 #define UFUNC_ERR_WARN   1
