@@ -481,7 +481,7 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
              * Is this a variable or a fixed size dimension?
              */
             if (_is_alpha_underscore(signature[i])) {
-                frozen_size = -1;
+                frozen_size = UFUNC_CORE_DIM_SIZE_UNSET;
             }
             else {
                 frozen_size = _get_size(signature + i);
@@ -514,7 +514,7 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
             /* Is this dimension flexible? */
             i = _get_end_of_name(signature, i);
             if((i > 0 && signature[i - 1] == '?')) {
-                ufunc->core_flags[cur_core_dim] |= UFUNC_CORE_CAN_BROADCAST;
+                ufunc->core_flags[cur_core_dim] |= UFUNC_CORE_CAN_IGNORE;
             }
             cur_core_dim++;
             nd++;
@@ -2162,49 +2162,50 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
             for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
                 int core_index = dim_offset + idim;
                 int core_dim_index = ufunc->core_dim_ixs[core_index];
-                int cur_dim_size = core_dim_sizes[core_dim_index];
+                int core_dim_size = core_dim_sizes[core_dim_index];
                 npy_intp op_dim_size;
-                npy_bool broadcast_possible;
+                npy_bool can_ignore;
 
                 /* can only happen if flexible; dimension missing altogether */
                 if (core_flags[core_index] & UFUNC_CORE_MISSING) {
                     op_dim_size = 0;
-                    core_flags[core_index] |= UFUNC_CORE_BROADCAST;
-                    dim_delta++;
-                    broadcast_possible = 0;
+                    core_flags[core_index] |= UFUNC_CORE_IGNORE;
+                    dim_delta++; /* for indexing in dimensions */
+                    can_ignore = 0;  /* really missing, we cannot ignore it! */
                 }
                 else {
                     op_dim_size = PyArray_DIM(op[i],
                              REMAP_AXIS(i, core_start_dim + idim - dim_delta));
-                    broadcast_possible = (op_dim_size == 1 &&
-                                          ((core_flags[core_index] &
-                                            UFUNC_CORE_CAN_BROADCAST) != 0));
+                    /* for *inputs* we allow ignoring of size 1 dimensions */
+                    can_ignore = (i < nin && op_dim_size == 1 &&
+                                  (core_flags[core_index] & UFUNC_CORE_CAN_IGNORE));
                 }
-                if (cur_dim_size < 0) {
-                    /* if (broadcast_possible) { */
-                    /*     /\* indicatet that it is encountered, but might be broadcast *\/ */
-                    /*     core_dim_sizes[core_dim_index] = -3; */
-                    /* } */
-                    if (broadcast_possible) { /* should be ignore_possible */
-                        core_dim_sizes[core_dim_index] = -2;
+                switch (core_dim_sizes[core_dim_index]) {
+                case UFUNC_CORE_DIM_SIZE_UNSET:
+                    if (can_ignore) {
+                        core_dim_sizes[core_dim_index] = UFUNC_CORE_DIM_MAYBE_IGNORE;
+                        break;
                     }
-                    else {
+                    /* fall through to cannot ignore */
+
+                case UFUNC_CORE_DIM_MAYBE_IGNORE:
+                    if (!can_ignore) {
                         core_dim_sizes[core_dim_index] = op_dim_size;
-                        /* label any previous ones for this one as broadcast */
-                        /* if (op_dim_size > 1) { */
-                        /*     for (j = 0; j < core_index; j++) { */
-                        /*         if (j == core_dim_index) { */
-                        /*             core_flags[j] |= UFUNC_CORE_BROADCAST; */
-                        /*         } */
-                        /*     } */
-                        /* } */
                     }
-                }
-                else if (op_dim_size != cur_dim_size) {
-                    if (cur_dim_size == 0 && broadcast_possible) {
-                        core_flags[core_dim_index] |= UFUNC_CORE_BROADCAST;
+                    break;
+
+                case 0:
+                    if (op_dim_size == 0) {
+                        break;
                     }
-                    else {
+                    if (can_ignore) {
+                        core_flags[core_dim_index] |= UFUNC_CORE_IGNORE;
+                        break;
+                    }
+                    /* fall through to size error below */
+
+                default:
+                    if (op_dim_size != core_dim_size) {
                         PyErr_Format(PyExc_ValueError,
                             "%s: %s operand %d has a mismatch in its "
                             "core dimension %d, with gufunc "
@@ -2221,45 +2222,44 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         }
     }
 
-    for (i=0; i<nop; i++) {
-        int idim;
-        int dim_offset = ufunc->core_offsets[i];
-
-        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
-            int core_index = dim_offset + idim;
-        }
-    }
     for (i = nin; i < nop; ++i) {
         int idim;
         int dim_offset = ufunc->core_offsets[i];
-        npy_bool broadcast_possible;
 
         for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
             int core_index = dim_offset + idim;
             int core_dim_index = ufunc->core_dim_ixs[core_index];
+            npy_bool can_ignore;
 
-            broadcast_possible = ((core_flags[core_index] &
-                                   UFUNC_CORE_CAN_BROADCAST) != 0);
-            if (core_dim_sizes[core_dim_index] == -1) {
-                /* Oops, this dimension was never specified
-                   (can only happen if output op not given) */
+            can_ignore = ((core_flags[core_index] &
+                           UFUNC_CORE_CAN_IGNORE) != 0);
+
+            /* check all cases where the size has not yet been set */
+            switch (core_dim_sizes[core_dim_index]) {
+            case UFUNC_CORE_DIM_SIZE_UNSET:
+                /*
+                 * Oops, this dimension was never specified
+                 * (can only happen if output op not given)
+                 */
                 PyErr_Format(PyExc_ValueError,
                         "%s: Output operand %d has core dimension %d "
                         "unspecified, with gufunc signature %s",
                         ufunc_get_name_cstr(ufunc), i - nin, idim,
                         ufunc->core_signature);
                 return -1;
-            }
-            else if (core_dim_sizes[core_dim_index] == -2) {
-                if (broadcast_possible) {
-                    /* indicate this core should not be allocated */
-                    core_flags[core_index] |= UFUNC_CORE_MISSING;
-                    /* indicate all cores with this index (including
-                       present one) are broadcast */
-                    for (j = 0; j < core_index; j++) {
-                        int cur_ix = ufunc->core_dim_ixs[core_index];
-                        if (ufunc->core_dim_ixs[j] == cur_ix) {
-                            core_flags[j] |= UFUNC_CORE_BROADCAST;
+
+            case UFUNC_CORE_DIM_MAYBE_IGNORE:
+                /*
+                 * Inputs suggested this core could be ignored;
+                 * if we can ignore it too, we'll do so.  Otherwise,
+                 * since this meant inputs had size 1, we'll just set
+                 * it so.
+                 */
+                if (can_ignore) {
+                    /* Ignore all core dimensions with this index */
+                    for (j = 0; j <= core_index; j++) {
+                        if (ufunc->core_dim_ixs[j] == core_dim_index) {
+                            core_flags[j] |= UFUNC_CORE_IGNORE;
                         }
                     }
                     core_dim_sizes[core_dim_index] = 0;
@@ -2267,16 +2267,24 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                 else {
                     core_dim_sizes[core_dim_index] = 1;
                 }
-            }
-            else if (core_dim_sizes[core_dim_index] == 0) {
-                /* if zero because of a missing core, we should
-                   not allocate this output either */
+                break;
+
+            case 0:
+                /*
+                 * We need to disambiguate between zero from a missing
+                 * core dimension, and an actual zero in the shape.
+                 * Look back to input flags (TODO: special flag!!)
+                 * If there was a core missing, we should
+                 * not allocate this output either.
+                 */
                 for (j = 0; j < core_index; j++) {
                     if (ufunc->core_dim_ixs[j] == core_dim_index) {
-                        core_flags[core_index] |= (core_flags[j] &
-                                                   UFUNC_CORE_MISSING);
+                        if (core_flags[j] & UFUNC_CORE_MISSING ) {
+                            core_flags[core_index] |= UFUNC_CORE_MISSING;
+                        }
                     }
                 }
+                break;
             }
         }
     }
@@ -2414,7 +2422,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         op[i] = NULL;
         dtypes[i] = NULL;
         arr_prep[i] = NULL;
-        /* TODO: just used core_num_dims_array!! */
+        /* TODO: just use core_num_dims_array!! */
         n_dims_used[i] = ufunc->core_num_dims[i];
     }
     for (i = 0, j=0; i < nop; ++i) {
@@ -2472,7 +2480,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         if (n_required > 0) {
             /* can be less if dim is flexible */
             for (j = core_offset; j < core_offset + num_dims; j++) {
-                if ((core_flags[j] & UFUNC_CORE_CAN_BROADCAST)) {
+                if ((core_flags[j] & UFUNC_CORE_CAN_IGNORE)) {
                     n_required--;
                 }
             }
@@ -2495,7 +2503,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                 int flexible_used = num_dims - n_dims_used[i];
                 /* one (or more?) flexible signature names have been used. Mark them */
                 for (j = core_offset; j < core_offset + num_dims; j++) {
-                    if ((core_flags[j] & UFUNC_CORE_CAN_BROADCAST)) {
+                    if ((core_flags[j] & UFUNC_CORE_CAN_IGNORE)) {
                         core_flags[j] |= UFUNC_CORE_MISSING;
                         flexible_used--;
                         if (flexible_used == 0) {
@@ -2648,9 +2656,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                     num_removed++;
                     continue;
                 }
-                else if ((core_flags[core_index] & UFUNC_CORE_BROADCAST)) {
-                    iter_shape[j] = 1;
-                } else {
+                else {
                     iter_shape[j] = core_dim_sizes[ufunc->core_dim_ixs[core_index]];
                 }
                 op_axes_arrays[i][j] = REMAP_AXIS(i, n + idim - num_removed);

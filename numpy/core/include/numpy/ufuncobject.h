@@ -221,7 +221,7 @@ typedef struct _tagPyUFuncObject {
         /*
          * for each core dimension (in flattened form, like core_dim_ixs),
          * set of flags OR'd together
-         * e.g., UFUNC_CORE_CAN_BROADCAST if signature has ?
+         * e.g., UFUNC_CORE_CAN_IGNORE if signature has ?
          *       UFUNC_CORE_FROZEN for a numerical dimension
          */
         npy_uint32 *core_flags;
@@ -230,13 +230,16 @@ typedef struct _tagPyUFuncObject {
 
 #include "arrayobject.h"
 
-/* the core dimension is fixed to the size given in core_dim_ixs */
+/* the core dimension is fixed. */
 #define UFUNC_CORE_FROZEN 0x0001
 /* the core dimension may be absent */
-#define UFUNC_CORE_CAN_BROADCAST 0x0002
-
+#define UFUNC_CORE_CAN_IGNORE 0x0002
+/* flags inferred during execution */
 #define UFUNC_CORE_MISSING 0x0001000
-#define UFUNC_CORE_BROADCAST 0x0002000
+#define UFUNC_CORE_IGNORE 0x0001000
+
+#define UFUNC_CORE_DIM_SIZE_UNSET -1
+#define UFUNC_CORE_DIM_MAYBE_IGNORE -2
 
 #define UFUNC_ERR_IGNORE 0
 #define UFUNC_ERR_WARN   1
