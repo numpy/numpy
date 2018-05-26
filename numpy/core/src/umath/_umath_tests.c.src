@@ -364,8 +364,8 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
     int nin, nout, i, core_num_ixs=0;
     PyObject *signature=NULL, *sig_str=NULL;
     PyUFuncObject *f=NULL;
-    PyObject *core_num_dims=NULL, *core_dim_ixs=NULL, *core_dim_szs=NULL;
-    PyObject *core_dim_flexible=NULL;
+    PyObject *core_num_dims=NULL, *core_dim_ixs=NULL;
+    PyObject *core_dim_flags=NULL, *core_dim_sizes=NULL;
     int core_enabled;
 
     if (!PyArg_ParseTuple(args, "iiO", &nin, &nout, &signature)) return NULL;
@@ -402,27 +402,27 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         PyObject * val = PyLong_FromLong(f->core_dim_ixs[i]);
         PyTuple_SET_ITEM(core_dim_ixs, i, val);
     }
-    core_dim_szs = PyTuple_New(f->core_num_dim_ix);
+    core_dim_flags = PyTuple_New(f->core_num_dim_ix);
+    if (core_dim_flags == NULL) goto error;
+    for (i=0; i<f->core_num_dim_ix; i++) {
+        PyObject * val = PyLong_FromLong(f->core_dim_flags[i]);
+        PyTuple_SET_ITEM(core_dim_flags, i, val);
+    }
+    core_dim_sizes = PyTuple_New(f->core_num_dim_ix);
     if (core_num_dims == NULL) goto error;
     for (i=0; i<f->core_num_dim_ix; i++) {
-        PyObject * val = PyLong_FromLong(f->core_dim_szs[i]);
-        PyTuple_SET_ITEM(core_dim_szs, i, val);
-    }
-    core_dim_flexible = PyTuple_New(f->core_num_dim_ix);
-    if (core_dim_flexible == NULL) goto error;
-    for (i=0; i<f->core_num_dim_ix; i++) {
-        PyObject * val = PyLong_FromLong(f->core_dim_flexible[i]);
-        PyTuple_SET_ITEM(core_dim_flexible, i, val);
+        PyObject * val = PyLong_FromLong(f->core_dim_sizes[i]);
+        PyTuple_SET_ITEM(core_dim_sizes, i, val);
     }
     Py_DECREF(f);
     return Py_BuildValue("iOOOO", core_enabled, core_num_dims,
-                                 core_dim_ixs, core_dim_szs,
-                                 core_dim_flexible);
+                         core_dim_ixs, core_dim_flags, core_dim_sizes);
 error:
     Py_XDECREF(f);
     Py_XDECREF(core_num_dims);
     Py_XDECREF(core_dim_ixs);
-    Py_XDECREF(core_dim_flexible);
+    Py_XDECREF(core_dim_flags);
+    Py_XDECREF(core_dim_sizes);
     return NULL;
 }
 
