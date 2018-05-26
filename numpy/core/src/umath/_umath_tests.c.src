@@ -128,6 +128,10 @@ static void
 /**end repeat**/
 
 char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
+/* for use with matrix_multiply code, but different signature */
+char *matmul_signature = "(m?,n),(n,p?)->(m,p)";
+/* for use with matrix_multiply code, but different signature */
+char *matflex_signature = "(m?,n),(n,p?)->(m?,p?)";
 
 /**begin repeat
 
@@ -151,6 +155,20 @@ static void
     npy_intp m,n,p;
     npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
          os_m=steps[4], os_p=steps[5];
+    /* no m dimension -> row vector . matrix */
+    if (dm == 0) {
+        dm = 1;
+    }
+    /* no p dimension -> matrix . column vector  */
+    if (dp == 0) {
+        os_m = os_p;
+        /* if this was entered as a 1-d array, it looks like a
+           matrix with first step equal zero; so switch steps */
+        if (is2_n == 0) {
+            is2_n = is2_p;
+        }
+        dp = 1;
+    }
     npy_intp ib1_n = is1_n*dn;
     npy_intp ib2_n = is2_n*dn;
     npy_intp ib2_p = is2_p*dp;
@@ -325,6 +343,22 @@ addUfuncs(PyObject *dictionary) {
                     "     \"(i),(i),(i)->()\" \n",
                     0, innerwt_signature);
     PyDict_SetItemString(dictionary, "innerwt", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
+                    matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matmul",
+                    "matmul on last two dimensions, with some being optional\n"
+                    "     \"(m?,n),(n,p?)->(m,p)\" \n",
+                    0, matmul_signature);
+    PyDict_SetItemString(dictionary, "matmul", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
+                    matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matflex",
+                    "matmul on last two dimensions, with some being optional\n"
+                    "     \"(m?,n),(n,p?)->(m?,p?)\" \n",
+                    0, matflex_signature);
+    PyDict_SetItemString(dictionary, "matflex", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
                     matrix_multiply_data, matrix_multiply_signatures,

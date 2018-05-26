@@ -2148,10 +2148,8 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         if (op[i] != NULL) {
             int idim;
             int dim_offset = ufunc->core_offsets[i];
-            int num_dims = core_num_dims[i];
-            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
+            int core_start_dim = PyArray_NDIM(op[i]) - core_num_dims[i];
             int dim_delta = 0;
-            npy_bool broadcast_possible;
 
             /* checked before this routine gets called */
             assert(core_start_dim >= 0);
@@ -2164,13 +2162,16 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
             for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
                 int core_index = dim_offset + idim;
                 int core_dim_index = ufunc->core_dim_ixs[core_index];
+                int cur_dim_size = core_dim_sizes[core_dim_index];
                 npy_intp op_dim_size;
+                npy_bool broadcast_possible;
+
                 /* can only happen if flexible; dimension missing altogether */
                 if (core_flags[core_index] & UFUNC_CORE_MISSING) {
-                    op_dim_size = 1;
-                    dim_delta++;
-                    broadcast_possible = 1;
+                    op_dim_size = 0;
                     core_flags[core_index] |= UFUNC_CORE_BROADCAST;
+                    dim_delta++;
+                    broadcast_possible = 0;
                 }
                 else {
                     op_dim_size = PyArray_DIM(op[i],
@@ -2179,25 +2180,28 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                                           ((core_flags[core_index] &
                                             UFUNC_CORE_CAN_BROADCAST) != 0));
                 }
-                if (core_dim_sizes[core_dim_index] < 0) {
-                    if (broadcast_possible) {
-                        /* indicatet that it is encountered, but might be broadcast */
+                if (cur_dim_size < 0) {
+                    /* if (broadcast_possible) { */
+                    /*     /\* indicatet that it is encountered, but might be broadcast *\/ */
+                    /*     core_dim_sizes[core_dim_index] = -3; */
+                    /* } */
+                    if (broadcast_possible) { /* should be ignore_possible */
                         core_dim_sizes[core_dim_index] = -2;
                     }
                     else {
                         core_dim_sizes[core_dim_index] = op_dim_size;
                         /* label any previous ones for this one as broadcast */
-                        if (op_dim_size > 1) {
-                            for (j = 0; j < core_index; j++) {
-                                if (j == core_dim_index) {
-                                    core_flags[j] |= UFUNC_CORE_BROADCAST;
-                                }
-                            }
-                        }
+                        /* if (op_dim_size > 1) { */
+                        /*     for (j = 0; j < core_index; j++) { */
+                        /*         if (j == core_dim_index) { */
+                        /*             core_flags[j] |= UFUNC_CORE_BROADCAST; */
+                        /*         } */
+                        /*     } */
+                        /* } */
                     }
                 }
-                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
-                    if (broadcast_possible) {
+                else if (op_dim_size != cur_dim_size) {
+                    if (cur_dim_size == 0 && broadcast_possible) {
                         core_flags[core_dim_index] |= UFUNC_CORE_BROADCAST;
                     }
                     else {
@@ -2217,6 +2221,14 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         }
     }
 
+    for (i=0; i<nop; i++) {
+        int idim;
+        int dim_offset = ufunc->core_offsets[i];
+
+        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
+            int core_index = dim_offset + idim;
+        }
+    }
     for (i = nin; i < nop; ++i) {
         int idim;
         int dim_offset = ufunc->core_offsets[i];
@@ -2244,16 +2256,50 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                     core_flags[core_index] |= UFUNC_CORE_MISSING;
                     /* indicate all cores with this index (including
                        present one) are broadcast */
-                    for (j = 0; j <= core_index; j++) {
-                        if (j == core_dim_index) {
+                    for (j = 0; j < core_index; j++) {
+                        int cur_ix = ufunc->core_dim_ixs[core_index];
+                        if (ufunc->core_dim_ixs[j] == cur_ix) {
                             core_flags[j] |= UFUNC_CORE_BROADCAST;
                         }
                     }
+                    core_dim_sizes[core_dim_index] = 0;
                 }
-                core_dim_sizes[core_dim_index] = 1;
+                else {
+                    core_dim_sizes[core_dim_index] = 1;
+                }
+            }
+            else if (core_dim_sizes[core_dim_index] == 0) {
+                /* if zero because of a missing core, we should
+                   not allocate this output either */
+                for (j = 0; j < core_index; j++) {
+                    if (ufunc->core_dim_ixs[j] == core_dim_index) {
+                        core_flags[core_index] |= (core_flags[j] &
+                                                   UFUNC_CORE_MISSING);
+                    }
+                }
             }
         }
     }
+
+#if NPY_UF_DBG_TRACING
+    printf("At end of _get_coredim_sizes\n");
+    for (i=0; i<nop; i++) {
+        int idim;
+        int dim_offset = ufunc->core_offsets[i];
+
+        printf("Operand %d, (inferred) flags=", i);
+        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
+            int core_index = dim_offset + idim;
+            printf(" %d, ", core_flags[core_index]);
+        }
+        printf("num_dims=%d\n", core_num_dims[i]);
+    }
+    printf("Inferred core_dim_sizes=");
+    for (i=0; i<ufunc->core_num_dim_ix; i++) {
+        printf(" %d", i, core_dim_sizes[i]);
+    }
+#endif
+
     return 0;
 }
 
@@ -2614,6 +2660,13 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
         op_axes[i] = op_axes_arrays[i];
     }
+
+#if NPY_UF_DBG_TRACING
+    printf("\niter shapes:");
+    for (j=0; j < iter_ndim; j++) {
+        printf(" %ld", iter_shape[j]);
+    }
+#endif
 
     /* Get the buffersize and errormask */
     if (_get_bufsize_errmask(extobj, ufunc_name, &buffersize, &errormask) < 0) {

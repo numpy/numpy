@@ -299,13 +299,6 @@ class TestUfunc(object):
         assert_equal(flags, ())
         assert_equal(sizes, ())
 
-        enabled, num_dims, ixs, flags, sizes = umt.test_signature(2, 1, "(n,k),(k,m)->(n,m)")
-        assert_equal(enabled, 1)
-        assert_equal(num_dims, (2, 2, 2))
-        assert_equal(ixs, (0, 1, 1, 2, 0, 2))
-        assert_equal(flags, (0, 0, 0, 0, 0, 0))
-        assert_equal(sizes, (-1, -1, -1))
-
         # more complicated names for variables
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
         assert_equal(enabled, 1)
@@ -320,7 +313,21 @@ class TestUfunc(object):
         assert_equal(ixs, (0, 1, 2, 1, 3))
         assert_equal(flags, (0, 0, 0, 0, 0))
         assert_equal(sizes, (-1, -1, -1, -1))
-
+        # matrix_multiply signature from _umath_tests
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(2, 1, "(n,k),(k,m)->(n,m)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 2, 2))
+        assert_equal(ixs, (0, 1, 1, 2, 0, 2))
+        assert_equal(flags, (0, 0, 0, 0, 0, 0))
+        assert_equal(sizes, (-1, -1, -1))
+        # matmul signature from _umath_tests
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(2, 1, "(n?,k),(k,m?)->(n,m)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 2, 2))
+        assert_equal(ixs, (0, 1, 1, 2, 0, 2))
+        assert_equal(flags, (2, 0, 0, 2, 0, 0))
+        assert_equal(sizes, (-1, -1, -1))
+        # matflex signature from _umath_tests
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(2, 1, "(n?,k),(k,m?)->(n?,m?)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 2, 2))
@@ -848,6 +855,49 @@ class TestUfunc(object):
         b = np.array([], dtype='f8')
         w = np.array([], dtype='f8')
         assert_array_equal(umt.innerwt(a, b, w), np.sum(a*b*w, axis=-1))
+
+    def test_ignorable_array(self):
+        mat = np.arange(12).reshape((2, 3, 2))
+        col_vec_array = np.arange(8).reshape((2, 2, 2, 1)) + 1
+        row_vec_array = np.arange(6).reshape((2, 1, 1, 3)) + 1
+        mm_col_vec = umt.matrix_multiply(mat, col_vec_array)
+        matmul_col_vec = umt.matmul(mat, col_vec_array)
+        assert_array_equal(matmul_col_vec, mm_col_vec)
+        matflex_col_vec = umt.matflex(mat, col_vec_array)
+        assert_array_equal(matflex_col_vec, mm_col_vec.squeeze())
+        mm_row_vec = umt.matrix_multiply(row_vec_array, mat)
+        matmul_row_vec = umt.matmul(row_vec_array, mat)
+        assert_array_equal(matmul_row_vec, mm_row_vec)
+        matflex_row_vec = umt.matflex(row_vec_array, mat)
+        assert_array_equal(matflex_row_vec, mm_row_vec.squeeze())
+
+    def test_ignorable_single(self):
+        mat = np.arange(12).reshape((2, 3, 2))
+        single_vec = np.arange(2)
+        col_vec = single_vec[:, np.newaxis]
+        assert_raises(ValueError, umt.matrix_multiply, mat, single_vec)
+        mm_col_vec = umt.matrix_multiply(mat, col_vec)
+        matmul_col = umt.matmul(mat, single_vec)
+        assert_array_equal(matmul_col, mm_col_vec.squeeze())
+        matmul_col_vec = umt.matmul(mat, col_vec)
+        assert_array_equal(matmul_col_vec, mm_col_vec)
+        matflex_col = umt.matflex(mat, single_vec)
+        assert_array_equal(matflex_col, mm_col_vec.squeeze())
+        matflex_col_vec = umt.matflex(mat, col_vec)
+        assert_array_equal(matflex_col_vec, mm_col_vec.squeeze())
+        #
+        single_vec = np.arange(3)
+        row_vec = single_vec[np.newaxis, :]
+        assert_raises(ValueError, umt.matrix_multiply, single_vec, mat)
+        mm_row_vec = umt.matrix_multiply(row_vec, mat)
+        matmul_row = umt.matmul(single_vec, mat)
+        assert_array_equal(matmul_row, mm_row_vec.squeeze())
+        matmul_row_vec = umt.matmul(row_vec, mat)
+        assert_array_equal(matmul_row_vec, mm_row_vec)
+        matflex_row = umt.matflex(single_vec, mat)
+        assert_array_equal(matflex_row, mm_row_vec.squeeze())
+        matflex_row_vec = umt.matflex(row_vec, mat)
+        assert_array_equal(matflex_row_vec, mm_row_vec.squeeze())
 
     def test_matrix_multiply(self):
         self.compare_matrix_multiply_results(np.long)
