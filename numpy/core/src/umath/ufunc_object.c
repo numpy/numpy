@@ -434,12 +434,11 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     ufunc->core_offsets = PyArray_malloc(sizeof(int) * ufunc->nargs);
     /* The next two items will be shrunk later */
     ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len);
-    ufunc->core_dim_szs = PyArray_malloc(sizeof(npy_intp) * len);
     ufunc->core_dim_flexible = PyArray_malloc(sizeof(int) * len);
 
     if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL ||
-        ufunc->core_offsets == NULL || ufunc->core_dim_szs == NULL ||
-        ufunc->core_dim_flexible == NULL) {
+            ufunc->core_offsets == NULL || 
+			ufunc->core_dim_flexible == NULL) {
         PyErr_NoMemory();
         goto fail;
     }
@@ -490,7 +489,6 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
             }
             if (j >= ufunc->core_num_dim_ix) {
                 var_names[j] = signature+i;
-                ufunc->core_dim_szs[j] = frozen_size;
                 ufunc->core_num_dim_ix++;
             }
             ufunc->core_dim_ixs[cur_core_dim] = j;
@@ -549,8 +547,6 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     }
     ufunc->core_dim_ixs = PyArray_realloc(ufunc->core_dim_ixs,
             sizeof(int)*cur_core_dim);
-    ufunc->core_dim_szs = PyArray_realloc(ufunc->core_dim_szs,
-            sizeof(npy_intp)*ufunc->core_num_dim_ix);
     ufunc->core_dim_flexible = PyArray_realloc(ufunc->core_dim_flexible,
             sizeof(int)*(ufunc->core_num_dim_ix));
 
@@ -661,7 +657,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     /* Get input arguments */
     for (i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
-
+        /* TODO: can this be eliminated since it is part of PyArray_FromAny */
         if (PyArray_Check(obj)) {
             PyArrayObject *obj_a = (PyArrayObject *)obj;
             out_op[i] = (PyArrayObject *)PyArray_FromArray(obj_a, NULL, 0);
@@ -2134,8 +2130,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
     int nop = nin + nout;
 
     for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        /* support fixed-size dim names */
-        core_dim_sizes[i] = ufunc->core_dim_szs[i];
+        core_dim_sizes[i] = -1;
     }
     for (i = 0; i < nop; ++i) {
         if (op[i] != NULL) {
@@ -2487,6 +2482,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             }
         }
     }
+    /* 
+     * Now we have filled in flexible_activated, ndims_used,
+     * and checked ndims for ops. 
+     */
 
     /*
      * Figure out the number of iteration dimensions, which
@@ -4853,7 +4852,6 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->core_dim_ixs = NULL;
     ufunc->core_offsets = NULL;
     ufunc->core_signature = NULL;
-    ufunc->core_dim_szs = NULL;
     if (signature != NULL) {
         if (_parse_signature(ufunc, signature) != 0) {
             Py_DECREF(ufunc);
@@ -5200,7 +5198,6 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 {
     PyArray_free(ufunc->core_num_dims);
     PyArray_free(ufunc->core_dim_ixs);
-    PyArray_free(ufunc->core_dim_szs);
     PyArray_free(ufunc->core_offsets);
     PyArray_free(ufunc->core_signature);
     PyArray_free(ufunc->ptr);
