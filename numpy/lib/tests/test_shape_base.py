@@ -5,11 +5,83 @@ import warnings
 
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, column_stack, kron, tile, expand_dims,
+    vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis
     )
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
+
+
+class TestTakeAlongAxis(object):
+    def test_argequivalent(self):
+        """ Test it translates from arg<func> to <func> """
+        from numpy.random import rand
+        a = rand(3, 4, 5)
+
+        funcs = [
+            (np.sort, np.argsort, dict()),
+            (np.min, np.argmin, dict()),
+            (np.max, np.argmax, dict()),
+            (np.partition, np.argpartition, dict(kth=2)),
+        ]
+
+        for func, argfunc, kwargs in funcs:
+            for axis in range(a.ndim):
+                a_func = func(a, axis=axis, **kwargs)
+                ai_func = argfunc(a, axis=axis, **kwargs)
+                assert_equal(a_func, take_along_axis(a, ai_func, axis=axis))
+
+    def test_insert_dimensions(self):
+        """ Test that inserting dimensions before or after is the same """
+        from numpy.random import rand
+        a = rand(3, 4, 5)
+        for axis in range(a.ndim):
+            # here we're emulating a keepdims argument to argmin
+            ai = np.argmin(a, axis=axis)
+            ai_exp = np.expand_dims(ai, axis=axis)
+            ai_val = np.take_along_axis(a, ai, axis=axis)
+            ai_val_exp = np.expand_dims(ai_val, axis=axis)
+            ai_exp_val = np.take_along_axis(a, ai_exp, axis=axis)
+
+            assert_equal(ai_val_exp, ai_exp_val)
+
+    def test_invalid(self):
+        """ Test it errors when indices has too few dimensions """
+        a = np.ones((10, 10))
+        ai = np.ones((10, 2), dtype=np.intp)
+
+        # sanity check
+        take_along_axis(a, ai, axis=1)
+
+        # not enough indices
+        assert_raises(ValueError, take_along_axis, a, 1, axis=1)
+        # bool arrays not allowed
+        assert_raises(IndexError, take_along_axis, a, ai.astype(bool), axis=1)
+        # float arrays not allowed
+        assert_raises(IndexError, take_along_axis, a, ai.astype(float), axis=1)
+        # invalid axis
+        assert_raises(np.AxisError, take_along_axis, a, 1, axis=10)
+
+    def test_empty(self):
+        """ Test everything is ok with empty results, even with inserted dims """
+        a  = np.ones((3, 4, 5))
+        ai = np.ones((3, 0, 5), dtype=np.intp)
+
+        actual = take_along_axis(a, ai, axis=1)
+        assert_equal(actual.shape, ai.shape)
+
+        a  = np.ones((3, 4,       5))
+        ai = np.ones((3, 0, 1, 0, 5), dtype=np.intp)
+
+        actual = take_along_axis(a, ai, axis=1)
+        assert_equal(actual.shape, ai.shape)
+
+    def test_broadcast(self):
+        """ Test that non-indexing dimensions are broadcast """
+        a  = np.ones((3, 4,    1))
+        ai = np.ones((1, 2, 6, 5), dtype=np.intp)
+        actual = take_along_axis(a, ai, axis=1)
+        assert_equal(actual.shape, (3, 2, 6, 5))
 
 
 class TestApplyAlongAxis(object):

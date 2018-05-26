@@ -140,6 +140,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     --------
     compress : Take elements using a boolean mask
     ndarray.take : equivalent method
+    take_along_axis : Take elements by matching the array and the index arrays
 
     Notes
     -----
@@ -478,6 +479,7 @@ def put(a, ind, v, mode='raise'):
     See Also
     --------
     putmask, place
+    put_along_axis : Put elements by matching the array and the index arrays
 
     Examples
     --------
@@ -723,7 +725,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     -------
     index_array : ndarray, int
         Array of indices that partition `a` along the specified axis.
-        In other words, ``a[index_array]`` yields a partitioned `a`.
+        If `a` is one-dimensional, ``a[index_array]`` yields a partitioned `a`.
+        More generally, ``np.take_along_axis(a, index_array, axis=a)`` always
+        yields the partitioned `a`, irrespective of dimensionality.
 
     See Also
     --------
@@ -904,6 +908,8 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     index_array : ndarray, int
         Array of indices that sort `a` along the specified axis.
         If `a` is one-dimensional, ``a[index_array]`` yields a sorted `a`.
+        More generally, ``np.take_along_axis(a, index_array, axis=a)`` always
+        yields the sorted `a`, irrespective of dimensionality.
 
     See Also
     --------
