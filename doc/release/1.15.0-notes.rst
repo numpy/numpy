@@ -126,6 +126,11 @@ unstructured void array's ``.item`` method now returns a bytes object
 This may affect code which assumed the return value was mutable, which is no
 longer the case.
 
+``copy.copy`` and ``copy.deepcopy`` no longer turn ``masked`` into an array
+----------------------------------------------------------------------------
+Since ``np.ma.masked`` is a readonly scalar, copying should be a no-op. These
+functions now behave consistently with ``np.copy()``.
+
 
 C API changes
 =============
