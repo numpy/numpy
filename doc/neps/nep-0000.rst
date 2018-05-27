@@ -3,7 +3,7 @@ Purpose and Process
 ===================
 
 :Author: Jarrod Millman <millman@berkeley.edu>
-:Status: Draft
+:Status: Active
 :Type: Process
 :Created: 2017-12-11
 

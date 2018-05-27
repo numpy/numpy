@@ -30,6 +30,19 @@ Accepted NEPs, implementation in progress
    NEP {{ nep }} — {{ tags['Title'] }} <{{ tags['Filename'] }}>
 {% endfor %}
 
+
+Open NEPs (under consideration)
+-------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Draft' %}
+   NEP {{ nep }} — {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
+
+
+
 Implemented NEPs
 ----------------
 
