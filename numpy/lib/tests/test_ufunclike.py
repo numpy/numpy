@@ -55,6 +55,10 @@ class TestUfunclike(object):
                 obj.metadata = self.metadata
                 return obj
 
+            def __array_finalize__(self, obj):
+                self.metadata = getattr(obj, 'metadata', None)
+                return self
+
         a = nx.array([1.1, -1.1])
         m = MyArray(a, metadata='foo')
         f = ufl.fix(m)
