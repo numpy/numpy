@@ -2799,13 +2799,8 @@ class MaskedArray(ndarray):
             # FIXME _sharedmask is never used.
             _sharedmask = True
         # Process mask.
-        # Number of named fields (or zero if none)
-        names_ = _data.dtype.names or ()
         # Type of the mask
-        if names_:
-            mdtype = make_mask_descr(_data.dtype)
-        else:
-            mdtype = MaskType
+        mdtype = make_mask_descr(_data.dtype)
 
         if mask is nomask:
             # Case 1. : no mask in input.
@@ -2831,14 +2826,12 @@ class MaskedArray(ndarray):
                     _data._mask = mask
                     _data._sharedmask = False
             else:
+                _data._sharedmask = not copy
                 if copy:
                     _data._mask = _data._mask.copy()
-                    _data._sharedmask = False
                     # Reset the shape of the original mask
                     if getmask(data) is not nomask:
                         data._mask.shape = data.shape
-                else:
-                    _data._sharedmask = True
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
@@ -2875,7 +2868,7 @@ class MaskedArray(ndarray):
                     _data._mask = mask
                     _data._sharedmask = not copy
                 else:
-                    if names_:
+                    if _data.dtype.names:
                         def _recursive_or(a, b):
                             "do a|=b on each field of a, recursively"
                             for name in a.dtype.names:
@@ -2884,7 +2877,7 @@ class MaskedArray(ndarray):
                                     _recursive_or(af, bf)
                                 else:
                                     af |= bf
-                            return
+
                         _recursive_or(_data._mask, mask)
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
