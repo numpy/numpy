@@ -401,6 +401,9 @@ class TestArrayAlmostEqual(_GenericTest):
         # comparison operators, not on them being able to store booleans
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return super(MyArray, self).__eq__(other).view(np.ndarray)
+
             def __lt__(self, other):
                 return super(MyArray, self).__lt__(other).view(np.ndarray)
 
@@ -500,6 +503,9 @@ class TestAlmostEqual(_GenericTest):
         # comparison operators, not on them being able to store booleans
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return super(MyArray, self).__eq__(other).view(np.ndarray)
+
             def __lt__(self, other):
                 return super(MyArray, self).__lt__(other).view(np.ndarray)
 
