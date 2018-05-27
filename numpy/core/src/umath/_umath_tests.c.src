@@ -271,7 +271,7 @@ static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
                                              NPY_DOUBLE, NPY_DOUBLE };
 
 
-static void
+static int
 addUfuncs(PyObject *dictionary) {
     PyObject *f;
 
@@ -280,6 +280,13 @@ addUfuncs(PyObject *dictionary) {
                     "inner on the last dimension and broadcast on the rest \n"
                     "     \"(i),(i)->()\" \n",
                     0, inner1d_signature);
+    /*
+     * yes, this should not happen, but I (MHvK) just spent an hour looking at
+     * segfaults because I screwed up something that seemed totally unrelated.
+     */
+    if (f == NULL) {
+        return -1;
+    }
     PyDict_SetItemString(dictionary, "inner1d", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(innerwt_functions, innerwt_data,
@@ -287,6 +294,9 @@ addUfuncs(PyObject *dictionary) {
                     "inner1d with a weight argument \n"
                     "     \"(i),(i),(i)->()\" \n",
                     0, innerwt_signature);
+    if (f == NULL) {
+        return -1;
+    }
     PyDict_SetItemString(dictionary, "innerwt", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
@@ -295,6 +305,9 @@ addUfuncs(PyObject *dictionary) {
                     "matrix multiplication on last two dimensions \n"
                     "     \"(m,n),(n,p)->(m,p)\" \n",
                     0, matrix_multiply_signature);
+    if (f == NULL) {
+        return -1;
+    }
     PyDict_SetItemString(dictionary, "matrix_multiply", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(euclidean_pdist_functions,
@@ -303,14 +316,22 @@ addUfuncs(PyObject *dictionary) {
                     "pairwise euclidean distance on last two dimensions \n"
                     "     \"(n,d)->(p)\" \n",
                     0, euclidean_pdist_signature);
+    if (f == NULL) {
+        return -1;
+    }
     PyDict_SetItemString(dictionary, "euclidean_pdist", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(inner1d_functions, inner1d_data,
                     inner1d_signatures, 2, 2, 1, PyUFunc_None, "inner1d_no_doc",
                     NULL,
                     0, inner1d_signature);
+    if (f == NULL) {
+        return -1;
+    }
     PyDict_SetItemString(dictionary, "inner1d_no_doc", f);
     Py_DECREF(f);
+
+    return 0;
 }
 
 
@@ -417,15 +438,14 @@ static struct PyModuleDef moduledef = {
 };
 #endif
 
+/* Initialization function for the module */
 #if defined(NPY_PY3K)
-#define RETVAL m
-PyMODINIT_FUNC PyInit__umath_tests(void)
+#define RETVAL(x) x
+PyMODINIT_FUNC PyInit__umath_tests(void) {
 #else
-#define RETVAL
-PyMODINIT_FUNC
-init_umath_tests(void)
+#define RETVAL(x)
+PyMODINIT_FUNC init_umath_tests(void) {
 #endif
-{
     PyObject *m;
     PyObject *d;
     PyObject *version;
@@ -435,9 +455,9 @@ init_umath_tests(void)
 #else
     m = Py_InitModule("_umath_tests", UMath_TestsMethods);
 #endif
-    if (m == NULL)
-        return RETVAL;
-
+    if (m == NULL) {
+        return RETVAL(NULL);
+    }
     import_array();
     import_ufunc();
 
@@ -448,12 +468,13 @@ init_umath_tests(void)
     Py_DECREF(version);
 
     /* Load the ufunc operators into the module's namespace */
-    addUfuncs(d);
-
-    if (PyErr_Occurred()) {
+    if (addUfuncs(d) < 0) {
+        Py_DECREF(m);
+        PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_tests module.");
+        return RETVAL(NULL);
     }
 
-    return RETVAL;
+    return RETVAL(m);
 }
