@@ -197,3 +197,27 @@ else:
     # but do not use them, we define them here for backward compatibility.
     oldnumeric = 'removed'
     numarray = 'removed'
+
+    def _sanity_check():
+        """
+        Quick sanity checks for common bugs caused by environment.
+        There are some cases (e.g., the wrong BLAS ABI) that cause wrong
+        results under specific runtime conditions that are not necessarily
+        achieved during test suite runs, and it is useful to catch those early.
+
+        See https://github.com/numpy/numpy/issues/8577 and other
+        similar bug reports.
+
+        """
+        try:
+            x = ones(2, dtype=float32)
+            if not abs(x.dot(x) - 2.0) < 1e-5:
+                raise AssertionError()
+        except AssertionError:
+            msg = ("The current Numpy installation ({!r}) fails to "
+                   "pass simple sanity checks. This can be caused for example "
+                   "by incorrect BLAS library being linked in.")
+            raise RuntimeError(msg.format(__file__))
+
+    _sanity_check()
+    del _sanity_check
