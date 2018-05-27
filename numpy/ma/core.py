@@ -2877,6 +2877,7 @@ class MaskedArray(ndarray):
                                     _recursive_or(af, bf)
                                 else:
                                     af |= bf
+
                         _recursive_or(_data._mask, mask)
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
