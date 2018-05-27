@@ -1963,42 +1963,6 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
 }
 
 /*
- * Translate axis to axes list of the form [(axis,), ...], with an
- * empty tuple for operands without core dimensions.
- * Returns an axes tuple or NULL on failure.
- */
-static PyObject*
-_build_axes_tuple_from_axis(PyObject *axis, int core_num_dims[], int nop) {
-    int i;
-    PyObject *axes = NULL, *axis_tuple = NULL, *tuple;
-    PyObject *empty_tuple = PyTuple_New(0);  /* cannot realistically fail */
-
-    axes = PyList_New(nop);
-    if (axes == NULL) {
-        return NULL;
-    }
-    axis_tuple = PyTuple_Pack(1, axis);
-    if (axis_tuple == NULL) {
-        goto fail;
-    }
-
-    for (i = 0; i < nop; i++) {
-        tuple = core_num_dims[i] == 1 ? axis_tuple : empty_tuple;
-        Py_INCREF(tuple);
-        PyList_SET_ITEM(axes, i, tuple);
-    }
-    Py_DECREF(axis_tuple);
-    Py_DECREF(empty_tuple);
-    return axes;
-
-fail:
-    Py_XDECREF(axis_tuple);
-    Py_XDECREF(axes);
-    Py_DECREF(empty_tuple);
-    return NULL;
-}
-
-/*
  * Interpret a possible axes keyword argument, using it to fill the remap_axis
  * array which maps default to actual axes for each operand, indexed as
  * as remap_axis[iop][iaxis]. The default axis order has first all broadcast
@@ -2010,8 +1974,7 @@ static int
 _parse_axes_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
     int nin = ufunc->nin;
-    int nout = ufunc->nout;
-    int nop = nin + nout;
+    int nop = ufunc->nargs;
     int iop, list_size;
 
     if (!PyList_Check(axes)) {
@@ -2124,6 +2087,59 @@ _parse_axes_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axes,
         }
         if (axis == op_ndim) {
             remap_axis[iop] = NULL;
+        }
+    } /* end of for(iop) loop over operands */
+    return 0;
+}
+
+/*
+ * Simplified version of the above, using axis to fill the remap_axis
+ * array, which maps default to actual axes for each operand, indexed as
+ * as remap_axis[iop][iaxis]. The default axis order has first all broadcast
+ * axes and then the core axes the gufunc operates on.
+ *
+ * Returns 0 on success, and -1 on failure
+ */
+static int
+_parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
+                PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
+    int nop = ufunc->nargs;
+    int iop, axis_int;
+
+    axis_int = PyArray_PyIntAsInt(axis);
+    if (error_converting(axis_int)) {
+        return -1;
+    }
+
+    for (iop = 0; iop < nop; ++iop) {
+        int axis, op_ndim, op_axis;
+
+        /* _check_axis_support ensures core_num_dims is 0 or 1 */
+        if (core_num_dims[iop] == 0) {
+            remap_axis[iop] = NULL;
+            continue;
+        }
+        if (op[iop]) {
+            op_ndim = PyArray_NDIM(op[iop]);
+        }
+        else {
+            op_ndim = broadcast_ndim + 1;
+        }
+        op_axis = axis_int;  /* ensure we don't modify axis_int */
+        if (check_and_adjust_axis(&op_axis, op_ndim) < 0) {
+            return -1;
+        }
+        /* Are we actually remapping away from last axis? */
+        if (op_axis == op_ndim - 1) {
+            remap_axis[iop] = NULL;
+            continue;
+        }
+        remap_axis[iop][op_ndim - 1] = op_axis;
+        for (axis = 0; axis < op_axis; axis++) {
+            remap_axis[iop][axis] = axis;
+        }
+        for (axis = op_axis; axis < op_ndim - 1; axis++) {
+            remap_axis[iop][axis] = axis + 1;
         }
     } /* end of for(iop) loop over operands */
     return 0;
@@ -2443,21 +2459,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /*
-     * Translate axis to axes list of the form [(axis,), ...], with an
-     * empty tuple for operands without core dimensions.
-     */
-    if (axis) {
-        assert(axes == NULL);  /* parser prevents passing in both axis & axes */
-        axes = _build_axes_tuple_from_axis(axis, core_num_dims, nop);
-        if (axes == NULL) {
-            retval = -1;
-            goto fail;
-        }
-    }
-
     /* Possibly remap axes. */
-    if (axes) {
+    if (axes != NULL || axis != NULL) {
         remap_axis = PyArray_malloc(sizeof(remap_axis[0]) * nop);
         remap_axis_memory = PyArray_malloc(sizeof(remap_axis_memory[0]) *
                                                   nop * NPY_MAXDIMS);
@@ -2468,8 +2471,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         for (i=0; i < nop; i++) {
             remap_axis[i] = remap_axis_memory + i * NPY_MAXDIMS;
         }
-        retval = _parse_axes_arg(ufunc, core_num_dims, axes, op, broadcast_ndim,
-                                 remap_axis);
+        if (axis) {
+            retval = _parse_axis_arg(ufunc, core_num_dims, axis, op,
+                                     broadcast_ndim, remap_axis);
+        }
+        else {
+            retval = _parse_axes_arg(ufunc, core_num_dims, axes, op,
+                                     broadcast_ndim, remap_axis);
+        }
         if(retval < 0) {
             goto fail;
         }
@@ -2818,7 +2827,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(axis);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
-    Py_XDECREF(axes);
 
     NPY_UF_DBG_PRINT("Returning Success\n");
 
@@ -2841,7 +2849,6 @@ fail:
     Py_XDECREF(axis);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
-    Py_XDECREF(axes);
     PyArray_free(remap_axis_memory);
     PyArray_free(remap_axis);
     return retval;
