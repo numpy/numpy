@@ -686,7 +686,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, isnan, any, inf, ndim
+    from numpy.core import array, isnan, inf, bool_
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
@@ -699,14 +699,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf: combine results of running func on x and y,
         checking that they are True at the same locations."""
+        # Both the != True comparison here and the cast to bool_ at
+        # the end are done to deal with `masked`, which cannot be
+        # compared usefully, and for which .all() yields masked.
         x_id = func(x)
         y_id = func(y)
-        if not any(x_id) and not any(y_id):
-            return False
-
-        try:
-            assert_array_equal(x_id, y_id)
-        except AssertionError:
+        if (x_id == y_id).all() != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
@@ -714,7 +712,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
-        return x_id if x_id.ndim == 0 else y_id
+        if x_id.ndim == 0:
+            return bool_(x_id)
+        elif y_id.ndim == 0:
+            return bool_(y_id)
+        else:
+            return y_id
 
     try:
         cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
@@ -727,7 +730,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
 
-        flagged = False
+        flagged = bool_(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
@@ -745,7 +748,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             if equal_nan and x.dtype.type == y.dtype.type:
                 flagged = func_assert_same_pos(x, y, func=isnat, hasval="NaT")
 
-        if ndim(flagged):
+        if flagged.ndim > 0:
             x, y = x[~flagged], y[~flagged]
             # Only do the comparison if actual values are left
             if x.size == 0:
