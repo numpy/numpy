@@ -856,48 +856,101 @@ class TestUfunc(object):
         w = np.array([], dtype='f8')
         assert_array_equal(umt.innerwt(a, b, w), np.sum(a*b*w, axis=-1))
 
-    def test_ignorable_array(self):
+    def test_can_ignore_signature(self):
+        # Comparing the effects of ? in signature:
+        # matrix_multiply: (m,n),(n,p)->(m,p)    # all must be there.
+        # matmul:        (m?,n),(n,p?)->(m,p)    # allow missing m, p.
+        # matflex:       (m?,n),(n,p?)->(m?,p?)  # remove 1 in output.
         mat = np.arange(12).reshape((2, 3, 2))
+        single_vec = np.arange(2)
+        col_vec = single_vec[:, np.newaxis]
         col_vec_array = np.arange(8).reshape((2, 2, 2, 1)) + 1
-        row_vec_array = np.arange(6).reshape((2, 1, 1, 3)) + 1
+        # matrix @ single column vector with proper dimension
+        mm_col_vec = umt.matrix_multiply(mat, col_vec)
+        # matmul does the same thing
+        matmul_col_vec = umt.matmul(mat, col_vec)
+        assert_array_equal(matmul_col_vec, mm_col_vec)
+        # but matflex squeezes the 1 away.
+        matflex_col_vec = umt.matflex(mat, col_vec)
+        assert_array_equal(matflex_col_vec, mm_col_vec.squeeze())
+        # matrix @ vector without dimension making it a column vector.
+        # matrix multiply fails -> missing core dim.
+        assert_raises(ValueError, umt.matrix_multiply, mat, single_vec)
+        # matmul mimicker passes, and returns a vector.
+        matmul_col = umt.matmul(mat, single_vec)
+        assert_array_equal(matmul_col, mm_col_vec.squeeze())
+        # matflex does the same.
+        matflex_col = umt.matflex(mat, single_vec)
+        assert_array_equal(matflex_col, mm_col_vec.squeeze())
+        # Now with a column array: same as for column vector,
+        # broadcasting sensibly.
         mm_col_vec = umt.matrix_multiply(mat, col_vec_array)
         matmul_col_vec = umt.matmul(mat, col_vec_array)
         assert_array_equal(matmul_col_vec, mm_col_vec)
         matflex_col_vec = umt.matflex(mat, col_vec_array)
         assert_array_equal(matflex_col_vec, mm_col_vec.squeeze())
+        # As above, but for row vector
+        single_vec = np.arange(3)
+        row_vec = single_vec[np.newaxis, :]
+        row_vec_array = np.arange(24).reshape((4, 2, 1, 1, 3)) + 1
+        # row vector @ matrix
+        mm_row_vec = umt.matrix_multiply(row_vec, mat)
+        matmul_row_vec = umt.matmul(row_vec, mat)
+        assert_array_equal(matmul_row_vec, mm_row_vec)
+        matflex_row_vec = umt.matflex(row_vec, mat)
+        assert_array_equal(matflex_row_vec, mm_row_vec.squeeze())
+        # single row vector @ matrix
+        assert_raises(ValueError, umt.matrix_multiply, single_vec, mat)
+        matmul_row = umt.matmul(single_vec, mat)
+        assert_array_equal(matmul_row, mm_row_vec.squeeze())
+        matflex_row = umt.matflex(single_vec, mat)
+        assert_array_equal(matflex_row, mm_row_vec.squeeze())
+        # row vector array @ matrix
         mm_row_vec = umt.matrix_multiply(row_vec_array, mat)
         matmul_row_vec = umt.matmul(row_vec_array, mat)
         assert_array_equal(matmul_row_vec, mm_row_vec)
         matflex_row_vec = umt.matflex(row_vec_array, mat)
         assert_array_equal(matflex_row_vec, mm_row_vec.squeeze())
-
-    def test_ignorable_single(self):
-        mat = np.arange(12).reshape((2, 3, 2))
-        single_vec = np.arange(2)
-        col_vec = single_vec[:, np.newaxis]
-        assert_raises(ValueError, umt.matrix_multiply, mat, single_vec)
-        mm_col_vec = umt.matrix_multiply(mat, col_vec)
-        matmul_col = umt.matmul(mat, single_vec)
-        assert_array_equal(matmul_col, mm_col_vec.squeeze())
-        matmul_col_vec = umt.matmul(mat, col_vec)
-        assert_array_equal(matmul_col_vec, mm_col_vec)
-        matflex_col = umt.matflex(mat, single_vec)
-        assert_array_equal(matflex_col, mm_col_vec.squeeze())
-        matflex_col_vec = umt.matflex(mat, col_vec)
-        assert_array_equal(matflex_col_vec, mm_col_vec.squeeze())
-        #
-        single_vec = np.arange(3)
-        row_vec = single_vec[np.newaxis, :]
-        assert_raises(ValueError, umt.matrix_multiply, single_vec, mat)
-        mm_row_vec = umt.matrix_multiply(row_vec, mat)
-        matmul_row = umt.matmul(single_vec, mat)
-        assert_array_equal(matmul_row, mm_row_vec.squeeze())
-        matmul_row_vec = umt.matmul(row_vec, mat)
-        assert_array_equal(matmul_row_vec, mm_row_vec)
-        matflex_row = umt.matflex(single_vec, mat)
-        assert_array_equal(matflex_row, mm_row_vec.squeeze())
-        matflex_row_vec = umt.matflex(row_vec, mat)
-        assert_array_equal(matflex_row_vec, mm_row_vec.squeeze())
+        # Now for vector combinations
+        # row vector @ column vector
+        col_vec = row_vec.T
+        col_vec_array = row_vec_array.swapaxes(-2, -1)
+        mm_row_col_vec = umt.matrix_multiply(row_vec, col_vec)
+        matmul_row_col_vec = umt.matmul(row_vec, col_vec)
+        assert_array_equal(matmul_row_col_vec, mm_row_col_vec)
+        matflex_row_col_vec = umt.matflex(row_vec, col_vec)
+        assert_array_equal(matflex_row_col_vec, mm_row_col_vec.squeeze())
+        # single row vector @ single col vector
+        assert_raises(ValueError, umt.matrix_multiply, single_vec, single_vec)
+        matmul_row_col = umt.matmul(single_vec, single_vec)
+        assert_array_equal(matmul_row_col, mm_row_col_vec.squeeze())
+        matflex_row_col = umt.matflex(single_vec, single_vec)
+        assert_array_equal(matflex_row_col, mm_row_col_vec.squeeze())
+        # row vector array @ matrix
+        mm_row_col_array = umt.matrix_multiply(row_vec_array, col_vec_array)
+        matmul_row_col_array = umt.matmul(row_vec_array, col_vec_array)
+        assert_array_equal(matmul_row_col_array, mm_row_col_array)
+        matflex_row_col_array = umt.matflex(row_vec_array, col_vec_array)
+        assert_array_equal(matflex_row_col_array,
+                           mm_row_col_array.squeeze((-2, -1)))
+        # Finally, check that things are *not* squeezed if one gives an
+        # output.
+        out = np.zeros_like(mm_row_col_array)
+        out = umt.matrix_multiply(row_vec_array, col_vec_array, out=out)
+        assert_array_equal(out, mm_row_col_array)
+        out[:] = 0
+        out = umt.matmul(row_vec_array, col_vec_array, out=out)
+        assert_array_equal(out, mm_row_col_array)
+        out[:] = 0
+        out = umt.matflex(row_vec_array, col_vec_array, out=out)
+        assert_array_equal(out, mm_row_col_array)
+        # And check one cannot put missing dimensions back.
+        out = np.zeros_like(mm_row_col_vec)
+        assert_raises(ValueError, umt.matrix_multiply, single_vec, single_vec,
+                      out)
+        # True missing dimenions -> m,p=0, and cannot adjust.
+        assert_raises(ValueError, umt.matmul, single_vec, single_vec, out)
+        assert_raises(ValueError, umt.matflex, single_vec, single_vec, out)
 
     def test_matrix_multiply(self):
         self.compare_matrix_multiply_results(np.long)
