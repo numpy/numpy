@@ -46,6 +46,13 @@ Deprecations
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
 
+* Multidimensional indexing with anything but a tuple is
+  deprecated. This means that code such as ``ind = [slice(None), 0]``,
+  ``arr[[slice(None), 0]]`` should be changed to ``arr[tuple(ind)]``. This is
+  necessary to avoid ambiguity in expressions such as ``arr[[[0, 1], [0, 1]]]``
+  which currently is interpreted as ``arr[array([0, 1]), array([0, 1])]``.
+  In future, this will be interpreted as ``arr[array([[0, 1], [0, 1]])]``.
+
 * Direct imports from the following modules is deprecated. All testing related
   imports should come from `numpy.testing`.
   * `np.testing.utils`
