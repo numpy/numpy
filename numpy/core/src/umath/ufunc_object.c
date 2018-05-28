@@ -2392,10 +2392,23 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                     op_dim_size = PyArray_DIM(op[i],
                              REMAP_AXIS(i, core_start_dim + idim - dim_delta));
                 }
-                if (core_dim_sizes[core_dim_index] < 0) {
+                /*
+                 * If the size of the core dimension was not yet set, or set to 1 
+                 * but able to be broadcast, set it to the current operand's size
+                 */
+                if (core_dim_size < 0 ||
+                    (core_dim_size == 1 && (core_dim_flags[core_dim_index] &
+                                            UFUNC_CORE_DIM_CAN_BROADCAST))) {
                     core_dim_sizes[core_dim_index] = op_dim_size;
                 }
-                else if (op_dim_size != core_dim_size) {
+                /*
+                 * If the size of the core dimension was set, check the this
+                 * operand's size is consistent with it, being either the same
+                 * or 1 and able to broadcast.
+                 */
+                else if (!(op_dim_size == core_dim_size ||
+                           (op_dim_size == 1 && (core_dim_flags[core_dim_index] &
+                                                 UFUNC_CORE_DIM_CAN_BROADCAST)))) {
                     PyErr_Format(PyExc_ValueError,
                             "%s: %s operand %d has a mismatch in its "
                             "core dimension %d, with gufunc "
@@ -2404,7 +2417,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                             ufunc_get_name_cstr(ufunc), i < nin ? "Input" : "Output",
                             i < nin ? i : i - nin, idim - dim_delta,
                             ufunc->core_signature, op_dim_size,
-                            core_dim_sizes[core_dim_index]);
+                            core_dim_size);
                     return -1;
                 }
             }
@@ -2686,6 +2699,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     if(retval < 0) {
         goto fail;
     }
+#if NPY_UF_DBG_TRACING
+    printf("Inferred core_dim_sizes =");
+    for(i=0;i<ufunc->core_num_dim_ix;i++) {
+        printf(" %ld", core_dim_sizes[i]);
+    }
+    printf("\n");
+#endif
+
     /*
      * Figure out the number of iterator creation dimensions,
      * which is the broadcast dimensions + all the core dimensions of

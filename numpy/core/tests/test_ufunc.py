@@ -944,7 +944,15 @@ class TestUfunc(object):
     def test_all_equal(self):
         a = np.arange(6).reshape((2, 3))
         b = np.arange(3)
-        assert_array_equal(umt.all_equal(a, b), np.all(a == b, axis=-1))
+        assert_array_equal(umt.all_equal(a, b), [True, False])
+        b = np.array([1])
+        assert_array_equal(umt.all_equal(a, b), [False, False])
+        assert_array_equal(umt.all_equal(b, a), [False, False])
+        a = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
+        assert_array_equal(umt.all_equal(a, b), [False, True, False])
+        assert_array_equal(umt.all_equal(b, a), [False, True, False])
+        b = np.array([[0], [1], [2]])
+        assert_array_equal(umt.all_equal(a, b), [True, True, True])
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
