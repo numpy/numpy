@@ -91,6 +91,40 @@ static void
 
 /**end repeat**/
 
+char *all_equal_signature = "(i|1),(i|1)->()";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long,npy_double#
+*/
+
+/*
+ *  This implements the function
+ *        out[n] = all_i { in1[n, i] == in2[n, i] }.
+ */
+
+static void
+@TYPE@_all_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1=steps[0], is2=steps[1];
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+        npy_bool equal = 1;
+        for (i = 0; i < di; i++) {
+            equal &= (*(@typ@ *)ip1) == (*(@typ@ *)ip2);
+            ip1 += is1;
+            ip2 += is2;
+        }
+        *(npy_bool *)op = equal;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
 char *innerwt_signature = "(i),(i),(i)->()";
 
 /**begin repeat
@@ -346,6 +380,9 @@ defdict = {
 static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
 static void * inner1d_data[] = { (void *)NULL, (void *)NULL };
 static char inner1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction all_equal_functions[] = { LONG_all_equal, DOUBLE_all_equal };
+static void * all_equal_data[] = { (void *)NULL, (void *)NULL };
+static char all_equal_signatures[] = { NPY_LONG, NPY_LONG, NPY_BOOL, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
 static PyUFuncGenericFunction innerwt_functions[] = { LONG_innerwt, DOUBLE_innerwt };
 static void * innerwt_data[] = { (void *)NULL, (void *)NULL };
 static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
@@ -383,6 +420,16 @@ addUfuncs(PyObject *dictionary) {
         return -1;
     }
     PyDict_SetItemString(dictionary, "inner1d", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(all_equal_functions, all_equal_data,
+                    all_equal_signatures, 2, 2, 1, PyUFunc_None, "all_equal",
+                    "test equality of all elements on the last dimension\n"
+                    "     \"(i|1),(i|1)->()\" \n",
+                    0, all_equal_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "all_equal", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(innerwt_functions, innerwt_data,
                     innerwt_signatures, 2, 3, 1, PyUFunc_None, "innerwt",

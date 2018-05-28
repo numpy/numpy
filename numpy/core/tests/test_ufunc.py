@@ -290,6 +290,7 @@ class TestUfunc(object):
         # from include/numpy/ufuncobject.h
         size_unset = 2
         can_ignore = 4
+        can_broadcast = 8
         # the arguments to test_signature are: nin, nout, core_signature
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, "(i),(i)->()")
@@ -372,7 +373,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 1, 0))
         assert_equal(ixs, (0, 0))
-        assert_equal(flags, (4,))
+        assert_equal(flags, (can_broadcast | size_unset,))
         assert_equal(sizes, (-1,))
 
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
@@ -380,7 +381,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 1, 1))
         assert_equal(ixs, (0, 0, 0))
-        assert_equal(flags, (4,))
+        assert_equal(flags, (can_broadcast | size_unset,))
         assert_equal(sizes, (-1,))
 
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
@@ -388,13 +389,15 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 1, 1, 0))
         assert_equal(ixs, (0, 1, 0))
-        assert_equal(flags, (5, 0))
+        assert_equal(flags, (can_broadcast, size_unset))
         assert_equal(sizes, (3, -1))
 
         # No broadcasting outputs.
-        assert_raises(ValueError, umt.test_signature, 1, 1, "(n|1),(n|1)->(n|1)")
+        assert_raises(ValueError, umt.test_signature,
+                      1, 1, "(n|1),(n|1)->(n|1)")
         # Broadcast on single input is meaningless.
-        assert_raises(ValueError, umt.test_signature, 1, 1, "(n|1)->()")
+        assert_raises(ValueError, umt.test_signature,
+                      1, 1, "(n|1)->()")
         # in the following calls, a ValueError should be raised because
         # of error in core signature
         # FIXME These should be using assert_raises
@@ -937,6 +940,11 @@ class TestUfunc(object):
         assert_raises(TypeError, mm, a, b, keepdims=False)
         # Regular ufuncs should not accept keepdims.
         assert_raises(TypeError, np.add, 1., 1., keepdims=False)
+
+    def test_all_equal(self):
+        a = np.arange(6).reshape((2, 3))
+        b = np.arange(3)
+        assert_array_equal(umt.all_equal(a, b), np.all(a == b, axis=-1))
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
