@@ -256,6 +256,11 @@ def minrelpath(path):
         return ''
     return os.sep.join(l)
 
+def sorted_glob(fileglob):
+    """sorts output of python glob for http://bugs.python.org/issue30461
+    to allow extensions to have reproducible build results"""
+    return sorted(glob.glob(fileglob))
+
 def _fix_paths(paths, local_path, include_non_existing):
     assert is_sequence(paths), repr(type(paths))
     new_paths = []
@@ -263,8 +268,8 @@ def _fix_paths(paths, local_path, include_non_existing):
     for n in paths:
         if is_string(n):
             if '*' in n or '?' in n:
-                p = glob.glob(n)
-                p2 = glob.glob(njoin(local_path, n))
+                p = sorted_glob(n)
+                p2 = sorted_glob(njoin(local_path, n))
                 if p2:
                     new_paths.extend(p2)
                 elif p:
@@ -528,7 +533,7 @@ def _get_headers(directory_list):
     # get *.h files from list of directories
     headers = []
     for d in directory_list:
-        head = glob.glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
+        head = sorted_glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
         headers.extend(head)
     return headers
 
@@ -882,7 +887,7 @@ class Configuration(object):
                                  caller_level = 1):
         l = subpackage_name.split('.')
         subpackage_path = njoin([self.local_path]+l)
-        dirs = [_m for _m in glob.glob(subpackage_path) if os.path.isdir(_m)]
+        dirs = [_m for _m in sorted_glob(subpackage_path) if os.path.isdir(_m)]
         config_list = []
         for d in dirs:
             if not os.path.isfile(njoin(d, '__init__.py')):
