@@ -1874,6 +1874,75 @@ fail:
 }
 
 /*
+ * Validate that operands have enough dimenions, accounting for
+ * possible flexible dimensions that may be absent.
+ */
+static int
+_validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
+                   npy_uint32 *core_dim_flags,
+                   int *n_dims_used) {
+    int i, j;
+    int nin = ufunc->nin;
+    int nop = ufunc->nargs;
+
+    for (i = 0; i < nop; i++) {
+        if (op[i] != NULL) {
+            int op_ndim = PyArray_NDIM(op[i]);
+
+            if (op_ndim < n_dims_used[i]) {
+                int core_offset = ufunc->core_offsets[i];
+                /* We've too few, but some dimensions might be flexible */
+                for (j = core_offset;
+                     j < core_offset + ufunc->core_num_dims[i]; j++) {
+                    int core_dim_index = ufunc->core_dim_ixs[j];
+                    if ((core_dim_flags[core_dim_index] &
+                         UFUNC_CORE_DIM_CAN_IGNORE)) {
+                        int i1, j1, k;
+                        /*
+                         * Found a dimension that can be ignored. Flag that
+                         * it is missing, and unflag that it can be ignored,
+                         * since we are doing so already.
+                         */
+                        core_dim_flags[core_dim_index] |= UFUNC_CORE_DIM_MISSING;
+                        core_dim_flags[core_dim_index] ^= UFUNC_CORE_DIM_CAN_IGNORE;
+                        /*
+                         * Reduce the number of core dimensions for all
+                         * operands that use this one (including ours),
+                         * and check whether we're now OK.
+                         */
+                        for (i1 = 0, k=0; i1 < nop; i1++) {
+                            for (j1 = 0; j1 < ufunc->core_num_dims[i1]; j1++) {
+                                if (ufunc->core_dim_ixs[k++] == core_dim_index) {
+                                    n_dims_used[i1]--;
+                                }
+                            }
+                        }
+                        if (op_ndim == n_dims_used[i]) {
+                            break;
+                        }
+                    }
+                }
+                if (op_ndim < n_dims_used[i]) {
+                    goto fail;
+                }
+            }
+        }
+    }
+    return 0;
+
+fail:
+    PyErr_Format(PyExc_ValueError,
+                 "%s: %s operand %d does not have enough "
+                 "dimensions (has %d, gufunc core with "
+                 "signature %s requires %d)",
+                 ufunc_get_name_cstr(ufunc),
+                 i < nin ? "Input" : "Output",
+                 i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                 ufunc->core_signature, n_dims_used[i]);
+    return -1;
+}
+
+/*
  * Check whether any of the outputs of a gufunc has core dimensions.
  */
 static int
@@ -2146,7 +2215,7 @@ _parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
  */
 static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
-                   int *core_num_dims, int *core_dim_flags,
+                   int *core_num_dims, npy_uint32 *core_dim_flags,
                    npy_intp *core_dim_sizes, int **remap_axis) {
     int i, j;
     int nin = ufunc->nin;
@@ -2288,7 +2357,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
     int n_dims_used[NPY_MAXARGS];
-    int core_dim_flags[NPY_MAXARGS];
+    npy_uint32 core_dim_flags[NPY_MAXARGS];
 
     npy_uint32 op_flags[NPY_MAXARGS];
     npy_intp iter_shape[NPY_MAXARGS];
@@ -2400,59 +2469,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     for (i = 0; i< nop; i++) {
         n_dims_used[i] = core_num_dims[i];
     }
-    for (i = 0; i < nop; i++) {
-        if (op[i] != NULL) {
-            /* TODO: store _n_required after parsing, ahead-of-time */
-            int op_ndim = PyArray_NDIM(op[i]);
-            int num_dims = ufunc->core_num_dims[i];
-
-            if (op_ndim < num_dims) {
-                int core_offset = ufunc->core_offsets[i];
-                int n_required = num_dims;
-                /* can be less if dim is flexible */
-                for (j = core_offset; j < core_offset + n_required; j++) {
-                    int core_dim_index = ufunc->core_dim_ixs[j];
-                    if ((core_dim_flags[core_dim_index] &
-                         UFUNC_CORE_DIM_CAN_IGNORE)) {
-                        core_dim_flags[core_dim_index] |= UFUNC_CORE_DIM_MISSING;
-                        n_required--;
-                        if (n_required == op_ndim) {
-                            break;
-                        }
-                    }
-                }
-                if (op_ndim < n_required) {
-                    PyErr_Format(PyExc_ValueError,
-                         "%s: %s operand %d does not have enough "
-                         "dimensions (has %d, gufunc core with "
-                         "signature %s requires %d)",
-                         ufunc_name,
-                         i < nin ? "Input" : "Output",
-                         i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                         ufunc->core_signature, n_required);
-                    retval = -1;
-                    goto fail;
-                }
-                n_dims_used[i] = op_ndim;
-            }
-        }
-        else {
-            /*
-             * For outputs that should be created, account for
-             * dimensions that should not be omitted.
-             */
-            int core_offset = ufunc->core_offsets[i];
-            int num_dims = ufunc->core_num_dims[i];
-            for (j = core_offset; j < core_offset + num_dims; j++) {
-                int core_dim_index = ufunc->core_dim_ixs[j];
-                if ((core_dim_flags[core_dim_index] &
-                     UFUNC_CORE_DIM_MISSING)) {
-                    n_dims_used[i]--;
-                }
-            }
-        }
+    retval = _validate_num_dims(ufunc, op, core_dim_flags,
+                                n_dims_used);
+    if (retval < 0) {
+        goto fail;
     }
-
     /*
      * Figure out the number of iteration dimensions, which
      * is the broadcast result of all the input non-core
