@@ -2344,9 +2344,10 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
             assert(core_start_dim >= 0);
 
             /*
-             * Make sure every core dimension exaclty matches all other core
-             * dimensions with the same label. When flexible, a dimension
-             * can be either 1 or the label, and even be absent.
+             * Make sure every core dimension exactly matches all other core
+             * dimensions with the same label. Note that flexible dimensions
+             * may have been removed at this point, if so, they are marked
+             * with UFUNC_CORE_DIM_MISSING.
              */
             for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
                 int core_index = dim_offset + idim;
@@ -2382,13 +2383,15 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         }
     }
 
+    /*
+     * Make sure no core dimension is unspecified.
+     */
     for (i = nin; i < nop; ++i) {
         int idim;
         int dim_offset = ufunc->core_offsets[i];
 
         for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
-            int core_index = dim_offset + idim;
-            int core_dim_index = ufunc->core_dim_ixs[core_index];
+            int core_dim_index = ufunc->core_dim_ixs[dim_offset + idim];
 
             /* check all cases where the size has not yet been set */
             if (core_dim_sizes[core_dim_index] < 0) {
@@ -2463,7 +2466,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int core_num_dims[NPY_MAXARGS];
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
-    int n_dims_used[NPY_MAXARGS];
     npy_uint32 core_dim_flags[NPY_MAXARGS];
 
     npy_uint32 op_flags[NPY_MAXARGS];
@@ -2519,7 +2521,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         dtypes[i] = NULL;
         arr_prep[i] = NULL;
     }
-    /* construct per-argument flags */
+    /* copy per-argument flags, so they can be changed */
     for (idim = 0; idim < ufunc->core_num_dim_ix; ++idim) {
         core_dim_flags[idim] = ufunc->core_dim_flags[idim];
     }
@@ -2573,11 +2575,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * Check that operands have the minimum dimensions required.
      * (Just checks core; broadcast dimensions are tested by the iterator.)
      */
-    for (i = 0; i< nop; i++) {
-        n_dims_used[i] = core_num_dims[i];
-    }
     retval = _validate_num_dims(ufunc, op, core_dim_flags,
-                                n_dims_used);
+                                core_num_dims);
     if (retval < 0) {
         goto fail;
     }
@@ -2588,7 +2587,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     broadcast_ndim = 0;
     for (i = 0; i < nin; ++i) {
-        int n = PyArray_NDIM(op[i]) - n_dims_used[i];
+        int n = PyArray_NDIM(op[i]) - core_num_dims[i];
         if (n > broadcast_ndim) {
             broadcast_ndim = n;
         }
@@ -2607,11 +2606,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             remap_axis[i] = remap_axis_memory + i * NPY_MAXDIMS;
         }
         if (axis) {
-            retval = _parse_axis_arg(ufunc, n_dims_used, axis, op,
+            retval = _parse_axis_arg(ufunc, core_num_dims, axis, op,
                                      broadcast_ndim, remap_axis);
         }
         else {
-            retval = _parse_axes_arg(ufunc, n_dims_used, axes, op,
+            retval = _parse_axes_arg(ufunc, core_num_dims, axes, op,
                                      broadcast_ndim, remap_axis);
         }
         if(retval < 0) {
@@ -2620,7 +2619,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /* Collect the lengths of the labelled core dimensions */
-    retval = _get_coredim_sizes(ufunc, op, n_dims_used, core_dim_flags,
+    retval = _get_coredim_sizes(ufunc, op, core_num_dims, core_dim_flags,
                                 core_dim_sizes, remap_axis);
     if(retval < 0) {
         goto fail;
@@ -2633,7 +2632,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     iter_ndim = broadcast_ndim;
     for (i = nin; i < nop; ++i) {
-        iter_ndim += n_dims_used[i];
+        iter_ndim += core_num_dims[i];
     }
     if (iter_ndim > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
@@ -2654,7 +2653,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         int n;
 
         if (op[i]) {
-            n = PyArray_NDIM(op[i]) - n_dims_used[i];
+            n = PyArray_NDIM(op[i]) - core_num_dims[i];
         }
         else {
             n = broadcast_ndim;
@@ -2682,12 +2681,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             /*
              * Fill in 'iter_shape' and 'op_axes' for the core dimensions
              * of this output. Here, we have to be careful: if keepdims
-             * was used, then this axis is not a real core dimension,
-             * but is being added back for broadcasting, so its size is 1.
+             * was used, then the axes are not real core dimensions, but
+             * are being added back for broadcasting, so their size is 1.
              * If the axis was removed, we should skip altogether.
              */
             if (keepdims) {
-                for (idim = 0; idim < n_dims_used[i]; ++idim) {
+                for (idim = 0; idim < core_num_dims[i]; ++idim) {
                     iter_shape[j] = 1;
                     op_axes_arrays[i][j] = REMAP_AXIS(i, n + idim);
                     ++j;
