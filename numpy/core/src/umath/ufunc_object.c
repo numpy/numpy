@@ -2538,7 +2538,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     core_dim_ixs_size = 0;
     for (i = 0; i < nop; ++i) {
-        core_dim_ixs_size += core_num_dims[i];
+        core_dim_ixs_size += ufunc->core_num_dims[i];
     }
     inner_strides = (npy_intp *)PyArray_malloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
@@ -2550,7 +2550,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     /* Copy the strides after the first nop */
     idim = nop;
     for (i = 0; i < nop; ++i) {
-        int num_dims = core_num_dims[i];
+        int num_dims = ufunc->core_num_dims[i];
         int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
         /*
          * Need to use the arrays in the iterator, not op, because
