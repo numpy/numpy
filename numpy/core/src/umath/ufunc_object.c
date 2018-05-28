@@ -498,7 +498,9 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
              * get its index, and set its properties
              */
             for(ix = 0; ix < ufunc->core_num_dim_ix; ix++) {
-                if (_is_same_name(signature + i, var_names[ix])) {
+                if (frozen_size > 0 ?
+                    frozen_size == ufunc->core_dim_sizes[ix] :
+                    _is_same_name(signature + i, var_names[ix])) {
                     break;
                 }
             }
