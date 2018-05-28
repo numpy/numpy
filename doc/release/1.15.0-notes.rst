@@ -193,7 +193,7 @@ combining these 5 compiled builds products into a single "fat" binary.
 ``return_indices`` keyword added for ``np.intersect1d``
 -------------------------------------------------------
 New keyword ``return_indices`` returns the indices of the two input arrays
-that correspond to the common elements. 
+that correspond to the common elements.
 
 ``np.quantile`` and ``np.nanquantile``
 --------------------------------------
@@ -418,6 +418,9 @@ is the same as::
 ``np.put_along_axis`` acts as the dual operation for writing to these indices
 within an array.
 
+.. note:: Implementations of ``__array_ufunc__`` should ensure that they can
+          handle either ``axis`` or ``axes``.  In future, we may convert
+          ``axis`` to ``axes`` before passing it on.
 
 Changes
 =======
