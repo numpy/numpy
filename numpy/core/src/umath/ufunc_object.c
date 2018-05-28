@@ -374,6 +374,9 @@ _get_end_of_name(const char* str, int offset)
     if (str[ret] == '?') {
         ret ++;
     }
+    if (str[ret] == '|' && str[ret+1] == '1') {
+        ret += 2;
+    }
     return ret;
 }
 
@@ -471,7 +474,7 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
             /* loop over core dimensions */
             int ix, i_end;
             npy_intp frozen_size;
-            npy_bool can_ignore;
+            npy_bool can_ignore, can_broadcast;
 
             if (signature[i] == '\0') {
                 parse_error = "unexpected end of signature string";
@@ -493,6 +496,18 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
             /* Is this dimension flexible? */
             i_end = _get_end_of_name(signature, i);
             can_ignore = (i_end > 0 && signature[i_end - 1] == '?');
+            can_broadcast = (i_end > 1 && signature[i_end - 2] == '|' &&
+                             signature[i_end - 1] == '1');
+            if (can_broadcast) {
+                if (cur_arg >= ufunc->nin) {
+                    parse_error = "|1 cannot be used on outputs";
+                    goto fail;
+                }
+                if (ufunc->nin == 1) {
+                    parse_error = "|1 is meaningless for a single input";
+                    goto fail;
+                }
+            }
             /*
              * Determine whether we already saw this dimension name,
              * get its index, and set its properties
@@ -517,6 +532,9 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
                 if (can_ignore) {
                     ufunc->core_dim_flags[ix] |= UFUNC_CORE_DIM_CAN_IGNORE;
                 }
+                if (can_broadcast) {
+                    ufunc->core_dim_flags[ix] |= UFUNC_CORE_DIM_CAN_BROADCAST;
+                }
             } else {
                 if (can_ignore && !(ufunc->core_dim_flags[ix] &
                                     UFUNC_CORE_DIM_CAN_IGNORE)) {
@@ -526,6 +544,17 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
                 if (!can_ignore && (ufunc->core_dim_flags[ix] &
                                     UFUNC_CORE_DIM_CAN_IGNORE)) {
                     parse_error = "? must be used, name already seen with ?";
+                    goto fail;
+                }
+                if (can_broadcast && !(ufunc->core_dim_flags[ix] &
+                                       UFUNC_CORE_DIM_CAN_BROADCAST)) {
+                    parse_error = "|1 cannot be used, name already seen without ?";
+                    goto fail;
+                }
+                if (!can_broadcast && cur_arg < ufunc->nin &&
+                    (ufunc->core_dim_flags[ix] &
+                     UFUNC_CORE_DIM_CAN_BROADCAST)) {
+                    parse_error = "|1 must be used, name already seen with |1";
                     goto fail;
                 }
             }

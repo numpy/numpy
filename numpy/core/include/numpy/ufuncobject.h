@@ -233,6 +233,8 @@ typedef struct _tagPyUFuncObject {
 #define UFUNC_CORE_DIM_SIZE_UNSET 0x0002
 /* the core dimension may be absent */
 #define UFUNC_CORE_DIM_CAN_IGNORE 0x0004
+/* the core dimension can be broadcast */
+#define UFUNC_CORE_DIM_CAN_BROADCAST 0x0008
 /* flags inferred during execution */
 #define UFUNC_CORE_DIM_MISSING 0x00040000
 

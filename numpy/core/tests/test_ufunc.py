@@ -367,6 +367,34 @@ class TestUfunc(object):
         assert_equal(flags, (can_ignore, size_unset, 0))
         assert_equal(sizes, (3, -1, 9))
 
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, '(n|1),(n|1) -> ()')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 1, 0))
+        assert_equal(ixs, (0, 0))
+        assert_equal(flags, (4,))
+        assert_equal(sizes, (-1,))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, '(n|1),(n|1) -> (n)')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 1, 1))
+        assert_equal(ixs, (0, 0, 0))
+        assert_equal(flags, (4,))
+        assert_equal(sizes, (-1,))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            3, 1, '(3|1),(n),(3|1) -> ()')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 1, 1, 0))
+        assert_equal(ixs, (0, 1, 0))
+        assert_equal(flags, (5, 0))
+        assert_equal(sizes, (3, -1))
+
+        # No broadcasting outputs.
+        assert_raises(ValueError, umt.test_signature, 1, 1, "(n|1),(n|1)->(n|1)")
+        # Broadcast on single input is meaningless.
+        assert_raises(ValueError, umt.test_signature, 1, 1, "(n|1)->()")
         # in the following calls, a ValueError should be raised because
         # of error in core signature
         # FIXME These should be using assert_raises
