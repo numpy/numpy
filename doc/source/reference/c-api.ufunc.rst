@@ -93,15 +93,20 @@ Functions
         the corresponding 1-d loop function in the func array.
 
     :param types:
-        Int8 of length `(nin + nout) * ntypes` It encodes the :ref:`dtype.num`
-        (built-in only) that the corresponding function in the `func` array
-        accepts. For a ufunc with two `ntypes`, one `nin` and one `nout` where
-        the first function accepts and returns `int32` and the second accepts
-        and returns `int64`, `types` would be `\05\05\07\07` since `int32.num`
-        is 5 and `int64.num` is 7.
+       Length ``(nin + nout) * ntypes`` array of ``char`` encoding the
+       :ref:`PyArray_Descr.type_num` (built-in only) that the corresponding
+       function in the ``func`` array accepts. For instance, for a comparison
+       ufunc with three ``ntypes``, two ``nin`` and one ``nout``, where the
+       first function accepts :ref:`npy_int32` and the the second
+       :ref:`npy_int64`, with both returning :ref:`npy_bool`, ``types`` would
+       be ``(char[]) {5, 5, 0, 7, 7, 0}`` since ``NPY_INT32`` is 5,
+       ``NPY_INT64`` is 7, and ``NPY_BOOL`` is 0 (on the python side, these
+       are exposed via :ref:`dtype.num`, i.e., for the example here,
+       ``dtype(np.int32).num``, ``dtype(np.int64).num``, and
+       ``dtype(np.bool_).num``, resp.).
 
-        :ref:`casting-rules` will be used at runtime to find the first `func` callable
-        by the input/output provided.
+        :ref:`casting-rules` will be used at runtime to find the first
+        ``func`` callable by the input/output provided.
 
     :param ntypes:
         How many different data-type-specific functions the ufunc has implemented.
