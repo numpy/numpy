@@ -2019,7 +2019,7 @@ static int
 _validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
                    npy_uint32 *core_dim_flags,
                    int *op_core_num_dims) {
-    int i, j;
+    int i, j, n_broadcast;
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
 
@@ -2029,13 +2029,32 @@ _validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
 
             if (op_ndim < op_core_num_dims[i]) {
                 int core_offset = ufunc->core_offsets[i];
+                npy_bool can_broadcast = 1;
+                n_broadcast = 0;
                 /* We've too few, but some dimensions might be flexible */
                 for (j = core_offset;
-                     j < core_offset + ufunc->core_num_dims[i]; j++) {
+                     (j < core_offset + ufunc->core_num_dims[i] &&
+                      op_ndim + n_broadcast < op_core_num_dims[i]); j++) {
                     int core_dim_index = ufunc->core_dim_ixs[j];
+                    /*
+                     * Can we broadcast? If so, happily do so.  But this
+                     * becomes impossible if we pass a dimension that
+                     * cannot be broadcast.
+                     */
+                    can_broadcast &= ((core_dim_flags[core_dim_index] &
+                                       UFUNC_CORE_DIM_CAN_BROADCAST) != 0);
+                    if (can_broadcast) {
+                        n_broadcast++;
+                    }
+                    /*
+                     * Can we ignore this dimension? If so, flag that
+                     * it is missing, and unflag that it can be ignored,
+                     * since we are doing so already.
+                     */
                     if ((core_dim_flags[core_dim_index] &
                          UFUNC_CORE_DIM_CAN_IGNORE)) {
                         int i1, j1, k;
+
                         /*
                          * Found a dimension that can be ignored. Flag that
                          * it is missing, and unflag that it can be ignored,
@@ -2055,12 +2074,9 @@ _validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
                                 }
                             }
                         }
-                        if (op_ndim == op_core_num_dims[i]) {
-                            break;
-                        }
                     }
                 }
-                if (op_ndim < op_core_num_dims[i]) {
+                if (op_ndim + n_broadcast < op_core_num_dims[i]) {
                     goto fail;
                 }
             }
@@ -2076,7 +2092,7 @@ fail:
                  ufunc_get_name_cstr(ufunc),
                  i < nin ? "Input" : "Output",
                  i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                 ufunc->core_signature, op_core_num_dims[i]);
+                 ufunc->core_signature, op_core_num_dims[i] - n_broadcast);
     return -1;
 }
 
@@ -2186,7 +2202,14 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         op_ncore = op_core_num_dims[iop];
         if (op[iop] != NULL) {
             op_ndim = PyArray_NDIM(op[iop]);
-            op_nbroadcast = op_ndim - op_ncore;
+            /* may be smaller than ncore if there is broadcasting */
+            if (op_ndim >= op_ncore) {
+                op_nbroadcast = op_ndim - op_ncore;
+            }
+            else {
+                op_ncore = op_ndim;
+                op_nbroadcast = 0;
+            }
         }
         else {
             op_nbroadcast = broadcast_ndim;
@@ -2365,12 +2388,9 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         if (op[i] != NULL) {
             int idim;
             int dim_offset = ufunc->core_offsets[i];
+            /* note: core_start_dim can be negative with broadcasting */
             int core_start_dim = PyArray_NDIM(op[i]) - op_core_num_dims[i];
             int dim_delta = 0;
-
-            /* checked before this routine gets called */
-            assert(core_start_dim >= 0);
-
             /*
              * Make sure every core dimension exactly matches all other core
              * dimensions with the same label. Note that flexible dimensions
@@ -2383,17 +2403,27 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                 npy_intp core_dim_size = core_dim_sizes[core_dim_index];
                 npy_intp op_dim_size;
 
-                /* can only happen if flexible; dimension missing altogether */
+                /*
+                 * Dimensions can be missing because they are flexible, or
+                 * because they are being broadcast.  Size = 0 or 1, resp.
+                 */
                 if (core_dim_flags[core_dim_index] & UFUNC_CORE_DIM_MISSING) {
                     op_dim_size = 1;
                     dim_delta++; /* for indexing in dimensions */
+                }
+                else if (core_start_dim + idim < 0) {
+                    /* should be true after _validate_num_dims */
+                    assert (core_dim_flags[core_dim_index] &
+                            UFUNC_CORE_DIM_CAN_BROADCAST);
+                    op_dim_size = 1;
                 }
                 else {
                     op_dim_size = PyArray_DIM(op[i],
                              REMAP_AXIS(i, core_start_dim + idim - dim_delta));
                 }
+
                 /*
-                 * If the size of the core dimension was not yet set, or set to 1 
+                 * If the size of the core dimension was not yet set, or set to 1
                  * but able to be broadcast, set it to the current operand's size
                  */
                 if (core_dim_size < 0 ||
@@ -2662,6 +2692,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     broadcast_ndim = 0;
     for (i = 0; i < nin; ++i) {
+        /* note: n can be negative with broadcasting, but that's OK */
         int n = PyArray_NDIM(op[i]) - op_core_num_dims[i];
         if (n > broadcast_ndim) {
             broadcast_ndim = n;
@@ -2736,6 +2767,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         int n;
 
         if (op[i]) {
+            /*
+             * Note n: can be negative for an *input* whose core is being
+             * broadcast, but that works: every op_axes item gets set to -1
+             */
             n = PyArray_NDIM(op[i]) - op_core_num_dims[i];
         }
         else {
@@ -2933,8 +2968,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         npy_intp *shape = PyArray_SHAPE(arr);
         npy_intp *strides = PyArray_STRIDES(arr);
         /*
-         * Could be negative if flexible dims are used, but not for
-         * keepdims, since those dimensions are allocated in arr.
+         * Could be negative for inputs with fewer than num_dim
+         * dimensions that were broadcast, but not for any outputs
+         * (with keepdims, extra dimensions have been allocated in arr)
+         * or for flexible dimensions (since core_num_dims is reduced).
          */
         int core_start_dim = PyArray_NDIM(arr) - op_core_num_dims[i];
         int num_removed = 0;
@@ -2948,6 +2985,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
              */
             if (core_dim_flags[core_dim_index] & UFUNC_CORE_DIM_MISSING) {
                 num_removed++;
+                inner_strides[idim++] = 0;
+            }
+            else if (core_start_dim + j - num_removed < 0) { /* broadcast input */
                 inner_strides[idim++] = 0;
             }
             else {
@@ -2995,7 +3035,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                                     NPY_SIZEOF_INTP * nop);
 
 #if 0
-    printf("strides: ");
+    printf("%d outer and %d inner strides: ", nop, core_dim_ixs_size);
     for (i = 0; i < nop+core_dim_ixs_size; ++i) {
         printf("%d ", (int)inner_strides[i]);
     }

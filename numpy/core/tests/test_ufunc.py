@@ -368,6 +368,7 @@ class TestUfunc(object):
         assert_equal(flags, (can_ignore, size_unset, 0))
         assert_equal(sizes, (3, -1, 9))
 
+        # all_equal signature
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, '(n|1),(n|1) -> ()')
         assert_equal(enabled, 1)
@@ -375,6 +376,14 @@ class TestUfunc(object):
         assert_equal(ixs, (0, 0))
         assert_equal(flags, (can_broadcast | size_unset,))
         assert_equal(sizes, (-1,))
+        # cube_equal signature
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, '(o|1,n|1,m|1),(o|1,n|1,m|1) -> ()')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (3, 3, 0))
+        assert_equal(ixs, (0, 1, 2, 0, 1, 2))
+        assert_equal(flags, (can_broadcast | size_unset,)*3)
+        assert_equal(sizes, (-1, -1, -1))
 
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, '(n|1),(n|1) -> (n)')
@@ -948,11 +957,41 @@ class TestUfunc(object):
         b = np.array([1])
         assert_array_equal(umt.all_equal(a, b), [False, False])
         assert_array_equal(umt.all_equal(b, a), [False, False])
+        b = np.array(1)
+        assert_array_equal(umt.all_equal(a, b), [False, False])
+        assert_array_equal(umt.all_equal(b, a), [False, False])
         a = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
         assert_array_equal(umt.all_equal(a, b), [False, True, False])
         assert_array_equal(umt.all_equal(b, a), [False, True, False])
         b = np.array([[0], [1], [2]])
         assert_array_equal(umt.all_equal(a, b), [True, True, True])
+
+    def test_cube_equal(self):
+        a = np.arange(48).reshape((2, 4, 2, 3))
+        b = np.arange(24).reshape((4, 2, 3))
+        assert_array_equal(umt.cube_equal(a, b), [True, False])
+        b = np.array([1])
+        assert_array_equal(umt.cube_equal(a, b), [False, False])
+        assert_array_equal(umt.cube_equal(b, a), [False, False])
+        a = (np.array([[[0, 0, 0], [1, 1, 1], [2, 2, 2]],
+                       [[3, 3, 3], [4, 4, 4], [5, 5, 5]],
+                       [[6, 6, 6], [7, 7, 7], [8, 8, 8]]]) *
+             np.arange(2).reshape(2, 1, 1, 1))
+        b = np.arange(9).reshape(3, 3)[..., np.newaxis]
+        assert_array_equal(umt.cube_equal(a, b), [False, True])
+        # Now with some axis swapping,
+        assert_array_equal(umt.cube_equal(a, b, axes=[(-3, -1, -2), (-3, -2, -1)]),
+                           [False, False])
+        a = np.arange(9).reshape(3, 1, 1, 3)
+        b = np.arange(3)[:, np.newaxis]
+        assert_array_equal(umt.cube_equal(a, b), [False, False, False])
+        assert_array_equal(umt.cube_equal(a, b, axes=[(-3, -1, -2), (-2, -1)]),
+                           [True, False, False])
+        assert_array_equal(umt.cube_equal(a, b, axes=[(-3, -2, -1), (-1, -2)]),
+                           [True, False, False])
+        assert_raises(ValueError, umt.cube_equal, a, b,
+                      axes=[(-3, -2, -1), (-3, -2, -1)])
+
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))

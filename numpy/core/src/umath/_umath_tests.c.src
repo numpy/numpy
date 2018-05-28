@@ -92,6 +92,7 @@ static void
 /**end repeat**/
 
 char *all_equal_signature = "(i|1),(i|1)->()";
+char *cube_equal_signature = "(o|1,n|1,m|1),(o|1,n|1,m|1)->()";
 
 /**begin repeat
 
@@ -118,6 +119,36 @@ static void
             equal &= (*(@typ@ *)ip1) == (*(@typ@ *)ip2);
             ip1 += is1;
             ip2 += is2;
+        }
+        *(npy_bool *)op = equal;
+    END_OUTER_LOOP
+}
+
+static void
+@TYPE@_cube_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp no=dimensions[0], nn=dimensions[1], nm=dimensions[2];
+    npy_intp io, in, im;
+    npy_intp is1_o=steps[0], is1_n=steps[1], is1_m=steps[2];
+    npy_intp is2_o=steps[3], is2_n=steps[4], is2_m=steps[5];
+    BEGIN_OUTER_LOOP_3
+        char *io1=args[0], *io2=args[1], *op=args[2];
+        npy_bool equal = 1;
+        for (io = 0; io < no; io++) {
+            char *in1=io1, *in2=io2;
+            for (in = 0; in < nn; in++) {
+                char *im1=in1, *im2=in2;
+                for (im =0; im < nm; im++) {
+                           equal &= (*(@typ@ *)im1) == (*(@typ@ *)im2);
+                    im1 += is1_m;
+                    im2 += is2_m;
+                }
+                in1 += is1_n;
+                in2 += is2_n;
+            }
+            io1 += is1_o;
+            io2 += is2_o;
         }
         *(npy_bool *)op = equal;
     END_OUTER_LOOP
@@ -383,6 +414,9 @@ static char inner1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, N
 static PyUFuncGenericFunction all_equal_functions[] = { LONG_all_equal, DOUBLE_all_equal };
 static void * all_equal_data[] = { (void *)NULL, (void *)NULL };
 static char all_equal_signatures[] = { NPY_LONG, NPY_LONG, NPY_BOOL, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
+static PyUFuncGenericFunction cube_equal_functions[] = { LONG_cube_equal, DOUBLE_cube_equal };
+static void * cube_equal_data[] = { (void *)NULL, (void *)NULL };
+static char cube_equal_signatures[] = { NPY_LONG, NPY_LONG, NPY_BOOL, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
 static PyUFuncGenericFunction innerwt_functions[] = { LONG_innerwt, DOUBLE_innerwt };
 static void * innerwt_data[] = { (void *)NULL, (void *)NULL };
 static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
@@ -430,6 +464,16 @@ addUfuncs(PyObject *dictionary) {
         return -1;
     }
     PyDict_SetItemString(dictionary, "all_equal", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(cube_equal_functions, cube_equal_data,
+                    cube_equal_signatures, 2, 2, 1, PyUFunc_None, "cube_equal",
+                    "test equality of all elements on the last 3 dimension\n"
+                    "     \"(o|1,n|1,m|1),(o|1,n|1,m|1)->()\" \n",
+                    0, cube_equal_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "cube_equal", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(innerwt_functions, innerwt_data,
                     innerwt_signatures, 2, 3, 1, PyUFunc_None, "innerwt",
