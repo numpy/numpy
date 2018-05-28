@@ -424,8 +424,8 @@ advanced usage and will not typically be used.
     provided by the **types** attribute of the ufunc object. For backwards
     compatibility this argument can also be provided as *sig*, although
     the long form is preferred. Note that this should not be confused with
-    the generalized ufunc signature that is stored in the **signature**
-    attribute of the of the ufunc object.
+    the generalized ufunc :ref:`signature <details-of-signature>` that is
+    stored in the **signature** attribute of the of the ufunc object.
 
 *extobj*
 

@@ -340,6 +340,28 @@ _is_alnum_underscore(char ch)
 }
 
 /*
+ * Convert a string into a number
+ */
+ static npy_intp
+ _get_size(const char* str)
+ {
+    char *stop;
+    #if defined(_MSC_VER)
+        #define strtoll _strtoi64
+    #endif
+    npy_intp size = (npy_intp)strtoll(str, &stop, 10);
+    #if defined(_MSC_VER)
+        #undef strtoll
+    #endif
+
+    if (stop == str || _is_alpha_underscore(*stop)) {
+        /* not a well formed number */
+         return -1;
+    }
+    return size;
+ }
+
+/*
  * Return the ending position of a variable name
  */
 static int
@@ -348,6 +370,9 @@ _get_end_of_name(const char* str, int offset)
     int ret = offset;
     while (_is_alnum_underscore(str[ret])) {
         ret++;
+    }
+    if (str[ret] == '?') {
+        ret ++;
     }
     return ret;
 }
@@ -406,12 +431,20 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     ufunc->core_enabled = 1;
     ufunc->core_num_dim_ix = 0;
     ufunc->core_num_dims = PyArray_malloc(sizeof(int) * ufunc->nargs);
-    ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len); /* shrink this later */
     ufunc->core_offsets = PyArray_malloc(sizeof(int) * ufunc->nargs);
-    if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL
-        || ufunc->core_offsets == NULL) {
+    /* The next three items will be shrunk later */
+    ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len);
+    ufunc->core_flags = PyArray_malloc(sizeof(npy_uint32) * len);
+    ufunc->core_dim_sizes = PyArray_malloc(sizeof(npy_intp) * len);
+
+    if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL ||
+        ufunc->core_offsets == NULL || ufunc->core_flags == NULL ||
+        ufunc->core_dim_sizes == NULL) {
         PyErr_NoMemory();
         goto fail;
+    }
+    for (i = 0; i < len; i++) {
+        ufunc->core_flags[i] = 0;
     }
 
     i = _next_non_white_space(signature, 0);
@@ -437,25 +470,54 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         i = _next_non_white_space(signature, i + 1);
         while (signature[i] != ')') {
             /* loop over core dimensions */
-            int j = 0;
-            if (!_is_alpha_underscore(signature[i])) {
-                parse_error = "expect dimension name";
+            int ix;
+            npy_intp frozen_size;
+
+            if (signature[i] == '\0') {
+                parse_error = "unexpected end of signature string";
                 goto fail;
             }
-            while (j < ufunc->core_num_dim_ix) {
-                if (_is_same_name(signature+i, var_names[j])) {
+            /*
+             * Is this a variable or a fixed size dimension?
+             */
+            if (_is_alpha_underscore(signature[i])) {
+                frozen_size = UFUNC_CORE_DIM_SIZE_UNSET;
+            }
+            else {
+                frozen_size = _get_size(signature + i);
+                if (frozen_size <= 0) {
+                    parse_error = "expect dimension name or non-zero frozen size";
+                    goto fail;
+                }
+            }
+            /*
+             * Determine whether we already saw this dimension name,
+             * get its index, and set its properties
+             */
+            for(ix = 0; ix < ufunc->core_num_dim_ix; ix++) {
+                if (_is_same_name(signature+i, var_names[ix])) {
                     break;
                 }
-                j++;
             }
-            if (j >= ufunc->core_num_dim_ix) {
-                var_names[j] = signature+i;
+            /*
+             * If a new dimension, store its properties; if old, check consistency.
+             */
+            if (ix == ufunc->core_num_dim_ix) {
                 ufunc->core_num_dim_ix++;
+                var_names[ix] = signature + i;
+                ufunc->core_dim_sizes[ix] = frozen_size;
             }
-            ufunc->core_dim_ixs[cur_core_dim] = j;
+            ufunc->core_dim_ixs[cur_core_dim] = ix;
+            if (frozen_size > 0) {
+                ufunc->core_flags[cur_core_dim] |= UFUNC_CORE_FROZEN;
+            }
+            /* Is this dimension flexible? */
+            i = _get_end_of_name(signature, i);
+            if((i > 0 && signature[i - 1] == '?')) {
+                ufunc->core_flags[cur_core_dim] |= UFUNC_CORE_CAN_IGNORE;
+            }
             cur_core_dim++;
             nd++;
-            i = _get_end_of_name(signature, i);
             i = _next_non_white_space(signature, i);
             if (signature[i] != ',' && signature[i] != ')') {
                 parse_error = "expect ',' or ')'";
@@ -493,7 +555,12 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         goto fail;
     }
     ufunc->core_dim_ixs = PyArray_realloc(ufunc->core_dim_ixs,
-            sizeof(int)*cur_core_dim);
+            sizeof(int) * cur_core_dim);
+    ufunc->core_dim_sizes = PyArray_realloc(ufunc->core_dim_sizes,
+            sizeof(npy_intp) * ufunc->core_num_dim_ix);
+    ufunc->core_flags = PyArray_realloc(ufunc->core_flags,
+            sizeof(npy_uint32) * cur_core_dim);
+
     /* check for trivial core-signature, e.g. "(),()->()" */
     if (cur_core_dim == 0) {
         ufunc->core_enabled = 0;
@@ -2066,85 +2133,181 @@ _parse_axes_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axes,
  */
 static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
-                   npy_intp* core_dim_sizes, int **remap_axis) {
-    int i;
+                   int *core_num_dims, int *core_flags,
+                   npy_intp *core_dim_sizes, int **remap_axis) {
+    int i, j;
     int nin = ufunc->nin;
     int nout = ufunc->nout;
     int nop = nin + nout;
 
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        core_dim_sizes[i] = -1;
+    for (j = 0; j < ufunc->core_num_dim_ix; ++j) {
+        /* support fixed-size dim names */
+        core_dim_sizes[j] = ufunc->core_dim_sizes[j];
     }
     for (i = 0; i < nop; ++i) {
         if (op[i] != NULL) {
             int idim;
             int dim_offset = ufunc->core_offsets[i];
-            int num_dims = ufunc->core_num_dims[i];
-            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
-            /*
-             * Make sure every core dimension exactly matches all other core
-             * dimensions with the same label.
-             */
-            for (idim = 0; idim < num_dims; ++idim) {
-                int core_dim_index = ufunc->core_dim_ixs[dim_offset+idim];
-                npy_intp op_dim_size = PyArray_DIM(
-                    op[i], REMAP_AXIS(i, core_start_dim+idim));
+            int core_start_dim = PyArray_NDIM(op[i]) - core_num_dims[i];
+            int dim_delta = 0;
 
-                if (core_dim_sizes[core_dim_index] == -1) {
-                    core_dim_sizes[core_dim_index] = op_dim_size;
+            /* checked before this routine gets called */
+            assert(core_start_dim >= 0);
+
+            /*
+             * Make sure every core dimension exaclty matches all other core
+             * dimensions with the same label. When flexible, a dimension
+             * can be either 1 or the label, and even be absent.
+             */
+            for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
+                int core_index = dim_offset + idim;
+                int core_dim_index = ufunc->core_dim_ixs[core_index];
+                int core_dim_size = core_dim_sizes[core_dim_index];
+                npy_intp op_dim_size;
+                npy_bool can_ignore;
+
+                /* can only happen if flexible; dimension missing altogether */
+                if (core_flags[core_index] & UFUNC_CORE_MISSING) {
+                    op_dim_size = 0;
+                    core_flags[core_index] |= UFUNC_CORE_IGNORE;
+                    dim_delta++; /* for indexing in dimensions */
+                    can_ignore = 0;  /* really missing, we cannot ignore it! */
                 }
-                else if (op_dim_size != core_dim_sizes[core_dim_index]) {
-                    PyErr_Format(PyExc_ValueError,
+                else {
+                    op_dim_size = PyArray_DIM(op[i],
+                             REMAP_AXIS(i, core_start_dim + idim - dim_delta));
+                    /* for *inputs* we allow ignoring of size 1 dimensions */
+                    can_ignore = (i < nin && op_dim_size == 1 &&
+                                  (core_flags[core_index] & UFUNC_CORE_CAN_IGNORE));
+                }
+                switch (core_dim_sizes[core_dim_index]) {
+                case UFUNC_CORE_DIM_SIZE_UNSET:
+                    if (can_ignore) {
+                        core_dim_sizes[core_dim_index] = UFUNC_CORE_DIM_MAYBE_IGNORE;
+                        break;
+                    }
+                    /* fall through to cannot ignore */
+
+                case UFUNC_CORE_DIM_MAYBE_IGNORE:
+                    if (!can_ignore) {
+                        core_dim_sizes[core_dim_index] = op_dim_size;
+                    }
+                    break;
+
+                case 0:
+                    if (op_dim_size == 0) {
+                        break;
+                    }
+                    if (can_ignore) {
+                        core_flags[core_dim_index] |= UFUNC_CORE_IGNORE;
+                        break;
+                    }
+                    /* fall through to size error below */
+
+                default:
+                    if (op_dim_size != core_dim_size) {
+                        PyErr_Format(PyExc_ValueError,
                             "%s: %s operand %d has a mismatch in its "
                             "core dimension %d, with gufunc "
                             "signature %s (size %zd is different "
                             "from %zd)",
                             ufunc_get_name_cstr(ufunc), i < nin ? "Input" : "Output",
-                            i < nin ? i : i - nin, idim,
+                            i < nin ? i : i - nin, idim - dim_delta,
                             ufunc->core_signature, op_dim_size,
                             core_dim_sizes[core_dim_index]);
-                    return -1;
+                        return -1;
+                    }
                 }
             }
         }
     }
 
-    /*
-     * Make sure no core dimension is unspecified.
-     */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
-        if (core_dim_sizes[i] == -1) {
-            break;
-        }
-    }
-    if (i != ufunc->core_num_dim_ix) {
-        /*
-         * There is at least one core dimension missing, find in which
-         * operand it comes up first (it has to be an output operand).
-         */
-        const int missing_core_dim = i;
-        int out_op;
-        for (out_op = nin; out_op < nop; ++out_op) {
-            int first_idx = ufunc->core_offsets[out_op];
-            int last_idx = first_idx + ufunc->core_num_dims[out_op];
-            for (i = first_idx; i < last_idx; ++i) {
-                if (ufunc->core_dim_ixs[i] == missing_core_dim) {
-                    break;
+    for (i = nin; i < nop; ++i) {
+        int idim;
+        int dim_offset = ufunc->core_offsets[i];
+
+        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
+            int core_index = dim_offset + idim;
+            int core_dim_index = ufunc->core_dim_ixs[core_index];
+            npy_bool can_ignore;
+
+            can_ignore = ((core_flags[core_index] &
+                           UFUNC_CORE_CAN_IGNORE) != 0);
+
+            /* check all cases where the size has not yet been set */
+            switch (core_dim_sizes[core_dim_index]) {
+            case UFUNC_CORE_DIM_SIZE_UNSET:
+                /*
+                 * Oops, this dimension was never specified
+                 * (can only happen if output op not given)
+                 */
+                PyErr_Format(PyExc_ValueError,
+                        "%s: Output operand %d has core dimension %d "
+                        "unspecified, with gufunc signature %s",
+                        ufunc_get_name_cstr(ufunc), i - nin, idim,
+                        ufunc->core_signature);
+                return -1;
+
+            case UFUNC_CORE_DIM_MAYBE_IGNORE:
+                /*
+                 * Inputs suggested this core could be ignored;
+                 * if we can ignore it too, we'll do so.  Otherwise,
+                 * since this meant inputs had size 1, we'll just set
+                 * it so.
+                 */
+                if (can_ignore) {
+                    /* Ignore all core dimensions with this index */
+                    for (j = 0; j <= core_index; j++) {
+                        if (ufunc->core_dim_ixs[j] == core_dim_index) {
+                            core_flags[j] |= UFUNC_CORE_IGNORE;
+                        }
+                    }
+                    core_dim_sizes[core_dim_index] = 0;
                 }
-            }
-            if (i < last_idx) {
-                /* Change index offsets for error message */
-                out_op -= nin;
-                i -= first_idx;
+                else {
+                    core_dim_sizes[core_dim_index] = 1;
+                }
+                break;
+
+            case 0:
+                /*
+                 * We need to disambiguate between zero from a missing
+                 * core dimension, and an actual zero in the shape.
+                 * Look back to input flags (TODO: special flag!!)
+                 * If there was a core missing, we should
+                 * not allocate this output either.
+                 */
+                for (j = 0; j < core_index; j++) {
+                    if (ufunc->core_dim_ixs[j] == core_dim_index) {
+                        if (core_flags[j] & UFUNC_CORE_MISSING ) {
+                            core_flags[core_index] |= UFUNC_CORE_MISSING;
+                        }
+                    }
+                }
                 break;
             }
         }
-        PyErr_Format(PyExc_ValueError,
-                     "%s: Output operand %d has core dimension %d "
-                     "unspecified, with gufunc signature %s",
-                     ufunc_get_name_cstr(ufunc), out_op, i, ufunc->core_signature);
-        return -1;
     }
+
+#if NPY_UF_DBG_TRACING
+    printf("At end of _get_coredim_sizes\n");
+    for (i=0; i<nop; i++) {
+        int idim;
+        int dim_offset = ufunc->core_offsets[i];
+
+        printf("Operand %d, (inferred) flags=", i);
+        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
+            int core_index = dim_offset + idim;
+            printf(" %d, ", core_flags[core_index]);
+        }
+        printf("num_dims=%d\n", core_num_dims[i]);
+    }
+    printf("Inferred core_dim_sizes=");
+    for (i=0; i<ufunc->core_num_dim_ix; i++) {
+        printf(" %d", i, core_dim_sizes[i]);
+    }
+#endif
+
     return 0;
 }
 
@@ -2203,6 +2366,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int *core_num_dims;
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
+    int n_dims_used[NPY_MAXARGS];
+    int core_flags[NPY_MAXARGS];
 
     npy_uint32 op_flags[NPY_MAXARGS];
     npy_intp iter_shape[NPY_MAXARGS];
@@ -2257,6 +2422,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         op[i] = NULL;
         dtypes[i] = NULL;
         arr_prep[i] = NULL;
+        /* TODO: just use core_num_dims_array!! */
+        n_dims_used[i] = ufunc->core_num_dims[i];
+    }
+    for (i = 0, j=0; i < nop; ++i) {
+        for (idim = 0; idim < ufunc->core_num_dims[i]; idim++) {
+            core_flags[j] = ufunc->core_flags[j];
+            j++;
+        }
     }
 
     NPY_UF_DBG_PRINT("Getting arguments\n");
@@ -2299,19 +2472,61 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * (Just checks core; broadcast dimensions are tested by the iterator.)
      */
     for (i = 0; i < nop; i++) {
-        if (op[i] != NULL && PyArray_NDIM(op[i]) < core_num_dims[i]) {
-            PyErr_Format(PyExc_ValueError,
+        /* TODO: store _n_required after parsing, ahead-of-time */
+        int n_required = ufunc->core_num_dims[i];
+        int core_offset = ufunc->core_offsets[i];
+        int num_dims = core_num_dims[i];
+
+        if (n_required > 0) {
+            /* can be less if dim is flexible */
+            for (j = core_offset; j < core_offset + num_dims; j++) {
+                if ((core_flags[j] & UFUNC_CORE_CAN_IGNORE)) {
+                    n_required--;
+                }
+            }
+        }
+        if (op[i] != NULL) {
+            n_dims_used[i] = PyArray_NDIM(op[i]);
+            if (n_dims_used[i] < n_required) {
+                PyErr_Format(PyExc_ValueError,
                          "%s: %s operand %d does not have enough "
                          "dimensions (has %d, gufunc core with "
                          "signature %s requires %d)",
                          ufunc_name,
                          i < nin ? "Input" : "Output",
-                         i < nin ? i : i - nin,
-                         PyArray_NDIM(op[i]),
-                         ufunc->core_signature,
-                         core_num_dims[i]);
-            retval = -1;
-            goto fail;
+                         i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                         ufunc->core_signature, n_required);
+                retval = -1;
+                goto fail;
+            }
+            if (n_dims_used[i] < num_dims) {
+                int flexible_used = num_dims - n_dims_used[i];
+                /* one (or more?) flexible signature names have been used. Mark them */
+                for (j = core_offset; j < core_offset + num_dims; j++) {
+                    if ((core_flags[j] & UFUNC_CORE_CAN_IGNORE)) {
+                        core_flags[j] |= UFUNC_CORE_MISSING;
+                        flexible_used--;
+                        if (flexible_used == 0) {
+                            break;
+                        }
+                    }
+                }
+                if (flexible_used) {
+                    PyErr_Format(PyExc_ValueError,
+                         "%s: %s operand %d does not have enough "
+                         "dimensions (has %d, gufunc core with "
+                         "signature %s requires %d)",
+                         ufunc_get_name_cstr(ufunc),
+                         i < nin ? "Input" : "Output",
+                         i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                         ufunc->core_signature, n_required + flexible_used);
+                    goto fail;
+                }
+            }
+            else {
+                /* never use more than the signature requires */
+                n_dims_used[i] = num_dims;
+            }
         }
     }
 
@@ -2322,28 +2537,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     broadcast_ndim = 0;
     for (i = 0; i < nin; ++i) {
-        int n = PyArray_NDIM(op[i]) - core_num_dims[i];
+        int n = PyArray_NDIM(op[i]) - n_dims_used[i];
         if (n > broadcast_ndim) {
             broadcast_ndim = n;
         }
-    }
-
-    /*
-     * Figure out the number of iterator creation dimensions,
-     * which is the broadcast dimensions + all the core dimensions of
-     * the outputs, so that the iterator can allocate those output
-     * dimensions following the rules of order='F', for example.
-     */
-    iter_ndim = broadcast_ndim;
-    for (i = nin; i < nop; ++i) {
-        iter_ndim += core_num_dims[i];
-    }
-    if (iter_ndim > NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError,
-                    "too many dimensions for generalized ufunc %s",
-                    ufunc_name);
-        retval = -1;
-        goto fail;
     }
 
     /* Possibly remap axes. */
@@ -2366,8 +2563,42 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /* Collect the lengths of the labelled core dimensions */
-    retval = _get_coredim_sizes(ufunc, op, core_dim_sizes, remap_axis);
+    retval = _get_coredim_sizes(ufunc, op, n_dims_used, core_flags,
+                                core_dim_sizes, remap_axis);
     if(retval < 0) {
+        goto fail;
+    }
+    /*
+     * For outputs that should be created, take into account any
+     * dimensions that should not be omitted.
+     */
+    for (i = nin; i < nop; i++) {
+        if (op[i] == NULL) {
+            int core_offset = ufunc->core_offsets[i];
+            int num_dims = ufunc->core_num_dims[i];
+            n_dims_used[i] = core_num_dims[i]; /* take account of keepdims */
+            for (j = core_offset; j < core_offset + num_dims; j++) {
+                if ((core_flags[j] & UFUNC_CORE_MISSING)) {
+                    n_dims_used[i]--;
+                }
+            }
+        }
+    }
+    /*
+     * Figure out the number of iterator creation dimensions,
+     * which is the broadcast dimensions + all the core dimensions of
+     * the outputs, so that the iterator can allocate those output
+     * dimensions following the rules of order='F', for example.
+     */
+    iter_ndim = broadcast_ndim;
+    for (i = nin; i < nop; ++i) {
+        iter_ndim += n_dims_used[i];
+    }
+    if (iter_ndim > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
+                    "too many dimensions for generalized ufunc %s",
+                    ufunc_name);
+        retval = -1;
         goto fail;
     }
 
@@ -2382,11 +2613,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         int n;
 
         if (op[i]) {
-            /*
-             * Note that n may be negative if broadcasting
-             * extends into the core dimensions.
-             */
-            n = PyArray_NDIM(op[i]) - core_num_dims[i];
+            n = PyArray_NDIM(op[i]) - n_dims_used[i];
         }
         else {
             n = broadcast_ndim;
@@ -2411,22 +2638,41 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         if (i >= nin) {
             int dim_offset = ufunc->core_offsets[i];
             int num_dims = core_num_dims[i];
+            int num_removed = 0;
             /*
              * Fill in 'iter_shape' and 'op_axes' for the core dimensions
              * of this output. Here, we have to be careful: if keepdims
              * was used, then this axis is not a real core dimension,
              * but is being added back for broadcasting, so its size is 1.
+             * If the axis was removed, we should skip altogether.
              */
             for (idim = 0; idim < num_dims; ++idim) {
-                iter_shape[j] = keepdims ? 1 : core_dim_sizes[
-                                        ufunc->core_dim_ixs[dim_offset + idim]];
-                op_axes_arrays[i][j] = REMAP_AXIS(i, n + idim);
+                int core_index = dim_offset + idim;
+                if (keepdims) { /* has to be first; core_flags will not exist */
+                    iter_shape[j] = 1;
+                }
+                else if ((core_flags[core_index] & UFUNC_CORE_MISSING)) {
+                    /* skip it */
+                    num_removed++;
+                    continue;
+                }
+                else {
+                    iter_shape[j] = core_dim_sizes[ufunc->core_dim_ixs[core_index]];
+                }
+                op_axes_arrays[i][j] = REMAP_AXIS(i, n + idim - num_removed);
                 ++j;
             }
         }
 
         op_axes[i] = op_axes_arrays[i];
     }
+
+#if NPY_UF_DBG_TRACING
+    printf("\niter shapes:");
+    for (j=0; j < iter_ndim; j++) {
+        printf(" %ld", iter_shape[j]);
+    }
+#endif
 
     /* Get the buffersize and errormask */
     if (_get_bufsize_errmask(extobj, ufunc_name, &buffersize, &errormask) < 0) {
@@ -2551,6 +2797,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     idim = nop;
     for (i = 0; i < nop; ++i) {
         int num_dims = core_num_dims[i];
+        /* Could be negative if flexible dims are used, or if keepdims */
         int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
         /*
          * Need to use the arrays in the iterator, not op, because
@@ -4627,7 +4874,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     }
     PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
 
-    ufunc->reserved1 = 0;
+    ufunc->version = 1;  /* NumPy 1.16 and up */
     ufunc->reserved2 = NULL;
 
     ufunc->nin = nin;
@@ -4671,6 +4918,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->core_dim_ixs = NULL;
     ufunc->core_offsets = NULL;
     ufunc->core_signature = NULL;
+    ufunc->core_flags = NULL;
+    ufunc->core_dim_sizes = NULL;
     if (signature != NULL) {
         if (_parse_signature(ufunc, signature) != 0) {
             Py_DECREF(ufunc);
@@ -5017,6 +5266,8 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 {
     PyArray_free(ufunc->core_num_dims);
     PyArray_free(ufunc->core_dim_ixs);
+    PyArray_free(ufunc->core_flags);
+    PyArray_free(ufunc->core_dim_sizes);
     PyArray_free(ufunc->core_offsets);
     PyArray_free(ufunc->core_signature);
     PyArray_free(ufunc->ptr);

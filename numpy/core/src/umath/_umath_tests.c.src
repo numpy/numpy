@@ -128,6 +128,10 @@ static void
 /**end repeat**/
 
 char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
+/* for use with matrix_multiply code, but different signature */
+char *matmul_signature = "(m?,n),(n,p?)->(m,p)";
+/* for use with matrix_multiply code, but different signature */
+char *matflex_signature = "(m?,n),(n,p?)->(m?,p?)";
 
 /**begin repeat
 
@@ -151,10 +155,28 @@ static void
     npy_intp m,n,p;
     npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
          os_m=steps[4], os_p=steps[5];
-    npy_intp ib1_n = is1_n*dn;
-    npy_intp ib2_n = is2_n*dn;
-    npy_intp ib2_p = is2_p*dp;
-    npy_intp ob_p  = os_p *dp;
+    npy_intp ib1_n;
+    npy_intp ib2_n;
+    npy_intp ib2_p;
+    npy_intp ob_p;
+    /* no m dimension -> row vector . matrix */
+    if (dm == 0) {
+        dm = 1;
+    }
+    /* no p dimension -> matrix . column vector  */
+    if (dp == 0) {
+        os_m = os_p;
+        /* if this was entered as a 1-d array, it looks like a
+           matrix with first step equal zero; so switch steps */
+        if (is2_n == 0) {
+            is2_n = is2_p;
+        }
+        dp = 1;
+    }
+    ib1_n = is1_n*dn;
+    ib2_n = is2_n*dn;
+    ib2_p = is2_p*dp;
+    ob_p  = os_p *dp;
     if (dn == 0) {
         /* No operand, need to zero the output */
         BEGIN_OUTER_LOOP_3
@@ -196,6 +218,40 @@ static void
 /**end repeat**/
 
 char *euclidean_pdist_signature = "(n,d)->(p)";
+char *cross1d_signature = "(3),(3)->(3)";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long, npy_double#
+*/
+
+/*
+ *  This implements the cross product:
+ *        out[n, 0] = in1[n, 1]*in2[n, 2] - in1[n, 2]*in2[n, 1]
+ *        out[n, 1] = in1[n, 2]*in2[n, 0] - in1[n, 0]*in2[n, 2]
+ *        out[n, 2] = in1[n, 0]*in2[n, 1] - in1[n, 1]*in2[n, 0]
+ */
+static void
+@TYPE@_cross1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp is1=steps[0], is2=steps[1], os = steps[2];
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+
+        *(@typ@ *)op = *(@typ@ *)(ip1 + is1) * *(@typ@ *)(ip2 + 2*is2) -
+                       *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)(ip2 + is2);
+        op += os;
+        *(@typ@ *)op = *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)ip2 -
+                       *(@typ@ *)ip1 * *(@typ@ *)(ip2 + 2*is2);
+        op += os;
+        *(@typ@ *)op = *(@typ@ *)ip1 * *(@typ@ *)(ip2 + is2) -
+                       *(@typ@ *)(ip1 + is1) * *(@typ@ *)ip2;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
 
 /**begin repeat
 
@@ -263,6 +319,9 @@ static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY
 static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
 static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction cross1d_functions[] = { LONG_cross1d, DOUBLE_cross1d };
+static void * cross1d_data[] = { (void *)NULL, (void *)NULL };
+static char cross1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 static PyUFuncGenericFunction euclidean_pdist_functions[] =
                             { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
@@ -291,6 +350,22 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
                     matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matmul",
+                    "matmul on last two dimensions, with some being optional\n"
+                    "     \"(m?,n),(n,p?)->(m,p)\" \n",
+                    0, matmul_signature);
+    PyDict_SetItemString(dictionary, "matmul", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
+                    matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matflex",
+                    "matmul on last two dimensions, with some being optional\n"
+                    "     \"(m?,n),(n,p?)->(m?,p?)\" \n",
+                    0, matflex_signature);
+    PyDict_SetItemString(dictionary, "matflex", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
+                    matrix_multiply_data, matrix_multiply_signatures,
                     3, 2, 1, PyUFunc_None, "matrix_multiply",
                     "matrix multiplication on last two dimensions \n"
                     "     \"(m,n),(n,p)->(m,p)\" \n",
@@ -311,15 +386,24 @@ addUfuncs(PyObject *dictionary) {
                     0, inner1d_signature);
     PyDict_SetItemString(dictionary, "inner1d_no_doc", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(cross1d_functions, cross1d_data, cross1d_signatures, 2,
+                                    2, 1, PyUFunc_None, "cross1d",
+                                    "cross product on the last dimension and broadcast on the rest \n"\
+                                    "     \"(3),(3)->(3)\" \n",
+                                    0, cross1d_signature);
+    PyDict_SetItemString(dictionary, "cross1d", f);
+    Py_DECREF(f);
 }
 
 
 static PyObject *
 UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
-    int nin, nout;
-    PyObject *signature, *sig_str;
-    PyObject *f;
+    int nin, nout, i, core_num_ixs=0;
+    PyObject *signature=NULL, *sig_str=NULL;
+    PyUFuncObject *f=NULL;
+    PyObject *core_num_dims=NULL, *core_dim_ixs=NULL;
+    PyObject *core_flags=NULL, *core_dim_sizes=NULL;
     int core_enabled;
 
     if (!PyArg_ParseTuple(args, "iiO", &nin, &nout, &signature)) return NULL;
@@ -334,17 +418,50 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    f = PyUFunc_FromFuncAndDataAndSignature(NULL, NULL, NULL,
+    f = (PyUFuncObject*)PyUFunc_FromFuncAndDataAndSignature(NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
         "doc:none",
         1, PyString_AS_STRING(sig_str));
     if (sig_str != signature) {
         Py_DECREF(sig_str);
     }
-    if (f == NULL) return NULL;
-    core_enabled = ((PyUFuncObject*)f)->core_enabled;
+    if (f == NULL) goto error;
+    core_enabled = f->core_enabled;
+    core_num_dims = PyTuple_New(f->nargs);
+    if (core_num_dims == NULL) goto error;
+    for (i=0; i<f->nargs; i++) {
+        PyObject * val = PyLong_FromLong(f->core_num_dims[i]);
+        PyTuple_SET_ITEM(core_num_dims, i, val);
+        core_num_ixs += f->core_num_dims[i];
+    }
+    core_dim_ixs = PyTuple_New(core_num_ixs);
+    if (core_num_dims == NULL) goto error;
+    for (i=0; i<core_num_ixs; i++) {
+        PyObject * val = PyLong_FromLong(f->core_dim_ixs[i]);
+        PyTuple_SET_ITEM(core_dim_ixs, i, val);
+    }
+    core_flags = PyTuple_New(core_num_ixs);
+    if (core_flags == NULL) goto error;
+    for (i=0; i<core_num_ixs; i++) {
+        PyObject * val = PyLong_FromLong(f->core_flags[i]);
+        PyTuple_SET_ITEM(core_flags, i, val);
+    }
+    core_dim_sizes = PyTuple_New(f->core_num_dim_ix);
+    if (core_num_dims == NULL) goto error;
+    for (i=0; i<f->core_num_dim_ix; i++) {
+        PyObject * val = PyLong_FromLong(f->core_dim_sizes[i]);
+        PyTuple_SET_ITEM(core_dim_sizes, i, val);
+    }
     Py_DECREF(f);
-    return Py_BuildValue("i", core_enabled);
+    return Py_BuildValue("iOOOO", core_enabled, core_num_dims,
+                         core_dim_ixs, core_flags, core_dim_sizes);
+error:
+    Py_XDECREF(f);
+    Py_XDECREF(core_num_dims);
+    Py_XDECREF(core_dim_ixs);
+    Py_XDECREF(core_flags);
+    Py_XDECREF(core_dim_sizes);
+    return NULL;
 }
 
 static PyMethodDef UMath_TestsMethods[] = {

@@ -93,12 +93,18 @@ Functions
         the corresponding 1-d loop function in the func array.
 
     :param types:
-        Must be of length (*nin* + *nout*) \* *ntypes*, and it
-        contains the data-types (built-in only) that the corresponding
-        function in the *func* array can deal with.
+        Int8 of length `(nin + nout) * ntypes` It encodes the :ref:`dtype.num`
+        (built-in only) that the corresponding function in the `func` array
+        accepts. For a ufunc with two `ntypes`, one `nin` and one `nout` where
+        the first function accepts and returns `int32` and the second accepts
+        and returns `int64`, `types` would be `\05\05\07\07` since `int32.num`
+        is 5 and `int64.num` is 7.
+
+        :ref:`casting-rules` will be used at runtime to find the first `func` callable
+        by the input/output provided.
 
     :param ntypes:
-        How many different data-type "signatures" the ufunc has implemented.
+        How many different data-type-specific functions the ufunc has implemented.
 
     :param nin:
         The number of inputs to this operation.
@@ -129,10 +135,11 @@ Functions
         int nin, int nout, int identity, char* name, char* doc, int unused, char *signature)
 
    This function is very similar to PyUFunc_FromFuncAndData above, but has
-   an extra *signature* argument, to define generalized universal functions.
+   an extra *signature* argument, to define a
+   :ref:`generalized universal functions <c-api.generalized-ufuncs>`.
    Similarly to how ufuncs are built around an element-by-element operation,
-   gufuncs are around subarray-by-subarray operations, the signature defining
-   the subarrays to operate on.
+   gufuncs are around subarray-by-subarray operations, the
+   :ref:`signature <details-of-signature>` defining the subarrays to operate on.
 
    :param signature:
         The signature for the new gufunc. Setting it to NULL is equivalent
