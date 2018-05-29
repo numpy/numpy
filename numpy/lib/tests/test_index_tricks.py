@@ -6,7 +6,7 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_raises_regex
     )
 from numpy.lib.index_tricks import (
-    mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
+    mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
     index_exp, ndindex, r_, s_, ix_
     )
 
@@ -155,6 +155,15 @@ class TestGrid(object):
                                   0.1*np.ones(20, 'd'), 11)
         assert_array_almost_equal(d[1, :, 1] - d[1, :, 0],
                                   0.2*np.ones(20, 'd'), 11)
+
+    def test_sparse(self):
+        grid_full   = mgrid[-1:1:10j, -2:2:10j]
+        grid_sparse = ogrid[-1:1:10j, -2:2:10j]
+
+        # sparse grids can be made dense by broadcasting
+        grid_broadcast = np.broadcast_arrays(*grid_sparse)
+        for f, b in zip(grid_full, grid_broadcast):
+            assert_equal(f, b)
 
 
 class TestConcatenator(object):
