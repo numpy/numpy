@@ -64,12 +64,19 @@ champion (a.k.a. Author) should first attempt to ascertain whether the idea is
 suitable for a NEP. Posting to the numpy-discussion `mailing list`_ is the best
 way to go about doing this.
 
-Following a discussion on the mailing list, the proposal should be submitted as
-a draft NEP via a `GitHub pull request`_ to the ``doc/neps`` directory with the
-name ``nep-<n>.rst`` where ``<n>`` is an appropriately assigned four-digit
-number (e.g., ``nep-0000.rst``). The draft must use the :doc:`nep-template`
-file. Once a formal proposal has been submitted as a PR, it should be announced
-on the mailing list.
+The proposal should be submitted as a draft NEP via a `GitHub pull
+request`_ to the ``doc/neps`` directory with the name ``nep-<n>.rst``
+where ``<n>`` is an appropriately assigned four-digit number (e.g.,
+``nep-0000.rst``). The draft must use the :doc:`nep-template` file.
+
+Once the PR is in place, the NEP should be announced on the mailing
+list for discussion (comments on the PR itself should be restricted to
+minor editorial and technical fixes).
+
+At the earliest convenience, the PR should be merged (regardless of
+whether it is accepted during discussion).  Additional PRs may be made
+by the Author to update or expand the NEP, or by maintainers to set
+its status, discussion URL, etc.
 
 Standards Track NEPs consist of two parts, a design document and a
 reference implementation.  It is generally recommended that at least a
@@ -83,9 +90,8 @@ mark the PR as a WIP).
 Review and Resolution
 ^^^^^^^^^^^^^^^^^^^^^
 
-NEPs are discussed on the mailing list and perhaps in other forums.
-Sometimes NEPs will grow out of an existing pull request.
-The possible paths of the status of NEPs are as follows:
+NEPs are discussed on the mailing list.  The possible paths of the
+status of NEPs are as follows:
 
 .. image:: _static/nep-0000.png
 
