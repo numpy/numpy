@@ -3,7 +3,9 @@
 #include <Python.h>
 #define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 #include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
 #include "numpy/npy_math.h"
+#include "numpy/halffloat.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "common.h"
@@ -1828,6 +1830,63 @@ call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
 
 /**end repeat**/
 
+/*
+ * For development/testing purposes, it's convenient to have access to the
+ * system printf for floats. This is a very simple printf interface.
+ */
+PyObject *
+PrintFloat_Printf_g(PyObject *obj, int precision)
+{
+    char str[1024];
+
+    if (PyArray_IsScalar(obj, Half)) {
+        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision,
+                      npy_half_to_double(x));
+    }
+    else if (PyArray_IsScalar(obj, Float)) {
+        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
+    }
+    else if (PyArray_IsScalar(obj, Double)) {
+        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
+        /* would be better to use lg, but not available in C90 */
+    }
+    else if (PyArray_IsScalar(obj, LongDouble)) {
+        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*Lg", precision, x);
+    }
+    else{
+        double val = PyFloat_AsDouble(obj);
+        if (error_converting(val)) {
+            return NULL;
+        }
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision, val);
+    }
+
+    return PyUString_FromString(str);
+}
+
+
+static PyObject *
+printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj;
+    int precision;
+
+    if (!PyArg_ParseTuple(args,"Oi:format_float_OSprintf_g", &obj,
+                                                             &precision)) {
+        return NULL;
+    }
+
+    if (precision < 0) {
+        PyErr_SetString(PyExc_TypeError, "precision must be non-negative");
+        return NULL;
+    }
+
+    return PrintFloat_Printf_g(obj, precision);
+}
 
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
@@ -1967,7 +2026,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
 /**end repeat1**/
 
 /**end repeat**/
-
+    {"format_float_OSprintf_g",
+        (PyCFunction)printf_float_g,
+        METH_VARARGS , NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
