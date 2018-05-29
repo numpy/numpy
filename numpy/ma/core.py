@@ -2992,7 +2992,9 @@ class MaskedArray(ndarray):
                     order = "K"
 
                 _mask = _mask.astype(_mask_dtype, order)
-
+            else:
+                # Take a view so shape changes, etc., do not propagate back.
+                _mask = _mask.view()
         else:
             _mask = nomask
 
@@ -3337,16 +3339,34 @@ class MaskedArray(ndarray):
             _mask[indx] = mindx
         return
 
-    def __setattr__(self, attr, value):
-        super(MaskedArray, self).__setattr__(attr, value)
-        if attr == 'dtype' and self._mask is not nomask:
-            self._mask = self._mask.view(make_mask_descr(value), ndarray)
-            # Try to reset the shape of the mask (if we don't have a void)
-            # This raises a ValueError if the dtype change won't work
+    # Define so that we can overwrite the setter.
+    @property
+    def dtype(self):
+        return super(MaskedArray, self).dtype
+
+    @dtype.setter
+    def dtype(self, dtype):
+        super(MaskedArray, type(self)).dtype.__set__(self, dtype)
+        if self._mask is not nomask:
+            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
+            # Try to reset the shape of the mask (if we don't have a void).
+            # This raises a ValueError if the dtype change won't work.
             try:
                 self._mask.shape = self.shape
             except (AttributeError, TypeError):
                 pass
+
+    @property
+    def shape(self):
+        return super(MaskedArray, self).shape
+
+    @shape.setter
+    def shape(self, shape):
+        super(MaskedArray, type(self)).shape.__set__(self, shape)
+        # Cannot use self._mask, since it may not (yet) exist when a
+        # masked matrix sets the shape.
+        if getmask(self) is not nomask:
+            self._mask.shape = self.shape
 
     def __setmask__(self, mask, copy=False):
         """
