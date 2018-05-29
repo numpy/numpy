@@ -1809,7 +1809,7 @@ parse_operand_subscripts(char *subscripts, int length,
                 PyErr_Format(PyExc_ValueError,
                              "einstein sum subscripts string contains "
                              "too many subscripts for operand %d", iop);
-                return 0;
+                return -1;
             }
 
             op_labels[idim++] = label;
@@ -1830,7 +1830,7 @@ parse_operand_subscripts(char *subscripts, int length,
                              "einstein sum subscripts string contains a "
                              "'.' that is not part of an ellipsis ('...') "
                              "in operand %d", iop);
-                return 0;
+                return -1;
             }
 
             ellipsis = idim;
@@ -1840,7 +1840,7 @@ parse_operand_subscripts(char *subscripts, int length,
                          "invalid subscript '%c' in einstein sum "
                          "subscripts string, subscripts must "
                          "be letters", (char)label);
-            return 0;
+            return -1;
         }
     }
 
@@ -1851,7 +1851,7 @@ parse_operand_subscripts(char *subscripts, int length,
                          "operand has more dimensions than subscripts "
                          "given in einstein sum, but no '...' ellipsis "
                          "provided to broadcast the extra dimensions.");
-            return 0;
+            return -1;
         }
     }
     /* Ellipsis found, may have to add broadcast dimensions. */
@@ -1890,7 +1890,7 @@ parse_operand_subscripts(char *subscripts, int length,
         }
     }
 
-    return 1;
+    return 0;
 }
 
 
@@ -2035,7 +2035,7 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
             if (ibroadcast == ndim_output) {
                 PyErr_SetString(PyExc_ValueError,
                         "output had too few broadcast dimensions");
-                return 0;
+                return -1;
             }
             new_dims[ibroadcast] = PyArray_DIM(op, idim);
             new_strides[ibroadcast] = PyArray_STRIDE(op, idim);
@@ -2058,7 +2058,7 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
                         "index '%c' don't match (%d != %d)",
                         iop, label, (int)new_dims[i],
                         (int)PyArray_DIM(op, idim));
-                return 0;
+                return -1;
             }
             new_dims[i] = PyArray_DIM(op, idim);
             new_strides[i] += PyArray_STRIDE(op, idim);
@@ -2076,14 +2076,14 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
                                 (PyObject *)op);
 
         if (*ret == NULL) {
-            return 0;
+            return -1;
         }
         if (!PyArray_Check(*ret)) {
             Py_DECREF(*ret);
             *ret = NULL;
             PyErr_SetString(PyExc_RuntimeError,
                         "NewFromDescr failed to return an array");
-            return 0;
+            return -1;
         }
         PyArray_UpdateFlags(*ret,
                     NPY_ARRAY_C_CONTIGUOUS|
@@ -2093,14 +2093,14 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
         if (PyArray_SetBaseObject(*ret, (PyObject *)op) < 0) {
             Py_DECREF(*ret);
             *ret = NULL;
-            return 0;
+            return -1;
         }
-        return 1;
+        return 0;
     }
 
     /* Return success, but that we couldn't make a view */
     *ret = NULL;
-    return 1;
+    return 0;
 }
 
 static PyArrayObject *
@@ -2246,7 +2246,7 @@ prepare_op_axes(int ndim, int iop, char *labels, int *axes,
         }
     }
 
-    return 1;
+    return 0;
 }
 
 static int
@@ -2574,10 +2574,10 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             return NULL;
         }
 
-        if (!parse_operand_subscripts(subscripts, length,
+        if (parse_operand_subscripts(subscripts, length,
                         PyArray_NDIM(op_in[iop]),
                         iop, op_labels[iop], label_counts,
-                        &min_label, &max_label)) {
+                        &min_label, &max_label) < 0) {
             return NULL;
         }
 
@@ -2682,9 +2682,9 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         if (iop == 0 && nop == 1 && out == NULL) {
             ret = NULL;
 
-            if (!get_single_op_view(op_in[iop], iop, labels,
-                                    ndim_output, output_labels,
-                                    &ret)) {
+            if (get_single_op_view(op_in[iop], iop, labels,
+                                   ndim_output, output_labels,
+                                   &ret) < 0) {
                 return NULL;
             }
 
@@ -2746,8 +2746,8 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     for (iop = 0; iop < nop; ++iop) {
         op_axes[iop] = op_axes_arrays[iop];
 
-        if (!prepare_op_axes(PyArray_NDIM(op[iop]), iop, op_labels[iop],
-                    op_axes[iop], ndim_iter, iter_labels)) {
+        if (prepare_op_axes(PyArray_NDIM(op[iop]), iop, op_labels[iop],
+                    op_axes[iop], ndim_iter, iter_labels) < 0) {
             goto fail;
         }
     }
