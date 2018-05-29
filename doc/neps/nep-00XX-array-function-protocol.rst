@@ -2,7 +2,8 @@
 NEP: Dispatch Mechanism for NumPy's high level API
 ==================================================
 
-:Author: Authors: Stephan Hoyer <shoyer@google.com> and Matthew Rocklin <mrocklin@gmail.com>
+:Author: Authors: Stephan Hoyer <shoyer@google.com>
+:Author: Matthew Rocklin <mrocklin@gmail.com>
 :Status: Draft
 :Type: Standards Track
 :Created: 2018-05-29
@@ -131,13 +132,6 @@ function is not implemented by these types.
         np.sum: my_sum,
         ...
     }
-
-*Note from MR: would it make sense instead for them to return the
-correct implementation rather than call it immediately. Perhaps cases
-exist where we want to find the right implementation, but not
-necessarily call it immediately. We have found this valuable when using
-the ``multipledispatch`` library. Not a blocking issue, just a comment
-of curiosity*
 
 Necessary changes within the Numpy codebase itself
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
