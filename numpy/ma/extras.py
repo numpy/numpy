@@ -381,7 +381,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     def wrapped_func(a, *args, **kwargs):
         res = func1d(a, *args, **kwargs)
-        return np.asanyarray(res).view(masked_array)
+        return np.ma.asanyarray(res)
 
     return np.apply_along_axis(wrapped_func, axis, arr, *args, **kwargs)
 apply_along_axis.__doc__ = np.apply_along_axis.__doc__
