@@ -6,7 +6,7 @@ NEP Template and Instructions
 :Status: <Draft | Active | Accepted | Deferred | Rejected | Withdrawn | Final | Superseded>
 :Type: <Standards Track | Process>
 :Created: <date created on, in yyyy-mm-dd format>
-
+:Resolution: <url> (required for Accepted | Rejected | Withdrawn)
 
 Abstract
 --------
