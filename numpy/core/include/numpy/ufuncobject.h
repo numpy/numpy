@@ -111,15 +111,20 @@ typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
                             NpyAuxData **out_innerloopdata,
                             int *out_needs_api);
 
-typedef struct _tagPyUFuncObject {
-        PyObject_HEAD
-        /*
+/* used in both ufunc and ufunc_wrapper */
+#define UFUNC_BASE \
+    PyObject_HEAD /*
          * nin: Number of inputs
          * nout: Number of outputs
          * nargs: Always nin + nout (Why is it stored?)
-         */
-        int nin, nout, nargs;
+ */ int nin, nout, nargs;
 
+typedef struct {
+        UFUNC_BASE
+} PyUFuncBaseObject;
+
+typedef struct _tagPyUFuncObject {
+        UFUNC_BASE
         /* Identity for reduction, either PyUFunc_One or PyUFunc_Zero */
         int identity;
 

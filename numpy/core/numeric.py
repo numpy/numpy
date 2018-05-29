@@ -28,7 +28,8 @@ if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
 
 from . import umath
-from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
+from .umath import (multiply, invert, sin, ufunc_wrapper,
+                    UFUNC_BUFSIZE_DEFAULT,
                     ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
                     ERR_LOG, ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
@@ -36,6 +37,7 @@ from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._internal import TooHardError, AxisError
 
 bitwise_not = invert
+# TODO properly export ufunc from umath
 ufunc = type(sin)
 newaxis = None
 
@@ -46,6 +48,32 @@ if sys.version_info[0] >= 3:
 else:
     import cPickle as pickle
     import __builtin__ as builtins
+
+
+# TODO: rewrite the __call__ in C?
+class UFuncWrapper(ufunc_wrapper):
+    ''' A decorator to wrap ufunc-like class methods and enable the
+        __array_ufunc__ protocol
+
+        Use as
+
+        class MyArray(ndarray):
+            @UFuncWrapper(2, 1) # nin, nout
+            def solve(self, other):
+                ...
+                return result
+    '''
+    def __call__(self, meth):
+        def wrap(*args, **kwds):
+            (status, r) = self.check_override(*args, **kwds)
+            if status > 0:
+                return r
+            return meth(*args, **kwds)
+        wrap.__name__ = meth.__name__
+        wrap.__doc__ = meth.__doc__
+        self.__name__ = meth.__name__
+        self.__doc__ = meth.__doc__
+        return wrap
 
 
 def loads(*args, **kwargs):
@@ -74,7 +102,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError', 'UFuncWrapper']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])

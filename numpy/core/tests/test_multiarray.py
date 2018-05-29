@@ -3329,7 +3329,7 @@ class TestBinop(object):
 
             def __div__(self, other):
                 raise AssertionError('__div__ should not be called')
-            
+
             def __pow__(self, exp):
                 return SomeClass(num=self.num ** exp)
 
@@ -3349,7 +3349,53 @@ class TestBinop(object):
         assert_equal(obj_arr ** 1, pow_for(1, obj_arr))
         assert_equal(obj_arr ** -1, pow_for(-1, obj_arr))
         assert_equal(obj_arr ** 2, pow_for(2, obj_arr))
-        
+
+    def test_wrapper(self):
+
+        class Solver(np.ndarray):
+            @np.UFuncWrapper(2, 1)
+            def solve(self, other, out=None):
+                # Solve for other given self
+                if out:
+                    out[...] = (self + other.T) / 2.0
+                    return out
+                return (self + other.T) / 2.0
+
+        class Overrider(object):
+            def __array_ufunc__(self, ufunc, method, *args, **kwargs):
+                return ufunc.__name__, method
+
+            @property
+            def T(self):
+                raise TypeError('__array_ufunc__ override not successful')
+
+        class InstanceOverrider():
+            # old style class on Python2, will warn and not override
+            def __array_ufunc__(self, ufunc, method, *args, **kwargs):
+                return ufunc.__name__, method
+
+            @property
+            def T(self):
+                return 4
+
+        s = np.arange(12).reshape(3,4).view(Solver)
+        a = np.arange(11, -1, -1).reshape(3,4).T
+        o = Overrider()
+        assert_equal(s.solve(a), 5.5)
+        assert_equal(s.solve(o), ('solve', '__call__'))
+
+        i = InstanceOverrider()
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            ISPY2 = sys.version_info[0] < 3
+            if ISPY2:
+                # did not override via __array_ufunc__
+                assert_equal(s.solve(i), (s + 4) / 2.0)
+                assert len(sup.log) == 1
+            else:
+                assert_equal(s.solve(o), ('solve', '__call__'))
+                assert len(sup.log) == 0
+
 class TestTemporaryElide(object):
     # elision is only triggered on relatively large arrays
 
@@ -5602,6 +5648,7 @@ if sys.version_info[:2] >= (3, 5):
     class TestMatmulOperator(MatmulCommon):
         import operator
         matmul = operator.matmul
+        mul = operator.mul
 
         def test_array_priority_override(self):
 
@@ -5618,6 +5665,29 @@ if sys.version_info[:2] >= (3, 5):
             b = np.ones(2)
             assert_equal(self.matmul(a, b), "A")
             assert_equal(self.matmul(b, a), "A")
+
+        def test_array_ufunc_override(self):
+            class OptOut:
+                __array_ufunc__ = None
+                def __rmatmul__(self, other):
+                   return 'rmatmul'
+
+            class OtherArray:
+                def __array_ufunc__(self, *args, **kwargs):
+                    return 'array_ufunc'
+                def __rmatmul__(self, other):
+                    return 'rmatmul'
+
+            array = np.arange(3)
+            opt_out = OptOut()
+            other_array = OtherArray()
+
+            # OptOut works as expected:
+            assert_raises(TypeError, self.mul, array, opt_out)
+            assert_equal(self.matmul(array, opt_out), 'rmatmul')
+
+            assert_equal(array * other_array,  'array_ufunc')
+            assert_equal(self.matmul(array, other_array), 'array_ufunc')
 
     def test_matmul_inplace():
         # It would be nice to support in-place matmul eventually, but for now
