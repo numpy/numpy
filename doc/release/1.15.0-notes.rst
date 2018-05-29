@@ -85,6 +85,16 @@ Future Changes
 Compatibility notes
 ===================
 
+The ``NpzFile`` returned by ``np.savez`` is now a `collections.abc.Mapping`
+---------------------------------------------------------------------------
+This means it behaves like a readonly dictionary, and has a new ``.values()``
+method and ``len()`` implementation.
+
+On python 3, this means that ``.iteritems()``, ``.iterkeys()`` have been
+deprecated, and ``.keys()`` and ``.items()`` now return views and not lists.
+This is consistent with how the builtin ``dict`` type changed between python 2
+and python 3.
+
 Under certain conditions, nditer must be used in a context manager
 ------------------------------------------------------------------
 When using an nditer with the ``"writeonly"`` or ``"readwrite"`` flags, there
