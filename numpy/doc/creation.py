@@ -9,7 +9,8 @@ Introduction
 There are 5 general mechanisms for creating arrays:
 
 1) Conversion from other Python structures (e.g., lists, tuples)
-2) Intrinsic numpy array creation objects (e.g., arange, ones, zeros, etc.)
+2) Intrinsic numpy array creation objects (e.g., arange, ones, zeros,
+   etc.)
 3) Reading arrays from disk, either from standard or custom formats
 4) Creating arrays from raw bytes through the use of strings or buffers
 5) Use of special library functions (e.g., random)
