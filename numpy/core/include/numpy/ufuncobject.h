@@ -167,7 +167,7 @@ typedef struct _tagPyUFuncObject {
         int *core_dim_ixs;
         /*
          * positions of 1st core dimensions of each
-         * argument in core_dim_ixs
+         * argument in core_dim_ixs, equivalent to cumsum(core_num_dims)
          */
         int *core_offsets;
         /* signature string for printing purpose */
