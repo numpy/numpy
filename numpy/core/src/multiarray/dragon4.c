@@ -42,6 +42,18 @@
 #define DEBUG_ASSERT(stmnt) do {} while(0)
 #endif
 
+static inline npy_uint64
+bitmask_u64(npy_uint32 n)
+{
+    return ~(~((npy_uint64)0) << n);
+}
+
+static inline npy_uint32
+bitmask_u32(npy_uint32 n)
+{
+    return ~(~((npy_uint32)0) << n);
+}
+
 /*
  *  Get the log base 2 of a 32-bit unsigned integer.
  *  http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
@@ -139,13 +151,13 @@ BigInt_Copy(BigInt *dst, const BigInt *src)
 static void
 BigInt_Set_uint64(BigInt *i, npy_uint64 val)
 {
-    if (val > 0xFFFFFFFF) {
-        i->blocks[0] = val & 0xFFFFFFFF;
-        i->blocks[1] = (val >> 32) & 0xFFFFFFFF;
+    if (val > bitmask_u64(32)) {
+        i->blocks[0] = val & bitmask_u64(32);
+        i->blocks[1] = (val >> 32) & bitmask_u64(32);
         i->length = 2;
     }
     else if (val != 0) {
-        i->blocks[0] = val & 0xFFFFFFFF;
+        i->blocks[0] = val & bitmask_u64(32);
         i->length = 1;
     }
     else {
@@ -228,7 +240,7 @@ BigInt_Add(BigInt *result, const BigInt *lhs, const BigInt *rhs)
         npy_uint64 sum = carry + (npy_uint64)(*largeCur) +
                                  (npy_uint64)(*smallCur);
         carry = sum >> 32;
-        *resultCur = sum & 0xFFFFFFFF;
+        *resultCur = sum & bitmask_u64(32);
         ++largeCur;
         ++smallCur;
         ++resultCur;
@@ -238,7 +250,7 @@ BigInt_Add(BigInt *result, const BigInt *lhs, const BigInt *rhs)
     while (largeCur != largeEnd) {
         npy_uint64 sum = carry + (npy_uint64)(*largeCur);
         carry = sum >> 32;
-        (*resultCur) = sum & 0xFFFFFFFF;
+        (*resultCur) = sum & bitmask_u64(32);
         ++largeCur;
         ++resultCur;
     }
@@ -307,13 +319,13 @@ BigInt_Multiply(BigInt *result, const BigInt *lhs, const BigInt *rhs)
                 npy_uint64 product = (*resultCur) +
                                      (*largeCur)*(npy_uint64)multiplier + carry;
                 carry = product >> 32;
-                *resultCur = product & 0xFFFFFFFF;
+                *resultCur = product & bitmask_u64(32);
                 ++largeCur;
                 ++resultCur;
             } while(largeCur != large->blocks + large->length);
 
             DEBUG_ASSERT(resultCur < result->blocks + maxResultLen);
-            *resultCur = (npy_uint32)(carry & 0xFFFFFFFF);
+            *resultCur = (npy_uint32)(carry & bitmask_u64(32));
         }
     }
 
@@ -337,7 +349,7 @@ BigInt_Multiply_int(BigInt *result, const BigInt *lhs, npy_uint32 rhs)
     const npy_uint32 *pLhsEnd = lhs->blocks + lhs->length;
     for ( ; pLhsCur != pLhsEnd; ++pLhsCur, ++resultCur) {
         npy_uint64 product = (npy_uint64)(*pLhsCur) * rhs + carry;
-        *resultCur = (npy_uint32)(product & 0xFFFFFFFF);
+        *resultCur = (npy_uint32)(product & bitmask_u64(32));
         carry = product >> 32;
     }
 
@@ -414,7 +426,7 @@ BigInt_Multiply10(BigInt *result)
     npy_uint32 *end = result->blocks + result->length;
     for ( ; cur != end; ++cur) {
         npy_uint64 product = (npy_uint64)(*cur) * 10ull + carry;
-        (*cur) = (npy_uint32)(product & 0xFFFFFFFF);
+        (*cur) = (npy_uint32)(product & bitmask_u64(32));
         carry = product >> 32;
     }
 
@@ -654,7 +666,7 @@ BigInt_Pow10(BigInt *result, npy_uint32 exponent)
      * initialize the result by looking up a 32-bit power of 10 corresponding to
      * the first 3 bits
      */
-    smallExponent = exponent & 0x7;
+    smallExponent = exponent & bitmask_u32(3);
     BigInt_Set_uint32(curTemp, g_PowerOf10_U32[smallExponent]);
 
     /* remove the low bits that we used for the 32-bit lookup table */
@@ -704,7 +716,7 @@ BigInt_MultiplyPow10(BigInt *result, const BigInt *in, npy_uint32 exponent)
      * initialize the result by looking up a 32-bit power of 10 corresponding to
      * the first 3 bits
      */
-    smallExponent = exponent & 0x7;
+    smallExponent = exponent & bitmask_u32(3);
     if (smallExponent != 0) {
         BigInt_Multiply_int(curTemp, in, g_PowerOf10_U32[smallExponent]);
     }
@@ -788,7 +800,7 @@ BigInt_DivideWithRemainder_MaxQuotient9(BigInt *dividend, const BigInt *divisor)
      */
     DEBUG_ASSERT(!divisor->length == 0 &&
                 divisor->blocks[divisor->length-1] >= 8 &&
-                divisor->blocks[divisor->length-1] < 0xFFFFFFFF &&
+                divisor->blocks[divisor->length-1] < bitmask_u64(32) &&
                 dividend->length <= divisor->length);
 
     /*
@@ -825,10 +837,10 @@ BigInt_DivideWithRemainder_MaxQuotient9(BigInt *dividend, const BigInt *divisor)
             carry = product >> 32;
 
             difference = (npy_uint64)*dividendCur
-                       - (product & 0xFFFFFFFF) - borrow;
+                       - (product & bitmask_u64(32)) - borrow;
             borrow = (difference >> 32) & 1;
 
-            *dividendCur = difference & 0xFFFFFFFF;
+            *dividendCur = difference & bitmask_u64(32);
 
             ++divisorCur;
             ++dividendCur;
@@ -860,7 +872,7 @@ BigInt_DivideWithRemainder_MaxQuotient9(BigInt *dividend, const BigInt *divisor)
                                   - (npy_uint64)*divisorCur - borrow;
             borrow = (difference >> 32) & 1;
 
-            *dividendCur = difference & 0xFFFFFFFF;
+            *dividendCur = difference & bitmask_u64(32);
 
             ++divisorCur;
             ++dividendCur;
@@ -1442,8 +1454,8 @@ typedef union FloatUnion16
 } FloatUnion16;
 
 npy_bool   IsNegative_F16(FloatUnion16 *v) { return (v->integer >> 15) != 0; }
-npy_uint32 GetExponent_F16(FloatUnion16 *v) { return (v->integer >> 10) & 0x1F;}
-npy_uint32 GetMantissa_F16(FloatUnion16 *v) { return v->integer & 0x3FF; }
+npy_uint32 GetExponent_F16(FloatUnion16 *v) { return (v->integer >> 10) & bitmask_u32(5);}
+npy_uint32 GetMantissa_F16(FloatUnion16 *v) { return v->integer & bitmask_u32(10); }
 
 
 /*
@@ -1459,8 +1471,8 @@ typedef union FloatUnion32
 } FloatUnion32;
 
 npy_bool   IsNegative_F32(FloatUnion32 *v) { return (v->integer >> 31) != 0; }
-npy_uint32 GetExponent_F32(FloatUnion32 *v) { return (v->integer >> 23) & 0xFF;}
-npy_uint32 GetMantissa_F32(FloatUnion32 *v) { return v->integer & 0x7FFFFF; }
+npy_uint32 GetExponent_F32(FloatUnion32 *v) { return (v->integer >> 23) & bitmask_u32(8);}
+npy_uint32 GetMantissa_F32(FloatUnion32 *v) { return v->integer & bitmask_u32(23); }
 
 /*
  * Helper union to decompose a 64-bit IEEE float.
@@ -1474,8 +1486,8 @@ typedef union FloatUnion64
     npy_uint64 integer;
 } FloatUnion64;
 npy_bool   IsNegative_F64(FloatUnion64 *v) { return (v->integer >> 63) != 0; }
-npy_uint32 GetExponent_F64(FloatUnion64 *v) { return (v->integer >> 52) & 0x7FF; }
-npy_uint64 GetMantissa_F64(FloatUnion64 *v) { return v->integer & 0xFFFFFFFFFFFFFull; }
+npy_uint32 GetExponent_F64(FloatUnion64 *v) { return (v->integer >> 52) & bitmask_u32(11); }
+npy_uint64 GetMantissa_F64(FloatUnion64 *v) { return v->integer & bitmask_u64(52); }
 
 /*
  * Helper unions and datatype to decompose a 80-bit IEEE float
@@ -1496,9 +1508,9 @@ typedef struct FloatVal128 {
 npy_bool   IsNegative_F128(FloatVal128 *v) {
     return ((v->integer[1] >> 15) & 0x1) != 0;
 }
-npy_uint32 GetExponent_F128(FloatVal128 *v) { return v->integer[1] & 0x7FFF; }
+npy_uint32 GetExponent_F128(FloatVal128 *v) { return v->integer[1] & bitmask_u32(15); }
 npy_uint64 GetMantissa_F128(FloatVal128 *v) {
-    return v->integer[0] &  0x7FFFFFFFFFFFFFFFull;
+    return v->integer[0] & bitmask_u64(63);
 }
 
 /*
@@ -2151,7 +2163,7 @@ Dragon4_PrintFloat16(char *buffer, npy_uint32 bufferSize, npy_uint16 value,
     }
 
     /* if this is a special value */
-    if (floatExponent == 0x1F) {
+    if (floatExponent == bitmask_u32(5)) {
         return PrintInfNan(buffer, bufferSize, floatMantissa, 3, signbit);
     }
     /* else this is a number */
@@ -2248,7 +2260,7 @@ Dragon4_PrintFloat32(char *buffer, npy_uint32 bufferSize, npy_float32 value,
     }
 
     /* if this is a special value */
-    if (floatExponent == 0xFF) {
+    if (floatExponent == bitmask_u32(8)) {
         return PrintInfNan(buffer, bufferSize, floatMantissa, 6, signbit);
     }
     /* else this is a number */
@@ -2346,7 +2358,7 @@ Dragon4_PrintFloat64(char *buffer, npy_uint32 bufferSize, npy_float64 value,
     }
 
     /* if this is a special value */
-    if (floatExponent == 0x7FF) {
+    if (floatExponent == bitmask_u32(11)) {
         return PrintInfNan(buffer, bufferSize, floatMantissa, 13, signbit);
     }
     /* else this is a number */
@@ -2442,7 +2454,7 @@ Dragon4_PrintFloat128(char *buffer, npy_uint32 bufferSize, FloatVal128 value,
     }
 
     /* if this is a special value */
-    if (floatExponent == 0x7FFF) {
+    if (floatExponent == bitmask_u32(15)) {
         return PrintInfNan(buffer, bufferSize, floatMantissa, 16, signbit);
     }
     /* else this is a number */
