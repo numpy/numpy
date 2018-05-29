@@ -181,6 +181,15 @@ npy_strtoull(const char *str, char **endptr, int base)
  *****************************************************************************
  */
 
+#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+/*
+ * Disable harmless compiler warning "4116: unnamed type definition in
+ * parentheses" which is caused by the _ALIGN macro.
+ */
+#if defined(_MSC_VER)
+#pragma warning(disable:4116)
+#endif
+
 
 /**begin repeat
  *
@@ -245,8 +254,10 @@ static int
         }
         return -1;
     }
-    if (ap == NULL || PyArray_ISBEHAVED(ap))
+    if (ap == NULL || PyArray_ISBEHAVED(ap)) {
+        assert(npy_is_aligned(ov, _ALIGN(@type@)));
         *((@type@ *)ov)=temp;
+    }
     else {
         PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
                                        ap);
@@ -808,7 +819,7 @@ NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
  */
 NPY_NO_EXPORT int
 _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
-            npy_intp *offset_p)
+            npy_intp *offset_p, char *dstdata)
 {
     PyObject *key;
     PyObject *tup;
@@ -822,7 +833,8 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
     }
 
     ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) && ((offset % new->alignment) != 0)) {
+    if ((new->alignment > 1) && 
+                ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
     else {
@@ -850,7 +862,7 @@ _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
     if (PyArray_EquivTypes(srcdescr, dstdescr)) {
         for (i = 0; i < names_size; i++) {
             /* neither line can ever fail, in principle */
-            if (_setup_field(i, dstdescr, dummy, &offset)) {
+            if (_setup_field(i, dstdescr, dummy, &offset, dstdata)) {
                 return -1;
             }
             PyArray_DESCR(dummy)->f->copyswap(dstdata + offset,
@@ -920,7 +932,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                 PyObject *item;
 
                 /* temporarily make ap have only this field */
-                if (_setup_field(i, descr, ap, &offset) == -1) {
+                if (_setup_field(i, descr, ap, &offset, ip) == -1) {
                     failed = 1;
                     break;
                 }
@@ -942,7 +954,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
 
             for (i = 0; i < names_size; i++) {
                 /* temporarily make ap have only this field */
-                if (_setup_field(i, descr, ap, &offset) == -1) {
+                if (_setup_field(i, descr, ap, &offset, ip) == -1) {
                     failed = 1;
                     break;
                 }
@@ -4239,17 +4251,6 @@ small_correlate(const char * d_, npy_intp dstride,
  **                       SETUP FUNCTION POINTERS                           **
  *****************************************************************************
  */
-
-
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
-/*
- * Disable harmless compiler warning "4116: unnamed type definition in
- * parentheses" which is caused by the _ALIGN macro.
- */
-#if defined(_MSC_VER)
-#pragma warning(disable:4116)
-#endif
-
 
 /**begin repeat
  *
