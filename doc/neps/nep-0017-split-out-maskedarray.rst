@@ -3,10 +3,10 @@ Split Out Masked Arrays
 =======================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
+:Status: Rejected
 :Type: Standards Track
 :Created: 2018-03-22
-
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-May/078026.html
 
 Abstract
 --------
@@ -107,12 +107,14 @@ better support for MaskedArrays than is currently available.
 Alternatives
 ------------
 
+After a lively discussion on the mailing list:
 
-Discussion
-----------
-
-- Links to mailing list threads or relevant GitHub issues
-
+- There is support (and active interest in) making a better *new* masked array
+  class.
+- The new class should be a consumer of the external NumPy API with no special
+  status (unlike today where there are hacks across the codebase to support it)
+- `MaskedArray` will stay where it is, at least until the new masked array
+  class materializes and has been tried in the wild.
 
 References and Footnotes
 ------------------------
