@@ -2,7 +2,7 @@
 NEP: Dispatch Mechanism for NumPy's high level API
 ==================================================
 
-:Author: Authors: Stephan Hoyer <shoyer@google.com>
+:Author: Stephan Hoyer <shoyer@google.com>
 :Author: Matthew Rocklin <mrocklin@gmail.com>
 :Status: Draft
 :Type: Standards Track
