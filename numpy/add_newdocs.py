@@ -5607,6 +5607,37 @@ add_newdoc('numpy.core.multiarray', 'unpackbits',
 
     """)
 
+add_newdoc('numpy.core._multiarray_tests', 'format_float_OSprintf_g',
+    """
+    format_float_OSprintf_g(val, precision)
+
+    Print a floating point scalar using the system's printf function,
+    equivalent to:
+
+        printf("%.*g", precision, val);
+
+    for half/float/double, or replacing 'g' by 'Lg' for longdouble. This
+    method is designed to help cross-validate the format_float_* methods.
+
+    Parameters
+    ----------
+    val : python float or numpy floating scalar
+        Value to format.
+
+    precision : non-negative integer, optional
+        Precision given to printf.
+
+    Returns
+    -------
+    rep : string
+        The string representation of the floating point value
+
+    See Also
+    --------
+    format_float_scientific
+    format_float_positional
+    """)
+
 
 ##############################################################################
 #
