@@ -1,10 +1,14 @@
+==================================================
 NEP: Dispatch Mechanism for NumPy's high level API
 ==================================================
 
-Authors: Stephan Hoyer shoyer@google.com and Matthew Rocklin mrocklin@gmail.com
+:Author: Authors: Stephan Hoyer <shoyer@google.com> and Matthew Rocklin <mrocklin@gmail.com>
+:Status: Draft
+:Type: Standards Track
+:Created: 2018-05-29
 
-Executive Summary
------------------
+Abstact
+-------
 
 We propose a protocol to allow arguments of numpy functions to define
 how that function operates on them. This allows other libraries that
@@ -12,8 +16,8 @@ implement NumPy's high level API to reuse Numpy functions. This allows
 libraries that extend NumPy's high level API to apply to more NumPy-like
 libraries.
 
-Motivation
-----------
+Detailed description
+--------------------
 
 Numpy's high level ndarray API has been implemented several times
 outside of NumPy itself for different architectures, such as for GPU
@@ -287,6 +291,14 @@ functions, but conceivably could become universal functions in the
 future. When/if this happens, we will change such overloads from using
 ``__array_function__`` to the more specialized ``__array_ufunc__``.
 
+
+Backward compatibility
+----------------------
+
+This proposal does not change existing semantics, except for those arguments
+that currently have ``__array_function__`` methods, which should be rare.
+
+
 Alternatives
 ------------
 
@@ -473,3 +485,33 @@ pass on ``**kwargs`` would entail public facing changes in NumPy.
 Customizing the detailed behavior of array libraries will require using
 library specific functions, which could be limiting in the case of
 libraries that consume the NumPy API such as xarray.
+
+
+Discussion
+----------
+
+Various alternatives to this proposal were discussed in a few Github issues:
+
+1.  `pydata/sparse #1 <https://github.com/pydata/sparse/issues/1>`_
+2.  `numpy/numpy #11128 <https://github.com/numpy/numpy/issues/11129>`_
+
+Additionally it was the subject of `a blogpost
+<http://matthewrocklin.com/blog/work/2018/05/27/beyond-numpy>`_ Following this
+it was discussed at a `NumPy developer sprint
+<https://scisprints.github.io/#may-numpy-developer-sprint>`_ at the `UC
+Berkeley Institute for Data Science (BIDS) <https://bids.berkeley.edu/>`_.
+
+
+References and Footnotes
+------------------------
+
+.. [1] Each NEP must either be explicitly labeled as placed in the public domain (see
+   this NEP as an example) or licensed under the `Open Publication License`_.
+
+.. _Open Publication License: http://www.opencontent.org/openpub/
+
+
+Copyright
+---------
+
+This document has been placed in the public domain. [1]_
