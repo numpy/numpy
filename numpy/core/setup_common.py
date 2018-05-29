@@ -364,11 +364,16 @@ def long_double_representation(lines):
             # the long double
             if read[-8:] == _AFTER_SEQ:
                 saw = copy.copy(read)
+                # if the content was 12 bytes, we only have 32 - 8 - 12 = 12
+                # "before" bytes. In other words the first 4 "before" bytes went
+                # past the sliding window.
                 if read[:12] == _BEFORE_SEQ[4:]:
                     if read[12:-8] == _INTEL_EXTENDED_12B:
                         return 'INTEL_EXTENDED_12_BYTES_LE'
                     if read[12:-8] == _MOTOROLA_EXTENDED_12B:
                         return 'MOTOROLA_EXTENDED_12_BYTES_BE'
+                # if the content was 16 bytes, we are left with 32-8-16 = 16
+                # "before" bytes, so 8 went past the sliding window.
                 elif read[:8] == _BEFORE_SEQ[8:]:
                     if read[8:-8] == _INTEL_EXTENDED_16B:
                         return 'INTEL_EXTENDED_16_BYTES_LE'
@@ -380,6 +385,7 @@ def long_double_representation(lines):
                         return 'DOUBLE_DOUBLE_BE'
                     elif read[8:-8] == _DOUBLE_DOUBLE_LE:
                         return 'DOUBLE_DOUBLE_LE'
+                # if the content was 8 bytes, left with 32-8-8 = 16 bytes
                 elif read[:16] == _BEFORE_SEQ:
                     if read[16:-8] == _IEEE_DOUBLE_LE:
                         return 'IEEE_DOUBLE_LE'
