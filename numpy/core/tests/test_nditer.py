@@ -811,7 +811,7 @@ def test_iter_nbo_align_contig():
         assert_equal(i.operands[0], a)
         i.operands[0][:] = 2
     assert_equal(au, [2]*6)
-    i = None # should not raise a DeprecationWarning
+    del i  # should not raise a warning
     # Byte order change by requesting NBO
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
@@ -1469,26 +1469,25 @@ def test_iter_allocate_output_types_scalar():
 
 def test_iter_allocate_output_subtype():
     # Make sure that the subtype with priority wins
+    class MyNDArray(np.ndarray):
+        __array_priority__ = 15
 
-    # matrix vs ndarray
-    a = np.matrix([[1, 2], [3, 4]])
+    # subclass vs ndarray
+    a = np.array([[1, 2], [3, 4]]).view(MyNDArray)
     b = np.arange(4).reshape(2, 2).T
     i = nditer([a, b, None], [],
-                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
+               [['readonly'], ['readonly'], ['writeonly', 'allocate']])
     assert_equal(type(a), type(i.operands[2]))
-    assert_(type(b) != type(i.operands[2]))
+    assert_(type(b) is not type(i.operands[2]))
     assert_equal(i.operands[2].shape, (2, 2))
 
-    # matrix always wants things to be 2D
-    b = np.arange(4).reshape(1, 2, 2)
-    assert_raises(RuntimeError, nditer, [a, b, None], [],
-                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
-    # but if subtypes are disabled, the result can still work
+    # If subtypes are disabled, we should get back an ndarray.
     i = nditer([a, b, None], [],
-            [['readonly'], ['readonly'], ['writeonly', 'allocate', 'no_subtype']])
+               [['readonly'], ['readonly'],
+                ['writeonly', 'allocate', 'no_subtype']])
     assert_equal(type(b), type(i.operands[2]))
-    assert_(type(a) != type(i.operands[2]))
-    assert_equal(i.operands[2].shape, (1, 2, 2))
+    assert_(type(a) is not type(i.operands[2]))
+    assert_equal(i.operands[2].shape, (2, 2))
 
 def test_iter_allocate_output_errors():
     # Check that the iterator will throw errors for bad output allocations
@@ -2838,16 +2837,34 @@ def test_writebacks():
     it = nditer(au, [],
                  [['readwrite', 'updateifcopy']],
                  casting='equiv', op_dtypes=[np.dtype('f4')])
-    au = None
+    # reentering works
+    with it:
+        with it:
+            for x in it:
+                x[...] = 123
+
+    it = nditer(au, [],
+                 [['readwrite', 'updateifcopy']],
+                 casting='equiv', op_dtypes=[np.dtype('f4')])
+    # make sure exiting the inner context manager closes the iterator
+    with it:
+        with it:
+            for x in it:
+                x[...] = 123
+        assert_raises(ValueError, getattr, it, 'operands')
     # do not crash if original data array is decrefed
+    it = nditer(au, [],
+                 [['readwrite', 'updateifcopy']],
+                 casting='equiv', op_dtypes=[np.dtype('f4')])
+    del au
     with it:
         for x in it:
             x[...] = 123
-    # make sure we cannot reenter the iterand
+    # make sure we cannot reenter the closed iterator
     enter = it.__enter__
     assert_raises(ValueError, enter)
 
-def test_close():
+def test_close_equivalent():
     ''' using a context amanger and using nditer.close are equivalent
     '''
     def add_close(x, y, out=None):
@@ -2856,8 +2873,10 @@ def test_close():
                     [['readonly'], ['readonly'], ['writeonly','allocate']])
         for (a, b, c) in it:
             addop(a, b, out=c)
+        ret = it.operands[2]
         it.close()
-        return it.operands[2]
+        return ret
+
     def add_context(x, y, out=None):
         addop = np.add
         it = np.nditer([x, y, out], [],
@@ -2870,6 +2889,13 @@ def test_close():
     assert_equal(z, range(0, 10, 2))
     z = add_context(range(5), range(5))
     assert_equal(z, range(0, 10, 2))
+
+def test_close_raises():
+    it = np.nditer(np.arange(3))
+    assert_equal (next(it), 0)
+    it.close()
+    assert_raises(StopIteration, next, it)
+    assert_raises(ValueError, getattr, it, 'operands')
 
 def test_warn_noclose():
     a = np.arange(6, dtype='f4')

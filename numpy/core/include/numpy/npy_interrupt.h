@@ -55,7 +55,7 @@ Ideas:
 Simple Interface:
 
 
-In your C-extension: around a block of code you want to be interruptable
+In your C-extension: around a block of code you want to be interruptible
 with a SIGINT
 
 NPY_SIGINT_ON

@@ -5,6 +5,7 @@ import itertools
 
 import numpy as np
 import numpy.core._umath_tests as umt
+import numpy.linalg._umath_linalg as uml
 import numpy.core._operand_flag_tests as opflag_tests
 import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
@@ -284,10 +285,16 @@ class TestUfunc(object):
     def test_signature(self):
         # the arguments to test_signature are: nin, nout, core_signature
         # pass
-        assert_equal(umt.test_signature(2, 1, "(i),(i)->()"), 1)
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i),(i)->()")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1,  1,  0))
+        assert_equal(ixs, (0, 0))
 
-        # pass. empty core signature; treat as plain ufunc (with trivial core)
-        assert_equal(umt.test_signature(2, 1, "(),()->()"), 0)
+        # empty core signature; treat as plain ufunc (with trivial core)
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(),()->()")
+        assert_equal(enabled, 0)
+        assert_equal(num_dims, (0,  0,  0))
+        assert_equal(ixs, ())
 
         # in the following calls, a ValueError should be raised because
         # of error in core signature
@@ -326,7 +333,10 @@ class TestUfunc(object):
             pass
 
         # more complicated names for variables
-        assert_equal(umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)"), 1)
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 1))
+        assert_equal(ixs, (0, 1, 2, 3))
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
@@ -494,6 +504,17 @@ class TestUfunc(object):
             d += d
             assert_almost_equal(d, 2. + 2j)
 
+    def test_sum_initial(self):
+        # Integer, single axis
+        assert_equal(np.sum([3], initial=2), 5)
+
+        # Floating point
+        assert_almost_equal(np.sum([0.2], initial=0.1), 0.3)
+
+        # Multiple non-adjacent axes
+        assert_equal(np.sum(np.ones((2, 3, 5), dtype=np.int64), axis=(0, 2), initial=2),
+                     [12, 12, 12])
+
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
         assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1))
@@ -600,49 +621,49 @@ class TestUfunc(object):
 
     def test_axes_argument(self):
         # inner1d signature: '(i),(i)->()'
-        in1d = umt.inner1d
+        inner1d = umt.inner1d
         a = np.arange(27.).reshape((3, 3, 3))
         b = np.arange(10., 19.).reshape((3, 1, 3))
         # basic tests on inputs (outputs tested below with matrix_multiply).
-        c = in1d(a, b)
+        c = inner1d(a, b)
         assert_array_equal(c, (a * b).sum(-1))
         # default
-        c = in1d(a, b, axes=[(-1,), (-1,), ()])
+        c = inner1d(a, b, axes=[(-1,), (-1,), ()])
         assert_array_equal(c, (a * b).sum(-1))
         # integers ok for single axis.
-        c = in1d(a, b, axes=[-1, -1, ()])
+        c = inner1d(a, b, axes=[-1, -1, ()])
         assert_array_equal(c, (a * b).sum(-1))
         # mix fine
-        c = in1d(a, b, axes=[(-1,), -1, ()])
+        c = inner1d(a, b, axes=[(-1,), -1, ()])
         assert_array_equal(c, (a * b).sum(-1))
         # can omit last axis.
-        c = in1d(a, b, axes=[-1, -1])
+        c = inner1d(a, b, axes=[-1, -1])
         assert_array_equal(c, (a * b).sum(-1))
         # can pass in other types of integer (with __index__ protocol)
-        c = in1d(a, b, axes=[np.int8(-1), np.array(-1, dtype=np.int32)])
+        c = inner1d(a, b, axes=[np.int8(-1), np.array(-1, dtype=np.int32)])
         assert_array_equal(c, (a * b).sum(-1))
         # swap some axes
-        c = in1d(a, b, axes=[0, 0])
+        c = inner1d(a, b, axes=[0, 0])
         assert_array_equal(c, (a * b).sum(0))
-        c = in1d(a, b, axes=[0, 2])
+        c = inner1d(a, b, axes=[0, 2])
         assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
         # Check errors for improperly constructed axes arguments.
         # should have list.
-        assert_raises(TypeError, in1d, a, b, axes=-1)
+        assert_raises(TypeError, inner1d, a, b, axes=-1)
         # needs enough elements
-        assert_raises(ValueError, in1d, a, b, axes=[-1])
+        assert_raises(ValueError, inner1d, a, b, axes=[-1])
         # should pass in indices.
-        assert_raises(TypeError, in1d, a, b, axes=[-1.0, -1.0])
-        assert_raises(TypeError, in1d, a, b, axes=[(-1.0,), -1])
-        assert_raises(TypeError, in1d, a, b, axes=[None, 1])
+        assert_raises(TypeError, inner1d, a, b, axes=[-1.0, -1.0])
+        assert_raises(TypeError, inner1d, a, b, axes=[(-1.0,), -1])
+        assert_raises(TypeError, inner1d, a, b, axes=[None, 1])
         # cannot pass an index unless there is only one dimension
         # (output is wrong in this case)
-        assert_raises(TypeError, in1d, a, b, axes=[-1, -1, -1])
+        assert_raises(TypeError, inner1d, a, b, axes=[-1, -1, -1])
         # or pass in generally the wrong number of axes
-        assert_raises(ValueError, in1d, a, b, axes=[-1, -1, (-1,)])
-        assert_raises(ValueError, in1d, a, b, axes=[-1, (-2, -1), ()])
+        assert_raises(ValueError, inner1d, a, b, axes=[-1, -1, (-1,)])
+        assert_raises(ValueError, inner1d, a, b, axes=[-1, (-2, -1), ()])
         # axes need to have same length.
-        assert_raises(ValueError, in1d, a, b, axes=[0, 1])
+        assert_raises(ValueError, inner1d, a, b, axes=[0, 1])
 
         # matrix_multiply signature: '(m,n),(n,p)->(m,p)'
         mm = umt.matrix_multiply
@@ -696,6 +717,73 @@ class TestUfunc(object):
         assert_raises(ValueError, mm, z, z, out=z[:, 0])
         assert_raises(ValueError, mm, z[1], z, axes=[0, 1])
         assert_raises(ValueError, mm, z, z, out=z[0], axes=[0, 1])
+
+    def test_keepdims_argument(self):
+        # inner1d signature: '(i),(i)->()'
+        inner1d = umt.inner1d
+        a = np.arange(27.).reshape((3, 3, 3))
+        b = np.arange(10., 19.).reshape((3, 1, 3))
+        c = inner1d(a, b)
+        assert_array_equal(c, (a * b).sum(-1))
+        c = inner1d(a, b, keepdims=False)
+        assert_array_equal(c, (a * b).sum(-1))
+        c = inner1d(a, b, keepdims=True)
+        assert_array_equal(c, (a * b).sum(-1, keepdims=True))
+        out = np.zeros_like(c)
+        d = inner1d(a, b, keepdims=True, out=out)
+        assert_(d is out)
+        assert_array_equal(d, c)
+        # Now combined with axes.
+        c = inner1d(a, b, axes=[(-1,), (-1,), ()], keepdims=False)
+        assert_array_equal(c, (a * b).sum(-1))
+        c = inner1d(a, b, axes=[(-1,), (-1,), (-1,)], keepdims=True)
+        assert_array_equal(c, (a * b).sum(-1, keepdims=True))
+        c = inner1d(a, b, axes=[0, 0], keepdims=False)
+        assert_array_equal(c, (a * b).sum(0))
+        c = inner1d(a, b, axes=[0, 0, 0], keepdims=True)
+        assert_array_equal(c, (a * b).sum(0, keepdims=True))
+        c = inner1d(a, b, axes=[0, 2], keepdims=False)
+        assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1))
+        c = inner1d(a, b, axes=[0, 2], keepdims=True)
+        assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1,
+                                                             keepdims=True))
+        c = inner1d(a, b, axes=[0, 2, 2], keepdims=True)
+        assert_array_equal(c, (a.transpose(1, 2, 0) * b).sum(-1,
+                                                             keepdims=True))
+        c = inner1d(a, b, axes=[0, 2, 0], keepdims=True)
+        assert_array_equal(c, (a * b.transpose(2, 0, 1)).sum(0, keepdims=True))
+        # Hardly useful, but should work.
+        c = inner1d(a, b, axes=[0, 2, 1], keepdims=True)
+        assert_array_equal(c, (a.transpose(1, 0, 2) * b.transpose(0, 2, 1))
+                           .sum(1, keepdims=True))
+        # Check with two core dimensions.
+        a = np.eye(3) * np.arange(4.)[:, np.newaxis, np.newaxis]
+        expected = uml.det(a)
+        c = uml.det(a, keepdims=False)
+        assert_array_equal(c, expected)
+        c = uml.det(a, keepdims=True)
+        assert_array_equal(c, expected[:, np.newaxis, np.newaxis])
+        a = np.eye(3) * np.arange(4.)[:, np.newaxis, np.newaxis]
+        expected_s, expected_l = uml.slogdet(a)
+        cs, cl = uml.slogdet(a, keepdims=False)
+        assert_array_equal(cs, expected_s)
+        assert_array_equal(cl, expected_l)
+        cs, cl = uml.slogdet(a, keepdims=True)
+        assert_array_equal(cs, expected_s[:, np.newaxis, np.newaxis])
+        assert_array_equal(cl, expected_l[:, np.newaxis, np.newaxis])
+        # Sanity check on innerwt.
+        a = np.arange(6).reshape((2, 3))
+        b = np.arange(10, 16).reshape((2, 3))
+        w = np.arange(20, 26).reshape((2, 3))
+        assert_array_equal(umt.innerwt(a, b, w, keepdims=True),
+                           np.sum(a * b * w, axis=-1, keepdims=True))
+        # Check errors.
+        # Not a boolean
+        assert_raises(TypeError, inner1d, a, b, keepdims='true')
+        # 1 core dimension only.
+        mm = umt.matrix_multiply
+        assert_raises(TypeError, mm, a, b, keepdims=True)
+        assert_raises(TypeError, mm, a, b, keepdims=False)
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
@@ -844,6 +932,7 @@ class TestUfunc(object):
         assert_equal(np.min(a), False)
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
+        assert_equal(np.array([1], dtype=object).sum(initial=1), 2)
 
     def test_object_array_accumulate_inplace(self):
         # Checks that in-place accumulates work, see also gh-7402
@@ -879,13 +968,6 @@ class TestUfunc(object):
         np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
         np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
         assert_array_equal(arr, out)
-
-    def test_object_scalar_multiply(self):
-        # Tickets #2469 and #4482
-        arr = np.matrix([1, 2], dtype=object)
-        desired = np.matrix([[3, 6]], dtype=object)
-        assert_equal(np.multiply(arr, 3), desired)
-        assert_equal(np.multiply(3, arr), desired)
 
     def test_zerosize_reduction(self):
         # Test with default dtype and object dtype
@@ -987,7 +1069,7 @@ class TestUfunc(object):
         assert_equal(np.sqrt(a, where=m), [1])
 
     def check_identityless_reduction(self, a):
-        # np.minimum.reduce is a identityless reduction
+        # np.minimum.reduce is an identityless reduction
 
         # Verify that it sees the zero at various positions
         a[...] = 1
@@ -1055,6 +1137,35 @@ class TestUfunc(object):
         a.shape = (3, 4, 5)
         a = a[1:, 1:, 1:]
         self.check_identityless_reduction(a)
+
+    def test_initial_reduction(self):
+        # np.minimum.reduce is an identityless reduction
+
+        # For cases like np.maximum(np.abs(...), initial=0)
+        # More generally, a supremum over non-negative numbers.
+        assert_equal(np.maximum.reduce([], initial=0), 0)
+
+        # For cases like reduction of an empty array over the reals.
+        assert_equal(np.minimum.reduce([], initial=np.inf), np.inf)
+        assert_equal(np.maximum.reduce([], initial=-np.inf), -np.inf)
+
+        # Random tests
+        assert_equal(np.minimum.reduce([5], initial=4), 4)
+        assert_equal(np.maximum.reduce([4], initial=5), 5)
+        assert_equal(np.maximum.reduce([5], initial=4), 5)
+        assert_equal(np.minimum.reduce([4], initial=5), 4)
+
+        # Check initial=None raises ValueError for both types of ufunc reductions
+        assert_raises(ValueError, np.minimum.reduce, [], initial=None)
+        assert_raises(ValueError, np.add.reduce, [], initial=None)
+
+        # Check that np._NoValue gives default behavior.
+        assert_equal(np.add.reduce([], initial=np._NoValue), 0)
+
+        # Check that initial kwarg behaves as intended for dtype=object
+        a = np.array([10], dtype=object)
+        res = np.add.reduce(a, initial=5)
+        assert_equal(res, 15)
 
     def test_identityless_reduction_nonreorderable(self):
         a = np.array([[8.0, 2.0, 2.0], [1.0, 0.5, 0.25]])
@@ -1407,15 +1518,18 @@ class TestUfunc(object):
         assert_equal(f(d, 0, None, None), r)
         assert_equal(f(d, 0, None, None, keepdims=False), r)
         assert_equal(f(d, 0, None, None, True), r.reshape((1,) + r.shape))
+        assert_equal(f(d, 0, None, None, False, 0), r)
+        assert_equal(f(d, 0, None, None, False, initial=0), r)
         # multiple keywords
         assert_equal(f(d, axis=0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, None, out=None, keepdims=False), r)
+        assert_equal(f(d, 0, None, out=None, keepdims=False, initial=0), r)
 
         # too little
         assert_raises(TypeError, f)
         # too much
-        assert_raises(TypeError, f, d, 0, None, None, False, 1)
+        assert_raises(TypeError, f, d, 0, None, None, False, 0, 1)
         # invalid axis
         assert_raises(TypeError, f, d, "invalid")
         assert_raises(TypeError, f, d, axis="invalid")

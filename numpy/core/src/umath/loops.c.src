@@ -1819,7 +1819,7 @@ NPY_NO_EXPORT void
             *((npy_bool *)op1) = @func@(in1) != 0;
         }
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -1866,6 +1866,9 @@ NPY_NO_EXPORT void
                 const @type@ in2 = *(@type@ *)ip2;
                 io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
             }
+            if (npy_isnan(io1)) {
+                npy_set_floatstatus_invalid();
+            }
             *((@type@ *)iop1) = io1;
         }
     }
@@ -1901,7 +1904,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
         }
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -1991,7 +1994,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = tmp + 0;
         }
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -2177,7 +2180,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_bool *)op1) = @func@(in1) != 0;
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 
@@ -2239,7 +2242,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in2 = *(npy_half *)ip2;
         *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in2)) ? in1 : in2;
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 
@@ -2681,7 +2684,7 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         *((npy_bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2790,7 +2793,7 @@ NPY_NO_EXPORT void
             ((@ftype@ *)op1)[1] = in2i;
         }
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 

@@ -74,3 +74,13 @@ class TestRegression(object):
             r1 = np.ma.corrcoef(x, y, ddof=1)
             # ddof should not have an effect (it gets cancelled out)
             assert_allclose(r0.data, r1.data)
+
+    def test_mask_not_backmangled(self):
+        # See gh-10314.  Test case taken from gh-3140.
+        a = np.ma.MaskedArray([1., 2.], mask=[False, False])
+        assert_(a.mask.shape == (2,))
+        b = np.tile(a, (2, 1))
+        # Check that the above no longer changes a.shape to (1, 2)
+        assert_(a.mask.shape == (2,))
+        assert_(b.shape == (2, 2))
+        assert_(b.mask.shape == (2, 2))

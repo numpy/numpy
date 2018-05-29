@@ -709,6 +709,10 @@ Construction and Destruction
     the functions will pass back errors through it instead of setting
     a Python exception.
 
+    :c:func:`NpyIter_Deallocate` must be called for each copy. One call to
+    :c:func:`NpyIter_Close` is sufficient to trigger writeback resolution for
+    all copies since they share buffers.
+
 .. c:function:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)``
 
     Removes an axis from iteration.  This requires that
@@ -761,8 +765,10 @@ Construction and Destruction
 
 .. c:function:: int NpyIter_Close(NpyIter* iter)
 
-    Resolves any needed writeback resolution. Must be called before
-    ``NpyIter_Deallocate``. After this call it is not safe to use the operands.
+    Resolves any needed writeback resolution. Should be called before
+    :c:func::`NpyIter_Deallocate`. After this call it is not safe to use the operands.
+    When using :c:func:`NpyIter_Copy`, only one call to :c:func:`NpyIter_Close`
+    is sufficient to resolve any writebacks, since the copies share buffers.
 
     Returns ``0`` or ``-1`` if unsuccessful.
 
@@ -770,10 +776,10 @@ Construction and Destruction
 
     Deallocates the iterator object.  
 
-    `NpyIter_Close` should be called before this. If not, and if writeback is
-    needed, it will be performed at this point in order to maintain
+    :c:func:`NpyIter_Close` should be called before this. If not, and if
+    writeback is needed, it will be performed at this point in order to maintain
     backward-compatibility with older code, and a deprecation warning will be
-    emmitted. Old code shuold be updated to call `NpyIter_Close` beforehand.
+    emitted. Old code should be updated to call `NpyIter_Close` beforehand.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 

@@ -647,6 +647,9 @@ def array2string(a, max_line_width=None, precision=None,
     options.update(overrides)
 
     if options['legacy'] == '1.13':
+        if style is np._NoValue:
+            style = repr
+
         if a.shape == () and not a.dtype.names:
             return style(a.item())
     elif style is not np._NoValue:
@@ -1085,7 +1088,7 @@ def format_float_positional(x, precision=None, unique=True,
 
     Examples
     --------
-    >>> np.format_float_scientific(np.float32(np.pi))
+    >>> np.format_float_positional(np.float32(np.pi))
     '3.1415927'
     >>> np.format_float_positional(np.float16(np.pi))
     '3.14'

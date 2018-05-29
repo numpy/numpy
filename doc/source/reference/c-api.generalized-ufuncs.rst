@@ -101,6 +101,7 @@ Dimension Index
     enumerates the dimension names according to the order of the first
     occurrence of each name in the signature.
 
+.. _details-of-signature:
 
 Details of Signature
 --------------------
@@ -126,9 +127,9 @@ The formal syntax of signatures is as follows::
     <Output arguments>     ::= <Argument list>
     <Argument list>        ::= nil | <Argument> | <Argument> "," <Argument list>
     <Argument>             ::= "(" <Core dimension list> ")"
-    <Core dimension list>  ::= nil | <Dimension name> |
-                               <Dimension name> "," <Core dimension list>
-    <Dimension name>       ::= valid Python variable name
+    <Core dimension list>  ::= nil | <Core dimension name> |
+                               <Core dimension name> "," <Core dimension list>
+    <Core dimension name>  ::= valid Python variable name
 
 
 Notes:

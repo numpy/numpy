@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, temppath,
     )
-from ._locales import CommaDecimalPointLocale
+from numpy.core.tests._locales import CommaDecimalPointLocale
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)

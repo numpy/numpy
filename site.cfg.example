@@ -180,6 +180,14 @@
 # mkl_libs = mkl_rt 
 # lapack_libs =
 
+# ACCELERATE
+# ----------
+# Accelerate/vecLib is an OSX framework providing a BLAS and LAPACK implementations.
+#
+# [accelerate]
+# libraries = Accelerate, vecLib
+# #libraries = None
+
 # UMFPACK
 # -------
 # The UMFPACK library is used in scikits.umfpack to factor large sparse matrices. 

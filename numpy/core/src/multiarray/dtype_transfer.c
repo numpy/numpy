@@ -3400,6 +3400,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
 {
     npy_intp src_itemsize, dst_itemsize;
     int src_type_num, dst_type_num;
+    int is_builtin;
 
 #if NPY_DT_DBG_TRACING
     printf("Calculating dtype transfer from ");
@@ -3439,6 +3440,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
     dst_itemsize = dst_dtype->elsize;
     src_type_num = src_dtype->type_num;
     dst_type_num = dst_dtype->type_num;
+    is_builtin = src_type_num < NPY_NTYPES && dst_type_num < NPY_NTYPES;
 
     /* Common special case - number -> number NBO cast */
     if (PyTypeNum_ISNUMBER(src_type_num) &&
@@ -3462,13 +3464,14 @@ PyArray_GetDTypeTransferFunction(int aligned,
     }
 
     /*
-     * If there are no references and the data types are equivalent,
+     * If there are no references and the data types are equivalent and builtin,
      * return a simple copy
      */
     if (PyArray_EquivTypes(src_dtype, dst_dtype) &&
             !PyDataType_REFCHK(src_dtype) && !PyDataType_REFCHK(dst_dtype) &&
             ( !PyDataType_HASFIELDS(dst_dtype) ||
-              is_dtype_struct_simple_unaligned_layout(dst_dtype)) ) {
+              is_dtype_struct_simple_unaligned_layout(dst_dtype)) &&
+            is_builtin) {
         /*
          * We can't pass through the aligned flag because it's not
          * appropriate. Consider a size-8 string, it will say it's
@@ -3494,7 +3497,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
                 !PyDataType_HASSUBARRAY(dst_dtype) &&
                 src_type_num != NPY_DATETIME && src_type_num != NPY_TIMEDELTA) {
         /* A custom data type requires that we use its copy/swap */
-        if (src_type_num >= NPY_NTYPES || dst_type_num >= NPY_NTYPES) {
+        if (!is_builtin) {
             /*
              * If the sizes and kinds are identical, but they're different
              * custom types, then get a cast function

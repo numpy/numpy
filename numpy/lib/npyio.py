@@ -480,9 +480,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     Notes
     -----
-    For a description of the ``.npy`` format, see the module docstring
-    of `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://numpy.github.io/neps/npy-format.html
+    For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
     Examples
     --------
@@ -566,9 +564,7 @@ def savez(file, *args, **kwds):
     The ``.npz`` file format is a zipped archive of files named after the
     variables they contain.  The archive is not compressed and each file
     in the archive contains one variable in ``.npy`` format. For a
-    description of the ``.npy`` format, see `numpy.lib.format` or the
-    NumPy Enhancement Proposal
-    http://numpy.github.io/neps/npy-format.html
+    description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -647,9 +643,9 @@ def savez_compressed(file, *args, **kwds):
     The ``.npz`` file format is a zipped archive of files named after the
     variables they contain.  The archive is compressed with
     ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
-    in ``.npy`` format. For a description of the ``.npy`` format, see
-    `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://numpy.github.io/neps/npy-format.html
+    in ``.npy`` format. For a description of the ``.npy`` format, see 
+    :py:mod:`numpy.lib.format`.
+
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -796,8 +792,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the data-type.
     comments : str or sequence of str, optional
         The characters or list of characters used to indicate the start of a
-        comment. For backwards compatibility, byte strings will be decoded as
-        'latin1'. The default is '#'.
+        comment. None implies no comments. For backwards compatibility, byte
+        strings will be decoded as 'latin1'. The default is '#'.
     delimiter : str, optional
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
@@ -864,18 +860,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     Examples
     --------
     >>> from io import StringIO   # StringIO behaves like a file object
-    >>> c = StringIO("0 1\\n2 3")
+    >>> c = StringIO(u"0 1\\n2 3")
     >>> np.loadtxt(c)
     array([[ 0.,  1.],
            [ 2.,  3.]])
 
-    >>> d = StringIO("M 21 72\\nF 35 58")
+    >>> d = StringIO(u"M 21 72\\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
     array([('M', 21, 72.0), ('F', 35, 58.0)],
           dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
 
-    >>> c = StringIO("1,0,2\\n3,0,4")
+    >>> c = StringIO(u"1,0,2\\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
     array([ 1.,  3.])
@@ -941,7 +937,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     if encoding is not None:
         fencoding = encoding
     # we must assume local encoding
-    # TOOD emit portability warning?
+    # TODO emit portability warning?
     elif fencoding is None:
         import locale
         fencoding = locale.getpreferredencoding()
@@ -1637,7 +1633,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Comma delimited file with mixed dtype
 
-    >>> s = StringIO("1,1.3,abcde")
+    >>> s = StringIO(u"1,1.3,abcde")
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
@@ -1664,7 +1660,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     An example with fixed-width columns
 
-    >>> s = StringIO("11.3abcde")
+    >>> s = StringIO(u"11.3abcde")
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data

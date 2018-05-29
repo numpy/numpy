@@ -908,8 +908,8 @@ if sys.version_info[0] >= 3:
     del defdict['divide']
 
 def indent(st, spaces):
-    indention = ' '*spaces
-    indented = indention + st.replace('\n', '\n'+indention)
+    indentation = ' '*spaces
+    indented = indentation + st.replace('\n', '\n'+indentation)
     # trim off any trailing spaces
     indented = re.sub(r' +$', r'', indented)
     return indented
@@ -972,7 +972,7 @@ def make_arrays(funcdict):
                     for vt in t.simd:
                         code2list.append(textwrap.dedent("""\
                         #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-                        if (npy_cpu_supports("{ISA}")) {{
+                        if (npy_cpu_supports("{isa}")) {{
                             {fname}_functions[{idx}] = {type}_{fname}_{isa};
                         }}
                         #endif

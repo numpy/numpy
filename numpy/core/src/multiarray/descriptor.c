@@ -18,6 +18,7 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "descriptor.h"
 #include "alloc.h"
+#include "assert.h"
 
 /*
  * offset:    A starting offset.
@@ -1938,33 +1939,26 @@ arraydescr_shape_get(PyArray_Descr *self)
     if (!PyDataType_HASSUBARRAY(self)) {
         return PyTuple_New(0);
     }
-    /*TODO
-     * self->subarray->shape should always be a tuple,
-     * so this check should be unnecessary
-     */
-    if (PyTuple_Check(self->subarray->shape)) {
-        Py_INCREF(self->subarray->shape);
-        return (PyObject *)(self->subarray->shape);
-    }
-    return Py_BuildValue("(O)", self->subarray->shape);
+    assert(PyTuple_Check(self->subarray->shape));
+    Py_INCREF(self->subarray->shape);
+    return self->subarray->shape;
 }
 
 static PyObject *
 arraydescr_ndim_get(PyArray_Descr *self)
 {
+    Py_ssize_t ndim;
+
     if (!PyDataType_HASSUBARRAY(self)) {
         return PyInt_FromLong(0);
     }
-    /*TODO
-     * self->subarray->shape should always be a tuple,
-     * so this check should be unnecessary
+
+    /*
+     * PyTuple_Size has built in check
+     * for tuple argument
      */
-    if (PyTuple_Check(self->subarray->shape)) {
-        Py_ssize_t ndim = PyTuple_Size(self->subarray->shape);
-        return PyInt_FromLong(ndim);
-    }
-    /* consistent with arraydescr_shape_get */
-    return PyInt_FromLong(1);
+    ndim = PyTuple_Size(self->subarray->shape);
+    return PyInt_FromLong(ndim);
 }
 
 

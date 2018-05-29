@@ -245,6 +245,10 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
             allocated_src_data = 1;
         }
 
+        if (PyDataType_FLAGCHK(PyArray_DESCR(dst), NPY_NEEDS_INIT)) {
+            memset(tmp_src_data, 0, PyArray_DESCR(dst)->elsize);
+        }
+
         if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0,
                             src_dtype, PyArray_DESCR(dst), 0) != NPY_SUCCEED) {
             src_data = tmp_src_data;

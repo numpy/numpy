@@ -257,6 +257,7 @@ add_newdoc('numpy.core', 'nditer',
     dtypes : tuple of dtype(s)
         The data types of the values provided in `value`. This may be
         different from the operand data types if buffering is enabled.
+        Valid only before the iterator is closed.
     finished : bool
         Whether the iteration over the operands is finished or not.
     has_delayed_bufalloc : bool
@@ -282,7 +283,8 @@ add_newdoc('numpy.core', 'nditer',
         Size of the iterator.
     itviews
         Structured view(s) of `operands` in memory, matching the reordered
-        and optimized iterator access pattern.
+        and optimized iterator access pattern. Valid only before the iterator
+        is closed.
     multi_index
         When the "multi_index" flag was used, this property
         provides access to the index. Raises a ValueError if accessed
@@ -292,7 +294,8 @@ add_newdoc('numpy.core', 'nditer',
     nop : int
         The number of iterator operands.
     operands : tuple of operand(s)
-        The array(s) to be iterated over.
+        The array(s) to be iterated over. Valid only before the iterator is
+        closed.
     shape : tuple of ints
         Shape tuple, the shape of the iterator.
     value
@@ -331,12 +334,12 @@ add_newdoc('numpy.core', 'nditer',
 
             it = np.nditer([x, y, out], [],
                         [['readonly'], ['readonly'], ['writeonly','allocate']])
+            with it:
+                while not it.finished:
+                    addop(it[0], it[1], out=it[2])
+                    it.iternext()
 
-            while not it.finished:
-                addop(it[0], it[1], out=it[2])
-                it.iternext()
-
-            return it.operands[2]
+                return it.operands[2]
 
     Here is an example outer product function::
 
@@ -351,7 +354,7 @@ add_newdoc('numpy.core', 'nditer',
             with it:
                 for (a, b, c) in it:
                     mulop(a, b, out=c)
-            return it.operands[2]
+                return it.operands[2]
 
         >>> a = np.arange(2)+1
         >>> b = np.arange(3)+1
@@ -374,7 +377,7 @@ add_newdoc('numpy.core', 'nditer',
             while not it.finished:
                 it[0] = lamdaexpr(*it[1:])
                 it.iternext()
-            return it.operands[0]
+                return it.operands[0]
 
         >>> a = np.arange(5)
         >>> b = np.ones(5)
@@ -382,10 +385,11 @@ add_newdoc('numpy.core', 'nditer',
         array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
     If operand flags `"writeonly"` or `"readwrite"` are used the operands may
-    be views into the original data with the WRITEBACKIFCOPY flag. In this case
-    nditer must be used as a context manager. The temporary
-    data will be written back to the original data when the `` __exit__``
-    function is called but not before::
+    be views into the original data with the `WRITEBACKIFCOPY` flag. In this case
+    nditer must be used as a context manager or the nditer.close
+    method must be called before using the result. The temporary
+    data will be written back to the original data when the `__exit__`
+    function is called but not before:
 
         >>> a = np.arange(6, dtype='i4')[::-2]
         >>> with nditer(a, [],
@@ -402,7 +406,7 @@ add_newdoc('numpy.core', 'nditer',
     references (like `x` in the example) may or may not share data with
     the original data `a`. If writeback semantics were active, i.e. if
     `x.base.flags.writebackifcopy` is `True`, then exiting the iterator
-     will sever the connection between `x` and `a`, writing to `x` will
+    will sever the connection between `x` and `a`, writing to `x` will
     no longer write to `a`. If writeback semantics are not active, then
     `x.data` will still point at some part of `a.data`, and writing to
     one will affect the other.
@@ -428,6 +432,13 @@ add_newdoc('numpy.core', 'nditer', ('copy',
     >>> it2.next()
     (array(1), array(2))
 
+    """))
+
+add_newdoc('numpy.core', 'nditer', ('operands',
+    """
+    operands[`Slice`]
+
+    The array(s) to be iterated over. Valid only before the iterator is closed.
     """))
 
 add_newdoc('numpy.core', 'nditer', ('debug_print',
@@ -555,6 +566,11 @@ add_newdoc('numpy.core', 'nditer', ('close',
     close()
 
     Resolve all writeback semantics in writeable operands.
+
+    See Also
+    --------
+
+    :ref:`nditer-context-manager`
 
     """))
 
@@ -4743,6 +4759,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
     machines with different endianness. Some of these problems can be overcome
     by outputting the data as text files, at the expense of speed and file
     size.
+    
+    When fid is a file object, array contents are directly written to the
+    file, bypassing the file object's ``write`` method. As a result, tofile
+    cannot be used with files objects supporting compression (e.g., GzipFile)
+    or file-like objects that do not support ``fileno()`` (e.g., BytesIO).
 
     """))
 
@@ -5631,10 +5652,13 @@ add_newdoc('numpy.core', 'ufunc',
         Alternate array object(s) in which to put the result; if provided, it
         must have a shape that the inputs broadcast to. A tuple of arrays
         (possible only as a keyword argument) must have length equal to the
-        number of outputs; use `None` for outputs to be allocated by the ufunc.
+        number of outputs; use `None` for uninitialized outputs to be
+        allocated by the ufunc.
     where : array_like, optional
         Values of True indicate to calculate the ufunc at that position, values
-        of False indicate to leave the value in the output alone.
+        of False indicate to leave the value in the output alone.  Note that if
+        an uninitialized return array is created via the default ``out=None``,
+        then the elements where the values are False will remain uninitialized.
     **kwargs
         For other keyword-only arguments, see the :ref:`ufunc docs <ufuncs.kwargs>`.
 
@@ -5642,7 +5666,8 @@ add_newdoc('numpy.core', 'ufunc',
     -------
     r : ndarray or tuple of ndarray
         `r` will have the shape that the arrays in `x` broadcast to; if `out` is
-        provided, `r` will be equal to `out`. If the function has more than one
+        provided, it will be returned. If not, `r` will be allocated and
+        may contain uninitialized values. If the function has more than one
         output, then the result will be a tuple of arrays.
 
     """)
@@ -5840,7 +5865,7 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, keepdims=False)
+    reduce(a, axis=0, dtype=None, out=None, keepdims=False, initial)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
@@ -5896,6 +5921,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         the result will broadcast correctly against the original `arr`.
 
         .. versionadded:: 1.7.0
+    initial : scalar, optional
+        The value with which to start the reduction.
+        If the ufunc has no identity or the dtype is object, this defaults
+        to None - otherwise it defaults to ufunc.identity.
+        If ``None`` is given, the first element of the reduction is used,
+        and an error is thrown if the reduction is empty.
+        
+        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -5927,7 +5960,24 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     >>> np.add.reduce(X, 2)
     array([[ 1,  5],
            [ 9, 13]])
-
+           
+    You can use the ``initial`` keyword argument to initialize the reduction with a
+    different value.
+    
+    >>> np.add.reduce([10], initial=5)
+    15
+    >>> np.add.reduce(np.ones((2, 2, 2)), axis=(0, 2), initializer=10)
+    array([14., 14.])
+    
+    Allows reductions of empty arrays where they would normally fail, i.e.
+    for ufuncs without an identity.
+    
+    >>> np.minimum.reduce([], initial=np.inf)
+    inf
+    >>> np.minimum.reduce([])
+    Traceback (most recent call last):
+        ...
+    ValueError: zero-size array to reduction operation minimum which has no identity
     """))
 
 add_newdoc('numpy.core', 'ufunc', ('accumulate',

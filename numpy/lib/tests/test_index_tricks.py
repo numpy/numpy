@@ -6,7 +6,7 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_raises_regex
     )
 from numpy.lib.index_tricks import (
-    mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
+    mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
     index_exp, ndindex, r_, s_, ix_
     )
 
@@ -156,6 +156,15 @@ class TestGrid(object):
         assert_array_almost_equal(d[1, :, 1] - d[1, :, 0],
                                   0.2*np.ones(20, 'd'), 11)
 
+    def test_sparse(self):
+        grid_full   = mgrid[-1:1:10j, -2:2:10j]
+        grid_sparse = ogrid[-1:1:10j, -2:2:10j]
+
+        # sparse grids can be made dense by broadcasting
+        grid_broadcast = np.broadcast_arrays(*grid_sparse)
+        for f, b in zip(grid_full, grid_broadcast):
+            assert_equal(f, b)
+
 
 class TestConcatenator(object):
     def test_1d(self):
@@ -183,37 +192,6 @@ class TestConcatenator(object):
         assert_(d.shape == (10, 5))
         assert_array_equal(d[:5, :], b)
         assert_array_equal(d[5:, :], c)
-
-    def test_matrix(self):
-        a = [1, 2]
-        b = [3, 4]
-
-        ab_r = np.r_['r', a, b]
-        ab_c = np.r_['c', a, b]
-
-        assert_equal(type(ab_r), np.matrix)
-        assert_equal(type(ab_c), np.matrix)
-
-        assert_equal(np.array(ab_r), [[1,2,3,4]])
-        assert_equal(np.array(ab_c), [[1],[2],[3],[4]])
-
-        assert_raises(ValueError, lambda: np.r_['rc', a, b])
-
-    def test_matrix_scalar(self):
-        r = np.r_['r', [1, 2], 3]
-        assert_equal(type(r), np.matrix)
-        assert_equal(np.array(r), [[1,2,3]])
-
-    def test_matrix_builder(self):
-        a = np.array([1])
-        b = np.array([2])
-        c = np.array([3])
-        d = np.array([4])
-        actual = np.r_['a, b; c, d']
-        expected = np.bmat([[a, b], [c, d]])
-
-        assert_equal(actual, expected)
-        assert_equal(type(actual), type(expected))
 
     def test_0d(self):
         assert_equal(r_[0, np.array(1), 2], [0, 1, 2])
