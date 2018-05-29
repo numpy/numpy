@@ -239,6 +239,13 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 /**end repeat**/
 #endif
 
+static PyObject *
+gentype21_not_implemented(PyObject *m1, PyObject *m2)
+{
+    Py_INCREF(Py_NotImplemented);
+    return Py_NotImplemented;
+}
+
 /* Get a nested slot, or NULL if absent */
 #define GET_NESTED_SLOT(type, group, slot) \
     ((type)->group == NULL ? NULL : (type)->group->slot)
@@ -1159,6 +1166,10 @@ static PyNumberMethods gentype_as_number = {
     0,                                           /*nb_inplace_floor_divide*/
     0,                                           /*nb_inplace_true_divide*/
     (unaryfunc)NULL,                             /*nb_index*/
+#if PY_VERSION_HEX >= 0x03050000
+    (binaryfunc)gentype21_not_implemented,       /*nb_matrix_multiply*/
+    0,                                           /*nb_inplace_matrix_multiply*/
+#endif
 };
 
 

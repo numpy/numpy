@@ -130,8 +130,8 @@ typedef struct _tagPyUFuncObject {
         /* The number of elements in 'functions' and 'data' */
         int ntypes;
 
-        /* Used to be unused field 'check_return' */
-        int reserved1;
+        /* Used to be unused field 'check_return', repurposed in 1.16 */
+        int version;
 
         /* The name of the ufunc */
         const char *name;
@@ -167,7 +167,7 @@ typedef struct _tagPyUFuncObject {
         int *core_dim_ixs;
         /*
          * positions of 1st core dimensions of each
-         * argument in core_dim_ixs
+         * argument in core_dim_ixs, equivalent to cumsum(core_num_dims)
          */
         int *core_offsets;
         /* signature string for printing purpose */
@@ -209,6 +209,14 @@ typedef struct _tagPyUFuncObject {
          * set by nditer object.
          */
         npy_uint32 iter_flags;
+
+        /* New in version 1 and above */
+
+        /*
+         * for each core_num_dim_ix, 1 for flexible (signature has ?) 0 otherwise
+         */
+        int *core_dim_flexible;
+
 } PyUFuncObject;
 
 #include "arrayobject.h"

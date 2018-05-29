@@ -1057,6 +1057,7 @@ PyUFunc_FromFuncAndData Specification
 What follows is the full specification of PyUFunc_FromFuncAndData, which
 automatically generates a ufunc from a C function with the correct signature.
 
+.. seealso:: :c:func:`PyUFunc_FromFuncAndDataAndSignature`
 
 .. c:function:: PyObject *PyUFunc_FromFuncAndData( \
         PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \

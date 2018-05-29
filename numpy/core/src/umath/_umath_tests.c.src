@@ -317,9 +317,11 @@ addUfuncs(PyObject *dictionary) {
 static PyObject *
 UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
-    int nin, nout;
-    PyObject *signature, *sig_str;
-    PyObject *f;
+    int nin, nout, i, core_num_ixs=0;
+    PyObject *signature=NULL, *sig_str=NULL;
+    PyUFuncObject *f=NULL;
+    PyObject *core_num_dims=NULL, *core_dim_ixs=NULL;
+    PyObject *core_dim_flexible=NULL;
     int core_enabled;
 
     if (!PyArg_ParseTuple(args, "iiO", &nin, &nout, &signature)) return NULL;
@@ -334,17 +336,43 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         return NULL;
     }
 
-    f = PyUFunc_FromFuncAndDataAndSignature(NULL, NULL, NULL,
+    f = (PyUFuncObject*)PyUFunc_FromFuncAndDataAndSignature(NULL, NULL, NULL,
         0, nin, nout, PyUFunc_None, "no name",
         "doc:none",
         1, PyString_AS_STRING(sig_str));
     if (sig_str != signature) {
         Py_DECREF(sig_str);
     }
-    if (f == NULL) return NULL;
-    core_enabled = ((PyUFuncObject*)f)->core_enabled;
+    if (f == NULL) goto error;
+    core_enabled = f->core_enabled;
+    core_num_dims = PyTuple_New(f->nargs);
+    if (core_num_dims == NULL) goto error;
+    for (i=0; i<f->nargs; i++) {
+        PyObject * val = PyLong_FromLong(f->core_num_dims[i]);
+        PyTuple_SET_ITEM(core_num_dims, i, val);
+        core_num_ixs += f->core_num_dims[i];
+    }
+    core_dim_ixs = PyTuple_New(core_num_ixs);
+    if (core_num_dims == NULL) goto error;
+    for (i=0; i<core_num_ixs; i++) {
+        PyObject * val = PyLong_FromLong(f->core_dim_ixs[i]);
+        PyTuple_SET_ITEM(core_dim_ixs, i, val);
+    }
+    core_dim_flexible = PyTuple_New(f->core_num_dim_ix);
+    if (core_dim_flexible == NULL) goto error;
+    for (i=0; i<f->core_num_dim_ix; i++) {
+        PyObject * val = PyLong_FromLong(f->core_dim_flexible[i]);
+        PyTuple_SET_ITEM(core_dim_flexible, i, val);
+    }
     Py_DECREF(f);
-    return Py_BuildValue("i", core_enabled);
+    return Py_BuildValue("iOOO", core_enabled, core_num_dims,
+                                 core_dim_ixs, core_dim_flexible);
+error:
+    Py_XDECREF(f);
+    Py_XDECREF(core_num_dims);
+    Py_XDECREF(core_dim_ixs);
+    Py_XDECREF(core_dim_flexible);
+    return NULL;
 }
 
 static PyMethodDef UMath_TestsMethods[] = {
