@@ -747,19 +747,17 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             return np.ma.minimum_fill_value(asorted)
         return s
 
-    counts = count(asorted, axis=axis)
+    counts = count(asorted, axis=axis, keepdims=True)
     h = counts // 2
 
-    # create indexing mesh grid for all but reduced axis
-    axes_grid = [np.arange(x) for i, x in enumerate(asorted.shape)
-                 if i != axis]
-    ind = np.meshgrid(*axes_grid, sparse=True, indexing='ij')
+    # duplicate high if odd number of elements so mean does nothing
+    odd = counts % 2 == 1
+    l = np.where(odd, h, h-1)
 
-    # insert indices of low and high median
-    ind.insert(axis, h - 1)
-    low = asorted[tuple(ind)]
-    ind[axis] = np.minimum(h, asorted.shape[axis] - 1)
-    high = asorted[tuple(ind)]
+    lh = np.concatenate([l,h], axis=axis)
+
+    # get low and high median
+    low_high = np.take_along_axis(asorted, lh, axis=axis)
 
     def replace_masked(s):
         # Replace masked entries with minimum_full_value unless it all values
@@ -767,30 +765,20 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # larger than the fill value is undefined and a valid value placed
         # elsewhere, e.g. [4, --, inf].
         if np.ma.is_masked(s):
-            rep = (~np.all(asorted.mask, axis=axis)) & s.mask
+            rep = (~np.all(asorted.mask, axis=axis, keepdims=True)) & s.mask
             s.data[rep] = np.ma.minimum_fill_value(asorted)
             s.mask[rep] = False
 
-    replace_masked(low)
-    replace_masked(high)
-
-    # duplicate high if odd number of elements so mean does nothing
-    odd = counts % 2 == 1
-    np.copyto(low, high, where=odd)
-    # not necessary for scalar True/False masks
-    try:
-        np.copyto(low.mask, high.mask, where=odd)
-    except Exception:
-        pass
+    replace_masked(low_high)
 
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
-        s = np.ma.sum([low, high], axis=0, out=out)
+        s = np.ma.sum(low_high, axis=axis, out=out)
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
 
         s = np.lib.utils._median_nancheck(asorted, s, axis, out)
     else:
-        s = np.ma.mean([low, high], axis=0, out=out)
+        s = np.ma.mean(low_high, axis=axis, out=out)
 
     return s
 
