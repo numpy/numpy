@@ -328,12 +328,18 @@ def build_project(args):
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
     cvars = distutils.sysconfig.get_config_vars()
-    if 'gcc' in cvars['CC']:
-        # add flags used as werrors tools/travis-test.sh
-        warnings_as_errors = ('-Werror=declaration-after-statement -Werror=vla'
-                              ' -Werror=nonnull -Werror=pointer-arith'
-                              ' -Wlogical-op -Werror=unused-function ')
-        env['CFLAGS'] = warnings_as_errors + env.get('CFLAGS', '')
+    if 'gcc' in cvars.get('CC', ''):
+        # add flags used as werrors from tools/travis-test.sh,
+        # add unused-function as well from sysconfig
+        warnings_as_errors = ' '.join([
+                    '-Werror=declaration-after-statement',
+                    '-Werror=vla',
+                    '-Werror=nonnull',
+                    '-Werror=pointer-arith',
+                    '-Wlogical-op',
+                    '-Werror=unused-function',
+        ])
+        env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'
