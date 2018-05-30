@@ -2252,7 +2252,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
 
                 /* can only happen if flexible; dimension missing altogether */
                 if (core_dim_flags[core_dim_index] & UFUNC_CORE_DIM_MISSING) {
-                    op_dim_size = 0;
+                    op_dim_size = 1;
                     dim_delta++; /* for indexing in dimensions */
                 }
                 else {
@@ -2737,9 +2737,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     /* Copy the strides after the first nop */
     idim = nop;
     for (i = 0; i < nop; ++i) {
-        int num_dims = ufunc->core_num_dims[i];
-        /* Could be negative if flexible dims are used, or if keepdims */
-        int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
         /*
          * Need to use the arrays in the iterator, not op, because
          * a copy with a different-sized type may have been made.
@@ -2747,20 +2744,31 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         PyArrayObject *arr = NpyIter_GetOperandArray(iter)[i];
         npy_intp *shape = PyArray_SHAPE(arr);
         npy_intp *strides = PyArray_STRIDES(arr);
-        for (j = 0; j < num_dims; ++j) {
-            if (core_start_dim + j >= 0) {
-                /*
-                 * Force the stride to zero when the shape is 1, so
-                 * that the broadcasting works right.
-                 */
-                int remapped_axis = REMAP_AXIS(i, core_start_dim + j);
+        /*
+         * Could be negative if flexible dims are used, but not for
+         * keepdims, since those dimensions are allocated in arr.
+         */
+        int core_start_dim = PyArray_NDIM(arr) - core_num_dims[i];
+        int num_removed = 0;
+        int dim_offset = ufunc->core_offsets[i];
+
+        for (j = 0; j < ufunc->core_num_dims[i]; ++j) {
+            int core_dim_index = ufunc->core_dim_ixs[dim_offset + j];
+            /*
+             * Force zero stride when the shape is 1 (always the case for
+             * for missing dimensions), so that broadcasting works right.
+             */
+            if (core_dim_flags[core_dim_index] & UFUNC_CORE_DIM_MISSING) {
+                num_removed++;
+                inner_strides[idim++] = 0;
+            }
+            else {
+                int remapped_axis = REMAP_AXIS(i, core_start_dim + j - num_removed);
                 if (shape[remapped_axis] != 1) {
                     inner_strides[idim++] = strides[remapped_axis];
                 } else {
                     inner_strides[idim++] = 0;
                 }
-            } else {
-                inner_strides[idim++] = 0;
             }
         }
     }
