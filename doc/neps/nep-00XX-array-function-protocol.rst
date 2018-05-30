@@ -514,7 +514,7 @@ Discussion
 Various alternatives to this proposal were discussed in a few Github issues:
 
 1.  `pydata/sparse #1 <https://github.com/pydata/sparse/issues/1>`_
-2.  `numpy/numpy #11128 <https://github.com/numpy/numpy/issues/11129>`_
+2.  `numpy/numpy #11129 <https://github.com/numpy/numpy/issues/11129>`_
 
 Additionally it was the subject of `a blogpost
 <http://matthewrocklin.com/blog/work/2018/05/27/beyond-numpy>`_ Following this
