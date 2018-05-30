@@ -1,0 +1,18 @@
+==========================
+NumPy 1.14.4 Release Notes
+==========================
+
+This is a bugfix release for bugs reported following the 1.14.3 release:
+
+* float128 values on ppc systems now print more correctly. The whitespace
+  padding is still incorrect and is to be fixed in numpy 1.15. Numpy still
+  fails some printing-related (and other) unit tests on ppc systems.
+* float values printed in the python2 interactive shell had extra quote marks
+
+The Python versions supported in this release are 2.7 and 3.4 - 3.6. The Python
+3.6 wheels available from PIP are built with Python 3.6.2 and should be
+compatible with all previous versions of Python 3.6. The source releases were
+cythonized with Cython 0.28.2.
+
+Contributors
+============
