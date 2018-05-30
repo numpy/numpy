@@ -860,6 +860,9 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
     LOOP_BLOCKED_END {
         *op  = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
+    if (npy_isnan(*op)) {
+        npy_set_floatstatus_invalid();
+    }
 }
 /**end repeat1**/
 
