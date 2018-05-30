@@ -332,7 +332,7 @@ def build_project(args):
         # add flags used as werrors tools/travis-test.sh
         warnings_as_errors = (' -Werror=declaration-after-statement -Werror=vla'
                               ' -Werror=nonnull -Werror=pointer-arith'
-                              ' -Wlogical-op')
+                              ' -Wlogical-op ')
         env['CFLAGS'] = warnings_as_errors + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
