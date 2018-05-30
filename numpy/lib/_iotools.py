@@ -205,7 +205,11 @@ class LineSplitter(object):
     #
 
     def __init__(self, delimiter=None, comments='#', autostrip=True, encoding=None):
+        delimiter = _decode_line(delimiter)
+        comments = _decode_line(comments)
+
         self.comments = comments
+
         # Delimiter is a character
         if (delimiter is None) or isinstance(delimiter, basestring):
             delimiter = delimiter or None
