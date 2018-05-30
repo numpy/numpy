@@ -53,6 +53,11 @@ class TestLineSplitter(object):
         test = LineSplitter(',')(strg)
         assert_equal(test, ['1', '2', '3', '4', '', '5'])
 
+        # gh-11028 bytes comment/delimiters should get decoded
+        strg = b" 1,2,3,4,,5 % test"
+        test = LineSplitter(delimiter=b',', comments=b'%')(strg)
+        assert_equal(test, ['1', '2', '3', '4', '', '5'])
+
     def test_constant_fixed_width(self):
         "Test LineSplitter w/ fixed-width fields"
         strg = "  1  2  3  4     5   # test"
