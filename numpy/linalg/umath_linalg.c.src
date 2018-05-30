@@ -368,17 +368,11 @@ typedef f2c_doublecomplex fortran_doublecomplex;
  *****************************************************************************
  */
 
-static NPY_INLINE void *
-offset_ptr(void* ptr, ptrdiff_t offset)
-{
-    return (void*)((npy_uint8*)ptr + offset);
-}
-
 static NPY_INLINE int
 get_fp_invalid_and_clear(void)
 {
     int status;
-    status = npy_clear_floatstatus();
+    status = npy_clear_floatstatus_barrier((char*)&status);
     return !!(status & NPY_FPE_INVALID);
 }
 
@@ -389,7 +383,7 @@ set_fp_invalid_or_clear(int error_occurred)
         npy_set_floatstatus_invalid();
     }
     else {
-        npy_clear_floatstatus();
+        npy_clear_floatstatus_barrier((char*)&error_occurred);
     }
 }
 
@@ -551,104 +545,6 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
               "\n\t\trow_strides: %td column_strides: %td"\
               "\n", name, params->rows, params->columns,
               params->row_strides, params->column_strides);
-}
-
-
-static NPY_INLINE float
-FLOAT_add(float op1, float op2)
-{
-    return op1 + op2;
-}
-
-static NPY_INLINE double
-DOUBLE_add(double op1, double op2)
-{
-    return op1 + op2;
-}
-
-static NPY_INLINE COMPLEX_t
-CFLOAT_add(COMPLEX_t op1, COMPLEX_t op2)
-{
-    COMPLEX_t result;
-    result.array[0] = op1.array[0] + op2.array[0];
-    result.array[1] = op1.array[1] + op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE DOUBLECOMPLEX_t
-CDOUBLE_add(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
-{
-    DOUBLECOMPLEX_t result;
-    result.array[0] = op1.array[0] + op2.array[0];
-    result.array[1] = op1.array[1] + op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE float
-FLOAT_mul(float op1, float op2)
-{
-    return op1*op2;
-}
-
-static NPY_INLINE double
-DOUBLE_mul(double op1, double op2)
-{
-    return op1*op2;
-}
-
-
-static NPY_INLINE COMPLEX_t
-CFLOAT_mul(COMPLEX_t op1, COMPLEX_t op2)
-{
-    COMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] - op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[1]*op2.array[0] + op1.array[0]*op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE DOUBLECOMPLEX_t
-CDOUBLE_mul(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
-{
-    DOUBLECOMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] - op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[1]*op2.array[0] + op1.array[0]*op2.array[1];
-
-    return result;
-}
-
-static NPY_INLINE float
-FLOAT_mulc(float op1, float op2)
-{
-    return op1*op2;
-}
-
-static NPY_INLINE double
-DOUBLE_mulc(float op1, float op2)
-{
-    return op1*op2;
-}
-
-static NPY_INLINE COMPLEX_t
-CFLOAT_mulc(COMPLEX_t op1, COMPLEX_t op2)
-{
-    COMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] + op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[0]*op2.array[1] - op1.array[1]*op2.array[0];
-
-    return result;
-}
-
-static NPY_INLINE DOUBLECOMPLEX_t
-CDOUBLE_mulc(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
-{
-    DOUBLECOMPLEX_t result;
-    result.array[0] = op1.array[0]*op2.array[0] + op1.array[1]*op2.array[1];
-    result.array[1] = op1.array[0]*op2.array[1] - op1.array[1]*op2.array[0];
-
-    return result;
 }
 
 static NPY_INLINE void

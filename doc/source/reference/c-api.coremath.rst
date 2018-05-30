@@ -183,14 +183,46 @@ Those can be useful for precise floating point comparison.
     * NPY_FPE_UNDERFLOW
     * NPY_FPE_INVALID
 
+    Note that :c:func:`npy_get_floatstatus_barrier` is preferable as it prevents
+    agressive compiler optimizations reordering the call relative to
+    the code setting the status, which could lead to incorrect results.
+
     .. versionadded:: 1.9.0
+
+.. c:function:: int npy_get_floatstatus_barrier(char*)
+
+    Get floating point status. A pointer to a local variable is passed in to
+    prevent aggresive compiler optimizations from reodering this function call
+    relative to the code setting the status, which could lead to incorrect
+    results.
+
+    Returns a bitmask with following possible flags:
+
+    * NPY_FPE_DIVIDEBYZERO
+    * NPY_FPE_OVERFLOW
+    * NPY_FPE_UNDERFLOW
+    * NPY_FPE_INVALID
+
+    .. versionadded:: 1.15.0
 
 .. c:function:: int npy_clear_floatstatus()
 
     Clears the floating point status. Returns the previous status mask.
 
+    Note that :c:func:`npy_clear_floatstatus_barrier` is preferable as it
+    prevents agressive compiler optimizations reordering the call relative to
+    the code setting the status, which could lead to incorrect results.
+
     .. versionadded:: 1.9.0
 
+.. c:function:: int npy_clear_floatstatus_barrier(char*)
+
+    Clears the floating point status. A pointer to a local variable is passed in to
+    prevent aggresive compiler optimizations from reodering this function call.
+    Returns the previous status mask.
+
+    .. versionadded:: 1.15.0
+n
 Complex functions
 ~~~~~~~~~~~~~~~~~
 
@@ -237,7 +269,7 @@ of floating point round-off error.
 
 Like for other types, NumPy includes a typedef npy_half for the 16 bit
 float.  Unlike for most of the other types, you cannot use this as a
-normal type in C, since is is a typedef for npy_uint16.  For example,
+normal type in C, since it is a typedef for npy_uint16.  For example,
 1.0 looks like 0x3c00 to C, and if you do an equality comparison
 between the different signed zeros, you will get -0.0 != 0.0
 (0x8000 != 0x0000), which is incorrect.

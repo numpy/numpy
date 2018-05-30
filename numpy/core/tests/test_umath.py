@@ -1327,6 +1327,16 @@ class TestMinMax(object):
         assert_equal(d.max(), d[0])
         assert_equal(d.min(), d[0])
 
+    def test_reduce_warns(self):
+        # gh 10370 Some compilers reorder the call to npy_getfloatstatus and
+        # put it before the call to an intrisic function that causes invalid
+        # status to be set
+        for n in (2, 4, 8, 16, 32):
+            with suppress_warnings() as sup:
+                sup.record(RuntimeWarning)
+                for r in np.diagflat([np.nan] * n):
+                    assert_equal(np.min(r), np.nan)
+
 
 class TestAbsoluteNegative(object):
     def test_abs_neg_blocked(self):
