@@ -153,30 +153,10 @@ static void
     npy_intp m,n,p;
     npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
          os_m=steps[4], os_p=steps[5];
-    npy_intp ib1_n;
-    npy_intp ib2_n;
-    npy_intp ib2_p;
-    npy_intp ob_p;
-    /*
-     * no m dimension -> row vector . matrix
-     */
-    if (dm == 0) {
-        dm = 1;
-    }
-    /*
-     * no p dimension -> matrix . column vector
-     * note that for a 1-d array, it looks like a matrix with first step
-     * equal zero, hence the switch in steps
-     */
-    if (dp == 0) {
-        os_m = os_p;
-        is2_n = is2_p;
-        dp = 1;
-    }
-    ib1_n = is1_n*dn;
-    ib2_n = is2_n*dn;
-    ib2_p = is2_p*dp;
-    ob_p  = os_p *dp;
+    npy_intp ib1_n = is1_n*dn;
+    npy_intp ib2_n = is2_n*dn;
+    npy_intp ib2_p = is2_p*dp;
+    npy_intp ob_p  = os_p *dp;
     if (dn == 0) {
         /* No operand, need to zero the output */
         BEGIN_OUTER_LOOP_3
