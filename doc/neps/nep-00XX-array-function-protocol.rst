@@ -44,14 +44,14 @@ equally well with any Numpy-like array object:
 
     def f(x):
         y = np.tensordot(x, x.T)
-        return np.sum(np.exp(y))
+        return np.mean(np.exp(y))
 
 Some of this is possible today with various protocol mechanisms within
 Numpy.
 
 -  The ``np.exp`` function checks the ``__array_ufunc__`` protocol
 -  The ``.T`` method works using Python's method dispatch
--  The ``np.sum`` function explicitly checks for a ``.sum`` method on
+-  The ``np.mean`` function explicitly checks for a ``.mean`` method on
    the argument
 
 However other functions, like ``np.tensordot`` do not dispatch, and
@@ -84,15 +84,15 @@ We propose the following signature for implementations of
 
 .. code-block:: python
 
-    def __array_function__(self, func, types, *args, **kwargs)
+    def __array_function__(self, func, types, args, kwargs)
 
 -  ``func`` is an arbitrary callable exposed by NumPy's public API,
    which was called in the form ``func(*args, **kwargs)``.
 -  ``types`` is a list of types for all arguments to the original NumPy
    function call that will be checked for an ``__array_function__``
    implementation.
--  ``*args`` and ``**kwargs`` are directly passed on from the original
-   call.
+-  The tuple ``args`` and dict ``**kwargs`` are directly passed on from the
+   original call.
 
 Unlike ``__array_ufunc__``, there are no high-level guarantees about the
 type of ``func``, or about which of ``args`` and ``kwargs`` may contain
@@ -119,10 +119,10 @@ function is not implemented by these types.
 .. code:: python
 
     class MyArray:
-        def __array_function__(self, func, overload_types, *args, **kwargs):
+        def __array_function__(self, func, types, args, kwargs):
             if func not in HANDLED_FUNCTIONS:
                 return NotImplemented
-            if not all(issubclass(t, MyArray) for t in overload_types):
+            if not all(issubclass(t, MyArray) for t in types):
                 return NotImplemented
             return HANDLED_FUNCTIONS[func](*args, **kwargs)
 
@@ -187,9 +187,11 @@ The rules for dispatch with ``__array_function__`` match those for
 `NEP-13 <http://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`__).
 In particular:
 
--  NumPy will gather implementations of ``__array_functions__`` from all
+-  NumPy will gather implementations of ``__array_function__`` from all
    specified inputs and call them in order: subclasses before
-   superclasses, and otherwise left to right.
+   superclasses, and otherwise left to right. Note that in some edge cases,
+   this differs slightly from the
+   `current behavior <https://bugs.python.org/issue30140 >`__ of Python.
 -  Implementations of ``__array_function__`` indicate that they can
    handle the operation by returning any value other than
    ``NotImplemented``.
@@ -213,7 +215,8 @@ might be affected by this change:
         success, value = do_array_function_dance(
             func=broadcast_to,
             relevant_arguments=[array],
-            array, shape, subok=subok)  # *args, **kwargs
+            args=(array,),
+            kwargs=dict(shape=kwargs, subok=subok))
         if success:
             return value
 
@@ -223,11 +226,35 @@ might be affected by this change:
         success, value = do_array_function_dance(
             func=concatenate,
             relevant_arguments=[arrays, out],
-            arrays, axis=axis, out=out)
+            args=(arrays,),
+            kwargs=dict(axis=axis, out=out))
         if success:
             return value
 
         ... # continue with the definition of concatenate
+
+The list of objects passed to ``relevant_arguments`` are those that should
+be inspected for ``__array_function__`` implementations.
+
+Alternatively, we could write these overloads with a decorator, e.g.,
+
+.. code:: python
+
+    @overload_for_array_function(['array'])
+    def broadcast_to(array, shape, subok=False):
+        ... # continue with the definition of broadcast_to
+
+    @overload_for_array_function(['arrays', 'out'])
+    def concatenate(arrays, axis=0, out=None):
+        ... # continue with the definition of concatenate
+
+The decorator ``overload_for_array_function`` would be written in terms
+of ``do_array_function_dance``.
+
+The downside of this approach would be a loss of introspection capability
+for NumPy functions on Python 2, since this requires the use of
+``inspect.Signature`` (only available on Python 3). However, NumPy won't
+be supporting Python 2 for `very much longer <http://www.numpy.org/neps/nep-0014-dropping-python2.7-proposal.html>`__.
 
 Use outside of NumPy
 ~~~~~~~~~~~~~~~~~~~~
@@ -304,7 +331,7 @@ We could (and should) continue to develop protocols like
 
 As mentioned above, if this means that some functions that we overload
 with ``__array_function__`` should switch to a new protocol instead,
-that is explicitly OK for as long as ``__array_ufunc__`` retains its
+that is explicitly OK for as long as ``__array_function__`` retains its
 experimental status.
 
 Separate namespace
