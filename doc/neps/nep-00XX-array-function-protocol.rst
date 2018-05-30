@@ -216,7 +216,7 @@ might be affected by this change:
             func=broadcast_to,
             relevant_arguments=[array],
             args=(array,),
-            kwargs=dict(shape=kwargs, subok=subok))
+            kwargs=dict(shape=shape, subok=subok))
         if success:
             return value
 
