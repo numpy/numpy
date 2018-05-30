@@ -239,6 +239,16 @@ single elementary function for four related but different signatures,
 The ``out`` argument to these functions is now always tested for memory overlap
 to avoid corrupted results when memory overlap occurs.
 
+New value ``unscaled`` for option ``cov`` in ``np.polyfit''
+-----------------------------------------------------------
+A further possible value has been added to the ``cov`` parameter of the
+``np.polyfit`` function. With ``cov='unscaled'`` the scaling of the covariance
+matrix is disabled completely (similar to setting ``absolute_sigma=True'' in
+``scipy.optimize.curve_fit``). This would be useful in occasions, where the
+weights are given by 1/sigma with sigma being the (known) standard errors of
+(Gaussian distributed) data points, in which case the unscaled matrix is
+already a correct estimate for the covariance matrix.
+
 Detailed docstrings for scalar numeric types
 --------------------------------------------
 The ``help`` function, when applied to numeric types such as `np.intc`,
@@ -349,6 +359,14 @@ raise a ``DeprecationWarning`` if the array is not numerical (i.e.,
 if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
 subclasses that override the default ``__array_ufunc__`` implementation,
 the ``TypeError`` is passed on.
+
+The scaling of the covariance matrix in ``np.polyfit`` is different
+-------------------------------------------------------------------
+So far, ``np.polyfit`` used a non-standard factor in the scaling of the the
+covariance matrix. Namely, rather than using the standard chisq/(M-N), it
+scales it with chisq/(M-N-2) where M is the number of data points and N is the
+number of parameters.  This scaling is inconsistent with other fitting programs
+such as e.g. ``scipy.optimize.curve_fit`` and was changed to chisq/(M-N).
 
 ``maximum`` and ``minimum`` no longer emit warnings
 ---------------------------------------------------

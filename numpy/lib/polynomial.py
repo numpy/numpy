@@ -463,9 +463,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     w : array_like, shape (M,), optional
         Weights to apply to the y-coordinates of the sample points. For
         gaussian uncertainties, use 1/sigma (not 1/sigma**2).
-    cov : bool, optional
-        Return the estimate and the covariance matrix of the estimate
-        If full is True, then cov is not returned.
+    cov : bool or str, optional
+        If given and not `False`, return not just the estimate but also its
+        covariance matrix. By default, the covariance are scaled by
+        chi2/sqrt(N-dof), i.e., the weights are presumed to be unreliable
+        except in a relative sense and everything is scaled such that the
+        reduced chi2 is unity. This scaling is omitted if ``cov='unscaled'``,
+        as is relevant for the case that the weights are 1/sigma**2, with
+        sigma known to be a reliable estimate of the uncertainty.
 
     Returns
     -------
@@ -633,14 +638,17 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     elif cov:
         Vbase = inv(dot(lhs.T, lhs))
         Vbase /= NX.outer(scale, scale)
-        # Some literature ignores the extra -2.0 factor in the denominator, but
-        #  it is included here because the covariance of Multivariate Student-T
-        #  (which is implied by a Bayesian uncertainty analysis) includes it.
-        #  Plus, it gives a slightly more conservative estimate of uncertainty.
-        if len(x) <= order + 2:
-            raise ValueError("the number of data points must exceed order + 2 "
-                             "for Bayesian estimate the covariance matrix")
-        fac = resids / (len(x) - order - 2.0)
+        if cov == "unscaled":
+            fac = 1
+        else:
+            if len(x) <= order:
+                raise ValueError("the number of data points must exceed order "
+                                 "to scale the covariance matrix")
+            # note, this used to be: fac = resids / (len(x) - order - 2.0)
+            # it was deciced that the "- 2" (originally justified by "Bayesian
+            # uncertainty analysis") is not was the user expects
+            # (see gh-11196 and gh-11197)
+            fac = resids / (len(x) - order)
         if y.ndim == 1:
             return c, Vbase * fac
         else:
