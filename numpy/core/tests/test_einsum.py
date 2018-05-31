@@ -596,6 +596,7 @@ class TestEinSum(object):
                      [[[1,  3], [3,  9], [5, 15], [7, 21]],
                      [[8, 16], [16, 32], [24, 48], [32, 64]]])
 
+    def test_subscript_range
         # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
         # when creating a subscript from arrays
         a = np.ones((2, 3))
@@ -603,6 +604,8 @@ class TestEinSum(object):
         np.einsum(a, [0, 20], b, [20, 2], [0, 2], optimize=False)
         np.einsum(a, [0, 27], b, [27, 2], [0, 2], optimize=False)
         np.einsum(a, [0, 51], b, [51, 2], [0, 2], optimize=False)
+        assert_raises(ValueError, lambda: np.einsum(a, [0, 52], b, [52, 2], [0, 2], optimize=False))
+        assert_raises(ValueError, lambda: np.einsum(a, [-1, 5], b, [5, 2], [-1, 2], optimize=False))
         
     def test_einsum_broadcast(self):
         # Issue #2455 change in handling ellipsis
