@@ -596,7 +596,7 @@ class TestEinSum(object):
                      [[[1,  3], [3,  9], [5, 15], [7, 21]],
                      [[8, 16], [16, 32], [24, 48], [32, 64]]])
 
-    def test_subscript_range
+    def test_subscript_range(self):
         # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
         # when creating a subscript from arrays
         a = np.ones((2, 3))
