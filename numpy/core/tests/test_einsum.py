@@ -598,9 +598,11 @@ class TestEinSum(object):
 
         # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
         # when creating a subscript from arrays
-        np.einsum(np.ones((2,3)),[0,20],np.ones((3,4)),[20,2],[0,2], optimize=False)
-        np.einsum(np.ones((2,3)),[0,27],np.ones((3,4)),[27,2],[0,2], optimize=False)
-        np.einsum(np.ones((2,3)),[0,51],np.ones((3,4)),[51,2],[0,2], optimize=False)
+        a = np.ones((2, 3))
+        b = np.ones((3, 4))
+        np.einsum(a, [0, 20], b, [20, 2], [0, 2], optimize=False)
+        np.einsum(a, [0, 27], b, [27, 2], [0, 2], optimize=False)
+        np.einsum(a, [0, 51], b, [51, 2], [0, 2], optimize=False)
         
     def test_einsum_broadcast(self):
         # Issue #2455 change in handling ellipsis
