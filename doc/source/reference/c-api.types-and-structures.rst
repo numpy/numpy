@@ -698,7 +698,7 @@ PyUFunc_Type
           PyUFuncGenericFunction *functions;
           void **data;
           int ntypes;
-          int reserved1;
+          int version;
           const char *name;
           char *types;
           const char *doc;
@@ -717,6 +717,10 @@ PyUFunc_Type
           PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
+          /* new in version 1 */
+          npy_intp *core_dim_sizes;
+          npy_uint32 *core_dim_flags;
+
       } PyUFuncObject;
 
    .. c:macro: PyUFuncObject.PyObject_HEAD
@@ -775,6 +779,10 @@ PyUFunc_Type
        The number of supported data types for the ufunc. This number
        specifies how many different 1-d loops (of the builtin data
        types) are available.
+
+   .. c:member:: int PyUFuncObject.version
+
+       The version of this struct, currently set to 1
 
    .. c:member:: char *PyUFuncObject.name
 
@@ -869,6 +877,21 @@ PyUFunc_Type
    .. c:member:: npy_uint32 PyUFuncObject.iter_flags
 
        Override the default nditer flags for the ufunc.
+
+   Added in version 1
+
+   .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
+
+       For each distinct core dimension, the possible
+       "frozen" size (``-1`` if not frozen)
+
+   .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
+
+       For each distinct core dimension, a set of flags ``OR`` ed together:
+
+       - :c:data:`UFUNC_CORE_CAN_IGNORE` if the dim name ends in ``?``
+       - :c:data:`UFUNC_CORE_DIM_SIZE_UNSET` if the dim size will be
+         determined by the operands (not frozen)
 
 PyArrayIter_Type
 ----------------
