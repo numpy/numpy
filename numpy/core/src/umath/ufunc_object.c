@@ -2308,19 +2308,20 @@ _parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
  *
  * Returns 0 on success, and -1 on failure
  *
- * The behavior has been changed in NumPy 1.10.0, and the following
+ * The behavior has been changed in NumPy 1.16.0, and the following
  * requirements must be fulfilled or an error will be raised:
  *  * Arguments, both input and output, must have at least as many
  *    dimensions as the corresponding number of core dimensions. In
- *    previous versions, 1's were prepended to the shape as needed.
+ *    versions before 1.10, 1's were prepended to the shape as needed.
  *  * Core dimensions with same labels must have exactly matching sizes.
- *    In previous versions, core dimensions of size 1 would broadcast
+ *    In versions before 1.10, core dimensions of size 1 would broadcast
  *    against other core dimensions with the same label.
  *  * All core dimensions must have their size specified by a passed in
- *    input or output argument. In previous versions, core dimensions in
+ *    input or output argument. In versions before 1.10, core dimensions in
  *    an output argument that were not specified in an input argument,
  *    and whose size could not be inferred from a passed in output
  *    argument, would have their size set to 1.
+ *  * Core dimensions may be fixed, new in ufunc->version 1 (NumPy 1.16)
  */
 static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,

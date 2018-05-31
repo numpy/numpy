@@ -576,8 +576,8 @@ static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
      "Arguments: nin nout signature \n"
-     "If fails, it returns NULL. Otherwise it will returns 0 for scalar ufunc "
-     "and 1 for generalized ufunc. \n",
+     "If fails, it returns NULL. Otherwise it returns a tuple of ufunc "
+     "internals. \n",
      },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
