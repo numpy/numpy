@@ -4,7 +4,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,)
+from numpy.testing import (assert_equal, assert_array_equal, assert_raises, assert_allclose,)
 from numpy.lib import pad
 
 
@@ -343,6 +343,13 @@ class TestStatistic(object):
              49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5]
             )
         assert_array_equal(a, b)
+
+    def test_check_mean_ignore_prepend(self):
+        # check that prepended values don't bias the appended mean
+        a = np.array([-1, 2 + 1e-12, -1], dtype=np.float64)
+        a = pad(a, (1, 1), 'mean')
+        front_pad, end_pad = a[0], a[-1]
+        assert_equal(front_pad, end_pad)
 
 
 class TestConstant(object):
