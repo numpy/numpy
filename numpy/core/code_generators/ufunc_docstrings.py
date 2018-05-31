@@ -3365,7 +3365,7 @@ add_newdoc('numpy.core.umath', 'sinh',
 
 add_newdoc('numpy.core.umath', 'sqrt',
     """
-    Return the positive square-root of an array, element-wise.
+    Return the non-negative square-root of an array, element-wise.
 
     Parameters
     ----------
