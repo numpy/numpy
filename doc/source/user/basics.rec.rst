@@ -6,8 +6,8 @@ Structured arrays
 
 .. automodule:: numpy.doc.structured_arrays
 
-Helper Funtions
-***************
+Recarray Helper Functions
+*************************
 
 .. automodule:: numpy.lib.recfunctions
     :members:
