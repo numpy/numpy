@@ -1109,7 +1109,7 @@ def einsum(*operands, **kwargs):
             # Checks have already been handled
             input_str, results_index = einsum_str.split('->')
             input_left, input_right = input_str.split(',')
-            if 1 in tmp_operands[0] or 1 in tmp_operands[1]:
+            if 1 in tmp_operands[0].shape or 1 in tmp_operands[1].shape:
                 left_dims = {dim: size for dim, size in
                              zip(input_left, tmp_operands[0].shape)}
                 right_dims = {dim: size for dim, size in
