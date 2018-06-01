@@ -189,14 +189,14 @@ are valid then which has precedence?
 
 The rules for dispatch with ``__array_function__`` match those for
 ``__array_ufunc__`` (see
-`NEP-13 <http://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`__).
+`NEP-13 <http://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_).
 In particular:
 
 -  NumPy will gather implementations of ``__array_function__`` from all
    specified inputs and call them in order: subclasses before
    superclasses, and otherwise left to right. Note that in some edge cases,
    this differs slightly from the
-   `current behavior <https://bugs.python.org/issue30140 >`__ of Python.
+   `current behavior <https://bugs.python.org/issue30140>`_ of Python.
 -  Implementations of ``__array_function__`` indicate that they can
    handle the operation by returning any value other than
    ``NotImplemented``.
@@ -259,7 +259,7 @@ of ``do_array_function_dance``.
 The downside of this approach would be a loss of introspection capability
 for NumPy functions on Python 2, since this requires the use of
 ``inspect.Signature`` (only available on Python 3). However, NumPy won't
-be supporting Python 2 for `very much longer <http://www.numpy.org/neps/nep-0014-dropping-python2.7-proposal.html>`__.
+be supporting Python 2 for `very much longer <http://www.numpy.org/neps/nep-0014-dropping-python2.7-proposal.html>`_.
 
 Use outside of NumPy
 ~~~~~~~~~~~~~~~~~~~~
@@ -363,9 +363,9 @@ Multiple dispatch
 
 An alternative to our suggestion of the ``__array_function__`` protocol
 would be implementing NumPy's core functions as
-`multi-methods <https://en.wikipedia.org/wiki/Multiple_dispatch>`__.
+`multi-methods <https://en.wikipedia.org/wiki/Multiple_dispatch>`_.
 Although one of us wrote a `multiple dispatch
-library <https://github.com/mrocklin/multipledispatch>`__ for Python, we
+library <https://github.com/mrocklin/multipledispatch>`_ for Python, we
 don't think this approach makes sense for NumPy in the near term.
 
 The main reason is that NumPy already has a well-proven dispatching
@@ -483,7 +483,7 @@ signature for functions in the past, including functions like
 For adding new keyword arguments that do not change default behavior, we
 would only include these as keyword arguments when they have changed
 from default values. This is similar to `what NumPy already has
-done <https://github.com/numpy/numpy/blob/v1.14.2/numpy/core/fromnumeric.py#L1865-L1867>`__,
+done <https://github.com/numpy/numpy/blob/v1.14.2/numpy/core/fromnumeric.py#L1865-L1867>`_,
 e.g., for the optional ``keepdims`` argument in ``sum``:
 
 .. code:: python
