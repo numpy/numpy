@@ -436,6 +436,20 @@ within an array.
 .. note:: Implementations of ``__array_ufunc__`` should ensure that they can
           handle either ``axis`` or ``axes``.  In future, we may convert
           ``axis`` to ``axes`` before passing it on.
+Generalized ufunc signatures now allow fixed-size dimensions
+------------------------------------------------------------
+By using a numerical value in the signature of a generalized ufunc, one can
+indicate that the given function requires input or output to have dimensions
+with the given size. E.g., the signature of a function that converts a polar
+angle to a two-dimensional cartesian unit vector would be ``()->(2)``; that
+for one that converts two spherical angles to a three-dimensional unit vector
+would be ``(),()->(3)``; and that for the cross product of two
+three-dimensional vectors would be ``(3),(3)->(3)``.
+
+Note that to the elementary function these dimensions are not treated any
+differently from variable ones indicated with a name starting with a letter;
+the loop still is passed the corresponding size, but it can now count on that
+size being equal to the fixed one given in the signature.
 
 Changes
 =======
