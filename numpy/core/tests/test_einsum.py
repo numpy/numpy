@@ -489,8 +489,16 @@ class TestEinSum(object):
         assert_array_equal(np.einsum('ij,ij->j', p, q, optimize=True),
                            [10.] * 2)
 
-        p = np.ones((1, 5))
-        q = np.ones((5, 5))
+        # a blas-compatible contraction broadcasting case which was failing
+        # for optimize=True (ticket #10930)
+        x = np.array([2., 3.])
+        y = np.array([4.])
+        assert_array_equal(np.einsum("i, i", x, y, optimize=False), 20.)
+        assert_array_equal(np.einsum("i, i", x, y, optimize=True), 20.)
+
+        # all-ones array was bypassing bug (ticket #10930)
+        p = np.ones((1, 5)) / 2
+        q = np.ones((5, 5)) / 2
         for optimize in (True, False):
             assert_array_equal(np.einsum("...ij,...jk->...ik", p, p,
                                          optimize=optimize),
@@ -498,7 +506,7 @@ class TestEinSum(object):
                                          optimize=optimize))
             assert_array_equal(np.einsum("...ij,...jk->...ik", p, q,
                                          optimize=optimize),
-                               np.full((1, 5), 5))
+                               np.full((1, 5), 1.25))
 
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1')
