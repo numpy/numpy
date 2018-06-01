@@ -95,10 +95,12 @@ We propose the following signature for implementations of
    original call.
 
 Unlike ``__array_ufunc__``, there are no high-level guarantees about the
-type of ``func``, or about which of ``args`` and ``kwargs`` may contain
-an objects implementing the array API. As a convenience for
-``__array_function__`` implementors of the NumPy API, ``types`` contains
-a list of all types that NumPy checks for potential overloads.
+type of ``func``, or about which of ``args`` and ``kwargs`` may contain objects
+implementing the array API. As a convenience for ``__array_function__``
+implementors of the NumPy API, the ``types`` keyword contains a list of all
+types that implement the ``__array_function__`` protocol.  This allows
+downstream implementations to quickly determine if they are likely able to
+support the operation.
 
 Still be determined: what guarantees can we offer for ``types``? Should
 we promise that types are unique, and appear in the order in which they
@@ -108,13 +110,15 @@ Example for a project implementing the NumPy API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Most implementations of ``__array_function__`` will start with two
-checks: 1. Is the given function something that we know how to overload?
-2. Are all arguments of a type that we know how to handle?
+checks:
+
+1.  Is the given function something that we know how to overload?
+2.  Are all arguments of a type that we know how to handle?
 
 If these conditions hold, ``__array_function__`` should return
-implementation for ``func(*args, **kwargs)``. Otherwise, it should
-return the sentinel value ``NotImplemented``, indicating that the
-function is not implemented by these types.
+the result from calling its implementation for ``func(*args, **kwargs)``.
+Otherwise, it should return the sentinel value ``NotImplemented``, indicating
+that the function is not implemented by these types.
 
 .. code:: python
 
@@ -140,7 +144,8 @@ This will require two changes within the Numpy codebase:
 
 1. A function to inspect available inputs, look for the
    ``__array_function__`` attribute on those inputs, and call those
-   methods appropriately until one succeeds.
+   methods appropriately until one succeeds.  This needs to be fast in the
+   common all-NumPy case.
 
    This is one additional function of moderate complexity.
 2. Calling this function within all relevant Numpy functions.
