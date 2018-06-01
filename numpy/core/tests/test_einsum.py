@@ -493,10 +493,10 @@ class TestEinSum(object):
 
         # a blas-compatible contraction broadcasting case which was failing
         # for optimize=True (ticket #10930)
-        x = np.array([0., 0.])
-        y = np.array([0.])
-        assert_array_equal(np.einsum("i, i", x, y, optimize=False), 0.)
-        assert_array_equal(np.einsum("i, i", x, y, optimize=True), 0.)
+        x = np.array([2., 3.])
+        y = np.array([4.])
+        assert_array_equal(np.einsum("i, i", x, y, optimize=False), 20.)
+        assert_array_equal(np.einsum("i, i", x, y, optimize=True), 20.)
 
         # all-ones array was bypassing bug (ticket #10930)
         p = np.ones((1, 5)) / 2
