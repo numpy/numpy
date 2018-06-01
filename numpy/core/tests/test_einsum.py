@@ -490,8 +490,8 @@ class TestEinSum(object):
                            np.einsum('ij,ij->j', p, q, optimize=False))
         assert_array_equal(np.einsum('ij,ij->j', p, q, optimize=True),
                            [10.] * 2)
-        
-        # a blas-compatible contraction broadcasting case which was failing 
+
+        # a blas-compatible contraction broadcasting case which was failing
         # for optimize=True (ticket #10930)
         x = np.array([0., 0.])
         y = np.array([0.])
