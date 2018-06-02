@@ -2085,80 +2085,101 @@ get_single_op_view(PyArrayObject *op, char *labels,
     return 0;
 }
 
-static PyArrayObject *
-get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
+static int
+_no_labels_are_negative(char *labels, int ndim)
 {
-    npy_intp new_strides[NPY_MAXDIMS];
-    npy_intp new_dims[NPY_MAXDIMS];
-    int idim, ndim, icombine, combineoffset;
-    int icombinemap[NPY_MAXDIMS];
+    int idim;
 
-    PyArrayObject *ret = NULL;
-
-    ndim = PyArray_NDIM(op);
-
-    /* Initialize the dimensions and strides to zero */
-    for (idim = 0; idim < ndim; ++idim) {
-        new_dims[idim] = 0;
-        new_strides[idim] = 0;
-    }
-
-    /* Copy the dimensions and strides, except when collapsing */
-    icombine = 0;
     for (idim = 0; idim < ndim; ++idim) {
         /*
          * The char type may be either signed or unsigned, we
          * need it to be signed here.
          */
-        int label = (signed char)labels[idim];
-        /* If this label says to merge axes, get the actual label */
-        if (label < 0) {
-            combineoffset = label;
-            label = labels[idim+label];
-        }
-        else {
-            combineoffset = 0;
-            if (icombine != idim) {
-                labels[icombine] = labels[idim];
-            }
-            icombinemap[idim] = icombine;
-        }
-        /* If the label is 0, it's an unlabeled broadcast dimension */
-        if (label == 0) {
-            new_dims[icombine] = PyArray_DIM(op, idim);
-            new_strides[icombine] = PyArray_STRIDE(op, idim);
-        }
-        else {
-            /* Update the combined axis dimensions and strides */
-            int i = icombinemap[idim + combineoffset];
-            if (combineoffset < 0 && new_dims[i] != 0 &&
-                        new_dims[i] != PyArray_DIM(op, idim)) {
-                PyErr_Format(PyExc_ValueError,
-                        "dimensions in operand %d for collapsing "
-                        "index '%c' don't match (%d != %d)",
-                        iop, label, (int)new_dims[i],
-                        (int)PyArray_DIM(op, idim));
-                return NULL;
-            }
-            new_dims[i] = PyArray_DIM(op, idim);
-            new_strides[i] += PyArray_STRIDE(op, idim);
-        }
+        int label  = (signed char)labels[idim];
 
-        /* If the label didn't say to combine axes, increment dest i */
-        if (combineoffset == 0) {
-            icombine++;
+        if (label < 0) {
+            return 0;
         }
     }
 
-    /* The compressed number of dimensions */
-    ndim = icombine;
+    return 1;
+}
 
+/*
+ * Given the labels for an operand array, returns a view of the array
+ * with all repeated labels collapsed into a single dimension along
+ * the corresponding diagonal. The labels are also updated to match
+ * the dimensions of the new array. If no label is repeated, the
+ * original array is reference increased and returned unchanged.
+ */
+static PyArrayObject *
+get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
+{
+    npy_intp new_strides[NPY_MAXDIMS];
+    npy_intp new_dims[NPY_MAXDIMS];
+    int idim, icombine;
+    int icombinemap[NPY_MAXDIMS];
+    int ndim = PyArray_NDIM(op);
+    PyArrayObject *ret = NULL;
+
+    /* A fast path to avoid unnecessary calculations. */
+    if (_no_labels_are_negative(labels, ndim)) {
+        Py_INCREF(op);
+
+        return op;
+    }
+
+    /* Combine repeated labels. */
+    icombine = 0;
+    for(idim = 0; idim < ndim; ++idim) {
+        /*
+         * The char type may be either signed or unsigned, we
+         * need it to be signed here.
+         */
+        int label = (signed char)labels[idim];
+        npy_intp dim = PyArray_DIM(op, idim);
+        npy_intp stride = PyArray_STRIDE(op, idim);
+
+        /* A repeated label, find the original one and merge them. */
+        if (label < 0) {
+            int i = icombinemap[idim + label];
+
+            icombinemap[idim] = -1;
+            if (new_dims[i] != dim) {
+                PyErr_Format(PyExc_ValueError,
+                             "dimensions in operand %d for collapsing "
+                             "index '%c' don't match (%d != %d)",
+                             iop, label, (int)new_dims[i], (int)dim);
+                return NULL;
+            }
+            new_strides[i] += stride;
+        }
+        /* A label seen for the first time, add it to the op view. */
+        else {
+            icombinemap[idim] = icombine;
+            new_dims[icombine] = dim;
+            new_strides[icombine] = stride;
+            ++icombine;
+        }
+    }
+
+    /* Overwrite labels to match the new operand view. */
+    for (idim = 0; idim < ndim; ++idim) {
+        int i = icombinemap[idim];
+
+        if (i >= 0) {
+            labels[i] = labels[idim];
+        }
+    }
+
+    /* Create a view of the operand with the compressed dimensions. */
     Py_INCREF(PyArray_DESCR(op));
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(op), PyArray_DESCR(op),
             ndim, new_dims, new_strides, PyArray_DATA(op),
             PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
             (PyObject *)op, (PyObject *)op);
+
     return ret;
 }
 
@@ -2648,33 +2669,10 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      */
     for (iop = 0; iop < nop; ++iop) {
         char *labels = op_labels[iop];
-        int combine, ndim;
 
-        ndim = PyArray_NDIM(op_in[iop]);
-        /*
-         * Check whether any dimensions need to be combined
-         *
-         * The char type may be either signed or unsigned, we
-         * need it to be signed here.
-         */
-        combine = 0;
-        for (idim = 0; idim < ndim; ++idim) {
-            if ((signed char)labels[idim] < 0) {
-                combine = 1;
-            }
-        }
-
-        /* If any dimensions are combined, create a view which combines them */
-        if (combine) {
-            op[iop] = get_combined_dims_view(op_in[iop], iop, labels);
-            if (op[iop] == NULL) {
-                goto fail;
-            }
-        }
-        /* No combining needed */
-        else {
-            Py_INCREF(op_in[iop]);
-            op[iop] = op_in[iop];
+        op[iop] = get_combined_dims_view(op_in[iop], iop, labels);
+        if (op[iop] == NULL) {
+            goto fail;
         }
     }
 
