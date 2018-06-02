@@ -2219,15 +2219,11 @@ static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
                    int *core_num_dims, npy_uint32 *core_dim_flags,
                    npy_intp *core_dim_sizes, int **remap_axis) {
-    int i, j;
+    int i;
     int nin = ufunc->nin;
     int nout = ufunc->nout;
     int nop = nin + nout;
 
-    for (j = 0; j < ufunc->core_num_dim_ix; ++j) {
-        /* support fixed-size dim names */
-        core_dim_sizes[j] = ufunc->core_dim_sizes[j];
-    }
     for (i = 0; i < nop; ++i) {
         if (op[i] != NULL) {
             int idim;
@@ -2342,6 +2338,40 @@ _get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
     }
 }
 
+/*
+ * Copy over parts of the ufunc structure that may need to be
+ * changed during execution.  Returns 0 on success; -1 otherwise.
+ */
+static int
+_initialize_variable_parts(PyUFuncObject *ufunc,
+                           int core_num_dims[],
+                           npy_intp core_dim_sizes[],
+                           npy_uint32 core_dim_flags[]) {
+    int i;
+
+    for (i = 0; i < ufunc->nargs; i++) {
+        core_num_dims[i] = ufunc->core_num_dims[i];
+    }
+    if (ufunc->version == 1) {
+        for (i = 0; i < ufunc->core_num_dim_ix; i++) {
+            core_dim_sizes[i] = ufunc->core_dim_sizes[i];
+            core_dim_flags[i] = ufunc->core_dim_flags[i];
+        }
+    }
+    else if (ufunc->version == 0) {
+        for (i = 0; i < ufunc->core_num_dim_ix; i++) {
+            core_dim_sizes[i] = -1;
+            core_dim_flags[i] = UFUNC_CORE_DIM_SIZE_UNSET;
+        }
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+                     "'%s': unrecognized version number %d.",
+                     ufunc_get_name_cstr(ufunc), ufunc->version);
+        return -1;
+    }
+    return 0;
+}
 
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
@@ -2416,9 +2446,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         dtypes[i] = NULL;
         arr_prep[i] = NULL;
     }
-    /* copy per-argument flags, so they can be changed */
-    for (idim = 0; idim < ufunc->core_num_dim_ix; ++idim) {
-        core_dim_flags[idim] = ufunc->core_dim_flags[idim];
+    /* Initialize possibly variable parts to the values from the ufunc */
+    retval = _initialize_variable_parts(ufunc, core_num_dims,
+                                        core_dim_sizes, core_dim_flags);
+    if (retval < 0) {
+        goto fail;
     }
 
     NPY_UF_DBG_PRINT("Getting arguments\n");
@@ -2451,19 +2483,17 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         }
     }
     /*
-     * If keepdims is set and true, signal all dimensions will be the same.
+     * If keepdims is set and true, which means all input dimensions are
+     * the same.  Signal all output dimensions will be the same too.
      */
     if (keepdims == 1) {
-        int num_dims = ufunc->core_num_dims[0];
-        for (i = 0; i < nop; ++i) {
+        int num_dims = core_num_dims[0];
+        for (i = nin; i < nop; ++i) {
             core_num_dims[i] = num_dims;
         }
     }
     else {
         /* keepdims was not set or was false; no adjustment necessary */
-        for (i = 0; i < nop; ++i) {
-            core_num_dims[i] = ufunc->core_num_dims[i];
-        }
         keepdims = 0;
     }
     /*
