@@ -1882,7 +1882,7 @@ fail:
 static int
 _validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
                    npy_uint32 *core_dim_flags,
-                   int *n_dims_used) {
+                   int *op_core_num_dims) {
     int i, j;
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
@@ -1891,7 +1891,7 @@ _validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
         if (op[i] != NULL) {
             int op_ndim = PyArray_NDIM(op[i]);
 
-            if (op_ndim < n_dims_used[i]) {
+            if (op_ndim < op_core_num_dims[i]) {
                 int core_offset = ufunc->core_offsets[i];
                 /* We've too few, but some dimensions might be flexible */
                 for (j = core_offset;
@@ -1915,16 +1915,16 @@ _validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
                         for (i1 = 0, k=0; i1 < nop; i1++) {
                             for (j1 = 0; j1 < ufunc->core_num_dims[i1]; j1++) {
                                 if (ufunc->core_dim_ixs[k++] == core_dim_index) {
-                                    n_dims_used[i1]--;
+                                    op_core_num_dims[i1]--;
                                 }
                             }
                         }
-                        if (op_ndim == n_dims_used[i]) {
+                        if (op_ndim == op_core_num_dims[i]) {
                             break;
                         }
                     }
                 }
-                if (op_ndim < n_dims_used[i]) {
+                if (op_ndim < op_core_num_dims[i]) {
                     goto fail;
                 }
             }
@@ -1940,7 +1940,7 @@ fail:
                  ufunc_get_name_cstr(ufunc),
                  i < nin ? "Input" : "Output",
                  i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                 ufunc->core_signature, n_dims_used[i]);
+                 ufunc->core_signature, op_core_num_dims[i]);
     return -1;
 }
 
@@ -2017,7 +2017,7 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
  * Returns 0 on success, and -1 on failure
  */
 static int
-_parse_axes_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axes,
+_parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
@@ -2047,7 +2047,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axes,
         PyObject *op_axes_tuple, *axis_item;
         int axis, op_axis;
 
-        op_ncore = core_num_dims[iop];
+        op_ncore = op_core_num_dims[iop];
         if (op[iop] != NULL) {
             op_ndim = PyArray_NDIM(op[iop]);
             op_nbroadcast = op_ndim - op_ncore;
@@ -2217,7 +2217,7 @@ _parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
  */
 static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
-                   int *core_num_dims, npy_uint32 *core_dim_flags,
+                   int *op_core_num_dims, npy_uint32 *core_dim_flags,
                    npy_intp *core_dim_sizes, int **remap_axis) {
     int i;
     int nin = ufunc->nin;
@@ -2228,7 +2228,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
         if (op[i] != NULL) {
             int idim;
             int dim_offset = ufunc->core_offsets[i];
-            int core_start_dim = PyArray_NDIM(op[i]) - core_num_dims[i];
+            int core_start_dim = PyArray_NDIM(op[i]) - op_core_num_dims[i];
             int dim_delta = 0;
 
             /* checked before this routine gets called */
@@ -2344,13 +2344,13 @@ _get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
  */
 static int
 _initialize_variable_parts(PyUFuncObject *ufunc,
-                           int core_num_dims[],
+                           int op_core_num_dims[],
                            npy_intp core_dim_sizes[],
                            npy_uint32 core_dim_flags[]) {
     int i;
 
     for (i = 0; i < ufunc->nargs; i++) {
-        core_num_dims[i] = ufunc->core_num_dims[i];
+        op_core_num_dims[i] = ufunc->core_num_dims[i];
     }
     if (ufunc->version == 1) {
         for (i = 0; i < ufunc->core_num_dim_ix; i++) {
@@ -2388,7 +2388,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* Use remapped axes for generalized ufunc */
     int broadcast_ndim, iter_ndim;
-    int core_num_dims[NPY_MAXARGS];
+    int op_core_num_dims[NPY_MAXARGS];
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
     npy_uint32 core_dim_flags[NPY_MAXARGS];
@@ -2447,7 +2447,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         arr_prep[i] = NULL;
     }
     /* Initialize possibly variable parts to the values from the ufunc */
-    retval = _initialize_variable_parts(ufunc, core_num_dims,
+    retval = _initialize_variable_parts(ufunc, op_core_num_dims,
                                         core_dim_sizes, core_dim_flags);
     if (retval < 0) {
         goto fail;
@@ -2487,9 +2487,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * the same.  Signal all output dimensions will be the same too.
      */
     if (keepdims == 1) {
-        int num_dims = core_num_dims[0];
+        int num_dims = op_core_num_dims[0];
         for (i = nin; i < nop; ++i) {
-            core_num_dims[i] = num_dims;
+            op_core_num_dims[i] = num_dims;
         }
     }
     else {
@@ -2501,7 +2501,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * (Just checks core; broadcast dimensions are tested by the iterator.)
      */
     retval = _validate_num_dims(ufunc, op, core_dim_flags,
-                                core_num_dims);
+                                op_core_num_dims);
     if (retval < 0) {
         goto fail;
     }
@@ -2512,7 +2512,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     broadcast_ndim = 0;
     for (i = 0; i < nin; ++i) {
-        int n = PyArray_NDIM(op[i]) - core_num_dims[i];
+        int n = PyArray_NDIM(op[i]) - op_core_num_dims[i];
         if (n > broadcast_ndim) {
             broadcast_ndim = n;
         }
@@ -2531,11 +2531,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             remap_axis[i] = remap_axis_memory + i * NPY_MAXDIMS;
         }
         if (axis) {
-            retval = _parse_axis_arg(ufunc, core_num_dims, axis, op,
+            retval = _parse_axis_arg(ufunc, op_core_num_dims, axis, op,
                                      broadcast_ndim, remap_axis);
         }
         else {
-            retval = _parse_axes_arg(ufunc, core_num_dims, axes, op,
+            retval = _parse_axes_arg(ufunc, op_core_num_dims, axes, op,
                                      broadcast_ndim, remap_axis);
         }
         if(retval < 0) {
@@ -2544,7 +2544,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /* Collect the lengths of the labelled core dimensions */
-    retval = _get_coredim_sizes(ufunc, op, core_num_dims, core_dim_flags,
+    retval = _get_coredim_sizes(ufunc, op, op_core_num_dims, core_dim_flags,
                                 core_dim_sizes, remap_axis);
     if(retval < 0) {
         goto fail;
@@ -2557,7 +2557,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     iter_ndim = broadcast_ndim;
     for (i = nin; i < nop; ++i) {
-        iter_ndim += core_num_dims[i];
+        iter_ndim += op_core_num_dims[i];
     }
     if (iter_ndim > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
@@ -2578,7 +2578,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         int n;
 
         if (op[i]) {
-            n = PyArray_NDIM(op[i]) - core_num_dims[i];
+            n = PyArray_NDIM(op[i]) - op_core_num_dims[i];
         }
         else {
             n = broadcast_ndim;
@@ -2611,7 +2611,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
              * If the axis was removed, we should skip altogether.
              */
             if (keepdims) {
-                for (idim = 0; idim < core_num_dims[i]; ++idim) {
+                for (idim = 0; idim < op_core_num_dims[i]; ++idim) {
                     iter_shape[j] = 1;
                     op_axes_arrays[i][j] = REMAP_AXIS(i, n + idim);
                     ++j;
@@ -2778,7 +2778,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * Could be negative if flexible dims are used, but not for
          * keepdims, since those dimensions are allocated in arr.
          */
-        int core_start_dim = PyArray_NDIM(arr) - core_num_dims[i];
+        int core_start_dim = PyArray_NDIM(arr) - op_core_num_dims[i];
         int num_removed = 0;
         int dim_offset = ufunc->core_offsets[i];
 
