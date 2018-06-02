@@ -397,12 +397,13 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     Notes
     -----
     * Without a mask, the missing value will be filled with something,
-    * depending on what its corresponding type:
-            -1      for integers
-            -1.0    for floating point numbers
-            '-'     for characters
-            '-1'    for strings
-            True    for boolean values
+      depending on what its corresponding type:
+
+      * ``-1``      for integers
+      * ``-1.0``    for floating point numbers
+      * ``'-'``     for characters
+      * ``'-1'``    for strings
+      * ``True``    for boolean values
     * XXX: I just obtained these values empirically
     """
     # Only one item in the input sequence ?
