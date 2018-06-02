@@ -1838,6 +1838,10 @@ make_full_arg_tuple(
         }
     }
 
+    /* No outputs in kwargs; if also none in args, we're done */
+    if (nargs == nin) {
+        return 0;
+    }
     /* copy across positional output arguments, adding trailing Nones */
     full_args->out = PyTuple_New(nout);
     if (full_args->out == NULL) {
