@@ -239,7 +239,7 @@ class memmap(ndarray):
         else:
             if not isinstance(shape, tuple):
                 shape = (shape,)
-            size = np.intp(1) # Causes bytes below to be computed as the integer type the OS uses for sizes - can prevent overflow
+            size = np.intp(1)  # avoid default choice of np.int_, which might overflow
             for k in shape:
                 size *= k
 
