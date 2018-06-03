@@ -1984,9 +1984,9 @@ class Test_I0(object):
             np.array(1.0634833707413234))
 
         A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549])
-        assert_almost_equal(
-            i0(A),
-            np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049]))
+        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049])
+        assert_almost_equal(i0(A), expected)
+        assert_almost_equal(i0(-A), expected)
 
         B = np.array([[0.827002, 0.99959078],
                       [0.89694769, 0.39298162],
@@ -2000,6 +2000,10 @@ class Test_I0(object):
                       [1.03633899, 1.00067775],
                       [1.03352052, 1.13557954],
                       [1.05884290, 1.06432317]]))
+        # Regression test for gh-11205
+        i0_0 = np.i0([0.])
+        assert_equal(i0_0.shape, (1,))
+        assert_array_equal(np.i0([0.]), np.array([1.]))
 
 
 class TestKaiser(object):
