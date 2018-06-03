@@ -941,7 +941,7 @@ def einsum(*operands, **kwargs):
     to the left of each term, like ``np.einsum('...ii->...i', a)``.
     To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
-    product with the left-most indices instead of rightmost, you can do
+    product with the left-most indices instead of rightmost, one can do
     ``np.einsum('ij...,jk...->ik...', a, b)``.
 
     When there is only one operand, no axes are summed, and no output
