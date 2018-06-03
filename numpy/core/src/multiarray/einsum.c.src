@@ -2086,7 +2086,7 @@ get_single_op_view(PyArrayObject *op, char *labels,
 }
 
 static int
-_no_labels_are_negative(char *labels, int ndim)
+_no_labels_are_negative(signed char *labels, int ndim)
 {
     int idim;
 
@@ -2095,7 +2095,7 @@ _no_labels_are_negative(char *labels, int ndim)
          * The char type may be either signed or unsigned, we
          * need it to be signed here.
          */
-        int label  = (signed char)labels[idim];
+        int label = labels[idim];
 
         if (label < 0) {
             return 0;
@@ -2123,7 +2123,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
     PyArrayObject *ret = NULL;
 
     /* A fast path to avoid unnecessary calculations. */
-    if (_no_labels_are_negative(labels, ndim)) {
+    if (_no_labels_are_negative((signed char *)labels, ndim)) {
         Py_INCREF(op);
 
         return op;
