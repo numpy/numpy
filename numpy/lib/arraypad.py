@@ -1295,6 +1295,12 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
+            if pad_before != 0:
+                # we must exclude the prepended values from the statistics
+                if chunk_after is None:
+                    chunk_after = newmat.shape[axis]
+                else:
+                    chunk_after = min(chunk_after, newmat.shape[axis])
             newmat = _prepend_mean(newmat, pad_before, chunk_before, axis)
             newmat = _append_mean(newmat, pad_after, chunk_after, axis)
 
