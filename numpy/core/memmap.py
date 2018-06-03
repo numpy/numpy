@@ -240,8 +240,7 @@ class memmap(ndarray):
         else:
             if not isinstance(shape, tuple):
                 shape = (shape,)
-            shape = tuple(map(lambda x: np.intp(x), shape)) # Force-promote to intp, prevent possible overflow with 32-bit types near the top of their range
-            size = 1
+            size = np.intp(1) # Causes bytes below to be computed as largest integer type available to prevent overflow
             for k in shape:
                 size *= k
 
