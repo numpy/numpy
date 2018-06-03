@@ -236,11 +236,10 @@ class memmap(ndarray):
                 raise ValueError("Size of available data is not a "
                         "multiple of the data-type size.")
             size = bytes // _dbytes
-            shape = (np.intp(size),)
         else:
             if not isinstance(shape, tuple):
                 shape = (shape,)
-            size = np.intp(1) # Causes bytes below to be computed as largest integer type available to prevent overflow
+            size = np.intp(1) # Causes bytes below to be computed as the integer type the OS uses for sizes - can prevent overflow
             for k in shape:
                 size *= k
 
