@@ -36,6 +36,10 @@ class TestUfuncKwargs(object):
         assert_raises(RuntimeError, np.add, 1, 2, signature='ii->i',
                       dtype=int)
 
+    def test_extobj_refcount(self):
+        # Should not segfault with USE_DEBUG.
+        assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
+
 
 class TestUfunc(object):
     def test_pickle(self):
@@ -717,6 +721,10 @@ class TestUfunc(object):
         assert_raises(ValueError, mm, z, z, out=z[:, 0])
         assert_raises(ValueError, mm, z[1], z, axes=[0, 1])
         assert_raises(ValueError, mm, z, z, out=z[0], axes=[0, 1])
+        # Regular ufuncs should not accept axes.
+        assert_raises(TypeError, np.add, 1., 1., axes=[0])
+        # should be able to deal with bad unrelated kwargs.
+        assert_raises(TypeError, mm, z, z, axes=[0, 1], parrot=True)
 
     def test_keepdims_argument(self):
         # inner1d signature: '(i),(i)->()'
@@ -784,6 +792,8 @@ class TestUfunc(object):
         mm = umt.matrix_multiply
         assert_raises(TypeError, mm, a, b, keepdims=True)
         assert_raises(TypeError, mm, a, b, keepdims=False)
+        # Regular ufuncs should not accept keepdims.
+        assert_raises(TypeError, np.add, 1., 1., keepdims=False)
 
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
