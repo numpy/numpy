@@ -2999,11 +2999,26 @@ PyArray_Arange(double start, double stop, double step, int type_num)
     PyArray_ArrFuncs *funcs;
     PyObject *obj;
     int ret;
+    double delta, tmp_len;
     NPY_BEGIN_THREADS_DEF;
 
-    length = _arange_safe_ceil_to_intp((stop - start)/step);
-    if (error_converting(length)) {
-        return NULL;
+    delta = stop - start;
+    tmp_len = delta/step;
+
+    /* Underflow and divide-by-inf check */
+    if (tmp_len == 0.0 && delta != 0.0) {
+        if (npy_signbit(tmp_len)) {
+            length = 0;
+        }
+        else {
+            length = 1;
+        }
+    }
+    else {
+        length = _arange_safe_ceil_to_intp(tmp_len);
+        if (error_converting(length)) {
+            return NULL;
+        }
     }
 
     if (length <= 0) {
@@ -3067,7 +3082,8 @@ static npy_intp
 _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, int cmplx)
 {
     npy_intp len, tmp;
-    PyObject *val;
+    PyObject *zero, *val;
+    int next_is_nonzero, val_is_zero;
     double value;
 
     *next = PyNumber_Subtract(stop, start);
@@ -3080,12 +3096,37 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         }
         return -1;
     }
+
+    zero = PyInt_FromLong(0);
+    if (!zero) {
+        Py_DECREF(*next);
+        *next = NULL;
+        return -1;
+    }
+
+    next_is_nonzero = PyObject_RichCompareBool(*next, zero, Py_NE);
+    if (next_is_nonzero == -1) {
+        Py_DECREF(zero);
+        Py_DECREF(*next);
+        *next = NULL;
+        return -1;
+    }
     val = PyNumber_TrueDivide(*next, step);
     Py_DECREF(*next);
     *next = NULL;
+
     if (!val) {
+        Py_DECREF(zero);
         return -1;
     }
+
+    val_is_zero = PyObject_RichCompareBool(val, zero, Py_EQ);
+    Py_DECREF(zero);
+    if (val_is_zero == -1) {
+        Py_DECREF(val);
+        return -1;
+    }
+
     if (cmplx && PyComplex_Check(val)) {
         value = PyComplex_RealAsDouble(val);
         if (error_converting(value)) {
@@ -3114,11 +3155,24 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
         if (error_converting(value)) {
             return -1;
         }
-        len = _arange_safe_ceil_to_intp(value);
-        if (error_converting(len)) {
-            return -1;
+
+        /* Underflow and divide-by-inf check */
+        if (val_is_zero && next_is_nonzero) {
+            if (npy_signbit(value)) {
+                len = 0;
+            }
+            else {
+                len = 1;
+            }
+        }
+        else {
+            len = _arange_safe_ceil_to_intp(value);
+            if (error_converting(len)) {
+                return -1;
+            }
         }
     }
+
     if (len > 0) {
         *next = PyNumber_Add(start, step);
         if (!*next) {
