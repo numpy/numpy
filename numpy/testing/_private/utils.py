@@ -15,6 +15,7 @@ import shutil
 import contextlib
 from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
+from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
