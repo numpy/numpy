@@ -829,15 +829,22 @@ def einsum(*operands, **kwargs):
 
     Evaluates the Einstein summation convention on the operands.
 
-    Using the Einstein summation convention, many common multi-dimensional
-    array operations can be represented in a simple fashion, which this
-    function computes. See the notes and examples for clarification.
+    Using the Einstein summation convention, many common multi-dimensional,
+    linear algebraic array operations can be represented in a simple fashion.
+    In *implicit* mode `einsum` computes these values.
+
+    In *explicit* mode, `einsum` provides further flexibility to compute
+    other array operations that might not be considered classical Einstein
+    summation operations, by disabling, or forcing summation over specified
+    subscript labels.
+
+    See the notes and examples for clarification.
 
     Parameters
     ----------
     subscripts : str
         Specifies the subscripts for summation as comma separated list of
-        subscript labels. An implicit (traditional Einstein summation)
+        subscript labels. An implicit (classical Einstein summation)
         calculation is performed unless the explicit indicator '->' is
         included as well as the precise output form.
     operands : list of array_like
@@ -887,15 +894,12 @@ def einsum(*operands, **kwargs):
     .. versionadded:: 1.6.0
 
     The Einstein summation convention can be used to compute
-    many multi-dimensional array operations. Additionally, the explicit
-    mode of this function provides further flexibility that can be used
-    to compute other array operations that might otherwise not be
-    considered classical Einstein summation operations. `einsum`
-    provides a succinct way of representing many array operations in a
+    many multi-dimensional, linear algebraic array operations. `einsum`
+    provides a succinct way of representing these in a
     clear and consistent format.
 
-    A non-exhaustive list of array operations which can be computed by
-    `einsum` is shown below along with examples,
+    A non-exhaustive list of these operations,
+    which can be computed by `einsum`, is shown below along with examples,
 
         * Trace of an array.
         * Return a diagonal.
@@ -916,7 +920,8 @@ def einsum(*operands, **kwargs):
     multiplication and is equivalent to ``np.matmul(a,b)``. Repeated
     subscript labels in one operand take the diagonal. For example,
     ``np.einsum('ii', a)`` is equivalent to ``np.trace(a)``.
-    In implicit mode, the chosen subscripts are important
+
+    In *implicit mode*, the chosen subscripts are important
     since the axes of the output are reordered alphabetically.  This
     means that ``np.einsum('ij', a)`` doesn't affect a 2D array, while
     ``np.einsum('ji', a)`` takes its transpose. Additionally,
@@ -924,8 +929,8 @@ def einsum(*operands, **kwargs):
     ``np.einsum('ij,jh', a, b)`` returns the transpose of the
     multiplication since subscript 'h' precedes subscript 'i'.
 
-    The output can be directly controlled by invoking the explict mode
-    and specifying output subscript labels.  This requires the
+    In *explicit mode* the output can be directly controlled by
+    specifying output subscript labels.  This requires the
     identifier '->' as well as the list of output subscript labels.
     This feature increases the flexibility of the function since
     summing can be disabled or forced when required. The call
@@ -949,9 +954,12 @@ def einsum(*operands, **kwargs):
     of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
     produces a view (changed in version 1.10.0).
 
-    An alternative way to provide the subscripts and operands is as
-    ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``. The examples
-    below have corresponding `einsum` calls with the two parameter methods.
+    `einsum` also provides an alternative way to provide the subscripts
+    and operands as ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``.
+    If the output shape is not provided in this format `einsum` will be
+    calculated in implicit mode, otherwise it will be performed explicitly.
+    The examples below have corresponding `einsum` calls with the two
+    parameter methods.
 
     .. versionadded:: 1.10.0
 
@@ -1105,7 +1113,16 @@ def einsum(*operands, **kwargs):
            [ 4796.,  5162.],
            [ 4928.,  5306.]])
 
-    Example in ellipsis use:
+    Writeable returned arrays (since version 1.10.0):
+
+    >>> a = np.zeros((3, 3))
+    >>> np.einsum('ii->i', a)[:] = 1
+    >>> a
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+
+    Example of ellipsis use:
 
     >>> a = np.arange(6).reshape((3,2))
     >>> b = np.arange(12).reshape((4,3))
@@ -1119,26 +1136,16 @@ def einsum(*operands, **kwargs):
     array([[10, 28, 46, 64],
            [13, 40, 67, 94]])
 
-    Writeable returned arrays:
-
-    >>> # since version 1.10.0
-    >>> a = np.zeros((3, 3))
-    >>> np.einsum('ii->i', a)[:] = 1
-    >>> a
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0.,  1.]])
-
     Chained array operations computed with an an optional, optimal
-    einsum path insertion:
+    `einsum_path` insertion (since verions 1.12.0):
 
-    >>> # since version 1.12.0
     >>> path, desc = np.einsum_path('ij,ki,lj->lk', a, b, a, optimize='optimal')
-    >>> # potential use inside loop or iteration
-    >>> np.einsum('ij,ki,lj->lk', a, b, a, optimize=path)
-    array([[ 13,  40,  67,  94],
-           [ 59, 176, 293, 410],
-           [105, 312, 519, 726]])
+    >>> for iteration in range(2):
+    ...     a = np.einsum('ij,ki,lj->lk', a, b, a, optimize=path)
+    >>> a
+    array([[  299702,   893504,  1487306,  2081108],
+           [ 1310074,  3905728,  6501382,  9097036],
+           [ 2320446,  6917952, 11515458, 16112964]])
 
     """
 
