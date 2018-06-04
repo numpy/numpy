@@ -20,7 +20,7 @@ from .multiarray import (
     WRAP, arange, array, broadcast, can_cast, compare_chararrays,
     concatenate, copyto, count_nonzero, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
-    inner, int_asbuffer, lexsort, matmul, may_share_memory,
+    inner, int_asbuffer, lexsort, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
     zeros, normalize_axis_index)
@@ -73,7 +73,7 @@ __all__ = [
     'errstate', 'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
-    'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
+    'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
     'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
 
 if sys.version_info[0] < 3:

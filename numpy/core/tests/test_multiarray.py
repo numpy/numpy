@@ -3158,7 +3158,7 @@ class TestBinop(object):
             if issubclass(MyType, np.ndarray):
                 # Use this range to avoid special case weirdnesses around
                 # divide-by-0, pow(x, 2), overflow due to pow(big, big), etc.
-                return np.arange(3, 5).view(MyType)
+                return np.arange(3, 7).reshape(2, 2).view(MyType)
             else:
                 return MyType()
 
@@ -3167,7 +3167,7 @@ class TestBinop(object):
             for op, (ufunc, has_inplace, dtype) in ops.items():
                 err_msg = ('op: %s, ufunc: %s, has_inplace: %s, dtype: %s'
                            % (op, ufunc, has_inplace, dtype))
-                check_objs = [np.arange(3, 5, dtype=dtype)]
+                check_objs = [np.arange(3, 7, dtype=dtype).reshape(2, 2)]
                 if check_scalar:
                     check_objs.append(check_objs[0][0])
                 for arr in check_objs:

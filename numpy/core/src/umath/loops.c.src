@@ -2925,6 +2925,127 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
     Py_XDECREF(zero);
 }
 
+
+/* TODO: support half, object, complex; use openblas or sse */
+
+/*
+ *****************************************************************************
+ **                            BASICS                                       **
+ *****************************************************************************
+ */
+
+#define INIT_OUTER_LOOP_1       \
+    npy_intp dN = *dimensions++;\
+    npy_intp N_;                \
+    npy_intp s0 = *steps++;
+
+#define INIT_OUTER_LOOP_2       \
+    INIT_OUTER_LOOP_1           \
+    npy_intp s1 = *steps++;
+
+#define INIT_OUTER_LOOP_3       \
+    INIT_OUTER_LOOP_2           \
+    npy_intp s2 = *steps++;
+
+#define INIT_OUTER_LOOP_4       \
+    INIT_OUTER_LOOP_3           \
+    npy_intp s3 = *steps++;
+
+#define BEGIN_OUTER_LOOP_2      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
+
+#define BEGIN_OUTER_LOOP_3      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
+
+#define BEGIN_OUTER_LOOP_4      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3) {
+
+#define END_OUTER_LOOP  }
+
+
+
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, 
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL#
+ *  #typ = npy_float,npy_double,npy_longdouble,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_bool#
+ */
+NPY_NO_EXPORT void
+@TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    /* TODO: replace the inner loop with @TYPE@_dot from arraytypes.c.src
+     *       should maybe accept the dot function as input?
+     *       Using @TYPE@_dot would at least give us cblas for 1D
+     *       For now, just copy the loops from _umath_tests.c matrix_multiply
+     */
+    /* signature is (m?,n),(n,p?)->(m?,p?) */
+    INIT_OUTER_LOOP_3
+    npy_intp dm = dimensions[0];
+    npy_intp dn = dimensions[1];
+    npy_intp dp = dimensions[2];
+    npy_intp m,n,p;
+    npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
+         os_m=steps[4], os_p=steps[5];
+    npy_intp ib1_n;
+    npy_intp ib2_n;
+    npy_intp ib2_p;
+    npy_intp ob_p;
+
+    if (dm == 0) {
+        dm = 1;
+    }
+    if (dp == 0) {
+        os_m = os_p;
+        is2_n = is2_p;
+        dp = 1;
+    }
+    ib1_n = is1_n*dn;
+    ib2_n = is2_n*dn;
+    ib2_p = is2_p*dp;
+    ob_p  = os_p *dp;
+    if (dn == 0) {
+        /* No operand, need to zero the output */
+        BEGIN_OUTER_LOOP_3
+            char *op=args[2];
+            for (m = 0; m < dm; m++) {
+                for (p = 0; p < dp; p++) {
+                    *(@typ@ *)op = 0;
+                    op  +=  os_p;
+                }
+                op  +=  os_m - ob_p;
+            }
+        END_OUTER_LOOP
+        return;
+    }
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+        for (m = 0; m < dm; m++) {
+            for (n = 0; n < dn; n++) {
+                @typ@ val1 = (*(@typ@ *)ip1);
+                for (p = 0; p < dp; p++) {
+                    if (n == 0) *(@typ@ *)op = 0;
+                    *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
+                    ip2 += is2_p;
+                    op  +=  os_p;
+                }
+                ip2 -= ib2_p;
+                op  -=  ob_p;
+                ip1 += is1_n;
+                ip2 += is2_n;
+            }
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            ip1 += is1_m;
+            op  +=  os_m;
+        }
+    END_OUTER_LOOP
+}
+/**end repeat**/
+
 /*
  *****************************************************************************
  **                              END LOOPS                                  **
