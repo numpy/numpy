@@ -100,10 +100,10 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     if (!out) {
-        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
-                                          PyArray_DIMS(ap), NPY_INTP,
-                                          NULL, NULL, 0, 0,
-                                          (PyObject *)ap);
+        rp = (PyArrayObject *)PyArray_NewFromDescr(
+                Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
+                PyArray_NDIM(ap) - 1, PyArray_DIMS(ap), NULL, NULL,
+                0, (PyObject *)ap);
         if (rp == NULL) {
             goto fail;
         }
@@ -216,10 +216,10 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     if (!out) {
-        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
-                                          PyArray_DIMS(ap), NPY_INTP,
-                                          NULL, NULL, 0, 0,
-                                          (PyObject *)ap);
+        rp = (PyArrayObject *)PyArray_NewFromDescr(
+                Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
+                PyArray_NDIM(ap) - 1, PyArray_DIMS(ap), NULL, NULL,
+                0, (PyObject *)ap);
         if (rp == NULL) {
             goto fail;
         }

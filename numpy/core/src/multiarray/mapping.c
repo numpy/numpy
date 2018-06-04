@@ -2215,9 +2215,10 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 
     /* create count-sized index arrays for each dimension */
     for (j = 0; j < nd; j++) {
-        new = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
-                                           NPY_INTP, NULL, NULL,
-                                           0, 0, NULL);
+        new = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
+            1, &count, NULL, NULL,
+            0, NULL);
         if (new == NULL) {
             goto fail;
         }

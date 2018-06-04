@@ -1143,8 +1143,8 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  * true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                     npy_intp *dims, npy_intp *strides, void *data,
+PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
+                     int nd, npy_intp *dims, npy_intp *strides, void *data,
                      int flags, PyObject *obj)
 {
     return PyArray_NewFromDescr_int(subtype, descr, nd,
