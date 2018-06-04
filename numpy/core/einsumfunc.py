@@ -900,9 +900,9 @@ def einsum(*operands, **kwargs):
     A non-exhaustive list of these operations,
     which can be computed by `einsum`, is shown below along with examples:
 
-    * Trace of an array, :py:func`numpy.trace`.
-    * Return a diagonal, :py:func`numpy.diag`.
-    * Array axis summations, :py:func`numpy.sum`.
+    * Trace of an array, :py:func:`numpy.trace`.
+    * Return a diagonal, :py:func:`numpy.diag`.
+    * Array axis summations, :py:func:`numpy.sum`.
     * Transpositions and permutations, :py:func:`numpy.transpose`.
     * Matrix multiplication and dot product, :py:func:`numpy.matmul` :py:func:`numpy.dot`.
     * Vector inner and outer products, :py:func:`numpy.inner` :py:func:`numpy.outer`.
@@ -917,7 +917,7 @@ def einsum(*operands, **kwargs):
     appears only once, it is not summed, so ``np.einsum('i', a)`` produces a
     view of ``a`` with no changes. A further example ``np.einsum('ij,jk', a, b)``
     describes traditional matrix multiplication and is equivalent to
-    py:func:`np.matmul(a,b) <numpy.matmul>`. Repeated subscript labels in one
+    :py:func:`np.matmul(a,b) <numpy.matmul>`. Repeated subscript labels in one
     operand take the diagonal. For example, ``np.einsum('ii', a)`` is equivalent
     to :py:func:`np.trace(a) <numpy.trace>`.
 
