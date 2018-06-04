@@ -2675,9 +2675,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         return NULL;
     }
 
-    /* Make sure all the flags are good */
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
     /* Double-check that the subtype didn't mess with the dimensions */
     if (subtype != &PyArray_Type) {
         if (PyArray_NDIM(ret) != op_ndim ||

@@ -2077,8 +2077,6 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         return NULL;
     }
 
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
     return (PyObject *)ret;
 }
 
@@ -2215,8 +2213,6 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     if (tmp == NULL) {
         return -1;
     }
-
-    PyArray_UpdateFlags(tmp, NPY_ARRAY_UPDATE_ALL);
 
     ret = PyArray_CopyObject(tmp, v);
     Py_DECREF(tmp);
