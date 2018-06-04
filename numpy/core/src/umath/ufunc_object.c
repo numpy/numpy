@@ -555,8 +555,14 @@ ufunc_get_name_cstr(PyUFuncObject *ufunc) {
  * Parses the positional and keyword arguments for a generic ufunc call.
  *
  * Note that if an error is returned, the caller must free the
- * non-zero references in out_op.  This
- * function does not do its own clean-up.
+ * non-zero references in out_op.  This function does not do its own clean-up.
+ *
+ * Note also that some of the outputs for keyword arguments contain
+ * borrowed references, while others are new references. In particular,
+ * out_extobj: borrowed ref.
+ * out_typetup: new ref.
+ * out_wheremask: new ref.
+ * out_axes: borrowed ref.
  */
 static int
 get_ufunc_arguments(PyUFuncObject *ufunc,
@@ -851,7 +857,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         if (dtype != NULL) {
                             if (*out_typetup != NULL) {
                                 PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot specify both 'sig' and 'dtype'");
+                                    "cannot specify both 'signature' and 'dtype'");
                                 goto fail;
                             }
                             *out_typetup = Py_BuildValue("(N)", dtype);
@@ -965,7 +971,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                         }
                         if (*out_typetup != NULL) {
                             PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot specify both 'sig' and 'dtype'");
+                                    "cannot specify both 'signature' and 'dtype'");
                             goto fail;
                         }
                         *out_typetup = value;
@@ -1027,17 +1033,18 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
 
 fail:
     Py_XDECREF(str_key_obj);
-    Py_XDECREF(*out_extobj);
-    *out_extobj = NULL;
+    /*
+     * Set output kwargs to NULL, XDECREF'ing those that were not borrowed.
+     */
     Py_XDECREF(*out_typetup);
     *out_typetup = NULL;
-    if (out_axes != NULL) {
-        Py_XDECREF(*out_axes);
-        *out_axes = NULL;
-    }
+    *out_extobj = NULL;
     if (out_wheremask != NULL) {
         Py_XDECREF(*out_wheremask);
         *out_wheremask = NULL;
+    }
+    if (out_axes != NULL) {
+        *out_axes = NULL;
     }
     return -1;
 }
@@ -2239,8 +2246,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     NPY_ORDER order = NPY_KEEPORDER;
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
-    /* When provided, extobj, typetup, and axes contain borrowed references */
-    PyObject *extobj = NULL, *type_tup = NULL, *axes = NULL;
+    /* When provided, extobj and axes contain borrowed references */
+    PyObject *extobj = NULL, *axes = NULL;
+    /* but type_tup has its own reference */
+    PyObject *type_tup = NULL;
     int keepdims = -1;
 
     if (ufunc == NULL) {
@@ -2772,8 +2781,10 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     NPY_ORDER order = NPY_KEEPORDER;
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
-    /* When provided, extobj and typetup contain borrowed references */
-    PyObject *extobj = NULL, *type_tup = NULL;
+    /* When provided, extobj contains a borrowed reference */
+    PyObject *extobj = NULL;
+    /* but type_tup has its own reference */
+    PyObject *type_tup = NULL;
 
     if (ufunc == NULL) {
         PyErr_SetString(PyExc_ValueError, "function not supported");
