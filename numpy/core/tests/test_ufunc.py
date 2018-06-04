@@ -718,6 +718,36 @@ class TestUfunc(object):
         assert_raises(ValueError, mm, z[1], z, axes=[0, 1])
         assert_raises(ValueError, mm, z, z, out=z[0], axes=[0, 1])
 
+    def test_axis_argument(self):
+        # inner1d signature: '(i),(i)->()'
+        inner1d = umt.inner1d
+        a = np.arange(27.).reshape((3, 3, 3))
+        b = np.arange(10., 19.).reshape((3, 1, 3))
+        c = inner1d(a, b)
+        assert_array_equal(c, (a * b).sum(-1))
+        c = inner1d(a, b, axis=-1)
+        assert_array_equal(c, (a * b).sum(-1))
+        out = np.zeros_like(c)
+        d = inner1d(a, b, axis=-1, out=out)
+        assert_(d is out)
+        assert_array_equal(d, c)
+        c = inner1d(a, b, axis=0)
+        assert_array_equal(c, (a * b).sum(0))
+        # Sanity check on innerwt.
+        a = np.arange(6).reshape((2, 3))
+        b = np.arange(10, 16).reshape((2, 3))
+        w = np.arange(20, 26).reshape((2, 3))
+        assert_array_equal(umt.innerwt(a, b, w, axis=0),
+                           np.sum(a * b * w, axis=0))
+        # Check errors.
+        # Cannot pass in both axis and axes.
+        assert_raises(RuntimeError, inner1d, a, b, axis=0, axes=[0, 0])
+        # Not an integer.
+        assert_raises(TypeError, inner1d, a, b, axis=[0])
+        # more than 1 core dimensions.
+        mm = umt.matrix_multiply
+        assert_raises(TypeError, mm, a, b, axis=1)
+
     def test_keepdims_argument(self):
         # inner1d signature: '(i),(i)->()'
         inner1d = umt.inner1d
@@ -733,7 +763,15 @@ class TestUfunc(object):
         d = inner1d(a, b, keepdims=True, out=out)
         assert_(d is out)
         assert_array_equal(d, c)
-        # Now combined with axes.
+        # Now combined with axis and axes.
+        c = inner1d(a, b, axis=-1, keepdims=False)
+        assert_array_equal(c, (a * b).sum(-1, keepdims=False))
+        c = inner1d(a, b, axis=-1, keepdims=True)
+        assert_array_equal(c, (a * b).sum(-1, keepdims=True))
+        c = inner1d(a, b, axis=0, keepdims=False)
+        assert_array_equal(c, (a * b).sum(0, keepdims=False))
+        c = inner1d(a, b, axis=0, keepdims=True)
+        assert_array_equal(c, (a * b).sum(0, keepdims=True))
         c = inner1d(a, b, axes=[(-1,), (-1,), ()], keepdims=False)
         assert_array_equal(c, (a * b).sum(-1))
         c = inner1d(a, b, axes=[(-1,), (-1,), (-1,)], keepdims=True)
@@ -777,10 +815,12 @@ class TestUfunc(object):
         w = np.arange(20, 26).reshape((2, 3))
         assert_array_equal(umt.innerwt(a, b, w, keepdims=True),
                            np.sum(a * b * w, axis=-1, keepdims=True))
+        assert_array_equal(umt.innerwt(a, b, w, axis=0, keepdims=True),
+                           np.sum(a * b * w, axis=0, keepdims=True))
         # Check errors.
         # Not a boolean
         assert_raises(TypeError, inner1d, a, b, keepdims='true')
-        # 1 core dimension only.
+        # More than 1 core dimension, and core output dimensions.
         mm = umt.matrix_multiply
         assert_raises(TypeError, mm, a, b, keepdims=True)
         assert_raises(TypeError, mm, a, b, keepdims=False)
