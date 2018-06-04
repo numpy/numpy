@@ -895,8 +895,7 @@ def einsum(*operands, **kwargs):
 
     The Einstein summation convention can be used to compute
     many multi-dimensional, linear algebraic array operations. `einsum`
-    provides a succinct way of representing these in a
-    clear and consistent format.
+    provides a succinct way of representing these.
 
     A non-exhaustive list of these operations,
     which can be computed by `einsum`, is shown below along with examples:
