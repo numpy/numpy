@@ -1153,8 +1153,6 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
         Py_DECREF(view);
         return NULL;
     }
-    /* Make sure all the flags are good */
-    PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
 
     return view;
 }

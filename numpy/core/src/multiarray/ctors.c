@@ -1358,8 +1358,6 @@ _array_from_buffer_3118(PyObject *memoryview)
     if (PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
         goto fail;
     }
-    PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
-
     return r;
 
 fail:
@@ -2124,7 +2122,6 @@ PyArray_FromStructInterface(PyObject *input)
         return NULL;
     }
     Py_DECREF(attr);
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
     return (PyObject *)ret;
 
  fail:
