@@ -899,16 +899,16 @@ def einsum(*operands, **kwargs):
     clear and consistent format.
 
     A non-exhaustive list of these operations,
-    which can be computed by `einsum`, is shown below along with examples,
+    which can be computed by `einsum`, is shown below along with examples:
 
-        * Trace of an array.
-        * Return a diagonal.
-        * Array axis summations.
-        * Transpositions and permutations.
-        * Matrix multiplication and vector dot product.
-        * Broadcasting and scalar multiplication.
-        * Tensor contractions.
-        * Chained array operations, in efficient calculation order.
+    * Trace of an array.
+    * Return a diagonal.
+    * Array axis summations.
+    * Transpositions and permutations.
+    * Matrix multiplication and vector dot product.
+    * Broadcasting and scalar multiplication.
+    * Tensor contractions.
+    * Chained array operations, in efficient calculation order.
 
     The subscripts string is a comma-separated list of subscript labels,
     where each label refers to a dimension of the corresponding operand.
@@ -1137,7 +1137,7 @@ def einsum(*operands, **kwargs):
            [13, 40, 67, 94]])
 
     Chained array operations computed with an an optional, optimal
-    `einsum_path` insertion (since verions 1.12.0):
+    `einsum_path` insertion (since version 1.12.0):
 
     >>> path, desc = np.einsum_path('ij,ki,lj->lk', a, b, a, optimize='optimal')
     >>> for iteration in range(2):
