@@ -388,8 +388,6 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         Py_DECREF(ret);
         return NULL;
     }
-
-    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
     return ret;
 }
 
