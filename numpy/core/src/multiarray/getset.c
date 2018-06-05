@@ -758,7 +758,6 @@ _get_part(PyArrayObject *self, int imag)
         Py_DECREF(ret);
         return NULL;
     }
-    PyArray_CLEARFLAGS(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return ret;
 }
 
