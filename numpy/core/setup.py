@@ -910,6 +910,7 @@ def configuration(parent_package='',top_path=None):
                                  generate_ufunc_api],
                          depends=deps + umath_deps,
                          libraries=['npymath'],
+                         extra_info=extra_info,
                          )
 
     #######################################################################

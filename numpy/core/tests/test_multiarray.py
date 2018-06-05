@@ -2574,7 +2574,7 @@ class TestMethods(object):
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
-    def test_dot(self):
+    def _test_arr_mult(self, func):
         a = np.array([[1, 0], [0, 1]])
         b = np.array([[0, 1], [1, 0]])
         c = np.array([[9, 1], [1, -9]])
@@ -2598,49 +2598,49 @@ class TestMethods(object):
         # gemm vs syrk optimizations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             eaf = a.astype(et)
-            assert_equal(np.dot(eaf, eaf), eaf)
-            assert_equal(np.dot(eaf.T, eaf), eaf)
-            assert_equal(np.dot(eaf, eaf.T), eaf)
-            assert_equal(np.dot(eaf.T, eaf.T), eaf)
-            assert_equal(np.dot(eaf.T.copy(), eaf), eaf)
-            assert_equal(np.dot(eaf, eaf.T.copy()), eaf)
-            assert_equal(np.dot(eaf.T.copy(), eaf.T.copy()), eaf)
+            assert_equal(func(eaf, eaf), eaf)
+            assert_equal(func(eaf.T, eaf), eaf)
+            assert_equal(func(eaf, eaf.T), eaf)
+            assert_equal(func(eaf.T, eaf.T), eaf)
+            assert_equal(func(eaf.T.copy(), eaf), eaf)
+            assert_equal(func(eaf, eaf.T.copy()), eaf)
+            assert_equal(func(eaf.T.copy(), eaf.T.copy()), eaf)
 
         # syrk validations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             eaf = a.astype(et)
             ebf = b.astype(et)
-            assert_equal(np.dot(ebf, ebf), eaf)
-            assert_equal(np.dot(ebf.T, ebf), eaf)
-            assert_equal(np.dot(ebf, ebf.T), eaf)
-            assert_equal(np.dot(ebf.T, ebf.T), eaf)
+            assert_equal(func(ebf, ebf), eaf)
+            assert_equal(func(ebf.T, ebf), eaf)
+            assert_equal(func(ebf, ebf.T), eaf)
+            assert_equal(func(ebf.T, ebf.T), eaf)
 
         # syrk - different shape, stride, and view validations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             edf = d.astype(et)
             assert_equal(
-                np.dot(edf[::-1, :], edf.T),
-                np.dot(edf[::-1, :].copy(), edf.T.copy())
+                func(edf[::-1, :], edf.T),
+                func(edf[::-1, :].copy(), edf.T.copy())
             )
             assert_equal(
-                np.dot(edf[:, ::-1], edf.T),
-                np.dot(edf[:, ::-1].copy(), edf.T.copy())
+                func(edf[:, ::-1], edf.T),
+                func(edf[:, ::-1].copy(), edf.T.copy())
             )
             assert_equal(
-                np.dot(edf, edf[::-1, :].T),
-                np.dot(edf, edf[::-1, :].T.copy())
+                func(edf, edf[::-1, :].T),
+                func(edf, edf[::-1, :].T.copy())
             )
             assert_equal(
-                np.dot(edf, edf[:, ::-1].T),
-                np.dot(edf, edf[:, ::-1].T.copy())
+                func(edf, edf[:, ::-1].T),
+                func(edf, edf[:, ::-1].T.copy())
             )
             assert_equal(
-                np.dot(edf[:edf.shape[0] // 2, :], edf[::2, :].T),
-                np.dot(edf[:edf.shape[0] // 2, :].copy(), edf[::2, :].T.copy())
+                func(edf[:edf.shape[0] // 2, :], edf[::2, :].T),
+                func(edf[:edf.shape[0] // 2, :].copy(), edf[::2, :].T.copy())
             )
             assert_equal(
-                np.dot(edf[::2, :], edf[:edf.shape[0] // 2, :].T),
-                np.dot(edf[::2, :].copy(), edf[:edf.shape[0] // 2, :].T.copy())
+                func(edf[::2, :], edf[:edf.shape[0] // 2, :].T),
+                func(edf[::2, :].copy(), edf[:edf.shape[0] // 2, :].T.copy())
             )
 
         # syrk - different shape
@@ -2648,9 +2648,14 @@ class TestMethods(object):
             edf = d.astype(et)
             eddtf = ddt.astype(et)
             edtdf = dtd.astype(et)
-            assert_equal(np.dot(edf, edf.T), eddtf)
-            assert_equal(np.dot(edf.T, edf), edtdf)
+            assert_equal(func(edf, edf.T), eddtf)
+            assert_equal(func(edf.T, edf), edtdf)
 
+    def test_dot(self):
+        a = np.array([[1, 0], [0, 1]])
+        b = np.array([[0, 1], [1, 0]])
+        c = np.array([[9, 1], [1, -9]])
+        self._test_arr_mult(np.dot)
         # function versus methods
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
@@ -2705,6 +2710,9 @@ class TestMethods(object):
         # make sure out can be any ndarray (not only subclass of inputs)
         np.dot(a, b, out=out)
         np.matmul(a, b, out=out)
+
+    def test_matmul(self):
+        self._test_arr_mult(np.matmul)
 
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
@@ -3116,6 +3124,8 @@ class TestBinop(object):
             # 'eq':       (np.equal, False),
             # 'ne':       (np.not_equal, False),
         }
+        if sys.version_info >= (3, 5):
+            ops['matmul'] = (np.matmul, False, float)
 
         class Coerced(Exception):
             pass

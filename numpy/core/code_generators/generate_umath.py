@@ -908,8 +908,7 @@ defdict = {
     Ufunc(2, 1, None,
           "matmul placeholder",
           "PyUFunc_SimpleBinaryOperationTypeResolver",
-          TD(bints),
-          TD('fdg'),
+          TD(notimes_or_obj),
           signature='"(n?,k),(k,m?)->(n?,m?)"'
           ),
 }

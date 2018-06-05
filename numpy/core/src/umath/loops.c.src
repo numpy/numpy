@@ -2962,18 +2962,20 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 
 #define END_OUTER_LOOP  }
 
-
-
 /**begin repeat
- *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, 
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
  *          BYTE, SHORT, INT, LONG, LONGLONG,
  *          BOOL#
- *  #typ = npy_float,npy_double,npy_longdouble,
+ *  #typ = npy_float,npy_double,npy_longdouble, npy_half,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
  *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
  *         npy_bool#
+ * #SPECL = 0, 0, 0, 2, 1, 1, 1, 0*11#
  */
+
 NPY_NO_EXPORT void
 @TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
@@ -2995,14 +2997,6 @@ NPY_NO_EXPORT void
     npy_intp ib2_p;
     npy_intp ob_p;
 
-    if (dm == 0) {
-        dm = 1;
-    }
-    if (dp == 0) {
-        os_m = os_p;
-        is2_n = is2_p;
-        dp = 1;
-    }
     ib1_n = is1_n*dn;
     ib2_n = is2_n*dn;
     ib2_p = is2_p*dp;
@@ -3013,7 +3007,12 @@ NPY_NO_EXPORT void
             char *op=args[2];
             for (m = 0; m < dm; m++) {
                 for (p = 0; p < dp; p++) {
+#if @SPECL@ == 1
+                    (*(@typ@ *)op).real = 0;
+                    (*(@typ@ *)op).imag = 0;
+#else
                     *(@typ@ *)op = 0;
+#endif
                     op  +=  os_p;
                 }
                 op  +=  os_m - ob_p;
@@ -3023,12 +3022,34 @@ NPY_NO_EXPORT void
     }
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
+#if defined(HAVE_CBLAS)
+        /* check data for contiguity, fix, and call blas */
+#endif
         for (m = 0; m < dm; m++) {
             for (n = 0; n < dn; n++) {
                 @typ@ val1 = (*(@typ@ *)ip1);
                 for (p = 0; p < dp; p++) {
-                    if (n == 0) *(@typ@ *)op = 0;
+                    if (n == 0) {
+#if @SPECL@ == 1
+                        (*(@typ@ *)op).real = 0;
+                        (*(@typ@ *)op).imag = 0;
+#else
+                        *(@typ@ *)op = 0;
+#endif
+                    }
+#if @SPECL@ == 1
+                    (*(@typ@ *)op).real += (val1.real * (*(@typ@ *)ip2).real) - 
+                                         (val1.imag * (*(@typ@ *)ip2).imag);
+                    (*(@typ@ *)op).imag += (val1.real * (*(@typ@ *)ip2).imag) + 
+                                         (val1.imag * (*(@typ@ *)ip2).real);
+#elif @SPECL@ == 2
+                    *(@typ@ *)op = npy_float_to_half(
+                                        npy_half_to_float(*(@typ@ *)op) + 
+                                        (npy_half_to_float(val1) * 
+                                         npy_half_to_float(*(@typ@ *)ip2)));
+#else
                     *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
+#endif
                     ip2 += is2_p;
                     op  +=  os_p;
                 }
@@ -3042,6 +3063,9 @@ NPY_NO_EXPORT void
             ip1 += is1_m;
             op  +=  os_m;
         }
+#if defined(HAVE_CBLAS)
+        /* if data was copied, copy it back */
+#endif
     END_OUTER_LOOP
 }
 /**end repeat**/
