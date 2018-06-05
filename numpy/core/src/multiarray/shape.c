@@ -270,22 +270,10 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     ret = (PyArrayObject *)PyArray_NewFromDescr_int(
             Py_TYPE(self), PyArray_DESCR(self),
             ndim, dimensions, strides, PyArray_DATA(self),
-            flags, (PyObject *)self,
+            flags, (PyObject *)self, (PyObject *)self,
             0, 1);
-
-    if (ret == NULL) {
-        goto fail;
-    }
-
-    if (PyArray_SetBaseObject(ret, (PyObject *)self)) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-    return (PyObject *)ret;
-
- fail:
     Py_DECREF(self);
-    return NULL;
+    return (PyObject *)ret;
 }
 
 
@@ -713,17 +701,11 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
      * incorrectly), sets up descr, and points data at PyArray_DATA(ap).
      */
     Py_INCREF(PyArray_DESCR(ap));
-    ret = (PyArrayObject *) PyArray_NewFromDescr(
+    ret = (PyArrayObject *) PyArray_NewFromDescrAndBase(
             Py_TYPE(ap), PyArray_DESCR(ap),
             n, PyArray_DIMS(ap), NULL, PyArray_DATA(ap),
-            flags, (PyObject *)ap);
+            flags, (PyObject *)ap, (PyObject *)ap);
     if (ret == NULL) {
-        return NULL;
-    }
-    /* point at true owner of memory: */
-    Py_INCREF(ap);
-    if (PyArray_SetBaseObject(ret, (PyObject *)ap) < 0) {
-        Py_DECREF(ret);
         return NULL;
     }
 
@@ -944,26 +926,14 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
 
         /* If all the strides matched a contiguous layout, return a view */
         if (i < 0) {
-            PyArrayObject *ret;
-
             stride = PyArray_ITEMSIZE(arr);
             val[0] = PyArray_SIZE(arr);
 
             Py_INCREF(PyArray_DESCR(arr));
-            ret = (PyArrayObject *)PyArray_NewFromDescr(
+            return PyArray_NewFromDescrAndBase(
                     Py_TYPE(arr), PyArray_DESCR(arr),
                     1, val, &stride, PyArray_BYTES(arr),
-                    PyArray_FLAGS(arr), (PyObject *)arr);
-            if (ret == NULL) {
-                return NULL;
-            }
-            Py_INCREF(arr);
-            if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-
-            return (PyObject *)ret;
+                    PyArray_FLAGS(arr), (PyObject *)arr, (PyObject *)arr);
         }
     }
 

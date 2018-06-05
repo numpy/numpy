@@ -17,6 +17,7 @@ import functools
 import ctypes
 import os
 import gc
+import weakref
 import pytest
 from contextlib import contextmanager
 if sys.version_info[0] >= 3:
@@ -7360,6 +7361,56 @@ class TestArange(object):
         # empty range
         assert_raises(ZeroDivisionError, np.arange, 0, 0, 0)
         assert_raises(ZeroDivisionError, np.arange, 0.0, 0.0, 0.0)
+
+
+class TestArrayFinalize(object):
+    """ Tests __array_finalize__ """
+
+    def test_receives_base(self):
+        # gh-11237
+        class SavesBase(np.ndarray):
+            def __array_finalize__(self, obj):
+                self.saved_base = self.base
+
+        a = np.array(1).view(SavesBase)
+        assert_(a.saved_base is a.base)
+
+    def test_lifetime_on_error(self):
+        # gh-11237
+        class RaisesInFinalize(np.ndarray):
+            def __array_finalize__(self, obj):
+                # crash, but keep this object alive
+                raise Exception(self)
+
+        # a plain object can't be weakref'd
+        class Dummy(object): pass
+
+        # get a weak reference to an object within an array
+        obj_arr = np.array(Dummy())
+        obj_ref = weakref.ref(obj_arr[()])
+
+        # get an array that crashed in __array_finalize__
+        with assert_raises(Exception) as e:
+            obj_arr.view(RaisesInFinalize)
+        if sys.version_info.major == 2:
+            # prevent an extra reference being kept
+            sys.exc_clear()
+
+        obj_subarray = e.exception.args[0]
+        del e
+        assert_(isinstance(obj_subarray, RaisesInFinalize))
+
+        # reference should still be held by obj_arr
+        gc.collect()
+        assert_(obj_ref() is not None, "object should not already be dead")
+
+        del obj_arr
+        gc.collect()
+        assert_(obj_ref() is not None, "obj_arr should not hold the last reference")
+
+        del obj_subarray
+        gc.collect()
+        assert_(obj_ref() is None, "no references should remain")
 
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
