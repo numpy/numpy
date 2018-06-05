@@ -2078,17 +2078,6 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
         if (*ret == NULL) {
             return -1;
         }
-        if (!PyArray_Check(*ret)) {
-            Py_DECREF(*ret);
-            *ret = NULL;
-            PyErr_SetString(PyExc_RuntimeError,
-                        "NewFromDescr failed to return an array");
-            return -1;
-        }
-        PyArray_UpdateFlags(*ret,
-                    NPY_ARRAY_C_CONTIGUOUS|
-                    NPY_ARRAY_ALIGNED|
-                    NPY_ARRAY_F_CONTIGUOUS);
         Py_INCREF(op);
         if (PyArray_SetBaseObject(*ret, (PyObject *)op) < 0) {
             Py_DECREF(*ret);
@@ -2183,16 +2172,6 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
     if (ret == NULL) {
         return NULL;
     }
-    if (!PyArray_Check(ret)) {
-        Py_DECREF(ret);
-        PyErr_SetString(PyExc_RuntimeError,
-                    "NewFromDescr failed to return an array");
-        return NULL;
-    }
-    PyArray_UpdateFlags(ret,
-                NPY_ARRAY_C_CONTIGUOUS|
-                NPY_ARRAY_ALIGNED|
-                NPY_ARRAY_F_CONTIGUOUS);
     Py_INCREF(op);
     if (PyArray_SetBaseObject(ret, (PyObject *)op) < 0) {
         Py_DECREF(ret);

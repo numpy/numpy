@@ -3684,7 +3684,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         Py_DECREF(ret);
         return NULL;
     }
-    PyArray_UpdateFlags(ret, NPY_ARRAY_ALIGNED);
     return (PyObject *)ret;
 }
 
