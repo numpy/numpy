@@ -189,7 +189,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     npy_intp *dimensions = newdims->ptr;
     PyArrayObject *ret;
     int ndim = newdims->len;
-    npy_bool same, incref = NPY_TRUE;
+    npy_bool same;
     npy_intp *strides = NULL;
     npy_intp newstrides[NPY_MAXDIMS];
     int flags;
@@ -230,6 +230,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
      * data in the order it is in.
      * NPY_RELAXED_STRIDES_CHECKING: size check is unnecessary when set.
      */
+    Py_INCREF(self);
     if ((PyArray_SIZE(self) > 1) &&
         ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
          (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self)))) {
@@ -246,7 +247,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             if (newcopy == NULL) {
                 return NULL;
             }
-            incref = NPY_FALSE;
+            Py_DECREF(self);
             self = (PyArrayObject *)newcopy;
         }
     }
@@ -277,9 +278,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         goto fail;
     }
 
-    if (incref) {
-        Py_INCREF(self);
-    }
     if (PyArray_SetBaseObject(ret, (PyObject *)self)) {
         Py_DECREF(ret);
         return NULL;
@@ -289,9 +287,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     return (PyObject *)ret;
 
  fail:
-    if (!incref) {
-        Py_DECREF(self);
-    }
+    Py_DECREF(self);
     return NULL;
 }
 
