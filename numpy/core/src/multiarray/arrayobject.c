@@ -1663,7 +1663,6 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             descr = NULL;
             goto fail;
         }
-        PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
         Py_INCREF(buffer.base);
         if (PyArray_SetBaseObject(ret, buffer.base) < 0) {
             Py_DECREF(ret);

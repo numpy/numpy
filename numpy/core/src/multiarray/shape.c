@@ -284,8 +284,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         Py_DECREF(ret);
         return NULL;
     }
-
-    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return (PyObject *)ret;
 
  fail:
@@ -970,9 +968,6 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
             if (ret == NULL) {
                 return NULL;
             }
-
-            PyArray_UpdateFlags(ret,
-                        NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
             Py_INCREF(arr);
             if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
                 Py_DECREF(ret);

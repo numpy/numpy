@@ -736,7 +736,6 @@ VOID_getitem(void *input, void *vap)
             Py_DECREF(ret);
             return NULL;
         }
-        PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
         return (PyObject *)ret;
     }
 
@@ -936,7 +935,6 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             Py_DECREF(ret);
             return -1;
         }
-        PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
         res = PyArray_CopyObject(ret, op);
         Py_DECREF(ret);
         return res;
