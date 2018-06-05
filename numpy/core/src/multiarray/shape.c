@@ -267,12 +267,11 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
 
     Py_INCREF(PyArray_DESCR(self));
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(Py_TYPE(self),
-                                       PyArray_DESCR(self),
-                                       ndim, dimensions,
-                                       strides,
-                                       PyArray_DATA(self),
-                                       flags, (PyObject *)self, 0, 1);
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+            Py_TYPE(self), PyArray_DESCR(self),
+            ndim, dimensions, strides, PyArray_DATA(self),
+            flags, (PyObject *)self,
+            0, 1);
 
     if (ret == NULL) {
         goto fail;
@@ -714,13 +713,10 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
      * incorrectly), sets up descr, and points data at PyArray_DATA(ap).
      */
     Py_INCREF(PyArray_DESCR(ap));
-    ret = (PyArrayObject *)
-        PyArray_NewFromDescr(Py_TYPE(ap),
-                             PyArray_DESCR(ap),
-                             n, PyArray_DIMS(ap),
-                             NULL, PyArray_DATA(ap),
-                             flags,
-                             (PyObject *)ap);
+    ret = (PyArrayObject *) PyArray_NewFromDescr(
+            Py_TYPE(ap), PyArray_DESCR(ap),
+            n, PyArray_DIMS(ap), NULL, PyArray_DATA(ap),
+            flags, (PyObject *)ap);
     if (ret == NULL) {
         return NULL;
     }
@@ -954,13 +950,10 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
             val[0] = PyArray_SIZE(arr);
 
             Py_INCREF(PyArray_DESCR(arr));
-            ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
-                               PyArray_DESCR(arr),
-                               1, val,
-                               &stride,
-                               PyArray_BYTES(arr),
-                               PyArray_FLAGS(arr),
-                               (PyObject *)arr);
+            ret = (PyArrayObject *)PyArray_NewFromDescr(
+                    Py_TYPE(arr), PyArray_DESCR(arr),
+                    1, val, &stride, PyArray_BYTES(arr),
+                    PyArray_FLAGS(arr), (PyObject *)arr);
             if (ret == NULL) {
                 return NULL;
             }

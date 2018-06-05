@@ -1349,9 +1349,10 @@ _array_from_buffer_3118(PyObject *memoryview)
     }
 
     flags = NPY_ARRAY_BEHAVED & (view->readonly ? ~NPY_ARRAY_WRITEABLE : ~0);
-    r = PyArray_NewFromDescr(&PyArray_Type, descr,
-                             nd, shape, strides, view->buf,
-                             flags, NULL);
+    r = PyArray_NewFromDescr(
+            &PyArray_Type, descr,
+            nd, shape, strides, view->buf,
+            flags, NULL);
     if (r == NULL) {
         goto fail;
     }
@@ -2112,10 +2113,10 @@ PyArray_FromStructInterface(PyObject *input)
         }
     }
 
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, thetype,
-                             inter->nd, inter->shape,
-                             inter->strides, inter->data,
-                             inter->flags, NULL);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, thetype,
+            inter->nd, inter->shape, inter->strides, inter->data,
+            inter->flags, NULL);
     Py_INCREF(input);
     if (PyArray_SetBaseObject(ret, input) < 0) {
         Py_DECREF(ret);
@@ -2382,10 +2383,10 @@ PyArray_FromInterface(PyObject *origin)
         }
     }
 
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                                n, dims,
-                                                NULL, data,
-                                                dataflags, NULL);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype,
+            n, dims, NULL, data,
+            dataflags, NULL);
     if (ret == NULL) {
         goto fail;
     }
@@ -2898,11 +2899,11 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
 
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(&PyArray_Type,
-                                                    type,
-                                                    nd, dims,
-                                                    NULL, NULL,
-                                                    is_f_order, NULL, 1, 0);
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+            &PyArray_Type, type,
+            nd, dims, NULL, NULL,
+            is_f_order, NULL,
+            1, 0);
 
     if (ret == NULL) {
         return NULL;
@@ -3666,12 +3667,11 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         }
     }
 
-    if ((ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                                     type,
-                                                     1, &n,
-                                                     NULL, data,
-                                                     NPY_ARRAY_DEFAULT,
-                                                     NULL)) == NULL) {
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, type,
+            1, &n, NULL, data,
+            NPY_ARRAY_DEFAULT, NULL);
+    if (ret == NULL) {
         Py_DECREF(buf);
         return NULL;
     }

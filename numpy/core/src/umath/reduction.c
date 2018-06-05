@@ -155,13 +155,10 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
 
-    ret = (PyArrayObject_fields *)PyArray_NewFromDescr(&PyArray_Type,
-                               dtype,
-                               ndim, shape,
-                               strides,
-                               PyArray_DATA(out),
-                               PyArray_FLAGS(out),
-                               NULL);
+    ret = (PyArrayObject_fields *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype,
+            ndim, shape, strides, PyArray_DATA(out),
+            PyArray_FLAGS(out), NULL);
     if (ret == NULL) {
         return NULL;
     }

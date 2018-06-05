@@ -1140,10 +1140,10 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
 
     Py_INCREF(dtype);
-    view = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
-                                shape, strides, dataptr,
-                                writeable ? NPY_ARRAY_WRITEABLE : 0,
-                                NULL);
+    view = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype,
+            ndim, shape, strides, dataptr,
+            writeable ? NPY_ARRAY_WRITEABLE : 0, NULL);
     if (view == NULL) {
         return NULL;
     }

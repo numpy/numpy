@@ -373,13 +373,13 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         Py_DECREF(safe);
     }
 
-    ret = PyArray_NewFromDescr_int(Py_TYPE(self),
-                                   typed,
-                                   PyArray_NDIM(self), PyArray_DIMS(self),
-                                   PyArray_STRIDES(self),
-                                   PyArray_BYTES(self) + offset,
-                                   PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
-                                   (PyObject *)self, 0, 1);
+    ret = PyArray_NewFromDescr_int(
+            Py_TYPE(self), typed,
+            PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
+            PyArray_BYTES(self) + offset,
+            PyArray_FLAGS(self) & ~NPY_ARRAY_F_CONTIGUOUS,
+            (PyObject *)self,
+            0, 1);
     if (ret == NULL) {
         return NULL;
     }
@@ -880,12 +880,13 @@ array_wraparray(PyArrayObject *self, PyObject *args)
     if (Py_TYPE(self) != Py_TYPE(arr)){
         PyArray_Descr *dtype = PyArray_DESCR(arr);
         Py_INCREF(dtype);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                                   dtype,
-                                   PyArray_NDIM(arr),
-                                   PyArray_DIMS(arr),
-                                   PyArray_STRIDES(arr), PyArray_DATA(arr),
-                                   PyArray_FLAGS(arr), (PyObject *)self);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(
+                Py_TYPE(self),
+                dtype,
+                PyArray_NDIM(arr),
+                PyArray_DIMS(arr),
+                PyArray_STRIDES(arr), PyArray_DATA(arr),
+                PyArray_FLAGS(arr), (PyObject *)self);
         if (ret == NULL) {
             return NULL;
         }
@@ -931,12 +932,11 @@ array_preparearray(PyArrayObject *self, PyObject *args)
 
     dtype = PyArray_DESCR(arr);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                               dtype,
-                               PyArray_NDIM(arr),
-                               PyArray_DIMS(arr),
-                               PyArray_STRIDES(arr), PyArray_DATA(arr),
-                               PyArray_FLAGS(arr), (PyObject *)self);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            Py_TYPE(self), dtype,
+            PyArray_NDIM(arr), PyArray_DIMS(arr), PyArray_STRIDES(arr),
+            PyArray_DATA(arr),
+            PyArray_FLAGS(arr), (PyObject *)self);
     if (ret == NULL) {
         return NULL;
     }

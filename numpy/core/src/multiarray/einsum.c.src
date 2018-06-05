@@ -2068,12 +2068,10 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
     if (idim == ndim) {
         Py_INCREF(PyArray_DESCR(op));
         *ret = (PyArrayObject *)PyArray_NewFromDescr(
-                                Py_TYPE(op),
-                                PyArray_DESCR(op),
-                                ndim_output, new_dims, new_strides,
-                                PyArray_DATA(op),
-                                PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
-                                (PyObject *)op);
+                Py_TYPE(op), PyArray_DESCR(op),
+                ndim_output, new_dims, new_strides, PyArray_DATA(op),
+                PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
+                (PyObject *)op);
 
         if (*ret == NULL) {
             return -1;
@@ -2162,12 +2160,10 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
 
     Py_INCREF(PyArray_DESCR(op));
     ret = (PyArrayObject *)PyArray_NewFromDescr(
-                            Py_TYPE(op),
-                            PyArray_DESCR(op),
-                            ndim, new_dims, new_strides,
-                            PyArray_DATA(op),
-                            PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
-                            (PyObject *)op);
+            Py_TYPE(op), PyArray_DESCR(op),
+            ndim, new_dims, new_strides, PyArray_DATA(op),
+            PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
+            (PyObject *)op);
 
     if (ret == NULL) {
         return NULL;

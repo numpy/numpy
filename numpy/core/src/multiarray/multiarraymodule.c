@@ -1629,11 +1629,10 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     }
     dtype = PyArray_DESCR(arr);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
-                        dtype, ndmin, newdims, newstrides,
-                        PyArray_DATA(arr),
-                        PyArray_FLAGS(arr),
-                        (PyObject *)arr);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            Py_TYPE(arr), dtype,
+            ndmin, newdims, newstrides, PyArray_DATA(arr),
+            PyArray_FLAGS(arr), (PyObject *)arr);
     if (ret == NULL) {
         Py_DECREF(arr);
         return NULL;
