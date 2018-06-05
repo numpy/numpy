@@ -290,8 +290,8 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     if ((typecode->type_num == NPY_VOID) &&
             !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
-        r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                typecode,
+        r = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type, typecode,
                 0, NULL, NULL,
                 ((PyVoidScalarObject *)scalar)->obval,
                 ((PyVoidScalarObject *)scalar)->flags,

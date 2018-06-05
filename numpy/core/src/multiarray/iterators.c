@@ -1093,9 +1093,9 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
 
     if (PyArray_ISCONTIGUOUS(it->ao)) {
         ret = (PyArrayObject *)PyArray_NewFromDescr(
-                &PyArray_Type, PyArray_DESCR(it->ao), 1, &size,
-                NULL, PyArray_DATA(it->ao), PyArray_FLAGS(it->ao),
-                (PyObject *)it->ao);
+                &PyArray_Type, PyArray_DESCR(it->ao),
+                1, &size, NULL, PyArray_DATA(it->ao),
+                PyArray_FLAGS(it->ao), (PyObject *)it->ao);
         if (ret == NULL) {
             return NULL;
         }

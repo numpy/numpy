@@ -631,13 +631,12 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(subtype,
-                               dtype,
-                               PyArray_NDIM(self), PyArray_DIMS(self),
-                               PyArray_STRIDES(self),
-                               PyArray_DATA(self),
-                               flags,
-                               (PyObject *)self, 0, 1);
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+            subtype, dtype,
+            PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
+            PyArray_DATA(self),
+            flags, (PyObject *)self,
+            0, 1);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;
