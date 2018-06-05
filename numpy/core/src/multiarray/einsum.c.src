@@ -23,6 +23,7 @@
 
 #include "convert.h"
 #include "common.h"
+#include "ctors.h"
 
 #ifdef NPY_HAVE_SSE_INTRINSICS
 #define EINSUM_USE_SSE1 1
@@ -2067,19 +2068,14 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
     /* If we processed all the input axes, return a view */
     if (idim == ndim) {
         Py_INCREF(PyArray_DESCR(op));
-        *ret = (PyArrayObject *)PyArray_NewFromDescr(
+        *ret = (PyArrayObject *)PyArray_NewFromDescr_int(
                 Py_TYPE(op), PyArray_DESCR(op),
                 ndim_output, new_dims, new_strides, PyArray_DATA(op),
                 PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
-                (PyObject *)op);
+                (PyObject *)op, (PyObject *)op,
+                0, 0);
 
         if (*ret == NULL) {
-            return -1;
-        }
-        Py_INCREF(op);
-        if (PyArray_SetBaseObject(*ret, (PyObject *)op) < 0) {
-            Py_DECREF(*ret);
-            *ret = NULL;
             return -1;
         }
         return 0;
@@ -2159,21 +2155,11 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
     ndim = icombine;
 
     Py_INCREF(PyArray_DESCR(op));
-    ret = (PyArrayObject *)PyArray_NewFromDescr(
+    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(op), PyArray_DESCR(op),
             ndim, new_dims, new_strides, PyArray_DATA(op),
             PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
-            (PyObject *)op);
-
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(op);
-    if (PyArray_SetBaseObject(ret, (PyObject *)op) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
+            (PyObject *)op, (PyObject *)op);
     return ret;
 }
 

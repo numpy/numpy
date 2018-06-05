@@ -155,6 +155,9 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
 
+    /* TODO: use PyArray_NewFromDescrAndBase here once multiarray and umath
+     *       are merged
+     */
     ret = (PyArrayObject_fields *)PyArray_NewFromDescr(
             &PyArray_Type, dtype,
             ndim, shape, strides, PyArray_DATA(out),

@@ -980,19 +980,14 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
 
     /* Create the new view and set the base array */
     Py_INCREF(PyArray_DESCR(self));
-    *view = (PyArrayObject *)PyArray_NewFromDescr(
+    *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             ensure_array ? &PyArray_Type : Py_TYPE(self),
             PyArray_DESCR(self),
             new_dim, new_shape, new_strides, data_ptr,
             PyArray_FLAGS(self),
-            ensure_array ? NULL : (PyObject *)self);
+            ensure_array ? NULL : (PyObject *)self,
+            (PyObject *)self);
     if (*view == NULL) {
-        return -1;
-    }
-
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(*view, (PyObject *)self) < 0) {
-        Py_DECREF(*view);
         return -1;
     }
 
@@ -1126,18 +1121,13 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *tmp = ret;
 
         Py_INCREF(dtype);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 Py_TYPE(self), dtype,
                 1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                PyArray_FLAGS(self), (PyObject *)self);
+                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
 
         if (ret == NULL) {
             Py_DECREF(tmp);
-            return NULL;
-        }
-
-        if (PyArray_SetBaseObject(ret, (PyObject *)tmp) < 0) {
-            Py_DECREF(ret);
             return NULL;
         }
     }
@@ -1437,15 +1427,10 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_STRIDES(arr),
                 PyArray_BYTES(arr) + offset,
                 PyArray_FLAGS(arr),
-                (PyObject *)arr,
+                (PyObject *)arr, (PyObject *)arr,
                 0, 1);
         if (*view == NULL) {
             return 0;
-        }
-        Py_INCREF(arr);
-        if (PyArray_SetBaseObject(*view, (PyObject *)arr) < 0) {
-            Py_DECREF(*view);
-            *view = NULL;
         }
         return 0;
     }
@@ -1565,18 +1550,11 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 PyArray_STRIDES(arr),
                 PyArray_DATA(arr),
                 PyArray_FLAGS(arr),
-                (PyObject *)arr,
+                (PyObject *)arr, (PyObject *)arr,
                 0, 1);
         if (*view == NULL) {
             return 0;
         }
-        Py_INCREF(arr);
-        if (PyArray_SetBaseObject(*view, (PyObject *)arr) < 0) {
-            Py_DECREF(*view);
-            *view = NULL;
-            return 0;
-        }
-
         return 0;
     }
     return -1;
@@ -1774,7 +1752,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         PyArrayObject *tmp_arr = (PyArrayObject *)result;
 
         Py_INCREF(PyArray_DESCR(tmp_arr));
-        result = PyArray_NewFromDescr(
+        result = PyArray_NewFromDescrAndBase(
                 Py_TYPE(self),
                 PyArray_DESCR(tmp_arr),
                 PyArray_NDIM(tmp_arr),
@@ -1782,17 +1760,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 PyArray_STRIDES(tmp_arr),
                 PyArray_BYTES(tmp_arr),
                 PyArray_FLAGS(self),
-                (PyObject *)self);
-
+                (PyObject *)self, (PyObject *)tmp_arr);
+        Py_DECREF(tmp_arr);
         if (result == NULL) {
-            Py_DECREF(tmp_arr);
-            goto finish;
-        }
-
-        if (PyArray_SetBaseObject((PyArrayObject *)result,
-                                  (PyObject *)tmp_arr) < 0) {
-            Py_DECREF(result);
-            result = NULL;
             goto finish;
         }
     }
