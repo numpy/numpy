@@ -235,6 +235,7 @@ BigInt_Set_2x_uint64(BigInt *i, npy_uint64 hi, npy_uint64 lo)
         i->length = 0;
     }
 
+    /* Note deliberate fallthrough in this switch */
     switch (i->length) {
         case 4:
             i->blocks[3] = (hi >> 32) & bitmask_u64(32);
