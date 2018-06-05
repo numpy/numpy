@@ -1,32 +1,3 @@
-==========================
-NumPy 1.14.4 Release Notes
-==========================
-
-This is a bugfix release for bugs reported following the 1.14.3 release. The
-most significant fixes are:
-
-* fixes for compiler instruction reordering that resulted in NaN's not being
-  properly propagated in `np.max` and `np.min`,
-
-* fixes for bus faults on SPARC and older ARM due to incorrect alignment
-  checks.
-
-There are also improvements to printing of long doubles on PPC platforms. All
-is not yet perfect on that platform, the whitespace padding is still incorrect
-and is to be fixed in numpy 1.15, consequently NumPy still fails some
-printing-related (and other) unit tests on ppc systems. However, the printed
-values are now correct.
-
-Note that NumPy will error on import if it detects incorrect float32 `dot`
-results. This problem has been seen on the Mac when working in the Anaconda
-enviroment and is due to a subtle interaction between MKL and PyQt5.  It is not
-strictly a NumPy problem, but it is best that users be aware of it.  See the
-gh-8577 NumPy issue for more information.
-
-The Python versions supported in this release are 2.7 and 3.4 - 3.6. The Python
-3.6 wheels available from PIP are built with Python 3.6.2 and should be
-compatible with all previous versions of Python 3.6. The source releases were
-cythonized with Cython 0.28.2 and should work for the upcoming Python 3.7.
 
 Contributors
 ============
