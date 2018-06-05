@@ -2064,10 +2064,10 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     }
 
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                        ret_ndim, &innerloopsize,
-                        &innerstride, dataptr,
-                        self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype,
+            ret_ndim, &innerloopsize, &innerstride, dataptr,
+            self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
     if (ret == NULL) {
         return NULL;
     }

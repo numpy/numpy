@@ -742,14 +742,14 @@ _get_part(PyArrayObject *self, int imag)
         Py_DECREF(type);
         type = new;
     }
-    ret = (PyArrayObject *)
-        PyArray_NewFromDescr(Py_TYPE(self),
-                             type,
-                             PyArray_NDIM(self),
-                             PyArray_DIMS(self),
-                             PyArray_STRIDES(self),
-                             PyArray_BYTES(self) + offset,
-                             PyArray_FLAGS(self), (PyObject *)self);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+            Py_TYPE(self),
+            type,
+            PyArray_NDIM(self),
+            PyArray_DIMS(self),
+            PyArray_STRIDES(self),
+            PyArray_BYTES(self) + offset,
+            PyArray_FLAGS(self), (PyObject *)self);
     if (ret == NULL) {
         return NULL;
     }

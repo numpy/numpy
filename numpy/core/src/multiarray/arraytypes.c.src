@@ -724,9 +724,10 @@ VOID_getitem(void *input, void *vap)
             return NULL;
         }
         Py_INCREF(descr->subarray->base);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                descr->subarray->base, shape.len, shape.ptr,
-                NULL, ip, PyArray_FLAGS(ap)&(~NPY_ARRAY_F_CONTIGUOUS), NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type, descr->subarray->base,
+                shape.len, shape.ptr, NULL, ip,
+                PyArray_FLAGS(ap) & ~NPY_ARRAY_F_CONTIGUOUS, NULL);
         npy_free_cache_dim_obj(shape);
         if (!ret) {
             return NULL;
@@ -923,9 +924,10 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             return -1;
         }
         Py_INCREF(descr->subarray->base);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                        descr->subarray->base, shape.len, shape.ptr,
-                        NULL, ip, PyArray_FLAGS(ap), NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type, descr->subarray->base,
+                shape.len, shape.ptr, NULL, ip,
+                PyArray_FLAGS(ap), NULL);
         npy_free_cache_dim_obj(shape);
         if (!ret) {
             return -1;

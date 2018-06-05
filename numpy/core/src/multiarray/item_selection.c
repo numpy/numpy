@@ -1876,13 +1876,10 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     /* Create the diagonal view */
     dtype = PyArray_DTYPE(self);
     Py_INCREF(dtype);
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               dtype,
-                               ndim-1, ret_shape,
-                               ret_strides,
-                               data,
-                               PyArray_FLAGS(self),
-                               (PyObject *)self);
+    ret = PyArray_NewFromDescr(
+            Py_TYPE(self), dtype,
+            ndim-1, ret_shape, ret_strides, data,
+            PyArray_FLAGS(self), (PyObject *)self);
     if (ret == NULL) {
         return NULL;
     }
