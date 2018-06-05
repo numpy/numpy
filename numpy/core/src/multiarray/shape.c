@@ -244,10 +244,10 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         else {
             PyObject *newcopy;
             newcopy = PyArray_NewCopy(self, order);
+            Py_DECREF(self);
             if (newcopy == NULL) {
                 return NULL;
             }
-            Py_DECREF(self);
             self = (PyArrayObject *)newcopy;
         }
     }
