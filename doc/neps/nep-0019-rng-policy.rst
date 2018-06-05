@@ -109,6 +109,10 @@ of the new design are out of scope for this NEP and up for much discussion, but
 we will discuss general policies that will guide the evolution of whatever code
 is adopted.
 
+
+New Policy
+::::::::::
+
 First, we will maintain API source compatibility just as we do with the rest of
 ``numpy``.  If we *must* make a breaking change, we will only do so with an
 appropriate deprecation period and warnings.
@@ -137,6 +141,10 @@ compose them to build other distributions.  Namely,
     * ``.bytes()``
     * ``.random_uintegers()``
     * ``.random_sample()``
+
+
+Supporting Unit Tests
+:::::::::::::::::::::
 
 Furthermore, the new design should also provide one generator class (we shall
 call it ``StableRandom`` for discussion purposes) that provides a slightly
@@ -170,12 +178,17 @@ For a long time, we considered that the way to allow algorithmic improvements
 while maintaining the stream was to apply some form of versioning.  That is,
 every time we make a stream change in one of the distributions, we increment
 some version number somewhere.  ``numpy.random`` would keep all past versions
-of the code, and there would be a way to get the old versions.  Proposals of
-how to do this exactly varied widely, but we will not exhaustively list them
-here.  We spent years going back and forth on these designs and were not able
-to find one that sufficed.  Let that time lost, and more importantly, the
-contributors that we lost while we dithered, serve as evidence against the
-notion.
+of the code, and there would be a way to get the old versions.
+
+We will not be doing this.  If one needs to get the exact bit-for-bit results
+from a given version of ``numpy``, whether one uses random numbers or not, one
+should use the exact version of ``numpy``.
+
+Proposals of how to do RNG versioning varied widely, and we will not
+exhaustively list them here.  We spent years going back and forth on these
+designs and were not able to find one that sufficed.  Let that time lost, and
+more importantly, the contributors that we lost while we dithered, serve as
+evidence against the notion.
 
 Concretely, adding in versioning makes maintenance of ``numpy.random``
 difficult.  Necessarily, we would be keeping lots of versions of the same code
@@ -198,8 +211,8 @@ is superfluous.
 Discussion
 ----------
 
-- https://mail.python.org/pipermail/numpy-discussion/2018-January/077608.html
-- https://github.com/numpy/numpy/pull/10124#issuecomment-350876221
+- `NEP discussion <https://mail.python.org/pipermail/numpy-discussion/2018-June/078126.html>`_
+- `Earlier discussion <https://mail.python.org/pipermail/numpy-discussion/2018-January/077608.html>`_
 
 
 Copyright
