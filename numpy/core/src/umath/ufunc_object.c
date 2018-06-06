@@ -553,11 +553,8 @@ ufunc_get_name_cstr(PyUFuncObject *ufunc) {
 
 /*
  * Parses the positional and keyword arguments for a generic ufunc call.
- *
- * Note that if an error is returned, the caller must free the
- * non-zero references in out_op.  This function does not do its own clean-up.
- *
- * Note also that all the outputs from keyword arguments contain new references.
+ * All returned arguments are new references (with optional ones NULL
+ * if not present)
  */
 static int
 get_ufunc_arguments(PyUFuncObject *ufunc,
@@ -576,6 +573,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int i, nargs;
     int nin = ufunc->nin;
     int nout = ufunc->nout;
+    int nop = ufunc->nargs;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
@@ -584,6 +582,13 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
     int has_sig = 0;
 
+    /*
+     * Initialize objects so caller knows when outputs and other optional
+     * arguments are set (also means we can safely XDECREF on failure).
+     */
+    for (i = 0; i < nop; i++) {
+        out_op[i] = NULL;
+    }
     *out_extobj = NULL;
     *out_typetup = NULL;
     if (out_axes != NULL) {
@@ -598,7 +603,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
 
     /* Check number of arguments */
     nargs = PyTuple_Size(args);
-    if ((nargs < nin) || (nargs > ufunc->nargs)) {
+    if ((nargs < nin) || (nargs > nop)) {
         PyErr_SetString(PyExc_ValueError, "invalid number of arguments");
         return -1;
     }
@@ -619,7 +624,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                  */
                 context = Py_BuildValue("OOi", ufunc, args, i);
                 if (context == NULL) {
-                    return -1;
+                    goto fail;
                 }
             }
             else {
@@ -631,7 +636,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         }
 
         if (out_op[i] == NULL) {
-            return -1;
+            goto fail;
         }
 
         type_num = PyArray_DESCR(out_op[i])->type_num;
@@ -674,7 +679,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         }
     }
 
-    if (any_flexible && !any_flexible_userloops && !any_object) {
+    if (any_flexible && !any_flexible_userloops && !any_object && nin == 2) {
         /* Traditionally, we return -2 here (meaning "NotImplemented") anytime
          * we hit the above condition.
          *
@@ -766,16 +771,17 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         if (!strcmp(ufunc_name, "equal") ||
                 !strcmp(ufunc_name, "not_equal")) {
             /* Warn on non-scalar, return NotImplemented regardless */
-            assert(nin == 2);
             if (PyArray_NDIM(out_op[0]) != 0 ||
                     PyArray_NDIM(out_op[1]) != 0) {
                 if (DEPRECATE_FUTUREWARNING(
                         "elementwise comparison failed; returning scalar "
                         "instead, but in the future will perform elementwise "
                         "comparison") < 0) {
-                    return -1;
+                    goto fail;
                 }
             }
+            Py_DECREF(out_op[0]);
+            Py_DECREF(out_op[1]);
             return -2;
         }
         else if (!strcmp(ufunc_name, "less") ||
@@ -785,9 +791,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
 #if !defined(NPY_PY3K)
             if (DEPRECATE("unorderable dtypes; returning scalar but in "
                           "the future this will be an error") < 0) {
-                return -1;
+                goto fail;
             }
 #endif
+            Py_DECREF(out_op[0]);
+            Py_DECREF(out_op[1]);
             return -2;
         }
     }
@@ -796,7 +804,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     for (i = nin; i < nargs; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
         if (_set_out_array(obj, out_op + i) < 0) {
-            return -1;
+            goto fail;
         }
     }
 
@@ -1048,24 +1056,19 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
 
 fail:
     Py_XDECREF(str_key_obj);
-    /*
-     * XDECREF any output kwargs that were assigned, and set them to NULL.
-     */
     Py_XDECREF(*out_typetup);
-    *out_typetup = NULL;
     Py_XDECREF(*out_extobj);
-    *out_extobj = NULL;
     if (out_wheremask != NULL) {
         Py_XDECREF(*out_wheremask);
-        *out_wheremask = NULL;
     }
     if (out_axes != NULL) {
         Py_XDECREF(*out_axes);
-        *out_axes = NULL;
     }
     if (out_axis != NULL) {
         Py_XDECREF(*out_axis);
-        *out_axis = NULL;
+    }
+    for (i = 0; i < nop; i++) {
+        Py_XDECREF(out_op[i]);
     }
     return -1;
 }
@@ -2341,7 +2344,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
     /* other possible keyword arguments */
-    PyObject *extobj = NULL, *type_tup = NULL, *axes = NULL, *axis = NULL;
+    PyObject *extobj, *type_tup, *axes, *axis;
     int keepdims = -1;
 
     if (ufunc == NULL) {
@@ -2357,9 +2360,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
-    /* Initialize all the operands and dtypes to NULL */
+    /* Initialize all dtypes and __array_prepare__ call-backs to NULL */
     for (i = 0; i < nop; ++i) {
-        op[i] = NULL;
         dtypes[i] = NULL;
         arr_prep[i] = NULL;
     }
@@ -2373,7 +2375,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                 op, &order, &casting, &extobj,
                 &type_tup, &subok, NULL, &axes, &axis, &keepdims);
     if (retval < 0) {
-        goto fail;
+        NPY_UF_DBG_PRINT("Failure in getting arguments\n");
+        return retval;
     }
     /*
      * If keepdims was passed in (and thus changed from the initial value
@@ -2893,7 +2896,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     NPY_ORDER order = NPY_KEEPORDER;
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
-    PyObject *extobj = NULL, *type_tup = NULL;
+    PyObject *extobj, *type_tup;
 
     if (ufunc == NULL) {
         PyErr_SetString(PyExc_ValueError, "function not supported");
@@ -2912,9 +2915,8 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
-    /* Initialize all the operands and dtypes to NULL */
+    /* Initialize all the dtypes and __array_prepare__ callbacks to NULL */
     for (i = 0; i < nop; ++i) {
-        op[i] = NULL;
         dtypes[i] = NULL;
         arr_prep[i] = NULL;
     }
@@ -2926,7 +2928,8 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
                 op, &order, &casting, &extobj,
                 &type_tup, &subok, &wheremask, NULL, NULL, NULL);
     if (retval < 0) {
-        goto fail;
+        NPY_UF_DBG_PRINT("Failure in getting arguments\n");
+        return retval;
     }
 
     /*
@@ -4502,20 +4505,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return override;
     }
 
-    /*
-     * Initialize all array objects to NULL to make cleanup easier
-     * if something goes wrong.
-     */
-    for (i = 0; i < ufunc->nargs; i++) {
-        mps[i] = NULL;
-    }
-
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
     if (errval < 0) {
-        for (i = 0; i < ufunc->nargs; i++) {
-            PyArray_DiscardWritebackIfCopy(mps[i]);
-            Py_XDECREF(mps[i]);
-        }
         if (errval == -1) {
             return NULL;
         }
