@@ -51,7 +51,7 @@ def compile(source,
     from numpy.distutils.exec_command import exec_command
     import tempfile
     if source_fn is None:
-        f = tempfile.NamedTemporaryFile(suffix=extension)
+        f = tempfile.NamedTemporaryFile(suffix=extension, mode='w')
     else:
         f = open(source_fn, 'w')
 
