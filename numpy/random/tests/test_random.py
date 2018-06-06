@@ -403,6 +403,8 @@ class TestRandomDist(object):
         assert_raises(ValueError, sample, [1, 2, 3], 4, replace=False)
         assert_raises(ValueError, sample, [1, 2, 3], 2,
                       replace=False, p=[1, 0, 0])
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, sample, [42, 2, 3], p=[None, None, None])
 
     def test_choice_return_shape(self):
         p = [0.1, 0.9]
