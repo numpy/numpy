@@ -48,6 +48,8 @@ def _all(a, axis=None, dtype=None, out=None, keepdims=False):
 def _count_reduce_items(arr, axis):
     if axis is None:
         axis = tuple(range(arr.ndim))
+    if isinstance(axis, list):
+        axis = tuple(axis)
     if not isinstance(axis, tuple):
         axis = (axis,)
     items = 1
