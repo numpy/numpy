@@ -385,6 +385,16 @@ inner-product example, ``keepdims=True, axes=[-2, -2, -2]`` would act on the
 one-but-last dimension of the input arguments, and leave a size 1 dimension in
 that place in the output.
 
+float128 values now print correctly on ppc systems
+--------------------------------------------------
+Previously printing float128 values was buggy on ppc, since the special
+double-double floating-point-format on these systems was not accounted for.
+float128s now print with correct rounding and uniqueness.
+
+Warning to ppc users: You should upgrade glibc if it is version <=2.23,
+especially if using float128. On ppc, glibc's malloc in these version often
+misaligns allocated memory which can crash numpy when using float128 values.
+
 New ``np.take_along_axis`` and ``np.put_along_axis`` functions
 --------------------------------------------------------------
 When used on multidimensional arrays, ``argsort``, ``argmin``, ``argmax``, and
