@@ -686,7 +686,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, isnan, isinf, any, inf
+    from numpy.core import array, isnan, inf, bool_
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
@@ -696,17 +696,28 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     def istime(x):
         return x.dtype.char in "Mm"
 
-    def chk_same_position(x_id, y_id, hasval='nan'):
-        """Handling nan/inf: check that x and y have the nan/inf at the same
-        locations."""
-        try:
-            assert_array_equal(x_id, y_id)
-        except AssertionError:
+    def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
+        """Handling nan/inf: combine results of running func on x and y,
+        checking that they are True at the same locations."""
+        # Both the != True comparison here and the cast to bool_ at
+        # the end are done to deal with `masked`, which cannot be
+        # compared usefully, and for which .all() yields masked.
+        x_id = func(x)
+        y_id = func(y)
+        if (x_id == y_id).all() != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
+        # If there is a scalar, then here we know the array has the same
+        # flag as it everywhere, so we should return the scalar flag.
+        if x_id.ndim == 0:
+            return bool_(x_id)
+        elif y_id.ndim == 0:
+            return bool_(y_id)
+        else:
+            return y_id
 
     try:
         cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
@@ -719,49 +730,32 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
 
+        flagged = bool_(False)
         if isnumber(x) and isnumber(y):
-            has_nan = has_inf = False
             if equal_nan:
-                x_isnan, y_isnan = isnan(x), isnan(y)
-                # Validate that NaNs are in the same place
-                has_nan = any(x_isnan) or any(y_isnan)
-                if has_nan:
-                    chk_same_position(x_isnan, y_isnan, hasval='nan')
+                flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
             if equal_inf:
-                x_isinf, y_isinf = isinf(x), isinf(y)
-                # Validate that infinite values are in the same place
-                has_inf = any(x_isinf) or any(y_isinf)
-                if has_inf:
-                    # Check +inf and -inf separately, since they are different
-                    chk_same_position(x == +inf, y == +inf, hasval='+inf')
-                    chk_same_position(x == -inf, y == -inf, hasval='-inf')
-
-            if has_nan and has_inf:
-                x = x[~(x_isnan | x_isinf)]
-                y = y[~(y_isnan | y_isinf)]
-            elif has_nan:
-                x = x[~x_isnan]
-                y = y[~y_isnan]
-            elif has_inf:
-                x = x[~x_isinf]
-                y = y[~y_isinf]
-
-            # Only do the comparison if actual values are left
-            if x.size == 0:
-                return
+                flagged |= func_assert_same_pos(x, y,
+                                                func=lambda xy: xy == +inf,
+                                                hasval='+inf')
+                flagged |= func_assert_same_pos(x, y,
+                                                func=lambda xy: xy == -inf,
+                                                hasval='-inf')
 
         elif istime(x) and istime(y):
             # If one is datetime64 and the other timedelta64 there is no point
             if equal_nan and x.dtype.type == y.dtype.type:
-                x_isnat, y_isnat = isnat(x), isnat(y)
+                flagged = func_assert_same_pos(x, y, func=isnat, hasval="NaT")
 
-                if any(x_isnat) or any(y_isnat):
-                    chk_same_position(x_isnat, y_isnat, hasval="NaT")
-
-                if any(x_isnat) or any(y_isnat):
-                    x = x[~x_isnat]
-                    y = y[~y_isnat]
+        if flagged.ndim > 0:
+            x, y = x[~flagged], y[~flagged]
+            # Only do the comparison if actual values are left
+            if x.size == 0:
+                return
+        elif flagged:
+            # no sense doing comparison if everything is flagged.
+            return
 
         val = comparison(x, y)
 

@@ -151,6 +151,17 @@ class TestArrayEqual(_GenericTest):
             self._test_not_equal(c, b)
             assert_equal(len(l), 1)
 
+    def test_masked_nan_inf(self):
+        # Regression test for gh-11121
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[False, True, False])
+        b = np.array([3., np.nan, 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[True, False, False])
+        b = np.array([np.inf, 4., 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+
 
 class TestBuildErrorMessage(object):
 
@@ -390,6 +401,9 @@ class TestArrayAlmostEqual(_GenericTest):
         # comparison operators, not on them being able to store booleans
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return super(MyArray, self).__eq__(other).view(np.ndarray)
+
             def __lt__(self, other):
                 return super(MyArray, self).__lt__(other).view(np.ndarray)
 
@@ -489,6 +503,9 @@ class TestAlmostEqual(_GenericTest):
         # comparison operators, not on them being able to store booleans
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return super(MyArray, self).__eq__(other).view(np.ndarray)
+
             def __lt__(self, other):
                 return super(MyArray, self).__lt__(other).view(np.ndarray)
 
@@ -649,6 +666,7 @@ class TestArrayAssertLess(object):
         assert_raises(AssertionError, lambda: self._assert_func(-x, -ainf))
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
+
 
 @pytest.mark.skip(reason="The raises decorator depends on Nose")
 class TestRaises(object):
