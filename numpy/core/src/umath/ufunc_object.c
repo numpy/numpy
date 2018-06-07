@@ -566,11 +566,12 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                     NPY_ORDER *out_order,
                     NPY_CASTING *out_casting,
                     PyObject **out_extobj,
-                    PyObject **out_typetup,
-                    int *out_subok,
-                    PyArrayObject **out_wheremask,
-                    PyObject **out_axes,
-                    int *out_keepdims)
+                    PyObject **out_typetup,  /* type: Tuple[np.dtype] */
+                    int *out_subok,  /* bool */
+                    PyArrayObject **out_wheremask, /* PyArray of bool */
+                    PyObject **out_axes,  /* type: List[Tuple[T]] */
+                    PyObject **out_axis,  /* type: T */
+                    int *out_keepdims)  /* bool */
 {
     int i, nargs;
     int nin = ufunc->nin;
@@ -587,6 +588,9 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     *out_typetup = NULL;
     if (out_axes != NULL) {
         *out_axes = NULL;
+    }
+    if (out_axis != NULL) {
+        *out_axis = NULL;
     }
     if (out_wheremask != NULL) {
         *out_wheremask = NULL;
@@ -827,9 +831,23 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 case 'a':
                     /* possible axes argument for generalized ufunc */
                     if (out_axes != NULL && strcmp(str, "axes") == 0) {
+                        if (out_axis != NULL && *out_axis != NULL) {
+                            PyErr_SetString(PyExc_TypeError,
+                                "cannot specify both 'axis' and 'axes'");
+                            goto fail;
+                        }
                         Py_INCREF(value);
                         *out_axes = value;
-
+                        bad_arg = 0;
+                    }
+                    else if (out_axis != NULL && strcmp(str, "axis") == 0) {
+                        if (out_axes != NULL && *out_axes != NULL) {
+                            PyErr_SetString(PyExc_TypeError,
+                                "cannot specify both 'axis' and 'axes'");
+                            goto fail;
+                        }
+                        Py_INCREF(value);
+                        *out_axis = value;
                         bad_arg = 0;
                     }
                     break;
@@ -1044,6 +1062,10 @@ fail:
     if (out_axes != NULL) {
         Py_XDECREF(*out_axes);
         *out_axes = NULL;
+    }
+    if (out_axis != NULL) {
+        Py_XDECREF(*out_axis);
+        *out_axis = NULL;
     }
     return -1;
 }
@@ -1891,6 +1913,27 @@ _has_output_coredims(PyUFuncObject *ufunc) {
 }
 
 /*
+ * Check whether the gufunc can be used with axis, i.e., that there is only
+ * a single, shared core dimension (which means that operands either have
+ * that dimension, or have no core dimensions).  Returns 0 if all is fine,
+ * and sets an error and returns -1 if not.
+ */
+static int
+_check_axis_support(PyUFuncObject *ufunc) {
+    if (ufunc->core_num_dim_ix != 1) {
+        PyErr_Format(PyExc_TypeError,
+                     "%s: axis can only be used with a single shared core "
+                     "dimension, not with the %d distinct ones implied by "
+                     "signature %s.",
+                     ufunc_get_name_cstr(ufunc),
+                     ufunc->core_num_dim_ix,
+                     ufunc->core_signature);
+        return -1;
+    }
+    return 0;
+}
+
+/*
  * Check whether the gufunc can be used with keepdims, i.e., that all its
  * input arguments have the same number of core dimension, and all output
  * arguments have no core dimensions. Returns 0 if all is fine, and sets
@@ -1905,7 +1948,7 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
         if (ufunc->core_num_dims[i] != (i < nin ? input_core_dims : 0)) {
             PyErr_Format(PyExc_TypeError,
                 "%s does not support keepdims: its signature %s requires "
-                "that %s %d has %d core dimensions, but keepdims can only "
+                "%s %d to have %d core dimensions, but keepdims can only "
                 "be used when all inputs have the same number of core "
                 "dimensions and all outputs have no core dimensions.",
                 ufunc_get_name_cstr(ufunc),
@@ -1931,8 +1974,7 @@ static int
 _parse_axes_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
     int nin = ufunc->nin;
-    int nout = ufunc->nout;
-    int nop = nin + nout;
+    int nop = ufunc->nargs;
     int iop, list_size;
 
     if (!PyList_Check(axes)) {
@@ -2045,6 +2087,59 @@ _parse_axes_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axes,
         }
         if (axis == op_ndim) {
             remap_axis[iop] = NULL;
+        }
+    } /* end of for(iop) loop over operands */
+    return 0;
+}
+
+/*
+ * Simplified version of the above, using axis to fill the remap_axis
+ * array, which maps default to actual axes for each operand, indexed as
+ * as remap_axis[iop][iaxis]. The default axis order has first all broadcast
+ * axes and then the core axes the gufunc operates on.
+ *
+ * Returns 0 on success, and -1 on failure
+ */
+static int
+_parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
+                PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
+    int nop = ufunc->nargs;
+    int iop, axis_int;
+
+    axis_int = PyArray_PyIntAsInt(axis);
+    if (error_converting(axis_int)) {
+        return -1;
+    }
+
+    for (iop = 0; iop < nop; ++iop) {
+        int axis, op_ndim, op_axis;
+
+        /* _check_axis_support ensures core_num_dims is 0 or 1 */
+        if (core_num_dims[iop] == 0) {
+            remap_axis[iop] = NULL;
+            continue;
+        }
+        if (op[iop]) {
+            op_ndim = PyArray_NDIM(op[iop]);
+        }
+        else {
+            op_ndim = broadcast_ndim + 1;
+        }
+        op_axis = axis_int;  /* ensure we don't modify axis_int */
+        if (check_and_adjust_axis(&op_axis, op_ndim) < 0) {
+            return -1;
+        }
+        /* Are we actually remapping away from last axis? */
+        if (op_axis == op_ndim - 1) {
+            remap_axis[iop] = NULL;
+            continue;
+        }
+        remap_axis[iop][op_ndim - 1] = op_axis;
+        for (axis = 0; axis < op_axis; axis++) {
+            remap_axis[iop][axis] = axis;
+        }
+        for (axis = op_axis; axis < op_ndim - 1; axis++) {
+            remap_axis[iop][axis] = axis + 1;
         }
     } /* end of for(iop) loop over operands */
     return 0;
@@ -2245,7 +2340,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     NPY_ORDER order = NPY_KEEPORDER;
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
-    PyObject *extobj = NULL, *type_tup = NULL, *axes = NULL;
+    /* other possible keyword arguments */
+    PyObject *extobj = NULL, *type_tup = NULL, *axes = NULL, *axis = NULL;
     int keepdims = -1;
 
     if (ufunc == NULL) {
@@ -2270,10 +2366,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT("Getting arguments\n");
 
-    /* Get all the arguments */
+    /*
+     * Get all the arguments.
+     */
     retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, NULL, &axes, &keepdims);
+                &type_tup, &subok, NULL, &axes, &axis, &keepdims);
     if (retval < 0) {
         goto fail;
     }
@@ -2284,6 +2382,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     if (keepdims != -1) {
         retval = _check_keepdims_support(ufunc);
+        if (retval < 0) {
+            goto fail;
+        }
+    }
+    if (axis != NULL) {
+        retval = _check_axis_support(ufunc);
         if (retval < 0) {
             goto fail;
         }
@@ -2356,7 +2460,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /* Possibly remap axes. */
-    if (axes) {
+    if (axes != NULL || axis != NULL) {
         remap_axis = PyArray_malloc(sizeof(remap_axis[0]) * nop);
         remap_axis_memory = PyArray_malloc(sizeof(remap_axis_memory[0]) *
                                                   nop * NPY_MAXDIMS);
@@ -2367,8 +2471,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         for (i=0; i < nop; i++) {
             remap_axis[i] = remap_axis_memory + i * NPY_MAXDIMS;
         }
-        retval = _parse_axes_arg(ufunc, core_num_dims, axes, op, broadcast_ndim,
-                                 remap_axis);
+        if (axis) {
+            retval = _parse_axis_arg(ufunc, core_num_dims, axis, op,
+                                     broadcast_ndim, remap_axis);
+        }
+        else {
+            retval = _parse_axes_arg(ufunc, core_num_dims, axes, op,
+                                     broadcast_ndim, remap_axis);
+        }
         if(retval < 0) {
             goto fail;
         }
@@ -2714,6 +2824,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(type_tup);
     Py_XDECREF(extobj);
     Py_XDECREF(axes);
+    Py_XDECREF(axis);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 
@@ -2735,6 +2846,7 @@ fail:
     Py_XDECREF(type_tup);
     Py_XDECREF(extobj);
     Py_XDECREF(axes);
+    Py_XDECREF(axis);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
     PyArray_free(remap_axis_memory);
@@ -2812,7 +2924,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     /* Get all the arguments */
     retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, &wheremask, NULL, NULL);
+                &type_tup, &subok, &wheremask, NULL, NULL, NULL);
     if (retval < 0) {
         goto fail;
     }

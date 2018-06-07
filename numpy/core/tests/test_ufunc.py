@@ -726,6 +726,50 @@ class TestUfunc(object):
         # should be able to deal with bad unrelated kwargs.
         assert_raises(TypeError, mm, z, z, axes=[0, 1], parrot=True)
 
+    def test_axis_argument(self):
+        # inner1d signature: '(i),(i)->()'
+        inner1d = umt.inner1d
+        a = np.arange(27.).reshape((3, 3, 3))
+        b = np.arange(10., 19.).reshape((3, 1, 3))
+        c = inner1d(a, b)
+        assert_array_equal(c, (a * b).sum(-1))
+        c = inner1d(a, b, axis=-1)
+        assert_array_equal(c, (a * b).sum(-1))
+        out = np.zeros_like(c)
+        d = inner1d(a, b, axis=-1, out=out)
+        assert_(d is out)
+        assert_array_equal(d, c)
+        c = inner1d(a, b, axis=0)
+        assert_array_equal(c, (a * b).sum(0))
+        # Sanity checks on innerwt and cumsum.
+        a = np.arange(6).reshape((2, 3))
+        b = np.arange(10, 16).reshape((2, 3))
+        w = np.arange(20, 26).reshape((2, 3))
+        assert_array_equal(umt.innerwt(a, b, w, axis=0),
+                           np.sum(a * b * w, axis=0))
+        assert_array_equal(umt.cumsum(a, axis=0), np.cumsum(a, axis=0))
+        assert_array_equal(umt.cumsum(a, axis=-1), np.cumsum(a, axis=-1))
+        out = np.empty_like(a)
+        b = umt.cumsum(a, out=out, axis=0)
+        assert_(out is b)
+        assert_array_equal(b, np.cumsum(a, axis=0))
+        b = umt.cumsum(a, out=out, axis=1)
+        assert_(out is b)
+        assert_array_equal(b, np.cumsum(a, axis=-1))
+        # Check errors.
+        # Cannot pass in both axis and axes.
+        assert_raises(TypeError, inner1d, a, b, axis=0, axes=[0, 0])
+        # Not an integer.
+        assert_raises(TypeError, inner1d, a, b, axis=[0])
+        # more than 1 core dimensions.
+        mm = umt.matrix_multiply
+        assert_raises(TypeError, mm, a, b, axis=1)
+        # Output wrong size in axis.
+        out = np.empty((1, 2, 3), dtype=a.dtype)
+        assert_raises(ValueError, umt.cumsum, a, out=out, axis=0)
+        # Regular ufuncs should not accept axis.
+        assert_raises(TypeError, np.add, 1., 1., axis=0)
+
     def test_keepdims_argument(self):
         # inner1d signature: '(i),(i)->()'
         inner1d = umt.inner1d
@@ -741,7 +785,15 @@ class TestUfunc(object):
         d = inner1d(a, b, keepdims=True, out=out)
         assert_(d is out)
         assert_array_equal(d, c)
-        # Now combined with axes.
+        # Now combined with axis and axes.
+        c = inner1d(a, b, axis=-1, keepdims=False)
+        assert_array_equal(c, (a * b).sum(-1, keepdims=False))
+        c = inner1d(a, b, axis=-1, keepdims=True)
+        assert_array_equal(c, (a * b).sum(-1, keepdims=True))
+        c = inner1d(a, b, axis=0, keepdims=False)
+        assert_array_equal(c, (a * b).sum(0, keepdims=False))
+        c = inner1d(a, b, axis=0, keepdims=True)
+        assert_array_equal(c, (a * b).sum(0, keepdims=True))
         c = inner1d(a, b, axes=[(-1,), (-1,), ()], keepdims=False)
         assert_array_equal(c, (a * b).sum(-1))
         c = inner1d(a, b, axes=[(-1,), (-1,), (-1,)], keepdims=True)
@@ -785,10 +837,12 @@ class TestUfunc(object):
         w = np.arange(20, 26).reshape((2, 3))
         assert_array_equal(umt.innerwt(a, b, w, keepdims=True),
                            np.sum(a * b * w, axis=-1, keepdims=True))
+        assert_array_equal(umt.innerwt(a, b, w, axis=0, keepdims=True),
+                           np.sum(a * b * w, axis=0, keepdims=True))
         # Check errors.
         # Not a boolean
         assert_raises(TypeError, inner1d, a, b, keepdims='true')
-        # 1 core dimension only.
+        # More than 1 core dimension, and core output dimensions.
         mm = umt.matrix_multiply
         assert_raises(TypeError, mm, a, b, keepdims=True)
         assert_raises(TypeError, mm, a, b, keepdims=False)
@@ -885,6 +939,11 @@ class TestUfunc(object):
         assert_almost_equal(out, b)
         # An output array is required to determine p with signature (n,d)->(p)
         assert_raises(ValueError, umt.euclidean_pdist, a)
+
+    def test_cumsum(self):
+        a = np.arange(10)
+        result = umt.cumsum(a)
+        assert_array_equal(result, a.cumsum())
 
     def test_object_logical(self):
         a = np.array([3, None, True, False, "test", ""], dtype=object)

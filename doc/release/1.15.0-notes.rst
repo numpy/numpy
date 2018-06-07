@@ -193,7 +193,7 @@ combining these 5 compiled builds products into a single "fat" binary.
 ``return_indices`` keyword added for ``np.intersect1d``
 -------------------------------------------------------
 New keyword ``return_indices`` returns the indices of the two input arrays
-that correspond to the common elements. 
+that correspond to the common elements.
 
 ``np.quantile`` and ``np.nanquantile``
 --------------------------------------
@@ -359,8 +359,8 @@ Increased performance in ``random.permutation`` for multidimensional arrays
 ``permutation`` uses the fast path in ``random.shuffle`` for all input
 array dimensions.  Previously the fast path was only used for 1-d arrays.
 
-Generalized ufuncs now accept ``axes`` and ``keepdims`` arguments
------------------------------------------------------------------
+Generalized ufuncs now accept ``axes``, ``axis`` and ``keepdims`` arguments
+---------------------------------------------------------------------------
 One can control over which axes a generalized ufunc operates by passing in an
 ``axes`` argument, a list of tuples with indices of particular axes.  For
 instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate for matrix
@@ -376,12 +376,19 @@ tuples can be omitted.  Hence, for a signature of ``(i),(i)->()`` appropriate
 for an inner product, one could pass in ``axes=[0, 0]`` to indicate that the
 vectors are stored in the first dimensions of the two inputs arguments.
 
+As a short-cut for generalized ufuncs that are similar to reductions, i.e.,
+that act on a single, shared core dimension such as the inner product example
+above, one can pass an ``axis`` argument. This is equivalent to passing in
+``axes`` with identical entries for all arguments with that core dimension
+(e.g., for the example above, ``axes=[(axis,), (axis,)]``).
+
 Furthermore, like for reductions, for generalized ufuncs that have inputs that
 all have the same number of core dimensions and outputs with no core dimension,
 one can pass in ``keepdims`` to leave a dimension with size 1 in the outputs,
 thus allowing proper broadcasting against the original inputs. The location of
 the extra dimension can be controlled with ``axes``. For instance, for the
 inner-product example, ``keepdims=True, axes=[-2, -2, -2]`` would act on the
+inner-product example, ``keepdims=True, axis=-2`` would act on the
 one-but-last dimension of the input arguments, and leave a size 1 dimension in
 that place in the output.
 
@@ -411,6 +418,9 @@ is the same as::
 ``np.put_along_axis`` acts as the dual operation for writing to these indices
 within an array.
 
+.. note:: Implementations of ``__array_ufunc__`` should ensure that they can
+          handle either ``axis`` or ``axes``.  In future, we may convert
+          ``axis`` to ``axes`` before passing it on.
 
 Changes
 =======
