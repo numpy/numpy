@@ -99,6 +99,7 @@ class TestNonarrayArgs(object):
         assert_(np.mean(A) == 3.5)
         assert_(np.all(np.mean(A, 0) == np.array([2.5, 3.5, 4.5])))
         assert_(np.all(np.mean(A, 1) == np.array([2., 5.])))
+        assert_(np.all(np.mean(A, [1]) == np.array([2., 5.])))
 
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
