@@ -571,14 +571,14 @@ def compute_md5(idirs):
     return _compute_hash(idirs, hashlib.md5)
 
 def compute_sha256(idirs):
-    # better checksum so gpg signed README.txt containing the sums can be used
+    # better checksum so gpg signed README.rst containing the sums can be used
     # to verify the binaries instead of signing all binaries
     return _compute_hash(idirs, hashlib.sha256)
 
 def write_release_task(options, filename='README'):
     idirs = options.installers.installersdir
     source = paver.path.path(RELEASE_NOTES)
-    target = paver.path.path(filename)
+    target = paver.path.path(filename + '.rst')
     if target.exists():
         target.remove()
 
