@@ -741,12 +741,21 @@ class TestUfunc(object):
         assert_array_equal(d, c)
         c = inner1d(a, b, axis=0)
         assert_array_equal(c, (a * b).sum(0))
-        # Sanity check on innerwt.
+        # Sanity checks on innerwt and cumsum.
         a = np.arange(6).reshape((2, 3))
         b = np.arange(10, 16).reshape((2, 3))
         w = np.arange(20, 26).reshape((2, 3))
         assert_array_equal(umt.innerwt(a, b, w, axis=0),
                            np.sum(a * b * w, axis=0))
+        assert_array_equal(umt.cumsum(a, axis=0), np.cumsum(a, axis=0))
+        assert_array_equal(umt.cumsum(a, axis=-1), np.cumsum(a, axis=-1))
+        out = np.empty_like(a)
+        b = umt.cumsum(a, out=out, axis=0)
+        assert_(out is b)
+        assert_array_equal(b, np.cumsum(a, axis=0))
+        b = umt.cumsum(a, out=out, axis=1)
+        assert_(out is b)
+        assert_array_equal(b, np.cumsum(a, axis=-1))
         # Check errors.
         # Cannot pass in both axis and axes.
         assert_raises(TypeError, inner1d, a, b, axis=0, axes=[0, 0])
@@ -755,6 +764,9 @@ class TestUfunc(object):
         # more than 1 core dimensions.
         mm = umt.matrix_multiply
         assert_raises(TypeError, mm, a, b, axis=1)
+        # Output wrong size in axis.
+        out = np.empty((1, 2, 3), dtype=a.dtype)
+        assert_raises(ValueError, umt.cumsum, a, out=out, axis=0)
         # Regular ufuncs should not accept axis.
         assert_raises(TypeError, np.add, 1., 1., axis=0)
 
@@ -927,6 +939,11 @@ class TestUfunc(object):
         assert_almost_equal(out, b)
         # An output array is required to determine p with signature (n,d)->(p)
         assert_raises(ValueError, umt.euclidean_pdist, a)
+
+    def test_cumsum(self):
+        a = np.arange(10)
+        result = umt.cumsum(a)
+        assert_array_equal(result, a.cumsum())
 
     def test_object_logical(self):
         a = np.array([3, None, True, False, "test", ""], dtype=object)
