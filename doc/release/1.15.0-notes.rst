@@ -118,6 +118,11 @@ available, but will not be maintained. The standard testing utilities,
 the nose specific functions `import_nose` and `raises`. Those functions are
 not used in numpy, but are kept for downstream compatibility.
 
+Numpy no longer monkey-patches ``ctypes`` with ``__array_interface__``
+----------------------------------------------------------------------
+Previously numpy added ``__array_interface__`` attributes to all the integer
+types from ``ctypes``.
+
 ``np.ma.notmasked_contiguous`` and ``np.ma.flatnotmasked_contiguous`` always return lists
 -----------------------------------------------------------------------------------------
 This was always the documented behavior, but in reality the result used to be
