@@ -1250,7 +1250,8 @@ PyArray_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
     }
 }
 
-/* Silence the current error and emit a deprecation warning instead.
+/*
+ * Silence the current error and emit a deprecation warning instead.
  *
  * If warnings are raised as errors, this sets the warning __cause__ to the
  * silenced error.
@@ -1366,26 +1367,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         result = PyArray_GenericBinaryFunction(self,
                 (PyObject *)other,
                 n_ops.equal);
-        /*
-         * If the comparison results in NULL, then the
-         * two array objects can not be compared together;
-         * indicate that
-         */
-        if (result == NULL) {
-            /*
-             * Comparisons should raise errors when element-wise comparison
-             * is not possible.
-             */
-            /* 2015-05-14, 1.10 */
-            if (DEPRECATE_silence_error(
-                    "elementwise == comparison failed; "
-                    "this will raise an error in the future.") < 0) {
-                return NULL;
-            }
-
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
         break;
     case Py_NE:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1437,21 +1418,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 
         result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
                 n_ops.not_equal);
-        if (result == NULL) {
-            /*
-             * Comparisons should raise errors when element-wise comparison
-             * is not possible.
-             */
-            /* 2015-05-14, 1.10 */
-            if (DEPRECATE_silence_error(
-                    "elementwise != comparison failed; "
-                    "this will raise an error in the future.") < 0) {
-                return NULL;
-            }
-
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
         break;
     case Py_GT:
         RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
@@ -1464,8 +1430,121 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 n_ops.greater_equal);
         break;
     default:
-        result = Py_NotImplemented;
-        Py_INCREF(result);
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+    if (result == NULL) {
+        /*
+         * 2015-05-14, 1.10; updated 2018-06-18, 1.16.
+         *
+         * Comparisons can raise errors when element-wise comparison is not
+         * possible. Some of these, though, should not be passed on.
+         * In particular, the ufuncs do not have loops for flexible dtype,
+         * so those should be treated separately.  Furthermore, for EQ and NE,
+         * we should never fail.
+         *
+         * Our ideal behaviour would be:
+         *
+         * 1. For EQ and NE:
+         *   - If self and other are scalars, return NotImplemented,
+         *     so that python can assign True of False as appropriate.
+         *   - If either is an array, return an array of False or True.
+         *
+         * 2. For LT, LE, GE, GT:
+         *   - If self or other was flexible, return NotImplemented
+         *     (as is in fact the case), so python can raise a TypeError.
+         *   - If other is not convertible to an array, pass on the error
+         *     (MHvK, 2018-06-18: not sure about this, but it's what we have).
+         *
+         * However, for backwards compatibilty, we cannot yet return arrays,
+         * so we raise warnings instead.  Furthermore, we warn on python2
+         * for LT, LE, GE, GT, since fall-back behaviour is poorly defined.
+         */
+        PyObject *exc, *val, *tb;
+        int other_is_flexible, ndim_other;
+
+        PyErr_Fetch(&exc, &val, &tb);
+        /*
+         * Determine whether other has a flexible dtype; here, inconvertible
+         * is counted as inflexible.  (This repeats work done in the ufunc,
+         * but OK to waste some time in an unlikely path.)
+         */
+        array_other = (PyArrayObject *)PyArray_FROM_O(other);
+        if (array_other) {
+            other_is_flexible = PyTypeNum_ISFLEXIBLE(
+                PyArray_DESCR(array_other)->type_num);
+            ndim_other = PyArray_NDIM(array_other);
+            Py_DECREF(array_other);
+        }
+        else {
+            PyErr_Clear(); /* we restore the original error if needed */
+            other_is_flexible = 0;
+            ndim_other = 0;
+        }
+        if (cmp_op == Py_EQ || cmp_op == Py_NE) {
+            /* note: for == and !=, a flexible self cannot get here */
+            if (other_is_flexible) {
+                /*
+                 * For scalars, returning NotImplemented is correct.
+                 * For arrays, we emit a future deprecation warning.
+                 */
+                if (ndim_other != 0 || PyArray_NDIM(self) != 0) {
+                    if (DEPRECATE_FUTUREWARNING(
+                            "elementwise comparison failed; returning scalar "
+                            "instead, but in the future will perform "
+                            "elementwise comparison") < 0) {
+                        /*
+                         * In future, we should create a correctly shaped
+                         * array of bool. For now, a placeholder error.
+                         */
+                        PyArray_ChainExceptionsCause(exc, val, tb);
+                        return NULL;
+                    }
+                }
+            }
+            else {
+                /*
+                 * If other did not have a flexible dtype, the error cannot
+                 * have been caused by a lack of implementation in the ufunc.
+                 */
+                if (DEPRECATE(
+                        "elementwise comparison failed; "
+                        "this will raise an error in the future.") < 0) {
+                    PyArray_ChainExceptionsCause(exc, val, tb);
+                    return NULL;
+                }
+            }
+            Py_XDECREF(exc);
+            Py_XDECREF(val);
+            Py_XDECREF(tb);
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+        }
+        else if (other_is_flexible ||
+                 PyTypeNum_ISFLEXIBLE(PyArray_DESCR(self)->type_num)) {
+            /*
+             * For LE, LT, GT, GE and a flexible self or other, we return
+             * NotImplemented, which is the correct answer since the ufuncs do
+             * not in fact implement loops for those.  On python 3 this will
+             * get us the desired TypeError, but on python 2, one gets strange
+             * ordering, so we emit a warning.
+             */
+#if !defined(NPY_PY3K)
+            if (DEPRECATE(
+                    "unorderable dtypes; returning scalar but in "
+                    "the future this will be an error") < 0) {
+                PyArray_ChainExceptionsCause(exc, val, tb);
+                return NULL;
+            }
+#endif
+            Py_XDECREF(exc);
+            Py_XDECREF(val);
+            Py_XDECREF(tb);
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+        }
+        /* LE, LT, GT, or GE with non-flexible other; just pass on error */
+        PyErr_Restore(exc, val, tb);
     }
     return result;
 }
