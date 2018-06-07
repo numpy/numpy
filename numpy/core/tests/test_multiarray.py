@@ -1994,6 +1994,12 @@ class TestMethods(object):
             assert_equal(b, out)
             b = a.searchsorted(a, 'r')
             assert_equal(b, out + 1)
+            # Test empty array, use a fresh array to get warnings in
+            # valgrind if access happens.
+            b = np.ndarray(shape=0, buffer=b'', dtype=dt).searchsorted(a, 'l')
+            assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
+            b = a.searchsorted(np.ndarray(shape=0, buffer=b'', dtype=dt), 'l')
+            assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
     def test_searchsorted_unicode(self):
         # Test searchsorted on unicode strings.
@@ -2091,6 +2097,14 @@ class TestMethods(object):
             assert_equal(b, out)
             b = a.searchsorted(a, 'r', s)
             assert_equal(b, out + 1)
+            # Test empty array, use a fresh array to get warnings in
+            # valgrind if access happens.
+            b = np.ndarray(shape=0, buffer=b'', dtype=dt).searchsorted(
+                    a, 'l', s[:0])
+            assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
+            b = a.searchsorted(
+                    np.ndarray(shape=0, buffer=b'', dtype=dt), 'l', s)
+            assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
         # Test non-contiguous sorter array
         a = np.array([3, 4, 1, 2, 0])
@@ -3345,7 +3359,7 @@ class TestBinop(object):
 
             def __div__(self, other):
                 raise AssertionError('__div__ should not be called')
-            
+
             def __pow__(self, exp):
                 return SomeClass(num=self.num ** exp)
 
@@ -3365,7 +3379,7 @@ class TestBinop(object):
         assert_equal(obj_arr ** 1, pow_for(1, obj_arr))
         assert_equal(obj_arr ** -1, pow_for(-1, obj_arr))
         assert_equal(obj_arr ** 2, pow_for(2, obj_arr))
-        
+
 class TestTemporaryElide(object):
     # elision is only triggered on relatively large arrays
 
