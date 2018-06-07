@@ -1661,12 +1661,14 @@ class TestMethods(object):
     def test_void_sort(self):
         # gh-8210 - previously segfaulted
         for i in range(4):
-            arr = np.empty(1000, 'V4')
+            rand = np.random.randint(256, size=4000, dtype=np.uint8)
+            arr = rand.view('V4')
             arr[::-1].sort()
 
         dt = np.dtype([('val', 'i4', (1,))])
         for i in range(4):
-            arr = np.empty(1000, dt)
+            rand = np.random.randint(256, size=4000, dtype=np.uint8)
+            arr = rand.view(dt)
             arr[::-1].sort()
 
     def test_sort_raises(self):
@@ -3345,7 +3347,7 @@ class TestBinop(object):
 
             def __div__(self, other):
                 raise AssertionError('__div__ should not be called')
-            
+
             def __pow__(self, exp):
                 return SomeClass(num=self.num ** exp)
 
@@ -3365,7 +3367,7 @@ class TestBinop(object):
         assert_equal(obj_arr ** 1, pow_for(1, obj_arr))
         assert_equal(obj_arr ** -1, pow_for(-1, obj_arr))
         assert_equal(obj_arr ** 2, pow_for(2, obj_arr))
-        
+
 class TestTemporaryElide(object):
     # elision is only triggered on relatively large arrays
 
