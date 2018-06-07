@@ -799,7 +799,7 @@ int npy_clear_floatstatus_barrier(char *param)
 
 #else
 
-int npy_get_floatstatus_barrier(char NPY_UNUSED(*param))
+int npy_get_floatstatus_barrier(char *NPY_UNUSED(param))
 {
     return 0;
 }
