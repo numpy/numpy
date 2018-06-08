@@ -11,6 +11,7 @@
 
 #include "npy_config.h"
 
+#include "npy_import.h"
 #include "npy_pycompat.h"
 #include "multiarraymodule.h"
 
@@ -1312,16 +1313,6 @@ _dtype_from_buffer_3118(PyObject *memoryview)
         if (descr == NULL) {
             return NULL;
         }
-
-        /* Sanity check */
-        if (descr->elsize != view->itemsize) {
-            PyErr_SetString(
-                    PyExc_RuntimeError,
-                    "Item size computed from the PEP 3118 buffer format "
-                    "string does not match the actual item size.");
-            Py_DECREF(descr);
-            return NULL;
-        }
     }
     else {
         /* If no format is specified, just assume a byte array
@@ -1332,6 +1323,28 @@ _dtype_from_buffer_3118(PyObject *memoryview)
         descr->elsize = view->itemsize;
     }
     return descr;
+}
+
+
+/*
+ * Call the python _is_from_ctypes
+ */
+NPY_NO_EXPORT int
+_is_from_ctypes(PyObject *obj) {
+    PyObject *ret_obj;
+    static PyObject *py_func = NULL;
+
+    npy_cache_import("numpy.core._internal", "_is_from_ctypes", &py_func);
+
+    if (py_func == NULL) {
+        return -1;
+    }
+    ret_obj = PyObject_CallFunctionObjArgs(py_func, obj, NULL);
+    if (ret_obj == NULL) {
+        return -1;
+    }
+
+    return PyObject_IsTrue(ret_obj);
 }
 
 
@@ -1352,6 +1365,68 @@ _array_from_buffer_3118(PyObject *memoryview)
 
     if (descr == NULL) {
         return NULL;
+    }
+
+    /* Sanity check */
+    if (descr->elsize != view->itemsize) {
+        /* Ctypes has bugs in its PEP3118 implementation, which we need to
+         * work around.
+         *
+         * bpo-10746
+         * bpo-32780
+         * bpo-32782
+         *
+         * Note that even if the above are fixed in master, we have to drop the
+         * early patch versions of python to actually make use of the fixes.
+         */
+
+        int is_ctypes = _is_from_ctypes(view->obj);
+        if (is_ctypes < 0) {
+            /* This error is not useful */
+            PyErr_WriteUnraisable(view->obj);
+            is_ctypes = 0;
+        }
+
+        if (!is_ctypes) {
+            /* This object has no excuse for a broken PEP3118 buffer */
+            PyErr_SetString(
+                    PyExc_RuntimeError,
+                    "Item size computed from the PEP 3118 buffer format "
+                    "string does not match the actual item size.");
+            Py_DECREF(descr);
+            return NULL;
+        }
+
+        if (PyErr_Warn(
+                    PyExc_RuntimeWarning,
+                    "A builtin ctypes object gave a PEP3118 format "
+                    "string that does not match its itemsize, so a "
+                    "best-guess will be made of the data type. "
+                    "Newer versions of python may behave correctly.") < 0) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+
+        /* Thankfully, np.dtype(ctypes_type) works in most cases.
+         * For an array input, this produces a dtype containing all the
+         * dimensions, so the array is now 0d.
+         */
+        nd = 0;
+        descr = (PyArray_Descr *)PyObject_CallFunctionObjArgs(
+                (PyObject *)&PyArrayDescr_Type, Py_TYPE(view->obj), NULL);
+        if (descr == NULL) {
+            return NULL;
+        }
+        if (descr->elsize != view->len) {
+            PyErr_SetString(
+                    PyExc_RuntimeError,
+                    "For the given ctypes object, neither the item size "
+                    "computed from the PEP 3118 buffer format nor from "
+                    "converting the type to a np.dtype matched the actual "
+                    "size. This is a bug both in python and numpy");
+            Py_DECREF(descr);
+            return NULL;
+        }
     }
 
     if (view->shape != NULL) {
@@ -1398,6 +1473,7 @@ _array_from_buffer_3118(PyObject *memoryview)
             nd, shape, strides, view->buf,
             flags, NULL, memoryview);
     return r;
+
 
 fail:
     Py_XDECREF(r);
