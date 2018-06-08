@@ -1996,9 +1996,10 @@ class TestMethods(object):
             assert_equal(b, out + 1)
             # Test empty array, use a fresh array to get warnings in
             # valgrind if access happens.
-            b = np.ndarray(shape=0, buffer=b'', dtype=dt).searchsorted(a, 'l')
+            e = np.ndarray(shape=0, buffer=b'', dtype=dt)
+            b = e.searchsorted(a, 'l')
             assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
-            b = a.searchsorted(np.ndarray(shape=0, buffer=b'', dtype=dt), 'l')
+            b = a.searchsorted(e, 'l')
             assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
     def test_searchsorted_unicode(self):
@@ -2099,11 +2100,10 @@ class TestMethods(object):
             assert_equal(b, out + 1)
             # Test empty array, use a fresh array to get warnings in
             # valgrind if access happens.
-            b = np.ndarray(shape=0, buffer=b'', dtype=dt).searchsorted(
-                    a, 'l', s[:0])
+            e = np.ndarray(shape=0, buffer=b'', dtype=dt)
+            b = e.searchsorted(a, 'l', s[:0])
             assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
-            b = a.searchsorted(
-                    np.ndarray(shape=0, buffer=b'', dtype=dt), 'l', s)
+            b = a.searchsorted(e, 'l', s)
             assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
         # Test non-contiguous sorter array
