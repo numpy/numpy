@@ -17,6 +17,11 @@ try:
 except ImportError:
     _has_pytz = False
 
+try:
+    RecursionError
+except NameError:
+    RecursionError = RuntimeError  # python < 3.5
+
 
 class TestDateTime(object):
     def test_datetime_dtype_creation(self):
@@ -1996,6 +2001,18 @@ class TestDateTime(object):
             if t in np.typecodes["Datetime"]:
                 continue
             assert_raises(TypeError, np.isnat, np.zeros(10, t))
+
+    def test_corecursive_input(self):
+        # construct a co-recursive list
+        a, b = [], []
+        a.append(b)
+        b.append(a)
+        obj_arr = np.array([None])
+        obj_arr[0] = a
+
+        # gh-11154: This shouldn't cause a C stack overflow
+        assert_raises(RecursionError, obj_arr.astype, 'M8')
+        assert_raises(RecursionError, obj_arr.astype, 'm8')
 
 
 class TestDateTimeData(object):
