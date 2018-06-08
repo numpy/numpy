@@ -1302,7 +1302,6 @@ PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
 }
 
 
-/* Steals a reference to the memory view */
 NPY_NO_EXPORT PyObject *
 _array_from_buffer_3118(PyObject *memoryview)
 {
@@ -1379,13 +1378,11 @@ _array_from_buffer_3118(PyObject *memoryview)
             &PyArray_Type, descr,
             nd, shape, strides, view->buf,
             flags, NULL, memoryview);
-    Py_DECREF(memoryview);
     return r;
 
 fail:
     Py_XDECREF(r);
     Py_XDECREF(descr);
-    Py_DECREF(memoryview);
     return NULL;
 
 }
@@ -1506,6 +1503,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         }
         else {
             PyObject *arr = _array_from_buffer_3118(memoryview);
+            Py_DECREF(memoryview);
             if (arr == NULL) {
                 return -1;
             }
