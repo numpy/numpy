@@ -1181,7 +1181,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     One-dimensional linear interpolation.
 
     Returns the one-dimensional piecewise linear interpolant to a function
-    with given discrete data-points (`xp`, `fp`), evaluated at `x`.
+    with given discrete data points (`xp`, `fp`), evaluated at `x`.
 
     Parameters
     ----------
