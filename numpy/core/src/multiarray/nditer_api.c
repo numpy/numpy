@@ -15,6 +15,7 @@
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
 #include "templ_common.h"
+#include "ctors.h"
 
 /* Internal helper functions private to this file */
 static npy_intp
@@ -1140,19 +1141,10 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
 
     Py_INCREF(dtype);
-    view = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
-                                shape, strides, dataptr,
-                                writeable ? NPY_ARRAY_WRITEABLE : 0,
-                                NULL);
-    if (view == NULL) {
-        return NULL;
-    }
-    /* Tell the view who owns the data */
-    Py_INCREF(obj);
-    if (PyArray_SetBaseObject(view, (PyObject *)obj) < 0) {
-        Py_DECREF(view);
-        return NULL;
-    }
+    view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+            &PyArray_Type, dtype,
+            ndim, shape, strides, dataptr,
+            writeable ? NPY_ARRAY_WRITEABLE : 0, NULL, (PyObject *)obj);
 
     return view;
 }

@@ -13,6 +13,7 @@
 #include "npy_import.h"
 
 #include "common.h"
+#include "ctors.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "getset.h"
@@ -742,20 +743,15 @@ _get_part(PyArrayObject *self, int imag)
         Py_DECREF(type);
         type = new;
     }
-    ret = (PyArrayObject *)
-        PyArray_NewFromDescr(Py_TYPE(self),
-                             type,
-                             PyArray_NDIM(self),
-                             PyArray_DIMS(self),
-                             PyArray_STRIDES(self),
-                             PyArray_BYTES(self) + offset,
-                             PyArray_FLAGS(self), (PyObject *)self);
+    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+            Py_TYPE(self),
+            type,
+            PyArray_NDIM(self),
+            PyArray_DIMS(self),
+            PyArray_STRIDES(self),
+            PyArray_BYTES(self) + offset,
+            PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
     if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
         return NULL;
     }
     return ret;

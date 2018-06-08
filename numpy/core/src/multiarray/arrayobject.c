@@ -1620,7 +1620,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             PyArray_NewFromDescr_int(subtype, descr,
                                      (int)dims.len,
                                      dims.ptr,
-                                     strides.ptr, NULL, is_f_order, NULL,
+                                     strides.ptr, NULL, is_f_order, NULL, NULL,
                                      0, 1);
         if (ret == NULL) {
             descr = NULL;
@@ -1653,20 +1653,13 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         if (is_f_order) {
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
-        ret = (PyArrayObject *)\
-            PyArray_NewFromDescr_int(subtype, descr,
-                                     dims.len, dims.ptr,
-                                     strides.ptr,
-                                     offset + (char *)buffer.ptr,
-                                     buffer.flags, NULL, 0, 1);
+        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+                subtype, descr,
+                dims.len, dims.ptr, strides.ptr, offset + (char *)buffer.ptr,
+                buffer.flags, NULL, buffer.base,
+                0, 1);
         if (ret == NULL) {
             descr = NULL;
-            goto fail;
-        }
-        Py_INCREF(buffer.base);
-        if (PyArray_SetBaseObject(ret, buffer.base) < 0) {
-            Py_DECREF(ret);
-            ret = NULL;
             goto fail;
         }
     }

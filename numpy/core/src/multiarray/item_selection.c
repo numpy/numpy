@@ -1876,19 +1876,11 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     /* Create the diagonal view */
     dtype = PyArray_DTYPE(self);
     Py_INCREF(dtype);
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               dtype,
-                               ndim-1, ret_shape,
-                               ret_strides,
-                               data,
-                               PyArray_FLAGS(self),
-                               (PyObject *)self);
+    ret = PyArray_NewFromDescrAndBase(
+            Py_TYPE(self), dtype,
+            ndim-1, ret_shape, ret_strides, data,
+            PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
     if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject((PyArrayObject *)ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
         return NULL;
     }
 
@@ -2365,17 +2357,11 @@ finish:
         /* the result is an empty array, the view must point to valid memory */
         npy_intp data_offset = is_empty ? 0 : i * NPY_SIZEOF_INTP;
 
-        PyArrayObject *view = (PyArrayObject *)PyArray_NewFromDescr(
+        PyArrayObject *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(ret), PyArray_DescrFromType(NPY_INTP),
             1, &nonzero_count, &stride, PyArray_BYTES(ret) + data_offset,
-            PyArray_FLAGS(ret), (PyObject *)ret);
+            PyArray_FLAGS(ret), (PyObject *)ret, (PyObject *)ret);
         if (view == NULL) {
-            Py_DECREF(ret);
-            Py_DECREF(ret_tuple);
-            return NULL;
-        }
-        Py_INCREF(ret);
-        if (PyArray_SetBaseObject(view, (PyObject *)ret) < 0) {
             Py_DECREF(ret);
             Py_DECREF(ret_tuple);
             return NULL;

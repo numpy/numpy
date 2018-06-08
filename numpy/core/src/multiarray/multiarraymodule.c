@@ -1607,7 +1607,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     npy_intp newstrides[NPY_MAXDIMS];
     npy_intp newstride;
     int i, k, num;
-    PyArrayObject *ret;
+    PyObject *ret;
     PyArray_Descr *dtype;
 
     if (order == NPY_FORTRANORDER || PyArray_ISFORTRAN(arr) || PyArray_NDIM(arr) == 0) {
@@ -1629,22 +1629,13 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     }
     dtype = PyArray_DESCR(arr);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
-                        dtype, ndmin, newdims, newstrides,
-                        PyArray_DATA(arr),
-                        PyArray_FLAGS(arr),
-                        (PyObject *)arr);
-    if (ret == NULL) {
-        Py_DECREF(arr);
-        return NULL;
-    }
-    /* steals a reference to arr --- so don't increment here */
-    if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
+    ret = PyArray_NewFromDescrAndBase(
+            Py_TYPE(arr), dtype,
+            ndmin, newdims, newstrides, PyArray_DATA(arr),
+            PyArray_FLAGS(arr), (PyObject *)arr, (PyObject *)arr);
+    Py_DECREF(arr);
 
-    return (PyObject *)ret;
+    return ret;
 }
 
 

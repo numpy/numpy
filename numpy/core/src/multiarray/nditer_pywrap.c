@@ -17,6 +17,7 @@
 #include "npy_pycompat.h"
 #include "alloc.h"
 #include "common.h"
+#include "ctors.h"
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
@@ -1991,8 +1992,6 @@ npyiter_seq_length(NewNpyArrayIterObject *self)
 NPY_NO_EXPORT PyObject *
 npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
-    PyArrayObject *ret;
-
     npy_intp ret_ndim;
     npy_intp nop, innerloopsize, innerstride;
     char *dataptr;
@@ -2064,20 +2063,11 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     }
 
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                        ret_ndim, &innerloopsize,
-                        &innerstride, dataptr,
-                        self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_XDECREF(ret);
-        return NULL;
-    }
-
-    return (PyObject *)ret;
+    return PyArray_NewFromDescrAndBase(
+            &PyArray_Type, dtype,
+            ret_ndim, &innerloopsize, &innerstride, dataptr,
+            self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0,
+            NULL, (PyObject *)self);
 }
 
 NPY_NO_EXPORT PyObject *

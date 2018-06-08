@@ -11,6 +11,7 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
+#include "ctors.h"
 #include "common.h"
 
 
@@ -273,17 +274,12 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         npy_intp stride = -PyArray_STRIDE(arr_bins, 0);
         void *data = (void *)(PyArray_BYTES(arr_bins) - stride * (shape - 1));
 
-        arr_tmp = (PyArrayObject *)PyArray_NewFromDescr(
+        arr_tmp = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type, PyArray_DescrFromType(NPY_DOUBLE),
                 1, &shape, &stride, data,
-                PyArray_FLAGS(arr_bins), NULL);
+                PyArray_FLAGS(arr_bins), NULL, (PyObject *)arr_bins);
+        Py_DECREF(arr_bins);
         if (!arr_tmp) {
-            goto fail;
-        }
-
-        if (PyArray_SetBaseObject(arr_tmp, (PyObject *)arr_bins) < 0) {
-
-            Py_DECREF(arr_tmp);
             goto fail;
         }
         arr_bins = arr_tmp;
@@ -1363,17 +1359,12 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     for (i = 0; i < dimensions.len; ++i) {
         PyArrayObject *view;
 
-        view = (PyArrayObject *)PyArray_NewFromDescr(
+        view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
                 ret_ndim - 1, ret_dims, ret_strides,
                 PyArray_BYTES(ret_arr) + i*sizeof(npy_intp),
-                NPY_ARRAY_WRITEABLE, NULL);
+                NPY_ARRAY_WRITEABLE, NULL, (PyObject *)ret_arr);
         if (view == NULL) {
-            goto fail;
-        }
-        Py_INCREF(ret_arr);
-        if (PyArray_SetBaseObject(view, (PyObject *)ret_arr) < 0) {
-            Py_DECREF(view);
             goto fail;
         }
         PyTuple_SET_ITEM(ret_tuple, i, PyArray_Return(view));
