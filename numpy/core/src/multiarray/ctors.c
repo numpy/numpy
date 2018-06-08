@@ -1302,6 +1302,39 @@ PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
 }
 
 
+NPY_NO_EXPORT PyArray_Descr *
+_dtype_from_buffer_3118(PyObject *memoryview)
+{
+    PyArray_Descr *descr;
+    Py_buffer *view = PyMemoryView_GET_BUFFER(memoryview);
+    if (view->format != NULL) {
+        descr = _descriptor_from_pep3118_format(view->format);
+        if (descr == NULL) {
+            return NULL;
+        }
+
+        /* Sanity check */
+        if (descr->elsize != view->itemsize) {
+            PyErr_SetString(
+                    PyExc_RuntimeError,
+                    "Item size computed from the PEP 3118 buffer format "
+                    "string does not match the actual item size.");
+            Py_DECREF(descr);
+            return NULL;
+        }
+    }
+    else {
+        /* If no format is specified, just assume a byte array
+         * TODO: void would make more sense here, as it wouldn't null
+         *       terminate.
+         */
+        descr = PyArray_DescrNewFromType(NPY_STRING);
+        descr->elsize = view->itemsize;
+    }
+    return descr;
+}
+
+
 NPY_NO_EXPORT PyObject *
 _array_from_buffer_3118(PyObject *memoryview)
 {
@@ -1314,27 +1347,13 @@ _array_from_buffer_3118(PyObject *memoryview)
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
 
     view = PyMemoryView_GET_BUFFER(memoryview);
-    if (view->format != NULL) {
-        descr = _descriptor_from_pep3118_format(view->format);
-        if (descr == NULL) {
-            goto fail;
-        }
-
-        /* Sanity check */
-        if (descr->elsize != view->itemsize) {
-            PyErr_SetString(
-                    PyExc_RuntimeError,
-                    "Item size computed from the PEP 3118 buffer format "
-                    "string does not match the actual item size.");
-            goto fail;
-        }
-    }
-    else {
-        descr = PyArray_DescrNewFromType(NPY_STRING);
-        descr->elsize = view->itemsize;
-    }
-
     nd = view->ndim;
+    descr = _dtype_from_buffer_3118(memoryview);
+
+    if (descr == NULL) {
+        return NULL;
+    }
+
     if (view->shape != NULL) {
         int k;
         if (nd > NPY_MAXDIMS || nd < 0) {
