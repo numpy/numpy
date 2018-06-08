@@ -1186,7 +1186,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     Parameters
     ----------
     x : array_like
-        The x-coordinates at which to calculate the interpolated values.
+        The x-coordinates at which to evaluate the interpolated values.
 
     xp : 1-D sequence of floats
         The x-coordinates of the data points, must be increasing if argument
