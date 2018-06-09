@@ -44,12 +44,12 @@ Exported symbols include:
      +-> number
      |     integer
      |     signedinteger   (intxx)              (kind=i)
-     |     byte
-     |     short
-     |     intc
-     |     intp           int0
-     |     int_
-     |     longlong
+     |       byte
+     |       short
+     |       intc
+     |       intp           int0
+     |       int_
+     |       longlong
      +-> unsignedinteger  (uintxx)              (kind=u)
      |     ubyte
      |     ushort
