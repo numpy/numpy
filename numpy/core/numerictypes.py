@@ -68,8 +68,8 @@ Exported symbols include:
      |             complex_ (cfloat, cdouble)
      |             clongfloat (longcomplex)
      +-> flexible
-     |     character
      |     void                                 (kind=V)
+     |     character
      |
      |     str_     (string_, bytes_)           (kind=S)    [Python 2]
      |     unicode_                             (kind=U)    [Python 2]
