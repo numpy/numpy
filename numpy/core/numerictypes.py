@@ -43,40 +43,40 @@ Exported symbols include:
      +-> bool_                                  (kind=b)
      +-> number
      |   +-> integer
-     |   |   +-> signedinteger   (intxx)              (kind=i)
+     |   |   +-> signedinteger     (intxx)      (kind=i)
      |   |   |     byte
      |   |   |     short
      |   |   |     intc
-     |   |   |     intp           int0
+     |   |   |     intp            int0
      |   |   |     int_
      |   |   |     longlong
-     |   |   \\-> unsignedinteger  (uintxx)              (kind=u)
+     |   |   \\-> unsignedinteger  (uintxx)     (kind=u)
      |   |         ubyte
      |   |         ushort
      |   |         uintc
-     |   |         uintp          uint0
+     |   |         uintp           uint0
      |   |         uint_
      |   |         ulonglong
      |   +-> inexact
-     |       +-> floating           (floatxx)       (kind=f)
+     |       +-> floating          (floatxx)    (kind=f)
      |       |     half
      |       |     single
-     |       |     float_  (double)
+     |       |     float_          (double)
      |       |     longfloat
-     |       \\-> complexfloating    (complexxx)     (kind=c)
+     |       \\-> complexfloating  (complexxx)  (kind=c)
      |             csingle  (singlecomplex)
      |             complex_ (cfloat, cdouble)
      |             clongfloat (longcomplex)
      +-> flexible
      |   +-> character
-     |   |     str_     (string_, bytes_)           (kind=S)    [Python 2]
-     |   |     unicode_                             (kind=U)    [Python 2]
+     |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
+     |   |     unicode_                         (kind=U)    [Python 2]
      |   |
-     |   |     bytes_   (string_)                   (kind=S)    [Python 3]
-     |   |     str_     (unicode_)                  (kind=U)    [Python 3]
+     |   |     bytes_   (string_)               (kind=S)    [Python 3]
+     |   |     str_     (unicode_)              (kind=U)    [Python 3]
      |   |
-     |   \\-> void                                 (kind=V)
-     \\-> object_ (not used much)                (kind=O)
+     |   \\-> void                              (kind=V)
+     \\-> object_ (not used much)               (kind=O)
 
 """
 from __future__ import division, absolute_import, print_function
