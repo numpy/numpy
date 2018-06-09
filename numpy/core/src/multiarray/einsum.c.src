@@ -2085,24 +2085,23 @@ get_single_op_view(PyArrayObject *op, char *labels,
     return 0;
 }
 
+
+/*
+ * The char type may be either signed or unsigned, we need it to be
+ * signed here.
+ */
 static int
-_no_labels_are_negative(signed char *labels, int ndim)
+_any_labels_are_negative(signed char *labels, int ndim)
 {
     int idim;
 
     for (idim = 0; idim < ndim; ++idim) {
-        /*
-         * The char type may be either signed or unsigned, we
-         * need it to be signed here.
-         */
-        int label = labels[idim];
-
-        if (label < 0) {
-            return 0;
+        if (labels[idim] < 0) {
+            return 1;
         }
     }
 
-    return 1;
+    return 0;
 }
 
 /*
@@ -2123,7 +2122,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
     PyArrayObject *ret = NULL;
 
     /* A fast path to avoid unnecessary calculations. */
-    if (_no_labels_are_negative((signed char *)labels, ndim)) {
+    if (!_any_labels_are_negative((signed char *)labels, ndim)) {
         Py_INCREF(op);
 
         return op;
@@ -2140,8 +2139,19 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
         npy_intp dim = PyArray_DIM(op, idim);
         npy_intp stride = PyArray_STRIDE(op, idim);
 
+        /* A label seen for the first time, add it to the op view. */
+        if (label >= 0) {
+            /*
+             * icombinemap maps dimensions in the original array to
+             * their position in the combined dimensions view.
+             */
+            icombinemap[idim] = icombine;
+            new_dims[icombine] = dim;
+            new_strides[icombine] = stride;
+            ++icombine;
+        }
         /* A repeated label, find the original one and merge them. */
-        if (label < 0) {
+        else {
             int i = icombinemap[idim + label];
 
             icombinemap[idim] = -1;
@@ -2153,13 +2163,6 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
                 return NULL;
             }
             new_strides[i] += stride;
-        }
-        /* A label seen for the first time, add it to the op view. */
-        else {
-            icombinemap[idim] = icombine;
-            new_dims[icombine] = dim;
-            new_strides[icombine] = stride;
-            ++icombine;
         }
     }
 
