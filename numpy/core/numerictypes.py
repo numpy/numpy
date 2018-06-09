@@ -43,20 +43,20 @@ Exported symbols include:
      +-> bool_                                  (kind=b)
      +-> number
      |   +-> integer
-     |   |     signedinteger   (intxx)              (kind=i)
-     |   |       byte
-     |   |       short
-     |   |       intc
-     |   |       intp           int0
-     |   |       int_
-     |   |       longlong
-     |   +-> unsignedinteger  (uintxx)              (kind=u)
-     |   |     ubyte
-     |   |     ushort
-     |   |     uintc
-     |   |     uintp          uint0
-     |   |     uint_
-     |   |     ulonglong
+     |   |   +-> signedinteger   (intxx)              (kind=i)
+     |   |   |     byte
+     |   |   |     short
+     |   |   |     intc
+     |   |   |     intp           int0
+     |   |   |     int_
+     |   |   |     longlong
+     |   |   \\-> unsignedinteger  (uintxx)              (kind=u)
+     |   |         ubyte
+     |   |         ushort
+     |   |         uintc
+     |   |         uintp          uint0
+     |   |         uint_
+     |   |         ulonglong
      |   +-> inexact
      |       +-> floating           (floatxx)       (kind=f)
      |       |     half
