@@ -41,9 +41,9 @@ Exported symbols include:
 
    generic
      +-> bool_                                  (kind=b)
-     +-> number                                 (kind=i)
+     +-> number
      |     integer
-     |     signedinteger   (intxx)
+     |     signedinteger   (intxx)              (kind=i)
      |     byte
      |     short
      |     intc
