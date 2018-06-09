@@ -64,9 +64,9 @@ Exported symbols include:
      |       |     float_          (double)
      |       |     longfloat
      |       \\-> complexfloating  (complexxx)  (kind=c)
-     |             csingle  (singlecomplex)
-     |             complex_ (cfloat, cdouble)
-     |             clongfloat (longcomplex)
+     |             csingle         (singlecomplex)
+     |             complex_        (cfloat, cdouble)
+     |             clongfloat      (longcomplex)
      +-> flexible
      |   +-> character
      |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
