@@ -583,7 +583,7 @@ int npy_get_floatstatus() {
     defined(__NetBSD__)
 #include <ieeefp.h>
 
-int npy_get_floatstatus_barrier(char * param))
+int npy_get_floatstatus_barrier(char * param)
 {
     int fpstatus = fpgetsticky();
     /*
