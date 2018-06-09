@@ -42,31 +42,31 @@ Exported symbols include:
    generic
      +-> bool_                                  (kind=b)
      +-> number
-     |     integer
-     |     signedinteger   (intxx)              (kind=i)
-     |       byte
-     |       short
-     |       intc
-     |       intp           int0
-     |       int_
-     |       longlong
-     +-> unsignedinteger  (uintxx)              (kind=u)
-     |     ubyte
-     |     ushort
-     |     uintc
-     |     uintp          uint0
-     |     uint_
-     |     ulonglong
-     +-> inexact
-     |   +-> floating           (floatxx)       (kind=f)
-     |   |     half
-     |   |     single
-     |   |     float_  (double)
-     |   |     longfloat
-     |   \\-> complexfloating    (complexxx)     (kind=c)
-     |         csingle  (singlecomplex)
-     |         complex_ (cfloat, cdouble)
-     |         clongfloat (longcomplex)
+     |   +-> integer
+     |   |     signedinteger   (intxx)              (kind=i)
+     |   |       byte
+     |   |       short
+     |   |       intc
+     |   |       intp           int0
+     |   |       int_
+     |   |       longlong
+     |   +-> unsignedinteger  (uintxx)              (kind=u)
+     |   |     ubyte
+     |   |     ushort
+     |   |     uintc
+     |   |     uintp          uint0
+     |   |     uint_
+     |   |     ulonglong
+     |   +-> inexact
+     |       +-> floating           (floatxx)       (kind=f)
+     |       |     half
+     |       |     single
+     |       |     float_  (double)
+     |       |     longfloat
+     |       \\-> complexfloating    (complexxx)     (kind=c)
+     |             csingle  (singlecomplex)
+     |             complex_ (cfloat, cdouble)
+     |             clongfloat (longcomplex)
      +-> flexible
      |     character
      |     void                                 (kind=V)
