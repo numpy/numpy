@@ -2319,8 +2319,10 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
         mask = np.isclose(xnew, value, atol=atol, rtol=rtol)
     else:
         mask = umath.equal(xnew, value)
-    return masked_array(
-        xnew, mask=mask, copy=copy, fill_value=value, shrink=shrink)
+    ret = masked_array(xnew, mask=mask, copy=copy, fill_value=value)
+    if shrink:
+        ret.shrink_mask()
+    return ret
 
 
 def masked_invalid(a, copy=True):
