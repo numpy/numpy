@@ -849,7 +849,7 @@ def einsum(*operands, **kwargs):
         included as well as subscript labels of the precise output form.
     operands : list of array_like
         These are the arrays for the operation.
-    out : {ndarray, None}, optional
+    out : ndarray, optional
         If provided, the calculation is done into this array.
     dtype : {data-type, None}, optional
         If provided, forces the calculation to use the data type specified.
@@ -980,7 +980,8 @@ def einsum(*operands, **kwargs):
     returns the optimal path in the majority of cases. In some cases 'optimal'
     will return the superlative path through a more expensive, exhaustive search.
     For iterative calculations it may be advisable to calculate the optimal path
-    once and reuse that path by supplying it as an argument. An example is given.
+    once and reuse that path by supplying it as an argument. An example is given
+    below.
 
     See :py:func:`numpy.einsum_path` for more details.
 

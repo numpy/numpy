@@ -2347,7 +2347,7 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
         included as well as subscript labels of the precise output form.
     operands : list of array_like
         These are the arrays for the operation.
-    out : {ndarray, None}, optional
+    out : ndarray, optional
         If provided, the calculation is done into this array.
     dtype : {data-type, None}, optional
         If provided, forces the calculation to use the data type specified.
