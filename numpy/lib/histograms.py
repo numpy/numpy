@@ -779,13 +779,12 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     if density is not None:
         normed = False
 
-    if density:
+    if density==1:
         db = np.array(np.diff(bin_edges), float)
         return n/db/n.sum(), bin_edges
-    elif normed:
-        # deprecated, buggy behavior. Remove for NumPy 2.0.0
-        db = np.array(np.diff(bin_edges), float)
-        return n/(n*db).sum(), bin_edges
+    elif density==2:
+        # normalize for fractionals
+        return n/n.sum(), bin_edges
     else:
         return n, bin_edges
 
