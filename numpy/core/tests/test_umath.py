@@ -1576,6 +1576,25 @@ class TestSpecialMethods(object):
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
 
+    def test_failing_out_wrap(self):
+
+        singleton = np.array([1.0])
+
+        class Ok(np.ndarray):
+            def __array_wrap__(self, obj):
+                return singleton
+
+        class Bad(np.ndarray):
+            def __array_wrap__(self, obj):
+                raise RuntimeError
+
+        ok = np.empty(1).view(Ok)
+        bad = np.empty(1).view(Bad)
+
+        # double-free (segfault) of "ok" if "bad" raises an exception
+        for i in range(10):
+            assert_raises(RuntimeError, ncu.frexp, 1, ok, bad)
+
     def test_none_wrap(self):
         # Tests that issue #8507 is resolved. Previously, this would segfault
 
