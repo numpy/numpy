@@ -605,13 +605,13 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         (instead of 1). If `density` is True, the weights are
         normalized, so that the integral of the density over the range
         remains 1.
-    density : bool, optional
+    density : bool or int, optional
         If ``False``, the result will contain the number of samples in
         each bin. If ``True``, the result is the value of the
         probability *density* function at the bin, normalized such that
-        the *integral* over the range is 1. Note that the sum of the
-        histogram values will not be equal to 1 unless bins of unity
-        width are chosen; it is not a probability *mass* function.
+        the *integral* over the range is 1. 
+        If ``2``, the result will be normalized such that the sum of the 
+        histogram values will be equal to 1.
 
         Overrides the ``normed`` keyword if given.
 
@@ -785,6 +785,10 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     elif density==2:
         # normalize for fractionals
         return n/n.sum(), bin_edges
+    elif normed:
+        # deprecated, buggy behavior. Remove for NumPy 2.0.0
+        db = np.array(np.diff(bin_edges), float)
+        return n/(n*db).sum(), bin_edges
     else:
         return n, bin_edges
 
