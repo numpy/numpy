@@ -73,7 +73,6 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
     int out_kwd_is_tuple = 0;
     int num_override_args = 0;
 
-    PyObject *obj;
     PyObject *out_kwd_obj = NULL;
     /*
      * Check inputs
@@ -106,7 +105,10 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
     }
 
     for (i = 0; i < nargs + nout_kwd; ++i) {
-        PyObject *method;
+        PyObject *obj;
+        int j;
+        npy_bool new_class = 1;
+
         if (i < nargs) {
             obj = PyTuple_GET_ITEM(args, i);
         }
@@ -119,12 +121,26 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
             }
         }
         /*
-         * Now see if the object provides an __array_ufunc__. However, we should
-         * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
-         * any ndarray subclass instances that did not override __array_ufunc__.
+         * Have we seen this class before?  If so, ignore.
          */
-        method = get_non_default_array_ufunc(obj);
-        if (method != NULL) {
+        if (with_override != NULL) {
+            for (j = 0; j < num_override_args; j++) {
+                new_class = (Py_TYPE(obj) != Py_TYPE(with_override[j]));
+                if (!new_class) {
+                    break;
+                }
+            }
+        }
+        if (new_class) {
+            /*
+             * Now see if the object provides an __array_ufunc__. However, we should
+             * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
+             * any ndarray subclass instances that did not override __array_ufunc__.
+             */
+            PyObject *method = get_non_default_array_ufunc(obj);
+            if (method == NULL) {
+                continue;
+            }
             if (method == Py_None) {
                 PyErr_Format(PyExc_TypeError,
                              "operand '%.200s' does not support ufuncs "
