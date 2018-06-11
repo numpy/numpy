@@ -976,9 +976,11 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
     PyObject *result = NULL;
-    int num_override_args;
 
-    if (PyTuple_Size(args) < 2) {
+    assert(PyTuple_CheckExact(args));
+    assert(kwds == NULL || PyDict_CheckExact(kwds));
+
+    if (PyTuple_GET_SIZE(args) < 2) {
         PyErr_SetString(PyExc_TypeError,
                         "__array_ufunc__ requires at least 2 arguments");
         return NULL;
@@ -988,11 +990,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    num_override_args = PyUFunc_WithOverride(normal_args, kwds, NULL, NULL);
-    if (num_override_args == -1) {
-        return NULL;
-    }
-    if (num_override_args) {
+    if (PyUFunc_HasOverride(normal_args, kwds)) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;
