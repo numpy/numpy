@@ -66,7 +66,7 @@ NPY_NO_EXPORT int
 PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
                      PyObject **with_override, PyObject **methods)
 {
-    int i;
+    int i, j;
 
     int nargs;
     int nout_kwd = 0;
@@ -134,6 +134,14 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
                 goto fail;
             }
             if (with_override != NULL) {
+                for (j = 0; j < num_override_args; j++) {
+                    if (Py_TYPE(obj) == Py_TYPE(with_override[j])) {
+                        break;
+                    }
+                }
+                if (j < num_override_args) {
+                    continue;
+                }
                 Py_INCREF(obj);
                 with_override[num_override_args] = obj;
             }
