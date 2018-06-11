@@ -1137,16 +1137,26 @@ def einsum(*operands, **kwargs):
     array([[10, 28, 46, 64],
            [13, 40, 67, 94]])
 
-    Chained array operations computed with an an optional, optimal
+    Chained array operations. For more complicated contractions, speed ups
+    might be achieved by repeatedly computing a 'greedy' path or pre-computing the
+    'optimal' path and repeatedly applying it, using an
     `einsum_path` insertion (since version 1.12.0):
 
-    >>> path, desc = np.einsum_path('ij,ki,lj->lk', a, b, a, optimize='optimal')
-    >>> for iteration in range(2):
-    ...     a = np.einsum('ij,ki,lj->lk', a, b, a, optimize=path)
-    >>> a
-    array([[  299702,   893504,  1487306,  2081108],
-           [ 1310074,  3905728,  6501382,  9097036],
-           [ 2320446,  6917952, 11515458, 16112964]])
+    # Speed benchmarked on 3.1GHz Intel i5.
+    >>> a = np.ones(64).reshape(2,4,8)
+    # Basic `einsum`: ~1520ms
+    >>> for iteration in range(500):
+    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a)
+    # Sub-optimal `einsum` (due to repeated path calculation time): ~330ms
+    >>> for iteration in range(500):
+    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')
+    # Greedy `einsum` (faster optimal path approximation): ~160ms
+    >>> for iteration in range(500):
+    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='greedy')
+    # Optimal `einsum` (best usage pattern in some use cases): ~110ms
+    >>> path = np.einsum_path('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')[0]
+    >>> for iteration in range(500):
+    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize=path)
 
     """
 
