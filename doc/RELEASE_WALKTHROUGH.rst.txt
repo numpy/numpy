@@ -148,9 +148,6 @@ Add another ``REL`` commit to the numpy maintenance branch, which resets the
     $ git commit -a -m"REL: prepare 1.14.x for further development"
     $ git push upstream maintenance/1.14.x
 
-This strategy is copied from the scipy release procedure and was used in numpy
-for the first time in 1.14.3. It needed to be modified a little since numpy
-has more strict requirements for the version number.
 
 Upload to PyPI
 --------------
