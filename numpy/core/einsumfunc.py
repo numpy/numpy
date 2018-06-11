@@ -1140,7 +1140,8 @@ def einsum(*operands, **kwargs):
     Chained array operations. For more complicated contractions, speed ups
     might be achieved by repeatedly computing a 'greedy' path or pre-computing the
     'optimal' path and repeatedly applying it, using an
-    `einsum_path` insertion (since version 1.12.0):
+    `einsum_path` insertion (since version 1.12.0). Performance improvements can be
+    particularly significant with larger arrays:
 
     # Speed benchmarked on 3.1GHz Intel i5.
     >>> a = np.ones(64).reshape(2,4,8)
