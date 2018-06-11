@@ -611,7 +611,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
         probability *density* function at the bin, normalized such that
         the *integral* over the range is 1. 
         If ``sum``, the result will be normalized such that the sum of 
-        the histogram values will be equal to 1.
+        the histogram values will be equal to 1. This *is* a probability 
+        mass function. 
 
         Overrides the ``normed`` keyword if given.
 
