@@ -418,7 +418,7 @@ wheels with your GPG key before upload.  ``-r warehouse`` causes the upload to
 use the Warehouse PyPI server.  This is a good idea because the Warehouse
 server seems to be a lot more reliable in receiving automated wheel uploads.
 For this flag to work, you will need a ``warehouse`` section in your
-``~/.pypirc`` file, of form:
+``~/.pypirc`` file, of form::
 
     [distutils]
     index-servers =
