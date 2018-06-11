@@ -236,6 +236,7 @@ class memmap(ndarray):
                 raise ValueError("Size of available data is not a "
                         "multiple of the data-type size.")
             size = bytes // _dbytes
+            shape = (size,)
         else:
             if not isinstance(shape, tuple):
                 shape = (shape,)
