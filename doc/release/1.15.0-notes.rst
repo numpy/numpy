@@ -154,6 +154,16 @@ Since ``np.ma.masked`` is a readonly scalar, copying should be a no-op. These
 functions now behave consistently with ``np.copy()``.
 
 
+Multifield Indexing of Structured Arrays will still return a copy
+-----------------------------------------------------------------
+The change that multi-field indexing of structured arrays returns a view
+instead of a copy is pushed back to 1.16. A new method
+``numpy.lib.recfunctions.repack_fields`` has been introduced to help mitigate
+the effects of this change, which can be used to write code compatible with
+both numpy 1.15 and 1.16. For more information on how to update code to account
+for this future change see "basics/structured arrays/accessing multiple fields"
+in the user guide.
+
 C API changes
 =============
 
