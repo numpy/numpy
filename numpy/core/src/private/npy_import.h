@@ -29,4 +29,18 @@ npy_cache_import(const char *module, const char *attr, PyObject **cache)
     }
 }
 
+NPY_INLINE static PyObject *
+npy_import(const char *module, const char *attr)
+{
+    PyObject *mod = PyImport_ImportModule(module);
+    PyObject *ret = NULL;
+
+    if (mod != NULL) {
+        ret = PyObject_GetAttrString(mod, attr);
+    }
+    Py_XDECREF(mod);
+
+    return ret;
+}
+
 #endif

@@ -424,7 +424,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
      * __len__ is not defined.
      */
     if (maxdims == 0 || !PySequence_Check(obj) || PySequence_Size(obj) < 0) {
-        // clear any PySequence_Size error, which corrupts further calls to it
+        /* clear any PySequence_Size error which corrupts further calls */
         PyErr_Clear();
 
         if (*out_dtype == NULL || (*out_dtype)->type_num != NPY_OBJECT) {
