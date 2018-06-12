@@ -76,7 +76,7 @@ removing bounds checks and wrap around, providing array alignment information
     cimport cython
     from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
     from randomgen.common cimport *
-    from randomgen.distributions import random_gauss_zig
+    from randomgen.distributions cimport random_gauss_zig
     from randomgen.xoroshiro128 import Xoroshiro128
 
 
