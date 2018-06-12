@@ -878,7 +878,7 @@ def einsum(*operands, **kwargs):
         Controls if intermediate optimization should occur. No optimization
         will occur if False and True will default to the 'greedy' algorithm.
         Also accepts an explicit contraction list from the ``np.einsum_path``
-        function. See ``np.einsum_path`` for more details. Default is True.
+        function. See ``np.einsum_path`` for more details. Defaults to False.
 
     Returns
     -------
@@ -906,7 +906,7 @@ def einsum(*operands, **kwargs):
     * Transpositions and permutations, :py:func:`numpy.transpose`.
     * Matrix multiplication and dot product, :py:func:`numpy.matmul` :py:func:`numpy.dot`.
     * Vector inner and outer products, :py:func:`numpy.inner` :py:func:`numpy.outer`.
-    * Broadcasting and scalar multiplication, :py:func:`numpy.multiply`.
+    * Broadcasting, element-wise and scalar multiplication, :py:func:`numpy.multiply`.
     * Tensor contractions, :py:func:`numpy.tensordot`.
     * Chained array operations, in efficient calculation order, :py:func:`numpy.einsum_path`.
 
