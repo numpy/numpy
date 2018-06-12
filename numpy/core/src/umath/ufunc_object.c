@@ -94,10 +94,6 @@ _get_wrap_prepare_args(ufunc_full_args full_args) {
     }
 }
 
-static PyObject *
-_apply_array_wrap(
-    PyObject *wrap, PyArrayObject *obj, _ufunc_context const *context);
-
 /* ---------------------------------------------------------------- */
 
 static int
@@ -311,6 +307,141 @@ _find_array_prepare(ufunc_full_args args,
     }
     Py_XDECREF(prep);
     return;
+}
+
+
+/*
+ * This function analyzes the input arguments
+ * and determines an appropriate __array_wrap__ function to call
+ * for the outputs.
+ *
+ * If an output argument is provided, then it is wrapped
+ * with its own __array_wrap__ not with the one determined by
+ * the input arguments.
+ *
+ * if the provided output argument is already an array,
+ * the wrapping function is None (which means no wrapping will
+ * be done --- not even PyArray_Return).
+ *
+ * A NULL is placed in output_wrap for outputs that
+ * should just have PyArray_Return called.
+ */
+static void
+_find_array_wrap(ufunc_full_args args, PyObject *kwds,
+                PyObject **output_wrap, int nin, int nout)
+{
+    int i;
+    PyObject *obj;
+    PyObject *wrap = NULL;
+
+    /*
+     * If a 'subok' parameter is passed and isn't True, don't wrap but put None
+     * into slots with out arguments which means return the out argument
+     */
+    if (kwds != NULL && (obj = PyDict_GetItem(kwds,
+                                              npy_um_str_subok)) != NULL) {
+        if (obj != Py_True) {
+            /* skip search for wrap members */
+            goto handle_out;
+        }
+    }
+
+    /*
+     * Determine the wrapping function given by the input arrays
+     * (could be NULL).
+     */
+    wrap = _find_array_method(args.in, npy_um_str_array_wrap);
+
+    /*
+     * For all the output arrays decide what to do.
+     *
+     * 1) Use the wrap function determined from the input arrays
+     * This is the default if the output array is not
+     * passed in.
+     *
+     * 2) Use the __array_wrap__ method of the output object
+     * passed in. -- this is special cased for
+     * exact ndarray so that no PyArray_Return is
+     * done in that case.
+     */
+handle_out:
+    if (args.out == NULL) {
+        for (i = 0; i < nout; i++) {
+            Py_XINCREF(wrap);
+            output_wrap[i] = wrap;
+        }
+    }
+    else {
+        for (i = 0; i < nout; i++) {
+            output_wrap[i] = _get_output_array_method(
+                PyTuple_GET_ITEM(args.out, i), npy_um_str_array_wrap, wrap);
+        }
+    }
+
+    Py_XDECREF(wrap);
+    return;
+}
+
+
+/*
+ * Apply the __array_wrap__ function with the given array and content.
+ *
+ * Interprets wrap=None and wrap=NULL as intended by _find_array_wrap
+ *
+ * Steals a reference to obj and wrap.
+ * Pass context=NULL to indicate there is no context.
+ */
+static PyObject *
+_apply_array_wrap(
+            PyObject *wrap, PyArrayObject *obj, _ufunc_context const *context) {
+    if (wrap == NULL) {
+        /* default behavior */
+        return PyArray_Return(obj);
+    }
+    else if (wrap == Py_None) {
+        Py_DECREF(wrap);
+        return (PyObject *)obj;
+    }
+    else {
+        PyObject *res;
+        PyObject *py_context = NULL;
+
+        /* Convert the context object to a tuple, if present */
+        if (context == NULL) {
+            py_context = Py_None;
+            Py_INCREF(py_context);
+        }
+        else {
+            PyObject *args_tup;
+            /* Call the method with appropriate context */
+            args_tup = _get_wrap_prepare_args(context->args);
+            if (args_tup == NULL) {
+                goto fail;
+            }
+            py_context = Py_BuildValue("OOi",
+                context->ufunc, args_tup, context->out_i);
+            Py_DECREF(args_tup);
+            if (py_context == NULL) {
+                goto fail;
+            }
+        }
+        /* try __array_wrap__(obj, context) */
+        res = PyObject_CallFunctionObjArgs(wrap, obj, py_context, NULL);
+        Py_DECREF(py_context);
+
+        /* try __array_wrap__(obj) if the context argument is not accepted  */
+        if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+            PyErr_Clear();
+            res = PyObject_CallFunctionObjArgs(wrap, obj, NULL);
+        }
+        Py_DECREF(wrap);
+        Py_DECREF(obj);
+        return res;
+    fail:
+        Py_DECREF(wrap);
+        Py_DECREF(obj);
+        return NULL;
+    }
 }
 
 
@@ -4428,139 +4559,6 @@ fail:
     Py_XDECREF(otype);
     Py_XDECREF(mp);
     return NULL;
-}
-
-/*
- * This function analyzes the input arguments
- * and determines an appropriate __array_wrap__ function to call
- * for the outputs.
- *
- * If an output argument is provided, then it is wrapped
- * with its own __array_wrap__ not with the one determined by
- * the input arguments.
- *
- * if the provided output argument is already an array,
- * the wrapping function is None (which means no wrapping will
- * be done --- not even PyArray_Return).
- *
- * A NULL is placed in output_wrap for outputs that
- * should just have PyArray_Return called.
- */
-static void
-_find_array_wrap(ufunc_full_args args, PyObject *kwds,
-                PyObject **output_wrap, int nin, int nout)
-{
-    int i;
-    PyObject *obj;
-    PyObject *wrap = NULL;
-
-    /*
-     * If a 'subok' parameter is passed and isn't True, don't wrap but put None
-     * into slots with out arguments which means return the out argument
-     */
-    if (kwds != NULL && (obj = PyDict_GetItem(kwds,
-                                              npy_um_str_subok)) != NULL) {
-        if (obj != Py_True) {
-            /* skip search for wrap members */
-            goto handle_out;
-        }
-    }
-
-    /*
-     * Determine the wrapping function given by the input arrays
-     * (could be NULL).
-     */
-    wrap = _find_array_method(args.in, npy_um_str_array_wrap);
-
-    /*
-     * For all the output arrays decide what to do.
-     *
-     * 1) Use the wrap function determined from the input arrays
-     * This is the default if the output array is not
-     * passed in.
-     *
-     * 2) Use the __array_wrap__ method of the output object
-     * passed in. -- this is special cased for
-     * exact ndarray so that no PyArray_Return is
-     * done in that case.
-     */
-handle_out:
-    if (args.out == NULL) {
-        for (i = 0; i < nout; i++) {
-            Py_XINCREF(wrap);
-            output_wrap[i] = wrap;
-        }
-    }
-    else {
-        for (i = 0; i < nout; i++) {
-            output_wrap[i] = _get_output_array_method(
-                PyTuple_GET_ITEM(args.out, i), npy_um_str_array_wrap, wrap);
-        }
-    }
-
-    Py_XDECREF(wrap);
-    return;
-}
-
-/*
- * Apply the __array_wrap__ function with the given array and content.
- *
- * Interprets wrap=None and wrap=NULL as intended by _find_array_wrap
- *
- * Steals a reference to obj and wrap.
- * Pass context=NULL to indicate there is no context.
- */
-static PyObject *
-_apply_array_wrap(
-            PyObject *wrap, PyArrayObject *obj, _ufunc_context const *context) {
-    if (wrap == NULL) {
-        /* default behavior */
-        return PyArray_Return(obj);
-    }
-    else if (wrap == Py_None) {
-        Py_DECREF(wrap);
-        return (PyObject *)obj;
-    }
-    else {
-        PyObject *res;
-        PyObject *py_context = NULL;
-
-        /* Convert the context object to a tuple, if present */
-        if (context == NULL) {
-            py_context = Py_None;
-            Py_INCREF(py_context);
-        }
-        else {
-            PyObject *args_tup;
-            /* Call the method with appropriate context */
-            args_tup = _get_wrap_prepare_args(context->args);
-            if (args_tup == NULL) {
-                goto fail;
-            }
-            py_context = Py_BuildValue("OOi",
-                context->ufunc, args_tup, context->out_i);
-            Py_DECREF(args_tup);
-            if (py_context == NULL) {
-                goto fail;
-            }
-        }
-        /* try __array_wrap__(obj, context) */
-        res = PyObject_CallFunctionObjArgs(wrap, obj, py_context, NULL);
-        Py_DECREF(py_context);
-
-        /* try __array_wrap__(obj) if the context argument is not accepted  */
-        if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-            PyErr_Clear();
-            res = PyObject_CallFunctionObjArgs(wrap, obj, NULL);
-        }
-        Py_DECREF(wrap);
-        Py_DECREF(obj);
-        return res;
-    fail:
-        Py_DECREF(wrap);
-        Py_DECREF(obj);
-        return NULL;
-    }
 }
 
 
