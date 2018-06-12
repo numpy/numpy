@@ -60,9 +60,10 @@ Build source releases
 
 Paver is used to build the source releases. It will create the ``release`` and
 ``release/installers`` directories and put the ``*.zip`` and ``*.tar.gz``
-source releases in the latter.
+source releases in the latter. ::
 
-    $ paver sdist # sdist will do a git clean -xdf, so we omit that
+    $ cython --version  # check that you have the correct cython version
+    $ paver sdist  # sdist will do a git clean -xdf, so we omit that
 
 Build wheels
 ------------
