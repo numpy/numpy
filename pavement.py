@@ -95,10 +95,10 @@ finally:
 #-----------------------------------
 
 # Source of the release notes
-RELEASE_NOTES = 'doc/release/1.15.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.16.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'maintenance/1.14.x'
+LOG_START = 'maintenance/1.15.x'
 LOG_END = 'master'
 
 
