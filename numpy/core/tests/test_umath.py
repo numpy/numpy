@@ -1568,13 +1568,14 @@ class TestSpecialMethods(object):
 
         class A(object):
             def __array__(self):
-                return np.zeros(1)
+                return np.zeros(2)
 
             def __array_wrap__(self, arr, context):
                 raise RuntimeError
 
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum.reduce, a)
 
     def test_failing_out_wrap(self):
 
