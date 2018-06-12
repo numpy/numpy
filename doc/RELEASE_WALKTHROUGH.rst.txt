@@ -5,12 +5,11 @@ replace 1.14.5 by the correct version.
 Release  Walkthrough
 ====================
 
-Backport Pull Requests, Write Release Note
----------------------------------------------
+Backport Pull Requests
+----------------------
 
 Changes that have been marked for this release must be backported to the
-maintenance/1.14.x branch. Summarize the changes in a release note
-doc/release/1.14.5-notes.rst
+maintenance/1.14.x branch.
 
 Update Release documentation
 ----------------------------
@@ -25,7 +24,13 @@ appended to ``doc/release/1.14.5-notes.rst`` for release updates, though not
 for new releases like ``1.14.0``, as the changelogs for latter tend to be
 excessively long. The ``doc/source/release.rst`` file should also be
 updated with a link to the new release notes. These changes should be committed
-to the maintenance branch, I used prepare-1.14.5-release as a branch name.
+to the maintenance branch, and later will be forward ported to master.
+
+Finish the Release Note
+-----------------------
+
+Fill out the release note ``doc/release/1.14.5-notes.rst`` calling out
+significant changes.
 
 Prepare the release commit
 --------------------------
