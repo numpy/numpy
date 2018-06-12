@@ -2499,7 +2499,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
-    npy_uint32 op_flags[NPY_MAXARGS];
+    npy_uint32 iter_flags, op_flags[NPY_MAXARGS];
 
     NpyIter *iter;
     sum_of_products_fn sop;
@@ -2745,19 +2745,23 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                     NPY_ITER_ALIGNED|
                     NPY_ITER_ALLOCATE|
                     NPY_ITER_NO_BROADCAST;
+    iter_flags = NPY_ITER_EXTERNAL_LOOP|
+            NPY_ITER_BUFFERED|
+            NPY_ITER_DELAY_BUFALLOC|
+            NPY_ITER_GROWINNER|
+            NPY_ITER_REDUCE_OK|
+            NPY_ITER_REFS_OK|
+            NPY_ITER_ZEROSIZE_OK;
+    if (out != NULL) {
+        iter_flags |= NPY_ITER_COPY_IF_OVERLAP;
+    }
+    if (dtype == NULL) {
+        iter_flags |= NPY_ITER_COMMON_DTYPE;
+    }
 
     /* Allocate the iterator */
-    iter = NpyIter_AdvancedNew(nop+1, op, NPY_ITER_EXTERNAL_LOOP|
-                ((dtype != NULL) ? 0 : NPY_ITER_COMMON_DTYPE)|
-                                       NPY_ITER_BUFFERED|
-                                       NPY_ITER_DELAY_BUFALLOC|
-                                       NPY_ITER_GROWINNER|
-                                       NPY_ITER_REDUCE_OK|
-                                       NPY_ITER_REFS_OK|
-                                       NPY_ITER_ZEROSIZE_OK,
-                                       order, casting,
-                                       op_flags, op_dtypes,
-                                       ndim_iter, op_axes, NULL, 0);
+    iter = NpyIter_AdvancedNew(nop+1, op, iter_flags, order, casting, op_flags,
+                               op_dtypes, ndim_iter, op_axes, NULL, 0);
 
     if (iter == NULL) {
         goto fail;
