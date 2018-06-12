@@ -324,6 +324,109 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
 }
 
 /*
+ * Check whether a set of input and output args have a non-default
+ *  `__array_ufunc__` method. Return the number of overrides, setting
+ * corresponding objects in PyObject array with_override and the corresponding
+ * __array_ufunc__ methods in methods (both using new references).
+ *
+ * Only the first override for a given class is returned.
+ *
+ * returns -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
+                     PyObject **with_override, PyObject **methods)
+{
+    int i;
+    PyObject *obj;
+
+    int num_override_args = 0;
+    int nin, nout = 0;
+    PyObject *out_kwd_obj = NULL;
+
+    nin = PyTuple_Size(args);
+    if (nin < 0) {
+        return -1;
+    }
+    if (kwds == NULL) {
+        nout = 0;
+    }
+    else {
+        if (!PyDict_CheckExact(kwds)) {
+            PyErr_SetString(PyExc_TypeError,
+                        "Internal Numpy error: call to PyUFunc_WithOverride "
+                        "with non-dict kwds");
+            return -1;
+        }
+        out_kwd_obj = PyDict_GetItemString(kwds, "out");
+        if (out_kwd_obj == NULL) {
+            nout = 0;
+        }
+        else if (PyTuple_CheckExact(out_kwd_obj)) {
+            nout = PyTuple_GET_SIZE(out_kwd_obj);
+            if (nout == 1) {
+                /* saves special-casing the tuple-of-one below */
+                out_kwd_obj = PyTuple_GET_ITEM(out_kwd_obj, 0);
+            }
+        }
+        else {
+            nout = 1;
+        }
+    }
+    for (i = 0; i < nin + nout; ++i) {
+        PyObject *method;
+        int j = 0;
+        npy_bool new_class = 1;
+
+        if (i < nin) {
+            obj = PyTuple_GET_ITEM(args, i);
+        }
+        else if (nout == 1) {
+            obj = out_kwd_obj;
+        }
+        else {
+            obj = PyTuple_GET_ITEM(out_kwd_obj, i - nin);
+        }
+        /*
+         * Now see if the object provides an __array_ufunc__. However, we should
+         * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
+         * any ndarray subclass instances that did not override __array_ufunc__.
+         *
+         * Furthermore, we should look at a given class only once.
+         */
+        while (j < num_override_args && new_class) {
+            new_class = (PyObject_Type(obj) != PyObject_Type(with_override[j]));
+            j++;
+        }
+        if (new_class) {
+            method = get_non_default_array_ufunc(obj);
+            if (method != NULL) {
+                if (method == Py_None) {
+                    PyErr_Format(PyExc_TypeError,
+                                 "operand '%.200s' does not support ufuncs "
+                                 "(__array_ufunc__=None)",
+                                 obj->ob_type->tp_name);
+                    Py_DECREF(method);
+                    goto fail;
+                }
+                Py_INCREF(obj);
+                with_override[num_override_args] = obj;
+                methods[num_override_args] = method;
+                ++num_override_args;
+            }
+        }
+    }
+    return num_override_args;
+
+fail:
+    for (i = 0; i < num_override_args; i++) {
+        Py_DECREF(with_override[i]);
+        Py_DECREF(methods[i]);
+    }
+    return -1;
+}
+
+/*
  * Check a set of args for the `__array_ufunc__` method.  If more than one of
  * the input arguments implements `__array_ufunc__`, they are tried in the
  * order: subclasses before superclasses, otherwise left to right. The first

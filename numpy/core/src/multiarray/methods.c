@@ -970,13 +970,78 @@ array_getarray(PyArrayObject *self, PyObject *args)
     }
 }
 
+/*
+ * Check whether an object has __array_ufunc__ defined on its class and it
+ * is not the default, i.e., the object is not an ndarray, and its
+ * __array_ufunc__ is not the same as that of ndarray.
+ *
+ * Returns 1 if this is the case, 0 if not.
+ */
+NPY_NO_EXPORT int
+has_non_default_array_ufunc(PyObject * obj)
+{
+    PyObject *method = get_non_default_array_ufunc(obj);
+    if (method) {
+        Py_DECREF(method);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+/*
+ * Check whether any of a set of input and output args have a non-default
+ *  `__array_ufunc__` method. Return 1 if so, 0 if not, -1 on error.
+ */
+static int
+PyUFunc_HasOverride(PyObject *args, PyObject *kwds)
+{
+    int i;
+    int nin, nout;
+    PyObject *out_kwd_obj, *method = NULL;
+
+    nin = PyTuple_Size(args);
+    if (nin < 0) {
+        return -1;
+    }
+    /* check inputs */
+    for (i = 0; i < nin; ++i) {
+        if (has_non_default_array_ufunc(PyTuple_GET_ITEM(args, i))) {
+            return 1;
+        }
+    }
+    if (!kwds) {
+        return 0;
+    }
+    if (!PyDict_CheckExact(kwds)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Internal Numpy error: call to PyUFunc_HasOverride "
+                        "with non-dict kwds");
+        return -1;
+    }
+    out_kwd_obj = PyDict_GetItemString(kwds, "out");
+    if (out_kwd_obj == NULL) {
+        return 0;
+    }
+    if (!PyTuple_CheckExact(out_kwd_obj)) {
+        return (has_non_default_array_ufunc(out_kwd_obj) != NULL);
+    }
+    nout = PyTuple_GET_SIZE(out_kwd_obj);
+    for (i = 0; i < nout; i++) {
+        if (has_non_default_array_ufunc(PyTuple_GET_ITEM(out_kwd_obj, i)) != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 static PyObject *
 array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
     PyObject *result = NULL;
-    int num_override_args;
+    npy_bool has_override;
 
     if (PyTuple_Size(args) < 2) {
         PyErr_SetString(PyExc_TypeError,
@@ -988,11 +1053,11 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    num_override_args = PyUFunc_HasOverride(normal_args, kwds);
-    if (num_override_args == -1) {
+    has_override = PyUFunc_HasOverride(normal_args, kwds);
+    if (has_override == -1) {
         return NULL;
     }
-    if (num_override_args) {
+    if (has_override) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;
