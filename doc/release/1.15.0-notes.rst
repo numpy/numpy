@@ -76,6 +76,9 @@ Deprecations
   necessary to avoid ambiguity in expressions such as ``arr[[[0, 1], [0, 1]]]``
   which currently is interpreted as ``arr[array([0, 1]), array([0, 1])]``.
   In future, this will be interpreted as ``arr[array([[0, 1], [0, 1]])]``.
+* The ``normed`` argument of ``np.histogram``, deprecated long ago in 1.6.0,
+  now emits a ``DeprecationWarning``.
+
 
 Future Changes
 ==============

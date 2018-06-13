@@ -4,6 +4,7 @@ Histogram-related functions
 from __future__ import division, absolute_import, print_function
 
 import operator
+import warnings
 
 import numpy as np
 from numpy.compat.py3k import basestring
@@ -559,7 +560,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     return bin_edges
 
 
-def histogram(a, bins=10, range=None, normed=False, weights=None,
+def histogram(a, bins=10, range=None, normed=None, weights=None,
               density=None):
     r"""
     Compute the histogram of a set of data.
@@ -591,14 +592,12 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
         .. deprecated:: 1.6.0
 
-        This keyword is deprecated in NumPy 1.6.0 due to confusing/buggy
-        behavior. It will be removed in NumPy 2.0.0. Use the ``density``
-        keyword instead. If ``False``, the result will contain the
-        number of samples in each bin. If ``True``, the result is the
-        value of the probability *density* function at the bin,
-        normalized such that the *integral* over the range is 1. Note
-        that this latter behavior is known to be buggy with unequal bin
-        widths; use ``density`` instead.
+        This is equivalent to the `density` argument, but produces incorrect
+        results for unequal bin widths. It should not be used.
+
+        .. versionchanged:: 1.15.0
+            DeprecationWarnings are actually emitted.
+
     weights : array_like, optional
         An array of weights, of the same shape as `a`.  Each value in
         `a` only contributes its associated weight towards the bin count
@@ -777,16 +776,39 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     # density overrides the normed keyword
     if density is not None:
+        if normed is not None:
+            # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
+            warnings.warn(
+                    "The normed argument is ignored when density is provided. "
+                    "In future passing both will result in an error.",
+                    DeprecationWarning, stacklevel=2)
         normed = False
 
     if density:
         db = np.array(np.diff(bin_edges), float)
         return n/db/n.sum(), bin_edges
     elif normed:
-        # deprecated, buggy behavior. Remove for NumPy 2.0.0
+        # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
+        warnings.warn(
+                "Passing `normed=True` on non-uniform bins has always been "
+                "broken, and computes neither the probability density "
+                "function nor the probability mass function. "
+                "The result is only correct if the bins are uniform, when "
+                "density=True will produce the same result anyway. "
+                "The argument will be removed in a future version of "
+                "numpy.",
+                np.VisibleDeprecationWarning, stacklevel=2)
+
+        # this normalization is incorrect, but
         db = np.array(np.diff(bin_edges), float)
         return n/(n*db).sum(), bin_edges
     else:
+        if normed is not None:
+            # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
+            warnings.warn(
+                    "Passing normed=False is deprecated, and has no effect. "
+                    "Consider passing the density argument instead.",
+                    DeprecationWarning, stacklevel=2)
         return n, bin_edges
 
 
