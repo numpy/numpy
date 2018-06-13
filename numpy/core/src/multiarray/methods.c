@@ -995,7 +995,7 @@ has_non_default_array_ufunc(PyObject * obj)
  *  `__array_ufunc__` method. Return 1 if so, 0 if not, -1 on error.
  */
 static int
-PyUFunc_HasOverride(PyObject *args, PyObject *kwds)
+check_override(PyObject *args, PyObject *kwds)
 {
     int i;
     int nin, nout;
@@ -1016,7 +1016,7 @@ PyUFunc_HasOverride(PyObject *args, PyObject *kwds)
     }
     if (!PyDict_CheckExact(kwds)) {
         PyErr_SetString(PyExc_TypeError,
-                        "Internal Numpy error: call to PyUFunc_HasOverride "
+                        "Internal Numpy error: call to has_override "
                         "with non-dict kwds");
         return -1;
     }
@@ -1053,13 +1053,15 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    has_override = PyUFunc_HasOverride(normal_args, kwds);
-    if (has_override == -1) {
-        return NULL;
-    }
+    has_override = check_override(normal_args, kwds);
     if (has_override) {
-        result = Py_NotImplemented;
-        Py_INCREF(Py_NotImplemented);
+        if (has_override == -1) {
+            result = NULL;
+        }
+        else {
+            result = Py_NotImplemented;
+            Py_INCREF(Py_NotImplemented);
+        }
         goto cleanup;
     }
 
