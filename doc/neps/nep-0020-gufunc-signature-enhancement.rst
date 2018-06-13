@@ -31,7 +31,7 @@ Each part of the proposal is driven by specific needs [1]_.
    ``()->(n)``, with there being no way to indicate that ``n`` has to equal 2.
    Indeed, this signature is particularly annoying since without putting in an
    output argument, the current gufunc wrapper code fails because it cannot
-   deteermine ``n``.  Similarly, the signature for an cross product of two
+   determine ``n``.  Similarly, the signature for an cross product of two
    3-dimensional vectors has to be ``(n),(n)->(n)``, with again no way to
    indicate that ``n`` has to equal 3.  Hence, the proposal here to allow one
    to give numerical values in addition to variable names.  Thus, angle to
@@ -71,9 +71,16 @@ Each part of the proposal is driven by specific needs [1]_.
    that, e.g., all parts of a vector are constant (maybe zero). The proposal
    is to allow the implementer of a gufunc to indicate that a dimension can be
    broadcast by post-fixing the dimension name with ``|1``. Hence, the
-   signature for ``all_equal`` would become ``(n|1),(n|1)->()``.  Another
-   application might be in fused ufuncs, such as ``sumproduct`` (which would
-   have the same signature).
+   signature for ``all_equal`` would become ``(n|1),(n|1)->()``.  The
+   signature seems handy more generally for "chained ufuncs"; e.g., another
+   application might be in a putative ufunc implementing ``sumproduct``.
+
+   Another example that arose in the discussion, is of a weighted mean, which
+   might look like ``weighted_mean(y, sigma[, axis, ...])``, returning the
+   mean and its uncertainty.  With a signature of ``(n),(n)->(),()``, one
+   would be forced to always give as many sigmas as there are data points,
+   while broadcasting would allow one to give a single sigma for all points
+   (which is still useful to calculate the uncertainty on the mean).
 
 Implementation
 --------------
@@ -182,7 +189,11 @@ signatures like ``(m|1,n|1,o|1),(m|1,n|1,o|1)->()`` (from the ``cube_equal``
 test case in [4]_), it is not even worth writing out the expansion.
 
 For broadcasting, the alternative suffix of ``^`` was suggested (as
-broadcasting can be thought of as increasing the size of the array).
+broadcasting can be thought of as increasing the size of the array).  This
+seems less clear.  Furthermore, it was wondered whether it should not just be
+an all-or-nothing flag.  This could be the case, though given the postfix
+for flexible dimensions, arguably another postfix is clearer (as is the
+implementation).
 
 Discussion
 ----------
@@ -211,7 +222,7 @@ References and Footnotes
 ------------------------
 
 .. [1] Identified needs and suggestions for the implementation are not all by
-       the author. In particular, the suggestion for fixed dimensions and 
+       the author. In particular, the suggestion for fixed dimensions and
        initial implementation was by Jaime Frio (`gh-5015
        <https://github.com/numpy/numpy/pull/5015>`_), the suggestion of ``?``
        to indicate dimensions can be omitted was by Nathaniel Smith, and the
