@@ -1,0 +1,16 @@
+
+Contributors
+============
+
+A total of 1 person contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+
+Pull requests merged
+====================
+
+A total of 2 pull requests were merged for this release.
+
+* `#11274 <https://github.com/numpy/numpy/pull/11274>`__: BUG: Correct use of NPY_UNUSED.
+* `#11294 <https://github.com/numpy/numpy/pull/11294>`__: BUG: Remove extra trailing parentheses.
