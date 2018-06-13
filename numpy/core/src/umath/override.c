@@ -377,10 +377,11 @@ check_overrides(PyObject *args, PyObject *out_kwd_obj,
          * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
          * any ndarray subclass instances that did not override __array_ufunc__.
          *
-         * Furthermore, we should look at a given class only once.
+         * Furthermore, like the python __op__ overloads, we should look at
+         * a given class only once.
          */
         while (j < num_override_args && new_class) {
-            new_class = (PyObject_Type(obj) != PyObject_Type(with_override[j]));
+            new_class = (Py_TYPE(obj) != Py_TYPE(with_override[j]));
             j++;
         }
         if (new_class) {
@@ -436,7 +437,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     PyObject *array_ufunc_methods[NPY_MAXARGS];
 
     PyObject *obj;
-    PyObject *other_obj;
     PyObject *out = NULL;
 
     PyObject *method_name = NULL;
@@ -610,11 +610,11 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
             /* Check for sub-types to the right of obj. */
             for (j = i + 1; j < num_override_args; j++) {
-                other_obj = with_override[j];
+                PyObject *other_obj = with_override[j];
                 if (other_obj != NULL &&
-                    PyObject_Type(other_obj) != PyObject_Type(obj) &&
+                    Py_TYPE(other_obj) != Py_TYPE(obj) &&
                     PyObject_IsInstance(other_obj,
-                                        PyObject_Type(override_obj))) {
+                                        (PyObject *)Py_TYPE(override_obj))) {
                     override_obj = NULL;
                     break;
                 }
