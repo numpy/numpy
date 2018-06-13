@@ -1,3 +1,5 @@
+:orphan:
+
 *************************
 Old Numeric compatibility
 *************************
