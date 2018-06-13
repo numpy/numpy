@@ -2175,6 +2175,9 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
         }
     }
 
+    /* The number of dimensions of the combined view. */
+    ndim = icombine;
+
     /* Create a view of the operand with the compressed dimensions. */
     Py_INCREF(PyArray_DESCR(op));
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
