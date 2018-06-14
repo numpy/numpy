@@ -695,7 +695,7 @@ int64_t random_binomial_btpe(brng_t *brng_state, int64_t n, double p,
     binomial->nsave = n;
     binomial->psave = p;
     binomial->has_binomial = 1;
-    binomial->r = r = min(p, 1.0 - p);
+    binomial->r = r = MIN(p, 1.0 - p);
     binomial->q = q = 1.0 - r;
     binomial->fm = fm = n * r + r;
     binomial->m = m = (int64_t)floor(binomial->fm);
@@ -836,7 +836,7 @@ int64_t random_binomial_inversion(brng_t *brng_state, int64_t n, double p,
     binomial->q = q = 1.0 - p;
     binomial->r = qn = exp(n * log(q));
     binomial->c = np = n * p;
-    binomial->m = bound = (int64_t)min(n, np + 10.0 * sqrt(np * q + 1));
+    binomial->m = bound = (int64_t)MIN(n, np + 10.0 * sqrt(np * q + 1));
   } else {
     q = binomial->q;
     qn = binomial->r;
@@ -1071,7 +1071,7 @@ int64_t random_hypergeometric_hyp(brng_t *brng_state, int64_t good, int64_t bad,
   double d2, u, y;
 
   d1 = bad + good - sample;
-  d2 = (double)min(bad, good);
+  d2 = (double)MIN(bad, good);
 
   y = d2;
   k = sample;
@@ -1099,10 +1099,10 @@ int64_t random_hypergeometric_hrua(brng_t *brng_state, int64_t good,
   int64_t Z;
   double T, W, X, Y;
 
-  mingoodbad = min(good, bad);
+  mingoodbad = MIN(good, bad);
   popsize = good + bad;
-  maxgoodbad = max(good, bad);
-  m = min(sample, popsize - sample);
+  maxgoodbad = MAX(good, bad);
+  m = MIN(sample, popsize - sample);
   d4 = ((double)mingoodbad) / popsize;
   d5 = 1.0 - d4;
   d6 = m * d4 + 0.5;
@@ -1111,7 +1111,7 @@ int64_t random_hypergeometric_hrua(brng_t *brng_state, int64_t good,
   d9 = (int64_t)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
   d10 = (loggam(d9 + 1) + loggam(mingoodbad - d9 + 1) + loggam(m - d9 + 1) +
          loggam(maxgoodbad - m + d9 + 1));
-  d11 = min(min(m, mingoodbad) + 1.0, floor(d6 + 16 * d7));
+  d11 = MIN(MIN(m, mingoodbad) + 1.0, floor(d6 + 16 * d7));
   /* 16 for 16-decimal-digit precision in D1 and D2 */
 
   while (1) {
