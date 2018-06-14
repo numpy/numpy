@@ -970,15 +970,72 @@ array_getarray(PyArrayObject *self, PyObject *args)
     }
 }
 
+/*
+ * Check whether an object has __array_ufunc__ defined on its class and it
+ * is not the default, i.e., the object is not an ndarray, and its
+ * __array_ufunc__ is not the same as that of ndarray.
+ *
+ * Returns 1 if this is the case, 0 if not.
+ */
+NPY_NO_EXPORT int
+has_non_default_array_ufunc(PyObject * obj)
+{
+    PyObject *method = get_non_default_array_ufunc(obj);
+    if (method) {
+        Py_DECREF(method);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+/*
+ * Check whether any of a set of input and output args have a non-default
+ *  `__array_ufunc__` method. Return 1 if so, 0 if not.
+ */
+static npy_bool
+has_override(PyObject *args, PyObject *kwds)
+{
+    int i;
+    int nin, nout;
+    PyObject *out_kwd_obj;
+
+    /* check inputs */
+    nin = PyTuple_GET_SIZE(args);
+    for (i = 0; i < nin; ++i) {
+        if (has_non_default_array_ufunc(PyTuple_GET_ITEM(args, i))) {
+            return 1;
+        }
+    }
+    if (!kwds) {
+        return 0;
+    }
+    out_kwd_obj = PyDict_GetItemString(kwds, "out");
+    if (out_kwd_obj == NULL) {
+        return 0;
+    }
+    if (!PyTuple_CheckExact(out_kwd_obj)) {
+        return has_non_default_array_ufunc(out_kwd_obj);
+    }
+    nout = PyTuple_GET_SIZE(out_kwd_obj);
+    for (i = 0; i < nout; i++) {
+        if (has_non_default_array_ufunc(PyTuple_GET_ITEM(out_kwd_obj, i))) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 static PyObject *
 array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
     PyObject *result = NULL;
-    int num_override_args;
 
-    if (PyTuple_Size(args) < 2) {
+    assert(PyTuple_CheckExact(args));
+    assert(PyDict_CheckExact(kwds));
+    if (PyTuple_GET_SIZE(args) < 2) {
         PyErr_SetString(PyExc_TypeError,
                         "__array_ufunc__ requires at least 2 arguments");
         return NULL;
@@ -988,11 +1045,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    num_override_args = PyUFunc_WithOverride(normal_args, kwds, NULL, NULL);
-    if (num_override_args == -1) {
-        return NULL;
-    }
-    if (num_override_args) {
+    if (has_override(normal_args, kwds)) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;

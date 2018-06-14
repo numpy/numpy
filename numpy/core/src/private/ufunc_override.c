@@ -22,7 +22,7 @@
  * nor to the default __array_ufunc__ method, so instead we import locally.
  * TODO: Can this really not be done more smartly?
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 get_non_default_array_ufunc(PyObject *obj)
 {
     static PyObject *ndarray = NULL;
@@ -51,105 +51,4 @@ get_non_default_array_ufunc(PyObject *obj)
     }
     Py_DECREF(cls_array_ufunc);
     return NULL;
-}
-
-/*
- * Check whether a set of input and output args have a non-default
- *  `__array_ufunc__` method. Return the number of overrides, setting
- * corresponding objects in PyObject array with_override and the corresponding
- * __array_ufunc__ methods in methods (both only if not NULL, and both using
- * new references).
- *
- * returns -1 on failure.
- */
-NPY_NO_EXPORT int
-PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
-                     PyObject **with_override, PyObject **methods)
-{
-    int i;
-
-    int nargs;
-    int nout_kwd = 0;
-    int out_kwd_is_tuple = 0;
-    int num_override_args = 0;
-
-    PyObject *obj;
-    PyObject *out_kwd_obj = NULL;
-    /*
-     * Check inputs
-     */
-    if (!PyTuple_Check(args)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Internal Numpy error: call to PyUFunc_HasOverride "
-                        "with non-tuple");
-        goto fail;
-    }
-    nargs = PyTuple_GET_SIZE(args);
-    if (nargs > NPY_MAXARGS) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Internal Numpy error: too many arguments in call "
-                        "to PyUFunc_HasOverride");
-        goto fail;
-    }
-    /* be sure to include possible 'out' keyword argument. */
-    if (kwds && PyDict_CheckExact(kwds)) {
-        out_kwd_obj = PyDict_GetItemString(kwds, "out");
-        if (out_kwd_obj != NULL) {
-            out_kwd_is_tuple = PyTuple_CheckExact(out_kwd_obj);
-            if (out_kwd_is_tuple) {
-                nout_kwd = PyTuple_GET_SIZE(out_kwd_obj);
-            }
-            else {
-                nout_kwd = 1;
-            }
-        }
-    }
-
-    for (i = 0; i < nargs + nout_kwd; ++i) {
-        PyObject *method;
-        if (i < nargs) {
-            obj = PyTuple_GET_ITEM(args, i);
-        }
-        else {
-            if (out_kwd_is_tuple) {
-                obj = PyTuple_GET_ITEM(out_kwd_obj, i - nargs);
-            }
-            else {
-                obj = out_kwd_obj;
-            }
-        }
-        /*
-         * Now see if the object provides an __array_ufunc__. However, we should
-         * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
-         * any ndarray subclass instances that did not override __array_ufunc__.
-         */
-        method = get_non_default_array_ufunc(obj);
-        if (method != NULL) {
-            if (method == Py_None) {
-                PyErr_Format(PyExc_TypeError,
-                             "operand '%.200s' does not support ufuncs "
-                             "(__array_ufunc__=None)",
-                             obj->ob_type->tp_name);
-                Py_DECREF(method);
-                goto fail;
-            }
-            if (with_override != NULL) {
-                Py_INCREF(obj);
-                with_override[num_override_args] = obj;
-            }
-            if (methods != NULL) {
-                methods[num_override_args] = method;
-            }
-            ++num_override_args;
-        }
-    }
-    return num_override_args;
-
-fail:
-    if (methods != NULL) {
-        for (i = 0; i < num_override_args; i++) {
-            Py_XDECREF(methods[i]);
-        }
-    }
-    return -1;
 }
