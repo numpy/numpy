@@ -339,6 +339,7 @@ _add_aliases()
 # is long, longlong, int, short, char.
 def _add_integer_aliases():
     _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
+    seen_bits = set()
     for ctype in _ctypes:
         i_info = typeinfo[ctype]
         u_info = typeinfo['U'+ctype]
@@ -347,7 +348,9 @@ def _add_integer_aliases():
         for info, charname, intname, Intname in [
                 (i_info,'i%d' % (bits//8,), 'int%d' % bits, 'Int%d' % bits),
                 (u_info,'u%d' % (bits//8,), 'uint%d' % bits, 'UInt%d' % bits)]:
-            if intname not in allTypes.keys():
+            if bits not in seen_bits:
+                # sometimes two different types have the same number of bits
+                # if so, the one iterated over first takes precedence
                 allTypes[intname] = info.type
                 sctypeDict[intname] = info.type
                 sctypeDict[Intname] = info.type
@@ -356,6 +359,9 @@ def _add_integer_aliases():
                 sctypeNA[charname] = info.type
             sctypeNA[info.type] = Intname
             sctypeNA[info.char] = Intname
+
+        seen_bits.add(bits)
+
 _add_integer_aliases()
 
 # We use these later
