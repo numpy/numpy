@@ -970,6 +970,64 @@ array_getarray(PyArrayObject *self, PyObject *args)
     }
 }
 
+/*
+ * Check whether an object has __array_ufunc__ defined on its class and it
+ * is not the default, i.e., the object is not an ndarray, and its
+ * __array_ufunc__ is not the same as that of ndarray.
+ *
+ * Returns 1 if this is the case, 0 if not.
+ */
+
+static int
+has_array_ufunc_override(PyObject * obj)
+{
+    PyObject *method = PyUFunc_GetNonDefaultArrayUfunc(obj);
+    if (method) {
+        Py_DECREF(method);
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+/*
+ * Check whether any of a set of input and output args have a non-default
+ *  `__array_ufunc__` method. Return 1 if so, 0 if not.
+ */
+static int
+any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
+{
+    int i;
+    int nin, nout;
+    PyObject *out_kwd_obj;
+
+    /* check inputs */
+    nin = PyTuple_GET_SIZE(args);
+    for (i = 0; i < nin; ++i) {
+        if (has_array_ufunc_override(PyTuple_GET_ITEM(args, i))) {
+            return 1;
+        }
+    }
+    /* check outputs, if any */
+    if (kwds == NULL) {
+        return 0;
+    }
+    out_kwd_obj = PyDict_GetItemString(kwds, "out");
+    if (out_kwd_obj == NULL) {
+        return 0;
+    }
+    if (!PyTuple_CheckExact(out_kwd_obj)) {
+        return has_array_ufunc_override(out_kwd_obj);
+    }
+    nout = PyTuple_GET_SIZE(out_kwd_obj);
+    for (i = 0; i < nout; i++) {
+        if (has_array_ufunc_override(PyTuple_GET_ITEM(out_kwd_obj, i))) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 static PyObject *
 array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -990,7 +1048,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    if (PyUFunc_HasOverride(normal_args, kwds)) {
+    if (any_array_ufunc_overrides(normal_args, kwds)) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;
