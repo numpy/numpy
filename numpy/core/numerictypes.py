@@ -296,16 +296,26 @@ def _add_types():
             allTypes[name] = info
 _add_types()
 
+# This is the priority order used to assign the bit-sized NPY_INTxx names, which
+# must match the order in npy_common.h in order for NPY_INTxx and np.intxx to be
+# consistent.
+# If two C types have the same size, then the earliest one in this list is used
+# as the sized name.
+_int_ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
+_uint_ctypes = list('U' + t for t in _int_ctypes)
+
 def _add_aliases():
     for type_name, info in typeinfo.items():
         if isinstance(info, type):
+            continue
+
+        # these are handled by _add_integer_aliases
+        if type_name in _int_ctypes or type_name in _uint_ctypes:
             continue
         name = english_lower(type_name)
 
         # insert bit-width version for this class (if relevant)
         base, bit, char = bitname(info.type)
-        if base[-3:] == 'int' or char[0] in 'ui':
-            continue
         if base != '':
             myname = "%s%d" % (base, bit)
             if (name not in ('longdouble', 'clongdouble') or
@@ -333,16 +343,11 @@ def _add_aliases():
             sctypeNA[char] = na_name
 _add_aliases()
 
-# Integers are handled so that the int32 and int64 types should agree
-# exactly with NPY_INT32, NPY_INT64. We need to enforce the same checking
-# as is done in arrayobject.h where the order of getting a bit-width match
-# is long, longlong, int, short, char.
 def _add_integer_aliases():
-    _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
     seen_bits = set()
-    for ctype in _ctypes:
-        i_info = typeinfo[ctype]
-        u_info = typeinfo['U'+ctype]
+    for i_ctype, u_ctype in zip(_int_ctypes, _uint_ctypes):
+        i_info = typeinfo[i_ctype]
+        u_info = typeinfo[u_ctype]
         bits = i_info.bits  # same for both
 
         for info, charname, intname, Intname in [
