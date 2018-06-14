@@ -37,3 +37,12 @@ Improvements
 
 Changes
 =======
+
+Comparison ufuncs will now error rather than return NotImplemented
+------------------------------------------------------------------
+
+Previously, comparison ufuncs would return `NotImplemented` if their arguments
+had structured dtypes, to help the comparison operators deal with those.  This
+is no longer needed, as the logic dealing with this case has moved to the
+comparison operators proper. Hence, like all other ufuncs, the comparison
+ufuncs will now error on structured dtypes.
