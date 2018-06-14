@@ -6,6 +6,8 @@ NumPy 1.16.0 Release Notes
 Highlights
 ==========
 
+* Python 3.4 support has officially been dropped.
+
 
 New functions
 =============
@@ -21,6 +23,8 @@ Future Changes
 
 Compatibility notes
 ===================
+
+* Python version 3.4 is no longer supported.
 
 
 C API changes
