@@ -218,6 +218,8 @@ allTypes = {}      # Collect the types we will add to the module here
 _abstract_types = {}
 _concrete_typeinfo = {}
 for k, v in typeinfo.items():
+    # make all the keys lowercase too
+    k = english_lower(k)
     if isinstance(v, type):
         _abstract_types[k] = v
     else:
@@ -247,7 +249,7 @@ def bitname(obj):
             newname = name[:-1]
         else:
             newname = name
-        info = _concrete_typeinfo[english_upper(newname)]
+        info = _concrete_typeinfo[english_lower(newname)]
         assert(info.type == obj)  # sanity check
         bits = info.bits
 
@@ -294,16 +296,14 @@ def bitname(obj):
 
 
 def _add_types():
-    for type_name, info in _concrete_typeinfo.items():
-        name = english_lower(type_name)
+    for name, info in _concrete_typeinfo.items():
         # define C-name and insert typenum and typechar references also
         allTypes[name] = info.type
         sctypeDict[name] = info.type
         sctypeDict[info.char] = info.type
         sctypeDict[info.num] = info.type
 
-    for type_name, cls in _abstract_types.items():
-        name = english_lower(type_name)
+    for name, cls in _abstract_types.items():
         allTypes[name] = cls
 _add_types()
 
@@ -312,15 +312,14 @@ _add_types()
 # consistent.
 # If two C types have the same size, then the earliest one in this list is used
 # as the sized name.
-_int_ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
-_uint_ctypes = list('U' + t for t in _int_ctypes)
+_int_ctypes = ['long', 'longlong', 'int', 'short', 'byte']
+_uint_ctypes = list('u' + t for t in _int_ctypes)
 
 def _add_aliases():
-    for type_name, info in _concrete_typeinfo.items():
+    for name, info in _concrete_typeinfo.items():
         # these are handled by _add_integer_aliases
-        if type_name in _int_ctypes or type_name in _uint_ctypes:
+        if name in _int_ctypes or name in _uint_ctypes:
             continue
-        name = english_lower(type_name)
 
         # insert bit-width version for this class (if relevant)
         base, bit, char = bitname(info.type)
