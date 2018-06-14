@@ -19,42 +19,26 @@
  * returns -1 on failure.
  */
 static int
-get_array_ufunc_overrides(PyObject *args, PyObject *kwds,
+get_array_ufunc_overrides(PyObject *args, PyObject *out_kwd_obj,
                           PyObject **with_override, PyObject **methods)
 {
     int i;
+    int nin, nout;
     int num_override_args = 0;
-    int nin, nout = 0;
-    PyObject *out_kwd_obj = NULL;
 
-    nin = PyTuple_Size(args);
-    if (nin < 0) {
-        return -1;
-    }
-    if (kwds == NULL) {
+    nin = PyTuple_GET_SIZE(args);
+    if (out_kwd_obj == NULL) {
         nout = 0;
     }
+    else if (PyTuple_CheckExact(out_kwd_obj)) {
+        nout = PyTuple_GET_SIZE(out_kwd_obj);
+        if (nout == 1) {
+            /* saves special-casing the tuple-of-one below */
+            out_kwd_obj = PyTuple_GET_ITEM(out_kwd_obj, 0);
+        }
+    }
     else {
-        if (!PyDict_CheckExact(kwds)) {
-            PyErr_SetString(PyExc_TypeError,
-                        "Internal Numpy error: call to PyUFunc_WithOverride "
-                        "with non-dict kwds");
-            return -1;
-        }
-        out_kwd_obj = PyDict_GetItemString(kwds, "out");
-        if (out_kwd_obj == NULL) {
-            nout = 0;
-        }
-        else if (PyTuple_CheckExact(out_kwd_obj)) {
-            nout = PyTuple_GET_SIZE(out_kwd_obj);
-            if (nout == 1) {
-                /* saves special-casing the tuple-of-one below */
-                out_kwd_obj = PyTuple_GET_ITEM(out_kwd_obj, 0);
-            }
-        }
-        else {
-            nout = 1;
-        }
+        nout = 1;
     }
 
     for (i = 0; i < nin + nout; ++i) {
@@ -453,7 +437,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     PyObject *with_override[NPY_MAXARGS];
     PyObject *array_ufunc_methods[NPY_MAXARGS];
 
-    PyObject *out;
+    PyObject *out = NULL;
 
     PyObject *method_name = NULL;
     PyObject *normal_args = NULL; /* normal_* holds normalized arguments. */
@@ -463,10 +447,13 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     Py_ssize_t len;
 
     /*
-     * Check inputs for overrides
+     * Check inputs and outputs for overrides.
      */
+    if (kwds && PyDict_CheckExact(kwds)) {
+        out = PyDict_GetItemString(kwds, "out");
+    }
     num_override_args = get_array_ufunc_overrides(
-        args, kwds, with_override, array_ufunc_methods);
+        args, out, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -482,10 +469,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     /* Build new kwds */
     if (kwds && PyDict_CheckExact(kwds)) {
-
-        /* ensure out is always a tuple */
         normal_kwds = PyDict_Copy(kwds);
-        out = PyDict_GetItemString(normal_kwds, "out");
+        /* ensure out is always a tuple */
         if (out != NULL) {
             int nout = ufunc->nout;
 
@@ -607,11 +592,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
-        PyObject *override_obj;
-        PyObject *override_array_ufunc;
-
-        override_obj = NULL;
-        *result = NULL;
+        PyObject *override_obj = NULL;
+        PyObject *override_array_ufunc = NULL;
 
         /* Choose an overriding argument */
         for (i = 0; i < num_override_args; i++) {
@@ -620,7 +602,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                 continue;
             }
 
-            /* Check for sub-types to the right of obj. */
+            /* Check for sub-types to the right of override_obj. */
             for (j = i + 1; j < num_override_args; j++) {
                 PyObject *other_obj = with_override[j];
                 if (other_obj != NULL &&
@@ -716,6 +698,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     goto cleanup;
 fail:
     status = -1;
+    *result = NULL;
 cleanup:
     for (i = 0; i < num_override_args; i++) {
         Py_XDECREF(with_override[i]);
