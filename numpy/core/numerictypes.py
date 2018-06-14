@@ -394,16 +394,14 @@ def _set_up_aliases():
                   ('clongfloat', 'clongdouble'),
                   ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
+                  ('bytes_', 'string'),
+                  ('string_', 'string'),
                   ('unicode_', 'unicode'),
                   ('object_', 'object')]
     if sys.version_info[0] >= 3:
-        type_pairs.extend([('bytes_', 'string'),
-                           ('str_', 'unicode'),
-                           ('string_', 'string')])
+        type_pairs.extend([('str_', 'unicode')])
     else:
-        type_pairs.extend([('str_', 'string'),
-                           ('string_', 'string'),
-                           ('bytes_', 'string')])
+        type_pairs.extend([('str_', 'string')])
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
