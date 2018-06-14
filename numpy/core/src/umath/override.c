@@ -347,8 +347,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     PyObject *with_override[NPY_MAXARGS];
     PyObject *array_ufunc_methods[NPY_MAXARGS];
 
-    PyObject *obj;
-    PyObject *other_obj;
     PyObject *out;
 
     PyObject *method_name = NULL;
@@ -511,21 +509,18 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
         /* Choose an overriding argument */
         for (i = 0; i < num_override_args; i++) {
-            obj = with_override[i];
-            if (obj == NULL) {
+            override_obj = with_override[i];
+            if (override_obj == NULL) {
                 continue;
             }
 
-            /* Get the first instance of an overriding arg.*/
-            override_obj = obj;
-
             /* Check for sub-types to the right of obj. */
             for (j = i + 1; j < num_override_args; j++) {
-                other_obj = with_override[j];
+                PyObject *other_obj = with_override[j];
                 if (other_obj != NULL &&
-                    PyObject_Type(other_obj) != PyObject_Type(obj) &&
+                    Py_TYPE(other_obj) != Py_TYPE(override_obj) &&
                     PyObject_IsInstance(other_obj,
-                                        PyObject_Type(override_obj))) {
+                                        (PyObject *)Py_TYPE(override_obj))) {
                     override_obj = NULL;
                     break;
                 }
