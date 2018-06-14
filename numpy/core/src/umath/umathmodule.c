@@ -226,20 +226,40 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
-NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_out = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_subok = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_prepare = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_wrap = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_pyvals_name = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_out = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_where = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axes = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_axis = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_keepdims = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_casting = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_order = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_dtype = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_subok = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_signature = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_sig = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_extobj = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_finalize = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_ufunc = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 
 /* intern some strings used in ufuncs */
 static int
 intern_strings(void)
 {
     npy_um_str_out = PyUString_InternFromString("out");
+    npy_um_str_where = PyUString_InternFromString("where");
+    npy_um_str_axes = PyUString_InternFromString("axes");
+    npy_um_str_axis = PyUString_InternFromString("axis");
+    npy_um_str_keepdims = PyUString_InternFromString("keepdims");
+    npy_um_str_casting = PyUString_InternFromString("casting");
+    npy_um_str_order = PyUString_InternFromString("order");
+    npy_um_str_dtype = PyUString_InternFromString("dtype");
     npy_um_str_subok = PyUString_InternFromString("subok");
+    npy_um_str_signature = PyUString_InternFromString("signature");
+    npy_um_str_sig = PyUString_InternFromString("sig");
+    npy_um_str_extobj = PyUString_InternFromString("extobj");
     npy_um_str_array_prepare = PyUString_InternFromString("__array_prepare__");
     npy_um_str_array_wrap = PyUString_InternFromString("__array_wrap__");
     npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__");
