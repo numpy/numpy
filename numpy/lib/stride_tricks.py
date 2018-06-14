@@ -219,23 +219,19 @@ def broadcast_arrays(*args, **kwargs):
     Examples
     --------
     >>> x = np.array([[1,2,3]])
-    >>> y = np.array([[1],[2],[3]])
+    >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.
 
     >>> [np.array(a) for a in np.broadcast_arrays(x, y)]
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     """
     # nditer is not used here to avoid the limit of 32 arrays.
