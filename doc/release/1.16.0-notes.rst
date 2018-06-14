@@ -37,3 +37,13 @@ Improvements
 
 Changes
 =======
+
+Comparison ufuncs will now error rather than return NotImplemented
+------------------------------------------------------------------
+
+Previously, comparison ufuncs such as ``np.equal`` would return
+`NotImplemented` if their arguments had structured dtypes, to help comparison
+operators such as ``__eq__`` deal with those.  This is no longer needed, as the
+relevant logic has moved to the comparison operators proper (which thus do
+continue to return `NotImplemented` as needed). Hence, like all other ufuncs,
+the comparison ufuncs will now error on structured dtypes.
