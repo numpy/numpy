@@ -40,9 +40,9 @@ static NPY_INLINE int64_t llabs(int64_t x) {
 #define DECLDIR extern
 #endif
 
-#ifndef min
-#define min(x, y) ((x < y) ? x : y)
-#define max(x, y) ((x > y) ? x : y)
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? x : y)
+#define MAX(x, y) (((x) > (y)) ? x : y)
 #endif
 
 #ifndef M_PI
