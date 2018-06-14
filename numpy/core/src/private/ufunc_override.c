@@ -140,6 +140,9 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
             if (methods != NULL) {
                 methods[num_override_args] = method;
             }
+            else {
+                Py_DECREF(method);
+            }
             ++num_override_args;
         }
     }
@@ -148,7 +151,12 @@ PyUFunc_WithOverride(PyObject *args, PyObject *kwds,
 fail:
     if (methods != NULL) {
         for (i = 0; i < num_override_args; i++) {
-            Py_XDECREF(methods[i]);
+            Py_DECREF(methods[i]);
+        }
+    }
+    if (with_override != NULL) {
+        for (i = 0; i < num_override_args; i++) {
+            Py_DECREF(with_override[i]);
         }
     }
     return -1;
