@@ -213,6 +213,17 @@ sctypeDict = {}      # Contains all leaf-node scalar types with aliases
 sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
 allTypes = {}      # Collect the types we will add to the module here
 
+
+# separate the actual type info from the abtract base classes
+_abstract_types = {}
+_concrete_typeinfo = {}
+for k, v in typeinfo.items():
+    if isinstance(v, type):
+        _abstract_types[k] = v
+    else:
+        _concrete_typeinfo[k] = v
+
+
 def _evalname(name):
     k = 0
     for ch in name:
@@ -236,7 +247,7 @@ def bitname(obj):
             newname = name[:-1]
         else:
             newname = name
-        info = typeinfo[english_upper(newname)]
+        info = _concrete_typeinfo[english_upper(newname)]
         assert(info.type == obj)  # sanity check
         bits = info.bits
 
@@ -283,17 +294,17 @@ def bitname(obj):
 
 
 def _add_types():
-    for type_name, info in typeinfo.items():
+    for type_name, info in _concrete_typeinfo.items():
         name = english_lower(type_name)
-        if not isinstance(info, type):
-            # define C-name and insert typenum and typechar references also
-            allTypes[name] = info.type
-            sctypeDict[name] = info.type
-            sctypeDict[info.char] = info.type
-            sctypeDict[info.num] = info.type
+        # define C-name and insert typenum and typechar references also
+        allTypes[name] = info.type
+        sctypeDict[name] = info.type
+        sctypeDict[info.char] = info.type
+        sctypeDict[info.num] = info.type
 
-        else:  # generic class
-            allTypes[name] = info
+    for type_name, cls in _abstract_types.items():
+        name = english_lower(type_name)
+        allTypes[name] = cls
 _add_types()
 
 # This is the priority order used to assign the bit-sized NPY_INTxx names, which
@@ -305,10 +316,7 @@ _int_ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
 _uint_ctypes = list('U' + t for t in _int_ctypes)
 
 def _add_aliases():
-    for type_name, info in typeinfo.items():
-        if isinstance(info, type):
-            continue
-
+    for type_name, info in _concrete_typeinfo.items():
         # these are handled by _add_integer_aliases
         if type_name in _int_ctypes or type_name in _uint_ctypes:
             continue
@@ -346,8 +354,8 @@ _add_aliases()
 def _add_integer_aliases():
     seen_bits = set()
     for i_ctype, u_ctype in zip(_int_ctypes, _uint_ctypes):
-        i_info = typeinfo[i_ctype]
-        u_info = typeinfo[u_ctype]
+        i_info = _concrete_typeinfo[i_ctype]
+        u_info = _concrete_typeinfo[u_ctype]
         bits = i_info.bits  # same for both
 
         for info, charname, intname, Intname in [
@@ -425,10 +433,9 @@ _set_up_aliases()
 # Now, construct dictionary to lookup character codes from types
 _sctype2char_dict = {}
 def _construct_char_code_lookup():
-    for name, info in typeinfo.items():
-        if not isinstance(info, type):
-            if info.char not in ['p', 'P']:
-                _sctype2char_dict[info.type] = info.char
+    for name, info in _concrete_typeinfo.items():
+        if info.char not in ['p', 'P']:
+            _sctype2char_dict[info.type] = info.char
 _construct_char_code_lookup()
 
 
@@ -773,9 +780,7 @@ _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, info in typeinfo.items():
-        if isinstance(info, type):
-            continue
+    for name, info in _concrete_typeinfo.items():
         obj = info.type
         nbytes[obj] = info.bits // 8
         _alignment[obj] = info.alignment
