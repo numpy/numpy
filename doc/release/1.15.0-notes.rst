@@ -51,6 +51,7 @@ New functions
   histogram without needing to calculate the histogram.
 
 * C functions `npy_get_floatstatus_barrier` and `npy_clear_floatstatus_barrier`
+* C functions :c:func:`npy_get_floatstatus_barrier` and :c:func:`npy_clear_floatstatus_barrier`
   have been added to deal with compiler optimization changing the order of
   operations.  See below for details.
 
@@ -92,6 +93,8 @@ Deprecations
 
 * Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
   ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
+* Users of the C-API should call :c:func:`PyArrayResolveWriteBackIfCopy` or
+  :c:func:`PyArray_DiscardWritbackIfCopy` on any array with the :c:const:`WRITEBACKIFCOPY`
   flag set, before deallocating the array. A deprecation warning will be
   emitted if those calls are not used when needed.
 
@@ -100,6 +103,7 @@ Deprecations
   writeback semantics, or alternately, one can call ``it.close()`` to trigger a
   writeback.  A ``RuntimeWarning`` will otherwise be raised in those cases. Users
   of the C-API should call ``NpyIter_Close`` before ``NpyIter_Deallocate``.
+  of the C-API should call :c:func:`NpyIter_Close` before :c:func:`NpyIter_Deallocate`.
 
 
 Future Changes
@@ -126,6 +130,7 @@ The ``umath_tests`` module is still available for backwards compatibility, but
 will be removed in the future.
 
 The ``NpzFile`` returned by ``np.savez`` is now a ``collections.abc.Mapping``
+-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 This means it behaves like a readonly dictionary, and has a new ``.values()``
 method and ``len()`` implementation.
@@ -216,6 +221,7 @@ New functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrie
 -----------------------------------------------------------------------------------
 Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
 have been added and should be used in place of the ``npy_get_floatstatus``and
+have been added and should be used in place of the ``npy_get_floatstatus`` and
 ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
 were rearranging the order of operations when the previous functions were used
 in the ufunc SIMD functions, resulting in the floatstatus flags being checked
@@ -456,13 +462,13 @@ that place in the output.
 
 float128 values now print correctly on ppc systems
 --------------------------------------------------
-Previously printing float128 values was buggy on ppc, since the special
+Previously printing ``float128`` values was buggy on ppc, since the special
 double-double floating-point-format on these systems was not accounted for.
-float128s now print with correct rounding and uniqueness.
+``float128`` s now print with correct rounding and uniqueness.
 
 Warning to ppc users: You should upgrade glibc if it is version <=2.23,
-especially if using float128. On ppc, glibc's malloc in these version often
-misaligns allocated memory which can crash numpy when using float128 values.
+especially if using ``float128``. On ppc, glibc's malloc in these version often
+misaligns allocated memory which can crash numpy when using ``float128`` values.
 
 New ``np.take_along_axis`` and ``np.put_along_axis`` functions
 --------------------------------------------------------------
