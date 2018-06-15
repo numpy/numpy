@@ -4,6 +4,8 @@ Implementation of optimized einsum.
 """
 from __future__ import division, absolute_import, print_function
 
+import itertools
+
 from numpy.compat import basestring
 from numpy.core.multiarray import c_einsum
 from numpy.core.numeric import asarray, asanyarray, result_type, tensordot, dot
@@ -13,6 +15,44 @@ __all__ = ['einsum', 'einsum_path']
 einsum_symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 einsum_symbols_set = set(einsum_symbols)
 
+
+def _flop_count(idx_contraction, inner, num_terms, size_dictionary):
+    """
+    Computes the number of FLOPS in the contraction.
+
+    Parameters
+    ----------
+    idx_contraction : iterable
+        The indices involved in the contraction
+    inner : bool
+        Does this contraction require an inner product?
+    num_terms : int
+        The number of terms in a contraction
+    size_dictionary : dict
+        The size of each of the indices in idx_contraction
+
+    Returns
+    -------
+    flop_count : int
+        The total number of FLOPS required for the contraction.
+
+    Examples
+    --------
+
+    >>> _flop_count('abc', False, 1, {'a': 2, 'b':3, 'c':5})
+    90
+
+    >>> _flop_count('abc', True, 2, {'a': 2, 'b':3, 'c':5})
+    270
+
+    """
+
+    overall_size = _compute_size_by_dict(idx_contraction, size_dictionary)
+    op_factor = max(1, num_terms - 1)
+    if inner:
+        op_factor += 1
+
+    return overall_size * op_factor
 
 def _compute_size_by_dict(indices, idx_dict):
     """
@@ -139,14 +179,9 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
         iter_results = []
 
         # Compute all unique pairs
-        comb_iter = []
-        for x in range(len(input_sets) - iteration):
-            for y in range(x + 1, len(input_sets) - iteration):
-                comb_iter.append((x, y))
-
         for curr in full_results:
             cost, positions, remaining = curr
-            for con in comb_iter:
+            for con in itertools.combinations(range(len(input_sets) - iteration), 2):
 
                 # Find the contraction
                 cont = _find_contraction(con, remaining, output_set)
@@ -157,15 +192,10 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
                 if new_size > memory_limit:
                     continue
 
-                # Find cost
-                new_cost = _compute_size_by_dict(idx_contract, idx_dict)
-                if idx_removed:
-                    new_cost *= 2
-
                 # Build (total_cost, positions, indices_remaining)
-                new_cost += cost
+                total_cost =  cost + _flop_count(idx_contract, idx_removed, len(con), idx_dict)
                 new_pos = positions + [con]
-                iter_results.append((new_cost, new_pos, new_input_sets))
+                iter_results.append((total_cost, new_pos, new_input_sets))
 
         # Update combinatorial list, if we did not find anything return best
         # path + remaining contractions
