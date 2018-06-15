@@ -323,31 +323,33 @@ def _add_aliases():
 
         # insert bit-width version for this class (if relevant)
         base, bit, char = bitname(info.type)
-        if base != '':
-            myname = "%s%d" % (base, bit)
-            if (name not in ('longdouble', 'clongdouble') or
-                   myname not in allTypes):
-                base_capitalize = english_capitalize(base)
-                if base == 'complex':
-                    na_name = '%s%d' % (base_capitalize, bit//2)
-                elif base == 'bool':
-                    na_name = base_capitalize
-                else:
-                    na_name = "%s%d" % (base_capitalize, bit)
 
-                allTypes[myname] = info.type
+        assert base != ''
+        myname = "%s%d" % (base, bit)
+        if (name not in ('longdouble', 'clongdouble') or
+               myname not in allTypes):
+            base_capitalize = english_capitalize(base)
+            if base == 'complex':
+                na_name = '%s%d' % (base_capitalize, bit//2)
+            elif base == 'bool':
+                na_name = base_capitalize
+            else:
+                na_name = "%s%d" % (base_capitalize, bit)
 
-                # add mapping for both the bit name and the numarray name
-                sctypeDict[myname] = info.type
-                sctypeDict[na_name] = info.type
+            allTypes[myname] = info.type
 
-                # add forward, reverse, and string mapping to numarray
-                sctypeNA[na_name] = info.type
-                sctypeNA[info.type] = na_name
-                sctypeNA[info.char] = na_name
-        if char != '':
-            sctypeDict[char] = info.type
-            sctypeNA[char] = na_name
+            # add mapping for both the bit name and the numarray name
+            sctypeDict[myname] = info.type
+            sctypeDict[na_name] = info.type
+
+            # add forward, reverse, and string mapping to numarray
+            sctypeNA[na_name] = info.type
+            sctypeNA[info.type] = na_name
+            sctypeNA[info.char] = na_name
+
+        assert char != ''
+        sctypeDict[char] = info.type
+        sctypeNA[char] = na_name
 _add_aliases()
 
 def _add_integer_aliases():
