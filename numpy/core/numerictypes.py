@@ -326,26 +326,30 @@ def _add_aliases():
 
         assert base != ''
         myname = "%s%d" % (base, bit)
-        if (name not in ('longdouble', 'clongdouble') or
-               myname not in allTypes):
-            base_capitalize = english_capitalize(base)
-            if base == 'complex':
-                na_name = '%s%d' % (base_capitalize, bit//2)
-            elif base == 'bool':
-                na_name = base_capitalize
-            else:
-                na_name = "%s%d" % (base_capitalize, bit)
 
-            allTypes[myname] = info.type
+        # ensure that (c)longdouble does not overwrite the aliases assigned to
+        # (c)double
+        if name in ('longdouble', 'clongdouble') and myname in allTypes:
+            continue
 
-            # add mapping for both the bit name and the numarray name
-            sctypeDict[myname] = info.type
-            sctypeDict[na_name] = info.type
+        base_capitalize = english_capitalize(base)
+        if base == 'complex':
+            na_name = '%s%d' % (base_capitalize, bit//2)
+        elif base == 'bool':
+            na_name = base_capitalize
+        else:
+            na_name = "%s%d" % (base_capitalize, bit)
 
-            # add forward, reverse, and string mapping to numarray
-            sctypeNA[na_name] = info.type
-            sctypeNA[info.type] = na_name
-            sctypeNA[info.char] = na_name
+        allTypes[myname] = info.type
+
+        # add mapping for both the bit name and the numarray name
+        sctypeDict[myname] = info.type
+        sctypeDict[na_name] = info.type
+
+        # add forward, reverse, and string mapping to numarray
+        sctypeNA[na_name] = info.type
+        sctypeNA[info.type] = na_name
+        sctypeNA[info.char] = na_name
 
         assert char != ''
         sctypeDict[char] = info.type
