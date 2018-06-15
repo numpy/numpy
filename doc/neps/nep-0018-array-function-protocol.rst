@@ -250,6 +250,11 @@ an ``__array_function__`` method that is identical to
 Changes within NumPy functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. warning::
+
+    This section is outdated. We intend to rewrite it to propose
+    an explicit `decorator based solution <https://github.com/numpy/numpy/pull/11303#issuecomment-396695348>`_ instead.
+
 Given a function defining the above behavior, for now call it
 ``try_array_function_override``, we now need to call that function from
 within every relevant NumPy function. This is a pervasive change, but of
