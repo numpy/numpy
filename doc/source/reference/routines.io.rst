@@ -63,6 +63,7 @@ Text formatting options
    set_printoptions
    get_printoptions
    set_string_function
+   printoptions
 
 Base-n representations
 ----------------------
