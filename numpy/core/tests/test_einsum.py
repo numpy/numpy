@@ -730,19 +730,22 @@ class TestEinsum(object):
         res = np.einsum('...ij,...jk->...ik', a, a, out=out)
         assert_equal(res, tgt)
 
-    def optimize_compare(self, string):
+    def optimize_compare(self, subscripts, operands=None):
         # Tests all paths of the optimization function against
         # conventional einsum
-        operands = [string]
-        terms = string.split('->')[0].split(',')
-        for term in terms:
-            dims = [global_size_dict[x] for x in term]
-            operands.append(np.random.rand(*dims))
+        if operands is None:
+            args = [subscripts]
+            terms = subscripts.split('->')[0].split(',')
+            for term in terms:
+                dims = [global_size_dict[x] for x in term]
+                args.append(np.random.rand(*dims))
+        else:
+            args = [subscripts] + operands
 
-        noopt = np.einsum(*operands, optimize=False)
-        opt = np.einsum(*operands, optimize='greedy')
+        noopt = np.einsum(*args, optimize=False)
+        opt = np.einsum(*args, optimize='greedy')
         assert_almost_equal(opt, noopt)
-        opt = np.einsum(*operands, optimize='optimal')
+        opt = np.einsum(*args, optimize='optimal')
         assert_almost_equal(opt, noopt)
 
     def test_hadamard_like_products(self):
@@ -827,6 +830,26 @@ class TestEinsum(object):
         a = np.arange(9).reshape(1, 1, 3, 1, 3)
         b = np.einsum('bbcdc->d', a)
         assert_equal(b, [12])
+
+    def test_broadcasting_dot_cases(self):
+        # Ensures broadcasting cases are not mistaken for GEMM
+
+        a = np.random.rand(1, 5, 4)
+        b = np.random.rand(4, 6)
+        c = np.random.rand(5, 6)
+        d = np.random.rand(10)
+
+        self.optimize_compare('ijk,kl,jl', operands=[a, b, c])
+        self.optimize_compare('ijk,kl,jl,i->i', operands=[a, b, c, d])
+
+        e = np.random.rand(1, 1, 5, 4)
+        f = np.random.rand(7, 7)
+        self.optimize_compare('abjk,kl,jl', operands=[e, b, c])
+        self.optimize_compare('abjk,kl,jl,ab->ab', operands=[e, b, c, f])
+
+        # Edge case found in gh-11308
+        g = np.arange(64).reshape(2, 4, 8)
+        self.optimize_compare('obk,ijk->ioj', operands=[g, g])
 
 
 class TestEinsumPath(object):

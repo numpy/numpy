@@ -462,25 +462,26 @@ def _can_dot(inputs, result, idx_removed):
     if len(inputs) != 2:
         return False
 
-    # Build a few temporaries
     input_left, input_right = inputs
+
+    for c in set(input_left + input_right):
+        # can't deal with repeated indices on same input or more than 2 total
+        nl, nr = input_left.count(c), input_right.count(c)
+        if (nl > 1) or (nr > 1) or (nl + nr > 2):
+            return False
+
+        # can't do implicit summation or dimension collapse e.g.
+        #     "ab,bc->c" (implicitly sum over 'a')
+        #     "ab,ca->ca" (take diagonal of 'a')
+        if nl + nr - 1 == int(c in result):
+            return False
+
+    # Build a few temporaries
     set_left = set(input_left)
     set_right = set(input_right)
     keep_left = set_left - idx_removed
     keep_right = set_right - idx_removed
     rs = len(idx_removed)
-
-    # Indices must overlap between the two operands
-    if not len(set_left & set_right):
-        return False
-
-    # We cannot have duplicate indices ("ijj, jk -> ik")
-    if (len(set_left) != len(input_left)) or (len(set_right) != len(input_right)):
-        return False
-
-    # Cannot handle partial inner ("ij, ji -> i")
-    if len(keep_left & keep_right):
-        return False
 
     # At this point we are a DOT, GEMV, or GEMM operation
 
@@ -845,6 +846,7 @@ def einsum_path(*operands, **kwargs):
 
     # Get length of each unique dimension and ensure all dimensions are correct
     dimension_dict = {}
+    broadcast_indices = [[] for x in range(len(input_list))]
     for tnum, term in enumerate(input_list):
         sh = operands[tnum].shape
         if len(sh) != len(term):
@@ -853,6 +855,11 @@ def einsum_path(*operands, **kwargs):
                              % (input_subscripts[tnum], tnum))
         for cnum, char in enumerate(term):
             dim = sh[cnum]
+
+            # Build out broadcast indices
+            if dim == 1:
+                broadcast_indices[tnum].append(char)
+
             if char in dimension_dict.keys():
                 # For broadcasting cases we always want the largest dim size
                 if dimension_dict[char] == 1:
@@ -863,6 +870,9 @@ def einsum_path(*operands, **kwargs):
                                      % (char, tnum, dimension_dict[char], dim))
             else:
                 dimension_dict[char] = dim
+
+    # Convert broadcast inds to sets
+    broadcast_indices = [set(x) for x in broadcast_indices]
 
     # Compute size of each input array plus the output array
     size_list = []
@@ -877,12 +887,8 @@ def einsum_path(*operands, **kwargs):
 
     # Compute naive cost
     # This isn't quite right, need to look into exactly how einsum does this
-    naive_cost = _compute_size_by_dict(indices, dimension_dict)
-    indices_in_input = input_subscripts.replace(',', '')
-    mult = max(len(input_list) - 1, 1)
-    if (len(indices_in_input) - len(set(indices_in_input))):
-        mult *= 2
-    naive_cost *= mult
+    inner_product = (sum(len(x) for x in input_sets) - len(indices)) > 0
+    naive_cost = _flop_count(indices, inner_product, len(input_list), dimension_dict)
 
     # Compute the path
     if (path_type is False) or (len(input_list) in [1, 2]) or (indices == output_set):
@@ -907,18 +913,24 @@ def einsum_path(*operands, **kwargs):
         contract = _find_contraction(contract_inds, input_sets, output_set)
         out_inds, input_sets, idx_removed, idx_contract = contract
 
-        cost = _compute_size_by_dict(idx_contract, dimension_dict)
-        if idx_removed:
-            cost *= 2
+        cost = _flop_count(idx_contract, idx_removed, len(contract_inds), dimension_dict)
         cost_list.append(cost)
         scale_list.append(len(idx_contract))
         size_list.append(_compute_size_by_dict(out_inds, dimension_dict))
 
+        bcast = set()
         tmp_inputs = []
         for x in contract_inds:
             tmp_inputs.append(input_list.pop(x))
+            bcast |= broadcast_indices.pop(x)
 
-        do_blas = _can_dot(tmp_inputs, out_inds, idx_removed)
+        new_bcast_inds = bcast - idx_removed
+
+        # If we're broadcasting, nix blas
+        if not len(idx_removed & bcast):
+            do_blas = _can_dot(tmp_inputs, out_inds, idx_removed)
+        else:
+            do_blas = False
 
         # Last contraction
         if (cnum - len(path)) == -1:
@@ -928,6 +940,7 @@ def einsum_path(*operands, **kwargs):
             idx_result = "".join([x[1] for x in sorted(sort_result)])
 
         input_list.append(idx_result)
+        broadcast_indices.append(new_bcast_inds)
         einsum_str = ",".join(tmp_inputs) + "->" + idx_result
 
         contraction = (contract_inds, idx_removed, einsum_str, input_list[:], do_blas)
@@ -1247,25 +1260,14 @@ def einsum(*operands, **kwargs):
             tmp_operands.append(operands.pop(x))
 
         # Do we need to deal with the output?
-        if specified_out and ((num + 1) == len(contraction_list)):
-            handle_out = True
+        handle_out = specified_out and ((num + 1) == len(contraction_list))
 
-        # Handle broadcasting vs BLAS cases
+        # Call tensordot if still possible
         if blas:
             # Checks have already been handled
             input_str, results_index = einsum_str.split('->')
             input_left, input_right = input_str.split(',')
-            if 1 in tmp_operands[0].shape or 1 in tmp_operands[1].shape:
-                left_dims = {dim: size for dim, size in
-                             zip(input_left, tmp_operands[0].shape)}
-                right_dims = {dim: size for dim, size in
-                              zip(input_right, tmp_operands[1].shape)}
-                # If dims do not match we are broadcasting, BLAS off
-                if any(left_dims[ind] != right_dims[ind] for ind in idx_rm):
-                    blas = False
 
-        # Call tensordot if still possible
-        if blas:
             tensor_result = input_left + input_right
             for s in idx_rm:
                 tensor_result = tensor_result.replace(s, "")
