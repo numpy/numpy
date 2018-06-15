@@ -161,7 +161,9 @@ import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, asstr, isfileobj, long, basestring
+from numpy.compat import (
+    asbytes, asstr, isfileobj, long, basestring, is_pathlib_path
+    )
 
 if sys.version_info[0] >= 3:
     import pickle
@@ -709,7 +711,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     Parameters
     ----------
-    filename : str
+    filename : str or pathlib.Path instance
         The name of the file on disk.  This may *not* be a file-like
         object.
     mode : str, optional
@@ -750,9 +752,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     memmap
 
     """
-    if not isinstance(filename, basestring):
-        raise ValueError("Filename must be a string.  Memmap cannot use"
-                         " existing file handles.")
+    if not (isinstance(filename, basestring) or is_pathlib_path(filename)):
+        raise ValueError("Filename must be a string or a pathlib.Path."
+                         "  Memmap cannot use existing file handles.")
 
     if 'w' in mode:
         # We are creating the file, not reading it.
@@ -770,7 +772,10 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        fp = open(filename, mode+'b')
+        if is_pathlib_path(filename):
+            fp = filename.open(mode+'b')
+        else:
+            fp = open(filename, mode+'b')
         try:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
@@ -782,7 +787,10 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             fp.close()
     else:
         # Read the header of the file first.
-        fp = open(filename, 'rb')
+        if is_pathlib_path(filename):
+            fp = filename.open('rb')
+        else:
+            fp = open(filename, 'rb')
         try:
             version = read_magic(fp)
             _check_version(version)

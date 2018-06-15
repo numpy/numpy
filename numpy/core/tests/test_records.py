@@ -14,9 +14,10 @@ from os import path
 import pytest
 
 import numpy as np
+from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, assert_warns
+    assert_raises, assert_warns, temppath
     )
 
 
@@ -323,6 +324,24 @@ class TestFromrecords(object):
         assert_equal(rec.itemsize, 4)
         assert_equal(rec['f0'], [b'test', b'test', b'test'])
         assert_equal(rec['f1'], [b'', b'', b''])
+
+
+@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+class TestPathUsage(object):
+    # Test that pathlib.Path can be used
+    def test_tofile_fromfile(self):
+        with temppath(suffix='.bin') as path:
+            path = Path(path)
+            a = np.empty(10, dtype='f8,i4,a5')
+            a[5] = (0.5,10,'abcde')
+            a.newbyteorder('<')
+            with path.open("wb") as fd:
+                a.tofile(fd)
+            x = np.core.records.fromfile(path,
+                                         formats='f8,i4,a5',
+                                         shape=10,
+                                         byteorder='<')
+            assert_array_equal(x, a)
 
 
 class TestRecord(object):

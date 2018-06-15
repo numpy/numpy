@@ -42,7 +42,7 @@ import warnings
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long
+from numpy.compat import isfileobj, bytes, long, is_pathlib_path
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
@@ -737,9 +737,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
-    If file is a string then that file is opened, else it is assumed
-    to be a file object. The file object must support random access
-    (i.e. it must have tell and seek methods).
+    If file is a string or a pathlib.Path then that file is opened,
+    else it is assumed to be a file object. The file object must
+    support random access (i.e. it must have tell and seek methods).
 
     >>> from tempfile import TemporaryFile
     >>> a = np.empty(10,dtype='f8,i4,a5')
@@ -767,6 +767,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     if isinstance(fd, str):
         name = 1
         fd = open(fd, 'rb')
+    elif is_pathlib_path(fd):
+        name = 1
+        fd = fd.open('rb')
     if (offset > 0):
         fd.seek(offset, 1)
     size = get_remaining_size(fd)

@@ -2252,11 +2252,33 @@ class TestPathUsage(object):
             assert_array_equal(x, a)
 
     def test_save_load(self):
-        # Test that pathlib.Path instances can be used with savez.
+        # Test that pathlib.Path instances can be used with save.
         with temppath(suffix='.npy') as path:
             path = Path(path)
             a = np.array([[1, 2], [3, 4]], int)
             np.save(path, a)
+            data = np.load(path)
+            assert_array_equal(data, a)
+
+    def test_save_load_memmap(self):
+        # Test that pathlib.Path instances can be loaded mem-mapped.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            data = np.load(path, mmap_mode='r')
+            assert_array_equal(data, a)
+
+    def test_save_load_memmap_readwrite(self):
+        # Test that pathlib.Path instances can be written mem-mapped.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            b = np.load(path, mmap_mode='r+')
+            a[0][0] = 5
+            b[0][0] = 5
+            del b  # closes the file
             data = np.load(path)
             assert_array_equal(data, a)
 
