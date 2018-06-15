@@ -41,10 +41,21 @@ source_suffix = '.rst'
 project = 'NumPy'
 copyright = '2008-2018, The SciPy community'
 
+import numpy
+
+# Allow the shortcut `np.dtype`. 
+# May fail if the shortcut needs to newly import.
+aliases = {}
+for name, module in sys.modules.items():
+    parts = name.split('.', 1)
+    if parts[0] == 'numpy':
+        parts[0] = 'np'
+        aliases[name] = module
+sys.modules.update(aliases)
+
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
-#
-import numpy
+
 # The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
 version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
