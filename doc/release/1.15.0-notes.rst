@@ -261,6 +261,12 @@ Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
 rather than percentiles in [0, 100]. ``np.percentile`` is now a thin wrapper
 around ``np.quantile`` with the extra step of dividing by 100.
 
+``pathlib.Path`` support for more functions
+-------------------------------------------
+The ``np.core.records.fromfile`` function now supports ``pathlib.Path``
+objects in addition to a string or a file object. Furthermore, the
+``np.load`` function now also supports ``pathlib.Path`` objects when
+using memory mapping (``mmap_mode`` keyword argument).
 
 Build system
 ------------
