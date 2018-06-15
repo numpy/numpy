@@ -16,7 +16,7 @@ for size, char in zip(sizes, chars):
     global_size_dict[char] = size
 
 
-class TestEinSum(object):
+class TestEinsum(object):
     def test_einsum_errors(self):
         for do_opt in [True, False]:
             # Need enough arguments
@@ -614,7 +614,7 @@ class TestEinSum(object):
         np.einsum(a, [0, 51], b, [51, 2], [0, 2], optimize=False)
         assert_raises(ValueError, lambda: np.einsum(a, [0, 52], b, [52, 2], [0, 2], optimize=False))
         assert_raises(ValueError, lambda: np.einsum(a, [-1, 5], b, [5, 2], [-1, 2], optimize=False))
-        
+
     def test_einsum_broadcast(self):
         # Issue #2455 change in handling ellipsis
         # remove the 'middle broadcast' error
@@ -829,7 +829,7 @@ class TestEinSum(object):
         assert_equal(b, [12])
 
 
-class TestEinSumPath(object):
+class TestEinsumPath(object):
     def build_operands(self, string, size_dict=global_size_dict):
 
         # Builds views based off initial operands
@@ -875,7 +875,7 @@ class TestEinSumPath(object):
         long_test1 = self.build_operands('acdf,jbje,gihb,hfac,gfac,gifabc,hfac')
         path, path_str = np.einsum_path(*long_test1, optimize='greedy')
         self.assert_path_equal(path, ['einsum_path',
-                                      (1, 4), (2, 4), (1, 4), (1, 3), (1, 2), (0, 1)])
+                                      (3, 6), (3, 4), (2, 4), (2, 3), (0, 2), (0, 1)])
 
         path, path_str = np.einsum_path(*long_test1, optimize='optimal')
         self.assert_path_equal(path, ['einsum_path',
@@ -884,10 +884,12 @@ class TestEinSumPath(object):
         # Long test 2
         long_test2 = self.build_operands('chd,bde,agbc,hiad,bdi,cgh,agdb')
         path, path_str = np.einsum_path(*long_test2, optimize='greedy')
+        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (3, 4), (0, 3), (3, 4), (1, 3), (1, 2), (0, 1)])
 
         path, path_str = np.einsum_path(*long_test2, optimize='optimal')
+        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (0, 5), (1, 4), (3, 4), (1, 3), (1, 2), (0, 1)])
 
@@ -921,7 +923,7 @@ class TestEinSumPath(object):
         # Edge test4
         edge_test4 = self.build_operands('dcc,fce,ea,dbf->ab')
         path, path_str = np.einsum_path(*edge_test4, optimize='greedy')
-        self.assert_path_equal(path, ['einsum_path', (0, 3), (0, 2), (0, 1)])
+        self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 1), (0, 1)])
 
         path, path_str = np.einsum_path(*edge_test4, optimize='optimal')
         self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 2), (0, 1)])
@@ -944,7 +946,7 @@ class TestEinSumPath(object):
         self.assert_path_equal(path, ['einsum_path', (0, 1, 2, 3)])
 
         path, path_str = np.einsum_path(*path_test, optimize=True)
-        self.assert_path_equal(path, ['einsum_path', (0, 3), (0, 2), (0, 1)])
+        self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 1), (0, 1)])
 
         exp_path = ['einsum_path', (0, 2), (0, 2), (0, 1)]
         path, path_str = np.einsum_path(*path_test, optimize=exp_path)
