@@ -605,6 +605,7 @@ add_newdoc('numpy.core', 'broadcast',
 
     Examples
     --------
+
     Manually adding two vectors, using broadcasting:
 
     >>> x = np.array([[1], [2], [3]])
@@ -7223,8 +7224,8 @@ add_newdoc('numpy.core.multiarray', 'datetime_data',
 
     Get information about the step size of a date or time type.
 
-    The returned tuple can be passed as the second argument of `datetime64` and
-    `timedelta64`.
+    The returned tuple can be passed as the second argument of `numpy.datetime64` and
+    `numpy.timedelta64`.
 
     Parameters
     ----------

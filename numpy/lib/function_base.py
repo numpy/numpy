@@ -3543,7 +3543,7 @@ def percentile(a, q, axis=None, out=None,
 def quantile(a, q, axis=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
-    Compute the `q`th quantile of the data along the specified axis.
+    Compute the qth quantile of the data along the specified axis.
     ..versionadded:: 1.15.0
 
     Parameters
@@ -3569,6 +3569,7 @@ def quantile(a, q, axis=None, out=None,
         This optional parameter specifies the interpolation method to
         use when the desired quantile lies between two data points
         ``i < j``:
+
             * linear: ``i + (j - i) * fraction``, where ``fraction``
               is the fractional part of the index surrounded by ``i``
               and ``j``.

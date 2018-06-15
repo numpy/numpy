@@ -173,6 +173,7 @@ concepts to remember include:
     of arbitrary dimension.
 
 .. data:: newaxis
+   :noindex:
 
    The :const:`newaxis` object can be used in all slicing operations to
    create an axis of length one. :const:`newaxis` is an alias for
@@ -287,7 +288,7 @@ understood with an example.
 Combining advanced and basic indexing
 """""""""""""""""""""""""""""""""""""
 
-When there is at least one slice (``:``), ellipsis (``...``) or ``np.newaxis``
+When there is at least one slice (``:``), ellipsis (``...``) or :const:`newaxis`
 in the index (or the array has more dimensions than there are advanced indexes),
 then the behaviour can be more complicated. It is like concatenating the
 indexing result for each advanced index element
@@ -310,7 +311,7 @@ the subspace defined by the basic indexing (excluding integers) and the
 subspace from the advanced indexing part. Two cases of index combination
 need to be distinguished:
 
-* The advanced indexes are separated by a slice, ellipsis or newaxis.
+* The advanced indexes are separated by a slice, :const:`Ellipsis` or :const:`newaxis`.
   For example ``x[arr1, :, arr2]``.
 * The advanced indexes are all next to each other.
   For example ``x[..., arr1, arr2, :]`` but *not* ``x[arr1, :, 1]``
