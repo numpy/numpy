@@ -126,6 +126,7 @@ Changing the number of dimensions
 
    ma.MaskedArray.squeeze
 
+   ma.stack
    ma.column_stack
    ma.concatenate
    ma.dstack
@@ -141,6 +142,7 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
+   ma.stack
    ma.column_stack
    ma.concatenate
    ma.append
