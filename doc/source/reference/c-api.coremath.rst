@@ -222,7 +222,7 @@ Those can be useful for precise floating point comparison.
     Returns the previous status mask.
 
     .. versionadded:: 1.15.0
-n
+
 Complex functions
 ~~~~~~~~~~~~~~~~~
 
