@@ -257,7 +257,7 @@ def minrelpath(path):
     return os.sep.join(l)
 
 def sorted_glob(fileglob):
-    """sorts output of python glob for http://bugs.python.org/issue30461
+    """sorts output of python glob for https://bugs.python.org/issue30461
     to allow extensions to have reproducible build results"""
     return sorted(glob.glob(fileglob))
 
@@ -317,7 +317,7 @@ def make_temp_file(suffix='', prefix='', text=True):
     return fo, name
 
 # Hooks for colored terminal output.
-# See also http://www.livinglogic.de/Python/ansistyle
+# See also https://web.archive.org/web/20100314204946/http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
     if sys.platform=='cygwin' and 'USE_COLOR' not in os.environ:
         # Avoid importing curses that causes illegal operation

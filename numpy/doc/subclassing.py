@@ -108,7 +108,7 @@ A brief Python primer on ``__new__`` and ``__init__``
 ``__new__`` is a standard Python method, and, if present, is called
 before ``__init__`` when we create a class instance. See the `python
 __new__ documentation
-<http://docs.python.org/reference/datamodel.html#object.__new__>`_ for more detail.
+<https://docs.python.org/reference/datamodel.html#object.__new__>`_ for more detail.
 
 For example, consider the following Python code:
 
