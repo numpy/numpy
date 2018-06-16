@@ -123,7 +123,7 @@ References
 
         * Proposed schedule for Gnome from Havoc Pennington (one of the core
           GTK and Gnome manager):
-          http://mail.gnome.org/archives/gnome-hackers/2002-June/msg00041.html
+          https://mail.gnome.org/archives/gnome-hackers/2002-June/msg00041.html
           The proposed schedule is heavily based on this email
 
-        * http://live.gnome.org/ReleasePlanning/Freezes
+        * https://wiki.gnome.org/ReleasePlanning/Freezes

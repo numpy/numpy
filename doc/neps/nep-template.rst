@@ -64,7 +64,7 @@ References and Footnotes
 .. [1] Each NEP must either be explicitly labeled as placed in the public domain (see
    this NEP as an example) or licensed under the `Open Publication License`_.
 
-.. _Open Publication License: http://www.opencontent.org/openpub/
+.. _Open Publication License: https://www.opencontent.org/openpub/
 
 
 Copyright

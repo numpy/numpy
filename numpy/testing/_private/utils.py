@@ -69,7 +69,7 @@ def import_nose():
 
     if not nose_is_good:
         msg = ('Need nose >= %d.%d.%d for tests - see '
-               'http://nose.readthedocs.io' %
+               'https://nose.readthedocs.io' %
                minimum_nose_version)
         raise ImportError(msg)
 
@@ -177,7 +177,7 @@ if os.name == 'nt':
         # thread's CPU usage is either 0 or 100).  To read counters like this,
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
-        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp (dead link)
         # My older explanation for this was that the "AddCounter" process forced
         # the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -1609,7 +1609,7 @@ def _integer_repr(x, vdt, comp):
     # Reinterpret binary representation of the float as sign-magnitude:
     # take into account two-complement representation
     # See also
-    # http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+    # https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
     rx = x.view(vdt)
     if not (rx.size == 1):
         rx[rx < 0] = comp - rx[rx < 0]
@@ -1917,7 +1917,7 @@ class suppress_warnings(object):
     ``warnings.catch_warnings``.
 
     However, it also provides a filter mechanism to work around
-    http://bugs.python.org/issue4180.
+    https://bugs.python.org/issue4180.
 
     This bug causes Python before 3.4 to not reliably show warnings again
     after they have been ignored once (even within catch_warnings). It

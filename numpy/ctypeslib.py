@@ -12,7 +12,7 @@ as_array : Create an ndarray from a ctypes array.
 
 References
 ----------
-.. [1] "SciPy Cookbook: ctypes", http://www.scipy.org/Cookbook/Ctypes
+.. [1] "SciPy Cookbook: ctypes", https://scipy-cookbook.readthedocs.io/items/Ctypes.html
 
 Examples
 --------

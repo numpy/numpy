@@ -303,7 +303,7 @@ Other statements:
       ``pymethoddef`` statement can be used only inside
       ``python module`` block.
 
-  __ http://www.python.org/doc/current/ext/ext.html
+  __ https://docs.python.org/extending/index.html
 
 Attributes
 ------------

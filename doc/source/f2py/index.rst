@@ -26,6 +26,5 @@ from Python.
    distutils
    advanced
 
-.. _Python: http://www.python.org/
-.. _NumPy: http://www.numpy.org/
-.. _SciPy: http://www.numpy.org/
+.. _Python: https://www.python.org/
+.. _NumPy: https://www.numpy.org/

@@ -36,7 +36,7 @@ class _DeprecationTestCase(object):
 
         # Do *not* ignore other DeprecationWarnings. Ignoring warnings
         # can give very confusing results because of
-        # http://bugs.python.org/issue4180 and it is probably simplest to
+        # https://bugs.python.org/issue4180 and it is probably simplest to
         # try to keep the tests cleanly giving only the right warning type.
         # (While checking them set to "error" those are ignored anyway)
         # We still have them show up, because otherwise they would be raised
@@ -414,7 +414,7 @@ class TestClassicIntDivision(_DeprecationTestCase):
     """
     See #7949. Deprecate the numeric-style dtypes with -3 flag in python 2
     if used for division
-    List of data types: http://docs.scipy.org/doc/numpy/user/basics.types.html
+    List of data types: https://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     def test_int_dtypes(self):
         #scramble types and do some mix and match testing

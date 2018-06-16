@@ -481,7 +481,7 @@ type(s). In particular, to create a sub-type in C follow these steps:
    module dictionary so it can be accessed from Python.
 
 More information on creating sub-types in C can be learned by reading
-PEP 253 (available at http://www.python.org/dev/peps/pep-0253).
+PEP 253 (available at https://www.python.org/dev/peps/pep-0253).
 
 
 Specific features of ndarray sub-typing

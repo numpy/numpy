@@ -780,7 +780,7 @@ def qr(a, mode='reduced'):
     dorgqr, and zungqr.
 
     For more information on the qr factorization, see for example:
-    http://en.wikipedia.org/wiki/QR_factorization
+    https://en.wikipedia.org/wiki/QR_factorization
 
     Subclasses of `ndarray` are preserved except for the 'raw' mode. So if
     `a` is of type `matrix`, all the return values will be matrices too.
@@ -1750,7 +1750,7 @@ def matrix_rank(M, tol=None, hermitian=False):
     References
     ----------
     .. [1] MATLAB reference documention, "Rank"
-           http://www.mathworks.com/help/techdoc/ref/rank.html
+           https://www.mathworks.com/help/techdoc/ref/rank.html
     .. [2] W. H. Press, S. A. Teukolsky, W. T. Vetterling and B. P. Flannery,
            "Numerical Recipes (3rd edition)", Cambridge University Press, 2007,
            page 795.
@@ -2468,7 +2468,7 @@ def multi_dot(arrays):
     ----------
 
     .. [1] Cormen, "Introduction to Algorithms", Chapter 15.2, p. 370-378
-    .. [2] http://en.wikipedia.org/wiki/Matrix_chain_multiplication
+    .. [2] https://en.wikipedia.org/wiki/Matrix_chain_multiplication
 
     Examples
     --------

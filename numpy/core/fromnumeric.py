@@ -2777,11 +2777,11 @@ def around(a, decimals=0, out=None):
 
     References
     ----------
-    .. [1] "Lecture Notes on the Status of  IEEE 754", William Kahan,
-           http://www.cs.berkeley.edu/~wkahan/ieee754status/IEEE754.PDF
+    .. [1] "Lecture Notes on the Status of IEEE 754", William Kahan,
+           https://people.eecs.berkeley.edu/~wkahan/ieee754status/IEEE754.PDF
     .. [2] "How Futile are Mindless Assessments of
            Roundoff in Floating-Point Computation?", William Kahan,
-           http://www.cs.berkeley.edu/~wkahan/Mindless.pdf
+           https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
 
     Examples
     --------

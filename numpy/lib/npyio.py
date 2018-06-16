@@ -1259,8 +1259,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     References
     ----------
     .. [1] `Format Specification Mini-Language
-           <http://docs.python.org/library/string.html#
-           format-specification-mini-language>`_, Python Documentation.
+           <https://docs.python.org/library/string.html#format-specification-mini-language>`_,
+           Python Documentation.
 
     Examples
     --------
@@ -1624,7 +1624,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     References
     ----------
     .. [1] NumPy User Guide, section `I/O with NumPy
-           <http://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
+           <https://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
     ---------

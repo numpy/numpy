@@ -101,7 +101,7 @@ to NumPy 1.6:
 
 The notes in `doc/source/reference/arrays.datetime.rst <https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/source/reference/arrays.datetime.rst>`_
 (also available in the online docs at `arrays.datetime.html
-<http://docs.scipy.org/doc/numpy/reference/arrays.datetime.html>`_) should be
+<https://docs.scipy.org/doc/numpy/reference/arrays.datetime.html>`_) should be
 consulted for more details.
 
 Custom formatter for printing arrays

@@ -10,11 +10,11 @@ documentation for NumPy.  You will need Sphinx 1.0.1 or newer.
 If you only want to get the documentation, note that pre-built
 versions can be found at
 
-    http://docs.scipy.org/
+    https://docs.scipy.org/
 
 in several different formats.
 
-.. _Sphinx: http://sphinx.pocoo.org
+.. _Sphinx: http://www.sphinx-doc.org/
 
 
 Instructions
@@ -66,11 +66,11 @@ which will rebuild NumPy, install it to a temporary location, and
 build the documentation in all formats. This will most likely again
 only work on Unix platforms.
 
-The documentation for NumPy distributed at http://docs.scipy.org in html and
+The documentation for NumPy distributed at https://docs.scipy.org in html and
 pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details on
-how to update http://docs.scipy.org.
+how to update https://docs.scipy.org.
 
-.. _Matplotlib: http://matplotlib.org/
+.. _Matplotlib: https://matplotlib.org/
 .. _HOWTO RELEASE: https://github.com/numpy/numpy/blob/master/doc/HOWTO_RELEASE.rst.txt
 
 Sphinx extensions
@@ -83,5 +83,5 @@ above), and are automatically enabled when building NumPy's documentation.
 If you want to make use of these extensions in third-party
 projects, they are available on PyPi_ as the numpydoc_ package.
 
-.. _PyPi: http://python.org/pypi
-.. _numpydoc: http://python.org/pypi/numpydoc
+.. _PyPi: https://pypi.org/
+.. _numpydoc: https://python.org/pypi/numpydoc

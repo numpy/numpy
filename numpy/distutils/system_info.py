@@ -487,7 +487,7 @@ class FFTWNotFoundError(NotFoundError):
 
 class DJBFFTNotFoundError(NotFoundError):
     """
-    DJBFFT (http://cr.yp.to/djbfft.html) libraries not found.
+    DJBFFT (https://cr.yp.to/djbfft.html) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [djbfft]) or by setting
     the DJBFFT environment variable."""
@@ -495,7 +495,7 @@ class DJBFFTNotFoundError(NotFoundError):
 
 class NumericNotFoundError(NotFoundError):
     """
-    Numeric (http://www.numpy.org/) module not found.
+    Numeric (https://www.numpy.org/) module not found.
     Get it from above location, install it, and retry setup.py."""
 
 
@@ -505,7 +505,7 @@ class X11NotFoundError(NotFoundError):
 
 class UmfpackNotFoundError(NotFoundError):
     """
-    UMFPACK sparse solver (http://www.cise.ufl.edu/research/sparse/umfpack/)
+    UMFPACK sparse solver (https://www.cise.ufl.edu/research/sparse/umfpack/)
     not found. Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [umfpack]) or by setting
     the UMFPACK environment variable."""

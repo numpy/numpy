@@ -26,7 +26,7 @@ from .utils import KnownFailureException, KnownFailureTest
 
 #-----------------------------------------------------------------------------
 # Modified version of the one in the stdlib, that fixes a python bug (doctests
-# not found in extension modules, http://bugs.python.org/issue3158)
+# not found in extension modules, https://bugs.python.org/issue3158)
 class NumpyDocTestFinder(doctest.DocTestFinder):
 
     def _from_module(self, module, object):

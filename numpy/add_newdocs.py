@@ -1452,7 +1452,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
     Values are generated within the half-open interval ``[start, stop)``
     (in other words, the interval including `start` but excluding `stop`).
     For integer arguments the function is equivalent to the Python built-in
-    `range <http://docs.python.org/lib/built-in-funcs.html>`_ function,
+    `range <https://docs.python.org/library/functions.html#func-range>`_ function,
     but returns an ndarray rather than a list.
 
     When using a non-integer step, such as 0.1, the results will often not

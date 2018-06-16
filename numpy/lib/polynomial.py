@@ -494,9 +494,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
     .. [2] Wikipedia, "Polynomial interpolation",
-           http://en.wikipedia.org/wiki/Polynomial_interpolation
+           https://en.wikipedia.org/wiki/Polynomial_interpolation
 
     Examples
     --------

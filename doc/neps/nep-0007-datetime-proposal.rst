@@ -662,9 +662,9 @@ operations mixing business days with other time units will not be
 allowed.
 
 
-.. [1] http://docs.python.org/lib/module-datetime.html
-.. [2] http://www.egenix.com/products/python/mxBase/mxDateTime
-.. [3] http://en.wikipedia.org/wiki/Unix_time
+.. [1] https://docs.python.org/library/datetime.html
+.. [2] https://www.egenix.com/products/python/mxBase/mxDateTime
+.. [3] https://en.wikipedia.org/wiki/Unix_time
 
 
 .. Local Variables:

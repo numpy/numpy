@@ -9,17 +9,17 @@ Introduction
 ''''''''''''
 
 SciPy uses the `Nose testing system
-<http://nose.readthedocs.io>`__, with some
+<https://nose.readthedocs.io>`__, with some
 minor convenience features added.  Nose is an extension of the unit
 testing framework offered by `unittest.py
-<http://docs.python.org/lib/module-unittest.html>`__. Our goal is that
+<https://docs.python.org/library/unittest.html>`__. Our goal is that
 every module and package in SciPy should have a thorough set of unit
 tests. These tests should exercise the full functionality of a given
 routine as well as its robustness to erroneous or unexpected input
 arguments. Long experience has shown that by far the best time to
 write the tests is before you write or change the code - this is
 `test-driven development
-<http://en.wikipedia.org/wiki/Test-driven_development>`__.  The
+<https://en.wikipedia.org/wiki/Test-driven_development>`__.  The
 arguments for this can sound rather abstract, but we can assure you
 that you will find that writing the tests first leads to more robust
 and better designed code. Well-designed tests with good coverage make
@@ -306,7 +306,7 @@ minor variations, it can be helpful to create a base class containing
 all the common tests, and then create a subclass for each variation.
 Several examples of this technique exist in NumPy; below are excerpts
 from one in `numpy/linalg/tests/test_linalg.py
-<http://github.com/numpy/numpy/blob/master/numpy/linalg/tests/test_linalg.py>`__::
+<https://github.com/numpy/numpy/blob/master/numpy/linalg/tests/test_linalg.py>`__::
 
   class LinalgTestCase:
       def test_single(self):

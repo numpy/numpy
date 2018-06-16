@@ -5,7 +5,7 @@
 
 NumPy is the fundamental package needed for scientific computing with Python.
 
-- **Website (including documentation):** http://www.numpy.org
+- **Website (including documentation):** https://www.numpy.org
 - **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
 - **Source:** https://github.com/numpy/numpy
 - **Bug reports:** https://github.com/numpy/numpy/issues

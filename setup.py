@@ -16,7 +16,7 @@ All numpy wheels distributed from pypi are BSD licensed.
 
 Windows wheels are linked against the ATLAS BLAS / LAPACK library, restricted
 to SSE2 instructions, so may not give optimal linear algebra performance for
-your machine. See http://docs.scipy.org/doc/numpy/user/install.html for
+your machine. See https://docs.scipy.org/doc/numpy/user/install.html for
 alternatives.
 
 """
@@ -357,7 +357,7 @@ def setup_package():
         maintainer_email = "numpy-discussion@python.org",
         description = DOCLINES[0],
         long_description = "\n".join(DOCLINES[2:]),
-        url = "http://www.numpy.org",
+        url = "https://www.numpy.org",
         author = "Travis E. Oliphant et al.",
         download_url = "https://pypi.python.org/pypi/numpy",
         license = 'BSD',

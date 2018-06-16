@@ -100,7 +100,7 @@ todo_include_todos = False
 ## to template names.
 ##
 ## This is required for the alabaster theme
-## refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
+## refs: https://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 #html_sidebars = {
 #    '**': [
 #        'relations.html',  # needs 'show_related': True theme option to display
@@ -127,8 +127,8 @@ if True:
         "edit_link": True,
         "sidebar": "right",
         "scipy_org_logo": True,
-        "rootlinks": [("http://scipy.org/", "Scipy.org"),
-                      ("http://docs.scipy.org/", "Docs")]
+        "rootlinks": [("https://scipy.org/", "Scipy.org"),
+                      ("https://docs.scipy.org/", "Docs")]
     }
 else:
     # Default build

@@ -405,8 +405,8 @@ interface between Python and Fortran. There is decent documentation
 for f2py found in the numpy/f2py/docs directory where-ever NumPy is
 installed on your system (usually under site-packages). There is also
 more information on using f2py (including how to use it to wrap C
-codes) at http://www.scipy.org/Cookbook under the "Using NumPy with
-Other Languages" heading.
+codes) at https://scipy-cookbook.readthedocs.io under the "Interfacing
+With Other Languages" heading.
 
 The f2py method of linking compiled code is currently the most
 sophisticated and integrated approach. It allows clean separation of

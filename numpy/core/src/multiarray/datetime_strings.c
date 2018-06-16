@@ -69,7 +69,7 @@
  * multiplatform code, get_localtime() should never be used outside of this
  * range.
  *
- * [1] http://en.wikipedia.org/wiki/Year_2038_problem
+ * [1] https://en.wikipedia.org/wiki/Year_2038_problem
  */
 static int
 get_localtime(NPY_TIME_T *ts, struct tm *tms)

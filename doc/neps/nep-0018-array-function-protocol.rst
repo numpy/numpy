@@ -197,7 +197,7 @@ are valid then which has precedence?
 
 For the most part, the rules for dispatch with ``__array_function__``
 match those for ``__array_ufunc__`` (see
-`NEP-13 <http://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_).
+`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_).
 In particular:
 
 -  NumPy will gather implementations of ``__array_function__`` from all

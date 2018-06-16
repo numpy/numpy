@@ -69,7 +69,7 @@ Glossary
        micro-processors and used for transmission of data over network protocols.
 
    BLAS
-       `Basic Linear Algebra Subprograms <http://en.wikipedia.org/wiki/BLAS>`_
+       `Basic Linear Algebra Subprograms <https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_
 
    broadcast
        NumPy can do operations on arrays whose shapes are mismatched::
@@ -155,7 +155,7 @@ Glossary
        be used as keys.
 
        For more information on dictionaries, read the
-       `Python tutorial <http://docs.python.org/tut>`_.
+       `Python tutorial <https://docs.python.org/tutorial/>`_.
 
    field
        In a :term:`structured data type`, each sub-type is called a `field`.
@@ -238,7 +238,7 @@ Glossary
                 [3, 4]])
 
        For more information, read the section on lists in the `Python
-       tutorial <http://docs.python.org/tut>`_.  For a mapping
+       tutorial <https://docs.python.org/tutorial/>`_.  For a mapping
        type (key-value), see *dictionary*.
 
    little-endian

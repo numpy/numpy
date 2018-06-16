@@ -32,13 +32,13 @@ even better, contact us and participate in fixing the problem.
 
 Our main means of communication are:
 
-- `scipy.org website <http://scipy.org/>`__
+- `scipy.org website <https://scipy.org/>`__
 
-- `Mailing lists <http://scipy.org/Mailing_Lists>`__
+- `Mailing lists <https://scipy.org/scipylib/mailing-lists.html>`__
 
 - `NumPy Issues <https://github.com/numpy/numpy/issues>`__ (bug reports go here)
 
-- `Old NumPy Trac <http://projects.scipy.org/numpy>`__ (no longer used)
+- `Old NumPy Trac <http://projects.scipy.org/numpy>`__ (dead link)
 
 More information about the development of NumPy can be found at our `Developer Zone <https://scipy.scipy.org/scipylib/dev-zone.html>`__.
 

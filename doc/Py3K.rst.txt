@@ -22,8 +22,8 @@ Resources
 
 Information on porting to 3K:
 
-- http://wiki.python.org/moin/cporting
-- http://wiki.python.org/moin/PortingExtensionModulesToPy3k
+- https://wiki.python.org/moin/cporting
+- https://wiki.python.org/moin/PortingExtensionModulesToPy3k
 
 
 Prerequisites
