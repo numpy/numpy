@@ -403,44 +403,18 @@ expecting a binary wheel.
 
 You can do this automatically using the ``wheel-uploader`` script from
 https://github.com/MacPython/terryfy.  Here is the recommended incantation for
-downloading all the Windows, Manylinux, OSX wheels and uploading to PyPI.
+downloading all the Windows, Manylinux, OSX wheels and uploading to PyPI. ::
 
-::
-
-    cd ~/wheelhouse   # local directory to cache wheel downloads
+    NPY_WHLS=~/wheelhouse   # local directory to cache wheel downloads
     CDN_URL=https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com
-    wheel-uploader -u $CDN_URL -w warehouse -v -s -t win numpy 1.11.1rc1
+    wheel-uploader -u $CDN_URL -w $NPY_WHLS -v -s -t win numpy 1.11.1rc1
     wheel-uploader -u $CDN_URL -w warehouse -v -s -t macosx numpy 1.11.1rc1
     wheel-uploader -u $CDN_URL -w warehouse -v -s -t manylinux1 numpy 1.11.1rc1
 
 The ``-v`` flag gives verbose feedback, ``-s`` causes the script to sign the
-wheels with your GPG key before upload.  ``-r warehouse`` causes the upload to
-use the Warehouse PyPI server.  This is a good idea because the Warehouse
-server seems to be a lot more reliable in receiving automated wheel uploads.
-For this flag to work, you will need a ``warehouse`` section in your
-``~/.pypirc`` file, of form::
-
-    [distutils]
-    index-servers =
-        pypi
-        warehouse
-
-    [pypi]
-    username:your_user_name
-    password:your_password
-
-    [warehouse]
-    repository: https://upload.pypi.io/legacy/
-    username: your_user_name
-    password: your_password
-
-    [server-login]
-    username:your_user_name
-    password:your_password
-
-Don't forget to upload the wheels before the source tarball, so there is no
-period for which people switch from an expected binary install to a source
-install from PyPI.
+wheels with your GPG key before upload. Don't forget to upload the wheels
+before the source tarball, so there is no period for which people switch from
+an expected binary install to a source install from PyPI.
 
 There are two ways to update the source release on PyPI, the first one is::
 
