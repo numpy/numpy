@@ -91,27 +91,12 @@ those contributors simply walked away.
 Implementation
 --------------
 
-We propose first freezing ``RandomState`` as it is and developing a new RNG
-subsystem alongside it.  This allows anyone who has been relying on our old
-stream-compatibility guarantee to have plenty of time to migrate.
-``RandomState`` will be considered deprecated, but with a long deprecation
-cycle, at least a few years.  Deprecation warnings will start silent but become
-increasingly noisy over time.  Bugs in the current state of the code will *not*
-be fixed if fixing them would impact the stream.  However, if changes in the
-rest of ``numpy`` would break something in the ``RandomState`` code, we will
-fix ``RandomState`` to continue working (for example, some change in the
-C API).  No new features will be added to ``RandomState``.  Users should
-migrate to the new subsystem as they are able to.
-
-Work on a proposed `new PRNG subsystem
-<https://github.com/bashtage/randomgen>`_ is already underway.  The specifics
-of the new design are out of scope for this NEP and up for much discussion, but
-we will discuss general policies that will guide the evolution of whatever code
-is adopted.
-
-
-New Policy
-::::::::::
+Work on a proposed new PRNG subsystem is already underway in the randomgen_
+project.  The specifics of the new design are out of scope for this NEP and up
+for much discussion, but we will discuss general policies that will guide the
+evolution of whatever code is adopted.  We will also outline just a few of the
+requirements that such a new system must have to support the policy proposed in
+this NEP.
 
 First, we will maintain API source compatibility just as we do with the rest of
 ``numpy``.  If we *must* make a breaking change, we will only do so with an
@@ -120,59 +105,132 @@ appropriate deprecation period and warnings.
 Second, breaking stream-compatibility in order to introduce new features or
 improve performance will be *allowed* with *caution*.  Such changes will be
 considered features, and as such will be no faster than the standard release
-cadence of features (i.e. on ``X.Y`` releases, never ``X.Y.Z``).  Slowness is
-not a bug.  Correctness bug fixes that break stream-compatibility can happen on
-bugfix releases, per usual, but developers should consider if they can wait
-until the next feature release.  We encourage developers to strongly weight
-user’s pain from the break in stream-compatibility against the improvements.
-One example of a worthwhile improvement would be to change algorithms for
-a significant increase in performance, for example, moving from the `Box-Muller
-transform <https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform>`_ method
-of Gaussian variate generation to the faster `Ziggurat algorithm
-<https://en.wikipedia.org/wiki/Ziggurat_algorithm>`_.  An example of an
-unworthy improvement would be tweaking the Ziggurat tables just a little bit.
+cadence of features (i.e. on ``X.Y`` releases, never ``X.Y.Z``).  Slowness will
+not be considered a bug for this purpose.  Correctness bug fixes that break
+stream-compatibility can happen on bugfix releases, per usual, but developers
+should consider if they can wait until the next feature release.  We encourage
+developers to strongly weight user’s pain from the break in
+stream-compatibility against the improvements.  One example of a worthwhile
+improvement would be to change algorithms for a significant increase in
+performance, for example, moving from the `Box-Muller transform
+<https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform>`_ method of
+Gaussian variate generation to the faster `Ziggurat algorithm
+<https://en.wikipedia.org/wiki/Ziggurat_algorithm>`_.  An example of a
+discouraged improvement would be tweaking the Ziggurat tables just a little bit
+for a small performance improvement.
 
 Any new design for the RNG subsystem will provide a choice of different core
-uniform PRNG algorithms.  We will be more strict about a select subset of
-methods on these core PRNG objects.  They MUST guarantee stream-compatibility
-for a minimal, specified set of methods which are chosen to make it easier to
-compose them to build other distributions.  Namely,
+uniform PRNG algorithms.  A promising design choice is to make these core
+uniform PRNGs their own lightweight objects with a minimal set of methods
+(randomgen_ calls them “basic RNGs”).  The broader set of non-uniform
+distributions will be its own class that holds a reference to one of these core
+uniform PRNG objects and simply delegates to the core uniform PRNG object when
+it needs uniform random numbers.  To borrow an example from randomgen_, the
+class ``MT19937`` is a basic RNG that implements the classic Mersenne Twister
+algorithm.  The class ``RandomGenerator`` wraps around the basic RNG to provide
+all of the non-uniform distribution methods::
+
+    # This is not the only way to instantiate this object.
+    # This is just handy for demonstrating the delegation.
+    >>> brng = MT19937(seed)
+    >>> rg = RandomGenerator(brng)
+    >>> x = rg.standard_normal(10)
+
+We will be more strict about a select subset of methods on these basic RNG
+objects.  They MUST guarantee stream-compatibility for a specified set
+of methods which are chosen to make it easier to compose them to build other
+distributions and which are needed to abstract over the implementation details
+of the variety of core PRNG algorithms.  Namely,
 
     * ``.bytes()``
     * ``.random_uintegers()``
     * ``.random_sample()``
 
+The distributions class (``RandomGenerator``) SHOULD have all of the same
+distribution methods as ``RandomState`` with close-enough function signatures
+such that almost all code that currently works with ``RandomState`` instances
+will work with ``RandomGenerator`` instances (ignoring the precise stream
+values).  Some variance will be allowed for integer distributions: in order to
+avoid some of the cross-platform problems described above, these SHOULD be
+rewritten to work with ``uint64`` numbers on all platforms.
+
+.. _randomgen: https://github.com/bashtage/randomgen
+
 
 Supporting Unit Tests
 :::::::::::::::::::::
 
-Furthermore, the new design should also provide one generator class (we shall
-call it ``StableRandom`` for discussion purposes) that provides a slightly
-broader subset of distribution methods for which stream-compatibility is
-*guaranteed*.  The point of ``StableRandom`` is to provide something that can
-be used in unit tests so projects that currently have tests which rely on the
-precise stream can be migrated off of ``RandomState``.  For the best
-transition, ``StableRandom`` should use as its core uniform PRNG the current
-MT19937 algorithm.  As best as possible, the API for the distribution methods
-that are provided on ``StableRandom`` should match their counterparts on
-``RandomState``.  They should provide the same stream that the current version
-of ``RandomState`` does.  Because their intended use is for unit tests, we do
-not need the performance improvements from the new algorithms that will be
-introduced by the new subsystem.
+Because we did make a strong stream-compatibility guarantee early in numpy’s
+life, reliance on stream-compatibility has grown beyond reproducible
+simulations.  One use case that remains for stream-compatibility across numpy
+versions is to use pseudorandom streams to generate test data in unit tests.
+With care, many of the cross-platform instabilities can be avoided in the
+context of small unit tests.
 
-The list of ``StableRandom`` methods should be chosen to support unit tests:
+The new PRNG subsystem MUST provide a second, legacy distributions class that
+uses the same implementations of the distribution methods as the current
+version of ``numpy.random.RandomState``.  The methods of this class will keep
+the same strict stream-compatibility guarantees.  It is intended that this
+class will no longer be modified, except to keep it working when numpy
+internals change.  All new development should go into the primary distributions
+class.  The purpose of ``RandomState`` will be documented as providing certain
+fixed functionality for backwards compatibility and stable numbers for the
+limited purpose of unit testing, and not making whole programs reproducible
+across numpy versions.
 
-    * ``.randint()``
-    * ``.uniform()``
-    * ``.normal()``
-    * ``.standard_normal()``
-    * ``.choice()``
-    * ``.shuffle()``
-    * ``.permutation()``
+This legacy distributions class MUST be accessible under the name
+``numpy.random.RandomState`` for backwards compatibility.  All current ways of
+instantiating ``numpy.random.RandomState`` with a given state should
+instantiate the Mersenne Twister basic RNG with the same state.  The legacy
+distributions class MUST be capable of accepting other basic RNGs.  The purpose
+here is to ensure that one can write a program with a consistent basic RNG
+state with a mixture of libraries that may or may not have upgraded from
+``RandomState``.  Instances of the legacy distributions class MUST respond
+``True`` to ``isinstance(rg, numpy.random.RandomState)`` because there is
+current utility code that relies on that check.  Similarly, old pickles of
+``numpy.random.RandomState`` instances MUST unpickle correctly.
 
 
-Not Versioning
---------------
+``numpy.random.*``
+::::::::::::::::::
+
+The preferred best practice for getting reproducible pseudorandom numbers is to
+instantiate a generator object with a seed and pass it around.  The implicit
+global ``RandomState`` behind the ``numpy.random.*`` convenience functions can
+cause problems, especially when threads or other forms of concurrency are
+involved.  Global state is always problematic.  We categorically recommend
+avoiding using the convenience functions when reproducibility is involved.
+
+That said, people do use them and use ``numpy.random.seed()`` to control the
+state underneath them.  It can be hard to categorize and count API usages
+consistently and usefully, but a very common usage is in unit tests where many
+of the problems of global state are less likely.
+
+The initial release of the new PRNG subsystem MUST leave these convenience
+functions as aliases to the methods on a global ``RandomState`` that is
+initialized with a Mersenne Twister basic RNG object.  A call to
+``numpy.random.seed()`` will be forwarded to that basic RNG object.  In order
+to allow certain workarounds, it MUST be possible to replace the basic RNG
+underneath the global ``RandomState`` with any other basic RNG object (we leave
+the precise API details up to the new subsystem).  Calling ``numpy.random.seed()``
+thereafter SHOULD just pass the given seed to the current basic RNG object and
+not attempt to reset the basic RNG to the Mersenne Twister.
+
+The set of ``numpy.random.*`` convenience functions SHALL remain the same as
+they currently are.  They SHALL be aliases to the ``RandomState`` methods and
+not the new less-stable distributions class (``RandomGenerator``, in the
+examples above). Users who want to get the fastest, best distributions can
+follow best practices and instantiate generator objects explicitly.
+
+After we have experience with the new PRNG subsystem, we can and should revisit
+these issues in future NEPs.
+
+
+Alternatives
+------------
+
+Versioning
+::::::::::
 
 For a long time, we considered that the way to allow algorithmic improvements
 while maintaining the stream was to apply some form of versioning.  That is,
@@ -206,6 +264,44 @@ the same level of stream-compatibility that we currently do, with all of the
 limitations described earlier.  Given that the standard practice for such needs
 is to pin the release of ``numpy`` as a whole, versioning ``RandomState`` alone
 is superfluous.
+
+
+``StableRandom``
+::::::::::::::::
+
+A previous version of this NEP proposed to leave ``RandomState`` completely
+alone for a deprecation period and build the new subsystem alongside with new
+names.  To satisfy the unit testing use case, it proposed introducing a small
+distributions class nominally called ``StableRandom``. It would have provided
+a small subset of distribution methods that were considered most useful in unit
+testing, but not the full set such that it would be too likely to be used
+outside of the testing context.
+
+During discussion about this proposal, it became apparent that there was no
+satisfactory subset.  At least some projects used a fairly broad selection of
+the ``RandomState`` methods in unit tests.
+
+Downstream project owners would have been forced to modify their code to
+accomodate the new PRNG subsystem.  Some modifications might be simply
+mechanical, but the bulk of the work would have been tedious churn for no
+positive improvement to the downstream project, just avoiding being broken.
+
+Furthermore, under this old proposal, we would have had a quite lengthy
+deprecation period where ``RandomState`` existed alongside the new system of
+basic RNGs and distribution classes. Leaving the implementation of
+``RandomState`` fixed meant that it could not use the new basic RNG state
+objects.  Developing programs that use a mixture of libraries that have and
+have not upgraded would require managing two sets of PRNG states.  This would
+notionally have been time-limited, but we intended the deprecation to be very
+long.
+
+The current proposal solves all of these problems.  All current usages of
+``RandomState`` will continue to work in perpetuity, though some may be
+discouraged through documentation.  Unit tests can continue to use the full
+complement of ``RandomState`` methods.  Mixed ``RandomState/RandomGenerator``
+code can safely share the common basic RNG state.  Unmodified ``RandomState``
+code can make use of the new features of alternative basic RNGs like settable
+streams.
 
 
 Discussion
