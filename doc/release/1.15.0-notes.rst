@@ -77,6 +77,9 @@ Deprecations
  `RuntimeWarning` will be emitted otherwise in these cases. Users of the C-API
   should call ``NpyIter_Close`` before ``NpyIter_Deallocate``.
 
+* The ``normed`` argument of ``np.histogram``, deprecated long ago in 1.6.0,
+  now emits a ``DeprecationWarning``.
+
 
 Future Changes
 ==============
