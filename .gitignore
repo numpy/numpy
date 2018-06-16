@@ -99,6 +99,7 @@ Icon?
 .gdb_history
 ehthumbs.db
 Thumbs.db
+.directory
 
 # pytest generated files #
 ##########################
