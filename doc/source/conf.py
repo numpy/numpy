@@ -104,8 +104,8 @@ if 'scipyorg' in tags:
         "edit_link": True,
         "sidebar": "right",
         "scipy_org_logo": True,
-        "rootlinks": [("http://scipy.org/", "Scipy.org"),
-                      ("http://docs.scipy.org/", "Docs")]
+        "rootlinks": [("https://scipy.org/", "Scipy.org"),
+                      ("https://docs.scipy.org/", "Docs")]
     }
 else:
     # Default build
@@ -341,8 +341,8 @@ def linkcode_resolve(domain, info):
     fn = relpath(fn, start=dirname(numpy.__file__))
 
     if 'dev' in numpy.__version__:
-        return "http://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
            fn, linespec)
     else:
-        return "http://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)

@@ -982,12 +982,12 @@ def _getmembers(item):
 #-----------------------------------------------------------------------------
 
 # The following SafeEval class and company are adapted from Michael Spencer's
-# ASPN Python Cookbook recipe:
-#   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/364469
+# ASPN Python Cookbook recipe: https://code.activestate.com/recipes/364469/
+#
 # Accordingly it is mostly Copyright 2006 by Michael Spencer.
 # The recipe, like most of the other ASPN Python Cookbook recipes was made
 # available under the Python license.
-#   http://www.python.org/license
+#   https://en.wikipedia.org/wiki/Python_License
 
 # It has been modified to:
 #   * handle unary -/+

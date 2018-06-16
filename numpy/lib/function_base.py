@@ -1649,7 +1649,7 @@ def disp(mesg, device=None, linefeed=True):
     return
 
 
-# See http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
+# See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
 _CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
 _ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
@@ -1906,7 +1906,7 @@ class vectorize(object):
     References
     ----------
     .. [1] NumPy Reference, section `Generalized Universal Function API
-           <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
+           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
@@ -2561,7 +2561,7 @@ def bartlett(M):
     .. [3] A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal
            Processing", Prentice-Hall, 1999, pp. 468-471.
     .. [4] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [5] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 429.
 
@@ -2661,7 +2661,7 @@ def hanning(M):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics",
            The University of Alberta Press, 1975, pp. 106-108.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 425.
 
@@ -2759,7 +2759,7 @@ def hamming(M):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
            University of Alberta Press, 1975, pp. 109-110.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 425.
 
@@ -3036,7 +3036,7 @@ def kaiser(M, beta):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
            University of Alberta Press, 1975, pp. 177-178.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
 
     Examples
     --------
@@ -3124,7 +3124,7 @@ def sinc(x):
     .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
            Resource. http://mathworld.wolfram.com/SincFunction.html
     .. [2] Wikipedia, "Sinc function",
-           http://en.wikipedia.org/wiki/Sinc_function
+           https://en.wikipedia.org/wiki/Sinc_function
 
     Examples
     --------
@@ -3840,10 +3840,10 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     References
     ----------
-    .. [1] Wikipedia page: http://en.wikipedia.org/wiki/Trapezoidal_rule
+    .. [1] Wikipedia page: https://en.wikipedia.org/wiki/Trapezoidal_rule
 
     .. [2] Illustration image:
-           http://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
+           https://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
 
     Examples
     --------

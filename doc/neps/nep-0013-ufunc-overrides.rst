@@ -53,7 +53,7 @@ changes in 3rd party code.
 .. [1] http://docs.python.org/doc/numpy/user/basics.subclassing.html
 .. [2] https://github.com/scipy/scipy/issues/2123
 .. [3] https://github.com/scipy/scipy/issues/1569
-.. [4] http://technicaldiscovery.blogspot.com/2013/07/thoughts-after-scipy-2013-and-specific.html
+.. [4] https://technicaldiscovery.blogspot.com/2013/07/thoughts-after-scipy-2013-and-specific.html
 
 
 Motivation
@@ -134,7 +134,7 @@ which have multiplication semantics incompatible with numpy arrays.
 However, the aim is to enable writing other custom array types that have
 strictly ndarray compatible semantics.
 
-.. [5] http://mail.python.org/pipermail/numpy-discussion/2011-June/056945.html
+.. [5] https://mail.python.org/pipermail/numpy-discussion/2011-June/056945.html
 
 .. [6] https://github.com/numpy/numpy/issues/5844
 
@@ -635,7 +635,7 @@ simplify the dispatch logic for binary operations with NumPy arrays
 as much as possible, by making it possible to use Python's dispatch rules
 or NumPy's dispatch rules, but not some mixture of both at the same time.
 
-.. [9] http://bugs.python.org/issue30140
+.. [9] https://bugs.python.org/issue30140
 
 .. _neps.ufunc-overrides.list-of-operators:
 
