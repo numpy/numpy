@@ -214,7 +214,10 @@ to allow certain workarounds, it MUST be possible to replace the basic RNG
 underneath the global ``RandomState`` with any other basic RNG object (we leave
 the precise API details up to the new subsystem).  Calling ``numpy.random.seed()``
 thereafter SHOULD just pass the given seed to the current basic RNG object and
-not attempt to reset the basic RNG to the Mersenne Twister.
+not attempt to reset the basic RNG to the Mersenne Twister.  The global
+``RandomState`` instance MUST be accessible by the name
+``numpy.random.mtrand._rand``: Robert Kern long ago promised ``scikit-learn``
+that this name would be stable.  Whoops.
 
 The set of ``numpy.random.*`` convenience functions SHALL remain the same as
 they currently are.  They SHALL be aliases to the ``RandomState`` methods and
