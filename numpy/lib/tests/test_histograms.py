@@ -40,20 +40,28 @@ class TestHistogram(object):
         assert_allclose(e, np.array([1., 2.]))
 
     def test_normed(self):
-        # Check that the integral of the density equals 1.
-        n = 100
-        v = np.random.rand(n)
-        a, b = histogram(v, normed=True)
-        area = np.sum(a * np.diff(b))
-        assert_almost_equal(area, 1)
+        sup = suppress_warnings()
+        with sup:
+            rec = sup.record(np.VisibleDeprecationWarning, '.*normed.*')
+            # Check that the integral of the density equals 1.
+            n = 100
+            v = np.random.rand(n)
+            a, b = histogram(v, normed=True)
+            area = np.sum(a * np.diff(b))
+            assert_almost_equal(area, 1)
+            assert_equal(len(rec), 1)
 
-        # Check with non-constant bin widths (buggy but backwards
-        # compatible)
-        v = np.arange(10)
-        bins = [0, 1, 5, 9, 10]
-        a, b = histogram(v, bins, normed=True)
-        area = np.sum(a * np.diff(b))
-        assert_almost_equal(area, 1)
+        sup = suppress_warnings()
+        with sup:
+            rec = sup.record(np.VisibleDeprecationWarning, '.*normed.*')
+            # Check with non-constant bin widths (buggy but backwards
+            # compatible)
+            v = np.arange(10)
+            bins = [0, 1, 5, 9, 10]
+            a, b = histogram(v, bins, normed=True)
+            area = np.sum(a * np.diff(b))
+            assert_almost_equal(area, 1)
+            assert_equal(len(rec), 1)
 
     def test_density(self):
         # Check that the integral of the density equals 1.
@@ -96,12 +104,12 @@ class TestHistogram(object):
         assert_equal(h.sum(), 9)
 
         # Normalization
-        h, b = histogram(a, range=[1, 9], normed=True)
+        h, b = histogram(a, range=[1, 9], density=True)
         assert_almost_equal((h * np.diff(b)).sum(), 1, decimal=15)
 
         # Weights
         w = np.arange(10) + .5
-        h, b = histogram(a, range=[1, 9], weights=w, normed=True)
+        h, b = histogram(a, range=[1, 9], weights=w, density=True)
         assert_equal((h * np.diff(b)).sum(), 1)
 
         h, b = histogram(a, bins=8, range=[1, 9], weights=w)
@@ -113,7 +121,7 @@ class TestHistogram(object):
         h, b = histogram(a)
         assert_(np.issubdtype(h.dtype, np.integer))
 
-        h, b = histogram(a, normed=True)
+        h, b = histogram(a, density=True)
         assert_(np.issubdtype(h.dtype, np.floating))
 
         h, b = histogram(a, weights=np.ones(10, int))
@@ -133,9 +141,9 @@ class TestHistogram(object):
         v = np.random.rand(100)
         w = np.ones(100) * 5
         a, b = histogram(v)
-        na, nb = histogram(v, normed=True)
+        na, nb = histogram(v, density=True)
         wa, wb = histogram(v, weights=w)
-        nwa, nwb = histogram(v, weights=w, normed=True)
+        nwa, nwb = histogram(v, weights=w, density=True)
         assert_array_almost_equal(a * 5, wa)
         assert_array_almost_equal(na, nwa)
 
@@ -149,7 +157,7 @@ class TestHistogram(object):
         wa, wb = histogram([1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1])
         assert_array_equal(wa, [4, 5, 0, 1])
         wa, wb = histogram(
-            [1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1], normed=True)
+            [1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1], density=True)
         assert_array_almost_equal(wa, np.array([4, 5, 0, 1]) / 10. / 3. * 4)
 
         # Check weights with non-uniform bin widths
