@@ -7,6 +7,7 @@ Contributing to NumPy
 
    gitwash/index
    development_environment
+   releasing
    governance/index
 
 For core developers: see :ref:`development-workflow`.
