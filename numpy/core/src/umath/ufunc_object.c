@@ -2037,8 +2037,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int **remap_axis = NULL;
     /* The __array_prepare__ function to call for each output */
     PyObject *arr_prep[NPY_MAXARGS];
-    /* The separated input and output arguments */
-    ufunc_full_args full_args = {NULL, NULL};
 
     NPY_ORDER order = NPY_KEEPORDER;
     /* Use the default assignment casting rule */
@@ -2291,10 +2289,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 #endif
 
     if (subok) {
-        if (make_full_arg_tuple_simple(&full_args, nin, nout, args) < 0) {
-            goto fail;
-        }
-
         /*
          * Get the appropriate __array_prepare__ function to call
          * for each output
@@ -2533,8 +2527,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(extobj);
     Py_XDECREF(axes);
     Py_XDECREF(axis);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
 
     NPY_UF_DBG_PRINT("Returning Success\n");
 
@@ -2555,8 +2547,6 @@ fail:
     Py_XDECREF(extobj);
     Py_XDECREF(axes);
     Py_XDECREF(axis);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
     PyArray_free(remap_axis_memory);
     PyArray_free(remap_axis);
     return retval;
