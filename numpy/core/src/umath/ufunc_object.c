@@ -1672,6 +1672,23 @@ fail:
     return -1;
 }
 
+static int
+make_full_arg_tuple_simple(
+        ufunc_full_args *full_args,
+        npy_intp nin, npy_intp nout,
+        PyObject *inout_args)
+{
+    if (PyTuple_GET_SIZE(inout_args) == nin + nout) {
+        full_args->in = PyTuple_GetSlice(inout_args, 0, nin);
+        full_args->out = PyTuple_GetSlice(inout_args, nin, nin+nout);
+    }
+    else {
+        Py_INCREF(inout_args);
+        full_args->in = inout_args;
+        full_args->out = NULL;
+    }
+}
+
 /*
  * Check whether any of the outputs of a gufunc has core dimensions.
  */
@@ -4460,13 +4477,9 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
      * None --- array-object passed in don't call PyArray_Return
      * method --- the __array_wrap__ method to call.
      */
-    if (PyTuple_GET_SIZE(inout_args) == ufunc->nargs) {
-        full_args.in = PyTuple_GetSlice(inout_args, 0, ufunc->nin);
-        full_args.out = PyTuple_GetSlice(inout_args, ufunc->nin, ufunc->nargs);
-    }
-    else {
-        Py_INCREF(inout_args);
-        full_args.in = inout_args;
+    if (make_full_arg_tuple_simple(&full_args, ufunc->nin, ufunc->nout,
+                                   inout_args) < 0) {
+        goto fail;
     }
     _find_array_wrap(full_args, other_kwds, wraparr, ufunc->nin, ufunc->nout);
 
