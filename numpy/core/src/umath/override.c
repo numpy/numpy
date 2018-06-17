@@ -112,9 +112,9 @@ fail:
 static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
-    PyObject* obj = PyDict_GetItemString(normal_kwds, "sig");
+    PyObject* obj = PyDict_GetItem(normal_kwds, npy_um_str_sig);
     if (obj != NULL) {
-        if (PyDict_GetItemString(normal_kwds, "signature")) {
+        if (PyDict_Contains(normal_kwds, npy_um_str_signature)) {
             PyErr_SetString(PyExc_TypeError,
                             "cannot specify both 'sig' and 'signature'");
             return -1;
@@ -123,8 +123,8 @@ normalize_signature_keyword(PyObject *normal_kwds)
          * No INCREF or DECREF needed: got a borrowed reference above,
          * and, unlike e.g. PyList_SetItem, PyDict_SetItem INCREF's it.
          */
-        PyDict_SetItemString(normal_kwds, "signature", obj);
-        PyDict_DelItemString(normal_kwds, "sig");
+        PyDict_DelItem(normal_kwds, npy_um_str_sig);
+        PyDict_SetItem(normal_kwds, npy_um_str_signature, obj);
     }
     return 0;
 }
@@ -165,7 +165,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
 
     /* If we have more args than nin, they must be the output variables.*/
     if (nargs > nin) {
-        if(nkwds > 0 && PyDict_GetItemString(*normal_kwds, "out")) {
+        if(nkwds > 0 && PyDict_GetItem(*normal_kwds, npy_um_str_out)) {
             PyErr_Format(PyExc_TypeError,
                          "argument given by name ('out') and position "
                          "(%"NPY_INTP_FMT")", nin);
@@ -199,13 +199,13 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
                     PyTuple_SET_ITEM(obj, i, item);
                 }
             }
-            PyDict_SetItemString(*normal_kwds, "out", obj);
+            PyDict_SetItem(*normal_kwds, npy_um_str_out, obj);
             Py_DECREF(obj);
         }
     }
     /* gufuncs accept either 'axes' or 'axis', but not both */
-    if (nkwds >= 2 && (PyDict_GetItemString(*normal_kwds, "axis") &&
-                       PyDict_GetItemString(*normal_kwds, "axes"))) {
+    if (nkwds >= 2 && (PyDict_Contains(*normal_kwds, npy_um_str_axis) &&
+                       PyDict_Contains(*normal_kwds, npy_um_str_axes))) {
         PyErr_SetString(PyExc_TypeError,
                         "cannot specify both 'axis' and 'axes'");
         return -1;
@@ -225,8 +225,12 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp i;
     PyObject *obj;
     static PyObject *NoValue = NULL;
-    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims",
-        "initial"};
+    static PyObject **kwlist[] = {&npy_um_str_array,
+                                  &npy_um_str_axis,
+                                  &npy_um_str_dtype,
+                                  &npy_um_str_out,
+                                  &npy_um_str_keepdims,
+                                  &npy_um_str_initial};
 
     npy_cache_import("numpy", "_NoValue", &NoValue);
     if (NoValue == NULL) return -1;
@@ -243,10 +247,10 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     }
 
     for (i = 1; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
+        if (PyDict_GetItem(*normal_kwds, *kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position "
-                         "(%"NPY_INTP_FMT")", kwlist[i], i);
+                         "argument given by name ('%S') and position "
+                         "(%"NPY_INTP_FMT")", *kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -261,7 +265,7 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
         if (i == 5 && obj == NoValue) {
             continue;
         }
-        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
+        PyDict_SetItem(*normal_kwds, *kwlist[i], obj);
         if (i == 3) {
             Py_DECREF(obj);
         }
@@ -279,7 +283,11 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp nargs = PyTuple_GET_SIZE(args);
     npy_intp i;
     PyObject *obj;
-    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
+    PyObject **kwlist[] = {&npy_um_str_array,
+                           &npy_um_str_axis,
+                           &npy_um_str_dtype,
+                           &npy_um_str_out,
+                           &npy_um_str_keepdims};
 
     if (nargs < 1 || nargs > 4) {
         PyErr_Format(PyExc_TypeError,
@@ -293,10 +301,10 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
     }
 
     for (i = 1; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
+        if (PyDict_GetItem(*normal_kwds, *kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position "
-                         "(%"NPY_INTP_FMT")", kwlist[i], i);
+                         "argument given by name ('%S') and position "
+                         "(%"NPY_INTP_FMT")", *kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -307,7 +315,7 @@ normalize_accumulate_args(PyUFuncObject *ufunc, PyObject *args,
             }
             obj = PyTuple_GetSlice(args, 3, 4);
         }
-        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
+        PyDict_SetItem(*normal_kwds, *kwlist[i], obj);
         if (i == 3) {
             Py_DECREF(obj);
         }
@@ -326,7 +334,11 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp i;
     npy_intp nargs = PyTuple_GET_SIZE(args);
     PyObject *obj;
-    static char *kwlist[] = {"array", "indices", "axis", "dtype", "out"};
+    PyObject **kwlist[] = {&npy_um_str_array,
+                           &npy_um_str_indices,
+                           &npy_um_str_axis,
+                           &npy_um_str_dtype,
+                           &npy_um_str_out};
 
     if (nargs < 2 || nargs > 5) {
         PyErr_Format(PyExc_TypeError,
@@ -341,10 +353,10 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
     }
 
     for (i = 2; i < nargs; i++) {
-        if (PyDict_GetItemString(*normal_kwds, kwlist[i])) {
+        if (PyDict_GetItem(*normal_kwds, *kwlist[i])) {
             PyErr_Format(PyExc_TypeError,
-                         "argument given by name ('%s') and position "
-                         "(%"NPY_INTP_FMT")", kwlist[i], i);
+                         "argument given by name ('%S') and position "
+                         "(%"NPY_INTP_FMT")", *kwlist[i], i);
             return -1;
         }
         obj = PyTuple_GET_ITEM(args, i);
@@ -355,7 +367,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
             }
             obj = PyTuple_GetSlice(args, 4, 5);
         }
-        PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
+        PyDict_SetItem(*normal_kwds, *kwlist[i], obj);
         if (i == 4) {
             Py_DECREF(obj);
         }
@@ -450,7 +462,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * Check inputs and outputs for overrides.
      */
     if (kwds && PyDict_CheckExact(kwds)) {
-        out = PyDict_GetItemString(kwds, "out");
+        out = PyDict_GetItem(kwds, npy_um_str_out);
     }
     num_override_args = get_array_ufunc_overrides(
         args, out, with_override, array_ufunc_methods);
@@ -490,7 +502,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                     }
                 }
                 if (all_none) {
-                    PyDict_DelItemString(normal_kwds, "out");
+                    PyDict_DelItem(normal_kwds, npy_um_str_out);
                 }
             }
             else {
@@ -525,12 +537,12 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
                     Py_INCREF(out);
                     /* steals reference */
                     PyTuple_SET_ITEM(out_tuple, 0, out);
-                    PyDict_SetItemString(normal_kwds, "out", out_tuple);
+                    PyDict_SetItem(normal_kwds, npy_um_str_out, out_tuple);
                     Py_DECREF(out_tuple);
                 }
                 else {
                     /* out=None; remove it */
-                    PyDict_DelItemString(normal_kwds, "out");
+                    PyDict_DelItem(normal_kwds, npy_um_str_out);
                 }
             }
         }
