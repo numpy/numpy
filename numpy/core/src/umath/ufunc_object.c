@@ -628,7 +628,6 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
 {
     int i, nargs;
     int nin = ufunc->nin;
-    int nout = ufunc->nout;
     int nop = ufunc->nargs;
     PyObject *obj, *context;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
