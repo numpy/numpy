@@ -647,7 +647,6 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
      * the initalization of the outputs in the kwds loop.
      */
     static ufunc_kwarg ufunc_kwargs[] = {
-        {&npy_um_str_out, NULL},      /* no converter, special-cased */
         {&npy_um_str_where, (converter *)_convert_wheremask},
         {&npy_um_str_axes, (converter *)_copy_value},
         {&npy_um_str_axis, (converter *)_copy_value},
@@ -665,10 +664,10 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
      * Some converters are from the Array_API, which are not availabe'
      * on compile time, so we insert them on the first call.
      */
-    if (ufunc_kwargs[5].convert == NULL) {
-        ufunc_kwargs[5].convert = (converter *)PyArray_CastingConverter;
-        ufunc_kwargs[6].convert = (converter *)PyArray_OrderConverter;
-        ufunc_kwargs[7].convert = (converter *)PyArray_DescrConverter2;
+    if (ufunc_kwargs[4].convert == NULL) {
+        ufunc_kwargs[4].convert = (converter *)PyArray_CastingConverter;
+        ufunc_kwargs[5].convert = (converter *)PyArray_OrderConverter;
+        ufunc_kwargs[6].convert = (converter *)PyArray_DescrConverter2;
     };
     /*
      * Initialize output objects so caller knows when outputs and optional
@@ -726,7 +725,6 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
             goto fail;
         }
     }
-
     /* Get positional output arguments */
     for (i = nin; i < nargs; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
@@ -736,31 +734,29 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     }
 
     /*
-     * Get keyword output and other arguments.
-     * Raise an error if anything else is present in the
-     * keyword dictionary.
+     * Get keyword arguments (note that any "out" has already been removed).
+     * Raise an error if anything else is present in the keyword dictionary.
      */
     if (kwds != NULL) {
         PyObject *key, *value;
         Py_ssize_t pos = 0;
-        void *outputs[12];
+        void *outputs[11];
         /*
          * We store the outputs in order, so we can easily set them
          * in our loop.  Note that if any of the out_* is NULL,
          * the keyword will automatically be treated as unwanted.
          */
-        outputs[0] = NULL;  /* out is treated differently */
-        outputs[1] = out_wheremask;
-        outputs[2] = out_axes;
-        outputs[3] = out_axis;
-        outputs[4] = out_keepdims;
-        outputs[5] = out_casting;
-        outputs[6] = out_order;
-        outputs[7] = &dtype;
-        outputs[8] = out_subok;
-        outputs[9] = out_typetup;
-        outputs[10] = &sig;
-        outputs[11] = out_extobj;
+        outputs[0] = out_wheremask;
+        outputs[1] = out_axes;
+        outputs[2] = out_axis;
+        outputs[3] = out_keepdims;
+        outputs[4] = out_casting;
+        outputs[5] = out_order;
+        outputs[6] = &dtype;
+        outputs[7] = out_subok;
+        outputs[8] = out_typetup;
+        outputs[9] = &sig;
+        outputs[10] = out_extobj;
 
         while (PyDict_Next(kwds, &pos, &key, &value)) {
             /*
@@ -771,6 +767,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
              *    normally interned this should almost always hit."""
              * And we do indeed intern them.
              */
+            void **output;
             ufunc_kwarg *kwarg = ufunc_kwargs;
             while (kwarg->key_ptr != NULL && *kwarg->key_ptr != key) {
                 kwarg++;
@@ -788,90 +785,19 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 }
             }
             /*
-             * All comparisons done; all but "out" are treated the same way.
+             * If we found a key and this keyword is desired (i.e., its
+             * output is not NULL), convert it.
              */
-            if (kwarg != ufunc_kwargs) {
-                /*
-                 * If we found a key and this keyword is desired (i.e., its
-                 * output is not NULL), convert it.
-                 */
-                void **output = outputs + (kwarg - ufunc_kwargs);
-                if (kwarg->key_ptr != NULL && *output != NULL) {
-                    if (!(*(kwarg->convert))(value, *output)) {
-                        goto fail;
-                    }
-                }
-                else {
-                    char *format = "'%S' is an invalid keyword to ufunc '%s'";
-                    PyErr_Format(PyExc_TypeError, format, key, ufunc_name);
+            output = outputs + (kwarg - ufunc_kwargs);
+            if (kwarg->key_ptr != NULL && *output != NULL) {
+                if (!(*(kwarg->convert))(value, *output)) {
                     goto fail;
                 }
             }
             else {
-                /*
-                 * Here for the "out" keyword.
-                 *
-                 * Output arrays are generally specified as a tuple of arrays
-                 * and None, but may be a single array or None for ufuncs
-                 * with a single output.
-                 */
-                if (nargs > nin) {
-                    PyErr_SetString(PyExc_ValueError,
-                        "cannot specify 'out' as both a "
-                        "positional and keyword argument");
-                    goto fail;
-                }
-                if (PyTuple_CheckExact(value)) {
-                    if (PyTuple_GET_SIZE(value) != nout) {
-                        PyErr_SetString(PyExc_ValueError,
-                            "The 'out' tuple must have exactly "
-                            "one entry per ufunc output");
-                        goto fail;
-                    }
-                    /* 'out' must be a tuple of arrays and Nones */
-                    for(i = 0; i < nout; ++i) {
-                        PyObject *val = PyTuple_GET_ITEM(value, i);
-                        if (_set_out_array(val, out_op+nin+i) < 0) {
-                            goto fail;
-                        }
-                    }
-                }
-                else if (nout == 1) {
-                    /* Can be an array if it only has one output */
-                    if (_set_out_array(value, out_op + nin) < 0) {
-                        goto fail;
-                    }
-                }
-                else {
-                    /*
-                     * If the deprecated behavior is ever removed,
-                     * keep only the else branch of this if-else
-                     */
-                    if (PyArray_Check(value) || value == Py_None) {
-                        if (DEPRECATE("passing a single array to the "
-                                      "'out' keyword argument of a "
-                                      "ufunc with\n"
-                                      "more than one output will "
-                                      "result in an error in the "
-                                      "future") < 0) {
-                            /* The future error message */
-                            PyErr_SetString(PyExc_TypeError,
-                                "'out' must be a tuple of arrays");
-                            goto fail;
-                        }
-                        if (_set_out_array(value, out_op+nin) < 0) {
-                            goto fail;
-                        }
-                    }
-                    else {
-                        PyErr_SetString(PyExc_TypeError,
-                            nout > 1 ? "'out' must be a tuple "
-                                       "of arrays" :
-                                       "'out' must be an array or a "
-                                       "tuple of a single array");
-                        goto fail;
-                    }
-                }
+                char *format = "'%S' is an invalid keyword to ufunc '%s'";
+                PyErr_Format(PyExc_TypeError, format, key, ufunc_name);
+                goto fail;
             }
         }
         /*
