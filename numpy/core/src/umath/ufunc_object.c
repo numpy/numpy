@@ -2149,6 +2149,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     if (axes != NULL && axis != NULL) {
         PyErr_SetString(PyExc_TypeError,
                         "cannot specify both 'axis' and 'axes'");
+        retval = -1;
         goto fail;
     }
     /*
@@ -2596,9 +2597,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
     /* Free the operand references and everything else */
     for (i = 0; i < nop; i++) {
-        Py_DECREF(op[i]);
-    }
-    for (i = 0; i < nop; ++i) {
+        Py_XDECREF(op[i]);
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
@@ -2606,6 +2605,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(extobj);
     Py_XDECREF(axes);
     Py_XDECREF(axis);
+    PyArray_free(remap_axis_memory);
+    PyArray_free(remap_axis);
 
     NPY_UF_DBG_PRINT("Returning Success\n");
 
@@ -2618,7 +2619,6 @@ fail:
     NpyIter_Deallocate(iter);
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
-        op[i] = NULL;
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
