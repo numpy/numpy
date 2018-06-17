@@ -31,5 +31,11 @@ NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_wrap;
 NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_finalize;
 NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_ufunc;
 NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_pyvals_name;
+NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str___call__;
+NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_reduce;
+NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_accumulate;
+NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_reduceat;
+NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_outer;
+NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_at;
 
 #endif

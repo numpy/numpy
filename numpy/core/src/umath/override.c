@@ -437,7 +437,7 @@ normalize_at_args(PyUFuncObject *ufunc, PyObject *args,
  * result of the operation, if any. If *result is NULL, there is no override.
  */
 NPY_NO_EXPORT int
-PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
+PyUFunc_CheckOverride(PyUFuncObject *ufunc, PyObject *method,
                       PyObject *args, PyObject *kwds,
                       PyObject **result)
 {
@@ -451,13 +451,26 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
     PyObject *out = NULL;
 
-    PyObject *method_name = NULL;
     PyObject *normal_args = NULL; /* normal_* holds normalized arguments. */
     PyObject *normal_kwds = NULL;
 
     PyObject *override_args = NULL;
     Py_ssize_t len;
-
+    typedef int normalizer(PyUFuncObject *, PyObject *,
+                           PyObject **, PyObject **);
+    typedef struct {
+        PyObject **name_ptr;
+        normalizer *normalize;
+    } ufunc_method;
+    ufunc_method *um;
+    static ufunc_method ufunc_methods[] = {
+        {&npy_um_str___call__, (normalizer *)normalize___call___args},
+        {&npy_um_str_reduce, (normalizer *)normalize_reduce_args},
+        {&npy_um_str_accumulate, (normalizer *)normalize_accumulate_args},
+        {&npy_um_str_reduceat, (normalizer *)normalize_reduceat_args},
+        {&npy_um_str_outer, (normalizer *)normalize_outer_args},
+        {&npy_um_str_at, (normalizer *)normalize_at_args},
+        {NULL, NULL}};
     /*
      * Check inputs and outputs for overrides.
      */
@@ -474,7 +487,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         *result = NULL;
         return 0;
     }
-
     /*
      * Normalize ufunc arguments.
      */
@@ -555,48 +567,32 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
 
     /* decide what to do based on the method. */
-
-    /* ufunc.__call__ */
-    if (strcmp(method, "__call__") == 0) {
-        status = normalize___call___args(ufunc, args, &normal_args,
-                                         &normal_kwds);
+    um = ufunc_methods;
+    while (um->name_ptr != NULL && *um->name_ptr != method) {
+        um++;
     }
-    /* ufunc.reduce */
-    else if (strcmp(method, "reduce") == 0) {
-        status = normalize_reduce_args(ufunc, args, &normal_args,
-                                       &normal_kwds);
+    /* Slow fallback, just in case */
+    if (um->name_ptr == NULL) {
+        int cmp;
+        um = ufunc_methods;
+        while (um->name_ptr != NULL &&
+               (cmp = PyObject_RichCompareBool(method, *um->name_ptr, Py_EQ)) == 0) {
+            um++;
+        }
+        if (cmp < 0) {
+            goto fail;
+        }
     }
-    /* ufunc.accumulate */
-    else if (strcmp(method, "accumulate") == 0) {
-        status = normalize_accumulate_args(ufunc, args, &normal_args,
-                                           &normal_kwds);
+    if (um->normalize) {
+        status = (*(um->normalize))(ufunc, args, &normal_args, &normal_kwds);
+        if (status < 0) {
+            goto fail;
+        }
     }
-    /* ufunc.reduceat */
-    else if (strcmp(method, "reduceat") == 0) {
-        status = normalize_reduceat_args(ufunc, args, &normal_args,
-                                         &normal_kwds);
-    }
-    /* ufunc.outer */
-    else if (strcmp(method, "outer") == 0) {
-        status = normalize_outer_args(ufunc, args, &normal_args, &normal_kwds);
-    }
-    /* ufunc.at */
-    else if (strcmp(method, "at") == 0) {
-        status = normalize_at_args(ufunc, args, &normal_args, &normal_kwds);
-    }
-    /* unknown method */
     else {
         PyErr_Format(PyExc_TypeError,
-                     "Internal Numpy error: unknown ufunc method '%s' in call "
+                     "Internal Numpy error: unknown ufunc method '%S' in call "
                      "to PyUFunc_CheckOverride", method);
-        status = -1;
-    }
-    if (status != 0) {
-        goto fail;
-    }
-
-    method_name = PyUString_FromString(method);
-    if (method_name == NULL) {
         goto fail;
     }
 
@@ -647,8 +643,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         }
         Py_INCREF(ufunc);
         PyTuple_SET_ITEM(override_args, 1, (PyObject *)ufunc);
-        Py_INCREF(method_name);
-        PyTuple_SET_ITEM(override_args, 2, method_name);
+        Py_INCREF(method);
+        PyTuple_SET_ITEM(override_args, 2, method);
         for (i = 0; i < len; i++) {
             PyObject *item = PyTuple_GET_ITEM(normal_args, i);
 
@@ -717,7 +713,6 @@ cleanup:
         Py_XDECREF(array_ufunc_methods[i]);
     }
     Py_XDECREF(normal_args);
-    Py_XDECREF(method_name);
     Py_XDECREF(normal_kwds);
     return status;
 }

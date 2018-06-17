@@ -4496,7 +4496,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", inout_args, other_kwds, &override);
+    errval = PyUFunc_CheckOverride(ufunc, npy_um_str___call__,
+                                   inout_args, other_kwds, &override);
     if (errval) {
         Py_XDECREF(inout_args);
         Py_XDECREF(other_kwds);
@@ -5162,7 +5163,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
 
-    errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
+    errval = PyUFunc_CheckOverride(ufunc, npy_um_str_outer, args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5258,7 +5259,7 @@ ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduce", args, kwds, &override);
+    errval = PyUFunc_CheckOverride(ufunc, npy_um_str_reduce, args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5274,7 +5275,7 @@ ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "accumulate", args, kwds, &override);
+    errval = PyUFunc_CheckOverride(ufunc, npy_um_str_accumulate, args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5290,7 +5291,7 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int errval;
     PyObject *override = NULL;
 
-    errval = PyUFunc_CheckOverride(ufunc, "reduceat", args, kwds, &override);
+    errval = PyUFunc_CheckOverride(ufunc, npy_um_str_reduceat, args, kwds, &override);
     if (errval) {
         return NULL;
     }
@@ -5354,7 +5355,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    errval = PyUFunc_CheckOverride(ufunc, "at", args, NULL, &override);
+    errval = PyUFunc_CheckOverride(ufunc, npy_um_str_at, args, NULL, &override);
     if (errval) {
         return NULL;
     }

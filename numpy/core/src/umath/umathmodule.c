@@ -246,6 +246,12 @@ NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str___call__;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_reduce;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_accumulate;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_reduceat;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_outer;
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_at;
 
 /* intern some strings used in ufuncs */
 static int
@@ -271,9 +277,23 @@ intern_strings(void)
     npy_um_str_array_finalize = PyUString_InternFromString("__array_finalize__");
     npy_um_str_ufunc = PyUString_InternFromString("__array_ufunc__");
     npy_um_str_pyvals_name = PyUString_InternFromString(UFUNC_PYVALS_NAME);
-
-    return npy_um_str_out && npy_um_str_subok && npy_um_str_array_prepare &&
-        npy_um_str_array_wrap && npy_um_str_array_finalize && npy_um_str_ufunc;
+    npy_um_str___call__ = PyUString_InternFromString("__call__");
+    npy_um_str_reduce = PyUString_InternFromString("reduce");
+    npy_um_str_accumulate = PyUString_InternFromString("accumulate");
+    npy_um_str_reduceat = PyUString_InternFromString("reduceat");
+    npy_um_str_outer = PyUString_InternFromString("outer");
+    npy_um_str_at = PyUString_InternFromString("at");
+    return (npy_um_str_out && npy_um_str_where &&
+            npy_um_str_axes && npy_um_str_axis && npy_um_str_keepdims &&
+            npy_um_str_casting && npy_um_str_order && npy_um_str_dtype &&
+            npy_um_str_subok && npy_um_str_signature && npy_um_str_sig &&
+            npy_um_str_extobj && npy_um_str_array && npy_um_str_initial &&
+            npy_um_str_indices && npy_um_str_array_prepare &&
+            npy_um_str_array_wrap && npy_um_str_array_finalize &&
+            npy_um_str_ufunc && npy_um_str_pyvals_name &&
+            npy_um_str___call__ && npy_um_str_reduce &&
+            npy_um_str_accumulate && npy_um_str_reduceat &&
+            npy_um_str_outer && npy_um_str_at);
 }
 
 /* Setup the umath module */
