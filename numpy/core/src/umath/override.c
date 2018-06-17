@@ -1,4 +1,5 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #define NO_IMPORT_ARRAY
 
 #include "npy_pycompat.h"
@@ -54,6 +55,12 @@ get_array_ufunc_overrides(PyObject *args, PyObject *out_kwd_obj,
         }
         else {
             obj = PyTuple_GET_ITEM(out_kwd_obj, i - nin);
+        }
+        /*
+         * Skip basic types.
+         */
+        if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
+            continue;
         }
         /*
          * Have we seen this class before?  If so, ignore.
