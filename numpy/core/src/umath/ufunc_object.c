@@ -4534,10 +4534,15 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
      * None --- array-object passed in don't call PyArray_Return
      * method --- the __array_wrap__ method to call.
      */
-    if (make_full_arg_tuple(&full_args, ufunc->nin, ufunc->nout, args, kwds) < 0) {
-        goto fail;
+    if (PyTuple_GET_SIZE(inout_args) == ufunc->nargs) {
+        full_args.in = PyTuple_GetSlice(inout_args, 0, ufunc->nin);
+        full_args.out = PyTuple_GetSlice(inout_args, ufunc->nin, ufunc->nargs);
     }
-    _find_array_wrap(full_args, kwds, wraparr, ufunc->nin, ufunc->nout);
+    else {
+        Py_INCREF(inout_args);
+        full_args.in = inout_args;
+    }
+    _find_array_wrap(full_args, other_kwds, wraparr, ufunc->nin, ufunc->nout);
 
     /* wrap outputs */
     for (i = 0; i < ufunc->nout; i++) {
