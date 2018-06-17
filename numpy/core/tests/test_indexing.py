@@ -833,7 +833,10 @@ class TestMultiIndexingAutomated(object):
                 # is not safe. It rejects np.array([1., 2.]) but not
                 # [1., 2.] as index (same for ie. np.take).
                 # (Note the importance of empty lists if changing this here)
-                indx = np.array(indx, dtype=np.intp)
+                try:
+                    indx = np.array(indx, dtype=np.intp)
+                except ValueError:
+                    raise IndexError
                 in_indices[i] = indx
             elif indx.dtype.kind != 'b' and indx.dtype.kind != 'i':
                 raise IndexError('arrays used as indices must be of '
@@ -986,9 +989,13 @@ class TestMultiIndexingAutomated(object):
                     # Maybe never happens...
                     raise ValueError
                 arr = arr.take(mi.ravel(), axis=ax)
-                arr = arr.reshape((arr.shape[:ax]
-                                    + mi.shape
-                                    + arr.shape[ax+1:]))
+                try:
+                    arr = arr.reshape((arr.shape[:ax]
+                                        + mi.shape
+                                        + arr.shape[ax+1:]))
+                except ValueError:
+                    # too many dimensions, probably
+                    raise IndexError
                 ax += mi.ndim
                 continue
 
@@ -1014,8 +1021,8 @@ class TestMultiIndexingAutomated(object):
         except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
-            assert_raises(Exception, arr.__getitem__, index)
-            assert_raises(Exception, arr.__setitem__, index, 0)
+            assert_raises(type(e), arr.__getitem__, index)
+            assert_raises(type(e), arr.__setitem__, index, 0)
             if HAS_REFCOUNT:
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
@@ -1038,8 +1045,8 @@ class TestMultiIndexingAutomated(object):
         except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
-            assert_raises(Exception, arr.__getitem__, index)
-            assert_raises(Exception, arr.__setitem__, index, 0)
+            assert_raises(type(e), arr.__getitem__, index)
+            assert_raises(type(e), arr.__setitem__, index, 0)
             if HAS_REFCOUNT:
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
@@ -1127,10 +1134,8 @@ class TestMultiIndexingAutomated(object):
 
     def test_1d(self):
         a = np.arange(10)
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
-            for index in self.complex_indices:
-                self._check_single_index(a, index)
+        for index in self.complex_indices:
+            self._check_single_index(a, index)
 
 class TestFloatNonIntegerArgument(object):
     """
