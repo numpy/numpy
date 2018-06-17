@@ -206,27 +206,32 @@ state underneath them.  It can be hard to categorize and count API usages
 consistently and usefully, but a very common usage is in unit tests where many
 of the problems of global state are less likely.
 
-The initial release of the new PRNG subsystem MUST leave these convenience
-functions as aliases to the methods on a global ``RandomState`` that is
-initialized with a Mersenne Twister basic RNG object.  A call to
-``numpy.random.seed()`` will be forwarded to that basic RNG object.  In order
-to allow certain workarounds, it MUST be possible to replace the basic RNG
-underneath the global ``RandomState`` with any other basic RNG object (we leave
-the precise API details up to the new subsystem).  Calling ``numpy.random.seed()``
-thereafter SHOULD just pass the given seed to the current basic RNG object and
-not attempt to reset the basic RNG to the Mersenne Twister.  The global
-``RandomState`` instance MUST be accessible by the name
-``numpy.random.mtrand._rand``: Robert Kern long ago promised ``scikit-learn``
-that this name would be stable.  Whoops.
+This NEP does not propose removing these functions or changing them to use the
+less-stable ``RandomGenerator`` distribution implementations.  Future NEPs
+might.
 
-The set of ``numpy.random.*`` convenience functions SHALL remain the same as
-they currently are.  They SHALL be aliases to the ``RandomState`` methods and
-not the new less-stable distributions class (``RandomGenerator``, in the
-examples above). Users who want to get the fastest, best distributions can
-follow best practices and instantiate generator objects explicitly.
+Specifically, the initial release of the new PRNG subsystem SHALL leave these
+convenience functions as aliases to the methods on a global ``RandomState``
+that is initialized with a Mersenne Twister basic RNG object.  A call to
+``numpy.random.seed()`` will be forwarded to that basic RNG object.  In
+addition, the global ``RandomState`` instance MUST be accessible in this
+initial release by the name ``numpy.random.mtrand._rand``: Robert Kern long ago
+promised ``scikit-learn`` that this name would be stable.  Whoops.
 
-After we have experience with the new PRNG subsystem, we can and should revisit
-these issues in future NEPs.
+In order to allow certain workarounds, it MUST be possible to replace the basic
+RNG underneath the global ``RandomState`` with any other basic RNG object (we
+leave the precise API details up to the new subsystem).  Calling
+``numpy.random.seed()`` thereafter SHOULD just pass the given seed to the
+current basic RNG object and not attempt to reset the basic RNG to the Mersenne
+Twister.  The set of ``numpy.random.*`` convenience functions SHALL remain the
+same as they currently are.  They SHALL be aliases to the ``RandomState``
+methods and not the new less-stable distributions class (``RandomGenerator``,
+in the examples above). Users who want to get the fastest, best distributions
+can follow best practices and instantiate generator objects explicitly.
+
+This NEP does not propose that these requirements remain in perpetuity.  After
+we have experience with the new PRNG subsystem, we can and should revisit these
+issues in future NEPs.
 
 
 Alternatives
