@@ -4507,7 +4507,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return override;
     }
 
-    errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
+    errval = PyUFunc_GenericFunction(ufunc, inout_args, other_kwds, mps);
     if (errval < 0) {
         goto fail;
     }
