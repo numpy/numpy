@@ -157,7 +157,7 @@ PyUFunc_clearfperr()
  * defines the method.
  */
 static PyObject*
-_find_array_method(PyObject *args, PyObject *method_name)
+_find_array_method(PyObject *args, npy_intp n, PyObject *method_name)
 {
     int i, n_methods;
     PyObject *obj;
@@ -165,7 +165,7 @@ _find_array_method(PyObject *args, PyObject *method_name)
     PyObject *method = NULL;
 
     n_methods = 0;
-    for (i = 0; i < PyTuple_GET_SIZE(args); i++) {
+    for (i = 0; i < n; i++) {
         obj = PyTuple_GET_ITEM(args, i);
         if (PyArray_CheckExact(obj) || PyArray_IsAnyScalar(obj)) {
             continue;
@@ -273,7 +273,7 @@ _find_array_prepare(ufunc_full_args args,
      * Determine the prepping function given by the input arrays
      * (could be NULL).
      */
-    prep = _find_array_method(args.in, npy_um_str_array_prepare);
+    prep = _find_array_method(args.in, nin, npy_um_str_array_prepare);
     /*
      * For all the output arrays decide what to do.
      *
@@ -4159,7 +4159,7 @@ _find_array_wrap(ufunc_full_args args, PyObject *kwds,
      * Determine the wrapping function given by the input arrays
      * (could be NULL).
      */
-    wrap = _find_array_method(args.in, npy_um_str_array_wrap);
+    wrap = _find_array_method(args.in, nin, npy_um_str_array_wrap);
 
     /*
      * For all the output arrays decide what to do.
