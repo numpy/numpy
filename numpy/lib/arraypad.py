@@ -259,35 +259,84 @@ def _validate_lengths(narray, number_elements):
 # Public functions
 
 
-def pad(array, pad_width, mode, stat_length=None, constant_values=0,
-        end_values=0, reflect_type="even", **kwargs):
+def pad(array, pad_width, mode, **kwargs):
     if not np.asarray(pad_width).dtype.kind == 'i':
         raise TypeError('`pad_width` must be of integral type.')
 
     array = np.asarray(array)
     pad_width = _validate_lengths(array, pad_width)
 
-    # Create array with final shape and original values
-    padded = _pad_empty(array, pad_width)
+    allowedkwargs = {
+        'constant': ['constant_values'],
+        'edge': [],
+        'linear_ramp': ['end_values'],
+        'maximum': ['stat_length'],
+        'mean': ['stat_length'],
+        'median': ['stat_length'],
+        'minimum': ['stat_length'],
+        'reflect': ['reflect_type'],
+        'symmetric': ['reflect_type'],
+        'wrap': [],
+        }
 
-    if hasattr(mode, "__call__"):
+    kwdefaults = {
+        'stat_length': None,
+        'constant_values': 0,
+        'end_values': 0,
+        'reflect_type': 'even',
+        }
+
+    if isinstance(mode, np.compat.basestring):
+        # Make sure have allowed kwargs appropriate for mode
+        for key in kwargs:
+            if key not in allowedkwargs[mode]:
+                raise ValueError('%s keyword not in allowed keywords %s' %
+                                 (key, allowedkwargs[mode]))
+
+        # Set kwarg defaults
+        for kw in allowedkwargs[mode]:
+            kwargs.setdefault(kw, kwdefaults[kw])
+
+        # Need to only normalize particular keywords.
+        for i in kwargs:
+            if i == 'stat_length':
+                kwargs[i] = _validate_lengths(array, kwargs[i])
+            if i in ['end_values', 'constant_values']:
+                kwargs[i] = _normalize_shape(array, kwargs[i],
+                                             cast_to_int=False)
+    else:
         # Drop back to old, slower np.apply_along_axis mode for user-supplied
         # vector function
         function = mode
-        # Set missing pad values
-        for iaxis in range(array.ndim):
+
+        # Create a new padded array
+        rank = list(range(array.ndim))
+        total_dim_increase = [np.sum(pad_width[i]) for i in rank]
+        offset_slices = tuple(
+            slice(pad_width[i][0], pad_width[i][0] + array.shape[i])
+            for i in rank)
+        new_shape = np.array(array.shape) + total_dim_increase
+        newmat = np.zeros(new_shape, array.dtype)
+
+        # Insert the original array into the padded array
+        newmat[offset_slices] = array
+
+        # This is the core of pad ...
+        for iaxis in rank:
             np.apply_along_axis(function,
                                 iaxis,
-                                padded,
+                                newmat,
                                 pad_width[iaxis],
                                 iaxis,
                                 kwargs)
+        return newmat
 
-    elif mode == "constant":
-        constant_values = _normalize_shape(
-            array, constant_values, cast_to_int=False)
+    # Create array with final shape and original values
+    padded = _pad_empty(array, pad_width)
+
+    if mode == "constant":
         for axis, ((left_pad, right_pad), (left_value, right_value)) \
-                in enumerate(zip(pad_width, constant_values)):
+                in enumerate(zip(pad_width, kwargs["constant_values"])):
             _set_generic(padded, axis, left_pad, left_value)
             _set_generic(padded, axis, -right_pad, right_value)
 
@@ -297,9 +346,8 @@ def pad(array, pad_width, mode, stat_length=None, constant_values=0,
             _set_edge(padded, axis, -right_pad)
 
     elif mode == "linear_ramp":
-        end_values = _normalize_shape(array, end_values, cast_to_int=False)
         for axis, ((left_pad, right_pad), (left_value, right_value)) \
-                in enumerate(zip(pad_width, end_values)):
+                in enumerate(zip(pad_width, kwargs["end_values"])):
             _set_linear_ramp(padded, axis, left_pad, left_value)
             _set_linear_ramp(padded, axis, -right_pad, right_value)
 
