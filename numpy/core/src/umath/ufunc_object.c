@@ -2535,10 +2535,6 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         return -1;
     }
 
-    if (ufunc->core_enabled) {
-        return PyUFunc_GeneralizedFunction(ufunc, args, kwds, op);
-    }
-
     nin = ufunc->nin;
     nout = ufunc->nout;
     nop = nin + nout;
@@ -4335,7 +4331,12 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return override;
     }
 
-    errval = PyUFunc_GenericFunction(ufunc, inout_args, other_kwds, mps);
+    if (ufunc->core_enabled) {
+        errval = PyUFunc_GeneralizedFunction(ufunc, inout_args, other_kwds, mps);
+    }
+    else {
+        errval = PyUFunc_GenericFunction(ufunc, inout_args, other_kwds, mps);
+    }
     if (errval < 0) {
         goto fail;
     }
