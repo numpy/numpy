@@ -12,8 +12,9 @@ from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,)
 from numpy.lib import pad
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestConditionalShortcuts(object):
+
+    @pytest.mark.skip(reason="not yet implemented")
     def test_zero_padding_shortcuts(self):
         test = np.arange(120).reshape(4, 5, 6)
         pad_amt = [(0, 0) for axis in test.shape]
@@ -56,8 +57,8 @@ class TestConditionalShortcuts(object):
                                pad(test, pad_amt, mode=mode, stat_length=30))
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestStatistic(object):
+
     def test_check_mean_stat_length(self):
         a = np.arange(100).astype('f')
         a = pad(a, ((25, 20), ), 'mean', stat_length=((2, 3), ))
@@ -352,6 +353,7 @@ class TestStatistic(object):
 
 
 class TestConstant(object):
+
     def test_check_constant(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'constant', constant_values=(10, 20))
@@ -510,6 +512,7 @@ class TestConstant(object):
 
 
 class TestLinearRamp(object):
+
     def test_check_simple(self):
         a = np.arange(100).astype('f')
         a = pad(a, (25, 20), 'linear_ramp', end_values=(4, 5))
@@ -897,8 +900,8 @@ class TestWrap(object):
         assert_array_equal(a, b)
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestStatLen(object):
+
     def test_check_simple(self):
         a = np.arange(30)
         a = np.reshape(a, (6, 5))
@@ -922,6 +925,7 @@ class TestStatLen(object):
 
 
 class TestEdge(object):
+
     def test_check_simple(self):
         a = np.arange(12)
         a = np.reshape(a, (4, 3))
@@ -961,6 +965,7 @@ class TestEdge(object):
 
 
 class TestZeroPadWidth(object):
+
     def test_zero_pad_width(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
@@ -969,6 +974,7 @@ class TestZeroPadWidth(object):
 
 
 class TestLegacyVectorFunction(object):
+
     def test_legacy_vector_functionality(self):
         def _padwithtens(vector, pad_width, iaxis, kwargs):
             vector[:pad_width[0]] = 10
@@ -991,6 +997,7 @@ class TestLegacyVectorFunction(object):
 
 
 class TestNdarrayPadWidth(object):
+
     def test_check_simple(self):
         a = np.arange(12)
         a = np.reshape(a, (4, 3))
@@ -1012,6 +1019,7 @@ class TestNdarrayPadWidth(object):
 
 
 class TestUnicodeInput(object):
+
     def test_unicode_mode(self):
         constant_mode = u'constant'
         a = np.pad([1], 2, mode=constant_mode)
@@ -1019,8 +1027,8 @@ class TestUnicodeInput(object):
         assert_array_equal(a, b)
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestValueError1(object):
+
     def test_check_simple(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
@@ -1042,6 +1050,7 @@ class TestValueError1(object):
         assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
                       **kwargs)
 
+    @pytest.mark.skip(reason="not yet implemented")
     def test_check_empty_array(self):
         assert_raises(ValueError, pad, [], 4, mode='reflect')
         assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')
@@ -1049,8 +1058,8 @@ class TestValueError1(object):
                       mode='reflect')
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestValueError2(object):
+
     def test_check_negative_pad_amount(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
@@ -1059,8 +1068,8 @@ class TestValueError2(object):
                       **kwargs)
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestValueError3(object):
+
     def test_check_kwarg_not_allowed(self):
         arr = np.arange(30).reshape(5, 6)
         assert_raises(ValueError, pad, arr, 4, mode='mean',
@@ -1088,8 +1097,8 @@ class TestValueError3(object):
                       mode='constant')
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestTypeError1(object):
+
     def test_float(self):
         arr = np.arange(30)
         assert_raises(TypeError, pad, arr, ((-2.1, 3), (3, 2)))
