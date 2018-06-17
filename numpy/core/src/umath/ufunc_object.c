@@ -4055,31 +4055,23 @@ fail:
  * should just have PyArray_Return called.
  */
 static void
-_find_array_wrap(PyObject *args, PyObject *kwds,
+_find_array_wrap(PyObject *args, int subok,
                 PyObject **output_wrap, int nin, int nout)
 {
     int i;
-    PyObject *obj;
     PyObject *wrap = NULL;
 
     /*
      * If a 'subok' parameter is passed and isn't True, don't wrap but put None
      * into slots with out arguments which means return the out argument
      */
-    if (kwds != NULL && (obj = PyDict_GetItem(kwds,
-                                              npy_um_str_subok)) != NULL) {
-        if (obj != Py_True) {
-            /* skip search for wrap members */
-            goto handle_out;
-        }
+    if (subok) {
+        /*
+         * Determine the wrapping function given by the input arrays
+         * (could be NULL).
+         */
+        wrap = _find_array_method(args, nin, npy_um_str_array_wrap);
     }
-
-    /*
-     * Determine the wrapping function given by the input arrays
-     * (could be NULL).
-     */
-    wrap = _find_array_method(args, nin, npy_um_str_array_wrap);
-
     /*
      * For all the output arrays decide what to do.
      *
@@ -4092,7 +4084,6 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
      * exact ndarray so that no PyArray_Return is
      * done in that case.
      */
-handle_out:
     if (PyTuple_GET_SIZE(args) == nin) {
         for (i = 0; i < nout; i++) {
             Py_XINCREF(wrap);
@@ -4276,8 +4267,10 @@ _possibly_wrap_outputs(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
 {
     int i;
     PyObject *wraparr[NPY_MAXARGS];
+    PyObject *subok_obj = kwds? PyDict_GetItem(kwds, npy_um_str_subok) : NULL;
+    int subok = subok_obj ? (subok_obj == Py_True) : 1;
 
-    _find_array_wrap(args, kwds, wraparr, ufunc->nin, ufunc->nout);
+   _find_array_wrap(args, subok, wraparr, ufunc->nin, ufunc->nout);
 
     /* wrap outputs */
     for (i = 0; i < ufunc->nout; i++) {
