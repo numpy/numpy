@@ -11,6 +11,65 @@ import numpy as np
 __all__ = ['pad']
 
 
+###############################################################################
+# Private utility functions.
+
+
+def _arange_ndarray(shape, axis, reverse=False):
+    """
+    Create an ndarray of `shape` with increments along specified `axis`
+
+    Parameters
+    ----------
+    shape : tuple of ints
+        Shape of desired array. Should be equivalent to `arr.shape` except
+        `shape[axis]` which may have any positive value.
+    axis : int
+        Axis to increment along.
+    reverse : bool
+        If False, increment in a positive fashion from 1 to `shape[axis]`,
+        inclusive. If True, the bounds are the same but the order reversed.
+
+    Returns
+    -------
+    arr : ndarray
+        Output array with `shape` that in- or decrements along the given
+        `axis`.
+
+    Notes
+    -----
+    The range is deliberately 1-indexed for this specific use case. Think of
+    this algorithm as broadcasting `np.arange` to a single `axis` of an
+    arbitrarily shaped ndarray.
+    """
+    init_shape = (1,) * axis + (shape[axis],) + (1,) * (len(shape) - axis - 1)
+    if not reverse:
+        arr = np.arange(1, shape[axis] + 1)
+    else:
+        arr = np.arange(shape[axis], 0, -1)
+    arr = arr.reshape(init_shape)
+    for i, dim in enumerate(shape):
+        if arr.shape[i] != dim:
+            arr = arr.repeat(dim, axis=i)
+    return arr
+
+
+def _round_if_needed(arr, dtype):
+    """
+    Rounds arr inplace if destination dtype is integer.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    dtype : dtype
+        The dtype of the destination array.
+
+    """
+    if np.issubdtype(dtype, np.integer):
+        arr.round(out=arr)
+
+
 def _slice_at_axis(shape, axis, sl):
     """
     Construct a slice tuple the length of shape, with sl at the specified axis
@@ -33,6 +92,66 @@ def _slice_column(shape, axis, from_index, column_width=1):
     else:
         sl = slice(from_index - column_width, from_index)
     return _slice_at_axis(shape, axis, sl)
+
+
+def _pad_empty(arr, pad_widths):
+    """Pad array with undefined values.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Array to grow.
+    pad_widths : sequence of tuple[int, int]
+        Pad width on both sides for each dimension in `arr`.
+
+    Returns
+    -------
+    padded : ndarray
+        Larger array with undefined values in padded areas.
+    """
+    # Allocate grown array
+    new_shape = tuple(
+        size + left + right
+        for size, (left, right) in zip(arr.shape, pad_widths)
+    )
+    padded = np.empty(new_shape, dtype=arr.dtype)
+
+    # Copy old array into correct space
+    old_area = tuple(
+        slice(left, left + size)
+        for size, (left, right) in zip(arr.shape, pad_widths)
+    )
+    padded[old_area] = arr
+
+    return padded
+
+
+def _set_generic(arr, axis, pad_index, values):
+    pad_area = _slice_pad_area(arr.shape, axis, pad_index)
+    arr[pad_area] = values
+
+
+def _set_edge(arr, axis, pad_index):
+    edge_slice = _slice_column(arr.shape, axis, pad_index)
+    edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
+    _set_generic(arr, axis, pad_index, edge_arr)
+
+
+def _set_linear_ramp(arr, axis, pad_index, end_value):
+    pad_shape = arr.shape[:axis] + (abs(pad_index),) + arr.shape[(axis + 1):]
+    reverse = True if 0 <= pad_index else False
+    linear_ramp = _arange_ndarray(tuple(pad_shape), axis, reverse)
+
+    edge_slice = _slice_column(arr.shape, axis, pad_index)
+    edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
+
+    slope = (end_value - edge_arr) / float(abs(pad_index))
+    linear_ramp = linear_ramp * slope
+    linear_ramp += edge_arr
+    _round_if_needed(linear_ramp, arr.dtype)
+
+    _set_generic(arr, axis, pad_index,
+                 linear_ramp.astype(arr.dtype, copy=False))
 
 
 def _normalize_shape(ndarray, shape, cast_to_int=True):
@@ -136,119 +255,8 @@ def _validate_lengths(narray, number_elements):
     return normshp
 
 
-def _arange_ndarray(shape, axis, reverse=False):
-    """
-    Create an ndarray of `shape` with increments along specified `axis`
-
-    Parameters
-    ----------
-    shape : tuple of ints
-        Shape of desired array. Should be equivalent to `arr.shape` except
-        `shape[axis]` which may have any positive value.
-    axis : int
-        Axis to increment along.
-    reverse : bool
-        If False, increment in a positive fashion from 1 to `shape[axis]`,
-        inclusive. If True, the bounds are the same but the order reversed.
-
-    Returns
-    -------
-    arr : ndarray
-        Output array with `shape` that in- or decrements along the given
-        `axis`.
-
-    Notes
-    -----
-    The range is deliberately 1-indexed for this specific use case. Think of
-    this algorithm as broadcasting `np.arange` to a single `axis` of an
-    arbitrarily shaped ndarray.
-    """
-    init_shape = (1,) * axis + (shape[axis],) + (1,) * (len(shape) - axis - 1)
-    if not reverse:
-        arr = np.arange(1, shape[axis] + 1)
-    else:
-        arr = np.arange(shape[axis], 0, -1)
-    arr = arr.reshape(init_shape)
-    for i, dim in enumerate(shape):
-        if arr.shape[i] != dim:
-            arr = arr.repeat(dim, axis=i)
-    return arr
-
-
-def _round_if_needed(arr, dtype):
-    """
-    Rounds arr inplace if destination dtype is integer.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-    dtype : dtype
-        The dtype of the destination array.
-
-    """
-    if np.issubdtype(dtype, np.integer):
-        arr.round(out=arr)
-
-
-def _pad_empty(arr, pad_widths):
-    """Pad array with undefined values.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Array to grow.
-    pad_widths : sequence of tuple[int, int]
-        Pad width on both sides for each dimension in `arr`.
-
-    Returns
-    -------
-    padded : ndarray
-        Larger array with undefined values in padded areas.
-    """
-    # Allocate grown array
-    new_shape = tuple(
-        size + left + right
-        for size, (left, right) in zip(arr.shape, pad_widths)
-    )
-    padded = np.empty(new_shape, dtype=arr.dtype)
-
-    # Copy old array into correct space
-    old_area = tuple(
-        slice(left, left + size)
-        for size, (left, right) in zip(arr.shape, pad_widths)
-    )
-    padded[old_area] = arr
-
-    return padded
-
-
-def _set_generic(arr, axis, pad_index, values):
-    pad_area = _slice_pad_area(arr.shape, axis, pad_index)
-    arr[pad_area] = values
-
-
-def _set_edge(arr, axis, pad_index):
-    edge_slice = _slice_column(arr.shape, axis, pad_index)
-    edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
-    _set_generic(arr, axis, pad_index, edge_arr)
-
-
-def _set_linear_ramp(arr, axis, pad_index, end_value):
-    pad_shape = arr.shape[:axis] + (abs(pad_index),) + arr.shape[(axis + 1):]
-    reverse = True if 0 <= pad_index else False
-    linear_ramp = _arange_ndarray(tuple(pad_shape), axis, reverse)
-
-    edge_slice = _slice_column(arr.shape, axis, pad_index)
-    edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
-
-    slope = (end_value - edge_arr) / float(abs(pad_index))
-    linear_ramp = linear_ramp * slope
-    linear_ramp += edge_arr
-    _round_if_needed(linear_ramp, arr.dtype)
-
-    _set_generic(arr, axis, pad_index,
-                 linear_ramp.astype(arr.dtype, copy=False))
+###############################################################################
+# Public functions
 
 
 def pad(array, pad_width, mode, stat_length=None, constant_values=0,
