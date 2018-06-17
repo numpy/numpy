@@ -4253,6 +4253,69 @@ get_inout_args(
     return 0;
 }
 
+/*
+ * Use __array_wrap__ on all outputs
+ * if present on one of the input arguments.
+ * If present for multiple inputs:
+ * use __array_wrap__ of input object with largest
+ * __array_priority__ (default = 0.0)
+ *
+ * Exception:  we should not wrap outputs for items already
+ * passed in as output-arguments.  These items should either
+ * be left unwrapped or wrapped by calling their own __array_wrap__
+ * routine.
+ *
+ * For each output argument, wrap will be either
+ * NULL --- call PyArray_Return() -- default if no output arguments given
+ * None --- array-object passed in don't call PyArray_Return
+ * method --- the __array_wrap__ method to call.
+ */
+static int
+_possibly_wrap_outputs(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds,
+                       PyArrayObject **mps, PyObject **retobj)
+{
+    int i;
+    PyObject *wraparr[NPY_MAXARGS];
+
+    _find_array_wrap(args, kwds, wraparr, ufunc->nin, ufunc->nout);
+
+    /* wrap outputs */
+    for (i = 0; i < ufunc->nout; i++) {
+        int j = ufunc->nin+i;
+        PyObject *wrap = wraparr[i];
+
+        if (wrap == NULL) {
+            /* default behavior */
+            retobj[i] = PyArray_Return(mps[j]);
+        }
+        else if (wrap == Py_None) {
+            Py_DECREF(wrap);
+            retobj[i] = (PyObject *)mps[j];
+        }
+        else {
+            PyObject *res;
+            res = PyObject_CallFunction(
+                wrap, "O(OOi)", mps[j], ufunc, args, i);
+
+            /* Handle __array_wrap__ that does not accept a context argument */
+            if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+                res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
+            }
+            Py_DECREF(wrap);
+            Py_DECREF(mps[j]);
+            mps[j] = NULL;  /* Prevent fail double-freeing this */
+            if (res == NULL) {
+                goto fail;
+            }
+            retobj[i] = res;
+        }
+    }
+    return 0;
+
+fail:
+    return -1;
+}
 
 static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
@@ -4260,7 +4323,6 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int i;
     PyArrayObject *mps[NPY_MAXARGS];
     PyObject *retobj[NPY_MAXARGS];
-    PyObject *wraparr[NPY_MAXARGS];
     PyObject *override = NULL;
     PyObject *inout_args = NULL, *other_kwds = NULL;
     int errval;
@@ -4291,56 +4353,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         Py_XDECREF(mps[i]);
     }
 
-    /*
-     * Use __array_wrap__ on all outputs
-     * if present on one of the input arguments.
-     * If present for multiple inputs:
-     * use __array_wrap__ of input object with largest
-     * __array_priority__ (default = 0.0)
-     *
-     * Exception:  we should not wrap outputs for items already
-     * passed in as output-arguments.  These items should either
-     * be left unwrapped or wrapped by calling their own __array_wrap__
-     * routine.
-     *
-     * For each output argument, wrap will be either
-     * NULL --- call PyArray_Return() -- default if no output arguments given
-     * None --- array-object passed in don't call PyArray_Return
-     * method --- the __array_wrap__ method to call.
-     */
-    _find_array_wrap(inout_args, other_kwds, wraparr, ufunc->nin, ufunc->nout);
-
-    /* wrap outputs */
-    for (i = 0; i < ufunc->nout; i++) {
-        int j = ufunc->nin+i;
-        PyObject *wrap = wraparr[i];
-
-        if (wrap == NULL) {
-            /* default behavior */
-            retobj[i] = PyArray_Return(mps[j]);
-        }
-        else if (wrap == Py_None) {
-            Py_DECREF(wrap);
-            retobj[i] = (PyObject *)mps[j];
-        }
-        else {
-            PyObject *res;
-            res = PyObject_CallFunction(
-                wrap, "O(OOi)", mps[j], ufunc, inout_args, i);
-
-            /* Handle __array_wrap__ that does not accept a context argument */
-            if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_Clear();
-                res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
-            }
-            Py_DECREF(wrap);
-            Py_DECREF(mps[j]);
-            mps[j] = NULL;  /* Prevent fail double-freeing this */
-            if (res == NULL) {
-                goto fail;
-            }
-            retobj[i] = res;
-        }
+    if (_possibly_wrap_outputs(ufunc, inout_args, other_kwds, mps, retobj) < 0) {
+        goto fail;
     }
 
     Py_XDECREF(inout_args);
