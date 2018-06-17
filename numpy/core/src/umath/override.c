@@ -473,8 +473,9 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, PyObject *method,
         {NULL, NULL}};
     /*
      * Check inputs and outputs for overrides.
+     * For __call__, we know any "out" has already been removed from dict.
      */
-    if (kwds && PyDict_CheckExact(kwds)) {
+    if (method != npy_um_str___call__ && kwds && PyDict_CheckExact(kwds)) {
         out = PyDict_GetItem(kwds, npy_um_str_out);
     }
     num_override_args = get_array_ufunc_overrides(
