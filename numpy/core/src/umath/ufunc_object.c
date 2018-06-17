@@ -263,7 +263,7 @@ _get_output_array_method(PyObject *obj, PyObject *method,
  * should just have PyArray_Return called.
  */
 static void
-_find_array_prepare(ufunc_full_args args,
+_find_array_prepare(PyObject *args,
                     PyObject **output_prep, int nin, int nout)
 {
     int i;
@@ -273,7 +273,7 @@ _find_array_prepare(ufunc_full_args args,
      * Determine the prepping function given by the input arrays
      * (could be NULL).
      */
-    prep = _find_array_method(args.in, nin, npy_um_str_array_prepare);
+    prep = _find_array_method(args, nin, npy_um_str_array_prepare);
     /*
      * For all the output arrays decide what to do.
      *
@@ -286,7 +286,7 @@ _find_array_prepare(ufunc_full_args args,
      * exact ndarray so that no PyArray_Return is
      * done in that case.
      */
-    if (args.out == NULL) {
+    if (PyTuple_GET_SIZE(args) == nin) {
         for (i = 0; i < nout; i++) {
             Py_XINCREF(prep);
             output_prep[i] = prep;
@@ -295,7 +295,7 @@ _find_array_prepare(ufunc_full_args args,
     else {
         for (i = 0; i < nout; i++) {
             output_prep[i] = _get_output_array_method(
-                PyTuple_GET_ITEM(args.out, i), npy_um_str_array_prepare, prep);
+                PyTuple_GET_ITEM(args, nin+i), npy_um_str_array_prepare, prep);
         }
     }
     Py_XDECREF(prep);
@@ -2300,7 +2300,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(full_args, arr_prep, nin, nout);
+        _find_array_prepare(args, arr_prep, nin, nout);
     }
 
     /* If the loop wants the arrays, provide them */
@@ -2693,7 +2693,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
          * Get the appropriate __array_prepare__ function to call
          * for each output
          */
-        _find_array_prepare(full_args, arr_prep, nin, nout);
+        _find_array_prepare(args, arr_prep, nin, nout);
     }
 
     /* Start with the floating-point exception flags cleared */
