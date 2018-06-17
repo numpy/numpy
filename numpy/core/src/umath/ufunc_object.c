@@ -278,6 +278,134 @@ _find_array_prepare(PyObject *args,
     return;
 }
 
+/*
+ * This function analyzes the input arguments
+ * and determines an appropriate __array_wrap__ function to call
+ * for the outputs.
+ *
+ * If an output argument is provided, then it is wrapped
+ * with its own __array_wrap__ not with the one determined by
+ * the input arguments.
+ *
+ * if the provided output argument is already an array,
+ * the wrapping function is None (which means no wrapping will
+ * be done --- not even PyArray_Return).
+ *
+ * A NULL is placed in output_wrap for outputs that
+ * should just have PyArray_Return called.
+ */
+static void
+_find_array_wrap(PyObject *args, int subok,
+                PyObject **output_wrap, int nin, int nout)
+{
+    int i;
+    PyObject *wrap = NULL;
+
+    /*
+     * If a 'subok' parameter is passed and isn't True, don't wrap but put None
+     * into slots with out arguments which means return the out argument
+     */
+    if (subok) {
+        /*
+         * Determine the wrapping function given by the input arrays
+         * (could be NULL).
+         */
+        wrap = _find_array_method(args, nin, npy_um_str_array_wrap);
+    }
+    /*
+     * For all the output arrays decide what to do.
+     *
+     * 1) Use the wrap function determined from the input arrays
+     * This is the default if the output array is not
+     * passed in.
+     *
+     * 2) Use the __array_wrap__ method of the output object
+     * passed in. -- this is special cased for
+     * exact ndarray so that no PyArray_Return is
+     * done in that case.
+     */
+    if (PyTuple_GET_SIZE(args) == nin) {
+        for (i = 0; i < nout; i++) {
+            Py_XINCREF(wrap);
+            output_wrap[i] = wrap;
+        }
+    }
+    else {
+        for (i = 0; i < nout; i++) {
+            output_wrap[i] = _get_output_array_method(
+                PyTuple_GET_ITEM(args, nin+i), npy_um_str_array_wrap, wrap);
+        }
+    }
+
+    Py_XDECREF(wrap);
+    return;
+}
+
+/*
+ * Use __array_wrap__ on all outputs
+ * if present on one of the input arguments.
+ * If present for multiple inputs:
+ * use __array_wrap__ of input object with largest
+ * __array_priority__ (default = 0.0)
+ *
+ * Exception:  we should not wrap outputs for items already
+ * passed in as output-arguments.  These items should either
+ * be left unwrapped or wrapped by calling their own __array_wrap__
+ * routine.
+ *
+ * For each output argument, wrap will be either
+ * NULL --- call PyArray_Return() -- default if no output arguments given
+ * None --- array-object passed in don't call PyArray_Return
+ * method --- the __array_wrap__ method to call.
+ */
+static int
+_possibly_wrap_outputs(PyUFuncObject *ufunc, PyObject *args, int subok,
+                       PyArrayObject **mps, PyObject **retobj)
+{
+    int i;
+    PyObject *wraparr[NPY_MAXARGS];
+    int retval = 0;
+
+   _find_array_wrap(args, subok, wraparr, ufunc->nin, ufunc->nout);
+
+    /* wrap outputs */
+    for (i = 0; i < ufunc->nout; i++) {
+        int j = ufunc->nin+i;
+        PyObject *wrap = wraparr[i];
+
+        if (wrap == NULL) {
+            /* default behavior */
+            retobj[i] = PyArray_Return(mps[j]);
+            mps[j] = NULL;  /* ownership transferred, prevent DECREF */
+        }
+        else if (wrap == Py_None) {
+            retobj[i] = (PyObject *)mps[j];
+            mps[j] = NULL;  /* ownership transferred, prevent DECREF */
+        }
+        else {
+            PyObject *res;
+            res = PyObject_CallFunction(
+                wrap, "O(OOi)", mps[j], ufunc, args, i);
+
+            /* Handle __array_wrap__ that does not accept a context argument */
+            if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+                res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
+            }
+            if (res == NULL) {
+                retval = -1;
+                break;
+            }
+            Py_DECREF(mps[j]);
+            mps[j] = NULL;  /* Prevent fail double-freeing this */
+            retobj[i] = res;
+        }
+    }
+    for (i = 0; i < ufunc->nout; i++) {
+        Py_XDECREF(wraparr[i]);
+    }
+    return retval;
+}
 
 /*UFUNC_API
  *
@@ -1937,14 +2065,14 @@ _get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                         PyObject *args, PyObject *kwds,
-                        PyArrayObject **op)
+                        PyObject **retobj)
 {
     int nin, nout;
     int i, j, idim, nop;
     const char *ufunc_name;
     int retval = 0, subok = 1;
     int needs_api = 0;
-
+    PyArrayObject *op[NPY_MAXARGS];
     PyArray_Descr *dtypes[NPY_MAXARGS];
 
     /* Use remapped axes for generalized ufunc */
@@ -2460,7 +2588,16 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
     NpyIter_Deallocate(iter);
-    /* The caller takes ownership of all the references in op */
+
+    /* Transfer or wrap outputs */
+    if (_possibly_wrap_outputs(ufunc, args, subok, op, retobj) < 0) {
+        retval = -1;
+        goto fail;
+    }
+    /* Free the operand references and everything else */
+    for (i = 0; i < nop; i++) {
+        Py_DECREF(op[i]);
+    }
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
@@ -2504,14 +2641,14 @@ fail:
 NPY_NO_EXPORT int
 PyUFunc_GenericFunction(PyUFuncObject *ufunc,
                         PyObject *args, PyObject *kwds,
-                        PyArrayObject **op)
+                        PyObject **retobj)
 {
     int nin, nout;
     int i, nop;
     const char *ufunc_name;
     int retval = -1, subok = 1;
     int need_fancy = 0;
-
+    PyArrayObject *op[NPY_MAXARGS];
     PyArray_Descr *dtypes[NPY_MAXARGS];
 
     /* These parameters come from extobj= or from a TLS global */
@@ -2644,9 +2781,14 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-
-    /* The caller takes ownership of all the references in op */
-    for (i = 0; i < nop; ++i) {
+    /* Transfer or wrap outputs */
+    if (_possibly_wrap_outputs(ufunc, args, subok, op, retobj) < 0) {
+        retval = -1;
+        goto fail;
+    }
+    /* Free the operand references and everything else */
+    for (i = 0; i < nop; i++) {
+        Py_XDECREF(op[i]);
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
@@ -2662,7 +2804,6 @@ fail:
     NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
-        op[i] = NULL;
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
@@ -4034,133 +4175,6 @@ fail:
     return NULL;
 }
 
-/*
- * This function analyzes the input arguments
- * and determines an appropriate __array_wrap__ function to call
- * for the outputs.
- *
- * If an output argument is provided, then it is wrapped
- * with its own __array_wrap__ not with the one determined by
- * the input arguments.
- *
- * if the provided output argument is already an array,
- * the wrapping function is None (which means no wrapping will
- * be done --- not even PyArray_Return).
- *
- * A NULL is placed in output_wrap for outputs that
- * should just have PyArray_Return called.
- */
-static void
-_find_array_wrap(PyObject *args, int subok,
-                PyObject **output_wrap, int nin, int nout)
-{
-    int i;
-    PyObject *wrap = NULL;
-
-    /*
-     * If a 'subok' parameter is passed and isn't True, don't wrap but put None
-     * into slots with out arguments which means return the out argument
-     */
-    if (subok) {
-        /*
-         * Determine the wrapping function given by the input arrays
-         * (could be NULL).
-         */
-        wrap = _find_array_method(args, nin, npy_um_str_array_wrap);
-    }
-    /*
-     * For all the output arrays decide what to do.
-     *
-     * 1) Use the wrap function determined from the input arrays
-     * This is the default if the output array is not
-     * passed in.
-     *
-     * 2) Use the __array_wrap__ method of the output object
-     * passed in. -- this is special cased for
-     * exact ndarray so that no PyArray_Return is
-     * done in that case.
-     */
-    if (PyTuple_GET_SIZE(args) == nin) {
-        for (i = 0; i < nout; i++) {
-            Py_XINCREF(wrap);
-            output_wrap[i] = wrap;
-        }
-    }
-    else {
-        for (i = 0; i < nout; i++) {
-            output_wrap[i] = _get_output_array_method(
-                PyTuple_GET_ITEM(args, nin+i), npy_um_str_array_wrap, wrap);
-        }
-    }
-
-    Py_XDECREF(wrap);
-    return;
-}
-
-/*
- * Use __array_wrap__ on all outputs
- * if present on one of the input arguments.
- * If present for multiple inputs:
- * use __array_wrap__ of input object with largest
- * __array_priority__ (default = 0.0)
- *
- * Exception:  we should not wrap outputs for items already
- * passed in as output-arguments.  These items should either
- * be left unwrapped or wrapped by calling their own __array_wrap__
- * routine.
- *
- * For each output argument, wrap will be either
- * NULL --- call PyArray_Return() -- default if no output arguments given
- * None --- array-object passed in don't call PyArray_Return
- * method --- the __array_wrap__ method to call.
- */
-static int
-_possibly_wrap_outputs(PyUFuncObject *ufunc, PyObject *args, int subok,
-                       PyArrayObject **mps, PyObject **retobj)
-{
-    int i;
-    PyObject *wraparr[NPY_MAXARGS];
-
-   _find_array_wrap(args, subok, wraparr, ufunc->nin, ufunc->nout);
-
-    /* wrap outputs */
-    for (i = 0; i < ufunc->nout; i++) {
-        int j = ufunc->nin+i;
-        PyObject *wrap = wraparr[i];
-
-        if (wrap == NULL) {
-            /* default behavior */
-            retobj[i] = PyArray_Return(mps[j]);
-        }
-        else if (wrap == Py_None) {
-            Py_DECREF(wrap);
-            retobj[i] = (PyObject *)mps[j];
-        }
-        else {
-            PyObject *res;
-            res = PyObject_CallFunction(
-                wrap, "O(OOi)", mps[j], ufunc, args, i);
-
-            /* Handle __array_wrap__ that does not accept a context argument */
-            if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_Clear();
-                res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
-            }
-            Py_DECREF(wrap);
-            Py_DECREF(mps[j]);
-            mps[j] = NULL;  /* Prevent fail double-freeing this */
-            if (res == NULL) {
-                goto fail;
-            }
-            retobj[i] = res;
-        }
-    }
-    return 0;
-
-fail:
-    return -1;
-}
-
 static int
 get_inout_args(
         npy_intp nin, npy_intp nout,
@@ -4307,13 +4321,10 @@ static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     int i;
-    PyArrayObject *mps[NPY_MAXARGS];
     PyObject *retobj[NPY_MAXARGS];
     PyObject *override = NULL;
     PyObject *inout_args = NULL, *other_kwds = NULL;
     int errval;
-    PyObject *subok_obj;
-    int subok;
 
     if (get_inout_args(ufunc->nin, ufunc->nout, args, kwds,
                        &inout_args, &other_kwds) < 0) {
@@ -4332,23 +4343,12 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
 
     if (ufunc->core_enabled) {
-        errval = PyUFunc_GeneralizedFunction(ufunc, inout_args, other_kwds, mps);
+        errval = PyUFunc_GeneralizedFunction(ufunc, inout_args, other_kwds, retobj);
     }
     else {
-        errval = PyUFunc_GenericFunction(ufunc, inout_args, other_kwds, mps);
+        errval = PyUFunc_GenericFunction(ufunc, inout_args, other_kwds, retobj);
     }
     if (errval < 0) {
-        goto fail;
-    }
-
-    /* Free the input references */
-    for (i = 0; i < ufunc->nin; i++) {
-        Py_XDECREF(mps[i]);
-    }
-
-    subok_obj = other_kwds? PyDict_GetItem(other_kwds, npy_um_str_subok) : NULL;
-    subok = subok_obj ? (subok_obj == Py_True) : 1;
-    if (_possibly_wrap_outputs(ufunc, inout_args, subok, mps, retobj) < 0) {
         goto fail;
     }
 
@@ -4371,9 +4371,6 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 fail:
     Py_XDECREF(inout_args);
     Py_XDECREF(other_kwds);
-    for (i = ufunc->nin; i < ufunc->nargs; i++) {
-        Py_XDECREF(mps[i]);
-    }
     return NULL;
 }
 
