@@ -4336,6 +4336,149 @@ handle_out:
 }
 
 
+static int
+get_inout_args(
+        npy_intp nin, npy_intp nout,
+        PyObject *args, PyObject *kwds,
+        PyObject **inout_args, PyObject **other_kwds)
+{
+    PyObject *out_kwd = NULL;
+    npy_intp nargs = PyTuple_GET_SIZE(args);
+    npy_intp i;
+
+    if (nargs < nin) {
+        PyErr_Format(PyExc_TypeError,
+                     "ufunc() missing %"NPY_INTP_FMT" of %"NPY_INTP_FMT
+                     "required positional argument(s)", nin - nargs, nin);
+        return -1;
+    }
+    if (nargs > nin + nout) {
+        PyErr_Format(PyExc_TypeError,
+                     "ufunc() takes from %"NPY_INTP_FMT" to %"NPY_INTP_FMT
+                     "arguments but %"NPY_INTP_FMT" were given",
+                     nin, nin + nout, nargs);
+        return -1;
+    }
+
+    /* Look for output keyword arguments */
+    out_kwd = kwds ? PyDict_GetItem(kwds, npy_um_str_out) : NULL;
+
+    if (out_kwd != NULL) {
+        if (nargs > nin) {
+            PyErr_SetString(PyExc_TypeError,
+                            "cannot specify 'out' as both a "
+                            "positional and keyword argument");
+            return -1;
+        }
+        if (PyTuple_Check(out_kwd)) {
+            if (PyTuple_GET_SIZE(out_kwd) != nout) {
+                PyErr_SetString(PyExc_ValueError,
+                                "The 'out' tuple must have exactly "
+                                "one entry per ufunc output");
+                return -1;
+            }
+            if (tuple_all_none(out_kwd)) {
+                Py_INCREF(args);
+                *inout_args = args;
+            }
+            else {
+                *inout_args = PySequence_Concat(args, out_kwd);
+            }
+        }
+        else {
+            /* A single argument x is promoted to (x, None, None ...) */
+            if (nout > 1) {
+                if (DEPRECATE("passing a single array to the "
+                              "'out' keyword argument of a "
+                              "ufunc with\n"
+                              "more than one output will "
+                              "result in an error in the "
+                              "future") < 0) {
+                    /* The future error message */
+                    PyErr_SetString(PyExc_TypeError,
+                                    "'out' must be a tuple of arrays");
+                    return -1;
+                }
+            }
+            if (out_kwd == Py_None) {
+                Py_INCREF(args);
+                *inout_args = args;
+            }
+            else {
+                *inout_args = PyTuple_New(nin + nout);
+                if (*inout_args == NULL) {
+                    return -1;
+                }
+                for (i = 0; i < nin; i++) {
+                    PyObject *obj = PyTuple_GET_ITEM(args, i);
+                    Py_INCREF(obj);
+                    PyTuple_SET_ITEM(*inout_args, i, obj);
+                }
+                Py_INCREF(out_kwd);
+                PyTuple_SET_ITEM(*inout_args, nin, out_kwd);
+                for (i = 1; i < nout; ++i) {
+                    Py_INCREF(Py_None);
+                    PyTuple_SET_ITEM(*inout_args, nin+i, Py_None);
+                }
+            }
+        }
+        if (PyDict_Size(kwds) == 1) {
+            *other_kwds = NULL;
+        }
+        else {
+            *other_kwds = PyDict_Copy(kwds);
+            if (*other_kwds == NULL) {
+                Py_DECREF(*inout_args);
+                *inout_args = NULL;
+                return -1;
+            }
+            PyDict_DelItem(*other_kwds, npy_um_str_out);
+        }
+        return 0;
+    }
+
+    /* No outputs in kwargs; if also none in args, we're done */
+    if (kwds == NULL || PyDict_Size(kwds) == 0) {
+        *other_kwds = NULL;
+    }
+    else {
+        Py_INCREF(kwds);
+        *other_kwds = kwds;
+    }
+    if (nargs == nin) {
+        Py_INCREF(args);
+        *inout_args = args;
+        return 0;
+    }
+    /* check whether all passed-on outputs are None */
+    for (i = nin; i < nargs; i++) {
+        if (PyTuple_GET_ITEM(args, i) != Py_None) {
+            break;
+        }
+    }
+    if (i == nargs) {
+        *inout_args = PyTuple_GetSlice(args, 0, nin);
+        return 0;
+    }
+    /* copy across positional output arguments, adding trailing Nones */
+    *inout_args = PyTuple_New(nin + nout);
+    if (*inout_args == NULL) {
+        Py_XDECREF(*other_kwds);
+        return -1;
+    }
+    for (i = 0; i < nargs; ++i) {
+        PyObject *item = PyTuple_GET_ITEM(args, i);
+        Py_INCREF(item);
+        PyTuple_SET_ITEM(*inout_args, i, item);
+    }
+    for (i = nargs; i < nin + nout; ++i) {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(*inout_args, i, Py_None);
+    }
+    return 0;
+}
+
+
 static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
@@ -4345,10 +4488,18 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyObject *wraparr[NPY_MAXARGS];
     PyObject *override = NULL;
     ufunc_full_args full_args = {NULL, NULL};
+    PyObject *inout_args = NULL, *other_kwds = NULL;
     int errval;
 
-    errval = PyUFunc_CheckOverride(ufunc, "__call__", args, kwds, &override);
+    if (get_inout_args(ufunc->nin, ufunc->nout, args, kwds,
+                       &inout_args, &other_kwds) < 0) {
+        return NULL;
+    }
+
+    errval = PyUFunc_CheckOverride(ufunc, "__call__", inout_args, other_kwds, &override);
     if (errval) {
+        Py_XDECREF(inout_args);
+        Py_XDECREF(other_kwds);
         return NULL;
     }
     else if (override) {
@@ -4357,7 +4508,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 
     errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
     if (errval < 0) {
-        return NULL;
+        goto fail;
     }
 
     /* Free the input references */
@@ -4428,6 +4579,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         }
     }
 
+    Py_XDECREF(inout_args);
+    Py_XDECREF(other_kwds);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 
@@ -4445,6 +4598,8 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
 
 fail:
+    Py_XDECREF(inout_args);
+    Py_XDECREF(other_kwds);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
     for (i = ufunc->nin; i < ufunc->nargs; i++) {
