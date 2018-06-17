@@ -2857,6 +2857,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
+            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
             goto fail;
@@ -2880,6 +2881,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     }
 
 finish:
+    NpyIter_Close(iter);
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
         Py_DECREF(op[iop]);
