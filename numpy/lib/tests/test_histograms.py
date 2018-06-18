@@ -703,3 +703,39 @@ class TestHistogramdd(object):
         hist, edges = histogramdd((x, y), bins=(x_edges, y_edges))
 
         assert_equal(hist[0, 0], 1)
+
+    def test_normed_non_uniform_2d(self):
+        # Defines the following grid:
+        #
+        #    0 2     8
+        #   0+-+-----+
+        #    + |     +
+        #    + |     +
+        #   6+-+-----+
+        #   8+-+-----+
+        x_edges = np.array([0, 2, 8])
+        y_edges = np.array([0, 6, 8])
+        relative_areas = np.array([
+            [3, 9],
+            [1, 3]])
+
+        # ensure the number of points in each region is proportional to its area
+        x = np.array([1] + [1]*3 + [7]*3 + [7]*9)
+        y = np.array([7] + [1]*3 + [7]*3 + [1]*9)
+
+        # sanity check that the above worked as intended
+        hist, edges = histogramdd((y, x), bins=(y_edges, x_edges))
+        assert_equal(hist, relative_areas)
+
+        # resulting histogram should be uniform, since counts and areas are propotional
+        hist, edges = histogramdd((y, x), bins=(y_edges, x_edges), normed=True)
+        assert_equal(hist, 1 / (8*8))
+
+    def test_normed_non_uniform_1d(self):
+        # compare to histogram to show the results are the same
+        v = np.arange(10)
+        bins = np.array([0, 1, 3, 6, 10])
+        hist, edges = histogram(v, bins, density=True)
+        hist_dd, edges_dd = histogramdd((v,), (bins,), normed=True)
+        assert_equal(hist, hist_dd)
+        assert_equal(edges, edges_dd[0])
