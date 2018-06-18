@@ -2133,6 +2133,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     /* Get the pointers for inner loop iteration */
     iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
+        /* no NpyIter_Close since iter has NPY_ITER_READONLY */
         NpyIter_Deallocate(iter);
         return -1;
     }
@@ -2165,6 +2166,7 @@ PyArray_CountNonzero(PyArrayObject *self)
 finish:
     NPY_END_THREADS;
 
+    /* no NpyIter_Close since iter has NPY_ITER_READONLY */
     NpyIter_Deallocate(iter);
 
     return nonzero_count;
@@ -2291,12 +2293,14 @@ PyArray_Nonzero(PyArrayObject *self)
         /* Get the pointers for inner loop iteration */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
+            /* no NpyIter_Close since iter has NPY_ITER_READONLY */
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
             return NULL;
         }
         get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
         if (get_multi_index == NULL) {
+            /* no NpyIter_Close since iter has NPY_ITER_READONLY */
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
             return NULL;
@@ -2330,6 +2334,7 @@ PyArray_Nonzero(PyArrayObject *self)
         NPY_END_THREADS;
     }
 
+    /* no NpyIter_Close since iter has NPY_ITER_READONLY */
     NpyIter_Deallocate(iter);
 
 finish:

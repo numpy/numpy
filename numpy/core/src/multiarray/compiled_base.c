@@ -1112,6 +1112,7 @@ fail:
         Py_XDECREF(op[i]);
     }
     npy_free_cache_dim_obj(dimensions);
+    /* no NpyIter_Close required since output is always allocated */
     NpyIter_Deallocate(iter);
     return NULL;
 }
@@ -1373,6 +1374,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     Py_DECREF(ret_arr);
     Py_XDECREF(indices);
     npy_free_cache_dim_obj(dimensions);
+    /* no NpyIter_Close since iter is NPY_ITER_READONLY */
     NpyIter_Deallocate(iter);
 
     return ret_tuple;

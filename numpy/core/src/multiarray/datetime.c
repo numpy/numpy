@@ -3519,6 +3519,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
 
     iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
+        /* no NpyIter_Close since iter is NPY_ITER_READONLY */
         NpyIter_Deallocate(iter);
         return -1;
     }
@@ -3533,6 +3534,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
     tmp_buffer = PyArray_malloc(maxlen+1);
     if (tmp_buffer == NULL) {
         PyErr_NoMemory();
+        /* no NpyIter_Close since iter is NPY_ITER_READONLY */
         NpyIter_Deallocate(iter);
         return -1;
     }
@@ -3585,6 +3587,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
     } while(iternext(iter));
 
     PyArray_free(tmp_buffer);
+    /* no NpyIter_Close since iter is NPY_ITER_READONLY */
     NpyIter_Deallocate(iter);
 
     return 0;

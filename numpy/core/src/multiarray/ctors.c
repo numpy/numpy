@@ -2794,6 +2794,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
                                 NPY_NO_CASTING,
                                 NULL);
     if (src_iter == NULL) {
+        /* no NpyIter_Close since iter is created with NPY_NO_CASTING */
         NpyIter_Deallocate(dst_iter);
         return -1;
     }
@@ -2813,7 +2814,9 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     src_itemsize = PyArray_DESCR(src)->elsize;
 
     if (dst_iternext == NULL || src_iternext == NULL) {
+        /* no NpyIter_Close since iter is created with NPY_NO_CASTING */
         NpyIter_Deallocate(dst_iter);
+        /* no NpyIter_Close since src_iter is NPY_ITER_READONLY */
         NpyIter_Deallocate(src_iter);
         return -1;
     }
@@ -2834,7 +2837,9 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
                     0,
                     &stransfer, &transferdata,
                     &needs_api) != NPY_SUCCEED) {
+        /* no NpyIter_Close since iter is created with NPY_NO_CASTING */
         NpyIter_Deallocate(dst_iter);
+        /* no NpyIter_Close since src_iter is NPY_ITER_READONLY */
         NpyIter_Deallocate(src_iter);
         return -1;
     }
@@ -2884,7 +2889,9 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     NPY_END_THREADS;
 
     NPY_AUXDATA_FREE(transferdata);
+    /* no NpyIter_Close since iter is created with NPY_NO_CASTING */
     NpyIter_Deallocate(dst_iter);
+    /* no NpyIter_Close since src_iter is NPY_ITER_READONLY */
     NpyIter_Deallocate(src_iter);
 
     return PyErr_Occurred() ? -1 : 0;
