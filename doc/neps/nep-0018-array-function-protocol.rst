@@ -78,7 +78,7 @@ is not covered by the ``__array_ufunc__`` protocol for universal functions
 the operation is specified by an arbitrary callable object rather than a ufunc
 instance and method.
 
-A prototype implementation with microbenchmark results can be found in
+A prototype implementation can be found in
 `this notebook <https://nbviewer.jupyter.org/gist/shoyer/1f0a308a06cd96df20879a1ddb8f0006>`_.
 
 The interface
@@ -93,24 +93,21 @@ We propose the following signature for implementations of
 
 -  ``func`` is an arbitrary callable exposed by NumPy's public API,
    which was called in the form ``func(*args, **kwargs)``.
--  ``types`` is a list of argument types from the original NumPy
-   function call that implement ``__array_function__``, in the order in which
-   they will be called.
+-  ``types`` is a list of unique argument types from the original NumPy
+   function call that implement ``__array_function__``.
 -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
    original call.
 
 Unlike ``__array_ufunc__``, there are no high-level guarantees about the
 type of ``func``, or about which of ``args`` and ``kwargs`` may contain objects
-implementing the array API. As a convenience for ``__array_function__``
-implementors, ``types`` contains a list of argument types with an
-``'__array_function__'`` attribute. This allows downstream implementations to
-quickly determine if they are likely able to support the operation.
+implementing the array API.
 
-Still be determined: what guarantees can we offer for ``types``? Should
-we promise that types are unique, and appear in the order in which they
-are checked? Should we pass in arguments directly instead, either the full
-list of arguments in ``relevant_arguments`` (see below) or a single argument
-for each unique type?
+As a convenience for ``__array_function__`` implementors, ``types`` contains a
+list of argument types with an ``'__array_function__'`` attribute. This allows
+downstream implementations to quickly determine if they are likely able to
+support the operation. There are no guarantees about the order of argument types in ``types``: ``__array_funtion__`` implementations that rely on such behavior
+would not have the well-defined "Type casting heirarchy" desribed in
+`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
 
 Example for a project implementing the NumPy API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -124,9 +121,16 @@ checks:
 If these conditions hold, ``__array_function__`` should return
 the result from calling its implementation for ``func(*args, **kwargs)``.
 Otherwise, it should return the sentinel value ``NotImplemented``, indicating
-that the function is not implemented by these types.
+that the function is not implemented by these types. This is preferrable to
+raising ``TypeError`` directly, because it gives *other* arguments the
+opportunity to define the operations.
+
+It may also be convenient to define a custom decorators (``implements`` below)
+for registering ``__array_function__`` implementations.
 
 .. code:: python
+
+    HANDLED_FUNCTIONS = {}
 
     class MyArray:
         def __array_function__(self, func, types, args, kwargs):
@@ -136,12 +140,26 @@ that the function is not implemented by these types.
                 return NotImplemented
             return HANDLED_FUNCTIONS[func](*args, **kwargs)
 
-    HANDLED_FUNCTIONS = {
-        np.concatenate: my_concatenate,
-        np.broadcast_to: my_broadcast_to,
-        np.sum: my_sum,
-        ...
-    }
+    def implements(numpy_function):
+        """Register an __array_function__ implementation for MyArray objects."""
+        def decorator(func):
+            HANDLED_FUNCTIONS[numpy_function] = func
+            return func
+        return decorator
+
+    @implements(np.concatenate)
+    def concatenate(arrays, axis=0, out=None):
+        ...  # implementation of concatenate for MyArray objects
+
+    @implements(np.broadcast_to)
+    def broadcast_to(array, shape):
+        ...  # implementation of broadcast_to for MyArray objects
+
+Note that it is not required for ``__array_function__`` implementations to
+include *all* of the corresponding NumPy function's optional arguments
+(e.g., ``broadcast_to`` above omits the irrelevant ``subok`` argument).
+Optional arguments are only passed in to ``__array_function__`` if they
+were explicitly used in the NumPy function call.
 
 Necessary changes within the NumPy codebase itself
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,13 +197,49 @@ be nested within lists or dictionaries, such as in the case of
 ``np.concatenate([x, y, z])``. This can be problematic for two reasons:
 
 1. Some functions are given long lists of values, and traversing them
-   might be prohibitively expensive
-2. Some function may have arguments that we don't want to inspect, even
-   if they have the ``__array_function__`` method
+   might be prohibitively expensive.
+2. Some functions may have arguments that we don't want to inspect, even
+   if they have the ``__array_function__`` method.
 
-To resolve these we ask the functions to provide an explicit list of
-arguments that should be traversed. This is the ``relevant_arguments=``
-keyword in the examples below.
+To resolve these issues, NumPy functions should explicitly indicate which
+of their arguments may be overloaded, and how these arguments should be
+checked. As a rule, this should include all arguments documented as either
+``array_like`` or ``ndarray``.
+
+We propose to do so by writing "dispatcher" functions for each overloaded
+NumPy function:
+- These functions will be called with the exact same arguments that were passed
+  into the NumPy function (i.e., ``dispatcher(*args, **kwargs)``), and should
+  return an iterable of arguments to check for overrides.
+- Dispatcher functions are required to share the exact same positional and
+  keyword arguments as the corresponding NumPy functions. Otherwise, valid
+  invocations of a NumPy function could result in an error when calling its
+  dispatcher.
+- Because default *values* for keyword arguments do not have
+  ``__array_function__`` attributes, by convention we set all default argument
+  values to ``None``. This reduces the likelihood of signatures falling out
+  of sync, and minimizes extraneous information in the dispatcher.
+  The only exception should be cases where the argument value in some way
+  effects dispatching, which should be rare.
+- Additionally, dispatchers should be written to accept additional ``**``
+  arguments, even if these are not part of the NumPy function's signature. This
+  allows additional implementation specific keyword arguments to be passed to
+  NumPy functions (see "TBD"), which should be ignored for dispatching purposes.
+
+An example of the dispatcher for ``np.concatenate`` may be instructive:
+
+.. code:: python
+
+    def _concatenate_dispatcher(arrays, axis=None, out=None, **ignored_kwargs):
+        for array in arrays:
+            yield array
+        if out is not None:
+            yield out
+
+The concatenate dispatcher is written as generator function, which allows it
+to potentially include the value of the optional ``out`` argument without
+needing to create a new sequence with the (potentially long) list of objects
+to be concatenated.
 
 Trying ``__array_function__`` methods until the right one works
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -250,87 +304,113 @@ an ``__array_function__`` method that is identical to
 Changes within NumPy functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. warning::
-
-    This section is outdated. We intend to rewrite it to propose
-    an explicit `decorator based solution <https://github.com/numpy/numpy/pull/11303#issuecomment-396695348>`_ instead.
-
 Given a function defining the above behavior, for now call it
 ``try_array_function_override``, we now need to call that function from
 within every relevant NumPy function. This is a pervasive change, but of
 fairly simple and innocuous code that should complete quickly and
 without effect if no arguments implement the ``__array_function__``
-protocol. Let us consider a few examples of NumPy functions and how they
-might be affected by this change:
+protocol.
+
+In most cases, these functions should written using a shared ``dispatch``
+decorator, which also associates dispatcher functions:
 
 .. code:: python
 
-    import itertools
+    def dispatch(dispatcher):
+        """Wrap a function for dispatch with the __array_function__ protocol."""
+        def decorator(func):
+            @functools.wraps(func)
+            def new_func(*args, **kwargs):
+                relevant_arguments = dispatcher(*args, **kwargs)
+                success, value = try_array_function_override(
+                    new_func, relevant_arguments, args, kwargs)
+                if success:
+                    return value
+                return func(*args, **kwargs)
+            return new_func
+        return decorator
 
+    # example usage
+    def _broadcast_to_dispatcher(array, shape, subok=None, **ignored_kwargs):
+        return (array,)
+
+    @dispatch(_broadcast_to_dispatcher)
     def broadcast_to(array, shape, subok=False):
-        success, value = try_array_function_override(
-            func=broadcast_to,
-            relevant_arguments=[array],
-            args=(array,),
-            kwargs=dict(shape=shape, subok=subok))
-        if success:
-            return value
+        ...  # existing definition of np.broadcast_to
 
-        ...  # continue with the definition of broadcast_to
+Using a decorator is great! We don't need to change the definitions of
+existing NumPy functions, and only need to write a few additional lines
+for the dispatcher function. We could even reuse a single dispatcher for
+families of functions with the same signature (e.g., ``sum`` and ``prod``).
+For such functions, the largest change could be adding a few lines to the
+docstring to note which arguments are checked for overloads.
 
-    def concatenate(arrays, axis=0, out=None)
-        success, value = try_array_function_override(
-            func=concatenate,
-            relevant_arguments=itertools.chain(arrays, [out]),
-            args=(arrays,),
-            kwargs=dict(axis=axis, out=out))
-        if success:
-            return value
+It's particularly worth calling out the decorator's use of
+``functools.wraps``:
+- This ensures that the wrapped function has the same name and docstring as
+  the wrapped NumPy function.
+- On Python 3, it also ensures that the decorator function copies the original
+  function signature, which is important for introspection based tools such as
+  auto-complete. If we care about preserving function signatures on Python 2,
+  for the `short while longer <http://www.numpy.org/neps/nep-0014-dropping-python2.7-proposal.html>`_
+  that NumPy supports Python 2.7, we do could do so by adding a vendored
+  dependency on the (single-file, BSD licensed)
+  `decorator library <https://github.com/micheles/decorator>`_.
+- Finally, it ensures that the wrapped function
+  `can be pickled <http://gael-varoquaux.info/programming/decoration-in-python-done-right-decorating-and-pickling.html>`_.
 
-        ...  # continue with the definition of concatenate
+In a few cases, it would not make sense to use the ``dispatch`` decorator
+directly, but override implementation in terms of
+``try_array_function_override`` should still be straightforward.
+- Functions written entirely in C (e.g., ``np.concatenate``) can't use
+  decorators, but they could still use a C equivalent of
+  ``try_array_function_override``. If performance is not a concern, they could
+  also be easily wrapped with a small Python wrapper.
+- The ``__call__`` method of ``np.vectorize`` can't be decorated with
+  ``@dispatch``, because we should pass a ``vectorize`` object itself as the
+  ``func`` argument  ``__array_function__``, not the unbound
+  ``vectorize.__call__`` method.
+- ``np.einsum`` does complicated argument parsing to handle two different
+  function signatures. It would probably be best to avoid the overhead of
+  parsing it twice in the typical case of no overrides.
 
-The list of objects passed to ``relevant_arguments`` are those that should
-be inspected for ``__array_function__`` implementations.
+Fortunately, in each of these cases so far, the functions already has a generic
+signature of the form ``*args, **kwargs``, which means we don't need to worry
+about potential inconsistency between how functions are called and what we pass
+to ``__array_function__``. (In C, arguments for all Python functions are parsed
+from a tuple ``*args`` and dict ``**kwargs``.) This shouldn't stop us from
+writing overrides for functions with non-generic signatures that can't use the
+decorator, but we should consider these cases carefully.
 
-Our microbenchmark results show that a pure Python implementation of
-``try_array_function_override`` adds approximately 2-4 microseconds of
-overhead to each function call without any overloaded arguments.
-This is acceptable for functions implemented in Python but probably too
-slow for functions written in C. Fortunately, we expect significantly less
-overhead with a C implementation of ``try_array_function_override``.
+Performance
+~~~~~~~~~~~
 
-A more succinct alternative would be to write these overloads with a decorator
-that builds overloaded functions automatically. Hypothetically, this might even
-directly parse Python 3 type annotations, e.g., perhaps
+Performance is always a concern with NumPy, even though NumPy users have
+already prioritized usability over pure speed with their choice of the Python
+language itself. It's important that this new ``__array_function__`` protocol
+not impose a significant cost in the typical case of NumPy functions acting
+on NumPy arrays.
 
-.. code:: python
+Our `microbenchmark results <https://nbviewer.jupyter.org/gist/shoyer/1f0a308a06cd96df20879a1ddb8f0006>`_
+show that a pure Python implementation of the override machinery described
+above adds roughly 2-3 microseconds of overhead to each NumPy function call
+without any overloaded arguments. For context, typical NumPy functions on small
+arrays have a runtime of 1-10 microseconds, mostly determined by what fraction
+of the function's logic is written in C. For example, one microsecond is about
+the difference in speed between the ``ndarray.sum()`` method (1.6 us) and
+``numpy.sum()`` function (2.6 us).
 
-    @overload_for_array_function
-    def broadcast_to(array: ArrayLike
-                     shape: Tuple[int, ...],
-                     subok: bool = False):
-        ...  # continue with the definition of broadcast_to
+Fortunately, we expect significantly less overhead with a C implementation of
+``try_array_function_override``, which is where the bulk of the runtime is.
+This would leave the ``dispatch`` decorator and dispatcher function on their
+own adding about 0.5 microseconds of overhead, for perhaps ~1 microsecond of
+overhead in the typical case.
 
-The decorator ``overload_for_array_function`` would be written in terms
-of ``try_array_function_override``, but would also need some level of magic
-for (1) access to the wrapper function (``np.broadcast_to``) for passing into
-``__array_function__`` implementations and (2) dynamic code generation
-resembling the `decorator library <https://github.com/micheles/decorator>`_ 
-to automatically write an overloaded function like the manually written
-implemenations above with the exact same signature as the original.
-Unfortunately, using the ``inspect`` module instead of code generation would
-probably be too slow: our prototype implementation adds ~15 microseconds of
-overhead.
-
-We like the idea of writing overloads with minimal syntax, but dynamic
-code generation also has potential downsides, such as slower import times, less
-transparent code and added difficulty for static analysis tools. It's not clear
-that tradeoffs would be worth it, especially because functions with complex
-signatures like ``np.einsum`` would assuredly still need to invoke
-``try_array_function_override`` directly.
-
-So we don't propose adding such a decorator yet, but it's something worth
-considering for the future.
+In our view, this level of overhead is reasonable to accept for code written
+in Python. We're pretty sure that the vast majority of NumPy users aren't
+concerned about performance differences measured in microsecond(s) on NumPy
+functions, because it's difficult to do *anything* in Python in less than a
+microsecond.
 
 Use outside of NumPy
 ~~~~~~~~~~~~~~~~~~~~
@@ -348,7 +428,7 @@ already wrap a limited subset of SciPy functionality (e.g.,
 ``scipy.linalg``) similarly to how they wrap NumPy.
 
 If we want to do this, we should expose the helper function
-``try_array_function_override()`` as a public API.
+``try_array_function_override()`` and ``dispatch()`` decorator as a public API.
 
 Non-goals
 ---------
@@ -551,6 +631,43 @@ high level NumPy API from adopting this proposal.
 
 NOTE: If you are reading this NEP in its draft state and disagree,
 please speak up on the mailing list!
+
+A magic decorator that inspects type annotations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A more succinct alternative would be to write these overloads with a decorator
+that builds overloaded functions automatically. Hypothetically, this might even
+directly parse Python 3 type annotations, e.g., perhaps
+
+.. code:: python
+
+    @overload_for_array_function
+    def broadcast_to(array: ArrayLike
+                     shape: Tuple[int, ...],
+                     subok: bool = False):
+        ...  # continue with the definition of broadcast_to
+
+The decorator ``overload_for_array_function`` would be written in terms
+of ``try_array_function_override``, but would also need some level of magic
+for (1) access to the wrapper function (``np.broadcast_to``) for passing into
+``__array_function__`` implementations and (2) dynamic code generation
+resembling the `decorator library <https://github.com/micheles/decorator>`_
+to automatically write an overloaded function like the manually written
+implemenations above with the exact same signature as the original.
+Unfortunately, using the ``inspect`` module instead of code generation would
+probably be too slow: our prototype implementation adds ~15 microseconds of
+overhead.
+
+We like the idea of writing overloads with minimal syntax, but dynamic
+code generation also has potential downsides, such as slower import times, less
+transparent code and added difficulty for static analysis tools. It's not clear
+that tradeoffs would be worth it, especially because functions with complex
+signatures like ``np.einsum`` would assuredly still need to invoke
+``try_array_function_override`` directly.
+
+So we don't propose adding such a decorator yet, but it's something worth
+considering for the future.
+
 
 Drawbacks of this approach
 --------------------------
