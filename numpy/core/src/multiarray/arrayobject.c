@@ -482,8 +482,7 @@ array_dealloc(PyArrayObject *self)
         {
             char const * msg = "WRITEBACKIFCOPY detected in array_dealloc. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
-                "PyArray_DiscardWritebackIfCopy is missing. This could also "
-                "be caused by using a nditer without a context manager";
+                "PyArray_DiscardWritebackIfCopy is missing.";
             Py_INCREF(self); /* hold on to self in next call  since if
                               * refcount == 0 it will recurse back into
                               *array_dealloc

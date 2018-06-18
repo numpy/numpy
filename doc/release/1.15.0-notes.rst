@@ -67,8 +67,7 @@ Deprecations
 * Users of ``nditer`` should use the nditer object as a context manager
   anytime one of the iterator operands is writeable, so that numpy can
   manage writeback semantics, or should call ``it.close()``. A
- `RuntimeWarning` will be emitted otherwise in these cases. Users of the C-API
-  should call ``NpyIter_Close`` before ``NpyIter_Deallocate``.
+ `RuntimeWarning` may be emitted otherwise in these cases.
 
 * Multidimensional indexing with anything but a tuple is
   deprecated. This means that code such as ``ind = [slice(None), 0]``,
@@ -167,9 +166,6 @@ in the user guide.
 
 C API changes
 =============
-
-* ``NpyIter_Close`` has been added and should be called before
-  ``NpyIter_Deallocate`` to resolve possible writeback-enabled arrays.
 
 * Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
   have been added and should be used in place of the ``npy_get_floatstatus``and

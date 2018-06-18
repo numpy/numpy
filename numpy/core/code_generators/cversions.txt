@@ -39,8 +39,7 @@
 0x0000000b = edb1ba83730c650fd9bc5772a919cda7
 
 # Version 12 (NumPy 1.14) Added PyArray_ResolveWritebackIfCopy,
+# Version 12 (NumPy 1.15) No change.
 # PyArray_SetWritebackIfCopyBase and deprecated PyArray_SetUpdateIfCopyBase.
 0x0000000c = a1bc756c5782853ec2e3616cf66869d8
 
-# Version 13 (NumPy 1.15) Added NpyIter_Close
-0x0000000d = 4386e829d65aafce6bd09a85b142d585
