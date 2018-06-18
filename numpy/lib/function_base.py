@@ -310,7 +310,8 @@ def average(a, axis=None, weights=None, returned=False):
         of the weights as the second element. The return type is `Float`
         if `a` is of integer type, otherwise it is of the same type as `a`.
         `sum_of_weights` is of the same type as `average`. The return type
-	    is same as the data type of `weights` if provided.
+	 is common to both `a` and `weights` otherwise is returned as
+	 `float`
 
     Raises
     ------
