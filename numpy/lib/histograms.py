@@ -572,8 +572,8 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
     bins : int or sequence of scalars or str, optional
         If `bins` is an int, it defines the number of equal-width
         bins in the given range (10, by default). If `bins` is a
-        sequence, it defines the bin edges, including the rightmost
-        edge, allowing for non-uniform bin widths.
+        sequence, it defines a monotonically increasing array of bin edges,
+        including the rightmost edge, allowing for non-uniform bin widths.
 
         .. versionadded:: 1.11.0
 
@@ -833,7 +833,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     bins : sequence or int, optional
         The bin specification:
 
-        * A sequence of arrays describing the bin edges along each dimension.
+        * A sequence of arrays describing the monotonically increasing bin
+          edges along each dimension.
         * The number of bins for each dimension (nx, ny, ... =bins)
         * The number of bins for all dimensions (nx=ny=...=bins).
 
