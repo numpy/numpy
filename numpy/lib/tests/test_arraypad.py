@@ -552,8 +552,8 @@ class TestLinearRamp(object):
         assert_allclose(test, expected)
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestReflect(object):
+
     def test_check_simple(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'reflect')
@@ -1050,7 +1050,6 @@ class TestValueError1(object):
         assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
                       **kwargs)
 
-    @pytest.mark.skip(reason="not yet implemented")
     def test_check_empty_array(self):
         assert_raises(ValueError, pad, [], 4, mode='reflect')
         assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')

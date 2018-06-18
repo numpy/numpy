@@ -78,34 +78,6 @@ def _slice_at_axis(shape, axis, sl):
     return slice_tup * axis + (sl,) + slice_tup * (len(shape) - axis - 1)
 
 
-def _slice_pad_area(shape, axis, from_index):
-    """
-    Create slice that selects a pad area.
-
-    Parameters
-    ----------
-    shape : tuple
-        Shape of the array to slice.
-    axis : int
-        Dimension in which to slice.
-    from_index : int
-        Index that marks the end (or start) of the sliced area in the given
-        dimension. If >= 0 the sliced area starts at index 0 and ends with this
-        value, otherwise it starts at the end of the array and `from_index` is
-        treated as an index counted from the right-hand side.
-
-    Returns
-    -------
-    pad_area_slice : slice
-        A slice selecting the pad area of an array with `shape`.
-    """
-    if 0 <= from_index:
-        sl = slice(0, from_index)
-    else:
-        sl = slice(from_index, shape[axis])
-    return _slice_at_axis(shape, axis, sl)
-
-
 def _slice_column(shape, axis, from_index, column_width=1):
     if 0 <= from_index:
         sl = slice(from_index, from_index + column_width)
@@ -169,7 +141,11 @@ def _set_generic(arr, axis, pad_index, values):
     """
     if pad_index == 0:
         return
-    pad_area = _slice_pad_area(arr.shape, axis, pad_index)
+    if 0 <= pad_index:
+        sl = slice(0, pad_index)
+    else:
+        sl = slice(pad_index, arr.shape[axis])
+    pad_area = _slice_at_axis(arr.shape, axis, sl)
     arr[pad_area] = values
 
 
@@ -203,6 +179,25 @@ def _set_linear_ramp(arr, axis, pad_index, end_value):
 
 
 def _set_stat(arr, axis, pad_index, stat_length, stat_func):
+    """Compute statistic and fill the pad area on one side.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Array with pad area which is modified inplace.
+    axis : int
+        Dimension with the pad area to set.
+    pad_index : int
+        Index that marks the end (or start) of the pad area in the given
+        dimension. If >= 0 the pad area starts at index 0 and ends with this
+        value, otherwise it starts at the end of the array and `pad_index` is
+        treated as an index counted from the right-hand side.
+    stat_length : scalar
+        Number of values at edge of each axis used to calculate the statistic
+        value.
+    stat_func : func
+        Function used to compute the statistic.
+    """
     if pad_index == 0:
         return
     if stat_length == 1:
@@ -222,6 +217,88 @@ def _set_stat(arr, axis, pad_index, stat_length, stat_func):
     #stats = stats.repeat(abs(pad_index), axis=axis)
 
     _set_generic(arr, axis, pad_index, stats)
+
+
+def _set_reflect_both(arr, axis, pad_amt, method):
+    """
+    Pad `axis` of `arr` with reflection.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array of arbitrary shape.
+    axis : int
+        Axis along which to pad `arr`.
+    pad_amt : tuple of ints, length 2
+        Padding to (prepend, append) along `axis`.
+    method : str
+        Controls method of reflection; options are 'even' or 'odd'.
+
+    Returns
+    -------
+    pad_amt : tuple of ints, length 2
+        New index positions of padding to do along the `axis`. If these are
+        both 0, padding is done in this dimension. See notes on why this is
+        necessary.
+
+    Notes
+    -----
+    This algorithm does not pad with repetition, i.e. the edges are not
+    repeated in the reflection. For that behavior, use `mode='symmetric'`.
+
+    The modes 'reflect', 'symmetric', and 'wrap' must be padded with a
+    single function, lest the indexing tricks in non-integer multiples of the
+    original shape would violate repetition in the final iteration.
+    """
+    left_pad, right_pad = pad_amt
+    period = arr.shape[axis] - right_pad - left_pad - 1
+
+    if left_pad > 0:
+        # Reflection of left area
+        left_slice = _slice_at_axis(
+            arr.shape, axis,
+            slice(left_pad + min(period, left_pad), left_pad, -1)
+        )
+        left_chunk = arr[left_slice]
+
+        if method == "odd":
+            edge_slice = _slice_at_axis(
+                arr.shape, axis, slice(left_pad, left_pad + 1)
+            )
+            left_chunk = 2 * arr[edge_slice] - left_chunk
+
+        if left_pad > period:
+            left_pad -= period
+            pad_area = _slice_at_axis(
+                arr.shape, axis, slice(left_pad, left_pad + period))
+            arr[pad_area] = left_chunk
+        else:
+            _set_generic(arr, axis, left_pad, left_chunk)
+            left_pad = 0
+
+    if right_pad > 0:
+        # Reflection of right area
+        right_slice = _slice_at_axis(
+            arr.shape, axis,
+            slice(-right_pad - 2, -right_pad - min(period, right_pad) - 2, -1)
+        )
+        right_chunk = arr[right_slice]
+
+        if method == "odd":
+            edge_slice = _slice_at_axis(
+                arr.shape, axis, slice(-right_pad - 1, -right_pad))
+            right_chunk = 2 * arr[edge_slice] - right_chunk
+
+        if right_pad > period:
+            right_pad -= period
+            pad_area = _slice_at_axis(
+                arr.shape, axis, slice(-right_pad - period, -right_pad))
+            arr[pad_area] = right_chunk
+        else:
+            _set_generic(arr, axis, -right_pad, right_chunk)
+            right_pad = 0
+
+    return left_pad, right_pad
 
 
 def _normalize_shape(ndarray, shape, cast_to_int=True):
@@ -611,7 +688,7 @@ def pad(array, pad_width, mode, **kwargs):
         return newmat
 
     # Create array with final shape and original values
-    padded, old_area = _pad_empty(array, pad_width)
+    padded, _ = _pad_empty(array, pad_width)
 
     if mode == "constant":
         for axis, ((left_pad, right_pad), (left_value, right_value)) \
@@ -649,7 +726,29 @@ def pad(array, pad_width, mode, **kwargs):
             _set_stat(padded, axis, -right_pad, length_right, stat_func)
 
     elif mode == "reflect":
-        pass
+        method = kwargs["reflect_type"]
+        for axis, (left_pad, right_pad) in enumerate(pad_width):
+            if array.shape[axis] == 0:
+                # Axes with non-zero padding cannot be empty.
+                if left_pad > 0 or right_pad > 0:
+                    raise ValueError("There aren't any elements to reflect"
+                                     " in axis {} of `array`".format(axis))
+                # Skip zero padding on empty axes.
+                continue
+
+            if array.shape[axis] == 1 and (left_pad > 0 or right_pad > 0):
+                # Extending singleton dimension for 'reflect' is legacy
+                # behavior; it really should raise an error.
+                _set_edge(padded, axis, left_pad)
+                _set_edge(padded, axis, -right_pad)
+                continue
+
+            while left_pad > 0 or right_pad > 0:
+                # Iteratively pad until dimension is filled with reflected
+                # values. This is necessary if the pad area is larger than
+                # the length of the original values in the current dimension.
+                left_pad, right_pad = _set_reflect_both(
+                    padded, axis, (left_pad, right_pad), method)
 
     elif mode == "symmetric":
         pass
