@@ -233,7 +233,8 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
             || index == Py_None
             || PySlice_Check(index)
             || PyArray_Check(index)
-            || !PySequence_Check(index)) {
+            || !PySequence_Check(index)
+            || PyBaseString_Check(index)) {
 
         return unpack_scalar(index, result, result_n);
     }
