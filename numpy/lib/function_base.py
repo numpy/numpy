@@ -330,6 +330,8 @@ def average(a, axis=None, weights=None, returned=False):
 
     ma.average : average for masked arrays -- useful if your data contains
                  "missing" values
+    numpy.result_type : Returns the type that results from applying the 
+    			NumPy type promotion rules to the arguments.
 
     Examples
     --------
