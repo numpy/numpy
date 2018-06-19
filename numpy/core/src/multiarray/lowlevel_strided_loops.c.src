@@ -1371,7 +1371,7 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
  */
 
 /*
- * Advanded indexing iteration of arrays when there is a single indexing
+ * Advanced indexing iteration of arrays when there is a single indexing
  * array which has the same memory order as the value array and both
  * can be trivially iterated (single stride, aligned, no casting necessary).
  */
