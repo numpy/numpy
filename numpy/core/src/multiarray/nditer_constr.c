@@ -691,7 +691,10 @@ NpyIter_Deallocate(NpyIter *iter)
         }
     }
 
-    /* Deallocate all the dtypes and objects that were iterated */
+    /*
+     * Deallocate all the dtypes and objects that were iterated and resolve
+     * any writeback buffers created by the iterator
+     */
     for(iop = 0; iop < nop; ++iop, ++dtype, ++object) {
         if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
             if (resolve && PyArray_ResolveWritebackIfCopy(*object) < 0) {

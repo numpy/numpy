@@ -2800,11 +2800,7 @@ npyiter_has_writeback(NpyIter *iter)
     }
     nop = NIT_NOP(iter);
     op_itflags = NIT_OPITFLAGS(iter);
-    /* If NPY_OP_ITFLAG_HAS_WRITEBACK flag set on operand, resolve it.
-     * If the resolution fails (should never happen), continue from the
-     * next operand and discard the writeback scratch buffers, and return
-     * failure status
-     */
+
     for (iop=0; iop<nop; iop++) {
         if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
             return NPY_TRUE;
