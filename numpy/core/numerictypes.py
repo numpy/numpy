@@ -92,7 +92,7 @@ from numpy.core.multiarray import (
         datetime_as_string, busday_offset, busday_count, is_busday,
         busdaycalendar
         )
-
+from numpy._globals import VisibleDeprecationWarning
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
@@ -210,8 +210,20 @@ def english_capitalize(s):
 
 
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
-sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
-allTypes = {}      # Collect the types we will add to the module here
+class TypeNADict(dict):
+    def __getitem__(self, key):
+        # 2018-06-24, 1.16
+        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
+                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
+        return dict.__getitem__(self, key)
+    def get(self, key, default=None):
+        # 2018-06-24, 1.16
+        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
+                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
+        return dict.get(self, key, default)
+
+sctypeNA = TypeNADict()  # Contails all leaf-node types -> numarray type equivalences
+allTypes = {}            # Collect the types we will add to the module here
 
 
 # separate the actual type info from the abtract base classes

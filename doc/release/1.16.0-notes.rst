@@ -14,6 +14,12 @@ New functions
 Deprecations
 ============
 
+`typeNA` and `sctypeNA` have been deprecated
+-------------------------------------------
+
+The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` were buggy
+and not documented. They will be removed in the 1.18 release. Use 
+`numpy.sctypeDict` instead.
 
 Future Changes
 ==============
