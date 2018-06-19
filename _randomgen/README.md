@@ -120,11 +120,10 @@ the RNG._
 ## Status
 
 * Builds and passes all tests on:
-  * Linux 32/64 bit, Python 2.7, 3.4, 3.5, 3.6 (probably works on 2.6 and 3.3)
+  * Linux 32/64 bit, Python 2.7, 3.4, 3.5, 3.6
   * PC-BSD (FreeBSD) 64-bit, Python 2.7
   * OSX 64-bit, Python 3.6
-  * Windows 32/64 bit (only tested on Python 2.7, 3.5 and 3.6, but
-    should work on 3.3/3.4)
+  * Windows 32/64 bit, Python 2.7, 3.5 and 3.6
 
 ## Version
 The version matched the latest version of NumPy where 
@@ -148,7 +147,7 @@ need to be smoothed.
 Building requires:
 
   * Python (2.7, 3.4, 3.5, 3.6)
-  * NumPy (1.10, 1.11, 1.12, 1.13, 1.14)
+  * NumPy (1.11, 1.12, 1.13, 1.14, 1.15)
   * Cython (0.26+)
   * tempita (0.5+), if not provided by Cython
  
@@ -183,10 +182,10 @@ python setup.py install --no-sse2
 
 ### Windows
 Either use a binary installer, or if building from scratch, use 
-Python 3.6 with Visual Studio 2015 Community Edition. It can also be 
-build using Microsoft Visual C++ Compiler for Python 2.7 and Python 2.7, 
-although some modifications may be needed to `distutils` to find the 
-compiler.
+Python 3.6 with Visual Studio 2015/2017 Community Edition. It can also
+be build using Microsoft Visual C++ Compiler for Python 2.7 and
+Python 2.7.
+
 
 ## Using
 

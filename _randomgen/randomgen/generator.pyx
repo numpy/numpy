@@ -446,9 +446,9 @@ cdef class RandomGenerator:
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
                Random Signal Principles", 4th ed, 2001, p. 57.
         .. [2] Wikipedia, "Poisson process",
-               http://en.wikipedia.org/wiki/Poisson_process
+               https://en.wikipedia.org/wiki/Poisson_process
         .. [3] Wikipedia, "Exponential distribution",
-               http://en.wikipedia.org/wiki/Exponential_distribution
+               https://en.wikipedia.org/wiki/Exponential_distribution
 
         """
         return cont(&random_exponential, self._brng, size, self.lock, 1,
@@ -612,7 +612,7 @@ cdef class RandomGenerator:
 
         See Also
         --------
-        random.random_integers : similar to `randint`, only for the closed
+        random_integers : similar to `randint`, only for the closed
             interval [`low`, `high`], and 1 is the lowest value if `high` is
             omitted. In particular, this other one is the one to use to generate
             uniformly distributed discrete non-integers.
@@ -1305,7 +1305,7 @@ cdef class RandomGenerator:
         References
         ----------
         .. [1] Wikipedia, "Normal distribution",
-               http://en.wikipedia.org/wiki/Normal_distribution
+               https://en.wikipedia.org/wiki/Normal_distribution
         .. [2] P. R. Peebles Jr., "Central Limit Theorem" in "Probability,
                Random Variables and Random Signal Principles", 4th ed., 2001,
                pp. 51, 51, 125.
@@ -1559,7 +1559,7 @@ cdef class RandomGenerator:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
-               http://en.wikipedia.org/wiki/Gamma_distribution
+               https://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -1646,7 +1646,7 @@ cdef class RandomGenerator:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
-               http://en.wikipedia.org/wiki/Gamma_distribution
+               https://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -1725,7 +1725,7 @@ cdef class RandomGenerator:
         .. [1] Glantz, Stanton A. "Primer of Biostatistics.", McGraw-Hill,
                Fifth Edition, 2002.
         .. [2] Wikipedia, "F-distribution",
-               http://en.wikipedia.org/wiki/F-distribution
+               https://en.wikipedia.org/wiki/F-distribution
 
         Examples
         --------
@@ -1805,7 +1805,7 @@ cdef class RandomGenerator:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
-               http://en.wikipedia.org/wiki/Noncentral_F-distribution
+               https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
         Examples
         --------
@@ -1887,7 +1887,7 @@ cdef class RandomGenerator:
         References
         ----------
         .. [1] NIST "Engineering Statistics Handbook"
-               http://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
+               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
 
         Examples
         --------
@@ -1949,7 +1949,7 @@ cdef class RandomGenerator:
                the analysis of weapon systems effectiveness", Metrika,
                Volume 15, Number 1 / December, 1970.
         .. [2] Wikipedia, "Noncentral chi-square distribution"
-               http://en.wikipedia.org/wiki/Noncentral_chi-square_distribution
+               https://en.wikipedia.org/wiki/Noncentral_chi-square_distribution
 
         Examples
         --------
@@ -2034,7 +2034,7 @@ cdef class RandomGenerator:
               Wolfram Web Resource.
               http://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
-              http://en.wikipedia.org/wiki/Cauchy_distribution
+              https://en.wikipedia.org/wiki/Cauchy_distribution
 
         Examples
         --------
@@ -2097,7 +2097,7 @@ cdef class RandomGenerator:
         .. [1] Dalgaard, Peter, "Introductory Statistics With R",
                Springer, 2002.
         .. [2] Wikipedia, "Student's t-distribution"
-               http://en.wikipedia.org/wiki/Student's_t-distribution
+               https://en.wikipedia.org/wiki/Student's_t-distribution
 
         Examples
         --------
@@ -2300,7 +2300,7 @@ cdef class RandomGenerator:
         .. [3] Reiss, R.D., Thomas, M.(2001), Statistical Analysis of Extreme
                Values, Birkhauser Verlag, Basel, pp 23-30.
         .. [4] Wikipedia, "Pareto distribution",
-               http://en.wikipedia.org/wiki/Pareto_distribution
+               https://en.wikipedia.org/wiki/Pareto_distribution
 
         Examples
         --------
@@ -2393,7 +2393,7 @@ cdef class RandomGenerator:
                Wide Applicability", Journal Of Applied Mechanics ASME Paper
                1951.
         .. [3] Wikipedia, "Weibull distribution",
-               http://en.wikipedia.org/wiki/Weibull_distribution
+               https://en.wikipedia.org/wiki/Weibull_distribution
 
         Examples
         --------
@@ -2576,7 +2576,7 @@ cdef class RandomGenerator:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
-               http://en.wikipedia.org/wiki/Laplace_distribution
+               https://en.wikipedia.org/wiki/Laplace_distribution
 
         Examples
         --------
@@ -2778,7 +2778,7 @@ cdef class RandomGenerator:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
-               http://en.wikipedia.org/wiki/Logistic_distribution
+               https://en.wikipedia.org/wiki/Logistic_distribution
 
         Examples
         --------
@@ -2858,7 +2858,7 @@ cdef class RandomGenerator:
         .. [1] Limpert, E., Stahel, W. A., and Abbt, M., "Log-normal
                Distributions across the Sciences: Keys and Clues,"
                BioScience, Vol. 51, No. 5, May, 2001.
-               http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
+               https://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
         .. [2] Reiss, R.D. and Thomas, M., "Statistical Analysis of Extreme
                Values," Basel: Birkhauser Verlag, 2001, pp. 31-32.
 
@@ -2950,9 +2950,9 @@ cdef class RandomGenerator:
         References
         ----------
         .. [1] Brighton Webs Ltd., "Rayleigh Distribution,"
-               http://www.brighton-webs.co.uk/distributions/rayleigh.asp
+               https://web.archive.org/web/20090514091424/http://brighton-webs.co.uk:80/distributions/rayleigh.asp
         .. [2] Wikipedia, "Rayleigh distribution"
-               http://en.wikipedia.org/wiki/Rayleigh_distribution
+               https://en.wikipedia.org/wiki/Rayleigh_distribution
 
         Examples
         --------
@@ -3026,12 +3026,12 @@ cdef class RandomGenerator:
         References
         ----------
         .. [1] Brighton Webs Ltd., Wald Distribution,
-               http://www.brighton-webs.co.uk/distributions/wald.asp
+               https://web.archive.org/web/20090423014010/http://www.brighton-webs.co.uk:80/distributions/wald.asp
         .. [2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
                Distribution: Theory : Methodology, and Applications", CRC Press,
                1988.
         .. [3] Wikipedia, "Wald distribution"
-               http://en.wikipedia.org/wiki/Wald_distribution
+               https://en.wikipedia.org/wiki/Wald_distribution
 
         Examples
         --------
@@ -3098,7 +3098,7 @@ cdef class RandomGenerator:
         References
         ----------
         .. [1] Wikipedia, "Triangular distribution"
-               http://en.wikipedia.org/wiki/Triangular_distribution
+               https://en.wikipedia.org/wiki/Triangular_distribution
 
         Examples
         --------
@@ -3211,7 +3211,7 @@ cdef class RandomGenerator:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
-               http://en.wikipedia.org/wiki/Binomial_distribution
+               https://en.wikipedia.org/wiki/Binomial_distribution
 
         Examples
         --------
@@ -3297,7 +3297,7 @@ cdef class RandomGenerator:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` trials and `p` probability of failure where `n` is an
+        parameters, `n` successes and `p` probability of success where `n` is an
         integer > 0 and `p` is in the interval [0, 1].
 
         Parameters
@@ -3317,8 +3317,8 @@ cdef class RandomGenerator:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized negative binomial distribution,
-            where each sample is equal to N, the number of successes that
-            occurred before n failures, and a failure on the (N + n)th trial.
+            where each sample is equal to N, the number of failures that
+            occurred before a total of n successes was reached.
 
         Notes
         -----
@@ -3327,10 +3327,9 @@ cdef class RandomGenerator:
         .. math:: P(N;n,p) = \\binom{N+n-1}{N}p^{n}(1-p)^{N},
 
         where :math:`n` is the number of successes, :math:`p` is the
-        probability of failure, and :math:`N+n` is the number of trials.
-        The negative binomial distribution gives the probability of n
-        successes and N failures in N+n trials, and a success on the (N+n)th
-        trial.
+        probability of success, and :math:`N+n` is the number of trials.
+        The negative binomial distribution gives the probability of N
+        failures given n successes, with a success on the last trial.
 
         If one throws a die repeatedly until the third time a "1" appears,
         then the probability distribution of the number of non-"1"s that
@@ -3342,7 +3341,7 @@ cdef class RandomGenerator:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
-               http://en.wikipedia.org/wiki/Negative_binomial_distribution
+               https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
         Examples
         --------
@@ -3411,7 +3410,7 @@ cdef class RandomGenerator:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
-               http://en.wikipedia.org/wiki/Poisson_distribution
+               https://en.wikipedia.org/wiki/Poisson_distribution
 
         Examples
         --------
@@ -3633,7 +3632,7 @@ cdef class RandomGenerator:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
-               http://en.wikipedia.org/wiki/Hypergeometric_distribution
+               https://en.wikipedia.org/wiki/Hypergeometric_distribution
 
         Examples
         --------
@@ -3743,7 +3742,7 @@ cdef class RandomGenerator:
         .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
                Data Sets, CRC Press, 1994.
         .. [4] Wikipedia, "Logarithmic distribution",
-               http://en.wikipedia.org/wiki/Logarithmic_distribution
+               https://en.wikipedia.org/wiki/Logarithmic_distribution
 
         Examples
         --------
@@ -4089,9 +4088,9 @@ cdef class RandomGenerator:
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.phy.cam.ac.uk/mackay/
+               http://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
-               http://en.wikipedia.org/wiki/Dirichlet_distribution
+               https://en.wikipedia.org/wiki/Dirichlet_distribution
 
         Examples
         --------
@@ -4264,45 +4263,50 @@ cdef class RandomGenerator:
     def permutation(self, object x):
         """
         permutation(x)
-
         Randomly permute a sequence, or return a permuted range.
-
         If `x` is a multi-dimensional array, it is only shuffled along its
         first index.
-
         Parameters
         ----------
         x : int or array_like
             If `x` is an integer, randomly permute ``np.arange(x)``.
             If `x` is an array, make a copy and shuffle the elements
             randomly.
-
         Returns
         -------
         out : ndarray
             Permuted sequence or array range.
-
         Examples
         --------
-        >>> randomgen.permutation(10)
+        >>> np.random.permutation(10)
         array([1, 7, 4, 3, 0, 9, 2, 5, 8, 6])
-
-        >>> randomgen.permutation([1, 4, 9, 12, 15])
+        >>> np.random.permutation([1, 4, 9, 12, 15])
         array([15,  1,  9,  4, 12])
-
         >>> arr = np.arange(9).reshape((3, 3))
-        >>> randomgen.permutation(arr)
+        >>> np.random.permutation(arr)
         array([[6, 7, 8],
                [0, 1, 2],
                [3, 4, 5]])
-
         """
         if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
-        else:
-            arr = np.array(x)
-        self.shuffle(arr)
-        return arr
+            self.shuffle(arr)
+            return arr
+
+        arr = np.asarray(x)
+
+        # shuffle has fast-path for 1-d
+        if arr.ndim == 1:
+            # must return a copy
+            if arr is x:
+                arr = np.array(arr)
+            self.shuffle(arr)
+            return arr
+
+        # Shuffle index array, dtype to ensure fast path
+        idx = np.arange(arr.shape[0], dtype=np.intp)
+        self.shuffle(idx)
+        return arr[idx]
 
 _random_generator = RandomGenerator()
 
