@@ -948,3 +948,8 @@ class TestUFunc(object):
 
         x += x.T
         assert_array_equal(x - x.T, 0)
+
+def test_matrix_multiply_overlap():
+    a = np.arange(9, dtype=int).reshape(3,3)
+    b = a.copy()
+    assert_copy_equivalent(_umath_tests.matrix_multiply, [a, b], out=b)

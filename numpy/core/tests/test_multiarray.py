@@ -7387,6 +7387,13 @@ class TestWritebackIfCopy(object):
         # if HAVE_CBLAS, will use WRITEBACKIFCOPY
         a = np.arange(9, dtype=float).reshape(3,3)
         b = np.dot(a, a, out=a)
+        assert b is a
+        assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
+
+    def test_matmul_out(self):
+        a = np.arange(9, dtype=float).reshape(3,3)
+        b = np.matmul(a, a, out=a)
+        assert b is a
         assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
 
     def test_view_assign(self):
