@@ -7582,3 +7582,8 @@ def test_npymath_real():
                 got = fun(z)
                 expected = npfun(z)
                 assert_allclose(got, expected)
+
+def test_double_import():
+    sys.modules['np'] = sys.modules['numpy']
+    # ensure no segfault on python3
+    __import__('np.core.multiarray')

@@ -4216,6 +4216,10 @@ static void init_basetypes(void);
 NPY_NO_EXPORT void
 initialize_numeric_types(void)
 {
+    if (PyUnicodeArrType_Type.tp_flags & Py_TPFLAGS_READY) {
+        /* already called */
+        return;
+    }
     init_basetypes();
     PyGenericArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
     PyGenericArrType_Type.tp_as_number = &gentype_as_number;
