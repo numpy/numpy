@@ -84,7 +84,7 @@ def rot90(m, k=1, axes=(0,1)):
 
     See Also
     --------
-d wgts, or float64 if that type would be integral.    flip : Reverse the order of elements in an array along the given axis.
+    flip : Reverse the order of elements in an array along the given axis.
     fliplr : Flip an array horizontally.
     flipud : Flip an array vertically.
 
