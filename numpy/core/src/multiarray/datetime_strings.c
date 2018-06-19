@@ -1575,6 +1575,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     Py_XDECREF(op_dtypes[0]);
     Py_XDECREF(op_dtypes[1]);
     if (iter != NULL) {
+        /* no NpyIter_Close needed since writeable output is freshly created */
         NpyIter_Deallocate(iter);
     }
 

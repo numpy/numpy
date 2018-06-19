@@ -562,6 +562,8 @@ finish:
     Py_XDECREF(dtypes[1]);
     Py_XDECREF(dtypes[2]);
     if (iter != NULL) {
+        /* not needed since iter is created with NPY_SAFE_CASTING */
+        /* NpyIter_Close(iter); */
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_XDECREF(ret);
             ret = NULL;
@@ -697,6 +699,8 @@ finish:
     Py_XDECREF(dtypes[1]);
     Py_XDECREF(dtypes[2]);
     if (iter != NULL) {
+        /* not needed since iter is created with NPY_SAFE_CASTING */
+        /* NpyIter_Close(iter); */
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_XDECREF(ret);
             ret = NULL;
@@ -822,6 +826,7 @@ finish:
     Py_XDECREF(dtypes[0]);
     Py_XDECREF(dtypes[1]);
     if (iter != NULL) {
+        NpyIter_Close(iter);
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_XDECREF(ret);
             ret = NULL;
