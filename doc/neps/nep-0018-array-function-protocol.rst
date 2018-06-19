@@ -311,12 +311,13 @@ fairly simple and innocuous code that should complete quickly and
 without effect if no arguments implement the ``__array_function__``
 protocol.
 
-In most cases, these functions should written using a shared ``dispatch``
-decorator, which also associates dispatcher functions:
+In most cases, these functions should written using the
+``array_function_dispatch`` decorator, which also associates dispatcher
+functions:
 
 .. code:: python
 
-    def dispatch(dispatcher):
+    def array_function_dispatch(dispatcher):
         """Wrap a function for dispatch with the __array_function__ protocol."""
         def decorator(func):
             @functools.wraps(func)
@@ -334,7 +335,7 @@ decorator, which also associates dispatcher functions:
     def _broadcast_to_dispatcher(array, shape, subok=None, **ignored_kwargs):
         return (array,)
 
-    @dispatch(_broadcast_to_dispatcher)
+    @array_function_dispatch(_broadcast_to_dispatcher)
     def broadcast_to(array, shape, subok=False):
         ...  # existing definition of np.broadcast_to
 
@@ -359,16 +360,16 @@ It's particularly worth calling out the decorator's use of
 - Finally, it ensures that the wrapped function
   `can be pickled <http://gael-varoquaux.info/programming/decoration-in-python-done-right-decorating-and-pickling.html>`_.
 
-In a few cases, it would not make sense to use the ``dispatch`` decorator
-directly, but override implementation in terms of
+In a few cases, it would not make sense to use the ``array_function_dispatch``
+decorator directly, but override implementation in terms of
 ``try_array_function_override`` should still be straightforward.
 - Functions written entirely in C (e.g., ``np.concatenate``) can't use
   decorators, but they could still use a C equivalent of
   ``try_array_function_override``. If performance is not a concern, they could
   also be easily wrapped with a small Python wrapper.
 - The ``__call__`` method of ``np.vectorize`` can't be decorated with
-  ``@dispatch``, because we should pass a ``vectorize`` object itself as the
-  ``func`` argument  ``__array_function__``, not the unbound
+  ``@array_function_dispatch``, because we should pass a ``vectorize`` object
+  itself as the ``func`` argument  ``__array_function__``, not the unbound
   ``vectorize.__call__`` method.
 - ``np.einsum`` does complicated argument parsing to handle two different
   function signatures. It would probably be best to avoid the overhead of
@@ -402,9 +403,9 @@ the difference in speed between the ``ndarray.sum()`` method (1.6 us) and
 
 Fortunately, we expect significantly less overhead with a C implementation of
 ``try_array_function_override``, which is where the bulk of the runtime is.
-This would leave the ``dispatch`` decorator and dispatcher function on their
-own adding about 0.5 microseconds of overhead, for perhaps ~1 microsecond of
-overhead in the typical case.
+This would leave the ``array_function_dispatch`` decorator and dispatcher
+function on their own adding about 0.5 microseconds of overhead, for perhaps ~1
+microsecond of overhead in the typical case.
 
 In our view, this level of overhead is reasonable to accept for code written
 in Python. We're pretty sure that the vast majority of NumPy users aren't
@@ -427,8 +428,9 @@ to be explicitly recognized. Libraries like Dask, CuPy, and Autograd
 already wrap a limited subset of SciPy functionality (e.g.,
 ``scipy.linalg``) similarly to how they wrap NumPy.
 
-If we want to do this, we should expose the helper function
-``try_array_function_override()`` and ``dispatch()`` decorator as a public API.
+If we want to do this, we should expose at least the decorator
+``array_function_dispatch()`` and possibly also the lower level
+``try_array_function_override()`` as part of NumPy's public API.
 
 Non-goals
 ---------
