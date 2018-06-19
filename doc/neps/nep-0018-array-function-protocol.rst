@@ -571,8 +571,14 @@ However, this also comes with several downsides:
    subject of a future NEP, but until then we should be reluctant to rely on
    these properties.
 
-Given these concerns, we encourage relying on this approach only in
-limited cases.
+Given these concerns, we think it's valuable to support explicit overloading of
+nearly every public function in NumPy's API. This does not preclude the future
+possibility of rewriting NumPy functions in terms of simplified core
+functionality with ``__array_function__`` and a protocol and/or base class for
+ensuring that arrays expose methods and properties like ``numpy.ndarray``.
+However, to work well this would require the possibility of implementing
+*some* but not all functions with ``__array_function__``, e.g., as described
+in the next section.
 
 Coersion to a NumPy array as a catch-all fallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
