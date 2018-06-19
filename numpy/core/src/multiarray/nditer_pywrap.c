@@ -1185,7 +1185,7 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
                     "operands. Typically nditer is used as a context manager "
                     "otherwise 'close' must be called before reading iteration "
                     "results.", 1) < 0) {
-                PyObject * s;
+                PyObject *s;
 
                 s = PyUString_FromString("npyiter_dealloc");
                 if (s) {
