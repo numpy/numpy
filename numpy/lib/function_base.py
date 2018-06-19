@@ -84,7 +84,7 @@ def rot90(m, k=1, axes=(0,1)):
 
     See Also
     --------
-    flip : Reverse the order of elements in an array along the given axis.
+d wgts, or float64 if that type would be integral.    flip : Reverse the order of elements in an array along the given axis.
     fliplr : Flip an array horizontally.
     flipud : Flip an array vertically.
 
@@ -309,9 +309,11 @@ def average(a, axis=None, weights=None, returned=False):
         return a tuple with the average as the first element and the sum
         of the weights as the second element. The return type is `Float`
         if `a` is of integer type, otherwise it is of the same type as `a`.
-        `sum_of_weights` is of the same type as `average`. The return type
-	 is common to both `a` and `weights` otherwise is returned as
-	 `float`
+        `sum_of_weights` is of the same type as `average`. The result type
+	 is common to both `a` and `weights` or 'float64' if that type  
+	 would be integral. Otherwise, if `a` is non integral, result would
+	 be a `dtype` which is capable to represent both `a.dtype` and 
+	 `wgt.dtype`
 
     Raises
     ------
@@ -350,6 +352,12 @@ def average(a, axis=None, weights=None, returned=False):
     Traceback (most recent call last):
     ...
     TypeError: Axis must be specified when shapes of a and weights differ.
+
+    >>> a = np.ones(5, dtype=np.float128)
+    >>> w = np.ones(5, dtype=np.complex64)
+    >>> avg = np.average(a, weights=w)
+    >>> print(avg.dtype)
+    complex256
 
     """
     a = np.asanyarray(a)
