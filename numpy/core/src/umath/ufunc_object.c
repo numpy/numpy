@@ -1281,7 +1281,6 @@ iterator_loop(PyUFuncObject *ufunc,
 
     PyArrayObject **op_it;
     npy_uint32 iter_flags;
-    int retval;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -1355,7 +1354,6 @@ iterator_loop(PyUFuncObject *ufunc,
             /* Call the __array_prepare__ functions for the new array */
             if (prepare_ufunc_output(ufunc, &op[nin+i],
                                      arr_prep[i], full_args, i) < 0) {
-                NpyIter_Close(iter);
                 NpyIter_Deallocate(iter);
                 return -1;
             }
@@ -1384,7 +1382,6 @@ iterator_loop(PyUFuncObject *ufunc,
             baseptrs[i] = PyArray_BYTES(op_it[i]);
         }
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
-            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return -1;
         }
@@ -1392,7 +1389,6 @@ iterator_loop(PyUFuncObject *ufunc,
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
-            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return -1;
         }
@@ -1410,9 +1406,7 @@ iterator_loop(PyUFuncObject *ufunc,
 
         NPY_END_THREADS;
     }
-    retval = NpyIter_Close(iter);
-    NpyIter_Deallocate(iter);
-    return retval;
+    return NpyIter_Deallocate(iter);
 }
 
 /*
@@ -1597,7 +1591,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                     PyObject **arr_prep,
                     ufunc_full_args full_args)
 {
-    int retval, i, nin = ufunc->nin, nout = ufunc->nout;
+    int i, nin = ufunc->nin, nout = ufunc->nout;
     int nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1709,7 +1703,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 
         if (prepare_ufunc_output(ufunc, &op_tmp,
                                  arr_prep[i], full_args, i) < 0) {
-            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return -1;
         }
@@ -1720,7 +1713,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                         "The __array_prepare__ functions modified the data "
                         "pointer addresses in an invalid fashion");
             Py_DECREF(op_tmp);
-            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return -1;
         }
@@ -1755,7 +1747,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                         wheremask != NULL ? fixed_strides[nop]
                                           : fixed_strides[nop + nin],
                         &innerloop, &innerloopdata, &needs_api) < 0) {
-            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return -1;
         }
@@ -1763,7 +1754,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
-            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return -1;
         }
@@ -1787,9 +1777,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         NPY_AUXDATA_FREE(innerloopdata);
     }
 
-    retval = NpyIter_Close(iter);
-    NpyIter_Deallocate(iter);
-    return retval;
+    return NpyIter_Deallocate(iter);
 }
 
 static npy_bool
@@ -2300,7 +2288,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int nin, nout;
     int i, j, idim, nop;
     const char *ufunc_name;
-    int retval = 0, subok = 1;
+    int retval, subok = 1;
     int needs_api = 0;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
@@ -2809,16 +2797,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Write back any temporary data from PyArray_SetWritebackIfCopyBase */
-    if (NpyIter_Close(iter) < 0) {
-        goto fail;
+    PyArray_free(inner_strides);
+    if (NpyIter_Deallocate(iter) < 0) {
+        retval = -1;
     }
 
-    PyArray_free(inner_strides);
-    if (NpyIter_Close(iter) < 0) {
-        goto fail;
-    }
-    NpyIter_Deallocate(iter);
     /* The caller takes ownership of all the references in op */
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(dtypes[i]);
@@ -2831,14 +2814,13 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 
-    NPY_UF_DBG_PRINT("Returning Success\n");
+    NPY_UF_DBG_PRINT1("Returning code %d\n", reval);
 
-    return 0;
+    return retval;
 
 fail:
     NPY_UF_DBG_PRINT1("Returning failure code %d\n", retval);
     PyArray_free(inner_strides);
-    NpyIter_Close(iter);
     NpyIter_Deallocate(iter);
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
@@ -3031,7 +3013,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     Py_XDECREF(full_args.out);
     Py_XDECREF(wheremask);
 
-    NPY_UF_DBG_PRINT("Returning Success\n");
+    NPY_UF_DBG_PRINT("Returning success code 0\n");
 
     return 0;
 
@@ -3722,12 +3704,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
 finish:
-    if (NpyIter_Close(iter) < 0) {
-        goto fail;
-    }
-    if (NpyIter_Close(iter_inner) < 0) {
-        goto fail;
-    }
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
     NpyIter_Deallocate(iter_inner);
@@ -4110,9 +4086,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
 finish:
-    if (NpyIter_Close(iter) < 0) {
-        goto fail;
-    }
     Py_XDECREF(op_dtypes[0]);
     NpyIter_Deallocate(iter);
 
@@ -5544,7 +5517,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     iternext = NpyIter_GetIterNext(iter_buffer, NULL);
     if (iternext == NULL) {
-        NpyIter_Close(iter_buffer);
         NpyIter_Deallocate(iter_buffer);
         goto fail;
     }
@@ -5614,7 +5586,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         PyErr_SetString(PyExc_ValueError, err_msg);
     }
 
-    NpyIter_Close(iter_buffer);
     NpyIter_Deallocate(iter_buffer);
 
     Py_XDECREF(op2_array);
@@ -5632,7 +5603,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     }
 
 fail:
-    /* iter_buffer has already been deallocated, don't use NpyIter_Close */
+    /* iter_buffer has already been deallocated, don't use NpyIter_Dealloc */
     if (op1_array != (PyArrayObject*)op1) {
         PyArray_DiscardWritebackIfCopy(op1_array);
     }
