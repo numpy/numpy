@@ -39,7 +39,7 @@ Improvements
 Even when no elements needed to be drawn, ``np.random.randint`` and
 ``np.random.choice`` raised an error when the arguments described an empty
 distribution. This has been fixed so that e.g.
-``np.random.choice([],0) == np.array([],dtype=float64)``.
+``np.random.choice([], 0) == np.array([], dtype=float64)``.
 
 Changes
 =======

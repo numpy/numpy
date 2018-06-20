@@ -1122,7 +1122,7 @@ cdef class RandomState:
         else:
             pop_size = a.shape[0]
             if pop_size is 0 and np.prod(size) != 0:
-                raise ValueError("a cannot be empty unless no samples are taken")
+                raise ValueError("'a' cannot be empty unless no samples are taken")
 
         if p is not None:
             d = len(p)
