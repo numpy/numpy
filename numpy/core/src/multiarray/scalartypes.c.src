@@ -1675,16 +1675,6 @@ gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
     return NULL;
 }
 
-static PyObject *
-gentype_squeeze(PyObject *self, PyObject *args)
-{
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    return self;
-}
-
 static Py_ssize_t
 gentype_getreadbuf(PyObject *, Py_ssize_t, void **);
 
@@ -1738,7 +1728,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, ptp, any, all, astype, resize,
  *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
- *         flatten, ravel#
+ *         flatten, ravel, squeeze#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
@@ -2121,7 +2111,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"squeeze",
         (PyCFunction)gentype_squeeze,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"view",
         (PyCFunction)gentype_view,
         METH_VARARGS | METH_KEYWORDS, NULL},
