@@ -441,10 +441,11 @@ class TestRandomDist(object):
         assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
         # Check zero-size
-        assert_equal(np.random.randint(0,0,(3,0,4)).shape, (3,0,4))
-        assert_equal(np.random.randint(0,-10,0).shape, (0,))
-        assert_equal(np.random.choice(0,0).shape, (0,))
-        assert_equal(np.random.choice([],(0,)).shape, (0,))
+        assert_equal(np.random.randint(0, 0, size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_equal(np.random.randint(0, -10, size=0).shape, (0,))
+        assert_equal(np.random.randint(10, 10, size=0).shape, (0,))
+        assert_equal(np.random.choice(0, size=0).shape, (0,))
+        assert_equal(np.random.choice([], size=(0,)).shape, (0,))
         assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
         assert_raises(ValueError, np.random.choice, [], 10)
 
