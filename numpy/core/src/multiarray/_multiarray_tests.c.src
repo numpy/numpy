@@ -1042,76 +1042,6 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
 }
 
 static PyObject *
-test_nditer_writeback(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
-{
-    /* like npyiter_init */
-    PyObject *op_in = NULL, *op_dtypes_in = NULL, *value = NULL;
-    PyArrayObject * opview;
-    int iop, nop = 0;
-    PyArrayObject *op[NPY_MAXARGS];
-    npy_uint32 flags = 0;
-    NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_EQUIV_CASTING;
-    npy_uint32 op_flags[NPY_MAXARGS];
-    PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
-    int retval;
-    unsigned char do_close;
-    int buffersize = 0;
-    NpyIter *iter = NULL;
-    static char *kwlist[] = {"value", "do_close", "input", "op_dtypes", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                    "ObO|O:test_nditer_writeback", kwlist,
-                    &value,
-                    &do_close,
-                    &op_in,
-                    &op_dtypes_in)) {
-        return NULL;
-    }
-    /* op and op_flags */
-    if (! PyArray_Check(op_in)) {
-        return NULL;
-    }
-    nop = 1;
-    op[0] = (PyArrayObject*)op_in;
-    op_flags[0] = NPY_ITER_READWRITE|NPY_ITER_UPDATEIFCOPY;
-
-    /* Set the dtypes */
-    for (iop=0; iop<nop; iop++) {
-        PyObject *dtype = PySequence_GetItem(op_dtypes_in, iop);
-        PyArray_DescrConverter2(dtype, &op_request_dtypes[iop]);
-    }
-
-    iter = NpyIter_AdvancedNew(nop, op, flags, order, casting, op_flags,
-                                  op_request_dtypes,
-                                  -1, NULL, NULL,
-                                  buffersize);
-    if (iter == NULL) {
-        goto fail;
-    }
-
-    opview = NpyIter_GetIterView(iter, 0);
-    retval = PyArray_FillWithScalar(opview, value);
-    Py_DECREF(opview);
-    if (retval < 0) {
-        NpyIter_Deallocate(iter);
-        return NULL;
-    }
-    if (do_close != 0) {
-        NpyIter_Close(iter);
-    }
-    NpyIter_Deallocate(iter);
-    Py_RETURN_NONE;
-
-fail:
-    for (iop = 0; iop < nop; ++iop) {
-        Py_XDECREF(op[iop]);
-        Py_XDECREF(op_request_dtypes[iop]);
-    }
-    return NULL;
-}
-
-static PyObject *
 array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
     PyObject *A = NULL;
@@ -1948,9 +1878,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_nditer_too_large",
         test_nditer_too_large,
         METH_VARARGS, NULL},
-    {"test_nditer_writeback",
-        (PyCFunction)test_nditer_writeback,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"solve_diophantine",
         (PyCFunction)array_solve_diophantine,
         METH_VARARGS | METH_KEYWORDS, NULL},

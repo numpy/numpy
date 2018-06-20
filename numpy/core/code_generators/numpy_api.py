@@ -350,8 +350,6 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
-    'NpyIter_Close':                        (304,),
-    # End 1.15 API
 }
 
 ufunc_types_api = {
