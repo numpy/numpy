@@ -2576,7 +2576,7 @@ int setup_plain_permutation(PyArrayMapIterObject *mit,
         int orig_index = -1;
         /* Check indices, we might have a single boolean index, which is OK */
         for (i = 0; i < index_num; i++) {
-            if (indices[i].type == HAS_FANCY) {
+            if (indices[i].type & (HAS_FANCY|HAS_BOOL)) {
                 if (orig_index != indices[i].orig_index && orig_index != -1) {
                     if (DEPRECATE(
                             "more than two array indices found; "
@@ -2592,7 +2592,7 @@ int setup_plain_permutation(PyArrayMapIterObject *mit,
     else if (mit->consec == 0) {
         /* We need to check whether or not the fancy index is "first" */
         for (i = 0; i < index_num; i++) {
-            if (indices[i].type == HAS_FANCY) {
+            if (indices[i].type & (HAS_FANCY|HAS_BOOL)) {
                 /*
                  * First dimension being the fancy one is correct the
                  * index is thus clear.

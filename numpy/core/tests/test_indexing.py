@@ -291,7 +291,7 @@ class TestIndexing(object):
     def test_too_many_fancy_indices_special_case(self):
         # Just documents behaviour, this is a small limitation.
         a = np.ones((1,) * 32)  # 32 is NPY_MAXDIMS
-        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+        assert_raises(IndexError, a.lindex.__getitem__, (np.array([0]),) * 32)
 
     def test_scalar_array_bool(self):
         # NumPy bools can be used as boolean index (python ones as of yet not)
@@ -467,7 +467,7 @@ class TestIndexing(object):
             pass
         index = ([1], [1])
         index = TupleSubclass(index)
-        assert_(arr[index].shape == (1,))
+        assert_(arr.lindex[index].shape == (1,))
         # Unlike the non nd-index:
         assert_(arr[index,].shape != (1,))
 
@@ -1235,9 +1235,9 @@ class TestBooleanIndexing(object):
     def test_boolean_indexing_weirdness(self):
         # Weird boolean indexing things
         a = np.ones((2, 3, 4))
-        a[False, True, ...].shape == (0, 2, 3, 4)
-        a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
-        assert_raises(IndexError, lambda: a[False, [0, 1], ...])
+        a.lindex[False, True, ...].shape == (0, 2, 3, 4)
+        a.lindex[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
+        assert_raises(IndexError, lambda: a.lindex[False, [0, 1], ...])
 
 
 class TestArrayToIndexDeprecation(object):
