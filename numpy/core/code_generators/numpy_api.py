@@ -75,7 +75,7 @@ multiarray_types_api = {
     'NpyIter_Type':                     (218,),
     # End 1.6 API
     # Start 1.11 API
-    'PyArrayAttributeIndexer_Type':     (301,),
+    'PyArrayAttributeIndexer_Type':     (304,),
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])

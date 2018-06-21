@@ -4704,7 +4704,7 @@ PyMODINIT_FUNC initmultiarray(void) {
         goto err;
     }
     if (PyType_Ready(&PyArrayAttributeIndexer_Type) < 0) {
-        return RETVAL;
+        goto err;
     }
     PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {

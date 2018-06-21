@@ -2327,7 +2327,7 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
      * other cases (field names, empty tuple) will return either
      * scalar or non-0d array. Compute this using ndarray subscript.
      */
-    ret = array_subscript((PyArrayObject *)res, ind);
+    ret = array_subscript((PyArrayObject *)res, ind, FANCY_INDEXING);
     Py_DECREF(res);
     return PyArray_Return((PyArrayObject*)ret);
 }
