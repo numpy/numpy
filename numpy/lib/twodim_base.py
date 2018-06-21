@@ -530,7 +530,8 @@ def vander(x, N=None, increasing=False):
     return v
 
 
-def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
+def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
+                density=None):
     """
     Compute the bi-dimensional histogram of two data samples.
 
@@ -560,9 +561,14 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         (if not specified explicitly in the `bins` parameters):
         ``[[xmin, xmax], [ymin, ymax]]``. All values outside of this range
         will be considered outliers and not tallied in the histogram.
+    density : bool, optional
+        If False, the default, returns the number of samples in each bin.
+        If True, returns the probability *density* function at the bin,
+        ``bin_count / sample_count / bin_area``.
     normed : bool, optional
-        If False, returns the number of samples in each bin. If True,
-        returns the bin density ``bin_count / sample_count / bin_area``.
+        An alias for the density argument that behaves identically. To avoid
+        confusion with the broken normed argument to `histogram`, `density`
+        should be preferred.
     weights : array_like, shape(N,), optional
         An array of values ``w_i`` weighing each sample ``(x_i, y_i)``.
         Weights are normalized to 1 if `normed` is True. If `normed` is
@@ -652,7 +658,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     if N != 1 and N != 2:
         xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
-    hist, edges = histogramdd([x, y], bins, range, normed, weights)
+    hist, edges = histogramdd([x, y], bins, range, normed, weights, density)
     return hist, edges[0], edges[1]
 
 

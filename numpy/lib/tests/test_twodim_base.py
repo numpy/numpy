@@ -208,7 +208,7 @@ class TestHistogram2d(object):
         x = array([1, 1, 2, 3, 4, 4, 4, 5])
         y = array([1, 3, 2, 0, 1, 2, 3, 4])
         H, xed, yed = histogram2d(
-            x, y, (6, 5), range=[[0, 6], [0, 5]], normed=True)
+            x, y, (6, 5), range=[[0, 6], [0, 5]], density=True)
         answer = array(
             [[0., 0, 0, 0, 0],
              [0, 1, 0, 1, 0],
@@ -220,11 +220,11 @@ class TestHistogram2d(object):
         assert_array_equal(xed, np.linspace(0, 6, 7))
         assert_array_equal(yed, np.linspace(0, 5, 6))
 
-    def test_norm(self):
+    def test_density(self):
         x = array([1, 2, 3, 1, 2, 3, 1, 2, 3])
         y = array([1, 1, 1, 2, 2, 2, 3, 3, 3])
         H, xed, yed = histogram2d(
-            x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], normed=True)
+            x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], density=True)
         answer = array([[1, 1, .5],
                         [1, 1, .5],
                         [.5, .5, .25]])/9.

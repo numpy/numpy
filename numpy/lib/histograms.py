@@ -812,7 +812,8 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         return n, bin_edges
 
 
-def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
+def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
+                density=None):
     """
     Compute the multidimensional histogram of some data.
 
@@ -845,9 +846,14 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         An entry of None in the sequence results in the minimum and maximum
         values being used for the corresponding dimension.
         The default, None, is equivalent to passing a tuple of D None values.
+    density : bool, optional
+        If False, the default, returns the number of samples in each bin.
+        If True, returns the probability *density* function at the bin,
+        ``bin_count / sample_count / bin_volume``.
     normed : bool, optional
-        If False, returns the number of samples in each bin. If True,
-        returns the bin density ``bin_count / sample_count / bin_volume``.
+        An alias for the density argument that behaves identically. To avoid
+        confusion with the broken normed argument to `histogram`, `density`
+        should be preferred.
     weights : (N,) array_like, optional
         An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
         Weights are normalized to 1 if normed is True. If normed is False,
@@ -961,8 +967,18 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     core = D*(slice(1, -1),)
     hist = hist[core]
 
-    # Normalize if normed is True
-    if normed:
+    # handle the aliasing normed argument
+    if normed is None:
+        if density is None:
+            density = False
+    elif density is None:
+        # an explicit normed argument was passed, alias it to the new name
+        density = normed
+    else:
+        raise TypeError("Cannot specify both 'normed' and 'density'")
+
+    if density:
+        # calculate the probability density function
         s = hist.sum()
         for i in _range(D):
             shape = np.ones(D, int)
