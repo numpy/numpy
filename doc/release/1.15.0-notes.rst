@@ -95,11 +95,6 @@ Deprecations
   flag set, before deallocating the array. A deprecation warning will be
   emitted if those calls are not used when needed.
 
-* Users of `numpy.nditer` should use the nditer object as a context manager
-  whenever one of the iterator operands is writeable so that numpy can manage
-  writeback semantics, or alternately, one can call ``it.close()`` to trigger a
-  writeback.  A ``RuntimeWarning`` will otherwise be raised in those cases. Users
-  of the C-API should call ``NpyIter_Close`` before ``NpyIter_Deallocate``.
 * Users of ``nditer`` should use the nditer object as a context manager
   anytime one of the iterator operands is writeable, so that numpy can
   manage writeback semantics, or should call ``it.close()``. A
@@ -213,11 +208,6 @@ for this future change see the "accessing multiple fields" section of the
 
 C API changes
 =============
-
-New function ``NpyIter_Close``
-------------------------------
-The function ``NpyIter_Close`` has been added and should be called before
-``NpyIter_Deallocate`` to resolve possible writeback-enabled arrays.
 
 New functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
 -----------------------------------------------------------------------------------
