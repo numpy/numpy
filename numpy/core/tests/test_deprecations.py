@@ -190,10 +190,10 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         b = np.array(['a', 'b', 'c'])
         assert_raises(ValueError, lambda x, y: x == y, a, b)
 
-        # The empty list is not cast to string, as this is only to document
-        # that fact (it likely should be changed). This means that the
-        # following works (and returns False) due to dtype mismatch:
-        a == []
+        # The empty list is not cast to string, and this used to pass due
+        # to dtype mismatch; now (2018-06-21) it correctly leads to a
+        # FutureWarning.
+        assert_warns(FutureWarning, lambda: a == [])
 
     def test_void_dtype_equality_failures(self):
         class NotArray(object):

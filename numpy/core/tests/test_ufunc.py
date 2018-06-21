@@ -1643,6 +1643,16 @@ class TestUfunc(object):
         target = np.array([ True, False, False, False], dtype=bool)
         assert_equal(np.all(target == (mra == ra[0])), True)
 
+    def test_scalar_equal(self):
+        # Scalar comparisons should always work, without deprecation warnings.
+        # even when the ufunc fails.
+        a = np.array(0.)
+        b = np.array('a')
+        assert_(a != b)
+        assert_(b != a)
+        assert_(not (a == b))
+        assert_(not (b == a))
+
     def test_NotImplemented_not_returned(self):
         # See gh-5964 and gh-2091. Some of these functions are not operator
         # related and were fixed for other reasons in the past.
