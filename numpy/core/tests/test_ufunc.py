@@ -1652,17 +1652,16 @@ class TestUfunc(object):
             np.bitwise_xor, np.left_shift, np.right_shift, np.fmax,
             np.fmin, np.fmod, np.hypot, np.logaddexp, np.logaddexp2,
             np.logical_and, np.logical_or, np.logical_xor, np.maximum,
-            np.minimum, np.mod
-            ]
-
-        # These functions still return NotImplemented. Will be fixed in
-        # future.
-        # bad = [np.greater, np.greater_equal, np.less, np.less_equal, np.not_equal]
+            np.minimum, np.mod,
+            np.greater, np.greater_equal, np.less, np.less_equal,
+            np.equal, np.not_equal]
 
         a = np.array('1')
         b = 1
+        c = np.array([1., 2.])
         for f in binary_funcs:
             assert_raises(TypeError, f, a, b)
+            assert_raises(TypeError, f, c, a)
 
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
