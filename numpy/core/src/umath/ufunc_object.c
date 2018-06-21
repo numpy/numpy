@@ -579,6 +579,27 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     int has_sig = 0;
 
+    enum NPY_UFUNC_KWARGS {
+        ufunc_out, ufunc_where, ufunc_axes,
+        ufunc_axis, ufunc_keepdims, ufunc_casting,
+        ufunc_order, ufunc_dtype, ufunc_subok,
+        ufunc_signature, ufunc_sig, ufunc_extobj,
+        ufunc_badkey };
+    static PyObject *ufunc_kwnames[ufunc_badkey] = {NULL};
+    if (*ufunc_kwnames == NULL) {
+        ufunc_kwnames[ufunc_out] = npy_um_str_out;
+        ufunc_kwnames[ufunc_where] = npy_um_str_where;
+        ufunc_kwnames[ufunc_axes] = npy_um_str_axes;
+        ufunc_kwnames[ufunc_axis] = npy_um_str_axis;
+        ufunc_kwnames[ufunc_keepdims] = npy_um_str_keepdims;
+        ufunc_kwnames[ufunc_casting] = npy_um_str_casting;
+        ufunc_kwnames[ufunc_order] = npy_um_str_order;
+        ufunc_kwnames[ufunc_dtype] = npy_um_str_dtype;
+        ufunc_kwnames[ufunc_subok] = npy_um_str_subok;
+        ufunc_kwnames[ufunc_signature] = npy_um_str_signature;
+        ufunc_kwnames[ufunc_sig] = npy_um_str_sig;
+        ufunc_kwnames[ufunc_extobj] = npy_um_str_extobj;
+    };
     /*
      * Initialize objects so caller knows when outputs and other optional
      * arguments are set (also means we can safely XDECREF on failure).
@@ -654,235 +675,233 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         PyObject *key, *value;
         Py_ssize_t pos = 0;
         while (PyDict_Next(kwds, &pos, &key, &value)) {
-            Py_ssize_t length = 0;
-            char *str = NULL;
+            PyArray_Descr *dtype;
             int bad_arg = 1;
-
-#if defined(NPY_PY3K)
-            Py_XDECREF(str_key_obj);
-            str_key_obj = PyUnicode_AsASCIIString(key);
-            if (str_key_obj != NULL) {
-                key = str_key_obj;
+            int kw_id;
+            /*
+             * For maximum speed, we follow CPython's ceval.c
+             * _PyEval_EvalCodeWithName, which tries direct pointer
+             * comparison first, noting:
+             * """Speed hack: do raw pointer compares. As names are
+             *    normally interned this should almost always hit."""
+             * And we do indeed intern them.
+             */
+            for (kw_id = 0; kw_id < ufunc_badkey; kw_id++) {
+                if (ufunc_kwnames[kw_id] == key) {
+                    goto kw_found;
+                }
             }
-#endif
-
-            if (PyBytes_AsStringAndSize(key, &str, &length) < 0) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
-                goto fail;
+            /* Slow fallback, just in case */
+            for (kw_id = 0; kw_id < ufunc_badkey; kw_id++) {
+                int cmp = PyObject_RichCompareBool(key, ufunc_kwnames[kw_id], Py_EQ);
+                if (cmp > 0) {
+                    goto kw_found;
+                }
+                else if (cmp < 0) {
+                    goto fail;
+                }
             }
-
-            switch (str[0]) {
-                case 'a':
-                    /* possible axes argument for generalized ufunc */
-                    if (out_axes != NULL && strcmp(str, "axes") == 0) {
-                        if (out_axis != NULL && *out_axis != NULL) {
-                            PyErr_SetString(PyExc_TypeError,
-                                "cannot specify both 'axis' and 'axes'");
+        kw_found:
+            switch (kw_id) {
+            case ufunc_axes:
+                /* possible axes argument for generalized ufunc */
+                if (out_axes != NULL) {
+                    if (out_axis != NULL && *out_axis != NULL) {
+                        PyErr_SetString(PyExc_TypeError,
+                            "cannot specify both 'axis' and 'axes'");
+                        goto fail;
+                    }
+                    Py_INCREF(value);
+                    *out_axes = value;
+                    bad_arg = 0;
+                }
+                break;
+            case ufunc_axis:
+                if (out_axis != NULL) {
+                    if (out_axes != NULL && *out_axes != NULL) {
+                        PyErr_SetString(PyExc_TypeError,
+                            "cannot specify both 'axis' and 'axes'");
+                        goto fail;
+                    }
+                    Py_INCREF(value);
+                    *out_axis = value;
+                    bad_arg = 0;
+                }
+                break;
+            case ufunc_casting:
+                /* Provides a policy for allowed casting */
+                if (!PyArray_CastingConverter(value, out_casting)) {
+                    goto fail;
+                }
+                bad_arg = 0;
+                break;
+            case ufunc_dtype:
+                /* Another way to specify 'signature' */
+                /* Allow this parameter to be None */
+                if (!PyArray_DescrConverter2(value, &dtype)) {
+                    goto fail;
+                }
+                if (dtype != NULL) {
+                    if (*out_typetup != NULL) {
+                        PyErr_SetString(PyExc_RuntimeError,
+                            "cannot specify both 'signature' and 'dtype'");
+                        goto fail;
+                    }
+                    *out_typetup = Py_BuildValue("(N)", dtype);
+                }
+                bad_arg = 0;
+                break;
+            case ufunc_extobj:
+                /*
+                 * Overrides the global parameters buffer size,
+                 * error mask, and error object
+                 */
+                Py_INCREF(value);
+                *out_extobj = value;
+                bad_arg = 0;
+                break;
+            case ufunc_keepdims:
+                if (out_keepdims != NULL) {
+                    if (!PyBool_Check(value)) {
+                        PyErr_SetString(PyExc_TypeError,
+                            "'keepdims' must be a boolean");
+                        goto fail;
+                    }
+                    *out_keepdims = (value == Py_True);
+                    bad_arg = 0;
+                }
+                break;
+            case ufunc_out:
+                /*
+                 * Output arrays may be specified as a keyword argument,
+                 * either as a single array or None for single output
+                 * ufuncs, or as a tuple of arrays and Nones.
+                 */
+                if (nargs > nin) {
+                    PyErr_SetString(PyExc_ValueError,
+                        "cannot specify 'out' as both a "
+                        "positional and keyword argument");
+                    goto fail;
+                }
+                if (PyTuple_CheckExact(value)) {
+                    if (PyTuple_GET_SIZE(value) != nout) {
+                        PyErr_SetString(PyExc_ValueError,
+                            "The 'out' tuple must have exactly "
+                            "one entry per ufunc output");
+                        goto fail;
+                    }
+                    /* 'out' must be a tuple of arrays and Nones */
+                    for(i = 0; i < nout; ++i) {
+                        PyObject *val = PyTuple_GET_ITEM(value, i);
+                        if (_set_out_array(val, out_op+nin+i) < 0) {
                             goto fail;
                         }
-                        Py_INCREF(value);
-                        *out_axes = value;
-                        bad_arg = 0;
                     }
-                    else if (out_axis != NULL && strcmp(str, "axis") == 0) {
-                        if (out_axes != NULL && *out_axes != NULL) {
-                            PyErr_SetString(PyExc_TypeError,
-                                "cannot specify both 'axis' and 'axes'");
-                            goto fail;
-                        }
-                        Py_INCREF(value);
-                        *out_axis = value;
-                        bad_arg = 0;
+                }
+                else if (nout == 1) {
+                    /* Can be an array if it only has one output */
+                    if (_set_out_array(value, out_op + nin) < 0) {
+                        goto fail;
                     }
-                    break;
-                case 'c':
-                    /* Provides a policy for allowed casting */
-                    if (strcmp(str, "casting") == 0) {
-                        if (!PyArray_CastingConverter(value, out_casting)) {
-                            goto fail;
-                        }
-                        bad_arg = 0;
-                    }
-                    break;
-                case 'd':
-                    /* Another way to specify 'sig' */
-                    if (strcmp(str, "dtype") == 0) {
-                        /* Allow this parameter to be None */
-                        PyArray_Descr *dtype;
-                        if (!PyArray_DescrConverter2(value, &dtype)) {
-                            goto fail;
-                        }
-                        if (dtype != NULL) {
-                            if (*out_typetup != NULL) {
-                                PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot specify both 'signature' and 'dtype'");
-                                goto fail;
-                            }
-                            *out_typetup = Py_BuildValue("(N)", dtype);
-                        }
-                        bad_arg = 0;
-                    }
-                    break;
-                case 'e':
+                }
+                else {
                     /*
-                     * Overrides the global parameters buffer size,
-                     * error mask, and error object
+                     * If the deprecated behavior is ever removed,
+                     * keep only the else branch of this if-else
                      */
-                    if (strcmp(str, "extobj") == 0) {
-                        Py_INCREF(value);
-                        *out_extobj = value;
-                        bad_arg = 0;
-                    }
-                    break;
-                case 'k':
-                    if (out_keepdims != NULL && strcmp(str, "keepdims") == 0) {
-                        if (!PyBool_Check(value)) {
+                    if (PyArray_Check(value) || value == Py_None) {
+                        if (DEPRECATE("passing a single array to the "
+                                      "'out' keyword argument of a "
+                                      "ufunc with\n"
+                                      "more than one output will "
+                                      "result in an error in the "
+                                      "future") < 0) {
+                            /* The future error message */
                             PyErr_SetString(PyExc_TypeError,
-                                        "'keepdims' must be a boolean");
+                                "'out' must be a tuple of arrays");
                             goto fail;
                         }
-                        *out_keepdims = (value == Py_True);
-                        bad_arg = 0;
+                        if (_set_out_array(value, out_op+nin) < 0) {
+                            goto fail;
+                        }
                     }
-                    break;
-                case 'o':
-                    /*
-                     * Output arrays may be specified as a keyword argument,
-                     * either as a single array or None for single output
-                     * ufuncs, or as a tuple of arrays and Nones.
-                     */
-                    if (strcmp(str, "out") == 0) {
-                        if (nargs > nin) {
-                            PyErr_SetString(PyExc_ValueError,
-                                    "cannot specify 'out' as both a "
-                                    "positional and keyword argument");
-                            goto fail;
-                        }
-                        if (PyTuple_CheckExact(value)) {
-                            if (PyTuple_GET_SIZE(value) != nout) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "The 'out' tuple must have exactly "
-                                        "one entry per ufunc output");
-                                goto fail;
-                            }
-                            /* 'out' must be a tuple of arrays and Nones */
-                            for(i = 0; i < nout; ++i) {
-                                PyObject *val = PyTuple_GET_ITEM(value, i);
-                                if (_set_out_array(val, out_op+nin+i) < 0) {
-                                    goto fail;
-                                }
-                            }
-                        }
-                        else if (nout == 1) {
-                            /* Can be an array if it only has one output */
-                            if (_set_out_array(value, out_op + nin) < 0) {
-                                goto fail;
-                            }
-                        }
-                        else {
-                            /*
-                             * If the deprecated behavior is ever removed,
-                             * keep only the else branch of this if-else
-                             */
-                            if (PyArray_Check(value) || value == Py_None) {
-                                if (DEPRECATE("passing a single array to the "
-                                              "'out' keyword argument of a "
-                                              "ufunc with\n"
-                                              "more than one output will "
-                                              "result in an error in the "
-                                              "future") < 0) {
-                                    /* The future error message */
-                                    PyErr_SetString(PyExc_TypeError,
-                                        "'out' must be a tuple of arrays");
-                                    goto fail;
-                                }
-                                if (_set_out_array(value, out_op+nin) < 0) {
-                                    goto fail;
-                                }
-                            }
-                            else {
-                                PyErr_SetString(PyExc_TypeError,
-                                    nout > 1 ? "'out' must be a tuple "
-                                               "of arrays" :
-                                               "'out' must be an array or a "
-                                               "tuple of a single array");
-                                goto fail;
-                            }
-                        }
-                        bad_arg = 0;
+                    else {
+                        PyErr_SetString(PyExc_TypeError,
+                            nout > 1 ? "'out' must be a tuple "
+                                       "of arrays" :
+                                       "'out' must be an array or a "
+                                       "tuple of a single array");
+                        goto fail;
                     }
-                    /* Allows the default output layout to be overridden */
-                    else if (strcmp(str, "order") == 0) {
-                        if (!PyArray_OrderConverter(value, out_order)) {
-                            goto fail;
-                        }
-                        bad_arg = 0;
+                }
+                bad_arg = 0;
+                break;
+            case ufunc_order:
+                /* Allows the default output layout to be overridden */
+                if (!PyArray_OrderConverter(value, out_order)) {
+                    goto fail;
+                }
+                bad_arg = 0;
+                break;
+            case ufunc_signature:
+            case ufunc_sig:
+                if (has_sig == 1) {
+                    PyErr_SetString(PyExc_ValueError,
+                        "cannot specify both 'sig' and 'signature'");
+                    goto fail;
+                }
+                if (*out_typetup != NULL) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                        "cannot specify both 'signature' and 'dtype'");
+                    goto fail;
+                }
+                Py_INCREF(value);
+                *out_typetup = value;
+                bad_arg = 0;
+                has_sig = 1;
+                break;
+            case ufunc_subok:
+                if (!PyBool_Check(value)) {
+                    PyErr_SetString(PyExc_TypeError,
+                        "'subok' must be a boolean");
+                    goto fail;
+                }
+                *out_subok = (value == Py_True);
+                bad_arg = 0;
+                break;
+            case ufunc_where:
+                /*
+                 * Provides a boolean array 'where=' mask if
+                 * out_wheremask is supplied.
+                 */
+                if (out_wheremask != NULL) {
+                    PyArray_Descr *dtype;
+                    dtype = PyArray_DescrFromType(NPY_BOOL);
+                    if (dtype == NULL) {
+                        goto fail;
                     }
-                    break;
-                case 's':
-                    /* Allows a specific function inner loop to be selected */
-                    if (strcmp(str, "sig") == 0 ||
-                            strcmp(str, "signature") == 0) {
-                        if (has_sig == 1) {
-                            PyErr_SetString(PyExc_ValueError,
-                                "cannot specify both 'sig' and 'signature'");
-                            goto fail;
-                        }
-                        if (*out_typetup != NULL) {
-                            PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot specify both 'signature' and 'dtype'");
-                            goto fail;
-                        }
-                        Py_INCREF(value);
-                        *out_typetup = value;
+                    if (value == Py_True) {
+                        /*
+                         * Optimization: where=True is the same as no
+                         * where argument. This lets us document it as a
+                         * default argument
+                         */
                         bad_arg = 0;
-                        has_sig = 1;
+                        break;
                     }
-                    else if (strcmp(str, "subok") == 0) {
-                        if (!PyBool_Check(value)) {
-                            PyErr_SetString(PyExc_TypeError,
-                                        "'subok' must be a boolean");
-                            goto fail;
-                        }
-                        *out_subok = (value == Py_True);
-                        bad_arg = 0;
+                    *out_wheremask = (PyArrayObject *)PyArray_FromAny(
+                                                          value, dtype,
+                                                          0, 0, 0, NULL);
+                    if (*out_wheremask == NULL) {
+                        goto fail;
                     }
-                    break;
-                case 'w':
-                    /*
-                     * Provides a boolean array 'where=' mask if
-                     * out_wheremask is supplied.
-                     */
-                    if (out_wheremask != NULL && strcmp(str, "where") == 0) {
-                        PyArray_Descr *dtype;
-                        dtype = PyArray_DescrFromType(NPY_BOOL);
-                        if (dtype == NULL) {
-                            goto fail;
-                        }
-                        if (value == Py_True) {
-                            /*
-                             * Optimization: where=True is the same as no
-                             * where argument. This lets us document it as a
-                             * default argument
-                             */
-                            bad_arg = 0;
-                            break;
-                        }
-                        *out_wheremask = (PyArrayObject *)PyArray_FromAny(
-                                                            value, dtype,
-                                                            0, 0, 0, NULL);
-                        if (*out_wheremask == NULL) {
-                            goto fail;
-                        }
-                        bad_arg = 0;
-                    }
-                    break;
+                    bad_arg = 0;
+                }
+                break;
             }
-
             if (bad_arg) {
-                char *format = "'%s' is an invalid keyword to ufunc '%s'";
-                PyErr_Format(PyExc_TypeError, format, str, ufunc_name);
+                char *format = "'%S' is an invalid keyword to ufunc '%s'";
+                PyErr_Format(PyExc_TypeError, format, key, ufunc_name);
                 goto fail;
             }
         }
