@@ -458,7 +458,8 @@ This flexibility does come with costs. In particular, it implicitly adds
 including it (because we use ``functools.wraps``). This means it is unlikely
 to work well with static analysis tools, which could report invalid arguments.
 Likewise, there is a price in readability: these optional arguments won't be
-included in the docstrings for NumPy functions.
+included in the docstrings for NumPy functions. These downsides mean that users
+should make use of this feature with care.
 
 Future difficulty extending NumPy's API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
