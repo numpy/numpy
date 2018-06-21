@@ -1285,6 +1285,7 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
     PyObject *exc, *val, *tb;
     PyArrayObject *array_other;
     int other_is_flexible, ndim_other;
+    int self_is_flexible = PyTypeNum_ISFLEXIBLE(PyArray_DESCR(self)->type_num);
 
     PyErr_Fetch(&exc, &val, &tb);
     /*
@@ -1305,8 +1306,11 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
         ndim_other = 0;
     }
     if (cmp_op == Py_EQ || cmp_op == Py_NE) {
-        /* note: for == and !=, a flexible self cannot get here */
-        if (other_is_flexible) {
+        /*
+         * note: for == and !=, a structured dtype self cannot get here,
+         * but a string can. Other can be string or structured.
+         */
+        if (other_is_flexible || self_is_flexible) {
             /*
              * For scalars, returning NotImplemented is correct.
              * For arrays, we emit a future deprecation warning.
@@ -1325,7 +1329,7 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
         }
         else {
             /*
-             * If other did not have a flexible dtype, the error cannot
+             * If neither self nor other had a flexible dtype, the error cannot
              * have been caused by a lack of implementation in the ufunc.
              *
              * 2015-05-14, 1.10
@@ -1342,8 +1346,7 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
-    else if (other_is_flexible ||
-             PyTypeNum_ISFLEXIBLE(PyArray_DESCR(self)->type_num)) {
+    else if (other_is_flexible || self_is_flexible) {
         /*
          * For LE, LT, GT, GE and a flexible self or other, we return
          * NotImplemented, which is the correct answer since the ufuncs do
