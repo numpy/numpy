@@ -93,7 +93,7 @@ We propose the following signature for implementations of
 
 -  ``func`` is an arbitrary callable exposed by NumPy's public API,
    which was called in the form ``func(*args, **kwargs)``.
--  ``types`` is a list of unique argument types from the original NumPy
+-  ``types`` is a ``frozenset`` of unique argument types from the original NumPy
    function call that implement ``__array_function__``.
 -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
    original call.
@@ -102,11 +102,13 @@ Unlike ``__array_ufunc__``, there are no high-level guarantees about the
 type of ``func``, or about which of ``args`` and ``kwargs`` may contain objects
 implementing the array API.
 
-As a convenience for ``__array_function__`` implementors, ``types`` contains a
-list of argument types with an ``'__array_function__'`` attribute. This allows
-downstream implementations to quickly determine if they are likely able to
-support the operation. There are no guarantees about the order of argument types in ``types``: ``__array_funtion__`` implementations that rely on such behavior
-would not have the well-defined "Type casting heirarchy" desribed in
+As a convenience for ``__array_function__`` implementors, ``types`` provides all
+argument types with an ``'__array_function__'`` attribute. This
+allows downstream implementations to quickly determine if they are likely able
+to support the operation. A ``frozenset`` is used to ensure that
+``__array_function__`` implementations cannot rely on the iteration order of
+``types``, which would facilitate violating the well-defined "Type casting
+hierarchy" described in
 `NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
 
 Example for a project implementing the NumPy API
@@ -348,6 +350,7 @@ docstring to note which arguments are checked for overloads.
 
 It's particularly worth calling out the decorator's use of
 ``functools.wraps``:
+
 - This ensures that the wrapped function has the same name and docstring as
   the wrapped NumPy function.
 - On Python 3, it also ensures that the decorator function copies the original
@@ -363,6 +366,7 @@ It's particularly worth calling out the decorator's use of
 In a few cases, it would not make sense to use the ``array_function_dispatch``
 decorator directly, but override implementation in terms of
 ``try_array_function_override`` should still be straightforward.
+
 - Functions written entirely in C (e.g., ``np.concatenate``) can't use
   decorators, but they could still use a C equivalent of
   ``try_array_function_override``. If performance is not a concern, they could
@@ -637,45 +641,74 @@ it proves critical to the numpy community in the future. Importantly, we don't
 think this will stop critical libraries that desire to implement most of the
 high level NumPy API from adopting this proposal.
 
-NOTE: If you are reading this NEP in its draft state and disagree,
-please speak up on the mailing list!
-
 A magic decorator that inspects type annotations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A more succinct alternative would be to write these overloads with a decorator
-that builds overloaded functions automatically. Hypothetically, this might even
-directly parse Python 3 type annotations, e.g., perhaps
+In principle, Python 3 type annotations contain sufficient information to
+automatically create most ``dispatcher`` functions. It would be convenient to
+use these annotations to dispense with the need for manually writing
+dispatchers, e.g.,
 
 .. code:: python
 
-    @overload_for_array_function
+    @array_function_dispatch
     def broadcast_to(array: ArrayLike
                      shape: Tuple[int, ...],
                      subok: bool = False):
-        ...  # continue with the definition of broadcast_to
+        ...  # existing definition of np.broadcast_to
 
-The decorator ``overload_for_array_function`` would be written in terms
-of ``try_array_function_override``, but would also need some level of magic
-for (1) access to the wrapper function (``np.broadcast_to``) for passing into
-``__array_function__`` implementations and (2) dynamic code generation
-resembling the `decorator library <https://github.com/micheles/decorator>`_
-to automatically write an overloaded function like the manually written
-implemenations above with the exact same signature as the original.
-Unfortunately, using the ``inspect`` module instead of code generation would
-probably be too slow: our prototype implementation adds ~15 microseconds of
-overhead.
+This would require some form of automatic code generation, either at compile or
+import time.
 
-We like the idea of writing overloads with minimal syntax, but dynamic
-code generation also has potential downsides, such as slower import times, less
-transparent code and added difficulty for static analysis tools. It's not clear
-that tradeoffs would be worth it, especially because functions with complex
-signatures like ``np.einsum`` would assuredly still need to invoke
-``try_array_function_override`` directly.
+We think this is an interesting possible extension to consider in the future. We
+don't think it makes sense to do so now, because code generation involves
+tradeoffs and NumPy's experience with type annotations is still
+`quite limited <https://github.com/numpy/numpy-stubs>`_. Even if NumPy
+was Python 3 only (which will happen
+`sometime in 2019 <http://www.numpy.org/neps/nep-0014-dropping-python2.7-proposal.html>`_),
+we aren't ready to annotate NumPy's codebase directly yet.
 
-So we don't propose adding such a decorator yet, but it's something worth
-considering for the future.
+Other possible choices for the protocol
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The array function ``__array_function__`` includes only two arguments, ``func``
+and ``types``, that provide information about the context of the function call.
+
+``func`` is part of the protocol because there is no way to avoid it:
+implementations need to be able to dispatch by matching a function to NumPy's
+public API.
+
+``types`` is included because we can compute it almost for free as part of
+collecting ``__array_function__`` implementations to call in
+``try_array_function_override``. We also think it will be used by most
+``__array_function__`` methods, which otherwise would need to extract this
+information themselves. It would be equivalently easy to provide single
+instances of each type, but providing only types seemed cleaner.
+
+Taking this even further, it was suggested that ``__array_function__`` should be
+a ``classmethod``. We agree that it would be a little cleaner to remove the
+redundant ``self`` argument, but feel that this minor clean-up would not be
+worth breaking from the precedence of ``__array_ufunc__``.
+
+There are two other arguments that we think *might* be important to pass to
+``__array_ufunc__`` implementations:
+
+- Access to the non-dispatched function (i.e., before wrapping with
+  ``array_function_dispatch``) in ``ndarray.__array_function__`` would allow
+  use to drop special case logic for that method from
+  ``try_array_function_override``.
+- Access to the ``dispatcher`` function passed into
+  ``array_function_dispatch()`` would allow ``__array_function__``
+  implementations to determine the list of "array-like" arguments in a generic
+  way by calling ``dispatcher(*args, **kwargs)``. This *could* be useful for
+  ``__array_function__`` implementations that dispatch based on the value of an
+  array attribute (e.g., ``dtype`` or ``units``) rather than directly on the
+  array type.
+
+We have left these out for now, because we don't know that they are necessary.
+If we want to include them in the future, the easiest way to do so would be to
+update the ``array_function_dispatch`` decorator to add them as function
+attributes.
 
 Drawbacks of this approach
 --------------------------
