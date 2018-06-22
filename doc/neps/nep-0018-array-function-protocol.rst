@@ -1,6 +1,6 @@
-=============================================
-Dispatch Mechanism for NumPy's high level API
-=============================================
+===========================================================
+A dispatch mechanism for NumPy's high level array functions
+===========================================================
 
 :Author: Stephan Hoyer <shoyer@google.com>
 :Author: Matthew Rocklin <mrocklin@gmail.com>
@@ -11,7 +11,7 @@ Dispatch Mechanism for NumPy's high level API
 Abstact
 -------
 
-We propose the ``__array_function__`` protocol, to allow arguments of numpy
+We propose the ``__array_function__`` protocol, to allow arguments of NumPy
 functions to define how that function operates on them. This will allow
 using NumPy as a high level API for efficient multi-dimensional array
 operations, even with array implementations that differ greatly from
@@ -27,7 +27,7 @@ arrays (Dask array) as well as various NumPy-like implementations in the
 deep learning frameworks, like TensorFlow and PyTorch.
 
 Similarly there are many projects that build on top of the NumPy API
-for labeled and indexed arrays (XArray), automatic differentation
+for labeled and indexed arrays (XArray), automatic differentiation
 (Autograd, Tangent), masked arrays (numpy.ma), physical units (astropy.units,
 pint, unyt), etc. that add additional functionality on top of the NumPy API.
 Most of these project also implement a close variation of NumPy's level high
@@ -123,7 +123,7 @@ checks:
 If these conditions hold, ``__array_function__`` should return
 the result from calling its implementation for ``func(*args, **kwargs)``.
 Otherwise, it should return the sentinel value ``NotImplemented``, indicating
-that the function is not implemented by these types. This is preferrable to
+that the function is not implemented by these types. This is preferable to
 raising ``TypeError`` directly, because it gives *other* arguments the
 opportunity to define the operations.
 
@@ -146,9 +146,8 @@ for registering ``__array_function__`` implementations.
         def __array_function__(self, func, types, args, kwargs):
             if func not in HANDLED_FUNCTIONS:
                 return NotImplemented
-            # Note: we use MyArray instead of type(self) for issubclass to allow
-            # subclasses that don't override __array_function__ to handle
-            # MyArray objects
+            # Note: this allows subclasses that don't override
+            # __array_function__ to handle MyArray objects
             if not all(issubclass(t, MyArray) for t in types):
                 return NotImplemented
             return HANDLED_FUNCTIONS[func](*args, **kwargs)
@@ -400,7 +399,7 @@ Extensibility
 
 An important virtue of this approach is that it allows for adding new
 optional arguments to NumPy functions without breaking code that already
-relyies on ``__array_function__``.
+relies on ``__array_function__``.
 
 This is not a theoretical concern. The implementation of overrides *within*
 functions like ``np.sum()`` rather than defining a new function capturing
@@ -430,7 +429,7 @@ optional arguments is somewhat onerous, e.g.,
 
 We thus avoid encouraging the tempting shortcut of adding catch-all
 ``**ignored_kwargs`` to the signatures of functions called by NumPy, which fails
-silently for mispelled or ignored arguments.
+silently for misspelled or ignored arguments.
 
 Performance
 ~~~~~~~~~~~
@@ -466,7 +465,7 @@ Use outside of NumPy
 ~~~~~~~~~~~~~~~~~~~~
 
 Nothing about this protocol that is particular to NumPy itself. Should
-we enourage use of the same ``__array_function__`` protocol third-party
+we encourage use of the same ``__array_function__`` protocol third-party
 libraries for overloading non-NumPy functions, e.g., for making
 array-implementation generic functionality in SciPy?
 
@@ -549,7 +548,7 @@ either inside or outside of NumPy.
 
 This has the advantage of alleviating any possible concerns about
 backwards compatibility and would provide the maximum freedom for quick
-experimentation. In the long term, it would provide a clean abstration
+experimentation. In the long term, it would provide a clean abstraction
 layer, separating NumPy's high level API from default implementations on
 ``numpy.ndarray`` objects.
 
@@ -577,7 +576,7 @@ don't think this approach makes sense for NumPy in the near term.
 
 The main reason is that NumPy already has a well-proven dispatching
 mechanism with ``__array_ufunc__``, based on Python's own dispatching
-system for arithemtic, and it would be confusing to add another
+system for arithmetic, and it would be confusing to add another
 mechanism that works in a very different way. This would also be more
 invasive change to NumPy itself, which would need to gain a multiple
 dispatch implementation.
@@ -591,7 +590,7 @@ would be straightforward to write a shim for a default
 Implementations in terms of a limited core API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The internal implemenations of some NumPy functions is extremely simple.
+The internal implementations of some NumPy functions is extremely simple.
 For example:
 
 - ``np.stack()`` is implemented in only a few lines of code by combining
@@ -629,7 +628,7 @@ However, to work well this would require the possibility of implementing
 *some* but not all functions with ``__array_function__``, e.g., as described
 in the next section.
 
-Coersion to a NumPy array as a catch-all fallback
+Coercion to a NumPy array as a catch-all fallback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 With the current design, classes that implement ``__array_function__``
@@ -682,7 +681,7 @@ fall-back to their current behavior of coercing all array-like arguments.
 It is not yet clear to us yet if we need an optional like
 ``NotImplementedButCoercible``, so for now we propose to defer this issue.
 We can always implement ``np.NotImplementedButCoercible`` at some later time if
-it proves critical to the numpy community in the future. Importantly, we don't
+it proves critical to the NumPy community in the future. Importantly, we don't
 think this will stop critical libraries that desire to implement most of the
 high level NumPy API from adopting this proposal.
 
@@ -800,7 +799,7 @@ attributes.
 Discussion
 ----------
 
-Various alternatives to this proposal were discussed in a few Github issues:
+Various alternatives to this proposal were discussed in a few GitHub issues:
 
 1. `pydata/sparse #1 <https://github.com/pydata/sparse/issues/1>`_
 2. `numpy/numpy #11129 <https://github.com/numpy/numpy/issues/11129>`_
