@@ -146,6 +146,9 @@ for registering ``__array_function__`` implementations.
         def __array_function__(self, func, types, args, kwargs):
             if func not in HANDLED_FUNCTIONS:
                 return NotImplemented
+            # Note: we use MyArray instead of type(self) for issubclass to allow
+            # subclasses that don't override __array_function__ to handle
+            # MyArray objects
             if not all(issubclass(t, MyArray) for t in types):
                 return NotImplemented
             return HANDLED_FUNCTIONS[func](*args, **kwargs)
