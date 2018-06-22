@@ -127,6 +127,14 @@ that the function is not implemented by these types. This is preferrable to
 raising ``TypeError`` directly, because it gives *other* arguments the
 opportunity to define the operations.
 
+There are no general requirements on the return value from
+``__array_function__``, although most sensible implementations should probably
+return array(s) with the same type as one of the function's arguments.
+If/when Python gains
+`typing support for protocols <https://www.python.org/dev/peps/pep-0544/>`_
+and NumPy adds static type annotations, the ``@overload`` implementation
+for ``SupportsArrayFunction`` will indicate a return type of ``Any``.
+
 It may also be convenient to define a custom decorators (``implements`` below)
 for registering ``__array_function__`` implementations.
 
