@@ -214,26 +214,22 @@ NumPy function:
 - These functions will be called with the exact same arguments that were passed
   into the NumPy function (i.e., ``dispatcher(*args, **kwargs)``), and should
   return an iterable of arguments to check for overrides.
-- Dispatcher functions are required to share the exact same positional and
-  keyword arguments as the corresponding NumPy functions. Otherwise, valid
-  invocations of a NumPy function could result in an error when calling its
-  dispatcher.
+- Dispatcher functions are required to share the exact same positional,
+  optional and keyword-only arguments as their corresponding NumPy functions.
+  Otherwise, valid invocations of a NumPy function could result in an error when
+  calling its dispatcher.
 - Because default *values* for keyword arguments do not have
   ``__array_function__`` attributes, by convention we set all default argument
   values to ``None``. This reduces the likelihood of signatures falling out
   of sync, and minimizes extraneous information in the dispatcher.
   The only exception should be cases where the argument value in some way
   effects dispatching, which should be rare.
-- Additionally, dispatchers should be written to accept additional ``**``
-  arguments, even if these are not part of the NumPy function's signature. This
-  allows additional implementation specific keyword arguments to be passed to
-  NumPy functions, which should be ignored for dispatching purposes.
 
 An example of the dispatcher for ``np.concatenate`` may be instructive:
 
 .. code:: python
 
-    def _concatenate_dispatcher(arrays, axis=None, out=None, **ignored_kwargs):
+    def _concatenate_dispatcher(arrays, axis=None, out=None):
         for array in arrays:
             yield array
         if out is not None:
@@ -391,12 +387,9 @@ decorator, but we should consider these cases carefully.
 Extensibility
 ~~~~~~~~~~~~~
 
-Within NumPy
-''''''''''''
-
 An important virtue of this approach is that it allows for adding new
-optional arguments to NumPy functions without breaking working code already
-relying on ``__array_function__``.
+optional arguments to NumPy functions without breaking code that already
+relyies on ``__array_function__``.
 
 This is not a theoretical concern. The implementation of overrides *within*
 functions like ``np.sum()`` rather than defining a new function capturing
@@ -427,85 +420,6 @@ optional arguments is somewhat onerous, e.g.,
 We thus avoid encouraging the tempting shortcut of adding catch-all
 ``**ignored_kwargs`` to the signatures of functions called by NumPy, which fails
 silently for mispelled or ignored arguments.
-
-Outside of NumPy
-''''''''''''''''
-
-We also allow ``__array_function__`` implementations to add their own
-optional keyword arguments by including ``**ignored_kwargs`` in dispatcher
-functions. Such implementation-specific arguments are quite common
-(e.g., ``dask.array.sum()`` adds ``split_every`` and ``tensorflow.reduce_sum()``
-adds ``name``), and we believe that adding support for them will add valuable
-flexibility for using NumPy as a high level API.
-
-This will be particularly useful for libraries that implement new high-level
-array functions on top of NumPy functions, e.g.,
-
-.. code:: python
-
-    def mean_squared_error(x, y, **kwargs):
-        return np.mean((x - y) ** 2, **kwargs)
-
-Otherwise, we would need separate versions of ``mean_squared_error`` for each
-array implementation in order to pass specific arguments.
-
-We don't allow adding optional positional arguments, because these are
-reserved for future use by NumPy itself, but conflicts between keyword arguments
-should be relatively rare.
-
-This flexibility does come with costs. In particular, it implicitly adds
-``**kwargs`` to the signature for all wrapped NumPy functions without actually
-including it (because we use ``functools.wraps``). This means it is unlikely
-to work well with static analysis tools, which could report invalid arguments.
-Likewise, there is a price in readability: these optional arguments won't be
-included in the docstrings for NumPy functions. These downsides mean that users
-should make use of this feature with care.
-
-Future difficulty extending NumPy's API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-One downside of passing on all arguments directly on to
-``__array_function__`` is that it makes it hard to extend the signatures
-of overloaded NumPy functions with new arguments, because adding even an
-optional keyword argument would break existing overloads.
-
-This is not a new problem for NumPy. NumPy has occasionally changed the
-signature for functions in the past, including functions like
-``numpy.sum`` which support overloads.
-
-For adding new keyword arguments that do not change default behavior, we
-would only include these as keyword arguments when they have changed
-from default values. This is similar to `what NumPy already has
-done <https://github.com/numpy/numpy/blob/v1.14.2/numpy/core/fromnumeric.py#L1865-L1867>`_,
-e.g., for the optional ``keepdims`` argument in ``sum``:
-
-.. code:: python
-
-    def sum(array, ..., keepdims=np._NoValue):
-        kwargs = {}
-        if keepdims is not np._NoValue:
-            kwargs['keepdims'] = keepdims
-        return array.sum(..., **kwargs)
-
-In other cases, such as deprecated arguments, preserving the existing
-behavior of overloaded functions may not be possible. Libraries that use
-``__array_function__`` should be aware of this risk: we don't propose to
-freeze NumPy's API in stone any more than it already is.
-
-Difficulty adding implementation specific arguments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Some array implementations generally follow NumPy's API, but have
-additional optional keyword arguments (e.g., ``dask.array.sum()`` has
-``split_every`` and ``tensorflow.reduce_sum()`` has ``name``). A generic
-dispatching library could potentially pass on all unrecognized keyword
-argument directly to the implementation, but extending ``np.sum()`` to
-pass on ``**kwargs`` would entail public facing changes in NumPy.
-Customizing the detailed behavior of array libraries will require using
-library specific functions, which could be limiting in the case of
-libraries that consume the NumPy API such as xarray.
-
-
 
 Performance
 ~~~~~~~~~~~
@@ -787,6 +701,48 @@ tradeoffs and NumPy's experience with type annotations is still
 was Python 3 only (which will happen
 `sometime in 2019 <http://www.numpy.org/neps/nep-0014-dropping-python2.7-proposal.html>`_),
 we aren't ready to annotate NumPy's codebase directly yet.
+
+Support for implementation-specific arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We could allow ``__array_function__`` implementations to add their own
+optional keyword arguments by including ``**ignored_kwargs`` in dispatcher
+functions, e.g.,
+
+.. code:: python
+
+    def _concatenate_dispatcher(arrays, axis=None, out=None, **ignored_kwargs):
+        ...  # same implementation of _concatenate_dispatcher as above
+
+Implementation-specific arguments are somewhat common in libraries that
+otherwise emulate NumPy's higher level API (e.g., ``dask.array.sum()`` adds
+``split_every`` and ``tensorflow.reduce_sum()`` adds ``name``). Supporting
+them in NumPy would be particularly useful for libraries that implement new
+high-level array functions on top of NumPy functions, e.g.,
+
+.. code:: python
+
+    def mean_squared_error(x, y, **kwargs):
+        return np.mean((x - y) ** 2, **kwargs)
+
+Otherwise, we would need separate versions of ``mean_squared_error`` for each
+array implementation in order to pass implementation-specific arguments to
+``mean()``.
+
+We wouldn't allow adding optional positional arguments, because these are
+reserved for future use by NumPy itself, but conflicts between keyword arguments
+should be relatively rare.
+
+However, this flexibility would come with a cost. In particular, it implicitly
+adds ``**kwargs`` to the signature for all wrapped NumPy functions without
+actually including it (because we use ``functools.wraps``). This means it is
+unlikely to work well with static analysis tools, which could report invalid
+arguments. Likewise, there is a price in readability: these optional arguments
+won't be included in the docstrings for NumPy functions.
+
+It's not clear that this tradeoff is worth it, so we propose to leave this out
+for now. Adding implementation-specific arguments will require using those
+libraries directly.
 
 Other possible choices for the protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
