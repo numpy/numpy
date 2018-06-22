@@ -800,6 +800,12 @@ it was discussed at a `NumPy developer sprint
 <https://scisprints.github.io/#may-numpy-developer-sprint>`_ at the `UC
 Berkeley Institute for Data Science (BIDS) <https://bids.berkeley.edu/>`_.
 
+Detailed discussion of this proposal itself can be found on the
+`the mailing list <https://mail.python.org/pipermail/numpy-discussion/2018-June/078127.html>`_ and relvant pull requests
+(`1 <https://github.com/numpy/numpy/pull/11189>`_,
+`2 <https://github.com/numpy/numpy/pull/11303#issuecomment-396638175>`_,
+`3 <https://github.com/numpy/numpy/pull/11374>`_)
+
 Copyright
 ---------
 
