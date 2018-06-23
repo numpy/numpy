@@ -668,8 +668,8 @@ class TestReflect(object):
         assert_array_equal(a, b)
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestSymmetric(object):
+
     def test_check_simple(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'symmetric')
