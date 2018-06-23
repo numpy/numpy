@@ -78,14 +78,6 @@ def _slice_at_axis(shape, axis, sl):
     return slice_tup * axis + (sl,) + slice_tup * (len(shape) - axis - 1)
 
 
-def _slice_column(shape, axis, from_index, column_width=1):
-    if 0 <= from_index:
-        sl = slice(from_index, from_index + column_width)
-    else:
-        sl = slice(from_index - column_width, from_index)
-    return _slice_at_axis(shape, axis, sl)
-
-
 def _pad_empty(arr, pad_widths):
     """Pad array with undefined values.
 
@@ -153,7 +145,12 @@ def _set_edge(arr, axis, pad_index):
     if pad_index == 0:
         return
 
-    edge_slice = _slice_column(arr.shape, axis, pad_index)
+    if pad_index > 0:
+        sl = slice(pad_index, pad_index + 1)
+    else:
+        sl = slice(pad_index - 1, pad_index)
+    edge_slice = _slice_at_axis(arr.shape, axis, sl)
+
     edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
     _set_generic(arr, axis, pad_index, edge_arr)
 
@@ -163,10 +160,16 @@ def _set_linear_ramp(arr, axis, pad_index, end_value):
         return
 
     pad_shape = arr.shape[:axis] + (abs(pad_index),) + arr.shape[(axis + 1):]
-    reverse = True if 0 <= pad_index else False
-    linear_ramp = _arange_ndarray(tuple(pad_shape), axis, reverse)
 
-    edge_slice = _slice_column(arr.shape, axis, pad_index)
+    if pad_index > 0:
+        linear_ramp = _arange_ndarray(tuple(pad_shape), axis, True)
+        edge_slice = _slice_at_axis(
+            arr.shape, axis, slice(pad_index, pad_index + 1))
+    else:
+        linear_ramp = _arange_ndarray(tuple(pad_shape), axis, False)
+        edge_slice = _slice_at_axis(
+            arr.shape, axis, slice(pad_index - 1, pad_index))
+
     edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
 
     slope = (end_value - edge_arr) / float(abs(pad_index))
