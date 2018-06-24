@@ -3398,9 +3398,9 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear', keepdims=False):
     """
-    Compute the qth percentile of the data along the specified axis.
+    Compute the q-th percentile of the data along the specified axis.
 
-    Returns the qth percentile(s) of the array elements.
+    Returns the q-th percentile(s) of the array elements.
 
     Parameters
     ----------
@@ -3467,7 +3467,7 @@ def percentile(a, q, axis=None, out=None,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th percentile of
+    Given a vector ``V`` of length ``N``, the q-th percentile of
     ``V`` is the value ``q/100`` of the way from the minimum to the
     maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
@@ -3543,7 +3543,7 @@ def percentile(a, q, axis=None, out=None,
 def quantile(a, q, axis=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
-    Compute the qth quantile of the data along the specified axis.
+    Compute the q-th quantile of the data along the specified axis.
     ..versionadded:: 1.15.0
 
     Parameters
@@ -3603,7 +3603,7 @@ def quantile(a, q, axis=None, out=None,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th quantile of
+    Given a vector ``V`` of length ``N``, the q-th quantile of
     ``V`` is the value ``q`` of the way from the minimum to the
     maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
@@ -3721,7 +3721,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices = concatenate((indices, [-1]))
 
         ap.partition(indices, axis=axis)
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         ap = np.moveaxis(ap, axis, 0)
         axis = 0
 
@@ -3754,7 +3754,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
         ap.partition(concatenate((indices_below, indices_above)), axis=axis)
 
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         ap = np.moveaxis(ap, axis, 0)
         weights_below = np.moveaxis(weights_below, axis, 0)
         weights_above = np.moveaxis(weights_above, axis, 0)
@@ -3768,7 +3768,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         x1 = take(ap, indices_below, axis=axis) * weights_below
         x2 = take(ap, indices_above, axis=axis) * weights_above
 
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         x1 = np.moveaxis(x1, axis, 0)
         x2 = np.moveaxis(x2, axis, 0)
 

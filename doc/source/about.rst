@@ -18,10 +18,7 @@ data types can be defined. This allows *NumPy* to seamlessly and
 speedily integrate with a wide variety of databases.
 
 NumPy is a successor for two earlier scientific Python libraries:
-NumPy derives from the :doc:`old Numerice <reference/routines.oldnumeric>` code
-base and can be used as a replacement for *Numeric*.  It also adds the features
-introduced by :doc:`Numarray <reference/routines.numarray>` and can also be
-used to replace *Numarray*.
+Numeric and Numarray.
 
 NumPy community
 ---------------
