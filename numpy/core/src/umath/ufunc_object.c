@@ -2434,8 +2434,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_COPY |
-                      NPY_ITER_ALIGNED |
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+                      NPY_ITER_ALIGNED;
+        if (op[i] && PyArray_NDIM(op[i]) < 2) {
+            op_flags[i] |= NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+        }
+
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
@@ -2450,8 +2453,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_UPDATEIFCOPY|
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST|
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+                      NPY_ITER_NO_BROADCAST;
+        if (op[i] && PyArray_NDIM(op[i]) < 2) {
+            op_flags[i] |= NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+        }
     }
 
     iter_flags = ufunc->iter_flags |
