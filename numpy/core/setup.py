@@ -716,10 +716,10 @@ def configuration(parent_package='',top_path=None):
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
-            join('src', 'multiarray', 'array_assign.h'),
+            join('src', 'common', 'array_assign.h'),
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
-            join('src', 'multiarray', 'cblasfuncs.h'),
+            join('src', 'common', 'cblasfuncs.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
@@ -742,7 +742,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'strfuncs.h'),
             join('src', 'multiarray', 'typeinfo.h'),
-            join('src', 'multiarray', 'ucsnarrow.h'),
+            join('src', 'common', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
             join('src', 'common', 'npy_config.h'),
@@ -778,7 +778,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
-            join('src', 'multiarray', 'array_assign.c'),
+            join('src', 'common', 'array_assign.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'buffer.c'),
@@ -821,7 +821,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'temp_elide.c'),
             join('src', 'multiarray', 'typeinfo.c'),
             join('src', 'multiarray', 'usertypes.c'),
-            join('src', 'multiarray', 'ucsnarrow.c'),
+            join('src', 'common', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'mem_overlap.c'),
@@ -834,8 +834,8 @@ def configuration(parent_package='',top_path=None):
         extra_info = blas_info
         # These files are also in MANIFEST.in so that they are always in
         # the source distribution independently of HAVE_CBLAS.
-        multiarray_src.extend([join('src', 'multiarray', 'cblasfuncs.c'),
-                               join('src', 'multiarray', 'python_xerbla.c'),
+        multiarray_src.extend([join('src', 'common', 'cblasfuncs.c'),
+                               join('src', 'common', 'python_xerbla.c'),
                                ])
         if uses_accelerate_framework(blas_info):
             multiarray_src.extend(get_sgemv_fix())

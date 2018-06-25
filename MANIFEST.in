@@ -14,8 +14,8 @@ recursive-include numpy/_build_utils *
 recursive-include numpy/linalg/lapack_lite *.c *.h
 include tox.ini
 # Add sdist files whose use depends on local configuration.
-include numpy/core/src/multiarray/cblasfuncs.c
-include numpy/core/src/multiarray/python_xerbla.c
+include numpy/core/src/common/cblasfuncs.c
+include numpy/core/src/common/python_xerbla.c
 # Adding scons build related files not found by distutils
 recursive-include numpy/core/code_generators *.py *.txt
 recursive-include numpy/core *.in *.h
