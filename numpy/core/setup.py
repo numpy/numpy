@@ -514,9 +514,9 @@ def configuration(parent_package='',top_path=None):
 
     def generate_numpyconfig_h(ext, build_dir):
         """Depends on config.h: generate_config_h has to be called before !"""
-        # put private include directory in build_dir on search path
+        # put common include directory in build_dir on search path
         # allows using code generation in headers headers
-        config.add_include_dirs(join(build_dir, "src", "private"))
+        config.add_include_dirs(join(build_dir, "src", "common"))
         config.add_include_dirs(join(build_dir, "src", "npymath"))
 
         target = join(build_dir, header_dir, '_numpyconfig.h')
@@ -603,7 +603,7 @@ def configuration(parent_package='',top_path=None):
     generate_numpy_api = generate_api_func('generate_numpy_api')
     generate_ufunc_api = generate_api_func('generate_ufunc_api')
 
-    config.add_include_dirs(join(local_dir, "src", "private"))
+    config.add_include_dirs(join(local_dir, "src", "common"))
     config.add_include_dirs(join(local_dir, "src"))
     config.add_include_dirs(join(local_dir))
 
@@ -700,9 +700,9 @@ def configuration(parent_package='',top_path=None):
     npysort_sources = [join('src', 'npysort', 'quicksort.c.src'),
                        join('src', 'npysort', 'mergesort.c.src'),
                        join('src', 'npysort', 'heapsort.c.src'),
-                       join('src', 'private', 'npy_partition.h.src'),
+                       join('src', 'common', 'npy_partition.h.src'),
                        join('src', 'npysort', 'selection.c.src'),
-                       join('src', 'private', 'npy_binsearch.h.src'),
+                       join('src', 'common', 'npy_binsearch.h.src'),
                        join('src', 'npysort', 'binsearch.c.src'),
                        ]
     config.add_library('npysort',
@@ -745,14 +745,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
-            join('src', 'private', 'npy_config.h'),
-            join('src', 'private', 'templ_common.h.src'),
-            join('src', 'private', 'lowlevel_strided_loops.h'),
-            join('src', 'private', 'mem_overlap.h'),
-            join('src', 'private', 'npy_longdouble.h'),
-            join('src', 'private', 'ufunc_override.h'),
-            join('src', 'private', 'binop_override.h'),
-            join('src', 'private', 'npy_extint128.h'),
+            join('src', 'common', 'npy_config.h'),
+            join('src', 'common', 'templ_common.h.src'),
+            join('src', 'common', 'lowlevel_strided_loops.h'),
+            join('src', 'common', 'mem_overlap.h'),
+            join('src', 'common', 'npy_longdouble.h'),
+            join('src', 'common', 'ufunc_override.h'),
+            join('src', 'common', 'binop_override.h'),
+            join('src', 'common', 'npy_extint128.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -823,10 +823,10 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
-            join('src', 'private', 'templ_common.h.src'),
-            join('src', 'private', 'mem_overlap.c'),
-            join('src', 'private', 'npy_longdouble.c'),
-            join('src', 'private', 'ufunc_override.c'),
+            join('src', 'common', 'templ_common.h.src'),
+            join('src', 'common', 'mem_overlap.c'),
+            join('src', 'common', 'npy_longdouble.c'),
+            join('src', 'common', 'ufunc_override.c'),
             ]
 
     blas_info = get_info('blas_opt', 0)
@@ -872,9 +872,9 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
-            # join('src', 'private', 'mem_overlap.c'),
-            # join('src', 'private', 'npy_longdouble.c'),
-            # join('src', 'private', 'ufunc_override.c'),
+            # join('src', 'common', 'mem_overlap.c'),
+            # join('src', 'common', 'npy_longdouble.c'),
+            # join('src', 'common', 'ufunc_override.c'),
             ]
 
     umath_deps = [
@@ -882,15 +882,15 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),
             join('src', 'multiarray', 'common.h'),
-            join('src', 'private', 'templ_common.h.src'),
+            join('src', 'common', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
-            join('src', 'private', 'lowlevel_strided_loops.h'),
-            join('src', 'private', 'mem_overlap.h'),
-            join('src', 'private', 'npy_longdouble.h'),
-            join('src', 'private', 'ufunc_override.h'),
-            join('src', 'private', 'binop_override.h')] + npymath_sources
+            join('src', 'common', 'lowlevel_strided_loops.h'),
+            join('src', 'common', 'mem_overlap.h'),
+            join('src', 'common', 'npy_longdouble.h'),
+            join('src', 'common', 'ufunc_override.h'),
+            join('src', 'common', 'binop_override.h')] + npymath_sources
 
     config.add_extension('_multiarray_umath',
                          sources=multiarray_src + umath_src +
@@ -933,9 +933,9 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
-                             join('src', 'private', 'mem_overlap.c')],
-                    depends=[join('src', 'private', 'mem_overlap.h'),
-                             join('src', 'private', 'npy_extint128.h')],
+                             join('src', 'common', 'mem_overlap.c')],
+                    depends=[join('src', 'common', 'mem_overlap.h'),
+                             join('src', 'common', 'npy_extint128.h')],
                     libraries=['npymath'])
 
     #######################################################################
