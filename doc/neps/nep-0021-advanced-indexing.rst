@@ -383,12 +383,13 @@ on the NumPy mailing list:
 
  * https://mail.python.org/pipermail/numpy-discussion/2015-April/072550.html
 
-Some discussion can be found on the pull request:
+Some discussion can be found on the original pull request for this NEP:
 
  * https://github.com/numpy/numpy/pull/6256
 
-A python implementation of the indexing operations can be found at:
+Python implementations of the indexing operations can be found at:
 
+ * https://github.com/numpy/numpy/pull/5749
  * https://gist.github.com/shoyer/c700193625347eb68fee4d1f0dc8c0c8
 
 
