@@ -812,6 +812,7 @@ class TestSymmetric(object):
 
 
 class TestWrap(object):
+
     def test_check_simple(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'wrap')
@@ -905,6 +906,11 @@ class TestWrap(object):
         a = pad([1, 2, 3], 4, 'wrap')
         b = np.array([3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
         assert_array_equal(a, b)
+
+    def test_pad_with_zero(self):
+        a = np.empty((3, 5))
+        b = np.pad(a, (0, 5), mode="wrap")
+        assert_array_equal(a, b[:-5, :-5])
 
 
 class TestStatLen(object):

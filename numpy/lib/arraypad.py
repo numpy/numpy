@@ -370,8 +370,8 @@ def _set_wrap_both(arr, axis, pad_amt):
     # (not part of the undefined pad area) we need to pad multiple times.
     # Each time the pad area shrinks on both sides which is communicated with
     # these variables.
-    new_left_pad = None
-    new_right_pad = None
+    new_left_pad = 0
+    new_right_pad = 0
 
     if left_pad > 0:
         # Pad with wrapped values on left side
@@ -393,7 +393,6 @@ def _set_wrap_both(arr, axis, pad_amt):
         else:
             # Chunk matches pad area
             _set_generic(arr, axis, left_pad, right_chunk)
-            new_left_pad = 0
 
     if right_pad > 0:
         # Pad with wrapped values on right side
@@ -415,7 +414,6 @@ def _set_wrap_both(arr, axis, pad_amt):
         else:
             # Chunk matches pad area
             _set_generic(arr, axis, -right_pad, left_chunk)
-            new_right_pad = 0
 
     return new_left_pad, new_right_pad
 
