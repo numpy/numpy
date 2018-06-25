@@ -27,7 +27,7 @@ def _linear_ramp(ndim, axis, size, reverse=False):
     ----------
     ndim : int
         Number of dimensions of the resulting array. All dimensions except
-        the one specified by `axis` whill have the size 1.
+        the one specified by `axis` will have the size 1.
     axis : int
         The dimension that contains the linear ramp of `size`.
     size : int

@@ -8,7 +8,8 @@ from __future__ import division, absolute_import, print_function
 import pytest
 
 import numpy as np
-from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,)
+from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,
+                           assert_equal)
 from numpy.lib import pad
 
 
@@ -349,6 +350,14 @@ class TestStatistic(object):
              49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5]
             )
         assert_array_equal(a, b)
+
+    @pytest.mark.parametrize("mode", ["mean", "median", "minimum", "maximum"])
+    def test_same_prepend_append(self, mode):
+        # Check if the prepended and appended values are the same.
+        # Regression test for issue gh-11216
+        a = np.array([-1, 2, -1]) + np.array([0, 1e-12, 0], dtype=np.float64)
+        a = np.pad(a, (1, 1), mode)
+        assert_equal(a[0], a[-1])
 
 
 class TestConstant(object):
