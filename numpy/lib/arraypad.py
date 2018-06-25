@@ -93,7 +93,7 @@ def _pad_empty(arr, pad_widths):
     """
     # Allocate grown array
     new_shape = tuple(
-        size + left + right
+        left + size + right
         for size, (left, right) in zip(arr.shape, pad_widths)
     )
     padded = np.empty(new_shape, dtype=arr.dtype)
@@ -808,18 +808,18 @@ def pad(array, pad_width, mode, **kwargs):
         stat_func = stat_functions[mode]
         for axis, ((left_pad, right_pad), (length_left, length_right)) \
                 in enumerate(zip(pad_width, kwargs["stat_length"])):
-            max_lenght = array.shape[axis]
+            max_length = array.shape[axis]
 
             if length_left is None:
-                length_left = max_lenght
-            elif length_left > max_lenght:
-                length_left = max_lenght
+                length_left = max_length
+            elif length_left > max_length:
+                length_left = max_length
             _set_stat(padded, axis, left_pad, length_left, stat_func)
 
             if length_right is None:
-                length_right = max_lenght
-            elif length_right > max_lenght:
-                length_right = max_lenght
+                length_right = max_length
+            elif length_right > max_length:
+                length_right = max_length
             _set_stat(padded, axis, -right_pad, length_right, stat_func)
 
     elif mode == "reflect":
