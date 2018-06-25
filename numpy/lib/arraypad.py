@@ -15,42 +15,38 @@ __all__ = ['pad']
 # Private utility functions.
 
 
-def _arange_ndarray(shape, axis, reverse=False):
+def _linear_ramp(ndim, axis, size, reverse=False):
     """
-    Create an ndarray of `shape` with increments along specified `axis`
+    Create a linear ramp of `size` in `axis` with `ndim`.
+
+    This algorithm creates a 1-indexed array. The resulting linear ramp is
+    broadcastable to any array that matches the ramp in `shape[axis]` and
+    `ndim`.
 
     Parameters
     ----------
-    shape : tuple of ints
-        Shape of desired array. Should be equivalent to `arr.shape` except
-        `shape[axis]` which may have any positive value.
+    ndim : int
+        Number of dimensions of the resulting array. All dimensions except
+        the one specified by `axis` whill have the size 1.
     axis : int
-        Axis to increment along.
-    reverse : bool
-        If False, increment in a positive fashion from 1 to `shape[axis]`,
-        inclusive. If True, the bounds are the same but the order reversed.
+        The dimension that contains the linear ramp of `size`.
+    size : int
+        The size of the linear ramp.
+    reverse :
+        If False, increment in a positive fashion from 1 to `size`, inclusive.
+        If True, the bounds are the same but the order reversed.
 
     Returns
     -------
     arr : ndarray
-        Output array with `shape` that in- or decrements along the given
-        `axis`.
-
-    Notes
-    -----
-    The range is deliberately 1-indexed for this specific use case. Think of
-    this algorithm as broadcasting `np.arange` to a single `axis` of an
-    arbitrarily shaped ndarray.
+        Output array with that in- or decrements along the given `axis`.
     """
-    init_shape = (1,) * axis + (shape[axis],) + (1,) * (len(shape) - axis - 1)
     if not reverse:
-        arr = np.arange(1, shape[axis] + 1)
+        arr = np.arange(1, size + 1, 1)
     else:
-        arr = np.arange(shape[axis], 0, -1)
+        arr = np.arange(size, 0, -1)
+    init_shape = (1,) * axis + (arr.size,) + (1,) * (ndim - axis - 1)
     arr = arr.reshape(init_shape)
-    for i, dim in enumerate(shape):
-        if arr.shape[i] != dim:
-            arr = arr.repeat(dim, axis=i)
     return arr
 
 
@@ -156,29 +152,45 @@ def _set_edge(arr, axis, pad_index):
 
 
 def _set_linear_ramp(arr, axis, pad_index, end_value):
+    """
+    Set pad area with a linear ramp from the edge to the given end value(s).
+
+    Parameters
+    ----------
+    arr : ndarray
+        Array with pad area which is modified inplace.
+    axis : int
+        Dimension with the pad area to set.
+    pad_index : int
+        Index that marks the end (or start) of the pad area in the given
+        dimension. If >= 0 the pad area starts at index 0 and ends with this
+        value, otherwise it starts at the end of the array and `pad_index` is
+        treated as an index counted from the right-hand side.
+    end_value : scalar
+        Constant value to use. For best results should be of type `arr.dtype`;
+        if not `arr.dtype` will be cast to `arr.dtype`.
+    """
     if pad_index == 0:
         return
 
-    pad_shape = arr.shape[:axis] + (abs(pad_index),) + arr.shape[(axis + 1):]
-
     if pad_index > 0:
-        linear_ramp = _arange_ndarray(tuple(pad_shape), axis, True)
+        ramp = _linear_ramp(arr.ndim, axis, abs(pad_index), True)
         edge_slice = _slice_at_axis(
             arr.shape, axis, slice(pad_index, pad_index + 1))
     else:
-        linear_ramp = _arange_ndarray(tuple(pad_shape), axis, False)
+        ramp = _linear_ramp(arr.ndim, axis, abs(pad_index), False)
         edge_slice = _slice_at_axis(
             arr.shape, axis, slice(pad_index - 1, pad_index))
 
     edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
 
+    # Scale linear ramp to desired linear space
     slope = (end_value - edge_arr) / float(abs(pad_index))
-    linear_ramp = linear_ramp * slope
-    linear_ramp += edge_arr
-    _round_if_needed(linear_ramp, arr.dtype)
+    ramp = ramp * slope
+    ramp += edge_arr
+    _round_if_needed(ramp, arr.dtype)
 
-    _set_generic(arr, axis, pad_index,
-                 linear_ramp.astype(arr.dtype, copy=False))
+    _set_generic(arr, axis, pad_index, ramp.astype(arr.dtype, copy=False))
 
 
 def _set_stat(arr, axis, pad_index, stat_length, stat_func):
