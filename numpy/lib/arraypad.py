@@ -234,7 +234,7 @@ def _set_stat(arr, axis, pad_index, stat_length, stat_func):
     _set_generic(arr, axis, pad_index, stats)
 
 
-def _set_reflect_both(arr, axis, pad_amt, method):
+def _set_reflect_both(arr, axis, pad_amt, method, include_edge=False):
     """
     Pad `axis` of `arr` with reflection.
 
@@ -248,6 +248,9 @@ def _set_reflect_both(arr, axis, pad_amt, method):
         Padding to (prepend, append) along `axis`.
     method : str
         Controls method of reflection; options are 'even' or 'odd'.
+    include_edge : bool
+        If true, edge value is included in reflection, otherwise the edge
+        value forms the symmetric axis to the reflection.
 
     Returns
     -------
@@ -258,91 +261,6 @@ def _set_reflect_both(arr, axis, pad_amt, method):
 
     Notes
     -----
-    This algorithm does not pad with repetition, i.e. the edges are not
-    repeated in the reflection. For that behavior, use `mode='symmetric'`.
-
-    The modes 'reflect', 'symmetric', and 'wrap' must be padded with a
-    single function, lest the indexing tricks in non-integer multiples of the
-    original shape would violate repetition in the final iteration.
-    """
-    left_pad, right_pad = pad_amt
-    period = arr.shape[axis] - right_pad - left_pad - 1
-
-    if left_pad > 0:
-        # Reflection of left area
-        left_slice = _slice_at_axis(
-            arr.shape, axis,
-            slice(left_pad + min(period, left_pad), left_pad, -1)
-        )
-        left_chunk = arr[left_slice]
-
-        if method == "odd":
-            edge_slice = _slice_at_axis(
-                arr.shape, axis, slice(left_pad, left_pad + 1)
-            )
-            left_chunk = 2 * arr[edge_slice] - left_chunk
-
-        if left_pad > period:
-            left_pad -= period
-            pad_area = _slice_at_axis(
-                arr.shape, axis, slice(left_pad, left_pad + period))
-            arr[pad_area] = left_chunk
-        else:
-            _set_generic(arr, axis, left_pad, left_chunk)
-            left_pad = 0
-
-    if right_pad > 0:
-        # Reflection of right area
-        right_slice = _slice_at_axis(
-            arr.shape, axis,
-            slice(-right_pad - 2, -right_pad - min(period, right_pad) - 2, -1)
-        )
-        right_chunk = arr[right_slice]
-
-        if method == "odd":
-            edge_slice = _slice_at_axis(
-                arr.shape, axis, slice(-right_pad - 1, -right_pad))
-            right_chunk = 2 * arr[edge_slice] - right_chunk
-
-        if right_pad > period:
-            right_pad -= period
-            pad_area = _slice_at_axis(
-                arr.shape, axis, slice(-right_pad - period, -right_pad))
-            arr[pad_area] = right_chunk
-        else:
-            _set_generic(arr, axis, -right_pad, right_chunk)
-            right_pad = 0
-
-    return left_pad, right_pad
-
-
-def _set_symmetric_both(arr, axis, pad_amt, method):
-    """
-    Pad `axis` of `arr` with symmetry.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    axis : int
-        Axis along which to pad `arr`.
-    pad_amt : tuple of ints, length 2
-        Padding to (prepend, append) along `axis`.
-    method : str
-        Controls method of symmetry; options are 'even' or 'odd'.
-
-    Returns
-    -------
-    pad_amt : tuple of ints, length 2
-        New index positions of padding to do along the `axis`. If these are
-        both 0, padding is done in this dimension. See notes on why this is
-        necessary.
-
-    Notes
-    -----
-    This algorithm does not pad with repetition, i.e. the edges are not
-    repeated in the reflection. For that behavior, use `mode='symmetric'`.
-
     The modes 'reflect', 'symmetric', and 'wrap' must be padded with a
     single function, lest the indexing tricks in non-integer multiples of the
     original shape would violate repetition in the final iteration.
@@ -350,10 +268,21 @@ def _set_symmetric_both(arr, axis, pad_amt, method):
     left_pad, right_pad = pad_amt
     period = arr.shape[axis] - right_pad - left_pad
 
+    if include_edge:
+        offset = 1  # Edge is included, we need to offset the pad amount by 1
+    else:
+        offset = 0  # Edge is not included, no need to offset pad amount
+        period -= 1  # But decrease size of chunk because edge is omitted
+
     if left_pad > 0:
+        # Pad with reflected values on left side
+        # First slice chunk from right side of the non-pad area.
+        # Use min(period, left_pad) to ensure that chunk is not larger than
+        # pad area
+        left_index = left_pad - offset
         left_slice = _slice_at_axis(
             arr.shape, axis,
-            slice(left_pad + min(period, left_pad) - 1, left_pad - 1, -1)
+            slice(left_index + min(period, left_pad), left_index, -1)
         )
         left_chunk = arr[left_slice]
 
@@ -364,18 +293,25 @@ def _set_symmetric_both(arr, axis, pad_amt, method):
             left_chunk = 2 * arr[edge_slice] - left_chunk
 
         if left_pad > period:
+            # Chunk is smaller than pad area
             left_pad -= period
             pad_area = _slice_at_axis(
                 arr.shape, axis, slice(left_pad, left_pad + period))
             arr[pad_area] = left_chunk
         else:
+            # Chunk matches pad area
             _set_generic(arr, axis, left_pad, left_chunk)
             left_pad = 0
 
     if right_pad > 0:
+        # Pad with reflected values on left side
+        # First slice chunk from right side of the non-pad area.
+        # Use min(period, right_pad) to ensure that chunk is not larger than
+        # pad area
+        right_index = -right_pad + offset - 2
         right_slice = _slice_at_axis(
             arr.shape, axis,
-            slice(-right_pad - 1, -right_pad - min(period, right_pad) - 1, -1)
+            slice(right_index, right_index - min(period, right_pad), -1)
         )
         right_chunk = arr[right_slice]
 
@@ -385,11 +321,13 @@ def _set_symmetric_both(arr, axis, pad_amt, method):
             right_chunk = 2 * arr[edge_slice] - right_chunk
 
         if right_pad > period:
+            # Chunk is smaller than pad area
             right_pad -= period
             pad_area = _slice_at_axis(
                 arr.shape, axis, slice(-right_pad - period, -right_pad))
             arr[pad_area] = right_chunk
         else:
+            # Chunk matches pad area
             _set_generic(arr, axis, -right_pad, right_chunk)
             right_pad = 0
 
@@ -480,7 +418,6 @@ def _set_wrap_both(arr, axis, pad_amt):
             new_right_pad = 0
 
     return new_left_pad, new_right_pad
-
 
 
 def _normalize_shape(ndarray, shape, cast_to_int=True):
@@ -907,8 +844,9 @@ def pad(array, pad_width, mode, **kwargs):
                 length_right = max_length
             _set_stat(padded, axis, -right_pad, length_right, stat_func)
 
-    elif mode == "reflect":
+    elif mode in {"reflect", "symmetric"}:
         method = kwargs["reflect_type"]
+        include_edge = True if mode == "symmetric" else False
         for axis, (left_pad, right_pad) in enumerate(pad_width):
             if array.shape[axis] == 0:
                 # Axes with non-zero padding cannot be empty.
@@ -930,25 +868,9 @@ def pad(array, pad_width, mode, **kwargs):
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
                 left_pad, right_pad = _set_reflect_both(
-                    padded, axis, (left_pad, right_pad), method)
-
-    elif mode == "symmetric":
-        method = kwargs["reflect_type"]
-        for axis, (left_pad, right_pad) in enumerate(pad_width):
-            if array.shape[axis] == 0:
-                # Axes with non-zero padding cannot be empty.
-                if left_pad > 0 or right_pad > 0:
-                    raise ValueError("There aren't any elements to reflect"
-                                     " in axis {} of `array`".format(axis))
-                # Skip zero padding on empty axes.
-                continue
-
-            while left_pad > 0 or right_pad > 0:
-                # Iteratively pad until dimension is filled with reflected
-                # values. This is necessary if the pad area is larger than
-                # the length of the original values in the current dimension.
-                left_pad, right_pad = _set_symmetric_both(
-                    padded, axis, (left_pad, right_pad), method)
+                    padded, axis, (left_pad, right_pad),
+                    method, include_edge
+                )
 
     elif mode == "wrap":
         for axis, (left_pad, right_pad) in enumerate(pad_width):
