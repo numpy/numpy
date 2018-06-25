@@ -351,7 +351,6 @@ def _set_symmetric_both(arr, axis, pad_amt, method):
     period = arr.shape[axis] - right_pad - left_pad
 
     if left_pad > 0:
-        # Reflection of left area
         left_slice = _slice_at_axis(
             arr.shape, axis,
             slice(left_pad + min(period, left_pad) - 1, left_pad - 1, -1)
@@ -374,7 +373,6 @@ def _set_symmetric_both(arr, axis, pad_amt, method):
             left_pad = 0
 
     if right_pad > 0:
-        # Reflection of right area
         right_slice = _slice_at_axis(
             arr.shape, axis,
             slice(-right_pad - 1, -right_pad - min(period, right_pad) - 1, -1)
@@ -396,6 +394,93 @@ def _set_symmetric_both(arr, axis, pad_amt, method):
             right_pad = 0
 
     return left_pad, right_pad
+
+
+def _set_wrap_both(arr, axis, pad_amt):
+    """
+    Pad `axis` of `arr` with wrapped values.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array of arbitrary shape.
+    axis : int
+        Axis along which to pad `arr`.
+    pad_amt : tuple of ints, length 2
+        Padding to (prepend, append) along `axis`.
+
+    Returns
+    -------
+    pad_amt : tuple of ints, length 2
+        New index positions of padding to do along the `axis`. If these are
+        both 0, padding is done in this dimension. See notes on why this is
+        necessary.
+
+    Notes
+    -----
+    This algorithm does not pad with repetition, i.e. the edges are not
+    repeated in the reflection. For that behavior, use `mode='symmetric'`.
+
+    The modes 'reflect', 'symmetric', and 'wrap' must be padded with a
+    single function, lest the indexing tricks in non-integer multiples of the
+    original shape would violate repetition in the final iteration.
+    """
+    left_pad, right_pad = pad_amt
+    period = arr.shape[axis] - right_pad - left_pad
+
+    # If the current dimension of `arr` doesn't contain enough valid values
+    # (not part of the undefined pad area) we need to pad multiple times.
+    # Each time the pad area shrinks on both sides which is communicated with
+    # these variables.
+    new_left_pad = None
+    new_right_pad = None
+
+    if left_pad > 0:
+        # Pad with wrapped values on left side
+        # First slice chunk from right side of the non-pad area.
+        # Use min(period, left_pad) to ensure that chunk is not larger than
+        # pad area
+        right_slice = _slice_at_axis(
+            arr.shape, axis,
+            slice(-right_pad - min(period, left_pad), -right_pad)
+        )
+        right_chunk = arr[right_slice]
+
+        if left_pad > period:
+            # Chunk is smaller than pad area
+            pad_area = _slice_at_axis(
+                arr.shape, axis, slice(left_pad - period, left_pad))
+            arr[pad_area] = right_chunk
+            new_left_pad = left_pad - period
+        else:
+            # Chunk matches pad area
+            _set_generic(arr, axis, left_pad, right_chunk)
+            new_left_pad = 0
+
+    if right_pad > 0:
+        # Pad with wrapped values on right side
+        # First slice chunk from left side of the non-pad area.
+        # Use min(period, right_pad) to ensure that chunk is not larger than
+        # pad area
+        left_slice = _slice_at_axis(
+            arr.shape, axis,
+            slice(left_pad, left_pad + min(period, right_pad))
+        )
+        left_chunk = arr[left_slice]
+
+        if right_pad > period:
+            # Chunk is smaller than pad area
+            pad_area = _slice_at_axis(
+                arr.shape, axis, slice(-right_pad, -right_pad + period))
+            arr[pad_area] = left_chunk
+            new_right_pad = right_pad - period
+        else:
+            # Chunk matches pad area
+            _set_generic(arr, axis, -right_pad, left_chunk)
+            new_right_pad = 0
+
+    return new_left_pad, new_right_pad
+
 
 
 def _normalize_shape(ndarray, shape, cast_to_int=True):
@@ -866,6 +951,20 @@ def pad(array, pad_width, mode, **kwargs):
                     padded, axis, (left_pad, right_pad), method)
 
     elif mode == "wrap":
-        pass
+        for axis, (left_pad, right_pad) in enumerate(pad_width):
+            if array.shape[axis] == 0:
+                # Axes with non-zero padding cannot be empty.
+                if left_pad > 0 or right_pad > 0:
+                    raise ValueError("There aren't any elements to wrap"
+                                     " in axis {} of `array`".format(axis))
+                # Skip zero padding on empty axes.
+                continue
+
+            while left_pad > 0 or right_pad > 0:
+                # Iteratively pad until dimension is filled with wrapped
+                # values. This is necessary if the pad area is larger than
+                # the length of the original values in the current dimension.
+                left_pad, right_pad = _set_wrap_both(
+                    padded, axis, (left_pad, right_pad))
 
     return padded

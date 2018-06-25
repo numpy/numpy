@@ -14,7 +14,6 @@ from numpy.lib import pad
 
 class TestConditionalShortcuts(object):
 
-    @pytest.mark.skip(reason="not yet implemented")
     def test_zero_padding_shortcuts(self):
         test = np.arange(120).reshape(4, 5, 6)
         pad_amt = [(0, 0) for axis in test.shape]
@@ -803,7 +802,6 @@ class TestSymmetric(object):
         assert_array_equal(a, b)
 
 
-@pytest.mark.skip(reason="not yet implemented")
 class TestWrap(object):
     def test_check_simple(self):
         a = np.arange(100)
