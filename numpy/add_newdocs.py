@@ -1577,71 +1577,72 @@ add_newdoc('numpy.core.multiarray', 'where',
     """
     where(condition, [x, y])
 
-    Return elements, either from `x` or `y`, depending on `condition`.
+    Return elements chosen from `x` or `y` depending on `condition`.
 
-    If only `condition` is given, return ``condition.nonzero()``.
+    .. note::
+        When only `condition` is provided, this function is a shorthand for
+        ``np.asarray(condition).nonzero()``. Using `nonzero` directly should be
+        preferred, as it behaves correctly for subclasses. The rest of this
+        documentation covers only the case where all three arguments are
+        provided.
 
     Parameters
     ----------
     condition : array_like, bool
-        When True, yield `x`, otherwise yield `y`.
-    x, y : array_like, optional
+        Where True, yield `x`, otherwise yield `y`.
+    x, y : array_like
         Values from which to choose. `x`, `y` and `condition` need to be
         broadcastable to some shape.
 
     Returns
     -------
-    out : ndarray or tuple of ndarrays
-        If both `x` and `y` are specified, the output array contains
-        elements of `x` where `condition` is True, and elements from
-        `y` elsewhere.
-
-        If only `condition` is given, return the tuple
-        ``condition.nonzero()``, the indices where `condition` is True.
+    out : ndarray
+        An array with elements from `x` where `condition` is True, and elements
+        from `y` elsewhere.
 
     See Also
     --------
-    nonzero, choose
+    choose
+    nonzero : The function that is called when x and y are omitted
 
     Notes
     -----
-    If `x` and `y` are given and input arrays are 1-D, `where` is
-    equivalent to::
+    If all the arrays are 1-D, `where` is equivalent to::
 
-        [xv if c else yv for (c,xv,yv) in zip(condition,x,y)]
+        [xv if c else yv
+         for c, xv, yv in zip(condition, x, y)]
 
     Examples
     --------
+    >>> a = np.arange(10)
+    >>> a
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.where(a < 5, a, 10*a)
+    array([ 0,  1,  2,  3,  4, 50, 60, 70, 80, 90])
+
+    This can be used on multidimensional arrays too:
+
     >>> np.where([[True, False], [True, True]],
     ...          [[1, 2], [3, 4]],
     ...          [[9, 8], [7, 6]])
     array([[1, 8],
            [3, 4]])
 
-    >>> np.where([[0, 1], [1, 0]])
-    (array([0, 1]), array([1, 0]))
+    The shapes of x, y, and the condition are broadcast together:
 
-    >>> x = np.arange(9.).reshape(3, 3)
-    >>> np.where( x > 5 )
-    (array([2, 2, 2]), array([0, 1, 2]))
-    >>> x[np.where( x > 3.0 )]               # Note: result is 1D.
-    array([ 4.,  5.,  6.,  7.,  8.])
-    >>> np.where(x < 5, x, -1)               # Note: broadcasting.
-    array([[ 0.,  1.,  2.],
-           [ 3.,  4., -1.],
-           [-1., -1., -1.]])
+    >>> x, y = np.ogrid[:3, :4]
+    >>> np.where(x < y, x, 10 + y)  # both x and 10+y are broadcast
+    array([[10,  0,  0,  0],
+           [10, 11,  1,  1],
+           [10, 11, 12,  2]])
 
-    Find the indices of elements of `x` that are in `goodvalues`.
-
-    >>> goodvalues = [3, 4, 7]
-    >>> ix = np.isin(x, goodvalues)
-    >>> ix
-    array([[False, False, False],
-           [ True,  True, False],
-           [False,  True, False]])
-    >>> np.where(ix)
-    (array([1, 1, 2]), array([0, 1, 1]))
-
+    >>> a = np.array([[0, 1, 2],
+    ...               [0, 2, 4],
+    ...               [0, 3, 6]])
+    >>> np.where(a < 4, a, -1)  # -1 is broadcast
+    array([[ 0,  1,  2],
+           [ 0,  2, -1],
+           [ 0,  3, -1]])
     """)
 
 

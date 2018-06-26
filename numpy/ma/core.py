@@ -7115,32 +7115,32 @@ size.__doc__ = np.size.__doc__
 
 def where(condition, x=_NoValue, y=_NoValue):
     """
-    Return a masked array with elements from x or y, depending on condition.
+    Return a masked array with elements from `x` or `y`, depending on condition.
 
-    Returns a masked array, shaped like condition, where the elements
-    are from `x` when `condition` is True, and from `y` otherwise.
-    If neither `x` nor `y` are given, the function returns a tuple of
-    indices where `condition` is True (the result of
-    ``condition.nonzero()``).
+    .. note::
+        When only `condition` is provided, this function is identical to
+        `nonzero`. The rest of this documentation covers only the case where
+        all three arguments are provided.
 
     Parameters
     ----------
     condition : array_like, bool
-        The condition to meet. For each True element, yield the corresponding
-        element from `x`, otherwise from `y`.
+        Where True, yield `x`, otherwise yield `y`. 
     x, y : array_like, optional
         Values from which to choose. `x`, `y` and `condition` need to be
         broadcastable to some shape.
 
     Returns
     -------
-    out : MaskedArray or tuple of ndarrays
-        The resulting masked array if `x` and `y` were given, otherwise
-        the result of ``condition.nonzero()``.
+    out : MaskedArray
+        An masked array with `masked` elements where the condition is masked,
+        elements from `x` where `condition` is True, and elements from `y`
+        elsewhere.
 
     See Also
     --------
     numpy.where : Equivalent function in the top-level NumPy module.
+    nonzero : The function that is called when x and y are omitted
 
     Examples
     --------
@@ -7151,9 +7151,6 @@ def where(condition, x=_NoValue, y=_NoValue):
     [[0.0 -- 2.0]
      [-- 4.0 --]
      [6.0 -- 8.0]]
-    >>> np.ma.where(x > 5)    # return the indices where x > 5
-    (array([2, 2]), array([0, 2]))
-
     >>> print(np.ma.where(x > 5, x, -3.1416))
     [[-3.1416 -- -3.1416]
      [-- -3.1416 --]

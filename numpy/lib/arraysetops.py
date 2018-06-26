@@ -607,6 +607,14 @@ def isin(element, test_elements, assume_unique=False, invert=False):
            [ True,  False]])
     >>> element[mask]
     array([2, 4])
+
+    The indices of the matched values can be obtained with `nonzero`:
+
+    >>> np.nonzero(mask)
+    (array([0, 1]), array([1, 0]))
+
+    The test can also be inverted:
+
     >>> mask = np.isin(element, test_elements, invert=True)
     >>> mask
     array([[ True, False],
