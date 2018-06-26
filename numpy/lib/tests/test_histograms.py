@@ -78,6 +78,10 @@ class TestHistogram(object):
         assert_array_equal(a, .1)
         assert_equal(np.sum(a * np.diff(b)), 1)
 
+        # Test that passing False works too
+        a, b = histogram(v, bins, density=False)
+        assert_array_equal(a, [1, 2, 3, 4])
+
         # Variale bin widths are especially useful to deal with
         # infinities.
         v = np.arange(10)

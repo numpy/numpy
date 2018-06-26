@@ -782,7 +782,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
                     "The normed argument is ignored when density is provided. "
                     "In future passing both will result in an error.",
                     DeprecationWarning, stacklevel=2)
-        normed = False
+        normed = None
 
     if density:
         db = np.array(np.diff(bin_edges), float)
