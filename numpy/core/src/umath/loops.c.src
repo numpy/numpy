@@ -2974,7 +2974,58 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
  *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
  *         npy_bool#
  * #SPECL = 0, 0, 0, 2, 1, 1, 1, 0*11#
+ * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*12#
  */
+
+/* signature is (m?,n),(n,p?)->(m?,p?) */
+
+NPY_NO_EXPORT void
+@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op, 
+                          npy_intp dm, npy_intp dn, npy_intp dp,
+                          npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
+                          npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
+                          npy_intp is2_p, npy_intp os_m, npy_intp os_p)
+{
+    npy_intp m, n, p;
+    for (m = 0; m < dm; m++) {
+        for (n = 0; n < dn; n++) {
+            @typ@ val1 = (*(@typ@ *)ip1);
+            for (p = 0; p < dp; p++) {
+                if (n == 0) {
+#if @SPECL@ == 1
+                    (*(@typ@ *)op).real = 0;
+                    (*(@typ@ *)op).imag = 0;
+#else
+                    *(@typ@ *)op = 0;
+#endif
+                }
+#if @SPECL@ == 1
+                (*(@typ@ *)op).real += (val1.real * (*(@typ@ *)ip2).real) - 
+                                     (val1.imag * (*(@typ@ *)ip2).imag);
+                (*(@typ@ *)op).imag += (val1.real * (*(@typ@ *)ip2).imag) + 
+                                     (val1.imag * (*(@typ@ *)ip2).real);
+#elif @SPECL@ == 2
+                *(@typ@ *)op = npy_float_to_half(
+                                    npy_half_to_float(*(@typ@ *)op) + 
+                                    (npy_half_to_float(val1) * 
+                                     npy_half_to_float(*(@typ@ *)ip2)));
+#else
+                *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
+#endif
+                ip2 += is2_p;
+                op  +=  os_p;
+            }
+            ip2 -= ib2_p;
+            op  -=  ob_p;
+            ip1 += is1_n;
+            ip2 += is2_n;
+        }
+        ip1 -= ib1_n;
+        ip2 -= ib2_n;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
 
 NPY_NO_EXPORT void
 @TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
@@ -2984,7 +3035,6 @@ NPY_NO_EXPORT void
      *       Using @TYPE@_dot would at least give us cblas for 1D
      *       For now, just copy the loops from _umath_tests.c matrix_multiply
      */
-    /* signature is (m?,n),(n,p?)->(m?,p?) */
     INIT_OUTER_LOOP_3
     npy_intp dm = dimensions[0];
     npy_intp dn = dimensions[1];
@@ -3022,52 +3072,30 @@ NPY_NO_EXPORT void
     }
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
-#if defined(HAVE_CBLAS)
-        /* check data for contiguity, fix, and call blas */
-#endif
-        for (m = 0; m < dm; m++) {
-            for (n = 0; n < dn; n++) {
-                @typ@ val1 = (*(@typ@ *)ip1);
-                for (p = 0; p < dp; p++) {
-                    if (n == 0) {
-#if @SPECL@ == 1
-                        (*(@typ@ *)op).real = 0;
-                        (*(@typ@ *)op).imag = 0;
-#else
-                        *(@typ@ *)op = 0;
-#endif
-                    }
-#if @SPECL@ == 1
-                    (*(@typ@ *)op).real += (val1.real * (*(@typ@ *)ip2).real) - 
-                                         (val1.imag * (*(@typ@ *)ip2).imag);
-                    (*(@typ@ *)op).imag += (val1.real * (*(@typ@ *)ip2).imag) + 
-                                         (val1.imag * (*(@typ@ *)ip2).real);
-#elif @SPECL@ == 2
-                    *(@typ@ *)op = npy_float_to_half(
-                                        npy_half_to_float(*(@typ@ *)op) + 
-                                        (npy_half_to_float(val1) * 
-                                         npy_half_to_float(*(@typ@ *)ip2)));
-#else
-                    *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
-#endif
-                    ip2 += is2_p;
-                    op  +=  os_p;
-                }
-                ip2 -= ib2_p;
-                op  -=  ob_p;
-                ip1 += is1_n;
-                ip2 += is2_n;
+#if @USEBLAS@ & defined(HAVE_CBLAS)
+        if ((dm == 1 && dn == 1) || (dn == 1 && dp == 1)) {
+            
+            /* scalar * something, switch the scalar to input2 */
+            if (dm ==1 && dn ==1) {
+                @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
+                                  ib1_n, ib2_n, ib2_p, ob_p,
+                                  is1_m, is1_n, is2_n, is2_p, os_m, os_p);
+                
             }
-            ip1 -= ib1_n;
-            ip2 -= ib2_n;
-            ip1 += is1_m;
-            op  +=  os_m;
+        } else {
+            @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
+                          ib1_n, ib2_n, ib2_p, ob_p,
+                          is1_m, is1_n, is2_n, is2_p, os_m, os_p);
         }
-#if defined(HAVE_CBLAS)
-        /* if data was copied, copy it back */
+#else           
+        @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
+                          ib1_n, ib2_n, ib2_p, ob_p,
+                          is1_m, is1_n, is2_n, is2_p, os_m, os_p);
+    
 #endif
     END_OUTER_LOOP
 }
+
 /**end repeat**/
 
 /*
