@@ -2767,16 +2767,11 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         goto fail;
     }
 
-    /* Initialize the output to all zeros and reset the iterator */
+    /* Initialize the output to all zeros */
     ret = NpyIter_GetOperandArray(iter)[nop];
     if (PyArray_AssignZero(ret, NULL) < 0) {
         goto fail;
     }
-    if (out != NULL) {
-        ret = out;
-    }
-    Py_INCREF(ret);
-
 
     /***************************/
     /*
@@ -2790,16 +2785,12 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             case 1:
                 if (ndim == 2) {
                     if (unbuffered_loop_nop1_ndim2(iter) < 0) {
-                        Py_DECREF(ret);
-                        ret = NULL;
                         goto fail;
                     }
                     goto finish;
                 }
                 else if (ndim == 3) {
                     if (unbuffered_loop_nop1_ndim3(iter) < 0) {
-                        Py_DECREF(ret);
-                        ret = NULL;
                         goto fail;
                     }
                     goto finish;
@@ -2808,16 +2799,12 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             case 2:
                 if (ndim == 2) {
                     if (unbuffered_loop_nop2_ndim2(iter) < 0) {
-                        Py_DECREF(ret);
-                        ret = NULL;
                         goto fail;
                     }
                     goto finish;
                 }
                 else if (ndim == 3) {
                     if (unbuffered_loop_nop2_ndim3(iter) < 0) {
-                        Py_DECREF(ret);
-                        ret = NULL;
                         goto fail;
                     }
                     goto finish;
@@ -2828,7 +2815,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     /***************************/
 
     if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
-        Py_DECREF(ret);
         goto fail;
     }
 
@@ -2850,8 +2836,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     if (sop == NULL) {
         PyErr_SetString(PyExc_TypeError,
                     "invalid data type for einsum");
-        Py_DECREF(ret);
-        ret = NULL;
     }
     else if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
@@ -2863,7 +2847,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             NpyIter_Deallocate(iter);
-            Py_DECREF(ret);
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
@@ -2879,12 +2862,16 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
         /* If the API was needed, it may have thrown an error */
         if (NpyIter_IterationNeedsAPI(iter) && PyErr_Occurred()) {
-            Py_DECREF(ret);
-            ret = NULL;
+            goto fail;
         }
     }
 
 finish:
+    if (out != NULL) {
+        ret = out;
+    }
+    Py_INCREF(ret);
+
     NpyIter_Deallocate(iter);
     for (iop = 0; iop < nop; ++iop) {
         Py_DECREF(op[iop]);
