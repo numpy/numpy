@@ -283,4 +283,17 @@ blas_stride(npy_intp stride, unsigned itemsize)
 
 #include "ucsnarrow.h"
 
+/*
+ * Make a new empty array, of the passed size, of a type that takes the
+ * priority of ap1 and ap2 into account.
+ *
+ * If `out` is non-NULL, memory overlap is checked with ap1 and ap2, and an
+ * updateifcopy temporary array may be returned. If `result` is non-NULL, the
+ * output array to be returned (`out` if non-NULL and the newly allocated array
+ * otherwise) is incref'd and put to *result.
+ */
+NPY_NO_EXPORT PyArrayObject *
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
+                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
+
 #endif
