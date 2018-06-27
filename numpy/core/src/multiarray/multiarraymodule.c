@@ -55,7 +55,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
-#include "ufunc_override.h"
 #include "multiarraymodule.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
@@ -67,8 +66,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "get_attr_string.h"
 
-#include "numpy/ufuncobject.h"
-#include "ufunc_object.h"
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
@@ -76,8 +73,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
  */
 #include "funcs.inc"
 #include "loops.h"
-#include "ufunc_object.h"
-#include "ufunc_type_resolution.h"
 #include "__umath_generated.c"
 #include "__ufunc_api.c"
 

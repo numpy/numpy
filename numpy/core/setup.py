@@ -710,16 +710,54 @@ def configuration(parent_package='',top_path=None):
                        include_dirs=[])
 
     #######################################################################
+    #             _multiarray_umath module - common part                  #
+    #######################################################################
+
+    common_deps = [
+            join('src', 'common', 'array_assign.h'),
+            join('src', 'common', 'binop_override.h'),
+            join('src', 'common', 'cblasfuncs.h'),
+            join('src', 'common', 'lowlevel_strided_loops.h'),
+            join('src', 'common', 'mem_overlap.h'),
+            join('src', 'common', 'npy_config.h'),
+            join('src', 'common', 'npy_extint128.h'),
+            join('src', 'common', 'npy_longdouble.h'),
+            join('src', 'common', 'templ_common.h.src'),
+            join('src', 'common', 'ucsnarrow.h'),
+            join('src', 'common', 'ufunc_override.h'),
+            ]
+
+    common_src = [
+            join('src', 'common', 'array_assign.c'),
+            join('src', 'common', 'mem_overlap.c'),
+            join('src', 'common', 'npy_longdouble.c'),
+            join('src', 'common', 'templ_common.h.src'),
+            join('src', 'common', 'ucsnarrow.c'),
+            join('src', 'common', 'ufunc_override.c'),
+            ]
+
+    blas_info = get_info('blas_opt', 0)
+    if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+        extra_info = blas_info
+        # These files are also in MANIFEST.in so that they are always in
+        # the source distribution independently of HAVE_CBLAS.
+        common_src.extend([join('src', 'common', 'cblasfuncs.c'),
+                               join('src', 'common', 'python_xerbla.c'),
+                               ])
+        if uses_accelerate_framework(blas_info):
+            common_src.extend(get_sgemv_fix())
+    else:
+        extra_info = {}
+
+    #######################################################################
     #             _multiarray_umath module - multiarray part              #
     #######################################################################
 
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
-            join('src', 'common', 'array_assign.h'),
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
-            join('src', 'common', 'cblasfuncs.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
@@ -742,17 +780,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'strfuncs.h'),
             join('src', 'multiarray', 'typeinfo.h'),
-            join('src', 'common', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
-            join('src', 'common', 'npy_config.h'),
-            join('src', 'common', 'templ_common.h.src'),
-            join('src', 'common', 'lowlevel_strided_loops.h'),
-            join('src', 'common', 'mem_overlap.h'),
-            join('src', 'common', 'npy_longdouble.h'),
-            join('src', 'common', 'ufunc_override.h'),
-            join('src', 'common', 'binop_override.h'),
-            join('src', 'common', 'npy_extint128.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -778,7 +807,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
-            join('src', 'common', 'array_assign.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'buffer.c'),
@@ -821,26 +849,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'temp_elide.c'),
             join('src', 'multiarray', 'typeinfo.c'),
             join('src', 'multiarray', 'usertypes.c'),
-            join('src', 'common', 'ucsnarrow.c'),
             join('src', 'multiarray', 'vdot.c'),
-            join('src', 'common', 'templ_common.h.src'),
-            join('src', 'common', 'mem_overlap.c'),
-            join('src', 'common', 'npy_longdouble.c'),
-            join('src', 'common', 'ufunc_override.c'),
             ]
-
-    blas_info = get_info('blas_opt', 0)
-    if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
-        extra_info = blas_info
-        # These files are also in MANIFEST.in so that they are always in
-        # the source distribution independently of HAVE_CBLAS.
-        multiarray_src.extend([join('src', 'common', 'cblasfuncs.c'),
-                               join('src', 'common', 'python_xerbla.c'),
-                               ])
-        if uses_accelerate_framework(blas_info):
-            multiarray_src.extend(get_sgemv_fix())
-    else:
-        extra_info = {}
 
     #######################################################################
     #             _multiarray_umath module - umath part                   #
@@ -872,9 +882,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
-            # join('src', 'common', 'mem_overlap.c'),
-            # join('src', 'common', 'npy_longdouble.c'),
-            # join('src', 'common', 'ufunc_override.c'),
             ]
 
     umath_deps = [
@@ -886,14 +893,11 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
-            join('src', 'common', 'lowlevel_strided_loops.h'),
-            join('src', 'common', 'mem_overlap.h'),
-            join('src', 'common', 'npy_longdouble.h'),
-            join('src', 'common', 'ufunc_override.h'),
-            join('src', 'common', 'binop_override.h')] + npymath_sources
+            ] 
 
     config.add_extension('_multiarray_umath',
-                         sources=multiarray_src + umath_src +
+                         sources=multiarray_src + umath_src + 
+                                 npymath_sources + common_src +
                                  [generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
@@ -902,7 +906,8 @@ def configuration(parent_package='',top_path=None):
                                   generate_umath_c,
                                   generate_ufunc_api,
                                  ],
-                         depends=deps + multiarray_deps + umath_deps,
+                         depends=deps + multiarray_deps + umath_deps + 
+                                common_deps,
                          libraries=['npymath', 'npysort'],
                          extra_info=extra_info)
 
