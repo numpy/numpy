@@ -2322,8 +2322,11 @@ add_newdoc('numpy.core', 'vdot',
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
-    einsum(subscripts, *operands, out=None, dtype=None, order='K',
-           casting='safe', optimize=False)
+    c_einsum(subscripts, *operands, out=None, dtype=None, order='K',
+           casting='safe')
+           
+    *This documentation shadows that of the native python implementation of the `einsum` function,
+    except all references and examples related to the `optimize` argument (v 0.12.0) have been removed.*
 
     Evaluates the Einstein summation convention on the operands.
 
@@ -2466,21 +2469,6 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
     have the same effect as :py:func:`np.swapaxes(a, 0, 2) <numpy.swapaxes>`
     and ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
     of a 2D array.
-
-    .. versionadded:: 1.12.0
-
-    Added the ``optimize`` argument which will optimize the contraction order
-    of an einsum expression. For a contraction with three or more operands this
-    can greatly increase the computational efficiency at the cost of a larger
-    memory footprint during computation.
-
-    Typically a 'greedy' algorithm is applied which empirical tests have shown
-    returns the optimal path in the majority of cases. In some cases 'optimal'
-    will return the superlative path through a more expensive, exhaustive search.
-    For iterative calculations it may be advisable to calculate the optimal path
-    once and reuse that path by supplying it as an argument. An example is given.
-
-    See :py:func:`numpy.einsum_path` for more details.
 
     Examples
     --------
@@ -2633,28 +2621,6 @@ add_newdoc('numpy.core.multiarray', 'c_einsum',
     >>> np.einsum('k...,jk', a, b)
     array([[10, 28, 46, 64],
            [13, 40, 67, 94]])
-
-    Chained array operations. For more complicated contractions, speed ups
-    might be achieved by repeatedly computing a 'greedy' path or pre-computing the
-    'optimal' path and repeatedly applying it, using an
-    `einsum_path` insertion (since version 1.12.0). Performance improvements can be
-    particularly significant with larger arrays:
-
-    # Speed benchmarked on 3.1GHz Intel i5.
-    >>> a = np.ones(64).reshape(2,4,8)
-    # Basic `einsum`: ~1520ms
-    >>> for iteration in range(500):
-    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a)
-    # Sub-optimal `einsum` (due to repeated path calculation time): ~330ms
-    >>> for iteration in range(500):
-    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')
-    # Greedy `einsum` (faster optimal path approximation): ~160ms
-    >>> for iteration in range(500):
-    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='greedy')
-    # Optimal `einsum` (best usage pattern in some use cases): ~110ms
-    >>> path = np.einsum_path('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')[0]
-    >>> for iteration in range(500):
-    ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize=path)
 
     """)
 
