@@ -644,10 +644,6 @@ class TestEig(EigCases):
 class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.svd, a, 0)
-            return
-
         u, s, vt = linalg.svd(a, 0)
         assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
@@ -670,15 +666,19 @@ class TestSVD(SVDCases):
         for dtype in [single, double, csingle, cdouble]:
             check(dtype)
 
-    def test_0_size(self):
-        # These raise errors currently
-        # (which does not mean that it may not make sense)
-        a = np.zeros((0, 0), dtype=np.complex64)
-        assert_raises(linalg.LinAlgError, linalg.svd, a)
-        a = np.zeros((0, 1), dtype=np.complex64)
-        assert_raises(linalg.LinAlgError, linalg.svd, a)
-        a = np.zeros((1, 0), dtype=np.complex64)
-        assert_raises(linalg.LinAlgError, linalg.svd, a)
+    def test_empty_identity(self):
+        """ Empty input should put an identity matrix in u or vh """
+        x = np.empty((4, 0))
+        u, s, vh = linalg.svd(x, compute_uv=True)
+        assert_equal(u.shape, (4, 4))
+        assert_equal(vh.shape, (0, 0))
+        assert_equal(u, np.eye(4))
+
+        x = np.empty((0, 4))
+        u, s, vh = linalg.svd(x, compute_uv=True)
+        assert_equal(u.shape, (0, 0))
+        assert_equal(vh.shape, (4, 4))
+        assert_equal(vh, np.eye(4))
 
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
