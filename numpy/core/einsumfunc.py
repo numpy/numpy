@@ -1143,9 +1143,8 @@ def einsum(*operands, **kwargs):
     `einsum_path` insertion (since version 1.12.0). Performance improvements can be
     particularly significant with larger arrays:
 
-    # Speed benchmarked on 3.1GHz Intel i5.
     >>> a = np.ones(64).reshape(2,4,8)
-    # Basic `einsum`: ~1520ms
+    # Basic `einsum`: ~1520ms  (benchmarked on 3.1GHz Intel i5.)
     >>> for iteration in range(500):
     ...     np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a)
     # Sub-optimal `einsum` (due to repeated path calculation time): ~330ms
