@@ -4,6 +4,9 @@ A dispatch mechanism for NumPy's high level array functions
 
 :Author: Stephan Hoyer <shoyer@google.com>
 :Author: Matthew Rocklin <mrocklin@gmail.com>
+:Author: Marten van Kerkwijk <mhvk@astro.utoronto.ca>
+:Author: Hameer Abbasi <hameerabbasi@yahoo.com>
+:Author: Eric Wieser <wieser.eric@gmail.com>
 :Status: Draft
 :Type: Standards Track
 :Created: 2018-05-29
