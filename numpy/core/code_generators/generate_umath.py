@@ -1080,6 +1080,8 @@ def make_code(funcdict, filename):
         Please make changes to the code generator program (%s)
     **/
     #include "cpuid.h"
+    #include "ufunc_object.h"
+    #include "ufunc_type_resolution.h"
     %s
 
     static int

@@ -286,15 +286,6 @@ int initumath(PyObject *m)
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
-    /* No need to import the array, only called via import in the first place
-    if (_import_array() < 0) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_ImportError,
-                            "umath failed: Could not import array core.");
-        }
-        return -1;
-    }
-    */
 
     /* Initialize the types */
     if (PyType_Ready(&PyUFunc_Type) < 0)
