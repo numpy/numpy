@@ -2962,6 +2962,117 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 
 #define END_OUTER_LOOP  }
 
+/*
+ * matmul loops
+ * signature is (m?,n),(n,p?)->(m?,p?) 
+ */
+
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, HALF#
+ *  #typ = npy_float,npy_double,npy_half#
+ * #SPECL = 0,0,1#
+ */
+
+NPY_NO_EXPORT void
+@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op, 
+                          npy_intp dm, npy_intp dn, npy_intp dp,
+                          npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
+                          npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
+                          npy_intp is2_p, npy_intp os_m, npy_intp os_p)
+{
+    npy_intp m, n, p;
+    for (m = 0; m < dm; m++) {
+        for (p = 0; p < dp; p++) {
+            double sum = 0;
+            for (n = 0; n < dn; n++) {
+#if @SPECL@ == 1
+                @typ@ val1 = (*(@typ@ *)ip1);
+                @typ@ val2 = (*(@typ@ *)ip2);
+                sum += npy_half_to_float(val1) * npy_half_to_float(val2);
+#else
+                sum += ((double)*(@typ@ *)ip1) * ((double)*(@typ@ *)ip2);
+#endif
+                ip2 += is2_n;
+                ip1 += is1_n;
+            }
+#if @SPECL@ == 1
+            *(@typ@ *)op = npy_float_to_half((float)sum);
+#else
+            *(@typ@ *)op = sum;
+#endif
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            op  +=  os_p;
+            ip2 += is2_p;
+        }
+        op -= ob_p;
+        ip2 -= ib2_p;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
+
+/**end repeat**/
+
+/**begin repeat
+ *  #TYPE = LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL#
+ *  #typ = npy_longdouble,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_bool#
+ * #SPECL = 0, 1, 1, 1, 0*11#
+ * #USEBLAS = 0, 1, 1, 0*12#
+ */
+
+NPY_NO_EXPORT void
+@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op, 
+                          npy_intp dm, npy_intp dn, npy_intp dp,
+                          npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
+                          npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
+                          npy_intp is2_p, npy_intp os_m, npy_intp os_p)
+{
+    npy_intp m, n, p;
+    for (m = 0; m < dm; m++) {
+        for (p = 0; p < dp; p++) {
+#if @SPECL@ == 1
+            (*(@typ@ *)op).real = 0;
+            (*(@typ@ *)op).imag = 0;
+#else
+            *(@typ@ *)op = 0;
+#endif
+            for (n = 0; n < dn; n++) {
+                @typ@ val1 = (*(@typ@ *)ip1);
+                @typ@ val2 = (*(@typ@ *)ip2);
+#if @SPECL@ == 1
+                (*(@typ@ *)op).real += (val1.real * val2.real) - 
+                                       (val1.imag * val2.imag);
+                (*(@typ@ *)op).imag += (val1.real * val2.imag) + 
+                                       (val1.imag * val2.real);
+#else
+                *(@typ@ *)op += val1 * val2;
+#endif
+                ip2 += is2_n;
+                ip1 += is1_n;
+            }
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            op  +=  os_p;
+            ip2 += is2_p;
+        }
+        op -= ob_p;
+        ip2 -= ib2_p;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
+
+/**end repeat**/
+
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
@@ -2976,56 +3087,6 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
  * #SPECL = 0, 0, 0, 2, 1, 1, 1, 0*11#
  * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*12#
  */
-
-/* signature is (m?,n),(n,p?)->(m?,p?) */
-
-NPY_NO_EXPORT void
-@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op, 
-                          npy_intp dm, npy_intp dn, npy_intp dp,
-                          npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
-                          npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
-                          npy_intp is2_p, npy_intp os_m, npy_intp os_p)
-{
-    npy_intp m, n, p;
-    for (m = 0; m < dm; m++) {
-        for (n = 0; n < dn; n++) {
-            @typ@ val1 = (*(@typ@ *)ip1);
-            for (p = 0; p < dp; p++) {
-                if (n == 0) {
-#if @SPECL@ == 1
-                    (*(@typ@ *)op).real = 0;
-                    (*(@typ@ *)op).imag = 0;
-#else
-                    *(@typ@ *)op = 0;
-#endif
-                }
-#if @SPECL@ == 1
-                (*(@typ@ *)op).real += (val1.real * (*(@typ@ *)ip2).real) - 
-                                     (val1.imag * (*(@typ@ *)ip2).imag);
-                (*(@typ@ *)op).imag += (val1.real * (*(@typ@ *)ip2).imag) + 
-                                     (val1.imag * (*(@typ@ *)ip2).real);
-#elif @SPECL@ == 2
-                *(@typ@ *)op = npy_float_to_half(
-                                    npy_half_to_float(*(@typ@ *)op) + 
-                                    (npy_half_to_float(val1) * 
-                                     npy_half_to_float(*(@typ@ *)ip2)));
-#else
-                *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
-#endif
-                ip2 += is2_p;
-                op  +=  os_p;
-            }
-            ip2 -= ib2_p;
-            op  -=  ob_p;
-            ip1 += is1_n;
-            ip2 += is2_n;
-        }
-        ip1 -= ib1_n;
-        ip2 -= ib2_n;
-        ip1 += is1_m;
-        op  +=  os_m;
-    }
-}
 
 NPY_NO_EXPORT void
 @TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
@@ -3081,6 +3142,10 @@ NPY_NO_EXPORT void
                                   ib1_n, ib2_n, ib2_p, ob_p,
                                   is1_m, is1_n, is2_n, is2_p, os_m, os_p);
                 
+            } else {
+                @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
+                                  ib1_n, ib2_n, ib2_p, ob_p,
+                                  is1_m, is1_n, is2_n, is2_p, os_m, os_p);
             }
         } else {
             @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
