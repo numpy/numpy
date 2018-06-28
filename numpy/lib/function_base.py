@@ -307,13 +307,12 @@ def average(a, axis=None, weights=None, returned=False):
     average, [sum_of_weights] : array_type or double
         Return the average along the specified axis. When returned is `True`,
         return a tuple with the average as the first element and the sum
-        of the weights as the second element. The return type is `Float`
-        if `a` is of integer type, otherwise it is of the same type as `a`.
-        `sum_of_weights` is of the same type as `average`. The result type
-	 is the type of lowest precision capable of representing values of
-	 both `a` and `weights` or 'float64' if that type would be integral.
-	 Otherwise, if `a` is non integral, result would be a `dtype` which
-	 is capable to represent both `a.dtype` and `wgt.dtype`
+        of the weights as the second element.`sum_of_weights` is of the
+        same type as `average`. The result type is the type of lowest precision
+        capable of representing values of both `a` and `weights` or 'float64'
+        if that type would be integral. Otherwise, if `a` is non integral,
+        result will be a `dtype` which is capable of representing both
+        `a.dtype` and `wgt.dtype`
 
     Raises
     ------
@@ -330,8 +329,8 @@ def average(a, axis=None, weights=None, returned=False):
 
     ma.average : average for masked arrays -- useful if your data contains
                  "missing" values
-    numpy.result_type : Returns the type that results from applying the 
-    			NumPy type promotion rules to the arguments.
+    numpy.result_type : Returns the type that results from applying the
+                        NumPy type promotion rules to the arguments.
 
     Examples
     --------
