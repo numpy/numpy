@@ -11,17 +11,13 @@ import numpy as np
 __all__ = ['pad']
 
 
-###############################################################################
-# Private utility functions.
-
-
-def _linear_ramp(ndim, axis, size, reverse=False):
+def _linear_ramp(ndim, axis, start, stop, size, reverse=False, dtype=None):
     """
     Create a linear ramp of `size` in `axis` with `ndim`.
 
-    This algorithm creates a 1-indexed array. The resulting linear ramp is
-    broadcastable to any array that matches the ramp in `shape[axis]` and
-    `ndim`.
+    This algorithm behaves like a vectorized version of `numpy.linspace`.
+    The resulting linear ramp is broadcastable to any array that matches the
+    ramp in `shape[axis]` and `ndim`.
 
     Parameters
     ----------
@@ -30,24 +26,45 @@ def _linear_ramp(ndim, axis, size, reverse=False):
         the one specified by `axis` will have the size 1.
     axis : int
         The dimension that contains the linear ramp of `size`.
+    start : int or ndarray
+        The starting value(s) of the linear ramp. If given as an array, its
+        size must match `size`.
+    stop : int or ndarray
+        The stop value(s) (not included!) of the linear ramp. If given as an
+        array, its size must match `size`.
     size : int
-        The size of the linear ramp.
+        The number of elements in the linear ramp.
     reverse :
-        If False, increment in a positive fashion from 1 to `size`, inclusive.
-        If True, the bounds are the same but the order reversed.
+        If False, increment in a positive fashion, otherwise decrement.
 
     Returns
     -------
-    arr : ndarray
-        Output array with that in- or decrements along the given `axis`.
+    ramp : ndarray
+        Output array that in- or decrements along the given `axis`.
+
+    Examples
+    --------
+    >>> _linear_ramp(ndim=2, axis=0, start=np.arange(3), stop=10, size=2)
+    array([[0. , 1. , 2. ],
+           [5. , 5.5, 6. ]])
     """
-    if not reverse:
-        arr = np.arange(1, size + 1, 1)
-    else:
-        arr = np.arange(size, 0, -1)
-    init_shape = (1,) * axis + (arr.size,) + (1,) * (ndim - axis - 1)
-    arr = arr.reshape(init_shape)
-    return arr
+    # Create initial ramp
+    ramp = np.arange(size)
+    if reverse:
+        ramp = ramp[::-1]
+
+    # Make sure, that ramp is broadcastable
+    init_shape = (1,) * axis + (size,) + (1,) * (ndim - axis - 1)
+    ramp = ramp.reshape(init_shape)
+
+    # And scale to given start and stop values
+    gain = (stop - start) / float(size)
+    ramp = ramp * gain
+    ramp += start
+
+    if dtype:
+        _round_if_needed(ramp, dtype)
+    return ramp
 
 
 def _round_if_needed(arr, dtype):
@@ -60,7 +77,6 @@ def _round_if_needed(arr, dtype):
         Input array.
     dtype : dtype
         The dtype of the destination array.
-
     """
     if np.issubdtype(dtype, np.integer):
         arr.round(out=arr)
@@ -68,183 +84,255 @@ def _round_if_needed(arr, dtype):
 
 def _slice_at_axis(shape, axis, sl):
     """
-    Construct a slice tuple the length of shape, with sl at the specified axis
+    Construct tuple of slices to slice an array in the given dimension.
+
+    Parameters
+    ----------
+    shape : tuple
+        Shape of the array to slice as returned by its `shape` attribute.
+    axis : int
+        The axis to which `sl` is applied. All other dimensions are left
+        "unsliced".
+    sl : slice
+        The slice for the given dimension.
+
+    Returns
+    -------
+    sl : tuple of slices
+        A tuple with slices matching `shape` in length.
+
+    Examples
+    --------
+    >>> _slice_at_axis((3, 4, 5), 1, slice(None, 3, -1))
+    (slice(None, None, None), slice(None, 3, -1), slice(None, None, None))
     """
     slice_tup = (slice(None),)
     return slice_tup * axis + (sl,) + slice_tup * (len(shape) - axis - 1)
 
 
-def _pad_empty(arr, pad_widths):
-    """Pad array with undefined values.
+def _pad_simple(array, pad_width, fill_value=None):
+    """Pad array on all sides with either a single value or undefined values.
 
     Parameters
     ----------
-    arr : ndarray
+    array : ndarray
         Array to grow.
-    pad_widths : sequence of tuple[int, int]
+    pad_width : sequence of tuple[int, int]
         Pad width on both sides for each dimension in `arr`.
+    fill_value : scalar, optional
+        If provided the padded area is filled with this value, otherwise
+        the pad area left undefined.
 
     Returns
     -------
     padded : ndarray
-        Larger array with undefined values in padded areas.
+        The padded array..
     old_area : tuple
         A tuple of slices pointing to the area of the original array.
     """
     # Allocate grown array
     new_shape = tuple(
         left + size + right
-        for size, (left, right) in zip(arr.shape, pad_widths)
+        for size, (left, right) in zip(array.shape, pad_width)
     )
-    padded = np.empty(new_shape, dtype=arr.dtype)
+    padded = np.empty(new_shape, dtype=array.dtype)
+
+    if fill_value is not None:
+        padded.fill(fill_value)
 
     # Copy old array into correct space
     old_area = tuple(
         slice(left, left + size)
-        for size, (left, right) in zip(arr.shape, pad_widths)
+        for size, (left, right) in zip(array.shape, pad_width)
     )
-    padded[old_area] = arr
+    padded[old_area] = array
 
     return padded, old_area
 
 
-def _set_generic(arr, axis, pad_index, values):
+def _set_pad_area(padded, axis, index_pair, value_pair):
     """
-    Set pad area with given values.
+    Set empty-padded area in given dimension.
 
     Parameters
     ----------
-    arr : ndarray
-        Array with pad area which is modified inplace.
+    padded : ndarray
+        Array with the pad area which is modified inplace.
     axis : int
         Dimension with the pad area to set.
-    pad_index : int
-        Index that marks the end (or start) of the pad area in the given
-        dimension. If >= 0 the pad area starts at index 0 and ends with this
-        value, otherwise it starts at the end of the array and `pad_index` is
-        treated as an index counted from the right-hand side.
-    values : scalar or ndarray
-        Values inserted into the pad area. It must match or be broadcastable
-        to the shape of `arr`.
+    index_pair : (int, int)
+        Pair of indices that mark the end (or start) of the pad area on both 
+        sides in the given dimension.
+    value_pair : tuple of scalars or ndarrays
+        Values inserted into the pad area on each side. It must match or be 
+        broadcastable to the shape of `arr`.
     """
-    if pad_index == 0:
-        return
-    if 0 <= pad_index:
-        sl = slice(0, pad_index)
-    else:
-        sl = slice(pad_index, arr.shape[axis])
-    pad_area = _slice_at_axis(arr.shape, axis, sl)
-    arr[pad_area] = values
+    if index_pair[0] > 0:
+        # Set pad values on the left
+        left_slice = _slice_at_axis(
+            padded.shape, axis, slice(None, index_pair[0]))
+        padded[left_slice] = value_pair[0]
+
+    if index_pair[1] > 0:
+        # Set pad values on the right
+        right_slice = _slice_at_axis(
+            padded.shape, axis, slice(-index_pair[1], None))
+        padded[right_slice] = value_pair[1]
 
 
-def _set_edge(arr, axis, pad_index):
-    if pad_index == 0:
-        return
-
-    if pad_index > 0:
-        sl = slice(pad_index, pad_index + 1)
-    else:
-        sl = slice(pad_index - 1, pad_index)
-    edge_slice = _slice_at_axis(arr.shape, axis, sl)
-
-    edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
-    _set_generic(arr, axis, pad_index, edge_arr)
-
-
-def _set_linear_ramp(arr, axis, pad_index, end_value):
+def _get_edges(padded, axis, index_pair):
     """
-    Set pad area with a linear ramp from the edge to the given end value(s).
+    Retrieve edge values from empty-padded array in given dimension.
+    
+    Parameters
+    ----------
+    padded : ndarray
+        Empty-padded array.
+    axis : int
+        Dimension in which the edges are considered.
+    index_pair : (int, int)
+        Pair of indices that mark the end (or start) of the pad area on both
+        sides in the given dimension.
+
+    Returns
+    -------
+    left_edge, right_edge : ndarray
+        Edge values of the valid area in `padded` in the given dimension.
+    """
+    if index_pair[0] > 0:
+        left_slice = _slice_at_axis(
+            padded.shape, axis, slice(index_pair[0], index_pair[0] + 1))
+        left_edge = padded[left_slice]
+    else:
+        left_edge = np.array([], dtype=padded.dtype)
+
+    if index_pair[1] > 0:
+        right_slice = _slice_at_axis(
+            padded.shape, axis, slice(-index_pair[1] - 1, -index_pair[1]))
+        right_edge = padded[right_slice]
+    else:
+        right_edge = np.array([], dtype=padded.dtype)
+
+    return left_edge, right_edge
+
+
+def _get_linear_ramps(padded, axis, index_pair, end_value_pair):
+    """
+    Construct linear ramps for empty-padded array in given dimension.
 
     Parameters
     ----------
-    arr : ndarray
-        Array with pad area which is modified inplace.
+    padded : ndarray
+        Empty-padded array.
     axis : int
-        Dimension with the pad area to set.
-    pad_index : int
-        Index that marks the end (or start) of the pad area in the given
-        dimension. If >= 0 the pad area starts at index 0 and ends with this
-        value, otherwise it starts at the end of the array and `pad_index` is
-        treated as an index counted from the right-hand side.
-    end_value : scalar
-        Constant value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
+        Dimension in which the ramps are constructed.
+    index_pair : (int, int)
+        Pair of indices that mark the end (or start) of the pad area on both
+        sides in the given dimension.
+    end_value_pair : (scalar, scalar)
+        End values for the linear ramps which form the edge of the fully padded
+        array. These values are included in the linear ramps.
+
+    Returns
+    -------
+    left_ramp, right_ramp : ndarray
+        Linear ramps to set on both sides of `padded`.
     """
-    if pad_index == 0:
-        return
+    edge_pair = _get_edges(padded, axis, index_pair)
 
-    if pad_index > 0:
-        ramp = _linear_ramp(arr.ndim, axis, abs(pad_index), True)
-        edge_slice = _slice_at_axis(
-            arr.shape, axis, slice(pad_index, pad_index + 1))
+    if index_pair[0] > 0:
+        left_ramp = _linear_ramp(
+            padded.ndim, axis,
+            start=end_value_pair[0], stop=edge_pair[0], size=index_pair[0],
+            dtype=padded.dtype, reverse=False
+        )
     else:
-        ramp = _linear_ramp(arr.ndim, axis, abs(pad_index), False)
-        edge_slice = _slice_at_axis(
-            arr.shape, axis, slice(pad_index - 1, pad_index))
+        left_ramp = np.array([], dtype=padded.dtype)
 
-    edge_arr = arr[edge_slice].repeat(abs(pad_index), axis=axis)
+    if index_pair[1] > 0:
+        right_ramp = _linear_ramp(
+            padded.ndim, axis,
+            start=end_value_pair[1], stop=edge_pair[1], size=index_pair[1],
+            dtype=padded.dtype, reverse=True
+        )
+    else:
+        right_ramp = np.array([], dtype=padded.dtype)
 
-    # Scale linear ramp to desired linear space
-    slope = (end_value - edge_arr) / float(abs(pad_index))
-    ramp = ramp * slope
-    ramp += edge_arr
-    _round_if_needed(ramp, arr.dtype)
-
-    _set_generic(arr, axis, pad_index, ramp.astype(arr.dtype, copy=False))
+    return left_ramp, right_ramp
 
 
-def _set_stat(arr, axis, pad_index, stat_length, stat_func):
-    """Compute statistic and fill the pad area on one side.
+def _get_stats(padded, axis, index_pair, length_pair, stat_func):
+    """
+    Calculate statistic for the empty-padded array in given dimnsion.
 
     Parameters
     ----------
-    arr : ndarray
-        Array with pad area which is modified inplace.
+    padded : ndarray
+        Empty-padded array.
     axis : int
-        Dimension with the pad area to set.
-    pad_index : int
-        Index that marks the end (or start) of the pad area in the given
-        dimension. If >= 0 the pad area starts at index 0 and ends with this
-        value, otherwise it starts at the end of the array and `pad_index` is
-        treated as an index counted from the right-hand side.
-    stat_length : scalar
-        Number of values at edge of each axis used to calculate the statistic
-        value.
-    stat_func : func
-        Function used to compute the statistic.
+        Dimension in which the statistic is calculated.
+    index_pair : (int, int)
+        Pair of indices that mark the end (or start) of the pad area on both
+        sides in the given dimension.
+    length_pair : 2-element sequence of None or int
+        Gives the number of values in valid area from each side that is
+        taken into account when calculating the statistic. If None the entire
+        valid area in `padded` is considered.
+    stat_func : function
+        Function to compute statistic. The expected signature is
+        ``stat_func(x: ndarray, axis: int, keepdims: bool) -> ndarray``.
+
+    Returns
+    -------
+    left_stat, right_stat : ndarray
+        Calculated statistic for both sides of `padded`.
     """
-    if pad_index == 0:
-        return
-    if stat_length == 1:
-        _set_edge(arr, axis, pad_index)
-        return
+    max_length = padded.shape[axis] - index_pair[0] - index_pair[1]
 
-    if 0 <= pad_index:
-        start = pad_index
-        stop = pad_index + stat_length
+    if index_pair[0] > 0:
+        if length_pair[0] is not None and length_pair[0] < max_length:
+            left_length = length_pair[0]
+        else:
+            left_length = max_length
+        left_slice = _slice_at_axis(
+            padded.shape, axis,
+            slice(index_pair[0], index_pair[0] + left_length)
+        )
+        left_chunk = padded[left_slice]
+        left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
+        _round_if_needed(left_stat, padded.dtype)
     else:
-        start = pad_index - stat_length
-        stop = pad_index
-    stat_area = _slice_at_axis(arr.shape, axis, slice(start, stop))
+        left_stat = np.array([], dtype=padded.dtype)
 
-    stats = stat_func(arr[stat_area], axis=axis, keepdims=True)
-    _round_if_needed(stats, arr.dtype)
-    #stats = stats.repeat(abs(pad_index), axis=axis)
+    if index_pair[1] > 0:
+        if length_pair[1] is not None and length_pair[1] < max_length:
+            right_length = length_pair[1]
+        else:
+            right_length = max_length
+        right_slice = _slice_at_axis(
+            padded.shape, axis,
+            slice(-index_pair[1] - right_length, -index_pair[1])
+        )
+        right_chunk = padded[right_slice]
+        right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
+        _round_if_needed(right_stat, padded.dtype)
+    else:
+        right_stat = np.array([], dtype=padded.dtype)
 
-    _set_generic(arr, axis, pad_index, stats)
+    return left_stat, right_stat
 
 
-def _set_reflect_both(arr, axis, pad_amt, method, include_edge=False):
+def _set_reflect_both(padded, axis, index_pair, method, include_edge=False):
     """
     Pad `axis` of `arr` with reflection.
 
     Parameters
     ----------
-    arr : ndarray
+    padded : ndarray
         Input array of arbitrary shape.
     axis : int
         Axis along which to pad `arr`.
-    pad_amt : tuple of ints, length 2
+    index_pair : tuple of ints, length 2
         Padding to (prepend, append) along `axis`.
     method : str
         Controls method of reflection; options are 'even' or 'odd'.
@@ -265,8 +353,8 @@ def _set_reflect_both(arr, axis, pad_amt, method, include_edge=False):
     single function, lest the indexing tricks in non-integer multiples of the
     original shape would violate repetition in the final iteration.
     """
-    left_pad, right_pad = pad_amt
-    period = arr.shape[axis] - right_pad - left_pad
+    left_pad, right_pad = index_pair
+    period = padded.shape[axis] - right_pad - left_pad
 
     if include_edge:
         offset = 1  # Edge is included, we need to offset the pad amount by 1
@@ -281,27 +369,27 @@ def _set_reflect_both(arr, axis, pad_amt, method, include_edge=False):
         # pad area
         left_index = left_pad - offset
         left_slice = _slice_at_axis(
-            arr.shape, axis,
+            padded.shape, axis,
             slice(left_index + min(period, left_pad), left_index, -1)
         )
-        left_chunk = arr[left_slice]
+        left_chunk = padded[left_slice]
 
         if method == "odd":
             edge_slice = _slice_at_axis(
-                arr.shape, axis, slice(left_pad, left_pad + 1)
+                padded.shape, axis, slice(left_pad, left_pad + 1)
             )
-            left_chunk = 2 * arr[edge_slice] - left_chunk
+            left_chunk = 2 * padded[edge_slice] - left_chunk
 
         if left_pad > period:
             # Chunk is smaller than pad area
             left_pad -= period
             pad_area = _slice_at_axis(
-                arr.shape, axis, slice(left_pad, left_pad + period))
-            arr[pad_area] = left_chunk
+                padded.shape, axis, slice(left_pad, left_pad + period))
         else:
             # Chunk matches pad area
-            _set_generic(arr, axis, left_pad, left_chunk)
+            pad_area = _slice_at_axis(padded.shape, axis, slice(None, left_pad))
             left_pad = 0
+        padded[pad_area] = left_chunk
 
     if right_pad > 0:
         # Pad with reflected values on left side
@@ -310,41 +398,42 @@ def _set_reflect_both(arr, axis, pad_amt, method, include_edge=False):
         # pad area
         right_index = -right_pad + offset - 2
         right_slice = _slice_at_axis(
-            arr.shape, axis,
+            padded.shape, axis,
             slice(right_index, right_index - min(period, right_pad), -1)
         )
-        right_chunk = arr[right_slice]
+        right_chunk = padded[right_slice]
 
         if method == "odd":
             edge_slice = _slice_at_axis(
-                arr.shape, axis, slice(-right_pad - 1, -right_pad))
-            right_chunk = 2 * arr[edge_slice] - right_chunk
+                padded.shape, axis, slice(-right_pad - 1, -right_pad))
+            right_chunk = 2 * padded[edge_slice] - right_chunk
 
         if right_pad > period:
             # Chunk is smaller than pad area
             right_pad -= period
             pad_area = _slice_at_axis(
-                arr.shape, axis, slice(-right_pad - period, -right_pad))
-            arr[pad_area] = right_chunk
+                padded.shape, axis, slice(-right_pad - period, -right_pad))
+
         else:
             # Chunk matches pad area
-            _set_generic(arr, axis, -right_pad, right_chunk)
+            pad_area = _slice_at_axis(padded.shape, axis, slice(-right_pad, None))
             right_pad = 0
+        padded[pad_area] = right_chunk
 
     return left_pad, right_pad
 
 
-def _set_wrap_both(arr, axis, pad_amt):
+def _set_wrap_both(padded, axis, index_pair):
     """
     Pad `axis` of `arr` with wrapped values.
 
     Parameters
     ----------
-    arr : ndarray
+    padded : ndarray
         Input array of arbitrary shape.
     axis : int
         Axis along which to pad `arr`.
-    pad_amt : tuple of ints, length 2
+    index_pair : tuple of ints, length 2
         Padding to (prepend, append) along `axis`.
 
     Returns
@@ -363,8 +452,8 @@ def _set_wrap_both(arr, axis, pad_amt):
     single function, lest the indexing tricks in non-integer multiples of the
     original shape would violate repetition in the final iteration.
     """
-    left_pad, right_pad = pad_amt
-    period = arr.shape[axis] - right_pad - left_pad
+    left_pad, right_pad = index_pair
+    period = padded.shape[axis] - right_pad - left_pad
 
     # If the current dimension of `arr` doesn't contain enough valid values
     # (not part of the undefined pad area) we need to pad multiple times.
@@ -379,20 +468,20 @@ def _set_wrap_both(arr, axis, pad_amt):
         # Use min(period, left_pad) to ensure that chunk is not larger than
         # pad area
         right_slice = _slice_at_axis(
-            arr.shape, axis,
+            padded.shape, axis,
             slice(-right_pad - min(period, left_pad), -right_pad)
         )
-        right_chunk = arr[right_slice]
+        right_chunk = padded[right_slice]
 
         if left_pad > period:
             # Chunk is smaller than pad area
             pad_area = _slice_at_axis(
-                arr.shape, axis, slice(left_pad - period, left_pad))
-            arr[pad_area] = right_chunk
+                padded.shape, axis, slice(left_pad - period, left_pad))
             new_left_pad = left_pad - period
         else:
             # Chunk matches pad area
-            _set_generic(arr, axis, left_pad, right_chunk)
+            pad_area = _slice_at_axis(padded.shape, axis, slice(None, left_pad))
+        padded[pad_area] = right_chunk
 
     if right_pad > 0:
         # Pad with wrapped values on right side
@@ -400,132 +489,94 @@ def _set_wrap_both(arr, axis, pad_amt):
         # Use min(period, right_pad) to ensure that chunk is not larger than
         # pad area
         left_slice = _slice_at_axis(
-            arr.shape, axis,
+            padded.shape, axis,
             slice(left_pad, left_pad + min(period, right_pad))
         )
-        left_chunk = arr[left_slice]
+        left_chunk = padded[left_slice]
 
         if right_pad > period:
             # Chunk is smaller than pad area
             pad_area = _slice_at_axis(
-                arr.shape, axis, slice(-right_pad, -right_pad + period))
-            arr[pad_area] = left_chunk
+                padded.shape, axis, slice(-right_pad, -right_pad + period))
             new_right_pad = right_pad - period
         else:
             # Chunk matches pad area
-            _set_generic(arr, axis, -right_pad, left_chunk)
+            pad_area = _slice_at_axis(padded.shape, axis, slice(-right_pad, None))
+        padded[pad_area] = left_chunk
 
     return new_left_pad, new_right_pad
 
 
-def _normalize_shape(ndarray, shape, cast_to_int=True):
+def _as_pairs(x, ndim, as_index=False):
     """
-    Private function which does some checks and normalizes the possibly
-    much simpler representations of 'pad_width', 'stat_length',
-    'constant_values', 'end_values'.
+    Broadcast `x` to an array with the shape (`ndim`, 2).
+
+    A helper function for `pad` that prepares and validates arguments like
+    `pad_width` to be iterated in pairs.
 
     Parameters
     ----------
-    narray : ndarray
-        Input ndarray
-    shape : {sequence, array_like, float, int}, optional
-        The width of padding (pad_width), the number of elements on the
-        edge of the narray used for statistics (stat_length), the constant
-        value(s) to use when filling padded regions (constant_values), or the
-        endpoint target(s) for linear ramps (end_values).
-        ((before_1, after_1), ... (before_N, after_N)) unique number of
-        elements for each axis where `N` is rank of `narray`.
-        ((before, after),) yields same before and after constants for each
-        axis.
-        (constant,) or val is a shortcut for before = after = constant for
-        all axes.
-    cast_to_int : bool, optional
-        Controls if values in ``shape`` will be rounded and cast to int
-        before being returned.
+    x : {None, scalar, array-like}
+        The object to broadcast to the shape (`ndim`, 2).
+    ndim : int
+        Number of pairs the broadcasted `x` will have.
+    as_index : bool, optional
+        If `x` is not None, try to round each element of `x` to a non-negative
+        integer.
 
     Returns
     -------
-    normalized_shape : tuple of tuples
-        val                               => ((val, val), (val, val), ...)
-        [[val1, val2], [val3, val4], ...] => ((val1, val2), (val3, val4), ...)
-        ((val1, val2), (val3, val4), ...) => no change
-        [[val1, val2], ]                  => ((val1, val2), (val1, val2), ...)
-        ((val1, val2), )                  => ((val1, val2), (val1, val2), ...)
-        [[val ,     ], ]                  => ((val, val), (val, val), ...)
-        ((val ,     ), )                  => ((val, val), (val, val), ...)
+    pairs : nested structure with shape (`ndim`, 2)
+        The broadcasted version of `x`.
 
+    Raises
+    ------
+    TypeError
+        If `as_index` is True and `x` can't be cast to an array of integer
+        type.
+    ValueError
+        If `as_index` is True and `x` contains negative elements.
+        Or if `x` is not broadcastable to the shape (`ndim`, 2).
     """
-    ndims = ndarray.ndim
+    if x is None:
+        # Pass through None as a special case
+        return ((None, None),) * ndim
 
-    # Shortcut shape=None
-    if shape is None:
-        return ((None, None), ) * ndims
+    x = np.asarray(x)
 
-    # Convert any input `info` to a NumPy array
-    shape_arr = np.asarray(shape)
+    if as_index:
+        try:
+            x = x.round().astype(np.intp, copy=False)
+        except AttributeError:
+            raise TypeError("can't cast `x` to int")
 
+    if x.size == 1:
+        # Single value case
+        x = x.ravel()  # Reduce superfluous dimensions
+        if as_index and x < 0:
+            raise ValueError("index can't contain negative values")
+        return ((x[0], x[0]),) * ndim
+
+    if x.size == 2 and ndim == 2 and x.shape != (2, 1):
+        # Pair value case, but except special case when each dimension has a
+        # single value which should be broadcasted to a pair
+        x = x.ravel()  # Reduce superfluous dimensions
+        if as_index and x[0] < 0 and x[1] < 0:
+            raise ValueError("index can't contain negative values")
+        return ((x[0], x[1]),) * ndim
+
+    if as_index and x.min() < 0:
+        raise ValueError("index can't contain negative values")
     try:
-        shape_arr = np.broadcast_to(shape_arr, (ndims, 2))
+        return np.broadcast_to(x, (ndim, 2)).tolist()
     except ValueError:
-        fmt = "Unable to create correctly shaped tuple from %s"
-        raise ValueError(fmt % (shape,))
-
-    # Cast if necessary
-    if cast_to_int is True:
-        shape_arr = np.round(shape_arr).astype(int)
-
-    # Convert list of lists to tuple of tuples
-    return tuple(tuple(axis) for axis in shape_arr.tolist())
-
-
-def _validate_lengths(narray, number_elements):
-    """
-    Private function which does some checks and reformats pad_width and
-    stat_length using _normalize_shape.
-
-    Parameters
-    ----------
-    narray : ndarray
-        Input ndarray
-    number_elements : {sequence, int}, optional
-        The width of padding (pad_width) or the number of elements on the edge
-        of the narray used for statistics (stat_length).
-        ((before_1, after_1), ... (before_N, after_N)) unique number of
-        elements for each axis.
-        ((before, after),) yields same before and after constants for each
-        axis.
-        (constant,) or int is a shortcut for before = after = constant for all
-        axes.
-
-    Returns
-    -------
-    _validate_lengths : tuple of tuples
-        int                               => ((int, int), (int, int), ...)
-        [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
-        ((int1, int2), (int3, int4), ...) => no change
-        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...)
-        ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
-        [[int ,     ], ]                  => ((int, int), (int, int), ...)
-        ((int ,     ), )                  => ((int, int), (int, int), ...)
-
-    """
-    normshp = _normalize_shape(narray, number_elements)
-    for i in normshp:
-        chk = [1 if x is None else x for x in i]
-        chk = [1 if x >= 0 else -1 for x in chk]
-        if (chk[0] < 0) or (chk[1] < 0):
-            fmt = "%s cannot contain negative values."
-            raise ValueError(fmt % (number_elements,))
-    return normshp
-
-
-###############################################################################
-# Public functions
+        raise ValueError("unable to broadcast '{}' to shape {}"
+                         .format(x, (ndim, 2)))
 
 
 def pad(array, pad_width, mode, **kwargs):
     """
-    Pads an array.
+    Pad an array.
 
     Parameters
     ----------
@@ -571,6 +622,8 @@ def pad(array, pad_width, mode, **kwargs):
             Pads with the wrap of the vector along the axis.
             The first values are used to pad the end and the
             end values are used to pad the beginning.
+        'empty'
+            Pads with undefined values.
         <function>
             Padding function, see Notes.
     stat_length : sequence or int, optional
@@ -730,9 +783,21 @@ def pad(array, pad_width, mode, **kwargs):
         raise TypeError('`pad_width` must be of integral type.')
 
     array = np.asarray(array)
-    pad_width = _validate_lengths(array, pad_width)
+    pad_width = _as_pairs(pad_width, array.ndim, as_index=True)
 
-    allowedkwargs = {
+    if not isinstance(mode, np.compat.basestring):
+        # Use user-supplied vector function with np.apply_along_axis
+        function = mode
+        # Create a new zero padded array
+        padded, _ = _pad_simple(array, pad_width, fill_value=0)
+        # And apply along each axis
+        for axis in range(padded.ndim):
+            np.apply_along_axis(function, axis, padded, pad_width[axis],
+                                axis, kwargs)
+        return padded
+
+    allowed_kwargs = {
+        'empty': [],
         'constant': ['constant_values'],
         'edge': [],
         'linear_ramp': ['end_values'],
@@ -744,14 +809,12 @@ def pad(array, pad_width, mode, **kwargs):
         'symmetric': ['reflect_type'],
         'wrap': [],
         }
-
-    kwdefaults = {
+    kwarg_defaults = {
         'stat_length': None,
         'constant_values': 0,
         'end_values': 0,
         'reflect_type': 'even',
         }
-
     stat_functions = {
         "maximum": np.max,
         "minimum": np.min,
@@ -759,132 +822,95 @@ def pad(array, pad_width, mode, **kwargs):
         "median": np.median,
     }
 
-    if isinstance(mode, np.compat.basestring):
-        # Make sure have allowed kwargs appropriate for mode
-        for key in kwargs:
-            if key not in allowedkwargs[mode]:
-                raise ValueError('%s keyword not in allowed keywords %s' %
-                                 (key, allowedkwargs[mode]))
+    # Make sure that no unsupported keywords were passed for the current mode
+    unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
+    if unsupported_kwargs:
+        raise ValueError("unsupported keyword arguments for mode '{}': {}"
+                         .format(mode, unsupported_kwargs))
 
-        # Set kwarg defaults
-        for kw in allowedkwargs[mode]:
-            kwargs.setdefault(kw, kwdefaults[kw])
-
-        # Need to only normalize particular keywords.
-        for i in kwargs:
-            if i == 'stat_length':
-                kwargs[i] = _validate_lengths(array, kwargs[i])
-            if i in ['end_values', 'constant_values']:
-                kwargs[i] = _normalize_shape(array, kwargs[i],
-                                             cast_to_int=False)
-    else:
-        # Drop back to old, slower np.apply_along_axis mode for user-supplied
-        # vector function
-        function = mode
-
-        # Create a new padded array
-        rank = list(range(array.ndim))
-        total_dim_increase = [np.sum(pad_width[i]) for i in rank]
-        offset_slices = tuple(
-            slice(pad_width[i][0], pad_width[i][0] + array.shape[i])
-            for i in rank)
-        new_shape = np.array(array.shape) + total_dim_increase
-        newmat = np.zeros(new_shape, array.dtype)
-
-        # Insert the original array into the padded array
-        newmat[offset_slices] = array
-
-        # This is the core of pad ...
-        for iaxis in rank:
-            np.apply_along_axis(function,
-                                iaxis,
-                                newmat,
-                                pad_width[iaxis],
-                                iaxis,
-                                kwargs)
-        return newmat
+    # Set kwarg defaults
+    for key in allowed_kwargs[mode]:
+        kwargs.setdefault(key, kwarg_defaults[key])
 
     # Create array with final shape and original values
-    padded, _ = _pad_empty(array, pad_width)
+    # (padded area is undefined)
+    padded, _ = _pad_simple(array, pad_width)
+    # And prepare iteration over all dimensions
+    # (zipping may be more readable than using enumerate)
+    axes = range(padded.ndim)
 
     if mode == "constant":
-        for axis, ((left_pad, right_pad), (left_value, right_value)) \
-                in enumerate(zip(pad_width, kwargs["constant_values"])):
-            _set_generic(padded, axis, left_pad, left_value)
-            _set_generic(padded, axis, -right_pad, right_value)
+        values = _as_pairs(kwargs["constant_values"], padded.ndim)
+        for axis, index_pair, value_pair in zip(axes, pad_width, values):
+            _set_pad_area(padded, axis, index_pair, value_pair)
 
     elif mode == "edge":
-        for axis, (left_pad, right_pad) in enumerate(pad_width):
-            _set_edge(padded, axis, left_pad)
-            _set_edge(padded, axis, -right_pad)
+        for axis, index_pair in zip(axes, pad_width):
+            edge_pair = _get_edges(padded, axis, index_pair)
+            _set_pad_area(padded, axis, index_pair, edge_pair)
 
     elif mode == "linear_ramp":
-        for axis, ((left_pad, right_pad), (left_value, right_value)) \
-                in enumerate(zip(pad_width, kwargs["end_values"])):
-            _set_linear_ramp(padded, axis, left_pad, left_value)
-            _set_linear_ramp(padded, axis, -right_pad, right_value)
+        end_values = _as_pairs(kwargs["end_values"], padded.ndim)
+        for axis, index_pair, value_pair in zip(axes, pad_width, end_values):
+            ramp_pair = _get_linear_ramps(padded, axis, index_pair, value_pair)
+            _set_pad_area(padded, axis, index_pair, ramp_pair)
 
     elif mode in stat_functions.keys():
-        stat_func = stat_functions[mode]
-        for axis, ((left_pad, right_pad), (length_left, length_right)) \
-                in enumerate(zip(pad_width, kwargs["stat_length"])):
-            max_length = array.shape[axis]
-
-            if length_left is None:
-                length_left = max_length
-            elif length_left > max_length:
-                length_left = max_length
-            _set_stat(padded, axis, left_pad, length_left, stat_func)
-
-            if length_right is None:
-                length_right = max_length
-            elif length_right > max_length:
-                length_right = max_length
-            _set_stat(padded, axis, -right_pad, length_right, stat_func)
+        func = stat_functions[mode]
+        length = _as_pairs(kwargs["stat_length"], padded.ndim, as_index=True)
+        for axis, index_pair, length_pair in zip(axes, pad_width, length):
+            stat_pair = _get_stats(padded, axis, index_pair, length_pair, func)
+            _set_pad_area(padded, axis, index_pair, stat_pair)
 
     elif mode in {"reflect", "symmetric"}:
         method = kwargs["reflect_type"]
         include_edge = True if mode == "symmetric" else False
-        for axis, (left_pad, right_pad) in enumerate(pad_width):
+        for axis, (left_index, right_index) in zip(axes, pad_width):
             if array.shape[axis] == 0:
                 # Axes with non-zero padding cannot be empty.
-                if left_pad > 0 or right_pad > 0:
+                if left_index > 0 or right_index > 0:
                     raise ValueError("There aren't any elements to reflect"
                                      " in axis {} of `array`".format(axis))
                 # Skip zero padding on empty axes.
                 continue
 
-            if array.shape[axis] == 1 and (left_pad > 0 or right_pad > 0):
+            if array.shape[axis] == 1 and (left_index > 0 or right_index > 0):
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
-                _set_edge(padded, axis, left_pad)
-                _set_edge(padded, axis, -right_pad)
+                edge_pair = _get_edges(padded, axis, (left_index, right_index))
+                _set_pad_area(padded, axis, (left_index, right_index), edge_pair)
                 continue
 
-            while left_pad > 0 or right_pad > 0:
+            while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with reflected
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
-                left_pad, right_pad = _set_reflect_both(
-                    padded, axis, (left_pad, right_pad),
+                left_index, right_index = _set_reflect_both(
+                    padded, axis, (left_index, right_index),
                     method, include_edge
                 )
 
     elif mode == "wrap":
-        for axis, (left_pad, right_pad) in enumerate(pad_width):
+        for axis, (left_index, right_index) in zip(axes, pad_width):
             if array.shape[axis] == 0:
                 # Axes with non-zero padding cannot be empty.
-                if left_pad > 0 or right_pad > 0:
+                if left_index > 0 or right_index > 0:
                     raise ValueError("There aren't any elements to wrap"
                                      " in axis {} of `array`".format(axis))
                 # Skip zero padding on empty axes.
                 continue
 
-            while left_pad > 0 or right_pad > 0:
+            while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with wrapped
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
-                left_pad, right_pad = _set_wrap_both(
-                    padded, axis, (left_pad, right_pad))
+                left_index, right_index = _set_wrap_both(
+                    padded, axis, (left_index, right_index))
+
+    elif mode == "empty":
+        pass  # Do nothing as padded is already prepared
+
+    else:
+        raise ValueError("mode '{}' is not supported".format(mode))
 
     return padded
