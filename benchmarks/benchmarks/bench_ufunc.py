@@ -150,3 +150,50 @@ class Scalar(Benchmark):
 
     def time_add_scalar_conv_complex(self):
         (self.y + self.z)
+
+
+class ArgParsing(Benchmark):
+    # In order to benchmark the speed of argument parsing, all but the
+    # out arguments are chosen such that they have no effect on the
+    # calculation.  In particular, subok=True and where=True are
+    # defaults, and the dtype is the correct one (the latter will
+    # still have some effect on the search for the correct inner loop).
+    x = np.array(1.)
+    y = np.array(2.)
+    out = np.array(3.)
+    param_names = ['arg_kwarg']
+    params = [[
+        ((x, y), dict()),
+        ((x, y, out), dict()),
+        ((x, y), dict(out=out)),
+        ((x, y), dict(out=(out,))),
+        ((x, y), dict(out=out, subok=True, where=True)),
+        ((x, y), dict(subok=True)),
+        ((x, y), dict(subok=True, where=True)),
+        ((x, y, out), dict(subok=True, where=True))
+    ]]
+
+    def time_add_arg_parsing(self, arg_kwarg):
+        np.add(*arg_kwarg[0], **arg_kwarg[1])
+
+
+class ArgParsingReduce(Benchmark):
+    # In order to benchmark the speed of argument parsing, all but the
+    # out arguments are chosen such that they have minimal effect on the
+    # calculation.
+    a = np.arange(2.)
+    out = np.array(0.)
+    param_names = ['arg_kwarg']
+    params = [[
+        ((a,), dict()),
+        ((a, 0), dict()),
+        ((a,), dict(axis=0)),
+        ((a, 0, None), dict()),
+        ((a,), dict(axis=0, dtype=None)),
+        ((a, 0, None, out), dict()),
+        ((a,), dict(axis=0, dtype=None, out=out)),
+        ((a,), dict(out=out))
+    ]]
+
+    def time_add_reduce_arg_parsing(self, arg_kwarg):
+        np.add.reduce(*arg_kwarg[0], **arg_kwarg[1])
