@@ -654,6 +654,10 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             else if (j == lenxp - 1) {
                 dres[i] = dy[j];
             }
+            else if (dx[j] == x_val) {
+                /* Avoid potential non-finite interpolation */
+                dres[i] = dy[j];
+            }
             else {
                 const npy_double slope = (slopes != NULL) ? slopes[j] :
                                          (dy[j+1] - dy[j]) / (dx[j+1] - dx[j]);
@@ -820,6 +824,10 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 dres[i] = rval;
             }
             else if (j == lenxp - 1) {
+                dres[i] = dy[j];
+            }
+            else if (dx[j] == x_val) {
+                /* Avoid potential non-finite interpolation */
                 dres[i] = dy[j];
             }
             else {
