@@ -908,7 +908,7 @@ class TestWrap(object):
         assert_array_equal(a, b)
 
     def test_pad_with_zero(self):
-        a = np.empty((3, 5))
+        a = np.ones((3, 5))
         b = np.pad(a, (0, 5), mode="wrap")
         assert_array_equal(a, b[:-5, :-5])
 
