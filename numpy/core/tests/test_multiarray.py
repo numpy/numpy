@@ -3414,6 +3414,16 @@ class TestBinop(object):
         assert_equal(obj_arr ** -1, pow_for(-1, obj_arr))
         assert_equal(obj_arr ** 2, pow_for(2, obj_arr))
 
+    def test_pos_array_ufunc_override(self):
+        class A(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return getattr(ufunc, method)(*[i.view(np.ndarray) for
+                                                i in inputs], **kwargs)
+        tst = np.array('foo').view(A)
+        with assert_raises(TypeError):
+            +tst
+
+
 class TestTemporaryElide(object):
     # elision is only triggered on relatively large arrays
 
