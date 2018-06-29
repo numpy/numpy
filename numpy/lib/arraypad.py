@@ -34,7 +34,7 @@ def _linear_ramp(ndim, axis, start, stop, size, reverse=False, dtype=None):
         array, its size must match `size`.
     size : int
         The number of elements in the linear ramp.
-    reverse :
+    reverse : bool
         If False, increment in a positive fashion, otherwise decrement.
 
     Returns
@@ -507,7 +507,7 @@ def _set_wrap_both(padded, axis, index_pair):
     return new_left_pad, new_right_pad
 
 
-def _as_pairs(x, ndim, as_index=False):
+def _as_pairs(x, ndim, as_index=False, assert_number=False):
     """
     Broadcast `x` to an array with the shape (`ndim`, 2).
 
@@ -517,12 +517,15 @@ def _as_pairs(x, ndim, as_index=False):
     Parameters
     ----------
     x : {None, scalar, array-like}
-        The object to broadcast to the shape (`ndim`, 2).
+        The object to broadcast to the shape (`ndim`, 2). None is only allowed
+        as a special case if `as_index` is True.
     ndim : int
         Number of pairs the broadcasted `x` will have.
     as_index : bool, optional
         If `x` is not None, try to round each element of `x` to a non-negative
         integer.
+    assert_number : bool, optional
+        Raise a TypeError if the dtype of `x` is not a subdtype of `np.number`.
 
     Returns
     -------
@@ -532,17 +535,22 @@ def _as_pairs(x, ndim, as_index=False):
     Raises
     ------
     TypeError
-        If `as_index` is True and `x` can't be cast to an array of integer
-        type.
+        If `as_index` is True and `x` is not None and can't be rounded to an
+        array of integer type.
+        Or if `assert_number` is True and the dtype of `x` is not a subdtype
+        of `np.number`.
     ValueError
         If `as_index` is True and `x` contains negative elements.
         Or if `x` is not broadcastable to the shape (`ndim`, 2).
     """
-    if x is None:
-        # Pass through None as a special case
+    if as_index and x is None:
+        # Pass through None as a special case for indices
         return ((None, None),) * ndim
 
     x = np.asarray(x)
+    if assert_number and not np.issubdtype(x.dtype, np.number):
+        raise TypeError("keyword argument must subdtype of np.number for "
+                        "the current mode")
 
     if as_index:
         try:
@@ -779,14 +787,17 @@ def pad(array, pad_width, mode, **kwargs):
            [100, 100, 100, 100, 100, 100, 100],
            [100, 100, 100, 100, 100, 100, 100]])
     """
-    if not np.asarray(pad_width).dtype.kind == 'i':
+    array = np.asarray(array)
+    pad_width = np.asarray(pad_width)
+
+    if not pad_width.dtype.kind == 'i':
         raise TypeError('`pad_width` must be of integral type.')
 
-    array = np.asarray(array)
+    # Broadcast to shape (array.ndim, 2)
     pad_width = _as_pairs(pad_width, array.ndim, as_index=True)
 
     if not isinstance(mode, np.compat.basestring):
-        # Use user-supplied vector function with np.apply_along_axis
+        # Old behavior: Use user-supplied function with np.apply_along_axis
         function = mode
         # Create a new zero padded array
         padded, _ = _pad_simple(array, pad_width, fill_value=0)
@@ -796,10 +807,10 @@ def pad(array, pad_width, mode, **kwargs):
                                 axis, kwargs)
         return padded
 
+    # Make sure that no unsupported keywords were passed for the current mode
     allowed_kwargs = {
-        'empty': [],
+        'empty': [], 'edge': [], 'wrap': [],
         'constant': ['constant_values'],
-        'edge': [],
         'linear_ramp': ['end_values'],
         'maximum': ['stat_length'],
         'mean': ['stat_length'],
@@ -807,30 +818,14 @@ def pad(array, pad_width, mode, **kwargs):
         'minimum': ['stat_length'],
         'reflect': ['reflect_type'],
         'symmetric': ['reflect_type'],
-        'wrap': [],
-        }
-    kwarg_defaults = {
-        'stat_length': None,
-        'constant_values': 0,
-        'end_values': 0,
-        'reflect_type': 'even',
-        }
-    stat_functions = {
-        "maximum": np.max,
-        "minimum": np.min,
-        "mean": np.mean,
-        "median": np.median,
     }
-
-    # Make sure that no unsupported keywords were passed for the current mode
     unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
     if unsupported_kwargs:
         raise ValueError("unsupported keyword arguments for mode '{}': {}"
                          .format(mode, unsupported_kwargs))
 
-    # Set kwarg defaults
-    for key in allowed_kwargs[mode]:
-        kwargs.setdefault(key, kwarg_defaults[key])
+    stat_functions = {"maximum": np.max, "minimum": np.min,
+                      "mean": np.mean, "median": np.median}
 
     # Create array with final shape and original values
     # (padded area is undefined)
@@ -839,8 +834,25 @@ def pad(array, pad_width, mode, **kwargs):
     # (zipping may be more readable than using enumerate)
     axes = range(padded.ndim)
 
+    if array.size == 0 and (mode != "constant" or mode != "empty"):
+        # Deal with special case: only modes "constant" and "empty" can extend
+        # empty axes, all other modes depend on `array` not being empty.
+        for axis, index_pair in zip(axes, pad_width):
+            if (
+                array.shape[axis] == 0
+                and (index_pair[0] > 0 or index_pair[1] > 0)
+            ):
+                raise ValueError(
+                    "can't extend empty axis {} using modes other than "
+                    "'constant' or 'empty'".format(axis)
+                )
+        # If pad values in empty axis were zero as well, then _pad_simple
+        # already returned the correct result
+        return padded
+
     if mode == "constant":
-        values = _as_pairs(kwargs["constant_values"], padded.ndim)
+        values = kwargs.get("constant_values", 0)
+        values = _as_pairs(values, padded.ndim, assert_number=True)
         for axis, index_pair, value_pair in zip(axes, pad_width, values):
             _set_pad_area(padded, axis, index_pair, value_pair)
 
@@ -850,30 +862,24 @@ def pad(array, pad_width, mode, **kwargs):
             _set_pad_area(padded, axis, index_pair, edge_pair)
 
     elif mode == "linear_ramp":
-        end_values = _as_pairs(kwargs["end_values"], padded.ndim)
+        end_values = kwargs.get("end_values", 0)
+        end_values = _as_pairs(end_values, padded.ndim, assert_number=True)
         for axis, index_pair, value_pair in zip(axes, pad_width, end_values):
             ramp_pair = _get_linear_ramps(padded, axis, index_pair, value_pair)
             _set_pad_area(padded, axis, index_pair, ramp_pair)
 
     elif mode in stat_functions.keys():
         func = stat_functions[mode]
-        length = _as_pairs(kwargs["stat_length"], padded.ndim, as_index=True)
+        length = kwargs.get("stat_length", None)
+        length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, index_pair, length_pair in zip(axes, pad_width, length):
             stat_pair = _get_stats(padded, axis, index_pair, length_pair, func)
             _set_pad_area(padded, axis, index_pair, stat_pair)
 
-    elif mode in {"reflect", "symmetric"}:
-        method = kwargs["reflect_type"]
+    elif mode == "reflect" or mode == "symmetric":
+        method = kwargs.get("reflect_type", "even")
         include_edge = True if mode == "symmetric" else False
         for axis, (left_index, right_index) in zip(axes, pad_width):
-            if array.shape[axis] == 0:
-                # Axes with non-zero padding cannot be empty.
-                if left_index > 0 or right_index > 0:
-                    raise ValueError("There aren't any elements to reflect"
-                                     " in axis {} of `array`".format(axis))
-                # Skip zero padding on empty axes.
-                continue
-
             if array.shape[axis] == 1 and (left_index > 0 or right_index > 0):
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
@@ -892,14 +898,6 @@ def pad(array, pad_width, mode, **kwargs):
 
     elif mode == "wrap":
         for axis, (left_index, right_index) in zip(axes, pad_width):
-            if array.shape[axis] == 0:
-                # Axes with non-zero padding cannot be empty.
-                if left_index > 0 or right_index > 0:
-                    raise ValueError("There aren't any elements to wrap"
-                                     " in axis {} of `array`".format(axis))
-                # Skip zero padding on empty axes.
-                continue
-
             while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with wrapped
                 # values. This is necessary if the pad area is larger than
