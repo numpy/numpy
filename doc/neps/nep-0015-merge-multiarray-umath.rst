@@ -63,14 +63,15 @@ unnecessarily large, and since we can never remove things from it then
 this creates an ongoing maintenance burden. The way C works, you can
 have internal API that's visible to everything inside the same
 extension module, or you can have a public API that everyone can use;
-you can't have an API that's visible to multiple extension modules
-inside numpy, but not to external users.
+you can't (easily) have an API that's visible to multiple extension
+modules inside numpy, but not to external users.
 
 We've also increasingly been putting utility code into
 ``numpy/core/src/private/``, which now contains a bunch of files which
 are ``#include``\d twice, once into ``multiarray`` and once into
 ``umath``. This is pretty gross, and is purely a workaround for these
-being separate C extensions.
+being separate C extensions. The ``npymath`` library is also
+included in both extension modules.
 
 
 Proposed changes
@@ -117,8 +118,8 @@ Backward compatibility
 The only compatibility break is the deprecation of ``np.set_numeric_ops``.
 
 
-Alternatives
-------------
+Rejected alternatives
+---------------------
 
 Preserve ``set_numeric_ops`` for monkeypatching
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,8 +138,11 @@ you have to reimplement the whole ufunc machinery, instead of just the
 core loop. On the other hand, the `PyUFunc_ReplaceLoopBySignature
 <https://docs.scipy.org/doc/numpy/reference/c-api.ufunc.html#c.PyUFunc_ReplaceLoopBySignature>`__
 API – which was added in 2006 – allows replacement of the inner loops
-of arbitrary ufuncs, so it's both simpler and more powerful. So this
-doesn't seem like a good reason to not deprecate ``set_numeric_ops``.
+of arbitrary ufuncs. This is both simpler and more powerful – e.g.
+replacing the inner loop of ``np.add`` means your code will
+automatically be used for both ``ndarray + ndarray`` as well as direct
+calls to ``np.add``. So this doesn't seem like a good reason to not
+deprecate ``set_numeric_ops``.
 
 
 Discussion
