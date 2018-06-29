@@ -1615,16 +1615,16 @@ def nonzero(a):
 
     Examples
     --------
-    >>> x = np.array([[1,0,0], [0,2,0], [1,1,0]])
+    >>> x = np.array([[3, 0, 0], [0, 4, 0], [5, 6, 0]])
     >>> x
-    array([[1, 0, 0],
-           [0, 2, 0],
-           [1, 1, 0]])
+    array([[3, 0, 0],
+           [0, 4, 0],
+           [5, 6, 0]])
     >>> np.nonzero(x)
     (array([0, 1, 2, 2]), array([0, 1, 0, 1]))
 
     >>> x[np.nonzero(x)]
-    array([1, 2, 1, 1])
+    array([3, 4, 5, 6])
     >>> np.transpose(np.nonzero(x))
     array([[0, 0],
            [1, 1],
@@ -1636,7 +1636,7 @@ def nonzero(a):
     boolean array and since False is interpreted as 0, np.nonzero(a > 3)
     yields the indices of the `a` where the condition is true.
 
-    >>> a = np.array([[1,2,3],[4,5,6],[7,8,9]])
+    >>> a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> a > 3
     array([[False, False, False],
            [ True,  True,  True],
@@ -1644,7 +1644,14 @@ def nonzero(a):
     >>> np.nonzero(a > 3)
     (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
-    The ``nonzero`` method of the boolean array can also be called.
+    Using this result to index `a` is equivalent to using the mask directly:
+
+    >>> a[np.nonzero(a > 3)]
+    array([4, 5, 6, 7, 8, 9])
+    >>> a[a > 3]  # prefer this spelling
+    array([4, 5, 6, 7, 8, 9])
+
+    ``nonzero`` can also be called as a method of the array.
 
     >>> (a > 3).nonzero()
     (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
