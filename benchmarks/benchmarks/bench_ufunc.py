@@ -10,15 +10,17 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj', 'conjugate',
           'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide', 'divmod',
           'equal', 'exp', 'exp2', 'expm1', 'fabs', 'float_power', 'floor',
-          'floor_divide', 'fmax', 'fmin', 'fmod', 'frexp', 'greater',
-          'greater_equal', 'heaviside', 'hypot', 'invert', 'isfinite', 'isinf',
-          'isnan', 'isnat', 'ldexp', 'left_shift', 'less', 'less_equal', 'log',
-          'log10', 'log1p', 'log2', 'logaddexp', 'logaddexp2', 'logical_and',
-          'logical_not', 'logical_or', 'logical_xor', 'maximum', 'minimum',
-          'mod', 'modf', 'multiply', 'negative', 'nextafter', 'not_equal',
-          'positive', 'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
-          'right_shift', 'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing',
-          'sqrt', 'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+          'floor_divide', 'fmax', 'fmin', 'fmod', 'frexp', 'gcd', 'greater',
+          'greater_equal', 'heaviside', 'hypot', 'invert', 'isfinite',
+          'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
+          'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
+          'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
+          'logical_xor', 'maximum', 'minimum', 'mod', 'modf', 'multiply',
+          'negative', 'nextafter', 'not_equal', 'positive', 'power',
+          'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
+          'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
+          'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
