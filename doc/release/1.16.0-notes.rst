@@ -74,3 +74,11 @@ operators such as ``__eq__`` deal with those.  This is no longer needed, as the
 relevant logic has moved to the comparison operators proper (which thus do
 continue to return `NotImplemented` as needed). Hence, like all other ufuncs,
 the comparison ufuncs will now error on structured dtypes.
+
+Positive will now raise a deprecation warning for non-numerical arrays
+----------------------------------------------------------------------
+Previously, ``+array`` unconditionally returned a copy. Now, it will
+raise a ``DeprecationWarning`` if the array is not numerical (i.e.,
+if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
+subclasses that override the default ``__array_ufunc__`` implementation,
+the ``TypeError`` is passed on.
