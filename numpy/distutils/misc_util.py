@@ -2300,19 +2300,9 @@ import sys
 
 extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
-if os.path.isdir(extra_dll_dir) and sys.platform == 'win32':
-    try:
-        from ctypes import windll, c_wchar_p
-        _AddDllDirectory = windll.kernel32.AddDllDirectory
-        _AddDllDirectory.argtypes = [c_wchar_p]
-        # Needed to initialize AddDllDirectory modifications
-        windll.kernel32.SetDefaultDllDirectories(0x1000)
-    except AttributeError:
-        def _AddDllDirectory(dll_directory):
-            os.environ.setdefault('PATH', '')
-            os.environ['PATH'] += os.pathsep + dll_directory
-
-    _AddDllDirectory(extra_dll_dir)
+if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
+    os.environ.setdefault('PATH', '')
+    os.environ['PATH'] += os.pathsep + extra_dll_dir
 
 """)
 
