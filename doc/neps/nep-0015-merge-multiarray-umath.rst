@@ -149,7 +149,7 @@ Discussion
 ----------
 
 * https://mail.python.org/pipermail/numpy-discussion/2018-March/077764.html
-
+* https://mail.python.org/pipermail/numpy-discussion/2018-June/078345.html
 
 Copyright
 ---------
