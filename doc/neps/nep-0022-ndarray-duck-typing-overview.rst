@@ -104,10 +104,10 @@ the full duck array interface include almost every package that uses
 numpy (scipy, sklearn, astropy, ...), and in particular packages that
 provide array-wrapping-classes that handle multiple types of arrays,
 such as xarray and dask.array. Potential implementers of the full duck
-array interface include: dask, sparse arrays, masked arrays, arrays
-with units (unless they switch to using dtypes), labeled arrays,
-masked arrays, and so forth. Clear use cases lead to good and relevant
-APIs.
+array interface include: distributed arrays, sparse arrays, masked
+arrays, arrays with units (unless they switch to using dtypes),
+labeled arrays, and so forth. Clear use cases lead to good and
+relevant APIs.
 
 Second, the Anna Karenina principle applies here: full duck arrays are
 all alike, but every partial duck array is partial in its own way:
@@ -252,7 +252,9 @@ It’s tempting to try to define cleaned up versions of ndarray methods
 with a more minimal interface to allow for easier implementation. For
 example, ``__array_reshape__`` could drop some of the strange
 arguments accepted by ``reshape`` and ``__array_basic_getitem__``
-could drop all the strange edge cases of NumPy’s advanced indexing.
+could drop all the `strange edge cases
+<http://www.numpy.org/neps/nep-0021-advanced-indexing.html>`__ of
+NumPy’s advanced indexing.
 
 But as discussed above, we don’t really know what APIs we need for
 duck-typing ndarray. We would inevitably end up with a very long list
@@ -273,7 +275,7 @@ large groups of related functionality at once.
 ``NDArrayOperatorsMixin`` is a good example: it allows for
 implementing arithmetic operators implicitly via the
 ``__array_ufunc__`` method. It’s not complete, and we’ll want more
-like that (e.g., inplace arithmetic, reductions, etc.).
+helpers like that (e.g. for reductions).
 
 (We initially thought that the importance of these mixins might be an
 argument for providing an array ABC, since that’s the standard way to
@@ -289,26 +291,26 @@ Tentative duck array guidelines
 As a general rule, libraries using duck arrays should insist upon the
 minimum possible requirements, and libraries implementing duck arrays
 should provide as complete of an API as possible. This will ensure
-maximum compatibility. For example, user should prefer to rely on
-``.transpose()`` rather than ``.rollaxis()`` (which can be implemented
+maximum compatibility. For example, users should prefer to rely on
+``.transpose()`` rather than ``.swapaxes()`` (which can be implemented
 in terms of transpose), but duck array authors should ideally
 implement both.
 
-If you’re trying to write a duck array, then by default this means you
-kind of need to do everything. You certainly need ``.shape``,
-``.ndim`` and ``.dtype``, but also that dtype should actually be a
+If you are trying to implement a duck array, then you should strive to
+implement everything. You certainly need ``.shape``, ``.ndim`` and
+``.dtype``, but also your dtype attribute should actually be a
 ``numpy.dtype`` object, weird fancy indexing edge cases should ideally
 work, etc. Only details related to NumPy’s specific ``np.ndarray``
-implementation (e.g., ``strides``, ``data``, ``view`) are explicitly
+implementation (e.g., ``strides``, ``data``, ``view``) are explicitly
 out of scope.
 
 A (very) rough sketch of future plans
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This proposal will help NumPy’s duck typing support, but creative use
-of array methods and existing protocols clearly does not yet suffice
-for full duck typing. We expect the need for additional protocols to
-support (at least) these features:
+The proposals discussed so far – ``__array_ufunc__`` and some kind of
+``asarray`` protocol – are clearly necessary but not sufficient for
+full duck typing support. We expect the need for additional protocols
+to support (at least) these features:
 
 * **Concatenating** duck arrays, which would be used internally by other
   array combining methods like stack/vstack/hstack. The implementation
@@ -331,10 +333,18 @@ support (at least) these features:
   of the above categories.
 * **Checking mutability** on duck arrays, which would imply that they
   support assignment with ``__setitem__`` and the out argument to
-  ufuncs. Many otherwise fine duck arrays* are not mutable, and it
-  turns out that frequently-used code like the default implementation
-  of ``np.mean`` needs to check this (to decide whether it can re-use
-  temporary arrays).
+  ufuncs. Many otherwise fine duck arrays are not easily mutable (for
+  example, because they use some kinds of sparse or compressed
+  storage, or are in read-only shared memory), and it turns out that
+  frequently-used code like the default implementation of ``np.mean``
+  needs to check this (to decide whether it can re-use temporary
+  arrays).
 
 We intentionally do not describe exactly how to add support for these
 types of duck arrays here. These will be the subject of future NEPs.
+
+
+Copyright
+---------
+
+This document has been placed in the public domain.
