@@ -305,9 +305,9 @@ def average(a, axis=None, weights=None, returned=False):
     Returns
     -------
     average, [sum_of_weights] : array_type or double
-        Return the average along the specified axis. When returned is `True`,
+        Return the average along the specified axis. When `returned` is `True`,
         return a tuple with the average as the first element and the sum
-        of the weights as the second element.`sum_of_weights` is of the
+        of the weights as the second element. `sum_of_weights` is of the
         same type as `average`. The result type is the type of lowest precision
         capable of representing values of both `a` and `weights` or 'float64'
         if that type would be integral. Otherwise, if `a` is non integral,
