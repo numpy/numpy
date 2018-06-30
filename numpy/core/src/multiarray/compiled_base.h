@@ -7,7 +7,7 @@ arr_insert(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *
-arr_digitize(PyObject *, PyObject *, PyObject *kwds);
+arr__monotonicity(PyObject *, PyObject *, PyObject *kwds);
 NPY_NO_EXPORT PyObject *
 arr_interp(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *

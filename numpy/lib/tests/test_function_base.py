@@ -1510,6 +1510,18 @@ class TestDigitize(object):
         assert_(not isinstance(digitize(b, a, False), A))
         assert_(not isinstance(digitize(b, a, True), A))
 
+    def test_large_integers_increasing(self):
+        # gh-11022
+        x = 2**54  # loses precision in a float
+        assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
+
+    @pytest.mark.xfail(
+        reason="gh-11022: np.core.multiarray._monoticity loses precision")
+    def test_large_integers_decreasing(self):
+        # gh-11022
+        x = 2**54  # loses precision in a float
+        assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
+
 
 class TestUnwrap(object):
 
