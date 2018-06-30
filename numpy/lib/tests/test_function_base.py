@@ -2237,6 +2237,14 @@ class TestInterp(object):
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
 
+    def test_non_finite_behavior(self):
+        x = [1, 2, 2.5, 3, 4]
+        xp = [1, 2, 3, 4]
+        fp = [1, 2, np.inf, 4]
+        assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.inf, np.inf, 4])
+        fp = [1, 2, np.nan, 4]
+        assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
+
     def test_complex_interp(self):
         # test complex interpolation
         x = np.linspace(0, 1, 5)
@@ -2251,6 +2259,12 @@ class TestInterp(object):
         x0 = 2.0
         right = 2 + 3.0j
         assert_almost_equal(np.interp(x0, x, y, right=right), right)
+        # test complex non finite
+        x = [1, 2, 2.5, 3, 4]
+        xp = [1, 2, 3, 4]
+        fp = [1, 2+1j, np.inf, 4]
+        y = [1, 2+1j, np.inf+0.5j, np.inf, 4]
+        assert_almost_equal(np.interp(x, xp, fp), y)
         # test complex periodic
         x = [-180, -170, -185, 185, -10, -5, 0, 365]
         xp = [190, -190, 350, -350]
