@@ -152,6 +152,18 @@ class Scalar(Benchmark):
         (self.y + self.z)
 
 
+class ArgPack(object):
+    __slots__ = ['args', 'kwargs']
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+    def __repr__(self):
+        return '({})'.format(', '.join(
+            [repr(a) for a in self.args] +
+            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
+        ))
+
+
 class ArgParsing(Benchmark):
     # In order to benchmark the speed of argument parsing, all but the
     # out arguments are chosen such that they have no effect on the
@@ -163,18 +175,18 @@ class ArgParsing(Benchmark):
     out = np.array(3.)
     param_names = ['arg_kwarg']
     params = [[
-        ((x, y), dict()),
-        ((x, y, out), dict()),
-        ((x, y), dict(out=out)),
-        ((x, y), dict(out=(out,))),
-        ((x, y), dict(out=out, subok=True, where=True)),
-        ((x, y), dict(subok=True)),
-        ((x, y), dict(subok=True, where=True)),
-        ((x, y, out), dict(subok=True, where=True))
+        ArgPack(x, y),
+        ArgPack(x, y, out),
+        ArgPack(x, y, out=out),
+        ArgPack(x, y, out=(out,)),
+        ArgPack(x, y, out=out, subok=True, where=True),
+        ArgPack(x, y, subok=True),
+        ArgPack(x, y, subok=True, where=True),
+        ArgPack(x, y, out, subok=True, where=True)
     ]]
 
-    def time_add_arg_parsing(self, arg_kwarg):
-        np.add(*arg_kwarg[0], **arg_kwarg[1])
+    def time_add_arg_parsing(self, arg_pack):
+        np.add(*arg_pack.args, **arg_pack.kwargs)
 
 
 class ArgParsingReduce(Benchmark):
@@ -185,15 +197,15 @@ class ArgParsingReduce(Benchmark):
     out = np.array(0.)
     param_names = ['arg_kwarg']
     params = [[
-        ((a,), dict()),
-        ((a, 0), dict()),
-        ((a,), dict(axis=0)),
-        ((a, 0, None), dict()),
-        ((a,), dict(axis=0, dtype=None)),
-        ((a, 0, None, out), dict()),
-        ((a,), dict(axis=0, dtype=None, out=out)),
-        ((a,), dict(out=out))
+        ArgPack(a,),
+        ArgPack(a, 0),
+        ArgPack(a, axis=0),
+        ArgPack(a, 0, None),
+        ArgPack(a, axis=0, dtype=None),
+        ArgPack(a, 0, None, out),
+        ArgPack(a, axis=0, dtype=None, out=out),
+        ArgPack(a, out=out)
     ]]
 
-    def time_add_reduce_arg_parsing(self, arg_kwarg):
-        np.add.reduce(*arg_kwarg[0], **arg_kwarg[1])
+    def time_add_reduce_arg_parsing(self, arg_pack):
+        np.add.reduce(*arg_pack.args, **arg_pack.kwargs)
