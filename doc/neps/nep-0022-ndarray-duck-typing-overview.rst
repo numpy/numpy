@@ -1,6 +1,6 @@
-==========================================================
-NEP 22: duck typing for NumPy arrays – high level overview
-==========================================================
+==================================================
+Duck typing for NumPy arrays – high level overview
+==================================================
 
 :Author: Stephan Hoyer <shoyer@google.com>, Nathaniel J. Smith <njs@pobox.com>
 :Status: Draft
