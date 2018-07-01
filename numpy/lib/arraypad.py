@@ -549,8 +549,7 @@ def _as_pairs(x, ndim, as_index=False, assert_number=False):
 
     x = np.asarray(x)
     if assert_number and not np.issubdtype(x.dtype, np.number):
-        raise TypeError("keyword argument must subdtype of np.number for "
-                        "the current mode")
+        raise TypeError("keyword argument must be subdtype of np.number")
 
     if as_index:
         try:
@@ -589,7 +588,7 @@ def pad(array, pad_width, mode, **kwargs):
     Parameters
     ----------
     array : array_like of rank N
-        Input array
+        The array to pad.
     pad_width : {sequence, array_like, int}
         Number of values padded to the edges of each axis.
         ((before_1, after_1), ... (before_N, after_N)) unique pad widths
@@ -834,7 +833,7 @@ def pad(array, pad_width, mode, **kwargs):
     # (zipping may be more readable than using enumerate)
     axes = range(padded.ndim)
 
-    if array.size == 0 and (mode != "constant" or mode != "empty"):
+    if array.size == 0 and mode not in {"constant", "empty"}:
         # Deal with special case: only modes "constant" and "empty" can extend
         # empty axes, all other modes depend on `array` not being empty.
         for axis, index_pair in zip(axes, pad_width):
@@ -868,7 +867,7 @@ def pad(array, pad_width, mode, **kwargs):
             ramp_pair = _get_linear_ramps(padded, axis, index_pair, value_pair)
             _set_pad_area(padded, axis, index_pair, ramp_pair)
 
-    elif mode in stat_functions.keys():
+    elif mode in stat_functions:
         func = stat_functions[mode]
         length = kwargs.get("stat_length", None)
         length = _as_pairs(length, padded.ndim, as_index=True)
@@ -876,7 +875,7 @@ def pad(array, pad_width, mode, **kwargs):
             stat_pair = _get_stats(padded, axis, index_pair, length_pair, func)
             _set_pad_area(padded, axis, index_pair, stat_pair)
 
-    elif mode == "reflect" or mode == "symmetric":
+    elif mode in {"reflect", "symmetric"}:
         method = kwargs.get("reflect_type", "even")
         include_edge = True if mode == "symmetric" else False
         for axis, (left_index, right_index) in zip(axes, pad_width):
