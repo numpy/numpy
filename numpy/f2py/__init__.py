@@ -69,6 +69,6 @@ def compile(source,
         f.close()
     return status
 
-from numpy.testing._private.pytesttester import PytestTester
+from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester
