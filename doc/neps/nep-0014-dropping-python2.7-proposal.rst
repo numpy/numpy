@@ -1,6 +1,6 @@
-====================================
-Plan for dropping Python 2.7 support
-====================================
+=============================================
+NEP 14 — Plan for dropping Python 2.7 support
+=============================================
 
 :Status: Accepted
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2017-November/077419.html

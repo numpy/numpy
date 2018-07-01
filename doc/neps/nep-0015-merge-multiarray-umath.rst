@@ -1,6 +1,6 @@
-============================
-Merging multiarray and umath
-============================
+=====================================
+NEP 15 — Merging multiarray and umath
+=====================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>
 :Status: Draft
