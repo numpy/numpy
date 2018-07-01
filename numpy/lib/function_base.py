@@ -27,6 +27,7 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, sort, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes, number
+from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
@@ -3890,41 +3891,6 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         y = np.asarray(y)
         ret = add.reduce(d * (y[tuple(slice1)]+y[tuple(slice2)])/2.0, axis)
     return ret
-
-
-#always succeed
-def add_newdoc(place, obj, doc):
-    """
-    Adds documentation to obj which is in module place.
-
-    If doc is a string add it to obj as a docstring
-
-    If doc is a tuple, then the first element is interpreted as
-       an attribute of obj and the second as the docstring
-          (method, docstring)
-
-    If doc is a list, then each element of the list should be a
-       sequence of length two --> [(method1, docstring1),
-       (method2, docstring2), ...]
-
-    This routine never raises an error.
-
-    This routine cannot modify read-only docstrings, as appear
-    in new-style classes or built-in functions. Because this
-    routine never raises an error the caller must check manually
-    that the docstrings were changed.
-    """
-    try:
-        new = getattr(__import__(place, globals(), {}, [obj]), obj)
-        if isinstance(doc, str):
-            add_docstring(new, doc.strip())
-        elif isinstance(doc, tuple):
-            add_docstring(getattr(new, doc[0]), doc[1].strip())
-        elif isinstance(doc, list):
-            for val in doc:
-                add_docstring(getattr(new, val[0]), val[1].strip())
-    except Exception:
-        pass
 
 
 # Based on scitools meshgrid

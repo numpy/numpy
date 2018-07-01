@@ -59,6 +59,10 @@ del nt
 from .fromnumeric import amax as max, amin as min, round_ as round
 from .numeric import absolute as abs
 
+# do this after everything else, to minimize the chance of this misleadingly
+# appearing in an import-time traceback
+from . import _add_newdocs
+
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
