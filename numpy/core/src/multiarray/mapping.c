@@ -2084,7 +2084,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ,
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ) ||
                  (PyArray_NDIM(tmp_arr) == 0 &&
-                        PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
+                        PyArray_TRIVIALLY_ITERABLE(ind))) &&
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
                 PyArray_DESCR(ind)->kind == 'i' &&
