@@ -40,6 +40,10 @@ def nep_metadata():
             tags['Title'] = lines[1].strip()
             tags['Filename'] = source
 
+        if not tags['Title'].startswith(f'NEP {nr} — '):
+            raise RuntimeError(
+                f'Title for NEP {nr} does not start with "NEP {nr} — " '
+                '(note that — here is a special, enlongated dash)')
 
         if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
             if not 'Resolution' in tags:

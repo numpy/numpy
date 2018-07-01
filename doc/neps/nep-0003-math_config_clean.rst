@@ -1,6 +1,6 @@
-===========================================================
-Cleaning the math configuration of numpy.core
-===========================================================
+=====================================================
+NEP 3 — Cleaning the math configuration of numpy.core
+=====================================================
 
 :Author: David Cournapeau
 :Contact: david@ar.media.kyoto-u.ac.jp

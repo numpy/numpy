@@ -1,6 +1,6 @@
-====================================================================
- A proposal for implementing some date/time types in NumPy
-====================================================================
+==================================================================
+NEP 7 — A proposal for implementing some date/time types in NumPy
+==================================================================
 
 :Author: Travis Oliphant
 :Contact: oliphant@enthought.com

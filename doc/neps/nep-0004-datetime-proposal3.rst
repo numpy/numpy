@@ -1,6 +1,6 @@
-====================================================================
- A (third) proposal for implementing some date/time types in NumPy
-====================================================================
+=========================================================================
+NEP 4 — A (third) proposal for implementing some date/time types in NumPy
+=========================================================================
 
 :Author: Francesc Alted i Abad
 :Contact: faltet@pytables.com

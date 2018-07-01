@@ -1,6 +1,6 @@
-=======================
-Split Out Masked Arrays
-=======================
+================================
+NEP 17 — Split Out Masked Arrays
+================================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
 :Status: Rejected

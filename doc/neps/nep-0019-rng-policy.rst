@@ -1,6 +1,6 @@
-==============================
-Random Number Generator Policy
-==============================
+=======================================
+NEP 19 — Random Number Generator Policy
+=======================================
 
 :Author: Robert Kern <robert.kern@gmail.com>
 :Status: Draft

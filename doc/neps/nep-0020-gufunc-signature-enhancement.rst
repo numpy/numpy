@@ -1,6 +1,6 @@
-======================================================
-Expansion of Generalized Universal Function Signatures
-======================================================
+===============================================================
+NEP 20 — Expansion of Generalized Universal Function Signatures
+===============================================================
 
 :Author: Marten van Kerkwijk <mhvk@astro.utoronto.ca>
 :Status: Draft
