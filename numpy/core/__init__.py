@@ -100,6 +100,6 @@ del copyreg
 del sys
 del _ufunc_reduce
 
-from numpy.testing._private.pytesttester import PytestTester
+from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester

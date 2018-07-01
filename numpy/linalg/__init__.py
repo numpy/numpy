@@ -50,6 +50,6 @@ from .info import __doc__
 
 from .linalg import *
 
-from numpy.testing._private.pytesttester import PytestTester
+from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester
