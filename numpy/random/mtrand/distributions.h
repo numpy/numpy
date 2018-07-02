@@ -168,6 +168,7 @@ extern long rk_geometric_inversion(rk_state *state, double p);
 
 /* Hypergeometric distribution */
 extern long rk_hypergeometric(rk_state *state, long good, long bad, long sample);
+extern long rk_hypergeometric_hyp_new(rk_state *state, long good, long bad, long sample);
 extern long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample);
 extern long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample);
 

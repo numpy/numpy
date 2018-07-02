@@ -782,6 +782,37 @@ long rk_geometric(rk_state *state, double p)
     }
 }
 
+long rk_hypergeometric_hyp_new(rk_state *state, long good, long bad, long sample)
+{
+    long remaining_total, remaining_good;
+
+    /*
+     *  We know this function will not be called with arguments that can result
+     *  in overflow in the following sum.
+     *  Also given: sample <= good + bad.
+     */
+    remaining_total = good + bad;
+    remaining_good = good;
+
+    while ((sample > 0) && (remaining_good > 0) &&
+           (remaining_total > remaining_good))
+    {
+        --remaining_total;
+        if (rk_interval(remaining_total, state) < remaining_good)
+        {
+            --remaining_good;
+        }
+        --sample;
+    }
+
+    if (remaining_total == remaining_good)
+    {
+        remaining_good -= sample;
+    }
+
+    return good - remaining_good;
+}
+
 long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample)
 {
     long d1, K, Z;
@@ -870,7 +901,7 @@ long rk_hypergeometric(rk_state *state, long good, long bad, long sample)
         return rk_hypergeometric_hrua(state, good, bad, sample);
     } else
     {
-        return rk_hypergeometric_hyp(state, good, bad, sample);
+        return rk_hypergeometric_hyp_new(state, good, bad, sample);
     }
 }
 
