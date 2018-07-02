@@ -20,6 +20,8 @@
 
 #include "ufunc_object.h"
 
+#include "npy_cblas.h" /* for TYPE_dot */
+
 #include <string.h> /* for memchr */
 
 /*
@@ -2963,18 +2965,183 @@ OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 #define END_OUTER_LOOP  }
 
 /*
+ *****************************************************************************
+ **                                  DOT                                    **
+ *****************************************************************************
+ */
+
+/*
+ * TODO: avoid copying code from one module to another
+ * copied from arraytypes.c.src
+ */
+
+
+/**begin repeat
+ *
+ * #name = FLOAT, DOUBLE#
+ * #type = npy_float, npy_double#
+ * #prefix = s, d#
+ */
+NPY_NO_EXPORT void
+@name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
+           npy_intp n, void *NPY_UNUSED(ignore))
+{
+#if defined(HAVE_CBLAS)
+    int is1b = blas_stride(is1, sizeof(@type@));
+    int is2b = blas_stride(is2, sizeof(@type@));
+
+    if (is1b && is2b)
+    {
+        double sum = 0.;  /* double for stability */
+
+        while (n > 0) {
+            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
+
+            sum += cblas_@prefix@dot(chunk,
+                                     (@type@ *) ip1, is1b,
+                                     (@type@ *) ip2, is2b);
+            /* use char strides here */
+            ip1 += chunk * is1;
+            ip2 += chunk * is2;
+            n -= chunk;
+        }
+        *((@type@ *)op) = (@type@)sum;
+    }
+    else
+#endif
+    {
+        @type@ sum = (@type@)0;  /* could make this double */
+        npy_intp i;
+
+        for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
+            const @type@ ip1r = *((@type@ *)ip1);
+            const @type@ ip2r = *((@type@ *)ip2);
+
+            sum += ip1r * ip2r;
+        }
+        *((@type@ *)op) = sum;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #name = CFLOAT, CDOUBLE#
+ * #ctype = npy_cfloat, npy_cdouble#
+ * #type = npy_float, npy_double#
+ * #prefix = c, z#
+ */
+NPY_NO_EXPORT void
+@name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
+           char *op, npy_intp n, void *NPY_UNUSED(ignore))
+{
+#if defined(HAVE_CBLAS)
+    int is1b = blas_stride(is1, sizeof(@ctype@));
+    int is2b = blas_stride(is2, sizeof(@ctype@));
+
+    if (is1b && is2b) {
+        double sum[2] = {0., 0.};  /* double for stability */
+
+        while (n > 0) {
+            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
+            @type@ tmp[2];
+
+            cblas_@prefix@dotu_sub((int)n, ip1, is1b, ip2, is2b, tmp);
+            sum[0] += (double)tmp[0];
+            sum[1] += (double)tmp[1];
+            /* use char strides here */
+            ip1 += chunk * is1;
+            ip2 += chunk * is2;
+            n -= chunk;
+        }
+        ((@type@ *)op)[0] = (@type@)sum[0];
+        ((@type@ *)op)[1] = (@type@)sum[1];
+    }
+    else
+#endif
+    {
+        @type@ sumr = (@type@)0.0;
+        @type@ sumi = (@type@)0.0;
+        npy_intp i;
+
+        for (i = 0; i < n; i++, ip1 += is1, ip2 += is2) {
+            const @type@ ip1r = ((@type@ *)ip1)[0];
+            const @type@ ip1i = ((@type@ *)ip1)[1];
+            const @type@ ip2r = ((@type@ *)ip2)[0];
+            const @type@ ip2i = ((@type@ *)ip2)[1];
+
+            sumr += ip1r * ip2r - ip1i * ip2i;
+            sumi += ip1r * ip2i + ip1i * ip2r;
+        }
+        ((@type@ *)op)[0] = sumr;
+        ((@type@ *)op)[1] = sumi;
+    }
+}
+
+/**end repeat**/
+
+
+/*
  * matmul loops
- * signature is (m?,n),(n,p?)->(m?,p?) 
+ * signature is (m?,n),(n,p?)->(m?,p?)
  */
 
 /**begin repeat
- *  #TYPE = FLOAT, DOUBLE, HALF#
- *  #typ = npy_float,npy_double,npy_half#
+ * #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+ * #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
+ * #SPECL = 0, 0, 1, 1#
+ */
+
+#if defined(HAVE_CBLAS)
+
+NPY_NO_EXPORT void
+@TYPE@_matmul_inner_level1blas(char *ip1, char *ip2, char *op,
+                          npy_intp dm, npy_intp dn, npy_intp dp,
+                          npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
+                          npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
+                          npy_intp is2_p, npy_intp os_m, npy_intp os_p)
+{
+    /* ip2 is a scalar (p == 1), ip1 and op may be 2d */
+    npy_intp m, n;
+    for (m = 0; m < dm; m++) {
+#if @SPECL@ == 1
+        (*(@typ@ *)op).real = 0;
+        (*(@typ@ *)op).imag = 0;
+#else
+        *(@typ@ *)op = 0;
+#endif
+        for (n = 0; n < dn; n++) {
+            @typ@ val1 = (*(@typ@ *)ip1);
+            @typ@ val2 = (*(@typ@ *)ip2);
+#if @SPECL@ == 1
+            (*(@typ@ *)op).real += (val1.real * val2.real) -
+                                   (val1.imag * val2.imag);
+            (*(@typ@ *)op).imag += (val1.real * val2.imag) +
+                                   (val1.imag * val2.real);
+#else
+            *(@typ@ *)op += val1 * val2;
+#endif
+            ip2 += is2_n;
+            ip1 += is1_n;
+        }
+        ip1 -= ib1_n;
+        ip2 -= ib2_n;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
+#endif
+
+/**end repeat**/
+
+/**begin repeat
+ * #TYPE = FLOAT, DOUBLE, HALF#
+ * #typ = npy_float,npy_double,npy_half#
  * #SPECL = 0,0,1#
  */
 
 NPY_NO_EXPORT void
-@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op, 
+@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op,
                           npy_intp dm, npy_intp dn, npy_intp dp,
                           npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
                           npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
@@ -3026,11 +3193,10 @@ NPY_NO_EXPORT void
  *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
  *         npy_bool#
  * #SPECL = 0, 1, 1, 1, 0*11#
- * #USEBLAS = 0, 1, 1, 0*12#
  */
 
 NPY_NO_EXPORT void
-@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op, 
+@TYPE@_matmul_inner_noblas(char *ip1, char *ip2, char *op,
                           npy_intp dm, npy_intp dn, npy_intp dp,
                           npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
                           npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
@@ -3049,9 +3215,9 @@ NPY_NO_EXPORT void
                 @typ@ val1 = (*(@typ@ *)ip1);
                 @typ@ val2 = (*(@typ@ *)ip2);
 #if @SPECL@ == 1
-                (*(@typ@ *)op).real += (val1.real * val2.real) - 
+                (*(@typ@ *)op).real += (val1.real * val2.real) -
                                        (val1.imag * val2.imag);
-                (*(@typ@ *)op).imag += (val1.real * val2.imag) + 
+                (*(@typ@ *)op).imag += (val1.real * val2.imag) +
                                        (val1.imag * val2.real);
 #else
                 *(@typ@ *)op += val1 * val2;
@@ -3073,6 +3239,8 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
+long cases = 0;
+
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
@@ -3088,25 +3256,17 @@ NPY_NO_EXPORT void
  * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*12#
  */
 
+
 NPY_NO_EXPORT void
 @TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    /* TODO: replace the inner loop with @TYPE@_dot from arraytypes.c.src
-     *       should maybe accept the dot function as input?
-     *       Using @TYPE@_dot would at least give us cblas for 1D
-     *       For now, just copy the loops from _umath_tests.c matrix_multiply
-     */
     INIT_OUTER_LOOP_3
     npy_intp dm = dimensions[0];
     npy_intp dn = dimensions[1];
     npy_intp dp = dimensions[2];
-    npy_intp m,n,p;
     npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
          os_m=steps[4], os_p=steps[5];
-    npy_intp ib1_n;
-    npy_intp ib2_n;
-    npy_intp ib2_p;
-    npy_intp ob_p;
+    npy_intp ib1_n, ib2_n, ib2_p, ob_p;
 
     ib1_n = is1_n*dn;
     ib2_n = is2_n*dn;
@@ -3115,6 +3275,7 @@ NPY_NO_EXPORT void
     if (dn == 0) {
         /* No operand, need to zero the output */
         BEGIN_OUTER_LOOP_3
+            npy_intp m, p;
             char *op=args[2];
             for (m = 0; m < dm; m++) {
                 for (p = 0; p < dp; p++) {
@@ -3134,31 +3295,69 @@ NPY_NO_EXPORT void
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 #if @USEBLAS@ & defined(HAVE_CBLAS)
-        if ((dm == 1 && dn == 1) || (dn == 1 && dp == 1)) {
-            
-            /* scalar * something, switch the scalar to input2 */
+        npy_intp ib1_m = is1_m * dm;
+        npy_intp ob_m = os_m * dp;
+        /*
+         * TODO: refactor this out to a inner_loop_selector, instead of
+         * PyUFunc_DefaultLegacyInnerLoopSelector
+         */
+        if (dm == 1 || dn == 1 || dp == 1) {
             if (dm ==1 && dn ==1) {
+                /* 0d @ something, switch ip1, ip2 and p, m */
+                cases |= 1 << 1;
+                @TYPE@_matmul_inner_level1blas(ip2, ip1, op, dp, dn, dm,
+                          ib2_n, ib1_n, ib1_m, ob_m,
+                          is2_p, is2_n, is1_n, is1_m, os_p, os_m);
+            } else if (dn == 1 && dp == 1) {
+                /* something @ 0d */
+                cases |= 1 << 2;
+                @TYPE@_matmul_inner_level1blas(ip1, ip2, op, dm, dn, dp,
+                          ib1_n, ib2_n, ib2_p, ob_p,
+                          is1_m, is1_n, is2_n, is2_p, os_m, os_p);
+            } else if (dn == 1) {
+                /* column @ row, 2d output, no blas needed */
+                cases |= 1 << 3;
                 @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
-                                  ib1_n, ib2_n, ib2_p, ob_p,
-                                  is1_m, is1_n, is2_n, is2_p, os_m, os_p);
-                
+                          ib1_n, ib2_n, ib2_p, ob_p,
+                          is1_m, is1_n, is2_n, is2_p, os_m, os_p);
+            } else if (dm == 1 && dp == 1) {
+                /* row @ column, 1,1 output */
+                cases |= 1 << 4;
+                @TYPE@_dot(ip1, is1_n, ip2, is2_n, op, dn, NULL);
+            } else if (dm == 1) {
+                /* vector @ matrix, switch ip1, ip2, p and m */
+                cases |= 1 << 5;
+                @TYPE@_matmul_inner_noblas(ip2, ip1, op, dp, dn, dm,
+                          ib2_n, ib1_n, ib1_m, ob_m,
+                          is2_p, is2_n, is1_n, is1_m, os_p, os_m);
+            } else if (dp == 1) {
+                /* matrix @ vector */
+                cases |= 1 << 6;
+                @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
+                          ib1_n, ib2_n, ib2_p, ob_p,
+                          is1_m, is1_n, is2_n, is2_p, os_m, os_p);
             } else {
-                @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
-                                  ib1_n, ib2_n, ib2_p, ob_p,
-                                  is1_m, is1_n, is2_n, is2_p, os_m, os_p);
+                /* cannot reach here */
+                /* printf("inconceivable to reach this line m=%ld, n=%ld, p=%ld\n",
+                 *      dm, dn, dp);
+                 */
             }
         } else {
+            /* matrix @ matrix */
+            cases |= 1 << 7;
             @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
                           ib1_n, ib2_n, ib2_p, ob_p,
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
         }
-#else           
+#else
+        cases |= 1 << 0;
         @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
                           ib1_n, ib2_n, ib2_p, ob_p,
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
-    
+
 #endif
     END_OUTER_LOOP
+    printf("@TYPE@_matmul use cases=%ld\n", cases);
 }
 
 /**end repeat**/

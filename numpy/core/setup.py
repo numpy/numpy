@@ -898,6 +898,7 @@ def configuration(parent_package='',top_path=None):
             join(codegen_dir, 'generate_ufunc_api.py'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('src', 'private', 'mem_overlap.h'),
+            join('src', 'private', 'npy_cblas.h'),
             join('src', 'private', 'npy_longdouble.h'),
             join('src', 'private', 'ufunc_override.h'),
             join('src', 'private', 'binop_override.h')] + npymath_sources
