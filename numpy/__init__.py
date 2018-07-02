@@ -191,7 +191,7 @@ else:
     from .testing import Tester
 
     # Pytest testing
-    from numpy.testing._private.pytesttester import PytestTester
+    from numpy._pytesttester import PytestTester
     test = PytestTester(__name__)
     del PytestTester
 
