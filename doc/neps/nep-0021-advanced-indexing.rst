@@ -1,6 +1,6 @@
-=========================================
-Simplified and explicit advanced indexing
-=========================================
+==================================================
+NEP 21 — Simplified and explicit advanced indexing
+==================================================
 
 :Author: Sebastian Berg
 :Author: Stephan Hoyer <shoyer@google.com>

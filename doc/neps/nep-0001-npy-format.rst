@@ -1,6 +1,6 @@
-=====================================
-A Simple File Format for NumPy Arrays
-=====================================
+=============================================
+NEP 1 — A Simple File Format for NumPy Arrays
+=============================================
 
 :Author: Robert Kern <robert.kern@gmail.com>
 :Status: Final

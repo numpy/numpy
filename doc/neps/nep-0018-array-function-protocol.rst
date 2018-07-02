@@ -1,6 +1,6 @@
-===========================================================
-A dispatch mechanism for NumPy's high level array functions
-===========================================================
+====================================================================
+NEP 18 — A dispatch mechanism for NumPy's high level array functions
+====================================================================
 
 :Author: Stephan Hoyer <shoyer@google.com>
 :Author: Matthew Rocklin <mrocklin@gmail.com>
