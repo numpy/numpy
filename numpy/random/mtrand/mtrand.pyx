@@ -4259,8 +4259,12 @@ cdef class RandomState:
 
             if lngood < 0:
                 raise ValueError("ngood < 0")
+            if lngood >= 2**30:
+                raise ValueError("ngood must be less than 2**30")
             if lnbad < 0:
                 raise ValueError("nbad < 0")
+            if lnbad >= 2**30:
+                raise ValueError("nbad must be less than 2**30")
             if lnsample < 1:
                 raise ValueError("nsample < 1")
             if lngood + lnbad < lnsample:
@@ -4270,8 +4274,12 @@ cdef class RandomState:
 
         if np.any(np.less(ongood, 0)):
             raise ValueError("ngood < 0")
+        if np.any(np.greater_equal(ongood, 2**30)):
+            raise ValueError("ngood must be less than 2**30")
         if np.any(np.less(onbad, 0)):
             raise ValueError("nbad < 0")
+        if np.any(np.greater_equal(onbad, 2**30)):
+            raise ValueError("nbad must be less than 2**30")
         if np.any(np.less(onsample, 1)):
             raise ValueError("nsample < 1")
         if np.any(np.less(np.add(ongood, onbad),onsample)):

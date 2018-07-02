@@ -25,11 +25,9 @@ class TestRegression(object):
 
         # Test for ticket #5623
         args = [
-            (2**20 - 2, 2**20 - 2, 2**20 - 2),  # Check for 32-bit systems
+            (2**20 - 2, 2**20 - 2, 2**20 - 2),
+            (2**30 - 1, 2**30 - 1, 2**30 - 1),
         ]
-        is_64bits = sys.maxsize > 2**32
-        if is_64bits and sys.platform != 'win32':
-            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2)) # Check for 64-bit systems
         for arg in args:
             assert_(np.random.hypergeometric(*arg) > 0)
 
