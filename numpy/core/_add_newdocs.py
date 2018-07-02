@@ -10,7 +10,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.lib import add_newdoc
+from numpy.core.function_base import add_newdoc
 
 ###############################################################################
 #

@@ -139,9 +139,7 @@ else:
         loader = PackageLoader(infunc=True)
         return loader(*packages, **options)
 
-    from . import add_newdocs
-    __all__ = ['add_newdocs',
-               'ModuleDeprecationWarning',
+    __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
