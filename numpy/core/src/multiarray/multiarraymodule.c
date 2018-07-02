@@ -73,8 +73,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
  */
 #include "funcs.inc"
 #include "loops.h"
-#include "__umath_generated.c"
-#include "__ufunc_api.c"
+#include "umathmodule.h"
 
 NPY_NO_EXPORT int initscalarmath(PyObject *);
 
@@ -4192,11 +4191,6 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     return PyInt_FromLong(axis);
 }
-
-/* declarations from umathmodule.c */
-PyObject * add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args);
-PyObject * ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds));
-int initumath(PyObject *m);
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",

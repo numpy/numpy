@@ -725,6 +725,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
             join('src', 'common', 'ufunc_override.h'),
+            join('src', 'common', 'umathmodule.h'),
             ]
 
     common_src = [
@@ -742,8 +743,8 @@ def configuration(parent_package='',top_path=None):
         # These files are also in MANIFEST.in so that they are always in
         # the source distribution independently of HAVE_CBLAS.
         common_src.extend([join('src', 'common', 'cblasfuncs.c'),
-                               join('src', 'common', 'python_xerbla.c'),
-                               ])
+                           join('src', 'common', 'python_xerbla.c'),
+                          ])
         if uses_accelerate_framework(blas_info):
             common_src.extend(get_sgemv_fix())
     else:

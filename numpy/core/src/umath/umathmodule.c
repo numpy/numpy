@@ -256,27 +256,7 @@ intern_strings(void)
         npy_um_str_array_wrap && npy_um_str_array_finalize && npy_um_str_ufunc;
 }
 
-/* Setup the umath module */
-/* Remove for time being, it is declared in __ufunc_api.h */
-/*static PyTypeObject PyUFunc_Type;*/
-/*
-static struct PyMethodDef methods[] = {
-    {"frompyfunc",
-        (PyCFunction) ufunc_frompyfunc,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"seterrobj",
-        (PyCFunction) ufunc_seterr,
-        METH_VARARGS, NULL},
-    {"geterrobj",
-        (PyCFunction) ufunc_geterr,
-        METH_VARARGS, NULL},
-    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
-        METH_VARARGS, NULL},
-    {NULL, NULL, 0, NULL}
-};
-*/
-
-#include <stdio.h>
+/* Setup the umath part of the module */
 
 int initumath(PyObject *m)
 {
