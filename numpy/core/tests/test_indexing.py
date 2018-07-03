@@ -329,6 +329,21 @@ class TestIndexing(object):
         assert_raises(IndexError, a.__getitem__, ind)
         assert_raises(IndexError, a.__setitem__, ind, 0)
 
+    def test_trivial_fancy_not_possible(self):
+        # Test that the fast path for trivial assignment is not incorrectly
+        # used when the index is not contiguous or 1D, see also gh-11467.
+        a = np.arange(6)
+        idx = np.arange(6, dtype=np.intp).reshape(2, 1, 3)[:, :, 0]
+        assert_array_equal(a[idx], idx)
+
+        # this case must not go into the fast path, note that idx is
+        # a non-contiuguous none 1D array here.
+        a[idx] = -1
+        res = np.arange(6)
+        res[0] = -1
+        res[3] = -1
+        assert_array_equal(a, res)
+
     def test_nonbaseclass_values(self):
         class SubClass(np.ndarray):
             def __array_finalize__(self, old):
