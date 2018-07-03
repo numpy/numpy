@@ -11,10 +11,10 @@ How to use the documentation
 ----------------------------
 Documentation is available in two forms: docstrings provided
 with the code, and a loose standing reference guide, available from
-`the NumPy homepage <http://www.scipy.org>`_.
+`the NumPy homepage <https://www.scipy.org>`_.
 
 We recommend exploring the docstrings using
-`IPython <http://ipython.scipy.org>`_, an advanced Python shell with
+`IPython <https://ipython.org>`_, an advanced Python shell with
 TAB-completion and introspection capabilities.  See below for further
 instructions.
 
@@ -139,9 +139,7 @@ else:
         loader = PackageLoader(infunc=True)
         return loader(*packages, **options)
 
-    from . import add_newdocs
-    __all__ = ['add_newdocs',
-               'ModuleDeprecationWarning',
+    __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
@@ -191,7 +189,7 @@ else:
     from .testing import Tester
 
     # Pytest testing
-    from numpy.testing._private.pytesttester import PytestTester
+    from numpy._pytesttester import PytestTester
     test = PytestTester(__name__)
     del PytestTester
 

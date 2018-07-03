@@ -384,23 +384,27 @@ def build_project(args):
         with open(log_filename, 'w') as log:
             p = subprocess.Popen(cmd, env=env, stdout=log, stderr=log,
                                  cwd=ROOT_DIR)
+        try:
+            # Wait for it to finish, and print something to indicate the
+            # process is alive, but only if the log file has grown (to
+            # allow continuous integration environments kill a hanging
+            # process accurately if it produces no output)
+            last_blip = time.time()
+            last_log_size = os.stat(log_filename).st_size
+            while p.poll() is None:
+                time.sleep(0.5)
+                if time.time() - last_blip > 60:
+                    log_size = os.stat(log_filename).st_size
+                    if log_size > last_log_size:
+                        print("    ... build in progress")
+                        last_blip = time.time()
+                        last_log_size = log_size
 
-        # Wait for it to finish, and print something to indicate the
-        # process is alive, but only if the log file has grown (to
-        # allow continuous integration environments kill a hanging
-        # process accurately if it produces no output)
-        last_blip = time.time()
-        last_log_size = os.stat(log_filename).st_size
-        while p.poll() is None:
-            time.sleep(0.5)
-            if time.time() - last_blip > 60:
-                log_size = os.stat(log_filename).st_size
-                if log_size > last_log_size:
-                    print("    ... build in progress")
-                    last_blip = time.time()
-                    last_log_size = log_size
-
-        ret = p.wait()
+            ret = p.wait()
+        except:
+            p.kill()
+            p.wait()
+            raise
 
     if ret == 0:
         print("Build OK")

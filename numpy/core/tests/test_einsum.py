@@ -730,7 +730,13 @@ class TestEinsum(object):
         res = np.einsum('...ij,...jk->...ik', a, a, out=out)
         assert_equal(res, tgt)
 
-    def optimize_compare(self, subscripts, operands=None):
+    def test_out_is_res(self):
+        a = np.arange(9).reshape(3, 3)
+        res = np.einsum('...ij,...jk->...ik', a, a, out=a)
+        assert res is a
+
+    def optimize_compare(self, string):
+
         # Tests all paths of the optimization function against
         # conventional einsum
         if operands is None:

@@ -44,7 +44,7 @@ from datetime import timedelta, datetime
 if sys.version_info[:2] > (3, 2):
     # In Python 3.3 the representation of empty shape, strides and sub-offsets
     # is an empty tuple instead of None.
-    # http://docs.python.org/dev/whatsnew/3.3.html#api-changes
+    # https://docs.python.org/dev/whatsnew/3.3.html#api-changes
     EMPTY = ()
 else:
     EMPTY = None

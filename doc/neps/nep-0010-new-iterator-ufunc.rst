@@ -1,6 +1,6 @@
-=====================================
-Optimizing Iterator/UFunc Performance
-=====================================
+==============================================
+NEP 10 — Optimizing Iterator/UFunc Performance
+==============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Content-Type: text/x-rst

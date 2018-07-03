@@ -5,7 +5,7 @@
 
 NumPy is the fundamental package needed for scientific computing with Python.
 
-- **Website (including documentation):** http://www.numpy.org
+- **Website (including documentation):** https://www.numpy.org
 - **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
 - **Source:** https://github.com/numpy/numpy
 - **Bug reports:** https://github.com/numpy/numpy/issues
@@ -17,7 +17,12 @@ It provides:
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
 
-If ``nose`` is installed, tests can be run after installation with:
+Testing:
+
+- NumPy versions >= 1.15 require ``pytest``
+- NumPy versions < 1.15 require ``nose``
+
+Tests can then be run after installation with:
 
     python -c 'import numpy; numpy.test()'
 

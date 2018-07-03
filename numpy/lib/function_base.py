@@ -27,6 +27,7 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, sort, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes, number
+from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
@@ -1649,7 +1650,7 @@ def disp(mesg, device=None, linefeed=True):
     return
 
 
-# See http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
+# See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
 _CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
 _ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
@@ -1906,7 +1907,7 @@ class vectorize(object):
     References
     ----------
     .. [1] NumPy Reference, section `Generalized Universal Function API
-           <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
+           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
@@ -2561,7 +2562,7 @@ def bartlett(M):
     .. [3] A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal
            Processing", Prentice-Hall, 1999, pp. 468-471.
     .. [4] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [5] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 429.
 
@@ -2661,7 +2662,7 @@ def hanning(M):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics",
            The University of Alberta Press, 1975, pp. 106-108.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 425.
 
@@ -2759,7 +2760,7 @@ def hamming(M):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
            University of Alberta Press, 1975, pp. 109-110.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 425.
 
@@ -3036,7 +3037,7 @@ def kaiser(M, beta):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
            University of Alberta Press, 1975, pp. 177-178.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
 
     Examples
     --------
@@ -3124,7 +3125,7 @@ def sinc(x):
     .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
            Resource. http://mathworld.wolfram.com/SincFunction.html
     .. [2] Wikipedia, "Sinc function",
-           http://en.wikipedia.org/wiki/Sinc_function
+           https://en.wikipedia.org/wiki/Sinc_function
 
     Examples
     --------
@@ -3398,9 +3399,9 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear', keepdims=False):
     """
-    Compute the qth percentile of the data along the specified axis.
+    Compute the q-th percentile of the data along the specified axis.
 
-    Returns the qth percentile(s) of the array elements.
+    Returns the q-th percentile(s) of the array elements.
 
     Parameters
     ----------
@@ -3467,7 +3468,7 @@ def percentile(a, q, axis=None, out=None,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th percentile of
+    Given a vector ``V`` of length ``N``, the q-th percentile of
     ``V`` is the value ``q/100`` of the way from the minimum to the
     maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
@@ -3543,7 +3544,7 @@ def percentile(a, q, axis=None, out=None,
 def quantile(a, q, axis=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
-    Compute the `q`th quantile of the data along the specified axis.
+    Compute the q-th quantile of the data along the specified axis.
     ..versionadded:: 1.15.0
 
     Parameters
@@ -3569,6 +3570,7 @@ def quantile(a, q, axis=None, out=None,
         This optional parameter specifies the interpolation method to
         use when the desired quantile lies between two data points
         ``i < j``:
+
             * linear: ``i + (j - i) * fraction``, where ``fraction``
               is the fractional part of the index surrounded by ``i``
               and ``j``.
@@ -3602,7 +3604,7 @@ def quantile(a, q, axis=None, out=None,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th quantile of
+    Given a vector ``V`` of length ``N``, the q-th quantile of
     ``V`` is the value ``q`` of the way from the minimum to the
     maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
@@ -3720,7 +3722,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices = concatenate((indices, [-1]))
 
         ap.partition(indices, axis=axis)
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         ap = np.moveaxis(ap, axis, 0)
         axis = 0
 
@@ -3753,7 +3755,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
         ap.partition(concatenate((indices_below, indices_above)), axis=axis)
 
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         ap = np.moveaxis(ap, axis, 0)
         weights_below = np.moveaxis(weights_below, axis, 0)
         weights_above = np.moveaxis(weights_above, axis, 0)
@@ -3767,7 +3769,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         x1 = take(ap, indices_below, axis=axis) * weights_below
         x2 = take(ap, indices_above, axis=axis) * weights_above
 
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         x1 = np.moveaxis(x1, axis, 0)
         x2 = np.moveaxis(x2, axis, 0)
 
@@ -3840,10 +3842,10 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     References
     ----------
-    .. [1] Wikipedia page: http://en.wikipedia.org/wiki/Trapezoidal_rule
+    .. [1] Wikipedia page: https://en.wikipedia.org/wiki/Trapezoidal_rule
 
     .. [2] Illustration image:
-           http://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
+           https://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
 
     Examples
     --------
@@ -3889,41 +3891,6 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         y = np.asarray(y)
         ret = add.reduce(d * (y[tuple(slice1)]+y[tuple(slice2)])/2.0, axis)
     return ret
-
-
-#always succeed
-def add_newdoc(place, obj, doc):
-    """
-    Adds documentation to obj which is in module place.
-
-    If doc is a string add it to obj as a docstring
-
-    If doc is a tuple, then the first element is interpreted as
-       an attribute of obj and the second as the docstring
-          (method, docstring)
-
-    If doc is a list, then each element of the list should be a
-       sequence of length two --> [(method1, docstring1),
-       (method2, docstring2), ...]
-
-    This routine never raises an error.
-
-    This routine cannot modify read-only docstrings, as appear
-    in new-style classes or built-in functions. Because this
-    routine never raises an error the caller must check manually
-    that the docstrings were changed.
-    """
-    try:
-        new = getattr(__import__(place, globals(), {}, [obj]), obj)
-        if isinstance(doc, str):
-            add_docstring(new, doc.strip())
-        elif isinstance(doc, tuple):
-            add_docstring(getattr(new, doc[0]), doc[1].strip())
-        elif isinstance(doc, list):
-            for val in doc:
-                add_docstring(getattr(new, val[0]), val[1].strip())
-    except Exception:
-        pass
 
 
 # Based on scitools meshgrid

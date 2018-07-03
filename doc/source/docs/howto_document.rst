@@ -4,7 +4,7 @@
 A Guide to NumPy/SciPy Documentation
 ====================================
 
-When using `Sphinx <http://sphinx.pocoo.org/>`__ in combination with the
+When using `Sphinx <http://www.sphinx-doc.org/>`__ in combination with the
 numpy conventions, you should use the ``numpydoc`` extension so that your
 docstrings will be handled correctly. For example, Sphinx will extract the
 ``Parameters`` section from your docstring and convert it into a field
@@ -19,7 +19,7 @@ Some features described in this document require a recent version of
 
 It is available from:
 
-* `numpydoc on PyPI <http://pypi.python.org/pypi/numpydoc>`_
+* `numpydoc on PyPI <https://pypi.python.org/pypi/numpydoc>`_
 * `numpydoc on GitHub <https://github.com/numpy/numpydoc/>`_
 
 Note that for documentation within numpy, it is not necessary to do
