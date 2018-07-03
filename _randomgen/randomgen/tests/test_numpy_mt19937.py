@@ -566,6 +566,14 @@ class TestRandomDist(object):
         assert_(mt19937.choice(6, s, replace=False, p=p).shape, s)
         assert_(mt19937.choice(np.arange(6), s, replace=True).shape, s)
 
+        # Check zero-size
+        assert_equal(mt19937.randint(0,0,(3,0,4)).shape, (3,0,4))
+        assert_equal(mt19937.randint(0,-10,0).shape, (0,))
+        assert_equal(mt19937.choice(0,0).shape, (0,))
+        assert_equal(mt19937.choice([],(0,)).shape, (0,))
+        assert_equal(mt19937.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_raises(ValueError, mt19937.choice, [], 10)    
+
     def test_bytes(self):
         mt19937.seed(self.seed)
         actual = mt19937.bytes(10)

@@ -1,7 +1,10 @@
 RandomGen
 =========
 
-|Travis Build Status| |Appveyor Build Status| |PyPI version|
+`Travis Build Status <https://travis-ci.org/bashtage/randomgen>`__
+`Appveyor Build
+Status <https://ci.appveyor.com/project/bashtage/randomgen/branch/master>`__
+`PyPI version <https://pypi.org/project/randomgen/>`__
 
 Random Number Generator using settable Basic RNG interface for future
 NumPy RandomState evolution.
@@ -23,16 +26,15 @@ NumPy.
 Features
 --------
 
--  Replacement for NumPy's RandomState
+-  Replacement for NumPy’s RandomState
 
-.. code:: python
+   .. code:: python
 
-    # import numpy.random as rnd
-    from randomgen import RandomGenerator, MT19937
-    rnd = RandomGenerator(MT19937())
-    x = rnd.standard_normal(100)
-    y = rnd.random_sample(100)
-    z = rnd.randn(10,10)
+      from randomgen import RandomGenerator, MT19937
+      rnd = RandomGenerator(MT19937())
+      x = rnd.standard_normal(100)
+      y = rnd.random_sample(100)
+      z = rnd.randn(10,10)
 
 -  Default random generator is a fast generator called Xoroshiro128plus
 -  Support for random number generators that support independent streams
@@ -40,14 +42,14 @@ Features
 -  Faster random number generation, especially for normal, standard
    exponential and standard gamma using the Ziggurat method
 
-.. code:: python
+   .. code:: python
 
-    from randomgen import RandomGenerator
-    # Use Xoroshiro128
-    rnd = RandomGenerator()
-    w = rnd.standard_normal(10000, method='zig')
-    x = rnd.standard_exponential(10000, method='zig')
-    y = rnd.standard_gamma(5.5, 10000, method='zig')
+      from randomgen import RandomGenerator
+      # Default basic PRNG is Xoroshiro128
+      rnd = RandomGenerator()
+      w = rnd.standard_normal(10000, method='zig')
+      x = rnd.standard_exponential(10000, method='zig')
+      y = rnd.standard_gamma(5.5, 10000, method='zig')
 
 -  Support for 32-bit floating randoms for core generators. Currently
    supported:
@@ -58,11 +60,11 @@ Features
    -  Normals (``standard_normal``)
    -  Standard Gammas (via ``standard_gamma``)
 
-**WARNING**: The 32-bit generators are **experimental** and subject to
-change.
+   **WARNING**: The 32-bit generators are **experimental** and subject
+   to change.
 
-**Note**: There are *no* plans to extend the alternative precision
-generation to all distributions.
+   **Note**: There are *no* plans to extend the alternative precision
+   generation to all distributions.
 
 -  Support for filling existing arrays using ``out`` keyword argument.
    Currently supported in (both 32- and 64-bit outputs)
@@ -84,11 +86,13 @@ addition to the MT19937 that is included in NumPy. The RNGs include:
    SSE2-aware version of the MT19937 generator that is especially fast
    at generating doubles
 -  `xoroshiro128+ <http://xoroshiro.di.unimi.it/>`__ and
-   `xorshift1024\*φ <http://xorshift.di.unimi.it/>`__
+   `xorshift1024*φ <http://xorshift.di.unimi.it/>`__
 -  `PCG64 <http://www.pcg-random.org/>`__
 -  ThreeFry and Philox from
    `Random123 <https://www.deshawresearch.com/resources_random123.html>`__
-   ## Differences from ``numpy.random.RandomState``
+
+Differences from ``numpy.random.RandomState``
+---------------------------------------------
 
 New Features
 ~~~~~~~~~~~~
@@ -121,7 +125,7 @@ New Functions
    (``[0, 2**32-1]``) or 64-bit (``[0, 2**64-1]``)
 -  ``jump`` - Jumps RNGs that support it. ``jump`` moves the state a
    great distance. *Only available if supported by the RNG.*
--  ``advance`` - Advanced the RNG 'as-if' a number of draws were made,
+-  ``advance`` - Advanced the RNG ‘as-if’ a number of draws were made,
    without actually drawing the numbers. *Only available if supported by
    the RNG.*
 
@@ -129,10 +133,11 @@ Status
 ------
 
 -  Builds and passes all tests on:
--  Linux 32/64 bit, Python 2.7, 3.4, 3.5, 3.6
--  PC-BSD (FreeBSD) 64-bit, Python 2.7
--  OSX 64-bit, Python 3.6
--  Windows 32/64 bit, Python 2.7, 3.5 and 3.6
+
+   -  Linux 32/64 bit, Python 2.7, 3.4, 3.5, 3.6
+   -  PC-BSD (FreeBSD) 64-bit, Python 2.7
+   -  OSX 64-bit, Python 3.6
+   -  Windows 32/64 bit, Python 2.7, 3.5 and 3.6
 
 Version
 -------
@@ -143,10 +148,10 @@ The version matched the latest version of NumPy where
 Documentation
 -------------
 
-| Documentation for the latest release is available on `my GitHub
-  pages <http://bashtage.github.io/randomgen/>`__. Documentation for the
-  latest commit (unreleased) is available under
-| `devel <http://bashtage.github.io/randomgen/devel/>`__.
+Documentation for the latest release is available on `my GitHub
+pages <http://bashtage.github.io/randomgen/>`__. Documentation for the
+latest commit (unreleased) is available under
+`devel <http://bashtage.github.io/randomgen/devel/>`__.
 
 Plans
 -----
@@ -154,7 +159,7 @@ Plans
 This module is essentially complete. There are a few rough edges that
 need to be smoothed.
 
--  Creation of additional streams from where supported (i.e. a
+-  Creation of additional streams from where supported (i.e. a
    ``next_stream()`` method)
 
 Requirements
@@ -180,15 +185,29 @@ Travis-CI (Linux/OSX) and Appveyor (Windows). The library is
 occasionally tested on Linux 32-bit and Free BSD 11.1.
 
 Basic tests are in place for all RNGs. The MT19937 is tested against
-NumPy's implementation for identical results. It also passes NumPy's
+NumPy’s implementation for identical results. It also passes NumPy’s
 test suite where still relevant.
 
 Installing
 ----------
 
+Either install from PyPi using
+
 .. code:: bash
 
-    python setup.py install
+   pip install randomgen
+
+or, if you want the latest version,
+
+.. code:: bash
+
+   pip install git+https://github.com/bashtage/randomgen.git
+
+or from a cloned repo,
+
+.. code:: bash
+
+   python setup.py install
 
 SSE2
 ~~~~
@@ -198,7 +217,7 @@ or are building on non-x86, you can install using:
 
 .. code:: bash
 
-    python setup.py install --no-sse2
+   python setup.py install --no-sse2
 
 Windows
 ~~~~~~~
@@ -214,16 +233,16 @@ The separate generators are importable from ``randomgen``
 
 .. code:: python
 
-    from randomgen import RandomGenerator, ThreeFry, PCG64, MT19937
-    rg = RandomGenerator(ThreeFry())
-    rg.random_sample(100)
+   from randomgen import RandomGenerator, ThreeFry, PCG64, MT19937
+   rg = RandomGenerator(ThreeFry())
+   rg.random_sample(100)
 
-    rg = RandomGenerator(PCG64())
-    rg.random_sample(100)
+   rg = RandomGenerator(PCG64())
+   rg.random_sample(100)
 
-    # Identical to NumPy
-    rg = RandomGenerator(MT19937())
-    rg.random_sample(100)
+   # Identical to NumPy
+   rg = RandomGenerator(MT19937())
+   rg.random_sample(100)
 
 License
 -------
@@ -234,49 +253,42 @@ Performance
 -----------
 
 Performance is promising, and even the mt19937 seems to be faster than
-NumPy's mt19937.
+NumPy’s mt19937.
 
 ::
 
-    Speed-up relative to NumPy (Uniform Doubles)
-    ************************************************************
-    DSFMT           137.1%
-    MT19937          21.0%
-    PCG32           101.2%
-    PCG64           110.7%
-    Philox           -2.7%
-    ThreeFry        -11.4%
-    ThreeFry32      -62.3%
-    Xoroshiro128    181.4%
-    Xorshift1024    141.8%
+   Speed-up relative to NumPy (Uniform Doubles)
+   ************************************************************
+   DSFMT           137.1%
+   MT19937          21.0%
+   PCG32           101.2%
+   PCG64           110.7%
+   Philox           -2.7%
+   ThreeFry        -11.4%
+   ThreeFry32      -62.3%
+   Xoroshiro128    181.4%
+   Xorshift1024    141.8%
 
-    Speed-up relative to NumPy (64-bit unsigned integers)
-    ************************************************************
-    DSFMT            24.8%
-    MT19937          15.0%
-    PCG32            92.6%
-    PCG64            99.0%
-    Philox          -20.4%
-    ThreeFry        -21.7%
-    ThreeFry32      -64.4%
-    Xoroshiro128    164.2%
-    Xorshift1024    120.8%
+   Speed-up relative to NumPy (64-bit unsigned integers)
+   ************************************************************
+   DSFMT            24.8%
+   MT19937          15.0%
+   PCG32            92.6%
+   PCG64            99.0%
+   Philox          -20.4%
+   ThreeFry        -21.7%
+   ThreeFry32      -64.4%
+   Xoroshiro128    164.2%
+   Xorshift1024    120.8%
 
-    Speed-up relative to NumPy (Standard normals)
-    ************************************************************
-    DSFMT           299.4%
-    MT19937         271.2%
-    PCG32           364.5%
-    PCG64           364.2%
-    Philox          256.9%
-    ThreeFry        236.0%
-    ThreeFry32       97.0%
-    Xoroshiro128    477.4%
-    Xorshift1024    360.7%
-
-.. |Travis Build Status| image:: https://travis-ci.org/bashtage/randomgen.svg?branch=master
-   :target: https://travis-ci.org/bashtage/randomgen
-.. |Appveyor Build Status| image:: https://ci.appveyor.com/api/projects/status/odc5c4ukhru5xicl/branch/master?svg=true
-   :target: https://ci.appveyor.com/project/bashtage/randomgen/branch/master
-.. |PyPI version| image:: https://badge.fury.io/py/randomgen.svg
-   :target: https://pypi.org/project/randomgen/
+   Speed-up relative to NumPy (Standard normals)
+   ************************************************************
+   DSFMT           299.4%
+   MT19937         271.2%
+   PCG32           364.5%
+   PCG64           364.2%
+   Philox          256.9%
+   ThreeFry        236.0%
+   ThreeFry32       97.0%
+   Xoroshiro128    477.4%
+   Xorshift1024    360.7%
