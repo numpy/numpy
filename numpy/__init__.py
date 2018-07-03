@@ -212,7 +212,9 @@ else:
         except AssertionError:
             msg = ("The current Numpy installation ({!r}) fails to "
                    "pass simple sanity checks. This can be caused for example "
-                   "by incorrect BLAS library being linked in.")
+                   "by incorrect BLAS library being linked in, or by mixing "
+                   "package managers (pip, conda, apt, ...). Search closed "
+                   "numpy issues for similar problems.")
             raise RuntimeError(msg.format(__file__))
 
     _sanity_check()
