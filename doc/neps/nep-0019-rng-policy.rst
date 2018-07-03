@@ -169,14 +169,16 @@ context of small unit tests.
 
 The new PRNG subsystem MUST provide a second, legacy distributions class that
 uses the same implementations of the distribution methods as the current
-version of ``numpy.random.RandomState``.  The methods of this class will keep
-the same strict stream-compatibility guarantees.  It is intended that this
-class will no longer be modified, except to keep it working when numpy
-internals change.  All new development should go into the primary distributions
-class.  The purpose of ``RandomState`` will be documented as providing certain
-fixed functionality for backwards compatibility and stable numbers for the
-limited purpose of unit testing, and not making whole programs reproducible
-across numpy versions.
+version of ``numpy.random.RandomState``.  The methods of this class will have
+strict stream-compatibility guarantees, even stricter than the current policy.
+It is intended that this class will no longer be modified, except to keep it
+working when numpy internals change.  All new development should go into the
+primary distributions class.  Bug fixes that change the stream SHALL NOT be
+made to ``RandomState``; instead, buggy distributions should be made to warn
+when they are buggy.  The purpose of ``RandomState`` will be documented as
+providing certain fixed functionality for backwards compatibility and stable
+numbers for the limited purpose of unit testing, and not making whole programs
+reproducible across numpy versions.
 
 This legacy distributions class MUST be accessible under the name
 ``numpy.random.RandomState`` for backwards compatibility.  All current ways of
