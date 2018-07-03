@@ -32,7 +32,6 @@ env:
 
 python:
   - 2.7
-  - 3.4
   - 3.5
   - 3.6
   - 3.7-dev
@@ -47,16 +46,6 @@ matrix:
           packages:
             - dpkg
             - debootstrap
-    - python: 3.4
-      env: USE_DEBUG=1
-      addons:
-        apt:
-          packages:
-            - *common_packages
-            - cython3-dbg
-            - python3-dbg
-            - python3-dev
-            - python3-setuptools
     - python: 3.6
       env: USE_WHEEL=1 RUN_FULL_TESTS=1
     - python: 2.7
@@ -68,7 +57,15 @@ matrix:
        - PYTHONOPTIMIZE=2
        - USE_ASV=1
     - python: 3.5
-      env: NPY_RELAXED_STRIDES_CHECKING=0
+      env: USE_DEBUG=1 NPY_RELAXED_STRIDES_CHECKING=0
+      addons:
+        apt:
+          packages:
+            - *common_packages
+            - cython3-dbg
+            - python3.5-dbg
+            - python3.5-dev
+            - python3-setuptools
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
     - python: 3.6
