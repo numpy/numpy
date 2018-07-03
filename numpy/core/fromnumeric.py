@@ -1197,7 +1197,17 @@ def resize(a, new_shape):
     See Also
     --------
     ndarray.resize : resize an array in-place.
-
+    
+    Notes
+    -----
+    Warning: This functionality does **not** consider axes separately,
+    i.e. it does not apply interpolation/extrapolation of some sort.
+    It simply takes the first `np.prod(new_shape)` elements of `a`,
+    disregarding axes, and fills the returned array with these elements.
+    (This is in case the new shape is smaller. For larger, see above.)
+    This functionality is therefor not suitable to resize images,
+    or data where each axis represents a separate and distinct entity.
+    
     Examples
     --------
     >>> a=np.array([[0,1],[2,3]])
