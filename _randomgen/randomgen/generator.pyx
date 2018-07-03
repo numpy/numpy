@@ -791,14 +791,14 @@ cdef class RandomGenerator:
                 pop_size = operator.index(a.item())
             except TypeError:
                 raise ValueError("a must be 1-dimensional or an integer")
-            if pop_size <= 0:
-                raise ValueError("a must be greater than 0")
+            if pop_size <= 0 and np.prod(size) != 0:
+                raise ValueError("a must be greater than 0 unless no samples are taken")
         elif a.ndim != 1:
             raise ValueError("a must be 1-dimensional")
         else:
             pop_size = a.shape[0]
-            if pop_size is 0:
-                raise ValueError("a must be non-empty")
+            if pop_size is 0 and np.prod(size) != 0:
+                raise ValueError("a cannot be empty unless no samples are taken")
 
         if p is not None:
             d = len(p)
@@ -4263,30 +4263,38 @@ cdef class RandomGenerator:
     def permutation(self, object x):
         """
         permutation(x)
+        
         Randomly permute a sequence, or return a permuted range.
+
         If `x` is a multi-dimensional array, it is only shuffled along its
         first index.
+
         Parameters
         ----------
         x : int or array_like
             If `x` is an integer, randomly permute ``np.arange(x)``.
             If `x` is an array, make a copy and shuffle the elements
             randomly.
+        
         Returns
         -------
         out : ndarray
             Permuted sequence or array range.
+        
         Examples
         --------
         >>> np.random.permutation(10)
         array([1, 7, 4, 3, 0, 9, 2, 5, 8, 6])
+        
         >>> np.random.permutation([1, 4, 9, 12, 15])
         array([15,  1,  9,  4, 12])
+        
         >>> arr = np.arange(9).reshape((3, 3))
         >>> np.random.permutation(arr)
         array([[6, 7, 8],
                [0, 1, 2],
                [3, 4, 5]])
+
         """
         if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
