@@ -356,7 +356,7 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
     idx_result, new_input_sets, idx_removed, idx_contract = contract
     naive_cost = _flop_count(idx_contract, idx_removed, len(input_sets), idx_dict)
 
-    # Initially iterate overa ll pairs
+    # Initially iterate over all pairs
     comb_iter = itertools.combinations(range(len(input_sets)), 2)
     known_contractions = []
 
