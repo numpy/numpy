@@ -41,6 +41,12 @@ Even when no elements needed to be drawn, ``np.random.randint`` and
 distribution. This has been fixed so that e.g.
 ``np.random.choice([], 0) == np.array([], dtype=float64)``.
 
+ARM support updated
+-------------------
+Support for ARM CPUs has been updated to accommodate 32 and 64 bit targets,
+and also big and little endian byte ordering. AARCH32 memory alignment issues
+have been addressed.
+
 Changes
 =======
 
