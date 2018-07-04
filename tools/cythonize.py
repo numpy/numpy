@@ -52,33 +52,29 @@ except NameError:
 # Rules
 #
 def process_pyx(fromfile, tofile):
-    try:
-        from Cython.Compiler.Version import version as cython_version
-        from distutils.version import LooseVersion
-        if LooseVersion(cython_version) < LooseVersion('0.19'):
-            raise Exception('Building %s requires Cython >= 0.19' % VENDOR)
-
-    except ImportError:
-        pass
-
     flags = ['--fast-fail']
     if tofile.endswith('.cxx'):
         flags += ['--cplus']
 
     try:
+        # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
+        from Cython.Compiler.Version import version as cython_version
+    except ImportError:
+        # if that fails, use the one on the path, which might be the wrong version
         try:
-            r = subprocess.call(['cython'] + flags + ["-o", tofile, fromfile])
-            if r != 0:
-                raise Exception('Cython failed')
+            # Try the one on the path as a last resort
+            subprocess.check_call(
+                ['cython'] + flags + ["-o", tofile, fromfile])
         except OSError:
-            # There are ways of installing Cython that don't result in a cython
-            # executable on the path, see scipy/scipy#2397.
-            r = subprocess.call([sys.executable, '-m', 'cython'] + flags +
-                                ["-o", tofile, fromfile])
-            if r != 0:
-                raise Exception('Cython failed')
-    except OSError:
-        raise OSError('Cython needs to be installed')
+            raise OSError('Cython needs to be installed')
+    else:
+        # check the version, and invoke through python
+        from distutils.version import LooseVersion
+        if LooseVersion(cython_version) < LooseVersion('0.19'):
+            raise Exception('Building %s requires Cython >= 0.19' % VENDOR)
+        subprocess.check_call(
+            [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
+
 
 def process_tempita_pyx(fromfile, tofile):
     import npy_tempita as tempita
