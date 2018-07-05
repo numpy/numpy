@@ -1201,11 +1201,11 @@ def resize(a, new_shape):
     Notes
     -----
     Warning: This functionality does **not** consider axes separately,
-    i.e. it does not apply interpolation/extrapolation of some sort.
-    It simply takes the first `np.prod(new_shape)` elements of `a`,
-    disregarding axes, and fills the returned array with these elements.
+    i.e. it does not apply interpolation/extrapolation.
+    It fills the return array with the required number of elements,
+    taken from `a` as they are laid out in memory, disregarding strides and axes.
     (This is in case the new shape is smaller. For larger, see above.)
-    This functionality is therefor not suitable to resize images,
+    This functionality is therefore not suitable to resize images,
     or data where each axis represents a separate and distinct entity.
     
     Examples
