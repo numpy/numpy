@@ -1526,7 +1526,9 @@ def moveaxis(a, source, destination):
     """
     Move axes of an array to new positions.
 
-    Other axes remain in their original order.
+    Other axes remain in their original order. If `source` and `destination`
+    are strings, the axes will be moved according to the permutation of
+    the characters in `source` and `destination`.
 
     .. versionadded:: 1.11.0
 
@@ -1534,9 +1536,9 @@ def moveaxis(a, source, destination):
     ----------
     a : np.ndarray
         The array whose axes should be reordered.
-    source : int or sequence of int
+    source : int, str or sequence of int
         Original positions of the axes to move. These must be unique.
-    destination : int or sequence of int
+    destination : int, str or sequence of int
         Destination positions for each of the original axes. These must also be
         unique.
 
@@ -1569,6 +1571,8 @@ def moveaxis(a, source, destination):
     (5, 4, 3)
     >>> np.moveaxis(x, [0, 1, 2], [-1, -2, -3]).shape
     (5, 4, 3)
+    >>> np.moveaxis(x, 'xyz', 'zyx').shape
+    (5, 4, 3)
 
     """
     try:
@@ -1578,8 +1582,23 @@ def moveaxis(a, source, destination):
         a = asarray(a)
         transpose = a.transpose
 
+    if type(source) is str or type(destination) is str:
+        if type(source) is not str or type(destination) is not str:
+            raise ValueError('`source` and `destination` must be of type str')
+        if not (len(source) == len(destination) == a.ndim):
+            raise ValueError('`source` and `destination` arguments must have '
+                             'the same number of elements as the shape of `a`')
+
+        try:
+            destination = [destination.index(c) for c in source]
+        except ValueError:
+            raise ValueError('`source` and `destination` arguments must contain '
+                             'the same elements')
+        source = [i for i, _ in enumerate(source)]
+
     source = normalize_axis_tuple(source, a.ndim, 'source')
     destination = normalize_axis_tuple(destination, a.ndim, 'destination')
+
     if len(source) != len(destination):
         raise ValueError('`source` and `destination` arguments must have '
                          'the same number of elements')

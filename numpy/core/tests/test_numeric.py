@@ -2486,6 +2486,16 @@ class TestMoveaxis(object):
             actual = np.moveaxis(x, source, destination).shape
             assert_(actual, expected)
 
+    def test_strings(self):
+        x = np.zeros((0, 1, 2, 3))
+        for source, destination, expected in [
+                ('ijkl', 'klij', (2, 3, 0, 1)),
+                ('ijkl', 'ljki', (3, 1, 2, 0)),
+                ('ijkl', 'iljk', (0, 3, 1, 2)),
+                ]:
+            actual = np.moveaxis(x, source, destination).shape
+            assert_(actual, expected)
+
     def test_errors(self):
         x = np.random.randn(1, 2, 3)
         assert_raises_regex(np.AxisError, 'source.*out of bounds',
@@ -2500,8 +2510,33 @@ class TestMoveaxis(object):
                             np.moveaxis, x, [0, 1], [1, 1])
         assert_raises_regex(ValueError, 'must have the same number',
                             np.moveaxis, x, 0, [0, 1])
+
+        assert_raises_regex(ValueError, 'must have the same number',
+                            np.moveaxis, x, 'x', 'xy')
         assert_raises_regex(ValueError, 'must have the same number',
                             np.moveaxis, x, [0, 1], [0])
+        assert_raises_regex(ValueError, 'must have the same number',
+                            np.moveaxis, x, 'xy', 'x')
+        assert_raises_regex(ValueError, 'must be of type str',
+                            np.moveaxis, x, 'xy', [0, 1])
+        assert_raises_regex(ValueError, 'must have the same number '
+                            'of elements as the shape of `a`',
+                            np.moveaxis, x, 'xyz', 'xy')
+        assert_raises_regex(ValueError, 'must contain the same elements',
+                            np.moveaxis, x, 'xyz', 'xyx')
+        assert_raises_regex(ValueError, 'repeated axis',
+                            np.moveaxis, x, 'xyx', 'xyz')
+        assert_raises_regex(ValueError, 'must have the same number '
+                            'of elements as the shape of `a`',
+                            np.moveaxis, x, 'xy', 'xyz')
+        assert_raises_regex(ValueError, 'must contain the same elements',
+                            np.moveaxis, x, 'ijk', 'xyz')
+        assert_raises_regex(ValueError, 'must have the same number '
+                            'of elements as the shape of `a`',
+                            np.moveaxis, x, 'ij', 'xyz')
+        assert_raises_regex(ValueError, 'must have the same number '
+                            'of elements as the shape of `a`',
+                            np.moveaxis, x, 'ijk', 'xy')
 
     def test_array_likes(self):
         x = np.ma.zeros((1, 2, 3))
