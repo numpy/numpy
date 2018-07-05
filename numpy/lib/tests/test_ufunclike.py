@@ -11,26 +11,28 @@ from numpy.testing import (
 class TestUfunclike(object):
 
     def test_isposinf(self):
-        a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
-        out = nx.zeros(a.shape, bool)
-        tgt = nx.array([True, False, False, False, False, False])
+        for dtype in [np.float, np.complex]:
+            a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0], dtype=dtype)
+            out = nx.zeros(a.shape, bool)
+            tgt = nx.array([True, False, False, False, False, False])
 
-        res = ufl.isposinf(a)
-        assert_equal(res, tgt)
-        res = ufl.isposinf(a, out)
-        assert_equal(res, tgt)
-        assert_equal(out, tgt)
+            res = ufl.isposinf(a)
+            assert_equal(res, tgt)
+            res = ufl.isposinf(a, out)
+            assert_equal(res, tgt)
+            assert_equal(out, tgt)
 
     def test_isneginf(self):
-        a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
-        out = nx.zeros(a.shape, bool)
-        tgt = nx.array([False, True, False, False, False, False])
+        for dtype in [np.float, np.complex]:
+            a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0], dtype=dtype)
+            out = nx.zeros(a.shape, bool)
+            tgt = nx.array([False, True, False, False, False, False])
 
-        res = ufl.isneginf(a)
-        assert_equal(res, tgt)
-        res = ufl.isneginf(a, out)
-        assert_equal(res, tgt)
-        assert_equal(out, tgt)
+            res = ufl.isneginf(a)
+            assert_equal(res, tgt)
+            res = ufl.isneginf(a, out)
+            assert_equal(res, tgt)
+            assert_equal(out, tgt)
 
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
