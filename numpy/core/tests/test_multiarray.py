@@ -5566,6 +5566,23 @@ class MatmulCommon(object):
             res = self.matmul(v, v)
             assert_(type(res) is np.dtype(dt).type)
 
+    def test_0d_vector_values(self):
+        vec1 = np.array([2])
+        vec2 = np.array([3, 4]).reshape(1, -1)
+        tgt = np.array([6, 8])
+        for dt in self.types[1:]:
+            v1 = vec1.astype(dt)
+            v2 = vec2.astype(dt)
+            res = self.matmul(v1, v2)
+            assert_equal(res, tgt)
+            res = self.matmul(v2.T, v1)
+            assert_equal(res, tgt)
+
+        # boolean type
+        vec = np.array([True, True], dtype='?').reshape(1, -1)
+        res = self.matmul(vec[:, 0], vec)
+        assert_equal(res, True)
+
     def test_vector_vector_values(self):
         vec1 = np.array([1, 2])
         vec2 = np.array([3, 4]).reshape(-1, 1)
@@ -5737,16 +5754,19 @@ class TestMatmul(MatmulCommon):
         # dimensions, subtype, and c_contiguous.
 
         # test out with allowed type cast
-        # msg = "out argument with allowed cast"
-        # out = np.zeros((2, 2), dtype=np.complex128)
-        # self.matmul(a, b, out=out)
-        # assert_array_equal(out, tgt, err_msg=msg)
+        msg = "out argument with allowed cast"
+        out = np.zeros((2, 2), dtype=np.complex128)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always", np.ComplexWarning)
+            self.matmul(a, b, out=out)
+        assert_array_equal(out, tgt, err_msg=msg)
 
         # test out non-contiguous
-        # msg = "out argument with non-contiguous layout"
-        # c = np.zeros((2, 2, 2), dtype=float)
-        # self.matmul(a, b, out=c[..., 0])
-        # assert_array_equal(c, tgt, err_msg=msg)
+        msg = "out argument with non-contiguous layout"
+        c = np.ones((2, 2, 2), dtype=float)
+        out = self.matmul(a, b, out=c[..., 0])
+        assert_(out.base is c)
+        assert_array_equal(out, tgt, err_msg=msg)
 
 
 if sys.version_info[:2] >= (3, 5):

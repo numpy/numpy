@@ -3087,54 +3087,6 @@ NPY_NO_EXPORT void
  */
 
 /**begin repeat
- * #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
- * #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
- * #SPECL = 0, 0, 1, 1#
- */
-
-#if defined(HAVE_CBLAS)
-
-NPY_NO_EXPORT void
-@TYPE@_matmul_inner_level1blas(char *ip1, char *ip2, char *op,
-                          npy_intp dm, npy_intp dn, npy_intp dp,
-                          npy_intp ib1_n, npy_intp ib2_n, npy_intp ib2_p, npy_intp ob_p,
-                          npy_intp is1_m, npy_intp is1_n, npy_intp is2_n,
-                          npy_intp is2_p, npy_intp os_m, npy_intp os_p)
-{
-    /* ip2 is a scalar (p == 1), ip1 and op may be 2d */
-    npy_intp m, n;
-    for (m = 0; m < dm; m++) {
-#if @SPECL@ == 1
-        (*(@typ@ *)op).real = 0;
-        (*(@typ@ *)op).imag = 0;
-#else
-        *(@typ@ *)op = 0;
-#endif
-        for (n = 0; n < dn; n++) {
-            @typ@ val1 = (*(@typ@ *)ip1);
-            @typ@ val2 = (*(@typ@ *)ip2);
-#if @SPECL@ == 1
-            (*(@typ@ *)op).real += (val1.real * val2.real) -
-                                   (val1.imag * val2.imag);
-            (*(@typ@ *)op).imag += (val1.real * val2.imag) +
-                                   (val1.imag * val2.real);
-#else
-            *(@typ@ *)op += val1 * val2;
-#endif
-            ip2 += is2_n;
-            ip1 += is1_n;
-        }
-        ip1 -= ib1_n;
-        ip2 -= ib2_n;
-        ip1 += is1_m;
-        op  +=  os_m;
-    }
-}
-#endif
-
-/**end repeat**/
-
-/**begin repeat
  * #TYPE = FLOAT, DOUBLE, HALF#
  * #typ = npy_float,npy_double,npy_half#
  * #SPECL = 0,0,1#
@@ -3239,8 +3191,6 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
-long cases = 0;
-
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
@@ -3254,6 +3204,8 @@ long cases = 0;
  *         npy_bool#
  * #SPECL = 0, 0, 0, 2, 1, 1, 1, 0*11#
  * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*12#
+ * #chr = s, d, 0, 0, c, z, 0*12#
+ * #blas_typ = npy_float, npy_double, void*16#
  */
 
 
@@ -3272,6 +3224,7 @@ NPY_NO_EXPORT void
     ib2_n = is2_n*dn;
     ib2_p = is2_p*dp;
     ob_p  = os_p *dp;
+
     if (dn == 0) {
         /* No operand, need to zero the output */
         BEGIN_OUTER_LOOP_3
@@ -3302,37 +3255,38 @@ NPY_NO_EXPORT void
          * PyUFunc_DefaultLegacyInnerLoopSelector
          */
         if (dm == 1 || dn == 1 || dp == 1) {
-            if (dm ==1 && dn ==1) {
-                /* 0d @ something, switch ip1, ip2 and p, m */
-                cases |= 1 << 1;
-                @TYPE@_matmul_inner_level1blas(ip2, ip1, op, dp, dn, dm,
-                          ib2_n, ib1_n, ib1_m, ob_m,
-                          is2_p, is2_n, is1_n, is1_m, os_p, os_m);
-            } else if (dn == 1 && dp == 1) {
-                /* something @ 0d */
-                cases |= 1 << 2;
-                @TYPE@_matmul_inner_level1blas(ip1, ip2, op, dm, dn, dp,
+            if (dm == 1 && dp == 1) {
+                /* row @ column, 1,1 output, must zero output */
+#if @SPECL@ == 1
+                (*(@typ@ *)op).real = 0;
+                (*(@typ@ *)op).imag = 0;
+#else
+                *(@typ@ *)op = 0;
+#endif
+                NPY_BEGIN_ALLOW_THREADS;
+                @TYPE@_dot(ip1, is1_n, ip2, is2_n, op, dn, NULL);
+                NPY_END_ALLOW_THREADS;
+            } else if (dn ==1 && (dn ==1 || dm ==1)){
+                /*
+                 * 0d @ vector or vector @ 0d
+                 * could use cblas_Xaxy, but that requires 0ing output
+                 * and would not be faster (XXX prove it)
+                 */
+                @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
                           ib1_n, ib2_n, ib2_p, ob_p,
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
             } else if (dn == 1) {
                 /* column @ row, 2d output, no blas needed */
-                cases |= 1 << 3;
                 @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
                           ib1_n, ib2_n, ib2_p, ob_p,
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
-            } else if (dm == 1 && dp == 1) {
-                /* row @ column, 1,1 output */
-                cases |= 1 << 4;
-                @TYPE@_dot(ip1, is1_n, ip2, is2_n, op, dn, NULL);
             } else if (dm == 1) {
                 /* vector @ matrix, switch ip1, ip2, p and m */
-                cases |= 1 << 5;
                 @TYPE@_matmul_inner_noblas(ip2, ip1, op, dp, dn, dm,
                           ib2_n, ib1_n, ib1_m, ob_m,
                           is2_p, is2_n, is1_n, is1_m, os_p, os_m);
             } else if (dp == 1) {
                 /* matrix @ vector */
-                cases |= 1 << 6;
                 @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
                           ib1_n, ib2_n, ib2_p, ob_p,
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
@@ -3344,20 +3298,17 @@ NPY_NO_EXPORT void
             }
         } else {
             /* matrix @ matrix */
-            cases |= 1 << 7;
             @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
                           ib1_n, ib2_n, ib2_p, ob_p,
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
         }
 #else
-        cases |= 1 << 0;
         @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
                           ib1_n, ib2_n, ib2_p, ob_p,
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
 
 #endif
     END_OUTER_LOOP
-    printf("@TYPE@_matmul use cases=%ld\n", cases);
 }
 
 /**end repeat**/
