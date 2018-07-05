@@ -197,7 +197,7 @@ PyArray_CompareLists(npy_intp *l1, npy_intp *l2, int n)
 }
 
 /*
- * simulates a C-style 1-3 dimensional array which can be accesed using
+ * simulates a C-style 1-3 dimensional array which can be accessed using
  * ptr[i]  or ptr[i][j] or ptr[i][j][k] -- requires pointer allocation
  * for 2-d and 3-d.
  *
@@ -800,102 +800,6 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     return 0;
 }
 
-/*
- * Make a new empty array, of the passed size, of a type that takes the
- * priority of ap1 and ap2 into account.
- *
- * If `out` is non-NULL, memory overlap is checked with ap1 and ap2, and an
- * updateifcopy temporary array may be returned. If `result` is non-NULL, the
- * output array to be returned (`out` if non-NULL and the newly allocated array
- * otherwise) is incref'd and put to *result.
- */
-static PyArrayObject *
-new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
-{
-    PyArrayObject *out_buf;
-
-    if (out) {
-        int d;
-
-        /* verify that out is usable */
-        if (PyArray_NDIM(out) != nd ||
-            PyArray_TYPE(out) != typenum ||
-            !PyArray_ISCARRAY(out)) {
-            PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable (must have the right datatype, "
-                "number of dimensions, and be a C-Array)");
-            return 0;
-        }
-        for (d = 0; d < nd; ++d) {
-            if (dimensions[d] != PyArray_DIM(out, d)) {
-                PyErr_SetString(PyExc_ValueError,
-                    "output array has wrong dimensions");
-                return 0;
-            }
-        }
-
-        /* check for memory overlap */
-        if (!(solve_may_share_memory(out, ap1, 1) == 0 &&
-              solve_may_share_memory(out, ap2, 1) == 0)) {
-            /* allocate temporary output array */
-            out_buf = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
-                                                            NULL, 0);
-            if (out_buf == NULL) {
-                return NULL;
-            }
-
-            /* set copy-back */
-            Py_INCREF(out);
-            if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
-                Py_DECREF(out);
-                Py_DECREF(out_buf);
-                return NULL;
-            }
-        }
-        else {
-            Py_INCREF(out);
-            out_buf = out;
-        }
-
-        if (result) {
-            Py_INCREF(out);
-            *result = out;
-        }
-
-        return out_buf;
-    }
-    else {
-        PyTypeObject *subtype;
-        double prior1, prior2;
-        /*
-         * Need to choose an output array that can hold a sum
-         * -- use priority to determine which subtype.
-         */
-        if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
-            prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-            prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
-        }
-        else {
-            prior1 = prior2 = 0.0;
-            subtype = Py_TYPE(ap1);
-        }
-
-        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                               typenum, NULL, NULL, 0, 0,
-                                               (PyObject *)
-                                               (prior2 > prior1 ? ap2 : ap1));
-
-        if (out_buf != NULL && result) {
-            Py_INCREF(out_buf);
-            *result = out_buf;
-        }
-
-        return out_buf;
-    }
-}
-
 /* Could perhaps be redone to not make contiguous arrays */
 
 /*NUMPY_API
@@ -1101,7 +1005,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (it1->index < it1->size) {
         while (it2->index < it2->size) {
-            dot(it1->dataptr, is1, it2->dataptr, is2, op, l, out_buf);
+            dot(it1->dataptr, is1, it2->dataptr, is2, op, l, NULL);
             op += os;
             PyArray_ITER_NEXT(it2);
         }
@@ -1607,7 +1511,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     npy_intp newstrides[NPY_MAXDIMS];
     npy_intp newstride;
     int i, k, num;
-    PyArrayObject *ret;
+    PyObject *ret;
     PyArray_Descr *dtype;
 
     if (order == NPY_FORTRANORDER || PyArray_ISFORTRAN(arr) || PyArray_NDIM(arr) == 0) {
@@ -1629,22 +1533,13 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     }
     dtype = PyArray_DESCR(arr);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
-                        dtype, ndmin, newdims, newstrides,
-                        PyArray_DATA(arr),
-                        PyArray_FLAGS(arr),
-                        (PyObject *)arr);
-    if (ret == NULL) {
-        Py_DECREF(arr);
-        return NULL;
-    }
-    /* steals a reference to arr --- so don't increment here */
-    if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
+    ret = PyArray_NewFromDescrAndBase(
+            Py_TYPE(arr), dtype,
+            ndmin, newdims, newstrides, PyArray_DATA(arr),
+            PyArray_FLAGS(arr), (PyObject *)arr, (PyObject *)arr);
+    Py_DECREF(arr);
 
-    return (PyObject *)ret;
+    return ret;
 }
 
 
@@ -2652,21 +2547,31 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
         /* Subscript */
         else if (PyInt_Check(item) || PyLong_Check(item)) {
             long s = PyInt_AsLong(item);
-            if ( s < 0 || s > 2*26) {
+            npy_bool bad_input = 0;
+
+            if (subindex + 1 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
-                        "subscript is not within the valid range [0, 52]");
+                        "subscripts list is too long");
                 Py_DECREF(obj);
                 return -1;
             }
-            if (s < 26) {
-                subscripts[subindex++] = 'A' + s;
+
+            if ( s < 0 ) {
+                bad_input = 1;
+            }
+            else if (s < 26) {
+                subscripts[subindex++] = 'A' + (char)s;
+            }
+            else if (s < 2*26) {
+                subscripts[subindex++] = 'a' + (char)s - 26;
             }
             else {
-                subscripts[subindex++] = 'a' + s;
+                bad_input = 1;
             }
-            if (subindex >= subsize) {
+
+            if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
-                        "subscripts list is too long");
+                        "subscript is not within the valid range [0, 52)");
                 Py_DECREF(obj);
                 return -1;
             }
@@ -3605,7 +3510,7 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 
 /*
- * Prints floating-point scalars usign the Dragon4 algorithm, scientific mode.
+ * Prints floating-point scalars using the Dragon4 algorithm, scientific mode.
  * See docstring of `np.format_float_scientific` for description of arguments.
  * The differences is that a value of -1 is valid for pad_left, exp_digits,
  * precision, which is equivalent to `None`.
@@ -3661,7 +3566,7 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 
 /*
- * Prints floating-point scalars usign the Dragon4 algorithm, positional mode.
+ * Prints floating-point scalars using the Dragon4 algorithm, positional mode.
  * See docstring of `np.format_float_positional` for description of arguments.
  * The differences is that a value of -1 is valid for pad_left, pad_right,
  * precision, which is equivalent to `None`.

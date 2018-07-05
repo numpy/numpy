@@ -6,7 +6,7 @@ Each dictionary contains name -> index pair.
 Whenever you change one index, you break the ABI (and the ABI version number
 should be incremented). Whenever you add an item to one of the dict, the API
 needs to be updated in both setup_common.py and by adding an appropriate
-entry to cversion.txt (generate the hash via "python cversions.py".
+entry to cversion.txt (generate the hash via "python cversions.py").
 
 When adding a function, make sure to use the next integer not used as an index
 (in case you use an existing index or jump, the build will stop and raise an
@@ -350,8 +350,6 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
-    'NpyIter_Close':                        (304,),
-    # End 1.15 API
 }
 
 ufunc_types_api = {

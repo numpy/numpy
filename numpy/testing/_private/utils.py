@@ -15,6 +15,7 @@ import shutil
 import contextlib
 from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
+from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
@@ -68,7 +69,7 @@ def import_nose():
 
     if not nose_is_good:
         msg = ('Need nose >= %d.%d.%d for tests - see '
-               'http://nose.readthedocs.io' %
+               'https://nose.readthedocs.io' %
                minimum_nose_version)
         raise ImportError(msg)
 
@@ -176,7 +177,7 @@ if os.name == 'nt':
         # thread's CPU usage is either 0 or 100).  To read counters like this,
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
-        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp (dead link)
         # My older explanation for this was that the "AddCounter" process forced
         # the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -685,7 +686,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, isnan, isinf, any, inf
+    from numpy.core import array, isnan, inf, bool_
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
@@ -695,17 +696,28 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     def istime(x):
         return x.dtype.char in "Mm"
 
-    def chk_same_position(x_id, y_id, hasval='nan'):
-        """Handling nan/inf: check that x and y have the nan/inf at the same
-        locations."""
-        try:
-            assert_array_equal(x_id, y_id)
-        except AssertionError:
+    def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
+        """Handling nan/inf: combine results of running func on x and y,
+        checking that they are True at the same locations."""
+        # Both the != True comparison here and the cast to bool_ at
+        # the end are done to deal with `masked`, which cannot be
+        # compared usefully, and for which .all() yields masked.
+        x_id = func(x)
+        y_id = func(y)
+        if (x_id == y_id).all() != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
+        # If there is a scalar, then here we know the array has the same
+        # flag as it everywhere, so we should return the scalar flag.
+        if x_id.ndim == 0:
+            return bool_(x_id)
+        elif y_id.ndim == 0:
+            return bool_(y_id)
+        else:
+            return y_id
 
     try:
         cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
@@ -718,49 +730,32 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
 
+        flagged = bool_(False)
         if isnumber(x) and isnumber(y):
-            has_nan = has_inf = False
             if equal_nan:
-                x_isnan, y_isnan = isnan(x), isnan(y)
-                # Validate that NaNs are in the same place
-                has_nan = any(x_isnan) or any(y_isnan)
-                if has_nan:
-                    chk_same_position(x_isnan, y_isnan, hasval='nan')
+                flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
             if equal_inf:
-                x_isinf, y_isinf = isinf(x), isinf(y)
-                # Validate that infinite values are in the same place
-                has_inf = any(x_isinf) or any(y_isinf)
-                if has_inf:
-                    # Check +inf and -inf separately, since they are different
-                    chk_same_position(x == +inf, y == +inf, hasval='+inf')
-                    chk_same_position(x == -inf, y == -inf, hasval='-inf')
-
-            if has_nan and has_inf:
-                x = x[~(x_isnan | x_isinf)]
-                y = y[~(y_isnan | y_isinf)]
-            elif has_nan:
-                x = x[~x_isnan]
-                y = y[~y_isnan]
-            elif has_inf:
-                x = x[~x_isinf]
-                y = y[~y_isinf]
-
-            # Only do the comparison if actual values are left
-            if x.size == 0:
-                return
+                flagged |= func_assert_same_pos(x, y,
+                                                func=lambda xy: xy == +inf,
+                                                hasval='+inf')
+                flagged |= func_assert_same_pos(x, y,
+                                                func=lambda xy: xy == -inf,
+                                                hasval='-inf')
 
         elif istime(x) and istime(y):
             # If one is datetime64 and the other timedelta64 there is no point
             if equal_nan and x.dtype.type == y.dtype.type:
-                x_isnat, y_isnat = isnat(x), isnat(y)
+                flagged = func_assert_same_pos(x, y, func=isnat, hasval="NaT")
 
-                if any(x_isnat) or any(y_isnat):
-                    chk_same_position(x_isnat, y_isnat, hasval="NaT")
-
-                if any(x_isnat) or any(y_isnat):
-                    x = x[~x_isnat]
-                    y = y[~y_isnat]
+        if flagged.ndim > 0:
+            x, y = x[~flagged], y[~flagged]
+            # Only do the comparison if actual values are left
+            if x.size == 0:
+                return
+        elif flagged:
+            # no sense doing comparison if everything is flagged.
+            return
 
         val = comparison(x, y)
 
@@ -771,7 +766,11 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             reduced = val.ravel()
             cond = reduced.all()
             reduced = reduced.tolist()
-        if not cond:
+        # The below comparison is a hack to ensure that fully masked
+        # results, for which val.ravel().all() returns np.ma.masked,
+        # do not trigger a failure (np.ma.masked != True evaluates as
+        # np.ma.masked, which is falsy).
+        if cond != True:
             match = 100-100.0*reduced.count(1)/len(reduced)
             msg = build_err_msg([x, y],
                                 err_msg
@@ -1369,16 +1368,20 @@ def _assert_valid_refcount(op):
     """
     if not HAS_REFCOUNT:
         return True
-    import numpy as np
+    import numpy as np, gc
 
     b = np.arange(100*100).reshape(100, 100)
     c = b
     i = 1
 
-    rc = sys.getrefcount(i)
-    for j in range(15):
-        d = op(b, c)
-    assert_(sys.getrefcount(i) >= rc)
+    gc.disable()
+    try:
+        rc = sys.getrefcount(i)
+        for j in range(15):
+            d = op(b, c)
+        assert_(sys.getrefcount(i) >= rc)
+    finally:
+        gc.enable()
     del d  # for pyflakes
 
 
@@ -1606,7 +1609,7 @@ def _integer_repr(x, vdt, comp):
     # Reinterpret binary representation of the float as sign-magnitude:
     # take into account two-complement representation
     # See also
-    # http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+    # https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
     rx = x.view(vdt)
     if not (rx.size == 1):
         rx[rx < 0] = comp - rx[rx < 0]
@@ -1629,98 +1632,6 @@ def integer_repr(x):
         return _integer_repr(x, np.int64, np.int64(-2**63))
     else:
         raise ValueError("Unsupported dtype %s" % x.dtype)
-
-
-# The following two classes are copied from python 2.6 warnings module (context
-# manager)
-class WarningMessage(object):
-
-    """
-    Holds the result of a single showwarning() call.
-
-    Deprecated in 1.8.0
-
-    Notes
-    -----
-    `WarningMessage` is copied from the Python 2.6 warnings module,
-    so it can be used in NumPy with older Python versions.
-
-    """
-
-    _WARNING_DETAILS = ("message", "category", "filename", "lineno", "file",
-                        "line")
-
-    def __init__(self, message, category, filename, lineno, file=None,
-                    line=None):
-        local_values = locals()
-        for attr in self._WARNING_DETAILS:
-            setattr(self, attr, local_values[attr])
-        if category:
-            self._category_name = category.__name__
-        else:
-            self._category_name = None
-
-    def __str__(self):
-        return ("{message : %r, category : %r, filename : %r, lineno : %s, "
-                    "line : %r}" % (self.message, self._category_name,
-                                    self.filename, self.lineno, self.line))
-
-
-class WarningManager(object):
-    """
-    A context manager that copies and restores the warnings filter upon
-    exiting the context.
-
-    The 'record' argument specifies whether warnings should be captured by a
-    custom implementation of ``warnings.showwarning()`` and be appended to a
-    list returned by the context manager. Otherwise None is returned by the
-    context manager. The objects appended to the list are arguments whose
-    attributes mirror the arguments to ``showwarning()``.
-
-    The 'module' argument is to specify an alternative module to the module
-    named 'warnings' and imported under that name. This argument is only useful
-    when testing the warnings module itself.
-
-    Deprecated in 1.8.0
-
-    Notes
-    -----
-    `WarningManager` is a copy of the ``catch_warnings`` context manager
-    from the Python 2.6 warnings module, with slight modifications.
-    It is copied so it can be used in NumPy with older Python versions.
-
-    """
-
-    def __init__(self, record=False, module=None):
-        self._record = record
-        if module is None:
-            self._module = sys.modules['warnings']
-        else:
-            self._module = module
-        self._entered = False
-
-    def __enter__(self):
-        if self._entered:
-            raise RuntimeError("Cannot enter %r twice" % self)
-        self._entered = True
-        self._filters = self._module.filters
-        self._module.filters = self._filters[:]
-        self._showwarning = self._module.showwarning
-        if self._record:
-            log = []
-
-            def showwarning(*args, **kwargs):
-                log.append(WarningMessage(*args, **kwargs))
-            self._module.showwarning = showwarning
-            return log
-        else:
-            return None
-
-    def __exit__(self):
-        if not self._entered:
-            raise RuntimeError("Cannot exit %r without entering first" % self)
-        self._module.filters = self._filters
-        self._module.showwarning = self._showwarning
 
 
 @contextlib.contextmanager
@@ -2006,7 +1917,7 @@ class suppress_warnings(object):
     ``warnings.catch_warnings``.
 
     However, it also provides a filter mechanism to work around
-    http://bugs.python.org/issue4180.
+    https://bugs.python.org/issue4180.
 
     This bug causes Python before 3.4 to not reliably show warnings again
     after they have been ignored once (even within catch_warnings). It

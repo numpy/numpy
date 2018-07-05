@@ -113,11 +113,6 @@ def poly(seq_of_zeros):
     >>> np.poly(P)
     array([ 1.        ,  0.        ,  0.16666667])
 
-    Or a square matrix object:
-
-    >>> np.poly(np.matrix(P))
-    array([ 1.        ,  0.        ,  0.16666667])
-
     Note how in all cases the leading coefficient is always 1.
 
     """
@@ -499,9 +494,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
     .. [2] Wikipedia, "Polynomial interpolation",
-           http://en.wikipedia.org/wiki/Polynomial_interpolation
+           https://en.wikipedia.org/wiki/Polynomial_interpolation
 
     Examples
     --------

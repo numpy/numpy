@@ -26,9 +26,11 @@ from numpy.compat import (
 
 if sys.version_info[0] >= 3:
     import pickle
+    from collections.abc import Mapping
 else:
     import cPickle as pickle
     from future_builtins import map
+    from collections import Mapping
 
 
 def loads(*args, **kwargs):
@@ -92,7 +94,7 @@ class BagObj(object):
 
         This also enables tab-completion in an interpreter or IPython.
         """
-        return object.__getattribute__(self, '_obj').keys()
+        return list(object.__getattribute__(self, '_obj').keys())
 
 
 def zipfile_factory(file, *args, **kwargs):
@@ -110,7 +112,7 @@ def zipfile_factory(file, *args, **kwargs):
     return zipfile.ZipFile(file, *args, **kwargs)
 
 
-class NpzFile(object):
+class NpzFile(Mapping):
     """
     NpzFile(fid)
 
@@ -216,6 +218,13 @@ class NpzFile(object):
     def __del__(self):
         self.close()
 
+    # Implement the Mapping ABC
+    def __iter__(self):
+        return iter(self.files)
+
+    def __len__(self):
+        return len(self.files)
+
     def __getitem__(self, key):
         # FIXME: This seems like it will copy strings around
         #   more than is strictly necessary.  The zipfile
@@ -225,11 +234,11 @@ class NpzFile(object):
         #   It would be better if the zipfile could read
         #   (or at least uncompress) the data
         #   directly into the array memory.
-        member = 0
+        member = False
         if key in self._files:
-            member = 1
+            member = True
         elif key in self.files:
-            member = 1
+            member = True
             key += '.npy'
         if member:
             bytes = self.zip.open(key)
@@ -245,31 +254,27 @@ class NpzFile(object):
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
-    def __iter__(self):
-        return iter(self.files)
 
-    def items(self):
-        """
-        Return a list of tuples, with each tuple (filename, array in file).
+    if sys.version_info.major == 3:
+        # deprecate the python 2 dict apis that we supported by accident in
+        # python 3. We forgot to implement itervalues() at all in earlier
+        # versions of numpy, so no need to deprecated it here.
 
-        """
-        return [(f, self[f]) for f in self.files]
+        def iteritems(self):
+            # Numpy 1.15, 2018-02-20
+            warnings.warn(
+                "NpzFile.iteritems is deprecated in python 3, to match the "
+                "removal of dict.itertems. Use .items() instead.",
+                DeprecationWarning, stacklevel=2)
+            return self.items()
 
-    def iteritems(self):
-        """Generator that returns tuples (filename, array in file)."""
-        for f in self.files:
-            yield (f, self[f])
-
-    def keys(self):
-        """Return files in the archive with a ``.npy`` extension."""
-        return self.files
-
-    def iterkeys(self):
-        """Return an iterator over the files in the archive."""
-        return self.__iter__()
-
-    def __contains__(self, key):
-        return self.files.__contains__(key)
+        def iterkeys(self):
+            # Numpy 1.15, 2018-02-20
+            warnings.warn(
+                "NpzFile.iterkeys is deprecated in python 3, to match the "
+                "removal of dict.iterkeys. Use .keys() instead.",
+                DeprecationWarning, stacklevel=2)
+            return self.keys()
 
 
 def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
@@ -475,9 +480,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     Notes
     -----
-    For a description of the ``.npy`` format, see the module docstring
-    of `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://numpy.github.io/neps/npy-format.html
+    For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
     Examples
     --------
@@ -561,9 +564,7 @@ def savez(file, *args, **kwds):
     The ``.npz`` file format is a zipped archive of files named after the
     variables they contain.  The archive is not compressed and each file
     in the archive contains one variable in ``.npy`` format. For a
-    description of the ``.npy`` format, see `numpy.lib.format` or the
-    NumPy Enhancement Proposal
-    http://numpy.github.io/neps/npy-format.html
+    description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -642,9 +643,9 @@ def savez_compressed(file, *args, **kwds):
     The ``.npz`` file format is a zipped archive of files named after the
     variables they contain.  The archive is compressed with
     ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
-    in ``.npy`` format. For a description of the ``.npy`` format, see
-    `numpy.lib.format` or the NumPy Enhancement Proposal
-    http://numpy.github.io/neps/npy-format.html
+    in ``.npy`` format. For a description of the ``.npy`` format, see 
+    :py:mod:`numpy.lib.format`.
+
 
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
@@ -791,8 +792,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the data-type.
     comments : str or sequence of str, optional
         The characters or list of characters used to indicate the start of a
-        comment. For backwards compatibility, byte strings will be decoded as
-        'latin1'. The default is '#'.
+        comment. None implies no comments. For backwards compatibility, byte
+        strings will be decoded as 'latin1'. The default is '#'.
     delimiter : str, optional
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
@@ -859,18 +860,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     Examples
     --------
     >>> from io import StringIO   # StringIO behaves like a file object
-    >>> c = StringIO("0 1\\n2 3")
+    >>> c = StringIO(u"0 1\\n2 3")
     >>> np.loadtxt(c)
     array([[ 0.,  1.],
            [ 2.,  3.]])
 
-    >>> d = StringIO("M 21 72\\nF 35 58")
+    >>> d = StringIO(u"M 21 72\\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
     array([('M', 21, 72.0), ('F', 35, 58.0)],
           dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
 
-    >>> c = StringIO("1,0,2\\n3,0,4")
+    >>> c = StringIO(u"1,0,2\\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
     array([ 1.,  3.])
@@ -1258,8 +1259,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     References
     ----------
     .. [1] `Format Specification Mini-Language
-           <http://docs.python.org/library/string.html#
-           format-specification-mini-language>`_, Python Documentation.
+           <https://docs.python.org/library/string.html#format-specification-mini-language>`_,
+           Python Documentation.
 
     Examples
     --------
@@ -1623,7 +1624,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     References
     ----------
     .. [1] NumPy User Guide, section `I/O with NumPy
-           <http://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
+           <https://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
     ---------
@@ -1632,7 +1633,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Comma delimited file with mixed dtype
 
-    >>> s = StringIO("1,1.3,abcde")
+    >>> s = StringIO(u"1,1.3,abcde")
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
@@ -1659,7 +1660,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     An example with fixed-width columns
 
-    >>> s = StringIO("11.3abcde")
+    >>> s = StringIO(u"11.3abcde")
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data

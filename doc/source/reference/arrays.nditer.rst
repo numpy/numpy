@@ -26,7 +26,7 @@ using the standard Python iterator interface.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 1 2 3 4 5
 
@@ -42,12 +42,12 @@ of that transpose in C order.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a.T):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 1 2 3 4 5
 
     >>> for x in np.nditer(a.T.copy(order='C')):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 3 1 4 2 5
 
@@ -70,35 +70,36 @@ order='C' for C order and order='F' for Fortran order.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a, order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 3 1 4 2 5
     >>> for x in np.nditer(a.T, order='C'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 3 1 4 2 5
+
+.. _nditer-context-manager:
 
 Modifying Array Values
 ----------------------
 
-By default, the :class:`nditer` treats the input array as a read-only
-object. To modify the array elements, you must specify either read-write
-or write-only mode. This is controlled with per-operand flags. The
-operands may be created as views into the original data with the 
-`WRITEBACKIFCOPY` flag. In this case the iterator must either
+By default, the :class:`nditer` treats the input operand as a read-only
+object. To be able to modify the array elements, you must specify either
+read-write or write-only mode using the `'readwrite'` or `'writeonly'`
+per-operand flags.
 
-- be used as a context manager, and the temporary data will be written back
-  to the original array when the `__exit__` function is called.
-- have a call to the iterator's `close` function to ensure the modified data
-  is written back to the original array.
+The nditer will then yield writeable buffer arrays which you may modify. However,
+because  the nditer must copy this buffer data back to the original array once
+iteration is finished, you must signal when the iteration is ended, by one of two
+methods. You may either:
 
-Regular assignment in Python simply changes a reference in the local or
-global variable dictionary instead of modifying an existing variable in
-place.  This means that simply assigning to `x` will not place the value
-into the element of the array, but rather switch `x` from being an array
-element reference to being a reference to the value you assigned. To
-actually modify the element of the array, `x` should be indexed with
-the ellipsis.
+ - used the nditer as a context manager using the `with` statement, and
+   the temporary data will be written back when the context is exited.
+ - call the iterator's `close` method once finished iterating, which will trigger
+   the write-back.
+
+The nditer can no longer be iterated once either `close` is called or its
+context is exited.
 
 .. admonition:: Example
 
@@ -138,12 +139,12 @@ elements each.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a, flags=['external_loop']):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 1 2 3 4 5]
 
     >>> for x in np.nditer(a, flags=['external_loop'], order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 3] [1 4] [2 5]
 
@@ -173,20 +174,20 @@ construct in order to be more readable.
     >>> a = np.arange(6).reshape(2,3)
     >>> it = np.nditer(a, flags=['f_index'])
     >>> while not it.finished:
-    ...     print "%d <%d>" % (it[0], it.index),
+    ...     print("%d <%d>" % (it[0], it.index), end=' ')
     ...     it.iternext()
     ...
     0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5>
 
     >>> it = np.nditer(a, flags=['multi_index'])
     >>> while not it.finished:
-    ...     print "%d <%s>" % (it[0], it.multi_index),
+    ...     print("%d <%s>" % (it[0], it.multi_index), end=' ')
     ...     it.iternext()
     ...
     0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
     >>> it = np.nditer(a, flags=['multi_index'], op_flags=['writeonly'])
-    >>> with it: 
+    >>> with it:
     ....    while not it.finished:
     ...         it[0] = it.multi_index[1] - it.multi_index[0]
     ...         it.iternext()
@@ -227,12 +228,12 @@ is enabled.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a, flags=['external_loop'], order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 3] [1 4] [2 5]
 
     >>> for x in np.nditer(a, flags=['external_loop','buffered'], order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 3 1 4 2 5]
 
@@ -269,7 +270,7 @@ data type doesn't match precisely.
 
     >>> a = np.arange(6).reshape(2,3) - 3
     >>> for x in np.nditer(a, op_dtypes=['complex128']):
-    ...     print np.sqrt(x),
+    ...     print(np.sqrt(x), end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -284,12 +285,12 @@ specified as an iterator flag.
     >>> a = np.arange(6).reshape(2,3) - 3
     >>> for x in np.nditer(a, op_flags=['readonly','copy'],
     ...                 op_dtypes=['complex128']):
-    ...     print np.sqrt(x),
+    ...     print(np.sqrt(x), end=' ')
     ...
     1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['complex128']):
-    ...     print np.sqrt(x),
+    ...     print(np.sqrt(x), end=' ')
     ...
     1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
 
@@ -305,7 +306,7 @@ complex to float.
 
     >>> a = np.arange(6.)
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['float32']):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -313,12 +314,12 @@ complex to float.
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['float32'],
     ...                 casting='same_kind'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0.0 1.0 2.0 3.0 4.0 5.0
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['int32'], casting='same_kind'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -360,7 +361,7 @@ a two dimensional array together.
     >>> a = np.arange(3)
     >>> b = np.arange(6).reshape(2,3)
     >>> for x, y in np.nditer([a,b]):
-    ...     print "%d:%d" % (x,y),
+    ...     print("%d:%d" % (x,y), end=' ')
     ...
     0:0 1:1 2:2 0:3 1:4 2:5
 
@@ -372,7 +373,7 @@ which includes the input shapes to help diagnose the problem.
     >>> a = np.arange(2)
     >>> b = np.arange(6).reshape(2,3)
     >>> for x, y in np.nditer([a,b]):
-    ...     print "%d:%d" % (x,y),
+    ...     print("%d:%d" % (x,y), end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>

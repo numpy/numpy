@@ -1452,7 +1452,7 @@ def buildapi(rout):
                 ['\\begin{description}'] + rd[k][1:] +\
                 ['\\end{description}']
 
-    # Workaround for Python 2.6, 2.6.1 bug: http://bugs.python.org/issue4720
+    # Workaround for Python 2.6, 2.6.1 bug: https://bugs.python.org/issue4720
     if rd['keyformat'] or rd['xaformat']:
         argformat = rd['argformat']
         if isinstance(argformat, list):

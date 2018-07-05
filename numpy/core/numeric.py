@@ -489,9 +489,9 @@ def asarray(a, dtype=None, order=None):
 
     Contrary to `asanyarray`, ndarray subclasses are not passed through:
 
-    >>> issubclass(np.matrix, np.ndarray)
+    >>> issubclass(np.recarray, np.ndarray)
     True
-    >>> a = np.matrix([[1, 2]])
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asarray(a) is a
     False
     >>> np.asanyarray(a) is a
@@ -545,7 +545,7 @@ def asanyarray(a, dtype=None, order=None):
 
     Instances of `ndarray` subclasses are passed through as-is:
 
-    >>> a = np.matrix([1, 2])
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asanyarray(a) is a
     True
 
@@ -1010,7 +1010,8 @@ def convolve(a, v, mode='full'):
 
     References
     ----------
-    .. [1] Wikipedia, "Convolution", http://en.wikipedia.org/wiki/Convolution.
+    .. [1] Wikipedia, "Convolution",
+        https://en.wikipedia.org/wiki/Convolution
 
     Examples
     --------
@@ -1896,7 +1897,7 @@ def fromfunction(function, shape, **kwargs):
         The result of the call to `function` is passed back directly.
         Therefore the shape of `fromfunction` is completely determined by
         `function`.  If `function` returns a scalar value, the shape of
-        `fromfunction` would match the `shape` parameter.
+        `fromfunction` would not match the `shape` parameter.
 
     See Also
     --------
@@ -2015,7 +2016,7 @@ def binary_repr(num, width=None):
     References
     ----------
     .. [1] Wikipedia, "Two's complement",
-        http://en.wikipedia.org/wiki/Two's_complement
+        https://en.wikipedia.org/wiki/Two's_complement
 
     Examples
     --------
@@ -2035,7 +2036,7 @@ def binary_repr(num, width=None):
     '11101'
 
     """
-    def warn_if_insufficient(width, binwdith):
+    def warn_if_insufficient(width, binwidth):
         if width is not None and width < binwidth:
             warnings.warn(
                 "Insufficient bit width provided. This behavior "
@@ -2280,7 +2281,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     relative difference (`rtol` * abs(`b`)) and the absolute difference
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
-    
+
     .. warning:: The default `atol` is not appropriate for comparing numbers
                  that are much smaller than one (see Notes).
 
@@ -2538,7 +2539,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     - Invalid operation: result is not an expressible number, typically
       indicates that a NaN was produced.
 
-    .. [1] http://en.wikipedia.org/wiki/IEEE_754
+    .. [1] https://en.wikipedia.org/wiki/IEEE_754
 
     Examples
     --------
@@ -2914,15 +2915,13 @@ True_ = bool_(True)
 
 
 def extend_all(module):
-    adict = {}
-    for a in __all__:
-        adict[a] = 1
+    existing = set(__all__)
     try:
         mall = getattr(module, '__all__')
     except AttributeError:
         mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
     for a in mall:
-        if a not in adict:
+        if a not in existing:
             __all__.append(a)
 
 

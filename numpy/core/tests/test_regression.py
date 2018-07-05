@@ -224,6 +224,42 @@ class TestRegression(object):
         x = np.arange(10, dtype='>f8')
         assert_array_equal(ref, x)
 
+    def test_arange_inf_step(self):
+        ref = np.arange(0, 1, 10)
+        x = np.arange(0, 1, np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, 1, -10)
+        x = np.arange(0, 1, -np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -1, -10)
+        x = np.arange(0, -1, -np.inf)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -1, 10)
+        x = np.arange(0, -1, np.inf)
+        assert_array_equal(ref, x)
+
+    def test_arange_underflow_stop_and_step(self):
+        finfo = np.finfo(np.float64)
+
+        ref = np.arange(0, finfo.eps, 2 * finfo.eps)
+        x = np.arange(0, finfo.eps, finfo.max)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, finfo.eps, -2 * finfo.eps)
+        x = np.arange(0, finfo.eps, -finfo.max)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -finfo.eps, -2 * finfo.eps)
+        x = np.arange(0, -finfo.eps, -finfo.max)
+        assert_array_equal(ref, x)
+
+        ref = np.arange(0, -finfo.eps, 2 * finfo.eps)
+        x = np.arange(0, -finfo.eps, finfo.max)
+        assert_array_equal(ref, x)
+
     def test_argmax(self):
         # Ticket #119
         a = np.random.normal(0, 1, (4, 5, 6, 7, 8))
@@ -2325,13 +2361,10 @@ class TestRegression(object):
 
     def test_void_item_memview(self):
         va = np.zeros(10, 'V4')
-        # for now, there is just a futurewarning
-        assert_warns(FutureWarning, va[:1].item)
-        # in the future, test we got a bytes copy:
-        #x = va[:1].item()
-        #va[0] = b'\xff\xff\xff\xff'
-        #del va
-        #assert_equal(x, b'\x00\x00\x00\x00')
+        x = va[:1].item()
+        va[0] = b'\xff\xff\xff\xff'
+        del va
+        assert_equal(x, b'\x00\x00\x00\x00')
 
     def test_structarray_title(self):
         # The following used to segfault on pypy, due to NPY_TITLE_KEY
@@ -2342,3 +2375,19 @@ class TestRegression(object):
             structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
             structure[0]['x'] = np.array([2])
             gc.collect()
+
+    def test_dtype_scalar_squeeze(self):
+        # gh-11384
+        values = {
+            'S': b"a",
+            'M': "2018-06-20",
+        }
+        for ch in np.typecodes['All']:
+            if ch in 'O':
+                continue
+            sctype = np.dtype(ch).type
+            scvalue = sctype(values.get(ch, 3))
+            for axis in [None, ()]:
+                squeezed = scvalue.squeeze(axis=axis)
+                assert_equal(squeezed, scvalue)
+                assert_equal(type(squeezed), type(scvalue))

@@ -16,15 +16,6 @@
 
 #include "binop_override.h"
 
-/* <2.7.11 and <3.4.4 have the wrong argument type for Py_EnterRecursiveCall */
-#if (PY_VERSION_HEX < 0x02070B00) || \
-    ((0x03000000 <= PY_VERSION_HEX) && (PY_VERSION_HEX < 0x03040400))
-    #define _Py_EnterRecursiveCall(x) Py_EnterRecursiveCall((char *)(x))
-#else
-    #define _Py_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
-#endif
-
-
 /*************************************************************************
  ****************   Implement Number Protocol ****************************
  *************************************************************************/
@@ -476,7 +467,9 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace,
     double exponent;
     NPY_SCALARKIND kind;   /* NPY_NOSCALAR is not scalar */
 
-    if (PyArray_Check(a1) && ((kind=is_scalar_with_conversion(o2, &exponent))>0)) {
+    if (PyArray_Check(a1) &&
+            !PyArray_ISOBJECT(a1) &&
+            ((kind=is_scalar_with_conversion(o2, &exponent))>0)) {
         PyObject *fastop = NULL;
         if (PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1)) {
             if (exponent == 1.0) {
@@ -794,7 +787,7 @@ _array_nonzero(PyArrayObject *mp)
     n = PyArray_SIZE(mp);
     if (n == 1) {
         int res;
-        if (_Py_EnterRecursiveCall(" while converting array to bool")) {
+        if (Npy_EnterRecursiveCall(" while converting array to bool")) {
             return -1;
         }
         res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
@@ -848,7 +841,7 @@ array_scalar_forward(PyArrayObject *v,
     /* Need to guard against recursion if our array holds references */
     if (PyDataType_REFCHK(PyArray_DESCR(v))) {
         PyObject *res;
-        if (_Py_EnterRecursiveCall(where) != 0) {
+        if (Npy_EnterRecursiveCall(where) != 0) {
             Py_DECREF(scalar);
             return NULL;
         }

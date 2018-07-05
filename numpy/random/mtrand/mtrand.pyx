@@ -22,8 +22,8 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
-include "randint_helpers.pxi"
 include "numpy.pxd"
+include "randint_helpers.pxi"
 include "cpython/pycapsule.pxd"
 
 from libc cimport string
@@ -573,21 +573,21 @@ def _shape_from_size(size, d):
            shape = tuple(size) + (d,)
     return shape
 
-# Look up table for randint functions keyed by type name. The stored data
-# is a tuple (lbnd, ubnd, func), where lbnd is the smallest value for the
-# type, ubnd is one greater than the largest value, and func is the
+# Look up table for randint functions keyed by dtype.
+# The stored data is a tuple (lbnd, ubnd, func), where lbnd is the smallest
+# value for the type, ubnd is one greater than the largest value, and func is the
 # function to call.
 _randint_type = {
-    'bool': (0, 2, _rand_bool),
-    'int8': (-2**7, 2**7, _rand_int8),
-    'int16': (-2**15, 2**15, _rand_int16),
-    'int32': (-2**31, 2**31, _rand_int32),
-    'int64': (-2**63, 2**63, _rand_int64),
-    'uint8': (0, 2**8, _rand_uint8),
-    'uint16': (0, 2**16, _rand_uint16),
-    'uint32': (0, 2**32, _rand_uint32),
-    'uint64': (0, 2**64, _rand_uint64)
-    }
+    np.dtype(np.bool_): (0, 2, _rand_bool),
+    np.dtype(np.int8): (-2**7, 2**7, _rand_int8),
+    np.dtype(np.int16): (-2**15, 2**15, _rand_int16),
+    np.dtype(np.int32): (-2**31, 2**31, _rand_int32),
+    np.dtype(np.int64): (-2**63, 2**63, _rand_int64),
+    np.dtype(np.uint8): (0, 2**8, _rand_uint8),
+    np.dtype(np.uint16): (0, 2**16, _rand_uint16),
+    np.dtype(np.uint32): (0, 2**32, _rand_uint32),
+    np.dtype(np.uint64): (0, 2**64, _rand_uint64)
+}
 
 
 cdef class RandomState:
@@ -969,13 +969,12 @@ cdef class RandomState:
             high = low
             low = 0
 
-        # '_randint_type' is defined in
-        # 'generate_randint_helpers.py'
-        key = np.dtype(dtype).name
-        if key not in _randint_type:
-            raise TypeError('Unsupported dtype "%s" for randint' % key)
-
-        lowbnd, highbnd, randfunc = _randint_type[key]
+        raw_dtype = dtype
+        dtype = np.dtype(dtype)
+        try:
+            lowbnd, highbnd, randfunc = _randint_type[dtype]
+        except KeyError:
+            raise TypeError('Unsupported dtype "%s" for randint' % dtype)
 
         # TODO: Do not cast these inputs to Python int
         #
@@ -986,20 +985,20 @@ cdef class RandomState:
         ihigh = int(high)
 
         if ilow < lowbnd:
-            raise ValueError("low is out of bounds for %s" % (key,))
+            raise ValueError("low is out of bounds for %s" % dtype)
         if ihigh > highbnd:
-            raise ValueError("high is out of bounds for %s" % (key,))
-        if ilow >= ihigh:
-            raise ValueError("low >= high")
-
+            raise ValueError("high is out of bounds for %s" % dtype)
+        if ilow >= ihigh and np.prod(size) != 0:
+            raise ValueError("Range cannot be empty (low >= high) unless no samples are taken")
+ 
         with self.lock:
             ret = randfunc(ilow, ihigh - 1, size, self.state_address)
 
-            if size is None:
-                if dtype in (np.bool, np.int, np.long):
-                    return dtype(ret)
+        # back-compat: keep python scalars when a python type is passed
+        if size is None and raw_dtype in (bool, int, np.long):
+            return raw_dtype(ret)
 
-            return ret
+        return ret
 
     def bytes(self, npy_intp length):
         """
@@ -1115,15 +1114,15 @@ cdef class RandomState:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
             except TypeError:
-                raise ValueError("a must be 1-dimensional or an integer")
-            if pop_size <= 0:
-                raise ValueError("a must be greater than 0")
+                raise ValueError("'a' must be 1-dimensional or an integer")
+            if pop_size <= 0 and np.prod(size) != 0:
+                raise ValueError("'a' must be greater than 0 unless no samples are taken")
         elif a.ndim != 1:
-            raise ValueError("a must be 1-dimensional")
+            raise ValueError("'a' must be 1-dimensional")
         else:
             pop_size = a.shape[0]
-            if pop_size is 0:
-                raise ValueError("a must be non-empty")
+            if pop_size is 0 and np.prod(size) != 0:
+                raise ValueError("'a' cannot be empty unless no samples are taken")
 
         if p is not None:
             d = len(p)
@@ -1137,9 +1136,9 @@ cdef class RandomState:
             pix = <double*>PyArray_DATA(p)
 
             if p.ndim != 1:
-                raise ValueError("p must be 1-dimensional")
+                raise ValueError("'p' must be 1-dimensional")
             if p.size != pop_size:
-                raise ValueError("a and p must have same size")
+                raise ValueError("'a' and 'p' must have same size")
             if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
             if abs(kahan_sum(pix, d) - 1.) > atol:
@@ -1607,7 +1606,7 @@ cdef class RandomState:
         References
         ----------
         .. [1] Wikipedia, "Normal distribution",
-               http://en.wikipedia.org/wiki/Normal_distribution
+               https://en.wikipedia.org/wiki/Normal_distribution
         .. [2] P. R. Peebles Jr., "Central Limit Theorem" in "Probability,
                Random Variables and Random Signal Principles", 4th ed., 2001,
                pp. 51, 51, 125.
@@ -1759,9 +1758,9 @@ cdef class RandomState:
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
                Random Signal Principles", 4th ed, 2001, p. 57.
         .. [2] Wikipedia, "Poisson process",
-               http://en.wikipedia.org/wiki/Poisson_process
+               https://en.wikipedia.org/wiki/Poisson_process
         .. [3] Wikipedia, "Exponential distribution",
-               http://en.wikipedia.org/wiki/Exponential_distribution
+               https://en.wikipedia.org/wiki/Exponential_distribution
 
         """
         cdef ndarray oscale
@@ -1860,7 +1859,7 @@ cdef class RandomState:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
-               http://en.wikipedia.org/wiki/Gamma_distribution
+               https://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -1950,7 +1949,7 @@ cdef class RandomState:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
-               http://en.wikipedia.org/wiki/Gamma_distribution
+               https://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -2047,7 +2046,7 @@ cdef class RandomState:
         .. [1] Glantz, Stanton A. "Primer of Biostatistics.", McGraw-Hill,
                Fifth Edition, 2002.
         .. [2] Wikipedia, "F-distribution",
-               http://en.wikipedia.org/wiki/F-distribution
+               https://en.wikipedia.org/wiki/F-distribution
 
         Examples
         --------
@@ -2150,7 +2149,7 @@ cdef class RandomState:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
-               http://en.wikipedia.org/wiki/Noncentral_F-distribution
+               https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
         Examples
         --------
@@ -2257,7 +2256,7 @@ cdef class RandomState:
         References
         ----------
         .. [1] NIST "Engineering Statistics Handbook"
-               http://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
+               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
 
         Examples
         --------
@@ -2333,8 +2332,8 @@ cdef class RandomState:
         .. [1] Delhi, M.S. Holla, "On a noncentral chi-square distribution in
                the analysis of weapon systems effectiveness", Metrika,
                Volume 15, Number 1 / December, 1970.
-        .. [2] Wikipedia, "Noncentral chi-square distribution"
-               http://en.wikipedia.org/wiki/Noncentral_chi-square_distribution
+        .. [2] Wikipedia, "Noncentral chi-squared distribution"
+               https://en.wikipedia.org/wiki/Noncentral_chi-squared_distribution
 
         Examples
         --------
@@ -2433,12 +2432,12 @@ cdef class RandomState:
         ----------
         .. [1] NIST/SEMATECH e-Handbook of Statistical Methods, "Cauchy
               Distribution",
-              http://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
+              https://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
         .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
               http://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
-              http://en.wikipedia.org/wiki/Cauchy_distribution
+              https://en.wikipedia.org/wiki/Cauchy_distribution
 
         Examples
         --------
@@ -2501,7 +2500,7 @@ cdef class RandomState:
         .. [1] Dalgaard, Peter, "Introductory Statistics With R",
                Springer, 2002.
         .. [2] Wikipedia, "Student's t-distribution"
-               http://en.wikipedia.org/wiki/Student's_t-distribution
+               https://en.wikipedia.org/wiki/Student's_t-distribution
 
         Examples
         --------
@@ -2731,7 +2730,7 @@ cdef class RandomState:
         .. [3] Reiss, R.D., Thomas, M.(2001), Statistical Analysis of Extreme
                Values, Birkhauser Verlag, Basel, pp 23-30.
         .. [4] Wikipedia, "Pareto distribution",
-               http://en.wikipedia.org/wiki/Pareto_distribution
+               https://en.wikipedia.org/wiki/Pareto_distribution
 
         Examples
         --------
@@ -2836,7 +2835,7 @@ cdef class RandomState:
                Wide Applicability", Journal Of Applied Mechanics ASME Paper
                1951.
         .. [3] Wikipedia, "Weibull distribution",
-               http://en.wikipedia.org/wiki/Weibull_distribution
+               https://en.wikipedia.org/wiki/Weibull_distribution
 
         Examples
         --------
@@ -2927,7 +2926,7 @@ cdef class RandomState:
                Dataplot Reference Manual, Volume 2: Let Subcommands and Library
                Functions", National Institute of Standards and Technology
                Handbook Series, June 2003.
-               http://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/powpdf.pdf
+               https://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/powpdf.pdf
 
         Examples
         --------
@@ -3042,7 +3041,7 @@ cdef class RandomState:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
-               http://en.wikipedia.org/wiki/Laplace_distribution
+               https://en.wikipedia.org/wiki/Laplace_distribution
 
         Examples
         --------
@@ -3272,7 +3271,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
-               http://en.wikipedia.org/wiki/Logistic_distribution
+               https://en.wikipedia.org/wiki/Logistic_distribution
 
         Examples
         --------
@@ -3366,7 +3365,7 @@ cdef class RandomState:
         .. [1] Limpert, E., Stahel, W. A., and Abbt, M., "Log-normal
                Distributions across the Sciences: Keys and Clues,"
                BioScience, Vol. 51, No. 5, May, 2001.
-               http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
+               https://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
         .. [2] Reiss, R.D. and Thomas, M., "Statistical Analysis of Extreme
                Values," Basel: Birkhauser Verlag, 2001, pp. 31-32.
 
@@ -3472,9 +3471,9 @@ cdef class RandomState:
         References
         ----------
         .. [1] Brighton Webs Ltd., "Rayleigh Distribution,"
-               http://www.brighton-webs.co.uk/distributions/rayleigh.asp
+               https://web.archive.org/web/20090514091424/http://brighton-webs.co.uk:80/distributions/rayleigh.asp
         .. [2] Wikipedia, "Rayleigh distribution"
-               http://en.wikipedia.org/wiki/Rayleigh_distribution
+               https://en.wikipedia.org/wiki/Rayleigh_distribution
 
         Examples
         --------
@@ -3560,12 +3559,12 @@ cdef class RandomState:
         References
         ----------
         .. [1] Brighton Webs Ltd., Wald Distribution,
-               http://www.brighton-webs.co.uk/distributions/wald.asp
+               https://web.archive.org/web/20090423014010/http://www.brighton-webs.co.uk:80/distributions/wald.asp
         .. [2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
                Distribution: Theory : Methodology, and Applications", CRC Press,
                1988.
-        .. [3] Wikipedia, "Wald distribution"
-               http://en.wikipedia.org/wiki/Wald_distribution
+        .. [3] Wikipedia, "Inverse Gaussian distribution"
+               https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution
 
         Examples
         --------
@@ -3651,7 +3650,7 @@ cdef class RandomState:
         References
         ----------
         .. [1] Wikipedia, "Triangular distribution"
-               http://en.wikipedia.org/wiki/Triangular_distribution
+               https://en.wikipedia.org/wiki/Triangular_distribution
 
         Examples
         --------
@@ -3758,7 +3757,7 @@ cdef class RandomState:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
-               http://en.wikipedia.org/wiki/Binomial_distribution
+               https://en.wikipedia.org/wiki/Binomial_distribution
 
         Examples
         --------
@@ -3861,7 +3860,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
-               http://en.wikipedia.org/wiki/Negative_binomial_distribution
+               https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
         Examples
         --------
@@ -3955,7 +3954,7 @@ cdef class RandomState:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
-               http://en.wikipedia.org/wiki/Poisson_distribution
+               https://en.wikipedia.org/wiki/Poisson_distribution
 
         Examples
         --------
@@ -4225,7 +4224,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
-               http://en.wikipedia.org/wiki/Hypergeometric_distribution
+               https://en.wikipedia.org/wiki/Hypergeometric_distribution
 
         Examples
         --------
@@ -4335,7 +4334,7 @@ cdef class RandomState:
         .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
                Data Sets, CRC Press, 1994.
         .. [4] Wikipedia, "Logarithmic distribution",
-               http://en.wikipedia.org/wiki/Logarithmic_distribution
+               https://en.wikipedia.org/wiki/Logarithmic_distribution
 
         Examples
         --------
@@ -4697,9 +4696,9 @@ cdef class RandomState:
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.phy.cam.ac.uk/mackay/
+               http://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
-               http://en.wikipedia.org/wiki/Dirichlet_distribution
+               https://en.wikipedia.org/wiki/Dirichlet_distribution
 
         Examples
         --------
@@ -4901,10 +4900,24 @@ cdef class RandomState:
         """
         if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
-        else:
-            arr = np.array(x)
-        self.shuffle(arr)
-        return arr
+            self.shuffle(arr)
+            return arr
+
+        arr = np.asarray(x)
+    
+        # shuffle has fast-path for 1-d
+        if arr.ndim == 1:
+            # must return a copy
+            if arr is x:
+                arr = np.array(arr)
+            self.shuffle(arr)
+            return arr
+
+        # Shuffle index array, dtype to ensure fast path
+        idx = np.arange(arr.shape[0], dtype=np.intp)
+        self.shuffle(idx)
+        return arr[idx]
+        
 
 _rand = RandomState()
 seed = _rand.seed

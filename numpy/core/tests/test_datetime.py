@@ -17,6 +17,11 @@ try:
 except ImportError:
     _has_pytz = False
 
+try:
+    RecursionError
+except NameError:
+    RecursionError = RuntimeError  # python < 3.5
+
 
 class TestDateTime(object):
     def test_datetime_dtype_creation(self):
@@ -124,7 +129,7 @@ class TestDateTime(object):
         assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
     def test_compare_generic_nat(self):
-        # regression tests for GH6452
+        # regression tests for gh-6452
         assert_equal(np.datetime64('NaT'),
                      np.datetime64('2000') + np.timedelta64('NaT'))
         # nb. we may want to make NaT != NaT true in the future
@@ -236,17 +241,24 @@ class TestDateTime(object):
         # find "supertype" for non-dates and dates
 
         b = np.bool_(True)
-        dt = np.datetime64('1970-01-01', 'M')
-        arr = np.array([b, dt])
-        assert_equal(arr.dtype, np.dtype('O'))
-
-        dt = datetime.date(1970, 1, 1)
-        arr = np.array([b, dt])
-        assert_equal(arr.dtype, np.dtype('O'))
-
+        dm = np.datetime64('1970-01-01', 'M')
+        d = datetime.date(1970, 1, 1)
         dt = datetime.datetime(1970, 1, 1, 12, 30, 40)
+
+        arr = np.array([b, dm])
+        assert_equal(arr.dtype, np.dtype('O'))
+
+        arr = np.array([b, d])
+        assert_equal(arr.dtype, np.dtype('O'))
+
         arr = np.array([b, dt])
         assert_equal(arr.dtype, np.dtype('O'))
+
+        arr = np.array([d, d]).astype('datetime64')
+        assert_equal(arr.dtype, np.dtype('M8[D]'))
+
+        arr = np.array([dt, dt]).astype('datetime64')
+        assert_equal(arr.dtype, np.dtype('M8[us]'))
 
     def test_timedelta_scalar_construction(self):
         # Construct with different units
@@ -324,6 +336,24 @@ class TestDateTime(object):
         a = np.timedelta64(1, 'Y')
         assert_raises(TypeError, np.timedelta64, a, 'D')
         assert_raises(TypeError, np.timedelta64, a, 'm')
+        a = datetime.timedelta(seconds=3)
+        assert_raises(TypeError, np.timedelta64, a, 'M')
+        assert_raises(TypeError, np.timedelta64, a, 'Y')
+        a = datetime.timedelta(weeks=3)
+        assert_raises(TypeError, np.timedelta64, a, 'M')
+        assert_raises(TypeError, np.timedelta64, a, 'Y')
+        a = datetime.timedelta()
+        assert_raises(TypeError, np.timedelta64, a, 'M')
+        assert_raises(TypeError, np.timedelta64, a, 'Y')
+
+    def test_timedelta_object_array_conversion(self):
+        # Regression test for gh-11096
+        inputs = [datetime.timedelta(28),
+                  datetime.timedelta(30),
+                  datetime.timedelta(31)]
+        expected = np.array([28, 30, 31], dtype='timedelta64[D]')
+        actual = np.array(inputs, dtype='timedelta64[D]')
+        assert_equal(expected, actual)
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
@@ -1971,6 +2001,18 @@ class TestDateTime(object):
             if t in np.typecodes["Datetime"]:
                 continue
             assert_raises(TypeError, np.isnat, np.zeros(10, t))
+
+    def test_corecursive_input(self):
+        # construct a co-recursive list
+        a, b = [], []
+        a.append(b)
+        b.append(a)
+        obj_arr = np.array([None])
+        obj_arr[0] = a
+
+        # gh-11154: This shouldn't cause a C stack overflow
+        assert_raises(RecursionError, obj_arr.astype, 'M8')
+        assert_raises(RecursionError, obj_arr.astype, 'm8')
 
 
 class TestDateTimeData(object):

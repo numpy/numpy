@@ -406,3 +406,9 @@ class TestIsSubDType(object):
         for w1, w2 in itertools.product(self.wrappers, repeat=2):
             assert_(not np.issubdtype(w1(np.float32), w2(np.float64)))
             assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
+
+
+def TestSctypeDict(object):
+    def test_longdouble(self):
+        assert_(np.sctypeDict['f8'] is not np.longdouble)
+        assert_(np.sctypeDict['c16'] is not np.clongdouble)

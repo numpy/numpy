@@ -11,6 +11,7 @@
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
+#include "ctors.h"
 #include "common.h"
 
 
@@ -273,16 +274,12 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         npy_intp stride = -PyArray_STRIDE(arr_bins, 0);
         void *data = (void *)(PyArray_BYTES(arr_bins) - stride * (shape - 1));
 
-        arr_tmp = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &shape,
-                                               NPY_DOUBLE, &stride, data, 0,
-                                               PyArray_FLAGS(arr_bins), NULL);
+        arr_tmp = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                &PyArray_Type, PyArray_DescrFromType(NPY_DOUBLE),
+                1, &shape, &stride, data,
+                PyArray_FLAGS(arr_bins), NULL, (PyObject *)arr_bins);
+        Py_DECREF(arr_bins);
         if (!arr_tmp) {
-            goto fail;
-        }
-
-        if (PyArray_SetBaseObject(arr_tmp, (PyObject *)arr_bins) < 0) {
-
-            Py_DECREF(arr_tmp);
             goto fail;
         }
         arr_bins = arr_tmp;
@@ -657,6 +654,10 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             else if (j == lenxp - 1) {
                 dres[i] = dy[j];
             }
+            else if (dx[j] == x_val) {
+                /* Avoid potential non-finite interpolation */
+                dres[i] = dy[j];
+            }
             else {
                 const npy_double slope = (slopes != NULL) ? slopes[j] :
                                          (dy[j+1] - dy[j]) / (dx[j+1] - dx[j]);
@@ -823,6 +824,10 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 dres[i] = rval;
             }
             else if (j == lenxp - 1) {
+                dres[i] = dy[j];
+            }
+            else if (dx[j] == x_val) {
+                /* Avoid potential non-finite interpolation */
                 dres[i] = dy[j];
             }
             else {
@@ -1362,17 +1367,12 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     for (i = 0; i < dimensions.len; ++i) {
         PyArrayObject *view;
 
-        view = (PyArrayObject *)PyArray_New(&PyArray_Type, ret_ndim-1,
-                                ret_dims, NPY_INTP,
-                                ret_strides,
-                                PyArray_BYTES(ret_arr) + i*sizeof(npy_intp),
-                                0, NPY_ARRAY_WRITEABLE, NULL);
+        view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
+                ret_ndim - 1, ret_dims, ret_strides,
+                PyArray_BYTES(ret_arr) + i*sizeof(npy_intp),
+                NPY_ARRAY_WRITEABLE, NULL, (PyObject *)ret_arr);
         if (view == NULL) {
-            goto fail;
-        }
-        Py_INCREF(ret_arr);
-        if (PyArray_SetBaseObject(view, (PyObject *)ret_arr) < 0) {
-            Py_DECREF(view);
             goto fail;
         }
         PyTuple_SET_ITEM(ret_tuple, i, PyArray_Return(view));
@@ -1621,8 +1621,10 @@ pack_bits(PyObject *input, int axis)
     if (PyArray_NDIM(new) == 0) {
         char *optr, *iptr;
 
-        out = (PyArrayObject *)PyArray_New(Py_TYPE(new), 0, NULL, NPY_UBYTE,
-                NULL, NULL, 0, 0, NULL);
+        out = (PyArrayObject *)PyArray_NewFromDescr(
+                Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
+                0, NULL, NULL, NULL,
+                0, NULL);
         if (out == NULL) {
             goto fail;
         }
@@ -1652,9 +1654,10 @@ pack_bits(PyObject *input, int axis)
     outdims[axis] = ((outdims[axis] - 1) >> 3) + 1;
 
     /* Create output array */
-    out = (PyArrayObject *)PyArray_New(Py_TYPE(new),
-                        PyArray_NDIM(new), outdims, NPY_UBYTE,
-                        NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
+    out = (PyArrayObject *)PyArray_NewFromDescr(
+            Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
+            PyArray_NDIM(new), outdims, NULL, NULL,
+            PyArray_ISFORTRAN(new), NULL);
     if (out == NULL) {
         goto fail;
     }
@@ -1746,9 +1749,10 @@ unpack_bits(PyObject *input, int axis)
     outdims[axis] <<= 3;
 
     /* Create output array */
-    out = (PyArrayObject *)PyArray_New(Py_TYPE(new),
-                        PyArray_NDIM(new), outdims, NPY_UBYTE,
-                        NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
+    out = (PyArrayObject *)PyArray_NewFromDescr(
+            Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
+            PyArray_NDIM(new), outdims, NULL, NULL,
+            PyArray_ISFORTRAN(new), NULL);
     if (out == NULL) {
         goto fail;
     }

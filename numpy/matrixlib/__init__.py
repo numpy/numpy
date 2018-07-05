@@ -7,6 +7,6 @@ from .defmatrix import *
 
 __all__ = defmatrix.__all__
 
-from numpy.testing._private.pytesttester import PytestTester
+from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester

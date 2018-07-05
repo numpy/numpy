@@ -4,6 +4,7 @@ Histogram-related functions
 from __future__ import division, absolute_import, print_function
 
 import operator
+import warnings
 
 import numpy as np
 from numpy.compat.py3k import basestring
@@ -559,7 +560,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     return bin_edges
 
 
-def histogram(a, bins=10, range=None, normed=False, weights=None,
+def histogram(a, bins=10, range=None, normed=None, weights=None,
               density=None):
     r"""
     Compute the histogram of a set of data.
@@ -571,8 +572,8 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
     bins : int or sequence of scalars or str, optional
         If `bins` is an int, it defines the number of equal-width
         bins in the given range (10, by default). If `bins` is a
-        sequence, it defines the bin edges, including the rightmost
-        edge, allowing for non-uniform bin widths.
+        sequence, it defines a monotonically increasing array of bin edges,
+        including the rightmost edge, allowing for non-uniform bin widths.
 
         .. versionadded:: 1.11.0
 
@@ -591,14 +592,12 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
         .. deprecated:: 1.6.0
 
-        This keyword is deprecated in NumPy 1.6.0 due to confusing/buggy
-        behavior. It will be removed in NumPy 2.0.0. Use the ``density``
-        keyword instead. If ``False``, the result will contain the
-        number of samples in each bin. If ``True``, the result is the
-        value of the probability *density* function at the bin,
-        normalized such that the *integral* over the range is 1. Note
-        that this latter behavior is known to be buggy with unequal bin
-        widths; use ``density`` instead.
+        This is equivalent to the `density` argument, but produces incorrect
+        results for unequal bin widths. It should not be used.
+
+        .. versionchanged:: 1.15.0
+            DeprecationWarnings are actually emitted.
+
     weights : array_like, optional
         An array of weights, of the same shape as `a`.  Each value in
         `a` only contributes its associated weight towards the bin count
@@ -777,16 +776,39 @@ def histogram(a, bins=10, range=None, normed=False, weights=None,
 
     # density overrides the normed keyword
     if density is not None:
-        normed = False
+        if normed is not None:
+            # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
+            warnings.warn(
+                    "The normed argument is ignored when density is provided. "
+                    "In future passing both will result in an error.",
+                    DeprecationWarning, stacklevel=2)
+        normed = None
 
     if density:
         db = np.array(np.diff(bin_edges), float)
         return n/db/n.sum(), bin_edges
     elif normed:
-        # deprecated, buggy behavior. Remove for NumPy 2.0.0
+        # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
+        warnings.warn(
+                "Passing `normed=True` on non-uniform bins has always been "
+                "broken, and computes neither the probability density "
+                "function nor the probability mass function. "
+                "The result is only correct if the bins are uniform, when "
+                "density=True will produce the same result anyway. "
+                "The argument will be removed in a future version of "
+                "numpy.",
+                np.VisibleDeprecationWarning, stacklevel=2)
+
+        # this normalization is incorrect, but
         db = np.array(np.diff(bin_edges), float)
         return n/(n*db).sum(), bin_edges
     else:
+        if normed is not None:
+            # 2018-06-13, numpy 1.15.0 (this was not noisily deprecated in 1.6)
+            warnings.warn(
+                    "Passing normed=False is deprecated, and has no effect. "
+                    "Consider passing the density argument instead.",
+                    DeprecationWarning, stacklevel=2)
         return n, bin_edges
 
 
@@ -811,7 +833,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     bins : sequence or int, optional
         The bin specification:
 
-        * A sequence of arrays describing the bin edges along each dimension.
+        * A sequence of arrays describing the monotonically increasing bin
+          edges along each dimension.
         * The number of bins for each dimension (nx, ny, ... =bins)
         * The number of bins for all dimensions (nx=ny=...=bins).
 
@@ -877,12 +900,6 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         # bins is an integer
         bins = D*[bins]
 
-    # avoid rounding issues for comparisons when dealing with inexact types
-    if np.issubdtype(sample.dtype, np.inexact):
-        edge_dt = sample.dtype
-    else:
-        edge_dt = float
-
     # normalize the range argument
     if range is None:
         range = (None,) * D
@@ -896,13 +913,12 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
             smin, smax = _get_outer_edges(sample[:,i], range[i])
-            edges[i] = np.linspace(smin, smax, bins[i] + 1, dtype=edge_dt)
+            edges[i] = np.linspace(smin, smax, bins[i] + 1)
         elif np.ndim(bins[i]) == 1:
-            edges[i] = np.asarray(bins[i], edge_dt)
-            # not just monotonic, due to the use of mindiff below
-            if np.any(edges[i][:-1] >= edges[i][1:]):
+            edges[i] = np.asarray(bins[i])
+            if np.any(edges[i][:-1] > edges[i][1:]):
                 raise ValueError(
-                    '`bins[{}]` must be strictly increasing, when an array'
+                    '`bins[{}]` must be monotonically increasing, when an array'
                     .format(i))
         else:
             raise ValueError(
@@ -913,7 +929,8 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Compute the bin number each sample falls into.
     Ncount = tuple(
-        np.digitize(sample[:, i], edges[i])
+        # avoid np.digitize to work around gh-11022
+        np.searchsorted(edges[i], sample[:, i], side='right')
         for i in _range(D)
     )
 
@@ -921,16 +938,10 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # For the rightmost bin, we want values equal to the right edge to be
     # counted in the last bin, and not as an outlier.
     for i in _range(D):
-        # Rounding precision
-        mindiff = dedges[i].min()
-        if not np.isinf(mindiff):
-            decimal = int(-np.log10(mindiff)) + 6
-            # Find which points are on the rightmost edge.
-            not_smaller_than_edge = (sample[:, i] >= edges[i][-1])
-            on_edge = (np.around(sample[:, i], decimal) ==
-                       np.around(edges[i][-1], decimal))
-            # Shift these points one bin to the left.
-            Ncount[i][on_edge & not_smaller_than_edge] -= 1
+        # Find which points are on the rightmost edge.
+        on_edge = (sample[:, i] == edges[i][-1])
+        # Shift these points one bin to the left.
+        Ncount[i][on_edge] -= 1
 
     # Compute the sample indices in the flattened histogram matrix.
     # This raises an error if the array is too large.

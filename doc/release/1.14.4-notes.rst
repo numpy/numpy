@@ -1,0 +1,60 @@
+==========================
+NumPy 1.14.4 Release Notes
+==========================
+
+This is a bugfix release for bugs reported following the 1.14.3 release. The
+most significant fixes are:
+
+* fixes for compiler instruction reordering that resulted in NaN's not being
+  properly propagated in `np.max` and `np.min`,
+
+* fixes for bus faults on SPARC and older ARM due to incorrect alignment
+  checks.
+
+There are also improvements to printing of long doubles on PPC platforms. All
+is not yet perfect on that platform, the whitespace padding is still incorrect
+and is to be fixed in numpy 1.15, consequently NumPy still fails some
+printing-related (and other) unit tests on ppc systems. However, the printed
+values are now correct.
+
+Note that NumPy will error on import if it detects incorrect float32 `dot`
+results. This problem has been seen on the Mac when working in the Anaconda
+enviroment and is due to a subtle interaction between MKL and PyQt5.  It is not
+strictly a NumPy problem, but it is best that users be aware of it.  See the
+gh-8577 NumPy issue for more information.
+
+The Python versions supported in this release are 2.7 and 3.4 - 3.6. The Python
+3.6 wheels available from PIP are built with Python 3.6.2 and should be
+compatible with all previous versions of Python 3.6. The source releases were
+cythonized with Cython 0.28.2 and should work for the upcoming Python 3.7.
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Charles Harris
+* Marten van Kerkwijk
+* Matti Picus
+* Pauli Virtanen
+* Ryan Soklaski +
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 11 pull requests were merged for this release.
+
+* `#11104 <https://github.com/numpy/numpy/pull/11104>`__: BUG: str of DOUBLE_DOUBLE format wrong on ppc64
+* `#11170 <https://github.com/numpy/numpy/pull/11170>`__: TST: linalg: add regression test for gh-8577
+* `#11174 <https://github.com/numpy/numpy/pull/11174>`__: MAINT: add sanity-checks to be run at import time
+* `#11181 <https://github.com/numpy/numpy/pull/11181>`__: BUG: void dtype setup checked offset not actual pointer for alignment
+* `#11194 <https://github.com/numpy/numpy/pull/11194>`__: BUG: Python2 doubles don't print correctly in interactive shell.
+* `#11198 <https://github.com/numpy/numpy/pull/11198>`__: BUG: optimizing compilers can reorder call to npy_get_floatstatus
+* `#11199 <https://github.com/numpy/numpy/pull/11199>`__: BUG: reduce using SSE only warns if inside SSE loop
+* `#11203 <https://github.com/numpy/numpy/pull/11203>`__: BUG: Bytes delimiter/comments in genfromtxt should be decoded
+* `#11211 <https://github.com/numpy/numpy/pull/11211>`__: BUG: Fix reference count/memory leak exposed by better testing
+* `#11219 <https://github.com/numpy/numpy/pull/11219>`__: BUG: Fixes einsum broadcasting bug when optimize=True
+* `#11251 <https://github.com/numpy/numpy/pull/11251>`__: DOC: Document 1.14.4 release.

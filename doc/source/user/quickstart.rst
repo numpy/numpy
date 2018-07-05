@@ -14,11 +14,11 @@ Prerequisites
 
 Before reading this tutorial you should know a bit of Python. If you
 would like to refresh your memory, take a look at the `Python
-tutorial <http://docs.python.org/tut/>`__.
+tutorial <https://docs.python.org/tutorial/>`__.
 
 If you wish to work the examples in this tutorial, you must also have
 some software installed on your computer. Please see
-http://scipy.org/install.html for instructions.
+https://scipy.org/install.html for instructions.
 
 The Basics
 ==========
@@ -569,7 +569,7 @@ first axis::
 
 However, if one wants to perform an operation on each element in the
 array, one can use the ``flat`` attribute which is an
-`iterator <https://docs.python.org/2/tutorial/classes.html#iterators>`__
+`iterator <https://docs.python.org/tutorial/classes.html#iterators>`__
 over all the elements of the array::
 
     >>> for element in b.flat:
@@ -1191,7 +1191,7 @@ This property can be very useful in assignments::
 You can look at the following
 example to see
 how to use boolean indexing to generate an image of the `Mandelbrot
-set <http://en.wikipedia.org/wiki/Mandelbrot_set>`__:
+set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
 
 .. plot::
 
@@ -1462,8 +1462,8 @@ that ``pylab.hist`` plots the histogram automatically, while
 Further reading
 ===============
 
--  The `Python tutorial <http://docs.python.org/tutorial/>`__
+-  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
--  `SciPy Lecture Notes <http://www.scipy-lectures.org>`__
+-  `SciPy Lecture Notes <https://www.scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__

@@ -182,6 +182,15 @@ npy_strtoull(const char *str, char **endptr, int base)
  *****************************************************************************
  */
 
+#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+/*
+ * Disable harmless compiler warning "4116: unnamed type definition in
+ * parentheses" which is caused by the _ALIGN macro.
+ */
+#if defined(_MSC_VER)
+#pragma warning(disable:4116)
+#endif
+
 
 /**begin repeat
  *
@@ -246,8 +255,10 @@ static int
         }
         return -1;
     }
-    if (ap == NULL || PyArray_ISBEHAVED(ap))
+    if (ap == NULL || PyArray_ISBEHAVED(ap)) {
+        assert(npy_is_aligned(ov, _ALIGN(@type@)));
         *((@type@ *)ov)=temp;
+    }
     else {
         PyArray_DESCR(ap)->f->copyswap(ov, &temp, PyArray_ISBYTESWAPPED(ap),
                                        ap);
@@ -655,9 +666,7 @@ VOID_getitem(void *input, void *vap)
 {
     PyArrayObject *ap = vap;
     char *ip = input;
-    PyArrayObject *u = NULL;
     PyArray_Descr* descr;
-    int itemsize;
 
     descr = PyArray_DESCR(ap);
     if (PyDataType_HASFIELDS(descr)) {
@@ -715,84 +724,16 @@ VOID_getitem(void *input, void *vap)
             return NULL;
         }
         Py_INCREF(descr->subarray->base);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                descr->subarray->base, shape.len, shape.ptr,
-                NULL, ip, PyArray_FLAGS(ap)&(~NPY_ARRAY_F_CONTIGUOUS), NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                &PyArray_Type, descr->subarray->base,
+                shape.len, shape.ptr, NULL, ip,
+                PyArray_FLAGS(ap) & ~NPY_ARRAY_F_CONTIGUOUS,
+                NULL, (PyObject *)ap);
         npy_free_cache_dim_obj(shape);
-        if (!ret) {
-            return NULL;
-        }
-        Py_INCREF(ap);
-        if (PyArray_SetBaseObject(ret, (PyObject *)ap) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-        PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
         return (PyObject *)ret;
     }
 
-    /* 2017-11-26, 1.14 */
-    if (DEPRECATE_FUTUREWARNING(
-            "the `.item()` method of unstructured void types will return an "
-            "immutable `bytes` object in the near future, the same as "
-            "returned by `bytes(void_obj)`, instead of the mutable memoryview "
-            "or integer array returned in numpy 1.13.") < 0) {
-        return NULL;
-    }
-    /*
-     * In the future all the code below will be replaced by
-     *
-     *       For unstructured void types like V4, return a bytes object (copy).
-     *     return PyBytes_FromStringAndSize(PyArray_DATA(ap), descr->elsize);
-     */
-
-    if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)
-            || PyDataType_FLAGCHK(descr, NPY_ITEM_IS_POINTER)) {
-        PyErr_SetString(PyExc_ValueError,
-                "tried to get void-array with object members as buffer.");
-        return NULL;
-    }
-    itemsize = PyArray_DESCR(ap)->elsize;
-
-#if defined(NPY_PY3K)
-    /*
-     * Return a byte array; there are no plain buffer objects on Py3
-     */
-    {
-        npy_intp dims[1], strides[1];
-        dims[0] = itemsize;
-        strides[0] = 1;
-        descr = PyArray_DescrNewFromType(NPY_BYTE);
-        u = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                             descr, 1, dims, strides, ip,
-                             PyArray_ISWRITEABLE(ap) ? NPY_ARRAY_WRITEABLE : 0,
-                             NULL);
-        Py_INCREF(ap);
-        if (PyArray_SetBaseObject(u, (PyObject *)ap) < 0) {
-            Py_DECREF(u);
-            return NULL;
-        }
-    }
-#else
-    /*
-     * default is to return buffer object pointing to
-     * current item a view of it
-     */
-    if (PyArray_ISWRITEABLE(ap)) {
-        if (array_might_be_written(ap) < 0) {
-            return NULL;
-        }
-        u = (PyArrayObject *)PyBuffer_FromReadWriteMemory(ip, itemsize);
-    }
-    else {
-        u = (PyArrayObject *)PyBuffer_FromMemory(ip, itemsize);
-    }
-#endif
-
-    if (u == NULL) {
-        return NULL;
-    }
-    return (PyObject *)u;
+    return PyBytes_FromStringAndSize(PyArray_DATA(ap), descr->elsize);
 }
 
 
@@ -809,7 +750,7 @@ NPY_NO_EXPORT int PyArray_CopyObject(PyArrayObject *, PyObject *);
  */
 NPY_NO_EXPORT int
 _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
-            npy_intp *offset_p)
+            npy_intp *offset_p, char *dstdata)
 {
     PyObject *key;
     PyObject *tup;
@@ -823,7 +764,8 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
     }
 
     ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) && ((offset % new->alignment) != 0)) {
+    if ((new->alignment > 1) && 
+                ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
     else {
@@ -851,7 +793,7 @@ _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
     if (PyArray_EquivTypes(srcdescr, dstdescr)) {
         for (i = 0; i < names_size; i++) {
             /* neither line can ever fail, in principle */
-            if (_setup_field(i, dstdescr, dummy, &offset)) {
+            if (_setup_field(i, dstdescr, dummy, &offset, dstdata)) {
                 return -1;
             }
             PyArray_DESCR(dummy)->f->copyswap(dstdata + offset,
@@ -921,7 +863,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                 PyObject *item;
 
                 /* temporarily make ap have only this field */
-                if (_setup_field(i, descr, ap, &offset) == -1) {
+                if (_setup_field(i, descr, ap, &offset, ip) == -1) {
                     failed = 1;
                     break;
                 }
@@ -943,7 +885,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
 
             for (i = 0; i < names_size; i++) {
                 /* temporarily make ap have only this field */
-                if (_setup_field(i, descr, ap, &offset) == -1) {
+                if (_setup_field(i, descr, ap, &offset, ip) == -1) {
                     failed = 1;
                     break;
                 }
@@ -975,19 +917,14 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             return -1;
         }
         Py_INCREF(descr->subarray->base);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                        descr->subarray->base, shape.len, shape.ptr,
-                        NULL, ip, PyArray_FLAGS(ap), NULL);
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                &PyArray_Type, descr->subarray->base,
+                shape.len, shape.ptr, NULL, ip,
+                PyArray_FLAGS(ap), NULL, (PyObject *)ap);
         npy_free_cache_dim_obj(shape);
         if (!ret) {
             return -1;
         }
-        Py_INCREF(ap);
-        if (PyArray_SetBaseObject(ret, (PyObject *)ap) < 0) {
-            Py_DECREF(ret);
-            return -1;
-        }
-        PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
         res = PyArray_CopyObject(ret, op);
         Py_DECREF(ret);
         return res;
@@ -4255,17 +4192,6 @@ small_correlate(const char * d_, npy_intp dstride,
  **                       SETUP FUNCTION POINTERS                           **
  *****************************************************************************
  */
-
-
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
-/*
- * Disable harmless compiler warning "4116: unnamed type definition in
- * parentheses" which is caused by the _ALIGN macro.
- */
-#if defined(_MSC_VER)
-#pragma warning(disable:4116)
-#endif
-
 
 /**begin repeat
  *

@@ -1092,16 +1092,11 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
     Py_INCREF(PyArray_DESCR(it->ao));
 
     if (PyArray_ISCONTIGUOUS(it->ao)) {
-        ret = (PyArrayObject *)PyArray_NewFromDescr(
-                &PyArray_Type, PyArray_DESCR(it->ao), 1, &size,
-                NULL, PyArray_DATA(it->ao), PyArray_FLAGS(it->ao),
-                (PyObject *)it->ao);
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                &PyArray_Type, PyArray_DESCR(it->ao),
+                1, &size, NULL, PyArray_DATA(it->ao),
+                PyArray_FLAGS(it->ao), (PyObject *)it->ao, (PyObject *)it->ao);
         if (ret == NULL) {
-            return NULL;
-        }
-        Py_INCREF(it->ao);
-        if (PyArray_SetBaseObject(ret, (PyObject *)it->ao) < 0) {
-            Py_DECREF(ret);
             return NULL;
         }
     }

@@ -1,6 +1,6 @@
-===========================
-Structured array extensions
-===========================
+===================================
+NEP 9 — Structured array extensions
+===================================
 
 :Status: Deferred
 

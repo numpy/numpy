@@ -552,7 +552,6 @@ class TestFloatExceptions(object):
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()])
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
-    @pytest.mark.xfail(reason="See ticket #2350")
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
         with np.errstate(all='raise'):
@@ -905,7 +904,7 @@ class TestTypes(object):
             fi = np.finfo(dt)
             assert_(np.can_cast(fi.min, dt))
             assert_(np.can_cast(fi.max, dt))
-            
+
 
 # Custom exception class to test exception propagation in fromiter
 class NIterError(Exception):
@@ -2201,13 +2200,16 @@ class TestLikeFuncs(object):
             self.compare_array_value(dz, value, fill_value)
 
         # Test the 'subok' parameter
-        a = np.matrix([[1, 2], [3, 4]])
+        class MyNDArray(np.ndarray):
+            pass
+
+        a = np.array([[1, 2], [3, 4]]).view(MyNDArray)
 
         b = like_function(a, **fill_kwarg)
-        assert_(type(b) is np.matrix)
+        assert_(type(b) is MyNDArray)
 
         b = like_function(a, subok=False, **fill_kwarg)
-        assert_(type(b) is not np.matrix)
+        assert_(type(b) is not MyNDArray)
 
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)

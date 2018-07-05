@@ -16,7 +16,7 @@ for size, char in zip(sizes, chars):
     global_size_dict[char] = size
 
 
-class TestEinSum(object):
+class TestEinsum(object):
     def test_einsum_errors(self):
         for do_opt in [True, False]:
             # Need enough arguments
@@ -491,8 +491,16 @@ class TestEinSum(object):
         assert_array_equal(np.einsum('ij,ij->j', p, q, optimize=True),
                            [10.] * 2)
 
-        p = np.ones((1, 5))
-        q = np.ones((5, 5))
+        # a blas-compatible contraction broadcasting case which was failing
+        # for optimize=True (ticket #10930)
+        x = np.array([2., 3.])
+        y = np.array([4.])
+        assert_array_equal(np.einsum("i, i", x, y, optimize=False), 20.)
+        assert_array_equal(np.einsum("i, i", x, y, optimize=True), 20.)
+
+        # all-ones array was bypassing bug (ticket #10930)
+        p = np.ones((1, 5)) / 2
+        q = np.ones((5, 5)) / 2
         for optimize in (True, False):
             assert_array_equal(np.einsum("...ij,...jk->...ik", p, p,
                                          optimize=optimize),
@@ -500,7 +508,7 @@ class TestEinSum(object):
                                          optimize=optimize))
             assert_array_equal(np.einsum("...ij,...jk->...ik", p, q,
                                          optimize=optimize),
-                               np.full((1, 5), 5))
+                               np.full((1, 5), 1.25))
 
         # Cases which were failing (gh-10899)
         x = np.eye(2, dtype=dtype)
@@ -595,6 +603,17 @@ class TestEinSum(object):
         assert_equal(np.einsum('x,yx,zx->xzy', a, b, c, optimize=True),
                      [[[1,  3], [3,  9], [5, 15], [7, 21]],
                      [[8, 16], [16, 32], [24, 48], [32, 64]]])
+
+    def test_subscript_range(self):
+        # Issue #7741, make sure that all letters of Latin alphabet (both uppercase & lowercase) can be used
+        # when creating a subscript from arrays
+        a = np.ones((2, 3))
+        b = np.ones((3, 4))
+        np.einsum(a, [0, 20], b, [20, 2], [0, 2], optimize=False)
+        np.einsum(a, [0, 27], b, [27, 2], [0, 2], optimize=False)
+        np.einsum(a, [0, 51], b, [51, 2], [0, 2], optimize=False)
+        assert_raises(ValueError, lambda: np.einsum(a, [0, 52], b, [52, 2], [0, 2], optimize=False))
+        assert_raises(ValueError, lambda: np.einsum(a, [-1, 5], b, [5, 2], [-1, 2], optimize=False))
 
     def test_einsum_broadcast(self):
         # Issue #2455 change in handling ellipsis
@@ -711,19 +730,27 @@ class TestEinSum(object):
         res = np.einsum('...ij,...jk->...ik', a, a, out=out)
         assert_equal(res, tgt)
 
-    def optimize_compare(self, string):
+    def test_out_is_res(self):
+        a = np.arange(9).reshape(3, 3)
+        res = np.einsum('...ij,...jk->...ik', a, a, out=a)
+        assert res is a
+
+    def optimize_compare(self, subscripts, operands=None):
         # Tests all paths of the optimization function against
         # conventional einsum
-        operands = [string]
-        terms = string.split('->')[0].split(',')
-        for term in terms:
-            dims = [global_size_dict[x] for x in term]
-            operands.append(np.random.rand(*dims))
+        if operands is None:
+            args = [subscripts]
+            terms = subscripts.split('->')[0].split(',')
+            for term in terms:
+                dims = [global_size_dict[x] for x in term]
+                args.append(np.random.rand(*dims))
+        else:
+            args = [subscripts] + operands
 
-        noopt = np.einsum(*operands, optimize=False)
-        opt = np.einsum(*operands, optimize='greedy')
+        noopt = np.einsum(*args, optimize=False)
+        opt = np.einsum(*args, optimize='greedy')
         assert_almost_equal(opt, noopt)
-        opt = np.einsum(*operands, optimize='optimal')
+        opt = np.einsum(*args, optimize='optimal')
         assert_almost_equal(opt, noopt)
 
     def test_hadamard_like_products(self):
@@ -809,8 +836,28 @@ class TestEinSum(object):
         b = np.einsum('bbcdc->d', a)
         assert_equal(b, [12])
 
+    def test_broadcasting_dot_cases(self):
+        # Ensures broadcasting cases are not mistaken for GEMM
 
-class TestEinSumPath(object):
+        a = np.random.rand(1, 5, 4)
+        b = np.random.rand(4, 6)
+        c = np.random.rand(5, 6)
+        d = np.random.rand(10)
+
+        self.optimize_compare('ijk,kl,jl', operands=[a, b, c])
+        self.optimize_compare('ijk,kl,jl,i->i', operands=[a, b, c, d])
+
+        e = np.random.rand(1, 1, 5, 4)
+        f = np.random.rand(7, 7)
+        self.optimize_compare('abjk,kl,jl', operands=[e, b, c])
+        self.optimize_compare('abjk,kl,jl,ab->ab', operands=[e, b, c, f])
+
+        # Edge case found in gh-11308
+        g = np.arange(64).reshape(2, 4, 8)
+        self.optimize_compare('obk,ijk->ioj', operands=[g, g])
+
+
+class TestEinsumPath(object):
     def build_operands(self, string, size_dict=global_size_dict):
 
         # Builds views based off initial operands
@@ -856,7 +903,7 @@ class TestEinSumPath(object):
         long_test1 = self.build_operands('acdf,jbje,gihb,hfac,gfac,gifabc,hfac')
         path, path_str = np.einsum_path(*long_test1, optimize='greedy')
         self.assert_path_equal(path, ['einsum_path',
-                                      (1, 4), (2, 4), (1, 4), (1, 3), (1, 2), (0, 1)])
+                                      (3, 6), (3, 4), (2, 4), (2, 3), (0, 2), (0, 1)])
 
         path, path_str = np.einsum_path(*long_test1, optimize='optimal')
         self.assert_path_equal(path, ['einsum_path',
@@ -865,10 +912,12 @@ class TestEinSumPath(object):
         # Long test 2
         long_test2 = self.build_operands('chd,bde,agbc,hiad,bdi,cgh,agdb')
         path, path_str = np.einsum_path(*long_test2, optimize='greedy')
+        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (3, 4), (0, 3), (3, 4), (1, 3), (1, 2), (0, 1)])
 
         path, path_str = np.einsum_path(*long_test2, optimize='optimal')
+        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (0, 5), (1, 4), (3, 4), (1, 3), (1, 2), (0, 1)])
 
@@ -902,7 +951,7 @@ class TestEinSumPath(object):
         # Edge test4
         edge_test4 = self.build_operands('dcc,fce,ea,dbf->ab')
         path, path_str = np.einsum_path(*edge_test4, optimize='greedy')
-        self.assert_path_equal(path, ['einsum_path', (0, 3), (0, 2), (0, 1)])
+        self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 1), (0, 1)])
 
         path, path_str = np.einsum_path(*edge_test4, optimize='optimal')
         self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 2), (0, 1)])
@@ -925,7 +974,7 @@ class TestEinSumPath(object):
         self.assert_path_equal(path, ['einsum_path', (0, 1, 2, 3)])
 
         path, path_str = np.einsum_path(*path_test, optimize=True)
-        self.assert_path_equal(path, ['einsum_path', (0, 3), (0, 2), (0, 1)])
+        self.assert_path_equal(path, ['einsum_path', (1, 2), (0, 1), (0, 1)])
 
         exp_path = ['einsum_path', (0, 2), (0, 2), (0, 1)]
         path, path_str = np.einsum_path(*path_test, optimize=exp_path)
@@ -942,3 +991,14 @@ class TestEinSumPath(object):
         for sp in itertools.product(['', ' '], repeat=4):
             # no error for any spacing
             np.einsum('{}...a{}->{}...a{}'.format(*sp), arr)
+
+def test_overlap():
+    a = np.arange(9, dtype=int).reshape(3, 3)
+    b = np.arange(9, dtype=int).reshape(3, 3)
+    d = np.dot(a, b)
+    # sanity check
+    c = np.einsum('ij,jk->ik', a, b)
+    assert_equal(c, d)
+    #gh-10080, out overlaps one of the operands
+    c = np.einsum('ij,jk->ik', a, b, out=b)
+    assert_equal(c, d)

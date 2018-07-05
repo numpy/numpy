@@ -36,7 +36,7 @@ class _DeprecationTestCase(object):
 
         # Do *not* ignore other DeprecationWarnings. Ignoring warnings
         # can give very confusing results because of
-        # http://bugs.python.org/issue4180 and it is probably simplest to
+        # https://bugs.python.org/issue4180 and it is probably simplest to
         # try to keep the tests cleanly giving only the right warning type.
         # (While checking them set to "error" those are ignored anyway)
         # We still have them show up, because otherwise they would be raised
@@ -134,6 +134,22 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.VisibleDeprecationWarning
 
 
+class TestNonTupleNDIndexDeprecation(object):
+    def test_basic(self):
+        a = np.zeros((5, 5))
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always')
+            assert_warns(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_warns(FutureWarning, a.__getitem__, [slice(None)])
+
+            warnings.filterwarnings('error')
+            assert_raises(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_raises(FutureWarning, a.__getitem__, [slice(None)])
+
+            # a a[[0, 1]] always was advanced indexing, so no error/warning
+            a[[0, 1]]
+
+
 class TestRankDeprecation(_DeprecationTestCase):
     """Test that np.rank is deprecated. The function should simply be
     removed. The VisibleDeprecationWarning may become unnecessary.
@@ -174,10 +190,10 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         b = np.array(['a', 'b', 'c'])
         assert_raises(ValueError, lambda x, y: x == y, a, b)
 
-        # The empty list is not cast to string, as this is only to document
-        # that fact (it likely should be changed). This means that the
-        # following works (and returns False) due to dtype mismatch:
-        a == []
+        # The empty list is not cast to string, and this used to pass due
+        # to dtype mismatch; now (2018-06-21) it correctly leads to a
+        # FutureWarning.
+        assert_warns(FutureWarning, lambda: a == [])
 
     def test_void_dtype_equality_failures(self):
         class NotArray(object):
@@ -398,7 +414,7 @@ class TestClassicIntDivision(_DeprecationTestCase):
     """
     See #7949. Deprecate the numeric-style dtypes with -3 flag in python 2
     if used for division
-    List of data types: http://docs.scipy.org/doc/numpy/user/basics.types.html
+    List of data types: https://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     def test_int_dtypes(self):
         #scramble types and do some mix and match testing

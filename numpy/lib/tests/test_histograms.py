@@ -40,20 +40,28 @@ class TestHistogram(object):
         assert_allclose(e, np.array([1., 2.]))
 
     def test_normed(self):
-        # Check that the integral of the density equals 1.
-        n = 100
-        v = np.random.rand(n)
-        a, b = histogram(v, normed=True)
-        area = np.sum(a * np.diff(b))
-        assert_almost_equal(area, 1)
+        sup = suppress_warnings()
+        with sup:
+            rec = sup.record(np.VisibleDeprecationWarning, '.*normed.*')
+            # Check that the integral of the density equals 1.
+            n = 100
+            v = np.random.rand(n)
+            a, b = histogram(v, normed=True)
+            area = np.sum(a * np.diff(b))
+            assert_almost_equal(area, 1)
+            assert_equal(len(rec), 1)
 
-        # Check with non-constant bin widths (buggy but backwards
-        # compatible)
-        v = np.arange(10)
-        bins = [0, 1, 5, 9, 10]
-        a, b = histogram(v, bins, normed=True)
-        area = np.sum(a * np.diff(b))
-        assert_almost_equal(area, 1)
+        sup = suppress_warnings()
+        with sup:
+            rec = sup.record(np.VisibleDeprecationWarning, '.*normed.*')
+            # Check with non-constant bin widths (buggy but backwards
+            # compatible)
+            v = np.arange(10)
+            bins = [0, 1, 5, 9, 10]
+            a, b = histogram(v, bins, normed=True)
+            area = np.sum(a * np.diff(b))
+            assert_almost_equal(area, 1)
+            assert_equal(len(rec), 1)
 
     def test_density(self):
         # Check that the integral of the density equals 1.
@@ -69,6 +77,10 @@ class TestHistogram(object):
         a, b = histogram(v, bins, density=True)
         assert_array_equal(a, .1)
         assert_equal(np.sum(a * np.diff(b)), 1)
+
+        # Test that passing False works too
+        a, b = histogram(v, bins, density=False)
+        assert_array_equal(a, [1, 2, 3, 4])
 
         # Variale bin widths are especially useful to deal with
         # infinities.
@@ -96,12 +108,12 @@ class TestHistogram(object):
         assert_equal(h.sum(), 9)
 
         # Normalization
-        h, b = histogram(a, range=[1, 9], normed=True)
+        h, b = histogram(a, range=[1, 9], density=True)
         assert_almost_equal((h * np.diff(b)).sum(), 1, decimal=15)
 
         # Weights
         w = np.arange(10) + .5
-        h, b = histogram(a, range=[1, 9], weights=w, normed=True)
+        h, b = histogram(a, range=[1, 9], weights=w, density=True)
         assert_equal((h * np.diff(b)).sum(), 1)
 
         h, b = histogram(a, bins=8, range=[1, 9], weights=w)
@@ -113,7 +125,7 @@ class TestHistogram(object):
         h, b = histogram(a)
         assert_(np.issubdtype(h.dtype, np.integer))
 
-        h, b = histogram(a, normed=True)
+        h, b = histogram(a, density=True)
         assert_(np.issubdtype(h.dtype, np.floating))
 
         h, b = histogram(a, weights=np.ones(10, int))
@@ -133,9 +145,9 @@ class TestHistogram(object):
         v = np.random.rand(100)
         w = np.ones(100) * 5
         a, b = histogram(v)
-        na, nb = histogram(v, normed=True)
+        na, nb = histogram(v, density=True)
         wa, wb = histogram(v, weights=w)
-        nwa, nwb = histogram(v, weights=w, normed=True)
+        nwa, nwb = histogram(v, weights=w, density=True)
         assert_array_almost_equal(a * 5, wa)
         assert_array_almost_equal(na, nwa)
 
@@ -149,7 +161,7 @@ class TestHistogram(object):
         wa, wb = histogram([1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1])
         assert_array_equal(wa, [4, 5, 0, 1])
         wa, wb = histogram(
-            [1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1], normed=True)
+            [1, 2, 2, 4], bins=4, weights=[4, 3, 2, 1], density=True)
         assert_array_almost_equal(wa, np.array([4, 5, 0, 1]) / 10. / 3. * 4)
 
         # Check weights with non-uniform bin widths
@@ -253,7 +265,7 @@ class TestHistogram(object):
         one_nan = np.array([0, 1, np.nan])
         all_nan = np.array([np.nan, np.nan])
 
-        # the internal commparisons with NaN give warnings
+        # the internal comparisons with NaN give warnings
         sup = suppress_warnings()
         sup.filter(RuntimeWarning)
         with sup:
@@ -613,8 +625,6 @@ class TestHistogramdd(object):
         assert_raises(ValueError, np.histogramdd, x, bins=[-1, 2, 4, 5])
         assert_raises(ValueError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
         assert_raises(
-            ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 2, 3]])
-        assert_raises(
             ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
         assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
 
@@ -646,7 +656,7 @@ class TestHistogramdd(object):
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
         assert_(hist[0] == 0.0)
-        assert_(hist[1] == 1.)
+        assert_(hist[1] == 0.0)
         x = [1.0001]
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
@@ -660,3 +670,76 @@ class TestHistogramdd(object):
                       range=[[0.0, 1.0], [0.25, 0.75], [0.25, np.inf]])
         assert_raises(ValueError, histogramdd, vals,
                       range=[[0.0, 1.0], [np.nan, 0.75], [0.25, 0.5]])
+
+    def test_equal_edges(self):
+        """ Test that adjacent entries in an edge array can be equal """
+        x = np.array([0, 1, 2])
+        y = np.array([0, 1, 2])
+        x_edges = np.array([0, 2, 2])
+        y_edges = 1
+        hist, edges = histogramdd((x, y), bins=(x_edges, y_edges))
+
+        hist_expected = np.array([
+            [2.],
+            [1.],  # x == 2 falls in the final bin
+        ])
+        assert_equal(hist, hist_expected)
+
+    def test_edge_dtype(self):
+        """ Test that if an edge array is input, its type is preserved """
+        x = np.array([0, 10, 20])
+        y = x / 10
+        x_edges = np.array([0, 5, 15, 20])
+        y_edges = x_edges / 10
+        hist, edges = histogramdd((x, y), bins=(x_edges, y_edges))
+
+        assert_equal(edges[0].dtype, x_edges.dtype)
+        assert_equal(edges[1].dtype, y_edges.dtype)
+
+    def test_large_integers(self):
+        big = 2**60  # Too large to represent with a full precision float
+
+        x = np.array([0], np.int64)
+        x_edges = np.array([-1, +1], np.int64)
+        y = big + x
+        y_edges = big + x_edges
+
+        hist, edges = histogramdd((x, y), bins=(x_edges, y_edges))
+
+        assert_equal(hist[0, 0], 1)
+
+    def test_normed_non_uniform_2d(self):
+        # Defines the following grid:
+        #
+        #    0 2     8
+        #   0+-+-----+
+        #    + |     +
+        #    + |     +
+        #   6+-+-----+
+        #   8+-+-----+
+        x_edges = np.array([0, 2, 8])
+        y_edges = np.array([0, 6, 8])
+        relative_areas = np.array([
+            [3, 9],
+            [1, 3]])
+
+        # ensure the number of points in each region is proportional to its area
+        x = np.array([1] + [1]*3 + [7]*3 + [7]*9)
+        y = np.array([7] + [1]*3 + [7]*3 + [1]*9)
+
+        # sanity check that the above worked as intended
+        hist, edges = histogramdd((y, x), bins=(y_edges, x_edges))
+        assert_equal(hist, relative_areas)
+
+        # resulting histogram should be uniform, since counts and areas are propotional
+        hist, edges = histogramdd((y, x), bins=(y_edges, x_edges), normed=True)
+        assert_equal(hist, 1 / (8*8))
+
+    def test_normed_non_uniform_1d(self):
+        # compare to histogram to show the results are the same
+        v = np.arange(10)
+        bins = np.array([0, 1, 3, 6, 10])
+        hist, edges = histogram(v, bins, density=True)
+        hist_dd, edges_dd = histogramdd((v,), (bins,), normed=True)
+        assert_equal(hist, hist_dd)
+        assert_equal(edges, edges_dd[0])

@@ -2,7 +2,11 @@
 Release Notes
 *************
 
+.. include:: ../release/1.16.0-notes.rst
 .. include:: ../release/1.15.0-notes.rst
+.. include:: ../release/1.14.5-notes.rst
+.. include:: ../release/1.14.4-notes.rst
+.. include:: ../release/1.14.3-notes.rst
 .. include:: ../release/1.14.2-notes.rst
 .. include:: ../release/1.14.1-notes.rst
 .. include:: ../release/1.14.0-notes.rst

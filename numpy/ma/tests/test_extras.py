@@ -307,18 +307,6 @@ class TestConcatenator(object):
         assert_array_equal(d[5:,:], b_2)
         assert_array_equal(d.mask, np.r_[m_1, m_2])
 
-    def test_matrix_builder(self):
-        assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
-
-    def test_matrix(self):
-        actual = mr_['r', 1, 2, 3]
-        expected = np.ma.array(np.r_['r', 1, 2, 3])
-        assert_array_equal(actual, expected)
-
-        # outer type is masked array, inner type is matrix
-        assert_equal(type(actual), type(expected))
-        assert_equal(type(actual.data), type(expected.data))
-
     def test_masked_constant(self):
         actual = mr_[np.ma.masked, 1]
         assert_equal(actual.mask, [True, False])

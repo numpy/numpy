@@ -93,12 +93,20 @@ Functions
         the corresponding 1-d loop function in the func array.
 
     :param types:
-        Must be of length (*nin* + *nout*) \* *ntypes*, and it
-        contains the data-types (built-in only) that the corresponding
-        function in the *func* array can deal with.
+       Length ``(nin + nout) * ntypes`` array of ``char`` encoding the
+       `numpy.dtype.num` (built-in only) that the corresponding
+       function in the ``func`` array accepts. For instance, for a comparison
+       ufunc with three ``ntypes``, two ``nin`` and one ``nout``, where the
+       first function accepts `numpy.int32` and the the second
+       `numpy.int64`, with both returning `numpy.bool_`, ``types`` would
+       be ``(char[]) {5, 5, 0, 7, 7, 0}`` since ``NPY_INT32`` is 5,
+       ``NPY_INT64`` is 7, and ``NPY_BOOL`` is 0.
+
+       :ref:`ufuncs.casting` will be used at runtime to find the first
+       ``func`` callable by the input/output provided.
 
     :param ntypes:
-        How many different data-type "signatures" the ufunc has implemented.
+        How many different data-type-specific functions the ufunc has implemented.
 
     :param nin:
         The number of inputs to this operation.
@@ -110,8 +118,9 @@ Functions
         The name for the ufunc.  Specifying a name of 'add' or
         'multiply' enables a special behavior for  integer-typed
         reductions when no dtype is given.  If the input type is an
-        integer (or boolean) data type smaller than the size of the int_
-        data type, it will be internally upcast to the int_ (or uint)
+        integer (or boolean) data type smaller than the size of the
+        `numpy.int_` data type, it will be internally upcast to the
+        `numpy.int_` (or `numpy.uint`)
         data type.
 
     :param doc:
@@ -129,10 +138,11 @@ Functions
         int nin, int nout, int identity, char* name, char* doc, int unused, char *signature)
 
    This function is very similar to PyUFunc_FromFuncAndData above, but has
-   an extra *signature* argument, to define generalized universal functions.
+   an extra *signature* argument, to define a
+   :ref:`generalized universal functions <c-api.generalized-ufuncs>`.
    Similarly to how ufuncs are built around an element-by-element operation,
-   gufuncs are around subarray-by-subarray operations, the signature defining
-   the subarrays to operate on.
+   gufuncs are around subarray-by-subarray operations, the
+   :ref:`signature <details-of-signature>` defining the subarrays to operate on.
 
    :param signature:
         The signature for the new gufunc. Setting it to NULL is equivalent

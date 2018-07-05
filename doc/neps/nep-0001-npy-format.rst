@@ -1,6 +1,6 @@
-=====================================
-A Simple File Format for NumPy Arrays
-=====================================
+=============================================
+NEP 1 — A Simple File Format for NumPy Arrays
+=============================================
 
 :Author: Robert Kern <robert.kern@gmail.com>
 :Status: Final
@@ -290,15 +290,15 @@ included in the 1.9.0 release of numpy.
 Specifically, the file format.py in this directory implements the
 format as described here.
 
-    http://github.com/numpy/numpy/blob/master/numpy/lib/format.py
+    https://github.com/numpy/numpy/blob/master/numpy/lib/format.py
 
 
 References
 ----------
 
-[1] http://docs.python.org/lib/module-pickle.html
+[1] https://docs.python.org/library/pickle.html
 
-[2] http://hdf.ncsa.uiuc.edu/products/hdf5/index.html
+[2] https://support.hdfgroup.org/HDF5/
 
 
 Copyright

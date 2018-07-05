@@ -364,10 +364,6 @@ def test_stack():
                         stack, [np.zeros((3, 3)), np.zeros(3)], axis=1)
     assert_raises_regex(ValueError, 'must have the same shape',
                         stack, [np.arange(2), np.arange(3)])
-    # np.matrix
-    m = np.matrix([[1, 2], [3, 4]])
-    assert_raises_regex(ValueError, 'shape too large to be a matrix',
-                        stack, [m, m])
 
 
 class TestBlock(object):

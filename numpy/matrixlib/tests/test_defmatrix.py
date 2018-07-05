@@ -1,5 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
+# As we are testing matrices, we ignore its PendingDeprecationWarnings
+try:
+    import pytest
+    pytestmark = pytest.mark.filterwarnings(
+        'ignore:the matrix subclass is not:PendingDeprecationWarning')
+except ImportError:
+    pass
+
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
@@ -13,7 +21,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_array_equal,
     assert_array_almost_equal, assert_raises
     )
-from numpy.matrixlib.defmatrix import matrix_power
+from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
 
 class TestCtor(object):

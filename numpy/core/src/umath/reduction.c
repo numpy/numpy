@@ -155,13 +155,13 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
 
-    ret = (PyArrayObject_fields *)PyArray_NewFromDescr(&PyArray_Type,
-                               dtype,
-                               ndim, shape,
-                               strides,
-                               PyArray_DATA(out),
-                               PyArray_FLAGS(out),
-                               NULL);
+    /* TODO: use PyArray_NewFromDescrAndBase here once multiarray and umath
+     *       are merged
+     */
+    ret = (PyArrayObject_fields *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype,
+            ndim, shape, strides, PyArray_DATA(out),
+            PyArray_FLAGS(out), NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -537,7 +537,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     }
 
     /* Start with the floating-point exception flags cleared */
-    PyUFunc_clearfperr();
+    npy_clear_floatstatus_barrier((char*)&iter);
 
     if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;

@@ -15,6 +15,7 @@
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
 #include "templ_common.h"
+#include "ctors.h"
 
 /* Internal helper functions private to this file */
 static npy_intp
@@ -1140,21 +1141,10 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
 
     Py_INCREF(dtype);
-    view = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
-                                shape, strides, dataptr,
-                                writeable ? NPY_ARRAY_WRITEABLE : 0,
-                                NULL);
-    if (view == NULL) {
-        return NULL;
-    }
-    /* Tell the view who owns the data */
-    Py_INCREF(obj);
-    if (PyArray_SetBaseObject(view, (PyObject *)obj) < 0) {
-        Py_DECREF(view);
-        return NULL;
-    }
-    /* Make sure all the flags are good */
-    PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
+    view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+            &PyArray_Type, dtype,
+            ndim, shape, strides, dataptr,
+            writeable ? NPY_ARRAY_WRITEABLE : 0, NULL, (PyObject *)obj);
 
     return view;
 }
@@ -1388,47 +1378,6 @@ NpyIter_GetInnerLoopSizePtr(NpyIter *iter)
         NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
         return &NAD_SHAPE(axisdata);
     }
-}
-
-/*NUMPY_API
- * Resolves all writebackifcopy scratch buffers, not safe to use iterator
- * operands after this call, in this iterator as well as any copies.
- * Returns 0 on success, -1 on failure
- */
-NPY_NO_EXPORT int
-NpyIter_Close(NpyIter *iter)
-{
-    int ret=0, iop, nop;
-    PyArrayObject ** operands;
-    npyiter_opitflags *op_itflags;
-    if (iter == NULL) {
-        return 0;
-    }
-    nop = NIT_NOP(iter);
-    operands = NIT_OPERANDS(iter);
-    op_itflags = NIT_OPITFLAGS(iter);
-    /* If NPY_OP_ITFLAG_HAS_WRITEBACK flag set on operand, resolve it.
-     * If the resolution fails (should never happen), continue from the
-     * next operand and discard the writeback scratch buffers, and return
-     * failure status
-     */
-    for (iop=0; iop<nop; iop++) {
-        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
-            op_itflags[iop] &= ~NPY_OP_ITFLAG_HAS_WRITEBACK;
-            if (PyArray_ResolveWritebackIfCopy(operands[iop]) < 0) {
-                ret = -1;
-                iop++;
-                break;
-            }
-        }
-    }
-    for (; iop<nop; iop++) {
-        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
-            op_itflags[iop] &= ~NPY_OP_ITFLAG_HAS_WRITEBACK;
-            PyArray_DiscardWritebackIfCopy(operands[iop]);
-        }
-    }
-    return ret;
 }
 
 /*NUMPY_API
@@ -2839,5 +2788,24 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
         count = reducespace;
     }
     return count * (*reduce_innersize);
+}
+
+NPY_NO_EXPORT npy_bool
+npyiter_has_writeback(NpyIter *iter)
+{
+    int iop, nop;
+    npyiter_opitflags *op_itflags;
+    if (iter == NULL) {
+        return 0;
+    }
+    nop = NIT_NOP(iter);
+    op_itflags = NIT_OPITFLAGS(iter);
+
+    for (iop=0; iop<nop; iop++) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
+            return NPY_TRUE;
+        }
+    }
+    return NPY_FALSE;
 }
 #undef NPY_ITERATOR_IMPLEMENTATION_CODE

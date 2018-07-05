@@ -240,7 +240,7 @@ class memmap(ndarray):
         else:
             if not isinstance(shape, tuple):
                 shape = (shape,)
-            size = 1
+            size = np.intp(1)  # avoid default choice of np.int_, which might overflow
             for k in shape:
                 size *= k
 

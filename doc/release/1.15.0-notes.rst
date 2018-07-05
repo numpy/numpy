@@ -20,15 +20,18 @@ New functions
 * ``nanquantile`` function, an interface to ``nanpercentile`` without factors
   of 100
 
-* `np.printoptions`, the context manager which sets print options temporarily
+* `np.printoptions`, a context manager that sets print options temporarily
   for the scope of the ``with`` block::
 
     >>> with np.printoptions(precision=2):
     ...     print(np.array([2.0]) / 3)
     [0.67]
 
-  * `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
-    without needing to calculate the histogram.
+* `np.histogram_bin_edges`, a function to get the edges of the bins used by a histogram
+  without needing to calculate the histogram.
+
+* `npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier`` have been added to
+  deal with compiler optimization changing the order of operations. See below for details.
 
 Deprecations
 ============
@@ -42,6 +45,14 @@ Deprecations
   * `np.ma.loads`, `np.ma.dumps`
   * `np.ma.load`, `np.ma.dump` - these functions already failed on python 3,
     when called with a string.
+
+* Multidimensional indexing with anything but a tuple is
+  deprecated. This means that code such as ``ind = [slice(None), 0]``,
+  ``arr[[slice(None), 0]]`` should be changed to ``arr[tuple(ind)]``. This is
+  necessary to avoid ambiguity in expressions such as ``arr[[[0, 1], [0, 1]]]``
+  which currently is interpreted as ``arr[array([0, 1]), array([0, 1])]``.
+  In future, this will be interpreted as ``arr[array([[0, 1], [0, 1]])]``.
+
 * Direct imports from the following modules is deprecated. All testing related
   imports should come from `numpy.testing`.
   * `np.testing.utils`
@@ -55,7 +66,7 @@ Deprecations
   In the future, it might return a different result. Use `np.sum(np.from_iter(generator))`
   or the built-in Python `sum` instead.
 
-* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or 
+* Users of the C-API should call ``PyArrayResolveWriteBackIfCopy`` or
   ``PyArray_DiscardWritbackIfCopy`` on any array with the ``WRITEBACKIFCOPY``
   flag set, before the array is deallocated. A deprecation warning will be
   emitted if those calls are not used when needed.
@@ -63,8 +74,10 @@ Deprecations
 * Users of ``nditer`` should use the nditer object as a context manager
   anytime one of the iterator operands is writeable, so that numpy can
   manage writeback semantics, or should call ``it.close()``. A
- `RuntimeWarning` will be emitted otherwise in these cases. Users of the C-API
-  should call ``NpyIter_Close`` before ``NpyIter_Dealloc``.
+ `RuntimeWarning` may be emitted otherwise in these cases.
+
+* The ``normed`` argument of ``np.histogram``, deprecated long ago in 1.6.0,
+  now emits a ``DeprecationWarning``.
 
 
 Future Changes
@@ -74,6 +87,16 @@ Future Changes
 Compatibility notes
 ===================
 
+The ``NpzFile`` returned by ``np.savez`` is now a `collections.abc.Mapping`
+---------------------------------------------------------------------------
+This means it behaves like a readonly dictionary, and has a new ``.values()``
+method and ``len()`` implementation.
+
+On python 3, this means that ``.iteritems()``, ``.iterkeys()`` have been
+deprecated, and ``.keys()`` and ``.items()`` now return views and not lists.
+This is consistent with how the builtin ``dict`` type changed between python 2
+and python 3.
+
 Under certain conditions, nditer must be used in a context manager
 ------------------------------------------------------------------
 When using an nditer with the ``"writeonly"`` or ``"readwrite"`` flags, there
@@ -81,7 +104,7 @@ are some circumstances where nditer doesn't actually give you a view onto the
 writable array. Instead, it gives you a copy, and if you make changes to the
 copy, nditer later writes those changes back into your actual array. Currently,
 this writeback occurs when the array objects are garbage collected, which makes
-this API error-prone on CPython and entirely broken on PyPy. Therefore, 
+this API error-prone on CPython and entirely broken on PyPy. Therefore,
 ``nditer`` should now be used as a context manager whenever using ``nditer``
 with writeable arrays (``with np.nditer(...) as it: ...``). You may also
 explicitly call ``it.close()`` for cases where a context manager is unusable,
@@ -96,6 +119,11 @@ available, but will not be maintained. The standard testing utilities,
 `assert_almost_equal` and such, are not be affected by this change except for
 the nose specific functions `import_nose` and `raises`. Those functions are
 not used in numpy, but are kept for downstream compatibility.
+
+Numpy no longer monkey-patches ``ctypes`` with ``__array_interface__``
+----------------------------------------------------------------------
+Previously numpy added ``__array_interface__`` attributes to all the integer
+types from ``ctypes``.
 
 ``np.ma.notmasked_contiguous`` and ``np.ma.flatnotmasked_contiguous`` always return lists
 -----------------------------------------------------------------------------------------
@@ -116,12 +144,44 @@ longer possible, and objects expecting the old API are respected. The silent suc
 by removing the interception of an otherwise-normal Exception when ``axis`` was provided to an object
 using the old API.
 
+unstructured void array's ``.item`` method now returns a bytes object
+---------------------------------------------------------------------
+``.item`` now returns a ``bytes`` object instead of a buffer or byte array.
+This may affect code which assumed the return value was mutable, which is no
+longer the case.
+
+``copy.copy`` and ``copy.deepcopy`` no longer turn ``masked`` into an array
+----------------------------------------------------------------------------
+Since ``np.ma.masked`` is a readonly scalar, copying should be a no-op. These
+functions now behave consistently with ``np.copy()``.
+
+
+Multifield Indexing of Structured Arrays will still return a copy
+-----------------------------------------------------------------
+The change that multi-field indexing of structured arrays returns a view
+instead of a copy is pushed back to 1.16. A new method
+``numpy.lib.recfunctions.repack_fields`` has been introduced to help mitigate
+the effects of this change, which can be used to write code compatible with
+both numpy 1.15 and 1.16. For more information on how to update code to account
+for this future change see "basics/structured arrays/accessing multiple fields"
+in the user guide.
 
 C API changes
 =============
 
-``NpyIter_Close`` has been added and should be called before
-``NpyIter_Dealloc`` to resolve possible writeback-enabled arrays.
+* Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
+  have been added and should be used in place of the ``npy_get_floatstatus``and
+  ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
+  were rearranging the order of operations when the previous functions were
+  used in the ufunc SIMD functions, resulting in the floatstatus flags being '
+  checked before the operation whose status we wanted to check was run.
+  See `#10339 <https://github.com/numpy/numpy/issues/10370>`__.
+
+* ``PyArray_GetDTypeTransferFunction`` now defaults to using user-defined
+  ``copyswapn`` / ``copyswap`` for user-defined dtypes. If this causes a
+  significant performance hit, consider implementing ``copyswapn`` to reflect
+  the implementation of ``PyArray_GetStridedCopyFn``.
+  See `#10898 <https://github.com/numpy/numpy/pull/10898>`__.
 
 New Features
 ============
@@ -144,6 +204,11 @@ Creating a full iOS-compatible NumPy package requires building for the 5
 architectures supported by iOS (i386, x86_64, armv7, armv7s and arm64), and
 combining these 5 compiled builds products into a single "fat" binary.
 
+``return_indices`` keyword added for ``np.intersect1d``
+-------------------------------------------------------
+New keyword ``return_indices`` returns the indices of the two input arrays
+that correspond to the common elements.
+
 ``np.quantile`` and ``np.nanquantile``
 --------------------------------------
 Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
@@ -159,6 +224,7 @@ interpreted unambiguously.
 Build system
 ------------
 Added experimental support for the 64-bit RISC-V architecture.
+
 
 Improvements
 ============
@@ -202,6 +268,13 @@ passed explicitly, and are not yet computed automatically.
 ------------------------------------------------------------------------
 No longer does an IQR of 0 result in `n_bins=1`, rather the number of bins
 chosen is related to the data size in this situation.
+
+``histogram`` and ``histogramdd`` return edges matching the float type of the data
+----------------------------------------------------------------------------------
+When passed ``float16``, ``np.float32``, or ``np.longdouble`` data, the
+returned edges are now of the same dtype. Previously, ``histogram`` would only
+return the same type if explicit bins were given, and ``histogram`` would
+produce ``float64`` bins no matter what the inputs.
 
 ``histogramdd`` allows explicit ranges to be given in a subset of axes
 ----------------------------------------------------------------------
@@ -292,6 +365,81 @@ of the overlap between input an output, that is, the next element accumulated
 is added before the accumulated result is stored in its place, hence the
 overlap is safe. Avoiding the copy results in faster execution.
 
+``linalg.matrix_power`` can now handle stacks of matrices
+---------------------------------------------------------
+Like other functions in ``linalg``, ``matrix_power`` can now deal with arrays
+of dimension larger than 2, which are treated as stacks of matrices. As part
+of the change, to further improve consistency, the name of the first argument
+has been changed to ``a`` (from ``M``), and the exceptions for non-square
+matrices have been changed to ``LinAlgError`` (from ``ValueError``).
+
+Increased performance in ``random.permutation`` for multidimensional arrays
+---------------------------------------------------------------------------
+``permutation`` uses the fast path in ``random.shuffle`` for all input
+array dimensions.  Previously the fast path was only used for 1-d arrays.
+
+Generalized ufuncs now accept ``axes``, ``axis`` and ``keepdims`` arguments
+---------------------------------------------------------------------------
+One can control over which axes a generalized ufunc operates by passing in an
+``axes`` argument, a list of tuples with indices of particular axes.  For
+instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate for matrix
+multiplication, the base elements are two-dimensional matrices and these are
+taken to be stored in the two last axes of each argument.  The corresponding
+axes keyword would be ``[(-2, -1), (-2, -1), (-2, -1)]``. If one wanted to
+use leading dimensions instead, one would pass in ``[(0, 1), (0, 1), (0, 1)]``.
+
+For simplicity, for generalized ufuncs that operate on 1-dimensional arrays
+(vectors), a single integer is accepted instead of a single-element tuple, and
+for generalized ufuncs for which all outputs are scalars, the (empty) output
+tuples can be omitted.  Hence, for a signature of ``(i),(i)->()`` appropriate
+for an inner product, one could pass in ``axes=[0, 0]`` to indicate that the
+vectors are stored in the first dimensions of the two inputs arguments.
+
+As a short-cut for generalized ufuncs that are similar to reductions, i.e.,
+that act on a single, shared core dimension such as the inner product example
+above, one can pass an ``axis`` argument. This is equivalent to passing in
+``axes`` with identical entries for all arguments with that core dimension
+(e.g., for the example above, ``axes=[(axis,), (axis,)]``).
+
+Furthermore, like for reductions, for generalized ufuncs that have inputs that
+all have the same number of core dimensions and outputs with no core dimension,
+one can pass in ``keepdims`` to leave a dimension with size 1 in the outputs,
+thus allowing proper broadcasting against the original inputs. The location of
+the extra dimension can be controlled with ``axes``. For instance, for the
+inner-product example, ``keepdims=True, axes=[-2, -2, -2]`` would act on the
+inner-product example, ``keepdims=True, axis=-2`` would act on the
+one-but-last dimension of the input arguments, and leave a size 1 dimension in
+that place in the output.
+
+float128 values now print correctly on ppc systems
+--------------------------------------------------
+Previously printing float128 values was buggy on ppc, since the special
+double-double floating-point-format on these systems was not accounted for.
+float128s now print with correct rounding and uniqueness.
+
+Warning to ppc users: You should upgrade glibc if it is version <=2.23,
+especially if using float128. On ppc, glibc's malloc in these version often
+misaligns allocated memory which can crash numpy when using float128 values.
+
+New ``np.take_along_axis`` and ``np.put_along_axis`` functions
+--------------------------------------------------------------
+When used on multidimensional arrays, ``argsort``, ``argmin``, ``argmax``, and
+``argpartition`` return arrays that are difficult to use as indices.
+``take_along_axis`` provides an easy way to use these indices to lookup values
+within an array, so that::
+
+    np.take_along_axis(a, np.argsort(a, axis=axis), axis=axis)
+
+is the same as::
+
+    np.sort(a, axis=axis)
+
+``np.put_along_axis`` acts as the dual operation for writing to these indices
+within an array.
+
+.. note:: Implementations of ``__array_ufunc__`` should ensure that they can
+          handle either ``axis`` or ``axes``.  In future, we may convert
+          ``axis`` to ``axes`` before passing it on.
 
 Changes
 =======

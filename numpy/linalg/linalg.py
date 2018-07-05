@@ -16,20 +16,20 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError', 'multi_dot']
 
+import operator
 import warnings
 
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot,
-    add, multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
-    finfo, errstate, geterrobj, longdouble, moveaxis, amin, amax, product, abs,
-    broadcast, atleast_2d, intp, asanyarray, object_, ones, matmul,
-    swapaxes, divide, count_nonzero, ndarray, isnan
+    csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
+    add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
+    finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
+    atleast_2d, intp, asanyarray, object_, matmul,
+    swapaxes, divide, count_nonzero, isnan
 )
 from numpy.core.multiarray import normalize_axis_index
-from numpy.lib import triu, asfarray
+from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import lapack_lite, _umath_linalg
-from numpy.matrixlib.defmatrix import matrix_power
 
 # For Python2/3 compatibility
 _N = b'N'
@@ -210,7 +210,8 @@ def _assertSquareness(*arrays):
 
 def _assertNdSquareness(*arrays):
     for a in arrays:
-        if max(a.shape[-2:]) != min(a.shape[-2:]):
+        m, n = a.shape[-2:]
+        if m != n:
             raise LinAlgError('Last 2 dimensions of the array must be square')
 
 def _assertFinite(*arrays):
@@ -532,6 +533,109 @@ def inv(a):
     return wrap(ainv.astype(result_t, copy=False))
 
 
+def matrix_power(a, n):
+    """
+    Raise a square matrix to the (integer) power `n`.
+
+    For positive integers `n`, the power is computed by repeated matrix
+    squarings and matrix multiplications. If ``n == 0``, the identity matrix
+    of the same shape as M is returned. If ``n < 0``, the inverse
+    is computed and then raised to the ``abs(n)``.
+
+    Parameters
+    ----------
+    a : (..., M, M) array_like
+        Matrix to be "powered."
+    n : int
+        The exponent can be any integer or long integer, positive,
+        negative, or zero.
+
+    Returns
+    -------
+    a**n : (..., M, M) ndarray or matrix object
+        The return value is the same shape and type as `M`;
+        if the exponent is positive or zero then the type of the
+        elements is the same as those of `M`. If the exponent is
+        negative the elements are floating-point.
+
+    Raises
+    ------
+    LinAlgError
+        For matrices that are not square or that (for negative powers) cannot
+        be inverted numerically.
+
+    Examples
+    --------
+    >>> from numpy.linalg import matrix_power
+    >>> i = np.array([[0, 1], [-1, 0]]) # matrix equiv. of the imaginary unit
+    >>> matrix_power(i, 3) # should = -i
+    array([[ 0, -1],
+           [ 1,  0]])
+    >>> matrix_power(i, 0)
+    array([[1, 0],
+           [0, 1]])
+    >>> matrix_power(i, -3) # should = 1/(-i) = i, but w/ f.p. elements
+    array([[ 0.,  1.],
+           [-1.,  0.]])
+
+    Somewhat more sophisticated example
+
+    >>> q = np.zeros((4, 4))
+    >>> q[0:2, 0:2] = -i
+    >>> q[2:4, 2:4] = i
+    >>> q # one of the three quaternion units not equal to 1
+    array([[ 0., -1.,  0.,  0.],
+           [ 1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.],
+           [ 0.,  0., -1.,  0.]])
+    >>> matrix_power(q, 2) # = -np.eye(4)
+    array([[-1.,  0.,  0.,  0.],
+           [ 0., -1.,  0.,  0.],
+           [ 0.,  0., -1.,  0.],
+           [ 0.,  0.,  0., -1.]])
+
+    """
+    a = asanyarray(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
+
+    try:
+        n = operator.index(n)
+    except TypeError:
+        raise TypeError("exponent must be an integer")
+
+    if n == 0:
+        a = empty_like(a)
+        a[...] = eye(a.shape[-2], dtype=a.dtype)
+        return a
+
+    elif n < 0:
+        a = inv(a)
+        n = abs(n)
+
+    # short-cuts.
+    if n == 1:
+        return a
+
+    elif n == 2:
+        return matmul(a, a)
+
+    elif n == 3:
+        return matmul(matmul(a, a), a)
+
+    # Use binary decomposition to reduce the number of matrix multiplications.
+    # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
+    # increasing powers of 2, and multiply into the result as needed.
+    z = result = None
+    while n > 0:
+        z = a if z is None else matmul(z, z)
+        n, bit = divmod(n, 2)
+        if bit:
+            result = z if result is None else matmul(result, z)
+
+    return result
+
+
 # Cholesky decomposition
 
 def cholesky(a):
@@ -676,7 +780,7 @@ def qr(a, mode='reduced'):
     dorgqr, and zungqr.
 
     For more information on the qr factorization, see for example:
-    http://en.wikipedia.org/wiki/QR_factorization
+    https://en.wikipedia.org/wiki/QR_factorization
 
     Subclasses of `ndarray` are preserved except for the 'raw' mode. So if
     `a` is of type `matrix`, all the return values will be matrices too.
@@ -1423,14 +1527,12 @@ def svd(a, full_matrices=True, compute_uv=True):
 
     """
     a, wrap = _makearray(a)
-    _assertNoEmpty2d(a)
     _assertRankAtLeast2(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(_raise_linalgerror_svd_nonconvergence)
 
-    m = a.shape[-2]
-    n = a.shape[-1]
+    m, n = a.shape[-2:]
     if compute_uv:
         if full_matrices:
             if m < n:
@@ -1541,6 +1643,7 @@ def cond(x, p=None):
 
     """
     x = asarray(x)  # in case we have a matrix
+    _assertNoEmpty2d(x)
     if p is None or p == 2 or p == -2:
         s = svd(x, compute_uv=False)
         with errstate(all='ignore'):
@@ -1647,7 +1750,7 @@ def matrix_rank(M, tol=None, hermitian=False):
     References
     ----------
     .. [1] MATLAB reference documention, "Rank"
-           http://www.mathworks.com/help/techdoc/ref/rank.html
+           https://www.mathworks.com/help/techdoc/ref/rank.html
     .. [2] W. H. Press, S. A. Teukolsky, W. T. Vetterling and B. P. Flannery,
            "Numerical Recipes (3rd edition)", Cambridge University Press, 2007,
            page 795.
@@ -1750,7 +1853,8 @@ def pinv(a, rcond=1e-15 ):
     a, wrap = _makearray(a)
     rcond = asarray(rcond)
     if _isEmpty2d(a):
-        res = empty(a.shape[:-2] + (a.shape[-1], a.shape[-2]), dtype=a.dtype)
+        m, n = a.shape[-2:]
+        res = empty(a.shape[:-2] + (n, m), dtype=a.dtype)
         return wrap(res)
     a = a.conjugate()
     u, s, vt = svd(a, full_matrices=False)
@@ -2007,10 +2111,9 @@ def lstsq(a, b, rcond="warn"):
         b = b[:, newaxis]
     _assertRank2(a, b)
     _assertNoEmpty2d(a, b)  # TODO: relax this constraint
-    m  = a.shape[0]
-    n  = a.shape[1]
-    n_rhs = b.shape[1]
-    if m != b.shape[0]:
+    m, n = a.shape[-2:]
+    m2, n_rhs = b.shape[-2:]
+    if m != m2:
         raise LinAlgError('Incompatible dimensions')
 
     t, result_t = _commonType(a, b)
@@ -2365,7 +2468,7 @@ def multi_dot(arrays):
     ----------
 
     .. [1] Cormen, "Introduction to Algorithms", Chapter 15.2, p. 370-378
-    .. [2] http://en.wikipedia.org/wiki/Matrix_chain_multiplication
+    .. [2] https://en.wikipedia.org/wiki/Matrix_chain_multiplication
 
     Examples
     --------

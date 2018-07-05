@@ -1,6 +1,6 @@
-=========================================================================
-A proposal to build numpy without warning with a big set of warning flags
-=========================================================================
+=================================================================================
+NEP 2 — A proposal to build numpy without warning with a big set of warning flags
+=================================================================================
 
 :Author: David Cournapeau
 :Contact: david@ar.media.kyoto-u.ac.jp

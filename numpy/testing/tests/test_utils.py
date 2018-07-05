@@ -151,6 +151,17 @@ class TestArrayEqual(_GenericTest):
             self._test_not_equal(c, b)
             assert_equal(len(l), 1)
 
+    def test_masked_nan_inf(self):
+        # Regression test for gh-11121
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[False, True, False])
+        b = np.array([3., np.nan, 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[True, False, False])
+        b = np.array([np.inf, 4., 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+
 
 class TestBuildErrorMessage(object):
 
@@ -286,7 +297,7 @@ class TestEqual(TestArrayEqual):
 
     def test_error_message(self):
         try:
-            self._assert_func(np.array([1, 2]), np.matrix([1, 2]))
+            self._assert_func(np.array([1, 2]), np.array([[1, 2]]))
         except AssertionError as e:
             msg = str(e)
             msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
@@ -296,7 +307,7 @@ class TestEqual(TestArrayEqual):
 
             (shapes (2,), (1, 2) mismatch)
              x: array([1, 2])
-             y: matrix([[1, 2]])""")
+             y: array([[1, 2]])""")
             try:
                 assert_equal(msg, msg_reference)
             except AssertionError:
@@ -366,19 +377,23 @@ class TestArrayAlmostEqual(_GenericTest):
         self._assert_func(b, a)
         self._assert_func(b, b)
 
-    def test_matrix(self):
-        # Matrix slicing keeps things 2-D, while array does not necessarily.
-        # See gh-8452.
-        m1 = np.matrix([[1., 2.]])
-        m2 = np.matrix([[1., np.nan]])
-        m3 = np.matrix([[1., -np.inf]])
-        m4 = np.matrix([[np.nan, np.inf]])
-        m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
-        for m in m1, m2, m3, m4, m5:
-            self._assert_func(m, m)
-            a = np.array(m)
-            self._assert_func(a, m)
-            self._assert_func(m, a)
+        # Test fully masked as well (see gh-11123).
+        a = np.ma.MaskedArray(3.5, mask=True)
+        b = np.array([3., 4., 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.masked
+        b = np.array([3., 4., 6.5])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[True, True, True])
+        b = np.array([1., 2., 3.])
+        self._test_equal(a, b)
+        self._test_equal(b, a)
+        a = np.ma.MaskedArray([3., 4., 6.5], mask=[True, True, True])
+        b = np.array(1.)
+        self._test_equal(a, b)
+        self._test_equal(b, a)
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
@@ -386,6 +401,9 @@ class TestArrayAlmostEqual(_GenericTest):
         # comparison operators, not on them being able to store booleans
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return super(MyArray, self).__eq__(other).view(np.ndarray)
+
             def __lt__(self, other):
                 return super(MyArray, self).__lt__(other).view(np.ndarray)
 
@@ -479,26 +497,15 @@ class TestAlmostEqual(_GenericTest):
             # remove anything that's not the array string
             assert_equal(str(e).split('%)\n ')[1], b)
 
-    def test_matrix(self):
-        # Matrix slicing keeps things 2-D, while array does not necessarily.
-        # See gh-8452.
-        m1 = np.matrix([[1., 2.]])
-        m2 = np.matrix([[1., np.nan]])
-        m3 = np.matrix([[1., -np.inf]])
-        m4 = np.matrix([[np.nan, np.inf]])
-        m5 = np.matrix([[1., 2.], [np.nan, np.inf]])
-        for m in m1, m2, m3, m4, m5:
-            self._assert_func(m, m)
-            a = np.array(m)
-            self._assert_func(a, m)
-            self._assert_func(m, a)
-
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
         # comparison operators, not on them being able to store booleans
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return super(MyArray, self).__eq__(other).view(np.ndarray)
+
             def __lt__(self, other):
                 return super(MyArray, self).__lt__(other).view(np.ndarray)
 
@@ -659,6 +666,7 @@ class TestArrayAssertLess(object):
         assert_raises(AssertionError, lambda: self._assert_func(-x, -ainf))
         assert_raises(AssertionError, lambda: self._assert_func(-ainf, -x))
         self._assert_func(-ainf, x)
+
 
 @pytest.mark.skip(reason="The raises decorator depends on Nose")
 class TestRaises(object):

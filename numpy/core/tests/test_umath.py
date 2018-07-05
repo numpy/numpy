@@ -1328,6 +1328,17 @@ class TestMinMax(object):
         assert_equal(d.max(), d[0])
         assert_equal(d.min(), d[0])
 
+    def test_reduce_warns(self):
+        # gh 10370, 11029 Some compilers reorder the call to npy_getfloatstatus
+        # and put it before the call to an intrisic function that causes
+        # invalid status to be set. Also make sure warnings are emitted
+        for n in (2, 4, 8, 16, 32):
+            with suppress_warnings() as sup:
+                sup.record(RuntimeWarning)
+                for r in np.diagflat([np.nan] * n):
+                    assert_equal(np.min(r), np.nan)
+                assert_equal(len(sup.log), n)
+
 
 class TestAbsoluteNegative(object):
     def test_abs_neg_blocked(self):
@@ -1565,6 +1576,25 @@ class TestSpecialMethods(object):
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
 
+    def test_failing_out_wrap(self):
+
+        singleton = np.array([1.0])
+
+        class Ok(np.ndarray):
+            def __array_wrap__(self, obj):
+                return singleton
+
+        class Bad(np.ndarray):
+            def __array_wrap__(self, obj):
+                raise RuntimeError
+
+        ok = np.empty(1).view(Ok)
+        bad = np.empty(1).view(Bad)
+
+        # double-free (segfault) of "ok" if "bad" raises an exception
+        for i in range(10):
+            assert_raises(RuntimeError, ncu.frexp, 1, ok, bad)
+
     def test_none_wrap(self):
         # Tests that issue #8507 is resolved. Previously, this would segfault
 
@@ -1664,13 +1694,16 @@ class TestSpecialMethods(object):
         assert_equal(ncu.maximum(a, C()), 0)
 
     def test_ufunc_override(self):
-
+        # check override works even with instance with high priority.
         class A(object):
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
                 return self, func, method, inputs, kwargs
 
+        class MyNDArray(np.ndarray):
+            __array_priority__ = 100
+
         a = A()
-        b = np.matrix([1])
+        b = np.array([1]).view(MyNDArray)
         res0 = np.multiply(a, b)
         res1 = np.multiply(b, b, out=a)
 
@@ -1712,18 +1745,22 @@ class TestSpecialMethods(object):
                 return "B"
 
         class C(object):
+            def __init__(self):
+                self.count = 0
+
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
+                self.count += 1
                 return NotImplemented
 
         class CSub(C):
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
+                self.count += 1
                 return NotImplemented
 
         a = A()
         a_sub = ASub()
         b = B()
         c = C()
-        c_sub = CSub()
 
         # Standard
         res = np.multiply(a, a_sub)
@@ -1734,11 +1771,27 @@ class TestSpecialMethods(object):
         # With 1 NotImplemented
         res = np.multiply(c, a)
         assert_equal(res, "A")
+        assert_equal(c.count, 1)
+        # Check our counter works, so we can trust tests below.
+        res = np.multiply(c, a)
+        assert_equal(c.count, 2)
 
         # Both NotImplemented.
+        c = C()
+        c_sub = CSub()
         assert_raises(TypeError, np.multiply, c, c_sub)
+        assert_equal(c.count, 1)
+        assert_equal(c_sub.count, 1)
+        c.count = c_sub.count = 0
         assert_raises(TypeError, np.multiply, c_sub, c)
+        assert_equal(c.count, 1)
+        assert_equal(c_sub.count, 1)
+        c.count = 0
+        assert_raises(TypeError, np.multiply, c, c)
+        assert_equal(c.count, 1)
+        c.count = 0
         assert_raises(TypeError, np.multiply, 2, c)
+        assert_equal(c.count, 1)
 
         # Ternary testing.
         assert_equal(three_mul_ufunc(a, 1, 2), "A")
@@ -1750,11 +1803,19 @@ class TestSpecialMethods(object):
         assert_equal(three_mul_ufunc(a, 2, b), "A")
         assert_equal(three_mul_ufunc(a, 2, a_sub), "ASub")
         assert_equal(three_mul_ufunc(a, a_sub, 3), "ASub")
+        c.count = 0
         assert_equal(three_mul_ufunc(c, a_sub, 3), "ASub")
+        assert_equal(c.count, 1)
+        c.count = 0
         assert_equal(three_mul_ufunc(1, a_sub, c), "ASub")
+        assert_equal(c.count, 0)
 
+        c.count = 0
         assert_equal(three_mul_ufunc(a, b, c), "A")
+        assert_equal(c.count, 0)
+        c_sub.count = 0
         assert_equal(three_mul_ufunc(a, b, c_sub), "A")
+        assert_equal(c_sub.count, 0)
         assert_equal(three_mul_ufunc(1, 2, b), "B")
 
         assert_raises(TypeError, three_mul_ufunc, 1, 2, c)
@@ -1773,9 +1834,25 @@ class TestSpecialMethods(object):
         assert_equal(four_mul_ufunc(a_sub, 1, 2, a), "ASub")
         assert_equal(four_mul_ufunc(a, 1, 2, a_sub), "ASub")
 
+        c = C()
+        c_sub = CSub()
         assert_raises(TypeError, four_mul_ufunc, 1, 2, 3, c)
+        assert_equal(c.count, 1)
+        c.count = 0
         assert_raises(TypeError, four_mul_ufunc, 1, 2, c_sub, c)
-        assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
+        assert_equal(c_sub.count, 1)
+        assert_equal(c.count, 1)
+        c2 = C()
+        c.count = c_sub.count = 0
+        assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c2)
+        assert_equal(c_sub.count, 1)
+        assert_equal(c.count, 1)
+        assert_equal(c2.count, 0)
+        c.count = c2.count = c_sub.count = 0
+        assert_raises(TypeError, four_mul_ufunc, c2, c, c_sub, c)
+        assert_equal(c_sub.count, 1)
+        assert_equal(c.count, 0)
+        assert_equal(c2.count, 1)
 
     def test_ufunc_override_methods(self):
 
@@ -1796,6 +1873,7 @@ class TestSpecialMethods(object):
         assert_raises(TypeError, np.multiply, a)
         assert_raises(TypeError, np.multiply, a, a, a, a)
         assert_raises(TypeError, np.multiply, a, a, sig='a', signature='a')
+        assert_raises(TypeError, ncu_tests.inner1d, a, a, axis=0, axes=[0, 0])
 
         # reduce, positional args
         res = np.multiply.reduce(a, 'axis0', 'dtype0', 'out0', 'keep0')
@@ -1926,6 +2004,7 @@ class TestSpecialMethods(object):
         # outer, wrong args
         assert_raises(TypeError, np.multiply.outer, a)
         assert_raises(TypeError, np.multiply.outer, a, a, a, a)
+        assert_raises(TypeError, np.multiply.outer, a, a, sig='a', signature='a')
 
         # at
         res = np.multiply.at(a, [4, 2], 'b0')
@@ -2680,7 +2759,7 @@ def test_nextafterf():
 
 @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                     reason="long double is same as double")
-@pytest.mark.skipif(platform.machine().startswith("ppc64"),
+@pytest.mark.xfail(condition=platform.machine().startswith("ppc64"),
                     reason="IBM double double")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
@@ -2713,7 +2792,7 @@ def test_spacingf():
 
 @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                     reason="long double is same as double")
-@pytest.mark.skipif(platform.machine().startswith("ppc64"),
+@pytest.mark.xfail(condition=platform.machine().startswith("ppc64"),
                     reason="IBM double double")
 def test_spacingl():
     return _test_spacing(np.longdouble)

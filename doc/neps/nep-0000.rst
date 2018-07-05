@@ -1,9 +1,9 @@
-===================
-Purpose and Process
-===================
+===========================
+NEP 0 — Purpose and Process
+===========================
 
 :Author: Jarrod Millman <millman@berkeley.edu>
-:Status: Draft
+:Status: Active
 :Type: Process
 :Created: 2017-12-11
 
@@ -64,12 +64,19 @@ champion (a.k.a. Author) should first attempt to ascertain whether the idea is
 suitable for a NEP. Posting to the numpy-discussion `mailing list`_ is the best
 way to go about doing this.
 
-Following a discussion on the mailing list, the proposal should be submitted as
-a draft NEP via a `GitHub pull request`_ to the ``doc/neps`` directory with the
-name ``nep-<n>.rst`` where ``<n>`` is an appropriately assigned four-digit
-number (e.g., ``nep-0000.rst``). The draft must use the :doc:`nep-template`
-file. Once a formal proposal has been submitted as a PR, it should be announced
-on the mailing list.
+The proposal should be submitted as a draft NEP via a `GitHub pull
+request`_ to the ``doc/neps`` directory with the name ``nep-<n>.rst``
+where ``<n>`` is an appropriately assigned four-digit number (e.g.,
+``nep-0000.rst``). The draft must use the :doc:`nep-template` file.
+
+Once the PR is in place, the NEP should be announced on the mailing
+list for discussion (comments on the PR itself should be restricted to
+minor editorial and technical fixes).
+
+At the earliest convenience, the PR should be merged (regardless of
+whether it is accepted during discussion).  Additional PRs may be made
+by the Author to update or expand the NEP, or by maintainers to set
+its status, discussion URL, etc.
 
 Standards Track NEPs consist of two parts, a design document and a
 reference implementation.  It is generally recommended that at least a
@@ -83,24 +90,16 @@ mark the PR as a WIP).
 Review and Resolution
 ^^^^^^^^^^^^^^^^^^^^^
 
-NEPs are discussed on the mailing list and perhaps in other forums.
-Sometimes NEPs will grow out of an existing pull request.
-The possible paths of the status of NEPs are as follows:
+NEPs are discussed on the mailing list.  The possible paths of the
+status of NEPs are as follows:
 
 .. image:: _static/nep-0000.png
 
 All NEPs should be created with the ``Draft`` status.
 
-Normally, a NEP is ``Accepted`` by consensus of all interested
-Contributors. To verify that consensus has been reached, the NEP
-author or another interested party should make a post on the
-numpy-discussion mailing list proposing it for acceptance; if there
-are no substantive objections after one week, the NEP can officially
-be marked ``Accepted``, and a link to this post should be added to the
-NEP for reference.
-
-In unusual cases, the `NumPy Steering Council`_ may be asked to decide whether
-a controversial NEP is ``Accepted``.
+Eventually, after discussion, there may be a consensus that the NEP
+should be accepted – see the next section for details. At this point
+the status becomes ``Accepted``.
 
 Once a NEP has been ``Accepted``, the reference implementation must be
 completed.  When the reference implementation is complete and incorporated
@@ -127,6 +126,61 @@ should be added to the original and new NEPs respectively.
 
 Process NEPs may also have a status of ``Active`` if they are never
 meant to be completed, e.g. NEP 0 (this NEP).
+
+
+How a NEP becomes Accepted
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A NEP is ``Accepted`` by consensus of all interested contributors. We
+need a concrete way to tell whether consensus has been reached. When
+you think a NEP is ready to accept, send an email to the
+numpy-discussion mailing list with a subject like:
+
+  Proposal to accept NEP #<number>: <title>
+
+In the body of your email, you should:
+
+* link to the latest version of the NEP,
+
+* briefly describe any major points of contention and how they were
+  resolved,
+
+* include a sentence like: "If there are no substantive objections
+  within 7 days from this email, then the NEP will be accepted; see
+  NEP 0 for more details."
+
+For an example, see: https://mail.python.org/pipermail/numpy-discussion/2018-June/078345.html
+
+After you send the email, you should make sure to link to the email
+thread from the ``Discussion`` section of the NEP, so that people can
+find it later.
+
+Generally the NEP author will be the one to send this email, but
+anyone can do it – the important thing is to make sure that everyone
+knows when a NEP is on the verge of acceptance, and give them a final
+chance to respond. If there's some special reason to extend this final
+comment period beyond 7 days, then that's fine, just say so in the
+email. You shouldn't do less than 7 days, because sometimes people are
+travelling or similar and need some time to respond.
+
+In general, the goal is to make sure that the community has consensus,
+not provide a rigid policy for people to try to game. When in doubt,
+err on the side of asking for more feedback and looking for
+opportunities to compromise.
+
+If the final comment period passes without any substantive objections,
+then the NEP can officially be marked ``Accepted``. You should send a
+followup email notifying the list (celebratory emoji optional but
+encouraged 🎉✨), and then update the NEP by setting its ``:Status:``
+to ``Accepted``, and its ``:Resolution:`` header to a link to your
+followup email.
+
+If there *are* substantive objections, then the NEP remains in
+``Draft`` state, discussion continues as normal, and it can be
+proposed for acceptance again later once the objections are resolved.
+
+In unusual cases, the `NumPy Steering Council`_ may be asked to decide
+whether a controversial NEP is ``Accepted``.
 
 
 Maintenance
@@ -197,7 +251,7 @@ References and Footnotes
    `GitHub <https://github.com/numpy/numpy/tree/master/doc/neps>`_.
 
 .. [2] The URL for viewing NEPs on the web is
-   http://numpy.github.io/neps/.
+   https://www.numpy.org/neps/.
 
 .. _repo: https://github.com/numpy/numpy
 
@@ -214,7 +268,7 @@ References and Footnotes
 
 .. _reStructuredTextPrimer: http://www.sphinx-doc.org/en/stable/rest.html
 
-.. _Sphinx: www.sphinx-doc.org/en/stable
+.. _Sphinx: http://www.sphinx-doc.org/en/stable/
 
 
 Copyright

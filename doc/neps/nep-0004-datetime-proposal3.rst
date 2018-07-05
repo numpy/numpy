@@ -1,6 +1,6 @@
-====================================================================
- A (third) proposal for implementing some date/time types in NumPy
-====================================================================
+=========================================================================
+NEP 4 — A (third) proposal for implementing some date/time types in NumPy
+=========================================================================
 
 :Author: Francesc Alted i Abad
 :Contact: faltet@pytables.com
@@ -562,9 +562,9 @@ examples of other derived units, and we find this a bit too overwhelming
 for this proposal purposes.
 
 
-.. [1] http://docs.python.org/lib/module-datetime.html
-.. [2] http://www.egenix.com/products/python/mxBase/mxDateTime
-.. [3] http://en.wikipedia.org/wiki/Unix_time
+.. [1] https://docs.python.org/library/datetime.html
+.. [2] https://www.egenix.com/products/python/mxBase/mxDateTime
+.. [3] https://en.wikipedia.org/wiki/Unix_time
 
 
 .. Local Variables:

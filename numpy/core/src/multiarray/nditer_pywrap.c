@@ -1,5 +1,5 @@
 /*
- * This file implements the CPython wrapper of the new NumPy iterator.
+ * This file implements the CPython wrapper of NpyIter
  *
  * Copyright (c) 2010 by Mark Wiebe (mwwiebe@gmail.com)
  * The University of British Columbia
@@ -17,6 +17,11 @@
 #include "npy_pycompat.h"
 #include "alloc.h"
 #include "common.h"
+#include "ctors.h"
+
+/* Functions not part of the public NumPy C API */
+npy_bool npyiter_has_writeback(NpyIter *iter);
+
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
@@ -26,8 +31,6 @@ struct NewNpyArrayIterObject_tag {
     NpyIter *iter;
     /* Flag indicating iteration started/stopped */
     char started, finished;
-    /* iter operands cannot be referenced if iter is closed */
-    npy_bool is_closed;
     /* Child to update for nested iteration */
     NewNpyArrayIterObject *nested_child;
     /* Cached values from the iterator */
@@ -87,7 +90,6 @@ npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     if (self != NULL) {
         self->iter = NULL;
         self->nested_child = NULL;
-        self->is_closed = 0;
     }
 
     return (PyObject *)self;
@@ -1172,10 +1174,29 @@ fail:
     return NULL;
 }
 
+
 static void
 npyiter_dealloc(NewNpyArrayIterObject *self)
 {
     if (self->iter) {
+        if (npyiter_has_writeback(self->iter)) {
+            if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                    "Temporary data has not been written back to one of the "
+                    "operands. Typically nditer is used as a context manager "
+                    "otherwise 'close' must be called before reading iteration "
+                    "results.", 1) < 0) {
+                PyObject *s;
+
+                s = PyUString_FromString("npyiter_dealloc");
+                if (s) {
+                    PyErr_WriteUnraisable(s);
+                    Py_DECREF(s);
+                }
+                else {
+                    PyErr_WriteUnraisable(Py_None);
+                }
+            }
+        }
         NpyIter_Deallocate(self->iter);
         self->iter = NULL;
         Py_XDECREF(self->nested_child);
@@ -1417,12 +1438,6 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
         ret = npyiter_seq_item(self, 0);
     }
     else {
-        if (self->is_closed) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator is closed");
-            return NULL;
-        }
-
         ret = PyTuple_New(nop);
         if (ret == NULL) {
             return NULL;
@@ -1452,12 +1467,6 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return NULL;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
     operands = self->operands;
 
@@ -1486,13 +1495,6 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return NULL;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
@@ -1516,7 +1518,7 @@ static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL || self->iternext == NULL ||
-                self->finished || self->is_closed) {
+                self->finished) {
         return NULL;
     }
 
@@ -1910,13 +1912,6 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return NULL;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
@@ -1991,8 +1986,6 @@ npyiter_seq_length(NewNpyArrayIterObject *self)
 NPY_NO_EXPORT PyObject *
 npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
-    PyArrayObject *ret;
-
     npy_intp ret_ndim;
     npy_intp nop, innerloopsize, innerstride;
     char *dataptr;
@@ -2012,13 +2005,6 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                 "and no reset has been done yet");
         return NULL;
     }
-
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return NULL;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
 
     /* Negative indexing */
@@ -2064,22 +2050,11 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     }
 
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                        ret_ndim, &innerloopsize,
-                        &innerstride, dataptr,
-                        self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_XDECREF(ret);
-        return NULL;
-    }
-
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
-    return (PyObject *)ret;
+    return PyArray_NewFromDescrAndBase(
+            &PyArray_Type, dtype,
+            ret_ndim, &innerloopsize, &innerstride, dataptr,
+            self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0,
+            NULL, (PyObject *)self);
 }
 
 NPY_NO_EXPORT PyObject *
@@ -2102,13 +2077,6 @@ npyiter_seq_slice(NewNpyArrayIterObject *self,
                 "and no reset has been done yet");
         return NULL;
     }
-
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return NULL;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -2168,13 +2136,6 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
                 "and no reset has been done yet");
         return -1;
     }
-
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return -1;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
 
     /* Negative indexing */
@@ -2216,8 +2177,6 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         return -1;
     }
 
-    PyArray_UpdateFlags(tmp, NPY_ARRAY_UPDATE_ALL);
-
     ret = PyArray_CopyObject(tmp, v);
     Py_DECREF(tmp);
     return ret;
@@ -2248,13 +2207,6 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
                 "and no reset has been done yet");
         return -1;
     }
-
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return -1;
-    }
-
     nop = NpyIter_GetNOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -2303,12 +2255,6 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
         PyErr_SetString(PyExc_ValueError,
                 "Iterator construction used delayed buffer allocation, "
                 "and no reset has been done yet");
-        return NULL;
-    }
-
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
         return NULL;
     }
 
@@ -2361,12 +2307,6 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
         return -1;
     }
 
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError,
-                "Iterator is closed");
-        return -1;
-    }
-
     if (PyInt_Check(op) || PyLong_Check(op) ||
                     (PyIndex_Check(op) && !PySequence_Check(op))) {
         npy_intp i = PyArray_PyIntAsIntp(op);
@@ -2401,10 +2341,6 @@ npyiter_enter(NewNpyArrayIterObject *self)
         PyErr_SetString(PyExc_RuntimeError, "operation on non-initialized iterator");
         return NULL;
     }
-    if (self->is_closed) {
-        PyErr_SetString(PyExc_ValueError, "cannot reuse closed iterator");
-        return NULL;
-    }
     Py_INCREF(self);
     return (PyObject *)self;
 }
@@ -2417,8 +2353,8 @@ npyiter_close(NewNpyArrayIterObject *self)
     if (self->iter == NULL) {
         Py_RETURN_NONE;
     }
-    ret = NpyIter_Close(iter);
-    self->is_closed = 1;
+    ret = NpyIter_Deallocate(iter);
+    self->iter = NULL;
     if (ret < 0) {
         return NULL;
     }

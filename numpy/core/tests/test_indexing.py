@@ -329,6 +329,21 @@ class TestIndexing(object):
         assert_raises(IndexError, a.__getitem__, ind)
         assert_raises(IndexError, a.__setitem__, ind, 0)
 
+    def test_trivial_fancy_not_possible(self):
+        # Test that the fast path for trivial assignment is not incorrectly
+        # used when the index is not contiguous or 1D, see also gh-11467.
+        a = np.arange(6)
+        idx = np.arange(6, dtype=np.intp).reshape(2, 1, 3)[:, :, 0]
+        assert_array_equal(a[idx], idx)
+
+        # this case must not go into the fast path, note that idx is
+        # a non-contiuguous none 1D array here.
+        a[idx] = -1
+        res = np.arange(6)
+        res[0] = -1
+        res[3] = -1
+        assert_array_equal(a, res)
+
     def test_nonbaseclass_values(self):
         class SubClass(np.ndarray):
             def __array_finalize__(self, old):
@@ -575,19 +590,6 @@ class TestSubclasses(object):
 
         assert_(isinstance(s[[0, 1, 2]], SubClass))
         assert_(isinstance(s[s > 0], SubClass))
-
-    def test_matrix_fancy(self):
-        # The matrix class messes with the shape. While this is always
-        # weird (getitem is not used, it does not have setitem nor knows
-        # about fancy indexing), this tests gh-3110
-        m = np.matrix([[1, 2], [3, 4]])
-
-        assert_(isinstance(m[[0,1,0], :], np.matrix))
-
-        # gh-3110. Note the transpose currently because matrices do *not*
-        # support dimension fixing for fancy indexing correctly.
-        x = np.asmatrix(np.arange(50).reshape(5,10))
-        assert_equal(x[:2, np.array(-1)], x[:2, -1].T)
 
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.
@@ -846,7 +848,10 @@ class TestMultiIndexingAutomated(object):
                 # is not safe. It rejects np.array([1., 2.]) but not
                 # [1., 2.] as index (same for ie. np.take).
                 # (Note the importance of empty lists if changing this here)
-                indx = np.array(indx, dtype=np.intp)
+                try:
+                    indx = np.array(indx, dtype=np.intp)
+                except ValueError:
+                    raise IndexError
                 in_indices[i] = indx
             elif indx.dtype.kind != 'b' and indx.dtype.kind != 'i':
                 raise IndexError('arrays used as indices must be of '
@@ -999,9 +1004,13 @@ class TestMultiIndexingAutomated(object):
                     # Maybe never happens...
                     raise ValueError
                 arr = arr.take(mi.ravel(), axis=ax)
-                arr = arr.reshape((arr.shape[:ax]
-                                    + mi.shape
-                                    + arr.shape[ax+1:]))
+                try:
+                    arr = arr.reshape((arr.shape[:ax]
+                                        + mi.shape
+                                        + arr.shape[ax+1:]))
+                except ValueError:
+                    # too many dimensions, probably
+                    raise IndexError
                 ax += mi.ndim
                 continue
 
@@ -1027,8 +1036,8 @@ class TestMultiIndexingAutomated(object):
         except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
-            assert_raises(Exception, arr.__getitem__, index)
-            assert_raises(Exception, arr.__setitem__, index, 0)
+            assert_raises(type(e), arr.__getitem__, index)
+            assert_raises(type(e), arr.__setitem__, index, 0)
             if HAS_REFCOUNT:
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
@@ -1051,8 +1060,8 @@ class TestMultiIndexingAutomated(object):
         except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
-            assert_raises(Exception, arr.__getitem__, index)
-            assert_raises(Exception, arr.__setitem__, index, 0)
+            assert_raises(type(e), arr.__getitem__, index)
+            assert_raises(type(e), arr.__setitem__, index, 0)
             if HAS_REFCOUNT:
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
@@ -1140,10 +1149,8 @@ class TestMultiIndexingAutomated(object):
 
     def test_1d(self):
         a = np.arange(10)
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error', '', np.VisibleDeprecationWarning)
-            for index in self.complex_indices:
-                self._check_single_index(a, index)
+        for index in self.complex_indices:
+            self._check_single_index(a, index)
 
 class TestFloatNonIntegerArgument(object):
     """

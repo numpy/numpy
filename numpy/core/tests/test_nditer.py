@@ -811,7 +811,7 @@ def test_iter_nbo_align_contig():
         assert_equal(i.operands[0], a)
         i.operands[0][:] = 2
     assert_equal(au, [2]*6)
-    i = None # should not raise a DeprecationWarning
+    del i  # should not raise a warning
     # Byte order change by requesting NBO
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
@@ -1469,26 +1469,25 @@ def test_iter_allocate_output_types_scalar():
 
 def test_iter_allocate_output_subtype():
     # Make sure that the subtype with priority wins
+    class MyNDArray(np.ndarray):
+        __array_priority__ = 15
 
-    # matrix vs ndarray
-    a = np.matrix([[1, 2], [3, 4]])
+    # subclass vs ndarray
+    a = np.array([[1, 2], [3, 4]]).view(MyNDArray)
     b = np.arange(4).reshape(2, 2).T
     i = nditer([a, b, None], [],
-                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
+               [['readonly'], ['readonly'], ['writeonly', 'allocate']])
     assert_equal(type(a), type(i.operands[2]))
-    assert_(type(b) != type(i.operands[2]))
+    assert_(type(b) is not type(i.operands[2]))
     assert_equal(i.operands[2].shape, (2, 2))
 
-    # matrix always wants things to be 2D
-    b = np.arange(4).reshape(1, 2, 2)
-    assert_raises(RuntimeError, nditer, [a, b, None], [],
-                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
-    # but if subtypes are disabled, the result can still work
+    # If subtypes are disabled, we should get back an ndarray.
     i = nditer([a, b, None], [],
-            [['readonly'], ['readonly'], ['writeonly', 'allocate', 'no_subtype']])
+               [['readonly'], ['readonly'],
+                ['writeonly', 'allocate', 'no_subtype']])
     assert_equal(type(b), type(i.operands[2]))
-    assert_(type(a) != type(i.operands[2]))
-    assert_equal(i.operands[2].shape, (1, 2, 2))
+    assert_(type(a) is not type(i.operands[2]))
+    assert_equal(i.operands[2].shape, (2, 2))
 
 def test_iter_allocate_output_errors():
     # Check that the iterator will throw errors for bad output allocations
@@ -2831,21 +2830,35 @@ def test_writebacks():
     x[:] = 123 # x.data still valid
     assert_equal(au, 6) # but not connected to au
 
-    do_close = 1
-    # test like above, only in C, and with an option to skip the NpyIter_Close
-    _multiarray_tests.test_nditer_writeback(3, do_close, au, op_dtypes=[np.dtype('f4')])
-    assert_equal(au, 3)
     it = nditer(au, [],
                  [['readwrite', 'updateifcopy']],
                  casting='equiv', op_dtypes=[np.dtype('f4')])
-    au = None
+    # reentering works
+    with it:
+        with it:
+            for x in it:
+                x[...] = 123
+
+    it = nditer(au, [],
+                 [['readwrite', 'updateifcopy']],
+                 casting='equiv', op_dtypes=[np.dtype('f4')])
+    # make sure exiting the inner context manager closes the iterator
+    with it:
+        with it:
+            for x in it:
+                x[...] = 123
+        assert_raises(ValueError, getattr, it, 'operands')
     # do not crash if original data array is decrefed
+    it = nditer(au, [],
+                 [['readwrite', 'updateifcopy']],
+                 casting='equiv', op_dtypes=[np.dtype('f4')])
+    del au
     with it:
         for x in it:
             x[...] = 123
-    # make sure we cannot reenter the iterand
+    # make sure we cannot reenter the closed iterator
     enter = it.__enter__
-    assert_raises(ValueError, enter)
+    assert_raises(RuntimeError, enter)
 
 def test_close_equivalent():
     ''' using a context amanger and using nditer.close are equivalent
@@ -2880,12 +2893,13 @@ def test_close_raises():
     assert_raises(StopIteration, next, it)
     assert_raises(ValueError, getattr, it, 'operands')
 
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_warn_noclose():
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
-    do_close = 0
     with suppress_warnings() as sup:
         sup.record(RuntimeWarning)
-        # test like above, only in C, and with an option to skip the NpyIter_Close
-        _multiarray_tests.test_nditer_writeback(3, do_close, au, op_dtypes=[np.dtype('f4')])
+        it = np.nditer(au, [], [['readwrite', 'updateifcopy']],
+                        casting='equiv', op_dtypes=[np.dtype('f4')])
+        del it
         assert len(sup.log) == 1

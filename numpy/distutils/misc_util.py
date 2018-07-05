@@ -256,6 +256,11 @@ def minrelpath(path):
         return ''
     return os.sep.join(l)
 
+def sorted_glob(fileglob):
+    """sorts output of python glob for https://bugs.python.org/issue30461
+    to allow extensions to have reproducible build results"""
+    return sorted(glob.glob(fileglob))
+
 def _fix_paths(paths, local_path, include_non_existing):
     assert is_sequence(paths), repr(type(paths))
     new_paths = []
@@ -263,8 +268,8 @@ def _fix_paths(paths, local_path, include_non_existing):
     for n in paths:
         if is_string(n):
             if '*' in n or '?' in n:
-                p = glob.glob(n)
-                p2 = glob.glob(njoin(local_path, n))
+                p = sorted_glob(n)
+                p2 = sorted_glob(njoin(local_path, n))
                 if p2:
                     new_paths.extend(p2)
                 elif p:
@@ -312,7 +317,7 @@ def make_temp_file(suffix='', prefix='', text=True):
     return fo, name
 
 # Hooks for colored terminal output.
-# See also http://www.livinglogic.de/Python/ansistyle
+# See also https://web.archive.org/web/20100314204946/http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
     if sys.platform=='cygwin' and 'USE_COLOR' not in os.environ:
         # Avoid importing curses that causes illegal operation
@@ -528,7 +533,7 @@ def _get_headers(directory_list):
     # get *.h files from list of directories
     headers = []
     for d in directory_list:
-        head = glob.glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
+        head = sorted_glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
         headers.extend(head)
     return headers
 
@@ -882,7 +887,7 @@ class Configuration(object):
                                  caller_level = 1):
         l = subpackage_name.split('.')
         subpackage_path = njoin([self.local_path]+l)
-        dirs = [_m for _m in glob.glob(subpackage_path) if os.path.isdir(_m)]
+        dirs = [_m for _m in sorted_glob(subpackage_path) if os.path.isdir(_m)]
         config_list = []
         for d in dirs:
             if not os.path.isfile(njoin(d, '__init__.py')):
@@ -2295,19 +2300,9 @@ import sys
 
 extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
-if os.path.isdir(extra_dll_dir) and sys.platform == 'win32':
-    try:
-        from ctypes import windll, c_wchar_p
-        _AddDllDirectory = windll.kernel32.AddDllDirectory
-        _AddDllDirectory.argtypes = [c_wchar_p]
-        # Needed to initialize AddDllDirectory modifications
-        windll.kernel32.SetDefaultDllDirectories(0x1000)
-    except AttributeError:
-        def _AddDllDirectory(dll_directory):
-            os.environ.setdefault('PATH', '')
-            os.environ['PATH'] += os.pathsep + dll_directory
-
-    _AddDllDirectory(extra_dll_dir)
+if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
+    os.environ.setdefault('PATH', '')
+    os.environ['PATH'] += os.pathsep + extra_dll_dir
 
 """)
 

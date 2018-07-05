@@ -140,6 +140,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     --------
     compress : Take elements using a boolean mask
     ndarray.take : equivalent method
+    take_along_axis : Take elements by matching the array and the index arrays
 
     Notes
     -----
@@ -478,6 +479,7 @@ def put(a, ind, v, mode='raise'):
     See Also
     --------
     putmask, place
+    put_along_axis : Put elements by matching the array and the index arrays
 
     Examples
     --------
@@ -723,7 +725,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     -------
     index_array : ndarray, int
         Array of indices that partition `a` along the specified axis.
-        In other words, ``a[index_array]`` yields a partitioned `a`.
+        If `a` is one-dimensional, ``a[index_array]`` yields a partitioned `a`.
+        More generally, ``np.take_along_axis(a, index_array, axis=a)`` always
+        yields the partitioned `a`, irrespective of dimensionality.
 
     See Also
     --------
@@ -904,6 +908,8 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     index_array : ndarray, int
         Array of indices that sort `a` along the specified axis.
         If `a` is one-dimensional, ``a[index_array]`` yields a sorted `a`.
+        More generally, ``np.take_along_axis(a, index_array, axis=a)`` always
+        yields the sorted `a`, irrespective of dimensionality.
 
     See Also
     --------
@@ -1336,10 +1342,11 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     Returns
     -------
     array_of_diagonals : ndarray
-        If `a` is 2-D and not a `matrix`, a 1-D array of the same type as `a`
-        containing the diagonal is returned. If `a` is a `matrix`, a 1-D
-        array containing the diagonal is returned in order to maintain
-        backward compatibility.
+        If `a` is 2-D, then a 1-D array containing the diagonal and of the
+        same type as `a` is returned unless `a` is a `matrix`, in which case
+        a 1-D array rather than a (2-D) `matrix` is returned in order to
+        maintain backward compatibility.
+        
         If ``a.ndim > 2``, then the dimensions specified by `axis1` and `axis2`
         are removed, and a new axis inserted at the end corresponding to the
         diagonal.
@@ -1496,10 +1503,9 @@ def ravel(a, order='C'):
     Returns
     -------
     y : array_like
-        If `a` is a matrix, y is a 1-D ndarray, otherwise y is an array of
-        the same subtype as `a`. The shape of the returned array is
-        ``(a.size,)``. Matrices are special cased for backward
-        compatibility.
+        y is an array of the same subtype as `a`, with shape ``(a.size,)``.
+        Note that matrices are special cased for backward compatibility, if `a`
+        is a matrix, then y is a 1-D ndarray.
 
     See Also
     --------
@@ -1609,16 +1615,16 @@ def nonzero(a):
 
     Examples
     --------
-    >>> x = np.array([[1,0,0], [0,2,0], [1,1,0]])
+    >>> x = np.array([[3, 0, 0], [0, 4, 0], [5, 6, 0]])
     >>> x
-    array([[1, 0, 0],
-           [0, 2, 0],
-           [1, 1, 0]])
+    array([[3, 0, 0],
+           [0, 4, 0],
+           [5, 6, 0]])
     >>> np.nonzero(x)
     (array([0, 1, 2, 2]), array([0, 1, 0, 1]))
 
     >>> x[np.nonzero(x)]
-    array([1, 2, 1, 1])
+    array([3, 4, 5, 6])
     >>> np.transpose(np.nonzero(x))
     array([[0, 0],
            [1, 1],
@@ -1630,7 +1636,7 @@ def nonzero(a):
     boolean array and since False is interpreted as 0, np.nonzero(a > 3)
     yields the indices of the `a` where the condition is true.
 
-    >>> a = np.array([[1,2,3],[4,5,6],[7,8,9]])
+    >>> a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     >>> a > 3
     array([[False, False, False],
            [ True,  True,  True],
@@ -1638,7 +1644,14 @@ def nonzero(a):
     >>> np.nonzero(a > 3)
     (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
-    The ``nonzero`` method of the boolean array can also be called.
+    Using this result to index `a` is equivalent to using the mask directly:
+
+    >>> a[np.nonzero(a > 3)]
+    array([4, 5, 6, 7, 8, 9])
+    >>> a[a > 3]  # prefer this spelling
+    array([4, 5, 6, 7, 8, 9])
+
+    ``nonzero`` can also be called as a method of the array.
 
     >>> (a > 3).nonzero()
     (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
@@ -2771,11 +2784,11 @@ def around(a, decimals=0, out=None):
 
     References
     ----------
-    .. [1] "Lecture Notes on the Status of  IEEE 754", William Kahan,
-           http://www.cs.berkeley.edu/~wkahan/ieee754status/IEEE754.PDF
+    .. [1] "Lecture Notes on the Status of IEEE 754", William Kahan,
+           https://people.eecs.berkeley.edu/~wkahan/ieee754status/IEEE754.PDF
     .. [2] "How Futile are Mindless Assessments of
            Roundoff in Floating-Point Computation?", William Kahan,
-           http://www.cs.berkeley.edu/~wkahan/Mindless.pdf
+           https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
 
     Examples
     --------
