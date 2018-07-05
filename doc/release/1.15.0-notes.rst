@@ -215,11 +215,6 @@ Like ``np.percentile`` and ``np.nanpercentile``, but takes quantiles in [0, 1]
 rather than percentiles in [0, 100]. ``np.percentile`` is now a thin wrapper
 around ``np.quantile`` with the extra step of dividing by 100.
 
-``np.average`` supports multi-dimension ``weights``
----------------------------------------------------
-Add support for any case where ``len(axis) == weights.ndim`` for ``np.average``.
-So for instance, ``np.average(arr_3d, weights_2d, axis=2d_tuple)`` can be
-interpreted unambiguously.
 
 Build system
 ------------

@@ -293,7 +293,7 @@ def average(a, axis=None, weights=None, returned=False):
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the average according to its associated weight.
         The weights array can either be x-D (in which case its ndim x must
-        equal the length of `axis`. And the length of each dimension must be the
+        equal the length of `axis`. The length of each dimension must be the
         size of `a` along the corresponding axis) or of the same shape as `a`.
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
