@@ -1546,7 +1546,6 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
                     Py_DECREF(names);
                     return 0;
                 }
-                Py_DECREF(title);
             }
             /* disallow duplicate field indices */
             if (PyDict_Contains(fields, name)) {
