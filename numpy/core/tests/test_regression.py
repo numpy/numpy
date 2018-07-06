@@ -2391,3 +2391,15 @@ class TestRegression(object):
                 squeezed = scvalue.squeeze(axis=axis)
                 assert_equal(squeezed, scvalue)
                 assert_equal(type(squeezed), type(scvalue))
+
+    def test_field_access_by_title(self):
+        # gh-11507
+        s = 'Some long field name'
+        if HAS_REFCOUNT:
+            base = sys.getrefcount(s)
+        t = np.dtype([((s, 'f1'), np.float64)])
+        data = np.zeros(10, t)
+        for i in range(10):
+            v = str(data[['f1']])
+            if HAS_REFCOUNT:
+                assert_(base <= sys.getrefcount(s))
