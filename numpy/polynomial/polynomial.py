@@ -1643,3 +1643,15 @@ class Polynomial(ABCPolyBase):
     nickname = 'poly'
     domain = np.array(polydomain)
     window = np.array(polydomain)
+    basis_name = None
+
+    @staticmethod
+    def _repr_latex_term(i, arg_str, needs_parens):
+        if needs_parens:
+            arg_str = r'\left({}\right)'.format(arg_str)
+        if i == 0:
+            return '1'
+        elif i == 1:
+            return arg_str
+        else:
+            return '{}^{{{}}}'.format(arg_str, i)

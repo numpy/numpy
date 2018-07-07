@@ -1851,3 +1851,4 @@ class Hermite(ABCPolyBase):
     nickname = 'herm'
     domain = np.array(hermdomain)
     window = np.array(hermdomain)
+    basis_name = 'H'
