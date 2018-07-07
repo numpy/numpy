@@ -412,12 +412,13 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     try:
         # Code to distinguish from NumPy binary files and pickles.
         _ZIP_PREFIX = b'PK\x03\x04'
+        _ZIP_SUFFIX = b'PK\x05\x06' # empty zip files start with this
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
-        if magic.startswith(_ZIP_PREFIX):
+        if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
             # zip-file (assume .npz)
             # Transfer file ownership to NpzFile
             tmp = own_fid
