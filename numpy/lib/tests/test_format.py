@@ -852,3 +852,10 @@ def test_large_archive():
         new_a = np.load(f)["arr"]
 
     assert_(a.shape == new_a.shape)
+
+
+def test_empty_npz():
+    # Test for gh-9989
+    fname = os.path.join(tempdir, "nothing.npz")
+    np.savez(fname)
+    np.load(fname)
