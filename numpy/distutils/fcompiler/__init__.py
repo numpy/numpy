@@ -91,7 +91,7 @@ class FCompiler(CCompiler):
 
     # These are the environment variables and distutils keys used.
     # Each configuration description is
-    # (<hook name>, <environment variable>, <key in distutils.cfg>, <convert>)
+    # (<hook name>, <environment variable>, <key in distutils.cfg>, <convert>, <append>)
     # The hook names are handled by the self._environment_hook method.
     #  - names starting with 'self.' call methods in this class
     #  - names starting with 'exe.' return the key in the executables dict
@@ -101,43 +101,43 @@ class FCompiler(CCompiler):
 
     distutils_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        noopt = (None, None, 'noopt', str2bool),
-        noarch = (None, None, 'noarch', str2bool),
-        debug = (None, None, 'debug', str2bool),
-        verbose = (None, None, 'verbose', str2bool),
+        noopt = (None, None, 'noopt', str2bool, False),
+        noarch = (None, None, 'noarch', str2bool, False),
+        debug = (None, None, 'debug', str2bool, False),
+        verbose = (None, None, 'verbose', str2bool, False),
     )
 
     command_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', None),
-        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None),
-        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None),
-        version_cmd = ('exe.version_cmd', None, None, None),
-        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None),
-        linker_exe = ('exe.linker_exe', 'LD', 'ld', None),
-        archiver = (None, 'AR', 'ar', None),
-        ranlib = (None, 'RANLIB', 'ranlib', None),
+        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', None, False),
+        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None, False),
+        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None, False),
+        version_cmd = ('exe.version_cmd', None, None, None, False),
+        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None, True),
+        linker_exe = ('exe.linker_exe', 'LD', 'ld', None, False),
+        archiver = (None, 'AR', 'ar', None, False),
+        ranlib = (None, 'RANLIB', 'ranlib', None, False),
     )
 
     flag_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        f77 = ('flags.f77', 'F77FLAGS', 'f77flags', flaglist),
-        f90 = ('flags.f90', 'F90FLAGS', 'f90flags', flaglist),
-        free = ('flags.free', 'FREEFLAGS', 'freeflags', flaglist),
-        fix = ('flags.fix', None, None, flaglist),
-        opt = ('flags.opt', 'FOPT', 'opt', flaglist),
-        opt_f77 = ('flags.opt_f77', None, None, flaglist),
-        opt_f90 = ('flags.opt_f90', None, None, flaglist),
-        arch = ('flags.arch', 'FARCH', 'arch', flaglist),
-        arch_f77 = ('flags.arch_f77', None, None, flaglist),
-        arch_f90 = ('flags.arch_f90', None, None, flaglist),
-        debug = ('flags.debug', 'FDEBUG', 'fdebug', flaglist),
-        debug_f77 = ('flags.debug_f77', None, None, flaglist),
-        debug_f90 = ('flags.debug_f90', None, None, flaglist),
-        flags = ('self.get_flags', 'FFLAGS', 'fflags', flaglist),
-        linker_so = ('flags.linker_so', 'LDFLAGS', 'ldflags', flaglist),
-        linker_exe = ('flags.linker_exe', 'LDFLAGS', 'ldflags', flaglist),
-        ar = ('flags.ar', 'ARFLAGS', 'arflags', flaglist),
+        f77 = ('flags.f77', 'F77FLAGS', 'f77flags', flaglist, True),
+        f90 = ('flags.f90', 'F90FLAGS', 'f90flags', flaglist, True),
+        free = ('flags.free', 'FREEFLAGS', 'freeflags', flaglist, True),
+        fix = ('flags.fix', None, None, flaglist, False),
+        opt = ('flags.opt', 'FOPT', 'opt', flaglist, True),
+        opt_f77 = ('flags.opt_f77', None, None, flaglist, False),
+        opt_f90 = ('flags.opt_f90', None, None, flaglist, False),
+        arch = ('flags.arch', 'FARCH', 'arch', flaglist, False),
+        arch_f77 = ('flags.arch_f77', None, None, flaglist, False),
+        arch_f90 = ('flags.arch_f90', None, None, flaglist, False),
+        debug = ('flags.debug', 'FDEBUG', 'fdebug', flaglist, True),
+        debug_f77 = ('flags.debug_f77', None, None, flaglist, False),
+        debug_f90 = ('flags.debug_f90', None, None, flaglist, False),
+        flags = ('self.get_flags', 'FFLAGS', 'fflags', flaglist, True),
+        linker_so = ('flags.linker_so', 'LDFLAGS', 'ldflags', flaglist, True),
+        linker_exe = ('flags.linker_exe', 'LDFLAGS', 'ldflags', flaglist, True),
+        ar = ('flags.ar', 'ARFLAGS', 'arflags', flaglist, True),
     )
 
     language_map = {'.f': 'f77',
