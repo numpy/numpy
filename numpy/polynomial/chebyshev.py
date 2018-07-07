@@ -2188,3 +2188,4 @@ class Chebyshev(ABCPolyBase):
     nickname = 'cheb'
     domain = np.array(chebdomain)
     window = np.array(chebdomain)
+    basis_name = 'T'

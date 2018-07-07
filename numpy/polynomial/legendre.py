@@ -1831,3 +1831,4 @@ class Legendre(ABCPolyBase):
     nickname = 'leg'
     domain = np.array(legdomain)
     window = np.array(legdomain)
+    basis_name = 'P'
