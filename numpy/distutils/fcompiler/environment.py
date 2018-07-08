@@ -54,13 +54,17 @@ class EnvironmentConfig(object):
         if envvar is not None:
             envvar_contents = os.environ.get(envvar)
             if envvar_contents is not None:
+                if convert is not None:
+                    envvar_contents = convert(envvar_contents)
+                else:
+                    envvar_contents = [envvar_contents]
                 if append and os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '0') == '1':
                     if var is None:
                         var = ''
                     try:
-                        var = ' '.join(var + [envvar_contents])
+                        var = ' '.join(var + envvar_contents)
                     except TypeError:
-                        var = ' '.join([var] + [envvar_contents])
+                        var = ' '.join([var] + envvar_contents)
                 else:
                     var = envvar_contents
         if confvar is not None and self._conf:

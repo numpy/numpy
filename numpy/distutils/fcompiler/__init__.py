@@ -114,7 +114,7 @@ class FCompiler(CCompiler):
         compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None, False),
         compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None, False),
         version_cmd = ('exe.version_cmd', None, None, None, False),
-        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None, True),
+        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None, False),
         linker_exe = ('exe.linker_exe', 'LD', 'ld', None, False),
         archiver = (None, 'AR', 'ar', None, False),
         ranlib = (None, 'RANLIB', 'ranlib', None, False),
