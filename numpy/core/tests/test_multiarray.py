@@ -1000,11 +1000,12 @@ class TestStructured(object):
         # Check that equality comparison works on structured arrays if
         # they are 'equiv'-castable
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i4'), ('b', '<f8')])
-        b = np.array([(5, 42), (10, 1)], dtype=[('a', '<i4'), ('b', '>f8')])
+        b = np.array([(42, 5), (1, 10)], dtype=[('b', '<f8'), ('a', '<i4')])
         assert_(np.can_cast(a.dtype, b.dtype, casting='equiv'))
         assert_equal(a == b, [True, True])
 
-        # Check that 'equiv' casting can change byte order
+        # Check that 'equiv' casting can reorder fields and change byte
+        # order
         assert_(np.can_cast(a.dtype, b.dtype, casting='equiv'))
         c = a.astype(b.dtype, casting='equiv')
         assert_equal(a == c, [True, True])
@@ -1151,32 +1152,21 @@ class TestStructured(object):
         dt = np.dtype([('foo', 'i8'), ('bar', 'i8')])
         arr = np.ones(2, dt)
         v1 = np.array([(2,3)], dtype=[('foo', 'i8'), ('bar', 'i8')])
-        v2 = np.array([(2,3)], dtype=[('bar', 'i8'), ('foo', 'i8')])
-        v3 = np.array([(2,3)], dtype=[('bar', 'i8'), ('baz', 'i8')])
-        v4 = np.array([(2,)],  dtype=[('bar', 'i8')])
+        v2 = np.array([(3,2)], dtype=[('bar', 'i8'), ('foo', 'i8')])
+        v3 = np.array([(3,0)], dtype=[('bar', 'i8'), ('baz', 'i8')])
+        v4 = np.array([(3,)],  dtype=[('bar', 'i8')])
         v5 = np.array([(2,3)], dtype=[('foo', 'f8'), ('bar', 'f8')])
         w = arr.view({'names': ['bar'], 'formats': ['i8'], 'offsets': [8]})
 
         ans = np.array([(2,3),(2,3)], dtype=dt)
+        ans0 = np.array([(0,3),(0,3)], dtype=dt)
         assert_equal(testassign(arr, v1), ans)
         assert_equal(testassign(arr, v2), ans)
-        assert_equal(testassign(arr, v3), ans)
-        assert_raises(ValueError, lambda: testassign(arr, v4))
+        assert_equal(testassign(arr, v3), ans0)
+        assert_equal(testassign(arr, v4), ans0)
         assert_equal(testassign(arr, v5), ans)
         w[:] = 4
         assert_equal(arr, np.array([(1,4),(1,4)], dtype=dt))
-
-        # test field-reordering, assignment by position, and self-assignment
-        a = np.array([(1,2,3)],
-                     dtype=[('foo', 'i8'), ('bar', 'i8'), ('baz', 'f4')])
-        a[['foo', 'bar']] = a[['bar', 'foo']]
-        assert_equal(a[0].item(), (2,1,3))
-
-        # test that this works even for 'simple_unaligned' structs
-        # (ie, that PyArray_EquivTypes cares about field order too)
-        a = np.array([(1,2)], dtype=[('a', 'i4'), ('b', 'i4')])
-        a[['a', 'b']] = a[['b', 'a']]
-        assert_equal(a[0].item(), (2,1))
 
     def test_structuredscalar_indexing(self):
         # test gh-7262
@@ -1191,6 +1181,25 @@ class TestStructured(object):
         assert_raises(ValueError, lambda : a[['b','b']])  # field exists, but repeated
         a[['b','c']]  # no exception
 
+    def test_field_require(self):
+        t1 = np.dtype([('a', np.float32), ('b', np.float64)], align=True)
+        t2 = np.dtype([('b', np.float64)], align=True)
+        data1 = np.ones(2, t1)
+        data2 = np.ones(2, t2)
+        assert_equal(np.require(data1, t2), data2)
+        assert_equal(data1.astype(t2), data2)
+        assert_equal(np.array(data1, t2), data2)
+
+        # new fields get set to 0
+        expected = np.array([(0, 1), (0, 1)], t1)
+        assert_equal(np.require(data2, t1), expected)
+        assert_equal(data2.astype(t1), expected)
+        assert_equal(np.array(data2, t1), expected)
+
+    def test_view_multifield(self):
+        a = np.zeros(3, dtype=[('a', 'f8'), ('b', 'i4'), ('c', 'f8')])
+        # the multifield index is a packed copy
+        b = a[['a', 'c']].view(('f8', 2))
 
 class TestBool(object):
     def test_test_interning(self):
@@ -4796,10 +4805,6 @@ class TestRecord(object):
             fn2 = func('f2')
             b[fn2] = 3
 
-            # In 1.16 code below can be replaced by:
-            # assert_equal(b[['f1', 'f2']][0].tolist(), (2, 3))
-            # assert_equal(b[['f2', 'f1']][0].tolist(), (3, 2))
-            # assert_equal(b[['f1', 'f3']][0].tolist(), (2, (1,)))
             with suppress_warnings() as sup:
                 sup.filter(FutureWarning,
                            ".* selecting multiple fields .*")
@@ -4823,51 +4828,6 @@ class TestRecord(object):
         else:
             assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
             assert_raises(ValueError, a.__getitem__, u'\u03e0')
-
-    # can be removed in 1.16
-    def test_field_names_deprecation(self):
-
-        def collect_warnings(f, *args, **kwargs):
-            with warnings.catch_warnings(record=True) as log:
-                warnings.simplefilter("always")
-                f(*args, **kwargs)
-            return [w.category for w in log]
-
-        a = np.zeros((1,), dtype=[('f1', 'i4'),
-                                  ('f2', 'i4'),
-                                  ('f3', [('sf1', 'i4')])])
-        a['f1'][0] = 1
-        a['f2'][0] = 2
-        a['f3'][0] = (3,)
-        b = np.zeros((1,), dtype=[('f1', 'i4'),
-                                  ('f2', 'i4'),
-                                  ('f3', [('sf1', 'i4')])])
-        b['f1'][0] = 1
-        b['f2'][0] = 2
-        b['f3'][0] = (3,)
-
-        # All the different functions raise a warning, but not an error
-        assert_equal(collect_warnings(a[['f1', 'f2']].__setitem__, 0, (10, 20)),
-                     [FutureWarning])
-        # For <=1.12 a is not modified, but it will be in 1.13
-        assert_equal(a, b)
-
-        # Views also warn
-        subset = a[['f1', 'f2']]
-        subset_view = subset.view()
-        assert_equal(collect_warnings(subset_view['f1'].__setitem__, 0, 10),
-                     [FutureWarning])
-        # But the write goes through:
-        assert_equal(subset['f1'][0], 10)
-        # Only one warning per multiple field indexing, though (even if there
-        # are multiple views involved):
-        assert_equal(collect_warnings(subset['f1'].__setitem__, 0, 10), [])
-
-        # make sure views of a multi-field index warn too
-        c = np.zeros(3, dtype='i8,i8,i8')
-        assert_equal(collect_warnings(c[['f0', 'f2']].view, 'i8,i8'),
-                     [FutureWarning])
-
 
     def test_record_hash(self):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')

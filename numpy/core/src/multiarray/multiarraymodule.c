@@ -1389,7 +1389,7 @@ _equivalent_fields(PyArray_Descr *type1, PyArray_Descr *type2) {
 
     int val;
 
-    if (type1->fields == type2->fields && type1->names == type2->names) {
+    if (type1->fields == type2->fields) {
         return 1;
     }
     if (type1->fields == NULL || type2->fields == NULL) {
@@ -1397,12 +1397,6 @@ _equivalent_fields(PyArray_Descr *type1, PyArray_Descr *type2) {
     }
 
     val = PyObject_RichCompareBool(type1->fields, type2->fields, Py_EQ);
-    if (val != 1 || PyErr_Occurred()) {
-        PyErr_Clear();
-        return 0;
-    }
-
-    val = PyObject_RichCompareBool(type1->names, type2->names, Py_EQ);
     if (val != 1 || PyErr_Occurred()) {
         PyErr_Clear();
         return 0;

@@ -654,27 +654,7 @@ PyArray_CompareString(char *s1, char *s2, size_t len)
 NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj)
 {
-    const char *msg =
-        "Numpy has detected that you (may be) writing to an array returned\n"
-        "by numpy.diagonal or by selecting multiple fields in a structured\n"
-        "array. This code will likely break in a future numpy release --\n"
-        "see numpy.diagonal or arrays.indexing reference docs for details.\n"
-        "The quick fix is to make an explicit copy (e.g., do\n"
-        "arr.diagonal().copy() or arr[['f0','f1']].copy()).";
-    if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
-        /* 2012-07-17, 1.7 */
-        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
-            return -1;
-        }
-        /* Only warn once per array */
-        while (1) {
-            PyArray_CLEARFLAGS(obj, NPY_ARRAY_WARN_ON_WRITE);
-            if (!PyArray_BASE(obj) || !PyArray_Check(PyArray_BASE(obj))) {
-                break;
-            }
-            obj = (PyArrayObject *)PyArray_BASE(obj);
-        }
-    }
+    /* XXX finish removing this warning functionality */
     return 0;
 }
 
@@ -695,9 +675,6 @@ PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
 {
     if (!PyArray_ISWRITEABLE(obj)) {
         PyErr_Format(PyExc_ValueError, "%s is read-only", name);
-        return -1;
-    }
-    if (array_might_be_written(obj) < 0) {
         return -1;
     }
     return 0;

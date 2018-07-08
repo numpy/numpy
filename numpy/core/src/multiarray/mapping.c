@@ -1389,8 +1389,7 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 
 /*
  * Helper function for _get_field_view which turns a multifield
- * view into a "packed" copy, as done in numpy 1.15 and before.
- * In numpy 1.16 this function should be removed.
+ * view into a "packed" copy.
  */
 NPY_NO_EXPORT int
 _multifield_view_to_copy(PyArrayObject **view) {
@@ -1403,7 +1402,6 @@ _multifield_view_to_copy(PyArrayObject **view) {
         goto view_fail;
     }
 
-    PyArray_CLEARFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
     viewcopy = PyObject_CallFunction(copyfunc, "O", *view);
     if (viewcopy == NULL) {
         goto view_fail;
@@ -1411,8 +1409,6 @@ _multifield_view_to_copy(PyArrayObject **view) {
     Py_DECREF(*view);
     *view = (PyArrayObject*)viewcopy;
 
-    /* warn when writing to the copy */
-    PyArray_ENABLEFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
     return 0;
 
 view_fail:
@@ -1427,11 +1423,6 @@ view_fail:
  * If an error occurred, return 0 and set view to NULL. If the subscript is not
  * a string or list of strings, return -1 and set view to NULL. Otherwise
  * return 0 and set view to point to a new view into arr for the given fields.
- *
- * In numpy 1.15 and before, in the case of a list of field names the returned
- * view will actually be a copy by default, with fields packed together.
- * The `force_view` argument causes a view to be returned. This argument can be
- * removed in 1.16 when we plan to return a view always.
  */
 NPY_NO_EXPORT int
 _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
@@ -1598,7 +1589,6 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
             return 0;
         }
 
-        /* the code below can be replaced by "return 0" in 1.16 */
         if (force_view) {
             return 0;
         }

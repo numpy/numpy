@@ -2544,11 +2544,12 @@ get_fields_transfer_function(int aligned,
 {
     PyObject *key, *tup, *title;
     PyArray_Descr *src_fld_dtype, *dst_fld_dtype;
-    npy_int i, field_count, structsize;
+    npy_int i, names_size, field_count, structsize;
     int src_offset, dst_offset;
     _field_transfer_data *data;
     _single_field_transfer *fields;
     int failed = 0;
+    PyObject *used_names_dict = NULL;
 
     /*
      * There are three cases to take care of: 1. src is non-structured,
@@ -2678,71 +2679,148 @@ get_fields_transfer_function(int aligned,
     }
 
     /* 3. Otherwise both src and dst are structured arrays */
-    field_count = PyTuple_GET_SIZE(dst_dtype->names);
+    /* Keeps track of the names we already used */
+    names_size = PyTuple_GET_SIZE(dst_dtype->names);
 
-    /* Match up the fields to copy (field-by-field transfer) */
-    if (PyTuple_GET_SIZE(src_dtype->names) != field_count) {
-        PyErr_SetString(PyExc_ValueError, "structures must have the same size");
-        return NPY_FAIL;
+    /*
+     * If DECREF is needed on source fields, will need
+     * to also go through its fields.
+     */
+    if (move_references && PyDataType_REFCHK(src_dtype)) {
+        field_count = names_size + PyTuple_GET_SIZE(src_dtype->names);
+        used_names_dict = PyDict_New();
+        if (used_names_dict == NULL) {
+            return NPY_FAIL;
+        }
     }
-
-    /* Allocate the field-data structure and populate it */
+    else {
+        field_count = names_size;
+    }
     structsize = sizeof(_field_transfer_data) +
                     field_count * sizeof(_single_field_transfer);
+    /* Allocate the data and populate it */
     data = (_field_transfer_data *)PyArray_malloc(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
+        Py_XDECREF(used_names_dict);
         return NPY_FAIL;
     }
     data->base.free = &_field_transfer_data_free;
     data->base.clone = &_field_transfer_data_clone;
     fields = &data->fields;
 
-    /* set up the transfer function for each field */
-    for (i = 0; i < field_count; ++i) {
+    for (i = 0; i < names_size; ++i) {
         key = PyTuple_GET_ITEM(dst_dtype->names, i);
         tup = PyDict_GetItem(dst_dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
-            failed = 1;
-            break;
+            for (i = i-1; i >= 0; --i) {
+                NPY_AUXDATA_FREE(fields[i].data);
+            }
+            PyArray_free(data);
+            Py_XDECREF(used_names_dict);
+            return NPY_FAIL;
         }
-        key = PyTuple_GET_ITEM(src_dtype->names, i);
         tup = PyDict_GetItem(src_dtype->fields, key);
-        if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
+        if (tup != NULL) {
+            if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
+                                                    &src_offset, &title)) {
+                for (i = i-1; i >= 0; --i) {
+                    NPY_AUXDATA_FREE(fields[i].data);
+                }
+                PyArray_free(data);
+                Py_XDECREF(used_names_dict);
+                return NPY_FAIL;
+            }
+            if (PyArray_GetDTypeTransferFunction(0,
+                                    src_stride, dst_stride,
+                                    src_fld_dtype, dst_fld_dtype,
+                                    move_references,
+                                    &fields[i].stransfer,
+                                    &fields[i].data,
+                                    out_needs_api) != NPY_SUCCEED) {
+                for (i = i-1; i >= 0; --i) {
+                    NPY_AUXDATA_FREE(fields[i].data);
+                }
+                PyArray_free(data);
+                Py_XDECREF(used_names_dict);
+                return NPY_FAIL;
+            }
+            fields[i].src_offset = src_offset;
+            fields[i].dst_offset = dst_offset;
+            fields[i].src_itemsize = src_fld_dtype->elsize;
+
+            if (used_names_dict != NULL) {
+                PyDict_SetItem(used_names_dict, key, Py_True);
+            }
+        }
+        else {
+            if (get_setdstzero_transfer_function(0,
+                                        dst_stride,
+                                        dst_fld_dtype,
+                                        &fields[i].stransfer,
+                                        &fields[i].data,
+                                        out_needs_api) != NPY_SUCCEED) {
+                for (i = i-1; i >= 0; --i) {
+                    NPY_AUXDATA_FREE(fields[i].data);
+                }
+                PyArray_free(data);
+                Py_XDECREF(used_names_dict);
+                return NPY_FAIL;
+            }
+            fields[i].src_offset = 0;
+            fields[i].dst_offset = dst_offset;
+            fields[i].src_itemsize = 0;
+        }
+    }
+
+    if (move_references && PyDataType_REFCHK(src_dtype)) {
+        /* Use field_count to track additional functions added */
+        field_count = names_size;
+
+        names_size = PyTuple_GET_SIZE(src_dtype->names);
+        for (i = 0; i < names_size; ++i) {
+            key = PyTuple_GET_ITEM(src_dtype->names, i);
+            if (PyDict_GetItem(used_names_dict, key) == NULL) {
+                tup = PyDict_GetItem(src_dtype->fields, key);
+                if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
-            failed = 1;
-            break;
+                    for (i = field_count-1; i >= 0; --i) {
+                        NPY_AUXDATA_FREE(fields[i].data);
+                    }
+                    PyArray_free(data);
+                    Py_XDECREF(used_names_dict);
+                    return NPY_FAIL;
+                }
+                if (PyDataType_REFCHK(src_fld_dtype)) {
+                    if (get_decsrcref_transfer_function(0,
+                                src_stride,
+                                src_fld_dtype,
+                                &fields[field_count].stransfer,
+                                &fields[field_count].data,
+                                out_needs_api) != NPY_SUCCEED) {
+                        for (i = field_count-1; i >= 0; --i) {
+                            NPY_AUXDATA_FREE(fields[i].data);
+                        }
+                        PyArray_free(data);
+                        return NPY_FAIL;
+                    }
+                    fields[field_count].src_offset = src_offset;
+                    fields[field_count].dst_offset = 0;
+                    fields[field_count].src_itemsize =
+                                            src_fld_dtype->elsize;
+                    field_count++;
+                }
+            }
         }
-
-        if (PyArray_GetDTypeTransferFunction(0,
-                                             src_stride, dst_stride,
-                                             src_fld_dtype, dst_fld_dtype,
-                                             move_references,
-                                             &fields[i].stransfer,
-                                             &fields[i].data,
-                                             out_needs_api) != NPY_SUCCEED) {
-            failed = 1;
-            break;
-        }
-        fields[i].src_offset = src_offset;
-        fields[i].dst_offset = dst_offset;
-        fields[i].src_itemsize = src_fld_dtype->elsize;
     }
 
-    if (failed) {
-        for (i = i-1; i >= 0; --i) {
-            NPY_AUXDATA_FREE(fields[i].data);
-        }
-        PyArray_free(data);
-        return NPY_FAIL;
-    }
+    Py_XDECREF(used_names_dict);
 
     data->field_count = field_count;
 
     *out_stransfer = &_strided_to_strided_field_transfer;
     *out_transferdata = (NpyAuxData *)data;
-
     return NPY_SUCCEED;
 }
 

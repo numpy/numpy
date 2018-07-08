@@ -103,15 +103,6 @@ class TestBuiltin(object):
                          'formats':['i1', 'f4'],
                          'offsets':[0, 2]}, align=True)
 
-    def test_field_order_equality(self):
-        x = np.dtype({'names': ['A', 'B'], 
-                      'formats': ['i4', 'f4'], 
-                      'offsets': [0, 4]})
-        y = np.dtype({'names': ['B', 'A'], 
-                      'formats': ['f4', 'i4'], 
-                      'offsets': [4, 0]})
-        assert_equal(x == y, False)
-
 class TestRecord(object):
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
@@ -227,12 +218,11 @@ class TestRecord(object):
         dt = np.dtype({'names':['f0', 'f1', 'f2'], 'formats':['<u4', '<u2', '<u2'],
                         'offsets':[4, 0, 2]}, align=True)
         assert_equal(dt.itemsize, 8)
-        # field name should not matter: assignment is by position
         dt2 = np.dtype({'names':['f2', 'f0', 'f1'],
-                        'formats':['<u4', '<u2', '<u2'],
-                        'offsets':[4, 0, 2]}, align=True)
+                        'formats':['<u2', '<u4', '<u2'],
+                        'offsets':[2, 4, 0]}, align=True)
         vals = [(0, 1, 2), (3, -1, 4)]
-        vals2 = [(0, 1, 2), (3, -1, 4)]
+        vals2 = [(2, 0, 1), (4, 3, -1)]
         a = np.array(vals, dt)
         b = np.array(vals2, dt2)
         assert_equal(a.astype(dt2), b)

@@ -147,17 +147,11 @@ summary they are:
 
 4.   A dictionary of field names
 
-     The use of this form of specification is discouraged, but documented here
-     because older numpy code may use it. The keys of the dictionary are the
-     field names and the values are tuples specifying type and offset::
+     The keys of the dictionary are the field names and the values are tuples
+     specifying type and offset::
 
       >>> np.dtype=({'col1': ('i1',0), 'col2': ('f4',1)})
       dtype([(('col1'), 'i1'), (('col2'), '>f4')])
-
-     This form is discouraged because Python dictionaries do not preserve order
-     in Python versions before Python 3.6, and the order of the fields in a
-     structured dtype has meaning. :ref:`Field Titles <titles>` may be
-     specified by using a 3-tuple, see below.
 
 Manipulating and Displaying Structured Datatypes
 ------------------------------------------------
@@ -267,11 +261,9 @@ providing a 3-element tuple ``(datatype, offset, title)`` instead of the usual
 The ``dtype.fields`` dictionary will contain :term:`titles` as keys, if any
 titles are used.  This means effectively that a field with a title will be
 represented twice in the fields dictionary. The tuple values for these fields
-will also have a third element, the field title. Because of this, and because
-the ``names`` attribute preserves the field order while the ``fields``
-attribute may not, it is recommended to iterate through the fields of a dtype
-using the ``names`` attribute of the dtype, which will not list titles, as
-in::
+will also have a third element, the field title. Because of this it is
+recommended to iterate through the fields of a dtype using the ``names``
+attribute of the dtype, which will not list titles, as in::
 
  >>> for name in d.names:
  ...     print(d.fields[name][:2])
@@ -311,12 +303,12 @@ of the array, from left to right::
  array([(1, 2., 3.), (7, 8., 9.)],
       dtype=[('f0', '<i8'), ('f1', '<f4'), ('f2', '<f8')])
 
-Assignment from Scalars
-```````````````````````
+Assignment from Unstructured Scalars
+````````````````````````````````````
 
-A scalar assigned to a structured element will be assigned to all fields. This
-happens when a scalar is assigned to a structured array, or when an
-unstructured array is assigned to a structured array::
+An unstructured scalar assigned to a structured element will be assigned to all
+fields. This happens when a scalar is assigned to a structured array, or when
+an unstructured array is assigned to a structured array::
 
  >>> x = np.zeros(2, dtype='i8,f4,?,S1')
  >>> x[:] = 3
@@ -343,20 +335,20 @@ structured datatype has just a single field::
 Assignment from other Structured Arrays
 ```````````````````````````````````````
 
-Assignment between two structured arrays occurs as if the source elements had
-been converted to tuples and then assigned to the destination elements. That
-is, the first field of the source array is assigned to the first field of the
-destination array, and the second field likewise, and so on, regardless of
-field names. Structured arrays with a different number of fields cannot be
-assigned to each other. Bytes of the destination structure which are not
-included in any of the fields are unaffected. ::
+Assignment between two structured arrays, or from a structured scalar to a
+structured array, works by copying the fields "by name", so that fields in the
+destination array are set to the value of the field with the same name in the
+source array or structured scalar. Fields in the destination array which are
+not present in the source array are set to 0::
 
- >>> a = np.zeros(3, dtype=[('a', 'i8'), ('b', 'f4'), ('c', 'S3')])
- >>> b = np.ones(3, dtype=[('x', 'f4'), ('y', 'S3'), ('z', 'O')])
- >>> b[:] = a
- >>> b
- array([(0.0, b'0.0', b''), (0.0, b'0.0', b''), (0.0, b'0.0', b'')],
-       dtype=[('x', '<f4'), ('y', 'S3'), ('z', 'O')])
+ >>> a = np.array([(1., 2, 'ABC'), (3., 4, 'DEF')],
+ ...               dtype=[('a', 'i8'), ('b', 'f4'), ('c', 'S3')])
+ >>> b = np.array([('XYZ', 5.), ('RST', 6.),
+ ...              dtype=[('c', 'S3'), ('b', 'f8')])
+ >>> a[:] = b
+ >>> a
+ array([(0.0, 5.0, b'XYZ'), (0.0, 6.0, b'RST')
+       dtype=[('a', 'i8'), ('b', 'f4'), ('c', 'S3')])
 
 
 Assignment involving subarrays
@@ -400,63 +392,37 @@ typically a non-structured array, except in the case of nested structures.
 Accessing Multiple Fields
 ```````````````````````````
 
-One can index and assign to a structured array with a multi-field index, where
-the index is a list of field names.
-
-.. warning::
-    The behavior of multi-field indexes will change from Numpy 1.15 to Numpy
-    1.16.
-
-In Numpy 1.16, the result of indexing with a multi-field index will be a view
-into the original array, as follows::
+One can index a structured array with a multi-field index, where the index is a
+list of field names. Unlike a single-field index, a multi-field index returns a
+copy rather than a view::
 
  >>> a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'i4'), ('c', 'f4')])
- >>> a[['a', 'c']]
+ >>> b = a[['a', 'c']]
+ >>> b
  array([(0, 0.), (0, 0.), (0, 0.)],
-      dtype={'names':['a','c'], 'formats':['<i4','<f4'], 'offsets':[0,8], 'itemsize':12})
+      dtype=[('a', 'i4'), ('c', 'f4')])
 
-Assignment to the view modifies the original array. The view's fields will be
-in the order they were indexed. Note that unlike for single-field indexing, the
-view's dtype has the same itemsize as the original array, and has fields at the
-same offsets as in the original array, and unindexed fields are merely missing.
+Assignment to this copy does *not* modify the original array. The copy's
+fields will be in the order they were indexed and will be packed in memory.
 
-In Numpy 1.15, indexing an array with a multi-field index returns a copy of
-the result above for 1.16, but with fields packed together in memory as if
-passed through :func:`numpy.lib.recfunctions.repack_fields`. This is the
-behavior since Numpy 1.7.
-
-.. warning::
-   The new behavior in Numpy 1.16 leads to extra "padding" bytes at the
-   location of unindexed fields. You will need to update any code which depends
-   on the data having a "packed" layout. For instance code such as::
-
-    >>> a[['a','c']].view('i8')  # will fail in Numpy 1.16
-    ValueError: When changing to a smaller dtype, its size must be a divisor of the size of original dtype
-
-   will need to be changed. This code has raised a ``FutureWarning`` since
-   Numpy 1.12.
-
-   The following is a recommended fix, which will behave identically in Numpy
-   1.15 and Numpy 1.16::
-
-    >>> from numpy.lib.recfunctions import repack_fields
-    >>> repack_fields(a[['a','c']]).view('i8')  # supported 1.15 and 1.16
-    array([0, 0, 0])
-
-Assigning to an array with a multi-field index will behave the same in Numpy
-1.15 and Numpy 1.16. In both versions the assignment will modify the original
-array::
+One can also assign to a structured array using a multi-field index::
 
  >>> a[['a', 'c']] = (2, 3)
  >>> a
  array([(2, 0, 3.0), (2, 0, 3.0), (2, 0, 3.0)],
        dtype=[('a', '<i8'), ('b', '<i4'), ('c', '<f8')])
 
-This obeys the structured array assignment rules described above. For example,
-this means that one can swap the values of two fields using appropriate
-multi-field indexes::
+ >>> a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'i4'), ('c', 'f4')])
+ >>> c = np.array([(1, 2.), (3, 4.), (5, 6.)],
+ ...              dtype=[('a', 'i8'), ('c', 'f8')])
+ >>> a[['a', 'c']] = c
+ >>> a
+ array([(2, 0, 3.0), (2, 0, 3.0), (2, 0, 3.0)],
+       dtype=[('a', '<i8'), ('b', '<i4'), ('c', '<f8')])
 
- >>> a[['a', 'c']] = a[['c', 'a']]
+Note that this assignment behaves as if the multi-field index is a view
+of the destination array with only the indexed fields, and then assignment from
+the source array follows the structured assignment rules described above.
 
 Indexing with an Integer to get a Structured Scalar
 ```````````````````````````````````````````````````
@@ -512,8 +478,8 @@ If the dtypes of two void structured arrays are equal, testing the equality of
 the arrays will result in a boolean array with the dimensions of the original
 arrays, with elements set to ``True`` where all fields of the corresponding
 structures are equal. Structured dtypes are equal if the field names,
-dtypes and titles are the same, ignoring endianness, and the fields are in
-the same order::
+dtypes and titles are the same, ignoring endianness, though they may be in a
+different order::
 
  >>> a = np.zeros(2, dtype=[('a', 'i4'), ('b', 'i4')])
  >>> b = np.ones(2, dtype=[('a', 'i4'), ('b', 'i4')])
