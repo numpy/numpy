@@ -1509,8 +1509,8 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     --------
     normalize_axis_index : normalizing a single scalar axis
     """
-    # Speed-up most common cases.
-    if not isinstance(axis, (list, tuple)):
+    # Optimization to speed-up the most common cases.
+    if type(axis) not in (tuple, list):
         try:
             axis = [operator.index(axis)]
         except TypeError:
