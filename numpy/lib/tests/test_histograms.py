@@ -547,13 +547,13 @@ class TestHistogramdd(object):
 
         # Check normalization
         ed = [[-2, 0, 2], [0, 1, 2, 3], [0, 1, 2, 3]]
-        H, edges = histogramdd(x, bins=ed, normed=True)
+        H, edges = histogramdd(x, bins=ed, density=True)
         assert_(np.all(H == answer / 12.))
 
         # Check that H has the correct shape.
         H, edges = histogramdd(x, (2, 3, 4),
                                range=[[-1, 1], [0, 3], [0, 4]],
-                               normed=True)
+                               density=True)
         answer = np.array([[[0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0]],
                            [[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0]]])
         assert_array_almost_equal(H, answer / 6., 4)
@@ -599,10 +599,10 @@ class TestHistogramdd(object):
     def test_weights(self):
         v = np.random.rand(100, 2)
         hist, edges = histogramdd(v)
-        n_hist, edges = histogramdd(v, normed=True)
+        n_hist, edges = histogramdd(v, density=True)
         w_hist, edges = histogramdd(v, weights=np.ones(100))
         assert_array_equal(w_hist, hist)
-        w_hist, edges = histogramdd(v, weights=np.ones(100) * 2, normed=True)
+        w_hist, edges = histogramdd(v, weights=np.ones(100) * 2, density=True)
         assert_array_equal(w_hist, n_hist)
         w_hist, edges = histogramdd(v, weights=np.ones(100, int) * 2)
         assert_array_equal(w_hist, 2 * hist)
@@ -708,7 +708,7 @@ class TestHistogramdd(object):
 
         assert_equal(hist[0, 0], 1)
 
-    def test_normed_non_uniform_2d(self):
+    def test_density_non_uniform_2d(self):
         # Defines the following grid:
         #
         #    0 2     8
@@ -732,14 +732,14 @@ class TestHistogramdd(object):
         assert_equal(hist, relative_areas)
 
         # resulting histogram should be uniform, since counts and areas are propotional
-        hist, edges = histogramdd((y, x), bins=(y_edges, x_edges), normed=True)
+        hist, edges = histogramdd((y, x), bins=(y_edges, x_edges), density=True)
         assert_equal(hist, 1 / (8*8))
 
-    def test_normed_non_uniform_1d(self):
+    def test_density_non_uniform_1d(self):
         # compare to histogram to show the results are the same
         v = np.arange(10)
         bins = np.array([0, 1, 3, 6, 10])
         hist, edges = histogram(v, bins, density=True)
-        hist_dd, edges_dd = histogramdd((v,), (bins,), normed=True)
+        hist_dd, edges_dd = histogramdd((v,), (bins,), density=True)
         assert_equal(hist, hist_dd)
         assert_equal(edges, edges_dd[0])
