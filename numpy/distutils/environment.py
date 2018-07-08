@@ -54,7 +54,7 @@ class EnvironmentConfig(object):
         if envvar is not None:
             envvar_contents = os.environ.get(envvar)
             if envvar_contents is not None:
-                if append and os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '1') == '1':
+                if append and os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '0') == '1':
                     if var is None:
                         var = ''
                     try:
