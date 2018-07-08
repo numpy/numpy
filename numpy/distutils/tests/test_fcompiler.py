@@ -29,8 +29,6 @@ def test_fcompiler_flags(monkeypatch):
         assert_(new_flags == [new_flag])
 
     monkeypatch.setenv('NPY_DISTUTILS_APPEND_FLAGS', '1')
-    fc = numpy.distutils.fcompiler.new_fcompiler(compiler='none')
-    flag_vars = fc.flag_vars.clone(lambda *args, **kwargs: None)
 
     for opt, envvar in customizable_flags:
         new_flag = '-dummy-{}-flag'.format(opt)
