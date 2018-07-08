@@ -365,7 +365,7 @@ def poly2cheb(pol):
     >>> c = p.convert(kind=P.Chebyshev)
     >>> c
     Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
-    >>> P.poly2cheb(range(4))
+    >>> P.chebyshev.poly2cheb(range(4))
     array([ 1.  ,  3.25,  1.  ,  0.75])
 
     """
@@ -417,7 +417,7 @@ def cheb2poly(c):
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
     Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
-    >>> P.cheb2poly(range(4))
+    >>> P.chebyshev.cheb2poly(range(4))
     array([ -2.,  -8.,   4.,  12.])
 
     """
