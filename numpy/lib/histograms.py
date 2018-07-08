@@ -4,6 +4,7 @@ Histogram-related functions
 from __future__ import division, absolute_import, print_function
 
 import operator
+import warnings
 
 import numpy as np
 from numpy.compat.py3k import basestring
@@ -944,12 +945,16 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
     core = D*(slice(1, -1),)
     hist = hist[core]
 
-    # handle the aliasing normed argument
+    # handle the deprecated normed argument
     if normed is None:
         if density is None:
             density = False
     elif density is None:
-        # an explicit normed argument was passed, alias it to the new name
+        # 2018-06-20, NumPy 1.15.0
+        warnings.warn(
+            "The 'normed' argument to histogramdd is being renamed to "
+            "'density', to match np.histogram",
+            PendingDeprecationWarning, stacklevel=2)
         density = normed
     else:
         raise TypeError("Cannot specify both 'normed' and 'density'")

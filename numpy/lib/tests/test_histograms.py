@@ -731,3 +731,14 @@ class TestHistogramdd(object):
         hist_dd, edges_dd = histogramdd((v,), (bins,), density=True)
         assert_equal(hist, hist_dd)
         assert_equal(edges, edges_dd[0])
+
+    def test_normed_argument(self):
+        v = np.arange(10)
+        bins = np.array([0, 1, 3, 6, 10])
+        # 2018-06-20, NumPy 1.15.0
+        assert_warns(
+            PendingDeprecationWarning,
+            lambda: histogramdd((v,), (bins,), normed=True))
+        assert_raises(
+            TypeError,
+            lambda: histogramdd((v,), (bins,), normed=True, density=False))

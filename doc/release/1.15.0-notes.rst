@@ -281,8 +281,8 @@ data. Previously, this could not be specified on a per-axis basis.
 The normed arguments of ``histogramdd`` and ``histogram2d`` have been renamed
 -----------------------------------------------------------------------------
 These arguments are now called ``density``, which is consistent with
-``histogram``. The old argument continues to work, but the new name should be
-preferred.
+``histogram``. The old argument continues to work, but in a future release will
+be deprecated.
 
 ``np.r_`` works with 0d arrays, and ``np.ma.mr_`` works with ``np.ma.masked``
 ----------------------------------------------------------------------------
