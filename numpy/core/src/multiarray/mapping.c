@@ -1540,13 +1540,11 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
                                 "cannot use field titles in multi-field index");
                 }
                 if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
-                    Py_DECREF(title);
                     Py_DECREF(name);
                     Py_DECREF(fields);
                     Py_DECREF(names);
                     return 0;
                 }
-                Py_DECREF(title);
             }
             /* disallow duplicate field indices */
             if (PyDict_Contains(fields, name)) {
