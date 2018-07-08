@@ -35,9 +35,10 @@ from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
 from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
     make_temp_file, get_shared_lib_extension
-from numpy.distutils.environment import EnvironmentConfig
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.compat import get_exception
+
+from .environment import EnvironmentConfig
 
 __metaclass__ = type
 
