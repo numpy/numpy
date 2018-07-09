@@ -150,13 +150,14 @@ else:
                 try:
                     return ctypes.cdll[libpath]
                 except OSError:
-                    ## defective lib file
-                    raise
+                    raise ## defective lib file
+
         ## if no successful return in the libname_ext loop:
         raise OSError("no file with expected extension")
 
-    ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
-                                    'load_library')
+    ctypes_load_library = deprecate(load_library,
+                                   'ctypes_load_library',
+                                   'load_library')
 
 def _num_fromflags(flaglist):
     num = 0
@@ -164,8 +165,14 @@ def _num_fromflags(flaglist):
         num += _flagdict[val]
     return num
 
-_flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
-              'OWNDATA', 'UPDATEIFCOPY', 'WRITEBACKIFCOPY']
+_flagnames = ['C_CONTIGUOUS',
+              'F_CONTIGUOUS',
+              'ALIGNED',
+              'WRITEABLE',
+              'OWNDATA',
+              'UPDATEIFCOPY',
+              'WRITEBACKIFCOPY']
+
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
@@ -174,25 +181,27 @@ def _flags_fromnum(num):
             res.append(key)
     return res
 
-
 class _ndptr(_ndptr_base):
 
     def _check_retval_(self):
-        """This method is called when this class is used as the .restype
-        attribute for a shared-library function.   It constructs a numpy
-        array from a void pointer."""
+        """ This method is called when this class is used as the .restype
+            attribute for a shared-library function. It constructs a numpy
+            array from a void pointer.
+        """
         return array(self)
 
     @property
     def __array_interface__(self):
-        return {'descr': self._dtype_.descr,
-                '__ref': self,
-                'strides': None,
-                'shape': self._shape_,
-                'version': 3,
-                'typestr': self._dtype_.descr[0][1],
-                'data': (self.value, False),
-                }
+        return {
+            'descr'     :   self._dtype_.descr,
+            '__ref'     :   self,
+            'strides'   :   None,
+            'shape'     :   self._shape_,
+            'version'   :   3,
+            'typestr'   :   self._dtype_.descr[0][1],
+            'data'      :  (self.value,
+                            False)
+        }
 
     @classmethod
     def from_param(cls, obj):
@@ -272,10 +281,12 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     ... #doctest: +SKIP
 
     """
+    # Confirm the dtype:
     if dtype is not None:
         dtype = _dtype(dtype)
-    num = None
     
+    # Transform flag strings to their integer equivaluent:
+    num = None
     if flags is not None:
         if isinstance(flags, str):
             flags = flags.split(',')
@@ -285,21 +296,16 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         elif isinstance(flags, flagsobj):
             num = flags.num
             flags = _flags_fromnum(num)
-        if num is None:
-            try:
-                flags = [x.strip().upper() for x in flags]
-            except Exception:
-                raise TypeError("invalid flags specification")
-            num = _num_fromflags(flags)
+        try:
+            flags = [str(x).strip().upper() for x in iter(flags)]
+        except Exception:
+            raise TypeError("invalid flags specification")
     
-    # Compose cache key tuple:
-    cache_key = (dtype, ndim, shape, num)
+    # Fetch the integer flag value, if needed:
+    if num is None:
+        num = _num_fromflags(flags)
     
-    try:
-        return _pointer_type_cache[cache_key]
-    except KeyError:
-        pass
-    
+    # Choose a name string based on the dtype:
     if dtype is None:
         name = 'any'
     elif dtype.names:
@@ -307,9 +313,8 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     else:
         name = dtype.str
     
-    if ndim is not None:
-        name += "_%dd" % ndim
-    
+    # Normalize the shape, and append a stringified
+    # copy to the name string:
     if shape is not None:
         try:
             strshape = [str(x) for x in shape]
@@ -319,10 +324,23 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         shape = tuple(shape)
         name += "_" + "x".join(strshape)
     
+    # Compose cache key tuple:
+    cache_key = (dtype, ndim, shape, num)
+    
+    # Return with a cached class value,
+    # if we have one:
+    try:
+        return _pointer_type_cache[cache_key]
+    except KeyError:
+        pass
+    
+    # Amend the name with the `ndim` value:
+    if ndim is not None:
+        name += "_%dd" % str(ndim)
+    
+    # Further amend the name with any flag strings:
     if flags is not None:
         name += "_" + "_".join(flags)
-    else:
-        flags = []
     
     # Create new `_ndptr` subclass:
     klass = type("ndpointer_%s" % name, (_ndptr,), {
