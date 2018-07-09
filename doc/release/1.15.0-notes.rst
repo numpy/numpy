@@ -10,10 +10,9 @@ For testing, we have switched to pytest as a replacement for the no longer
 maintained nose framework. The old nose based interface remains for downstream
 projects who may still be using it.
 
-The Python versions supported by this release are 2.7, 3.4-3.6.  The upcoming
-3.7 release should also work, but you will need to compile from source using
-Cython 0.28.2 or later. The wheels will be linked with OpenBLAS 3.0, which
-should fix some of the linalg problems reported for NumPy 1.14.
+The Python versions supported by this release are 2.7, 3.4-3.7. The wheels are
+linked with OpenBLAS v0.3.0, which should fix some of the linalg problems
+reported for NumPy 1.14.
 
 
 Highlights
@@ -24,6 +23,8 @@ Highlights
 * Many improvements to the histogram functions.
 * Support for unicode field names in python 2.7.
 * Improved support for PyPy.
+* Fixes and improvements to `numpy.einsum`.
+
 
 New functions
 =============
@@ -275,6 +276,22 @@ Added experimental support for the 64-bit RISC-V architecture.
 
 Improvements
 ============
+
+``np.einsum`` updates
+---------------------
+Syncs einsum path optimization tech between `numpy` and `opt_einsum`. In
+particular, the `greedy` path has received many enhancements by @jcmgray. A
+full list of issues fixed are:
+
+* Arbitrary memory can be passed into the `greedy` path. Fixes gh-11210.
+* The greedy path has been updated to contain more dynamic programming ideas
+  preventing a large number of duplicate (and expensive) calls that figure out
+  the actual pair contraction that takes place. Now takes a few seconds on
+  several hundred input tensors. Useful for matrix product state theories.
+* Reworks the broadcasting dot error catching found in gh-11218 gh-10352 to be
+  a bit earlier in the process.
+* Enhances the `can_dot` functionality that previous missed an edge case (part
+  of gh-11308).
 
 ``np.ufunc.reduce`` and related functions now accept an initial value
 ---------------------------------------------------------------------
