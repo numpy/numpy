@@ -296,7 +296,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         elif isinstance(flags, flagsobj):
             num = flags.num
             flags = _flags_fromnum(num)
-        if flags is None:
+        if num is None:
             try:
                 flags = [str(x).strip().upper() for x in iter(flags)]
             except Exception:
