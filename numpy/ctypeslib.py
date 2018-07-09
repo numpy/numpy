@@ -286,25 +286,21 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         dtype = _dtype(dtype)
     
     # Transform flag strings to their integer equivaluent:
-    num = None
     if flags is not None:
         if isinstance(flags, str):
             flags = flags.split(',')
         elif isinstance(flags, (int, integer)):
             num = flags
+            flags = _flags_fromnum(num)
         elif isinstance(flags, flagsobj):
             num = flags.num
+            flags = _flags_fromnum(num)
         if num is None:
             try:
-                flags = [str(x).strip().upper() for x in iter(flags)]
+                flags = [x.strip().upper() for x in flags]
             except Exception:
                 raise TypeError("invalid flags specification")
-    
-    # Fetch the integer or string flag values, if needed:
-    if flags is None:
-        flags = _flags_fromnum(num)
-    elif num is None:
-        num = _num_fromflags(flags)
+            num = _num_fromflags(flags)
     
     # Choose a name string based on the dtype:
     if dtype is None:
