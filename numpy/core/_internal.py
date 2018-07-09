@@ -444,46 +444,46 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
-def _dtype_from_pep3118(spec):
 
-    class Stream(object):
-        def __init__(self, s):
-            self.s = s
-            self.byteorder = '@'
+class _Stream(object):
+    def __init__(self, s):
+        self.s = s
+        self.byteorder = '@'
 
-        def advance(self, n):
-            res = self.s[:n]
-            self.s = self.s[n:]
+    def advance(self, n):
+        res = self.s[:n]
+        self.s = self.s[n:]
+        return res
+
+    def consume(self, c):
+        if self.s[:len(c)] == c:
+            self.advance(len(c))
+            return True
+        return False
+
+    def consume_until(self, c):
+        if callable(c):
+            i = 0
+            while i < len(self.s) and not c(self.s[i]):
+                i = i + 1
+            return self.advance(i)
+        else:
+            i = self.s.index(c)
+            res = self.advance(i)
+            self.advance(len(c))
             return res
 
-        def consume(self, c):
-            if self.s[:len(c)] == c:
-                self.advance(len(c))
-                return True
-            return False
+    @property
+    def next(self):
+        return self.s[0]
 
-        def consume_until(self, c):
-            if callable(c):
-                i = 0
-                while i < len(self.s) and not c(self.s[i]):
-                    i = i + 1
-                return self.advance(i)
-            else:
-                i = self.s.index(c)
-                res = self.advance(i)
-                self.advance(len(c))
-                return res
+    def __bool__(self):
+        return bool(self.s)
+    __nonzero__ = __bool__
 
-        @property
-        def next(self):
-            return self.s[0]
 
-        def __bool__(self):
-            return bool(self.s)
-        __nonzero__ = __bool__
-
-    stream = Stream(spec)
-
+def _dtype_from_pep3118(spec):
+    stream = _Stream(spec)
     dtype, align = __dtype_from_pep3118(stream, is_subdtype=False)
     return dtype
 
