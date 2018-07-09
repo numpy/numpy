@@ -301,10 +301,10 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                 raise TypeError("invalid flags specification")
     
     # Fetch the integer or string flag values, if needed:
-    if num is None:
-        num = _num_fromflags(flags)
-    elif flags is None:
+    if flags is None:
         flags = _flags_fromnum(num)
+    elif num is None:
+        num = _num_fromflags(flags)
     
     # Choose a name string based on the dtype:
     if dtype is None:
