@@ -308,11 +308,14 @@ def average(a, axis=None, weights=None, returned=False):
         Return the average along the specified axis. When `returned` is `True`,
         return a tuple with the average as the first element and the sum
         of the weights as the second element. `sum_of_weights` is of the
-        same type as `average`. The result type is the type of lowest precision
-        capable of representing values of both `a` and `weights` or 'float64'
-        if that type would be integral. Otherwise, if `a` is non integral,
-        result will be a `dtype` which is capable of representing both
-        `a.dtype` and `wgt.dtype`
+        same type as `average`. The result dtype follows a genereal pattern.
+        If `weights` is None, the result dtype will be that of `a` , or `float64`
+        if `a` is integral. Otherwise, if `weights` is not None and `a` is non
+        integral, the result type will be the type of lowest precision capable of
+        representing values of both `a` and `weights` but if `a` happens to be
+        integral, the previous rules still applies but the result dtype would
+        at least be `float64`.
+
     Raises
     ------
     ZeroDivisionError
@@ -348,9 +351,11 @@ def average(a, axis=None, weights=None, returned=False):
     >>> np.average(data, axis=1, weights=[1./4, 3./4])
     array([ 0.75,  2.75,  4.75])
     >>> np.average(data, weights=[1./4, 3./4])
+    
     Traceback (most recent call last):
     ...
     TypeError: Axis must be specified when shapes of a and weights differ.
+    
     >>> a = np.ones(5, dtype=np.float128)
     >>> w = np.ones(5, dtype=np.complex64)
     >>> avg = np.average(a, weights=w)
