@@ -296,10 +296,11 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         elif isinstance(flags, flagsobj):
             num = flags.num
             flags = _flags_fromnum(num)
-        try:
-            flags = [str(x).strip().upper() for x in iter(flags)]
-        except Exception:
-            raise TypeError("invalid flags specification")
+        if flags is None:
+            try:
+                flags = [str(x).strip().upper() for x in iter(flags)]
+            except Exception:
+                raise TypeError("invalid flags specification")
     
     # Fetch the integer flag value, if needed:
     if num is None:
