@@ -51,10 +51,11 @@ Then, we're ready to call ``foo_func``:
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
-           'c_intp', 'as_ctypes', 'as_array']
+__all__ = ['load_library', 'ctypes_load_library',
+           'c_intp', 'ndpointer',
+           'as_ctypes', 'as_array']
 
-import sys, os
+import os
 from numpy import integer, ndarray, dtype as _dtype, deprecate, array
 from numpy.core.multiarray import _flagdict, flagsobj
 
