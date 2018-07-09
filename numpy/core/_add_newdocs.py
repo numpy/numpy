@@ -1319,6 +1319,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     hstack : Stack arrays in sequence horizontally (column wise)
     vstack : Stack arrays in sequence vertically (row wise)
     dstack : Stack arrays in sequence depth wise (along third dimension)
+    block : Assemble arrays from blocks.
 
     Notes
     -----
