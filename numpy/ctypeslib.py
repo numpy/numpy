@@ -316,7 +316,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[(dtype, shape, ndim, num)] = klass
+    _pointer_type_cache[(dtype, ndim, shape, num)] = klass
     return klass
 
 
