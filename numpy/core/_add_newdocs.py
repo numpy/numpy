@@ -1349,19 +1349,19 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     >>> a[1] = np.ma.masked
     >>> b = np.arange(2, 5)
     >>> a
-    masked_array(data = [0 -- 2],
-                 mask = [False  True False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2],
+                 mask=[False,  True, False],
+           fill_value=999999)
     >>> b
     array([2, 3, 4])
     >>> np.concatenate([a, b])
-    masked_array(data = [0 1 2 2 3 4],
-                 mask = False,
-           fill_value = 999999)
+    masked_array(data=[0, 1, 2, 2, 3, 4],
+                 mask=False,
+           fill_value=999999)
     >>> np.ma.concatenate([a, b])
-    masked_array(data = [0 -- 2 2 3 4],
-                 mask = [False  True False False False False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2, 2, 3, 4],
+                 mask=[False,  True, False, False, False, False],
+           fill_value=999999)
 
     """)
 
