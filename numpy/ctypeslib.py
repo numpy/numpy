@@ -214,8 +214,11 @@ class _ndptr(_ndptr_base):
 
 
 # Factory for an array-checking class with from_param defined for
-#  use with ctypes argtypes mechanism
+# use with ctypes argtypes mechanism
+
+# Module-local pointer type cache dict:
 _pointer_type_cache = {}
+
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     """
     Array-checking restype/argtypes.
@@ -268,10 +271,10 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     ... #doctest: +SKIP
 
     """
-
     if dtype is not None:
         dtype = _dtype(dtype)
     num = None
+    
     if flags is not None:
         if isinstance(flags, str):
             flags = flags.split(',')
@@ -287,18 +290,25 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             except Exception:
                 raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
+    
+    # Compose cache key tuple:
+    cache_key = (dtype, ndim, shape, num)
+    
     try:
-        return _pointer_type_cache[(dtype, ndim, shape, num)]
+        return _pointer_type_cache[cache_key]
     except KeyError:
         pass
+    
     if dtype is None:
         name = 'any'
     elif dtype.names:
         name = str(id(dtype))
     else:
         name = dtype.str
+    
     if ndim is not None:
         name += "_%dd" % ndim
+    
     if shape is not None:
         try:
             strshape = [str(x) for x in shape]
@@ -306,17 +316,22 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             strshape = [str(shape)]
             shape = (shape,)
         shape = tuple(shape)
-        name += "_"+"x".join(strshape)
+        name += "_" + "x".join(strshape)
+    
     if flags is not None:
-        name += "_"+"_".join(flags)
+        name += "_" + "_".join(flags)
     else:
         flags = []
-    klass = type("ndpointer_%s"%name, (_ndptr,),
-                 {"_dtype_": dtype,
-                  "_shape_" : shape,
-                  "_ndim_" : ndim,
-                  "_flags_" : num})
-    _pointer_type_cache[(dtype, ndim, shape, num)] = klass
+    
+    # Create new `_ndptr` subclass:
+    klass = type("ndpointer_%s" % name, (_ndptr,), {
+                 "_dtype_"  : dtype,
+                 "_shape_"  : shape,
+                 "_ndim_"   : ndim,
+                 "_flags_"  : num })
+    
+    # Cache the newly created class and return it:
+    _pointer_type_cache[cache_key] = klass
     return klass
 
 
