@@ -457,6 +457,7 @@ Type strings
 
     Both arguments must be convertible to data-type objects with the same total
     size.
+
     .. admonition:: Example
 
        32-bit integer, whose first two bytes are interpreted as an integer
