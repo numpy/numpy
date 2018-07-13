@@ -1075,7 +1075,7 @@ def assert_string_equal(actual, desired):
         raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
         raise AssertionError(repr(type(desired)))
-    if re.match(r'\A'+desired+r'\Z', actual, re.M):
+    if desired == actual:
         return
 
     diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
@@ -1099,7 +1099,7 @@ def assert_string_equal(actual, desired):
                     l.append(d3)
                 else:
                     diff.insert(0, d3)
-            if re.match(r'\A'+d2[2:]+r'\Z', d1[2:]):
+            if d2[2:] == d1[2:]:
                 continue
             diff_list.extend(l)
             continue
