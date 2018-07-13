@@ -310,10 +310,10 @@ def average(a, axis=None, weights=None, returned=False):
         of the weights as the second element. `sum_of_weights` is of the
         same type as `average`. The result dtype follows a genereal pattern.
         If `weights` is None, the result dtype will be that of `a` , or `float64`
-        if `a` is integral. Otherwise, if `weights` is not None and `a` is non
+        if `a` is integral. Otherwise, if `weights` is not None and `a` is non-
         integral, the result type will be the type of lowest precision capable of
-        representing values of both `a` and `weights` but if `a` happens to be
-        integral, the previous rules still applies but the result dtype would
+        representing values of both `a` and `weights`. If `a` happens to be
+        integral, the previous rules still applies but the result dtype will
         at least be `float64`.
 
     Raises
@@ -332,7 +332,8 @@ def average(a, axis=None, weights=None, returned=False):
     ma.average : average for masked arrays -- useful if your data contains
                  "missing" values
     numpy.result_type : Returns the type that results from applying the
-                        NumPy type promotion rules to the arguments.
+                        numpy type promotion rules to the arguments.
+
     Examples
     --------
     >>> data = range(1,5)
