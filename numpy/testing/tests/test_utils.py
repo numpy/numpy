@@ -1081,6 +1081,12 @@ class TestStringEqual(object):
 
         assert_raises(AssertionError,
                       lambda: assert_string_equal("foo", "hello"))
+        
+    def test_regex(self):
+        assert_string_equal("a+*b", "a+*b")
+
+        assert_raises(AssertionError,
+                      lambda: assert_string_equal("aaa", "a+b"))
 
 
 def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
