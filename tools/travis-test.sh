@@ -105,6 +105,11 @@ run_test()
     export PYTHONPATH=$PWD
   fi
 
+  if [ -n "$RUN_COVERAGE" ]; then
+    pip install pytest-cov
+    COVERAGE_FLAG=--coverage
+  fi
+
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
   mkdir -p empty
@@ -113,10 +118,17 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full
+    export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
+    $PYTHON ../tools/test-installed-numpy.py -v --mode=full $COVERAGE_FLAG
   else
     $PYTHON ../tools/test-installed-numpy.py -v
   fi
+
+  if [ -n "$RUN_COVERAGE" ]; then
+    # Upload coverage files to codecov
+    bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy
+  fi
+
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
     $PYTHON `which asv` machine --machine travis
@@ -181,4 +193,3 @@ else
   setup_base
   run_test
 fi
-
