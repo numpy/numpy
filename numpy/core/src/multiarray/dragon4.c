@@ -2714,7 +2714,7 @@ Dragon4_PrintFloat_Intel_extended128(
  * becomes more common.
  */
 static npy_uint32
-Dragon4_PrintFloat_IEEE_binary128(
+Dragon4_PrintFloat_IEEE_binary128_le(
     Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
 {
     FloatUnion128 buf128;
