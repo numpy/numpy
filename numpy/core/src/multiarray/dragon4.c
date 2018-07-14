@@ -2743,10 +2743,10 @@ Dragon4_PrintFloat_IEEE_binary128_le(
     }
 
     /* Assumes little-endian !!! */
-    mantissa_hi = buf128.integer.a & bitmask_u64(48);
-    mantissa_lo = buf128.integer.b;
-    floatExponent = (buf128.integer.a >> 48) & bitmask_u32(15);
-    floatSign = buf128.integer.a >> 63;
+    mantissa_hi = buf128.integer.b & bitmask_u64(48);
+    mantissa_lo = buf128.integer.a;
+    floatExponent = (buf128.integer.b >> 48) & bitmask_u32(15);
+    floatSign = buf128.integer.b >> 63;
 
     /* output the sign */
     if (floatSign != 0) {
