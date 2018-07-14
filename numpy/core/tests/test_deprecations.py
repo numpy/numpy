@@ -504,3 +504,10 @@ class TestGeneratorSum(_DeprecationTestCase):
     # 2018-02-25, 1.15.0
     def test_generator_sum(self):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
+
+class TestSctypeNA(_VisibleDeprecationTestCase):
+    # 2018-06-24, 1.16
+    def test_sctypeNA(self):
+        self.assert_deprecated(lambda: np.sctypeNA['?'])
+        self.assert_deprecated(lambda: np.typeNA['?'])
+        self.assert_deprecated(lambda: np.typeNA.get('?'))
