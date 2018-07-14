@@ -14,7 +14,7 @@ class EnvironmentConfig(object):
 
     def dump_variable(self, name):
         conf_desc = self._conf_keys[name]
-        hook, envvar, confvar, convert = conf_desc
+        hook, envvar, confvar, convert, append = conf_desc
         if not convert:
             convert = lambda x : x
         print('%s.%s:' % (self._distutils_section, name))
@@ -49,10 +49,15 @@ class EnvironmentConfig(object):
         return var
 
     def _get_var(self, name, conf_desc):
-        hook, envvar, confvar, convert = conf_desc
+        hook, envvar, confvar, convert, append = conf_desc
         var = self._hook_handler(name, hook)
         if envvar is not None:
-            var = os.environ.get(envvar, var)
+            envvar_contents = os.environ.get(envvar)
+            if envvar_contents is not None:
+                if var and append and os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '0') == '1':
+                    var = var + [envvar_contents]
+                else:
+                    var = envvar_contents
         if confvar is not None and self._conf:
             var = self._conf.get(confvar, (None, var))[1]
         if convert is not None:
