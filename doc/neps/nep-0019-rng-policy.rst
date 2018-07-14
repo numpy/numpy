@@ -3,10 +3,10 @@ NEP 19 — Random Number Generator Policy
 =======================================
 
 :Author: Robert Kern <robert.kern@gmail.com>
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2018-05-24
-
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-June/078126.html
 
 Abstract
 --------
