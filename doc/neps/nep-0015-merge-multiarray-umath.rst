@@ -3,10 +3,10 @@ NEP 15 — Merging multiarray and umath
 =====================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2018-02-22
-
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-June/078345.html
 
 Abstract
 --------
