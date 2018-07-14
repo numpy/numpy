@@ -469,7 +469,8 @@ def _set_wrap_both(padded, axis, index_pair):
         # pad area
         right_slice = _slice_at_axis(
             padded.shape, axis,
-            slice(-right_pad - min(period, left_pad), -right_pad)
+            slice(-right_pad - min(period, left_pad),
+                  -right_pad if right_pad != 0 else None)
         )
         right_chunk = padded[right_slice]
 
