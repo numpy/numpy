@@ -47,6 +47,15 @@ Support for ARM CPUs has been updated to accommodate 32 and 64 bit targets,
 and also big and little endian byte ordering. AARCH32 memory alignment issues
 have been addressed.
 
+Appending to build flags
+------------------------
+`numpy.distutils` has always overridden rather than appended to `LDFLAGS` and
+other similar such environment variables for compiling Fortran extensions.
+Now, if the `NPY_DISTUTILS_APPEND_FLAGS` environment variable is set to 1, the
+behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,
+`F90FLAGS`, `FREEFLAGS`, `FOPT`, `FDEBUG`, and `FFLAGS`.  See gh-11525 for more
+details.
+
 Changes
 =======
 
