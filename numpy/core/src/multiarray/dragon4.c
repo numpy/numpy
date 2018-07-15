@@ -2698,7 +2698,7 @@ Dragon4_PrintFloat_Intel_extended128(
 }
 #endif /* HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE */
 
-#if defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
+#if defined(HAVE_LDOUBLE_IEEE_QUAD_LE) || defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
 /*
  * IEEE binary128 floating-point format
  *
@@ -2714,11 +2714,9 @@ Dragon4_PrintFloat_Intel_extended128(
  * becomes more common.
  */
 static npy_uint32
-Dragon4_PrintFloat_IEEE_binary128_le(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+Dragon4_PrintFloat_IEEE_binary128(
+    Dragon4_Scratch *scratch, FloatVal128 val128, Dragon4_Options *opt)
 {
-    FloatUnion128 buf128;
-
     char *buffer = scratch->repr;
     npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
@@ -2731,8 +2729,6 @@ Dragon4_PrintFloat_IEEE_binary128_le(
     npy_bool hasUnequalMargins;
     char signbit = '\0';
 
-    buf128.floatingPoint = *value;
-
     if (bufferSize == 0) {
         return 0;
     }
@@ -2743,10 +2739,10 @@ Dragon4_PrintFloat_IEEE_binary128_le(
     }
 
     /* Assumes little-endian !!! */
-    mantissa_hi = buf128.integer.b & bitmask_u64(48);
-    mantissa_lo = buf128.integer.a;
-    floatExponent = (buf128.integer.b >> 48) & bitmask_u32(15);
-    floatSign = buf128.integer.b >> 63;
+    mantissa_hi = val128.hi & bitmask_u64(48);
+    mantissa_lo = val128.lo;
+    floatExponent = (val128.hi >> 48) & bitmask_u32(15);
+    floatSign = val128.hi >> 63;
 
     /* output the sign */
     if (floatSign != 0) {
@@ -2810,7 +2806,40 @@ Dragon4_PrintFloat_IEEE_binary128_le(
     return Format_floatbits(buffer, bufferSize, bigints, exponent,
                             signbit, mantissaBit, hasUnequalMargins, opt);
 }
+
+#if defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
+static npy_uint32
+Dragon4_PrintFloat_IEEE_binary128_le(
+    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+{
+    FloatVal128 val128;
+    FloatUnion128 buf128;
+
+    buf128.floatingPoint = *value;
+    val128.lo = buf128.integer.a;
+    val128.hi = buf128.integer.b;
+
+    return Dragon4_PrintFloat_IEEE_binary128(scratch, val128, opt);
+}
 #endif /* HAVE_LDOUBLE_IEEE_QUAD_LE */
+
+#if defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
+static npy_uint32
+Dragon4_PrintFloat_IEEE_binary128_be(
+    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+{
+    FloatVal128 val128;
+    FloatUnion128 buf128;
+
+    buf128.floatingPoint = *value;
+    val128.lo = buf128.integer.b;
+    val128.hi = buf128.integer.a;
+
+    return Dragon4_PrintFloat_IEEE_binary128(scratch, val128, opt);
+}
+#endif /* HAVE_LDOUBLE_IEEE_QUAD_BE */
+
+#endif /* HAVE_LDOUBLE_IEEE_QUAD_LE | HAVE_LDOUBLE_IEEE_BE*/
 
 #if (defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
      defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE))
