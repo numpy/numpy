@@ -2707,11 +2707,9 @@ Dragon4_PrintFloat_Intel_extended128(
  * mantissa: 112 bits
  *
  * Currently binary128 format exists on only a few CPUs, such as on the POWER9
- * arch. Because of this, this code has not been tested. I am not sure if the
- * arch also supports uint128, and C does not seem to support int128 literals.
- * So we use uint64 to do manipulation. Unfortunately this means we are endian
- * dependent. Assume little-endian for now, can fix later once binary128
- * becomes more common.
+ * arch or aarch64. Because of this, this code has not been extensively tested.
+ * I am not sure if the arch also supports uint128, and C does not seem to
+ * support int128 literals. So we use uint64 to do manipulation.
  */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary128(
@@ -2824,6 +2822,10 @@ Dragon4_PrintFloat_IEEE_binary128_le(
 #endif /* HAVE_LDOUBLE_IEEE_QUAD_LE */
 
 #if defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
+/*
+ * This function is untested, very few, if any, architectures implement
+ * big endien IEEE binary128 floating point.
+ */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary128_be(
     Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
