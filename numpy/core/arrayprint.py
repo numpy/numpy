@@ -528,6 +528,8 @@ def array2string(a, max_line_width=None, precision=None,
 
         The output is left-padded by the length of the prefix string, and
         wrapping is forced at the column ``max_line_width - len(suffix)``.
+        It should be noted that the content of prefix and suffix strings are
+        not included in the output.
     style : _NoValue, optional
         Has no effect, do not use.
 
