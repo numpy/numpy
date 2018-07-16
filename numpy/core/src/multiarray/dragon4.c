@@ -2736,7 +2736,6 @@ Dragon4_PrintFloat_IEEE_binary128(
         return 0;
     }
 
-    /* Assumes little-endian !!! */
     mantissa_hi = val128.hi & bitmask_u64(48);
     mantissa_lo = val128.lo;
     floatExponent = (val128.hi >> 48) & bitmask_u32(15);
@@ -2824,7 +2823,7 @@ Dragon4_PrintFloat_IEEE_binary128_le(
 #if defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
 /*
  * This function is untested, very few, if any, architectures implement
- * big endien IEEE binary128 floating point.
+ * big endian IEEE binary128 floating point.
  */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary128_be(
