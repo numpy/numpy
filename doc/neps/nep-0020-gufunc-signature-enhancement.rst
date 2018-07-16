@@ -6,6 +6,7 @@ NEP 20 — Expansion of Generalized Universal Function Signatures
 :Status: Draft
 :Type: Standards Track
 :Created: 2018-06-10
+:Reference: 
 
 Abstract
 --------
@@ -64,28 +65,10 @@ Each part of the proposal is driven by specific needs [1]_.
    but different signatures, ``(m,n),(n,p)->(m,p)``, ``(n),(n,p)->(p)``,
    ``(m,n),(n)->(m)`` and ``(n),(n)->()``.
 
-3. Dimensions that can be broadcast. For some applications, broadcasting
-   between operands makes sense. For instance, an ``all_equal`` function that
-   compares vectors in arrays could have a signature ``(n),(n)->()``, but this
-   forces both operands to be arrays, while it would be useful also to check
-   that, e.g., all parts of a vector are constant (maybe zero). The proposal
-   is to allow the implementer of a gufunc to indicate that a dimension can be
-   broadcast by post-fixing the dimension name with ``|1``. Hence, the
-   signature for ``all_equal`` would become ``(n|1),(n|1)->()``.  The
-   signature seems handy more generally for "chained ufuncs"; e.g., another
-   application might be in a putative ufunc implementing ``sumproduct``.
-
-   Another example that arose in the discussion, is of a weighted mean, which
-   might look like ``weighted_mean(y, sigma[, axis, ...])``, returning the
-   mean and its uncertainty.  With a signature of ``(n),(n)->(),()``, one
-   would be forced to always give as many sigmas as there are data points,
-   while broadcasting would allow one to give a single sigma for all points
-   (which is still useful to calculate the uncertainty on the mean).
-
 Implementation
 --------------
 
-The proposed changes have all been implemented [3]_, [4]_, [5]_. These PRs
+The proposed changes have all been implemented [3]_, [5]_. These PRs
 extend the ufunc structure with two new fields, each of size equal to the
 number of distinct dimensions, with ``core_dim_sizes`` holding possibly fixed
 sizes, and ``core_dim_flags`` holding flags indicating whether a dimension can
@@ -116,7 +99,7 @@ With the above, the formal defition of the syntax would become [4]_::
                              <Core dimension> "," <Core dimension list>
   <Core dimension>       ::= <Dimension name> <Dimension modifier>
   <Dimension name>       ::= valid Python variable name | valid integer
-  <Dimension modifier>   ::= nil | "|1" | "?"
+  <Dimension modifier>   ::= nil | "?"
 
 #. All quotes are for clarity.
 #. Unmodified core dimensions that share the same name must have the same size.
@@ -124,9 +107,6 @@ With the above, the formal defition of the syntax would become [4]_::
    elementary function's implementation.
 #. White spaces are ignored.
 #. An integer as a dimension name freezes that dimension to the value.
-#. If a name if suffixed with the ``|1`` modifier, it is allowed to broadcast
-   against other dimensions with the same name.  All input dimensions
-   must share this modifier, while no output dimensions should have it.
 #. If the name is suffixed with the ``?`` modifier, the dimension is a core
    dimension only if it exists on all inputs and outputs that share it;
    otherwise it is ignored (and replaced by a dimension of size 1 for the
@@ -187,6 +167,32 @@ signature of ``(n|1),(n|1)->()``, one would have to have five entries:
 ``(n),(n)->() | (n),(1)->() | (1),(n)->() | (n),()->() | (),(n)->()``.  For
 signatures like ``(m|1,n|1,o|1),(m|1,n|1,o|1)->()`` (from the ``cube_equal``
 test case in [4]_), it is not even worth writing out the expansion.
+
+Broadcasting
+~~~~~~~~~~~~
+
+The original NEP included a proposal to add an additional extension::
+
+   Dimensions that can be broadcast. For some applications, broadcasting
+   between operands makes sense. For instance, an ``all_equal`` function that
+   compares vectors in arrays could have a signature ``(n),(n)->()``, but this
+   forces both operands to be arrays, while it would be useful also to check
+   that, e.g., all parts of a vector are constant (maybe zero). The proposal
+   is to allow the implementer of a gufunc to indicate that a dimension can be
+   broadcast by post-fixing the dimension name with ``|1``. Hence, the
+   signature for ``all_equal`` would become ``(n|1),(n|1)->()``.  The
+   signature seems handy more generally for "chained ufuncs"; e.g., another
+   application might be in a putative ufunc implementing ``sumproduct``.
+
+   Another example that arose in the discussion, is of a weighted mean, which
+   might look like ``weighted_mean(y, sigma[, axis, ...])``, returning the
+   mean and its uncertainty.  With a signature of ``(n),(n)->(),()``, one
+   would be forced to always give as many sigmas as there are data points,
+   while broadcasting would allow one to give a single sigma for all points
+   (which is still useful to calculate the uncertainty on the mean).
+
+This part of the NEP was postponed and may be proposed again when a very
+compelling use case presents itself. The PR implementing it is [4]_.
 
 For broadcasting, the alternative suffix of ``^`` was suggested (as
 broadcasting can be thought of as increasing the size of the array).  This
