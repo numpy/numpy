@@ -63,8 +63,8 @@
     #define NPY_CPU_HPPA
 #elif defined(__alpha__)
     #define NPY_CPU_ALPHA
-#elif defined(__arm__)
-    #if defined(__ARMEB__)
+#elif defined(__arm__) || defined(__aarch64__)
+    #if defined(__ARMEB__) || defined(__AARCH64EB__)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEB_AARCH32
         #elif defined(__ARM_64BIT_STATE)
@@ -72,7 +72,7 @@
         #else
             #define NPY_CPU_ARMEB
         #endif
-    #elif defined(__ARMEL__)
+    #elif defined(__ARMEL__) || defined(__AARCH64EL__)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEL_AARCH32
         #elif defined(__ARM_64BIT_STATE)
