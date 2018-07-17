@@ -3,9 +3,14 @@ NEP 20 — Expansion of Generalized Universal Function Signatures
 ===============================================================
 
 :Author: Marten van Kerkwijk <mhvk@astro.utoronto.ca>
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2018-06-10
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-April/077959.html,
+             https://mail.python.org/pipermail/numpy-discussion/2018-May/078078.html
+
+.. note:: The proposal to add fixed (i) and flexible (ii) dimensions
+          was accepted, while that to add broadcastable (iii) ones was deferred.
 
 Abstract
 --------
