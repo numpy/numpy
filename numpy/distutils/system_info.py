@@ -540,7 +540,7 @@ class system_info(object):
                     'extra_compile_args': '', 'extra_link_args': ''}
         self.cp = ConfigParser(defaults)
         self.files = []
-        self.files.extend(get_standard_file('.numpy-site.cfg'))
+        self.files.extend(get_standard_file('~/.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
         self.parse_config_files()
 
