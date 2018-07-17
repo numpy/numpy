@@ -308,6 +308,49 @@ _find_array_prepare(ufunc_full_args args,
     return;
 }
 
+#define NPY_UFUNC_DEFAULT_INPUT_FLAGS \
+    NPY_ITER_READONLY | \
+    NPY_ITER_ALIGNED | \
+    NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+
+#define NPY_UFUNC_DEFAULT_OUTPUT_FLAGS \
+    NPY_ITER_ALIGNED | \
+    NPY_ITER_ALLOCATE | \
+    NPY_ITER_NO_BROADCAST | \
+    NPY_ITER_NO_SUBTYPE | \
+    NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+/*
+ * Set per-operand flags according to desired input or output flags.
+ * op_flags[i] for i in input (as determined by ufunc->nin) will be
+ * merged with op_in_flags, perhaps overriding per-operand flags set
+ * in previous stages.
+ * op_flags[i] for i in output will be set to op_out_flags only if previously
+ * unset.
+ * The input flag behavior preserves backward compatibility, while the
+ * output flag behaviour is the "correct" one for maximum flexibility.
+ */
+NPY_NO_EXPORT void
+_ufunc_setup_flags(PyUFuncObject *ufunc, npy_uint32 op_in_flags,
+                   npy_uint32 op_out_flags, npy_uint32 *op_flags)
+{
+    int nin = ufunc->nin;
+    int nout = ufunc->nout;
+    int nop = nin + nout, i;
+    /* Set up the flags */
+    for (i = 0; i < nin; ++i) {
+        op_flags[i] = ufunc->op_flags[i] | op_in_flags;
+        /*
+         * If READWRITE flag has been set for this operand,
+         * then clear default READONLY flag
+         */
+        if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
+            op_flags[i] &= ~NPY_ITER_READONLY;
+        }
+    }
+    for (i = nin; i < nop; ++i) {
+        op_flags[i] = ufunc->op_flags[i] ? ufunc->op_flags[i] : op_out_flags;
+    }
+}
 
 /*
  * This function analyzes the input arguments
@@ -1394,11 +1437,11 @@ iterator_loop(PyUFuncObject *ufunc,
                     PyObject **arr_prep,
                     ufunc_full_args full_args,
                     PyUFuncGenericFunction innerloop,
-                    void *innerloopdata)
+                    void *innerloopdata,
+                    npy_uint32 *op_flags)
 {
     npy_intp i, nin = ufunc->nin, nout = ufunc->nout;
     npy_intp nop = nin + nout;
-    npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
     char *baseptrs[NPY_MAXARGS];
 
@@ -1411,29 +1454,6 @@ iterator_loop(PyUFuncObject *ufunc,
     npy_uint32 iter_flags;
 
     NPY_BEGIN_THREADS_DEF;
-
-    /* Set up the flags */
-    for (i = 0; i < nin; ++i) {
-        op_flags[i] = NPY_ITER_READONLY |
-                      NPY_ITER_ALIGNED |
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-        /*
-         * If READWRITE flag has been set for this operand,
-         * then clear default READONLY flag
-         */
-        op_flags[i] |= ufunc->op_flags[i];
-        if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
-            op_flags[i] &= ~NPY_ITER_READONLY;
-        }
-    }
-    for (i = nin; i < nop; ++i) {
-        op_flags[i] = NPY_ITER_WRITEONLY |
-                      NPY_ITER_ALIGNED |
-                      NPY_ITER_ALLOCATE |
-                      NPY_ITER_NO_BROADCAST |
-                      NPY_ITER_NO_SUBTYPE |
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-    }
 
     iter_flags = ufunc->iter_flags |
                  NPY_ITER_EXTERNAL_LOOP |
@@ -1538,15 +1558,15 @@ iterator_loop(PyUFuncObject *ufunc,
 }
 
 /*
+ * ufunc           - the ufunc to call
  * trivial_loop_ok - 1 if no alignment, data conversion, etc required
- * nin             - number of inputs
- * nout            - number of outputs
- * op              - the operands (nin + nout of them)
+ * op              - the operands (ufunc->nin + ufunc->nout of them)
+ * dtypes          - the dtype of each operand
  * order           - the loop execution order/output memory order
  * buffersize      - how big of a buffer to use
  * arr_prep        - the __array_prepare__ functions for the outputs
- * innerloop       - the inner loop function
- * innerloopdata   - data to pass to the inner loop
+ * full_args       - the original input, output PyObject *
+ * op_flags        - per-operand flags, a combination of NPY_ITER_* constants
  */
 static int
 execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
@@ -1556,7 +1576,8 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
                     NPY_ORDER order,
                     npy_intp buffersize,
                     PyObject **arr_prep,
-                    ufunc_full_args full_args)
+                    ufunc_full_args full_args,
+                    npy_uint32 *op_flags)
 {
     npy_intp nin = ufunc->nin, nout = ufunc->nout;
     PyUFuncGenericFunction innerloop;
@@ -1691,7 +1712,7 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
     NPY_UF_DBG_PRINT("iterator loop\n");
     if (iterator_loop(ufunc, op, dtypes, order,
                     buffersize, arr_prep, full_args,
-                    innerloop, innerloopdata) < 0) {
+                    innerloop, innerloopdata, op_flags) < 0) {
         return -1;
     }
 
@@ -1717,14 +1738,13 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                     NPY_ORDER order,
                     npy_intp buffersize,
                     PyObject **arr_prep,
-                    ufunc_full_args full_args)
+                    ufunc_full_args full_args,
+                    npy_uint32 *op_flags)
 {
     int i, nin = ufunc->nin, nout = ufunc->nout;
     int nop = nin + nout;
-    npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
     int needs_api;
-    npy_intp default_op_in_flags = 0, default_op_out_flags = 0;
 
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
@@ -1734,48 +1754,10 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     PyArrayObject **op_it;
     npy_uint32 iter_flags;
 
-    if (wheremask != NULL) {
-        if (nop + 1 > NPY_MAXARGS) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Too many operands when including where= parameter");
-            return -1;
-        }
-        op[nop] = wheremask;
-        dtypes[nop] = NULL;
-        default_op_out_flags |= NPY_ITER_WRITEMASKED;
+    for (i = nin; i < nop; ++i) {
+        op_flags[i] |= (op[i] != NULL ? NPY_ITER_READWRITE : NPY_ITER_WRITEONLY);
     }
 
-    /* Set up the flags */
-    for (i = 0; i < nin; ++i) {
-        op_flags[i] = default_op_in_flags |
-                      NPY_ITER_READONLY |
-                      NPY_ITER_ALIGNED |
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-        /*
-         * If READWRITE flag has been set for this operand,
-         * then clear default READONLY flag
-         */
-        op_flags[i] |= ufunc->op_flags[i];
-        if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
-            op_flags[i] &= ~NPY_ITER_READONLY;
-        }
-    }
-    for (i = nin; i < nop; ++i) {
-        /*
-         * We don't write to all elements, and the iterator may make
-         * UPDATEIFCOPY temporary copies. The output arrays (unless they are
-         * allocated by the iterator itself) must be considered READWRITE by the
-         * iterator, so that the elements we don't write to are copied to the
-         * possible temporary array.
-         */
-        op_flags[i] = default_op_out_flags |
-                      (op[i] != NULL ? NPY_ITER_READWRITE : NPY_ITER_WRITEONLY) |
-                      NPY_ITER_ALIGNED |
-                      NPY_ITER_ALLOCATE |
-                      NPY_ITER_NO_BROADCAST |
-                      NPY_ITER_NO_SUBTYPE |
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-    }
     if (wheremask != NULL) {
         op_flags[nop] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
     }
@@ -2785,6 +2767,18 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     if (retval < 0) {
         goto fail;
     }
+    /*
+     * We don't write to all elements, and the iterator may make
+     * UPDATEIFCOPY temporary copies. The output arrays (unless they are
+     * allocated by the iterator itself) must be considered READWRITE by the
+     * iterator, so that the elements we don't write to are copied to the
+     * possible temporary array.
+     */
+    _ufunc_setup_flags(ufunc, NPY_ITER_COPY | NPY_UFUNC_DEFAULT_INPUT_FLAGS,
+                       NPY_ITER_UPDATEIFCOPY |
+                       NPY_ITER_READWRITE |
+                       NPY_UFUNC_DEFAULT_OUTPUT_FLAGS,
+                       op_flags);
     /* For the generalized ufunc, we get the loop right away too */
     retval = ufunc->legacy_inner_loop_selector(ufunc, dtypes,
                                     &innerloop, &innerloopdata, &needs_api);
@@ -2827,28 +2821,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * Set up the iterator per-op flags.  For generalized ufuncs, we
      * can't do buffering, so must COPY or UPDATEIFCOPY.
      */
-    for (i = 0; i < nin; ++i) {
-        op_flags[i] = NPY_ITER_READONLY |
-                      NPY_ITER_COPY |
-                      NPY_ITER_ALIGNED |
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-        /*
-         * If READWRITE flag has been set for this operand,
-         * then clear default READONLY flag
-         */
-        op_flags[i] |= ufunc->op_flags[i];
-        if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
-            op_flags[i] &= ~NPY_ITER_READONLY;
-        }
-    }
-    for (i = nin; i < nop; ++i) {
-        op_flags[i] = NPY_ITER_READWRITE|
-                      NPY_ITER_UPDATEIFCOPY|
-                      NPY_ITER_ALIGNED|
-                      NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST|
-                      NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
-    }
 
     iter_flags = ufunc->iter_flags |
                  NPY_ITER_MULTI_INDEX |
@@ -3097,7 +3069,8 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     int i, nop;
     const char *ufunc_name;
     int retval = -1, subok = 1;
-    int need_fancy = 0;
+    npy_uint32 op_flags[NPY_MAXARGS];
+    npy_intp default_op_out_flags;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
 
@@ -3156,13 +3129,6 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         return retval;
     }
 
-    /*
-     * Use the masked loop if a wheremask was specified.
-     */
-    if (wheremask != NULL) {
-        need_fancy = 1;
-    }
-
     /* Get the buffersize and errormask */
     if (_get_bufsize_errmask(extobj, ufunc_name, &buffersize, &errormask) < 0) {
         retval = -1;
@@ -3177,16 +3143,20 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Only do the trivial loop check for the unmasked version. */
-    if (!need_fancy) {
-        /*
-         * This checks whether a trivial loop is ok, making copies of
-         * scalar and one dimensional operands if that will help.
-         */
-        trivial_loop_ok = check_for_trivial_loop(ufunc, op, dtypes, buffersize);
-        if (trivial_loop_ok < 0) {
-            goto fail;
-        }
+    if (wheremask != NULL) {
+        /* Set up the flags. */
+        default_op_out_flags = NPY_ITER_NO_SUBTYPE |
+                               NPY_ITER_WRITEMASKED |
+                               NPY_UFUNC_DEFAULT_OUTPUT_FLAGS;
+        _ufunc_setup_flags(ufunc, NPY_UFUNC_DEFAULT_INPUT_FLAGS,
+                           default_op_out_flags, op_flags);
+    }
+    else {
+        /* Set up the flags. */
+        default_op_out_flags = NPY_ITER_WRITEONLY |
+                               NPY_UFUNC_DEFAULT_OUTPUT_FLAGS;
+        _ufunc_setup_flags(ufunc, NPY_UFUNC_DEFAULT_INPUT_FLAGS,
+                           default_op_out_flags, op_flags);
     }
 
 #if NPY_UF_DBG_TRACING
@@ -3214,23 +3184,46 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
         _find_array_prepare(full_args, arr_prep, nin, nout);
     }
 
-    /* Start with the floating-point exception flags cleared */
-    npy_clear_floatstatus_barrier((char*)&ufunc);
 
     /* Do the ufunc loop */
-    if (need_fancy) {
+    if (wheremask != NULL) {
         NPY_UF_DBG_PRINT("Executing fancy inner loop\n");
 
+        if (nop + 1 > NPY_MAXARGS) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Too many operands when including where= parameter");
+            return -1;
+        }
+        op[nop] = wheremask;
+        dtypes[nop] = NULL;
+
+        /* Set up the flags */
+
+        npy_clear_floatstatus_barrier((char*)&ufunc);
         retval = execute_fancy_ufunc_loop(ufunc, wheremask,
                             op, dtypes, order,
-                            buffersize, arr_prep, full_args);
+                            buffersize, arr_prep, full_args, op_flags);
     }
     else {
         NPY_UF_DBG_PRINT("Executing legacy inner loop\n");
 
+        /*
+         * This checks whether a trivial loop is ok, making copies of
+         * scalar and one dimensional operands if that will help.
+         * Since it requires dtypes, it can only be called after
+         * ufunc->type_resolver
+         */
+        trivial_loop_ok = check_for_trivial_loop(ufunc, op, dtypes, buffersize);
+        if (trivial_loop_ok < 0) {
+            goto fail;
+        }
+
+        /* check_for_trivial_loop on half-floats can overflow */
+        npy_clear_floatstatus_barrier((char*)&ufunc);
+
         retval = execute_legacy_ufunc_loop(ufunc, trivial_loop_ok,
                             op, dtypes, order,
-                            buffersize, arr_prep, full_args);
+                            buffersize, arr_prep, full_args, op_flags);
     }
     if (retval < 0) {
         goto fail;
