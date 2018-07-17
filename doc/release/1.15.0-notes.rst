@@ -441,6 +441,44 @@ within an array.
 .. note:: Implementations of ``__array_ufunc__`` should ensure that they can
           handle either ``axis`` or ``axes``.  In future, we may convert
           ``axis`` to ``axes`` before passing it on.
+Generalized ufunc signatures now allow fixed-size dimensions
+------------------------------------------------------------
+By using a numerical value in the signature of a generalized ufunc, one can
+indicate that the given function requires input or output to have dimensions
+with the given size. E.g., the signature of a function that converts a polar
+angle to a two-dimensional cartesian unit vector would be ``()->(2)``; that
+for one that converts two spherical angles to a three-dimensional unit vector
+would be ``(),()->(3)``; and that for the cross product of two
+three-dimensional vectors would be ``(3),(3)->(3)``.
+
+Note that to the elementary function these dimensions are not treated any
+differently from variable ones indicated with a name starting with a letter;
+the loop still is passed the corresponding size, but it can now count on that
+size being equal to the fixed one given in the signature.
+
+Generalized ufunc signatures now allow flexible dimensions
+----------------------------------------------------------
+
+Some functions, in particular numpy's implementation of ``@`` as ``matmul``,
+are very similar to generalized ufuncs in that they operate over core
+dimensions, but one could not present them as such because they were able to
+deal with inputs in which a dimension is missing. To support this, it is now
+allowed to postfix a dimension name with a question mark to indicate that the
+dimension does not necessarily have to be present.
+
+With this addition, the signature for ``matmul`` can be expressed as
+``(m?,n),(n,p?)->(m?,p?)``.  This indicates that if, e.g., the second operand
+has only one dimension, for the purposes of the elementary function it will be
+treated as if that input has core shape ``(n, 1)``, and the output has the
+corresponding core shape of ``(m, 1)``. The actual output array, however, has
+the flexible dimension removed, i.e., it will have shape ``(..., n)``.
+Similarly, if both arguments have only a single dimension, the inputs will be
+presented as having shapes ``(1, n)`` and ``(n, 1)`` to the elementary
+function, and the output as ``(1, 1)``, while the actual output array returned
+will have shape ``()``. In this way, the signature allows one to use a
+single elementary function for four related but different signatures,
+``(m,n),(n,p)->(m,p)``, ``(n),(n,p)->(p)``, ``(m,n),(n)->(m)`` and
+``(n),(n)->()``.
 
 Changes
 =======

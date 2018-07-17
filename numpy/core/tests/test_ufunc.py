@@ -287,19 +287,126 @@ class TestUfunc(object):
         pass
 
     def test_signature(self):
+        # from include/numpy/ufuncobject.h
+        size_unset = 2
+        can_ignore = 4
+        can_broadcast = 8
         # the arguments to test_signature are: nin, nout, core_signature
-        # pass
-        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i),(i)->()")
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, "(i),(i)->()")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1,  1,  0))
         assert_equal(ixs, (0, 0))
+        assert_equal(flags, (size_unset,))
+        assert_equal(sizes, (-1,))
 
         # empty core signature; treat as plain ufunc (with trivial core)
-        enabled, num_dims, ixs = umt.test_signature(2, 1, "(),()->()")
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, "(),()->()")
         assert_equal(enabled, 0)
         assert_equal(num_dims, (0,  0,  0))
         assert_equal(ixs, ())
+        assert_equal(flags, ())
+        assert_equal(sizes, ())
 
+        # more complicated names for variables
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, "(i1,i2),(J_1)->(_kAB)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 1))
+        assert_equal(ixs, (0, 1, 2, 3))
+        assert_equal(flags, (size_unset,)*4)
+        assert_equal(sizes, (-1, -1, -1, -1))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, u"(i1, i12),   (J_1)->(i12, i2)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 2))
+        assert_equal(ixs, (0, 1, 2, 1, 3))
+        assert_equal(flags, (size_unset,)*4)
+        assert_equal(sizes, (-1, -1, -1, -1))
+        # matrix_multiply signature from _umath_tests
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, "(n,k),(k,m)->(n,m)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 2, 2))
+        assert_equal(ixs, (0, 1, 1, 2, 0, 2))
+        assert_equal(flags, (size_unset,)*3)
+        assert_equal(sizes, (-1, -1, -1))
+        # matmul signature from _umath_tests
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, "(n?,k),(k,m?)->(n?,m?)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 2, 2))
+        assert_equal(ixs, (0, 1, 1, 2, 0, 2))
+        assert_equal(flags, (size_unset | can_ignore,
+                             size_unset,
+                             size_unset | can_ignore))
+        assert_equal(sizes, (-1, -1, -1))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            1, 1, "(3)->()")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 0))
+        assert_equal(ixs, (0,))
+        assert_equal(flags, (0,))
+        assert_equal(sizes, (3,))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            3, 1, "(3),(03,3),(n)->(9)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 2, 1, 1))
+        assert_equal(ixs, (0, 0, 0, 1, 2))
+        assert_equal(flags, (0, size_unset, 0))
+        assert_equal(sizes, (3, -1, 9))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            3, 1, "(3?),(3?,3?),(n)->(9)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 2, 1, 1))
+        assert_equal(ixs, (0, 0, 0, 1, 2))
+        assert_equal(flags, (can_ignore, size_unset, 0))
+        assert_equal(sizes, (3, -1, 9))
+
+        # all_equal signature
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, '(n|1),(n|1) -> ()')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 1, 0))
+        assert_equal(ixs, (0, 0))
+        assert_equal(flags, (can_broadcast | size_unset,))
+        assert_equal(sizes, (-1,))
+        # cube_equal signature
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, '(o|1,n|1,m|1),(o|1,n|1,m|1) -> ()')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (3, 3, 0))
+        assert_equal(ixs, (0, 1, 2, 0, 1, 2))
+        assert_equal(flags, (can_broadcast | size_unset,)*3)
+        assert_equal(sizes, (-1, -1, -1))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            2, 1, '(n|1),(n|1) -> (n)')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 1, 1))
+        assert_equal(ixs, (0, 0, 0))
+        assert_equal(flags, (can_broadcast | size_unset,))
+        assert_equal(sizes, (-1,))
+
+        enabled, num_dims, ixs, flags, sizes = umt.test_signature(
+            3, 1, '(3|1),(n),(3|1) -> ()')
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (1, 1, 1, 0))
+        assert_equal(ixs, (0, 1, 0))
+        assert_equal(flags, (can_broadcast, size_unset))
+        assert_equal(sizes, (3, -1))
+
+        # No broadcasting outputs.
+        assert_raises(ValueError, umt.test_signature,
+                      1, 1, "(n|1),(n|1)->(n|1)")
+        # Broadcast on single input is meaningless.
+        assert_raises(ValueError, umt.test_signature,
+                      1, 1, "(n|1)->()")
         # in the following calls, a ValueError should be raised because
         # of error in core signature
         # FIXME These should be using assert_raises
@@ -335,12 +442,6 @@ class TestUfunc(object):
             assert_equal(ret, None, err_msg=msg)
         except ValueError:
             pass
-
-        # more complicated names for variables
-        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
-        assert_equal(enabled, 1)
-        assert_equal(num_dims, (2, 1, 1))
-        assert_equal(ixs, (0, 1, 2, 3))
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
@@ -849,6 +950,49 @@ class TestUfunc(object):
         # Regular ufuncs should not accept keepdims.
         assert_raises(TypeError, np.add, 1., 1., keepdims=False)
 
+    def test_all_equal(self):
+        a = np.arange(6).reshape((2, 3))
+        b = np.arange(3)
+        assert_array_equal(umt.all_equal(a, b), [True, False])
+        b = np.array([1])
+        assert_array_equal(umt.all_equal(a, b), [False, False])
+        assert_array_equal(umt.all_equal(b, a), [False, False])
+        b = np.array(1)
+        assert_array_equal(umt.all_equal(a, b), [False, False])
+        assert_array_equal(umt.all_equal(b, a), [False, False])
+        a = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
+        assert_array_equal(umt.all_equal(a, b), [False, True, False])
+        assert_array_equal(umt.all_equal(b, a), [False, True, False])
+        b = np.array([[0], [1], [2]])
+        assert_array_equal(umt.all_equal(a, b), [True, True, True])
+
+    def test_cube_equal(self):
+        a = np.arange(48).reshape((2, 4, 2, 3))
+        b = np.arange(24).reshape((4, 2, 3))
+        assert_array_equal(umt.cube_equal(a, b), [True, False])
+        b = np.array([1])
+        assert_array_equal(umt.cube_equal(a, b), [False, False])
+        assert_array_equal(umt.cube_equal(b, a), [False, False])
+        a = (np.array([[[0, 0, 0], [1, 1, 1], [2, 2, 2]],
+                       [[3, 3, 3], [4, 4, 4], [5, 5, 5]],
+                       [[6, 6, 6], [7, 7, 7], [8, 8, 8]]]) *
+             np.arange(2).reshape(2, 1, 1, 1))
+        b = np.arange(9).reshape(3, 3)[..., np.newaxis]
+        assert_array_equal(umt.cube_equal(a, b), [False, True])
+        # Now with some axis swapping,
+        assert_array_equal(umt.cube_equal(a, b, axes=[(-3, -1, -2), (-3, -2, -1)]),
+                           [False, False])
+        a = np.arange(9).reshape(3, 1, 1, 3)
+        b = np.arange(3)[:, np.newaxis]
+        assert_array_equal(umt.cube_equal(a, b), [False, False, False])
+        assert_array_equal(umt.cube_equal(a, b, axes=[(-3, -1, -2), (-2, -1)]),
+                           [True, False, False])
+        assert_array_equal(umt.cube_equal(a, b, axes=[(-3, -2, -1), (-1, -2)]),
+                           [True, False, False])
+        assert_raises(ValueError, umt.cube_equal, a, b,
+                      axes=[(-3, -2, -1), (-3, -2, -1)])
+
+
     def test_innerwt(self):
         a = np.arange(6).reshape((2, 3))
         b = np.arange(10, 16).reshape((2, 3))
@@ -865,6 +1009,89 @@ class TestUfunc(object):
         b = np.array([], dtype='f8')
         w = np.array([], dtype='f8')
         assert_array_equal(umt.innerwt(a, b, w), np.sum(a*b*w, axis=-1))
+
+    def test_cross1d(self):
+        """Test with fixed-sized signature."""
+        a = np.eye(3)
+        assert_array_equal(umt.cross1d(a, a), np.zeros((3, 3)))
+        out = np.zeros((3, 3))
+        result = umt.cross1d(a[0], a, out)
+        assert_(result is out)
+        assert_array_equal(result, np.vstack((np.zeros(3), a[2], -a[1])))
+        assert_raises(ValueError, umt.cross1d, np.eye(4), np.eye(4))
+        assert_raises(ValueError, umt.cross1d, a, np.arange(4.))
+        assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros((3, 4)))
+
+    def test_can_ignore_signature(self):
+        # Comparing the effects of ? in signature:
+        # matrix_multiply: (m,n),(n,p)->(m,p)    # all must be there.
+        # matmul:        (m?,n),(n,p?)->(m?,p?)  # allow missing m, p.
+        mat = np.arange(12).reshape((2, 3, 2))
+        single_vec = np.arange(2)
+        col_vec = single_vec[:, np.newaxis]
+        col_vec_array = np.arange(8).reshape((2, 2, 2, 1)) + 1
+        # matrix @ single column vector with proper dimension
+        mm_col_vec = umt.matrix_multiply(mat, col_vec)
+        # matmul does the same thing
+        matmul_col_vec = umt.matmul(mat, col_vec)
+        assert_array_equal(matmul_col_vec, mm_col_vec)
+        # matrix @ vector without dimension making it a column vector.
+        # matrix multiply fails -> missing core dim.
+        assert_raises(ValueError, umt.matrix_multiply, mat, single_vec)
+        # matmul mimicker passes, and returns a vector.
+        matmul_col = umt.matmul(mat, single_vec)
+        assert_array_equal(matmul_col, mm_col_vec.squeeze())
+        # Now with a column array: same as for column vector,
+        # broadcasting sensibly.
+        mm_col_vec = umt.matrix_multiply(mat, col_vec_array)
+        matmul_col_vec = umt.matmul(mat, col_vec_array)
+        assert_array_equal(matmul_col_vec, mm_col_vec)
+        # As above, but for row vector
+        single_vec = np.arange(3)
+        row_vec = single_vec[np.newaxis, :]
+        row_vec_array = np.arange(24).reshape((4, 2, 1, 1, 3)) + 1
+        # row vector @ matrix
+        mm_row_vec = umt.matrix_multiply(row_vec, mat)
+        matmul_row_vec = umt.matmul(row_vec, mat)
+        assert_array_equal(matmul_row_vec, mm_row_vec)
+        # single row vector @ matrix
+        assert_raises(ValueError, umt.matrix_multiply, single_vec, mat)
+        matmul_row = umt.matmul(single_vec, mat)
+        assert_array_equal(matmul_row, mm_row_vec.squeeze())
+        # row vector array @ matrix
+        mm_row_vec = umt.matrix_multiply(row_vec_array, mat)
+        matmul_row_vec = umt.matmul(row_vec_array, mat)
+        assert_array_equal(matmul_row_vec, mm_row_vec)
+        # Now for vector combinations
+        # row vector @ column vector
+        col_vec = row_vec.T
+        col_vec_array = row_vec_array.swapaxes(-2, -1)
+        mm_row_col_vec = umt.matrix_multiply(row_vec, col_vec)
+        matmul_row_col_vec = umt.matmul(row_vec, col_vec)
+        assert_array_equal(matmul_row_col_vec, mm_row_col_vec)
+        # single row vector @ single col vector
+        assert_raises(ValueError, umt.matrix_multiply, single_vec, single_vec)
+        matmul_row_col = umt.matmul(single_vec, single_vec)
+        assert_array_equal(matmul_row_col, mm_row_col_vec.squeeze())
+        # row vector array @ matrix
+        mm_row_col_array = umt.matrix_multiply(row_vec_array, col_vec_array)
+        matmul_row_col_array = umt.matmul(row_vec_array, col_vec_array)
+        assert_array_equal(matmul_row_col_array, mm_row_col_array)
+        # Finally, check that things are *not* squeezed if one gives an
+        # output.
+        out = np.zeros_like(mm_row_col_array)
+        out = umt.matrix_multiply(row_vec_array, col_vec_array, out=out)
+        assert_array_equal(out, mm_row_col_array)
+        out[:] = 0
+        out = umt.matmul(row_vec_array, col_vec_array, out=out)
+        assert_array_equal(out, mm_row_col_array)
+        # And check one cannot put missing dimensions back.
+        out = np.zeros_like(mm_row_col_vec)
+        assert_raises(ValueError, umt.matrix_multiply, single_vec, single_vec,
+                      out)
+        # But fine for matmul, since it is just a broadcast.
+        out = umt.matmul(single_vec, single_vec, out)
+        assert_array_equal(out, mm_row_col_vec.squeeze())
 
     def test_matrix_multiply(self):
         self.compare_matrix_multiply_results(np.long)
