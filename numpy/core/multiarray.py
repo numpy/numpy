@@ -1,14 +1,14 @@
 from . import _multiarray_umath
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (_fastCopyAndTranspose, _flagdict, _insert,
-     _reconstruct, _vec_string, _ARRAY_API)
+     _reconstruct, _vec_string, _ARRAY_API, _monotonicity)
 
 __all__ = ['_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
     'ITEM_HASOBJECT', 'ITEM_IS_POINTER', 'LIST_PICKLE', 'MAXDIMS',
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP',
     '_fastCopyAndTranspose', '_flagdict', '_insert', '_reconstruct',
-    '_vec_string',
+    '_vec_string', '_monotonicity',
     'add_docstring', 'arange', 'array', 'bincount', 'broadcast', 'busday_count',
     'busday_offset', 'busdaycalendar', 'can_cast', 'compare_chararrays',
     'concatenate', 'copyto', 'correlate', 'correlate2', 'count_nonzero',
