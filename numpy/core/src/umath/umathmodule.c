@@ -331,16 +331,10 @@ int initumath(PyObject *m)
     PyDict_SetItemString(d, "mod", s2);
 
     if (!intern_strings()) {
-        goto err;
+        PyErr_SetString(PyExc_RuntimeError,
+           "cannot intern umath strings while initializing _multiarray_umath.");
+        return -1;
     }
 
     return 0;
-
- err:
-    /* Check for errors */
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load umath part of _multiarray_umath.");
-    }
-    return -1;
 }
