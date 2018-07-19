@@ -2714,6 +2714,19 @@ class TestMethods(object):
     def test_matmul(self):
         self._test_arr_mult(np.matmul)
 
+
+    def test_matmul_out(self):
+        # overlapping memory
+        a = np.arange(18).reshape(2, 3, 3)
+        b = np.matmul(a, a)
+        c = np.matmul(a, a, out=a)
+        assert_(c is a)
+        assert_equal(c, b)
+        a = np.arange(18).reshape(2, 3, 3)
+        c = np.matmul(a, a, out=a[::-1, ...])
+        assert(c.base is a.base)
+        assert_equal(c, b)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])

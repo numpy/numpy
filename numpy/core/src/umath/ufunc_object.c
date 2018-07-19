@@ -2678,26 +2678,31 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * can't do buffering, so must COPY or UPDATEIFCOPY.
      */
     for (i = 0; i < nin; ++i) {
-        op_flags[i] = NPY_ITER_READONLY |
+        op_flags[i] = ufunc->op_flags[i];
+        if (op_flags[i] == 0) {
+            op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_COPY |
                       NPY_ITER_ALIGNED |
                       NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+        }
         /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
          */
-        op_flags[i] |= ufunc->op_flags[i];
         if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
             op_flags[i] &= ~NPY_ITER_READONLY;
         }
     }
     for (i = nin; i < nop; ++i) {
-        op_flags[i] = NPY_ITER_READWRITE|
+        op_flags[i] = ufunc->op_flags[i];
+        if (op_flags[i] == 0) {
+            op_flags[i] = NPY_ITER_READWRITE|
                       NPY_ITER_UPDATEIFCOPY|
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
                       NPY_ITER_NO_BROADCAST|
                       NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+        }
     }
 
     iter_flags = ufunc->iter_flags |

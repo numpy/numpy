@@ -907,9 +907,9 @@ defdict = {
 'matmul' :
     Ufunc(2, 1, None,
           "matmul placeholder",
-          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          "PyUFunc_MatmulTypeResolver",
           TD(notimes_or_obj),
-          signature='"(n?,k),(k,m?)->(n?,m?)"'
+          signature='"(n?,k),(k,m?)->(n?,m?)"',
           ),
 }
 

@@ -23,6 +23,7 @@
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
+#include "mem_overlap.h"
 
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
@@ -42,6 +43,7 @@ npy_casting_to_string(NPY_CASTING casting)
             return "<unknown>";
     }
 }
+
 /*UFUNC_API
  *
  * Validates that the input operands can be cast to
@@ -1293,6 +1295,106 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
 #endif
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
+}
+
+/*
+ * This also makes sure that the data segment is aligned with
+ * an itemsize address as well by returning one if not true.
+ */
+static int
+_bad_strides(PyArrayObject *ap)
+{
+    int itemsize = PyArray_ITEMSIZE(ap);
+    int i, N=PyArray_NDIM(ap);
+    npy_intp *strides = PyArray_STRIDES(ap);
+
+    if (((npy_intp)(PyArray_DATA(ap)) % itemsize) != 0) {
+        return 1;
+    }
+    for (i = N-2; i < N; i++) {
+        if ((strides[i] < 0) || (strides[i] % itemsize) != 0) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/*
+ * This function applies special type resolution rules for the case
+ * where all the functions have the pattern XX->X, using
+ * PyArray_ResultType instead of a linear search to get the best
+ * loop, like PyUFunc_SimpleBinaryOperationTypeResolver, and adds
+ * memory overlap and contiguity considerations to the operands,
+ * possibly creating Writeback temporary data
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_MatmulTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+
+    if (PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting, operands,
+            type_tup, out_dtypes) < 0) {
+        return -1;
+    }
+    if (PyArray_NDIM(operands[0]) >= 2 && PyArray_NDIM(operands[1]) >= 2) {
+#if defined(HAVE_CBLAS)
+        int typenum =  out_dtypes[2]->type_num;
+        npy_bool copy_out = NPY_FALSE;
+        if (  (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
+                NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
+            /*
+             * We are going to use BLAS
+             * make sure arrays are contiguous
+             */
+            if (_bad_strides(operands[0])) {
+                    PyObject *op = PyArray_NewCopy(operands[0], NPY_ANYORDER);
+
+                    if (op == NULL) {
+                       return -1;
+                    }
+                    Py_DECREF(operands[0]);
+                    operands[0] = (PyArrayObject *)op;
+            }
+            if (_bad_strides(operands[1])) {
+                    PyObject *op = PyArray_NewCopy(operands[1], NPY_ANYORDER);
+
+                    if (op == NULL) {
+                        return -1;
+                    }
+                    Py_DECREF(operands[1]);
+                    operands[1] = (PyArrayObject *)op;
+            }
+        }
+#endif
+        if (operands[2] != NULL && (
+            solve_may_share_memory(operands[0], operands[2], 1) != 0 ||
+            solve_may_share_memory(operands[1], operands[2], 1) != 0)) {
+            copy_out = NPY_TRUE;
+        }
+#if defined(HAVE_CBLAS)
+        else if (operands[2] != NULL && _bad_strides(operands[2])) {
+            copy_out = NPY_TRUE;
+        }
+#endif
+        if (copy_out) {
+            /*
+             * Use all the flags in PyUFunc_GeneralizedFunction
+             * except NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+             */
+            ufunc->op_flags[2] = NPY_ITER_READWRITE|
+                      NPY_ITER_UPDATEIFCOPY|
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_BROADCAST;
+        }
+    }
+    return 0;
 }
 
 
