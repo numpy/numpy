@@ -34,7 +34,7 @@ from __future__ import division, print_function
 
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
-SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
+SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
