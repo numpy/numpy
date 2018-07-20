@@ -1583,8 +1583,51 @@ class TestQR(object):
         assert_almost_equal(r2, r1)
 
     def test_qr_empty(self):
-        a = np.zeros((0, 2))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
+        for m, n in [(3, 0), (0, 3)]:
+            k = min(m, n)
+            a = np.empty((m, n))
+            a_type = type(a)
+            a_dtype = a.dtype
+            #
+            q, r = np.linalg.qr(a, mode='reduced')
+            assert_(q.dtype == a_dtype)
+            assert_(r.dtype == a_dtype)
+            assert_(isinstance(q, a_type))
+            assert_(isinstance(r, a_type))
+            assert_(q.shape == (m, k))
+            assert_(r.shape == (k, n))
+            assert_almost_equal(np.dot(q, r), a)
+            assert_almost_equal(np.dot(q.T.conj(), q), np.eye(k))
+            assert_almost_equal(np.triu(r), r)
+            #
+            r = np.linalg.qr(a, mode='r')
+            assert_(r.dtype == a_dtype)
+            assert_(isinstance(r, a_type))
+            assert_(r.shape == (k, n))
+            assert_almost_equal(np.triu(r), r)
+            #
+            q, r = np.linalg.qr(a, mode='complete')
+            assert_(q.dtype == a_dtype)
+            assert_(r.dtype == a_dtype)
+            assert_(isinstance(q, a_type))
+            assert_(isinstance(r, a_type))
+            assert_(q.shape == (m, m))
+            assert_(r.shape == (m, n))
+            assert_almost_equal(q, np.eye(m))
+            assert_almost_equal(np.dot(q, r), a)
+            assert_almost_equal(np.triu(r), r)
+            #
+            h, tau = np.linalg.qr(a, mode='raw')
+            assert_(h.dtype == np.double)
+            assert_(tau.dtype == np.double)
+            assert_(h.shape == (n, m))
+            assert_(tau.shape == (k,))
+            #
+            with suppress_warnings() as sup:
+                sup.filter(DeprecationWarning, "The 'economic' option is deprecated.")
+                h = np.linalg.qr(a, mode='economic')
+            assert_(h.dtype == np.double)
+            assert_(h.shape == (n, m))
 
     def test_mode_raw(self):
         # The factorization is not unique and varies between libraries,
@@ -1624,15 +1667,6 @@ class TestQR(object):
             self.check_qr(m1)
             self.check_qr(m2)
             self.check_qr(m2.T)
-
-    def test_0_size(self):
-        # There may be good ways to do (some of this) reasonably:
-        a = np.zeros((0, 0))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
-        a = np.zeros((0, 1))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
-        a = np.zeros((1, 0))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
 
 
 class TestCholesky(object):
