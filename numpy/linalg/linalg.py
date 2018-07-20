@@ -862,20 +862,20 @@ def qr(a, mode='reduced'):
     if _isEmpty2d(a):
         k = min(m, n)
         if mode == 'reduced':
-            # ‘reduced’ : returns q, r with dimensions (M, K), (K, N) (default)
+            # 'reduced': returns q, r with dimensions (M, K), (K, N) (default)
             return empty((m, k)), empty((k, n))
         elif mode == 'r':
-            # ‘r’ : returns r only with dimensions (K, N)
+            # 'r': returns r only with dimensions (K, N)
             return empty((k, n))
         elif mode == 'complete':
-            # ‘complete’ : returns q, r with dimensions (M, M), (M, N)
+            # 'complete': returns q, r with dimensions (M, M), (M, N)
             return eye(m), empty((m, n))
         elif mode in ('raw', 'economic'):
-            # ‘raw’ : returns h, tau with dimensions (N, M), (K,)
+            # 'raw': returns h, tau with dimensions (N, M), (K,)
             h = empty((n, m))
             tau = empty(k)
             if mode == 'economic':
-                # ‘economic’ : returns h from ‘raw’, deprecated.
+                # 'economic': returns h from raw, deprecated.
                 return h
             else:
                 return h, tau
