@@ -688,6 +688,9 @@ class TestScalarIndexing(object):
 
 
 class TestCreation(object):
+    """
+    Test the np.array constructor
+    """
     def test_from_attribute(self):
         class x(object):
             def __array__(self, dtype=None):
@@ -916,6 +919,21 @@ class TestCreation(object):
         a = np.array([1, 2, [3]])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
+
+    def test_jagged_shape_object(self):
+        # The jagged dimension of a list is turned into an object array
+        a = np.array([[1, 1], [2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2, 2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2], [3, 3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
 
 class TestStructured(object):
     def test_subarray_field_access(self):
