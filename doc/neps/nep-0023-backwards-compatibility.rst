@@ -82,11 +82,9 @@ A new keyword ``density`` was introduced to replace it; ``normed`` started givin
         # v1.15.0 was the first release where `normed` started emitting
         # DeprecationWarnings
 
-The ``new`` keyword was planned from the start to be temporary; such a plan
-forces users to change their code more than once.  Such keywords (there have
-been other instances proposed, e.g. ``legacy_index`` in
-`NEP 21 <http://www.numpy.org/neps/nep-0021-advanced-indexing.html>`_) are not
-desired.  The right thing to have done here would probably have been to
+The ``new`` keyword was planned from the start to be temporary.  Such a plan
+forces users to change their code more than once, which is almost never the
+right thing to do.  Instead, a better approach here would have been to
 deprecate ``histogram`` and introduce a new function ``hist`` in its place.
 
 **Returning a view rather than a copy**
