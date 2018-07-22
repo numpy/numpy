@@ -666,7 +666,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int *out_is_object)
 {
     PyObject *e;
-    int r;
     npy_intp n, i;
     Py_buffer buffer_view;
     PyObject * seq;
@@ -849,12 +848,11 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         int maxndim_m1 = *maxndim - 1;
         PyObject *first = PySequence_Fast_GET_ITEM(seq, 0);
 
-        r = discover_dimensions(first, &maxndim_m1, d + 1, check_it,
-                                        stop_at_string, stop_at_tuple,
-                                        out_is_object);
-        if (r < 0) {
+        if (discover_dimensions(
+                first, &maxndim_m1, d + 1, check_it,
+                stop_at_string, stop_at_tuple, out_is_object) < 0) {
             Py_DECREF(seq);
-            return r;
+            return -1;
         }
 
         /* For the dimension truncation check below */
@@ -864,13 +862,12 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             npy_intp dtmp[NPY_MAXDIMS];
             PyObject *elem = PySequence_Fast_GET_ITEM(seq, i);
 
-            /* Get the dimensions of the first item */
-            r = discover_dimensions(elem, &maxndim_m1, dtmp, check_it,
-                                            stop_at_string, stop_at_tuple,
-                                            out_is_object);
-            if (r < 0) {
+            /* Get the dimensions of the remaining items */
+            if (discover_dimensions(
+                    elem, &maxndim_m1, dtmp, check_it,
+                    stop_at_string, stop_at_tuple, out_is_object) < 0) {
                 Py_DECREF(seq);
-                return r;
+                return -1;
             }
 
             /* Reduce max_ndim_m1 to just items which match */
@@ -1706,9 +1703,9 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 
         *out_ndim = NPY_MAXDIMS;
         is_object = 0;
-        if (discover_dimensions(op, out_ndim, out_dims, check_it,
-                                    stop_at_string, stop_at_tuple,
-                                    &is_object) < 0) {
+        if (discover_dimensions(
+                op, out_ndim, out_dims, check_it,
+                stop_at_string, stop_at_tuple, &is_object) < 0) {
             Py_DECREF(*out_dtype);
             if (PyErr_Occurred()) {
                 return -1;
