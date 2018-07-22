@@ -76,6 +76,9 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
+    - python: 3.7
+      dist: xenial  # Required for Python 3.7
+      sudo: true  # Required for Python 3.7
 
 before_install:
   - ./tools/travis-before-install.sh
