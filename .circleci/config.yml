@@ -8,7 +8,7 @@ jobs:
     docker:
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7
 
     working_directory: ~/repo
 
