@@ -1,5 +1,5 @@
 =======================================================
-NEP 23 - Backwards compatibility and deprecation policy
+NEP 23 — Backwards compatibility and deprecation policy
 =======================================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
@@ -115,7 +115,7 @@ many libraries that depend on NumPy.  Therefore it was reverted before release,
 to give those libraries time to fix their code first.  It was finally
 introduced for v1.11.0 and turned into a hard error for v1.12.0.
 
-This change was disruptive, however it did catch real bugs in e.g. SciPy and
+This change was disruptive, however it did catch real bugs in, e.g., SciPy and
 scikit-learn.  Overall the change was worth the cost, and introducing it in
 master first to allow testing, then removing it again before a release, is a
 useful strategy.
@@ -131,7 +131,7 @@ cleanups/improvements:
 **Removing the financial functions**
 
 The financial functions (e.g. ``np.pmt``) are badly named, are present in the
-main NumPy namespace, and don't really fit well with NumPy's scope.
+main NumPy namespace, and don't really fit well within NumPy's scope.
 They were added in 2008 after
 `a discussion <https://mail.python.org/pipermail/numpy-discussion/2008-April/032353.html>`_
 on the mailing list where opinion was divided (but a majority in favor).
@@ -158,7 +158,7 @@ This year there have been suggestions to consider removing some or all of
 The motivation was that all these cost maintenance effort, and that they slow
 down work on the core of Numpy (ndarrays, dtypes and ufuncs).
 
-The import on downstream libraries and users would be very large, and
+The impact on downstream libraries and users would be very large, and
 maintenance of these modules would still have to happen.  Therefore this is
 simply not a good idea; removing these submodules should not happen even for
 a new major version of NumPy.
@@ -247,9 +247,9 @@ Functionality with more strict policies:
 Alternatives
 ------------
 
-**Being more agressive with deprecations.**
+**Being more aggressive with deprecations.**
 
-The goal of being more agressive is to allow NumPy to move forward faster.
+The goal of being more aggressive is to allow NumPy to move forward faster.
 This would avoid others inventing their own solutions (often in multiple
 places), as well as be a benefit to users without a legacy code base.  We
 reject this alternative because of the place NumPy has in the scientific Python
