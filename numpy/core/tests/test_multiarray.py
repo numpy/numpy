@@ -903,6 +903,19 @@ class TestCreation(object):
             assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
 
+    def test_jagged_ndim_object(self):
+        # Lists of mismatching depths are treated as object arrays
+        a = np.array([[1], 2, 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, [2], 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, 2, [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
 
 class TestStructured(object):
     def test_subarray_field_access(self):
