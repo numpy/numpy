@@ -35,9 +35,11 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - 3.7-dev
 matrix:
   include:
+    - python: 3.7
+      dist: xenial  # Required for Python 3.7
+      sudo: true    # travis-ci/travis-ci#9069
     - python: 3.6
       env: USE_CHROOT=1 ARCH=i386 DIST=bionic PYTHON=3.6
       sudo: true
@@ -76,9 +78,6 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
-    - python: 3.7
-      dist: xenial  # Required for Python 3.7
-      sudo: true    # travis-ci/travis-ci#9069
 
 before_install:
   - ./tools/travis-before-install.sh
