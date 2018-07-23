@@ -688,6 +688,9 @@ class TestScalarIndexing(object):
 
 
 class TestCreation(object):
+    """
+    Test the np.array constructor
+    """
     def test_from_attribute(self):
         class x(object):
             def __array__(self, dtype=None):
@@ -902,6 +905,34 @@ class TestCreation(object):
                        shape=(max_bytes//itemsize,), dtype=dtype)
             assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
+
+    def test_jagged_ndim_object(self):
+        # Lists of mismatching depths are treated as object arrays
+        a = np.array([[1], 2, 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, [2], 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, 2, [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+    def test_jagged_shape_object(self):
+        # The jagged dimension of a list is turned into an object array
+        a = np.array([[1, 1], [2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2, 2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2], [3, 3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
 
 
 class TestStructured(object):
