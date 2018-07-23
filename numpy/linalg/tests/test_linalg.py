@@ -875,10 +875,6 @@ class TestDet(DetCases):
 class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.lstsq, a, b)
-            return
-
         arr = np.asarray(a)
         m, n = arr.shape
         u, s, vt = linalg.svd(a, 0)
@@ -922,6 +918,35 @@ class TestLstsq(LstsqCases):
             assert_(rank == 3)
             # Warning should be raised exactly once (first command)
             assert_(len(w) == 1)
+
+    @pytest.mark.parametrize(["m", "n", "n_rhs"], [
+        (0, 4, 1),
+        (0, 4, 2),
+        (4, 0, 1),
+        (4, 0, 2),
+        (4, 2, 0)
+    ])
+    def test_empty_a_b(self, m, n, n_rhs):
+        a = np.arange(m * n).reshape(m, n)
+        b = np.ones((m, n_rhs))
+        x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
+        assert_equal(x.shape, (n, n_rhs))
+        assert_equal(residuals.shape, ((n_rhs,) if m > n else (0,)))
+        assert_equal(rank, min(m, n))
+        assert_equal(s.shape, (min(m, n),))
+
+    @pytest.mark.parametrize(["m", "n"], [
+        (0, 4),
+        (4, 0)
+    ])
+    def test_empty_a_b_1d(self, m, n):
+        a = np.arange(m * n).reshape(m, n)
+        b = np.ones((m,))
+        x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
+        assert_equal(x.shape, (n,))
+        assert_equal(residuals.shape, ((1,) if m > n else (0,)))
+        assert_equal(rank, min(m, n))
+        assert_equal(s.shape, (min(m, n),))
 
 
 class TestMatrixPower(object):
