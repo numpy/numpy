@@ -378,6 +378,19 @@ A list of current Institutional Partners is maintained at the page
 :ref:`governance-people`.
 
 
+Commit Rights in the NumPy Code Base
+====================================
+
+The NumPy Steering Council can grant and revoke commit rights to the NumPy code
+repository, currently hosted at `github`_.
+
+The policy for granting commit privileges is based on trust, with the
+understanding that they are needed for many of the mundane tasks required
+to maintain NumPy.  Upon receiving this privilege, it is expected that the
+new committers, until they are experienced enough, will use it conservatively
+to triage issues, add labels, and merge only safe pull requests such as
+documentation.  
+
 Document history
 ================
 
@@ -398,3 +411,4 @@ copyright and related or neighboring rights to the NumPy project
 governance and decision-making document, as per the `CC-0 public
 domain dedication / license
 <https://creativecommons.org/publicdomain/zero/1.0/>`_.
+.. _`github`: https://github.com/numpy/numpy
