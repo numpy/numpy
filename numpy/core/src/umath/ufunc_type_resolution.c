@@ -1297,6 +1297,9 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
                                         type_tup, out_dtypes);
 }
 
+#if defined(HAVE_CBLAS)
+/* XXX TODO: copied from multiarray, remove once PR #10915 goes in */
+
 /*
  * This also makes sure that the data segment is aligned with
  * an itemsize address as well by returning one if not true.
@@ -1319,6 +1322,7 @@ _bad_strides(PyArrayObject *ap)
 
     return 0;
 }
+#endif
 
 /*
  * This function applies special type resolution rules for the case
@@ -1343,9 +1347,9 @@ PyUFunc_MatmulTypeResolver(PyUFuncObject *ufunc,
         return -1;
     }
     if (PyArray_NDIM(operands[0]) >= 2 && PyArray_NDIM(operands[1]) >= 2) {
+        npy_bool copy_out = NPY_FALSE;
 #if defined(HAVE_CBLAS)
         int typenum =  out_dtypes[2]->type_num;
-        npy_bool copy_out = NPY_FALSE;
         if (  (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
                 NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
             /*

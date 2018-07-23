@@ -3094,7 +3094,7 @@ static const float oneF[2] = {1.0, 0.0}, zeroF[2] = {0.0, 0.0};
  * #step0 = 0.F, 0., zeroF, zeroD#
  */
 NPY_NO_EXPORT void
-@name@_gemv(char *ip1, npy_intp is1_m, char *ip2, npy_intp is2_n, char *op,
+@name@_gemv(void *ip1, npy_intp is1_m, void *ip2, npy_intp is2_n, void *op,
                npy_intp m, npy_intp n)
 {
     /*
@@ -3325,10 +3325,12 @@ NPY_NO_EXPORT void
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
             } else if (dm == 1) {
                 /* vector @ matrix, switch ip1, ip2, p and m */
-                @TYPE@_gemv(ip2, is2_n, ip1, is1_n, op, dn, dp);
+                @TYPE@_gemv((void*)ip2, is2_n, (void*)ip1, is1_n,
+                            (void*)op, dn, dp);
             } else if (dp == 1) {
                 /* matrix @ vector */
-                @TYPE@_gemv(ip1, is1_n, ip2, is2_n, op, dm, dn);
+                @TYPE@_gemv((void*)ip1, is1_n, (void*)ip2, is2_n,
+                            (void*)op, dm, dn);
             } else {
                 /* cannot reach here */
                 /* printf("inconceivable to reach this line m=%ld, n=%ld, p=%ld\n",
