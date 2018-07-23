@@ -3080,6 +3080,49 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
+#if defined(HAVE_CBLAS)
+static const double oneD[2] = {1.0, 0.0}, zeroD[2] = {0.0, 0.0};
+static const float oneF[2] = {1.0, 0.0}, zeroF[2] = {0.0, 0.0};
+
+/**begin repeat
+ *
+ * #name = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+ * #ctype = npy_float, npy_double, npy_cfloat, npy_cdouble#
+ * #type = npy_float, npy_double, npy_cfloat, npy_cdouble#
+ * #prefix = s, d, c, z#
+ * #step1 = 1.F, 1., oneF, oneD#
+ * #step0 = 0.F, 0., zeroF, zeroD#
+ */
+NPY_NO_EXPORT void
+@name@_gemv(char *ip1, npy_intp is1_m, char *ip2, npy_intp is2_n, char *op,
+               npy_intp m, npy_intp n)
+{
+    /*
+     * Vector matrix multiplication -- Level 2 BLAS
+     * arguments
+     * ip1: contiguous data, m*n shape
+     * ip2: contiguous data in c order, n*1 shape
+     * op:  contiguous data in c order, m shape
+     */
+    enum CBLAS_ORDER order;
+    int lda;
+
+    NPY_BEGIN_ALLOW_THREADS
+    if (is1_m == sizeof(@type@)) {
+        order = CblasColMajor;
+        lda = n;
+    }
+    else {
+        /* is1_m == sizeof(@type@) * m; */
+        order = CblasRowMajor;
+        lda = m;
+    }
+    cblas_@prefix@gemv(order, CblasTrans, m, n, @step1@, ip1, lda, ip2, 1,
+                        @step0@, op, 1);
+        NPY_END_ALLOW_THREADS;}
+
+/**end repeat**/
+#endif
 
 /*
  * matmul loops
@@ -3248,8 +3291,8 @@ NPY_NO_EXPORT void
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 #if @USEBLAS@ & defined(HAVE_CBLAS)
-        npy_intp ib1_m = is1_m * dm;
-        npy_intp ob_m = os_m * dp;
+        /* npy_intp ib1_m = is1_m * dm;
+        npy_intp ob_m = os_m * dp; */
         /*
          * TODO: refactor this out to a inner_loop_selector, instead of
          * PyUFunc_DefaultLegacyInnerLoopSelector
@@ -3282,14 +3325,10 @@ NPY_NO_EXPORT void
                           is1_m, is1_n, is2_n, is2_p, os_m, os_p);
             } else if (dm == 1) {
                 /* vector @ matrix, switch ip1, ip2, p and m */
-                @TYPE@_matmul_inner_noblas(ip2, ip1, op, dp, dn, dm,
-                          ib2_n, ib1_n, ib1_m, ob_m,
-                          is2_p, is2_n, is1_n, is1_m, os_p, os_m);
+                @TYPE@_gemv(ip2, is2_n, ip1, is1_n, op, dn, dp);
             } else if (dp == 1) {
                 /* matrix @ vector */
-                @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
-                          ib1_n, ib2_n, ib2_p, ob_p,
-                          is1_m, is1_n, is2_n, is2_p, os_m, os_p);
+                @TYPE@_gemv(ip1, is1_n, ip2, is2_n, op, dm, dn);
             } else {
                 /* cannot reach here */
                 /* printf("inconceivable to reach this line m=%ld, n=%ld, p=%ld\n",
