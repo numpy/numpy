@@ -4143,15 +4143,15 @@ cdef class RandomState:
         if op.shape == ():
             fp = PyFloat_AsDouble(p)
 
-            if fp < 0.0:
-                raise ValueError("p < 0.0")
+            if fp <= 0.0:
+                raise ValueError("p <= 0.0")
             if fp > 1.0:
                 raise ValueError("p > 1.0")
             return discd_array_sc(self.internal_state, rk_geometric, size, fp,
                                   self.lock)
 
-        if np.any(np.less(op, 0.0)):
-            raise ValueError("p < 0.0")
+        if np.any(np.less_equal(op, 0.0)):
+            raise ValueError("p <= 0.0")
         if np.any(np.greater(op, 1.0)):
             raise ValueError("p > 1.0")
         return discd_array(self.internal_state, rk_geometric, size, op,
