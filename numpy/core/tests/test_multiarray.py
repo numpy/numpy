@@ -5762,24 +5762,26 @@ class TestMatmul(MatmulCommon):
         out = np.zeros((2, 2), dtype=np.int32)
         assert_raises(Exception, self.matmul, a, b, out=out)
 
-        # skip following tests for now, cblas does not allow non-contiguous
+        # cblas does not allow non-contiguous
         # outputs and consistency with dot would require same type,
         # dimensions, subtype, and c_contiguous.
 
-        # test out with allowed type cast
-        msg = "out argument with allowed cast"
+        # test out with type cast
         out = np.zeros((2, 2), dtype=np.complex128)
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter("always", np.ComplexWarning)
-            self.matmul(a, b, out=out)
-        assert_array_equal(out, tgt, err_msg=msg)
+        assert_raises(ValueError, self.matmul, a, b, out=out)
+        #msg = "out argument with allowed cast"
+        #with warnings.catch_warnings(record=True):
+        #    warnings.simplefilter("always", np.ComplexWarning)
+        #    self.matmul(a, b, out=out)
+        #assert_array_equal(out, tgt, err_msg=msg)
 
         # test out non-contiguous
-        msg = "out argument with non-contiguous layout"
         c = np.ones((2, 2, 2), dtype=float)
-        out = self.matmul(a, b, out=c[..., 0])
-        assert_(out.base is c)
-        assert_array_equal(out, tgt, err_msg=msg)
+        assert_raises(ValueError, self.matmul, a, b, out=c[..., 0])
+        #msg = "out argument with non-contiguous layout"
+        #out = self.matmul(a, b, out=c[..., 0])
+        #assert_(out.base is c)
+        #assert_array_equal(out, tgt, err_msg=msg)
 
 
 if sys.version_info[:2] >= (3, 5):
