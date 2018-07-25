@@ -103,8 +103,10 @@ Numpy has both scalars and zero-dimensional arrays.
 
 - The current implementation adds a large maintenance burden -- can we remove
   scalars and/or simplify it internally?
-- Zero dimensional arrays get converted into scalars by most NumPy functions.
-  Can this be fixed?
+- Zero dimensional arrays get converted into scalars by most NumPy
+  functions (i.e., output of `np.sin(x)` depends on whether `x` is
+  zero-dimensional or not).  This inconsistency should be addressed,
+  so that one could, e.g., write sane type annotations.
 
 .. _`NEP 19`: https://www.numpy.org/neps/nep-0019-rng-policy.html
 .. _`NEP 22`: http://www.numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html
