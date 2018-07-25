@@ -22,6 +22,7 @@ Here, we describe aspects of N-d array computation that are within scope for Num
 
   - Masked arrays
   - Structured arrays
+  - Memory mapped arrays
 
 - Historically, NumPy has included the following **basic functionality
   in support of scientific computation**. We intend to keep supporting
