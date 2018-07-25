@@ -1103,6 +1103,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         outgood = 1;
     }
     if (!outgood && PyArray_ISONESEGMENT(out) &&
+                        /* Both are contiguous, but must be identically so */
+                        PyArray_ISFORTRAN(out) == PyArray_ISFORTRAN(self) &&
                         PyArray_CHKFLAGS(out, NPY_ARRAY_ALIGNED) &&
                         PyArray_ISNOTSWAPPED(out) &&
                         PyArray_EquivTypes(PyArray_DESCR(out), indescr)) {
@@ -1115,7 +1117,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
      */
     if (!outgood) {
         int oflags;
-        if (PyArray_ISFORTRAN(out))
+        if (PyArray_ISFORTRAN(self))
             oflags = NPY_ARRAY_FARRAY;
         else
             oflags = NPY_ARRAY_CARRAY;
