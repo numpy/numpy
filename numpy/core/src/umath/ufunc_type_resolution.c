@@ -1376,25 +1376,35 @@ PyUFunc_MatmulTypeResolver(PyUFuncObject *ufunc,
             }
         }
 #endif
-        if (operands[2] != NULL && (
-            solve_may_share_memory(operands[0], operands[2], 1) != 0 ||
-            solve_may_share_memory(operands[1], operands[2], 1) != 0)) {
-            copy_out = NPY_TRUE;
-        }
+        if (operands[2] != NULL) {
+            npy_intp last_stride = PyArray_STRIDE(operands[2],
+                                                  PyArray_NDIM(operands[2]) - 1);
+            if (last_stride != PyArray_ITEMSIZE(operands[2]) ||
+                    !PyArray_EquivTypes(PyArray_DESCR(operands[2]), out_dtypes[2])) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array is not acceptable (must have the right datatype, "
+                    "number of dimensions, and be a C-Array)");
+                return -1;
+            }
+            if (solve_may_share_memory(operands[0], operands[2], 1) != 0 ||
+                    solve_may_share_memory(operands[1], operands[2], 1) != 0) {
+                copy_out = NPY_TRUE;
+            }
 #if defined(HAVE_CBLAS)
-        else if (operands[2] != NULL && _bad_strides(operands[2])) {
-            copy_out = NPY_TRUE;
-        }
+            else if (_bad_strides(operands[2])) {
+                copy_out = NPY_TRUE;
+            }
 #endif
+        }
         if (copy_out) {
             /*
              * Use all the flags in PyUFunc_GeneralizedFunction
              * except NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
              */
-            ufunc->op_flags[2] = NPY_ITER_READWRITE|
-                      NPY_ITER_UPDATEIFCOPY|
-                      NPY_ITER_ALIGNED|
-                      NPY_ITER_ALLOCATE|
+            ufunc->op_flags[2] = NPY_ITER_READWRITE |
+                      NPY_ITER_UPDATEIFCOPY |
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST;
         }
     }

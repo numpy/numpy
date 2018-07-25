@@ -3107,7 +3107,6 @@ NPY_NO_EXPORT void
     enum CBLAS_ORDER order;
     int lda;
 
-    NPY_BEGIN_ALLOW_THREADS
     if (is1_m == sizeof(@type@)) {
         order = CblasColMajor;
         lda = n;
@@ -3119,7 +3118,78 @@ NPY_NO_EXPORT void
     }
     cblas_@prefix@gemv(order, CblasTrans, m, n, @step1@, ip1, lda, ip2, 1,
                         @step0@, op, 1);
-        NPY_END_ALLOW_THREADS;}
+}
+
+NPY_NO_EXPORT void
+@name@_matmul_matrixmatrix(void *ip1, npy_intp is1_m, npy_intp is1_n,
+                           void *ip2, npy_intp is2_n, npy_intp is2_p,
+                           void *op, npy_intp m, npy_intp n, npy_intp p)
+{
+    /*
+     * matrix matrix multiplication -- Level 3 BLAS
+     */
+    enum CBLAS_ORDER order = CblasRowMajor;
+    enum CBLAS_TRANSPOSE trans1, trans2;
+    int M, N, P, lda, ldb;
+    trans1 = CblasNoTrans;
+    trans2 = CblasNoTrans;
+    M = m;
+    N = n;
+    P = p;
+
+
+    lda = N > 1 ? is1_m / sizeof(@type@) : 1;
+    ldb = P > 1 ? P : 1;
+    /*
+     * Avoid temporary copies for arrays in Fortran order
+     */
+    if (is1_m == sizeof(@type@)) {
+        trans1 = CblasTrans;
+        lda = N > 1 ? is1_n / sizeof(@type@) : 1;
+    }
+    else if (is1_n != sizeof(@type@)) {
+        printf("should copy ip1\n");
+    }
+    if (is2_n == sizeof(@type@)) {
+        trans2 = CblasTrans;
+        ldb = N > 1 ? is2_p / sizeof(@type@) : 1;
+    }
+    else if (is2_p != sizeof(@type@)) {
+        printf("should copy ip2\n");
+    }
+    /*
+     * Use syrk if we have a case of a matrix times its transpose.
+     * Otherwise, use gemm for all other cases.
+     */
+    if (
+        (ip1 == ip2) &&
+        (m == p) &&
+        (is1_m == is2_p) &&
+        (is1_n == is2_n) &&
+        ((trans1 == CblasTrans) ^ (trans2 == CblasTrans)) &&
+        ((trans1 == CblasNoTrans) ^ (trans2 == CblasNoTrans))
+    ) {
+        npy_intp i,j;
+        if (trans1 == CblasNoTrans) {
+            cblas_@prefix@syrk(order, CblasUpper, trans1, P, N, @step1@,
+                               ip1, lda, @step0@, op, P);
+        }
+        else {
+            cblas_@prefix@syrk(order, CblasUpper, trans1, P, N, @step1@,
+                               ip1, ldb, @step0@, op, p);
+        }
+        for (i = 0; i < P; i++) {
+            for (j = i + 1; j < P; j++) {
+                ((@type@*)op)[j * P + i] = ((@type@*)op)[i * P + j];
+            }
+        }
+
+    }
+    else {
+        cblas_@prefix@gemm(order, trans1, trans2, M, P, N, @step1@, ip1, lda,
+                           ip2, ldb, @step0@, op, P);
+    }
+}
 
 /**end repeat**/
 #endif
@@ -3306,9 +3376,7 @@ NPY_NO_EXPORT void
 #else
                 *(@typ@ *)op = 0;
 #endif
-                NPY_BEGIN_ALLOW_THREADS;
                 @TYPE@_dot(ip1, is1_n, ip2, is2_n, op, dn, NULL);
-                NPY_END_ALLOW_THREADS;
             } else if (dn ==1 && (dn ==1 || dm ==1)){
                 /*
                  * 0d @ vector or vector @ 0d
@@ -3339,9 +3407,9 @@ NPY_NO_EXPORT void
             }
         } else {
             /* matrix @ matrix */
-            @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
-                          ib1_n, ib2_n, ib2_p, ob_p,
-                          is1_m, is1_n, is2_n, is2_p, os_m, os_p);
+            @TYPE@_matmul_matrixmatrix((void*)ip1, is1_m, is1_n,
+                                       (void*)ip2, is2_n, is2_p,
+                                       (void*)op, dm, dn, dp);
         }
 #else
         @TYPE@_matmul_inner_noblas(ip1, ip2, op, dm, dn, dp,
