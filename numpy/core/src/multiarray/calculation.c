@@ -5,6 +5,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
+#include "lowlevel_strided_loops.h"
 
 #include "npy_config.h"
 
@@ -1102,9 +1103,18 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (out == newin) {
         outgood = 1;
     }
-    if (!outgood && PyArray_ISONESEGMENT(out) &&
-                        /* Both are contiguous, but must be identically so */
-                        PyArray_ISFORTRAN(out) == PyArray_ISFORTRAN(self) &&
+
+
+    /* make sure the shape of the output array is the same */
+    if (!PyArray_SAMESHAPE(newin, out)) {
+        PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
+                        "same shape as the input.");
+        goto fail;
+    }
+
+    if (!outgood && PyArray_EQUIVALENTLY_ITERABLE(
+                            self, out, PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                            PyArray_TRIVIALLY_ITERABLE_OP_NOREAD) &&
                         PyArray_CHKFLAGS(out, NPY_ARRAY_ALIGNED) &&
                         PyArray_ISNOTSWAPPED(out) &&
                         PyArray_EquivTypes(PyArray_DESCR(out), indescr)) {
@@ -1113,15 +1123,19 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 
     /*
      * Do we still not have a suitable output array?
-     * Create one, now
+     * Create one, now. No matter why the array is not suitable a copy has
+     * to be made. This may be just to avoid memory overlap though.
      */
     if (!outgood) {
         int oflags;
-        if (PyArray_ISFORTRAN(self))
+        if (PyArray_ISFORTRAN(self)) {
             oflags = NPY_ARRAY_FARRAY;
-        else
+        }
+        else {
             oflags = NPY_ARRAY_CARRAY;
-        oflags |= NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST;
+        }
+        oflags |= (NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST |
+                   NPY_ARRAY_ENSURECOPY);
         Py_INCREF(indescr);
         newout = (PyArrayObject*)PyArray_FromArray(out, indescr, oflags);
         if (newout == NULL) {
@@ -1131,13 +1145,6 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     else {
         newout = out;
         Py_INCREF(newout);
-    }
-
-    /* make sure the shape of the output array is the same */
-    if (!PyArray_SAMESHAPE(newin, newout)) {
-        PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
-                        "same shape as the input.");
-        goto fail;
     }
 
     /* Now we can call the fast-clip function */
