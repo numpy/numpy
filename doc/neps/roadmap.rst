@@ -31,7 +31,7 @@ Better dtypes
   - More consistent support for dtype metadata
   - Support for writing a dtype in Python
 - New string dtype(s):
-  - Fixed width encoded strings (utf8, latin1, ...)
+  - Encoded strings with fixed-width storage (utf8, latin1, ...)
   - Variable length strings (could share implementation with dtype=object, but are explicitly type-checked)
   - One of these should probably be the default for text data. The current behavior on Python 3 is neither efficient nor user friendly.
 - `np.int` should not be platform dependent
