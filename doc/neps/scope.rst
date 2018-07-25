@@ -18,10 +18,10 @@ Here, we describe aspects of N-d array computation that are within scope for Num
 
 - **Python API and a C API** to the ndarray's methods and attributes.
 
-- Other **specialized types of N-dimensional arrays**:
+- Other **specialized types or uses of N-dimensional arrays**:
 
   - Masked arrays
-  - Structured arrays
+  - Structured arrays (informally known as record arrays)
   - Memory mapped arrays
 
 - Historically, NumPy has included the following **basic functionality
