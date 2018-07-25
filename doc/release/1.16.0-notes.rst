@@ -62,6 +62,12 @@ behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,
 `F90FLAGS`, `FREEFLAGS`, `FOPT`, `FDEBUG`, and `FFLAGS`.  See gh-11525 for more
 details.
 
+``np.clip`` and the ``clip`` method check for memory overlap
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``out`` argument to these functions is now always tested for memory overlap
+to avoid corrupted results when memory overlap occurs.
+
+
 Changes
 =======
 
