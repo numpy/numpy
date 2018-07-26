@@ -7,21 +7,20 @@ in. It may be used to encourage and inspire developers and to search for
 funding.
 
 Interoperability protocols & duck typing
-========================================
+----------------------------------------
 
-`__array_function__`
---------------------
-See `NEP 18`_ and a sample implementation_
+- `__array_function__`
 
-Array Duck-Typing
------------------
-`NEP 22`_    `np.asduckarray()`
+  See `NEP 18`_ and a sample implementation_
 
+- Array Duck-Typing
 
-Mixins like `NDArrayOperatorsMixin`:
+  `NEP 22`_    `np.asduckarray()`
 
-- for mutable arrays
-- for reduction methods implemented as ufuncs
+- Mixins like `NDArrayOperatorsMixin`:
+
+  - for mutable arrays
+  - for reduction methods implemented as ufuncs
 
 Better dtypes
 -------------
