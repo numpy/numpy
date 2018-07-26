@@ -39,4 +39,8 @@ Here, we describe aspects of N-d array computation that are within scope for Num
   - f2py (generating bindings for Fortran code)
   - testing utilities
 
-- **Speed**: while we take performance concerns seriously, where conflict arises maintenance and portability take precedence over performance. We aim to prevent regressions where possible (e.g., through asv).
+- **Speed**: we take performance concerns seriously and aim to execute
+  operations on large arrays with similar performance as native C
+  code. That said, where conflict arises, maintenance and portability take
+  precedence over performance. We aim to prevent regressions where
+  possible (e.g., through asv).
