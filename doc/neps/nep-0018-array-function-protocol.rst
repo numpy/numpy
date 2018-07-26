@@ -381,10 +381,6 @@ decorator directly, but override implementation in terms of
   decorators, but they could still use a C equivalent of
   ``try_array_function_override``. If performance is not a concern, they could
   also be easily wrapped with a small Python wrapper.
-- The ``__call__`` method of ``np.vectorize`` can't be decorated with
-  ``@array_function_dispatch``, because we should pass a ``vectorize`` object
-  itself as the ``func`` argument  ``__array_function__``, not the unbound
-  ``vectorize.__call__`` method.
 - ``np.einsum`` does complicated argument parsing to handle two different
   function signatures. It would probably be best to avoid the overhead of
   parsing it twice in the typical case of no overrides.
@@ -798,6 +794,28 @@ We have left these out for now, because we don't know that they are necessary.
 If we want to include them in the future, the easiest way to do so would be to
 update the ``array_function_dispatch`` decorator to add them as function
 attributes.
+
+Protocols for methods
+~~~~~~~~~~~~~~~~~~~~~
+
+NumPy defines a number of classes with methods that act on NumPy arrays, e.g.,
+``vectorize.__call__`` and various ``random.RandomState`` methods. Such classes
+with methods are also found in other core libraries in the scientific Python
+stack, e.g., distribution objects in scipy.stats and model objects in
+scikit-learn.
+
+Overloads for such method could be fit into the ``__array_function__`` protocol
+by establishing a standard way of inspecting the ``func`` argument, e.g.,
+``func.__self__`` to obtain the class object and ``func.__func__`` to return
+the unbound function object. However, some caution is in order, because
+this could immesh what are currently implementation details as a permanent
+features of the interface, such as the fact that ``vectorize`` is implemented as a
+class rather than closure, or whether a method is implemented directly or using
+a descriptor.
+
+Given the complexity and the limited use cases, we are also deferring on this
+issue for now, but we are confident that ``__array_function__`` could be
+expanded to accomodate it in the future.
 
 Discussion
 ----------
