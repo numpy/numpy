@@ -1166,7 +1166,7 @@ def eig(a):
            Hermitian (conjugate symmetric) array.
 
     eigvalsh : eigenvalues of a real symmetric or complex Hermitian
-            (conjugate symmetric) array.
+               (conjugate symmetric) array.
 
     Notes
     -----
