@@ -81,21 +81,6 @@ def fix(x, out=None):
         res = res[()]
     return res
 
-
-def _isinf(x, sign, out=None):
-    if nx.isscalar(x):
-        if out is not None:
-            raise ValueError('out has to be None if x is scalar.')
-        return nx.isinf(x) and nx.sign(x) == sign
-    else:
-        x = nx.asanyarray(x)
-        out = nx.isinf(x, out)
-        if x.ndim == 0:
-            out = nx.asanyarray(out)
-        out_b = out.astype(bool, copy=False)
-        out[out_b] = nx.sign(x[out_b]) == sign
-        return out
-
 @_deprecate_out_named_y
 def isposinf(x, out=None):
     """
@@ -153,7 +138,7 @@ def isposinf(x, out=None):
     array([0, 0, 1])
 
     """
-    return _isinf(x, 1, out=out)
+    return nx.logical_and(nx.isinf(x), ~nx.signbit(x), out)
 
 
 @_deprecate_out_named_y
@@ -214,4 +199,4 @@ def isneginf(x, out=None):
     array([1, 0, 0])
 
     """
-    return _isinf(x, -1, out=out)
+    return nx.logical_and(nx.isinf(x), nx.signbit(x), out)
