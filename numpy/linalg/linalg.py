@@ -965,8 +965,10 @@ def eigvals(a):
     See Also
     --------
     eig : eigenvalues and right eigenvectors of general arrays
-    eigvalsh : eigenvalues of symmetric or Hermitian arrays.
-    eigh : eigenvalues and eigenvectors of symmetric/Hermitian arrays.
+    eigvalsh : eigenvalues of real symmetric or complex Hermitian 
+               (conjugate symmetric) arrays.
+    eigh : eigenvalues and eigenvectors of real symmetric or complex
+           Hermitian (conjugate symmetric) arrays.
 
     Notes
     -----
@@ -1027,7 +1029,7 @@ def eigvals(a):
 
 def eigvalsh(a, UPLO='L'):
     """
-    Compute the eigenvalues of a Hermitian or real symmetric matrix.
+    Compute the eigenvalues of a complex Hermitian or real symmetric matrix.
 
     Main difference from eigh: the eigenvectors are not computed.
 
@@ -1057,7 +1059,8 @@ def eigvalsh(a, UPLO='L'):
 
     See Also
     --------
-    eigh : eigenvalues and eigenvectors of symmetric/Hermitian arrays.
+    eigh : eigenvalues and eigenvectors of real symmetric or complex Hermitian
+           (conjugate symmetric) arrays.
     eigvals : eigenvalues of general real or complex arrays.
     eig : eigenvalues and right eigenvectors of general real or complex
           arrays.
@@ -1159,11 +1162,11 @@ def eig(a):
     --------
     eigvals : eigenvalues of a non-symmetric array.
 
-    eigh : eigenvalues and eigenvectors of a symmetric or Hermitian
-           (conjugate symmetric) array.
+    eigh : eigenvalues and eigenvectors of a real symmetric or complex 
+           Hermitian (conjugate symmetric) array.
 
-    eigvalsh : eigenvalues of a symmetric or Hermitian (conjugate symmetric)
-               array.
+    eigvalsh : eigenvalues of a real symmetric or complex Hermitian
+            (conjugate symmetric) array.
 
     Notes
     -----
@@ -1268,7 +1271,8 @@ def eig(a):
 
 def eigh(a, UPLO='L'):
     """
-    Return the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
+    Return the eigenvalues and eigenvectors of a complex Hermitian
+    (conjugate symmetric) or a real symmetric matrix.
 
     Returns two objects, a 1-D array containing the eigenvalues of `a`, and
     a 2-D square array or matrix (depending on the input type) of the
@@ -1277,7 +1281,7 @@ def eigh(a, UPLO='L'):
     Parameters
     ----------
     a : (..., M, M) array
-        Hermitian/Symmetric matrices whose eigenvalues and
+        Hermitian or real symmetric matrices whose eigenvalues and
         eigenvectors are to be computed.
     UPLO : {'L', 'U'}, optional
         Specifies whether the calculation is done with the lower triangular
@@ -1304,7 +1308,8 @@ def eigh(a, UPLO='L'):
 
     See Also
     --------
-    eigvalsh : eigenvalues of symmetric or Hermitian arrays.
+    eigvalsh : eigenvalues of real symmetric or complex Hermitian
+               (conjugate symmetric) arrays.
     eig : eigenvalues and right eigenvectors for non-symmetric arrays.
     eigvals : eigenvalues of non-symmetric arrays.
 
