@@ -116,8 +116,9 @@ def isposinf(x, out=None):
     NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754).
 
-    Errors result if the second argument is also supplied when `x` is a
-    scalar input, or if first and second arguments have different shapes.
+    Errors result if the second argument is also supplied when x is a scalar
+    input, if first and second arguments have different shapes, or if the
+    first argument as complex values
 
     Examples
     --------
@@ -138,6 +139,10 @@ def isposinf(x, out=None):
     array([0, 0, 1])
 
     """
+    x = nx.asanyarray(x)
+    if nx.issubdtype(x.dtype, nx.complexfloating):
+        raise ValueError('This operation is not supported for complex values'
+                         'because it would be ambiguous.')
     return nx.logical_and(nx.isinf(x), ~nx.signbit(x), out)
 
 
@@ -178,7 +183,8 @@ def isneginf(x, out=None):
     (IEEE 754).
 
     Errors result if the second argument is also supplied when x is a scalar
-    input, or if first and second arguments have different shapes.
+    input, if first and second arguments have different shapes, or if the
+    first argument as complex values.
 
     Examples
     --------
@@ -199,4 +205,8 @@ def isneginf(x, out=None):
     array([1, 0, 0])
 
     """
+    x = nx.asanyarray(x)
+    if nx.issubdtype(x.dtype, nx.complexfloating):
+        raise ValueError('This operation is not supported for complex values'
+                         'because it would be ambiguous.')
     return nx.logical_and(nx.isinf(x), nx.signbit(x), out)
