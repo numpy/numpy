@@ -3674,8 +3674,8 @@ def _quantile_is_valid(q):
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
                            interpolation='linear', keepdims=False):
     a = asarray(a)
-    base = a.flat[0]
-    a = a - base
+    base = a.flat[0] if a.dtype.kind == 'M' else None
+
     if q.ndim == 0:
         # Do not allow 0-d arrays because following code fails for scalar
         zerod = True
@@ -3698,6 +3698,8 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     if axis is None:
         axis = 0
 
+    if base is not None:
+        ap = ap - base
     Nx = ap.shape[axis]
     indices = q * (Nx - 1)
 
@@ -3735,8 +3737,10 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
         if zerod:
             indices = indices[0]
-        r = take(ap, indices, axis=axis, out=out)
 
+        if base is not None:
+            ap = ap + base
+        r = take(ap, indices, axis=axis, out=out)
 
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
@@ -3779,6 +3783,8 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             x1 = x1.squeeze(0)
             x2 = x2.squeeze(0)
 
+        if base is not None:
+            x1 = x1 + base
         if out is not None:
             r = add(x1, x2, out=out)
         else:
@@ -3802,7 +3808,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             else:
                 r[..., n.repeat(q.size, 0)] = a.dtype.type(np.nan)
 
-    return r + base
+    return r
 
 
 def trapz(y, x=None, dx=1.0, axis=-1):
