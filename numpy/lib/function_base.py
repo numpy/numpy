@@ -3674,6 +3674,8 @@ def _quantile_is_valid(q):
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
                            interpolation='linear', keepdims=False):
     a = asarray(a)
+    base = a.flat[0]
+    a = a - base
     if q.ndim == 0:
         # Do not allow 0-d arrays because following code fails for scalar
         zerod = True
@@ -3800,7 +3802,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             else:
                 r[..., n.repeat(q.size, 0)] = a.dtype.type(np.nan)
 
-    return r
+    return r + base
 
 
 def trapz(y, x=None, dx=1.0, axis=-1):
