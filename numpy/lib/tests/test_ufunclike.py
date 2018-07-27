@@ -52,7 +52,8 @@ class TestUfunclike(object):
                 return res
 
             def __array_wrap__(self, obj, context=None):
-                obj.metadata = self.metadata
+                if isinstance(obj, MyArray):
+                    obj.metadata = self.metadata
                 return obj
 
             def __array_finalize__(self, obj):
