@@ -1740,6 +1740,8 @@ add_newdoc('numpy.core.umath', 'isnat',
     """
     Test element-wise for NaT (not a time) and return result as a boolean array.
 
+    .. versionadded:: 1.13.0
+
     Parameters
     ----------
     x : array_like
