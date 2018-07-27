@@ -3808,7 +3808,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             else:
                 r[..., n.repeat(q.size, 0)] = a.dtype.type(np.nan)
 
-    return r
+    return r + base
 
 
 def trapz(y, x=None, dx=1.0, axis=-1):
