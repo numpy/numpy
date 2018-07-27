@@ -3989,6 +3989,7 @@ def meshgrid(*xi, **kwargs):
 
     `meshgrid` is very useful to evaluate functions on a grid.
 
+    >>> import matplotlib.pyplot as plt
     >>> x = np.arange(-5, 5, 0.1)
     >>> y = np.arange(-5, 5, 0.1)
     >>> xx, yy = np.meshgrid(x, y, sparse=True)
