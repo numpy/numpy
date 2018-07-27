@@ -118,7 +118,7 @@ def isposinf(x, out=None):
 
     Errors result if the second argument is also supplied when x is a scalar
     input, if first and second arguments have different shapes, or if the
-    first argument as complex values
+    first argument has complex values
 
     Examples
     --------
@@ -184,7 +184,7 @@ def isneginf(x, out=None):
 
     Errors result if the second argument is also supplied when x is a scalar
     input, if first and second arguments have different shapes, or if the
-    first argument as complex values.
+    first argument has complex values.
 
     Examples
     --------
