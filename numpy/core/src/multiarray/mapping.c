@@ -373,7 +373,7 @@ NPY_NO_EXPORT int
 prepare_index(PyArrayObject *self, PyObject *index,
               npy_index_info *indices,
               int *num, int *ndim, int *out_fancy_ndim, int allow_boolean,
-              int is_plain_index)
+              int indexing_method)
 {
     int new_ndim, fancy_ndim, used_ndim, index_ndim;
     int curr_idx, get_idx;
@@ -562,6 +562,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
              */
             PyArrayObject *nonzero_result[NPY_MAXDIMS];
 
+            if (indexing_method == VECTOR_INDEXING) {
+                PyErr_SetString(PyExc_IndexError,
+                                "boolean array index found, the `vindex`, "
+                                "however, indexing attribute does not support "
+                                "boolean indices. `oindex` (and plain "
+                                "indexing) is the natural choice for "
+                                "booleans.");
+                goto failed_building_indices;
+            }
+
             if ((index_ndim == 1) && allow_boolean) {
                 /*
                  * If ndim and size match, this can be optimized as a single
@@ -728,7 +738,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             used_ndim = PyArray_NDIM(self);
             new_ndim += indices[ellipsis_pos].value;
         }
-        else if (is_plain_index) {
+        else if (indexing_method == PLAIN_INDEXING) {
             /*
              * There is no ellipsis yet, but it is not a full index
              * so we append an ellipsis to the end. Use -1 to signal not given.
@@ -1655,6 +1665,19 @@ array_subscript(PyArrayObject *self, PyObject *op, int indexing_method)
 
     PyArrayMapIterObject * mit = NULL;
 
+    if (Py_TYPE(op) == &PyArrayMultiIndex_Type) {
+        /* We have a forwarded attribute index */
+        if (indexing_method != PLAIN_INDEXING) {
+            PyErr_SetString(PyExc_ValueError,
+                            "an attribute indexer (e.g. oindex) was "
+                            "passed into a non-plain indexing method. "
+                            "This is unsupported.");
+            return NULL;
+        }
+        indexing_method = ((PyArrayMultiIndex *)op)->indexing_method;
+        op = ((PyArrayMultiIndex *)op)->index;
+    }
+
     /* return fields if op is a string index */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
         PyArrayObject *view;
@@ -1669,8 +1692,7 @@ array_subscript(PyArrayObject *self, PyObject *op, int indexing_method)
 
     /* Prepare the indices */
     index_type = prepare_index(self, op, indices, &index_num,
-                               &ndim, &fancy_ndim, 1,
-                               indexing_method==PLAIN_INDEXING);
+                               &ndim, &fancy_ndim, 1, indexing_method);
 
     if (index_type < 0) {
         return NULL;
@@ -1852,47 +1874,6 @@ array_subscript(PyArrayObject *self, PyObject *op, int indexing_method)
 
 
 /*
- * Short wrapper for the arrays indexing slot.
- */
-NPY_NO_EXPORT PyObject *
-array_subscript_fancy(PyArrayObject *self, PyObject *op)
-{
-    if (PyArray_CheckExact(self)) {
-        return array_subscript(self, op, PLAIN_INDEXING);
-    }
-    /* Call back into python if numpy getitem is defined */
-    if (!_check_method_is_base(self, "__numpy_getitem__")) {
-        PyObject *meth, *result, *args;
-        static PyObject *kwargs = NULL;
-
-        if (kwargs == NULL) {
-            kwargs = Py_BuildValue(
-                "{s:s}", "indexing_method", "plain");
-            if (kwargs == NULL) {
-                return NULL;
-            }
-        }
-        args = PyTuple_Pack(1, op);
-        if (args == NULL) {
-            return NULL;
-        }
-        
-        meth = PyObject_GetAttrString((PyObject *)self, "__numpy_getitem__");
-        if (meth == NULL) {
-            Py_DECREF(args);
-            return NULL;
-        }
-        result = PyObject_Call(meth, args, kwargs); 
-        Py_DECREF(args);
-        Py_DECREF(meth);
-        return result;      
-    }
-    /* The subclass does not define anything, so we can just index */
-    return array_subscript(self, op, PLAIN_INDEXING);
-}
-
-
-/*
  * Python C-Api level item assignment (implementation for PySequence_SetItem)
  *
  * Negative indices are not accepted because PySequence_SetItem converts
@@ -1973,6 +1954,20 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op,
                         "cannot delete array elements");
         return -1;
     }
+
+    if (Py_TYPE(ind) == &PyArrayMultiIndex_Type) {
+        /* We have a forwarded attribute index */
+        if (indexing_method != PLAIN_INDEXING) {
+            PyErr_SetString(PyExc_ValueError,
+                            "an attribute indexer (e.g. oindex) was "
+                            "passed into a non-plain indexing method. "
+                            "This is unsupported.");
+            return -1;
+        }
+        indexing_method = ((PyArrayMultiIndex *)ind)->indexing_method;
+        ind = ((PyArrayMultiIndex *)ind)->index;
+    }
+
     if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
         return -1;
     }
@@ -1996,8 +1991,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op,
 
     /* Prepare the indices */
     index_type = prepare_index(self, ind, indices, &index_num,
-                               &ndim, &fancy_ndim, 1,
-                               indexing_method==PLAIN_INDEXING);
+                               &ndim, &fancy_ndim, 1, indexing_method);
 
     if (index_type < 0) {
         return -1;
@@ -2243,45 +2237,19 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op,
 }
 
 
+
 /*
- * General assignment with python indexing objects.
+ * General subscription and assignment with python indexing objects.
  */
+PyObject *
+array_subscript_fancy(PyArrayObject *self, PyObject *ind)
+{
+    return array_subscript(self, ind, PLAIN_INDEXING);
+}
+
 static int
 array_assign_subscript_fancy(PyArrayObject *self, PyObject *ind, PyObject *op)
 {
-    if (PyArray_CheckExact(self)) {
-        return array_assign_subscript(self, ind, op, PLAIN_INDEXING, 0);
-    }
-    /* Call back into python if numpy setitem is defined */
-    if (!_check_method_is_base(self, "__numpy_setitem__")) {
-        PyObject *meth, *args, *result;
-        static PyObject *kwargs = NULL;
-        int failure;
-
-        if (kwargs == NULL) {
-            kwargs = Py_BuildValue(
-                "{s:s}", "indexing_method", "plain");
-            if (kwargs == NULL) {
-                return NULL;
-            }
-        }
-        args = PyTuple_Pack(2, ind, op);
-        if (args == NULL) {
-            return NULL;
-        }
-        meth = PyObject_GetAttrString((PyObject *)self, "__numpy_setitem__");
-        if (meth == NULL) {
-            Py_DECREF(op);
-            return NULL;
-        }
-        result = PyObject_Call(meth, args, kwargs);   
-        Py_DECREF(op); 
-        Py_DECREF(meth);
-        failure = result == NULL;
-        Py_XDECREF(result);
-        return failure;
-    }
-    /* The subclass does not define anything, so we can just index */
     return array_assign_subscript(self, ind, op, PLAIN_INDEXING, 1);
 }
 
@@ -2579,10 +2547,13 @@ int setup_plain_permutation(PyArrayMapIterObject *mit,
             if (indices[i].type & (HAS_FANCY|HAS_BOOL)) {
                 if (orig_index != indices[i].orig_index && orig_index != -1) {
                     if (DEPRECATE(
+                            "TODO: Rethink this warning and type! "
+                            "(e.g. only deprecation warning if transpose logic "
+                            "is strange)\n"
                             "more than two array indices found; "
                             "please use `arr.oindex`, `arr.vindex`, or "
                             "`arr.lindex` to clarify use case.") < 0) {
-                    return -1;             
+                    return -1;
                     }
                 }
                 orig_index = indices[i].orig_index;
@@ -3863,7 +3834,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
     PyArrayObject *a_copy = NULL;
 
     index_type = prepare_index(a, index, indices, &index_num,
-                               &ndim, &fancy_ndim, 0, 1);
+                               &ndim, &fancy_ndim, 0, PLAIN_INDEXING);
 
     if (index_type < 0) {
         return NULL;
@@ -4085,136 +4056,83 @@ NPY_NO_EXPORT PyObject *
 arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
                                 PyObject *op)
 {
+    PyObject *multiindex;
+
     if (PyArray_CheckExact(attr_indexer->array)) {
         return array_subscript(
             attr_indexer->array, op, attr_indexer->indexing_method);
     }
-    if (!_check_method_is_base(attr_indexer->array, "__numpy_getitem__")) {
-        PyObject *meth, *args, *kwargs, *result;
-        static PyObject *okwargs = NULL, *vkwargs = NULL, *lkwargs = NULL;
-        switch (attr_indexer->indexing_method) {
-            case OUTER_INDEXING:
-                if (okwargs == NULL) {
-                    okwargs = Py_BuildValue(
-                        "{s:s}", "indexing_method", "outer");
-                }
-                kwargs = okwargs;
-                break;
-            case VECTOR_INDEXING:
-                if (vkwargs == NULL) {
-                    vkwargs = Py_BuildValue(
-                        "{s:s}", "indexing_method", "vector");
-                }
-                kwargs = vkwargs;
-                break;
-            case FANCY_INDEXING:
-                if (lkwargs == NULL) {
-                    lkwargs = Py_BuildValue(
-                        "{s:s}", "indexing_method", "legacy");
-                }
-                kwargs = lkwargs;
-                break;
-        }
-        if (kwargs == NULL) {
-            return NULL;
-        }
-        args = PyTuple_Pack(1, op);
-        if (args == NULL) {
-            return NULL;
-        }
-        meth = PyObject_GetAttrString(
-            (PyObject *)attr_indexer->array, "__numpy_getitem__");
-        if (meth == NULL) {
-            Py_DECREF(args);
-            return NULL;
-        }
-        result = PyObject_Call(meth, args, kwargs);
-        printf("blah: %ld\n", (npy_intp)result);
-        Py_DECREF(args);
-        return result;    
-    }
+
+    /* TODO: This probably makes sense, but only if the test is fast */
     if (_check_method_is_base(attr_indexer->array, "__getitem__") &&
                 _check_method_is_base(attr_indexer->array, "__setitem__")) {
         return array_subscript(
             attr_indexer->array, op, attr_indexer->indexing_method);
     }
 
-    PyErr_SetString(PyExc_AttributeError,
-                    "to use the special indexing attributes `oindex`, "
-                    "`vindex`, or `legacy_index` an ndarray subclass needs "
-                    "to implement `__numpy_setitem__` or not define "
-                    "`__getitem__` and `__setitem__`.");
-    return NULL;
+
+    multiindex = PyArray_MultiIndexNew(op, attr_indexer->indexing_method);
+    if (multiindex == NULL) {
+        return NULL;
+    }
+
+    return PyObject_GetItem((PyObject *)(attr_indexer->array), multiindex);
 }
+
 
 
 NPY_NO_EXPORT int
 arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
                                        PyObject *op, PyObject *vals)
 {
+    PyObject *multiindex;
+
     if (PyArray_CheckExact(attr_indexer->array)) {
         return array_assign_subscript(
             attr_indexer->array, op, vals, attr_indexer->indexing_method, 0);
     }
-    if (!_check_method_is_base(attr_indexer->array, "__numpy_setitem__")) {
-        PyObject *meth, *args, *kwargs, *result;
-        int failure;
-        static PyObject *okwargs = NULL, *vkwargs = NULL, *lkwargs = NULL;
-        switch (attr_indexer->indexing_method) {
-            case OUTER_INDEXING:
-                if (okwargs == NULL) {
-                    okwargs = Py_BuildValue(
-                        "{s:s}", "indexing_method", "outer");
-                }
-                kwargs = okwargs;
-                break;
-            case VECTOR_INDEXING:
-                if (vkwargs == NULL) {
-                    vkwargs = Py_BuildValue(
-                        "{s:s}", "indexing_method", "vector");
-                }
-                kwargs = vkwargs;
-                break;
-            case FANCY_INDEXING:
-                if (lkwargs == NULL) {
-                    lkwargs = Py_BuildValue(
-                        "{s:s}", "indexing_method", "legacy");
-                }
-                kwargs = lkwargs;
-                break;
-        }
-        if (kwargs == NULL) {
-            return -1;
-        }
-        args = PyTuple_Pack(2, op, vals);
-        if (args == NULL) {
-            return -1;
-        }
-        meth = PyObject_GetAttrString(
-            (PyObject *)attr_indexer->array, "__numpy_setitem__");
-        if (meth == NULL) {
-            Py_DECREF(args);
-            return -1;
-        }
-        result = PyObject_Call(meth, args, kwargs);
-        Py_DECREF(args);
-        Py_DECREF(meth);
-        failure = result == NULL;
-        Py_XDECREF(result);
-        return failure;      
-    }
+
+    /* TODO: This probably makes sense, but only if the test is fast */
     if (_check_method_is_base(attr_indexer->array, "__getitem__") &&
                 _check_method_is_base(attr_indexer->array, "__setitem__")) {
         return array_assign_subscript(
             attr_indexer->array, op, vals, attr_indexer->indexing_method, 0);
     }
 
-    PyErr_SetString(PyExc_AttributeError,
-                    "to use the special indexing attributes `oindex`, "
-                    "`vindex`, or `legacy_index` an ndarray subclass needs "
-                    "to implement `__numpy_setitem__` or not define "
-                    "`__getitem__` and `__setitem__`.");
-    return -1;
+
+    multiindex = PyArray_MultiIndexNew(op, attr_indexer->indexing_method);
+    if (multiindex == NULL) {
+        return -1;
+    }
+
+    return PyObject_SetItem((PyObject *)(attr_indexer->array),
+                            multiindex, vals);
+}
+
+
+NPY_NO_EXPORT PyObject *
+PyArray_MultiIndexNew(PyObject *index, int indexing_method)
+{
+    PyArrayMultiIndex *multiindex;
+    /* create new AttrinbuteIndexer object */
+    multiindex = (PyArrayMultiIndex *)PyArray_malloc(sizeof(PyArrayMultiIndex));
+    if (multiindex == NULL) {
+        return NULL;
+    }
+    /* set all attributes of mapiter to zero */
+    Py_INCREF(index);
+    multiindex->index = index;
+    multiindex->indexing_method = indexing_method;
+    PyObject_Init((PyObject *)multiindex, &PyArrayMultiIndex_Type);
+    return (PyObject *)multiindex;
+}
+
+
+static void
+arraymultiindex_dealloc(PyArrayMultiIndex *multiindex)
+{
+    Py_XDECREF(multiindex->index);
+    PyArray_free(multiindex);
 }
 
 
@@ -4223,6 +4141,7 @@ NPY_NO_EXPORT PyMappingMethods arrayattributeindexer_as_mapping = {
     (binaryfunc)arrayattributeindexer_subscript,            /*mp_subscript*/
     (objobjargproc)arrayattributeindexer_assign_subscript,  /*mp_ass_subscript*/
 };
+
 
 /*
  * Attribute indexer, i.e. `arr.oindex[indices]`.
@@ -4238,7 +4157,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayAttributeIndexer_Type = {
     sizeof(PyArrayAttributeIndexer),            /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
-    (destructor)arrayattributeindexer_dealloc,  /* tp_dealloc */
+    (destructor)arraymultiindex_dealloc,        /* tp_dealloc */
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
@@ -4259,6 +4178,94 @@ NPY_NO_EXPORT PyTypeObject PyArrayAttributeIndexer_Type = {
     0,                                          /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                         /* tp_flags */
     "Helper to enable indexing such as arr.oindex",  /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    0,                                          /* tp_getset */
+    0,                                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    0,                                          /* tp_init */
+    0,                                          /* tp_alloc */
+    0,                                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
+};
+
+
+NPY_NO_EXPORT PyObject *
+arraymultiindex_subscript(PyArrayAttributeIndexer *attr_indexer,
+                                PyObject *op)
+{
+    PyErr_SetString(PyExc_AttributeError,
+                    "the specialized MultiIndex object cannot be modified. "
+                    "It will get more functionality but right now can only "
+                    "be forwarded to numpy for indexing.");
+    return NULL;
+}
+
+
+NPY_NO_EXPORT PySequenceMethods multiindex_as_mapping = {
+    NULL,                                                   /*mp_length*/
+    (binaryfunc)arraymultiindex_subscript,                  /*mp_subscript*/
+    NULL,                                                   /*mp_ass_subscript*/
+};
+
+
+/*
+ * MultiIndex object. This object holds just a tuple to a python index
+ * as well as the information whether it was created through oindex/vindex
+ * or not. If passed in as a numpy index (to plain indexing), it will work
+ * like the corresponding vindex/oindex or legacy indexing method.
+ */
+NPY_NO_EXPORT PyTypeObject PyArrayMultiIndex_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,                                          /* ob_size */
+#endif
+    "numpy.MultiIndex",                         /* tp_name */
+    sizeof(PyArrayMultiIndex),                  /* tp_basicsize */
+    0,                                          /* tp_itemsize */
+    /* methods */
+    (destructor)arrayattributeindexer_dealloc,  /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    &multiindex_as_mapping,                     /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    "Multi-dimensional indexing object helper", /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */

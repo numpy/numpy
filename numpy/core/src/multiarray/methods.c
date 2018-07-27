@@ -2458,72 +2458,6 @@ array_setslice(PyArrayObject *self, PyObject *args)
 
 #endif
 
-/* Special indexing methods */
-static PyObject *
-array_numpy_getitem(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    static char *kwlist[] = {"index", "indexing_method", NULL};
-    char *indexing_method = "";
-    int indexing_method_int;
-    PyObject *op;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|s", kwlist,
-                                     &op, &indexing_method)) {
-        return NULL;                                
-    }
-    if (strcmp(indexing_method, "plain") == 0) {
-        indexing_method_int = PLAIN_INDEXING;
-    }
-    else if (strcmp(indexing_method, "outer") == 0) {
-        indexing_method_int = OUTER_INDEXING;
-    }
-    else if (strcmp(indexing_method, "vector") == 0) {
-        indexing_method_int = VECTOR_INDEXING;
-    }
-    else if (strcmp(indexing_method, "legacy") == 0) {
-        indexing_method_int = FANCY_INDEXING;
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError, "invalid `indexing_method` passed.");
-        return NULL;
-    }
-    return array_subscript(self, op, indexing_method_int);    
-}
-
-static PyObject *
-array_numpy_setitem(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    static char *kwlist[] = {"index", "values", "indexing_method", NULL};
-    char *indexing_method = "plain";
-    int indexing_method_int;
-    PyObject *op, *vals;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|s", kwlist,
-                                     &op, &vals, &indexing_method)) {
-        return NULL;                                
-    }
-    if (strcmp(indexing_method, "plain") == 0) {
-        indexing_method_int = PLAIN_INDEXING;
-    }
-    else if (strcmp(indexing_method, "outer") == 0) {
-        indexing_method_int = OUTER_INDEXING;
-    }
-    else if (strcmp(indexing_method, "vector") == 0) {
-        indexing_method_int = VECTOR_INDEXING;
-    }
-    else if (strcmp(indexing_method, "legacy") == 0) {
-        indexing_method_int = FANCY_INDEXING;
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError, "invalid `indexing_method` passed.");
-        return NULL;
-    }
-    if (array_assign_subscript(self, op, vals, indexing_method_int, 0) == 0) {
-        Py_RETURN_NONE;
-    }
-    return NULL;
-}
-
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
@@ -2598,14 +2532,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction) array_setslice,
         METH_VARARGS, NULL},
 #endif
-
-    /* For special indexing support */
-    {"__numpy_getitem__",
-        (PyCFunction)array_numpy_getitem,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"__numpy_setitem__",
-        (PyCFunction)array_numpy_setitem,
-        METH_VARARGS | METH_KEYWORDS, NULL},
 
     /* Original and Extended methods added 2005 */
     {"all",

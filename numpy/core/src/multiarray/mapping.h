@@ -103,6 +103,23 @@ NPY_NO_EXPORT PyObject *
 PyArray_AttributeIndexerNew(PyArrayObject *array, int indexing_method);
 
 
+/*
+ * Prototypes for attribute indexing helper (arr.oindex, etc.)
+ */
+typedef struct {
+        PyObject_HEAD
+        /*
+         * Attribute information portion.
+         */
+        PyObject *index;      /* The indexing object */
+        int indexing_method;  /* See mapping.h */
+} PyArrayMultiIndex;
+
+
+NPY_NO_EXPORT PyObject *
+PyArray_MultiIndexNew(PyObject *index, int indexing_method);
+
+
 NPY_NO_EXPORT PyObject *
 arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
                                  PyObject *op);
