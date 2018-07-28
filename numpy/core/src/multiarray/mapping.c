@@ -2546,14 +2546,15 @@ int setup_plain_permutation(PyArrayMapIterObject *mit,
         for (i = 0; i < index_num; i++) {
             if (indices[i].type & (HAS_FANCY|HAS_BOOL)) {
                 if (orig_index != indices[i].orig_index && orig_index != -1) {
+                    /*
+                     * TODO: We probably have to remove/make this warning less
+                     *       pronounced!
+                     */
                     if (DEPRECATE(
-                            "TODO: Rethink this warning and type! "
-                            "(e.g. only deprecation warning if transpose logic "
-                            "is strange)\n"
                             "more than two array indices found; "
                             "please use `arr.oindex`, `arr.vindex`, or "
                             "`arr.lindex` to clarify use case.") < 0) {
-                    return -1;
+                        return -1;
                     }
                 }
                 orig_index = indices[i].orig_index;

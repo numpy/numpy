@@ -22,7 +22,7 @@ __all__ = [
 
 
 def _make_along_axis_idx(arr_shape, indices, axis):
-	# compute dimensions to iterate over
+    # compute dimensions to iterate over
     if not _nx.issubdtype(indices.dtype, _nx.integer):
         raise IndexError('`indices` must be an integer array')
     if len(arr_shape) != indices.ndim:
@@ -33,15 +33,15 @@ def _make_along_axis_idx(arr_shape, indices, axis):
 
     # build a fancy index, consisting of orthogonal aranges, with the
     # requested index inserted at the right location
-    fancy_index = []
+    vector_index = []
     for dim, n in zip(dest_dims, arr_shape):
         if dim is None:
-            fancy_index.append(indices)
+            vector_index.append(indices)
         else:
             ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
-            fancy_index.append(_nx.arange(n).reshape(ind_shape))
+            vector_index.append(_nx.arange(n).reshape(ind_shape))
 
-    return tuple(fancy_index)
+    return tuple(vector_index)
 
 
 def take_along_axis(arr, indices, axis):
@@ -157,7 +157,7 @@ def take_along_axis(arr, indices, axis):
         arr_shape = arr.shape
 
     # use the fancy index
-    return arr[_make_along_axis_idx(arr_shape, indices, axis)]
+    return arr.vindex[_make_along_axis_idx(arr_shape, indices, axis)]
 
 
 def put_along_axis(arr, indices, values, axis):
@@ -242,7 +242,7 @@ def put_along_axis(arr, indices, values, axis):
         arr_shape = arr.shape
 
     # use the fancy index
-    arr[_make_along_axis_idx(arr_shape, indices, axis)] = values
+    arr.vindex[_make_along_axis_idx(arr_shape, indices, axis)] = values
 
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
