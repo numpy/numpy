@@ -4111,32 +4111,6 @@ arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
 }
 
 
-NPY_NO_EXPORT PyObject *
-PyArray_MultiIndexNew(PyObject *index, int indexing_method)
-{
-    PyArrayMultiIndex *multiindex;
-    /* create new AttrinbuteIndexer object */
-    multiindex = (PyArrayMultiIndex *)PyArray_malloc(sizeof(PyArrayMultiIndex));
-    if (multiindex == NULL) {
-        return NULL;
-    }
-    /* set all attributes of mapiter to zero */
-    Py_INCREF(index);
-    multiindex->index = index;
-    multiindex->indexing_method = indexing_method;
-    PyObject_Init((PyObject *)multiindex, &PyArrayMultiIndex_Type);
-    return (PyObject *)multiindex;
-}
-
-
-static void
-arraymultiindex_dealloc(PyArrayMultiIndex *multiindex)
-{
-    Py_XDECREF(multiindex->index);
-    PyArray_free(multiindex);
-}
-
-
 NPY_NO_EXPORT PyMappingMethods arrayattributeindexer_as_mapping = {
     NULL,                                                   /*mp_length*/
     (binaryfunc)arrayattributeindexer_subscript,            /*mp_subscript*/
@@ -4158,7 +4132,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayAttributeIndexer_Type = {
     sizeof(PyArrayAttributeIndexer),            /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
-    (destructor)arraymultiindex_dealloc,        /* tp_dealloc */
+    (destructor)arrayattributeindexer_dealloc,  /* tp_dealloc */
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
@@ -4211,7 +4185,44 @@ NPY_NO_EXPORT PyTypeObject PyArrayAttributeIndexer_Type = {
 
 
 NPY_NO_EXPORT PyObject *
-arraymultiindex_subscript(PyArrayAttributeIndexer *attr_indexer,
+PyArray_MultiIndexNew(PyObject *index, int indexing_method)
+{
+    PyArrayMultiIndex *multiindex;
+    /* create new AttrinbuteIndexer object */
+    multiindex = (PyArrayMultiIndex *)PyArray_malloc(sizeof(PyArrayMultiIndex));
+    if (multiindex == NULL) {
+        return NULL;
+    }
+    /* set all attributes of mapiter to zero */
+    Py_INCREF(index);
+    multiindex->index = index;
+    multiindex->indexing_method = indexing_method;
+    PyObject_Init((PyObject *)multiindex, &PyArrayMultiIndex_Type);
+    return (PyObject *)multiindex;
+}
+
+
+static void
+multiindex_dealloc(PyArrayMultiIndex *multiindex)
+{
+    Py_XDECREF(multiindex->index);
+    PyArray_free(multiindex);
+}
+
+
+NPY_NO_EXPORT Py_ssize_t
+multiindex_length(PyArrayObject *self)
+{
+    PyErr_SetString(PyExc_AttributeError,
+                    "the specialized MultiIndex object cannot be modified. "
+                    "It will get more functionality but right now can only "
+                    "be forwarded to numpy for indexing.");
+    return -1;
+}
+
+
+NPY_NO_EXPORT PyObject *
+multiindex_subscript(PyArrayAttributeIndexer *attr_indexer,
                                 PyObject *op)
 {
     PyErr_SetString(PyExc_AttributeError,
@@ -4223,8 +4234,8 @@ arraymultiindex_subscript(PyArrayAttributeIndexer *attr_indexer,
 
 
 NPY_NO_EXPORT PySequenceMethods multiindex_as_mapping = {
-    NULL,                                                   /*mp_length*/
-    (binaryfunc)arraymultiindex_subscript,                  /*mp_subscript*/
+    (lenfunc)multiindex_length,                        /*mp_length*/
+    (binaryfunc)multiindex_subscript,                  /*mp_subscript*/
     NULL,                                                   /*mp_ass_subscript*/
 };
 
@@ -4246,7 +4257,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIndex_Type = {
     sizeof(PyArrayMultiIndex),                  /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
-    (destructor)arrayattributeindexer_dealloc,  /* tp_dealloc */
+    (destructor)multiindex_dealloc,             /* tp_dealloc */
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
