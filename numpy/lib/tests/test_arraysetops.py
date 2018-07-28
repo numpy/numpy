@@ -59,8 +59,8 @@ class TestSetOps(object):
         ui1 = np.unravel_index(i1, a.shape)
         ui2 = np.unravel_index(i2, b.shape)
         ea = np.array([2, 6, 7, 8])
-        assert_array_equal(ea, a[ui1])
-        assert_array_equal(ea, b[ui2])
+        assert_array_equal(ea, a.vindex[ui1])
+        assert_array_equal(ea, b.vindex[ui2])
     
         # non1d, not assumed to be uniqueinputs
         a = np.array([[2, 4, 5, 6, 6], [4, 7, 8, 7, 2]])
@@ -69,8 +69,8 @@ class TestSetOps(object):
         ui1 = np.unravel_index(i1, a.shape)
         ui2 = np.unravel_index(i2, b.shape)
         ea = np.array([2, 7, 8])
-        assert_array_equal(ea, a[ui1])
-        assert_array_equal(ea, b[ui2])
+        assert_array_equal(ea, a.vindex[ui1])
+        assert_array_equal(ea, b.vindex[ui2])
         
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])

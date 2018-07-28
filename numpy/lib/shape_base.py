@@ -31,7 +31,7 @@ def _make_along_axis_idx(arr_shape, indices, axis):
     shape_ones = (1,) * indices.ndim
     dest_dims = list(range(axis)) + [None] + list(range(axis+1, indices.ndim))
 
-    # build a fancy index, consisting of orthogonal aranges, with the
+    # build a vector index, consisting of orthogonal aranges, with the
     # requested index inserted at the right location
     vector_index = []
     for dim, n in zip(dest_dims, arr_shape):
@@ -149,14 +149,15 @@ def take_along_axis(arr, indices, axis):
     """
     # normalize inputs
     if axis is None:
-        arr = arr.flat
         arr_shape = (len(arr),)  # flatiter has no .shape
         axis = 0
+        # TODO: Make along axis needed here for error checks probably?
+        return arr.flat[_make_along_axis_idx(arr_shape, indices, axis)]
     else:
         axis = normalize_axis_index(axis, arr.ndim)
         arr_shape = arr.shape
 
-    # use the fancy index
+    # use the vector index
     return arr.vindex[_make_along_axis_idx(arr_shape, indices, axis)]
 
 

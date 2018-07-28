@@ -4064,12 +4064,12 @@ arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
             attr_indexer->array, op, attr_indexer->indexing_method);
     }
 
-    /* TODO: This probably makes sense, but only if the test is fast */
+    /* TODO: This probably makes sense, but only if the test is fast 
     if (_check_method_is_base(attr_indexer->array, "__getitem__") &&
                 _check_method_is_base(attr_indexer->array, "__setitem__")) {
         return array_subscript(
             attr_indexer->array, op, attr_indexer->indexing_method);
-    }
+    } OR, it is wrong, at least on newer pythons? */
 
 
     multiindex = PyArray_MultiIndexNew(op, attr_indexer->indexing_method);
@@ -4093,12 +4093,12 @@ arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
             attr_indexer->array, op, vals, attr_indexer->indexing_method, 0);
     }
 
-    /* TODO: This probably makes sense, but only if the test is fast */
+    /* TODO: This probably makes sense, but only if the test is fast
     if (_check_method_is_base(attr_indexer->array, "__getitem__") &&
                 _check_method_is_base(attr_indexer->array, "__setitem__")) {
         return array_assign_subscript(
             attr_indexer->array, op, vals, attr_indexer->indexing_method, 0);
-    }
+    } OR, it is wrong, at least on newer pythons? */
 
 
     multiindex = PyArray_MultiIndexNew(op, attr_indexer->indexing_method);
