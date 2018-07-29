@@ -205,7 +205,12 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
  * @param  result    An empty buffer of PyObject* to write each index component
  *                   to. The references written are new.
  * @param  result_n  The length of the result buffer
- *
+ * @param allow_heuristic
+                     If not True, an error is always given when the
+ *                   sequence unpacking heuristic inherited from Numeric would
+ *                   be used. Otherwise a FutureWarning is given.
+ *                   The special indexing attributes use this for the more
+ *                   strict check.
  * @returns          The number of items in `result`, or -1 if an error occurred.
  *                   The entries in `result` at and beyond this index should be
  *                   assumed to contain garbage, even if they were initialized
@@ -213,7 +218,8 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
  *                   dispose of them.
  */
 NPY_NO_EXPORT npy_intp
-unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
+unpack_indices(PyObject *index, PyObject **result, npy_intp result_n,
+               int allow_heuristic)
 {
     npy_intp n, i;
     npy_bool commit_to_unpack;
@@ -313,6 +319,14 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
                     || PySlice_Check(tmp_obj)
                     || tmp_obj == Py_Ellipsis
                     || tmp_obj == Py_None) {
+
+                if (!allow_heuristic) {
+                    PyErr_SetString(PyExc_IndexError,
+                        "using a non-tuple sequence for multidimensional "
+                        "indexing is not allowed for the special indexing "
+                        "attributes and deprecated for normal indexing.");
+                    goto fail;
+                }
                 if (DEPRECATE_FUTUREWARNING(
                         "Using a non-tuple sequence for multidimensional "
                         "indexing is deprecated; use `arr[tuple(seq)]` "
@@ -395,7 +409,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
      */
     PyObject *raw_indices[NPY_MAXDIMS*2];
 
-    index_ndim = unpack_indices(index, raw_indices, NPY_MAXDIMS*2);
+    index_ndim = unpack_indices(index, raw_indices, NPY_MAXDIMS*2,
+                                indexing_method==PLAIN_INDEXING);
     if (index_ndim == -1) {
         return -1;
     }
