@@ -1622,12 +1622,6 @@ class TestQR(object):
             assert_(tau.dtype == np.double)
             assert_(h.shape == (n, m))
             assert_(tau.shape == (k,))
-            #
-            with suppress_warnings() as sup:
-                sup.filter(DeprecationWarning, "The 'economic' option is deprecated.")
-                h = np.linalg.qr(a, mode='economic')
-            assert_(h.dtype == np.double)
-            assert_(h.shape == (n, m))
 
     def test_mode_raw(self):
         # The factorization is not unique and varies between libraries,
