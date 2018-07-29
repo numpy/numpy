@@ -1694,7 +1694,8 @@ array_subscript(PyArrayObject *self, PyObject *op, int indexing_method)
     }
 
     /* return fields if op is a string index */
-    if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
+    if (indexing_method == PLAIN_INDEXING &&
+                    PyDataType_HASFIELDS(PyArray_DESCR(self))) {
         PyArrayObject *view;
         int ret = _get_field_view(self, op, &view, 0);
         if (ret == 0){
@@ -1988,7 +1989,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op,
     }
 
     /* field access */
-    if (PyDataType_HASFIELDS(PyArray_DESCR(self))){
+    if (indexing_method == PLAIN_INDEXING &&
+                    PyDataType_HASFIELDS(PyArray_DESCR(self))){
         PyArrayObject *view;
         int ret = _get_field_view(self, ind, &view, 1);
         if (ret == 0){
@@ -3934,16 +3936,6 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 }
 
 
-#undef HAS_INTEGER
-#undef HAS_NEWAXIS
-#undef HAS_SLICE
-#undef HAS_ELLIPSIS
-#undef HAS_FANCY
-#undef HAS_BOOL
-#undef HAS_SCALAR_ARRAY
-#undef HAS_0D_BOOL
-
-
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
@@ -4069,14 +4061,13 @@ PyArray_AttributeIndexerNew(PyArrayObject *array, int indexing_method)
 
 
 NPY_NO_EXPORT PyObject *
-arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
+arrayattributeindexer_subscript(PyArrayAttributeIndexer *self,
                                 PyObject *op)
 {
     PyObject *multiindex;
 
-    if (PyArray_CheckExact(attr_indexer->array)) {
-        return array_subscript(
-            attr_indexer->array, op, attr_indexer->indexing_method);
+    if (PyArray_CheckExact(self->array)) {
+        return array_subscript(self->array, op, self->indexing_method);
     }
 
     /* TODO: This probably makes sense, but only if the test is fast 
@@ -4087,25 +4078,25 @@ arrayattributeindexer_subscript(PyArrayAttributeIndexer *attr_indexer,
     } OR, it is wrong, at least on newer pythons? */
 
 
-    multiindex = PyArray_MultiIndexNew(op, attr_indexer->indexing_method);
+    multiindex = PyArray_MultiIndexNew(op, self->array, self->indexing_method);
     if (multiindex == NULL) {
         return NULL;
     }
 
-    return PyObject_GetItem((PyObject *)(attr_indexer->array), multiindex);
+    return PyObject_GetItem((PyObject *)self->array, multiindex);
 }
 
 
 
 NPY_NO_EXPORT int
-arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
+arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *self,
                                        PyObject *op, PyObject *vals)
 {
     PyObject *multiindex;
 
-    if (PyArray_CheckExact(attr_indexer->array)) {
-        return array_assign_subscript(
-            attr_indexer->array, op, vals, attr_indexer->indexing_method, 0);
+    if (PyArray_CheckExact(self->array)) {
+        return array_assign_subscript(self->array, op, vals,
+                                      self->indexing_method, 0);
     }
 
     /* TODO: This probably makes sense, but only if the test is fast
@@ -4116,13 +4107,12 @@ arrayattributeindexer_assign_subscript(PyArrayAttributeIndexer *attr_indexer,
     } OR, it is wrong, at least on newer pythons? */
 
 
-    multiindex = PyArray_MultiIndexNew(op, attr_indexer->indexing_method);
+    multiindex = PyArray_MultiIndexNew(op, self->array, self->indexing_method);
     if (multiindex == NULL) {
         return -1;
     }
 
-    return PyObject_SetItem((PyObject *)(attr_indexer->array),
-                            multiindex, vals);
+    return PyObject_SetItem((PyObject *)self->array, multiindex, vals);
 }
 
 
@@ -4200,7 +4190,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayAttributeIndexer_Type = {
 
 
 NPY_NO_EXPORT PyObject *
-PyArray_MultiIndexNew(PyObject *index, int indexing_method)
+PyArray_MultiIndexNew(PyObject *index, PyArrayObject *array, int indexing_method)
 {
     PyArrayMultiIndex *multiindex;
     /* create new AttrinbuteIndexer object */
@@ -4213,6 +4203,24 @@ PyArray_MultiIndexNew(PyObject *index, int indexing_method)
     multiindex->index = index;
     multiindex->indexing_method = indexing_method;
     PyObject_Init((PyObject *)multiindex, &PyArrayMultiIndex_Type);
+
+    /*
+     * For possible future code, anticipate that array can be NULL
+     */
+    if (array != NULL) {
+        multiindex->bound = 1;
+        multiindex->orig_ndim = PyArray_NDIM(array);
+        memcpy(multiindex->orig_shape, PyArray_DIMS(array),
+               multiindex->orig_ndim * sizeof(npy_intp));
+        multiindex->orig_dtype = PyArray_DESCR(array);
+        Py_INCREF(multiindex->orig_dtype);
+    }
+    else {
+        multiindex->orig_dtype = NULL;
+        multiindex->orig_ndim = 0;
+        multiindex->bound = 0;
+    }
+
     return (PyObject *)multiindex;
 }
 
@@ -4221,6 +4229,7 @@ static void
 multiindex_dealloc(PyArrayMultiIndex *multiindex)
 {
     Py_XDECREF(multiindex->index);
+    Py_XDECREF(multiindex->orig_dtype);
     PyArray_free(multiindex);
 }
 
@@ -4251,9 +4260,247 @@ multiindex_subscript(PyArrayAttributeIndexer *attr_indexer,
 NPY_NO_EXPORT PySequenceMethods multiindex_as_mapping = {
     (lenfunc)multiindex_length,                        /*mp_length*/
     (binaryfunc)multiindex_subscript,                  /*mp_subscript*/
-    NULL,                                                   /*mp_ass_subscript*/
+    NULL,                                              /*mp_ass_subscript*/
 };
 
+
+static PyObject *
+multiindex_prepared(PyArrayMultiIndex *self, PyObject *args, PyObject *kwds)
+{
+    /*
+     * Exposed as a method, this allows to get some basic information about
+     * an index (independend of the method).
+     * Preliminary checks that are guaranteed (I guess):
+     *   1. Number of indices
+     *   2. Boolean array shape.
+     *   3. Types of indices are correct.
+     *
+     * Errors are raised if these are incorrect. Also returns whether a copy
+     * has to be enforced.
+     * Shape information is needed to test the dimension of the index, the
+     * actual shape (size of individual dimension) is only used to check
+     * boolean arrays.
+     */
+    int i;
+    Py_ssize_t tuple_index;
+
+    int dummy_ndim;
+    PyObject *shape_obj = NULL;
+    npy_intp shape[NPY_MAXDIMS];
+    npy_intp *shape_ptr = NULL;
+    PyObject *dtype_obj = NULL;
+    PyArray_Descr *dtype = NULL;
+    char *convert_booleans_str = "not_single";
+    int allow_single_boolean;
+    static char *kwlist[] = {"shape", "dtype", "convert_booleans", NULL};
+
+    PyArrayObject *dummy_array;
+    npy_intp dummy_strides[NPY_MAXDIMS] = {0};  /* TODO: Is this right? */
+
+    int index_type, index_num, fancy_ndim, ndim;
+    npy_intp ellipis_dims = -1;
+    npy_index_info indices[NPY_MAXDIMS * 2 + 1];
+    char *index_type_str;
+    PyObject *new_index, *tmp;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOs:prepared", kwlist,
+                                     &shape_obj, &dtype_obj,
+                                     &convert_booleans_str)) {
+        return NULL;
+    }
+
+    if (strcmp(convert_booleans_str, "not_single") == 0) {
+        allow_single_boolean = 1;
+    }
+    else if (strcmp(convert_booleans_str,  "always") == 0) {
+        allow_single_boolean = 0;
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                "`convert_booleans` must be either 'not_single' or "
+                "'always'.");
+        return NULL;
+    }
+
+    if (shape_obj == NULL || shape_obj == Py_None) {
+        /* Use shape of intially bound array */
+        if (!self->bound) {
+            PyErr_SetString(PyExc_ValueError,
+                    "must pass in a shape if the indexing object is not "
+                    "created for a specific array.");
+            return NULL;
+        }
+        dummy_ndim = self->orig_ndim;
+        shape_ptr = self->orig_shape;
+    }
+    else {
+        dummy_ndim = PyArray_IntpFromSequence(shape_obj, shape, NPY_MAXDIMS);
+        if (dummy_ndim < 0) {
+            return NULL;
+        }
+        shape_ptr = shape;
+    }
+
+    /* Get the dtype (NewFromDescr will steal the reference) */
+    if (self->bound && (dtype_obj == NULL || dtype_obj == Py_None)) {
+        dtype = self->orig_dtype;
+        Py_INCREF(dtype);
+    }
+    else {
+        if (PyArray_DescrConverter(dtype_obj, &dtype) < 0) {
+            return NULL;
+        }
+    }
+
+    /*
+     * This should likely be refactored above, but for now create a dummy arr.
+     * While easy for prepare_index, it is a bit less so `get_field_view`,
+     * although that is unused when writing this, because plain indexing
+     * cannot be used to create this object.
+     */
+    dummy_array = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype,
+            dummy_ndim, shape_ptr, dummy_strides,
+            dummy_strides,  /* data will never be read */
+            0, NULL);
+
+    /* Check if we have a field access going on */
+    if (self->indexing_method == PLAIN_INDEXING &&
+                    PyDataType_HASFIELDS(PyArray_DESCR(dummy_array))) {
+        /* TODO: Untested, and cannot be reached at the moment */
+        PyArrayObject *view;
+        int ret = _get_field_view(dummy_array, self->index, &view, 1);
+        if (ret == 0){
+            Py_DECREF(dummy_array);
+            if (view == NULL) {
+                return NULL;
+            }
+            Py_DECREF(view);
+
+            return Py_BuildValue("{ss, sO}",
+                                 "type", "field-access",
+                                 "orig_index", self->index);
+        }
+    }
+    /* Normal multi-dimensional indexing */
+    index_type = prepare_index(dummy_array, self->index, indices, &index_num,
+                               &ndim, &fancy_ndim, allow_single_boolean,
+                               self->indexing_method);
+    Py_DECREF(dummy_array);
+    if (index_type < 0) {
+        return NULL;
+    }
+
+    if (index_type == HAS_BOOL) {
+        assert(index_num == 1);
+        new_index = indices[0].object;
+        Py_INCREF(new_index);
+    }
+    else {
+        new_index = PyTuple_New(index_num);
+        if (new_index == NULL) {
+            return NULL;
+        }
+        for (i=0; i < index_num; i++) {
+            if (indices[i].type & HAS_INTEGER) {
+                tmp = PyLong_FromSsize_t(indices[i].value);
+                if (tmp == NULL) {
+                    goto failed_packing_tuple;
+                }
+                PyTuple_SET_ITEM(new_index, i, tmp);
+                tuple_index++;
+            }
+            else if (indices[i].type & HAS_NEWAXIS) {
+                Py_INCREF(Py_None);
+                PyTuple_SET_ITEM(new_index, i, Py_None);
+                tuple_index++;
+            }
+            else if (indices[i].type & HAS_SLICE) {
+                Py_INCREF(indices[i].object);
+                PyTuple_SET_ITEM(new_index, i, indices[i].object);
+                tuple_index++;
+            }
+            else if (indices[i].type & HAS_ELLIPSIS) {
+                Py_INCREF(Py_Ellipsis);
+                PyTuple_SET_ITEM(new_index, i, Py_Ellipsis);
+                ellipis_dims = indices[i].value;
+            }
+            else if (indices[i].type & HAS_BOOL) {
+                /* if this happens should be the only element really */
+                Py_INCREF(indices[i].object);
+                PyTuple_SET_ITEM(new_index, i, indices[i].object);
+                tuple_index++;
+            }
+            else if (indices[i].type & HAS_FANCY) {
+                Py_INCREF(indices[i].object);
+                PyTuple_SET_ITEM(new_index, i, indices[i].object);
+                tuple_index++;
+            }
+            else if (indices[i].type & HAS_0D_BOOL) {
+                /* if this happens should be the only element really */
+                tmp = indices[i].value ? Py_True : Py_False;
+                Py_INCREF(tmp);
+                PyTuple_SET_ITEM(new_index, i, tmp);
+                tuple_index++;
+            }
+            else {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "internal numpy error, please contact the "
+                                "numpy developers.");
+                goto failed_packing_tuple;
+            }
+        }
+    }
+    /* Cleanup index */
+    for (i=0; i < index_num; i++) {
+        Py_XDECREF(indices[i].object);
+    }
+
+    if (self->indexing_method == PLAIN_INDEXING) {
+        index_type_str = "plain";
+    }
+    else if (self->indexing_method == VECTOR_INDEXING) {
+        index_type_str = "vindex";
+    }
+    else if (self->indexing_method == OUTER_INDEXING) {
+        index_type_str = "oindex";
+    }
+    else {
+        index_type_str = "lindex";
+    }
+
+    return Py_BuildValue(
+                "{ss, ss, sO, sO, sN, sO, sN, si}",
+                "type", "index",
+                "method", index_type_str,
+                "orig_index", self->index,
+                "view", ((index_type & (HAS_FANCY|HAS_BOOL|HAS_SCALAR_ARRAY)) ||
+                                            (index_type == HAS_INTEGER)) ?
+                                Py_False : Py_True,
+                "simplified_index", new_index,
+                "scalar", (index_type == HAS_INTEGER) ? Py_True : Py_False,
+                "ellipsis_dims", (ellipis_dims < 0) ?
+                                       (Py_INCREF(Py_None), Py_None) :
+                                       PyLong_FromSsize_t(ellipis_dims),
+                "result_ndim", ndim);
+
+  failed_packing_tuple:
+    for (i=0; i < index_num; i++) {
+        Py_XDECREF(indices[i].object);
+    }
+    Py_DECREF(new_index);
+    return NULL;
+}
+
+
+NPY_NO_EXPORT PyMethodDef multiindex_methods[] = {
+
+    /* for subtypes */
+    {"prepared",
+        (PyCFunction)multiindex_prepared,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL, NULL, 0, NULL}           /* sentinel */
+};
 
 /*
  * MultiIndex object. This object holds just a tuple to a python index
@@ -4299,7 +4546,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIndex_Type = {
     0,                                          /* tp_weaklistoffset */
     0,                                          /* tp_iter */
     0,                                          /* tp_iternext */
-    0,                                          /* tp_methods */
+    multiindex_methods,                         /* tp_methods */
     0,                                          /* tp_members */
     0,                                          /* tp_getset */
     0,                                          /* tp_base */
@@ -4323,5 +4570,14 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIndex_Type = {
 #endif
 };
 
+
+#undef HAS_INTEGER
+#undef HAS_NEWAXIS
+#undef HAS_SLICE
+#undef HAS_ELLIPSIS
+#undef HAS_FANCY
+#undef HAS_BOOL
+#undef HAS_SCALAR_ARRAY
+#undef HAS_0D_BOOL
 
 

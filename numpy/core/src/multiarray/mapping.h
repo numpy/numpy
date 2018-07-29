@@ -104,20 +104,26 @@ PyArray_AttributeIndexerNew(PyArrayObject *array, int indexing_method);
 
 
 /*
- * Prototypes for attribute indexing helper (arr.oindex, etc.)
+ * Prototypes for multi index objects passed to subclasses by arr.oindex, etc.
  */
 typedef struct {
         PyObject_HEAD
         /*
          * Attribute information portion.
          */
-        PyObject *index;      /* The indexing object */
-        int indexing_method;  /* See mapping.h */
+        PyObject *index;            /* The indexing object */
+        int indexing_method;        /* See mapping.h */
+        /* If bound is 1, the following are information about the array */
+        int bound;
+        npy_intp orig_shape[NPY_MAXDIMS];
+        int orig_ndim;
+        PyArray_Descr *orig_dtype;
 } PyArrayMultiIndex;
 
 
 NPY_NO_EXPORT PyObject *
-PyArray_MultiIndexNew(PyObject *index, int indexing_method);
+PyArray_MultiIndexNew(PyObject *index, PyArrayObject *array,
+                      int indexing_method);
 
 
 NPY_NO_EXPORT PyObject *
