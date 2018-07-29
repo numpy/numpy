@@ -859,34 +859,32 @@ def qr(a, mode='reduced'):
     a, wrap = _makearray(a)
     _assertRank2(a)
     m, n = a.shape
-    is_non_empty = not _isEmpty2d(a)
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
     a = _to_native_byte_order(a)
     mn = min(m, n)
     tau = zeros((mn,), t)
 
-    if is_non_empty:
-        if isComplexType(t):
-            lapack_routine = lapack_lite.zgeqrf
-            routine_name = 'zgeqrf'
-        else:
-            lapack_routine = lapack_lite.dgeqrf
-            routine_name = 'dgeqrf'
+    if isComplexType(t):
+        lapack_routine = lapack_lite.zgeqrf
+        routine_name = 'zgeqrf'
+    else:
+        lapack_routine = lapack_lite.dgeqrf
+        routine_name = 'dgeqrf'
 
-        # calculate optimal size of work data 'work'
-        lwork = 1
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, a, m, tau, work, -1, 0)
-        if results['info'] != 0:
-            raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    # calculate optimal size of work data 'work'
+    lwork = 1
+    work = zeros((lwork,), t)
+    results = lapack_routine(m, n, a, max(1, m), tau, work, -1, 0)
+    if results['info'] != 0:
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
-        # do qr decomposition
-        lwork = int(abs(work[0]))
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, n, a, m, tau, work, lwork, 0)
-        if results['info'] != 0:
-            raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    # do qr decomposition
+    lwork = max(1, int(abs(work[0])))
+    work = zeros((lwork,), t)
+    results = lapack_routine(m, n, a, max(1, m), tau, work, lwork, 0)
+    if results['info'] != 0:
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # handle modes that don't return q
     if mode == 'r':
@@ -904,33 +902,32 @@ def qr(a, mode='reduced'):
     #  generate q from a
     if mode == 'complete' and m > n:
         mc = m
-        q = empty((m, m), t) if is_non_empty else eye(m, dtype=t)
+        q = empty((m, m), t)
     else:
         mc = mn
-        q = empty((n, m), t) if is_non_empty else eye(n, m, dtype=t)
+        q = empty((n, m), t)
     q[:n] = a
 
-    if is_non_empty:
-        if isComplexType(t):
-            lapack_routine = lapack_lite.zungqr
-            routine_name = 'zungqr'
-        else:
-            lapack_routine = lapack_lite.dorgqr
-            routine_name = 'dorgqr'
+    if isComplexType(t):
+        lapack_routine = lapack_lite.zungqr
+        routine_name = 'zungqr'
+    else:
+        lapack_routine = lapack_lite.dorgqr
+        routine_name = 'dorgqr'
 
-        # determine optimal lwork
-        lwork = 1
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, mc, mn, q, m, tau, work, -1, 0)
-        if results['info'] != 0:
-            raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    # determine optimal lwork
+    lwork = 1
+    work = zeros((lwork,), t)
+    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, -1, 0)
+    if results['info'] != 0:
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
-        # compute q
-        lwork = int(abs(work[0]))
-        work = zeros((lwork,), t)
-        results = lapack_routine(m, mc, mn, q, m, tau, work, lwork, 0)
-        if results['info'] != 0:
-            raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    # compute q
+    lwork = max(1, int(abs(work[0])))
+    work = zeros((lwork,), t)
+    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, lwork, 0)
+    if results['info'] != 0:
+        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     q = _fastCopyAndTranspose(result_t, q[:mc])
     r = _fastCopyAndTranspose(result_t, a[:, :mc])
