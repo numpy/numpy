@@ -235,14 +235,16 @@ def put_along_axis(arr, indices, values, axis):
     """
     # normalize inputs
     if axis is None:
-        arr = arr.flat
         axis = 0
         arr_shape = (len(arr),)  # flatiter has no .shape
+        # Use the vector index (it is just one in this case)
+        arr.flat[_make_along_axis_idx(arr_shape, indices, axis)] = values
+        return
     else:
         axis = normalize_axis_index(axis, arr.ndim)
         arr_shape = arr.shape
 
-    # use the fancy index
+    # use the vector index
     arr.vindex[_make_along_axis_idx(arr_shape, indices, axis)] = values
 
 

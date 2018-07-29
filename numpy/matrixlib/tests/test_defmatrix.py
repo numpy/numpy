@@ -366,7 +366,7 @@ class TestNewScalarIndexing(object):
         x = a[[1, 0]]
         assert_(isinstance(x, matrix))
         assert_equal(x, matrix([[3,  4], [1, 2]]))
-        x = a[[[1], [0]], [[1, 0], [0, 1]]]
+        x = a.vindex[[[1], [0]], [[1, 0], [0, 1]]]
         assert_(isinstance(x, matrix))
         assert_equal(x, matrix([[4,  3], [1,  2]]))
 

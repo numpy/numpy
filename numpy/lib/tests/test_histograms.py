@@ -569,7 +569,7 @@ class TestHistogramdd(object):
         assert_array_equal(H, answer)
 
         Z = np.zeros((5, 5, 5))
-        Z[list(range(5)), list(range(5)), list(range(5))] = 1.
+        Z.vindex[list(range(5)), list(range(5)), list(range(5))] = 1.
         H, edges = histogramdd([np.arange(5), np.arange(5), np.arange(5)], 5)
         assert_array_equal(H, Z)
 

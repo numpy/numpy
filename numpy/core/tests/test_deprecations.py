@@ -14,7 +14,7 @@ import pytest
 import numpy as np
 from numpy.testing import (
     assert_raises, assert_warns, assert_no_warnings, assert_array_equal,
-    assert_
+    assert_, suppress_warnings
     )
 
 try:
@@ -137,7 +137,8 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
 class TestNonTupleNDIndexDeprecation(object):
     def test_basic(self):
         a = np.zeros((5, 5))
-        with warnings.catch_warnings():
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, "more than two array indices found")
             warnings.filterwarnings('always')
             assert_warns(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
             assert_warns(FutureWarning, a.__getitem__, [slice(None)])
