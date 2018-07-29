@@ -1589,27 +1589,12 @@ class TestQR(object):
             a_type = type(a)
             a_dtype = a.dtype
 
-            q, r = np.linalg.qr(a, mode='reduced')
-            assert_equal(q.dtype, a_dtype)
-            assert_equal(r.dtype, a_dtype)
-            assert_(isinstance(q, a_type))
-            assert_(isinstance(r, a_type))
-            assert_equal(q.shape, (m, k))
-            assert_equal(r.shape, (k, n))
+            self.check_qr(a)
 
             r = np.linalg.qr(a, mode='r')
             assert_equal(r.dtype, a_dtype)
             assert_(isinstance(r, a_type))
             assert_equal(r.shape, (k, n))
-
-            q, r = np.linalg.qr(a, mode='complete')
-            assert_equal(q.dtype, a_dtype)
-            assert_equal(r.dtype, a_dtype)
-            assert_(isinstance(q, a_type))
-            assert_(isinstance(r, a_type))
-            assert_equal(q.shape, (m, m))
-            assert_equal(r.shape, (m, n))
-            assert_almost_equal(q, np.eye(m))
 
             h, tau = np.linalg.qr(a, mode='raw')
             assert_equal(h.dtype, np.double)
