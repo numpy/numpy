@@ -4440,16 +4440,16 @@ multiindex_prepared(PyArrayMultiIndex *self, PyObject *args, PyObject *kwds)
                 PyTuple_SET_ITEM(new_index, i, indices[i].object);
                 tuple_index++;
             }
-            else if (indices[i].type & HAS_FANCY) {
-                Py_INCREF(indices[i].object);
-                PyTuple_SET_ITEM(new_index, i, indices[i].object);
-                tuple_index++;
-            }
             else if (indices[i].type & HAS_0D_BOOL) {
                 /* if this happens should be the only element really */
                 tmp = indices[i].value ? Py_True : Py_False;
                 Py_INCREF(tmp);
                 PyTuple_SET_ITEM(new_index, i, tmp);
+                tuple_index++;
+            }
+            else if (indices[i].type & HAS_FANCY) {
+                Py_INCREF(indices[i].object);
+                PyTuple_SET_ITEM(new_index, i, indices[i].object);
                 tuple_index++;
             }
             else {
