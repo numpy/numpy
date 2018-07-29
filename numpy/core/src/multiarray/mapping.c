@@ -604,7 +604,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
                     /* keep track anyway, just to be complete */
                     used_ndim = PyArray_NDIM(self);
-                    fancy_ndim = PyArray_NDIM(self);
+                    fancy_ndim = 1;
                     curr_idx += 1;
                     break;
                 }
@@ -638,8 +638,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 }
 
                 used_ndim += 0;
-                if (fancy_ndim < 1) {
-                    fancy_ndim = 1;
+                if (indexing_method == OUTER_INDEXING) {
+                    fancy_ndim += 1;
+                }
+                else {
+                    fancy_ndim = (fancy_ndim < 1) ? 1 : fancy_ndim;
                 }
                 curr_idx += 1;
                 continue;
@@ -677,8 +680,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
             }
 
             /* All added indices have 1 dimension */
-            if (fancy_ndim < 1) {
-                fancy_ndim = 1;
+            if (indexing_method == OUTER_INDEXING) {
+                fancy_ndim += 1;
+            }
+            else {
+                fancy_ndim = (fancy_ndim < 1) ? 1 : fancy_ndim;
             }
             continue;
         }
@@ -717,8 +723,12 @@ prepare_index(PyArrayObject *self, PyObject *index,
             indices[curr_idx].object = (PyObject *)arr;
 
             used_ndim += 1;
-            if (fancy_ndim < PyArray_NDIM(arr)) {
-                fancy_ndim = PyArray_NDIM(arr);
+            if (indexing_method == OUTER_INDEXING) {
+                fancy_ndim += PyArray_NDIM(arr);
+            }
+            else {
+                fancy_ndim = (fancy_ndim < PyArray_NDIM(arr)) ?
+                                        PyArray_NDIM(arr) : fancy_ndim;
             }
             curr_idx += 1;
             continue;
@@ -2901,13 +2911,10 @@ int setup_outer_index(npy_index_info *indices, int num,
                       int *ndim, int *fancy_ndim) {
     int i, j, arr_ndim;
     int prev_indx = -1;
+    int fancy_ndim_seen = 0;
     PyArray_Dims permute;
     npy_intp d[NPY_MAXDIMS];
     PyArrayObject *arr;
-    
-    /* remove the old fancy ndim, since they are wrong here */
-    *ndim -= *fancy_ndim;
-    *fancy_ndim = 0;
 
     permute.ptr = d;
     permute.len = 0;
@@ -2915,8 +2922,9 @@ int setup_outer_index(npy_index_info *indices, int num,
     for (i=num-1; i >= 0; i--) {
         /* We have to expand even 0-d booleans here, so use &: */
         if (indices[i].type & HAS_FANCY) {
-            if (*fancy_ndim == 0) {
-                *fancy_ndim += PyArray_NDIM((PyArrayObject *)indices[i].object);
+            if (fancy_ndim_seen == 0) {
+                fancy_ndim_seen +=
+                        PyArray_NDIM((PyArrayObject *)indices[i].object);
                 prev_indx = indices[i].orig_index;
                 continue;
             }
@@ -2930,17 +2938,17 @@ int setup_outer_index(npy_index_info *indices, int num,
                  * Expand the output further, unless it is boolean and was
                  * already expanded.
                  */
-                *fancy_ndim += arr_ndim;  /* should be always 1 */
+                fancy_ndim_seen += arr_ndim;  /* should be always 1 */
                 prev_indx = indices[i].orig_index;
             }
             for (j = 0; j < PyArray_NDIM(arr); j++) {
                 permute.ptr[j] = PyArray_DIMS(arr)[j];
             }
-            for (j = arr_ndim; j < *fancy_ndim; j++) {
+            for (j = arr_ndim; j < fancy_ndim_seen; j++) {
                 permute.ptr[j] = 1;
             }
             
-            permute.len = *fancy_ndim;
+            permute.len = fancy_ndim_seen;
             indices[i].object = (PyObject *)
                 PyArray_Newshape(arr, &permute, NPY_ANYORDER);
             Py_DECREF(arr);
@@ -2949,8 +2957,7 @@ int setup_outer_index(npy_index_info *indices, int num,
             }
         }
     }
-    
-    *ndim += *fancy_ndim;
+
     if (*ndim >= NPY_MAXDIMS) {
         PyErr_Format(PyExc_IndexError,
                  "number of dimensions must be within [0, %d], "
@@ -2964,12 +2971,14 @@ int setup_outer_index(npy_index_info *indices, int num,
 
 int setup_vector_index(npy_index_info *indices, int num,
                       int *ndim, int *fancy_ndim) {
+    /* TODO: Shoudl not really have to do anything! */
     int i, j, arr_ndim, boolean_ndim, total_boolean_ndim, expand_ndim;
     int prev_indx = -1;
     PyArray_Dims permute;
     npy_intp d[NPY_MAXDIMS];
     PyArrayObject *arr;
-    
+
+    /* TODO: Remove this part completely, it is only true if bools are allowed in vindex! */
     /* remove the old fancy ndim, since they are wrong here */
     *ndim -= *fancy_ndim;
     *fancy_ndim = 0;
