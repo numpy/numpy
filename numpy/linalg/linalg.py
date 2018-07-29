@@ -880,7 +880,7 @@ def qr(a, mode='reduced'):
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # do qr decomposition
-    lwork = max(1, int(abs(work[0])))
+    lwork = max(1, n, int(abs(work[0])))
     work = zeros((lwork,), t)
     results = lapack_routine(m, n, a, max(1, m), tau, work, lwork, 0)
     if results['info'] != 0:
@@ -923,7 +923,7 @@ def qr(a, mode='reduced'):
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # compute q
-    lwork = max(1, int(abs(work[0])))
+    lwork = max(1, n, int(abs(work[0])))
     work = zeros((lwork,), t)
     results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, lwork, 0)
     if results['info'] != 0:
