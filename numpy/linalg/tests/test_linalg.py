@@ -1583,45 +1583,39 @@ class TestQR(object):
         assert_almost_equal(r2, r1)
 
     def test_qr_empty(self):
-        for m, n in [(3, 0), (0, 3)]:
+        for m, n in [(0, 0), (3, 0), (0, 3)]:
             k = min(m, n)
             a = np.empty((m, n))
             a_type = type(a)
             a_dtype = a.dtype
-            #
+
             q, r = np.linalg.qr(a, mode='reduced')
-            assert_(q.dtype == a_dtype)
-            assert_(r.dtype == a_dtype)
+            assert_equal(q.dtype, a_dtype)
+            assert_equal(r.dtype, a_dtype)
             assert_(isinstance(q, a_type))
             assert_(isinstance(r, a_type))
-            assert_(q.shape == (m, k))
-            assert_(r.shape == (k, n))
-            assert_almost_equal(np.dot(q, r), a)
-            assert_almost_equal(np.dot(q.T.conj(), q), np.eye(k))
-            assert_almost_equal(np.triu(r), r)
-            #
+            assert_equal(q.shape, (m, k))
+            assert_equal(r.shape, (k, n))
+
             r = np.linalg.qr(a, mode='r')
-            assert_(r.dtype == a_dtype)
+            assert_equal(r.dtype, a_dtype)
             assert_(isinstance(r, a_type))
-            assert_(r.shape == (k, n))
-            assert_almost_equal(np.triu(r), r)
-            #
+            assert_equal(r.shape, (k, n))
+
             q, r = np.linalg.qr(a, mode='complete')
-            assert_(q.dtype == a_dtype)
-            assert_(r.dtype == a_dtype)
+            assert_equal(q.dtype, a_dtype)
+            assert_equal(r.dtype, a_dtype)
             assert_(isinstance(q, a_type))
             assert_(isinstance(r, a_type))
-            assert_(q.shape == (m, m))
-            assert_(r.shape == (m, n))
+            assert_equal(q.shape, (m, m))
+            assert_equal(r.shape, (m, n))
             assert_almost_equal(q, np.eye(m))
-            assert_almost_equal(np.dot(q, r), a)
-            assert_almost_equal(np.triu(r), r)
-            #
+
             h, tau = np.linalg.qr(a, mode='raw')
-            assert_(h.dtype == np.double)
-            assert_(tau.dtype == np.double)
-            assert_(h.shape == (n, m))
-            assert_(tau.shape == (k,))
+            assert_equal(h.dtype, np.double)
+            assert_equal(tau.dtype, np.double)
+            assert_equal(h.shape, (n, m))
+            assert_equal(tau.shape, (k,))
 
     def test_mode_raw(self):
         # The factorization is not unique and varies between libraries,
