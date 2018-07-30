@@ -70,8 +70,18 @@ def process_pyx(fromfile, tofile):
     else:
         # check the version, and invoke through python
         from distutils.version import LooseVersion
-        if LooseVersion(cython_version) < LooseVersion('0.19'):
-            raise Exception('Building %s requires Cython >= 0.19' % VENDOR)
+
+        # requiring the newest version on all pythons doesn't work, since
+        # we're relying on the version of the distribution cython. Add new
+        # versions as they become required for new python versions.
+        if sys.version_info[:2] < (3, 7):
+            required_version = LooseVersion('0.19')
+        else:
+            required_version = LooseVersion('0.28')
+
+        if LooseVersion(cython_version) < required_version:
+            raise RuntimeError('Building {} requires Cython >= {}'.format(
+                VENDOR, required_version))
         subprocess.check_call(
             [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
 
