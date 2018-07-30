@@ -43,7 +43,7 @@ from numpy.lib.function_base import angle
 from numpy.compat import (
     getargspec, formatargspec, long, basestring, unicode, bytes
     )
-from numpy import expand_dims as n_expand_dims
+from numpy import expand_dims
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 
@@ -6793,56 +6793,6 @@ def diag(v, k=0):
     if getmask(v) is not nomask:
         output._mask = np.diag(v._mask, k)
     return output
-
-
-def expand_dims(x, axis):
-    """
-    Expand the shape of an array.
-
-    Expands the shape of the array by including a new axis before the one
-    specified by the `axis` parameter. This function behaves the same as
-    `numpy.expand_dims` but preserves masked elements.
-
-    See Also
-    --------
-    numpy.expand_dims : Equivalent function in top-level NumPy module.
-
-    Examples
-    --------
-    >>> import numpy.ma as ma
-    >>> x = ma.array([1, 2, 4])
-    >>> x[1] = ma.masked
-    >>> x
-    masked_array(data = [1 -- 4],
-                 mask = [False  True False],
-           fill_value = 999999)
-    >>> np.expand_dims(x, axis=0)
-    array([[1, 2, 4]])
-    >>> ma.expand_dims(x, axis=0)
-    masked_array(data =
-     [[1 -- 4]],
-                 mask =
-     [[False  True False]],
-           fill_value = 999999)
-
-    The same result can be achieved using slicing syntax with `np.newaxis`.
-
-    >>> x[np.newaxis, :]
-    masked_array(data =
-     [[1 -- 4]],
-                 mask =
-     [[False  True False]],
-           fill_value = 999999)
-
-    """
-    result = n_expand_dims(x, axis)
-    if isinstance(x, MaskedArray):
-        new_shape = result.shape
-        result = x.view()
-        result.shape = new_shape
-        if result._mask is not nomask:
-            result._mask.shape = new_shape
-    return result
 
 
 def left_shift(a, n):
