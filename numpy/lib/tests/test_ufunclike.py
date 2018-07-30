@@ -22,7 +22,7 @@ class TestUfunclike(object):
         assert_equal(out, tgt)
 
         a = a.astype(np.complex)
-        with assert_raises(ValueError):
+        with assert_raises(TypeError):
             ufl.isposinf(a)
 
     def test_isneginf(self):
@@ -37,7 +37,7 @@ class TestUfunclike(object):
         assert_equal(out, tgt)
 
         a = a.astype(np.complex)
-        with assert_raises(ValueError):
+        with assert_raises(TypeError):
             ufl.isneginf(a)
 
     def test_fix(self):
