@@ -141,8 +141,8 @@ def isposinf(x, out=None):
     """
     x = nx.asanyarray(x)
     if nx.issubdtype(x.dtype, nx.complexfloating):
-        raise ValueError('This operation is not supported for complex values'
-                         'because it would be ambiguous.')
+        raise TypeError('This operation is not supported for complex values '
+                        'because it would be ambiguous.')
     return nx.logical_and(nx.isinf(x), ~nx.signbit(x), out)
 
 
@@ -207,6 +207,6 @@ def isneginf(x, out=None):
     """
     x = nx.asanyarray(x)
     if nx.issubdtype(x.dtype, nx.complexfloating):
-        raise ValueError('This operation is not supported for complex values'
-                         'because it would be ambiguous.')
+        raise TypeError('This operation is not supported for complex values '
+                        'because it would be ambiguous.')
     return nx.logical_and(nx.isinf(x), nx.signbit(x), out)
