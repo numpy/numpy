@@ -4798,6 +4798,15 @@ class TestRecord(object):
             assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
             assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
 
+            # A single name string provided to fromarrays() is also allowed to be unicode:
+            x = np.core.records.fromarrays([[0], [0]], names=u'a,b', formats=u'i4,i4')
+
+        def test_unicode_order(self):
+            # Test that we can sort with order as a unicode field name:
+            name = u'b'
+            x = np.zeros(1, dtype=[(name, int)])
+            x.sort(order=name)
+
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
         a = np.zeros((1,), dtype=[('f1', 'i4'),
