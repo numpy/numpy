@@ -181,6 +181,11 @@ else:
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
+    # Filter out Cython harmless warnings
+    warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+    warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+    warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
+
     # oldnumeric and numarray were removed in 1.9. In case some packages import
     # but do not use them, we define them here for backward compatibility.
     oldnumeric = 'removed'
