@@ -1340,7 +1340,7 @@ def angle(z, deg=False):
 
     """
     z = asarray(z)
-    if (issubclass(z.dtype.type, _nx.complexfloating)):
+    if issubclass(z.dtype.type, _nx.complexfloating):
         zimag = z.imag
         zreal = z.real
     else:
