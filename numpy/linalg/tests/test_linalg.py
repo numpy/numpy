@@ -1582,25 +1582,28 @@ class TestQR(object):
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-    def test_qr_empty(self):
-        for m, n in [(0, 0), (3, 0), (0, 3)]:
-            k = min(m, n)
-            a = np.empty((m, n))
-            a_type = type(a)
-            a_dtype = a.dtype
 
-            self.check_qr(a)
+    @pytest.mark.parametrize(["m", "n"], [
+        (0, 4, 1),
+        (0, 4, 2),
+        (4, 0, 1),
+        (4, 0, 2),
+        (4, 2, 0),
+        (0, 0, 0)
+    ])
+    def test_qr_empty(self, m, n):
+        k = min(m, n)
+        a = np.empty((m, n))
+        a_type = type(a)
+        a_dtype = a.dtype
 
-            r = np.linalg.qr(a, mode='r')
-            assert_equal(r.dtype, a_dtype)
-            assert_(isinstance(r, a_type))
-            assert_equal(r.shape, (k, n))
+        self.check_qr(a)
 
-            h, tau = np.linalg.qr(a, mode='raw')
-            assert_equal(h.dtype, np.double)
-            assert_equal(tau.dtype, np.double)
-            assert_equal(h.shape, (n, m))
-            assert_equal(tau.shape, (k,))
+        h, tau = np.linalg.qr(a, mode='raw')
+        assert_equal(h.dtype, np.double)
+        assert_equal(tau.dtype, np.double)
+        assert_equal(h.shape, (n, m))
+        assert_equal(tau.shape, (k,))
 
     def test_mode_raw(self):
         # The factorization is not unique and varies between libraries,
