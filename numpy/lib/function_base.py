@@ -1309,7 +1309,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     return interp_func(x, xp, fp, left, right)
 
 
-def angle(z, deg=0):
+def angle(z, deg=False):
     """
     Return the angle of the complex argument.
 
@@ -1325,6 +1325,9 @@ def angle(z, deg=0):
     angle : ndarray or scalar
         The counterclockwise angle from the positive real axis on
         the complex plane, with dtype as numpy.float64.
+        
+        ..versionchanged:: 1.16.0
+            This function works on subclasses of ndarray like `ma.array`.
 
     See Also
     --------
@@ -1339,18 +1342,18 @@ def angle(z, deg=0):
     45.0
 
     """
-    if deg:
-        fact = 180/pi
-    else:
-        fact = 1.0
-    z = asarray(z)
-    if (issubclass(z.dtype.type, _nx.complexfloating)):
+    z = asanyarray(z)
+    if issubclass(z.dtype.type, _nx.complexfloating):
         zimag = z.imag
         zreal = z.real
     else:
         zimag = 0
         zreal = z
-    return arctan2(zimag, zreal) * fact
+
+    a = arctan2(zimag, zreal)
+    if deg:
+        a *= 180/pi
+    return a
 
 
 def unwrap(p, discont=pi, axis=-1):
