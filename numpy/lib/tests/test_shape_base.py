@@ -293,6 +293,15 @@ class TestExpandDims(object):
             assert_warns(DeprecationWarning, expand_dims, a, -6)
             assert_warns(DeprecationWarning, expand_dims, a, 5)
 
+    def test_subclasses(self):
+        a = np.arange(10).reshape((2, 5))
+        a = np.ma.array(a, mask=a%3 == 0)
+
+        expanded = np.expand_dims(a, axis=1)
+        assert_(isinstance(expanded, np.ma.MaskedArray))
+        assert_equal(expanded.shape, (2, 1, 5))
+        assert_equal(expanded.mask.shape, (2, 1, 5))
+
 
 class TestArraySplit(object):
     def test_integer_0_split(self):
