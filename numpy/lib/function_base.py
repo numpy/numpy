@@ -1309,7 +1309,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     return interp_func(x, xp, fp, left, right)
 
 
-def angle(z, deg=0):
+def angle(z, deg=False):
     """
     Return the angle of the complex argument.
 
