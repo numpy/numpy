@@ -321,6 +321,15 @@ def linkcode_resolve(domain, info):
         except Exception:
             return None
 
+    # strip decorators, which would resolve to the source of the decorator
+    # possibly an upstream bug in getsourcefile, bpo-1764286
+    try:
+        unwrap = inspect.unwrap
+    except AttributeError:
+        pass
+    else:
+        obj = unwrap(obj)
+
     try:
         fn = inspect.getsourcefile(obj)
     except Exception:
