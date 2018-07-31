@@ -48,7 +48,7 @@ distribution. This has been fixed so that e.g.
 ``np.random.choice([], 0) == np.array([], dtype=float64)``.
 
 ``linalg.qr`` now works with empty matrices
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Previously, a ``LinAlgError`` would be raised when empty matrix
 (with zero rows and/or columns) is passed in. This has been fixed
 so that outputs of appropriate shapes are returned for the various modes.
