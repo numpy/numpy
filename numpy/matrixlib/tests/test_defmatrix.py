@@ -466,3 +466,11 @@ class TestShape(object):
     def test_matrix_memory_sharing(self):
         assert_(np.may_share_memory(self.m, self.m.ravel()))
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
+
+    def test_expand_dims_matrix(self):
+        # matrices are always 2d - so expand_dims only makes sense when the
+        # type is changed away from matrix.
+        a = np.arange(10).reshape((2, 5)).view(np.matrix)
+        expanded = np.expand_dims(a, axis=1)
+        assert_equal(expanded.ndim, 3)
+        assert_(not isinstance(expanded, np.matrix))

@@ -536,7 +536,11 @@ def expand_dims(a, axis):
     True
 
     """
-    a = asarray(a)
+    if isinstance(a, matrix):
+        a = asarray(a)
+    else:
+        a = asanyarray(a)
+
     shape = a.shape
     if axis > a.ndim or axis < -a.ndim - 1:
         # 2017-05-17, 1.13.0
