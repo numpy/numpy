@@ -49,9 +49,9 @@ distribution. This has been fixed so that e.g.
 
 ``linalg.qr`` now works with empty matrices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Previously, a ``LinAlgError`` would be raised when empty matrix ("flat"
-or "skinny") is passed in. This has been fixed so that outputs of
-appropriate shapes are returned for the various modes.
+Previously, a ``LinAlgError`` would be raised when empty matrix
+(with zero rows and/or columns) is passed in. This has been fixed
+so that outputs of appropriate shapes are returned for the various modes.
 
 ARM support updated
 -------------------
