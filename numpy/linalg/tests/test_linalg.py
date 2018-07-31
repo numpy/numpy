@@ -1582,9 +1582,25 @@ class TestQR(object):
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-    def test_qr_empty(self):
-        a = np.zeros((0, 2))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
+
+    @pytest.mark.parametrize(["m", "n"], [
+        (3, 0),
+        (0, 3),
+        (0, 0)
+    ])
+    def test_qr_empty(self, m, n):
+        k = min(m, n)
+        a = np.empty((m, n))
+        a_type = type(a)
+        a_dtype = a.dtype
+
+        self.check_qr(a)
+
+        h, tau = np.linalg.qr(a, mode='raw')
+        assert_equal(h.dtype, np.double)
+        assert_equal(tau.dtype, np.double)
+        assert_equal(h.shape, (n, m))
+        assert_equal(tau.shape, (k,))
 
     def test_mode_raw(self):
         # The factorization is not unique and varies between libraries,
@@ -1624,15 +1640,6 @@ class TestQR(object):
             self.check_qr(m1)
             self.check_qr(m2)
             self.check_qr(m2.T)
-
-    def test_0_size(self):
-        # There may be good ways to do (some of this) reasonably:
-        a = np.zeros((0, 0))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
-        a = np.zeros((0, 1))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
-        a = np.zeros((1, 0))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
 
 
 class TestCholesky(object):
