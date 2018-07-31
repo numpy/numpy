@@ -1339,10 +1339,6 @@ def angle(z, deg=0):
     45.0
 
     """
-    if deg:
-        fact = 180/pi
-    else:
-        fact = 1.0
     z = asarray(z)
     if (issubclass(z.dtype.type, _nx.complexfloating)):
         zimag = z.imag
@@ -1350,7 +1346,11 @@ def angle(z, deg=0):
     else:
         zimag = 0
         zreal = z
-    return arctan2(zimag, zreal) * fact
+
+    a = arctan2(zimag, zreal)
+    if deg:
+        a *= 180/pi
+    return a
 
 
 def unwrap(p, discont=pi, axis=-1):
