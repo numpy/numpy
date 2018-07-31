@@ -59,7 +59,7 @@ For development, you can set up an in-place build so that changes made to
 This allows you to import the in-place built NumPy *from the repo base
 directory only*.  If you want the in-place build to be visible outside that
 base dir, you need to point your ``PYTHONPATH`` environment variable to this
-directory.  Some IDEs (Spyder for example) have utilities to manage
+directory.  Some IDEs (`Spyder`_ for example) have utilities to manage
 ``PYTHONPATH``.  On Linux and OSX, you can run the command::
 
     $ export PYTHONPATH=$PWD
@@ -77,6 +77,8 @@ is with ``python setup.py develop``.  Instead of adjusting ``PYTHONPATH``, this
 installs a ``.egg-link`` file into your site-packages as well as adjusts the
 ``easy-install.pth`` there, so its a more permanent (and magical) operation.
 
+
+.. _Spyder: https://www.spyder-ide.org/
 
 Other build options
 -------------------
