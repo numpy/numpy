@@ -1584,12 +1584,9 @@ class TestQR(object):
 
 
     @pytest.mark.parametrize(["m", "n"], [
-        (0, 4, 1),
-        (0, 4, 2),
-        (4, 0, 1),
-        (4, 0, 2),
-        (4, 2, 0),
-        (0, 0, 0)
+        (3, 0),
+        (0, 3),
+        (0, 0)
     ])
     def test_qr_empty(self, m, n):
         k = min(m, n)
