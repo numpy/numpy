@@ -858,13 +858,13 @@ def qr(a, mode='reduced'):
 
     a, wrap = _makearray(a)
     _assertRank2(a)
-    _assertNoEmpty2d(a)
     m, n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
     a = _to_native_byte_order(a)
     mn = min(m, n)
     tau = zeros((mn,), t)
+
     if isComplexType(t):
         lapack_routine = lapack_lite.zgeqrf
         routine_name = 'zgeqrf'
@@ -875,14 +875,14 @@ def qr(a, mode='reduced'):
     # calculate optimal size of work data 'work'
     lwork = 1
     work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, m, tau, work, -1, 0)
+    results = lapack_routine(m, n, a, max(1, m), tau, work, -1, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # do qr decomposition
-    lwork = int(abs(work[0]))
+    lwork = max(1, n, int(abs(work[0])))
     work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, m, tau, work, lwork, 0)
+    results = lapack_routine(m, n, a, max(1, m), tau, work, lwork, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
@@ -918,14 +918,14 @@ def qr(a, mode='reduced'):
     # determine optimal lwork
     lwork = 1
     work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, m, tau, work, -1, 0)
+    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, -1, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # compute q
-    lwork = int(abs(work[0]))
+    lwork = max(1, n, int(abs(work[0])))
     work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, m, tau, work, lwork, 0)
+    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, lwork, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
