@@ -41,43 +41,42 @@ Exported symbols include:
 
    generic
      +-> bool_                                  (kind=b)
-     +-> number                                 (kind=i)
-     |     integer
-     |     signedinteger   (intxx)
-     |     byte
-     |     short
-     |     intc
-     |     intp           int0
-     |     int_
-     |     longlong
-     +-> unsignedinteger  (uintxx)              (kind=u)
-     |     ubyte
-     |     ushort
-     |     uintc
-     |     uintp          uint0
-     |     uint_
-     |     ulonglong
-     +-> inexact
-     |   +-> floating           (floatxx)       (kind=f)
-     |   |     half
-     |   |     single
-     |   |     float_  (double)
-     |   |     longfloat
-     |   \\-> complexfloating    (complexxx)     (kind=c)
-     |         csingle  (singlecomplex)
-     |         complex_ (cfloat, cdouble)
-     |         clongfloat (longcomplex)
+     +-> number
+     |   +-> integer
+     |   |   +-> signedinteger     (intxx)      (kind=i)
+     |   |   |     byte
+     |   |   |     short
+     |   |   |     intc
+     |   |   |     intp            int0
+     |   |   |     int_
+     |   |   |     longlong
+     |   |   \\-> unsignedinteger  (uintxx)     (kind=u)
+     |   |         ubyte
+     |   |         ushort
+     |   |         uintc
+     |   |         uintp           uint0
+     |   |         uint_
+     |   |         ulonglong
+     |   +-> inexact
+     |       +-> floating          (floatxx)    (kind=f)
+     |       |     half
+     |       |     single
+     |       |     float_          (double)
+     |       |     longfloat
+     |       \\-> complexfloating  (complexxx)  (kind=c)
+     |             csingle         (singlecomplex)
+     |             complex_        (cfloat, cdouble)
+     |             clongfloat      (longcomplex)
      +-> flexible
-     |     character
-     |     void                                 (kind=V)
-     |
-     |     str_     (string_, bytes_)           (kind=S)    [Python 2]
-     |     unicode_                             (kind=U)    [Python 2]
-     |
-     |     bytes_   (string_)                   (kind=S)    [Python 3]
-     |     str_     (unicode_)                  (kind=U)    [Python 3]
-     |
-     \\-> object_ (not used much)                (kind=O)
+     |   +-> character
+     |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
+     |   |     unicode_                         (kind=U)    [Python 2]
+     |   |
+     |   |     bytes_   (string_)               (kind=S)    [Python 3]
+     |   |     str_     (unicode_)              (kind=U)    [Python 3]
+     |   |
+     |   \\-> void                              (kind=V)
+     \\-> object_ (not used much)               (kind=O)
 
 """
 from __future__ import division, absolute_import, print_function
@@ -85,6 +84,7 @@ from __future__ import division, absolute_import, print_function
 import types as _types
 import sys
 import numbers
+import warnings
 
 from numpy.compat import bytes, long
 from numpy.core.multiarray import (
@@ -92,7 +92,7 @@ from numpy.core.multiarray import (
         datetime_as_string, busday_offset, busday_count, is_busday,
         busdaycalendar
         )
-
+from numpy._globals import VisibleDeprecationWarning
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
@@ -210,8 +210,33 @@ def english_capitalize(s):
 
 
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
-sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
-allTypes = {}      # Collect the types we will add to the module here
+class TypeNADict(dict):
+    def __getitem__(self, key):
+        # 2018-06-24, 1.16
+        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
+                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
+        return dict.__getitem__(self, key)
+    def get(self, key, default=None):
+        # 2018-06-24, 1.16
+        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
+                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
+        return dict.get(self, key, default)
+
+sctypeNA = TypeNADict()  # Contails all leaf-node types -> numarray type equivalences
+allTypes = {}            # Collect the types we will add to the module here
+
+
+# separate the actual type info from the abtract base classes
+_abstract_types = {}
+_concrete_typeinfo = {}
+for k, v in typeinfo.items():
+    # make all the keys lowercase too
+    k = english_lower(k)
+    if isinstance(v, type):
+        _abstract_types[k] = v
+    else:
+        _concrete_typeinfo[k] = v
+
 
 def _evalname(name):
     k = 0
@@ -236,9 +261,9 @@ def bitname(obj):
             newname = name[:-1]
         else:
             newname = name
-        info = typeinfo[english_upper(newname)]
-        assert(info[-1] == obj)  # sanity check
-        bits = info[2]
+        info = _concrete_typeinfo[english_lower(newname)]
+        assert(info.type == obj)  # sanity check
+        bits = info.bits
 
     except KeyError:     # bit-width name
         base, bits = _evalname(name)
@@ -283,89 +308,90 @@ def bitname(obj):
 
 
 def _add_types():
-    for a in typeinfo.keys():
-        name = english_lower(a)
-        if isinstance(typeinfo[a], tuple):
-            typeobj = typeinfo[a][-1]
+    for name, info in _concrete_typeinfo.items():
+        # define C-name and insert typenum and typechar references also
+        allTypes[name] = info.type
+        sctypeDict[name] = info.type
+        sctypeDict[info.char] = info.type
+        sctypeDict[info.num] = info.type
 
-            # define C-name and insert typenum and typechar references also
-            allTypes[name] = typeobj
-            sctypeDict[name] = typeobj
-            sctypeDict[typeinfo[a][0]] = typeobj
-            sctypeDict[typeinfo[a][1]] = typeobj
-
-        else:  # generic class
-            allTypes[name] = typeinfo[a]
+    for name, cls in _abstract_types.items():
+        allTypes[name] = cls
 _add_types()
 
+# This is the priority order used to assign the bit-sized NPY_INTxx names, which
+# must match the order in npy_common.h in order for NPY_INTxx and np.intxx to be
+# consistent.
+# If two C types have the same size, then the earliest one in this list is used
+# as the sized name.
+_int_ctypes = ['long', 'longlong', 'int', 'short', 'byte']
+_uint_ctypes = list('u' + t for t in _int_ctypes)
+
 def _add_aliases():
-    for a in typeinfo.keys():
-        name = english_lower(a)
-        if not isinstance(typeinfo[a], tuple):
+    for name, info in _concrete_typeinfo.items():
+        # these are handled by _add_integer_aliases
+        if name in _int_ctypes or name in _uint_ctypes:
             continue
-        typeobj = typeinfo[a][-1]
+
         # insert bit-width version for this class (if relevant)
-        base, bit, char = bitname(typeobj)
-        if base[-3:] == 'int' or char[0] in 'ui':
+        base, bit, char = bitname(info.type)
+
+        assert base != ''
+        myname = "%s%d" % (base, bit)
+
+        # ensure that (c)longdouble does not overwrite the aliases assigned to
+        # (c)double
+        if name in ('longdouble', 'clongdouble') and myname in allTypes:
             continue
-        if base != '':
-            myname = "%s%d" % (base, bit)
-            if ((name != 'longdouble' and name != 'clongdouble') or
-                   myname not in allTypes.keys()):
-                allTypes[myname] = typeobj
-                sctypeDict[myname] = typeobj
-                if base == 'complex':
-                    na_name = '%s%d' % (english_capitalize(base), bit//2)
-                elif base == 'bool':
-                    na_name = english_capitalize(base)
-                    sctypeDict[na_name] = typeobj
-                else:
-                    na_name = "%s%d" % (english_capitalize(base), bit)
-                    sctypeDict[na_name] = typeobj
-                sctypeNA[na_name] = typeobj
-                sctypeDict[na_name] = typeobj
-                sctypeNA[typeobj] = na_name
-                sctypeNA[typeinfo[a][0]] = na_name
-        if char != '':
-            sctypeDict[char] = typeobj
-            sctypeNA[char] = na_name
+
+        base_capitalize = english_capitalize(base)
+        if base == 'complex':
+            na_name = '%s%d' % (base_capitalize, bit//2)
+        elif base == 'bool':
+            na_name = base_capitalize
+        else:
+            na_name = "%s%d" % (base_capitalize, bit)
+
+        allTypes[myname] = info.type
+
+        # add mapping for both the bit name and the numarray name
+        sctypeDict[myname] = info.type
+        sctypeDict[na_name] = info.type
+
+        # add forward, reverse, and string mapping to numarray
+        sctypeNA[na_name] = info.type
+        sctypeNA[info.type] = na_name
+        sctypeNA[info.char] = na_name
+
+        assert char != ''
+        sctypeDict[char] = info.type
+        sctypeNA[char] = na_name
 _add_aliases()
 
-# Integers are handled so that the int32 and int64 types should agree
-# exactly with NPY_INT32, NPY_INT64. We need to enforce the same checking
-# as is done in arrayobject.h where the order of getting a bit-width match
-# is long, longlong, int, short, char.
 def _add_integer_aliases():
-    _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
-    for ctype in _ctypes:
-        val = typeinfo[ctype]
-        bits = val[2]
-        charname = 'i%d' % (bits//8,)
-        ucharname = 'u%d' % (bits//8,)
-        intname = 'int%d' % bits
-        UIntname = 'UInt%d' % bits
-        Intname = 'Int%d' % bits
-        uval = typeinfo['U'+ctype]
-        typeobj = val[-1]
-        utypeobj = uval[-1]
-        if intname not in allTypes.keys():
-            uintname = 'uint%d' % bits
-            allTypes[intname] = typeobj
-            allTypes[uintname] = utypeobj
-            sctypeDict[intname] = typeobj
-            sctypeDict[uintname] = utypeobj
-            sctypeDict[Intname] = typeobj
-            sctypeDict[UIntname] = utypeobj
-            sctypeDict[charname] = typeobj
-            sctypeDict[ucharname] = utypeobj
-            sctypeNA[Intname] = typeobj
-            sctypeNA[UIntname] = utypeobj
-            sctypeNA[charname] = typeobj
-            sctypeNA[ucharname] = utypeobj
-        sctypeNA[typeobj] = Intname
-        sctypeNA[utypeobj] = UIntname
-        sctypeNA[val[0]] = Intname
-        sctypeNA[uval[0]] = UIntname
+    seen_bits = set()
+    for i_ctype, u_ctype in zip(_int_ctypes, _uint_ctypes):
+        i_info = _concrete_typeinfo[i_ctype]
+        u_info = _concrete_typeinfo[u_ctype]
+        bits = i_info.bits  # same for both
+
+        for info, charname, intname, Intname in [
+                (i_info,'i%d' % (bits//8,), 'int%d' % bits, 'Int%d' % bits),
+                (u_info,'u%d' % (bits//8,), 'uint%d' % bits, 'UInt%d' % bits)]:
+            if bits not in seen_bits:
+                # sometimes two different types have the same number of bits
+                # if so, the one iterated over first takes precedence
+                allTypes[intname] = info.type
+                sctypeDict[intname] = info.type
+                sctypeDict[Intname] = info.type
+                sctypeDict[charname] = info.type
+                sctypeNA[Intname] = info.type
+                sctypeNA[charname] = info.type
+            sctypeNA[info.type] = Intname
+            sctypeNA[info.char] = Intname
+
+        seen_bits.add(bits)
+
 _add_integer_aliases()
 
 # We use these later
@@ -393,16 +419,14 @@ def _set_up_aliases():
                   ('clongfloat', 'clongdouble'),
                   ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
+                  ('bytes_', 'string'),
+                  ('string_', 'string'),
                   ('unicode_', 'unicode'),
                   ('object_', 'object')]
     if sys.version_info[0] >= 3:
-        type_pairs.extend([('bytes_', 'string'),
-                           ('str_', 'unicode'),
-                           ('string_', 'string')])
+        type_pairs.extend([('str_', 'unicode')])
     else:
-        type_pairs.extend([('str_', 'string'),
-                           ('string_', 'string'),
-                           ('bytes_', 'string')])
+        type_pairs.extend([('str_', 'string')])
     for alias, t in type_pairs:
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
@@ -426,11 +450,9 @@ _set_up_aliases()
 # Now, construct dictionary to lookup character codes from types
 _sctype2char_dict = {}
 def _construct_char_code_lookup():
-    for name in typeinfo.keys():
-        tup = typeinfo[name]
-        if isinstance(tup, tuple):
-            if tup[0] not in ['p', 'P']:
-                _sctype2char_dict[tup[-1]] = tup[0]
+    for name, info in _concrete_typeinfo.items():
+        if info.char not in ['p', 'P']:
+            _sctype2char_dict[info.type] = info.char
 _construct_char_code_lookup()
 
 
@@ -501,11 +523,11 @@ def maximum_sctype(t):
 
     Examples
     --------
-    >>> np.maximum_sctype(np.int)
+    >>> np.maximum_sctype(int)
     <type 'numpy.int64'>
     >>> np.maximum_sctype(np.uint8)
     <type 'numpy.uint64'>
-    >>> np.maximum_sctype(np.complex)
+    >>> np.maximum_sctype(complex)
     <type 'numpy.complex192'>
 
     >>> np.maximum_sctype(str)
@@ -528,33 +550,6 @@ def maximum_sctype(t):
     else:
         return sctypes[base][-1]
 
-try:
-    buffer_type = _types.BufferType
-except AttributeError:
-    # Py3K
-    buffer_type = memoryview
-
-_python_types = {int: 'int_',
-                 float: 'float_',
-                 complex: 'complex_',
-                 bool: 'bool_',
-                 bytes: 'bytes_',
-                 unicode: 'unicode_',
-                 buffer_type: 'void',
-                 }
-
-if sys.version_info[0] >= 3:
-    def _python_type(t):
-        """returns the type corresponding to a certain Python type"""
-        if not isinstance(t, type):
-            t = type(t)
-        return allTypes[_python_types.get(t, 'object_')]
-else:
-    def _python_type(t):
-        """returns the type corresponding to a certain Python type"""
-        if not isinstance(t, _types.TypeType):
-            t = type(t)
-        return allTypes[_python_types.get(t, 'object_')]
 
 def issctype(rep):
     """
@@ -597,7 +592,7 @@ def issctype(rep):
         if res and res != object_:
             return True
         return False
-    except:
+    except Exception:
         return False
 
 def obj2sctype(rep, default=None):
@@ -639,22 +634,19 @@ def obj2sctype(rep, default=None):
     <type 'list'>
 
     """
-    try:
-        if issubclass(rep, generic):
-            return rep
-    except TypeError:
-        pass
-    if isinstance(rep, dtype):
-        return rep.type
-    if isinstance(rep, type):
-        return _python_type(rep)
+    # prevent abtract classes being upcast
+    if isinstance(rep, type) and issubclass(rep, generic):
+        return rep
+    # extract dtype from arrays
     if isinstance(rep, ndarray):
         return rep.dtype.type
+    # fall back on dtype to convert
     try:
         res = dtype(rep)
-    except:
+    except Exception:
         return default
-    return res.type
+    else:
+        return res.type
 
 
 def issubclass_(arg1, arg2):
@@ -684,9 +676,9 @@ def issubclass_(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubclass_(np.int32, np.int)
+    >>> np.issubclass_(np.int32, int)
     True
-    >>> np.issubclass_(np.int32, np.float)
+    >>> np.issubclass_(np.int32, float)
     False
 
     """
@@ -717,9 +709,9 @@ def issubsctype(arg1, arg2):
     --------
     >>> np.issubsctype('S8', str)
     True
-    >>> np.issubsctype(np.array([1]), np.int)
+    >>> np.issubsctype(np.array([1]), int)
     True
-    >>> np.issubsctype(np.array([1]), np.float)
+    >>> np.issubsctype(np.array([1]), float)
     False
 
     """
@@ -745,20 +737,46 @@ def issubdtype(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubdtype('S1', str)
+    >>> np.issubdtype('S1', np.string_)
     True
     >>> np.issubdtype(np.float64, np.float32)
     False
 
     """
-    if issubclass_(arg2, generic):
-        return issubclass(dtype(arg1).type, arg2)
-    mro = dtype(arg2).type.mro()
-    if len(mro) > 1:
-        val = mro[1]
-    else:
-        val = mro[0]
-    return issubclass(dtype(arg1).type, val)
+    if not issubclass_(arg1, generic):
+        arg1 = dtype(arg1).type
+    if not issubclass_(arg2, generic):
+        arg2_orig = arg2
+        arg2 = dtype(arg2).type
+        if not isinstance(arg2_orig, dtype):
+            # weird deprecated behaviour, that tried to infer np.floating from
+            # float, and similar less obvious things, such as np.generic from
+            # basestring
+            mro = arg2.mro()
+            arg2 = mro[1] if len(mro) > 1 else mro[0]
+
+            def type_repr(x):
+                """ Helper to produce clear error messages """
+                if not isinstance(x, type):
+                    return repr(x)
+                elif issubclass(x, generic):
+                    return "np.{}".format(x.__name__)
+                else:
+                    return x.__name__
+
+            # 1.14, 2017-08-01
+            warnings.warn(
+                "Conversion of the second argument of issubdtype from `{raw}` "
+                "to `{abstract}` is deprecated. In future, it will be treated "
+                "as `{concrete} == np.dtype({raw}).type`.".format(
+                    raw=type_repr(arg2_orig),
+                    abstract=type_repr(arg2),
+                    concrete=type_repr(dtype(arg2_orig).type)
+                ),
+                FutureWarning, stacklevel=2
+            )
+
+    return issubclass(arg1, arg2)
 
 
 # This dictionary allows look up based on any alias for an array data-type
@@ -779,15 +797,13 @@ _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, val in typeinfo.items():
-        if not isinstance(val, tuple):
-            continue
-        obj = val[-1]
-        nbytes[obj] = val[2] // 8
-        _alignment[obj] = val[3]
-        if (len(val) > 5):
-            _maxvals[obj] = val[4]
-            _minvals[obj] = val[5]
+    for name, info in _concrete_typeinfo.items():
+        obj = info.type
+        nbytes[obj] = info.bits // 8
+        _alignment[obj] = info.alignment
+        if len(info) > 5:
+            _maxvals[obj] = info.max
+            _minvals[obj] = info.min
         else:
             _maxvals[obj] = None
             _minvals[obj] = None
@@ -821,7 +837,7 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.float, np.complex, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, float, complex, np.string_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
     l
     d
@@ -958,6 +974,7 @@ def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
+    numbers.Number.register(number)
 
 _register_types()
 
@@ -986,7 +1003,7 @@ def find_common_type(array_types, scalar_types):
 
     Examples
     --------
-    >>> np.find_common_type([], [np.int64, np.float32, np.complex])
+    >>> np.find_common_type([], [np.int64, np.float32, complex])
     dtype('complex128')
     >>> np.find_common_type([np.int64, np.float32], [])
     dtype('float64')
@@ -1002,7 +1019,7 @@ def find_common_type(array_types, scalar_types):
     Complex is of a different type, so it up-casts the float in the
     `array_types` argument:
 
-    >>> np.find_common_type([np.float32], [np.complex])
+    >>> np.find_common_type([np.float32], [complex])
     dtype('complex128')
 
     Type specifier strings are convertible to dtypes and can therefore

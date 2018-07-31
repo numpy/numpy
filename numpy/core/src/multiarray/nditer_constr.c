@@ -651,6 +651,8 @@ NpyIter_Deallocate(NpyIter *iter)
     int iop, nop;
     PyArray_Descr **dtype;
     PyArrayObject **object;
+    npyiter_opitflags *op_itflags;
+    npy_bool resolve = 1;
 
     if (iter == NULL) {
         return NPY_SUCCEED;
@@ -660,6 +662,7 @@ NpyIter_Deallocate(NpyIter *iter)
     nop = NIT_NOP(iter);
     dtype = NIT_DTYPES(iter);
     object = NIT_OPERANDS(iter);
+    op_itflags = NIT_OPITFLAGS(iter);
 
     /* Deallocate any buffers and buffering data */
     if (itflags & NPY_ITFLAG_BUFFER) {
@@ -688,15 +691,28 @@ NpyIter_Deallocate(NpyIter *iter)
         }
     }
 
-    /* Deallocate all the dtypes and objects that were iterated */
+    /*
+     * Deallocate all the dtypes and objects that were iterated and resolve
+     * any writeback buffers created by the iterator
+     */
     for(iop = 0; iop < nop; ++iop, ++dtype, ++object) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
+            if (resolve && PyArray_ResolveWritebackIfCopy(*object) < 0) {
+                resolve = 0;
+            }
+            else {
+                PyArray_DiscardWritebackIfCopy(*object);
+            }
+        }
         Py_XDECREF(*dtype);
         Py_XDECREF(*object);
     }
 
     /* Deallocate the iterator memory */
     PyObject_Free(iter);
-
+    if (resolve == 0) {
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -2672,9 +2688,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         return NULL;
     }
 
-    /* Make sure all the flags are good */
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
     /* Double-check that the subtype didn't mess with the dimensions */
     if (subtype != &PyArray_Type) {
         if (PyArray_NDIM(ret) != op_ndim ||
@@ -2716,7 +2729,7 @@ npyiter_allocate_arrays(NpyIter *iter,
          *
          * If any write operand has memory overlap with any read operand,
          * eliminate all overlap by making temporary copies, by enabling
-         * NPY_OP_ITFLAG_FORCECOPY for the write operand to force UPDATEIFCOPY.
+         * NPY_OP_ITFLAG_FORCECOPY for the write operand to force WRITEBACKIFCOPY.
          *
          * Operands with NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE enabled are not
          * considered overlapping if the arrays are exactly the same. In this
@@ -2920,13 +2933,15 @@ npyiter_allocate_arrays(NpyIter *iter,
                     return 0;
                 }
             }
-            /* If the data will be written to, set UPDATEIFCOPY */
+            /* If the data will be written to, set WRITEBACKIFCOPY
+               and require a context manager */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
                 Py_INCREF(op[iop]);
-                if (PyArray_SetUpdateIfCopyBase(temp, op[iop]) < 0) {
+                if (PyArray_SetWritebackIfCopyBase(temp, op[iop]) < 0) {
                     Py_DECREF(temp);
                     return 0;
                 }
+                op_itflags[iop] |= NPY_OP_ITFLAG_HAS_WRITEBACK;
             }
 
             Py_DECREF(op[iop]);

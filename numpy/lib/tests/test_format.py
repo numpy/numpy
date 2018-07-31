@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+# doctest
 r''' Test the .npy file format.
 
 Set up:
@@ -275,19 +276,17 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-
 import sys
 import os
 import shutil
 import tempfile
 import warnings
+import pytest
 from io import BytesIO
 
 import numpy as np
-from numpy.compat import asbytes, asbytes_nested, sixu
 from numpy.testing import (
-    run_module_suite, assert_, assert_array_equal, assert_raises, raises,
-    dec, SkipTest
+    assert_, assert_array_equal, assert_raises, raises, SkipTest
     )
 from numpy.lib import format
 
@@ -455,20 +454,20 @@ def assert_equal_(o1, o2):
 def test_roundtrip():
     for arr in basic_arrays + record_arrays:
         arr2 = roundtrip(arr)
-        yield assert_array_equal, arr, arr2
+        assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_randsize():
     for arr in basic_arrays + record_arrays:
         if arr.dtype != object:
             arr2 = roundtrip_randsize(arr)
-            yield assert_array_equal, arr, arr2
+            assert_array_equal(arr, arr2)
 
 
 def test_roundtrip_truncated():
     for arr in basic_arrays:
         if arr.dtype != object:
-            yield assert_raises, ValueError, roundtrip_truncated, arr
+            assert_raises(ValueError, roundtrip_truncated, arr)
 
 
 def test_long_str():
@@ -478,9 +477,9 @@ def test_long_str():
     assert_array_equal(long_str_arr, long_str_arr2)
 
 
-@dec.slow
+@pytest.mark.slow
 def test_memmap_roundtrip():
-    # Fixme: test crashes nose on windows.
+    # Fixme: used to crash on windows
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
         for arr in basic_arrays + record_arrays:
             if arr.dtype.hasobject:
@@ -509,7 +508,7 @@ def test_memmap_roundtrip():
             fp = open(mfn, 'rb')
             memmap_bytes = fp.read()
             fp.close()
-            yield assert_equal_, normal_bytes, memmap_bytes
+            assert_equal_(normal_bytes, memmap_bytes)
 
             # Check that reading the file using memmap works.
             ma = format.open_memmap(nfn, mode='r')
@@ -545,8 +544,8 @@ def test_pickle_python2_python3():
         import __builtin__
         xrange = __builtin__.xrange
 
-    expected = np.array([None, xrange, sixu('\u512a\u826f'),
-                         asbytes('\xe4\xb8\x8d\xe8\x89\xaf')],
+    expected = np.array([None, xrange, u'\u512a\u826f',
+                         b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
     for fname in ['py2-objarr.npy', 'py2-objarr.npz',
@@ -616,6 +615,11 @@ def test_version_2_0():
         format.write_array(f, d)
         assert_(w[0].category is UserWarning)
 
+    # check alignment of data portion
+    f.seek(0)
+    header = f.readline()
+    assert_(len(header) % format.ARRAY_ALIGN == 0)
+
     f.seek(0)
     n = format.read_array(f)
     assert_array_equal(d, n)
@@ -624,7 +628,7 @@ def test_version_2_0():
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
-@dec.slow
+@pytest.mark.slow
 def test_version_2_0_memmap():
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
@@ -682,23 +686,23 @@ def test_write_version():
             raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
-bad_version_magic = asbytes_nested([
-    '\x93NUMPY\x01\x01',
-    '\x93NUMPY\x00\x00',
-    '\x93NUMPY\x00\x01',
-    '\x93NUMPY\x02\x00',
-    '\x93NUMPY\x02\x02',
-    '\x93NUMPY\xff\xff',
-])
-malformed_magic = asbytes_nested([
-    '\x92NUMPY\x01\x00',
-    '\x00NUMPY\x01\x00',
-    '\x93numpy\x01\x00',
-    '\x93MATLB\x01\x00',
-    '\x93NUMPY\x01',
-    '\x93NUMPY',
-    '',
-])
+bad_version_magic = [
+    b'\x93NUMPY\x01\x01',
+    b'\x93NUMPY\x00\x00',
+    b'\x93NUMPY\x00\x01',
+    b'\x93NUMPY\x02\x00',
+    b'\x93NUMPY\x02\x02',
+    b'\x93NUMPY\xff\xff',
+]
+malformed_magic = [
+    b'\x92NUMPY\x01\x00',
+    b'\x00NUMPY\x01\x00',
+    b'\x93numpy\x01\x00',
+    b'\x93MATLB\x01\x00',
+    b'\x93NUMPY\x01',
+    b'\x93NUMPY',
+    b'',
+]
 
 def test_read_magic():
     s1 = BytesIO()
@@ -724,13 +728,13 @@ def test_read_magic():
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_magic), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
         f = BytesIO(magic)
-        yield raises(ValueError)(format.read_array), f
+        assert_raises(ValueError, format.read_array, f)
 
 
 def test_bad_magic_args():
@@ -759,6 +763,7 @@ def test_read_array_header_1_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_1_0(s)
 
+    assert_(s.tell() % format.ARRAY_ALIGN == 0)
     assert_((shape, fortran, dtype) == ((3, 6), False, float))
 
 
@@ -771,6 +776,7 @@ def test_read_array_header_2_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_2_0(s)
 
+    assert_(s.tell() % format.ARRAY_ALIGN == 0)
     assert_((shape, fortran, dtype) == ((3, 6), False, float))
 
 
@@ -778,11 +784,11 @@ def test_bad_header():
     # header of length less than 2 should fail
     s = BytesIO()
     assert_raises(ValueError, format.read_array_header_1_0, s)
-    s = BytesIO(asbytes('1'))
+    s = BytesIO(b'1')
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # header shorter than indicated size should fail
-    s = BytesIO(asbytes('\x01\x00'))
+    s = BytesIO(b'\x01\x00')
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
@@ -812,7 +818,7 @@ def test_large_file_support():
         # avoid actually writing 5GB
         import subprocess as sp
         sp.check_call(["truncate", "-s", "5368709120", tf_name])
-    except:
+    except Exception:
         raise SkipTest("Could not create 5GB large file")
     # write a small array to the end
     with open(tf_name, "wb") as f:
@@ -826,8 +832,9 @@ def test_large_file_support():
     assert_array_equal(r, d)
 
 
-@dec.slow
-@dec.skipif(np.dtype(np.intp).itemsize < 8, "test requires 64-bit system")
+@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
+                    reason="test requires 64-bit system")
+@pytest.mark.slow
 def test_large_archive():
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.
@@ -847,5 +854,8 @@ def test_large_archive():
     assert_(a.shape == new_a.shape)
 
 
-if __name__ == "__main__":
-    run_module_suite()
+def test_empty_npz():
+    # Test for gh-9989
+    fname = os.path.join(tempdir, "nothing.npz")
+    np.savez(fname)
+    np.load(fname)

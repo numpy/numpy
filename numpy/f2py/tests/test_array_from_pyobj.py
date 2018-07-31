@@ -7,17 +7,15 @@ import copy
 
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
-)
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, SkipTest
-)
+    )
+from numpy.testing import assert_, assert_equal, SkipTest
 from numpy.core.multiarray import typeinfo
-import util
+from . import util
 
 wrap = None
 
 
-def setup():
+def setup_module():
     """
     Build the required testing extension module
 
@@ -51,7 +49,7 @@ def flags2names(flags):
     info = []
     for flagname in ['CONTIGUOUS', 'FORTRAN', 'OWNDATA', 'ENSURECOPY',
                      'ENSUREARRAY', 'ALIGNED', 'NOTSWAPPED', 'WRITEABLE',
-                     'UPDATEIFCOPY', 'BEHAVED', 'BEHAVED_RO',
+                     'WRITEBACKIFCOPY', 'UPDATEIFCOPY', 'BEHAVED', 'BEHAVED_RO',
                      'CARRAY', 'FARRAY'
                      ]:
         if abs(flags) & getattr(wrap, flagname, 0):
@@ -141,7 +139,7 @@ class Type(object):
             dtype0 = name
             name = None
             for n, i in typeinfo.items():
-                if isinstance(i, tuple) and dtype0.type is i[-1]:
+                if not isinstance(i, type) and dtype0.type is i.type:
                     name = n
                     break
         obj = cls._type_cache.get(name.upper(), None)
@@ -154,11 +152,12 @@ class Type(object):
 
     def _init(self, name):
         self.NAME = name.upper()
+        info = typeinfo[self.NAME]
         self.type_num = getattr(wrap, 'NPY_' + self.NAME)
-        assert_equal(self.type_num, typeinfo[self.NAME][1])
-        self.dtype = typeinfo[self.NAME][-1]
-        self.elsize = typeinfo[self.NAME][2] / 8
-        self.dtypechar = typeinfo[self.NAME][0]
+        assert_equal(self.type_num, info.num)
+        self.dtype = info.type
+        self.elsize = info.bits / 8
+        self.dtypechar = info.char
 
     def cast_types(self):
         return [self.__class__(_m) for _m in _cast_dict[self.NAME]]
@@ -167,28 +166,28 @@ class Type(object):
         return [self.__class__(_m) for _m in _type_names]
 
     def smaller_types(self):
-        bits = typeinfo[self.NAME][3]
+        bits = typeinfo[self.NAME].alignment
         types = []
         for name in _type_names:
-            if typeinfo[name][3] < bits:
+            if typeinfo[name].alignment < bits:
                 types.append(Type(name))
         return types
 
     def equal_types(self):
-        bits = typeinfo[self.NAME][3]
+        bits = typeinfo[self.NAME].alignment
         types = []
         for name in _type_names:
             if name == self.NAME:
                 continue
-            if typeinfo[name][3] == bits:
+            if typeinfo[name].alignment == bits:
                 types.append(Type(name))
         return types
 
     def larger_types(self):
-        bits = typeinfo[self.NAME][3]
+        bits = typeinfo[self.NAME].alignment
         types = []
         for name in _type_names:
-            if typeinfo[name][3] > bits:
+            if typeinfo[name].alignment > bits:
                 types.append(Type(name))
         return types
 
@@ -294,7 +293,7 @@ class Array(object):
         return obj_attr[0] == self.arr_attr[0]
 
 
-class test_intent(unittest.TestCase):
+class TestIntent(object):
 
     def test_in_out(self):
         assert_equal(str(intent.in_.out), 'intent(in,out)')
@@ -305,7 +304,7 @@ class test_intent(unittest.TestCase):
         assert_(not intent.in_.is_intent('c'))
 
 
-class _test_shared_memory:
+class _test_shared_memory(object):
     num2seq = [1, 2]
     num23seq = [[1, 2, 3], [4, 5, 6]]
 
@@ -578,14 +577,8 @@ class _test_shared_memory:
 
 for t in _type_names:
     exec('''\
-class test_%s_gen(unittest.TestCase,
-              _test_shared_memory
-              ):
-    def setUp(self):
+class TestGen_%s(_test_shared_memory):
+    def setup(self):
         self.type = Type(%r)
     array = lambda self,dims,intent,obj: Array(Type(%r),dims,intent,obj)
 ''' % (t, t, t))
-
-if __name__ == "__main__":
-    setup()
-    run_module_suite()

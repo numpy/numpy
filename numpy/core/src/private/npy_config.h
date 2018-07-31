@@ -15,7 +15,8 @@
  * amd64 is not harmed much by the bloat as the system provides 16 byte
  * alignment by default.
  */
-#if (defined NPY_CPU_X86 || defined _WIN32)
+#if (defined NPY_CPU_X86 || defined _WIN32 || defined NPY_CPU_ARMEL_AARCH32 ||\
+     defined NPY_CPU_ARMEB_AARCH32)
 #define NPY_MAX_COPY_ALIGNMENT 8
 #else
 #define NPY_MAX_COPY_ALIGNMENT 16
@@ -59,6 +60,19 @@
 #undef HAVE_CATANH
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
+
+#endif
+
+/* MSVC _hypot messes with fp precision mode on 32-bit, see gh-9567 */
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(_WIN64)
+
+#undef HAVE_CABS
+#undef HAVE_CABSF
+#undef HAVE_CABSL
+
+#undef HAVE_HYPOT
+#undef HAVE_HYPOTF
+#undef HAVE_HYPOTL
 
 #endif
 

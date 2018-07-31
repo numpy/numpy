@@ -16,7 +16,7 @@ Building NumPy requires the following software installed:
    On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
 
    On Windows: the official python installer at
-   `www.python.org <http://www.python.org>`_ is enough
+   `www.python.org <https://www.python.org>`_ is enough
 
    Make sure that the Python package distutils is installed before
    continuing. For example, in Debian GNU/Linux, installing python-dev
@@ -32,7 +32,7 @@ Building NumPy requires the following software installed:
    FORTRAN 77 compiler installed.
 
    Note that NumPy is developed mainly using GNU compilers. Compilers from
-   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Porland,
+   other vendors such as Intel, Absoft, Sun, NAG, Compaq, Vast, Portland,
    Lahey, HP, IBM, Microsoft are only supported in the form of community
    feedback, and may not work out of the box. GCC 4.x (and later) compilers
    are recommended.
@@ -114,7 +114,7 @@ How to check the ABI of blas/lapack/atlas
 
 One relatively simple and reliable way to check for the compiler used to build
 a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a a dependency, gfortran
+means that g77 has been used. If libgfortran.so is a dependency, gfortran
 has been used. If both are dependencies, this means both have been used, which
 is almost always a very bad idea.
 
@@ -132,12 +132,14 @@ Supplying additional compiler flags
 
 Additional compiler flags can be supplied by setting the ``OPT``,
 ``FOPT`` (for Fortran), and ``CC`` environment variables.
+When providing options that should improve the performance of the code ensure
+that you also set ``-DNDEBUG`` so that debugging code is not executed.
 
 
 Building with ATLAS support
 ---------------------------
 
-Ubuntu 
+Ubuntu
 ~~~~~~
 
 You can install the necessary package for optimized ATLAS with this command::

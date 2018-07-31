@@ -98,6 +98,16 @@ Floating point routines
    copysign
    frexp
    ldexp
+   nextafter
+   spacing
+
+Rational routines
+-----------------
+.. autosummary::
+   :toctree: generated/
+
+   lcm
+   gcd
 
 Arithmetic operations
 ---------------------
@@ -106,6 +116,7 @@ Arithmetic operations
 
    add
    reciprocal
+   positive
    negative
    multiply
    divide
@@ -113,11 +124,13 @@ Arithmetic operations
    subtract
    true_divide
    floor_divide
+   float_power
 
    fmod
    mod
    modf
    remainder
+   divmod
 
 Handling complex numbers
 ------------------------
@@ -145,6 +158,7 @@ Miscellaneous
    absolute
    fabs
    sign
+   heaviside
    maximum
    minimum
    fmax

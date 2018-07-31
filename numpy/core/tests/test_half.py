@@ -1,11 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import platform
+import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import TestCase, run_module_suite, assert_, assert_equal, \
-    dec
+from numpy.testing import assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -18,8 +18,8 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
         assert_(False,
                 "Did not raise floating point %s error" % strmatch)
 
-class TestHalf(TestCase):
-    def setUp(self):
+class TestHalf(object):
+    def setup(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)
         self.all_f16.dtype = float16
@@ -66,7 +66,7 @@ class TestHalf(TestCase):
         # Check the range for which all integers can be represented
         i_int = np.arange(-2048, 2049)
         i_f16 = np.array(i_int, dtype=float16)
-        j = np.array(i_f16, dtype=np.int)
+        j = np.array(i_f16, dtype=int)
         assert_equal(i_int, j)
 
     def test_nans_infs(self):
@@ -317,12 +317,14 @@ class TestHalf(TestCase):
 
         assert_equal(np.floor_divide(a, b), [0, 0, 2, 1, 0])
         assert_equal(np.remainder(a, b), [0, 1, 0, 0, 2])
+        assert_equal(np.divmod(a, b), ([0, 0, 2, 1, 0], [0, 1, 0, 0, 2]))
         assert_equal(np.square(b), [4, 25, 1, 16, 9])
         assert_equal(np.reciprocal(b), [-0.5, 0.199951171875, 1, 0.25, 0.333251953125])
         assert_equal(np.ones_like(b), [1, 1, 1, 1, 1])
         assert_equal(np.conjugate(b), b)
         assert_equal(np.absolute(b), [2, 5, 1, 4, 3])
         assert_equal(np.negative(b), [2, -5, -1, -4, -3])
+        assert_equal(np.positive(b), b)
         assert_equal(np.sign(b), [-1, 1, 1, 1, 1])
         assert_equal(np.modf(b), ([0, 0, 0, 0, 0], b))
         assert_equal(np.frexp(b), ([-0.5, 0.625, 0.5, 0.5, 0.75], [2, 3, 1, 3, 2]))
@@ -354,7 +356,8 @@ class TestHalf(TestCase):
         assert_equal(np.power(b32, a16).dtype, float16)
         assert_equal(np.power(b32, b16).dtype, float32)
 
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+    @pytest.mark.skipif(platform.machine() == "armv5tel",
+                        reason="See gh-413.")
     def test_half_fpe(self):
         with np.errstate(all='raise'):
             sx16 = np.array((1e-4,), dtype=float16)
@@ -430,7 +433,3 @@ class TestHalf(TestCase):
         c = np.array(b)
         assert_(c.dtype == float16)
         assert_equal(a, c)
-
-
-if __name__ == "__main__":
-    run_module_suite()

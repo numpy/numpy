@@ -6,8 +6,8 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
-    TestCase, assert_almost_equal, assert_raises,
-    assert_equal, assert_, run_module_suite)
+    assert_almost_equal, assert_raises, assert_equal, assert_,
+    )
 
 
 def trim(x):
@@ -27,7 +27,7 @@ T9 = [0, 9, 0, -120, 0, 432, 0, -576, 0, 256]
 Tlist = [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
 
-class TestConstants(TestCase):
+class TestConstants(object):
 
     def test_polydomain(self):
         assert_equal(poly.polydomain, [-1, 1])
@@ -42,7 +42,7 @@ class TestConstants(TestCase):
         assert_equal(poly.polyx, [0, 1])
 
 
-class TestArithmetic(TestCase):
+class TestArithmetic(object):
 
     def test_polyadd(self):
         for i in range(5):
@@ -103,7 +103,7 @@ class TestArithmetic(TestCase):
                 assert_equal(res, tgt, err_msg=msg)
 
 
-class TestEvaluation(TestCase):
+class TestEvaluation(object):
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([1., 2., 3.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -263,13 +263,16 @@ class TestEvaluation(TestCase):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(TestCase):
+class TestIntegral(object):
 
     def test_polyint(self):
         # check exceptions
         assert_raises(ValueError, poly.polyint, [0], .5)
         assert_raises(ValueError, poly.polyint, [0], -1)
         assert_raises(ValueError, poly.polyint, [0], 1, [0, 0])
+        assert_raises(ValueError, poly.polyint, [0], lbnd=[0])
+        assert_raises(ValueError, poly.polyint, [0], scl=[0])
+        assert_raises(ValueError, poly.polyint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -357,7 +360,7 @@ class TestIntegral(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(TestCase):
+class TestDerivative(object):
 
     def test_polyder(self):
         # check exceptions
@@ -397,7 +400,7 @@ class TestDerivative(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(TestCase):
+class TestVander(object):
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -445,7 +448,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestCompanion(TestCase):
+class TestCompanion(object):
 
     def test_raises(self):
         assert_raises(ValueError, poly.polycompanion, [])
@@ -460,7 +463,7 @@ class TestCompanion(TestCase):
         assert_(poly.polycompanion([1, 2])[0, 0] == -.5)
 
 
-class TestMisc(TestCase):
+class TestMisc(object):
 
     def test_polyfromroots(self):
         res = poly.polyfromroots([])
@@ -562,7 +565,3 @@ class TestMisc(TestCase):
 
     def test_polyline(self):
         assert_equal(poly.polyline(3, 4), [3, 4])
-
-
-if __name__ == "__main__":
-    run_module_suite()

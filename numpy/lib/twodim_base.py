@@ -6,6 +6,7 @@ from __future__ import division, absolute_import, print_function
 from numpy.core.numeric import (
     absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
+    nonzero
     )
 from numpy.core import iinfo, transpose
 
@@ -136,7 +137,7 @@ def flipud(m):
     return m[::-1, ...]
 
 
-def eye(N, M=None, k=0, dtype=float):
+def eye(N, M=None, k=0, dtype=float, order='C'):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -152,6 +153,11 @@ def eye(N, M=None, k=0, dtype=float):
       to a lower diagonal.
     dtype : data-type, optional
       Data-type of the returned array.
+    order : {'C', 'F'}, optional
+        Whether the output should be stored in row-major (C-style) or
+        column-major (Fortran-style) order in memory.
+
+        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -177,7 +183,7 @@ def eye(N, M=None, k=0, dtype=float):
     """
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype)
+    m = zeros((N, M), dtype=dtype, order=order)
     if k >= M:
         return m
     if k >= 0:
@@ -524,7 +530,8 @@ def vander(x, N=None, increasing=False):
     return v
 
 
-def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
+def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
+                density=None):
     """
     Compute the bi-dimensional histogram of two data samples.
 
@@ -554,9 +561,14 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         (if not specified explicitly in the `bins` parameters):
         ``[[xmin, xmax], [ymin, ymax]]``. All values outside of this range
         will be considered outliers and not tallied in the histogram.
+    density : bool, optional
+        If False, the default, returns the number of samples in each bin.
+        If True, returns the probability *density* function at the bin,
+        ``bin_count / sample_count / bin_area``.
     normed : bool, optional
-        If False, returns the number of samples in each bin. If True,
-        returns the bin density ``bin_count / sample_count / bin_area``.
+        An alias for the density argument that behaves identically. To avoid
+        confusion with the broken normed argument to `histogram`, `density`
+        should be preferred.
     weights : array_like, shape(N,), optional
         An array of values ``w_i`` weighing each sample ``(x_i, y_i)``.
         Weights are normalized to 1 if `normed` is True. If `normed` is
@@ -569,9 +581,9 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         The bi-dimensional histogram of samples `x` and `y`. Values in `x`
         are histogrammed along the first dimension and values in `y` are
         histogrammed along the second dimension.
-    xedges : ndarray, shape(nx,)
+    xedges : ndarray, shape(nx+1,)
         The bin edges along the first dimension.
-    yedges : ndarray, shape(ny,)
+    yedges : ndarray, shape(ny+1,)
         The bin edges along the second dimension.
 
     See Also
@@ -644,9 +656,9 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         N = 1
 
     if N != 1 and N != 2:
-        xedges = yedges = asarray(bins, float)
+        xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
-    hist, edges = histogramdd([x, y], bins, range, normed, weights)
+    hist, edges = histogramdd([x, y], bins, range, normed, weights, density)
     return hist, edges[0], edges[1]
 
 
@@ -717,7 +729,7 @@ def mask_indices(n, mask_func, k=0):
     """
     m = ones((n, n), int)
     a = mask_func(m, k)
-    return where(a != 0)
+    return nonzero(a != 0)
 
 
 def tril_indices(n, k=0, m=None):
@@ -797,7 +809,7 @@ def tril_indices(n, k=0, m=None):
            [-10, -10, -10, -10]])
 
     """
-    return where(tri(n, m, k=k, dtype=bool))
+    return nonzero(tri(n, m, k=k, dtype=bool))
 
 
 def tril_indices_from(arr, k=0):
@@ -907,7 +919,7 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
-    return where(~tri(n, m, k=k-1, dtype=bool))
+    return nonzero(~tri(n, m, k=k-1, dtype=bool))
 
 
 def triu_indices_from(arr, k=0):

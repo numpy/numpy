@@ -186,8 +186,8 @@ def parse_loop_header(loophead) :
         if nsub is None :
             nsub = size
         elif nsub != size :
-            msg = "Mismatch in number of values:\n%s = %s" % (name, vals)
-            raise ValueError(msg)
+            msg = "Mismatch in number of values, %d != %d\n%s = %s"
+            raise ValueError(msg % (nsub, size, name, vals))
         names.append((name, vals))
 
 
@@ -315,8 +315,7 @@ def unique_key(adict):
     return newkey
 
 
-if __name__ == "__main__":
-
+def main():
     try:
         file = sys.argv[1]
     except IndexError:
@@ -335,3 +334,6 @@ if __name__ == "__main__":
         e = get_exception()
         raise ValueError("In %s loop at %s" % (file, e))
     outfile.write(writestr)
+
+if __name__ == "__main__":
+    main()

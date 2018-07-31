@@ -1,5 +1,5 @@
-"""
-This paver file is intented to help with the release process as much as
+r"""
+This paver file is intended to help with the release process as much as
 possible. It relies on virtualenv to generate 'bootstrap' environments as
 independent from the user system as possible (e.g. to make sure the sphinx doc
 is built against the built numpy, not an installed one).
@@ -65,11 +65,7 @@ import sys
 import shutil
 import subprocess
 import re
-try:
-    from hashlib import md5
-    from hashlib import sha256
-except ImportError:
-    from md5 import md5
+import hashlib
 
 import paver
 from paver.easy import \
@@ -99,10 +95,10 @@ finally:
 #-----------------------------------
 
 # Source of the release notes
-RELEASE_NOTES = 'doc/release/1.13.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.16.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'maintenance/1.12.x'
+LOG_START = 'maintenance/1.15.x'
 LOG_END = 'master'
 
 
@@ -157,8 +153,8 @@ if sys.platform =="darwin":
     MAKENSIS = ["wine", "makensis"]
 elif sys.platform == "win32":
     WINDOWS_PYTHON = {
-        "3.4": ["C:\Python34\python.exe"],
-        "2.7": ["C:\Python27\python.exe"],
+        "3.4": [r"C:\Python34\python.exe"],
+        "2.7": [r"C:\Python27\python.exe"],
     }
     # XXX: find out which env variable is necessary to avoid the pb with python
     # 2.6 and random module when importing tempfile
@@ -409,7 +405,7 @@ def macosx_version():
         raise ValueError("Not darwin ??")
     st = subprocess.Popen(["sw_vers"], stdout=subprocess.PIPE)
     out = st.stdout.readlines()
-    ver = re.compile("ProductVersion:\s+([0-9]+)\.([0-9]+)\.([0-9]+)")
+    ver = re.compile(r"ProductVersion:\s+([0-9]+)\.([0-9]+)\.([0-9]+)")
     for i in out:
         m = ver.match(i)
         if m:
@@ -477,7 +473,7 @@ def _create_dmg(pyver, src_dir, volname=None):
 def dmg(options):
     try:
         pyver = options.dmg.python_version
-    except:
+    except Exception:
         pyver = DEFAULT_PYTHON
     idirs = options.installers.installersdir
 
@@ -562,30 +558,27 @@ def sdist(options):
         target = os.path.join(idirs, tarball_name(t))
         shutil.copy(source, target)
 
-def compute_md5(idirs):
+def _compute_hash(idirs, algo):
     released = paver.path.path(idirs).listdir()
     checksums = []
     for f in sorted(released):
-        m = md5(open(f, 'r').read())
-        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
-
+        with open(f, 'r') as _file:
+            m = algo(_file.read())
+            checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
     return checksums
+
+def compute_md5(idirs):
+    return _compute_hash(idirs, hashlib.md5)
 
 def compute_sha256(idirs):
-    # better checksum so gpg signed README.txt containing the sums can be used
+    # better checksum so gpg signed README.rst containing the sums can be used
     # to verify the binaries instead of signing all binaries
-    released = paver.path.path(idirs).listdir()
-    checksums = []
-    for f in sorted(released):
-        m = sha256(open(f, 'r').read())
-        checksums.append('%s  %s' % (m.hexdigest(), os.path.basename(f)))
-
-    return checksums
+    return _compute_hash(idirs, hashlib.sha256)
 
 def write_release_task(options, filename='README'):
     idirs = options.installers.installersdir
     source = paver.path.path(RELEASE_NOTES)
-    target = paver.path.path(filename)
+    target = paver.path.path(filename + '.rst')
     if target.exists():
         target.remove()
 

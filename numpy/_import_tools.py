@@ -303,8 +303,7 @@ class PackageLoader(object):
                     lines.append(line)
                     line = tab
                 line += ' ' + word
-            else:
-                lines.append(line)
+            lines.append(line)
         return '\n'.join(lines)
 
     def get_pkgdocs(self):

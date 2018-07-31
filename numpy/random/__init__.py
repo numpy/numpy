@@ -117,6 +117,6 @@ def __RandomState_ctor():
     """
     return RandomState(seed=0)
 
-from numpy.testing.nosetester import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+from numpy._pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

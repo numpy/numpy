@@ -1,9 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import (
-    assert_array_equal, assert_equal, assert_raises, run_module_suite
-)
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 
 
 def test_packbits():
@@ -213,6 +211,15 @@ def test_packbits_large():
     assert_raises(TypeError, np.packbits, np.array(a, dtype=float))
 
 
+def test_packbits_very_large():
+    # test some with a larger arrays gh-8637
+    # code is covered earlier but larger array makes crash on bug more likely
+    for s in range(950, 1050):
+        for dt in '?bBhHiIlLqQ':
+            x = np.ones((200, s), dtype=bool)
+            np.packbits(x, axis=1)
+
+
 def test_unpackbits():
     # Copied from the docstring.
     a = np.array([[2], [7], [23]], dtype=np.uint8)
@@ -259,7 +266,3 @@ def test_unpackbits_large():
     assert_array_equal(np.packbits(np.unpackbits(d, axis=1), axis=1), d)
     d = d.T.copy()
     assert_array_equal(np.packbits(np.unpackbits(d, axis=0), axis=0), d)
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -62,6 +62,7 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -699,15 +700,12 @@ def hermeder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         return c[:1]*0
@@ -719,7 +717,7 @@ def hermeder(c, m=1, scl=1, axis=0):
             for j in range(n, 0, -1):
                 der[j - 1] = j*c[j]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -771,8 +769,8 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 0``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
-        ``np.isscalar(scl) == False``.
+        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -783,7 +781,7 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.
     Why is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`.  Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a` - perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
@@ -819,17 +817,18 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt):
         n = len(c)
@@ -844,7 +843,7 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j + 1] = c[j]/(j + 1)
             tmp[0] += k[i] - hermeval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -986,12 +985,12 @@ def hermeval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = hermeval(x, c)
@@ -1046,7 +1045,7 @@ def hermegrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = hermeval(x, c)
@@ -1099,12 +1098,12 @@ def hermeval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = hermeval(x, c)
@@ -1163,7 +1162,7 @@ def hermegrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = hermeval(x, c)
@@ -1231,7 +1230,7 @@ def hermevander(x, deg):
         v[1] = x
         for i in range(2, ideg + 1):
             v[i] = (v[i-1]*x - v[i-2]*(i - 1))
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def hermevander2d(x, y, deg):
@@ -1281,7 +1280,7 @@ def hermevander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1345,7 +1344,7 @@ def hermevander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1474,7 +1473,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
 
     Examples
     --------
@@ -1587,7 +1586,7 @@ def hermecompanion(c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy
@@ -1735,7 +1734,7 @@ def hermegauss(deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
@@ -1798,7 +1797,7 @@ def hermeweight(x):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     w = np.exp(-.5*x**2)

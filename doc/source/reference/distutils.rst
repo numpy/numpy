@@ -213,7 +213,7 @@ build phase of setup, if a template file named <somefile>.src is
 encountered, a new file named <somefile> is constructed from the
 template and placed in the build directory to be used instead. Two
 forms of template conversion are supported. The first form occurs for
-files named named <file>.ext.src where ext is a recognized Fortran
+files named <file>.ext.src where ext is a recognized Fortran
 extension (f, f90, f95, f77, for, ftn, pyf). The second form is used
 for all other cases.
 

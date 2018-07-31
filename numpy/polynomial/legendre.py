@@ -86,6 +86,7 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -135,10 +136,10 @@ def poly2leg(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(np.arange(4))
     >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> c = P.Legendre(P.poly2leg(p.coef))
+    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
+    >>> c = P.Legendre(P.legendre.poly2leg(p.coef))
     >>> c
-    Legendre([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    Legendre([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
 
     """
     [pol] = pu.as_series([pol])
@@ -618,7 +619,7 @@ def legpow(c, pow, maxpower=16):
     """Raise a Legendre series to a power.
 
     Returns the Legendre series `c` raised to the power `pow`. The
-    arguement `c` is a sequence of coefficients ordered from low to high.
+    argument `c` is a sequence of coefficients ordered from low to high.
     i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
 
     Parameters
@@ -736,15 +737,12 @@ def legder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
@@ -760,7 +758,7 @@ def legder(c, m=1, scl=1, axis=0):
                 der[1] = 3*c[2]
             der[0] = c[1]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -812,8 +810,8 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 0``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
-        ``np.isscalar(scl) == False``.
+        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -824,7 +822,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.
     Why is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`.  Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a` - perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
@@ -862,17 +860,18 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt):
         n = len(c)
@@ -891,7 +890,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j - 1] -= t
             tmp[0] += k[i] - legval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -1026,12 +1025,12 @@ def legval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = legval(x, c)
@@ -1086,7 +1085,7 @@ def leggrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = legval(x, c)
@@ -1139,12 +1138,12 @@ def legval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = legval(x, c)
@@ -1203,7 +1202,7 @@ def leggrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = legval(x, c)
@@ -1264,7 +1263,7 @@ def legvander(x, deg):
         v[1] = x
         for i in range(2, ideg + 1):
             v[i] = (v[i-1]*x*(2*i - 1) - v[i-2]*(i - 1))/i
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def legvander2d(x, y, deg):
@@ -1314,7 +1313,7 @@ def legvander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1378,7 +1377,7 @@ def legvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1510,7 +1509,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
 
     Examples
     --------
@@ -1616,7 +1615,7 @@ def legcompanion(c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy
@@ -1717,7 +1716,7 @@ def leggauss(deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
@@ -1782,7 +1781,7 @@ def legweight(x):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     w = x*0.0 + 1.0

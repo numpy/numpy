@@ -575,9 +575,9 @@ def endswith(a, suffix, start=0, end=None):
     array(['foo', 'bar'],
         dtype='|S3')
     >>> np.char.endswith(s, 'ar')
-    array([False,  True], dtype=bool)
+    array([False,  True])
     >>> np.char.endswith(s, 'a', start=1, end=2)
-    array([False,  True], dtype=bool)
+    array([False,  True])
 
     """
     return _vec_string(
@@ -1289,7 +1289,7 @@ def split(a, sep=None, maxsplit=None):
     For each element in `a`, return a list of the words in the
     string, using `sep` as the delimiter string.
 
-    Calls `str.rsplit` element-wise.
+    Calls `str.split` element-wise.
 
     Parameters
     ----------
@@ -1383,7 +1383,7 @@ def strip(a, chars=None):
     For each element in `a`, return a copy with the leading and
     trailing characters removed.
 
-    Calls `str.rstrip` element-wise.
+    Calls `str.strip` element-wise.
 
     Parameters
     ----------

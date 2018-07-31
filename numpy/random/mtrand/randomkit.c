@@ -64,13 +64,6 @@
 
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <limits.h>
-#include <math.h>
-#include <assert.h>
 
 #ifdef _WIN32
 /*
@@ -109,18 +102,27 @@
 #include <wincrypt.h>
 #endif
 
-#else
-/* Unix */
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#endif
-
 /*
  * Do not move this include. randomkit.h must be included
  * after windows timeb.h is included.
  */
 #include "randomkit.h"
+
+#else
+/* Unix */
+#include "randomkit.h"
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+#endif
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
+#include <math.h>
+#include <assert.h>
 
 #ifndef RK_DEV_URANDOM
 #define RK_DEV_URANDOM "/dev/urandom"
@@ -614,7 +616,7 @@ rk_gauss(rk_state *state)
         }
         while (r2 >= 1.0 || r2 == 0.0);
 
-        /* Box-Muller transform */
+        /* Polar method, a more efficient version of the Box-Muller approach. */
         f = sqrt(-2.0*log(r2)/r2);
         /* Keep for next call */
         state->gauss = f*x1;

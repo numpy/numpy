@@ -214,7 +214,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
 /*
  * This is identical to PyArray_GetDTypeTransferFunction, but returns a
  * transfer function which also takes a mask as a parameter.  The mask is used
- * to determine which values to copy, and data is transfered exactly when
+ * to determine which values to copy, and data is transferred exactly when
  * mask[i*mask_stride] is true.
  *
  * If move_references is true, values which are not copied to the
@@ -286,7 +286,7 @@ PyArray_CastRawArrays(npy_intp count,
  * count:
  *      How many elements to transfer
  * src_itemsize:
- *      How big each element is.  If transfering between elements of different
+ *      How big each element is.  If transferring between elements of different
  *      sizes, for example a casting operation, the 'stransfer' function
  *      should be specialized for that, in which case 'stransfer' will use
  *      this parameter as the source item size.
@@ -414,20 +414,24 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataC, npy_intp *out_stridesC);
 
 /*
- * Return number of elements that must be peeled from
- * the start of 'addr' with 'nvals' elements of size 'esize'
- * in order to reach 'alignment'.
- * alignment must be a power of two.
- * see npy_blocked_end for an example
+ * Return number of elements that must be peeled from the start of 'addr' with
+ * 'nvals' elements of size 'esize' in order to reach blockable alignment.
+ * The required alignment in bytes is passed as the 'alignment' argument and
+ * must be a power of two. This function is used to prepare an array for
+ * blocking. See the 'npy_blocked_end' function documentation below for an
+ * example of how this function is used.
  */
-static NPY_INLINE npy_uintp
+static NPY_INLINE npy_intp
 npy_aligned_block_offset(const void * addr, const npy_uintp esize,
                          const npy_uintp alignment, const npy_uintp nvals)
 {
-    const npy_uintp offset = (npy_uintp)addr & (alignment - 1);
-    npy_uintp peel = offset ? (alignment - offset) / esize : 0;
-    peel = nvals < peel ? nvals : peel;
-    return peel;
+    npy_uintp offset, peel;
+
+    offset = (npy_uintp)addr & (alignment - 1);
+    peel = offset ? (alignment - offset) / esize : 0;
+    peel = (peel <= nvals) ? peel : nvals;
+    assert(peel <= NPY_MAX_INTP);
+    return (npy_intp)peel;
 }
 
 /*
@@ -450,11 +454,16 @@ npy_aligned_block_offset(const void * addr, const npy_uintp esize,
  * for(; i < n; i++)
  *   <scalar-op>
  */
-static NPY_INLINE npy_uintp
-npy_blocked_end(const npy_uintp offset, const npy_uintp esize,
+static NPY_INLINE npy_intp
+npy_blocked_end(const npy_uintp peel, const npy_uintp esize,
                 const npy_uintp vsz, const npy_uintp nvals)
 {
-    return nvals - offset - (nvals - offset) % (vsz / esize);
+    npy_uintp ndiff = nvals - peel;
+    npy_uintp res = (ndiff - ndiff % (vsz / esize));
+
+    assert(nvals >= peel);
+    assert(res <= NPY_MAX_INTP);
+    return (npy_intp)(res);
 }
 
 
@@ -680,21 +689,16 @@ npy_bswap8_unaligned(char * x)
 #define PyArray_TRIVIALLY_ITERABLE_OP_NOREAD 0
 #define PyArray_TRIVIALLY_ITERABLE_OP_READ 1
 
-#define PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) (            \
-                        PyArray_NDIM(arr1) == PyArray_NDIM(arr2) && \
-                        PyArray_CompareLists(PyArray_DIMS(arr1), \
-                                             PyArray_DIMS(arr2), \
-                                             PyArray_NDIM(arr1)) && \
-                        (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
-                                      NPY_ARRAY_F_CONTIGUOUS)) & \
-                                (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
-                                              NPY_ARRAY_F_CONTIGUOUS)) \
-                        )
+#define PyArray_TRIVIALLY_ITERABLE(arr) ( \
+                    PyArray_NDIM(arr) <= 1 || \
+                    PyArray_CHKFLAGS(arr, NPY_ARRAY_C_CONTIGUOUS) || \
+                    PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) \
+                    )
 
 #define PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size, arr) ( \
-                        size == 1 ? 0 : ((PyArray_NDIM(arr) == 1) ? \
-                                          PyArray_STRIDE(arr, 0) : \
-                                          PyArray_ITEMSIZE(arr)))
+        assert(PyArray_TRIVIALLY_ITERABLE(arr)), \
+        size == 1 ? 0 : ((PyArray_NDIM(arr) == 1) ? \
+                             PyArray_STRIDE(arr, 0) : PyArray_ITEMSIZE(arr)))
 
 static NPY_INLINE int
 PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr2,
@@ -748,15 +752,22 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
     return (!arr1_read || arr1_ahead) && (!arr2_read || arr2_ahead);
 }
 
+#define PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) (            \
+                        PyArray_NDIM(arr1) == PyArray_NDIM(arr2) && \
+                        PyArray_CompareLists(PyArray_DIMS(arr1), \
+                                             PyArray_DIMS(arr2), \
+                                             PyArray_NDIM(arr1)) && \
+                        (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
+                                      NPY_ARRAY_F_CONTIGUOUS)) & \
+                                (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
+                                              NPY_ARRAY_F_CONTIGUOUS)) \
+                        )
+
 #define PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2, arr1_read, arr2_read) ( \
                         PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) && \
                         PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK( \
                             arr1, arr2, arr1_read, arr2_read))
-#define PyArray_TRIVIALLY_ITERABLE(arr) ( \
-                    PyArray_NDIM(arr) <= 1 || \
-                    PyArray_CHKFLAGS(arr, NPY_ARRAY_C_CONTIGUOUS) || \
-                    PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) \
-                    )
+
 #define PyArray_PREPARE_TRIVIAL_ITERATION(arr, count, data, stride) \
                     count = PyArray_SIZE(arr); \
                     data = PyArray_BYTES(arr); \
@@ -764,7 +775,6 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                                     ((PyArray_NDIM(arr) == 1) ? \
                                             PyArray_STRIDE(arr, 0) : \
                                             PyArray_ITEMSIZE(arr)));
-
 
 #define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2, arr1_read, arr2_read) (   \
                     PyArray_TRIVIALLY_ITERABLE(arr1) && \

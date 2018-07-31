@@ -14,25 +14,23 @@ Prerequisites
 
 Before reading this tutorial you should know a bit of Python. If you
 would like to refresh your memory, take a look at the `Python
-tutorial <http://docs.python.org/tut/>`__.
+tutorial <https://docs.python.org/tutorial/>`__.
 
 If you wish to work the examples in this tutorial, you must also have
 some software installed on your computer. Please see
-http://scipy.org/install.html for instructions.
+https://scipy.org/install.html for instructions.
 
 The Basics
 ==========
 
 NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
-tuple of positive integers. In NumPy dimensions are called *axes*. The
-number of axes is *rank*.
+tuple of positive integers. In NumPy dimensions are called *axes*.
 
-For example, the coordinates of a point in 3D space ``[1, 2, 1]`` is an
-array of rank 1, because it has one axis. That axis has a length of 3.
-In the example pictured below, the array has rank 2 (it is 2-dimensional).
-The first dimension (axis) has a length of 2, the second dimension has a
-length of 3.
+For example, the coordinates of a point in 3D space ``[1, 2, 1]`` has
+one axis. That axis has 3 elements in it, so we say it has a length
+of 3. In the example pictured below, the array has 2 axes. The first
+axis has a length of 2, the second axis has a length of 3.
 
 ::
 
@@ -46,14 +44,12 @@ arrays and offers less functionality. The more important attributes of
 an ``ndarray`` object are:
 
 ndarray.ndim
-    the number of axes (dimensions) of the array. In the Python world,
-    the number of dimensions is referred to as *rank*.
+    the number of axes (dimensions) of the array.
 ndarray.shape
     the dimensions of the array. This is a tuple of integers indicating
     the size of the array in each dimension. For a matrix with *n* rows
     and *m* columns, ``shape`` will be ``(n,m)``. The length of the
-    ``shape`` tuple is therefore the rank, or number of dimensions,
-    ``ndim``.
+    ``shape`` tuple is therefore the number of axes, ``ndim``.
 ndarray.size
     the total number of elements of the array. This is equal to the
     product of the elements of ``shape``.
@@ -274,7 +270,7 @@ can change the printing options using ``set_printoptions``.
 
 ::
 
-    >>> np.set_printoptions(threshold='nan')
+    >>> np.set_printoptions(threshold=np.nan)
 
 
 Basic Operations
@@ -297,23 +293,23 @@ created and filled with the result.
     >>> 10*np.sin(a)
     array([ 9.12945251, -9.88031624,  7.4511316 , -2.62374854])
     >>> a<35
-    array([ True, True, False, False], dtype=bool)
+    array([ True, True, False, False])
 
 Unlike in many matrix languages, the product operator ``*`` operates
 elementwise in NumPy arrays. The matrix product can be performed using
-the ``dot`` function or method::
+the ``@`` operator (in python >=3.5) or the ``dot`` function or method::
 
     >>> A = np.array( [[1,1],
     ...             [0,1]] )
     >>> B = np.array( [[2,0],
     ...             [3,4]] )
-    >>> A*B                         # elementwise product
+    >>> A * B                       # elementwise product
     array([[2, 0],
            [0, 4]])
-    >>> A.dot(B)                    # matrix product
+    >>> A @ B                       # matrix product
     array([[5, 4],
            [3, 4]])
-    >>> np.dot(A, B)                # another matrix product
+    >>> A.dot(B)                    # another matrix product
     array([[5, 4],
            [3, 4]])
 
@@ -537,8 +533,8 @@ remaining axes. NumPy also allows you to write this using dots as
 ``b[i,...]``.
 
 The **dots** (``...``) represent as many colons as needed to produce a
-complete indexing tuple. For example, if ``x`` is a rank 5 array (i.e.,
-it has 5 axes), then
+complete indexing tuple. For example, if ``x`` is an array with 5
+axes, then
 
 -  ``x[1,2,...]`` is equivalent to ``x[1,2,:,:,:]``,
 -  ``x[...,3]`` to ``x[:,:,:,:,3]`` and
@@ -573,7 +569,7 @@ first axis::
 
 However, if one wants to perform an operation on each element in the
 array, one can use the ``flat`` attribute which is an
-`iterator <https://docs.python.org/2/tutorial/classes.html#iterators>`__
+`iterator <https://docs.python.org/tutorial/classes.html#iterators>`__
 over all the elements of the array::
 
     >>> for element in b.flat:
@@ -804,7 +800,7 @@ Copies and Views
 
 When operating and manipulating arrays, their data is sometimes copied
 into a new array and sometimes not. This is often a source of confusion
-for beginners. There are three cases::
+for beginners. There are three cases:
 
 No Copy at All
 --------------
@@ -1119,13 +1115,13 @@ value of time-dependent series::
            [-0.53657292,  0.42016704,  0.99060736,  0.65028784],
            [-0.28790332, -0.96139749, -0.75098725,  0.14987721]])
     >>>
-    >>> ind = data.argmax(axis=0)                   # index of the maxima for each series
+    >>> ind = data.argmax(axis=0)                  # index of the maxima for each series
     >>> ind
     array([2, 0, 3, 1])
     >>>
-    >>> time_max = time[ ind]                       # times corresponding to the maxima
+    >>> time_max = time[ind]                       # times corresponding to the maxima
     >>>
-    >>> data_max = data[ind, xrange(data.shape[1])] # => data[ind[0],0], data[ind[1],1]...
+    >>> data_max = data[ind, range(data.shape[1])] # => data[ind[0],0], data[ind[1],1]...
     >>>
     >>> time_max
     array([  82.5 ,   20.  ,  113.75,   51.25])
@@ -1180,7 +1176,7 @@ boolean arrays that have *the same shape* as the original array::
     >>> b                                          # b is a boolean with a's shape
     array([[False, False, False, False],
            [False,  True,  True,  True],
-           [ True,  True,  True,  True]], dtype=bool)
+           [ True,  True,  True,  True]])
     >>> a[b]                                       # 1d array with the selected elements
     array([ 5,  6,  7,  8,  9, 10, 11])
 
@@ -1195,7 +1191,7 @@ This property can be very useful in assignments::
 You can look at the following
 example to see
 how to use boolean indexing to generate an image of the `Mandelbrot
-set <http://en.wikipedia.org/wiki/Mandelbrot_set>`__:
+set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
 
 .. plot::
 
@@ -1245,9 +1241,9 @@ selecting the slices we want::
 
 Note that the length of the 1D boolean array must coincide with the
 length of the dimension (or axis) you want to slice. In the previous
-example, ``b1`` is a 1-rank array with length 3 (the number of *rows* in
-``a``), and ``b2`` (of length 4) is suitable to index the 2nd rank
-(columns) of ``a``.
+example, ``b1`` has length 3 (the number of *rows* in ``a``), and
+``b2`` (of length 4) is suitable to index the 2nd axis (columns) of
+``a``.
 
 The ix_() function
 -------------------
@@ -1361,7 +1357,7 @@ See linalg.py in numpy folder for more.
            [ 0.,  1.]])
     >>> j = np.array([[0.0, -1.0], [1.0, 0.0]])
 
-    >>> np.dot (j, j) # matrix product
+    >>> j @ j        # matrix product
     array([[-1.,  0.],
            [ 0., -1.]])
 
@@ -1455,10 +1451,10 @@ that ``pylab.hist`` plots the histogram automatically, while
     >>> mu, sigma = 2, 0.5
     >>> v = np.random.normal(mu,sigma,10000)
     >>> # Plot a normalized histogram with 50 bins
-    >>> plt.hist(v, bins=50, normed=1)       # matplotlib version (plot)
+    >>> plt.hist(v, bins=50, density=1)       # matplotlib version (plot)
     >>> plt.show()
     >>> # Compute the histogram with numpy and then plot it
-    >>> (n, bins) = np.histogram(v, bins=50, normed=True)  # NumPy version (no plot)
+    >>> (n, bins) = np.histogram(v, bins=50, density=True)  # NumPy version (no plot)
     >>> plt.plot(.5*(bins[1:]+bins[:-1]), n)
     >>> plt.show()
 
@@ -1466,8 +1462,8 @@ that ``pylab.hist`` plots the histogram automatically, while
 Further reading
 ===============
 
--  The `Python tutorial <http://docs.python.org/tutorial/>`__
+-  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
--  `SciPy Lecture Notes <http://www.scipy-lectures.org>`__
+-  `SciPy Lecture Notes <https://www.scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__

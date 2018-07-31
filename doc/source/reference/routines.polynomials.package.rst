@@ -15,3 +15,4 @@ Polynomial Package
    routines.polynomials.laguerre
    routines.polynomials.hermite
    routines.polynomials.hermite_e
+   routines.polynomials.polyutils

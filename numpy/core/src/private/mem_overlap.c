@@ -181,15 +181,16 @@
   All rights reserved.
   Licensed under 3-clause BSD license, see LICENSE.txt.
 */
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/ndarraytypes.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
 
 
 #define MAX(a, b) (((a) >= (b)) ? (a) : (b))
@@ -414,7 +415,8 @@ diophantine_dfs(unsigned int n,
             x[0] = x1 + c1*t_l;
             x[1] = x2 - c2*t_l;
             if (require_ub_nontrivial) {
-                int j, is_ub_trivial;
+                unsigned int j;
+                int is_ub_trivial;
 
                 is_ub_trivial = 1;
                 for (j = 0; j < n; ++j) {
@@ -710,7 +712,7 @@ static int
 strides_to_terms(PyArrayObject *arr, diophantine_term_t *terms,
                  unsigned int *nterms, int skip_empty)
 {
-    unsigned int i;
+    int i;
 
     for (i = 0; i < PyArray_NDIM(arr); ++i) {
         if (skip_empty) {
@@ -755,9 +757,11 @@ solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
                        Py_ssize_t max_work)
 {
     npy_int64 rhs;
-    diophantine_term_t terms[2*NPY_MAXDIMS+2];
-    npy_uintp start1 = 0, start2 = 0, end1 = 0, end2 = 0, size1 = 0, size2 = 0;
-    npy_int64 x[2*NPY_MAXDIMS+2];
+    diophantine_term_t terms[2*NPY_MAXDIMS + 2];
+    npy_uintp start1 = 0, end1 = 0, size1 = 0;
+    npy_uintp start2 = 0, end2 = 0, size2 = 0;
+    npy_uintp uintp_rhs;
+    npy_int64 x[2*NPY_MAXDIMS + 2];
     unsigned int nterms;
 
     get_array_memory_extents(a, &start1, &end1, &size1);
@@ -796,12 +800,12 @@ solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
        the extent check above.)
     */
 
-    rhs = MIN(end2 - 1 - start1, end1 - 1 - start2);
-
-    if (rhs != (npy_uintp)rhs) {
+    uintp_rhs = MIN(end2 - 1 - start1, end1 - 1 - start2);
+    if (uintp_rhs > NPY_MAX_INT64) {
         /* Integer overflow */
         return MEM_OVERLAP_OVERFLOW;
     }
+    rhs = (npy_int64)uintp_rhs;
 
     nterms = 0;
     if (strides_to_terms(a, terms, &nterms, 1)) {
@@ -844,8 +848,7 @@ solve_may_have_internal_overlap(PyArrayObject *a, Py_ssize_t max_work)
 {
     diophantine_term_t terms[NPY_MAXDIMS+1];
     npy_int64 x[NPY_MAXDIMS+1];
-    unsigned int nterms;
-    int i, j;
+    unsigned int i, j, nterms;
 
     if (PyArray_ISCONTIGUOUS(a)) {
         /* Quick case */

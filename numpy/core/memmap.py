@@ -34,7 +34,7 @@ class memmap(ndarray):
     This class may at some point be turned into a factory function
     which returns a view into an mmap buffer.
 
-    Delete the memmap instance to close.
+    Delete the memmap instance to close the memmap file.
 
 
     Parameters
@@ -240,7 +240,7 @@ class memmap(ndarray):
         else:
             if not isinstance(shape, tuple):
                 shape = (shape,)
-            size = 1
+            size = np.intp(1)  # avoid default choice of np.int_, which might overflow
             for k in shape:
                 size *= k
 
@@ -248,7 +248,7 @@ class memmap(ndarray):
 
         if mode == 'w+' or (mode == 'r+' and flen < bytes):
             fid.seek(bytes - 1, 0)
-            fid.write(np.compat.asbytes('\0'))
+            fid.write(b'\0')
             fid.flush()
 
         if mode == 'c':

@@ -1,31 +1,30 @@
-<div align="center">
-  <img src="http://www.numpy.org/_static/numpy_logo.png"><br>
-</div>
------------------
-|  **`Travis CI Status`**   |
-|-------------------|
-|[![Travis](https://img.shields.io/travis/numpy/numpy.svg)](https://travis-ci.org/numpy/numpy)|
+# <img alt="NumPy" src="https://cdn.rawgit.com/numpy/numpy/master/branding/icons/numpylogo.svg" height="60">
 
+[![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](https://travis-ci.org/numpy/numpy)
+[![AppVeyor](https://img.shields.io/appveyor/ci/charris/numpy/master.svg?label=AppVeyor)](https://ci.appveyor.com/project/charris/numpy)
+[![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](https://codecov.io/gh/numpy/numpy)
 
 NumPy is the fundamental package needed for scientific computing with Python.
-This package contains:
 
-   * a powerful N-dimensional array object
-   * sophisticated (broadcasting) functions
-   * tools for integrating C/C++ and Fortran code
-   * useful linear algebra, Fourier transform, and random number capabilities.
+- **Website (including documentation):** https://www.numpy.org
+- **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
+- **Source:** https://github.com/numpy/numpy
+- **Bug reports:** https://github.com/numpy/numpy/issues
 
-It derives from the old Numeric code base and can be used as a replacement for Numeric. It also adds the features introduced by numarray and can be used to replace numarray.
+It provides:
 
-More information can be found at the website:
+- a powerful N-dimensional array object
+- sophisticated (broadcasting) functions
+- tools for integrating C/C++ and Fortran code
+- useful linear algebra, Fourier transform, and random number capabilities
 
-* http://www.numpy.org
+Testing:
 
-After installation, tests can be run (if ``nose`` is installed) with:
+- NumPy versions >= 1.15 require ``pytest``
+- NumPy versions < 1.15 require ``nose``
+
+Tests can then be run after installation with:
 
     python -c 'import numpy; numpy.test()'
 
-The most current development version is always available from our
-git repository:
-
-* http://github.com/numpy/numpy
+[![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](https://numfocus.org)

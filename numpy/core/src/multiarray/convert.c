@@ -13,6 +13,7 @@
 
 #include "npy_pycompat.h"
 
+#include "common.h"
 #include "arrayobject.h"
 #include "ctors.h"
 #include "mapping.h"
@@ -85,7 +86,7 @@ recursive_tolist(PyArrayObject *self, char *dataptr, int startdim)
 
     /* Base case */
     if (startdim >= PyArray_NDIM(self)) {
-        return PyArray_DESCR(self)->f->getitem(dataptr,self);
+        return PyArray_GETITEM(self, dataptr);
     }
 
     n = PyArray_DIM(self, startdim);
@@ -221,7 +222,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         while (it->index < it->size) {
-            obj = PyArray_DESCR(self)->f->getitem(it->dataptr, self);
+            obj = PyArray_GETITEM(self, it->dataptr);
             if (obj == NULL) {
                 Py_DECREF(it);
                 return -1;
@@ -411,7 +412,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     else if (PyLong_Check(obj) || PyInt_Check(obj)) {
         /* Try long long before unsigned long long */
         npy_longlong ll_v = PyLong_AsLongLong(obj);
-        if (ll_v == -1 && PyErr_Occurred()) {
+        if (error_converting(ll_v)) {
             /* Long long failed, try unsigned long long */
             npy_ulonglong ull_v;
             PyErr_Clear();
@@ -441,7 +442,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     /* Python float */
     else if (PyFloat_Check(obj)) {
         npy_double v = PyFloat_AsDouble(obj);
-        if (v == -1 && PyErr_Occurred()) {
+        if (error_converting(v)) {
             return -1;
         }
         value = (char *)value_buffer;
@@ -457,11 +458,11 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         npy_double re, im;
 
         re = PyComplex_RealAsDouble(obj);
-        if (re == -1 && PyErr_Occurred()) {
+        if (error_converting(re)) {
             return -1;
         }
         im = PyComplex_ImagAsDouble(obj);
-        if (im == -1 && PyErr_Occurred()) {
+        if (error_converting(im)) {
             return -1;
         }
         value = (char *)value_buffer;
@@ -612,11 +613,14 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         subtype = Py_TYPE(self);
     }
 
-    if (type != NULL && (PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) {
+    dtype = PyArray_DESCR(self);
+
+    if (type != NULL && !PyArray_EquivTypes(dtype, type) &&
+            (PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) {
         const char *msg =
             "Numpy has detected that you may be viewing or writing to an array "
             "returned by selecting multiple fields in a structured array. \n\n"
-            "This code may break in numpy 1.13 because this will return a view "
+            "This code may break in numpy 1.16 because this will return a view "
             "instead of a copy -- see release notes for details.";
         /* 2016-09-19, 1.12 */
         if (DEPRECATE_FUTUREWARNING(msg) < 0) {
@@ -628,24 +632,14 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 
     flags = PyArray_FLAGS(self);
 
-    dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr_int(subtype,
-                               dtype,
-                               PyArray_NDIM(self), PyArray_DIMS(self),
-                               PyArray_STRIDES(self),
-                               PyArray_DATA(self),
-                               flags,
-                               (PyObject *)self, 0, 1);
+    ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+            subtype, dtype,
+            PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
+            PyArray_DATA(self),
+            flags, (PyObject *)self, (PyObject *)self,
+            0, 1);
     if (ret == NULL) {
-        Py_XDECREF(type);
-        return NULL;
-    }
-
-    /* Set the base object */
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
         Py_XDECREF(type);
         return NULL;
     }

@@ -11,4 +11,4 @@ Contents:
 
    development_setup
    configure_git
-   development_workflow
+   dot2_dot3

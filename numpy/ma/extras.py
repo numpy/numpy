@@ -16,10 +16,10 @@ __all__ = [
     'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
     'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
     'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
-    'hsplit', 'hstack', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
+    'hsplit', 'hstack', 'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
     'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
-    'setdiff1d', 'setxor1d', 'unique', 'union1d', 'vander', 'vstack',
+    'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
     ]
 
 import itertools
@@ -36,6 +36,8 @@ from .core import (
 import numpy as np
 from numpy import ndarray, array as nxarray
 import numpy.core.umath as umath
+from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
 
@@ -213,7 +215,7 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
-class _fromnxfunction:
+class _fromnxfunction(object):
     """
     Defines a wrapper to adapt NumPy functions to masked arrays.
 
@@ -355,6 +357,7 @@ vstack = row_stack = _fromnxfunction_seq('vstack')
 hstack = _fromnxfunction_seq('hstack')
 column_stack = _fromnxfunction_seq('column_stack')
 dstack = _fromnxfunction_seq('dstack')
+stack = _fromnxfunction_seq('stack')
 
 hsplit = _fromnxfunction_single('hsplit')
 
@@ -380,11 +383,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     arr = array(arr, copy=False, subok=True)
     nd = arr.ndim
-    if axis < 0:
-        axis += nd
-    if (axis >= nd):
-        raise ValueError("axis must be less than arr.ndim; axis=%d, rank=%d."
-            % (axis, nd))
+    axis = normalize_axis_index(axis, nd)
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
     indlist = list(range(nd))
@@ -717,8 +716,16 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     if axis is None:
         axis = 0
-    elif axis < 0:
-        axis += asorted.ndim
+    else:
+        axis = normalize_axis_index(axis, asorted.ndim)
+
+    if asorted.shape[axis] == 0:
+        # for empty axis integer indices fail so use slicing to get same result
+        # as median (which is mean of empty slice = nan)
+        indexer = [slice(None)] * asorted.ndim
+        indexer[axis] = slice(0, 0)
+        indexer = tuple(indexer)
+        return np.ma.mean(asorted[indexer], axis=axis, out=out)
 
     if asorted.ndim == 1:
         counts = count(asorted)
@@ -740,19 +747,17 @@ def _median(a, axis=None, out=None, overwrite_input=False):
             return np.ma.minimum_fill_value(asorted)
         return s
 
-    counts = count(asorted, axis=axis)
+    counts = count(asorted, axis=axis, keepdims=True)
     h = counts // 2
 
-    # create indexing mesh grid for all but reduced axis
-    axes_grid = [np.arange(x) for i, x in enumerate(asorted.shape)
-                 if i != axis]
-    ind = np.meshgrid(*axes_grid, sparse=True, indexing='ij')
+    # duplicate high if odd number of elements so mean does nothing
+    odd = counts % 2 == 1
+    l = np.where(odd, h, h-1)
 
-    # insert indices of low and high median
-    ind.insert(axis, h - 1)
-    low = asorted[tuple(ind)]
-    ind[axis] = np.minimum(h, asorted.shape[axis] - 1)
-    high = asorted[tuple(ind)]
+    lh = np.concatenate([l,h], axis=axis)
+
+    # get low and high median
+    low_high = np.take_along_axis(asorted, lh, axis=axis)
 
     def replace_masked(s):
         # Replace masked entries with minimum_full_value unless it all values
@@ -760,36 +765,26 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # larger than the fill value is undefined and a valid value placed
         # elsewhere, e.g. [4, --, inf].
         if np.ma.is_masked(s):
-            rep = (~np.all(asorted.mask, axis=axis)) & s.mask
+            rep = (~np.all(asorted.mask, axis=axis, keepdims=True)) & s.mask
             s.data[rep] = np.ma.minimum_fill_value(asorted)
             s.mask[rep] = False
 
-    replace_masked(low)
-    replace_masked(high)
-
-    # duplicate high if odd number of elements so mean does nothing
-    odd = counts % 2 == 1
-    np.copyto(low, high, where=odd)
-    # not necessary for scalar True/False masks
-    try:
-        np.copyto(low.mask, high.mask, where=odd)
-    except:
-        pass
+    replace_masked(low_high)
 
     if np.issubdtype(asorted.dtype, np.inexact):
         # avoid inf / x = masked
-        s = np.ma.sum([low, high], axis=0, out=out)
+        s = np.ma.sum(low_high, axis=axis, out=out)
         np.true_divide(s.data, 2., casting='unsafe', out=s.data)
 
         s = np.lib.utils._median_nancheck(asorted, s, axis, out)
     else:
-        s = np.ma.mean([low, high], axis=0, out=out)
+        s = np.ma.mean(low_high, axis=axis, out=out)
 
     return s
 
 
 def compress_nd(x, axis=None):
-    """Supress slices from multiple dimensions which contain masked values.
+    """Suppress slices from multiple dimensions which contain masked values.
 
     Parameters
     ----------
@@ -798,10 +793,10 @@ def compress_nd(x, axis=None):
         elements are masked, `x` is interpreted as a MaskedArray with `mask`
         set to `nomask`.
     axis : tuple of ints or int, optional
-        Which dimensions to supress slices from can be configured with this
+        Which dimensions to suppress slices from can be configured with this
         parameter.
-        - If axis is a tuple of ints, those are the axes to supress slices from.
-        - If axis is an int, then that is the only axis to supress slices from.
+        - If axis is a tuple of ints, those are the axes to suppress slices from.
+        - If axis is an int, then that is the only axis to suppress slices from.
         - If axis is None, all axis are selected.
 
     Returns
@@ -812,18 +807,11 @@ def compress_nd(x, axis=None):
     x = asarray(x)
     m = getmask(x)
     # Set axis to tuple of ints
-    if isinstance(axis, int):
-        axis = (axis,)
-    elif axis is None:
+    if axis is None:
         axis = tuple(range(x.ndim))
-    elif not isinstance(axis, tuple):
-        raise ValueError('Invalid type for axis argument')
-    # Check axis input
-    axis = [ax + x.ndim if ax < 0 else ax for ax in axis]
-    if not all(0 <= ax < x.ndim for ax in axis):
-        raise ValueError("'axis' entry is out of bounds")
-    if len(axis) != len(set(axis)):
-        raise ValueError("duplicate value in 'axis'")
+    else:
+        axis = normalize_axis_tuple(axis, x.ndim)
+
     # Nothing is masked: return x
     if m is nomask or not m.any():
         return x._data
@@ -941,7 +929,7 @@ def mask_rows(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -986,7 +974,7 @@ def mask_cols(a, axis=None):
     Examples
     --------
     >>> import numpy.ma as ma
-    >>> a = np.zeros((3, 3), dtype=np.int)
+    >>> a = np.zeros((3, 3), dtype=int)
     >>> a[1, 1] = 1
     >>> a
     array([[0, 0, 0],
@@ -1133,6 +1121,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
+
 def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
@@ -1140,8 +1129,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     The output is always a masked array. See `numpy.in1d` for more details.
 
+    We recommend using :func:`isin` instead of `in1d` for new code.
+
     See Also
     --------
+    isin       : Version of this function that preserves the shape of ar1.
     numpy.in1d : Equivalent function for ndarrays.
 
     Notes
@@ -1172,6 +1164,29 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return flag[indx][rev_idx]
 
 
+def isin(element, test_elements, assume_unique=False, invert=False):
+    """
+    Calculates `element in test_elements`, broadcasting over
+    `element` only.
+
+    The output is always a masked array of the same shape as `element`.
+    See `numpy.isin` for more details.
+
+    See Also
+    --------
+    in1d       : Flattened version of this function.
+    numpy.isin : Equivalent function for ndarrays.
+
+    Notes
+    -----
+    .. versionadded:: 1.13.0
+
+    """
+    element = ma.asarray(element)
+    return in1d(element, test_elements, assume_unique=assume_unique,
+                invert=invert).reshape(element.shape)
+
+
 def union1d(ar1, ar2):
     """
     Union of two arrays.
@@ -1183,7 +1198,7 @@ def union1d(ar1, ar2):
     numpy.union1d : Equivalent function for ndarrays.
 
     """
-    return unique(ma.concatenate((ar1, ar2)))
+    return unique(ma.concatenate((ar1, ar2), axis=None))
 
 
 def setdiff1d(ar1, ar2, assume_unique=False):
@@ -1436,60 +1451,24 @@ class MAxisConcatenator(AxisConcatenator):
     mr_class
 
     """
+    concatenate = staticmethod(concatenate)
 
-    def __init__(self, axis=0):
-        AxisConcatenator.__init__(self, axis, matrix=False)
+    @classmethod
+    def makemat(cls, arr):
+        # There used to be a view as np.matrix here, but we may eventually
+        # deprecate that class. In preparation, we use the unmasked version
+        # to construct the matrix (with copy=False for backwards compatibility
+        # with the .view)
+        data = super(MAxisConcatenator, cls).makemat(arr.data, copy=False)
+        return array(data, mask=arr.mask)
 
     def __getitem__(self, key):
+        # matrix builder syntax, like 'a, b; c, d'
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
-        if not isinstance(key, tuple):
-            key = (key,)
-        objs = []
-        scalars = []
-        final_dtypedescr = None
-        for k in range(len(key)):
-            scalar = False
-            if isinstance(key[k], slice):
-                step = key[k].step
-                start = key[k].start
-                stop = key[k].stop
-                if start is None:
-                    start = 0
-                if step is None:
-                    step = 1
-                if isinstance(step, complex):
-                    size = int(abs(step))
-                    newobj = np.linspace(start, stop, num=size)
-                else:
-                    newobj = np.arange(start, stop, step)
-            elif isinstance(key[k], str):
-                if (key[k] in 'rc'):
-                    self.matrix = True
-                    self.col = (key[k] == 'c')
-                    continue
-                try:
-                    self.axis = int(key[k])
-                    continue
-                except (ValueError, TypeError):
-                    raise ValueError("Unknown special directive")
-            elif type(key[k]) in np.ScalarType:
-                newobj = asarray([key[k]])
-                scalars.append(k)
-                scalar = True
-            else:
-                newobj = key[k]
-            objs.append(newobj)
-            if isinstance(newobj, ndarray) and not scalar:
-                if final_dtypedescr is None:
-                    final_dtypedescr = newobj.dtype
-                elif newobj.dtype > final_dtypedescr:
-                    final_dtypedescr = newobj.dtype
-        if final_dtypedescr is not None:
-            for k in scalars:
-                objs[k] = objs[k].astype(final_dtypedescr)
-        res = concatenate(tuple(objs), axis=self.axis)
-        return self._retval(res)
+
+        return super(MAxisConcatenator, self).__getitem__(key)
+
 
 class mr_class(MAxisConcatenator):
     """
@@ -1634,7 +1613,10 @@ def flatnotmasked_contiguous(a):
     Returns
     -------
     slice_list : list
-        A sorted sequence of slices (start index, end index).
+        A sorted sequence of `slice` objects (start index, end index).
+
+        ..versionchanged:: 1.15.0
+            Now returns an empty list instead of None for a fully masked array
 
     See Also
     --------
@@ -1649,7 +1631,7 @@ def flatnotmasked_contiguous(a):
     --------
     >>> a = np.ma.arange(10)
     >>> np.ma.flatnotmasked_contiguous(a)
-    slice(0, 10, None)
+    [slice(0, 10, None)]
 
     >>> mask = (a < 3) | (a > 8) | (a == 5)
     >>> a[mask] = np.ma.masked
@@ -1659,13 +1641,13 @@ def flatnotmasked_contiguous(a):
     >>> np.ma.flatnotmasked_contiguous(a)
     [slice(3, 5, None), slice(6, 9, None)]
     >>> a[:] = np.ma.masked
-    >>> print(np.ma.flatnotmasked_edges(a))
-    None
+    >>> np.ma.flatnotmasked_contiguous(a)
+    []
 
     """
     m = getmask(a)
     if m is nomask:
-        return slice(0, a.size, None)
+        return [slice(0, a.size)]
     i = 0
     result = []
     for (k, g) in itertools.groupby(m.ravel()):
@@ -1673,7 +1655,7 @@ def flatnotmasked_contiguous(a):
         if not k:
             result.append(slice(i, i + n))
         i += n
-    return result or None
+    return result
 
 def notmasked_contiguous(a, axis=None):
     """
@@ -1685,13 +1667,16 @@ def notmasked_contiguous(a, axis=None):
         The input array.
     axis : int, optional
         Axis along which to perform the operation.
-        If None (default), applies to a flattened version of the array.
+        If None (default), applies to a flattened version of the array, and this
+        is the same as `flatnotmasked_contiguous`.
 
     Returns
     -------
     endpoints : list
         A list of slices (start and end indexes) of unmasked indexes
         in the array.
+
+        If the input is 2d and axis is specified, the result is a list of lists.
 
     See Also
     --------
@@ -1704,17 +1689,35 @@ def notmasked_contiguous(a, axis=None):
 
     Examples
     --------
-    >>> a = np.arange(9).reshape((3, 3))
+    >>> a = np.arange(12).reshape((3, 4))
     >>> mask = np.zeros_like(a)
-    >>> mask[1:, 1:] = 1
-
+    >>> mask[1:, :-1] = 1; mask[0, 1] = 1; mask[-1, 0] = 0
     >>> ma = np.ma.array(a, mask=mask)
+    >>> ma
+    masked_array(
+      data=[[0, --, 2, 3],
+            [--, --, --, 7],
+            [8, --, --, 11]],
+      mask=[[False,  True, False, False],
+            [ True,  True,  True, False],
+            [False,  True,  True, False]],
+      fill_value=999999)
     >>> np.array(ma[~ma.mask])
-    array([0, 1, 2, 3, 6])
+    array([ 0,  2,  3,  7, 8, 11])
 
     >>> np.ma.notmasked_contiguous(ma)
-    [slice(0, 4, None), slice(6, 7, None)]
+    [slice(0, 1, None), slice(2, 4, None), slice(7, 9, None), slice(11, 12, None)]
 
+    >>> np.ma.notmasked_contiguous(ma, axis=0)
+    [[slice(0, 1, None), slice(2, 3, None)],  # column broken into two segments
+     [],                                      # fully masked column
+     [slice(0, 1, None)],
+     [slice(0, 3, None)]]
+
+    >>> np.ma.notmasked_contiguous(ma, axis=1)
+    [[slice(0, 1, None), slice(2, 4, None)],  # row broken into two segments
+     [slice(3, 4, None)],
+     [slice(0, 1, None), slice(3, 4, None)]]
     """
     a = asarray(a)
     nd = a.ndim
@@ -1731,7 +1734,7 @@ def notmasked_contiguous(a, axis=None):
     #
     for i in range(a.shape[other]):
         idx[other] = i
-        result.append(flatnotmasked_contiguous(a[idx]) or None)
+        result.append(flatnotmasked_contiguous(a[tuple(idx)]))
     return result
 
 

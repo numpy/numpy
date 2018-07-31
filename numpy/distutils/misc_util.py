@@ -9,6 +9,7 @@ import atexit
 import tempfile
 import subprocess
 import shutil
+import multiprocessing
 
 import distutils
 from distutils.errors import DistutilsError
@@ -32,11 +33,6 @@ def clean_up_temporary_directory():
                 pass
 
 atexit.register(clean_up_temporary_directory)
-
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from numpy.distutils.compat import get_exception
 from numpy.compat import basestring
@@ -97,7 +93,11 @@ def get_num_build_jobs():
 
     """
     from numpy.distutils.core import get_distribution
-    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", 1))
+    try:
+        cpu_count = len(os.sched_getaffinity(0))
+    except AttributeError:
+        cpu_count = multiprocessing.cpu_count()
+    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", cpu_count))
     dist = get_distribution()
     # may be None during configuration
     if dist is None:
@@ -256,6 +256,11 @@ def minrelpath(path):
         return ''
     return os.sep.join(l)
 
+def sorted_glob(fileglob):
+    """sorts output of python glob for https://bugs.python.org/issue30461
+    to allow extensions to have reproducible build results"""
+    return sorted(glob.glob(fileglob))
+
 def _fix_paths(paths, local_path, include_non_existing):
     assert is_sequence(paths), repr(type(paths))
     new_paths = []
@@ -263,8 +268,8 @@ def _fix_paths(paths, local_path, include_non_existing):
     for n in paths:
         if is_string(n):
             if '*' in n or '?' in n:
-                p = glob.glob(n)
-                p2 = glob.glob(njoin(local_path, n))
+                p = sorted_glob(n)
+                p2 = sorted_glob(njoin(local_path, n))
                 if p2:
                     new_paths.extend(p2)
                 elif p:
@@ -312,7 +317,7 @@ def make_temp_file(suffix='', prefix='', text=True):
     return fo, name
 
 # Hooks for colored terminal output.
-# See also http://www.livinglogic.de/Python/ansistyle
+# See also https://web.archive.org/web/20100314204946/http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
     if sys.platform=='cygwin' and 'USE_COLOR' not in os.environ:
         # Avoid importing curses that causes illegal operation
@@ -461,7 +466,7 @@ def is_sequence(seq):
         return False
     try:
         len(seq)
-    except:
+    except Exception:
         return False
     return True
 
@@ -528,7 +533,7 @@ def _get_headers(directory_list):
     # get *.h files from list of directories
     headers = []
     for d in directory_list:
-        head = glob.glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
+        head = sorted_glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
         headers.extend(head)
     return headers
 
@@ -540,6 +545,18 @@ def _get_directories(list_of_sources):
         if d[0] != '' and not d[0] in direcs:
             direcs.append(d[0])
     return direcs
+
+def _commandline_dep_string(cc_args, extra_postargs, pp_opts):
+    """
+    Return commandline representation used to determine if a file needs
+    to be recompiled
+    """
+    cmdline = 'commandline: '
+    cmdline += ' '.join(cc_args)
+    cmdline += ' '.join(extra_postargs)
+    cmdline += ' '.join(pp_opts) + '\n'
+    return cmdline
+
 
 def get_dependencies(sources):
     #XXX scan sources for include statements
@@ -870,7 +887,7 @@ class Configuration(object):
                                  caller_level = 1):
         l = subpackage_name.split('.')
         subpackage_path = njoin([self.local_path]+l)
-        dirs = [_m for _m in glob.glob(subpackage_path) if os.path.isdir(_m)]
+        dirs = [_m for _m in sorted_glob(subpackage_path) if os.path.isdir(_m)]
         config_list = []
         for d in dirs:
             if not os.path.isfile(njoin(d, '__init__.py')):
@@ -1052,24 +1069,25 @@ class Configuration(object):
 
         Notes
         -----
-        Rules for installation paths:
-          foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
-          (gun, foo/bar) -> parent/gun
-          foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
-          (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
-          (gun/*, foo/*) -> parent/gun/a, parent/gun/b
-          /foo/bar -> (bar, /foo/bar) -> parent/bar
-          (gun, /foo/bar) -> parent/gun
-          (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
+        Rules for installation paths::
+
+            foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
+            (gun, foo/bar) -> parent/gun
+            foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
+            (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
+            (gun/*, foo/*) -> parent/gun/a, parent/gun/b
+            /foo/bar -> (bar, /foo/bar) -> parent/bar
+            (gun, /foo/bar) -> parent/gun
+            (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
 
         Examples
         --------
         For example suppose the source directory contains fun/foo.dat and
-        fun/bar/car.dat::
+        fun/bar/car.dat:
 
-            >>> self.add_data_dir('fun')                       #doctest: +SKIP
-            >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
-            >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
+        >>> self.add_data_dir('fun')                       #doctest: +SKIP
+        >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
+        >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
 
         Will install data-files to the locations::
 
@@ -1085,6 +1103,7 @@ class Configuration(object):
               gun/
                 foo.dat
                 car.dat
+
         """
         if is_sequence(data_path):
             d, data_path = data_path
@@ -1204,15 +1223,15 @@ class Configuration(object):
           #. file.txt -> (., file.txt)-> parent/file.txt
           #. foo/file.txt -> (foo, foo/file.txt) -> parent/foo/file.txt
           #. /foo/bar/file.txt -> (., /foo/bar/file.txt) -> parent/file.txt
-          #. *.txt -> parent/a.txt, parent/b.txt
-          #. foo/*.txt -> parent/foo/a.txt, parent/foo/b.txt
-          #. */*.txt -> (*, */*.txt) -> parent/c/a.txt, parent/d/b.txt
+          #. ``*``.txt -> parent/a.txt, parent/b.txt
+          #. foo/``*``.txt`` -> parent/foo/a.txt, parent/foo/b.txt
+          #. ``*/*.txt`` -> (``*``, ``*``/``*``.txt) -> parent/c/a.txt, parent/d/b.txt
           #. (sun, file.txt) -> parent/sun/file.txt
           #. (sun, bar/file.txt) -> parent/sun/file.txt
           #. (sun, /foo/bar/file.txt) -> parent/sun/file.txt
-          #. (sun, *.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun, bar/*.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun/*, */*.txt) -> parent/sun/c/a.txt, parent/d/b.txt
+          #. (sun, ``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun, bar/``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun/``*``, ``*``/``*``.txt) -> parent/sun/c/a.txt, parent/d/b.txt
 
         An additional feature is that the path to a data-file can actually be
         a function that takes no arguments and returns the actual path(s) to
@@ -1824,7 +1843,7 @@ class Configuration(object):
                     close_fds=True)
             sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+        except Exception:
             pass
         os.chdir(cwd)
         if m:
@@ -1861,7 +1880,7 @@ class Configuration(object):
                     close_fds=True)
             sout = p.stdout
             m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+        except Exception:
             pass
         os.chdir(cwd)
         if m:
@@ -2055,7 +2074,6 @@ class Configuration(object):
 
         """
         self.py_modules.append((self.name, name, generate_config_py))
-
 
     def get_info(self,*names):
         """Get resources information.
@@ -2270,9 +2288,24 @@ def generate_config_py(target):
     from distutils.dir_util import mkpath
     mkpath(os.path.dirname(target))
     f = open(target, 'w')
-    f.write('# This file is generated by %s\n' % (os.path.abspath(sys.argv[0])))
+    f.write('# This file is generated by numpy\'s %s\n' % (os.path.basename(sys.argv[0])))
     f.write('# It contains system_info results at the time of building this package.\n')
     f.write('__all__ = ["get_info","show"]\n\n')
+
+    # For gfortran+msvc combination, extra shared libraries may exist
+    f.write("""
+
+import os
+import sys
+
+extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
+
+if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
+    os.environ.setdefault('PATH', '')
+    os.environ['PATH'] += os.pathsep + extra_dll_dir
+
+""")
+
     for k, i in system_info.saved_results.items():
         f.write('%s=%r\n' % (k, i))
     f.write(r'''

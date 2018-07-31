@@ -3,16 +3,16 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-        TestCase, run_module_suite, assert_, assert_raises, assert_equal,
-        assert_warns, assert_no_warnings, assert_array_equal,
-        assert_array_almost_equal, suppress_warnings)
+        assert_, assert_raises, assert_equal, assert_warns,
+        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
+        suppress_warnings
+        )
 from numpy import random
-from numpy.compat import asbytes
 import sys
 import warnings
 
 
-class TestSeed(TestCase):
+class TestSeed(object):
     def test_scalar(self):
         s = np.random.RandomState(0)
         assert_equal(s.randint(1000), 684)
@@ -42,8 +42,15 @@ class TestSeed(TestCase):
         assert_raises(ValueError, np.random.RandomState, [1, 2, 4294967296])
         assert_raises(ValueError, np.random.RandomState, [1, -2, 4294967296])
 
+    def test_invalid_array_shape(self):
+        # gh-9832
+        assert_raises(ValueError, np.random.RandomState, np.array([], dtype=np.int64))
+        assert_raises(ValueError, np.random.RandomState, [[1, 2, 3]])
+        assert_raises(ValueError, np.random.RandomState, [[1, 2, 3],
+                                                          [4, 5, 6]])
 
-class TestBinomial(TestCase):
+
+class TestBinomial(object):
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
         # binomial(0, p) should be zero for any p in [0, 1].
@@ -58,7 +65,7 @@ class TestBinomial(TestCase):
         assert_raises(ValueError, random.binomial, 1, np.nan)
 
 
-class TestMultinomial(TestCase):
+class TestMultinomial(object):
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 
@@ -83,11 +90,11 @@ class TestMultinomial(TestCase):
                      (2, 2, 2))
 
         assert_raises(TypeError, np.random.multinomial, 1, p,
-                      np.float(1))
+                      float(1))
 
 
-class TestSetState(TestCase):
-    def setUp(self):
+class TestSetState(object):
+    def setup(self):
         self.seed = 1234567890
         self.prng = random.RandomState(self.seed)
         self.state = self.prng.get_state()
@@ -134,7 +141,7 @@ class TestSetState(TestCase):
         self.prng.negative_binomial(0.5, 0.5)
 
 
-class TestRandint(TestCase):
+class TestRandint(object):
 
     rfunc = np.random.randint
 
@@ -143,7 +150,7 @@ class TestRandint(TestCase):
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
-        assert_raises(TypeError, self.rfunc, 1, dtype=np.float)
+        assert_raises(TypeError, self.rfunc, 1, dtype=float)
 
     def test_bounds_checking(self):
         for dt in self.itype:
@@ -158,29 +165,49 @@ class TestRandint(TestCase):
         for dt in self.itype:
             lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
             tgt = (lbnd + ubnd)//2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+
+    def test_full_range(self):
+        # Test for ticket #1690
+
+        for dt in self.itype:
+            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+
+            try:
+                self.rfunc(lbnd, ubnd, dtype=dt)
+            except Exception as e:
+                raise AssertionError("No error should have been raised, "
+                                     "but one was with the following "
+                                     "message:\n\n%s" % str(e))
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
         np.random.seed()
+
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
                 vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
+
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
 
     def test_repeatability(self):
         import hashlib
         # We use a md5 hash of generated sequences of 1000 samples
-        # in the range [0, 6) for all but np.bool, where the range
+        # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
         tgt = {'bool': '7dd3170d7aa461d201a65f8bcf3944b0',
                'int16': '1b7741b80964bb190c50d541dca1cac1',
@@ -204,11 +231,34 @@ class TestRandint(TestCase):
             res = hashlib.md5(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
-        # bools do not depend on endianess
+        # bools do not depend on endianness
         np.random.seed(1234)
-        val = self.rfunc(0, 2, size=1000, dtype=np.bool).view(np.int8)
+        val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
-        assert_(tgt[np.dtype(np.bool).name] == res)
+        assert_(tgt[np.dtype(bool).name] == res)
+
+    def test_int64_uint64_corner_case(self):
+        # When stored in Numpy arrays, `lbnd` is casted
+        # as np.int64, and `ubnd` is casted as np.uint64.
+        # Checking whether `lbnd` >= `ubnd` used to be
+        # done solely via direct comparison, which is incorrect
+        # because when Numpy tries to compare both numbers,
+        # it casts both to np.float64 because there is
+        # no integer superset of np.int64 and np.uint64. However,
+        # `ubnd` is too large to be represented in np.float64,
+        # causing it be round down to np.iinfo(np.int64).max,
+        # leading to a ValueError because `lbnd` now equals
+        # the new `ubnd`.
+
+        dt = np.int64
+        tgt = np.iinfo(np.int64).max
+        lbnd = np.int64(np.iinfo(np.int64).max)
+        ubnd = np.uint64(np.iinfo(np.int64).max + 1)
+
+        # None of these function calls should
+        # generate a ValueError now.
+        actual = np.random.randint(lbnd, ubnd, dtype=dt)
+        assert_equal(actual, tgt)
 
     def test_respect_dtype_singleton(self):
         # See gh-7203
@@ -217,23 +267,23 @@ class TestRandint(TestCase):
             ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
 
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
-            self.assertEqual(sample.dtype, np.dtype(dt))
+            assert_equal(sample.dtype, np.dtype(dt))
 
-        for dt in (np.bool, np.int, np.long):
-            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
+        for dt in (bool, int, np.long):
+            lbnd = 0 if dt is bool else np.iinfo(dt).min
+            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
             # gh-7284: Ensure that we get Python data types
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
-            self.assertFalse(hasattr(sample, 'dtype'))
-            self.assertEqual(type(sample), dt)
+            assert_(not hasattr(sample, 'dtype'))
+            assert_equal(type(sample), dt)
 
 
-class TestRandomDist(TestCase):
+class TestRandomDist(object):
     # Make sure the random distribution returns the correct value for a
     # given seed
 
-    def setUp(self):
+    def setup(self):
         self.seed = 1234567890
 
     def test_rand(self):
@@ -384,16 +434,25 @@ class TestRandomDist(TestCase):
         # Check multi dimensional array
         s = (2, 3)
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
-        assert_(np.random.choice(6, s, replace=True).shape, s)
-        assert_(np.random.choice(6, s, replace=False).shape, s)
-        assert_(np.random.choice(6, s, replace=True, p=p).shape, s)
-        assert_(np.random.choice(6, s, replace=False, p=p).shape, s)
-        assert_(np.random.choice(np.arange(6), s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False).shape, s)
+        assert_equal(np.random.choice(6, s, replace=True, p=p).shape, s)
+        assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
+
+        # Check zero-size
+        assert_equal(np.random.randint(0, 0, size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_equal(np.random.randint(0, -10, size=0).shape, (0,))
+        assert_equal(np.random.randint(10, 10, size=0).shape, (0,))
+        assert_equal(np.random.choice(0, size=0).shape, (0,))
+        assert_equal(np.random.choice([], size=(0,)).shape, (0,))
+        assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_raises(ValueError, np.random.choice, [], 10)
 
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
-        desired = asbytes('\x82Ui\x9e\xff\x97+Wf\xa5')
+        desired = b'\x82Ui\x9e\xff\x97+Wf\xa5'
         assert_equal(actual, desired)
 
     def test_shuffle(self):
@@ -480,7 +539,12 @@ class TestRandomDist(TestCase):
         assert_equal(np.random.dirichlet(p, (2, 2)).shape, (2, 2, 2))
         assert_equal(np.random.dirichlet(p, np.array((2, 2))).shape, (2, 2, 2))
 
-        assert_raises(TypeError, np.random.dirichlet, p, np.float(1))
+        assert_raises(TypeError, np.random.dirichlet, p, float(1))
+
+    def test_dirichlet_bad_alpha(self):
+        # gh-2089
+        alpha = np.array([5.4e-01, -1.0e-16])
+        assert_raises(ValueError, np.random.mtrand.dirichlet, alpha)
 
     def test_exponential(self):
         np.random.seed(self.seed)
@@ -704,7 +768,7 @@ class TestRandomDist(TestCase):
                  [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
-        #   http://mail.scipy.org/pipermail/numpy-discussion/2012-September/063801.html
+        #   https://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
         # Consensus is that this is probably some gcc quirk that affects
         # rounding but not in any important way, so we just use a looser
         # tolerance on this test:
@@ -823,6 +887,27 @@ class TestRandomDist(TestCase):
         # DBL_MAX by increasing fmin a bit
         np.random.uniform(low=np.nextafter(fmin, 1), high=fmax / 1e17)
 
+    def test_scalar_exception_propagation(self):
+        # Tests that exceptions are correctly propagated in distributions
+        # when called with objects that throw exceptions when converted to
+        # scalars.
+        #
+        # Regression test for gh: 8865
+
+        class ThrowingFloat(np.ndarray):
+            def __float__(self):
+                raise TypeError
+
+        throwing_float = np.array(1.0).view(ThrowingFloat)
+        assert_raises(TypeError, np.random.uniform, throwing_float, throwing_float)
+
+        class ThrowingInteger(np.ndarray):
+            def __int__(self):
+                raise TypeError
+
+        throwing_int = np.array(1).view(ThrowingInteger)
+        assert_raises(TypeError, np.random.hypergeometric, throwing_int, 1, 1)
+
     def test_vonmises(self):
         np.random.seed(self.seed)
         actual = np.random.vonmises(mu=1.23, kappa=1.54, size=(3, 2))
@@ -866,10 +951,10 @@ class TestRandomDist(TestCase):
         assert_array_equal(actual, desired)
 
 
-class TestBroadcast(TestCase):
+class TestBroadcast(object):
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
-    def setUp(self):
+    def setup(self):
         self.seed = 123456789
 
     def setSeed(self):
@@ -1037,6 +1122,12 @@ class TestBroadcast(TestCase):
         assert_raises(ValueError, nonc_f, bad_dfnum, dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, dfden, bad_nonc * 3)
+
+    def test_noncentral_f_small_df(self):
+        self.setSeed()
+        desired = np.array([6.869638627492048, 0.785880199263955])
+        actual = np.random.noncentral_f(0.9, 0.9, 2, size=2)
+        assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_chisquare(self):
         df = [1]
@@ -1359,6 +1450,10 @@ class TestBroadcast(TestCase):
         actual = zipf(a * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, zipf, bad_a * 3)
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, zipf, np.nan)
+            assert_raises(ValueError, zipf, [0, 0, np.nan])
+
 
     def test_geometric(self):
         p = [0.5]
@@ -1421,9 +1516,9 @@ class TestBroadcast(TestCase):
         assert_raises(ValueError, logseries, bad_p_one * 3)
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
-class TestThread(TestCase):
+class TestThread(object):
     # make sure each state produces the same sequence even in threads
-    def setUp(self):
+    def setup(self):
         self.seeds = range(4)
 
     def check_function(self, function, sz):
@@ -1464,8 +1559,8 @@ class TestThread(TestCase):
         self.check_function(gen_random, sz=(10000, 6))
 
 # See Issue #4263
-class TestSingleEltArrayInput(TestCase):
-    def setUp(self):
+class TestSingleEltArrayInput(object):
+    def setup(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])
         self.argThree = np.array([4])
@@ -1488,7 +1583,7 @@ class TestSingleEltArrayInput(TestCase):
             else:
                 out = func(self.argOne)
 
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
     def test_two_arg_funcs(self):
         funcs = (np.random.uniform, np.random.normal,
@@ -1509,17 +1604,17 @@ class TestSingleEltArrayInput(TestCase):
                 argTwo = self.argTwo
 
             out = func(self.argOne, argTwo)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne[0], argTwo)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne, argTwo[0])
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
 # TODO: Uncomment once randint can broadcast arguments
 #    def test_randint(self):
-#        itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
+#        itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
 #                 np.int32, np.uint32, np.int64, np.uint64]
 #        func = np.random.randint
 #        high = np.array([1])
@@ -1541,13 +1636,10 @@ class TestSingleEltArrayInput(TestCase):
 
         for func in funcs:
             out = func(self.argOne, self.argTwo, self.argThree)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne[0], self.argTwo, self.argThree)
-            self.assertEqual(out.shape, self.tgtShape)
+            assert_equal(out.shape, self.tgtShape)
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
-            self.assertEqual(out.shape, self.tgtShape)
-
-if __name__ == "__main__":
-    run_module_suite()
+            assert_equal(out.shape, self.tgtShape)

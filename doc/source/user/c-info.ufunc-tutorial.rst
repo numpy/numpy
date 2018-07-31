@@ -17,8 +17,8 @@ Creating a new universal function
 Before reading this, it may help to familiarize yourself with the basics
 of C extensions for Python by reading/skimming the tutorials in Section 1
 of `Extending and Embedding the Python Interpreter
-<http://docs.python.org/extending/index.html>`_ and in `How to extend
-NumPy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
+<https://docs.python.org/extending/index.html>`_ and in :doc:`How to extend
+NumPy <c-info.how-to-extend>`
 
 The umath module is a computer-generated C-module that creates many
 ufuncs. It provides a great many examples of how to create a universal
@@ -1057,10 +1057,11 @@ PyUFunc_FromFuncAndData Specification
 What follows is the full specification of PyUFunc_FromFuncAndData, which
 automatically generates a ufunc from a C function with the correct signature.
 
+.. seealso:: :c:func:`PyUFunc_FromFuncAndDataAndSignature`
 
-.. c:function:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
-   void** data, char* types, int ntypes, int nin, int nout, int identity,
-   char* name, char* doc, int unused)
+.. c:function:: PyObject *PyUFunc_FromFuncAndData( \
+        PyUFuncGenericFunction* func, void** data, char* types, int ntypes, \
+        int nin, int nout, int identity, char* name, char* doc, int unused)
 
     *func*
 
@@ -1069,8 +1070,8 @@ automatically generates a ufunc from a C function with the correct signature.
         ``PyUFuncGenericFunction`` function. This function has the following
         signature. An example of a valid 1d loop function is also given.
 
-        .. c:function:: void loop1d(char** args, npy_intp* dimensions,
-           npy_intp* steps, void* data)
+    .. c:function:: void loop1d( \
+            char** args, npy_intp* dimensions, npy_intp* steps, void* data)
 
         *args*
 
@@ -1098,7 +1099,7 @@ automatically generates a ufunc from a C function with the correct signature.
         .. code-block:: c
 
             static void
-            double_add(char *args, npy_intp *dimensions, npy_intp *steps,
+            double_add(char **args, npy_intp *dimensions, npy_intp *steps,
                void *extra)
             {
                 npy_intp i;

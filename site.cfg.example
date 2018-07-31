@@ -10,7 +10,7 @@
 # The format of the file is that of the standard library's ConfigParser module.
 # No interpolation is allowed, RawConfigParser class being used to load it.
 #
-#   http://docs.python.org/3/library/configparser.html
+#   https://docs.python.org/library/configparser.html
 #
 # Each section defines settings that apply to one particular dependency. Some of
 # the settings are general and apply to nearly any section and are defined here.
@@ -122,7 +122,7 @@
 # multiprocessing.
 # (This problem does not exist with multithreaded ATLAS.)
 #
-# http://docs.python.org/3.4/library/multiprocessing.html#contexts-and-start-methods
+# https://docs.python.org/library/multiprocessing.html#contexts-and-start-methods
 # https://github.com/xianyi/OpenBLAS/issues/294
 #
 # [openblas]
@@ -153,29 +153,40 @@
 # runtime_library_dirs = /home/username/blis/lib
 
 # MKL
-#----
-# MKL is Intel's very optimized yet proprietary implementation of BLAS and
-# Lapack.
-# For recent (9.0.21, for example) mkl, you need to change the names of the
-# lapack library. Assuming you installed the mkl in /opt, for a 32 bits cpu:
+#---- 
+# Intel MKL is Intel's very optimized yet proprietary implementation of BLAS and 
+# Lapack. Find the latest info on building numpy with Intel MKL in this article:
+# https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl
+# Assuming you installed the mkl in /opt/intel/compilers_and_libraries_2018/linux/mkl, 
+# for 64 bits code at Linux: 
+# [mkl] 
+# library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/intel64
+# include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include 
+# mkl_libs = mkl_rt 
+# lapack_libs =  
+# 
+# For 32 bit code at Linux: 
 # [mkl]
-# library_dirs = /opt/intel/mkl/9.1.023/lib/32/
-# lapack_libs = mkl_lapack
-#
-# For 10.*, on 32 bits machines:
-# [mkl]
-# library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
-# lapack_libs = mkl_lapack
-# mkl_libs = mkl, guide
-#
-# On win-64, the following options compiles numpy with the MKL library
-# dynamically linked.
-# [mkl]
-# include_dirs = C:\Program Files (x86)\Intel\Composer XE 2015\mkl\include
-# library_dirs = C:\Program Files (x86)\Intel\Composer XE 2015\mkl\lib\intel64
-# mkl_libs = mkl_core_dll, mkl_intel_lp64_dll, mkl_intel_thread_dll
-# lapack_libs = mkl_lapack95_lp64
+# library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/ia32
+# include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include 
+# mkl_libs = mkl_rt 
+# lapack_libs =  
+# 
+# On win-64, the following options compiles numpy with the MKL library 
+# dynamically linked. 
+# [mkl] 
+# include_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\include
+# library_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\lib\intel64
+# mkl_libs = mkl_rt 
+# lapack_libs =
 
+# ACCELERATE
+# ----------
+# Accelerate/vecLib is an OSX framework providing a BLAS and LAPACK implementations.
+#
+# [accelerate]
+# libraries = Accelerate, vecLib
+# #libraries = None
 
 # UMFPACK
 # -------
@@ -186,9 +197,9 @@
 #
 # UMFPACK is not used by numpy.
 #
-#   http://www.cise.ufl.edu/research/sparse/umfpack/
-#   http://www.cise.ufl.edu/research/sparse/amd/
-#   http://scikits.appspot.com/umfpack
+#   https://www.cise.ufl.edu/research/sparse/umfpack/
+#   https://www.cise.ufl.edu/research/sparse/amd/
+#   https://scikit-umfpack.github.io/scikit-umfpack/
 #
 #[amd]
 #amd_libs = amd
@@ -202,7 +213,7 @@
 # Note that these libraries are not used by for numpy or scipy.
 #
 #   http://fftw.org/
-#   http://cr.yp.to/djbfft.html
+#   https://cr.yp.to/djbfft.html
 #
 # Given only this section, numpy.distutils will try to figure out which version
 # of FFTW you are using.

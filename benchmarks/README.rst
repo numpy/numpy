@@ -36,7 +36,7 @@ More on how to use ``asv`` can be found in `ASV documentation`_
 Command-line help is available as usual via ``asv --help`` and
 ``asv run --help``.
 
-.. _ASV documentation: https://spacetelescope.github.io/asv/
+.. _ASV documentation: https://asv.readthedocs.io/
 
 
 Writing benchmarks

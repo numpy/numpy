@@ -206,6 +206,9 @@ static NPY_GCC_OPT_3 void
 #else
     npy_uint64 temp0, temp1;
 #endif
+    if (N == 0) {
+        return;
+    }
 #if @is_aligned@ && @elsize@ != 16
     /* sanity check */
     assert(npy_is_aligned(dst, _ALIGN(@type@)));
@@ -1368,9 +1371,9 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
  */
 
 /*
- * Advanded indexing iteration of arrays when there is a single indexing
+ * Advanced indexing iteration of arrays when there is a single indexing
  * array which has the same memory order as the value array and both
- * can be trivally iterated (single stride, aligned, no casting necessary).
+ * can be trivially iterated (single stride, aligned, no casting necessary).
  */
 NPY_NO_EXPORT int
 mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
@@ -1402,7 +1405,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
     /* Check the indices beforehand */
     while (itersize--) {
         npy_intp indval = *((npy_intp*)ind_ptr);
-        if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
+        if (check_and_adjust_index(&indval, fancy_dim, 0, _save) < 0 ) {
             return -1;
         }
         ind_ptr += ind_stride;
@@ -1434,7 +1437,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
             npy_intp indval = *((npy_intp*)ind_ptr);
             assert(npy_is_aligned(ind_ptr, _ALIGN(npy_intp)));
 #if @isget@
-            if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
+            if (check_and_adjust_index(&indval, fancy_dim, 0, _save) < 0 ) {
                 return -1;
             }
 #else
@@ -1744,7 +1747,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                 }
                 else {
                     /*
-                     * faster resetting if the subspace iteration is trival.
+                     * faster resetting if the subspace iteration is trivial.
                      * reset_offsets are zero for positive strides,
                      * for negative strides this shifts the pointer to the last
                      * item.

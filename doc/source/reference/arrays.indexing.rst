@@ -29,11 +29,15 @@ dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
 (constructed by ``start:stop:step`` notation inside of brackets), an
 integer, or a tuple of slice objects and integers. :const:`Ellipsis`
 and :const:`newaxis` objects can be interspersed with these as
-well. In order to remain backward compatible with a common usage in
-Numeric, basic slicing is also initiated if the selection object is
-any non-ndarray sequence (such as a :class:`list`) containing :class:`slice`
-objects, the :const:`Ellipsis` object, or the :const:`newaxis` object,
-but not for integer arrays or other embedded sequences.
+well.
+
+.. deprecated:: 1.15.0
+
+  In order to remain backward compatible with a common usage in
+  Numeric, basic slicing is also initiated if the selection object is
+  any non-ndarray and non-tuple sequence (such as a :class:`list`) containing
+  :class:`slice` objects, the :const:`Ellipsis` object, or the :const:`newaxis`
+  object, but not for integer arrays or other embedded sequences.
 
 .. index::
    triple: ndarray; special methods; getitem
@@ -85,7 +89,7 @@ concepts to remember include:
 - Assume *n* is the number of elements in the dimension being
   sliced. Then, if *i* is not given it defaults to 0 for *k > 0* and
   *n - 1* for *k < 0* . If *j* is not given it defaults to *n* for *k > 0*
-  and -1 for *k < 0* . If *k* is not given it defaults to 1. Note that
+  and *-n-1* for *k < 0* . If *k* is not given it defaults to 1. Note that
   ``::`` is the same as ``:`` and means select all indices along this
   axis.
 
@@ -169,8 +173,9 @@ concepts to remember include:
     of arbitrary dimension.
 
 .. data:: newaxis
+   :noindex:
 
-   The :const:`newaxis` object can be used in all slicing operations to 
+   The :const:`newaxis` object can be used in all slicing operations to
    create an axis of length one. :const:`newaxis` is an alias for
    'None', and 'None' can be used in place of this with the same result.
 
@@ -196,7 +201,8 @@ basic slicing that returns a :term:`view`).
    why this occurs.
 
    Also recognize that ``x[[1,2,3]]`` will trigger advanced indexing,
-   whereas ``x[[1,2,slice(None)]]`` will trigger basic slicing.
+   whereas due to the deprecated Numeric compatibility mentioned above,
+   ``x[[1,2,slice(None)]]`` will trigger basic slicing.
 
 Integer array indexing
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -282,7 +288,7 @@ understood with an example.
 Combining advanced and basic indexing
 """""""""""""""""""""""""""""""""""""
 
-When there is at least one slice (``:``), ellipsis (``...``) or ``np.newaxis``
+When there is at least one slice (``:``), ellipsis (``...``) or :const:`newaxis`
 in the index (or the array has more dimensions than there are advanced indexes),
 then the behaviour can be more complicated. It is like concatenating the
 indexing result for each advanced index element
@@ -305,7 +311,7 @@ the subspace defined by the basic indexing (excluding integers) and the
 subspace from the advanced indexing part. Two cases of index combination
 need to be distinguished:
 
-* The advanced indexes are separated by a slice, ellipsis or newaxis.
+* The advanced indexes are separated by a slice, :const:`Ellipsis` or :const:`newaxis`.
   For example ``x[arr1, :, arr2]``.
 * The advanced indexes are all next to each other.
   For example ``x[..., arr1, arr2, :]`` but *not* ``x[arr1, :, 1]``
@@ -431,7 +437,7 @@ also supports boolean arrays and will work without any surprises.
     ...            [ 9, 10, 11]])
     >>> rows = (x.sum(-1) % 2) == 0
     >>> rows
-    array([False,  True, False,  True], dtype=bool)
+    array([False,  True, False,  True])
     >>> columns = [0, 2]
     >>> x[np.ix_(rows, columns)]
     array([[ 3,  5],
@@ -503,7 +509,7 @@ dictionary-like.
 Indexing ``x['field-name']`` returns a new :term:`view` to the array,
 which is of the same shape as *x* (except when the field is a
 sub-array) but of data type ``x.dtype['field-name']`` and contains
-only the part of the data in the specified field. Also 
+only the part of the data in the specified field. Also
 :ref:`record array <arrays.classes.rec>` scalars can be "indexed" this way.
 
 Indexing into a structured array can also be done with a list of field names,

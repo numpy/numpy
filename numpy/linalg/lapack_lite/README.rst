@@ -1,10 +1,10 @@
 Regenerating lapack_lite source
 ===============================
 
-:Author: David M. Cooke <cookedm@physics.mcmaster.ca>
+:Authors: * David M. Cooke <cookedm@physics.mcmaster.ca>
+          * Eric Wieser (upgraded lapack version on 2017-03-26)
 
-The ``numpy/linalg/blas_lite.c``, ``numpy/linalg/dlapack_lite.c``, and
-``numpy/linalg/zlapack_lite.c`` are ``f2c``'d versions of the LAPACK routines
+The ``numpy/linalg/f2c_*.c`` files are ``f2c``'d versions of the LAPACK routines
 required by the ``LinearAlgebra`` module, and wrapped by the ``lapack_lite``
 module. The scripts in this directory can be used to create these files
 automatically from a directory of LAPACK source files.
@@ -23,20 +23,14 @@ properly. Assuming that you have an unpacked LAPACK source tree in
 $ python2 ./make_lite.py wrapped_routines ~/LAPACK new-lite/
 
 This will grab the right routines, with dependencies, put them into the
-appropriate ``blas_lite.f``, ``dlapack_lite.f``, or ``zlapack_lite.f`` files,
-run ``f2c`` over them, then do some scrubbing similar to that done to
-generate the CLAPACK_ distribution.
+appropriate ``f2c_*.f`` files, run ``f2c`` over them, then do some scrubbing
+similar to that done to generate the CLAPACK_ distribution.
 
 .. _CLAPACK: http://netlib.org/clapack/index.html
 
-The versions in Numeric CVS as of 2005-04-12 use the LAPACK source from the
-`Debian package lapack3`_, version 3.0.20000531a-6. It was found that these
-(being regularly maintained) worked better than the patches to the last
-released version of LAPACK available at the LAPACK_ page.
+The output C files in git use the LAPACK source from the LAPACK_ page, using
+version 3.2.2. Unfortunately, newer versions use newer FORTRAN features, which
+are increasingly not supported by ``f2c``. As these are found, the patch files
+will need to be changed to re-express new constructs with legacy constructs.
 
-.. _Debian package lapack3: http://packages.debian.org/unstable/libs/lapack3
 .. _LAPACK: http://netlib.org/lapack/index.html
-
-A slightly-patched ``f2c`` was used to add parentheses around ``||`` expressions
-and the arguments to ``<<`` to silence gcc warnings. Edit
-the ``src/output.c`` in the ``f2c`` source to do this.

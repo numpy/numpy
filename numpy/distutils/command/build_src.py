@@ -569,14 +569,14 @@ class build_src(build_ext.build_ext):
         if not os.path.isfile(target_file):
             raise DistutilsError("f2py target file %r not generated" % (target_file,))
 
-        target_c = os.path.join(self.build_src, 'fortranobject.c')
-        target_h = os.path.join(self.build_src, 'fortranobject.h')
+        build_dir = os.path.join(self.build_src, target_dir)
+        target_c = os.path.join(build_dir, 'fortranobject.c')
+        target_h = os.path.join(build_dir, 'fortranobject.h')
         log.info("  adding '%s' to sources." % (target_c))
         new_sources.append(target_c)
-        if self.build_src not in extension.include_dirs:
-            log.info("  adding '%s' to include_dirs." \
-                     % (self.build_src))
-            extension.include_dirs.append(self.build_src)
+        if build_dir not in extension.include_dirs:
+            log.info("  adding '%s' to include_dirs." % (build_dir))
+            extension.include_dirs.append(build_dir)
 
         if not skip_f2py:
             import numpy.f2py

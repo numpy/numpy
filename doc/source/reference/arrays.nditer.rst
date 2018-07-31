@@ -26,7 +26,7 @@ using the standard Python iterator interface.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 1 2 3 4 5
 
@@ -42,12 +42,12 @@ of that transpose in C order.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a.T):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 1 2 3 4 5
 
     >>> for x in np.nditer(a.T.copy(order='C')):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 3 1 4 2 5
 
@@ -70,28 +70,36 @@ order='C' for C order and order='F' for Fortran order.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a, order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 3 1 4 2 5
     >>> for x in np.nditer(a.T, order='C'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0 3 1 4 2 5
+
+.. _nditer-context-manager:
 
 Modifying Array Values
 ----------------------
 
-By default, the :class:`nditer` treats the input array as a read-only
-object. To modify the array elements, you must specify either read-write
-or write-only mode. This is controlled with per-operand flags.
+By default, the :class:`nditer` treats the input operand as a read-only
+object. To be able to modify the array elements, you must specify either
+read-write or write-only mode using the `'readwrite'` or `'writeonly'`
+per-operand flags.
 
-Regular assignment in Python simply changes a reference in the local or
-global variable dictionary instead of modifying an existing variable in
-place.  This means that simply assigning to `x` will not place the value
-into the element of the array, but rather switch `x` from being an array
-element reference to being a reference to the value you assigned. To
-actually modify the element of the array, `x` should be indexed with
-the ellipsis.
+The nditer will then yield writeable buffer arrays which you may modify. However,
+because  the nditer must copy this buffer data back to the original array once
+iteration is finished, you must signal when the iteration is ended, by one of two
+methods. You may either:
+
+ - used the nditer as a context manager using the `with` statement, and
+   the temporary data will be written back when the context is exited.
+ - call the iterator's `close` method once finished iterating, which will trigger
+   the write-back.
+
+The nditer can no longer be iterated once either `close` is called or its
+context is exited.
 
 .. admonition:: Example
 
@@ -99,8 +107,9 @@ the ellipsis.
     >>> a
     array([[0, 1, 2],
            [3, 4, 5]])
-    >>> for x in np.nditer(a, op_flags=['readwrite']):
-    ...     x[...] = 2 * x
+    >>> with np.nditer(a, op_flags=['readwrite']) as it:
+    ...    for x in it:
+    ...        x[...] = 2 * x
     ...
     >>> a
     array([[ 0,  2,  4],
@@ -130,12 +139,12 @@ elements each.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a, flags=['external_loop']):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 1 2 3 4 5]
 
     >>> for x in np.nditer(a, flags=['external_loop'], order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 3] [1 4] [2 5]
 
@@ -165,22 +174,23 @@ construct in order to be more readable.
     >>> a = np.arange(6).reshape(2,3)
     >>> it = np.nditer(a, flags=['f_index'])
     >>> while not it.finished:
-    ...     print "%d <%d>" % (it[0], it.index),
+    ...     print("%d <%d>" % (it[0], it.index), end=' ')
     ...     it.iternext()
     ...
     0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5>
 
     >>> it = np.nditer(a, flags=['multi_index'])
     >>> while not it.finished:
-    ...     print "%d <%s>" % (it[0], it.multi_index),
+    ...     print("%d <%s>" % (it[0], it.multi_index), end=' ')
     ...     it.iternext()
     ...
     0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
     >>> it = np.nditer(a, flags=['multi_index'], op_flags=['writeonly'])
-    >>> while not it.finished:
-    ...     it[0] = it.multi_index[1] - it.multi_index[0]
-    ...     it.iternext()
+    >>> with it:
+    ....    while not it.finished:
+    ...         it[0] = it.multi_index[1] - it.multi_index[0]
+    ...         it.iternext()
     ...
     >>> a
     array([[ 0,  1,  2],
@@ -218,12 +228,12 @@ is enabled.
 
     >>> a = np.arange(6).reshape(2,3)
     >>> for x in np.nditer(a, flags=['external_loop'], order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 3] [1 4] [2 5]
 
     >>> for x in np.nditer(a, flags=['external_loop','buffered'], order='F'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     [0 3 1 4 2 5]
 
@@ -260,7 +270,7 @@ data type doesn't match precisely.
 
     >>> a = np.arange(6).reshape(2,3) - 3
     >>> for x in np.nditer(a, op_dtypes=['complex128']):
-    ...     print np.sqrt(x),
+    ...     print(np.sqrt(x), end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -275,12 +285,12 @@ specified as an iterator flag.
     >>> a = np.arange(6).reshape(2,3) - 3
     >>> for x in np.nditer(a, op_flags=['readonly','copy'],
     ...                 op_dtypes=['complex128']):
-    ...     print np.sqrt(x),
+    ...     print(np.sqrt(x), end=' ')
     ...
     1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['complex128']):
-    ...     print np.sqrt(x),
+    ...     print(np.sqrt(x), end=' ')
     ...
     1.73205080757j 1.41421356237j 1j 0j (1+0j) (1.41421356237+0j)
 
@@ -296,7 +306,7 @@ complex to float.
 
     >>> a = np.arange(6.)
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['float32']):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -304,12 +314,12 @@ complex to float.
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['float32'],
     ...                 casting='same_kind'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     0.0 1.0 2.0 3.0 4.0 5.0
 
     >>> for x in np.nditer(a, flags=['buffered'], op_dtypes=['int32'], casting='same_kind'):
-    ...     print x,
+    ...     print(x, end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -351,7 +361,7 @@ a two dimensional array together.
     >>> a = np.arange(3)
     >>> b = np.arange(6).reshape(2,3)
     >>> for x, y in np.nditer([a,b]):
-    ...     print "%d:%d" % (x,y),
+    ...     print("%d:%d" % (x,y), end=' ')
     ...
     0:0 1:1 2:2 0:3 1:4 2:5
 
@@ -363,7 +373,7 @@ which includes the input shapes to help diagnose the problem.
     >>> a = np.arange(2)
     >>> b = np.arange(6).reshape(2,3)
     >>> for x, y in np.nditer([a,b]):
-    ...     print "%d:%d" % (x,y),
+    ...     print("%d:%d" % (x,y), end=' ')
     ...
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -385,10 +395,10 @@ parameter support.
 .. admonition:: Example
 
     >>> def square(a):
-    ...     it = np.nditer([a, None])
-    ...     for x, y in it:
-    ...          y[...] = x*x
-    ...     return it.operands[1]
+    ...     with np.nditer([a, None]) as it:
+    ...         for x, y in it:
+    ...             y[...] = x*x
+    ...         return it.operands[1]
     ...
     >>> square([1,2,3])
     array([1, 4, 9])
@@ -426,9 +436,10 @@ reasons.
     ...             flags = ['external_loop', 'buffered'],
     ...             op_flags = [['readonly'],
     ...                         ['writeonly', 'allocate', 'no_broadcast']])
-    ...     for x, y in it:
-    ...         y[...] = x*x
-    ...     return it.operands[1]
+    ...     with it:
+    ...         for x, y in it:
+    ...             y[...] = x*x
+    ...         return it.operands[1]
     ...
 
     >>> square([1,2,3])
@@ -480,16 +491,21 @@ Everything to do with the outer product is handled by the iterator setup.
     >>> b = np.arange(8).reshape(2,4)
     >>> it = np.nditer([a, b, None], flags=['external_loop'],
     ...             op_axes=[[0, -1, -1], [-1, 0, 1], None])
-    >>> for x, y, z in it:
-    ...     z[...] = x*y
+    >>> with it:
+    ...     for x, y, z in it:
+    ...         z[...] = x*y
+    ...     result = it.operands[2]  # same as z
     ...
-    >>> it.operands[2]
+    >>> result
     array([[[ 0,  0,  0,  0],
             [ 0,  0,  0,  0]],
            [[ 0,  1,  2,  3],
             [ 4,  5,  6,  7]],
            [[ 0,  2,  4,  6],
             [ 8, 10, 12, 14]]])
+
+Note that once the iterator is closed we can not access :func:`operands <nditer.operands>`
+and must use a reference created inside the context manager.
 
 Reduction Iteration
 -------------------
@@ -505,9 +521,10 @@ For a simple example, consider taking the sum of all elements in an array.
 
     >>> a = np.arange(24).reshape(2,3,4)
     >>> b = np.array(0)
-    >>> for x, y in np.nditer([a, b], flags=['reduce_ok', 'external_loop'],
-    ...                     op_flags=[['readonly'], ['readwrite']]):
-    ...     y[...] += x
+    >>> with np.nditer([a, b], flags=['reduce_ok', 'external_loop'],
+    ...                     op_flags=[['readonly'], ['readwrite']]) as it:
+    ...     for x,y in it:
+    ...         y[...] += x
     ...
     >>> b
     array(276)
@@ -525,11 +542,13 @@ sums along the last axis of `a`.
     >>> it = np.nditer([a, None], flags=['reduce_ok', 'external_loop'],
     ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...             op_axes=[None, [0,1,-1]])
-    >>> it.operands[1][...] = 0
-    >>> for x, y in it:
-    ...     y[...] += x
+    >>> with it:
+    ...     it.operands[1][...] = 0
+    ...     for x, y in it:
+    ...         y[...] += x
+    ...     result = it.operands[1]
     ...
-    >>> it.operands[1]
+    >>> result
     array([[ 6, 22, 38],
            [54, 70, 86]])
     >>> np.sum(a, axis=2)
@@ -558,12 +577,14 @@ buffering.
     ...                                  'buffered', 'delay_bufalloc'],
     ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...             op_axes=[None, [0,1,-1]])
-    >>> it.operands[1][...] = 0
-    >>> it.reset()
-    >>> for x, y in it:
-    ...     y[...] += x
+    >>> with it:
+    ...     it.operands[1][...] = 0
+    ...     it.reset()
+    ...     for x, y in it:
+    ...         y[...] += x
+    ...     result = it.operands[1]
     ...
-    >>> it.operands[1]
+    >>> result
     array([[ 6, 22, 38],
            [54, 70, 86]])
 
@@ -609,11 +630,12 @@ Here's how this looks.
     ...                 op_flags=[['readonly'], ['readwrite', 'allocate']],
     ...                 op_axes=[None, axeslist],
     ...                 op_dtypes=['float64', 'float64'])
-    ...     it.operands[1][...] = 0
-    ...     it.reset()
-    ...     for x, y in it:
-    ...         y[...] += x*x
-    ...     return it.operands[1]
+    ...     with it:
+    ...         it.operands[1][...] = 0
+    ...         it.reset()
+    ...         for x, y in it:
+    ...             y[...] += x*x
+    ...         return it.operands[1]
     ...
     >>> a = np.arange(6).reshape(2,3)
     >>> sum_squares_py(a)
@@ -661,16 +683,17 @@ Here's the listing of sum_squares.pyx::
                     op_flags=[['readonly'], ['readwrite', 'allocate']],
                     op_axes=[None, axeslist],
                     op_dtypes=['float64', 'float64'])
-        it.operands[1][...] = 0
-        it.reset()
-        for xarr, yarr in it:
-            x = xarr
-            y = yarr
-            size = x.shape[0]
-            for i in range(size):
-               value = x[i]
-               y[i] = y[i] + value * value
-        return it.operands[1]
+        with it:
+            it.operands[1][...] = 0
+            it.reset()
+            for xarr, yarr in it:
+                x = xarr
+                y = yarr
+                size = x.shape[0]
+                for i in range(size):
+                   value = x[i]
+                   y[i] = y[i] + value * value
+            return it.operands[1]
 
 On this machine, building the .pyx file into a module looked like the
 following, but you may have to find some Cython tutorials to tell you

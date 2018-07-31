@@ -43,7 +43,12 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
 {
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
-    @type@ last_key_val = *(const @type@ *)key;
+    @type@ last_key_val;
+
+    if (key_len == 0) {
+        return;
+    }
+    last_key_val = *(const @type@ *)key;
 
     for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         const @type@ key_val = *(const @type@ *)key;
@@ -86,7 +91,12 @@ argbinsearch_@side@_@suff@(const char *arr, const char *key,
 {
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
-    @type@ last_key_val = *(const @type@ *)key;
+    @type@ last_key_val;
+
+    if (key_len == 0) {
+        return 0;
+    }
+    last_key_val = *(const @type@ *)key;
 
     for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
         const @type@ key_val = *(const @type@ *)key;

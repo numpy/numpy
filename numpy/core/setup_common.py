@@ -39,7 +39,9 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000a - 1.11.x
 # 0x0000000a - 1.12.x
 # 0x0000000b - 1.13.x
-C_API_VERSION = 0x0000000b
+# 0x0000000c - 1.14.x
+# 0x0000000c - 1.15.x
+C_API_VERSION = 0x0000000c
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -107,7 +109,8 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate"]
+        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
+        "backtrace"]
 
 
 OPTIONAL_HEADERS = [
@@ -115,7 +118,8 @@ OPTIONAL_HEADERS = [
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
                 "features.h",  # for glibc version linux
-                "xlocale.h"  # see GH#8367
+                "xlocale.h",  # see GH#8367
+                "dlfcn.h", # dladdr
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a
@@ -143,6 +147,7 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX"),
                        ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
                         "stdio.h", "LINK_AVX2"),
+                       ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
 # function attributes
@@ -163,7 +168,7 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 # variable attributes tested via "int %s a" % attribute
 OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 
-# Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
+# Subset of OPTIONAL_STDFUNCS which may already have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = [
     "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
     "ftello", "fseeko"
@@ -212,6 +217,21 @@ def check_long_double_representation(cmd):
             cmd.compiler.compile_options.remove("/GL")
         except (AttributeError, ValueError):
             pass
+
+    # Disable multi-file interprocedural optimization in the Intel compiler on Linux
+    # which generates intermediary object files and prevents checking the
+    # float representation.
+    elif (sys.platform != "win32" 
+            and cmd.compiler.compiler_type.startswith('intel') 
+            and '-ipo' in cmd.compiler.cc_exe):        
+        newcompiler = cmd.compiler.cc_exe.replace(' -ipo', '')
+        cmd.compiler.set_executables(
+            compiler=newcompiler,
+            compiler_so=newcompiler,
+            compiler_cxx=newcompiler,
+            linker_exe=newcompiler,
+            linker_so=newcompiler + ' -shared'
+        )
 
     # We need to use _compile because we need the object filename
     src, obj = cmd._compile(body, None, None, 'c')
@@ -315,9 +335,9 @@ _MOTOROLA_EXTENDED_12B = ['300', '031', '000', '000', '353', '171',
 _IEEE_QUAD_PREC_BE = ['300', '031', '326', '363', '105', '100', '000', '000',
                       '000', '000', '000', '000', '000', '000', '000', '000']
 _IEEE_QUAD_PREC_LE = _IEEE_QUAD_PREC_BE[::-1]
-_DOUBLE_DOUBLE_BE = (['301', '235', '157', '064', '124', '000', '000', '000'] +
+_IBM_DOUBLE_DOUBLE_BE = (['301', '235', '157', '064', '124', '000', '000', '000'] +
                      ['000'] * 8)
-_DOUBLE_DOUBLE_LE = (['000', '000', '000', '124', '064', '157', '235', '301'] +
+_IBM_DOUBLE_DOUBLE_LE = (['000', '000', '000', '124', '064', '157', '235', '301'] +
                      ['000'] * 8)
 
 def long_double_representation(lines):
@@ -344,11 +364,16 @@ def long_double_representation(lines):
             # the long double
             if read[-8:] == _AFTER_SEQ:
                 saw = copy.copy(read)
+                # if the content was 12 bytes, we only have 32 - 8 - 12 = 12
+                # "before" bytes. In other words the first 4 "before" bytes went
+                # past the sliding window.
                 if read[:12] == _BEFORE_SEQ[4:]:
                     if read[12:-8] == _INTEL_EXTENDED_12B:
                         return 'INTEL_EXTENDED_12_BYTES_LE'
                     if read[12:-8] == _MOTOROLA_EXTENDED_12B:
                         return 'MOTOROLA_EXTENDED_12_BYTES_BE'
+                # if the content was 16 bytes, we are left with 32-8-16 = 16
+                # "before" bytes, so 8 went past the sliding window.
                 elif read[:8] == _BEFORE_SEQ[8:]:
                     if read[8:-8] == _INTEL_EXTENDED_16B:
                         return 'INTEL_EXTENDED_16_BYTES_LE'
@@ -356,10 +381,11 @@ def long_double_representation(lines):
                         return 'IEEE_QUAD_BE'
                     elif read[8:-8] == _IEEE_QUAD_PREC_LE:
                         return 'IEEE_QUAD_LE'
-                    elif read[8:-8] == _DOUBLE_DOUBLE_BE:
-                        return 'DOUBLE_DOUBLE_BE'
-                    elif read[8:-8] == _DOUBLE_DOUBLE_LE:
-                        return 'DOUBLE_DOUBLE_LE'
+                    elif read[8:-8] == _IBM_DOUBLE_DOUBLE_LE:
+                        return 'IBM_DOUBLE_DOUBLE_LE'
+                    elif read[8:-8] == _IBM_DOUBLE_DOUBLE_BE:
+                        return 'IBM_DOUBLE_DOUBLE_BE'
+                # if the content was 8 bytes, left with 32-8-8 = 16 bytes
                 elif read[:16] == _BEFORE_SEQ:
                     if read[16:-8] == _IEEE_DOUBLE_LE:
                         return 'IEEE_DOUBLE_LE'

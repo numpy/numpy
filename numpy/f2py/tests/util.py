@@ -16,10 +16,12 @@ import atexit
 import textwrap
 import re
 import random
+import pytest
+import numpy.f2py
 
 from numpy.compat import asbytes, asstr
-import numpy.f2py
 from numpy.testing import SkipTest, temppath
+from importlib import import_module
 
 try:
     from hashlib import md5
@@ -146,8 +148,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
             os.unlink(fn)
 
     # Import
-    __import__(module_name)
-    return sys.modules[module_name]
+    return import_module(module_name)
 
 
 @_memoize
@@ -213,7 +214,7 @@ sys.exit(99)
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
 
-    m = re.search(asbytes(r'COMPILERS:(\d+),(\d+),(\d+)'), out)
+    m = re.search(br'COMPILERS:(\d+),(\d+),(\d+)', out)
     if m:
         _compiler_status = (bool(int(m.group(1))), bool(int(m.group(2))),
                             bool(int(m.group(3))))
@@ -319,7 +320,10 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    def setUp(self):
+    def setup(self):
+        if sys.platform == 'win32':
+            raise SkipTest('Fails with MinGW64 Gfortran (Issue #9673)')
+
         if self.module is not None:
             return
 

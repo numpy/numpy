@@ -1,23 +1,114 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+import warnings
+import functools
+
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, column_stack, kron, tile
+    vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
+    put_along_axis
     )
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_array_equal,
-    assert_raises, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
 
 
-class TestApplyAlongAxis(TestCase):
+def _add_keepdims(func):
+    """ hack in keepdims behavior into a function taking an axis """
+    @functools.wraps(func)
+    def wrapped(a, axis, **kwargs):
+        res = func(a, axis=axis, **kwargs)
+        if axis is None:
+            axis = 0  # res is now a scalar, so we can insert this anywhere
+        return np.expand_dims(res, axis=axis)
+    return wrapped
+
+
+class TestTakeAlongAxis(object):
+    def test_argequivalent(self):
+        """ Test it translates from arg<func> to <func> """
+        from numpy.random import rand
+        a = rand(3, 4, 5)
+
+        funcs = [
+            (np.sort, np.argsort, dict()),
+            (_add_keepdims(np.min), _add_keepdims(np.argmin), dict()),
+            (_add_keepdims(np.max), _add_keepdims(np.argmax), dict()),
+            (np.partition, np.argpartition, dict(kth=2)),
+        ]
+
+        for func, argfunc, kwargs in funcs:
+            for axis in list(range(a.ndim)) + [None]:
+                a_func = func(a, axis=axis, **kwargs)
+                ai_func = argfunc(a, axis=axis, **kwargs)
+                assert_equal(a_func, take_along_axis(a, ai_func, axis=axis))
+
+    def test_invalid(self):
+        """ Test it errors when indices has too few dimensions """
+        a = np.ones((10, 10))
+        ai = np.ones((10, 2), dtype=np.intp)
+
+        # sanity check
+        take_along_axis(a, ai, axis=1)
+
+        # not enough indices
+        assert_raises(ValueError, take_along_axis, a, np.array(1), axis=1)
+        # bool arrays not allowed
+        assert_raises(IndexError, take_along_axis, a, ai.astype(bool), axis=1)
+        # float arrays not allowed
+        assert_raises(IndexError, take_along_axis, a, ai.astype(float), axis=1)
+        # invalid axis
+        assert_raises(np.AxisError, take_along_axis, a, ai, axis=10)
+
+    def test_empty(self):
+        """ Test everything is ok with empty results, even with inserted dims """
+        a  = np.ones((3, 4, 5))
+        ai = np.ones((3, 0, 5), dtype=np.intp)
+
+        actual = take_along_axis(a, ai, axis=1)
+        assert_equal(actual.shape, ai.shape)
+
+    def test_broadcast(self):
+        """ Test that non-indexing dimensions are broadcast in both directions """
+        a  = np.ones((3, 4, 1))
+        ai = np.ones((1, 2, 5), dtype=np.intp)
+        actual = take_along_axis(a, ai, axis=1)
+        assert_equal(actual.shape, (3, 2, 5))
+
+
+class TestPutAlongAxis(object):
+    def test_replace_max(self):
+        a_base = np.array([[10, 30, 20], [60, 40, 50]])
+
+        for axis in list(range(a_base.ndim)) + [None]:
+            # we mutate this in the loop
+            a = a_base.copy()
+
+            # replace the max with a small value
+            i_max = _add_keepdims(np.argmax)(a, axis=axis)
+            put_along_axis(a, i_max, -99, axis=axis)
+
+            # find the new minimum, which should max
+            i_min = _add_keepdims(np.argmin)(a, axis=axis)
+
+            assert_equal(i_min, i_max)
+
+    def test_broadcast(self):
+        """ Test that non-indexing dimensions are broadcast in both directions """
+        a  = np.ones((3, 4, 1))
+        ai = np.arange(10, dtype=np.intp).reshape((1, 2, 5)) % 4
+        put_along_axis(a, ai, 20, axis=1)
+        assert_equal(take_along_axis(a, ai, axis=1), 20)
+
+
+class TestApplyAlongAxis(object):
     def test_simple(self):
         a = np.ones((20, 10), 'd')
         assert_array_equal(
             apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
 
-    def test_simple101(self, level=11):
+    def test_simple101(self):
         a = np.ones((10, 101), 'd')
         assert_array_equal(
             apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
@@ -28,19 +119,21 @@ class TestApplyAlongAxis(TestCase):
                            [[27, 30, 33], [36, 39, 42], [45, 48, 51]])
 
     def test_preserve_subclass(self):
-        # this test is particularly malicious because matrix
-        # refuses to become 1d
         def double(row):
             return row * 2
-        m = np.matrix([[0, 1], [2, 3]])
-        expected = np.matrix([[0, 2], [4, 6]])
+
+        class MyNDArray(np.ndarray):
+            pass
+
+        m = np.array([[0, 1], [2, 3]]).view(MyNDArray)
+        expected = np.array([[0, 2], [4, 6]]).view(MyNDArray)
 
         result = apply_along_axis(double, 0, m)
-        assert_(isinstance(result, np.matrix))
+        assert_(isinstance(result, MyNDArray))
         assert_array_equal(result, expected)
 
         result = apply_along_axis(double, 1, m)
-        assert_(isinstance(result, np.matrix))
+        assert_(isinstance(result, MyNDArray))
         assert_array_equal(result, expected)
 
     def test_subclass(self):
@@ -78,7 +171,7 @@ class TestApplyAlongAxis(TestCase):
 
     def test_axis_insertion(self, cls=np.ndarray):
         def f1to2(x):
-            """produces an assymmetric non-square matrix from x"""
+            """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
             return (x[::-1] * x[1:,None]).view(cls)
 
@@ -122,7 +215,7 @@ class TestApplyAlongAxis(TestCase):
 
     def test_axis_insertion_ma(self):
         def f1to2(x):
-            """produces an assymmetric non-square matrix from x"""
+            """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
             res = x[::-1] * x[1:,None]
             return np.ma.masked_where(res%5==0, res)
@@ -159,15 +252,49 @@ class TestApplyAlongAxis(TestCase):
         assert_equal(actual, np.ones(10))
         assert_raises(ValueError, np.apply_along_axis, empty_to_1, 0, a)
 
+    def test_with_iterable_object(self):
+        # from issue 5248
+        d = np.array([
+            [set([1, 11]), set([2, 22]), set([3, 33])],
+            [set([4, 44]), set([5, 55]), set([6, 66])]
+        ])
+        actual = np.apply_along_axis(lambda a: set.union(*a), 0, d)
+        expected = np.array([{1, 11, 4, 44}, {2, 22, 5, 55}, {3, 33, 6, 66}])
 
-class TestApplyOverAxes(TestCase):
+        assert_equal(actual, expected)
+
+        # issue 8642 - assert_equal doesn't detect this!
+        for i in np.ndindex(actual.shape):
+            assert_equal(type(actual[i]), type(expected[i]))
+
+
+class TestApplyOverAxes(object):
     def test_simple(self):
         a = np.arange(24).reshape(2, 3, 4)
         aoa_a = apply_over_axes(np.sum, a, [0, 2])
         assert_array_equal(aoa_a, np.array([[[60], [92], [124]]]))
 
 
-class TestArraySplit(TestCase):
+class TestExpandDims(object):
+    def test_functionality(self):
+        s = (2, 3, 4, 5)
+        a = np.empty(s)
+        for axis in range(-5, 4):
+            b = expand_dims(a, axis)
+            assert_(b.shape[axis] == 1)
+            assert_(np.squeeze(b).shape == s)
+
+    def test_deprecations(self):
+        # 2017-05-17, 1.13.0
+        s = (2, 3, 4, 5)
+        a = np.empty(s)
+        with warnings.catch_warnings():
+            warnings.simplefilter("always")
+            assert_warns(DeprecationWarning, expand_dims, a, -6)
+            assert_warns(DeprecationWarning, expand_dims, a, 5)
+
+
+class TestArraySplit(object):
     def test_integer_0_split(self):
         a = np.arange(10)
         assert_raises(ValueError, array_split, a, 0)
@@ -292,7 +419,7 @@ class TestArraySplit(TestCase):
         compare_results(res, desired)
 
 
-class TestSplit(TestCase):
+class TestSplit(object):
     # The split function is essentially the same as array_split,
     # except that it test if splitting will result in an
     # equal split.  Only test for this case.
@@ -307,12 +434,12 @@ class TestSplit(TestCase):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
 
-class TestColumnStack(TestCase):
+class TestColumnStack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, column_stack, 1)
 
 
-class TestDstack(TestCase):
+class TestDstack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, dstack, 1)
 
@@ -347,7 +474,7 @@ class TestDstack(TestCase):
 
 # array_split has more comprehensive test of splitting.
 # only do simple test on hsplit, vsplit, and dsplit
-class TestHsplit(TestCase):
+class TestHsplit(object):
     """Only testing for integer splits.
 
     """
@@ -376,7 +503,7 @@ class TestHsplit(TestCase):
         compare_results(res, desired)
 
 
-class TestVsplit(TestCase):
+class TestVsplit(object):
     """Only testing for integer splits.
 
     """
@@ -403,7 +530,7 @@ class TestVsplit(TestCase):
         compare_results(res, desired)
 
 
-class TestDsplit(TestCase):
+class TestDsplit(object):
     # Only testing for integer splits.
     def test_non_iterable(self):
         assert_raises(ValueError, dsplit, 1, 1)
@@ -436,7 +563,7 @@ class TestDsplit(TestCase):
         compare_results(res, desired)
 
 
-class TestSqueeze(TestCase):
+class TestSqueeze(object):
     def test_basic(self):
         from numpy.random import rand
 
@@ -455,18 +582,12 @@ class TestSqueeze(TestCase):
         assert_equal(type(res), np.ndarray)
 
 
-class TestKron(TestCase):
+class TestKron(object):
     def test_return_type(self):
-        a = np.ones([2, 2])
-        m = np.asmatrix(a)
-        assert_equal(type(kron(a, a)), np.ndarray)
-        assert_equal(type(kron(m, m)), np.matrix)
-        assert_equal(type(kron(a, m)), np.matrix)
-        assert_equal(type(kron(m, a)), np.matrix)
-
         class myarray(np.ndarray):
             __array_priority__ = 0.0
 
+        a = np.ones([2, 2])
         ma = myarray(a.shape, a.dtype, a.data)
         assert_equal(type(kron(a, a)), np.ndarray)
         assert_equal(type(kron(ma, ma)), myarray)
@@ -474,7 +595,7 @@ class TestKron(TestCase):
         assert_equal(type(kron(ma, a)), myarray)
 
 
-class TestTile(TestCase):
+class TestTile(object):
     def test_basic(self):
         a = np.array([0, 1, 2])
         b = [[1, 2], [3, 4]]
@@ -514,26 +635,22 @@ class TestTile(TestCase):
                 assert_equal(large, klarge)
 
 
-class TestMayShareMemory(TestCase):
+class TestMayShareMemory(object):
     def test_basic(self):
         d = np.ones((50, 60))
         d2 = np.ones((30, 60, 6))
-        self.assertTrue(np.may_share_memory(d, d))
-        self.assertTrue(np.may_share_memory(d, d[::-1]))
-        self.assertTrue(np.may_share_memory(d, d[::2]))
-        self.assertTrue(np.may_share_memory(d, d[1:, ::-1]))
+        assert_(np.may_share_memory(d, d))
+        assert_(np.may_share_memory(d, d[::-1]))
+        assert_(np.may_share_memory(d, d[::2]))
+        assert_(np.may_share_memory(d, d[1:, ::-1]))
 
-        self.assertFalse(np.may_share_memory(d[::-1], d2))
-        self.assertFalse(np.may_share_memory(d[::2], d2))
-        self.assertFalse(np.may_share_memory(d[1:, ::-1], d2))
-        self.assertTrue(np.may_share_memory(d2[1:, ::-1], d2))
+        assert_(not np.may_share_memory(d[::-1], d2))
+        assert_(not np.may_share_memory(d[::2], d2))
+        assert_(not np.may_share_memory(d[1:, ::-1], d2))
+        assert_(np.may_share_memory(d2[1:, ::-1], d2))
 
 
 # Utility
 def compare_results(res, desired):
     for i in range(len(desired)):
         assert_array_equal(res[i], desired[i])
-
-
-if __name__ == "__main__":
-    run_module_suite()

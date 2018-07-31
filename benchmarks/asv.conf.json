@@ -7,7 +7,7 @@
     "project": "numpy",
 
     // The project's homepage
-    "project_url": "http://numpy.org/",
+    "project_url": "https://www.numpy.org/",
 
     // The URL or local path of the source code repository for the
     // project being benchmarked

@@ -6,6 +6,7 @@ import operator
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
                       TooHardError,asanyarray)
+from numpy.core.multiarray import add_docstring
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -115,17 +116,24 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     y = _nx.arange(0, num, dtype=dt)
 
     delta = stop - start
+    # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
+    # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
+    # see gh-7142. Hence, we multiply in place only for standard scalar types.
+    _mult_inplace = _nx.isscalar(delta) 
     if num > 1:
         step = delta / div
         if step == 0:
             # Special handling for denormal numbers, gh-5437
             y /= div
-            y = y * delta
+            if _mult_inplace:
+                y *= delta
+            else:
+                y = y * delta
         else:
-            # One might be tempted to use faster, in-place multiplication here,
-            # but this prevents step from overriding what class is produced,
-            # and thus prevents, e.g., use of Quantities; see gh-7142.
-            y = y * step
+            if _mult_inplace:
+                y *= step
+            else:
+                y = y * step
     else:
         # 0 and 1 item long sequences have an undefined step
         step = NaN
@@ -292,13 +300,13 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
 
     Negative, decreasing, and complex inputs are allowed:
 
-    >>> geomspace(1000, 1, num=4)
+    >>> np.geomspace(1000, 1, num=4)
     array([ 1000.,   100.,    10.,     1.])
-    >>> geomspace(-1000, -1, num=4)
+    >>> np.geomspace(-1000, -1, num=4)
     array([-1000.,  -100.,   -10.,    -1.])
-    >>> geomspace(1j, 1000j, num=4)  # Straight line
+    >>> np.geomspace(1j, 1000j, num=4)  # Straight line
     array([ 0.   +1.j,  0.  +10.j,  0. +100.j,  0.+1000.j])
-    >>> geomspace(-1+0j, 1+0j, num=5)  # Circle
+    >>> np.geomspace(-1+0j, 1+0j, num=5)  # Circle
     array([-1.00000000+0.j        , -0.70710678+0.70710678j,
             0.00000000+1.j        ,  0.70710678+0.70710678j,
             1.00000000+0.j        ])
@@ -339,7 +347,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
     # complex and another is negative and log would produce NaN otherwise
     start = start + (stop - stop)
     stop = stop + (start - start)
-    if _nx.issubdtype(dtype, complex):
+    if _nx.issubdtype(dtype, _nx.complexfloating):
         start = start + 0j
         stop = stop + 0j
 
@@ -349,3 +357,38 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
                                  endpoint=endpoint, base=10.0, dtype=dtype)
 
     return result.astype(dtype)
+
+
+#always succeed
+def add_newdoc(place, obj, doc):
+    """
+    Adds documentation to obj which is in module place.
+
+    If doc is a string add it to obj as a docstring
+
+    If doc is a tuple, then the first element is interpreted as
+       an attribute of obj and the second as the docstring
+          (method, docstring)
+
+    If doc is a list, then each element of the list should be a
+       sequence of length two --> [(method1, docstring1),
+       (method2, docstring2), ...]
+
+    This routine never raises an error.
+
+    This routine cannot modify read-only docstrings, as appear
+    in new-style classes or built-in functions. Because this
+    routine never raises an error the caller must check manually
+    that the docstrings were changed.
+    """
+    try:
+        new = getattr(__import__(place, globals(), {}, [obj]), obj)
+        if isinstance(doc, str):
+            add_docstring(new, doc.strip())
+        elif isinstance(doc, tuple):
+            add_docstring(getattr(new, doc[0]), doc[1].strip())
+        elif isinstance(doc, list):
+            for val in doc:
+                add_docstring(getattr(new, val[0]), val[1].strip())
+    except Exception:
+        pass

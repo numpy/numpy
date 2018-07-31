@@ -1,11 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy import (logspace, linspace, geomspace, dtype, array, finfo,
-                   typecodes, arange, isnan, ndarray, sqrt)
+from numpy import (
+    logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
+    ndarray, sqrt, nextafter
+    )
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_raises,
-    assert_array_equal, assert_allclose, suppress_warnings
-)
+    assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
+    suppress_warnings
+    )
 
 
 class PhysicalQuantity(float):
@@ -40,7 +42,7 @@ class PhysicalQuantity2(ndarray):
     __array_priority__ = 10
 
 
-class TestLogspace(TestCase):
+class TestLogspace(object):
 
     def test_basic(self):
         y = logspace(0, 6)
@@ -76,7 +78,7 @@ class TestLogspace(TestCase):
         assert_equal(ls, logspace(1.0, 7.0, 1))
 
 
-class TestGeomspace(TestCase):
+class TestGeomspace(object):
 
     def test_basic(self):
         y = geomspace(1, 1e6)
@@ -191,7 +193,7 @@ class TestGeomspace(TestCase):
         assert_raises(ValueError, geomspace, 0, 0)
 
 
-class TestLinspace(TestCase):
+class TestLinspace(object):
 
     def test_basic(self):
         y = linspace(0, 10)
@@ -301,9 +303,9 @@ class TestLinspace(TestCase):
     def test_denormal_numbers(self):
         # Regression test for gh-5437. Will probably fail when compiled
         # with ICC, which flushes denormals to zero
-        for dt in (dtype(f) for f in typecodes['Float']):
-            stop = finfo(dt).tiny * finfo(dt).resolution
-            assert_(any(linspace(0, stop, 10, endpoint=False, dtype=dt)))
+        for ftype in sctypes['float']:
+            stop = nextafter(ftype(0), ftype(1)) * 5  # A denormal number
+            assert_(any(linspace(0, stop, 10, endpoint=False, dtype=ftype)))
 
     def test_equivalent_to_arange(self):
         for j in range(1000):
@@ -319,7 +321,3 @@ class TestLinspace(TestCase):
                 assert_(isinstance(y, tuple) and len(y) == 2 and
                         len(y[0]) == num and isnan(y[1]),
                         'num={0}, endpoint={1}'.format(num, ept))
-
-
-if __name__ == "__main__":
-    run_module_suite()

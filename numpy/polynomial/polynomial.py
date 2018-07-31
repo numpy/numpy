@@ -36,7 +36,7 @@ Misc Functions
 --------------
 - `polyfromroots` -- create a polynomial with specified roots.
 - `polyroots` -- find the roots of a polynomial.
-- `polyvalfromroots` -- evalute a polynomial at given points from roots.
+- `polyvalfromroots` -- evaluate a polynomial at given points from roots.
 - `polyvander` -- Vandermonde-like matrix for powers.
 - `polyvander2d` -- Vandermonde-like matrix for 2D power series.
 - `polyvander3d` -- Vandermonde-like matrix for 3D power series.
@@ -66,6 +66,7 @@ __all__ = [
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -540,15 +541,12 @@ def polyder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
@@ -560,7 +558,7 @@ def polyder(c, m=1, scl=1, axis=0):
             for j in range(n, 0, -1):
                 der[j - 1] = j*c[j]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -610,7 +608,8 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 1``, ``len(k) > m``.
+        If ``m < 1``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -621,7 +620,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.  Why
     is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`. Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a` - perhaps not what one would have first thought.
 
     Examples
@@ -656,18 +655,19 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
     k = list(k) + [0]*(cnt - len(k))
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -681,7 +681,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j + 1] = c[j]/(j + 1)
             tmp[0] += k[i] - polyval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -918,7 +918,7 @@ def polyval2d(x, y, c):
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = polyval(x, c)
@@ -1031,7 +1031,7 @@ def polyval3d(x, y, z, c):
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = polyval(x, c)
@@ -1152,7 +1152,7 @@ def polyvander(x, deg):
         v[1] = x
         for i in range(2, ideg + 1):
             v[i] = v[i-1]*x
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def polyvander2d(x, y, deg):

@@ -72,6 +72,7 @@ Joining arrays
    dstack
    hstack
    vstack
+   block
 
 Splitting arrays
 ================

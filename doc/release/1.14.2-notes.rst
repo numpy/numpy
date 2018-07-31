@@ -1,0 +1,40 @@
+==========================
+NumPy 1.14.2 Release Notes
+==========================
+
+This is a bugfix release for some bugs reported following the 1.14.1 release. The major
+problems dealt with are as follows.
+
+* Residual bugs in the new array printing functionality.
+* Regression resulting in a relocation problem with shared library.
+* Improved PyPy compatibility.
+
+The Python versions supported in this release are 2.7 and 3.4 - 3.6. The Python
+3.6 wheels available from PIP are built with Python 3.6.2 and should be
+compatible with all previous versions of Python 3.6. The source releases were
+cythonized with Cython 0.26.1, which is known to **not** support the upcoming
+Python 3.7 release.  People who wish to run Python 3.7 should check out the
+NumPy repo and try building with the, as yet, unreleased master branch of
+Cython.
+
+Contributors
+============
+
+A total of 4 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Charles Harris
+* Eric Wieser
+* Pauli Virtanen
+
+Pull requests merged
+====================
+
+A total of 5 pull requests were merged for this release.
+
+* `#10674 <https://github.com/numpy/numpy/pull/10674>`__: BUG: Further back-compat fix for subclassed array repr
+* `#10725 <https://github.com/numpy/numpy/pull/10725>`__: BUG: dragon4 fractional output mode adds too many trailing zeros
+* `#10726 <https://github.com/numpy/numpy/pull/10726>`__: BUG: Fix f2py generated code to work on PyPy
+* `#10727 <https://github.com/numpy/numpy/pull/10727>`__: BUG: Fix missing NPY_VISIBILITY_HIDDEN on npy_longdouble_to_PyLong
+* `#10729 <https://github.com/numpy/numpy/pull/10729>`__: DOC: Create 1.14.2 notes and changelog.

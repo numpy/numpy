@@ -11,7 +11,7 @@ Glossary
        vertically downwards across rows (axis 0), and the second running
        horizontally across columns (axis 1).
 
-       Many operation can take place along one of these axes.  For example,
+       Many operations can take place along one of these axes.  For example,
        we can sum each row of an array, in which case we operate along
        columns, or axis 1::
 
@@ -48,7 +48,7 @@ Glossary
          array([(1, 2.0), (3, 4.0)],
                dtype=[('x', '<i4'), ('y', '<f8')])
 
-       Fast element-wise operations, called `ufuncs`_, operate on arrays.
+       Fast element-wise operations, called a :term:`ufunc`, operate on arrays.
 
    array_like
        Any sequence that can be interpreted as an ndarray.  This includes
@@ -62,8 +62,14 @@ Glossary
          >>> x.shape
          (3,)
 
+   big-endian
+       When storing a multi-byte value in memory as a sequence of bytes, the
+       sequence addresses/sends/stores the most significant byte first (lowest
+       address) and the least significant byte last (highest address). Common in
+       micro-processors and used for transmission of data over network protocols.
+
    BLAS
-       `Basic Linear Algebra Subprograms <http://en.wikipedia.org/wiki/BLAS>`_
+       `Basic Linear Algebra Subprograms <https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_
 
    broadcast
        NumPy can do operations on arrays whose shapes are mismatched::
@@ -82,7 +88,7 @@ Glossary
          array([[4, 5],
                 [5, 6]])
 
-       See `doc.broadcasting`_ for more information.
+       See `numpy.doc.broadcasting` for more information.
 
    C order
        See `row-major`
@@ -149,13 +155,25 @@ Glossary
        be used as keys.
 
        For more information on dictionaries, read the
-       `Python tutorial <http://docs.python.org/tut>`_.
+       `Python tutorial <https://docs.python.org/tutorial/>`_.
+
+   field
+       In a :term:`structured data type`, each sub-type is called a `field`.
+       The `field` has a name (a string), a type (any valid :term:`dtype`, and
+       an optional `title`. See :ref:`arrays.dtypes`
 
    Fortran order
        See `column-major`
 
    flattened
-       Collapsed to a one-dimensional array. See `ndarray.flatten`_ for details.
+       Collapsed to a one-dimensional array. See `numpy.ndarray.flatten`
+       for details.
+
+   homogenous
+       Describes a block of memory comprised of blocks, each block comprised of 
+       items and of the same size, and blocks are interpreted in exactly the
+       same way. In the simplest case each block contains a single item, for
+       instance int32 or float64.
 
    immutable
        An object that cannot be modified after execution is called
@@ -220,8 +238,14 @@ Glossary
                 [3, 4]])
 
        For more information, read the section on lists in the `Python
-       tutorial <http://docs.python.org/tut>`_.  For a mapping
+       tutorial <https://docs.python.org/tutorial/>`_.  For a mapping
        type (key-value), see *dictionary*.
+
+   little-endian
+       When storing a multi-byte value in memory as a sequence of bytes, the
+       sequence addresses/sends/stores the least significant byte first (lowest
+       address) and the most significant byte last (highest address). Common in
+       x86 processors.
 
    mask
        A boolean array, used to select only certain elements for an operation::
@@ -232,7 +256,7 @@ Glossary
 
          >>> mask = (x > 2)
          >>> mask
-         array([False, False, False, True,  True], dtype=bool)
+         array([False, False, False, True,  True])
 
          >>> x[mask] = -1
          >>> x
@@ -284,9 +308,9 @@ Glossary
        See *array*.
 
    record array
-       An `ndarray`_ with `structured data type`_ which has been subclassed as
-       np.recarray and whose dtype is of type np.record, making the
-       fields of its data type to be accessible by attribute.
+       An :term:`ndarray` with :term:`structured data type` which has been
+       subclassed as ``np.recarray`` and whose dtype is of type ``np.record``,
+       making the fields of its data type to be accessible by attribute.
 
    reference
        If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
@@ -348,10 +372,13 @@ Glossary
 
          >>> x[:, 1]
          array([2, 4])
-   
+
+   structure
+       See :term:`structured data type`
+
    structured data type
        A data type composed of other datatypes
-   
+
    tuple
        A sequence that may contain a variable number of types of any
        kind.  A tuple is immutable, i.e., once constructed it cannot be

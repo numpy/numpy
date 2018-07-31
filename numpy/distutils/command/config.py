@@ -101,8 +101,12 @@ Original exception was: %s, and the Compiler class was %s
         return ret
 
     def _compile (self, body, headers, include_dirs, lang):
-        return self._wrap_method(old_config._compile, lang,
-                                 (body, headers, include_dirs, lang))
+        src, obj = self._wrap_method(old_config._compile, lang,
+                                     (body, headers, include_dirs, lang))
+        # _compile in unixcompiler.py sometimes creates .d dependency files.
+        # Clean them up.
+        self.temp_files.append(obj + '.d')
+        return src, obj
 
     def _link (self, body,
                headers, include_dirs,
@@ -359,7 +363,7 @@ int main (void)
         decl : dict
             for every (key, value), the declaration in the value will be
             used for function in key. If a function is not in the
-            dictionay, no declaration will be used.
+            dictionary, no declaration will be used.
         call : dict
             for every item (f, value), if the value is True, a call will be
             done to the function f.
@@ -441,7 +445,7 @@ int main (void)
                 src, obj, exe = self._link(body, headers, include_dirs,
                                            libraries, library_dirs, lang)
                 grabber.restore()
-            except:
+            except Exception:
                 output = grabber.data
                 grabber.restore()
                 raise

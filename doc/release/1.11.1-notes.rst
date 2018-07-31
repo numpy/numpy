@@ -1,5 +1,6 @@
+==========================
 NumPy 1.11.1 Release Notes
-**************************
+==========================
 
 Numpy 1.11.1 supports Python 2.6 - 2.7 and 3.2 - 3.5. It fixes bugs and
 regressions found in Numpy 1.11.0 and includes several build related

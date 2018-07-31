@@ -1,0 +1,84 @@
+==========================
+NumPy 1.16.0 Release Notes
+==========================
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+Deprecations
+============
+
+`typeNA` and `sctypeNA` have been deprecated
+-------------------------------------------
+
+The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` were buggy
+and not documented. They will be removed in the 1.18 release. Use 
+`numpy.sctypeDict` instead.
+
+Future Changes
+==============
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+``randint`` and ``choice`` now work on empty distributions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Even when no elements needed to be drawn, ``np.random.randint`` and
+``np.random.choice`` raised an error when the arguments described an empty
+distribution. This has been fixed so that e.g.
+``np.random.choice([], 0) == np.array([], dtype=float64)``.
+
+ARM support updated
+-------------------
+Support for ARM CPUs has been updated to accommodate 32 and 64 bit targets,
+and also big and little endian byte ordering. AARCH32 memory alignment issues
+have been addressed.
+
+Appending to build flags
+------------------------
+`numpy.distutils` has always overridden rather than appended to `LDFLAGS` and
+other similar such environment variables for compiling Fortran extensions.
+Now, if the `NPY_DISTUTILS_APPEND_FLAGS` environment variable is set to 1, the
+behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,
+`F90FLAGS`, `FREEFLAGS`, `FOPT`, `FDEBUG`, and `FFLAGS`.  See gh-11525 for more
+details.
+
+Changes
+=======
+
+Comparison ufuncs will now error rather than return NotImplemented
+------------------------------------------------------------------
+
+Previously, comparison ufuncs such as ``np.equal`` would return
+`NotImplemented` if their arguments had structured dtypes, to help comparison
+operators such as ``__eq__`` deal with those.  This is no longer needed, as the
+relevant logic has moved to the comparison operators proper (which thus do
+continue to return `NotImplemented` as needed). Hence, like all other ufuncs,
+the comparison ufuncs will now error on structured dtypes.
+
+Positive will now raise a deprecation warning for non-numerical arrays
+----------------------------------------------------------------------
+Previously, ``+array`` unconditionally returned a copy. Now, it will
+raise a ``DeprecationWarning`` if the array is not numerical (i.e.,
+if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
+subclasses that override the default ``__array_ufunc__`` implementation,
+the ``TypeError`` is passed on.

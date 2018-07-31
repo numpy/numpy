@@ -18,8 +18,6 @@ Performance tuning
 .. autosummary::
    :toctree: generated/
 
-   alterdot
-   restoredot
    setbufsize
    getbufsize
 
@@ -31,6 +29,13 @@ Memory ranges
 
    shares_memory
    may_share_memory
+
+Array mixins
+------------
+.. autosummary::
+   :toctree: generated/
+
+   lib.mixins.NDArrayOperatorsMixin
 
 NumPy version comparison
 ------------------------

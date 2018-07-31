@@ -14,6 +14,9 @@
 #include "common.h"
 #include "buffer.h"
 
+#include "get_attr_string.h"
+#include "mem_overlap.h"
+
 /*
  * The casting to use for implicit assignment operations resulting from
  * in-place operations (like +=) and out= arguments. (Notice that this
@@ -28,61 +31,6 @@
  * be allowed under the NPY_SAME_KIND_CASTING rules, and if not we issue a
  * warning (that people's code will be broken in a future release.)
  */
-
-/*
- * PyArray_GetAttrString_SuppressException:
- *
- * Stripped down version of PyObject_GetAttrString,
- * avoids lookups for None, tuple, and List objects,
- * and doesn't create a PyErr since this code ignores it.
- *
- * This can be much faster then PyObject_GetAttrString where
- * exceptions are not used by caller.
- *
- * 'obj' is the object to search for attribute.
- *
- * 'name' is the attribute to search for.
- *
- * Returns attribute value on success, 0 on failure.
- */
-PyObject *
-PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
-{
-    PyTypeObject *tp = Py_TYPE(obj);
-    PyObject *res = (PyObject *)NULL;
-
-    /* We do not need to check for special attributes on trivial types */
-    if (_is_basic_python_type(obj)) {
-        return NULL;
-    }
-
-    /* Attribute referenced by (char *)name */
-    if (tp->tp_getattr != NULL) {
-        res = (*tp->tp_getattr)(obj, name);
-        if (res == NULL) {
-            PyErr_Clear();
-        }
-    }
-    /* Attribute referenced by (PyObject *)name */
-    else if (tp->tp_getattro != NULL) {
-#if defined(NPY_PY3K)
-        PyObject *w = PyUnicode_InternFromString(name);
-#else
-        PyObject *w = PyString_InternFromString(name);
-#endif
-        if (w == NULL) {
-            return (PyObject *)NULL;
-        }
-        res = (*tp->tp_getattro)(obj, w);
-        Py_DECREF(w);
-        if (res == NULL) {
-            PyErr_Clear();
-        }
-    }
-    return res;
-}
-
-
 
 NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_SAME_KIND_CASTING;
 
@@ -358,7 +306,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         memset(&buffer_view, 0, sizeof(Py_buffer));
         if (PyObject_GetBuffer(obj, &buffer_view,
                                PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-            PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
+            PyObject_GetBuffer(obj, &buffer_view,
+                               PyBUF_FORMAT|PyBUF_SIMPLE) == 0) {
 
             PyErr_Clear();
             dtype = _descriptor_from_pep3118_format(buffer_view.format);
@@ -382,7 +331,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* The array interface */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array_interface__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
@@ -415,7 +364,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* The array struct interface */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
     if (ip != NULL) {
         PyArrayInterface *inter;
         char buf[40];
@@ -450,7 +399,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #endif
 
     /* The __array__ attribute */
-    ip = PyArray_GetAttrString_SuppressException(obj, "__array__");
+    ip = PyArray_LookupSpecial_OnInstance(obj, "__array__");
     if (ip != NULL) {
         Py_DECREF(ip);
         ip = PyObject_CallMethod(obj, "__array__", NULL);
@@ -476,7 +425,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
      * __len__ is not defined.
      */
     if (maxdims == 0 || !PySequence_Check(obj) || PySequence_Size(obj) < 0) {
-        // clear any PySequence_Size error, which corrupts further calls to it
+        /* clear any PySequence_Size error which corrupts further calls */
         PyErr_Clear();
 
         if (*out_dtype == NULL || (*out_dtype)->type_num != NPY_OBJECT) {
@@ -641,7 +590,7 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
-    unsigned int i;
+    int i;
     npy_uintp aligned;
     npy_uintp alignment = PyArray_DESCR(ap)->alignment;
 
@@ -686,8 +635,12 @@ NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {
     PyObject *base=PyArray_BASE(ap);
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#else
     void *dummy;
     Py_ssize_t n;
+#endif
 
     /* If we own our own data, then no-problem */
     if ((base == NULL) || (PyArray_FLAGS(ap) & NPY_ARRAY_OWNDATA)) {
@@ -721,9 +674,18 @@ _IsWriteable(PyArrayObject *ap)
     if (PyString_Check(base)) {
         return NPY_TRUE;
     }
-    if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
+#if defined(NPY_PY3K)
+    if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
+        PyErr_Clear();
         return NPY_FALSE;
     }
+    PyBuffer_Release(&view);
+#else
+    if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
+        PyErr_Clear();
+        return NPY_FALSE;
+    }
+#endif
     return NPY_TRUE;
 }
 
@@ -891,3 +853,102 @@ _may_have_objects(PyArray_Descr *dtype)
     return (PyDataType_HASFIELDS(base) ||
             PyDataType_FLAGCHK(base, NPY_ITEM_HASOBJECT) );
 }
+
+/*
+ * Make a new empty array, of the passed size, of a type that takes the
+ * priority of ap1 and ap2 into account.
+ *
+ * If `out` is non-NULL, memory overlap is checked with ap1 and ap2, and an
+ * updateifcopy temporary array may be returned. If `result` is non-NULL, the
+ * output array to be returned (`out` if non-NULL and the newly allocated array
+ * otherwise) is incref'd and put to *result.
+ */
+NPY_NO_EXPORT PyArrayObject *
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
+                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
+{
+    PyArrayObject *out_buf;
+
+    if (out) {
+        int d;
+
+        /* verify that out is usable */
+        if (PyArray_NDIM(out) != nd ||
+            PyArray_TYPE(out) != typenum ||
+            !PyArray_ISCARRAY(out)) {
+            PyErr_SetString(PyExc_ValueError,
+                "output array is not acceptable (must have the right datatype, "
+                "number of dimensions, and be a C-Array)");
+            return 0;
+        }
+        for (d = 0; d < nd; ++d) {
+            if (dimensions[d] != PyArray_DIM(out, d)) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array has wrong dimensions");
+                return 0;
+            }
+        }
+
+        /* check for memory overlap */
+        if (!(solve_may_share_memory(out, ap1, 1) == 0 &&
+              solve_may_share_memory(out, ap2, 1) == 0)) {
+            /* allocate temporary output array */
+            out_buf = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
+                                                            NULL, 0);
+            if (out_buf == NULL) {
+                return NULL;
+            }
+
+            /* set copy-back */
+            Py_INCREF(out);
+            if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
+                Py_DECREF(out);
+                Py_DECREF(out_buf);
+                return NULL;
+            }
+        }
+        else {
+            Py_INCREF(out);
+            out_buf = out;
+        }
+
+        if (result) {
+            Py_INCREF(out);
+            *result = out;
+        }
+
+        return out_buf;
+    }
+    else {
+        PyTypeObject *subtype;
+        double prior1, prior2;
+        /*
+         * Need to choose an output array that can hold a sum
+         * -- use priority to determine which subtype.
+         */
+        if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
+            prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
+            prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
+            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
+        }
+        else {
+            prior1 = prior2 = 0.0;
+            subtype = Py_TYPE(ap1);
+        }
+
+        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
+                                               typenum, NULL, NULL, 0, 0,
+                                               (PyObject *)
+                                               (prior2 > prior1 ? ap2 : ap1));
+
+        if (out_buf != NULL && result) {
+            Py_INCREF(out_buf);
+            *result = out_buf;
+        }
+
+        return out_buf;
+    }
+}
+
+
+

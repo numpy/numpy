@@ -25,7 +25,7 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
  * the loop, such as when the iternext() function never calls
  * a function which could raise a Python exception.
  *
- * Ths skip_first_count parameter indicates how many elements need to be
+ * The skip_first_count parameter indicates how many elements need to be
  * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
  * when the 'assign_identity' parameter was NULL when calling
  * PyArray_ReduceWrapper.
@@ -109,8 +109,8 @@ typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
 
 /*
  * This function executes all the standard NumPy reduction function
- * boilerplate code, just calling assign_identity and the appropriate
- * inner loop function where necessary.
+ * boilerplate code, just calling the appropriate inner loop function where
+ * necessary.
  *
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
@@ -130,13 +130,14 @@ typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
  *               with size one.
  * subok       : If true, the result uses the subclass of operand, otherwise
  *               it is always a base class ndarray.
- * assign_identity : If NULL, PyArray_InitializeReduceResult is used, otherwise
- *               this function is called to initialize the result to
+ * identity    : If Py_None, PyArray_InitializeReduceResult is used, otherwise
+ *               this value is used to initialize the result to
  *               the reduction's unit.
  * loop        : The loop which does the reduction.
- * data        : Data which is passed to assign_identity and the inner loop.
+ * data        : Data which is passed to the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
+ * errormask   : forwarded from _get_bufsize_errmask
  */
 NPY_NO_EXPORT PyArrayObject *
 PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
@@ -147,8 +148,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                       npy_bool *axis_flags, int reorderable,
                       int keepdims,
                       int subok,
-                      PyArray_AssignReduceIdentityFunc *assign_identity,
+                      PyObject *identity,
                       PyArray_ReduceLoopFunc *loop,
-                      void *data, npy_intp buffersize, const char *funcname);
+                      void *data, npy_intp buffersize, const char *funcname,
+                      int errormask);
 
 #endif

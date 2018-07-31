@@ -4,7 +4,7 @@ A Guide to Masked Arrays in NumPy
 
 .. Contents::
 
-See http://www.scipy.org/scipy/numpy/wiki/MaskedArray
+See http://www.scipy.org/scipy/numpy/wiki/MaskedArray (dead link)
 for updates of this document.
 
 
@@ -18,7 +18,7 @@ that could store some additional information along with numerical values,
 while keeping the possibility for missing data (picture storing a series
 of dates along with measurements, what would later become the `TimeSeries
 Scikit <http://projects.scipy.org/scipy/scikits/wiki/TimeSeries>`__
-.
+(dead link).
 
 I started to implement such a class, but then quickly realized that
 any additional information disappeared when processing these subarrays
@@ -104,9 +104,9 @@ array(data =
  [False False True False False],
       fill_value=?)
 >>> old_ma.getmask(x) == new_ma.getmask(x)
-array([True, True, True, True, True], dtype=bool)
+array([True, True, True, True, True])
 >>> old_ma.getmask(y) == new_ma.getmask(y)
-array([True, True, False, True, True], dtype=bool)
+array([True, True, False, True, True])
 >>> old_ma.getmask(y)
 False
 

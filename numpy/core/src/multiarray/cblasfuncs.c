@@ -12,32 +12,6 @@
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
-#include "mem_overlap.h"
-
-
-/*
- * Helper: call appropriate BLAS dot function for typenum.
- * Strides are NumPy strides.
- */
-static void
-blas_dot(int typenum, npy_intp n,
-         void *a, npy_intp stridea, void *b, npy_intp strideb, void *res)
-{
-    switch (typenum) {
-        case NPY_DOUBLE:
-            DOUBLE_dot(a, stridea, b, strideb, res, n, NULL);
-            break;
-        case NPY_FLOAT:
-            FLOAT_dot(a, stridea, b, strideb, res, n, NULL);
-            break;
-        case NPY_CDOUBLE:
-            CDOUBLE_dot(a, stridea, b, strideb, res, n, NULL);
-            break;
-        case NPY_CFLOAT:
-            CFLOAT_dot(a, stridea, b, strideb, res, n, NULL);
-            break;
-    }
-}
 
 
 static const double oneD[2] = {1.0, 0.0}, zeroD[2] = {0.0, 0.0};
@@ -227,6 +201,7 @@ _bad_strides(PyArrayObject *ap)
     return 0;
 }
 
+
 /*
  * dot(a,b)
  * Returns the dot product of a and b for arrays of floating point types.
@@ -237,7 +212,7 @@ _bad_strides(PyArrayObject *ap)
  * This is for use by PyArray_MatrixProduct2. It is assumed on entry that
  * the arrays ap1 and ap2 have a common data type given by typenum that is
  * float, double, cfloat, or cdouble and have dimension <= 2. The
- * __numpy_ufunc__ nonsense is also assumed to have been taken care of.
+ * __array_ufunc__ nonsense is also assumed to have been taken care of.
  */
 NPY_NO_EXPORT PyObject *
 cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
@@ -250,8 +225,6 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     npy_intp ap1stride = 0;
     npy_intp dimensions[NPY_MAXDIMS];
     npy_intp numbytes;
-    double prior1, prior2;
-    PyTypeObject *subtype;
     MatrixShape ap1shape, ap2shape;
 
     if (_bad_strides(ap1)) {
@@ -381,74 +354,9 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         }
     }
 
-    /* Choose which subtype to return */
-    if (Py_TYPE(ap1) != Py_TYPE(ap2)) {
-        prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-        prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-        subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
-    }
-    else {
-        prior1 = prior2 = 0.0;
-        subtype = Py_TYPE(ap1);
-    }
-
-    if (out != NULL) {
-        int d;
-
-        /* verify that out is usable */
-        if (Py_TYPE(out) != subtype ||
-            PyArray_NDIM(out) != nd ||
-            PyArray_TYPE(out) != typenum ||
-            !PyArray_ISCARRAY(out)) {
-
-            PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable "
-                "(must have the right type, nr dimensions, and be a C-Array)");
-            goto fail;
-        }
-        for (d = 0; d < nd; ++d) {
-            if (dimensions[d] != PyArray_DIM(out, d)) {
-                PyErr_SetString(PyExc_ValueError,
-                    "output array has wrong dimensions");
-                goto fail;
-            }
-        }
-
-        /* check for memory overlap */
-        if (!(solve_may_share_memory(out, ap1, 1) == 0 &&
-              solve_may_share_memory(out, ap2, 1) == 0)) {
-            /* allocate temporary output array */
-            out_buf = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
-                                                            NULL, 0);
-            if (out_buf == NULL) {
-                goto fail;
-            }
-
-            /* set copy-back */
-            Py_INCREF(out);
-            if (PyArray_SetUpdateIfCopyBase(out_buf, out) < 0) {
-                Py_DECREF(out);
-                goto fail;
-            }
-        }
-        else {
-            Py_INCREF(out);
-            out_buf = out;
-        }
-        Py_INCREF(out);
-        result = out;
-    }
-    else {
-        PyObject *tmp = (PyObject *)(prior2 > prior1 ? ap2 : ap1);
-
-        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                               typenum, NULL, NULL, 0, 0, tmp);
-        if (out_buf == NULL) {
-            goto fail;
-        }
-
-        Py_INCREF(out_buf);
-        result = out_buf;
+    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, &result);
+    if (out_buf == NULL) {
+        goto fail;
     }
 
     numbytes = PyArray_NBYTES(out_buf);
@@ -456,7 +364,8 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     if (numbytes == 0 || l == 0) {
             Py_DECREF(ap1);
             Py_DECREF(ap2);
-            return PyArray_Return(out_buf);
+            Py_DECREF(out_buf);
+            return PyArray_Return(result);
     }
 
     if (ap2shape == _scalar) {
@@ -615,10 +524,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         NPY_BEGIN_ALLOW_THREADS;
 
         /* Dot product between two vectors -- Level 1 BLAS */
-        blas_dot(typenum, l,
+        PyArray_DESCR(out_buf)->f->dotfunc(
                  PyArray_DATA(ap1), PyArray_STRIDE(ap1, (ap1shape == _row)),
                  PyArray_DATA(ap2), PyArray_STRIDE(ap2, 0),
-                 PyArray_DATA(out_buf));
+                 PyArray_DATA(out_buf), l, NULL);
         NPY_END_ALLOW_THREADS;
     }
     else if (ap1shape == _matrix && ap2shape != _matrix) {
@@ -770,6 +679,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
     Py_DECREF(ap2);
 
     /* Trigger possible copyback into `result` */
+    PyArray_ResolveWritebackIfCopy(out_buf);
     Py_DECREF(out_buf);
 
     return PyArray_Return(result);

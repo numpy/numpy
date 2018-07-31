@@ -126,6 +126,7 @@ import os
 import re
 import copy
 import warnings
+import atexit
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
@@ -151,6 +152,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
+from numpy.distutils import customized_ccompiler
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -210,6 +212,55 @@ if sys.platform == 'win32':
     default_src_dirs = ['.']
     default_x11_lib_dirs = []
     default_x11_include_dirs = []
+    _include_dirs = [
+        'include',
+        'include/suitesparse',
+    ]
+    _lib_dirs = [
+        'lib',
+    ]
+
+    _include_dirs = [d.replace('/', os.sep) for d in _include_dirs]
+    _lib_dirs = [d.replace('/', os.sep) for d in _lib_dirs]
+    def add_system_root(library_root):
+        """Add a package manager root to the include directories"""
+        global default_lib_dirs
+        global default_include_dirs
+
+        library_root = os.path.normpath(library_root)
+
+        default_lib_dirs.extend(
+            os.path.join(library_root, d) for d in _lib_dirs)
+        default_include_dirs.extend(
+            os.path.join(library_root, d) for d in _include_dirs)
+
+    if sys.version_info >= (3, 3):
+        # VCpkg is the de-facto package manager on windows for C/C++
+        # libraries. If it is on the PATH, then we append its paths here.
+        # We also don't re-implement shutil.which for Python 2.7 because
+        # vcpkg doesn't support MSVC 2008.
+        vcpkg = shutil.which('vcpkg')
+        if vcpkg:
+            vcpkg_dir = os.path.dirname(vcpkg)
+            if platform.architecture() == '32bit':
+                specifier = 'x86'
+            else:
+                specifier = 'x64'
+
+            vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
+            for vcpkg_root in [
+                os.path.join(vcpkg_installed, specifier + '-windows'),
+                os.path.join(vcpkg_installed, specifier + '-windows-static'),
+            ]:
+                add_system_root(vcpkg_root)
+
+        # Conda is another popular package manager that provides libraries
+        conda = shutil.which('conda')
+        if conda:
+            conda_dir = os.path.dirname(conda)
+            add_system_root(os.path.join(conda_dir, '..', 'Library'))
+            add_system_root(os.path.join(conda_dir, 'Library'))
+
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
                                  '/opt/local/lib', '/sw/lib'], platform_bits)
@@ -330,9 +381,11 @@ def get_info(name, notfound_action=0):
           'openblas': openblas_info,          # use blas_opt instead
           # openblas with embedded lapack
           'openblas_lapack': openblas_lapack_info, # use blas_opt instead
+          'openblas_clapack': openblas_clapack_info, # use blas_opt instead
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
+          'accelerate': accelerate_info,      # use blas_opt instead
           'x11': x11_info,
           'fft_opt': fft_opt_info,
           'fftw': fftw_info,
@@ -434,7 +487,7 @@ class FFTWNotFoundError(NotFoundError):
 
 class DJBFFTNotFoundError(NotFoundError):
     """
-    DJBFFT (http://cr.yp.to/djbfft.html) libraries not found.
+    DJBFFT (https://cr.yp.to/djbfft.html) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [djbfft]) or by setting
     the DJBFFT environment variable."""
@@ -442,7 +495,7 @@ class DJBFFTNotFoundError(NotFoundError):
 
 class NumericNotFoundError(NotFoundError):
     """
-    Numeric (http://www.numpy.org/) module not found.
+    Numeric (https://www.numpy.org/) module not found.
     Get it from above location, install it, and retry setup.py."""
 
 
@@ -452,7 +505,7 @@ class X11NotFoundError(NotFoundError):
 
 class UmfpackNotFoundError(NotFoundError):
     """
-    UMFPACK sparse solver (http://www.cise.ufl.edu/research/sparse/umfpack/)
+    UMFPACK sparse solver (https://www.cise.ufl.edu/research/sparse/umfpack/)
     not found. Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [umfpack]) or by setting
     the UMFPACK environment variable."""
@@ -684,9 +737,13 @@ class system_info(object):
             return self.get_libs(key, '')
 
     def library_extensions(self):
-        static_exts = ['.a']
+        c = customized_ccompiler()
+        static_exts = []
+        if c.compiler_type != 'msvc':
+            # MSVC doesn't understand binutils
+            static_exts.append('.a')
         if sys.platform == 'win32':
-            static_exts.append('.lib')  # .lib is used by MSVC
+            static_exts.append('.lib')  # .lib is used by MSVC and others
         if self.search_static_first:
             exts = static_exts + [so_ext]
         else:
@@ -748,6 +805,8 @@ class system_info(object):
                 # doesn't seem correct
                 if ext == '.dll.a':
                     lib += '.dll'
+                if ext == '.lib':
+                    lib = prefix + lib
                 return lib
 
         return False
@@ -1480,6 +1539,11 @@ class lapack_opt_info(system_info):
             self.set_info(**openblas_info)
             return
 
+        openblas_info = get_info('openblas_clapack')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
         atlas_info = get_info('atlas_3_10_threads')
         if not atlas_info:
             atlas_info = get_info('atlas_3_10')
@@ -1488,37 +1552,10 @@ class lapack_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas')
 
-        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
-                                             lapack_mkl_info):
-            # Use the system lapack from Accelerate or vecLib under OSX
-            args = []
-            link_args = []
-            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
-               'x86_64' in get_platform() or \
-               'i386' in platform.platform():
-                intel = 1
-            else:
-                intel = 0
-            if os.path.exists('/System/Library/Frameworks'
-                              '/Accelerate.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
-            elif os.path.exists('/System/Library/Frameworks'
-                                '/vecLib.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
-            if args:
-                self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3),
-                                             ('HAVE_CBLAS', None)])
-                return
+        accelerate_info = get_info('accelerate')
+        if accelerate_info and not atlas_info:
+            self.set_info(**accelerate_info)
+            return
 
         need_lapack = 0
         need_blas = 0
@@ -1594,41 +1631,10 @@ class blas_opt_info(system_info):
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
 
-        if sys.platform == 'darwin' and not (atlas_info or openblas_info or
-                                             blas_mkl_info or blis_info):
-            # Use the system BLAS from Accelerate or vecLib under OSX
-            args = []
-            link_args = []
-            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
-               'x86_64' in get_platform() or \
-               'i386' in platform.platform():
-                intel = 1
-            else:
-                intel = 0
-            if os.path.exists('/System/Library/Frameworks'
-                              '/Accelerate.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
-            elif os.path.exists('/System/Library/Frameworks'
-                                '/vecLib.framework/'):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
-            if args:
-                self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3),
-                                             ('HAVE_CBLAS', None)])
-                return
+        accelerate_info = get_info('accelerate')
+        if accelerate_info and not atlas_info:
+            self.set_info(**accelerate_info)
+            return
 
         need_blas = 0
         info = {}
@@ -1687,8 +1693,7 @@ class blas_info(system_info):
         # primitive cblas check by looking for the header and trying to link
         # cblas or blas
         res = False
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
         tmpdir = tempfile.mkdtemp()
         s = """#include <cblas.h>
         int main(int argc, const char *argv[])
@@ -1739,12 +1744,28 @@ class openblas_info(blas_info):
         return True
 
     def calc_info(self):
+        c = customized_ccompiler()
+
         lib_dirs = self.get_lib_dirs()
 
         openblas_libs = self.get_libs('libraries', self._lib_names)
         if openblas_libs == self._lib_names: # backward compat with 1.8.0
             openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+
         info = self.check_libs(lib_dirs, openblas_libs, [])
+
+        if c.compiler_type == "msvc" and info is None:
+            from numpy.distutils.fcompiler import new_fcompiler
+            f = new_fcompiler(c_compiler=c)
+            if f and f.compiler_type == 'gnu95':
+                # Try gfortran-compatible library files
+                info = self.check_msvc_gfortran_libs(lib_dirs, openblas_libs)
+                # Skip lapack check, we'd need build_ext to do it
+                assume_lapack = True
+        elif info:
+            assume_lapack = False
+            info['language'] = 'c'
+
         if info is None:
             return
 
@@ -1752,13 +1773,42 @@ class openblas_info(blas_info):
         extra_info = self.calc_extra_info()
         dict_append(info, **extra_info)
 
-        if not self.check_embedded_lapack(info):
+        if not (assume_lapack or self.check_embedded_lapack(info)):
             return
 
-        info['language'] = 'c'
         info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
 
+    def check_msvc_gfortran_libs(self, library_dirs, libraries):
+        # First, find the full path to each library directory
+        library_paths = []
+        for library in libraries:
+            for library_dir in library_dirs:
+                # MinGW static ext will be .a
+                fullpath = os.path.join(library_dir, library + '.a')
+                if os.path.isfile(fullpath):
+                    library_paths.append(fullpath)
+                    break
+            else:
+                return None
+
+        # Generate numpy.distutils virtual static library file
+        tmpdir = os.path.join(os.getcwd(), 'build', 'openblas')
+        if not os.path.isdir(tmpdir):
+            os.makedirs(tmpdir)
+
+        info = {'library_dirs': [tmpdir],
+                'libraries': ['openblas'],
+                'language': 'f77'}
+
+        fake_lib_file = os.path.join(tmpdir, 'openblas.fobjects')
+        fake_clib_file = os.path.join(tmpdir, 'openblas.cobjects')
+        with open(fake_lib_file, 'w') as f:
+            f.write("\n".join(library_paths))
+        with open(fake_clib_file, 'w') as f:
+            pass
+
+        return info
 
 class openblas_lapack_info(openblas_info):
     section = 'openblas'
@@ -1768,10 +1818,10 @@ class openblas_lapack_info(openblas_info):
 
     def check_embedded_lapack(self, info):
         res = False
-        c = distutils.ccompiler.new_compiler()
-        c.customize('')
+        c = customized_ccompiler()
+
         tmpdir = tempfile.mkdtemp()
-        s = """void zungqr();
+        s = """void zungqr_();
         int main(int argc, const char *argv[])
         {
             zungqr_();
@@ -1782,8 +1832,10 @@ class openblas_lapack_info(openblas_info):
         # Add the additional "extra" arguments
         try:
             extra_args = info['extra_link_args']
-        except:
+        except Exception:
             extra_args = []
+        if sys.version_info < (3, 5) and sys.version_info > (3, 0) and c.compiler_type == "msvc":
+            extra_args.append("/MANIFEST")
         try:
             with open(src, 'wt') as f:
                 f.write(s)
@@ -1799,6 +1851,8 @@ class openblas_lapack_info(openblas_info):
             shutil.rmtree(tmpdir)
         return res
 
+class openblas_clapack_info(openblas_lapack_info):
+    _lib_names = ['openblas', 'lapack']
 
 class blis_info(blas_info):
     section = 'blis'
@@ -1824,6 +1878,58 @@ class blis_info(blas_info):
                     include_dirs=incl_dirs)
         self.set_info(**info)
 
+class accelerate_info(system_info):
+    section = 'accelerate'
+    notfounderror = BlasNotFoundError
+
+    def calc_info(self):
+        # Make possible to enable/disable from config file/env var
+        libraries = os.environ.get('ACCELERATE')
+        if libraries:
+            libraries = [libraries]
+        else:
+            libraries = self.get_libs('libraries', ['accelerate', 'veclib'])
+        libraries = [lib.strip().lower() for lib in libraries]
+
+        if (sys.platform == 'darwin' and
+                not os.getenv('_PYTHON_HOST_PLATFORM', None)):
+            # Use the system BLAS from Accelerate or vecLib under OSX
+            args = []
+            link_args = []
+            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+               'x86_64' in get_platform() or \
+               'i386' in platform.platform():
+                intel = 1
+            else:
+                intel = 0
+            if (os.path.exists('/System/Library/Frameworks'
+                              '/Accelerate.framework/') and
+                    'accelerate' in libraries):
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
+                args.extend([
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
+                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
+            elif (os.path.exists('/System/Library/Frameworks'
+                                 '/vecLib.framework/') and
+                      'veclib' in libraries):
+                if intel:
+                    args.extend(['-msse3'])
+                else:
+                    args.extend(['-faltivec'])
+                args.extend([
+                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
+                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
+
+            if args:
+                self.set_info(extra_compile_args=args,
+                              extra_link_args=link_args,
+                              define_macros=[('NO_ATLAS_INFO', 3),
+                                             ('HAVE_CBLAS', None)])
+
+        return
 
 class blas_src_info(system_info):
     section = 'blas_src'

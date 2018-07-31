@@ -56,7 +56,9 @@ class IntelFCompiler(BaseIntelFCompiler):
         return ['-fPIC']
 
     def get_flags_opt(self):  # Scipy test failures with -O2
-        return ['-xhost -openmp -fp-model strict -O1']
+        v = self.get_version()
+        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
+        return ['-fp-model strict -O1 -{}'.format(mpopt)]
 
     def get_flags_arch(self):
         return []
@@ -120,7 +122,9 @@ class IntelEM64TFCompiler(IntelFCompiler):
         return ['-fPIC']
 
     def get_flags_opt(self):  # Scipy test failures with -O2
-        return ['-openmp -fp-model strict -O1']
+        v = self.get_version()
+        mpopt = 'openmp' if v and v < '15' else 'qopenmp'
+        return ['-fp-model strict -O1 -{}'.format(mpopt)]
 
     def get_flags_arch(self):
         return ['']
@@ -211,7 +215,5 @@ class IntelEM64VisualFCompiler(IntelVisualFCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='intel')
-    compiler.customize()
-    print(compiler.get_version())
+    from numpy.distutils import customized_fcompiler
+    print(customized_fcompiler(compiler='intel').get_version())

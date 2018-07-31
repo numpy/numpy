@@ -100,10 +100,9 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
         interface['strides'] = tuple(strides)
 
     array = np.asarray(DummyArray(interface, base=x))
-
-    if array.dtype.fields is None and x.dtype.fields is not None:
-        # This should only happen if x.dtype is [('', 'Vx')]
-        array.dtype = x.dtype
+    # The route via `__interface__` does not preserve structured
+    # dtypes. Since dtype should remain unchanged, we set it explicitly.
+    array.dtype = x.dtype
 
     view = _maybe_view_as_subclass(x, array)
 
@@ -124,9 +123,12 @@ def _broadcast_to(array, shape, subok, readonly):
     needs_writeable = not readonly and array.flags.writeable
     extras = ['reduce_ok'] if needs_writeable else []
     op_flag = 'readwrite' if needs_writeable else 'readonly'
-    broadcast = np.nditer(
+    it = np.nditer(
         (array,), flags=['multi_index', 'refs_ok', 'zerosize_ok'] + extras,
-        op_flags=[op_flag], itershape=shape, order='C').itviews[0]
+        op_flags=[op_flag], itershape=shape, order='C')
+    with it:
+        # never really has writebackifcopy semantics
+        broadcast = it.itviews[0]
     result = _maybe_view_as_subclass(array, broadcast)
     if needs_writeable and not result.flags.writeable:
         result.flags.writeable = True
@@ -217,23 +219,19 @@ def broadcast_arrays(*args, **kwargs):
     Examples
     --------
     >>> x = np.array([[1,2,3]])
-    >>> y = np.array([[1],[2],[3]])
+    >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.
 
     >>> [np.array(a) for a in np.broadcast_arrays(x, y)]
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     """
     # nditer is not used here to avoid the limit of 32 arrays.

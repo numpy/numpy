@@ -8,7 +8,7 @@ NumPy manual contents
    reference/index
    f2py/index
    dev/index
-   neps/index
+   docs/index
    release
    about
    bugs
