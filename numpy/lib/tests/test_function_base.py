@@ -1043,6 +1043,16 @@ class TestAngle(object):
         assert_array_almost_equal(y, yo, 11)
         assert_array_almost_equal(z, zo, 11)
 
+    def test_subclass(self):
+        x = np.ma.array([1 + 3j, 1, np.sqrt(2)/2 * (1 + 1j)])
+        x[1] = np.ma.masked
+        expected = np.ma.array([np.arctan(3.0 / 1.0), 0, np.arctan(1.0)])
+        expected[1] = np.ma.masked
+        actual = angle(x)
+        assert_equal(type(actual), type(expected))
+        assert_equal(actual.mask, expected.mask)
+        assert_equal(actual, expected)
+
 
 class TestTrimZeros(object):
 
