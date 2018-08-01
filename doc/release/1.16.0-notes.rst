@@ -40,6 +40,12 @@ New Features
 Improvements
 ============
 
+``linalg.lstsq`` now works with empty matrices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously, a ``LinAlgError`` would be raised when an empty matrix/empty
+matrices (with zero rows and/or columns) is passed in. Now outputs of
+appropriate shapes are returned.
+
 ``randint`` and ``choice`` now work on empty distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Even when no elements needed to be drawn, ``np.random.randint`` and
