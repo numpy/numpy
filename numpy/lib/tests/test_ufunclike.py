@@ -4,8 +4,8 @@ import numpy as np
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_warns
-    )
+    assert_, assert_equal, assert_array_equal, assert_warns, assert_raises
+)
 
 
 class TestUfunclike(object):
@@ -21,6 +21,10 @@ class TestUfunclike(object):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
+        a = a.astype(np.complex)
+        with assert_raises(TypeError):
+            ufl.isposinf(a)
+
     def test_isneginf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
         out = nx.zeros(a.shape, bool)
@@ -31,6 +35,10 @@ class TestUfunclike(object):
         res = ufl.isneginf(a, out)
         assert_equal(res, tgt)
         assert_equal(out, tgt)
+
+        a = a.astype(np.complex)
+        with assert_raises(TypeError):
+            ufl.isneginf(a)
 
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
