@@ -1,3 +1,10 @@
+"""
+Create the numpy.core.multiarray namespace for backward compatibility. In v1.16
+the multiarray and umath c-extension modules were merged into a single
+_multiarray_umath extension module. So we replicate the old namespace
+by importing from the extension module.
+"""
+
 from . import _multiarray_umath
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (_fastCopyAndTranspose, _flagdict, _insert,
