@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data,
+    _gen_alignment_data, assert_warns
     )
 
 
@@ -1338,6 +1338,10 @@ class TestMinMax(object):
                 for r in np.diagflat([np.nan] * n):
                     assert_equal(np.min(r), np.nan)
                 assert_equal(len(sup.log), n)
+
+    def test_minimize_warns(self):
+        # gh 11589
+        assert_warns(RuntimeWarning, np.minimum, np.nan, 1)
 
 
 class TestAbsoluteNegative(object):
