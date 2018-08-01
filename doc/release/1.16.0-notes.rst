@@ -91,6 +91,11 @@ nd_grid __len__ removal
 -----------------------
 ``len(np.mgrid)`` and ``len(np.ogrid)`` are now considered nonsensical
 and raise a ``TypeError``.
+``np.unravel_index`` now accepts ``shape`` keyword argument
+-----------------------------------------------------------
+Previously, only the ``dims`` keyword argument was accepted
+for specification of the shape of the array to be used
+for unraveling. ``dims`` remains supported, but is now deprecated.
 
 
 C API changes

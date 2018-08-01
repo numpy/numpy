@@ -5410,7 +5410,7 @@ add_newdoc('numpy.core.multiarray', 'ravel_multi_index',
 
 add_newdoc('numpy.core.multiarray', 'unravel_index',
     """
-    unravel_index(indices, dims, order='C')
+    unravel_index(indices, shape, order='C')
 
     Converts a flat index or array of flat indices into a tuple
     of coordinate arrays.
@@ -5419,10 +5419,14 @@ add_newdoc('numpy.core.multiarray', 'unravel_index',
     ----------
     indices : array_like
         An integer array whose elements are indices into the flattened
-        version of an array of dimensions ``dims``. Before version 1.6.0,
+        version of an array of dimensions ``shape``. Before version 1.6.0,
         this function accepted just one index value.
-    dims : tuple of ints
+    shape : tuple of ints
         The shape of the array to use for unraveling ``indices``.
+
+        .. versionchanged:: 1.16.0
+            Renamed from ``dims`` to ``shape``.
+
     order : {'C', 'F'}, optional
         Determines whether the indices should be viewed as indexing in
         row-major (C-style) or column-major (Fortran-style) order.
