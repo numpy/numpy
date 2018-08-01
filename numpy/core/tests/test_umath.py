@@ -1333,10 +1333,11 @@ class TestMinMax(object):
         # and put it before the call to an intrisic function that causes
         # invalid status to be set. Also make sure warnings are emitted
         for n in (2, 4, 8, 16, 32):
-            with suppress_warnings() as sup:
-                sup.record(RuntimeWarning)
-                for r in np.diagflat([np.nan] * n):
-                    assert_equal(np.min(r), np.nan)
+            for dt in (np.float32, np.float16, np.complex64):
+                with suppress_warnings() as sup:
+                    sup.record(RuntimeWarning)
+                    for r in np.diagflat(np.array([np.nan] * n, dtype=dt)):
+                        assert_equal(np.min(r), np.nan)
                 assert_equal(len(sup.log), n)
 
 

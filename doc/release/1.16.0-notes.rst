@@ -88,3 +88,10 @@ raise a ``DeprecationWarning`` if the array is not numerical (i.e.,
 if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
 subclasses that override the default ``__array_ufunc__`` implementation,
 the ``TypeError`` is passed on.
+
+``maximum`` and ``minimum`` set invalid float status for more dtypes
+--------------------------------------------------------------------
+Previously only ``float32`` and ``float64`` set invalid float status (by
+default emitting a `RuntimeWarning`) when a Nan is encountered in
+`numpy.maximum` and `numpy.minimum`. Now ``float16``, ``complex64``,
+``complex128`` and ``complex256`` will do so as well.

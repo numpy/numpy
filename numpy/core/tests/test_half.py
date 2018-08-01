@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, suppress_warnings
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -301,13 +301,19 @@ class TestHalf(object):
         assert_equal(np.copysign(b, a), [2, 5, 1, 4, 3])
 
         assert_equal(np.maximum(a, b), [0, 5, 2, 4, 3])
-        x = np.maximum(b, c)
-        assert_(np.isnan(x[3]))
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            x = np.maximum(b, c)
+            assert_(np.isnan(x[3]))
+        assert_equal(len(sup.log), 1)
         x[3] = 0
         assert_equal(x, [0, 5, 1, 0, 6])
         assert_equal(np.minimum(a, b), [-2, 1, 1, 4, 2])
-        x = np.minimum(b, c)
-        assert_(np.isnan(x[3]))
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            x = np.minimum(b, c)
+            assert_(np.isnan(x[3]))
+        assert_equal(len(sup.log), 1)
         x[3] = 0
         assert_equal(x, [-2, -1, -np.inf, 0, 3])
         assert_equal(np.fmax(a, b), [0, 5, 2, 4, 3])
