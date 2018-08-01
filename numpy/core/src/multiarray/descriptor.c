@@ -83,7 +83,7 @@ _arraydescr_fromctypes(PyObject *obj)
                 /* derived type */
                 PyObject *newtup;
                 PyArray_Descr *derived;
-                newtup = Py_BuildValue("NN", newdescr, length);
+                newtup = Py_BuildValue("N(N)", newdescr, length);
                 ret = PyArray_DescrConverter(newtup, &derived);
                 Py_DECREF(newtup);
                 if (ret == NPY_SUCCEED) {

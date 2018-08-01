@@ -4,6 +4,7 @@ import pickle
 import sys
 import operator
 import pytest
+import ctypes
 
 import numpy as np
 from numpy.core._rational_tests import rational
@@ -728,3 +729,74 @@ def test_dtypes_are_true():
 def test_invalid_dtype_string():
     # test for gh-10440
     assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
+
+
+class TestFromCTypes(object):
+
+    @staticmethod
+    def check(ctype, dtype):
+        dtype = np.dtype(dtype)
+        assert_equal(np.dtype(ctype), dtype)
+        assert_equal(np.dtype(ctype()), dtype)
+
+    def test_array(self):
+        c8 = ctypes.c_uint8
+        self.check(     3 * c8,  (np.uint8, (3,)))
+        self.check(     1 * c8,  (np.uint8, (1,)))
+        self.check(     0 * c8,  (np.uint8, (0,)))
+        self.check(1 * (3 * c8), ((np.uint8, (3,)), (1,)))
+        self.check(3 * (1 * c8), ((np.uint8, (1,)), (3,)))
+
+    def test_padded_structure(self):
+        class PaddedStruct(ctypes.Structure):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', np.uint8),
+            ('b', np.uint16)
+        ], align=True)
+        self.check(PaddedStruct, expected)
+
+    @pytest.mark.xfail(reason="_pack_ is ignored - see gh-11651")
+    def test_packed_structure(self):
+        class PackedStructure(ctypes.Structure):
+            _pack_ = 1
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', np.uint8),
+            ('b', np.uint16)
+        ])
+        self.check(PackedStructure, expected)
+
+    @pytest.mark.xfail(sys.byteorder != 'little',
+        reason="non-native endianness does not work - see gh-10533")
+    def test_little_endian_structure(self):
+        class PaddedStruct(ctypes.LittleEndianStructure):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', '<B'),
+            ('b', '<H')
+        ], align=True)
+        self.check(PaddedStruct, expected)
+
+    @pytest.mark.xfail(sys.byteorder != 'big',
+        reason="non-native endianness does not work - see gh-10533")
+    def test_big_endian_structure(self):
+        class PaddedStruct(ctypes.BigEndianStructure):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', '>B'),
+            ('b', '>H')
+        ], align=True)
+        self.check(PaddedStruct, expected)
