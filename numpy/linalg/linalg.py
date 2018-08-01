@@ -2115,7 +2115,6 @@ def lstsq(a, b, rcond="warn"):
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
-    _assertNoEmpty2d(a, b)  # TODO: relax this constraint
     m, n = a.shape[-2:]
     m2, n_rhs = b.shape[-2:]
     if m != m2:
@@ -2146,7 +2145,16 @@ def lstsq(a, b, rcond="warn"):
 
     signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
     extobj = get_linalg_error_extobj(_raise_linalgerror_lstsq)
+    if n_rhs == 0:
+        # lapack can't handle n_rhs = 0 - so allocate the array one larger in that axis
+        b = zeros(b.shape[:-2] + (m, n_rhs + 1), dtype=b.dtype)
     x, resids, rank, s = gufunc(a, b, rcond, signature=signature, extobj=extobj)
+    if m == 0:
+        x[...] = 0
+    if n_rhs == 0:
+        # remove the item we added
+        x = x[..., :n_rhs]
+        resids = resids[..., :n_rhs]
 
     # remove the axis we added
     if is_1d:
