@@ -381,10 +381,6 @@ decorator directly, but override implementation in terms of
   decorators, but they could still use a C equivalent of
   ``try_array_function_override``. If performance is not a concern, they could
   also be easily wrapped with a small Python wrapper.
-- The ``__call__`` method of ``np.vectorize`` can't be decorated with
-  ``@array_function_dispatch``, because we should pass a ``vectorize`` object
-  itself as the ``func`` argument  ``__array_function__``, not the unbound
-  ``vectorize.__call__`` method.
 - ``np.einsum`` does complicated argument parsing to handle two different
   function signatures. It would probably be best to avoid the overhead of
   parsing it twice in the typical case of no overrides.
@@ -798,6 +794,31 @@ We have left these out for now, because we don't know that they are necessary.
 If we want to include them in the future, the easiest way to do so would be to
 update the ``array_function_dispatch`` decorator to add them as function
 attributes.
+
+Callable objects generated at runtime
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+NumPy has some APIs that define callable objects *dynamically*, such as
+``vectorize`` and methods on ``random.RandomState`` object. Examples can
+also be found in other core libraries in the scientific Python stack, e.g.,
+distribution objects in scipy.stats and model objects in scikit-learn. It would
+be nice to be able to write overloads for such callables, too. This presents a
+challenge for the ``__array_function__`` protocol, because unlike the case for
+functions there is no public object in the ``numpy`` namespace to pass into
+the ``func`` argument.
+
+We could potentially handle this by establishing an alternative convention
+for how the ``func`` argument could be inspected, e.g., by using
+``func.__self__`` to obtain the class object and ``func.__func__`` to return
+the unbound function object. However, some caution is in order, because
+this would immesh what are currently implementation details as a permanent
+features of the interface, such as the fact that ``vectorize`` is implemented as a
+class rather than closure, or whether a method is implemented directly or using
+a descriptor.
+
+Given the complexity and the limited use cases, we are also deferring on this
+issue for now, but we are confident that ``__array_function__`` could be
+expanded to accomodate these use cases in the future if need be.
 
 Discussion
 ----------
