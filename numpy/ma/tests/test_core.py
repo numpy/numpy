@@ -5022,3 +5022,18 @@ def test_astype():
     x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
     assert_(x_f2.flags.f_contiguous)
     assert_(x_f2.mask.flags.f_contiguous)
+
+
+def test_fieldless_void():
+    dt = np.dtype([])  # a void dtype with no fields
+    x = np.empty(4, dt)
+
+    # these arrays contain no values, so there's little to test - but this
+    # shouldn't crash
+    mx = np.ma.array(x)
+    assert_equal(mx.dtype, x.dtype)
+    assert_equal(mx.shape, x.shape)
+
+    mx = np.ma.array(x, mask=x)
+    assert_equal(mx.dtype, x.dtype)
+    assert_equal(mx.shape, x.shape)
