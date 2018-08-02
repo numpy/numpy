@@ -1,0 +1,23 @@
+==========================
+NumPy 1.15.1 Release Notes
+==========================
+
+This is a bugfix release for some problems reported following the 1.15.0
+release. The major problems fixed are the following.
+
+* The update to cython 0.28.3 exposed a problematic use of a gcc attribute used
+  to prefer code size rather than speed in module intialization.
+
+The Python versions supported by this release are 2.7, 3.4-3.7. The wheels are
+linked with OpenBLAS v0.3.0, which should fix some of the linalg problems
+reported for NumPy 1.14.
+
+Contributors
+============
+
+
+Pull requests merged
+====================
+
+
+
