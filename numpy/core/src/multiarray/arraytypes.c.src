@@ -733,7 +733,7 @@ VOID_getitem(void *input, void *vap)
         return (PyObject *)ret;
     }
 
-    return PyBytes_FromStringAndSize(PyArray_DATA(ap), descr->elsize);
+    return PyBytes_FromStringAndSize(ip, descr->elsize);
 }
 
 
