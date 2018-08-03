@@ -72,6 +72,13 @@ details.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``out`` argument to these functions is now always tested for memory overlap
 to avoid corrupted results when memory overlap occurs.
+Ufuncs will not write to "broadcasted arrays"
+---------------------------------------------
+Code that uses `numpy.broadcast_arrays` can create an array with a 0-stride
+which effectively duplicates the underlying data along an axis. Using such
+an array for output of a ufunc such as `u += v` (where `u` has repeated data)
+will give an incorrect answer. This situation is now detected and an error
+raised.
 
 
 Changes

@@ -545,6 +545,12 @@ class TestUfunc(object):
         a = np.arange(2).reshape((2, 1, 1))
         b = np.arange(3).reshape((3, 1, 1))
         assert_raises(ValueError, umt.inner1d, a, b)
+        # Writing to a broadcasted array should fail, gh-2705
+        a = np.arange(2)
+        b = np.arange(4).reshape((2, 2))
+        u, v = np.broadcast_arrays(a, b)
+        assert_equal(u.strides[0], 0)
+        assert_raises(ValueError, u.__iadd__, v)
 
     def test_type_cast(self):
         msg = "type cast"
