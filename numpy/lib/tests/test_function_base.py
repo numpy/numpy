@@ -2775,6 +2775,13 @@ class TestQuantile(object):
         np.quantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
 
+    def test_datetime64(self):
+        arr = np.array(['2018', '2019'], dtype='M8[ns]')
+        assert_equal(np.percentile(arr, 50), np.datetime64('2018-07-02T12'))
+
+        arr = np.array(['2018', '2019'], dtype='M8[Y]')
+        assert_equal(np.percentile(arr, 50), np.datetime64('2018'))
+
 
 class TestMedian(object):
 
