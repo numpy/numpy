@@ -2919,10 +2919,7 @@ True_ = bool_(True)
 
 def extend_all(module):
     existing = set(__all__)
-    try:
-        mall = getattr(module, '__all__')
-    except AttributeError:
-        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
+    mall = getattr(module, '__all__')
     for a in mall:
         if a not in existing:
             __all__.append(a)
