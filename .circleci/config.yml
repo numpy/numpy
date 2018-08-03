@@ -20,7 +20,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install cython sphinx matplotlib
+            pip install cython sphinx matplotlib asv
             sudo apt-get update
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
 
@@ -105,3 +105,16 @@ jobs:
             else
               echo "Not on the master branch; skipping deployment"
             fi
+
+      -  run:
+          name: asv verification
+          command: |
+              . venv/bin/activate
+              # quick asv run to verify that there are no
+              # errors when running the suite
+              cd benchmarks
+              # TODO: can we override the asv.conf.json
+              # for things like environment type, Python
+              # version(s), and pull in the branch identification
+              # from the PR?
+              asv run -e --quick
