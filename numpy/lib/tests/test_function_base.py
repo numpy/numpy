@@ -2782,6 +2782,11 @@ class TestQuantile(object):
         arr = np.array(['2018', '2019'], dtype='M8[Y]')
         assert_equal(np.percentile(arr, 50), np.datetime64('2018'))
 
+        arr = np.array(['2018', '2019', 'nat'], dtype='M8[ns]')
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_equal(np.percentile(arr, 50), np.datetime64('NaT'))
+
 
 class TestMedian(object):
 
