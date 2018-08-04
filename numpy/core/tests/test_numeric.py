@@ -1530,7 +1530,7 @@ class TestClip(object):
         m = -0.5
         M = 0.6
         self.fastclip(a, m, M, a)
-        self.clip(a, m, M, ac)
+        self.clip(ac, m, M, ac)
         assert_array_strict_equal(a, ac)
 
     def test_noncontig_inplace(self):
@@ -1543,7 +1543,7 @@ class TestClip(object):
         m = -0.5
         M = 0.6
         self.fastclip(a, m, M, a)
-        self.clip(a, m, M, ac)
+        self.clip(ac, m, M, ac)
         assert_array_equal(a, ac)
 
     def test_type_cast_01(self):
@@ -1721,6 +1721,22 @@ class TestClip(object):
         self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
+
+    def test_clip_with_out_transposed(self):
+        # Test that the out argument works when tranposed
+        a = np.arange(16).reshape(4, 4)
+        out = np.empty_like(a).T
+        a.clip(4, 10, out=out)
+        expected = self.clip(a, 4, 10)
+        assert_array_equal(out, expected)
+
+    def test_clip_with_out_memory_overlap(self):
+        # Test that the out argument works when it has memory overlap
+        a = np.arange(16).reshape(4, 4)
+        ac = a.copy()
+        a[:-1].clip(4, 10, out=a[1:])
+        expected = self.clip(ac[:-1], 4, 10)
+        assert_array_equal(a[1:], expected)
 
     def test_clip_inplace_array(self):
         # Test native double input with array min/max
