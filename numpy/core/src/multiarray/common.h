@@ -252,6 +252,7 @@ npy_memchr(char * haystack, char needle,
     return p;
 }
 
+
 /*
  * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
  * (BLAS won't handle negative or zero strides the way we want).

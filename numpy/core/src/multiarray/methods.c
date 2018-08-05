@@ -21,6 +21,7 @@
 #include "conversion_utils.h"
 #include "shape.h"
 #include "strfuncs.h"
+#include "mapping.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -2456,6 +2457,7 @@ array_setslice(PyArrayObject *self, PyObject *args)
 }
 
 #endif
+
 
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 

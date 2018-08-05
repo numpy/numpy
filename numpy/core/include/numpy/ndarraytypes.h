@@ -1315,8 +1315,9 @@ typedef struct {
         char                  *baseoffset;
 
         /*
-         * after binding consec denotes at which axis the fancy axes
-         * are inserted.
+         * after binding consec != 0 means that a transpose is
+         * necessary. The exact value carries (temporarely unused) info for
+         * fancy indexing transpose. (Did not rename for API compat)
          */
         int                   consec;
         char                  *dataptr;
@@ -1355,8 +1356,14 @@ typedef struct {
 
         /* Count for the external loop (which ever it is) for API iteration */
         npy_intp              iter_count;
+        /* 
+         * Specify how to transpose for MapIterSwapAxes
+         */
+        npy_intp              set_perm[NPY_MAXDIMS];
+        npy_intp              get_perm[NPY_MAXDIMS];
 
 } PyArrayMapIterObject;
+
 
 enum {
     NPY_NEIGHBORHOOD_ITER_ZERO_PADDING,

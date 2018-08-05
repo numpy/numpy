@@ -309,7 +309,7 @@ class TestMatrixReturn(object):
             'partition', 'argpartition',
             'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset',
+            'prod', 'std', 'ctypes', 'itemset', 'vindex', 'oindex', 'lindex',
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:
@@ -366,7 +366,7 @@ class TestNewScalarIndexing(object):
         x = a[[1, 0]]
         assert_(isinstance(x, matrix))
         assert_equal(x, matrix([[3,  4], [1, 2]]))
-        x = a[[[1], [0]], [[1, 0], [0, 1]]]
+        x = a.vindex[[[1], [0]], [[1, 0], [0, 1]]]
         assert_(isinstance(x, matrix))
         assert_equal(x, matrix([[4,  3], [1,  2]]))
 

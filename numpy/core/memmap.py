@@ -332,7 +332,10 @@ class memmap(ndarray):
         return arr.view(np.ndarray)
 
     def __getitem__(self, index):
+        # TODO: May not be necessary, but might be on python 2 to correctly
+        # channel special single item getting and simple slice getting.
         res = super(memmap, self).__getitem__(index)
         if type(res) is memmap and res._mmap is None:
             return res.view(type=ndarray)
         return res
+

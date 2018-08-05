@@ -117,7 +117,8 @@ class TestIndexing(object):
         assert_array_equal(arr, np.arange(5)[:,None].repeat(2, axis=1))
 
         arr = np.arange(25).reshape(5, 5)
-        assert_array_equal(arr[u_index, u_index], arr[index, index])
+        assert_array_equal(arr.vindex[u_index, u_index],
+                           arr.lindex[index, index])
 
     def test_empty_fancy_index(self):
         # Empty list index creates an empty array
@@ -290,7 +291,7 @@ class TestIndexing(object):
     def test_too_many_fancy_indices_special_case(self):
         # Just documents behaviour, this is a small limitation.
         a = np.ones((1,) * 32)  # 32 is NPY_MAXDIMS
-        assert_raises(IndexError, a.__getitem__, (np.array([0]),) * 32)
+        assert_raises(IndexError, a.lindex.__getitem__, (np.array([0]),) * 32)
 
     def test_scalar_array_bool(self):
         # NumPy bools can be used as boolean index (python ones as of yet not)
@@ -466,7 +467,7 @@ class TestIndexing(object):
             pass
         index = ([1], [1])
         index = TupleSubclass(index)
-        assert_(arr[index].shape == (1,))
+        assert_(arr.lindex[index].shape == (1,))
         # Unlike the non nd-index:
         assert_(arr[index,].shape != (1,))
 
@@ -507,7 +508,7 @@ class TestIndexing(object):
         assert_array_equal(x[ind], x[ind.copy()])
         # higher dimensional advanced index
         zind = np.zeros(4, dtype=np.intp)
-        assert_array_equal(x2[ind, zind], x2[ind.copy(), zind])
+        assert_array_equal(x2.lindex[ind, zind], x2.vindex[ind.copy(), zind])
 
     def test_indexing_array_negative_strides(self):
         # From gh-8264,
@@ -541,7 +542,7 @@ class TestBroadcastedAssignments(object):
         a[[0, 1, 2], :] = np.ones((1, 3, 2))
         a[:, [0, 1]] = np.ones((1, 3, 2))
         # Fancy without subspace (with broadcasting)
-        a[[[0], [1], [2]], [0, 1]] = np.ones((1, 3, 2))
+        a.vindex[[[0], [1], [2]], [0, 1]] = np.ones((1, 3, 2))
 
     def test_prepend_not_one(self):
         assign = self.assign
@@ -567,7 +568,7 @@ class TestBroadcastedAssignments(object):
     def test_index_is_larger(self):
         # Simple case of fancy index broadcasting of the index.
         a = np.zeros((5, 5))
-        a[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
+        a.vindex[[[0], [1], [2]], [0, 1, 2]] = [2, 3, 4]
 
         assert_((a[:3, :3] == [2, 3, 4]).all())
 
@@ -673,8 +674,9 @@ class TestFancyIndexingCast(object):
         assert_equal(zero_array[0, 1], 1)
 
         # Fancy indexing works, although we get a cast warning.
-        assert_warns(np.ComplexWarning,
-                     zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
+        assert_warns(
+            np.ComplexWarning,
+            zero_array.lindex.__setitem__, ([0], [1]), np.array([2 + 1j]))
         assert_equal(zero_array[0, 1], 2)  # No complex part
 
         # Cast complex to float, throwing away the imaginary portion.
@@ -1031,13 +1033,15 @@ class TestMultiIndexingAutomated(object):
             Index being tested.
         """
         # Test item getting
+        if all(_ is not Ellipsis for _ in index):
+            index = index + (Ellipsis,)
         try:
             mimic_get, no_copy = self._get_multi_index(arr, index)
         except Exception as e:
             if HAS_REFCOUNT:
                 prev_refcount = sys.getrefcount(arr)
-            assert_raises(type(e), arr.__getitem__, index)
-            assert_raises(type(e), arr.__setitem__, index, 0)
+            assert_raises(type(e), arr.lindex.__getitem__, index)
+            assert_raises(type(e), arr.lindex.__setitem__, index, 0)
             if HAS_REFCOUNT:
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
@@ -1066,13 +1070,17 @@ class TestMultiIndexingAutomated(object):
                 assert_equal(prev_refcount, sys.getrefcount(arr))
             return
 
-        self._compare_index_result(arr, index, mimic_get, no_copy)
+        self._compare_index_result(arr, index, mimic_get, no_copy, lindex=False)
 
-    def _compare_index_result(self, arr, index, mimic_get, no_copy):
+    def _compare_index_result(self, arr, index, mimic_get, no_copy,
+            lindex=True):
         """Compare mimicked result to indexing result.
         """
         arr = arr.copy()
-        indexed_arr = arr[index]
+        if lindex:
+            indexed_arr = arr.lindex[index]
+        else:
+            indexed_arr = arr[index]
         assert_array_equal(indexed_arr, mimic_get)
         # Check if we got a view, unless its a 0-sized or 0-d array.
         # (then its not a view, and that does not matter)
@@ -1088,7 +1096,11 @@ class TestMultiIndexingAutomated(object):
 
         # Test non-broadcast setitem:
         b = arr.copy()
-        b[index] = mimic_get + 1000
+        if lindex:
+            b.lindex[index] = mimic_get + 1000
+        else:
+            b[index] = mimic_get + 1000
+
         if b.size == 0:
             return  # nothing to compare here...
         if no_copy and indexed_arr.ndim != 0:
@@ -1223,9 +1235,9 @@ class TestBooleanIndexing(object):
     def test_boolean_indexing_weirdness(self):
         # Weird boolean indexing things
         a = np.ones((2, 3, 4))
-        a[False, True, ...].shape == (0, 2, 3, 4)
-        a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
-        assert_raises(IndexError, lambda: a[False, [0, 1], ...])
+        a.lindex[False, True, ...].shape == (0, 2, 3, 4)
+        a.lindex[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
+        assert_raises(IndexError, lambda: a.lindex[False, [0, 1], ...])
 
 
 class TestArrayToIndexDeprecation(object):

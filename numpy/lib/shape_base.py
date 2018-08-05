@@ -22,7 +22,7 @@ __all__ = [
 
 
 def _make_along_axis_idx(arr_shape, indices, axis):
-	# compute dimensions to iterate over
+    # compute dimensions to iterate over
     if not _nx.issubdtype(indices.dtype, _nx.integer):
         raise IndexError('`indices` must be an integer array')
     if len(arr_shape) != indices.ndim:
@@ -31,17 +31,17 @@ def _make_along_axis_idx(arr_shape, indices, axis):
     shape_ones = (1,) * indices.ndim
     dest_dims = list(range(axis)) + [None] + list(range(axis+1, indices.ndim))
 
-    # build a fancy index, consisting of orthogonal aranges, with the
+    # build a vector index, consisting of orthogonal aranges, with the
     # requested index inserted at the right location
-    fancy_index = []
+    vector_index = []
     for dim, n in zip(dest_dims, arr_shape):
         if dim is None:
-            fancy_index.append(indices)
+            vector_index.append(indices)
         else:
             ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
-            fancy_index.append(_nx.arange(n).reshape(ind_shape))
+            vector_index.append(_nx.arange(n).reshape(ind_shape))
 
-    return tuple(fancy_index)
+    return tuple(vector_index)
 
 
 def take_along_axis(arr, indices, axis):
@@ -149,15 +149,16 @@ def take_along_axis(arr, indices, axis):
     """
     # normalize inputs
     if axis is None:
-        arr = arr.flat
         arr_shape = (len(arr),)  # flatiter has no .shape
         axis = 0
+        # TODO: Make along axis needed here for error checks probably?
+        return arr.flat[_make_along_axis_idx(arr_shape, indices, axis)]
     else:
         axis = normalize_axis_index(axis, arr.ndim)
         arr_shape = arr.shape
 
-    # use the fancy index
-    return arr[_make_along_axis_idx(arr_shape, indices, axis)]
+    # use the vector index
+    return arr.vindex[_make_along_axis_idx(arr_shape, indices, axis)]
 
 
 def put_along_axis(arr, indices, values, axis):
@@ -234,15 +235,17 @@ def put_along_axis(arr, indices, values, axis):
     """
     # normalize inputs
     if axis is None:
-        arr = arr.flat
         axis = 0
         arr_shape = (len(arr),)  # flatiter has no .shape
+        # Use the vector index (it is just one in this case)
+        arr.flat[_make_along_axis_idx(arr_shape, indices, axis)] = values
+        return
     else:
         axis = normalize_axis_index(axis, arr.ndim)
         arr_shape = arr.shape
 
-    # use the fancy index
-    arr[_make_along_axis_idx(arr_shape, indices, axis)] = values
+    # use the vector index
+    arr.vindex[_make_along_axis_idx(arr_shape, indices, axis)] = values
 
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):

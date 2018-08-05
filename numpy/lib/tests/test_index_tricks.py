@@ -326,7 +326,7 @@ def test_diag_indices():
                   [5, 6, 7, 8],
                   [9, 10, 11, 12],
                   [13, 14, 15, 16]])
-    a[di] = 100
+    a.vindex[di] = 100
     assert_array_equal(
         a, np.array([[100, 2, 3, 4],
                      [5, 100, 7, 8],
@@ -339,7 +339,7 @@ def test_diag_indices():
 
     # And use it to set the diagonal of a zeros array to 1:
     a = np.zeros((2, 2, 2), int)
-    a[d3] = 1
+    a.vindex[d3] = 1
     assert_array_equal(
         a, np.array([[[1, 0],
                       [0, 0]],
