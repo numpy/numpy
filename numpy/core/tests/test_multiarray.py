@@ -2724,7 +2724,7 @@ class TestMethods(object):
         assert_equal(c, b)
         a = np.arange(18).reshape(2, 3, 3)
         c = np.matmul(a, a, out=a[::-1, ...])
-        assert(c.base is a.base)
+        assert_(c.base is a.base)
         assert_equal(c, b)
 
     def test_diagonal(self):

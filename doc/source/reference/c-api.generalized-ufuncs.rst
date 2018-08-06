@@ -141,7 +141,7 @@ Notes:
    elementary function's implementation.
 #. White spaces are ignored.
 #. An integer as a dimension name freezes that dimension to the value,
-#. The name can be suffixed with a question mark, this make the dimension a
+#. The name can be suffixed with a question mark, this makes the dimension a
    core dimension only if it exists on the input or output, otherwise 1 is used.
 
 Here are some examples of signatures:
