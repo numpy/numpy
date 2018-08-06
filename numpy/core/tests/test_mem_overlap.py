@@ -609,11 +609,21 @@ def assert_copy_equivalent(operation, args, out, **kwargs):
     kwargs2['out'] = out.copy()
 
     out_orig = out.copy()
-    out[...] = operation(*args, **kwargs2)
+    retval = operation(*args, **kwargs2)
+    out[...] = retval
     expected = out.copy()
     out[...] = out_orig
 
-    got = operation(*args, **kwargs).copy()
+    try:
+        got = operation(*args, **kwargs).copy()
+    except ValueError as e:
+        if np.prod(out.strides) == 0:
+            # broadcasted output may raise, but not in 100% of cases; gh-2705
+            assert_('stride == 0' in e.args[0])
+            # make sure out and retval differ if the operation failed
+            assert_(np.any(out != retval))
+            return
+        raise
 
     if (got != expected).any():
         assert_equal(got, expected)

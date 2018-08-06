@@ -1605,15 +1605,6 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     }
                     else {
                         strides[iop] = PyArray_STRIDE(op_cur, ondim-idim-1);
-                        if ((strides[iop] == 0) && (bshape > 0) &&
-                                (!(flags & NPY_ITER_REDUCE_OK)) &&
-                                (op_itflags[iop] & NPY_OP_ITFLAG_WRITE)) {
-                            PyErr_SetString(PyExc_ValueError,
-                                     "non-broadcastable output operand "
-                                     "with stride == 0 provided "
-                                     "but broadcasting required");
-                            return 0;
-                        }
                     }
                 }
             }

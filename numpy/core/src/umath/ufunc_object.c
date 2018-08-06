@@ -1418,6 +1418,22 @@ iterator_loop(PyUFuncObject *ufunc,
             baseptrs[nin+i] = PyArray_BYTES(op[nin+i]);
         }
         else {
+            if (NpyIter_GetIterSize(iter) != 0) {
+                /* Check for broadcasted output arrays */
+                npy_intp *strides = PyArray_STRIDES(op[nin+i]);
+                npy_intp *shape = PyArray_SHAPE(op[nin+i]);
+                int j, out_dims = PyArray_NDIM(op[nin+i]);
+                for (j=0; j < out_dims; j++) {
+                    if (strides[j] == 0 && shape[j] > 1) {
+                        PyErr_SetString(PyExc_ValueError,
+                             "non-broadcastable output operand "
+                             "with stride == 0 provided "
+                             "but broadcasting required");
+                        NpyIter_Deallocate(iter);
+                        return -1;
+                    }
+                }
+            }
             baseptrs[nin+i] = PyArray_BYTES(op_it[nin+i]);
         }
     }
