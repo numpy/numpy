@@ -2366,6 +2366,13 @@ class TestRegression(object):
         del va
         assert_equal(x, b'\x00\x00\x00\x00')
 
+    def test_void_getitem(self):
+        # Test fix for gh-11668.
+        assert_(np.array([b'a'], 'V1').astype('O') == b'a')
+        assert_(np.array([b'ab'], 'V2').astype('O') == b'ab')
+        assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
+        assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
+
     def test_structarray_title(self):
         # The following used to segfault on pypy, due to NPY_TITLE_KEY
         # not working properly and resulting to double-decref of the
