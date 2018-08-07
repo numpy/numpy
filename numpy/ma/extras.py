@@ -533,9 +533,8 @@ def average(a, axis=None, weights=None, returned=False):
         The importance that each element has in the computation of the average.
         The weights array can either be 1-D (in which case its length must be
         the size of `a` along the given axis) or of the same shape as `a`.
-        If ``weights=None``, then all data in `a` are assumed to have a
-        weight equal to one.   If `weights` is complex, the imaginary parts
-        are ignored.
+        If ``weights=None``, then the corresponding elements in `a` are not considered.
+        If `weights` is complex, the imaginary parts are ignored.
     returned : bool, optional
         Flag indicating whether a tuple ``(result, sum of weights)``
         should be returned as output (True), or just the result (False).
