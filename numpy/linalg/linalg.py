@@ -2115,7 +2115,6 @@ def lstsq(a, b, rcond="warn"):
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
-    _assertNoEmpty2d(a, b)  # TODO: relax this constraint
     m, n = a.shape[-2:]
     m2, n_rhs = b.shape[-2:]
     if m != m2:

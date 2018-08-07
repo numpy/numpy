@@ -3197,7 +3197,13 @@ static void
             params.RCOND = args[2];
             not_ok = call_@lapack_func@(&params);
             if (!not_ok) {
-                delinearize_@TYPE@_matrix(args[3], params.B, &x_out);
+                if (m == 0) {
+                    /* Lapack has betrayed us and left this uninitialized */
+                    zero_@TYPE@_matrix(args[3], &x_out);
+                }
+                else {
+                    delinearize_@TYPE@_matrix(args[3], params.B, &x_out);
+                }
                 *(npy_int*) args[5] = params.RANK;
                 delinearize_@REALTYPE@_matrix(args[6], params.S, &s_out);
 
