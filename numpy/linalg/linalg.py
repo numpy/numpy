@@ -133,11 +133,6 @@ def _linalgRealType(t):
     """Cast the type t to either double or cdouble."""
     return double
 
-_complex_types_map = {single : csingle,
-                      double : cdouble,
-                      csingle : csingle,
-                      cdouble : cdouble}
-
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
     result_type = single
