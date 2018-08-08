@@ -542,6 +542,8 @@ def matrix_power(a, n):
     of the same shape as M is returned. If ``n < 0``, the inverse
     is computed and then raised to the ``abs(n)``.
 
+    .. note:: Stacks of object matrices are not currently supported.
+
     Parameters
     ----------
     a : (..., M, M) array_like
@@ -604,6 +606,16 @@ def matrix_power(a, n):
     except TypeError:
         raise TypeError("exponent must be an integer")
 
+    # Fall back on dot for object arrays. Object arrays are not supported by
+    # the current implementation of matmul using einsum
+    if a.dtype != object:
+        fmatmul = matmul
+    elif a.ndim == 2:
+        fmatmul = dot
+    else:
+        raise NotImplementedError(
+            "matrix_power not supported for stacks of object arrays")
+
     if n == 0:
         a = empty_like(a)
         a[...] = eye(a.shape[-2], dtype=a.dtype)
@@ -618,20 +630,20 @@ def matrix_power(a, n):
         return a
 
     elif n == 2:
-        return matmul(a, a)
+        return fmatmul(a, a)
 
     elif n == 3:
-        return matmul(matmul(a, a), a)
+        return fmatmul(fmatmul(a, a), a)
 
     # Use binary decomposition to reduce the number of matrix multiplications.
     # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
     # increasing powers of 2, and multiply into the result as needed.
     z = result = None
     while n > 0:
-        z = a if z is None else matmul(z, z)
+        z = a if z is None else fmatmul(z, z)
         n, bit = divmod(n, 2)
         if bit:
-            result = z if result is None else matmul(result, z)
+            result = z if result is None else fmatmul(result, z)
 
     return result
 
