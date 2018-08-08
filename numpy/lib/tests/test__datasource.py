@@ -17,6 +17,8 @@ else:
     from urlparse import urlparse
     from urllib2 import URLError
 
+import httpretty
+
 
 def urlopen_stub(url, data=None):
     '''Stub to replace urlopen for testing.'''
@@ -102,7 +104,12 @@ class TestDataSourceOpen(object):
         rmtree(self.tmpdir)
         del self.ds
 
+    @httpretty.activate
     def test_ValidHTTP(self):
+        httpretty.register_uri(
+                httpretty.GET,
+                'http://www.google.com/index.html',
+                )
         fh = self.ds.open(valid_httpurl())
         assert_(fh)
         fh.close()
@@ -171,7 +178,12 @@ class TestDataSourceExists(object):
         rmtree(self.tmpdir)
         del self.ds
 
+    @httpretty.activate
     def test_ValidHTTP(self):
+        httpretty.register_uri(
+                httpretty.GET,
+                'http://www.google.com/index.html',
+                )
         assert_(self.ds.exists(valid_httpurl()))
 
     def test_InvalidHTTP(self):
@@ -308,7 +320,12 @@ class TestRepositoryExists(object):
         tmpfile = invalid_textfile(self.tmpdir)
         assert_equal(self.repos.exists(tmpfile), False)
 
+    @httpretty.activate
     def test_RemoveHTTPFile(self):
+        httpretty.register_uri(
+                httpretty.GET,
+                'http://www.google.com/index.html',
+                )
         assert_(self.repos.exists(valid_httpurl()))
 
     def test_CachedHTTPFile(self):
