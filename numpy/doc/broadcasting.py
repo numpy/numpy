@@ -125,7 +125,7 @@ An example of broadcasting in practice::
  (5,)
 
  >>> x + y
- <type 'exceptions.ValueError'>: operands could not be broadcast together with shapes (4,) (5,)
+ ValueError: operands could not be broadcast together with shapes (4,) (5,)
 
  >>> xx.shape
  (4, 1)
