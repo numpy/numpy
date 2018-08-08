@@ -53,9 +53,10 @@ dimensions are compatible when
 2) one of them is 1
 
 If these conditions are not met, a
-``ValueError: frames are not aligned`` exception is thrown, indicating that
-the arrays have incompatible shapes. The size of the resulting array
-is the maximum size along each dimension of the input arrays.
+``ValueError: operands could not be broadcast together`` exception is 
+thrown, indicating that the arrays have incompatible shapes. The size of 
+the resulting array is the maximum size along each dimension of the input 
+arrays.
 
 Arrays do not need to have the same *number* of dimensions.  For example,
 if you have a ``256x256x3`` array of RGB values, and you want to scale
@@ -124,7 +125,7 @@ An example of broadcasting in practice::
  (5,)
 
  >>> x + y
- <type 'exceptions.ValueError'>: shape mismatch: objects cannot be broadcast to a single shape
+ <type 'exceptions.ValueError'>: operands could not be broadcast together with shapes (4,) (5,)
 
  >>> xx.shape
  (4, 1)
