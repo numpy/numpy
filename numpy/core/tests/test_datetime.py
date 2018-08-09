@@ -620,6 +620,10 @@ class TestDateTime(object):
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
         dt = np.dtype('M8[W]')
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
+        scalar = np.datetime64('2016-01-01T00:00:00.000000000')
+        assert_equal(pickle.loads(pickle.dumps(scalar)), scalar)
+        delta = scalar - np.datetime64('2015-01-01T00:00:00.000000000')
+        assert_equal(pickle.loads(pickle.dumps(delta)), delta)
 
         # Check that loading pickles from 1.6 works
         pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
