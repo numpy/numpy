@@ -92,6 +92,7 @@ swab_separator(const char *sep)
 
     s = start = malloc(strlen(sep)+3);
     if (s == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
     /* add space to front if there isn't one */
