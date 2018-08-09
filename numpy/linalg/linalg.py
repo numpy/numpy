@@ -21,7 +21,7 @@ import warnings
 
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
-    float16, csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
+    half, csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
     add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
@@ -115,9 +115,9 @@ def isComplexType(t):
 
 _real_types_map = {single : single,
                    double : double,
+                   half : half,
                    csingle : single,
-                   cdouble : double,
-                   float16 : float16}
+                   cdouble : double}
 
 _complex_types_map = {single : csingle,
                       double : cdouble,
@@ -136,7 +136,10 @@ def _linalgRealType(t):
 
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
-    result_type = single
+    dtype_priority = {half: 1,
+                      single: 2,
+                      double: 3}
+    result_type = half
     is_complex = False
     for a in arrays:
         if issubclass(a.dtype.type, inexact):
@@ -149,10 +152,9 @@ def _commonType(*arrays):
                         (a.dtype.name,))
         else:
             rt = double
-        if rt is double:
-            result_type = double
-        elif rt is float16:
-            result_type = float16
+        if dtype_priority[rt] > dtype_priority[result_type]:
+            # Update only when the higher priority datatype is seen
+            result_type = rt
     if is_complex:
         t = cdouble
         result_type = _complex_types_map[result_type]
