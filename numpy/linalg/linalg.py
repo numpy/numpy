@@ -21,7 +21,7 @@ import warnings
 
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
+    float16, csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
     add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
@@ -116,7 +116,8 @@ def isComplexType(t):
 _real_types_map = {single : single,
                    double : double,
                    csingle : single,
-                   cdouble : double}
+                   cdouble : double,
+                   float16 : float16}
 
 _complex_types_map = {single : csingle,
                       double : cdouble,
@@ -150,6 +151,8 @@ def _commonType(*arrays):
             rt = double
         if rt is double:
             result_type = double
+        elif rt is float16:
+            result_type = float16
     if is_complex:
         t = cdouble
         result_type = _complex_types_map[result_type]
@@ -972,7 +975,7 @@ def eigvals(a):
     See Also
     --------
     eig : eigenvalues and right eigenvectors of general arrays
-    eigvalsh : eigenvalues of real symmetric or complex Hermitian 
+    eigvalsh : eigenvalues of real symmetric or complex Hermitian
                (conjugate symmetric) arrays.
     eigh : eigenvalues and eigenvectors of real symmetric or complex
            Hermitian (conjugate symmetric) arrays.
@@ -1169,7 +1172,7 @@ def eig(a):
     --------
     eigvals : eigenvalues of a non-symmetric array.
 
-    eigh : eigenvalues and eigenvectors of a real symmetric or complex 
+    eigh : eigenvalues and eigenvectors of a real symmetric or complex
            Hermitian (conjugate symmetric) array.
 
     eigvalsh : eigenvalues of a real symmetric or complex Hermitian
