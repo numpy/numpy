@@ -12,7 +12,7 @@ import subprocess
 import pytest
 
 import numpy as np
-from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
+from numpy import array, single, double, csingle, cdouble, float16, dot, identity, matmul
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
@@ -43,7 +43,8 @@ def assert_almost_equal(a, b, single_decimal=6, double_decimal=12, **kw):
 
 def get_real_dtype(dtype):
     return {single: single, double: double,
-            csingle: single, cdouble: double}[dtype]
+            csingle: single, cdouble: double,
+            float16: float16}[dtype]
 
 
 def get_complex_dtype(dtype):
@@ -118,6 +119,9 @@ CASES += apply_tag('square', [
     LinalgCase("double_2",
                array([[1., 2.], [3., 4.]], dtype=double),
                array([[2., 1., 4.], [3., 4., 6.]], dtype=double)),
+    LinalgCase("float16",
+               array([[1., 2.], [3., 4.]], dtype=float16),
+               array([[2., 1.], [4., 3.]], dtype=float16)),
     LinalgCase("csingle",
                array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=csingle),
                array([2. + 1j, 1. + 2j], dtype=csingle)),
@@ -946,7 +950,7 @@ class TestLstsq(LstsqCases):
         assert_equal(s.shape, (min(m, n),))
 
 
-@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
+@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO'])
 class TestMatrixPower(object):
 
     rshft_0 = np.eye(4)
@@ -977,7 +981,7 @@ class TestMatrixPower(object):
             mz = matrix_power(M, 0)
             assert_equal(mz, identity_like_generalized(M))
             assert_equal(mz.dtype, M.dtype)
-        
+
         for mat in self.rshft_all:
             tz(mat.astype(dt))
             if dt != object:
