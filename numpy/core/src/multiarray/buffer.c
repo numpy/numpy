@@ -468,6 +468,7 @@ _buffer_info_new(PyObject *obj)
 
     info = malloc(sizeof(_buffer_info_t));
     if (info == NULL) {
+        PyErr_NoMemory();
         goto fail;
     }
 
@@ -493,6 +494,7 @@ _buffer_info_new(PyObject *obj)
         else {
             info->shape = malloc(sizeof(Py_ssize_t) * PyArray_NDIM(arr) * 2 + 1);
             if (info->shape == NULL) {
+                PyErr_NoMemory();
                 goto fail;
             }
             info->strides = info->shape + PyArray_NDIM(arr);
