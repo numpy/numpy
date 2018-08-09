@@ -365,8 +365,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_BYTE:         if (_append_char(str, 'b')) return -1; break;
         case NPY_UBYTE:
         case NPY_DATETIME:
-        case NPY_TIMEDELTA:
-                               if (_append_char(str, 'B')) return -1; break;
+        case NPY_TIMEDELTA:    if (_append_char(str, 'B')) return -1; break;
+
         case NPY_SHORT:        if (_append_char(str, 'h')) return -1; break;
         case NPY_USHORT:       if (_append_char(str, 'H')) return -1; break;
         case NPY_INT:          if (_append_char(str, 'i')) return -1; break;

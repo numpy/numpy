@@ -2413,6 +2413,7 @@ class TestRegression(object):
             if HAS_REFCOUNT:
                 assert_(base <= sys.getrefcount(s))
 
+    @pytest.mark.skipif(sys.version_info < (3, 0), reason="Python3 only")
     def test_datetime_memoryview(self):
         # gh-11656
         # Values verified with v1.13.3
