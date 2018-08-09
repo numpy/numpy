@@ -12,7 +12,7 @@ import subprocess
 import pytest
 
 import numpy as np
-from numpy import array, single, double, csingle, cdouble, float16, dot, identity, matmul
+from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
@@ -43,8 +43,7 @@ def assert_almost_equal(a, b, single_decimal=6, double_decimal=12, **kw):
 
 def get_real_dtype(dtype):
     return {single: single, double: double,
-            csingle: single, cdouble: double,
-            float16: float16}[dtype]
+            csingle: single, cdouble: double}[dtype]
 
 
 def get_complex_dtype(dtype):
