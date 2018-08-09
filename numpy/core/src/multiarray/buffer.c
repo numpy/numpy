@@ -796,8 +796,10 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     /* Fill in information */
     info = _buffer_get_info(self);
     if (info == NULL) {
-        PyErr_SetString(PyExc_BufferError,
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_BufferError,
                         "could not get scalar buffer information");
+        }
         goto fail;
     }
 
