@@ -17,7 +17,7 @@ else:
     from urlparse import urlparse
     from urllib2 import URLError
 
-import httpretty
+import pytest
 
 
 def urlopen_stub(url, data=None):
@@ -28,26 +28,12 @@ def urlopen_stub(url, data=None):
     else:
         raise URLError('Name or service not known')
 
-# setup and teardown
-old_urlopen = None
-
-
-def setup():
-    global old_urlopen
-
-    old_urlopen = urllib_request.urlopen
-    urllib_request.urlopen = urlopen_stub
-
-
-def teardown():
-    urllib_request.urlopen = old_urlopen
-
 # A valid website for more robust testing
 http_path = 'http://www.google.com/'
 http_file = 'index.html'
 
-http_fakepath = 'http://fake.abc.web/site/'
-http_fakefile = 'fake.txt'
+http_fakepath = '//http:'
+http_fakefile = '%fake.txt'
 
 malicious_files = ['/etc/shadow', '../../shadow',
                    '..\\system.dat', 'c:\\windows\\system.dat']
@@ -104,27 +90,35 @@ class TestDataSourceOpen(object):
         rmtree(self.tmpdir)
         del self.ds
 
-    @httpretty.activate
-    def test_ValidHTTP(self):
-        httpretty.register_uri(
-                httpretty.GET,
-                'http://www.google.com/index.html',
-                )
-        fh = self.ds.open(valid_httpurl())
-        assert_(fh)
-        fh.close()
+    def test_ValidHTTP(self, monkeypatch):
+        with monkeypatch.context() as m:
+            m.setattr(urllib_request, 
+                      "urlopen",
+                      urlopen_stub)
+            fh = self.ds.open(valid_httpurl())
+            assert_(fh)
+            fh.close()
 
-    def test_InvalidHTTP(self):
-        url = invalid_httpurl()
-        assert_raises(IOError, self.ds.open, url)
-        try:
-            self.ds.open(url)
-        except IOError as e:
-            # Regression test for bug fixed in r4342.
-            assert_(e.errno is None)
+    def test_InvalidHTTP(self, monkeypatch):
+        # instead of using an actual network
+        # connection, we check to ensure
+        # that a garbled http URL
+        # is not processed normally
+        with monkeypatch.context() as m:
+            m.setattr(urllib_request, 
+                      "urlopen",
+                      urlopen_stub)
+            url = invalid_httpurl()
+            assert_raises(IOError, self.ds.open, url)
+            try:
+                self.ds.open(url)
+            except IOError as e:
+                # Regression test for bug fixed in r4342.
+                assert_(e.errno is None)
 
     def test_InvalidHTTPCacheURLError(self):
-        assert_raises(URLError, self.ds._cache, invalid_httpurl())
+        assert_raises(URLError, self.ds._cache,
+                      "http://fake.abc.web/site/fake.txt")
 
     def test_ValidFile(self):
         local_file = valid_textfile(self.tmpdir)
@@ -178,16 +172,19 @@ class TestDataSourceExists(object):
         rmtree(self.tmpdir)
         del self.ds
 
-    @httpretty.activate
-    def test_ValidHTTP(self):
-        httpretty.register_uri(
-                httpretty.GET,
-                'http://www.google.com/index.html',
-                )
-        assert_(self.ds.exists(valid_httpurl()))
+    def test_ValidHTTP(self, monkeypatch):
+        with monkeypatch.context() as m:
+            m.setattr(urllib_request, 
+                      "urlopen",
+                      urlopen_stub)
+            assert_(self.ds.exists(valid_httpurl()))
 
-    def test_InvalidHTTP(self):
-        assert_equal(self.ds.exists(invalid_httpurl()), False)
+    def test_InvalidHTTP(self, monkeypatch):
+        with monkeypatch.context() as m:
+            m.setattr(urllib_request, 
+                      "urlopen",
+                      urlopen_stub)
+            assert_equal(self.ds.exists(invalid_httpurl()), False)
 
     def test_ValidFile(self):
         # Test valid file in destpath
@@ -227,7 +224,11 @@ class TestDataSourceAbspath(object):
         # Test filename with complete path
         assert_equal(tmpfile, self.ds.abspath(tmpfile))
 
-    def test_InvalidHTTP(self):
+    def test_InvalidHTTP(self, monkeypatch):
+        with monkeypatch.context() as m:
+            m.setattr(urllib_request, 
+                      "urlopen",
+                      urlopen_stub)
         scheme, netloc, upath, pms, qry, frg = urlparse(invalid_httpurl())
         invalidhttp = os.path.join(self.tmpdir, netloc,
                                    upath.strip(os.sep).strip('/'))
@@ -256,13 +257,13 @@ class TestDataSourceAbspath(object):
             assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
             assert_(tmp_path(fn).startswith(self.tmpdir))
 
-    def test_windows_os_sep(self):
+    def test_windows_os_sep(self, monkeypatch):
         orig_os_sep = os.sep
         try:
             os.sep = '\\'
             self.test_ValidHTTP()
             self.test_ValidFile()
-            self.test_InvalidHTTP()
+            self.test_InvalidHTTP(monkeypatch)
             self.test_InvalidFile()
             self.test_sandboxing()
         finally:
@@ -320,13 +321,12 @@ class TestRepositoryExists(object):
         tmpfile = invalid_textfile(self.tmpdir)
         assert_equal(self.repos.exists(tmpfile), False)
 
-    @httpretty.activate
-    def test_RemoveHTTPFile(self):
-        httpretty.register_uri(
-                httpretty.GET,
-                'http://www.google.com/index.html',
-                )
-        assert_(self.repos.exists(valid_httpurl()))
+    def test_RemoveHTTPFile(self, monkeypatch):
+        with monkeypatch.context() as m:
+            m.setattr(urllib_request, 
+                      "urlopen",
+                      urlopen_stub)
+            assert_(self.repos.exists(valid_httpurl()))
 
     def test_CachedHTTPFile(self):
         localfile = valid_httpurl()
