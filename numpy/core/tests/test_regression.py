@@ -2412,27 +2412,3 @@ class TestRegression(object):
             v = str(data[['f1']])
             if HAS_REFCOUNT:
                 assert_(base <= sys.getrefcount(s))
-
-    @pytest.mark.skipif(sys.version_info < (3, 0), reason="Python3 only")
-    def test_datetime_memoryview(self):
-        # gh-11656
-        # Values verified with v1.13.3
-        def as_dict(m):
-            return dict(strides=m.strides, shape=m.shape, itemsize=m.itemsize,
-                        ndim=m.ndim, format=m.format)
-
-        dt1 = np.datetime64('2016-01-01')
-        dt2 = np.datetime64('2017-01-01')
-        expected = {'strides': (1,), 'itemsize': 1, 'ndim': 1,
-                    'shape': (8,), 'format': 'B'}
-        lst = [161, 65, 0, 0, 0, 0, 0, 0]
-        v = memoryview(dt1)
-        res = as_dict(v) 
-        assert_equal(res, expected)
-        assert_equal(v.tolist(), lst)
-
-        lst = [110, 1, 0, 0, 0, 0, 0, 0]
-        v = memoryview(dt2 - dt1)
-        res = as_dict(v)
-        assert_equal(res, expected)
-        assert_equal(v.tolist(), lst)
