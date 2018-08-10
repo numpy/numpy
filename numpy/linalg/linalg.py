@@ -153,7 +153,7 @@ def _commonType(*arrays):
         else:
             rt = double
         if dtype_priority[rt] > dtype_priority[result_type]:
-            # Update only when the higher priority datatype is seen
+            # Update only when the higher priority datatype is visited while traversing
             result_type = rt
     if is_complex:
         t = cdouble
