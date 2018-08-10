@@ -136,9 +136,6 @@ def _linalgRealType(t):
 
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
-    dtype_priority = {half: 1,
-                      single: 2,
-                      double: 3}
     result_type = half
     is_complex = False
     for a in arrays:
@@ -152,8 +149,8 @@ def _commonType(*arrays):
                         (a.dtype.name,))
         else:
             rt = double
-        if dtype_priority[rt] > dtype_priority[result_type]:
-            # Update only when the higher priority datatype is seen
+        if rt.itemsize > result_type.itemsize:
+            # Update only when the bigger datatype is seen
             result_type = rt
     if is_complex:
         t = cdouble
