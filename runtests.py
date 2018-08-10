@@ -328,9 +328,10 @@ def build_project(args):
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
     cvars = distutils.sysconfig.get_config_vars()
-    if 'gcc' in cvars.get('CC', ''):
+    compiler = env.get('CC') or cvars.get('CC', '')
+    if 'gcc' in compiler:
         # Check that this isn't clang masquerading as gcc.
-        if sys.platform != 'darwin' or 'gnu-gcc' in cvars.get('CC', ''):
+        if sys.platform != 'darwin' or 'gnu-gcc' in compiler:
             # add flags used as werrors
             warnings_as_errors = ' '.join([
                 # from tools/travis-test.sh
