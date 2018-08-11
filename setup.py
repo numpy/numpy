@@ -370,7 +370,7 @@ def setup_package():
         zip_safe=False,
         entry_points={
             'console_scripts': [
-                'f2py = numpy.f2py.__main__:main',
+                'f2py = numpy.f2py.f2py2e:main',
                 'conv-template = numpy.distutils.conv_template:main',
                 'from-template = numpy.distutils.from_template:main',
             ]

@@ -45,37 +45,14 @@ def _get_f2py_shebang():
 
 def configuration(parent_package='', top_path=None):
     config = Configuration('f2py', parent_package, top_path)
-
     config.add_data_dir('tests')
-
-    config.add_data_files('src/fortranobject.c',
-                          'src/fortranobject.h',
-                          )
-
+    config.add_data_files(
+        'src/fortranobject.c',
+        'src/fortranobject.h',)
     config.make_svn_version_py()
-
-    def generate_f2py_py(build_dir):
-        f2py_exe = 'f2py' + os.path.basename(sys.executable)[6:]
-        if f2py_exe[-4:] == '.exe':
-            f2py_exe = f2py_exe[:-4] + '.py'
-        if 'bdist_wininst' in sys.argv and f2py_exe[-3:] != '.py':
-            f2py_exe = f2py_exe + '.py'
-        target = os.path.join(build_dir, f2py_exe)
-        if newer(__file__, target):
-            log.info('Creating %s', target)
-            f = open(target, 'w')
-            f.write(_get_f2py_shebang() + '\n')
-            mainloc = os.path.join(os.path.dirname(__file__), "__main__.py")
-            with open(mainloc) as mf:
-                f.write(mf.read())
-            f.close()
-        return target
-
-    config.add_scripts(generate_f2py_py)
-
     log.info('F2PY Version %s', config.get_version())
-
     return config
+
 
 if __name__ == "__main__":
 
