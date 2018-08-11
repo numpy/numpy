@@ -237,19 +237,45 @@ _getintp_ctype.cache = None
 
 class _missing_ctypes(object):
     def cast(self, num, obj):
-        return num
+        return obj.value
 
-    def c_void_p(self, num):
-        return num
+    class c_void_p(object):
+        def __init__(self, ptr):
+            self.value = ptr
+
+
+
+def _get_void_ptr(arr):
+    """
+    Get a `ctypes.c_void_p` to arr.data, that keeps a reference to the array
+    """
+    import numpy as np
+    # don't let subclasses interfere
+    arr = arr.view(ndarray)
+    # collapse the array to point to at most 1 element, so it become contiguous
+    arr = arr[np.s_[:1,] * arr.ndim + np.s_[...,]]
+    # then convert to ctypes now that we've reduced it to a simple, empty, array
+    arr.flags.writeable = True
+    arr = (ctypes.c_char * 0).from_buffer(arr)
+    # finally cast to void*
+    return ctypes.cast(ctypes.pointer(arr), ctypes.c_void_p)
+
 
 class _ctypes(object):
     def __init__(self, array, ptr=None):
+        self._arr = array
+
         if ctypes:
             self._ctypes = ctypes
+            # get a void pointer to the buffer, which keeps the array alive
+            self._data = _get_void_ptr(array)
+            assert self._data.value == ptr
         else:
+            # fake a pointer-like object that holds onto the reference
             self._ctypes = _missing_ctypes()
-        self._arr = array
-        self._data = ptr
+            self._data = self._ctypes.c_void_p(ptr)
+            self._data._objects = array
+
         if self._arr.ndim == 0:
             self._zerod = True
         else:
@@ -262,6 +288,8 @@ class _ctypes(object):
         ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use the data as a
         pointer to a ctypes array of floating-point data:
         ``self.data_as(ctypes.POINTER(ctypes.c_double))``.
+
+        The returned pointer will keep a reference to the array.
         """
         return self._ctypes.cast(self._data, obj)
 
@@ -292,8 +320,13 @@ class _ctypes(object):
         attribute to arbitrary C-code to avoid trouble that can include Python
         crashing. User Beware! The value of this attribute is exactly the same
         as ``self._array_interface_['data'][0]``.
+
+        Note that unlike `data_as`, a reference will not be kept to the array:
+        code like ``ctypes.c_void_p((a + b).ctypes.data)`` will result in a
+        pointer to a deallocated array, and should be spelt
+        ``(a + b).ctypes.data_as(ctypes.c_void_p)``
         """
-        return self._data
+        return self._data.value
 
     def get_shape(self):
         """
@@ -317,7 +350,7 @@ class _ctypes(object):
         return self.strides_as(_getintp_ctype())
 
     def get_as_parameter(self):
-        return self._ctypes.c_void_p(self._data)
+        return self._data
 
     data = property(get_data)
     shape = property(get_shape)

@@ -2390,9 +2390,9 @@ class TestMaskedArrayInPlaceArithmetics(object):
         assert_equal(xm, y + 1)
 
         (x, _, xm) = self.floatdata
-        id1 = x.data.ctypes._data
+        id1 = x.data.ctypes.data
         x += 1.
-        assert_(id1 == x.data.ctypes._data)
+        assert_(id1 == x.data.ctypes.data)
         assert_equal(x, y + 1.)
 
     def test_inplace_addition_array(self):

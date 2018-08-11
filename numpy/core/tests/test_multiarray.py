@@ -7472,6 +7472,46 @@ class TestCTypes(object):
         finally:
             _internal.ctypes = ctypes
 
+    def _make_readonly(x):
+        x.flags.writeable = False
+        return x
+
+    @pytest.mark.parametrize('arr', [
+        np.array([1, 2, 3]),
+        np.array([['one', 'two'], ['three', 'four']]),
+        np.array((1, 2), dtype='i4,i4'),
+        np.array([None], dtype=object),
+        np.array([]),
+        np.empty((0, 0)),
+        _make_readonly(np.array([1, 2, 3])),
+    ], ids=[
+        '1d',
+        '2d',
+        'structured',
+        'object',
+        'empty',
+        'empty-2d',
+        'readonly'
+    ])
+    def test_ctypes_data_as_holds_reference(self, arr):
+        # gh-9647
+        # create a copy to ensure that pytest does not mess with the refcounts
+        arr = arr.copy()
+
+        arr_ref = weakref.ref(arr)
+
+        ctypes_ptr = arr.ctypes.data_as(ctypes.c_void_p)
+
+        # `ctypes_ptr` should hold onto `arr`
+        del arr
+        gc.collect()
+        assert_(arr_ref() is not None, "ctypes pointer did not hold onto a reference")
+
+        # but when the `ctypes_ptr` object dies, so should `arr`
+        del ctypes_ptr
+        gc.collect()
+        assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
+
 
 class TestWritebackIfCopy(object):
     # all these tests use the WRITEBACKIFCOPY mechanism

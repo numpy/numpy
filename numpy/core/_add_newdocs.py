@@ -2127,14 +2127,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
 
     .. automethod:: numpy.core._internal._ctypes.strides_as
 
-    Be careful using the ctypes attribute - especially on temporary
-    arrays or arrays constructed on the fly. For example, calling
-    ``(a+b).ctypes.data_as(ctypes.c_void_p)`` returns a pointer to memory
-    that is invalid because the array created as (a+b) is deallocated
-    before the next Python statement. You can avoid this problem using
-    either ``c=a+b`` or ``ct=(a+b).ctypes``. In the latter case, ct will
-    hold a reference to the array until ct is deleted or re-assigned.
-
     If the ctypes module is not available, then the ctypes attribute
     of array objects still returns something useful, but ctypes objects
     are not returned and errors may be raised instead. In particular,
