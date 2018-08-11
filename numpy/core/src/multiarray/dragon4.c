@@ -114,7 +114,7 @@ LogBase2_64(npy_uint64 val)
     return LogBase2_32((npy_uint32)val);
 }
 
-#if defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
+#if defined(HAVE_LDOUBLE_IEEE_QUAD_LE) || defined(HAVE_LDOUBLE_IEEE_QUAD_BE)
 static npy_uint32
 LogBase2_128(npy_uint64 hi, npy_uint64 lo)
 {
@@ -217,7 +217,8 @@ BigInt_Set_uint64(BigInt *i, npy_uint64 val)
 
 #if (defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
      defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE) || \
-     defined(HAVE_LDOUBLE_IEEE_QUAD_LE))
+     defined(HAVE_LDOUBLE_IEEE_QUAD_LE) || \
+     defined(HAVE_LDOUBLE_IEEE_QUAD_BE))
 static void
 BigInt_Set_2x_uint64(BigInt *i, npy_uint64 hi, npy_uint64 lo)
 {
