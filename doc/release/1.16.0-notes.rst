@@ -46,6 +46,12 @@ New Features
 Improvements
 ============
 
+`np.polynomial.Polynomial` classes render in LaTeX in Jupyter notebooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When used in a front-end that supports it, `Polynomial` instances are now
+rendered through LaTeX. The current format is experimental, and is subject to
+change.
+
 ``randint`` and ``choice`` now work on empty distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Even when no elements needed to be drawn, ``np.random.randint`` and
