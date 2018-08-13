@@ -2846,7 +2846,7 @@ Dragon4_PrintFloat_IEEE_binary128_be(
 #if (defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
      defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE))
 /*
- * IBM extended precision 128-bit floating-point format, aka IBM double-dobule
+ * IBM extended precision 128-bit floating-point format, aka IBM double-double
  *
  * IBM's double-double type is a pair of IEEE binary64 values, which you add
  * together to get a total value. The exponents are arranged so that the lower
@@ -2883,11 +2883,14 @@ Dragon4_PrintFloat_IEEE_binary128_be(
  */
 static npy_uint32
 Dragon4_PrintFloat_IBM_double_double(
-    Dragon4_Scratch *scratch, FloatVal128 val128, Dragon4_Options *opt)
+    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
 {
     char *buffer = scratch->repr;
     npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
+
+    FloatVal128 val128;
+    FloatUnion128 buf128;
 
     npy_uint32 floatExponent1, floatExponent2;
     npy_uint64 floatMantissa1, floatMantissa2;
@@ -2908,6 +2911,12 @@ Dragon4_PrintFloat_IBM_double_double(
         buffer[0] = '\0';
         return 0;
     }
+
+    /* The high part always comes before the low part, regardless of the
+     * endianness of the system. */
+    buf128.floatingPoint = *value;
+    val128.hi = buf128.integer.a;
+    val128.lo = buf128.integer.b;
 
     /* deconstruct the floating point values */
     floatMantissa1 = val128.hi & bitmask_u64(52);
@@ -3052,39 +3061,6 @@ Dragon4_PrintFloat_IBM_double_double(
     return Format_floatbits(buffer, bufferSize, bigints, exponent1,
                             signbit, mantissaBit, hasUnequalMargins, opt);
 }
-
-#if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE)
-static npy_uint32
-Dragon4_PrintFloat_IBM_double_double_le(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
-{
-    FloatVal128 val128;
-    FloatUnion128 buf128;
-
-    buf128.floatingPoint = *value;
-    val128.lo = buf128.integer.a;
-    val128.hi = buf128.integer.b;
-
-    return Dragon4_PrintFloat_IBM_double_double(scratch, val128, opt);
-}
-#endif /* HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE */
-
-#if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
-static npy_uint32
-Dragon4_PrintFloat_IBM_double_double_be(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
-{
-    FloatVal128 val128;
-    FloatUnion128 buf128;
-
-    buf128.floatingPoint = *value;
-    val128.hi = buf128.integer.a;
-    val128.lo = buf128.integer.b;
-
-    return Dragon4_PrintFloat_IBM_double_double(scratch, val128, opt);
-}
-
-#endif /* HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE */
 
 #endif /* HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE | HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE */
 

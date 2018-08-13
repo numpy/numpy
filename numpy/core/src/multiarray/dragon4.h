@@ -75,10 +75,9 @@
     #define NPY_LONGDOUBLE_BINFMT_NAME Intel_extended128
 #elif defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE)
     #define NPY_LONGDOUBLE_BINFMT_NAME Motorola_extended96
-#elif defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE)
-    #define NPY_LONGDOUBLE_BINFMT_NAME IBM_double_double_le
-#elif defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
-    #define NPY_LONGDOUBLE_BINFMT_NAME IBM_double_double_be
+#elif (defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
+       defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE))
+    #define NPY_LONGDOUBLE_BINFMT_NAME IBM_double_double
 #else
     #error No long double representation defined
 #endif
