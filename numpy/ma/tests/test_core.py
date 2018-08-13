@@ -3174,18 +3174,13 @@ class TestMaskedArrayMethods(object):
         assert_equal(test.mask, mask_first.mask)
 
         # Test sort on dtype with subarray (gh-8069)
+        # Just check that the sort does not error, structured array subarrays
+        # are treated as byte strings and that leads to differing behavior
+        # depending on endianess and `endwith`.
         dt = np.dtype([('v', int, 2)])
         a = a.view(dt)
-        mask_last = mask_last.view(dt)
-        mask_first = mask_first.view(dt)
-
         test = sort(a)
-        assert_equal(test, mask_last)
-        assert_equal(test.mask, mask_last.mask)
-
         test = sort(a, endwith=False)
-        assert_equal(test, mask_first)
-        assert_equal(test.mask, mask_first.mask)
 
     def test_argsort(self):
         # Test argsort
