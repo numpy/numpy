@@ -2505,7 +2505,7 @@ cdef class RandomState:
         Examples
         --------
         From Dalgaard page 83 [1]_, suppose the daily energy intake for 11
-        women in Kj is:
+        women in kilojoules (kJ) is:
 
         >>> intake = np.array([5260., 5470, 5640, 6180, 6390, 6515, 6805, 7515, \\
         ...                    7515, 8230, 8770])
