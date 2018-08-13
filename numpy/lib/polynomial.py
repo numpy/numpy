@@ -398,6 +398,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
     the squared error.
 
+    Please use `numpy.polynomial.Polynomial.fit` for new code. This remains
+    here for historical reasons. The order of the returned vector is `deg`,
+    `deg-1`, ...  `0`, where the recommended function returns the opposite
+    order.
+
     Parameters
     ----------
     x : array_like, shape (M,)
