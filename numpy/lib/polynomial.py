@@ -396,12 +396,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     Fit a polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
-    the squared error.
+    the squared error in the order `deg`, `deg-1`, ... `0`.
 
-    Please use `numpy.polynomial.Polynomial.fit` for new code. This remains
-    here for historical reasons. The order of the returned vector is `deg`,
-    `deg-1`, ...  `0`, where the recommended function returns the opposite
-    order.
+    The numpy.polynomial.Polynomial.fit class method is recommended for new
+    code as it is more stable numerically. See the documentation for the method
+    for more information.
 
     Parameters
     ----------

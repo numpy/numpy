@@ -860,7 +860,8 @@ class ABCPolyBase(object):
         -------
         new_series : series
             A series that represents the least squares fit to the data and
-            has the domain specified in the call.
+            has the domain specified in the call. ``newseries.coef`` will
+            print the coefficients of the polynomial.
 
         [resid, rank, sv, rcond] : list
             These values are only returned if `full` = True
