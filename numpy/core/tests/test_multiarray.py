@@ -4800,17 +4800,20 @@ class TestRecord(object):
         assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
         assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
 
-        # A single name string provided to fromarrays() is also allowed to be unicode:
+    def test_fromarrays_unicode(self):
+        # A single name string provided to fromarrays() is allowed to be unicode
+        # on both Python 2 and 3:
         x = np.core.records.fromarrays([[0], [1]], names=u'a,b', formats=u'i4,i4')
         assert_equal(x['a'][0], 0)
         assert_equal(x['b'][0], 1)
 
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
     def test_unicode_order(self):
-        # Test that we can sort with order as a unicode field name:
+        # Test that we can sort with order as a unicode field name in both Python 2 and
+        # 3:
         name = u'b'
-        x = np.zeros(1, dtype=[(name, int)])
+        x = np.array([1, 3, 2], dtype=[(name, int)])
         x.sort(order=name)
+        assert_equal(x[u'b'], np.array([1, 3, 2]))
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used

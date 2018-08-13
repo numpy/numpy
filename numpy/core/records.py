@@ -174,7 +174,7 @@ class format_parser(object):
         if (names):
             if (type(names) in [list, tuple]):
                 pass
-            elif isinstance(names, str) or isinstance(names, unicode):
+            elif isinstance(names, (str, unicode)):
                 names = names.split(',')
             else:
                 raise NameError("illegal input names %s" % repr(names))
