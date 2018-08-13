@@ -6346,13 +6346,20 @@ class TestNewBufferProtocol(object):
         assert_(not y.flags.owndata)
         assert_(y2.flags.owndata)
 
-        assert_equal(y.dtype, obj.dtype)
-        assert_equal(y.shape, obj.shape)
-        assert_array_equal(obj, y)
+        if obj.dtype.char in 'Mm':
+            target = obj.dtype.byteorder + 'Q'
+            assert_equal(y.dtype, np.dtype(target))
+            assert_equal(y.shape, obj.shape)
+            assert_array_equal(obj.astype(target), y)
+        else:
+            assert_equal(y.dtype, obj.dtype)
+            assert_equal(y.shape, obj.shape)
+            assert_array_equal(obj, y)
 
-        assert_equal(y2.dtype, obj.dtype)
-        assert_equal(y2.shape, obj.shape)
-        assert_array_equal(obj, y2)
+        assert_equal(y2.dtype, y.dtype)
+        assert_equal(y2.shape, y.shape)
+        assert_array_equal(y, y2)
+
 
     def test_roundtrip(self):
         x = np.array([1, 2, 3, 4, 5], dtype='i4')
@@ -6447,17 +6454,14 @@ class TestNewBufferProtocol(object):
         for typ in np.typeDict.values():
             dtype = np.dtype(typ)
 
-            if dtype.char in 'Mm':
-                # datetimes cannot be used in buffers
-                continue
             if dtype.char == 'V':
                 # skip void
                 continue
 
-            x = np.zeros(4, dtype=dtype)
+            x = np.ones(4, dtype=dtype)
             self._check_roundtrip(x)
 
-            if dtype.char not in 'qQgG':
+            if dtype.char not in 'qQgGMm':
                 dt = dtype.newbyteorder('<')
                 x = np.zeros(4, dtype=dt)
                 self._check_roundtrip(x)
@@ -6465,10 +6469,6 @@ class TestNewBufferProtocol(object):
                 dt = dtype.newbyteorder('>')
                 x = np.zeros(4, dtype=dt)
                 self._check_roundtrip(x)
-
-    def test_roundtrip_scalar(self):
-        # Issue #4015.
-        self._check_roundtrip(0)
 
     def test_export_simple_1d(self):
         x = np.array([1, 2, 3, 4, 5], dtype='i')

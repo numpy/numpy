@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pytest
 
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, assert_array_equal
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_and_codes = [
@@ -34,6 +34,22 @@ scalars_and_codes = [
                     reason="Python 2 scalars lack a buffer interface")
 class TestScalarPEP3118(object):
 
+    def _check_roundtrip(self, obj):
+        x = np.asarray(obj)
+        m = memoryview(obj)
+        y = np.asarray(m)
+        y2 = np.array(m)
+        assert_(not y.flags.owndata)
+        assert_(y2.flags.owndata)
+
+        assert_equal(y.dtype, obj.dtype)
+        assert_equal(y.shape, obj.shape)
+        assert_array_equal(obj, y)
+
+        assert_equal(y2.dtype, obj.dtype)
+        assert_equal(y2.shape, obj.shape)
+        assert_array_equal(obj, y2)
+
     def test_scalar_match_array(self):
         for scalar, _ in scalars_and_codes:
             x = scalar()
@@ -58,6 +74,11 @@ class TestScalarPEP3118(object):
             mv_x = memoryview(x)
             assert_equal(mv_x.format, code)
 
+    def test_round_trip(self):
+        for scalar, code in scalars_and_codes:
+            x = scalar()
+            self._check_roundtrip(x)
+
     def test_void_scalar_structured_data(self):
         dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
         x = np.array(('ndarray_scalar', (1.2, 3.0)), dtype=dt)[()]
@@ -80,19 +101,25 @@ class TestScalarPEP3118(object):
 
     def test_datetime_memoryview(self):
         # gh-11656
-        # Values verified with v1.13.3, shape is not () as in test_scalar_dim
+        # Values chaged for 1.16, format was 'B' now '8B'
         def as_dict(m):
             return dict(strides=m.strides, shape=m.shape, itemsize=m.itemsize,
                         ndim=m.ndim, format=m.format)
 
         dt1 = np.datetime64('2016-01-01')
         dt2 = np.datetime64('2017-01-01')
-        expected = {'strides': (1,), 'itemsize': 1, 'ndim': 1,
-                    'shape': (8,), 'format': 'B'}
+        expected = {'strides': (), 'itemsize': 8, 'ndim': 0,
+                    'shape': (), 'format': 'Q'}
         v = memoryview(dt1)
         res = as_dict(v) 
         assert_equal(res, expected)
+        x = np.asarray(v)
+        # cannot round trip
+        assert_equal(x.dtype, np.uint64)
 
         v = memoryview(dt2 - dt1)
         res = as_dict(v)
         assert_equal(res, expected)
+        x = np.asarray(v)
+        # cannot round trip
+        assert_equal(x.dtype, np.uint64)

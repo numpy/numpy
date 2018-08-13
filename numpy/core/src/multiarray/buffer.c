@@ -363,10 +363,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         switch (descr->type_num) {
         case NPY_BOOL:         if (_append_char(str, '?')) return -1; break;
         case NPY_BYTE:         if (_append_char(str, 'b')) return -1; break;
-        case NPY_UBYTE:
-        case NPY_DATETIME:
-        case NPY_TIMEDELTA:    if (_append_char(str, 'B')) return -1; break;
-
+        case NPY_UBYTE:        if (_append_char(str, 'B')) return -1; break;
         case NPY_SHORT:        if (_append_char(str, 'h')) return -1; break;
         case NPY_USHORT:       if (_append_char(str, 'H')) return -1; break;
         case NPY_INT:          if (_append_char(str, 'i')) return -1; break;
@@ -397,6 +394,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_CDOUBLE:      if (_append_str(str, "Zd")) return -1; break;
         case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg")) return -1; break;
         case NPY_OBJECT:       if (_append_char(str, 'O')) return -1; break;
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:    if (_append_char(str, 'Q')) return -1; break;
         case NPY_STRING: {
             char buf[128];
             PyOS_snprintf(buf, sizeof(buf), "%ds", descr->elsize);
@@ -471,19 +470,7 @@ _buffer_info_new(PyObject *obj)
     if (info == NULL) {
         goto fail;
     }
-
-    if (PyArray_IsScalar(obj, Datetime) || PyArray_IsScalar(obj, Timedelta)) {
-        descr = PyArray_DescrFromScalar(obj);
-        if (descr == NULL) {
-            goto fail;
-        }
-        info->ndim = 1;
-        info->shape = malloc(sizeof(Py_ssize_t));
-        info->strides = malloc(sizeof(Py_ssize_t));
-        info->shape[0] = 8;
-        info->strides[0] = 1;
-    }
-    else if (PyArray_IsScalar(obj, Generic)) {
+    if (PyArray_IsScalar(obj, Generic)) {
         descr = PyArray_DescrFromScalar(obj);
         if (descr == NULL) {
             goto fail;
@@ -830,9 +817,6 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     }
 #endif
     view->len = elsize;
-    if (PyArray_IsScalar(self, Datetime) || PyArray_IsScalar(self, Timedelta)) {
-        elsize = 1; /* descr->elsize is 8, but scalars are always 1 */
-    }
     view->itemsize = elsize;
 
     Py_DECREF(descr);

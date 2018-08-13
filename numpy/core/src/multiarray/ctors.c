@@ -1305,10 +1305,9 @@ PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
 
 
 NPY_NO_EXPORT PyArray_Descr *
-_dtype_from_buffer_3118(PyObject *memoryview)
+_dtype_from_buffer_3118(Py_buffer *view)
 {
     PyArray_Descr *descr;
-    Py_buffer *view = PyMemoryView_GET_BUFFER(memoryview);
     if (view->format != NULL) {
         descr = _descriptor_from_pep3118_format(view->format);
         if (descr == NULL) {
@@ -1362,7 +1361,7 @@ _array_from_buffer_3118(PyObject *memoryview)
 
     view = PyMemoryView_GET_BUFFER(memoryview);
     nd = view->ndim;
-    descr = _dtype_from_buffer_3118(memoryview);
+    descr = _dtype_from_buffer_3118(view);
 
     if (descr == NULL) {
         return NULL;
@@ -1390,10 +1389,12 @@ _array_from_buffer_3118(PyObject *memoryview)
 
         if (!is_ctypes) {
             /* This object has no excuse for a broken PEP3118 buffer */
-            PyErr_SetString(
+            PyErr_Format(
                     PyExc_RuntimeError,
-                    "Item size computed from the PEP 3118 buffer format "
-                    "string does not match the actual item size.");
+                    "Item size %d for PEP 3118 buffer format "
+                    "string %s does not match the dtype %c item size %d.",
+                    (int)view->itemsize, view->format, descr->type,
+                    (int)descr->elsize);
             Py_DECREF(descr);
             return NULL;
         }
