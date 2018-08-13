@@ -1782,8 +1782,8 @@ class vectorize(object):
     Generalized function class.
 
     Define a vectorized function which takes a nested sequence of objects or
-    numpy arrays as inputs and returns an single or tuple of numpy array as
-    output. The vectorized function evaluates `pyfunc` over successive tuples
+    numpy arrays as inputs and returns a single numpy array or a tuple of numpy
+    arrays. The vectorized function evaluates `pyfunc` over successive tuples
     of the input arrays like the python map function, except it uses the
     broadcasting rules of numpy.
 
