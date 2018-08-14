@@ -92,6 +92,46 @@ class TestFlags(object):
         self.a[0] = 5
         self.a[0] = 0
 
+    def test_writeable_from_readonly(self):
+        # gh-9440 - make sure fromstring, from buffer on readonly buffers
+        # set writeable False
+        data = b'\x00' * 100
+        vals = np.frombuffer(data, 'B')
+        assert_raises(ValueError, vals.setflags, write=True)
+        types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
+        values = np.core.records.fromstring(data, types)
+        vals = values['vals']
+        assert_raises(ValueError, vals.setflags, write=True)
+
+    def test_writeable_from_buffer(self):
+        data = bytearray(b'\x00' * 100)
+        vals = np.frombuffer(data, 'B')
+        assert_(vals.flags.writeable)
+        vals.setflags(write=False)
+        assert_(vals.flags.writeable is False)
+        vals.setflags(write=True)
+        assert_(vals.flags.writeable)
+        types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
+        values = np.core.records.fromstring(data, types)
+        vals = values['vals']
+        assert_(vals.flags.writeable)
+        vals.setflags(write=False)
+        assert_(vals.flags.writeable is False)
+        vals.setflags(write=True)
+        assert_(vals.flags.writeable)
+
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 2 always copies")
+    def test_writeable_pickle(self):
+        import pickle
+        # Small arrays will be copied without setting base.
+        # See condition for using PyArray_SetBaseObject in
+        # array_setstate.
+        a = np.arange(1000)
+        for v in range(pickle.HIGHEST_PROTOCOL):
+            vals = pickle.loads(pickle.dumps(a, v))
+            assert_(vals.flags.writeable)
+            assert_(isinstance(vals.base, bytes))
+
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
         assert_equal(self.a.flags['C'], True)

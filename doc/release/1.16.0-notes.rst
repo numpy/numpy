@@ -387,6 +387,8 @@ Previously `np.core.umath` and `np.core.multiarray` were the c-extension
 modules, they are now python wrappers to the single `np.core/_multiarray_math`
 c-extension module.
 
+.. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html
+
 ``getfield`` validity checks extended
 ----------------------------------------
 `numpy.ndarray.getfield` now checks the dtype and offset arguments to prevent
@@ -403,3 +405,7 @@ the future.
 
 .. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html
 .. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+Arrays based off readonly buffers cannot be set ``writeable``
+-------------------------------------------------------------
+We now disallow setting the ``writeable`` flag True on arrays created
+from ``fromstring(readonly-buffer)``.
