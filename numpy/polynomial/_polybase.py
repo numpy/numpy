@@ -862,8 +862,7 @@ class ABCPolyBase(object):
             A series that represents the least squares fit to the data and
             has the domain and window specified in the call. If the
             coefficients for the unscaled and unshifted basis polynomials are
-            of interest, do `new_series.convert().coef
-            <numpy.polynomial.polynomial.Polynomial.convert>`
+            of interest, do ``new_series.convert().coef``
 
         [resid, rank, sv, rcond] : list
             These values are only returned if `full` = True
