@@ -609,12 +609,6 @@ _IsWriteable(PyArrayObject *ap)
      * If it is a writeable array, then return TRUE
      * If we can find an array object
      * or a writeable buffer object as the final base object
-     * or a string object (for pickling support memory savings).
-     * - this last could be removed if a proper pickleable
-     * buffer was added to Python.
-     *
-     * MW: I think it would better to disallow switching from READONLY
-     *     to WRITEABLE like this...
      */
 
     while(PyArray_Check(base)) {
@@ -622,15 +616,6 @@ _IsWriteable(PyArrayObject *ap)
             return (npy_bool) (PyArray_ISWRITEABLE((PyArrayObject *)base));
         }
         base = PyArray_BASE((PyArrayObject *)base);
-    }
-
-    /*
-     * here so pickle support works seamlessly
-     * and unpickled array can be set and reset writeable
-     * -- could be abused --
-     */
-    if (PyString_Check(base)) {
-        return NPY_TRUE;
     }
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
