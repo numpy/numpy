@@ -99,7 +99,7 @@ Deprecations
 * Users of ``nditer`` should use the nditer object as a context manager
   anytime one of the iterator operands is writeable, so that numpy can
   manage writeback semantics, or should call ``it.close()``. A
- `RuntimeWarning` may be emitted otherwise in these cases.
+  `RuntimeWarning` may be emitted otherwise in these cases.
 
 * The ``normed`` argument of ``np.histogram``, deprecated long ago in 1.6.0,
   now emits a ``DeprecationWarning``.
@@ -227,13 +227,6 @@ Changes to ``PyArray_GetDTypeTransferFunction``
 significant performance hit, consider implementing ``copyswapn`` to reflect the
 implementation of ``PyArray_GetStridedCopyFn``.  See `#10898
 <https://github.com/numpy/numpy/pull/10898>`__.
-* Functions ``npy_get_floatstatus_barrier`` and ``npy_clear_floatstatus_barrier``
-  have been added and should be used in place of the ``npy_get_floatstatus``and
-  ``npy_clear_status`` functions. Optimizing compilers like GCC 8.1 and Clang
-  were rearranging the order of operations when the previous functions were
-  used in the ufunc SIMD functions, resulting in the floatstatus flags being '
-  checked before the operation whose status we wanted to check was run.
-  See `#10339 <https://github.com/numpy/numpy/issues/10370>`__.
 
 
 New Features

@@ -183,10 +183,10 @@ override the behavior of NumPy's ufuncs. This works quite similarly to Python's
 ``__mul__`` and other binary operation routines. See the documentation for a
 more detailed description of the implementation and behavior of this new
 option. The API is provisional, we do not yet guarantee backward compatibility
-as modifications may be made pending feedback. See the NEP_ and
+as modifications may be made pending feedback. See `NEP 13`_  and
 documentation_ for more details.
 
-.. _NEP: https://github.com/numpy/numpy/blob/master/doc/neps/ufunc-overrides.rst
+.. _`NEP 13`: http://www.numpy.org/neps/nep-0013-ufunc-overrides.html
 .. _documentation: https://github.com/charris/numpy/blob/master/doc/source/reference/arrays.classes.rst
 
 New ``positive`` ufunc
