@@ -4813,7 +4813,7 @@ class TestRecord(object):
         name = u'b'
         x = np.array([1, 3, 2], dtype=[(name, int)])
         x.sort(order=name)
-        assert_equal(x[u'b'], np.array([1, 3, 2]))
+        assert_equal(x[u'b'], np.array([1, 2, 3]))
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
