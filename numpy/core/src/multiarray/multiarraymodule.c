@@ -2020,7 +2020,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         if (DEPRECATE(
                 "The binary mode of fromstring is deprecated, as it behaves "
                 "surprisingly on unicode inputs. Use frombuffer instead") < 0) {
-            Py_DECREF(descr);
+            Py_XDECREF(descr);
             return NULL;
         }
     }
