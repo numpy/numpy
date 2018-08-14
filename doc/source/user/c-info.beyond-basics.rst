@@ -358,38 +358,6 @@ previously created. Then you call :c:func:`PyUFunc_RegisterLoopForType`
 this function is ``0`` if the process was successful and ``-1`` with
 an error condition set if it was not successful.
 
-.. c:function:: int PyUFunc_RegisterLoopForType( \
-        PyUFuncObject* ufunc, int usertype, PyUFuncGenericFunction function, \
-        int* arg_types, void* data)
-
-    *ufunc*
-
-        The ufunc to attach this loop to.
-
-    *usertype*
-
-        The user-defined type this loop should be indexed under. This number
-        must be a user-defined type or an error occurs.
-
-    *function*
-
-        The ufunc inner 1-d loop. This function must have the signature as
-        explained in Section `3 <#sec-creating-a-new>`__ .
-
-    *arg_types*
-
-        (optional) If given, this should contain an array of integers of at
-        least size ufunc.nargs containing the data-types expected by the loop
-        function. The data will be copied into a NumPy-managed structure so
-        the memory for this argument should be deleted after calling this
-        function. If this is NULL, then it will be assumed that all data-types
-        are of type usertype.
-
-    *data*
-
-        (optional) Specify any optional data needed by the function which will
-        be passed when the function is called.
-
 .. index::
    pair: dtype; adding new
 

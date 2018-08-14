@@ -67,7 +67,7 @@ A total of 36 pull requests were merged for this release.
 * `#10431 <https://github.com/numpy/numpy/pull/10431>`__: REL: Add 1.14.1 release notes template
 * `#10435 <https://github.com/numpy/numpy/pull/10435>`__: MAINT: Use ValueError for duplicate field names in lookup (backport)
 * `#10534 <https://github.com/numpy/numpy/pull/10534>`__: BUG: Provide a better error message for out-of-order fields
-* `#10536 <https://github.com/numpy/numpy/pull/10536>`__: BUG: Resize bytes_ columns in genfromtxt (backport of #10401)
+* `#10536 <https://github.com/numpy/numpy/pull/10536>`__: BUG: Resize bytes columns in genfromtxt (backport of #10401)
 * `#10537 <https://github.com/numpy/numpy/pull/10537>`__: BUG: multifield-indexing adds padding bytes: revert for 1.14.1
 * `#10539 <https://github.com/numpy/numpy/pull/10539>`__: BUG: fix np.save issue with python 2.7.5
 * `#10540 <https://github.com/numpy/numpy/pull/10540>`__: BUG: Add missing DECREF in Py2 int() cast

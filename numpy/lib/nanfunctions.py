@@ -1178,13 +1178,15 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
         This optional parameter specifies the interpolation method to
         use when the desired quantile lies between two data points
         ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+
+        * linear: ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * lower: ``i``.
+        * higher: ``j``.
+        * nearest: ``i`` or ``j``, whichever is nearest.
+        * midpoint: ``(i + j) / 2``.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the

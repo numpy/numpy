@@ -13,7 +13,7 @@ used with 3.6.0 due to Python bug 29943_. NumPy 1.13.2 will be released shortly
 after Python 3.6.2 is out to fix that problem. If you are using 3.6.0 the
 workaround is to upgrade to 3.6.1 or use an earlier Python version.
 
-.. _#29943: https://bugs.python.org/issue29943
+.. _29943: https://bugs.python.org/issue29943
 
 
 Pull requests merged
@@ -21,7 +21,7 @@ Pull requests merged
 A total of 19 pull requests were merged for this release.
 
 * #9240 DOC: BLD: fix lots of Sphinx warnings/errors.
-* #9255 Revert "DEP: Raise TypeError for subtract(bool_, bool_)."
+* #9255 Revert "DEP: Raise TypeError for subtract(bool, bool)."
 * #9261 BUG: don't elide into readonly and updateifcopy temporaries for...
 * #9262 BUG: fix missing keyword rename for common block in numpy.f2py
 * #9263 BUG: handle resize of 0d array
