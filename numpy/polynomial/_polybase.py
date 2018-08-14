@@ -860,8 +860,10 @@ class ABCPolyBase(object):
         -------
         new_series : series
             A series that represents the least squares fit to the data and
-            has the domain specified in the call. ``newseries.coef`` will
-            print the coefficients of the polynomial.
+            has the domain and window specified in the call. If the
+            coefficients for the unscaled and unshifted basis polynomials are
+            of interest, do `new_series.convert().coef
+            <numpy.polynomial.polynomial.Polynomial.convert>`
 
         [resid, rank, sv, rcond] : list
             These values are only returned if `full` = True
