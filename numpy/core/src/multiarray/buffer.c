@@ -395,7 +395,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg")) return -1; break;
         case NPY_OBJECT:       if (_append_char(str, 'O')) return -1; break;
         case NPY_DATETIME:
-        case NPY_TIMEDELTA:    if (_append_char(str, 'Q')) return -1; break;
+        case NPY_TIMEDELTA:    if (_append_str(str, "=Q")) return -1; break;
         case NPY_STRING: {
             char buf[128];
             PyOS_snprintf(buf, sizeof(buf), "%ds", descr->elsize);

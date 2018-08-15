@@ -1391,10 +1391,10 @@ _array_from_buffer_3118(PyObject *memoryview)
             /* This object has no excuse for a broken PEP3118 buffer */
             PyErr_Format(
                     PyExc_RuntimeError,
-                    "Item size %d for PEP 3118 buffer format "
-                    "string %s does not match the dtype %c item size %d.",
-                    (int)view->itemsize, view->format, descr->type,
-                    (int)descr->elsize);
+                    "Item size %zd for PEP 3118 buffer format "
+                    "string %s does not match the dtype %c item size %zd.",
+                    view->itemsize, view->format, descr->type,
+                    descr->elsize);
             Py_DECREF(descr);
             return NULL;
         }
