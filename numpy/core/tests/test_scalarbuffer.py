@@ -109,7 +109,7 @@ class TestScalarPEP3118(object):
         dt1 = np.datetime64('2016-01-01')
         dt2 = np.datetime64('2017-01-01')
         expected = {'strides': (), 'itemsize': 8, 'ndim': 0,
-                    'shape': (), 'format': 'Q'}
+                    'shape': (), 'format': '=Q'}
         v = memoryview(dt1)
         res = as_dict(v) 
         assert_equal(res, expected)
