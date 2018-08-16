@@ -4748,55 +4748,72 @@ class TestRecord(object):
         # Error raised when multiple fields have the same name
         assert_raises(ValueError, test_assign)
 
-    if sys.version_info[0] >= 3:
-        def test_bytes_fields(self):
-            # Bytes are not allowed in field names and not recognized in titles
-            # on Py3
-            assert_raises(TypeError, np.dtype, [(b'a', int)])
-            assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
+    def test_bytes_fields(self):
+        # Bytes are not allowed in field names and not recognized in titles
+        # on Py3
+        assert_raises(TypeError, np.dtype, [(b'a', int)])
+        assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
 
-            dt = np.dtype([((b'a', 'b'), int)])
-            assert_raises(TypeError, dt.__getitem__, b'a')
+        dt = np.dtype([((b'a', 'b'), int)])
+        assert_raises(TypeError, dt.__getitem__, b'a')
 
-            x = np.array([(1,), (2,), (3,)], dtype=dt)
-            assert_raises(IndexError, x.__getitem__, b'a')
+        x = np.array([(1,), (2,), (3,)], dtype=dt)
+        assert_raises(IndexError, x.__getitem__, b'a')
 
-            y = x[0]
-            assert_raises(IndexError, y.__getitem__, b'a')
+        y = x[0]
+        assert_raises(IndexError, y.__getitem__, b'a')
 
-        def test_multiple_field_name_unicode(self):
-            def test_assign_unicode():
-                dt = np.dtype([("\u20B9", "f8"),
-                               ("B", "f8"),
-                               ("\u20B9", "f8")])
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
+    def test_multiple_field_name_unicode(self):
+        def test_assign_unicode():
+            dt = np.dtype([("\u20B9", "f8"),
+                           ("B", "f8"),
+                           ("\u20B9", "f8")])
 
-            # Error raised when multiple fields have the same name(unicode included)
-            assert_raises(ValueError, test_assign_unicode)
+        # Error raised when multiple fields have the same name(unicode included)
+        assert_raises(ValueError, test_assign_unicode)
 
-    else:
-        def test_unicode_field_titles(self):
-            # Unicode field titles are added to field dict on Py2
-            title = u'b'
-            dt = np.dtype([((title, 'a'), int)])
-            dt[title]
-            dt['a']
-            x = np.array([(1,), (2,), (3,)], dtype=dt)
-            x[title]
-            x['a']
-            y = x[0]
-            y[title]
-            y['a']
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
+    def test_unicode_field_titles(self):
+        # Unicode field titles are added to field dict on Py2
+        title = u'b'
+        dt = np.dtype([((title, 'a'), int)])
+        dt[title]
+        dt['a']
+        x = np.array([(1,), (2,), (3,)], dtype=dt)
+        x[title]
+        x['a']
+        y = x[0]
+        y[title]
+        y['a']
 
-        def test_unicode_field_names(self):
-            # Unicode field names are converted to ascii on Python 2:
-            encodable_name = u'b'
-            assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
-            assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
+    def test_unicode_field_names(self):
+        # Unicode field names are converted to ascii on Python 2:
+        encodable_name = u'b'
+        assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
+        assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
 
-            # But raises UnicodeEncodeError if it can't be encoded:
-            nonencodable_name = u'\uc3bc'
-            assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
-            assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
+        # But raises UnicodeEncodeError if it can't be encoded:
+        nonencodable_name = u'\uc3bc'
+        assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
+        assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
+
+    def test_fromarrays_unicode(self):
+        # A single name string provided to fromarrays() is allowed to be unicode
+        # on both Python 2 and 3:
+        x = np.core.records.fromarrays([[0], [1]], names=u'a,b', formats=u'i4,i4')
+        assert_equal(x['a'][0], 0)
+        assert_equal(x['b'][0], 1)
+
+    def test_unicode_order(self):
+        # Test that we can sort with order as a unicode field name in both Python 2 and
+        # 3:
+        name = u'b'
+        x = np.array([1, 3, 2], dtype=[(name, int)])
+        x.sort(order=name)
+        assert_equal(x[u'b'], np.array([1, 2, 3]))
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
