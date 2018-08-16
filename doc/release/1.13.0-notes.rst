@@ -187,7 +187,7 @@ as modifications may be made pending feedback. See `NEP 13`_  and
 documentation_ for more details.
 
 .. _`NEP 13`: http://www.numpy.org/neps/nep-0013-ufunc-overrides.html
-.. _documentation: https://github.com/charris/numpy/blob/master/doc/source/reference/arrays.classes.rst
+.. _documentation: https://github.com/numpy/numpy/blob/master/doc/source/reference/arrays.classes.rst
 
 New ``positive`` ufunc
 ----------------------
