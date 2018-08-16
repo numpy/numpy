@@ -42,7 +42,7 @@ import warnings
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long
+from numpy.compat import isfileobj, bytes, long, unicode
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
@@ -174,7 +174,7 @@ class format_parser(object):
         if (names):
             if (type(names) in [list, tuple]):
                 pass
-            elif isinstance(names, str):
+            elif isinstance(names, (str, unicode)):
                 names = names.split(',')
             else:
                 raise NameError("illegal input names %s" % repr(names))
