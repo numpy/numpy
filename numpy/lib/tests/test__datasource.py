@@ -33,14 +33,14 @@ def urlopen_stub(url, data=None):
 old_urlopen = None
 
 
-def setup():
+def setup_module():
     global old_urlopen
 
     old_urlopen = urllib_request.urlopen
     urllib_request.urlopen = urlopen_stub
 
 
-def teardown():
+def teardown_module():
     urllib_request.urlopen = old_urlopen
 
 # A valid website for more robust testing
