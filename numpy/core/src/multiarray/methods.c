@@ -1127,6 +1127,103 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_Return((PyArrayObject *)PyArray_Choose(self, choices, out, clipmode));
 }
 
+
+static PyObject *
+_newnames(PyArray_Descr *datatype, PyObject *order)
+{
+    PyObject *oldnames = datatype->names;
+    int len_names = PyTuple_Size(oldnames);
+    PyObject *nameslist = PyList_New(len_names);
+    PyObject *new_order;
+    PyObject *seen = PySet_New(NULL);
+    int i, j, strcmp_result, found_name;
+    Py_ssize_t len, nameslen;
+    char err_str[100];
+    char *err_cat;
+    PyObject* (*GetItem) (PyObject *, Py_ssize_t);
+	PyObject *order_copy;
+
+    for (i = 0; i < len_names; i++) {
+        PyObject *newitem = PyTuple_GetItem(oldnames, i);
+        PyList_SetItem(nameslist, i, newitem);
+    }
+
+    // check for string type of order (aliased for Python 2)
+    if (PyBytes_Check(order) || PyUnicode_Check(order)) {
+        new_order = PyList_New(0);
+        PyList_Append(new_order, order);
+	order = new_order;
+    }
+
+    if (PyList_Check(order) || PyTuple_Check(order)) {
+        if (PyList_Check(order)) {
+            len = PyList_Size(order);
+	    GetItem = PyList_GetItem;
+        }
+        else {
+            len = PyTuple_Size(order);
+	    GetItem = PyTuple_GetItem;
+        }
+        for (i = 0; i < len; i++) {
+            PyObject *curr_name = GetItem(order, i);
+            // try to find curr_name in nameslist
+            found_name = 0;
+            for (j = 0; j < len_names; j++) {
+		PyObject *name = PyList_GetItem(nameslist, j);
+		// try to avoid Unicode / String mess with Python 2/3
+		#ifndef NPY_PY3K
+                strcmp_result = PyObject_RichCompareBool(PyObject_Repr(name),
+							 PyObject_Repr(curr_name),
+							 Py_EQ);
+		#else
+                strcmp_result = PyObject_RichCompareBool(name,
+							 curr_name,
+							 Py_EQ);
+		#endif
+                if (strcmp_result == 1) {
+                    ++found_name;
+                    break;
+                }
+            }
+
+            if (found_name == 0) {
+		if (PySet_Contains(seen, curr_name)) {
+		    strcpy(err_str, "duplicate field name: ");
+		}
+		else {
+		    strcpy(err_str, "unknown field name: ");
+		}
+                err_cat = (char *)PyObject_Repr(curr_name);
+	        strcat(err_str, err_cat);
+	        PyErr_SetString(PyExc_ValueError, err_str);
+	        return NULL;
+            }
+            // slice del to remove item from list
+            PyList_SetSlice(nameslist, j, j + 1, NULL);
+            PySet_Add(seen, curr_name);
+        }
+
+        // combine elements of order and nameslist
+        // then convert to tuple & return
+        nameslen = PyList_Size(nameslist);
+	// careful with order object -- need a copy it seems
+	order_copy = PyList_New(0);
+	for (i = 0; i < len; i++) {
+	    PyList_Append(order_copy, GetItem(order, i));
+	}
+	order = order_copy;
+        for (j = 0; j < nameslen; j++) {
+            PyList_Append(order, PyList_GetItem(nameslist, j));
+        }
+        return PyList_AsTuple(order);
+        }
+    strcpy(err_str, "unsupported order value: ");
+    err_cat = (char *)PyObject_Repr(order);
+    strcat(err_str, err_cat);
+    PyErr_SetString(PyExc_ValueError, err_str);
+    return NULL;
+}
+
 static PyObject *
 array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1149,20 +1246,14 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+
+        new_name = _newnames(saved, order);
         if (new_name == NULL) {
             return NULL;
         }
@@ -1210,20 +1301,15 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+
+        new_name = _newnames(saved, order);
+
         if (new_name == NULL) {
             return NULL;
         }
@@ -1271,20 +1357,15 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify "
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+
+        new_name = _newnames(saved, order);
+
         if (new_name == NULL) {
             return NULL;
         }
@@ -1325,20 +1406,15 @@ array_argpartition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     if (order != NULL) {
         PyObject *new_name;
-        PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify "
                             "order when the array has no fields.");
             return NULL;
         }
-        _numpy_internal = PyImport_ImportModule("numpy.core._internal");
-        if (_numpy_internal == NULL) {
-            return NULL;
-        }
-        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
-                                       "OO", saved, order);
-        Py_DECREF(_numpy_internal);
+
+        new_name = _newnames(saved, order);
+
         if (new_name == NULL) {
             return NULL;
         }
