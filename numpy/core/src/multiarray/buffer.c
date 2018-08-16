@@ -238,7 +238,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             PyArray_Descr *child;
             char *p;
             Py_ssize_t len;
-            int new_offset;
+            int new_offset, ret;
 
             name = PyTuple_GET_ITEM(descr->names, k);
             item = PyDict_GetItem(descr->fields, name);
@@ -266,8 +266,11 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             }
 
             /* Insert child item */
-            _buffer_format_string(child, str, obj, offset,
+            ret = _buffer_format_string(child, str, obj, offset,
                                   active_byteorder);
+            if (ret != 0) {
+                return ret;
+            }
 
             /* Insert field name */
 #if defined(NPY_PY3K)
