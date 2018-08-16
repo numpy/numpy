@@ -702,9 +702,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # Both the != True comparison here and the cast to bool_ at
         # the end are done to deal with `masked`, which cannot be
         # compared usefully, and for which .all() yields masked.
+        import numpy as np
         x_id = func(x)
         y_id = func(y)
-        if (x_id == y_id).all() != True:
+        if not np.all(x_id == y_id)
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
