@@ -257,33 +257,72 @@ class _ctypes(object):
             self._zerod = False
 
     def data_as(self, obj):
+        """
+        Return the data pointer cast to a particular c-types object.
+        For example, calling ``self._as_parameter_`` is equivalent to
+        ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use the data as a
+        pointer to a ctypes array of floating-point data:
+        ``self.data_as(ctypes.POINTER(ctypes.c_double))``.
+        """
         return self._ctypes.cast(self._data, obj)
 
     def shape_as(self, obj):
+        """
+        Return the shape tuple as an array of some other c-types
+        type. For example: ``self.shape_as(ctypes.c_short)``.
+        """
         if self._zerod:
             return None
         return (obj*self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
+        """
+        Return the strides tuple as an array of some other
+        c-types type. For example: ``self.strides_as(ctypes.c_longlong)``.
+        """
         if self._zerod:
             return None
         return (obj*self._arr.ndim)(*self._arr.strides)
 
     def get_data(self):
+        """
+        A pointer to the memory area of the array as a Python integer.
+        This memory area may contain data that is not aligned, or not in correct
+        byte-order. The memory area may not even be writeable. The array
+        flags and data-type of this array should be respected when passing this
+        attribute to arbitrary C-code to avoid trouble that can include Python
+        crashing. User Beware! The value of this attribute is exactly the same
+        as ``self._array_interface_['data'][0]``.
+        """
         return self._data
 
     def get_shape(self):
+        """
+        (c_intp*self.ndim): A ctypes array of length self.ndim where
+        the basetype is the C-integer corresponding to ``dtype('p')`` on this
+        platform. This base-type could be `ctypes.c_int`, `ctypes.c_long`, or
+        `ctypes.c_longlong` depending on the platform.
+        The c_intp type is defined accordingly in `numpy.ctypeslib`.
+        The ctypes array contains the shape of the underlying array.
+        """
         return self.shape_as(_getintp_ctype())
 
     def get_strides(self):
+        """
+        (c_intp*self.ndim): A ctypes array of length self.ndim where
+        the basetype is the same as for the shape attribute. This ctypes array
+        contains the strides information from the underlying array. This strides
+        information is important for showing how many bytes must be jumped to
+        get to the next element in the array.
+        """
         return self.strides_as(_getintp_ctype())
 
     def get_as_parameter(self):
         return self._ctypes.c_void_p(self._data)
 
-    data = property(get_data, None, doc="c-types data")
-    shape = property(get_shape, None, doc="c-types shape")
-    strides = property(get_strides, None, doc="c-types strides")
+    data = property(get_data)
+    shape = property(get_shape)
+    strides = property(get_strides)
     _as_parameter_ = property(get_as_parameter, None, doc="_as parameter_")
 
 
