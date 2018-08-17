@@ -88,7 +88,7 @@ Functions
         (element-by-element) function :math:`N` times with the following
         signature:
 
-        .. c:function:: void loopfunc( \
+        .. c:function:: void loopfunc(
                 char** args, npy_intp* dimensions, npy_intp* steps, void* data)
 
             *args*
@@ -173,14 +173,12 @@ Functions
         an empty array is passed to the reduce method of the ufunc.
 
     :param name:
-        The name for the ufunc as a ``NULL`` terminated string.
-        Specifying a name of 'add' or
-        'multiply' enables a special behavior for  integer-typed
-        reductions when no dtype is given.  If the input type is an
-        integer (or boolean) data type smaller than the size of the
-        `numpy.int_` data type, it will be internally upcast to the
-        `numpy.int_` (or `numpy.uint`)
-        data type.
+        The name for the ufunc as a ``NULL`` terminated string.  Specifying
+        a name of 'add' or 'multiply' enables a special behavior for
+        integer-typed reductions when no dtype is given. If the input type is an
+        integer (or boolean) data type smaller than the size of the `numpy.int_`
+        data type, it will be internally upcast to the `numpy.int_` (or
+        `numpy.uint`) data type.
 
     :param doc:
         Allows passing in a documentation string to be stored with the
