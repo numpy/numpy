@@ -175,6 +175,14 @@ _is_natively_aligned_at(PyArray_Descr *descr,
     return 1;
 }
 
+/*
+ * Fill in str with an appropriate PEP 3118 format string, based on
+ * descr. For structured dtypes, calls itself recursively. Each call extends
+ * str at offset then updates offset, and uses  descr->byteorder, (and
+ * possibly the byte order in obj) to determine the byte-order char.
+ *
+ * Returns 0 for success, -1 for failure
+ */
 static int
 _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                       PyObject* obj, Py_ssize_t *offset,
@@ -195,8 +203,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         PyObject *item, *subarray_tuple;
         Py_ssize_t total_count = 1;
         Py_ssize_t dim_size;
+        Py_ssize_t old_offset;
         char buf[128];
-        int old_offset;
         int ret;
 
         if (PyTuple_Check(descr->subarray->shape)) {
@@ -230,15 +238,15 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         return ret;
     }
     else if (PyDataType_HASFIELDS(descr)) {
-        int base_offset = *offset;
+        Py_ssize_t base_offset = *offset;
 
         _append_str(str, "T{");
         for (k = 0; k < PyTuple_GET_SIZE(descr->names); ++k) {
             PyObject *name, *item, *offset_obj, *tmp;
             PyArray_Descr *child;
             char *p;
-            Py_ssize_t len;
-            int new_offset;
+            Py_ssize_t len, new_offset;
+            int ret;
 
             name = PyTuple_GET_ITEM(descr->names, k);
             item = PyDict_GetItem(descr->fields, name);
@@ -266,8 +274,11 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             }
 
             /* Insert child item */
-            _buffer_format_string(child, str, obj, offset,
+            ret = _buffer_format_string(child, str, obj, offset,
                                   active_byteorder);
+            if (ret < 0) {
+                return -1;
+            }
 
             /* Insert field name */
 #if defined(NPY_PY3K)
