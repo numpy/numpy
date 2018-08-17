@@ -21,6 +21,12 @@ The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` were buggy
 and not documented. They will be removed in the 1.18 release. Use 
 `numpy.sctypeDict` instead.
 
+
+``np.PackageLoader`` and ``np.pkgload`` have been removed
+---------------------------------------------------------
+These were deprecated in 1.10, had no tests, and seem to no longer work in
+1.15 anyway.
+
 Future Changes
 ==============
 
@@ -39,6 +45,12 @@ New Features
 
 Improvements
 ============
+
+`np.polynomial.Polynomial` classes render in LaTeX in Jupyter notebooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When used in a front-end that supports it, `Polynomial` instances are now
+rendered through LaTeX. The current format is experimental, and is subject to
+change.
 
 ``randint`` and ``choice`` now work on empty distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

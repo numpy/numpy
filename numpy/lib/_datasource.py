@@ -37,6 +37,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import warnings
 import shutil
 import io
 
@@ -85,9 +86,10 @@ def _python2_bz2open(fn, mode, encoding, newline):
 
     if "t" in mode:
         # BZ2File is missing necessary functions for TextIOWrapper
-        raise ValueError("bz2 text files not supported in python2")
-    else:
-        return bz2.BZ2File(fn, mode)
+        warnings.warn("Assuming latin1 encoding for bz2 text file in Python2",
+                      RuntimeWarning, stacklevel=5)
+        mode = mode.replace("t", "")
+    return bz2.BZ2File(fn, mode)
 
 def _python2_gzipopen(fn, mode, encoding, newline):
     """ Wrapper to open gzip in text mode.
