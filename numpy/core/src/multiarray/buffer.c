@@ -175,7 +175,8 @@ _is_natively_aligned_at(PyArray_Descr *descr,
     return 1;
 }
 
-/* Fill in str with an appropriate PEP 3118 format string, based on
+/*
+ * Fill in str with an appropriate PEP 3118 format string, based on
  * descr. For structured dtypes, calls itself recursively. Each call extends
  * str at offset then updates offset, and uses  descr->byteorder, (and
  * possibly the byte order in obj) to determine the byte-order char.
@@ -202,8 +203,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         PyObject *item, *subarray_tuple;
         Py_ssize_t total_count = 1;
         Py_ssize_t dim_size;
+        Py_ssize_t old_offset;
         char buf[128];
-        int old_offset;
         int ret;
 
         if (PyTuple_Check(descr->subarray->shape)) {
