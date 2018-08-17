@@ -119,7 +119,7 @@ PyArray_SetNumericOps(PyObject *dict)
     return 0;
 }
 
-/* FIXME - macro contains goto */
+/* Note - macro contains goto */
 #define GET(op) if (n_ops.op &&                                         \
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
         goto fail;
