@@ -30,19 +30,30 @@ class TestSetOps(object):
         ed = np.array([1, 2, 5])
         c = intersect1d(a, b)
         assert_array_equal(c, ed)
-
         assert_array_equal([], intersect1d([], []))
-        
+
+    def test_intersect1d_array_like(self):
+        # See gh-11772
+        class Test(object):
+            def __array__(self):
+                return np.arange(3)
+
+        a = Test()
+        res = intersect1d(a, a)
+        assert_array_equal(res, a)
+        res = intersect1d([1, 2, 3], [1, 2, 3])
+        assert_array_equal(res, [1, 2, 3])
+
     def test_intersect1d_indices(self):
         # unique inputs
-        a = np.array([1, 2, 3, 4]) 
+        a = np.array([1, 2, 3, 4])
         b = np.array([2, 1, 4, 6])
         c, i1, i2 = intersect1d(a, b, assume_unique=True, return_indices=True)
         ee = np.array([1, 2, 4])
         assert_array_equal(c, ee)
         assert_array_equal(a[i1], ee)
         assert_array_equal(b[i2], ee)
-        
+
         # non-unique inputs
         a = np.array([1, 2, 2, 3, 4, 3, 2])
         b = np.array([1, 8, 4, 2, 2, 3, 2, 3])
@@ -51,7 +62,7 @@ class TestSetOps(object):
         assert_array_equal(c, ef)
         assert_array_equal(a[i1], ef)
         assert_array_equal(b[i2], ef)
-                
+
         # non1d, unique inputs
         a = np.array([[2, 4, 5, 6], [7, 8, 1, 15]])
         b = np.array([[3, 2, 7, 6], [10, 12, 8, 9]])
@@ -61,7 +72,7 @@ class TestSetOps(object):
         ea = np.array([2, 6, 7, 8])
         assert_array_equal(ea, a[ui1])
         assert_array_equal(ea, b[ui2])
-    
+
         # non1d, not assumed to be uniqueinputs
         a = np.array([[2, 4, 5, 6, 6], [4, 7, 8, 7, 2]])
         b = np.array([[3, 2, 7, 7], [10, 12, 8, 7]])
@@ -71,7 +82,7 @@ class TestSetOps(object):
         ea = np.array([2, 7, 8])
         assert_array_equal(ea, a[ui1])
         assert_array_equal(ea, b[ui2])
-        
+
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])
         b = np.array([2, 4, 3, 1, 5])
