@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pytest
 
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, assert_raises
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_and_codes = [
@@ -77,3 +77,9 @@ class TestScalarPEP3118(object):
         mv_a = memoryview(a)
         assert_equal(mv_x.itemsize, mv_a.itemsize)
         assert_equal(mv_x.format, mv_a.format)
+
+    def test_invalid_buffer_format(self):
+        # datetime64 cannot be used in a buffer yet
+        dt = np.dtype([('a', int), ('b', 'M8[s]')])
+        a = np.empty(1, dt)
+        assert_raises((ValueError, BufferError), memoryview, a[0])
