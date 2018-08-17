@@ -277,7 +277,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             ret = _buffer_format_string(child, str, obj, offset,
                                   active_byteorder);
             if (ret == -1) {
-                return ret;
+                return -1;
             }
 
             /* Insert field name */
