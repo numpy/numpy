@@ -181,7 +181,7 @@ _is_natively_aligned_at(PyArray_Descr *descr,
  * str at offset then updates offset, and uses  descr->byteorder, (and
  * possibly the byte order in obj) to determine the byte-order char.
  *
- * Returns 0 for succcess, -1 for failure
+ * Returns 0 for success, -1 for failure
  */
 static int
 _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
@@ -276,7 +276,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* Insert child item */
             ret = _buffer_format_string(child, str, obj, offset,
                                   active_byteorder);
-            if (ret == -1) {
+            if (ret < 0) {
                 return -1;
             }
 
