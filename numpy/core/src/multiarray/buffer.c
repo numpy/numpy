@@ -404,9 +404,9 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_CFLOAT:       if (_append_str(str, "Zf")) return -1; break;
         case NPY_CDOUBLE:      if (_append_str(str, "Zd")) return -1; break;
         case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg")) return -1; break;
-        /* XXX: datetime */
-        /* XXX: timedelta */
         case NPY_OBJECT:       if (_append_char(str, 'O')) return -1; break;
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:    if (_append_str(str, "=Q")) return -1; break;
         case NPY_STRING: {
             char buf[128];
             PyOS_snprintf(buf, sizeof(buf), "%ds", descr->elsize);
@@ -482,7 +482,6 @@ _buffer_info_new(PyObject *obj)
         PyErr_NoMemory();
         goto fail;
     }
-
     if (PyArray_IsScalar(obj, Generic)) {
         descr = PyArray_DescrFromScalar(obj);
         if (descr == NULL) {
@@ -809,8 +808,6 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     /* Fill in information */
     info = _buffer_get_info(self);
     if (info == NULL) {
-        PyErr_SetString(PyExc_BufferError,
-                        "could not get scalar buffer information");
         goto fail;
     }
 
