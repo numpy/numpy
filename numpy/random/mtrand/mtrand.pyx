@@ -4836,9 +4836,8 @@ cdef class RandomState:
                     self._shuffle_raw(n, sizeof(npy_intp), stride, x_ptr, buf_ptr)
                 else:
                     self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim > 1 and x.size:
-            # Multidimensional ndarrays require a bounce buffer.
-            buf = np.empty_like(x[0])
+        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+            buf = np.empty_like(x[0,...])
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
