@@ -467,6 +467,10 @@ class TestRandomDist(object):
                      lambda x: [(i, i) for i in x],
                      lambda x: np.asarray([[i, i] for i in x]),
                      lambda x: np.vstack([x, x]).T,
+                     # gh-11442
+                     lambda x: (np.asarray([(i, i) for i in x],
+                                           [("a", int), ("b", int)])
+                                .view(np.recarray)),
                      # gh-4270
                      lambda x: np.asarray([(i, i) for i in x],
                                           [("a", object, 1),
