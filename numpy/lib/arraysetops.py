@@ -312,12 +312,12 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
     return_indices : bool
-        If True, the indices which correspond to the intersection of the 
-        two arrays are returned. The first instance of a value is used 
-        if there are multiple. Default is False. 
-    
-        .. versionadded:: 1.15.0    
-        
+        If True, the indices which correspond to the intersection of the two
+        arrays are returned. The first instance of a value is used if there are
+        multiple. Default is False.
+
+        .. versionadded:: 1.15.0
+
     Returns
     -------
     intersect1d : ndarray
@@ -326,7 +326,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         The indices of the first occurrences of the common values in `ar1`.
         Only provided if `return_indices` is True.
     comm2 : ndarray
-        The indices of the first occurrences of the common values in `ar2`. 
+        The indices of the first occurrences of the common values in `ar2`.
         Only provided if `return_indices` is True.
 
 
@@ -345,7 +345,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     >>> from functools import reduce
     >>> reduce(np.intersect1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
     array([3])
-    
+
     To return the indices of the values common to the input arrays
     along with the intersected values:
     >>> x = np.array([1, 1, 2, 3, 4])
@@ -355,8 +355,11 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     (array([0, 2, 4]), array([1, 0, 2]))
     >>> xy, x[x_ind], y[y_ind]
     (array([1, 2, 4]), array([1, 2, 4]), array([1, 2, 4]))
-    
+
     """
+    ar1 = np.asanyarray(ar1)
+    ar2 = np.asanyarray(ar2)
+
     if not assume_unique:
         if return_indices:
             ar1, ind1 = unique(ar1, return_index=True)
@@ -367,7 +370,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     else:
         ar1 = ar1.ravel()
         ar2 = ar2.ravel()
-        
+
     aux = np.concatenate((ar1, ar2))
     if return_indices:
         aux_sort_indices = np.argsort(aux, kind='mergesort')
@@ -388,6 +391,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         return int1d, ar1_indices, ar2_indices
     else:
         return int1d
+
 
 def setxor1d(ar1, ar2, assume_unique=False):
     """
