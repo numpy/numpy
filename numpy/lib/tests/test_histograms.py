@@ -310,6 +310,20 @@ class TestHistogram(object):
         assert_equal(d_edge.dtype, dates.dtype)
         assert_equal(t_edge.dtype, td)
 
+    def do_signed_overflow_bounds(self, dtype):
+        exponent = 8 * np.dtype(dtype).itemsize - 1
+        arr = np.array([-2**exponent + 4, 2**exponent - 4], dtype=dtype)
+        hist, e = histogram(arr, bins=2)
+        assert_equal(e, [-2**exponent + 4, 0, 2**exponent - 4])
+        assert_equal(hist, [1, 1])
+
+    def test_signed_overflow_bounds(self):
+        self.do_signed_overflow_bounds(np.byte)
+        self.do_signed_overflow_bounds(np.short)
+        self.do_signed_overflow_bounds(np.intc)
+        self.do_signed_overflow_bounds(np.int_)
+        self.do_signed_overflow_bounds(np.longlong)
+
     def do_precision_lower_bound(self, float_small, float_large):
         eps = np.finfo(float_large).eps
 
