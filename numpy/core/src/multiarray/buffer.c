@@ -404,8 +404,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_CFLOAT:       if (_append_str(str, "Zf")) return -1; break;
         case NPY_CDOUBLE:      if (_append_str(str, "Zd")) return -1; break;
         case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg")) return -1; break;
-        /* XXX: datetime */
-        /* XXX: timedelta */
+        /* XXX NPY_DATETIME */
+        /* XXX NPY_TIMEDELTA */
         case NPY_OBJECT:       if (_append_char(str, 'O')) return -1; break;
         case NPY_STRING: {
             char buf[128];
@@ -483,7 +483,29 @@ _buffer_info_new(PyObject *obj)
         goto fail;
     }
 
-    if (PyArray_IsScalar(obj, Generic)) {
+    if (PyArray_IsScalar(obj, Datetime) || PyArray_IsScalar(obj, Timedelta)) {
+        /*
+         * Special case datetime64 scalars to remain backward compatible.
+         * This will change in a future version.
+         * Note arrays of datetime64 and strutured arrays with datetime64
+         * fields will not hit this code path and are currently unsupported
+         * in _buffer_format_string.
+         */
+        _append_char(&fmt, 'B');
+        _append_char(&fmt, '\0');
+        info->ndim = 1;
+        info->shape = malloc(sizeof(Py_ssize_t) * 2);
+        if (info->shape == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+        info->strides = info->shape + info->ndim;
+        info->shape[0] = 8;
+        info->strides[0] = 1;
+        info->format = fmt.s;
+        return info;
+    }
+    else if (PyArray_IsScalar(obj, Generic)) {
         descr = PyArray_DescrFromScalar(obj);
         if (descr == NULL) {
             goto fail;
@@ -809,8 +831,6 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     /* Fill in information */
     info = _buffer_get_info(self);
     if (info == NULL) {
-        PyErr_SetString(PyExc_BufferError,
-                        "could not get scalar buffer information");
         goto fail;
     }
 
@@ -833,6 +853,9 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     }
 #endif
     view->len = elsize;
+    if (PyArray_IsScalar(self, Datetime) || PyArray_IsScalar(self, Timedelta)) {
+        elsize = 1; /* descr->elsize,char is 8,'M', but we return 1,'B' */
+    }
     view->itemsize = elsize;
 
     Py_DECREF(descr);
