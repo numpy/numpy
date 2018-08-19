@@ -1702,7 +1702,6 @@ class TestDateTime(object):
         assert_equal(np.busday_offset(np.datetime64('NaT'), 1, roll='preceding'),
                      np.datetime64('NaT'))
 
-
     def test_datetime_busdaycalendar(self):
         # Check that it removes NaT, duplicates, and weekends
         # and sorts the result.

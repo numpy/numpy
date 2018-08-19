@@ -514,8 +514,6 @@ class TestMaskedArray(object):
               fill_value=999999)''')
         )
 
-
-
     def test_str_repr_legacy(self):
         oldopts = np.get_printoptions()
         np.set_printoptions(legacy='1.13')
@@ -787,7 +785,6 @@ class TestMaskedArray(object):
                              dtype = "int, (2,3)float, float")
         control = "(0, [[--, 0.0, --], [0.0, 0.0, --]], 0.0)"
         assert_equal(str(t_2d0), control)
-
 
     def test_flatten_structured_array(self):
         # Test flatten_structured_array on arrays

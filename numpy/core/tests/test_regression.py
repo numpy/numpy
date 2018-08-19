@@ -1828,7 +1828,6 @@ class TestRegression(object):
             assert_equal(oct(a), oct(0))
             assert_equal(hex(a), hex(0))
 
-
     def test_object_array_self_copy(self):
         # An object array being copied into itself DECREF'ed before INCREF'ing
         # causing segmentation faults (gh-3787)

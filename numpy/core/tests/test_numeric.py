@@ -1275,7 +1275,6 @@ class TestArrayComparisons(object):
         assert_equal(a == None, [False, False, False])
         assert_equal(a != None, [True, True, True])
 
-
     def test_array_equiv(self):
         res = np.array_equiv(np.array([1, 2]), np.array([1, 2]))
         assert_(res)
