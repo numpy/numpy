@@ -231,6 +231,11 @@ class ABCPolyBase(object):
             The coefficients of ``other`` if it is a compatible instance
             of ABCPolyBase, otherwise ``other``.
 
+        Raises
+        ------
+        TypeError
+             When ``other`` is an incompatible instance of ABCPolyBase. 
+
         """
         if isinstance(other, ABCPolyBase):
             if not isinstance(other, self.__class__):
@@ -636,7 +641,7 @@ class ABCPolyBase(object):
             the default domain of ``kind`` is used.
         kind : class, optional
             The polynomial series type class to which the current instance
-            should be converted. If ``kind`` is None, then the class of
+            should be converted. If ``kind`` is None, then the class of the
             current instance is used.
         window : array_like, optional
             The window of the converted series. If the value is None,
