@@ -51,11 +51,11 @@ Classes
 
 See Also
 --------
-numpy.polynomial.chebyshev : Objects for dealing with Chebyshev series.
-numpy.polynomial.hermite : Objects for dealing with Hermite_e series.
-numpy.polynomial.hermite_e : Objects for dealing with Hermite series.
-numpy.polynomial.laguerre : Objects for dealing with Laguerre series.
-numpy.polynomial.legendre : Objects for dealing with Legendre series.
+`numpy.polynomial.chebyshev` : Objects for dealing with Chebyshev series.
+`numpy.polynomial.hermite` : Objects for dealing with Hermite_e series.
+`numpy.polynomial.hermite_e` : Objects for dealing with Hermite series.
+`numpy.polynomial.laguerre` : Objects for dealing with Laguerre series.
+`numpy.polynomial.legendre` : Objects for dealing with Legendre series.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -116,7 +116,7 @@ def polyline(off, scl):
 
     See Also
     --------
-    chebline, hermline, hermeline, lagline, legline, polyline.
+    chebline, hermline, hermeline, lagline, legline, polyline
 
     Examples
     --------
@@ -169,7 +169,7 @@ def polyfromroots(roots):
     See Also
     --------
     chebfromroots, hermfromroots, hermefromroots, lagfromroots, legfromroots,
-    polyfromroots.
+    polyfromroots
 
     Notes
     -----
@@ -319,7 +319,7 @@ def polymulx(c):
     Notes
     -----
 
-    .. versionadded:: 1.5.
+    .. versionadded:: 1.5.0
 
     Examples
     --------
@@ -468,7 +468,7 @@ def polypow(c, pow, maxpower=None):
     >>> from numpy.polynomial import polynomial as P
     >>> c = (1,2,3)
     >>> P.polypow(c, 2)
-    array([  1.,   4.,  10.,  12.,   9.])
+    array([ 1.,  4.,  10.,  12.,  9.])
 
     """
     # c is a trimmed copy
@@ -1156,9 +1156,9 @@ def polyvander(x, deg):
     >>> from numpy.polynomial import polynomial as P
     >>> x = numpy.array((1,2,3))
     >>> P.polyvander(c, 3)
-    array([[  1.,   1.,   1.,   1.],
-           [  1.,   2.,   4.,   8.],
-           [  1.,   3.,   9.,  27.]])
+    array([[  1.,  1.,  1.,   1.],
+           [  1.,  2.,  4.,   8.],
+           [  1.,  3.,  9.,  27.]])
 
     """
     ideg = int(deg)
@@ -1392,7 +1392,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, hermfit, hermefit, lagfit, legfit, polyfit.
+    chebfit, hermfit, hermefit, lagfit, legfit, polyfit
     polyval : Evaluates a polynomial.
     polyvander : Vandermonde matrix for powers.
     linalg.lstsq : Computes a least-squares fit from the matrix.
@@ -1595,7 +1595,7 @@ def polyroots(c):
 
     See Also
     --------
-    chebroots, hermroots, hermeroots, lagroots, legroots, polyroots.
+    chebroots, hermroots, hermeroots, lagroots, legroots, polyroots
 
     Notes
     -----
