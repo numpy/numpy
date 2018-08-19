@@ -2,6 +2,7 @@
 Release Notes
 *************
 
+.. include:: ../release/1.15.1-notes.rst
 .. include:: ../release/1.15.0-notes.rst
 .. include:: ../release/1.14.5-notes.rst
 .. include:: ../release/1.14.4-notes.rst
@@ -39,3 +40,4 @@ Release Notes
 .. include:: ../release/1.5.0-notes.rst
 .. include:: ../release/1.4.0-notes.rst
 .. include:: ../release/1.3.0-notes.rst
+
