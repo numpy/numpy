@@ -234,7 +234,7 @@ class ABCPolyBase(object):
         Raises
         ------
         TypeError
-             When ``other`` is an incompatible instance of ABCPolyBase. 
+            When ``other`` is an incompatible instance of ABCPolyBase. 
 
         """
         if isinstance(other, ABCPolyBase):
