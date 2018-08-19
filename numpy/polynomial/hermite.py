@@ -54,11 +54,11 @@ Classes
 
 See also
 --------
-numpy.polynomial.chebyshev : Objects for dealing with Chebyshev series.
-numpy.polynomial.hermite_e : Objects for dealing with Hermite series.
-numpy.polynomial.laguerre : Objects for dealing with Laguerre series.
-numpy.polynomial.legendre : Objects for dealing with Legendre series.
-numpy.polynomial.polynomial : Objects for dealing with polynomials.
+`numpy.polynomial.chebyshev` : Objects for dealing with Chebyshev series.
+`numpy.polynomial.hermite_e` : Objects for dealing with Hermite series.
+`numpy.polynomial.laguerre` : Objects for dealing with Laguerre series.
+`numpy.polynomial.legendre` : Objects for dealing with Legendre series.
+`numpy.polynomial.polynomial` : Objects for dealing with polynomials.
 
 """
 from __future__ import division, absolute_import, print_function

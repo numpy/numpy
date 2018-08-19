@@ -54,11 +54,11 @@ Classes
 
 See also
 --------
-numpy.polynomial.chebyshev : Objects for dealing with Chebyshev series.
-numpy.polynomial.hermite : Objects for dealing with Hermite_e series.
-numpy.polynomial.laguerre : Objects for dealing with Laguerre series.
-numpy.polynomial.legendre : Objects for dealing with Legendre series.
-numpy.polynomial.polynomial : Objects for dealing with polynomials.
+`numpy.polynomial.chebyshev` : Objects for dealing with Chebyshev series.
+`numpy.polynomial.hermite` : Objects for dealing with Hermite_e series.
+`numpy.polynomial.laguerre` : Objects for dealing with Laguerre series.
+`numpy.polynomial.legendre` : Objects for dealing with Legendre series.
+`numpy.polynomial.polynomial` : Objects for dealing with polynomials.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -1445,7 +1445,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, hermfit, lagfit, legfit, polyfit.
+    chebfit, hermfit, lagfit, legfit, polyfit
     hermeval : Evaluates a Hermite series.
     hermevander : pseudo Vandermonde matrix of Hermite series.
     hermeweight : HermiteE weight function.
@@ -1641,7 +1641,7 @@ def hermeroots(c):
 
     See Also
     --------
-    chebroots, hermroots, lagroots, legroots, polyroots.
+    chebroots, hermroots, lagroots, legroots, polyroots
 
     Notes
     -----

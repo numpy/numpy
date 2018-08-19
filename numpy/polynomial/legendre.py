@@ -74,11 +74,11 @@ Classes
 
 See also
 --------
-numpy.polynomial.chebyshev : Objects for dealing with Chebyshev series.
-numpy.polynomial.hermite : Objects for dealing with Hermite_e series.
-numpy.polynomial.hermite_e : Objects for dealing with Hermite series.
-numpy.polynomial.laguerre : Objects for dealing with Laguerre series.
-numpy.polynomial.polynomial : Objects for dealing with polynomials.
+`numpy.polynomial.chebyshev` : Objects for dealing with Chebyshev series.
+`numpy.polynomial.hermite` : Objects for dealing with Hermite_e series.
+`numpy.polynomial.hermite_e` : Objects for dealing with Hermite series.
+`numpy.polynomial.laguerre` : Objects for dealing with Laguerre series.
+`numpy.polynomial.polynomial` : Objects for dealing with polynomials.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -247,7 +247,7 @@ def legline(off, scl):
 
     See Also
     --------
-    chebline, hermline, hermeline, lagline, polyline.
+    chebline, hermline, hermeline, lagline, polyline
 
     Examples
     --------
@@ -465,7 +465,7 @@ def legmulx(c):
     >>> from numpy.polynomial import legendre as L
     >>> c = (1,2,3)
     >>> L.legmulx(c)
-    array([ 0.66666667,  2.2       ,  1.33333333,  1.8       ])
+    array([ 0.66666667,  2.2,  1.33333333,  1.8])
 
     """
     # c is a trimmed copy
@@ -654,7 +654,7 @@ def legpow(c, pow, maxpower=16):
     >>> from numpy.polynomial import legendre as L
     >>> c = (1,2,3)
     >>> L.legpow(c, 2)
-    array([  4.13333333,   8.8       ,  11.23809524,   7.2       ,   4.62857143])
+    array([ 4.13333333,  8.8,  11.23809524,  7.2,  4.62857143])
 
     """
     # c is a trimmed copy
@@ -972,8 +972,8 @@ def legval(x, c, tensor=True):
     >>> c1 = (1,2)
     >>> c2 = (3,4)
     >>> L.legval((c1, c2), coef)
-    array([[  6. ,  21.5],
-           [ 46. ,  79.5]])
+    array([[  6.,  21.5],
+           [ 46.,  79.5]])
 
     """
     c = np.array(c, ndmin=1, copy=0)

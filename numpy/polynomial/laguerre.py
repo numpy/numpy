@@ -54,11 +54,11 @@ Classes
 
 See also
 --------
-numpy.polynomial.chebyshev : Objects for dealing with Chebyshev series.
-numpy.polynomial.hermite : Objects for dealing with Hermite_e series.
-numpy.polynomial.hermite_e : Objects for dealing with Hermite series.
-numpy.polynomial.legendre : Objects for dealing with Legendre series.
-numpy.polynomial.polynomial : Objects for dealing with polynomials.
+`numpy.polynomial.chebyshev` : Objects for dealing with Chebyshev series.
+`numpy.polynomial.hermite` : Objects for dealing with Hermite_e series.
+`numpy.polynomial.hermite_e` : Objects for dealing with Hermite series.
+`numpy.polynomial.legendre` : Objects for dealing with Legendre series.
+`numpy.polynomial.polynomial` : Objects for dealing with polynomials.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -219,7 +219,7 @@ def lagline(off, scl):
 
     See Also
     --------
-    chebline, hermline, hermeline, legline, polyline.
+    chebline, hermline, hermeline, legline, polyline
 
     Examples
     --------
@@ -273,7 +273,7 @@ def lagfromroots(roots):
     See Also
     --------
     chebfromroots, hermfromroots, hermefromroots, legfromroots,
-    polyfromroots.
+    polyfromroots
 
     Examples
     --------
@@ -1448,7 +1448,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, hermfit, hermefit, legfit, polyfit.
+    chebfit, hermfit, hermefit, legfit, polyfit
     lagval : Evaluates a Laguerre series.
     lagvander : pseudo Vandermonde matrix of Laguerre series.
     lagweight : Laguerre weight function.
