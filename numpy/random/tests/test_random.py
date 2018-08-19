@@ -1454,7 +1454,6 @@ class TestBroadcast(object):
             assert_raises(ValueError, zipf, np.nan)
             assert_raises(ValueError, zipf, [0, 0, np.nan])
 
-
     def test_geometric(self):
         p = [0.5]
         bad_p_one = [-1]

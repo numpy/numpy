@@ -113,7 +113,6 @@ class TestRavelUnravelIndex(object):
         assert_(x.flags.writeable)
         assert_(y.flags.writeable)
 
-
     def test_0d(self):
         # gh-580
         x = np.unravel_index(0, ())

@@ -53,7 +53,6 @@ class TestNoseDecorators(object):
         assert_(f_istest.__test__)
         assert_(not f_isnottest.__test__)
 
-
     def test_skip_functions_hardcoded(self):
         @dec.skipif(True)
         def f1(x):

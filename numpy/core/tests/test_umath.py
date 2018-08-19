@@ -1173,7 +1173,6 @@ class TestBitwiseUFuncs(object):
             assert_(np.bitwise_xor(zeros, zeros).dtype == dt, msg)
             assert_(np.bitwise_and(zeros, zeros).dtype == dt, msg)
 
-
     def test_identity(self):
         assert_(np.bitwise_or.identity == 0, 'bitwise_or')
         assert_(np.bitwise_xor.identity == 0, 'bitwise_xor')

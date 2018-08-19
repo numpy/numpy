@@ -1391,7 +1391,6 @@ class TestAssertNoGcCycles(object):
 
         assert_no_gc_cycles(no_cycle)
 
-
     def test_asserts(self):
         def make_cycle():
             a = []
@@ -1405,7 +1404,6 @@ class TestAssertNoGcCycles(object):
 
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
-
 
     def test_fails(self):
         """

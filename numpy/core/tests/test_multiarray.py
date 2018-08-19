@@ -108,7 +108,6 @@ class TestFlags(object):
         assert_equal(self.a.flags['X'], False)
         assert_equal(self.a.flags['WRITEBACKIFCOPY'], False)
 
-
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
         assert_(a.flags.aligned)
@@ -2729,7 +2728,6 @@ class TestMethods(object):
         # Order of axis argument doesn't matter:
         assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
 
-
     def test_diagonal_view_notwriteable(self):
         # this test is only for 1.9, the diagonal view will be
         # writeable in 1.10.
@@ -4386,7 +4384,6 @@ class TestIO(object):
             d.tofile(f)
         assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
 
-
     def test_io_open_buffered_fromfile(self):
         # gh-6632
         self.x.tofile(self.filename)
@@ -4925,7 +4922,6 @@ class TestRecord(object):
         c = np.zeros(3, dtype='i8,i8,i8')
         assert_equal(collect_warnings(c[['f0', 'f2']].view, 'i8,i8'),
                      [FutureWarning])
-
 
     def test_record_hash(self):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')
@@ -6494,7 +6490,6 @@ class TestNewBufferProtocol(object):
         a = np.empty(3, dt)
         assert_raises((ValueError, BufferError), memoryview, a)
         assert_raises((ValueError, BufferError), memoryview, np.array((3), 'M8[D]'))
-
 
     def test_export_simple_1d(self):
         x = np.array([1, 2, 3, 4, 5], dtype='i')

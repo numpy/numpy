@@ -194,7 +194,6 @@ class TestIndexing(object):
 
         assert_raises(IndexError, arr.__getitem__, (slice(None), index))
 
-
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
         # boolean array of length one
