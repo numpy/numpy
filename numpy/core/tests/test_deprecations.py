@@ -504,3 +504,9 @@ class TestGeneratorSum(_DeprecationTestCase):
     # 2018-02-25, 1.15.0
     def test_generator_sum(self):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
+
+
+class TestFromstring(_DeprecationTestCase):
+    # 2017-10-19, 1.14
+    def test_fromstring(self):
+        self.assert_deprecated(np.fromstring, args=('\x00'*80,))
