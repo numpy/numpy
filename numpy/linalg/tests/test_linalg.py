@@ -959,7 +959,6 @@ class TestMatrixPower(object):
     #FIXME the 'e' dtype might work in future
     dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
-
     def test_large_power(self, dt):
         power = matrix_power
         rshft = self.rshft_1.astype(dt)
@@ -1021,7 +1020,6 @@ class TestMatrixPower(object):
         mat = self.rshft_0.astype(dt)
         assert_raises(TypeError, matrix_power, mat, 1.5)
         assert_raises(TypeError, matrix_power, mat, [1])
-
 
     def test_exceptions_non_square(self, dt):
         assert_raises(LinAlgError, matrix_power, np.array([1], dt), 1)
