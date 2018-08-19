@@ -134,7 +134,7 @@ static int
 _append_str(_tmp_string_t *s, char const *p)
 {
     for (; *p != '\0'; p++) {
-        if (_append_char(s, *p) != 0) {
+        if (_append_char(s, *p) < 0) {
             return -1;
         }
     }
@@ -215,19 +215,19 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             subarray_tuple = Py_BuildValue("(O)", descr->subarray->shape);
         }
 
-        _append_char(str, '(');
+        if (_append_char(str, '(') < 0) return -1;
         for (k = 0; k < PyTuple_GET_SIZE(subarray_tuple); ++k) {
             if (k > 0) {
-                _append_char(str, ',');
+                if (_append_char(str, ',') < 0) return -1;
             }
             item = PyTuple_GET_ITEM(subarray_tuple, k);
             dim_size = PyNumber_AsSsize_t(item, NULL);
 
             PyOS_snprintf(buf, sizeof(buf), "%ld", (long)dim_size);
-            _append_str(str, buf);
+            if (_append_str(str, buf) < 0) return -1;
             total_count *= dim_size;
         }
-        _append_char(str, ')');
+        if (_append_char(str, ')') < 0) return -1;
 
         Py_DECREF(subarray_tuple);
 
@@ -240,7 +240,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
     else if (PyDataType_HASFIELDS(descr)) {
         Py_ssize_t base_offset = *offset;
 
-        _append_str(str, "T{");
+        if (_append_str(str, "T{") < 0) return -1;
         for (k = 0; k < PyTuple_GET_SIZE(descr->names); ++k) {
             PyObject *name, *item, *offset_obj, *tmp;
             PyArray_Descr *child;
@@ -269,7 +269,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 return -1;
             }
             while (*offset < new_offset) {
-                _append_char(str, 'x');
+                if (_append_char(str, 'x') < 0) return -1;
                 ++*offset;
             }
 
@@ -292,7 +292,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 PyErr_SetString(PyExc_ValueError, "invalid field name");
                 return -1;
             }
-            _append_char(str, ':');
+            if (_append_char(str, ':') < 0) return -1;
             while (len > 0) {
                 if (*p == ':') {
                     Py_DECREF(tmp);
@@ -301,16 +301,16 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                                     "field names");
                     return -1;
                 }
-                _append_char(str, *p);
+                if (_append_char(str, *p) < 0) return -1;
                 ++p;
                 --len;
             }
-            _append_char(str, ':');
+            if (_append_char(str, ':') < 0) return -1;
 #if defined(NPY_PY3K)
             Py_DECREF(tmp);
 #endif
         }
-        _append_char(str, '}');
+        if (_append_char(str, '}') < 0) return -1;
     }
     else {
         int is_standard_size = 1;
@@ -338,7 +338,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* Prefer native types, to cater for Cython */
             is_standard_size = 0;
             if (*active_byteorder != '@') {
-                _append_char(str, '@');
+                if (_append_char(str, '@') < 0) return -1;
                 *active_byteorder = '@';
             }
         }
@@ -346,7 +346,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* Data types that have no standard size */
             is_standard_size = 0;
             if (*active_byteorder != '^') {
-                _append_char(str, '^');
+                if (_append_char(str, '^') < 0) return -1;
                 *active_byteorder = '^';
             }
         }
@@ -354,7 +354,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                  descr->byteorder == '=') {
             is_standard_size = 1;
             if (*active_byteorder != descr->byteorder) {
-                _append_char(str, descr->byteorder);
+                if (_append_char(str, descr->byteorder) < 0) return -1;
                 *active_byteorder = descr->byteorder;
             }
 
@@ -372,45 +372,45 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         }
 
         switch (descr->type_num) {
-        case NPY_BOOL:         if (_append_char(str, '?')) return -1; break;
-        case NPY_BYTE:         if (_append_char(str, 'b')) return -1; break;
-        case NPY_UBYTE:        if (_append_char(str, 'B')) return -1; break;
-        case NPY_SHORT:        if (_append_char(str, 'h')) return -1; break;
-        case NPY_USHORT:       if (_append_char(str, 'H')) return -1; break;
-        case NPY_INT:          if (_append_char(str, 'i')) return -1; break;
-        case NPY_UINT:         if (_append_char(str, 'I')) return -1; break;
+        case NPY_BOOL:         if (_append_char(str, '?') < 0) return -1; break;
+        case NPY_BYTE:         if (_append_char(str, 'b') < 0) return -1; break;
+        case NPY_UBYTE:        if (_append_char(str, 'B') < 0) return -1; break;
+        case NPY_SHORT:        if (_append_char(str, 'h') < 0) return -1; break;
+        case NPY_USHORT:       if (_append_char(str, 'H') < 0) return -1; break;
+        case NPY_INT:          if (_append_char(str, 'i') < 0) return -1; break;
+        case NPY_UINT:         if (_append_char(str, 'I') < 0) return -1; break;
         case NPY_LONG:
             if (is_standard_size && (NPY_SIZEOF_LONG == 8)) {
-                if (_append_char(str, 'q')) return -1;
+                if (_append_char(str, 'q') < 0) return -1;
             }
             else {
-                if (_append_char(str, 'l')) return -1;
+                if (_append_char(str, 'l') < 0) return -1;
             }
             break;
         case NPY_ULONG:
             if (is_standard_size && (NPY_SIZEOF_LONG == 8)) {
-                if (_append_char(str, 'Q')) return -1;
+                if (_append_char(str, 'Q') < 0) return -1;
             }
             else {
-                if (_append_char(str, 'L')) return -1;
+                if (_append_char(str, 'L') < 0) return -1;
             }
             break;
-        case NPY_LONGLONG:     if (_append_char(str, 'q')) return -1; break;
-        case NPY_ULONGLONG:    if (_append_char(str, 'Q')) return -1; break;
-        case NPY_HALF:         if (_append_char(str, 'e')) return -1; break;
-        case NPY_FLOAT:        if (_append_char(str, 'f')) return -1; break;
-        case NPY_DOUBLE:       if (_append_char(str, 'd')) return -1; break;
-        case NPY_LONGDOUBLE:   if (_append_char(str, 'g')) return -1; break;
-        case NPY_CFLOAT:       if (_append_str(str, "Zf")) return -1; break;
-        case NPY_CDOUBLE:      if (_append_str(str, "Zd")) return -1; break;
-        case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg")) return -1; break;
+        case NPY_LONGLONG:     if (_append_char(str, 'q') < 0) return -1; break;
+        case NPY_ULONGLONG:    if (_append_char(str, 'Q') < 0) return -1; break;
+        case NPY_HALF:         if (_append_char(str, 'e') < 0) return -1; break;
+        case NPY_FLOAT:        if (_append_char(str, 'f') < 0) return -1; break;
+        case NPY_DOUBLE:       if (_append_char(str, 'd') < 0) return -1; break;
+        case NPY_LONGDOUBLE:   if (_append_char(str, 'g') < 0) return -1; break;
+        case NPY_CFLOAT:       if (_append_str(str, "Zf") < 0) return -1; break;
+        case NPY_CDOUBLE:      if (_append_str(str, "Zd") < 0) return -1; break;
+        case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg") < 0) return -1; break;
         /* XXX NPY_DATETIME */
         /* XXX NPY_TIMEDELTA */
-        case NPY_OBJECT:       if (_append_char(str, 'O')) return -1; break;
+        case NPY_OBJECT:       if (_append_char(str, 'O') < 0) return -1; break;
         case NPY_STRING: {
             char buf[128];
             PyOS_snprintf(buf, sizeof(buf), "%ds", descr->elsize);
-            if (_append_str(str, buf)) return -1;
+            if (_append_str(str, buf) < 0) return -1;
             break;
         }
         case NPY_UNICODE: {
@@ -418,14 +418,14 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             char buf[128];
             assert(descr->elsize % 4 == 0);
             PyOS_snprintf(buf, sizeof(buf), "%dw", descr->elsize / 4);
-            if (_append_str(str, buf)) return -1;
+            if (_append_str(str, buf) < 0) return -1;
             break;
         }
         case NPY_VOID: {
             /* Insert padding bytes */
             char buf[128];
             PyOS_snprintf(buf, sizeof(buf), "%dx", descr->elsize);
-            if (_append_str(str, buf)) return -1;
+            if (_append_str(str, buf) < 0) return -1;
             break;
         }
         default:
@@ -491,8 +491,12 @@ _buffer_info_new(PyObject *obj)
          * fields will not hit this code path and are currently unsupported
          * in _buffer_format_string.
          */
-        _append_char(&fmt, 'B');
-        _append_char(&fmt, '\0');
+        if (_append_char(&fmt, 'B') < 0) {
+            goto fail;
+        }
+        if (_append_char(&fmt, '\0') < 0) {
+            goto fail;
+        }
         info->ndim = 1;
         info->shape = malloc(sizeof(Py_ssize_t) * 2);
         if (info->shape == NULL) {
@@ -546,7 +550,9 @@ _buffer_info_new(PyObject *obj)
         free(fmt.s);
         goto fail;
     }
-    _append_char(&fmt, '\0');
+    if (_append_char(&fmt, '\0') < 0) {
+        goto fail;
+    }
     info->format = fmt.s;
 
     return info;
