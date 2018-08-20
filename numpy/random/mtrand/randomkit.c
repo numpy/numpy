@@ -65,8 +65,10 @@
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
 
+//Lehmer is a very fast alternative RNG useful for performance testing.
 //#define USE_LEHMER 1
-//#define USE_LEMIRE 1
+
+#define USE_LEMIRE 1
 
 #ifdef _WIN32
 /*
