@@ -65,6 +65,9 @@
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
 
+//#define USE_LEHMER 1
+//#define USE_LEMIRE 1
+
 #ifdef _WIN32
 /*
  * Windows
@@ -123,6 +126,7 @@
 #include <limits.h>
 #include <math.h>
 #include <assert.h>
+#include <stdint.h>
 
 #ifndef RK_DEV_URANDOM
 #define RK_DEV_URANDOM "/dev/urandom"
@@ -138,12 +142,16 @@ char *rk_strerror[RK_ERR_MAX] =
     "random device unvavailable"
 };
 
+
 /* static functions */
+static uint64_t splitmix64_stateless(const uint64_t index);
 static unsigned long rk_hash(unsigned long key);
 
 void
 rk_seed(unsigned long seed, rk_state *state)
 {
+    state->lehmer.s128_ = (((__uint128_t)splitmix64_stateless(seed)) << 64) + splitmix64_stateless(seed + 1);
+    
     int pos;
     seed &= 0xffffffffUL;
 
@@ -156,6 +164,16 @@ rk_seed(unsigned long seed, rk_state *state)
     state->gauss = 0;
     state->has_gauss = 0;
     state->has_binomial = 0;
+}
+
+//! Stateless [0,2^64) splitmix64 by Daniel Lemire https://github.com/lemire/testingRNG
+uint64_t
+splitmix64_stateless(const uint64_t index)
+{
+    uint64_t z = index + UINT64_C(0x9E3779B97F4A7C15);
+    z = (z ^ (z >> 30)) * UINT64_C(0xBF58476D1CE4E5B9);
+    z = (z ^ (z >> 27)) * UINT64_C(0x94D049BB133111EB);
+    return z ^ (z >> 31);
 }
 
 /* Thomas Wang 32 bits integer hash function */
@@ -207,6 +225,14 @@ rk_randomseed(rk_state *state)
     return RK_ENODEV;
 }
 
+#ifdef USE_LEHMER
+unsigned long
+rk_random(rk_state *state)
+{
+    state->lehmer.s128_ *= UINT64_C(0xda942042e4dd58b5);
+    return (uint32_t)state->lehmer.s64_[1]; //return lowest 32-bits of upper 64 bits of s128_
+}
+#else
 /* Magic Mersenne Twister constants */
 #define N 624
 #define M 397
@@ -250,11 +276,19 @@ rk_random(rk_state *state)
 
     return y;
 }
-
+#endif
 
 /*
  * Returns an unsigned 64 bit random integer.
  */
+#ifdef USE_LEHMER
+static npy_uint64
+rk_uint64(rk_state *state)
+{
+    state->lehmer.s128_ *= UINT64_C(0xda942042e4dd58b5);
+    return state->lehmer.s64_[1]; //return upper 64 bits of s128_
+}
+#else
 NPY_INLINE static npy_uint64
 rk_uint64(rk_state *state)
 {
@@ -262,7 +296,7 @@ rk_uint64(rk_state *state)
     npy_uint64 lower = (npy_uint64)rk_random(state);
     return upper | lower;
 }
-
+#endif
 
 /*
  * Returns an unsigned 32 bit random integer.
@@ -273,7 +307,6 @@ rk_uint32(rk_state *state)
     return (npy_uint32)rk_random(state);
 }
 
-
 /*
  * Fills an array with cnt random npy_uint64 between off and off + rng
  * inclusive. The numbers wrap if rng is sufficiently large.
@@ -282,7 +315,7 @@ void
 rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
                  npy_uint64 *out, rk_state *state)
 {
-    npy_uint64 val, mask = rng;
+    npy_uint64 val;
     npy_intp i;
 
     if (rng == 0) {
@@ -292,7 +325,50 @@ rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
         return;
     }
 
+#ifdef USE_LEMIRE
+    if (rng <= 0xffffffffUL)
+    {
+        for (i = 0; i < cnt; i++) {
+            //Rejection algorithm by Daniel Lemire https://arxiv.org/abs/1805.10941
+            //Has a good chance of not requiring a division.
+            
+            uint64_t m = ((uint64_t)rk_uint32(state)) * rng;
+            uint32_t leftover = m & ((uint32_t)((UINT64_C(1) << 32) - 1));
+            
+            if (leftover < rng) {
+                const uint32_t threshold = ((uint32_t)((UINT64_C(1) << 32) - rng)) % rng;
+                
+                while (leftover < threshold) {
+                    m = ((uint64_t)rk_uint32(state)) * rng;
+                    leftover = m & ((uint32_t)((UINT64_C(1) << 32)) - 1);
+                }
+            }
+            
+            out[i] =  off + (m >> 32);
+        }
+    }
+    else
+    {// Lemire not yet extended for 64-bit numbers! So still use rejection sampling.
+        /* Smallest bit mask >= max */
+        npy_uint64 mask = rng;
+        
+        mask |= mask >> 1;
+        mask |= mask >> 2;
+        mask |= mask >> 4;
+        mask |= mask >> 8;
+        mask |= mask >> 16;
+        mask |= mask >> 32;
+
+        for (i = 0; i < cnt; i++)
+        {
+            while ((val = (rk_uint64(state) & mask)) > rng);
+            out[i] =  off + val;
+        }
+    }
+#else
     /* Smallest bit mask >= max */
+    npy_uint64 mask = rng;
+    
     mask |= mask >> 1;
     mask |= mask >> 2;
     mask |= mask >> 4;
@@ -309,8 +385,8 @@ rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
         }
         out[i] =  off + val;
     }
+#endif
 }
-
 
 /*
  * Fills an array with cnt random npy_uint32 between off and off + rng
@@ -512,6 +588,13 @@ rk_interval(unsigned long max, rk_state *state)
     return value;
 }
 
+#ifdef USE_LEHMER
+double
+rk_double(rk_state *state)
+{
+    return ((rk_uint64(state)>>11)+0.5) / 9007199254740992.0; //9007199254740992 == 2^53
+}
+#else
 double
 rk_double(rk_state *state)
 {
@@ -519,6 +602,7 @@ rk_double(rk_state *state)
     long a = rk_random(state) >> 5, b = rk_random(state) >> 6;
     return (a * 67108864.0 + b) / 9007199254740992.0;
 }
+#endif
 
 void
 rk_fill(void *buffer, size_t size, rk_state *state)

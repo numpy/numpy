@@ -67,6 +67,8 @@
 
 typedef struct rk_state_
 {
+    union{__uint128_t s128_; uint64_t s64_[2];} lehmer;
+
     unsigned long key[RK_STATE_LEN];
     int pos;
     int has_gauss; /* !=0: gauss contains a gaussian deviate */
