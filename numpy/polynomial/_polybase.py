@@ -535,14 +535,18 @@ class ABCPolyBase(object):
 
     def __idiv__(self, other):
         try:
-            self.coef = self.__rdivmod__(other)[0]
+            self.coef, _ = self._div(self.coef, other)
+        except ZeroDivisionError as e:
+            raise e
         except Exception:
             return NotImplemented
         return self
 
     def __imod__(self, other):
         try:
-            self.coef = self.__rdivmod__(other)[1]
+            _, self.coef = self._div(self.coef, other)
+        except ZeroDivisionError as e:
+            raise e
         except Exception:
             return NotImplemented
         return self
