@@ -512,8 +512,47 @@ class ABCPolyBase(object):
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
 
-    # Enhance me
-    # some augmented arithmetic operations could be added here
+    def __iadd__(self, other):
+        try:
+            self.coef = self._add(self.coef, other)
+        except Exception:
+            return NotImplemented
+        return self
+
+    def __isub__(self, other):
+        try:
+            self.coef = self._sub(self.coef, other)
+        except Exception:
+            return NotImplemented
+        return self
+
+    def __imul__(self, other):
+        try:
+            self.coef = self._mul(self.coef, other)
+        except Exception:
+            return NotImplemented
+        return self
+
+    def __idiv__(self, other):
+        try:
+            self.coef = self.__rdivmod__(other)[0]
+        except Exception:
+            return NotImplemented
+        return self
+
+    def __imod__(self, other):
+        try:
+            self.coef = self.__rdivmod__(other)[1]
+        except Exception:
+            return NotImplemented
+        return self
+
+    def __ipow__(self, other):
+        try:
+            self.coef = self._pow(self.coef, other, maxpower=self.maxpower)
+        except Exception:
+            return NotImplemented
+        return self
 
     def __eq__(self, other):
         res = (isinstance(other, self.__class__) and
