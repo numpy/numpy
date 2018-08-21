@@ -68,7 +68,7 @@
 
 //Rejection algorithm by Daniel Lemire https://arxiv.org/abs/1805.10941
 //Has a good chance of not requiring a division.
-//#define USE_LEMIRE 1
+#define USE_LEMIRE 1
 
 
 #ifdef _WIN32
@@ -148,7 +148,7 @@ char *rk_strerror[RK_ERR_MAX] =
 
 /* static functions */
 #ifdef USE_LEHMER
-static npy_uint64 splitmix64_stateless(const npy_uint64 index);
+static __uint64_t splitmix64_stateless(const __uint64_t index);
 #endif
 static unsigned long rk_hash(unsigned long key);
 
@@ -156,7 +156,8 @@ void
 rk_seed(unsigned long seed, rk_state *state)
 {
 #ifdef USE_LEHMER
-    state->lehmer.s128_ = (((npy_uint128)splitmix64_stateless(seed)) << 64) + splitmix64_stateless(seed + 1);
+    __uint64_t index = 0;
+    while ((state->lehmer.s128_ = (((__uint128_t)splitmix64_stateless(seed + index)) << 64) + splitmix64_stateless(seed + index + 1)) == 0) index += 1;
 #endif //USE_LEHMER
     
     int pos;
@@ -175,10 +176,10 @@ rk_seed(unsigned long seed, rk_state *state)
 
 #ifdef USE_LEHMER
 //! Stateless [0,2^64) splitmix64 by Daniel Lemire https://github.com/lemire/testingRNG
-npy_uint64
-splitmix64_stateless(const npy_uint64 index)
+__uint64_t
+splitmix64_stateless(const __uint64_t index)
 {
-    npy_uint64 z = index + UINT64_C(0x9E3779B97F4A7C15);
+    __uint64_t z = index + UINT64_C(0x9E3779B97F4A7C15);
     z = (z ^ (z >> 30)) * UINT64_C(0xBF58476D1CE4E5B9);
     z = (z ^ (z >> 27)) * UINT64_C(0x94D049BB133111EB);
     return z ^ (z >> 31);
@@ -212,6 +213,7 @@ rk_randomseed(rk_state *state)
     if (rk_devfill(state->key, sizeof(state->key), 0) == RK_NOERR) {
         /* ensures non-zero key */
         state->key[0] |= 0x80000000UL;
+        
         state->pos = RK_STATE_LEN;
         state->gauss = 0;
         state->has_gauss = 0;
@@ -220,7 +222,16 @@ rk_randomseed(rk_state *state)
         for (i = 0; i < 624; i++) {
             state->key[i] &= 0xffffffffUL;
         }
-        return RK_NOERR;
+        
+#ifdef USE_LEHMER
+        state->lehmer.s128_ =
+        (((__uint128_t)state->key[0]) << 96) +
+        (((__uint128_t)state->key[1]) << 64) +
+        (((__uint128_t)state->key[2]) << 32) +
+        (((__uint128_t)state->key[3]) << 0);
+#endif //USE_LEHMER
+        
+       return RK_NOERR;
     }
 
 #ifndef _WIN32
@@ -240,7 +251,7 @@ unsigned long
 rk_random(rk_state *state)
 {
     state->lehmer.s128_ *= UINT64_C(0xda942042e4dd58b5);
-    return (npy_uint32)state->lehmer.s64_[1]; //return lowest 32-bits of upper 64 bits of s128_
+    return (__uint32_t)state->lehmer.s64_[1]; //return lowest 32-bits of upper 64 bits of s128_
 }
 #else
 /* Magic Mersenne Twister constants */
@@ -342,9 +353,14 @@ rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
         for (i = 0; i < cnt; i++) {
             //Rejection algorithm by Daniel Lemire https://arxiv.org/abs/1805.10941
             //Has a good chance of not requiring a division.
+
+            //printf("%d ", i);
+            
             npy_uint64 m = ((npy_uint64)rk_uint32(state)) * rng;
             npy_uint32 leftover = m & ((npy_uint32)((UINT64_C(1) << 32) - 1));
             
+            //printf("%d %d \n", m, leftover);
+
             if (leftover < rng) {
                 const npy_uint32 threshold = ((npy_uint32)((UINT64_C(1) << 32) - rng)) % rng;
                 

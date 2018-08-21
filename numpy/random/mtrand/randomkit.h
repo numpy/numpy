@@ -62,13 +62,13 @@
 #include <stddef.h>
 #include <numpy/npy_common.h>
 
-#ifdef NPY_UINT128
+#if defined(__SIZEOF_INT128__)
 //Lehmer is a very fast alternative RNG useful for performance testing. Appearantly passes tests like BigCrush.
 //  Should be good enough for many use cases, but I still want to do my own statistical tests on it.
 //  Replaces rk_random, rk_uint64 and rk_double functions with version that are 4 - 9 times faster!
 
-//#define USE_LEHMER 1
-#endif //NPY_UINT128
+#define USE_LEHMER 1
+#endif //__SIZEOF_INT128__
 
 #define RK_STATE_LEN 624
 
@@ -76,7 +76,7 @@ typedef struct rk_state_
 {
 #ifdef USE_LEHMER
     //Simply maintain the Lehmer state within the rk_state_ so that MT still available if required.
-    union{npy_uint128 s128_; npy_uint64 s64_[2];} lehmer;
+    union{__uint128_t s128_; __uint64_t s64_[2];} lehmer;
 #endif //USE_LEHMER
 
     unsigned long key[RK_STATE_LEN];
