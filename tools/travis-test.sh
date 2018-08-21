@@ -130,6 +130,10 @@ run_test()
     # the code paths
     cd ..
 
+    # update timestamps on *.gcda files to satisfy gcov
+    # see gh-11790
+    find . -type f -name "*.gcda" -exec touch {} +
+
     # execute gcov on source files
     find . -name '*.gcno' -type f -exec gcov -pb {} +
 
