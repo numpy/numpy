@@ -66,7 +66,7 @@ def test_broadcast_kwargs():
     y = np.arange(10)
 
     with assert_raises_regex(TypeError,
-                             'broadcast_arrays\\(\\) got an unexpected keyword*'):
+                             r'broadcast_arrays\(\) got an unexpected keyword*'):
         broadcast_arrays(x, y, dtype='float64')
 
 
