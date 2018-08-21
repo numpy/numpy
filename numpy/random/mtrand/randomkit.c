@@ -67,7 +67,7 @@
 
 
 //Rejection algorithm by Daniel Lemire https://arxiv.org/abs/1805.10941
-//Has a good chance of not requiring a division.
+//  Has a good chance of not requiring a division.
 #define USE_LEMIRE 1
 
 
