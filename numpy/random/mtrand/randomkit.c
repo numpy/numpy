@@ -65,10 +65,11 @@
 /* static char const rcsid[] =
   "@(#) $Jeannot: randomkit.c,v 1.28 2005/07/21 22:14:09 js Exp $"; */
 
-//Lehmer is a very fast alternative RNG useful for performance testing.
-//#define USE_LEHMER 1
 
-#define USE_LEMIRE 1
+//Rejection algorithm by Daniel Lemire https://arxiv.org/abs/1805.10941
+//Has a good chance of not requiring a division.
+//#define USE_LEMIRE 1
+
 
 #ifdef _WIN32
 /*
@@ -146,13 +147,17 @@ char *rk_strerror[RK_ERR_MAX] =
 
 
 /* static functions */
-static uint64_t splitmix64_stateless(const uint64_t index);
+#ifdef USE_LEHMER
+static npy_uint64 splitmix64_stateless(const npy_uint64 index);
+#endif
 static unsigned long rk_hash(unsigned long key);
 
 void
 rk_seed(unsigned long seed, rk_state *state)
 {
-    state->lehmer.s128_ = (((__uint128_t)splitmix64_stateless(seed)) << 64) + splitmix64_stateless(seed + 1);
+#ifdef USE_LEHMER
+    state->lehmer.s128_ = (((npy_uint128)splitmix64_stateless(seed)) << 64) + splitmix64_stateless(seed + 1);
+#endif //USE_LEHMER
     
     int pos;
     seed &= 0xffffffffUL;
@@ -168,15 +173,18 @@ rk_seed(unsigned long seed, rk_state *state)
     state->has_binomial = 0;
 }
 
+#ifdef USE_LEHMER
 //! Stateless [0,2^64) splitmix64 by Daniel Lemire https://github.com/lemire/testingRNG
-uint64_t
-splitmix64_stateless(const uint64_t index)
+npy_uint64
+splitmix64_stateless(const npy_uint64 index)
 {
-    uint64_t z = index + UINT64_C(0x9E3779B97F4A7C15);
+    npy_uint64 z = index + UINT64_C(0x9E3779B97F4A7C15);
     z = (z ^ (z >> 30)) * UINT64_C(0xBF58476D1CE4E5B9);
     z = (z ^ (z >> 27)) * UINT64_C(0x94D049BB133111EB);
     return z ^ (z >> 31);
 }
+#endif //USE_LEHMER
+
 
 /* Thomas Wang 32 bits integer hash function */
 unsigned long
@@ -232,7 +240,7 @@ unsigned long
 rk_random(rk_state *state)
 {
     state->lehmer.s128_ *= UINT64_C(0xda942042e4dd58b5);
-    return (uint32_t)state->lehmer.s64_[1]; //return lowest 32-bits of upper 64 bits of s128_
+    return (npy_uint32)state->lehmer.s64_[1]; //return lowest 32-bits of upper 64 bits of s128_
 }
 #else
 /* Magic Mersenne Twister constants */
@@ -330,19 +338,19 @@ rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
 #ifdef USE_LEMIRE
     if (rng <= 0xffffffffUL)
     {
+        //Generate cnt random numbers.
         for (i = 0; i < cnt; i++) {
             //Rejection algorithm by Daniel Lemire https://arxiv.org/abs/1805.10941
             //Has a good chance of not requiring a division.
-            
-            uint64_t m = ((uint64_t)rk_uint32(state)) * rng;
-            uint32_t leftover = m & ((uint32_t)((UINT64_C(1) << 32) - 1));
+            npy_uint64 m = ((npy_uint64)rk_uint32(state)) * rng;
+            npy_uint32 leftover = m & ((npy_uint32)((UINT64_C(1) << 32) - 1));
             
             if (leftover < rng) {
-                const uint32_t threshold = ((uint32_t)((UINT64_C(1) << 32) - rng)) % rng;
+                const npy_uint32 threshold = ((npy_uint32)((UINT64_C(1) << 32) - rng)) % rng;
                 
                 while (leftover < threshold) {
-                    m = ((uint64_t)rk_uint32(state)) * rng;
-                    leftover = m & ((uint32_t)((UINT64_C(1) << 32)) - 1);
+                    m = ((npy_uint64)rk_uint32(state)) * rng;
+                    leftover = m & ((npy_uint32)((UINT64_C(1) << 32)) - 1);
                 }
             }
             
@@ -350,7 +358,7 @@ rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
         }
     }
     else
-    {// Lemire not yet extended for 64-bit numbers! So still use rejection sampling.
+    {// Lemire not yet extended for 64-bit numbers! So still use previous rejection sampling.
         /* Smallest bit mask >= max */
         npy_uint64 mask = rng;
         
