@@ -67,7 +67,7 @@
 //  Should be good enough for many use cases, but I still want to do my own statistical tests on it.
 //  Replaces rk_random, rk_uint64 and rk_double functions with version that are 4 - 9 times faster!
 
-#define USE_LEHMER 1
+// #define USE_LEHMER 1
 #endif //__SIZEOF_INT128__
 
 #define RK_STATE_LEN 624

@@ -150,6 +150,8 @@ char *rk_strerror[RK_ERR_MAX] =
 #ifdef USE_LEHMER
 static __uint64_t splitmix64_stateless(const __uint64_t index);
 #endif
+
+/* static functions */
 static unsigned long rk_hash(unsigned long key);
 
 void
