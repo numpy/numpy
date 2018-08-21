@@ -129,7 +129,6 @@
 #include <limits.h>
 #include <math.h>
 #include <assert.h>
-#include <stdint.h>
 
 #ifndef RK_DEV_URANDOM
 #define RK_DEV_URANDOM "/dev/urandom"
@@ -349,7 +348,9 @@ rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
     }
 
 #ifdef USE_LEMIRE
-    if (rng <= 0xffffffffUL)
+    const npy_uint64 exclusive_rng = rng + 1; //rng is the inclusive range.
+    
+    if (exclusive_rng < 0xffffffffUL)
     {
         //Generate cnt random numbers.
         for (i = 0; i < cnt; i++) {
@@ -358,16 +359,16 @@ rk_random_uint64(npy_uint64 off, npy_uint64 rng, npy_intp cnt,
 
             //printf("%d ", i);
             
-            npy_uint64 m = ((npy_uint64)rk_uint32(state)) * rng;
+            npy_uint64 m = ((npy_uint64)rk_uint32(state)) * exclusive_rng;
             npy_uint32 leftover = m & ((npy_uint32)((UINT64_C(1) << 32) - 1));
             
             //printf("%d %d \n", m, leftover);
 
-            if (leftover < rng) {
-                const npy_uint32 threshold = ((npy_uint32)((UINT64_C(1) << 32) - rng)) % rng;
+            if (leftover < exclusive_rng) {
+                const npy_uint32 threshold = ((npy_uint32)((UINT64_C(1) << 32) - exclusive_rng)) % exclusive_rng;
                 
                 while (leftover < threshold) {
-                    m = ((npy_uint64)rk_uint32(state)) * rng;
+                    m = ((npy_uint64)rk_uint32(state)) * exclusive_rng;
                     leftover = m & ((npy_uint32)((UINT64_C(1) << 32)) - 1);
                 }
             }
