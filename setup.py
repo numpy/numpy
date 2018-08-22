@@ -352,6 +352,18 @@ def setup_package():
     # Rewrite the version file everytime
     write_version_py()
 
+    # The f2py scripts that will be installed
+    if sys.platform == 'win32':
+        f2py_cmds = [
+            'f2py = numpy.f2py.f2py2e:main',
+            ]
+    else:
+        f2py_cmds = [
+            'f2py = numpy.f2py.f2py2e:main',
+            'f2py%s = numpy.f2py.f2py2e:main' % sys.version_info[:1],
+            'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
+            ]
+
     metadata = dict(
         name = 'numpy',
         maintainer = "NumPy Developers",
@@ -368,6 +380,9 @@ def setup_package():
         cmdclass={"sdist": sdist_checked},
         python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
         zip_safe=False,
+        entry_points={
+            'console_scripts': f2py_cmds
+        },
     )
 
     if "--force" in sys.argv:
