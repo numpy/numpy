@@ -644,13 +644,25 @@ def main():
         from numpy.distutils.system_info import show_all
         show_all()
         return
+
+    # Probably outdated options that were not working before 1.16
+    if '--g3-numpy' in sys.argv[1:]:
+        sys.stderr.write("G3 f2py support is not implemented, yet.\\n")
+        sys.exit(1)
+    elif '--2e-numeric' in sys.argv[1:]:
+        sys.argv.remove('--2e-numeric')
+    elif '--2e-numarray' in sys.argv[1:]:
+        # Note that this errors becaust the -DNUMARRAY argument is
+        # not recognized. Just here for back compatibility and the
+        # error message.
+        sys.argv.append("-DNUMARRAY")
+        sys.argv.remove('--2e-numarray')
+    elif '--2e-numpy' in sys.argv[1:]:
+        sys.argv.remove('--2e-numpy')
+    else:
+        pass
+
     if '-c' in sys.argv[1:]:
         run_compile()
     else:
         run_main(sys.argv[1:])
-
-# if __name__ == "__main__":
-#    main()
-
-
-# EOF
