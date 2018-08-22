@@ -3,17 +3,17 @@ Using F2PY
 ===========
 
 F2PY can be used either as a command line tool ``f2py`` or as a Python
-module ``f2py2e``. While we try to install the command line tool as part
+module ``numpy.f2py``. While we try to install the command line tool as part
 of the numpy setup, some platforms like Windows make it difficult to
 reliably put the executable on the ``PATH``. We will refer to ``f2py``
-in this document but you may have to run it as
+in this document but you may have to run it as a module
 
 ```
-python -mnumpy.f2py
+python -m numpy.f2py
 ```
 
 If you run ``f2py`` with no arguments, and the line ``numpy Version`` at the
-end matches the NumPy version printed from ``python -mnumpy.f2py``, then you
+end matches the NumPy version printed from ``python -m numpy.f2py``, then you
 can use the shorter version. If not, or if you cannot run ``f2py``, you should
 replace all calls to ``f2py`` here with the longer version.
 
@@ -207,7 +207,7 @@ Execute ``f2py`` without any options to get an up-to-date list of
 available options.
 
 Python module ``f2py2e``
-=========================
+========================
 
 .. warning::
 
