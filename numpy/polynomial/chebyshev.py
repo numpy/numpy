@@ -24,7 +24,7 @@ Arithmetic
 - `chebmulx` -- multiply a Chebyshev series by x.
 - `chebmul` -- multiply two Chebyshev series.
 - `chebdiv` -- divide one Chebyshev series by another.
-- `chebpow` -- raise a Chebyshev series to an positive integer power
+- `chebpow` -- raise a Chebyshev series to a positive integer power
 - `chebval` -- evaluate a Chebyshev series at given points.
 - `chebval2d` -- evaluate a 2D Chebyshev series at given points.
 - `chebval3d` -- evaluate a 3D Chebyshev series at given points.
