@@ -18,7 +18,7 @@ Deprecations
 --------------------------------------------
 
 The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` were buggy
-and not documented. They will be removed in the 1.18 release. Use 
+and not documented. They will be removed in the 1.18 release. Use
 `numpy.sctypeDict` instead.
 
 
@@ -33,6 +33,14 @@ Future Changes
 
 Compatibility notes
 ===================
+
+f2py script on Windows
+----------------------
+On Windows, the installed script for running f2py is now an ``.exe`` file
+rather than a ``*.py`` file and should be run from the command line as ``f2py``
+whenever the ``Scripts`` directory is in the path. Folks needing compatibility
+with earler versions of Numpy should run ``f2py`` as a module: ``python -m
+numpy.f2py [...]``.
 
 
 C API changes
