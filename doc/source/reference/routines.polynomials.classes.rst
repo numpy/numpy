@@ -35,11 +35,11 @@ degree :math:`n`, but could just as easily be the basis functions of
 any of the other classes. The convention for all the classes is that
 the coefficient :math:`c[i]` goes with the basis function of degree i.
 
-All of the classes have the same methods, and especially they implement the
-Python numeric operators +, -, \*, //, %, divmod, \*\*, ==,
-and !=. The last two can be a bit problematic due to floating point
-roundoff errors. We now give a quick demonstration of the various
-operations using NumPy version 1.7.0.
+All of the classes are immutable and have the same methods, and
+especially they implement the Python numeric operators +, -, \*, //, %,
+divmod, \*\*, ==, and !=. The last two can be a bit problematic due to
+floating point roundoff errors. We now give a quick demonstration of the
+various operations using NumPy version 1.7.0.
 
 Basics
 ------
@@ -186,6 +186,10 @@ Which gives the polynomial `p` in Chebyshev form. This works because
 :math:`T_1(x) = x` and substituting :math:`x` for :math:`x` doesn't change
 the original polynomial. However, all the multiplications and divisions
 will be done using Chebyshev series, hence the type of the result.
+
+It is intended that all polynomial instances are immutable, therefore
+augmented operations and any other fuctionality that would violate the
+immutablity of a polynomial instance are intentionally unimplemented.
 
 Calculus
 --------

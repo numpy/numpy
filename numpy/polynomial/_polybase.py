@@ -58,6 +58,11 @@ class ABCPolyBase(object):
     window : (2,) ndarray
         Default window of the class.
 
+    Notes
+    -----
+    ABCPolyBase instances should be immutable. Pleae ensure that any
+    modifications to this baseclass conform with this intention.
+
     """
     __metaclass__ = ABCMeta
 
@@ -511,52 +516,6 @@ class ABCPolyBase(object):
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
-
-    def __iadd__(self, other):
-        try:
-            self.coef = self._add(self.coef, other)
-        except Exception:
-            return NotImplemented
-        return self
-
-    def __isub__(self, other):
-        try:
-            self.coef = self._sub(self.coef, other)
-        except Exception:
-            return NotImplemented
-        return self
-
-    def __imul__(self, other):
-        try:
-            self.coef = self._mul(self.coef, other)
-        except Exception:
-            return NotImplemented
-        return self
-
-    def __idiv__(self, other):
-        try:
-            self.coef, _ = self._div(self.coef, other)
-        except ZeroDivisionError as e:
-            raise e
-        except Exception:
-            return NotImplemented
-        return self
-
-    def __imod__(self, other):
-        try:
-            _, self.coef = self._div(self.coef, other)
-        except ZeroDivisionError as e:
-            raise e
-        except Exception:
-            return NotImplemented
-        return self
-
-    def __ipow__(self, other):
-        try:
-            self.coef = self._pow(self.coef, other, maxpower=self.maxpower)
-        except Exception:
-            return NotImplemented
-        return self
 
     def __eq__(self, other):
         res = (isinstance(other, self.__class__) and
