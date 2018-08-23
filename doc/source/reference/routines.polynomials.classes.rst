@@ -188,8 +188,9 @@ the original polynomial. However, all the multiplications and divisions
 will be done using Chebyshev series, hence the type of the result.
 
 It is intended that all polynomial instances are immutable, therefore
-augmented operations and any other fuctionality that would violate the
-immutablity of a polynomial instance are intentionally unimplemented.
+augmented operations (``+=``, ``-=``, etc.) and any other functionality that
+would violate the immutablity of a polynomial instance are intentionally
+unimplemented.
 
 Calculus
 --------

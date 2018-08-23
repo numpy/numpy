@@ -17,7 +17,7 @@ from . import polyutils as pu
 __all__ = ['ABCPolyBase']
 
 class ABCPolyBase(object):
-    """An abstract base class for series classes.
+    """An abstract base class for immutable series classes.
 
     ABCPolyBase provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' along with the
@@ -57,11 +57,6 @@ class ABCPolyBase(object):
         Default domain of the class.
     window : (2,) ndarray
         Default window of the class.
-
-    Notes
-    -----
-    ABCPolyBase instances should be immutable. Pleae ensure that any
-    modifications to this baseclass conform with this intention.
 
     """
     __metaclass__ = ABCMeta
