@@ -5,6 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
+import numpy.polynomial.polyutils as pu
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
@@ -109,6 +110,21 @@ class TestArithmetic(object):
                 tgt = cheb.chebadd(ci, cj)
                 quo, rem = cheb.chebdiv(tgt, ci)
                 res = cheb.chebadd(cheb.chebmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_chebpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = list(range(i+1))
+                [c] = pu.as_series([c])
+                power = j+1
+                zs = cheb._cseries_to_zseries(c)
+                prd = zs
+                for i in range(2, power + 1):
+                    prd = np.convolve(prd, zs)
+                tgt = cheb._zseries_to_cseries(prd)        
+                res = cheb.chebpow(c, power)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
