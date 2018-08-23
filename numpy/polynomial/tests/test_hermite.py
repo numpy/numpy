@@ -5,6 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.polynomial.hermite as herm
+import numpy.polynomial.polyutils as pu
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
@@ -97,6 +98,19 @@ class TestArithmetic(object):
                 tgt = herm.hermadd(ci, cj)
                 quo, rem = herm.hermdiv(tgt, ci)
                 res = herm.hermadd(herm.hermmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_hermpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = list(range(i+1))
+                [c] = pu.as_series([c])
+                power = j+1
+                tgt = c
+                for i in range(2, power + 1):
+                    tgt = herm.hermmul(tgt, c)
+                res = herm.hermpow(c, power) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
