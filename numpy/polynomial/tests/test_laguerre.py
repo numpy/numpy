@@ -5,7 +5,6 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.polynomial.laguerre as lag
-import numpy.polynomial.polyutils as pu
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
@@ -101,8 +100,8 @@ class TestArithmetic(object):
         for i in range(5):
             for j in range(5):
                 msg = "At i=%d, j=%d" % (i, j)
-                c = np.random.randint(0, 100, i+1)
-                power = j+1
+                c = np.random.randint(0, 100, i + 1)
+                power = j + 1
                 tgt = c
                 for i in range(2, power + 1):
                     tgt = lag.lagmul(tgt, c)

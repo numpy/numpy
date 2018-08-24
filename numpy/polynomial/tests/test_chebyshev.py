@@ -5,7 +5,6 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
-import numpy.polynomial.polyutils as pu
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,

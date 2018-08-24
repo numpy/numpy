@@ -21,7 +21,7 @@ Arithmetic
 ----------
 - `chebadd` -- add two Chebyshev series.
 - `chebsub` -- subtract one Chebyshev series from another.
-- `chebmulx` -- multiply a Chebyshev series by x.
+- `chebmulx` -- multiply a Chebyshev series in ``P_i(x)`` by ``x``.
 - `chebmul` -- multiply two Chebyshev series.
 - `chebdiv` -- divide one Chebyshev series by another.
 - `chebpow` -- raise a Chebyshev series to a positive integer power

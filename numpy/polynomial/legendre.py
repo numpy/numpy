@@ -29,7 +29,7 @@ Arithmetic
 
    legadd               add two Legendre series.
    legsub               subtract one Legendre series from another.
-   legmulx              multiply a Legendre series in P_i(x) by x.
+   legmulx              multiply a Legendre series in ``P_i(x)`` by ``x``.
    legmul               multiply two Legendre series.
    legdiv               divide one Legendre series by another.
    legpow               raise a Legendre series to an positive integer power
