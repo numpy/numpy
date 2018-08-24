@@ -403,6 +403,13 @@ class TestArraySplit(object):
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
 
+    def test_integer_split_2D_rows_greater_max_int32(self):
+        a = np.broadcast_to([0], (1 << 32, 2))
+        res = array_split(a, 4)
+        chunk = np.broadcast_to([0], (1 << 30, 2))
+        tgt = [chunk] * 4
+        compare_results(res, tgt)
+
     def test_index_split_simple(self):
         a = np.arange(10)
         indices = [1, 5, 7]
