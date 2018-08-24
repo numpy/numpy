@@ -116,7 +116,8 @@ class TestArithmetic(object):
         for i in range(5):
             for j in range(5):
                 msg = "At i=%d, j=%d" % (i, j)
-                c = np.random.randint(0, 100, i+1)
+                c = list(range(i+1))
+                [c] = pu.as_series([c])
                 power = j+1
                 zs = cheb._cseries_to_zseries(c)
                 prd = zs
