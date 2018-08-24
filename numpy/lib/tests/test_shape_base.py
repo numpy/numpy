@@ -3,6 +3,8 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import warnings
 import functools
+import sys
+import pytest
 
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
@@ -12,6 +14,9 @@ from numpy.lib.shape_base import (
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
+
+
+IS_64BIT = sys.maxsize > 2**32
 
 
 def _add_keepdims(func):
@@ -403,12 +408,14 @@ class TestArraySplit(object):
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
 
+    @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     def test_integer_split_2D_rows_greater_max_int32(self):
         a = np.broadcast_to([0], (1 << 32, 2))
         res = array_split(a, 4)
         chunk = np.broadcast_to([0], (1 << 30, 2))
         tgt = [chunk] * 4
-        compare_results(res, tgt)
+        for i in range(len(tgt)):
+            assert_equal(res[i].shape, tgt[i].shape)
 
     def test_index_split_simple(self):
         a = np.arange(10)
