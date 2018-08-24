@@ -105,8 +105,7 @@ class TestArithmetic(object):
         for i in range(5):
             for j in range(5):
                 msg = "At i=%d, j=%d" % (i, j)
-                c = list(range(i+1))
-                [c] = pu.as_series([c])
+                c = np.random.randint(0, 100, i+1)
                 power = j+1
                 tgt = c
                 for i in range(2, power + 1):

@@ -455,7 +455,7 @@ def polypow(c, pow, maxpower=None):
 
     See Also
     --------
-    polyadd, polysub,polymulx, polymul, polydiv
+    polyadd, polysub, polymulx, polymul, polydiv
 
     Examples
     --------
