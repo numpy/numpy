@@ -116,15 +116,12 @@ class TestArithmetic(object):
         for i in range(5):
             for j in range(5):
                 msg = "At i=%d, j=%d" % (i, j)
-                c = list(range(i+1))
-                [c] = pu.as_series([c])
-                power = j+1
-                zs = cheb._cseries_to_zseries(c)
-                prd = zs
+                c = np.random.randint(0, 100, i + 1)
+                power = j + 1
+                tgt = c
                 for i in range(2, power + 1):
-                    prd = np.convolve(prd, zs)
-                tgt = cheb._zseries_to_cseries(prd)        
-                res = cheb.chebpow(c, power)
+                    tgt = cheb.chebmul(tgt, c)
+                res = cheb.chebpow(c, power) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
