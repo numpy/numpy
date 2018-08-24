@@ -439,7 +439,23 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* Recursive case, first check the sequence contains only one type */
-    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+
+    /* probe the __len__ of obj as a precaution */
+    size = PySequence_Length(obj);
+
+    /* PySequence_Fast can call __getitem__ with
+     * an integer value infinitely without checking
+     * __len__ bounds so slice obj by bounds
+     * before passing in; since PySequence_GetSlice
+     * can also iterate infinitely without a __len__
+     * check we create a new list object that respects
+     * __len__ and fill it in; related to gh-8912 */
+
+    seq = PyList_New(size);
+    for (i = 0; i < size; ++i) {
+        PyList_SetItem(seq, i, PySequence_GetItem(obj, i));
+    }
+
     if (seq == NULL) {
         goto fail;
     }

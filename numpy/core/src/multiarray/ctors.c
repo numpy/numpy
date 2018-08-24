@@ -528,7 +528,14 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     /* Copy element by element */
     else {
         PyObject * seq;
-        seq = PySequence_Fast(s, "Could not convert object to sequence");
+        Py_ssize_t size;
+        /* Carefully check __len__ of iterable object
+         * see: gh-8912 */
+        size = PySequence_Length(s);
+        seq = PyList_New(size);
+        for (i = 0; i < size; ++i) {
+            PyList_SetItem(seq, i, PySequence_GetItem(s, i));
+        }
         if (seq == NULL) {
             goto fail;
         }
@@ -667,7 +674,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int *out_is_object)
 {
     PyObject *e;
-    npy_intp n, i;
+    npy_intp n, i, size;
     Py_buffer buffer_view;
     PyObject * seq;
 
@@ -811,7 +818,16 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         }
     }
 
-    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+
+    /* Carefully check __len__ of iterable object
+     * see: gh-8912 */
+    size = PySequence_Length(obj);
+    seq = PyList_New(size);
+
+    for (i = 0; i < size; ++i) {
+        PyList_SetItem(seq, i, PySequence_GetItem(obj, i));
+    }
+
     if (seq == NULL) {
         /*
          * PySequence_Check detects whether an old type object is a
