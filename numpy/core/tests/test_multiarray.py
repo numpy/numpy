@@ -852,6 +852,32 @@ class TestCreation(object):
         assert_(a.dtype == np.dtype(object))
         assert_raises(ValueError, np.array, [Fail()])
 
+    @pytest.mark.parametrize("length, val, expected", [
+        (5, 1, np.ones(5)),
+        (1, 2, np.array(2)),
+        (29, 17.717, np.repeat(17.717, 29)),
+        ])
+    def test_respect_iter_len(self, length, val, expected):
+        # test fix for gh-8912
+        # a user-defined object with
+        # a __getitem__ defined could
+        # cause an infinite loop (hang)
+        # because __len__ of object
+        # was not respected in internal
+        # PySequence_Fast(seq) calls
+        # that are now handled more carefully
+
+        class UserDefined:
+
+            def __len__(self):
+                return length
+
+            def __getitem__(self, x):
+                return val
+
+        result = np.array(UserDefined())
+        assert_equal(result, expected)
+
     def test_no_len_object_type(self):
         # gh-5100, want object array from iterable object without len()
         class Point2:
