@@ -92,6 +92,8 @@ import numbers
 import warnings
 import numpy as np
 import numpy.linalg as la
+
+from functools import reduce
 from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
@@ -856,16 +858,8 @@ def chebpow(c, pow, maxpower=16):
         raise ValueError("Power is too large")
     elif power == 0:
         return np.array([1], dtype=c.dtype)
-    elif power == 1:
-        return c
     else:
-        # This can be made more efficient by using powers of two
-        # in the usual way.
-        zs = _cseries_to_zseries(c)
-        prd = zs
-        for i in range(2, power + 1):
-            prd = np.convolve(prd, zs)
-        return _zseries_to_cseries(prd)
+        return reduce(chebmul, [c]*power)
 
 
 def chebder(c, m=1, scl=1, axis=0):
