@@ -3,6 +3,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
@@ -108,9 +110,7 @@ class TestArithmetic(object):
                 msg = "At i=%d, j=%d" % (i, j)
                 c = np.array(range(i + 1))
                 power = j + 1
-                tgt = c
-                for i in range(2, power + 1):
-                    tgt = poly.polymul(tgt, c)
+                tgt = reduce(poly.polymul, [c]*power)
                 res = poly.polypow(c, power) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 

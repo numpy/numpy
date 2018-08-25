@@ -3,6 +3,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.laguerre as lag
 from numpy.polynomial.polynomial import polyval
@@ -102,9 +104,7 @@ class TestArithmetic(object):
                 msg = "At i=%d, j=%d" % (i, j)
                 c = np.array(range(i + 1))
                 power = j + 1
-                tgt = c
-                for i in range(2, power + 1):
-                    tgt = lag.lagmul(tgt, c)
+                tgt = reduce(lag.lagmul, [c]*power)
                 res = lag.lagpow(c, power) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
