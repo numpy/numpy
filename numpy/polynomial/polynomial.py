@@ -465,10 +465,8 @@ def polypow(c, pow, maxpower=None):
         raise ValueError("Power must be a non-negative integer.")
     elif maxpower is not None and power > maxpower:
         raise ValueError("Power is too large")
-    elif power == 0:
-        return np.array([1], dtype=c.dtype)
     else:
-        return reduce(polymul, [c]*power)
+        return reduce(polymul, [c]*power, np.array([1], dtype=c.dtype))
 
 
 def polyder(c, m=1, scl=1, axis=0):

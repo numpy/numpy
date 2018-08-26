@@ -621,10 +621,8 @@ def lagpow(c, pow, maxpower=16):
         raise ValueError("Power must be a non-negative integer.")
     elif maxpower is not None and power > maxpower:
         raise ValueError("Power is too large")
-    elif power == 0:
-        return np.array([1], dtype=c.dtype)
     else:
-        return reduce(lagmul, [c]*power)
+        return reduce(lagmul, [c]*power, np.array([1], dtype=c.dtype))
 
 
 def lagder(c, m=1, scl=1, axis=0):
