@@ -82,6 +82,11 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # force a 1d array
     ary = np.asanyarray(ary).ravel()
 
+    # we have unit tests enforcing
+    # propagation of the dtype of input
+    # ary to returned result
+    dtype_req = ary.dtype
+
     # fast track default case
     if to_begin is None and to_end is None:
         return ary[1:] - ary[:-1]
@@ -89,13 +94,23 @@ def ediff1d(ary, to_end=None, to_begin=None):
     if to_begin is None:
         l_begin = 0
     else:
-        to_begin = np.asanyarray(to_begin).ravel()
+        to_begin = np.asanyarray(to_begin)
+        if not np.can_cast(to_begin, dtype_req):
+            raise TypeError("dtype of to_begin must be compatible "
+                            "with input ary")
+
+        to_begin = to_begin.ravel()
         l_begin = len(to_begin)
 
     if to_end is None:
         l_end = 0
     else:
-        to_end = np.asanyarray(to_end).ravel()
+        to_end = np.asanyarray(to_end)
+        if not np.can_cast(to_end, dtype_req):
+            raise TypeError("dtype of to_end must be compatible "
+                            "with input ary")
+
+        to_end = to_end.ravel()
         l_end = len(to_end)
 
     # do the calculation in place and copy to_begin and to_end
