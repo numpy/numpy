@@ -688,7 +688,7 @@ def array_split(ary, indices_or_sections, axis=0):
     except AttributeError:
         Ntotal = len(ary)
     try:
-        # handle scalar case.
+        # handle array case.
         Nsections = len(indices_or_sections) + 1
         div_points = [0] + list(indices_or_sections) + [Ntotal]
     except TypeError:
@@ -700,7 +700,7 @@ def array_split(ary, indices_or_sections, axis=0):
         section_sizes = ([0] +
                          extras * [Neach_section+1] +
                          (Nsections-extras) * [Neach_section])
-        div_points = _nx.array(section_sizes).cumsum()
+        div_points = _nx.array(section_sizes, dtype=_nx.intp).cumsum()
 
     sub_arys = []
     sary = _nx.swapaxes(ary, axis, 0)
