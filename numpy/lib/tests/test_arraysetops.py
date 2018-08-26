@@ -6,10 +6,13 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import sys
 
-from numpy.testing import assert_array_equal, assert_equal, assert_raises
+from numpy.testing import (assert_array_equal, assert_equal,
+                           assert_raises, assert_raises_regex)
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
+import pytest
+
 
 
 class TestSetOps(object):
@@ -124,6 +127,68 @@ class TestSetOps(object):
         assert_array_equal([1,7,8], ediff1d(two_elem, to_end=[7,8]))
         assert_array_equal([7,1], ediff1d(two_elem, to_begin=7))
         assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
+
+    @pytest.mark.parametrize("ary, prepend, append", [
+        # should fail because trying to cast
+        # np.nan standard floating point value
+        # into an integer array:
+        (np.array([1, 2, 3], dtype=np.int64),
+         None,
+         np.nan),
+        # should fail because attempting
+        # to downcast to smaller int type:
+        (np.array([1, 2, 3], dtype=np.int32),
+         np.array([5, 7, 2], dtype=np.int64),
+         None),
+        # should fail because attempting to cast
+        # two special floating point values
+        # to integers (on both sides of ary):
+        (np.array([1., 3., 9.], dtype=np.int8),
+         np.nan,
+         np.nan),
+         ])
+    def test_ediff1d_forbidden_type_casts(self, ary, prepend, append):
+        # verify resolution of gh-11490
+
+        # specifically, raise an appropriate
+        # Exception when attempting to append or
+        # prepend with an incompatible type
+        msg = 'must be compatible'
+        with assert_raises_regex(TypeError, msg):
+            ediff1d(ary=ary,
+                    to_end=append,
+                    to_begin=prepend)
+
+    @pytest.mark.parametrize("ary,"
+                             "prepend,"
+                             "append,"
+                             "expected", [
+        (np.array([1, 2, 3], dtype=np.int16),
+         0,
+         None,
+         np.array([0, 1, 1], dtype=np.int16)),
+        (np.array([1, 2, 3], dtype=np.int32),
+         0,
+         0,
+         np.array([0, 1, 1, 0], dtype=np.int32)),
+        (np.array([1, 2, 3], dtype=np.int64),
+         3,
+         -9,
+         np.array([3, 1, 1, -9], dtype=np.int64)),
+         ])
+    def test_ediff1d_scalar_handling(self,
+                                     ary,
+                                     prepend,
+                                     append,
+                                     expected):
+        # maintain backwards-compatibility
+        # of scalar prepend / append behavior
+        # in ediff1d following fix for gh-11490
+        actual = np.ediff1d(ary=ary,
+                            to_end=append,
+                            to_begin=prepend)
+        assert_equal(actual, expected)
+
 
     def test_isin(self):
         # the tests for in1d cover most of isin's behavior
