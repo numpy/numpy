@@ -60,7 +60,11 @@ Classes
 
 See also
 --------
-`numpy.polynomial`
+`numpy.polynomial.hermite` : Objects for dealing with Hermite_e series.
+`numpy.polynomial.hermite_e` : Objects for dealing with Hermite series.
+`numpy.polynomial.laguerre` : Objects for dealing with Laguerre series.
+`numpy.polynomial.legendre` : Objects for dealing with Legendre series.
+`numpy.polynomial.polynomial` : Objects for dealing with polynomials.
 
 Notes
 -----
@@ -114,9 +118,9 @@ chebtrim = pu.trimcoef
 #
 
 def _cseries_to_zseries(c):
-    """Covert Chebyshev series to z-series.
+    """Convert Chebyshev series to z-series.
 
-    Covert a Chebyshev series to the equivalent z-series. The result is
+    Convert a Chebyshev series to the equivalent z-series. The result is
     never an empty array. The dtype of the return is the same as that of
     the input. No checks are run on the arguments as this routine is for
     internal use.
@@ -129,7 +133,7 @@ def _cseries_to_zseries(c):
     Returns
     -------
     zs : 1-D ndarray
-        Odd length symmetric z-series, ordered from  low to high.
+        Odd length symmetric z-series, ordered from low to high.
 
     """
     n = c.size
@@ -139,9 +143,9 @@ def _cseries_to_zseries(c):
 
 
 def _zseries_to_cseries(zs):
-    """Covert z-series to a Chebyshev series.
+    """Convert z-series to a Chebyshev series.
 
-    Covert a z series to the equivalent Chebyshev series. The result is
+    Convert a z series to the equivalent Chebyshev series. The result is
     never an empty array. The dtype of the return is the same as that of
     the input. No checks are run on the arguments as this routine is for
     internal use.
@@ -149,12 +153,12 @@ def _zseries_to_cseries(zs):
     Parameters
     ----------
     zs : 1-D ndarray
-        Odd length symmetric z-series, ordered from  low to high.
+        Odd length symmetric z-series, ordered from low to high.
 
     Returns
     -------
     c : 1-D ndarray
-        Chebyshev coefficients, ordered from  low to high.
+        Chebyshev coefficients, ordered from low to high.
 
     """
     n = (zs.size + 1)//2
@@ -193,9 +197,9 @@ def _zseries_mul(z1, z2):
 def _zseries_div(z1, z2):
     """Divide the first z-series by the second.
 
-    Divide `z1` by `z2` and return the quotient and remainder as z-series.
-    Warning: this implementation only applies when both z1 and z2 have the
-    same symmetry, which is sufficient for present purposes.
+    Divide ``z1`` by ``z2`` and return the quotient and remainder as z-series.
+    Warning: this implementation only applies when both ``z1`` and ``z2``
+    have the same symmetry, which is sufficient for present purposes.
 
     Parameters
     ----------
@@ -261,7 +265,7 @@ def _zseries_der(zs):
     """Differentiate a z-series.
 
     The derivative is with respect to x, not z. This is achieved using the
-    chain rule and the value of dx/dz given in the module notes.
+    chain rule and the value of dx/dz` given in the module notes.
 
     Parameters
     ----------
@@ -278,8 +282,7 @@ def _zseries_der(zs):
     The zseries for x (ns) has been multiplied by two in order to avoid
     using floats that are incompatible with Decimal and likely other
     specialized scalar types. This scaling has been compensated by
-    multiplying the value of zs by two also so that the two cancels in the
-    division.
+    multiplying the value of `zs` by two.
 
     """
     n = len(zs)//2
@@ -439,7 +442,7 @@ def cheb2poly(c):
 
 
 #
-# These are constant arrays are of integer type so as to be compatible
+# These constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
 
@@ -460,8 +463,6 @@ def chebline(off, scl):
     """
     Chebyshev series whose graph is a straight line.
 
-
-
     Parameters
     ----------
     off, scl : scalars
@@ -475,7 +476,7 @@ def chebline(off, scl):
 
     See Also
     --------
-    polyline
+    hermline, hermeline, lagline, legline, polyline
 
     Examples
     --------
@@ -521,15 +522,15 @@ def chebfromroots(roots):
     Returns
     -------
     out : ndarray
-        1-D array of coefficients.  If all roots are real then `out` is a
+        1-D array of coefficients. If all roots are real then `out` is a
         real array, if some of the roots are complex, then `out` is complex
         even if all the coefficients in the result are real (see Examples
         below).
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    hermefromroots.
+    hermfromroots, hermefromroots, lagfromroots, legfromroots,
+    polyfromroots.
 
     Examples
     --------
@@ -562,7 +563,7 @@ def chebadd(c1, c2):
     """
     Add one Chebyshev series to another.
 
-    Returns the sum of two Chebyshev series `c1` + `c2`.  The arguments
+    Returns the sum of two Chebyshev series `c1` + `c2`. The arguments
     are sequences of coefficients ordered from lowest order term to
     highest, i.e., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
 
@@ -625,7 +626,8 @@ def chebsub(c1, c2):
     Returns
     -------
     out : ndarray
-        Of Chebyshev series coefficients representing their difference.
+        1-D array of Chebyshev series coefficients representing their 
+        difference.
 
     See Also
     --------
@@ -664,7 +666,7 @@ def chebsub(c1, c2):
 def chebmulx(c):
     """Multiply a Chebyshev series by x.
 
-    Multiply the polynomial `c` by x, where x is the independent
+    Multiply the polynomial ``c`` by x, where x is the independent
     variable.
 
 
@@ -679,8 +681,12 @@ def chebmulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
-    Notes
-    -----
+    Examples
+    --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c = (1,2,3)
+    >>> C.chebmulx(c)
+    array([ 1. ,  2.5,  1. ,  1.5])
 
     .. versionadded:: 1.5.0
 
@@ -718,7 +724,7 @@ def chebmul(c1, c2):
     Returns
     -------
     out : ndarray
-        Of Chebyshev series coefficients representing their product.
+        1-D array of Chebyshev series coefficients representing their product.
 
     See Also
     --------
@@ -730,7 +736,7 @@ def chebmul(c1, c2):
     that are not in the Chebyshev polynomial basis set.  Thus, to express
     the product as a C-series, it is typically necessary to "reproject"
     the product onto said basis set, which typically produces
-    "unintuitive live" (but correct) results; see Examples section below.
+    "unintuitive" (but correct) results; see Examples section below.
 
     Examples
     --------
@@ -768,8 +774,8 @@ def chebdiv(c1, c2):
     Returns
     -------
     [quo, rem] : ndarrays
-        Of Chebyshev series coefficients representing the quotient and
-        remainder.
+        1-D arrays of Chebyshev series coefficients representing the quotient
+        and remainder.
 
     See Also
     --------
@@ -781,8 +787,8 @@ def chebdiv(c1, c2):
     results in quotient and remainder terms that are not in the Chebyshev
     polynomial basis set.  Thus, to express these results as C-series, it
     is typically necessary to "reproject" the results onto said basis
-    set, which typically produces "unintuitive" (but correct) results;
-    see Examples section below.
+    set, which typically produces "unintuitive" (but correct) results; see
+    Examples section below.
 
     Examples
     --------
@@ -845,6 +851,10 @@ def chebpow(c, pow, maxpower=16):
 
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c = (1,2,3)
+    >>> C.chebpow(c, 2)
+    array([  7.5,  10. ,   8. ,   6. ,   4.5])
 
     """
     # c is a trimmed copy
@@ -888,7 +898,7 @@ def chebder(c, m=1, scl=1, axis=0):
         the different axis correspond to different variables with the
         degree in each axis given by the corresponding index.
     m : int, optional
-        Number of derivatives taken, must be non-negative. (Default: 1)
+        Number of derivatives taken, must be non-negative. (Default: 1).
     scl : scalar, optional
         Each differentiation is multiplied by `scl`.  The end result is
         multiplication by ``scl**m``.  This is for use in a linear change of
@@ -983,7 +993,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Parameters
     ----------
     c : array_like
-        Array of Chebyshev series coefficients. If c is multidimensional
+        Array of Chebyshev series coefficients. If c is multidimensional,
         the different axis correspond to different variables with the
         degree in each axis given by the corresponding index.
     m : int, optional
@@ -991,8 +1001,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     k : {[], list, scalar}, optional
         Integration constant(s).  The value of the first integral at zero
         is the first value in the list, the value of the second integral
-        at zero is the second value, etc.  If ``k == []`` (the default),
-        all constants are set to zero.  If ``m == 1``, a single scalar can
+        at zero is the second value, etc.   If ``k == []`` (the default),
+        all constants are set to zero. If ``m == 1``, a single scalar can
         be given instead of a list.
     lbnd : scalar, optional
         The lower bound of the integral. (Default: 0)
@@ -1012,8 +1022,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 1``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
-        ``np.ndim(scl) != 0``.
+        If ``m < 1``, ``len(k) > m``, ``np.ndim(lbnd) != 0``,
+        ``np.ndim(scl) != 0``, or `m` or `axis` are not integers.
 
     See Also
     --------
@@ -1105,15 +1115,15 @@ def chebval(x, c, tensor=True):
     .. math:: p(x) = c_0 * T_0(x) + c_1 * T_1(x) + ... + c_n * T_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
-    list, otherwise it is treated as a scalar. In either case, either `x`
-    or its elements must support multiplication and addition both with
-    themselves and with the elements of `c`.
+    list, otherwise it is treated as a scalar. `x` or its elements must  
+    support multiplication and addition both with themselves and with the 
+    elements of `c`.
 
     If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
     `c` is multidimensional, then the shape of the result depends on the
-    value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
-    x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
-    scalars have shape (,).
+    value of `tensor`. If `tensor` is True, the shape will be 
+    c.shape[1:] + x.shape. If `tensor` is False, the shape will be 
+    c.shape[1:]. Note that scalars have shape (,).
 
     Trailing zeros in the coefficients will be used in the evaluation, so
     they should be avoided if efficiency is a concern.
@@ -1121,23 +1131,24 @@ def chebval(x, c, tensor=True):
     Parameters
     ----------
     x : array_like, compatible object
-        If `x` is a list or tuple, it is converted to an ndarray, otherwise
-        it is left unchanged and treated as a scalar. In either case, `x`
-        or its elements must support addition and multiplication with
-        with themselves and with the elements of `c`.
+        If `x` is a list or tuple it is converted to an ndarray, otherwise
+        it is left unchanged and treated as a scalar. `x` or its elements 
+        must support addition and multiplication with themselves and with 
+        the elements of `c`.
     c : array_like
-        Array of coefficients ordered so that the coefficients for terms of
-        degree n are contained in c[n]. If `c` is multidimensional the
+        An array of coefficients ordered so that the coefficients for terms
+        of degree n are contained in c[n]. If `c` is multidimensional the
         remaining indices enumerate multiple polynomials. In the two
         dimensional case the coefficients may be thought of as stored in
         the columns of `c`.
     tensor : boolean, optional
-        If True, the shape of the coefficient array is extended with ones
-        on the right, one for each dimension of `x`. Scalars have dimension 0
-        for this action. The result is that every column of coefficients in
-        `c` is evaluated for every element of `x`. If False, `x` is broadcast
-        over the columns of `c` for the evaluation.  This keyword is useful
-        when `c` is multidimensional. The default value is True.
+        If `True`, the shape of the coefficient array is extended with ones
+        on the right, having one for each dimension of `x`. Scalars have 
+        dimension `0` for this action. The result is that every column of 
+        coefficients in `c` is evaluated for every element of `x`. If
+        `False`, `x` is broadcast over the columns of `c` for the
+        evaluation. This keyword is useful when `c` is multidimensional.
+        The default value is `True`.
 
         .. versionadded:: 1.7.0
 
@@ -1156,6 +1167,15 @@ def chebval(x, c, tensor=True):
 
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> coef = (1,2,3)
+    >>> C.chebval(1, coef)
+    6.0
+    >>> c1 = (1,2)
+    >>> c2 = (3,4)
+    >>> C.chebval((c1, c2), coef)
+    array([[   6.,   26.],
+           [  58.,  102.]])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -1192,10 +1212,10 @@ def chebval2d(x, y, c):
     .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * T_i(x) * T_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
-    tuples or a lists, otherwise they are treated as a scalars and they
-    must have the same shape after conversion. In either case, either `x`
-    and `y` or their elements must support multiplication and addition both
-    with themselves and with the elements of `c`.
+    tuples or a lists. If either series isn't an ndarray, tuple, or list, 
+    they are treated as scalars and must have the same shape after conversion.
+    `x` and `y` or their elements must support multiplication and addition
+    both with themselves and with the elements of `c`.
 
     If `c` is a 1-D array a one is implicitly appended to its shape to make
     it 2-D. The shape of the result will be c.shape[2:] + x.shape.
@@ -1203,13 +1223,14 @@ def chebval2d(x, y, c):
     Parameters
     ----------
     x, y : array_like, compatible objects
-        The two dimensional series is evaluated at the points `(x, y)`,
-        where `x` and `y` must have the same shape. If `x` or `y` is a list
-        or tuple, it is first converted to an ndarray, otherwise it is left
-        unchanged and if it isn't an ndarray it is treated as a scalar.
+        The 2-D series is evaluated at the points ``(x, y)``, where ``x`` and 
+        `y`` must have the same shape. ``x`` or ``y`` are converted to ndarrays
+        if they are tuples or lists, otherwise they are left unchanged. If either
+        series isn't an ndarray, tuple, or list they are treated as scalars and
+        must have the same shape after conversion.
     c : array_like
         Array of coefficients ordered so that the coefficient of the term
-        of multi-degree i,j is contained in ``c[i,j]``. If `c` has
+        of multi-degree i,j is contained in ``c[i,j]``. If ``c`` has
         dimension greater than 2 the remaining indices enumerate multiple
         sets of coefficients.
 
@@ -1251,25 +1272,26 @@ def chebgrid2d(x, y, c):
     `a` from `x` and `b` from `y`. The resulting points form a grid with
     `x` in the first dimension and `y` in the second.
 
-    The parameters `x` and `y` are converted to arrays only if they are
-    tuples or a lists, otherwise they are treated as a scalars. In either
-    case, either `x` and `y` or their elements must support multiplication
-    and addition both with themselves and with the elements of `c`.
+    The parameters `x` and `y` are arrays, converted to arrays if they are
+    tuples or a lists, or treated as a scalars and must have the same shape
+    after conversion. `x` and `y`, or their elements, must support 
+    multiplication and addition both with themselves and with the elements
+    of `c`.
 
     If `c` has fewer than two dimensions, ones are implicitly appended to
-    its shape to make it 2-D. The shape of the result will be c.shape[2:] +
+    its shape to make it 2-D. The shape of the result will be  c.shape[2:] +
     x.shape + y.shape.
 
     Parameters
     ----------
     x, y : array_like, compatible objects
-        The two dimensional series is evaluated at the points in the
-        Cartesian product of `x` and `y`.  If `x` or `y` is a list or
-        tuple, it is first converted to an ndarray, otherwise it is left
-        unchanged and, if it isn't an ndarray, it is treated as a scalar.
+        The 2-D series is evaluated at the points in the Cartesian product
+        of `x` and `y`.  `x` and `y` are ndarrays, converted to arrays if
+        they are lists or tuples, or left unchanged and treated as scalars
+        and must have the same shape after conversion.
     c : array_like
         Array of coefficients ordered so that the coefficient of the term of
-        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
+        multi-degree i,j is contained in ``c[i,j]``. If ``c`` has dimension
         greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
@@ -1302,11 +1324,11 @@ def chebval3d(x, y, z, c):
 
     .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * T_i(x) * T_j(y) * T_k(z)
 
-    The parameters `x`, `y`, and `z` are converted to arrays only if
-    they are tuples or a lists, otherwise they are treated as a scalars and
-    they must have the same shape after conversion. In either case, either
-    `x`, `y`, and `z` or their elements must support multiplication and
-    addition both with themselves and with the elements of `c`.
+    The parameters ``x``, ``y``, and ``z`` are arrays, converted to arrays if
+    they are tuples or a lists, or treated as a scalars and must have the same
+    shape after conversion. ``x``, ``y``, and ``z``, or their elements, must
+    support multiplication and addition both with themselves and with the
+    elements of ``c``.
 
     If `c` has fewer than 3 dimensions, ones are implicitly appended to its
     shape to make it 3-D. The shape of the result will be c.shape[3:] +
@@ -1315,11 +1337,10 @@ def chebval3d(x, y, z, c):
     Parameters
     ----------
     x, y, z : array_like, compatible object
-        The three dimensional series is evaluated at the points
-        `(x, y, z)`, where `x`, `y`, and `z` must have the same shape.  If
-        any of `x`, `y`, or `z` is a list or tuple, it is first converted
-        to an ndarray, otherwise it is left unchanged and if it isn't an
-        ndarray it is  treated as a scalar.
+        The 3-D series is evaluated at the points ``(x, y, z)``, where ``x``,
+        ``y``, and ``z`` must have the same shape.  ``x``, ``y``, and ``z`` are
+        either arrays, converted to arrays if they are lists or tuples, or
+        treated as scalars and must have the same shape after conversion.
     c : array_like
         Array of coefficients ordered so that the coefficient of the term of
         multi-degree i,j,k is contained in ``c[i,j,k]``. If `c` has dimension
@@ -1366,11 +1387,10 @@ def chebgrid3d(x, y, z, c):
     a grid with `x` in the first dimension, `y` in the second, and `z` in
     the third.
 
-    The parameters `x`, `y`, and `z` are converted to arrays only if they
-    are tuples or a lists, otherwise they are treated as a scalars. In
-    either case, either `x`, `y`, and `z` or their elements must support
-    multiplication and addition both with themselves and with the elements
-    of `c`.
+    The parameters ``x``, ``y``, and ``z`` are arrays, converted to arrays if
+    they are tuples or a lists, or treated as a scalars. ``x``, ``y``, and
+    ``z``, or  their elements, must support multiplication and addition both
+    with themselves and with the elements of ``c``.
 
     If `c` has fewer than three dimensions, ones are implicitly appended to
     its shape to make it 3-D. The shape of the result will be c.shape[3:] +
@@ -1379,11 +1399,9 @@ def chebgrid3d(x, y, z, c):
     Parameters
     ----------
     x, y, z : array_like, compatible objects
-        The three dimensional series is evaluated at the points in the
-        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
-        list or tuple, it is first converted to an ndarray, otherwise it is
-        left unchanged and, if it isn't an ndarray, it is treated as a
-        scalar.
+        The 3-D series is evaluated at the points in the Cartesian product of
+        `x`, `y`, and `z`.  `x`,`y`, and `z` are arrays, converted to arrays
+        if they are lists or tuples, or treated as scalars.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
         degree i,j are contained in ``c[i,j]``. If `c` has dimension
@@ -1441,10 +1459,19 @@ def chebvander(x, deg):
     Returns
     -------
     vander : ndarray
-        The pseudo Vandermonde matrix. The shape of the returned matrix is
+        The pseudo-Vandermonde matrix. The shape of the returned matrix is
         ``x.shape + (deg + 1,)``, where The last index is the degree of the
         corresponding Chebyshev polynomial.  The dtype will be the same as
         the converted `x`.
+
+    Examples
+    --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> x = (1,2,3)
+    >>> C.chebvander(x, 3)
+    array([[  1.,   1.,   1.,   1.],
+           [  1.,   2.,   7.,  26.],
+           [  1.,   3.,  17.,  99.]])
 
     """
     ideg = int(deg)
@@ -1479,7 +1506,7 @@ def chebvander2d(x, y, deg):
     `V` index the points `(x, y)` and the last index encodes the degrees of
     the Chebyshev polynomials.
 
-    If ``V = chebvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
+    If ``V == chebvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
@@ -1543,7 +1570,7 @@ def chebvander3d(x, y, z, deg):
     indices of `V` index the points `(x, y, z)` and the last index encodes
     the degrees of the Chebyshev polynomials.
 
-    If ``V = chebvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
+    If ``V == chebvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
@@ -1601,7 +1628,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     Return the coefficients of a Chebyshev series of degree `deg` that is the
     least squares fit to the data values `y` given at points `x`. If `y` is
-    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
+    1-D, the returned coefficients will also be 1-D. If `y` is 2-D multiple
     fits are done, one for each column of `y`, and the resulting
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
@@ -1644,11 +1671,11 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     -------
     coef : ndarray, shape (M,) or (M, K)
         Chebyshev coefficients ordered from low to high. If `y` was 2-D,
-        the coefficients for the data in column k  of `y` are in column
+        the coefficients for the data in column k of `y` are in column
         `k`.
 
     [residuals, rank, singular_values, rcond] : list
-        These values are only returned if `full` = True
+        These values are only returned if ``full`` is True
 
         resid -- sum of squared residuals of the least squares fit
         rank -- the numerical rank of the scaled Vandermonde matrix
@@ -1657,11 +1684,20 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
         For more details, see `linalg.lstsq`.
 
+    Raises
+    ------
+    TypeError
+        If `deg` is not an int or array_like of ints, `w` or `x` is empty
+        or not a 1-D array_like, `y` is not a 1-D or  2-D array_like, or
+        `w`, `x`, and `y` are not the same length.
+    ValueError
+        If `deg` is negative.
+
     Warns
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.  The
+        deficient. The warning is only raised if ``full`` is False. The
         warnings can be turned off by
 
         >>> import warnings
@@ -1669,7 +1705,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    polyfit, legfit, lagfit, hermfit, hermefit
+    hermfit, hermefit, lagfit, legfit, polyfit.
     chebval : Evaluates a Chebyshev series.
     chebvander : Vandermonde matrix of Chebyshev series.
     chebweight : Chebyshev weight function.
@@ -1688,7 +1724,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     .. math:: V(x) * c = w * y,
 
-    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    where `V` is the weighted pseudo-Vandermonde matrix of `x`, `c` are the
     coefficients to be solved for, `w` are the weights, and `y` are the
     observed values.  This equation is then solved using the singular value
     decomposition of `V`.
@@ -1712,6 +1748,13 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> c = (1,2,3)
+    >>> x = numpy.linspace(-10, 10)
+    >>> err = numpy.random.randn(len(x))/10
+    >>> y = C.chebval(x, c) + err
+    >>> C.chebfit(x, y, 2)
+    array([ 0.99597163,  1.99499028,  3.00004472])
 
     """
     x = np.asarray(x) + 0.0
@@ -1857,7 +1900,7 @@ def chebroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, hermroots, hermeroots
+    hermroots, hermeroots, lagroots, legroots, polyroots.
 
     Notes
     -----
@@ -2037,7 +2080,7 @@ def chebpts1(npts):
     Chebyshev points of the first kind.
 
     The Chebyshev points of the first kind are the points ``cos(x)``,
-    where ``x = [pi*(k + .5)/npts for k in range(npts)]``.
+    where ``x == [pi*(k + .5)/npts for k in range(npts)]``.
 
     Parameters
     ----------
@@ -2074,7 +2117,7 @@ def chebpts2(npts):
     Chebyshev points of the second kind.
 
     The Chebyshev points of the second kind are the points ``cos(x)``,
-    where ``x = [pi*k/(npts - 1) for k in range(npts)]``.
+    where ``x == [pi*k/(npts - 1) for k in range(npts)]``.
 
     Parameters
     ----------

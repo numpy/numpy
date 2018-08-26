@@ -74,11 +74,11 @@ Classes
 
 See also
 --------
-numpy.polynomial.polynomial
-numpy.polynomial.chebyshev
-numpy.polynomial.laguerre
-numpy.polynomial.hermite
-numpy.polynomial.hermite_e
+`numpy.polynomial.chebyshev` : Objects for dealing with Chebyshev series.
+`numpy.polynomial.hermite` : Objects for dealing with Hermite_e series.
+`numpy.polynomial.hermite_e` : Objects for dealing with Hermite series.
+`numpy.polynomial.laguerre` : Objects for dealing with Laguerre series.
+`numpy.polynomial.polynomial` : Objects for dealing with polynomials.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -247,7 +247,7 @@ def legline(off, scl):
 
     See Also
     --------
-    polyline, chebline
+    chebline, hermline, hermeline, lagline, polyline
 
     Examples
     --------
@@ -300,8 +300,8 @@ def legfromroots(roots):
 
     See Also
     --------
-    polyfromroots, chebfromroots, lagfromroots, hermfromroots,
-    hermefromroots.
+    chebfromroots, hermfromroots, hermefromroots, lagfromroots,
+    polyfromroots.
 
     Examples
     --------
@@ -459,6 +459,13 @@ def legmulx(c):
     .. math::
 
       xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+
+    Examples
+    --------
+    >>> from numpy.polynomial import legendre as L
+    >>> c = (1,2,3)
+    >>> L.legmulx(c)
+    array([ 0.66666667,  2.2,  1.33333333,  1.8])
 
     """
     # c is a trimmed copy
@@ -644,6 +651,10 @@ def legpow(c, pow, maxpower=16):
 
     Examples
     --------
+    >>> from numpy.polynomial import legendre as L
+    >>> c = (1,2,3)
+    >>> L.legpow(c, 2)
+    array([ 4.13333333,  8.8,  11.23809524,  7.2,  4.62857143])
 
     """
     # c is a trimmed copy
@@ -810,8 +821,8 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
-        ``np.ndim(scl) != 0``.
+        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``,
+        ``np.ndim(scl) != 0``, or `m` or `axis` are not integers.
 
     See Also
     --------
@@ -954,6 +965,15 @@ def legval(x, c, tensor=True):
 
     Examples
     --------
+    >>> from numpy.polynomial import legendre as L
+    >>> coef = (1,2,3)
+    >>> L.legval(1, coef)
+    6.0
+    >>> c1 = (1,2)
+    >>> c2 = (3,4)
+    >>> L.legval((c1, c2), coef)
+    array([[  6.,  21.5],
+           [ 46.,  79.5]])
 
     """
     c = np.array(c, ndmin=1, copy=0)
@@ -1245,6 +1265,15 @@ def legvander(x, deg):
         corresponding Legendre polynomial.  The dtype will be the same as
         the converted `x`.
 
+    Examples
+    --------
+    >>> from numpy.polynomial.legendre import legvander
+    >>> x = np.array([-1, 0, 1])
+    >>> hermvander(x, 3)
+    array([[ 1., -1.,  1. , -1.],
+           [ 1.,  0., -0.5, -0.],
+           [ 1.,  1.,  1. ,  1.]])
+
     """
     ideg = int(deg)
     if ideg != deg:
@@ -1458,6 +1487,15 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
         For more details, see `linalg.lstsq`.
 
+    Raises
+    ------
+    TypeError
+        If `deg` is not an int or array_like of ints, `w` or `x` is empty
+        or not a 1-D array_like, `y` is not a 1-D or 2-D array_like, or
+        `w`, `x`, and `y` are not the same length.
+    ValueError
+        If `deg` is negative.
+
     Warns
     -----
     RankWarning
@@ -1513,6 +1551,13 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> from numpy.polynomial import legendre as L
+    >>> c = (1,2,3)
+    >>> x = numpy.linspace(-10, 10)
+    >>> err = numpy.random.randn(len(x))/10
+    >>> y = L.legval(x, c) + err
+    >>> L.legfit(x, y, 2)
+    array([ 1.01248507,  1.99801426,  2.99930525])
 
     """
     x = np.asarray(x) + 0.0
