@@ -107,7 +107,7 @@ class TestArithmetic(object):
             for j in range(5):
                 msg = "At i=%d, j=%d" % (i, j)
                 c = np.arange(i + 1)
-                tgt = reduce(leg.legmul, [c]*j) if j else np.array([1])
+                tgt = reduce(leg.legmul, [c]*j, np.array([1]))
                 res = leg.legpow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
