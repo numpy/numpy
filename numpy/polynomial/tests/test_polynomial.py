@@ -108,10 +108,9 @@ class TestArithmetic(object):
         for i in range(5):
             for j in range(5):
                 msg = "At i=%d, j=%d" % (i, j)
-                c = np.array(range(i + 1))
-                power = j + 1
-                tgt = reduce(poly.polymul, [c]*power)
-                res = poly.polypow(c, power) 
+                c = np.arange(i + 1)
+                tgt = reduce(poly.polymul, [c]*j) if j else np.array([1])
+                res = poly.polypow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
