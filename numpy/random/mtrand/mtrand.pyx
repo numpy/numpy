@@ -1141,7 +1141,9 @@ cdef class RandomState:
                 raise ValueError("'a' and 'p' must have same size")
             if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
-            if abs(kahan_sum(pix, d) - 1.) > atol:
+
+            # negated to handle NaNs in p
+            if not abs(kahan_sum(pix, d) - 1.) <= atol:
                 raise ValueError("probabilities do not sum to 1")
 
         shape = size
