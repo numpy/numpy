@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
+    assert_raises_regex,
     )
 import textwrap
 
@@ -209,6 +210,15 @@ class TestArray2String(object):
         assert_(np.array2string(a) == '[0 1 2]')
         assert_(np.array2string(a, max_line_width=4, legacy='1.13') == '[0 1\n 2]')
         assert_(np.array2string(a, max_line_width=4) == '[0\n 1\n 2]')
+
+    def test_unexpected_kwarg(self):
+        # ensure than an appropriate TypeError
+        # is raised when array2string receives
+        # an unexpected kwarg
+
+        with assert_raises_regex(TypeError, 'nonsense'):
+            np.array2string(np.array([1, 2, 3]),
+                            nonsense=None)
 
     def test_format_function(self):
         """Test custom format function for each element in array."""
