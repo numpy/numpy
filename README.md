@@ -1,7 +1,7 @@
 # <img alt="NumPy" src="https://cdn.rawgit.com/numpy/numpy/master/branding/icons/numpylogo.svg" height="60">
 
 [![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](https://travis-ci.org/numpy/numpy)
-[![AppVeyor](https://img.shields.io/appveyor/ci/numpy/numpy/master.svg?label=AppVeyor)](https://ci.appveyor.com/project/numpy/numpy)
+[![AppVeyor](https://img.shields.io/appveyor/ci/charris/numpy/master.svg?label=AppVeyor)](https://ci.appveyor.com/project/charris/numpy)
 [![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](https://codecov.io/gh/numpy/numpy)
 
 NumPy is the fundamental package needed for scientific computing with Python.
