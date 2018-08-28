@@ -206,15 +206,15 @@ Other options:
 Execute ``f2py`` without any options to get an up-to-date list of
 available options.
 
-Python module ``f2py2e``
-========================
+Python module ``numpy.f2py``
+============================
 
 .. warning::
 
-  The current Python interface to ``f2py2e`` module is not mature and
-  may change in future depending on users needs.
+  The current Python interface to the ``f2py`` module is not mature and
+  may change in the future.
 
-The following functions are provided by the ``f2py2e`` module:
+The following functions are provided by the ``numpy.f2py`` module:
 
 ``run_main(<list>)``
   Equivalent to running::
