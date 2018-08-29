@@ -62,9 +62,9 @@ cf2py  intent(out) a
     """
 
     @pytest.mark.slow
-    def test_all(self):
-        for name in "t,t2".split(","):
-            self.check_function(name)
+    @pytest.mark.parametrize('name', 't,t2'.split(','))
+    def test_all(self, name):
+        self.check_function(name)
 
     @pytest.mark.slow
     def test_docstring(self):
