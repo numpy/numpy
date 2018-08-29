@@ -21,7 +21,7 @@ Arithmetic
 - `polymulx` -- multiply a polynomial in ``P_i(x)`` by ``x``.
 - `polymul` -- multiply two polynomials.
 - `polydiv` -- divide one polynomial by another.
-- `polypow` -- raise a polynomial to an positive integer power.
+- `polypow` -- raise a polynomial to a positive integer power.
 - `polyval` -- evaluate a polynomial at given points.
 - `polyval2d` -- evaluate a 2D polynomial at given points.
 - `polyval3d` -- evaluate a 3D polynomial at given points.
