@@ -538,19 +538,22 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 }
 
 static PyObject *
+_void_scalar_repr(PyObject *obj) {
+    static PyObject *reprfunc = NULL;
+    npy_cache_import("numpy.core.arrayprint",
+                     "_void_scalar_repr", &reprfunc);
+    if (reprfunc == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(reprfunc, "O", obj);
+}
+
+static PyObject *
 voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        static PyObject *reprfunc = NULL;
-
-        npy_cache_import("numpy.core.arrayprint",
-                         "_void_scalar_repr", &reprfunc);
-        if (reprfunc == NULL) {
-            return NULL;
-        }
-
-        return PyObject_CallFunction(reprfunc, "O", self);
+        return _void_scalar_repr(self);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
 }
@@ -560,15 +563,7 @@ voidtype_str(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        static PyObject *reprfunc = NULL;
-
-        npy_cache_import("numpy.core.arrayprint",
-                         "_void_scalar_repr", &reprfunc);
-        if (reprfunc == NULL) {
-            return NULL;
-        }
-
-        return PyObject_CallFunction(reprfunc, "O", self);
+        return _void_scalar_repr(self);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "b'", "\\x", "'");
 }
