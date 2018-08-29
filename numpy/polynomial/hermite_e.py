@@ -54,7 +54,11 @@ Classes
 
 See also
 --------
-`numpy.polynomial`
+`numpy.polynomial.chebyshev` : Objects for dealing with Chebyshev series.
+`numpy.polynomial.hermite` : Objects for dealing with Hermite_e series.
+`numpy.polynomial.laguerre` : Objects for dealing with Laguerre series.
+`numpy.polynomial.legendre` : Objects for dealing with Legendre series.
+`numpy.polynomial.polynomial` : Objects for dealing with polynomials.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -218,7 +222,7 @@ def hermeline(off, scl):
 
     See Also
     --------
-    polyline, chebline
+    chebline, hermline, lagline, legline, polyline.
 
     Examples
     --------
@@ -272,8 +276,7 @@ def hermefromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    chebfromroots.
+    chebfromroots, hermfromroots, lagfromroots, legfromroots, polyfromroots.
 
     Examples
     --------
@@ -769,8 +772,8 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
-        ``np.ndim(scl) != 0``.
+        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``,
+        ``np.ndim(scl) != 0``, or `m` or `axis` are not integers.
 
     See Also
     --------
@@ -1421,6 +1424,15 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
         For more details, see `linalg.lstsq`.
 
+    Raises
+    ------
+    TypeError
+        If `deg` is not an int or array_like of ints,  `w` or `x` is empty
+        or not a 1-D array_like, `y` is not a 1-D or  2-D array_like, or
+        `w`, `x`, and `y` are not the same length.
+    ValueError
+        If `deg` is negative.
+
     Warns
     -----
     RankWarning
@@ -1433,7 +1445,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, polyfit, hermfit, polyfit
+    chebfit, hermfit, lagfit, legfit, polyfit
     hermeval : Evaluates a Hermite series.
     hermevander : pseudo Vandermonde matrix of Hermite series.
     hermeweight : HermiteE weight function.
@@ -1629,7 +1641,7 @@ def hermeroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, hermroots, chebroots
+    chebroots, hermroots, lagroots, legroots, polyroots
 
     Notes
     -----

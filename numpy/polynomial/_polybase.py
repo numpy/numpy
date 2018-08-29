@@ -142,7 +142,7 @@ class ABCPolyBase(object):
         Parameters
         ----------
         other : class instance
-            The other class must have the ``coef`` attribute.
+            The ``other`` class must have the ``coef`` attribute.
 
         Returns
         -------
@@ -165,7 +165,7 @@ class ABCPolyBase(object):
         Parameters
         ----------
         other : class instance
-            The other class must have the ``domain`` attribute.
+            The ``other`` class must have the ``domain`` attribute.
 
         Returns
         -------
@@ -183,7 +183,7 @@ class ABCPolyBase(object):
         Parameters
         ----------
         other : class instance
-            The other class must have the ``window`` attribute.
+            The ``other`` class must have the ``window`` attribute.
 
         Returns
         -------
@@ -206,7 +206,7 @@ class ABCPolyBase(object):
         Returns
         -------
         bool : boolean
-            True if other is same class as self
+            True if ``other`` is same class as ``self``.
 
         """
         return isinstance(other, self.__class__)
@@ -214,9 +214,9 @@ class ABCPolyBase(object):
     def _get_coefficients(self, other):
         """Interpret other as polynomial coefficients.
 
-        The `other` argument is checked to see if it is of the same
-        class as self with identical domain and window. If so,
-        return its coefficients, otherwise return `other`.
+        The ``other`` argument is checked to see if it is of the same
+        class as ``self``, with identical ``domain`` and ``window``. If so,
+        return its coefficients, otherwise return ``other``.
 
         .. versionadded:: 1.9.0
 
@@ -228,13 +228,13 @@ class ABCPolyBase(object):
         Returns
         -------
         coef
-            The coefficients of`other` if it is a compatible instance,
-            of ABCPolyBase, otherwise `other`.
+            The coefficients of ``other`` if it is a compatible instance
+            of ABCPolyBase, otherwise ``other``.
 
         Raises
         ------
         TypeError
-            When `other` is an incompatible instance of ABCPolyBase.
+            When ``other`` is an incompatible instance of ABCPolyBase. 
 
         """
         if isinstance(other, ABCPolyBase):
@@ -512,7 +512,7 @@ class ABCPolyBase(object):
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
 
-    # Enhance me
+    # TODO: Enhance me
     # some augmented arithmetic operations could be added here
 
     def __eq__(self, other):
@@ -638,29 +638,26 @@ class ABCPolyBase(object):
         ----------
         domain : array_like, optional
             The domain of the converted series. If the value is None,
-            the default domain of `kind` is used.
+            the default domain of ``kind`` is used.
         kind : class, optional
             The polynomial series type class to which the current instance
-            should be converted. If kind is None, then the class of the
+            should be converted. If ``kind`` is None, then the class of the
             current instance is used.
         window : array_like, optional
             The window of the converted series. If the value is None,
-            the default window of `kind` is used.
+            the default ``window`` of ``kind`` is used.
 
         Returns
         -------
         new_series : series
-            The returned class can be of different type than the current
-            instance and/or have a different domain and/or different
-            window.
+            The returned class can be of a different type than the current
+            instance and/or have a different ``domain`` and/or different
+            ``window``.
 
         Notes
         -----
         Conversion between domains and class types can result in
         numerically ill defined series.
-
-        Examples
-        --------
 
         """
         if kind is None:
@@ -736,7 +733,7 @@ class ABCPolyBase(object):
     def deriv(self, m=1):
         """Differentiate.
 
-        Return a series instance of that is the derivative of the current
+        Return a series instance that is the derivative of the current
         series.
 
         Parameters
@@ -785,9 +782,9 @@ class ABCPolyBase(object):
         n : int, optional
             Number of point pairs to return. The default value is 100.
         domain : {None, array_like}, optional
-            If not None, the specified domain is used instead of that of
+            If not None the specified domain is used instead of that of
             the calling instance. It should be of the form ``[beg,end]``.
-            The default is None which case the class domain is used.
+            The default is None in which case the class domain is used.
 
         Returns
         -------
@@ -808,7 +805,7 @@ class ABCPolyBase(object):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
-        `y` sampled at `x`. The domain of the returned instance can be
+        ``y`` sampled at ``x``. The ``domain`` of the returned instance can be
         specified and this will often result in a superior fit with less
         chance of ill conditioning.
 
@@ -821,15 +818,15 @@ class ABCPolyBase(object):
             points sharing the same x-coordinates can be fitted at once by
             passing in a 2D-array that contains one dataset per column.
         deg : int or 1-D array_like
-            Degree(s) of the fitting polynomials. If `deg` is a single integer
-            all terms up to and including the `deg`'th term are included in the
+            Degree(s) of the fitting polynomials. If ``deg`` is a single integer
+            all terms up to and including the ``deg``'th term are included in the
             fit. For NumPy versions >= 1.11.0 a list of integers specifying the
             degrees of the terms to include may be used instead.
         domain : {None, [beg, end], []}, optional
-            Domain to use for the returned series. If ``None``,
-            then a minimal domain that covers the points `x` is chosen.  If
+            Domain to use for the returned series. If None,
+            then a minimal domain that covers the points ``x`` is chosen. If
             ``[]`` the class domain is used. The default value was the
-            class domain in NumPy 1.4 and ``None`` in later versions.
+            class domain in NumPy 1.4 and None in later versions.
             The ``[]`` option was added in numpy 1.5.0.
         rcond : float, optional
             Relative condition number of the fit. Singular values smaller
@@ -844,7 +841,7 @@ class ABCPolyBase(object):
             also returned.
         w : array_like, shape (M,), optional
             Weights. If not None the contribution of each point
-            ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+            ``(x[i],y[i])`` to the fit is weighted by ``w[i]``. Ideally the
             weights are chosen so that the errors of the products
             ``w[i]*y[i]`` all have the same variance.  The default value is
             None.
@@ -870,7 +867,7 @@ class ABCPolyBase(object):
             resid -- sum of squared residuals of the least squares fit
             rank -- the numerical rank of the scaled Vandermonde matrix
             sv -- singular values of the scaled Vandermonde matrix
-            rcond -- value of `rcond`.
+            rcond -- value of ``rcond``.
 
             For more details, see `linalg.lstsq`.
 
@@ -907,7 +904,7 @@ class ABCPolyBase(object):
         domain : {[], None, array_like}, optional
             Domain for the resulting series. If None the domain is the
             interval from the smallest root to the largest. If [] the
-            domain is the class domain. The default is [].
+            domain is the class ``domain``. The default is [].
         window : {None, array_like}, optional
             Window for the returned series. If None the class window is
             used. The default is None.
@@ -938,7 +935,7 @@ class ABCPolyBase(object):
         """Identity function.
 
         If ``p`` is the returned series, then ``p(x) == x`` for all
-        values of x.
+        values of ``x``.
 
         Parameters
         ----------
@@ -955,7 +952,7 @@ class ABCPolyBase(object):
         Returns
         -------
         new_series : series
-             Series of representing the identity.
+             Series representing the identity.
 
         """
         if domain is None:
@@ -1011,7 +1008,7 @@ class ABCPolyBase(object):
 
         The `series` is expected to be an instance of some polynomial
         series of one of the types supported by by the numpy.polynomial
-        module, but could be some other class that supports the convert
+        module, but could be some other class that supports the ``convert``
         method.
 
         .. versionadded:: 1.7.0
@@ -1027,8 +1024,8 @@ class ABCPolyBase(object):
         window : {None, array_like}, optional
             If given, the resulting array must be if the form
             ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
-            the window. If None is given then the class window is used. The
-            default is None.
+            the ``window``. If None is given then the class ``window`` is used.
+            The default is None.
 
         Returns
         -------
