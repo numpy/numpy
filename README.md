@@ -20,8 +20,8 @@ It provides:
 
 Testing:
 
-- NumPy versions >= 1.15 require ``pytest``
-- NumPy versions < 1.15 require ``nose``
+- NumPy versions &ge; 1.15 require `pytest`
+- NumPy versions &lt; 1.15 require `nose`
 
 Tests can then be run after installation with:
 
