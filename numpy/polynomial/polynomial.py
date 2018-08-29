@@ -18,9 +18,10 @@ Arithmetic
 ----------
 - `polyadd` -- add two polynomials.
 - `polysub` -- subtract one polynomial from another.
+- `polymulx` -- multiply a polynomial in ``P_i(x)`` by ``x``.
 - `polymul` -- multiply two polynomials.
 - `polydiv` -- divide one polynomial by another.
-- `polypow` -- raise a polynomial to an positive integer power
+- `polypow` -- raise a polynomial to an positive integer power.
 - `polyval` -- evaluate a polynomial at given points.
 - `polyval2d` -- evaluate a 2D polynomial at given points.
 - `polyval3d` -- evaluate a 3D polynomial at given points.
@@ -228,7 +229,7 @@ def polyadd(c1, c2):
 
     See Also
     --------
-    polysub, polymul, polydiv, polypow
+    polysub, polymulx, polymul, polydiv, polypow
 
     Examples
     --------
@@ -273,7 +274,7 @@ def polysub(c1, c2):
 
     See Also
     --------
-    polyadd, polymul, polydiv, polypow
+    polyadd, polymulx, polymul, polydiv, polypow
 
     Examples
     --------
@@ -315,6 +316,10 @@ def polymulx(c):
     -------
     out : ndarray
         Array representing the result of the multiplication.
+
+    See Also
+    --------
+    polyadd, polysub, polymul, polydiv, polypow
 
     Notes
     -----
@@ -362,7 +367,7 @@ def polymul(c1, c2):
 
     See Also
     --------
-    polyadd, polysub, polydiv, polypow
+    polyadd, polysub, polymulx, polydiv, polypow
 
     Examples
     --------
@@ -399,7 +404,7 @@ def polydiv(c1, c2):
 
     See Also
     --------
-    polyadd, polysub, polymul, polypow
+    polyadd, polysub, polymulx, polymul, polypow
 
     Examples
     --------
@@ -461,14 +466,13 @@ def polypow(c, pow, maxpower=None):
 
     See Also
     --------
-    polyadd, polysub, polymul, polydiv
+    polyadd, polysub, polymulx, polymul, polydiv
 
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c = (1,2,3)
-    >>> P.polypow(c, 2)
-    array([ 1.,  4.,  10.,  12.,  9.])
+    >>> P.polypow([1,2,3], 2)
+    array([ 1., 4., 10., 12., 9.])
 
     """
     # c is a trimmed copy

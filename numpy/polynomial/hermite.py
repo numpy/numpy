@@ -16,11 +16,12 @@ Constants
 
 Arithmetic
 ----------
-- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
 - `hermadd` -- add two Hermite series.
 - `hermsub` -- subtract one Hermite series from another.
+- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
 - `hermmul` -- multiply two Hermite series.
 - `hermdiv` -- divide one Hermite series by another.
+- `hermpow` -- raise a Hermite series to a positive integer power.
 - `hermval` -- evaluate a Hermite series at given points.
 - `hermval2d` -- evaluate a 2D Hermite series at given points.
 - `hermval3d` -- evaluate a 3D Hermite series at given points.
@@ -327,7 +328,7 @@ def hermadd(c1, c2):
 
     See Also
     --------
-    hermsub, hermmul, hermdiv, hermpow
+    hermsub, hermmulx, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -375,7 +376,7 @@ def hermsub(c1, c2):
 
     See Also
     --------
-    hermadd, hermmul, hermdiv, hermpow
+    hermadd, hermmulx, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -420,6 +421,10 @@ def hermmulx(c):
     -------
     out : ndarray
         Array representing the result of the multiplication.
+
+    See Also
+    --------
+    hermadd, hermsub, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -473,7 +478,7 @@ def hermmul(c1, c2):
 
     See Also
     --------
-    hermadd, hermsub, hermdiv, hermpow
+    hermadd, hermsub, hermmulx, hermdiv, hermpow
 
     Notes
     -----
@@ -541,7 +546,7 @@ def hermdiv(c1, c2):
 
     See Also
     --------
-    hermadd, hermsub, hermmul, hermpow
+    hermadd, hermsub, hermmulx, hermmul, hermpow
 
     Notes
     -----
@@ -610,7 +615,7 @@ def hermpow(c, pow, maxpower=16):
 
     See Also
     --------
-    hermadd, hermsub, hermmul, hermdiv
+    hermadd, hermsub, hermmulx, hermmul, hermdiv
 
     Examples
     --------

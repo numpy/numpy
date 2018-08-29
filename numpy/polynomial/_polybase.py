@@ -17,7 +17,7 @@ from . import polyutils as pu
 __all__ = ['ABCPolyBase']
 
 class ABCPolyBase(object):
-    """An abstract base class for series classes.
+    """An abstract base class for immutable series classes.
 
     ABCPolyBase provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' along with the
@@ -511,9 +511,6 @@ class ABCPolyBase(object):
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
-
-    # TODO: Enhance me
-    # some augmented arithmetic operations could be added here
 
     def __eq__(self, other):
         res = (isinstance(other, self.__class__) and

@@ -16,11 +16,12 @@ Constants
 
 Arithmetic
 ----------
-- `lagmulx` -- multiply a Laguerre series in ``P_i(x)`` by ``x``.
 - `lagadd` -- add two Laguerre series.
 - `lagsub` -- subtract one Laguerre series from another.
+- `lagmulx` -- multiply a Laguerre series in ``P_i(x)`` by ``x``.
 - `lagmul` -- multiply two Laguerre series.
 - `lagdiv` -- divide one Laguerre series by another.
+- `lagpow` -- raise a Laguerre series to a positive integer power.
 - `lagval` -- evaluate a Laguerre series at given points.
 - `lagval2d` -- evaluate a 2D Laguerre series at given points.
 - `lagval3d` -- evaluate a 3D Laguerre series at given points.
@@ -324,7 +325,7 @@ def lagadd(c1, c2):
 
     See Also
     --------
-    lagsub, lagmul, lagdiv, lagpow
+    lagsub, lagmulx, lagmul, lagdiv, lagpow
 
     Notes
     -----
@@ -373,7 +374,7 @@ def lagsub(c1, c2):
 
     See Also
     --------
-    lagadd, lagmul, lagdiv, lagpow
+    lagadd, lagmulx, lagmul, lagdiv, lagpow
 
     Notes
     -----
@@ -418,6 +419,10 @@ def lagmulx(c):
     -------
     out : ndarray
         Array representing the result of the multiplication.
+
+    See Also
+    --------
+    lagadd, lagsub, lagmul, lagdiv, lagpow
 
     Notes
     -----
@@ -472,7 +477,7 @@ def lagmul(c1, c2):
 
     See Also
     --------
-    lagadd, lagsub, lagdiv, lagpow
+    lagadd, lagsub, lagmulx, lagdiv, lagpow
 
     Notes
     -----
@@ -540,7 +545,7 @@ def lagdiv(c1, c2):
 
     See Also
     --------
-    lagadd, lagsub, lagmul, lagpow
+    lagadd, lagsub, lagmulx, lagmul, lagpow
 
     Notes
     -----
@@ -607,7 +612,7 @@ def lagpow(c, pow, maxpower=16):
 
     See Also
     --------
-    lagadd, lagsub, lagmul, lagdiv
+    lagadd, lagsub, lagmulx, lagmul, lagdiv
 
     Examples
     --------

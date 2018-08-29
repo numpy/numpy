@@ -21,9 +21,10 @@ Arithmetic
 ----------
 - `chebadd` -- add two Chebyshev series.
 - `chebsub` -- subtract one Chebyshev series from another.
+- `chebmulx` -- multiply a Chebyshev series in ``P_i(x)`` by ``x``.
 - `chebmul` -- multiply two Chebyshev series.
 - `chebdiv` -- divide one Chebyshev series by another.
-- `chebpow` -- raise a Chebyshev series to an positive integer power
+- `chebpow` -- raise a Chebyshev series to a positive integer power.
 - `chebval` -- evaluate a Chebyshev series at given points.
 - `chebval2d` -- evaluate a 2D Chebyshev series at given points.
 - `chebval3d` -- evaluate a 3D Chebyshev series at given points.
@@ -580,7 +581,7 @@ def chebadd(c1, c2):
 
     See Also
     --------
-    chebsub, chebmul, chebdiv, chebpow
+    chebsub, chebmulx, chebmul, chebdiv, chebpow
 
     Notes
     -----
@@ -631,7 +632,7 @@ def chebsub(c1, c2):
 
     See Also
     --------
-    chebadd, chebmul, chebdiv, chebpow
+    chebadd, chebmulx, chebmul, chebdiv, chebpow
 
     Notes
     -----
@@ -690,6 +691,12 @@ def chebmulx(c):
 
     .. versionadded:: 1.5.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> C.chebmulx([1,2,3])
+    array([ 1.,  2.5,  3.,  1.5,  2.])
+
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -728,7 +735,7 @@ def chebmul(c1, c2):
 
     See Also
     --------
-    chebadd, chebsub, chebdiv, chebpow
+    chebadd, chebsub, chebmulx, chebdiv, chebpow
 
     Notes
     -----
@@ -779,7 +786,7 @@ def chebdiv(c1, c2):
 
     See Also
     --------
-    chebadd, chebsub, chebmul, chebpow
+    chebadd, chebsub, chemulx, chebmul, chebpow
 
     Notes
     -----
@@ -847,14 +854,13 @@ def chebpow(c, pow, maxpower=16):
 
     See Also
     --------
-    chebadd, chebsub, chebmul, chebdiv
+    chebadd, chebsub, chebmulx, chebmul, chebdiv
 
     Examples
     --------
     >>> from numpy.polynomial import chebyshev as C
-    >>> c = (1,2,3)
-    >>> C.chebpow(c, 2)
-    array([  7.5,  10. ,   8. ,   6. ,   4.5])
+    >>> C.chebpow([1, 2, 3, 4], 2)
+    array([15.5, 22. , 16. , 14. , 12.5, 12. ,  8. ])
 
     """
     # c is a trimmed copy
