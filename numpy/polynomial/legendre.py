@@ -32,7 +32,7 @@ Arithmetic
    legmulx              multiply a Legendre series in ``P_i(x)`` by ``x``.
    legmul               multiply two Legendre series.
    legdiv               divide one Legendre series by another.
-   legpow               raise a Legendre series to an positive integer power.
+   legpow               raise a Legendre series to a positive integer power.
    legval               evaluate a Legendre series at given points.
    legval2d             evaluate a 2D Legendre series at given points.
    legval3d             evaluate a 3D Legendre series at given points.
