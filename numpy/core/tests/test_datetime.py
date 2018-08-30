@@ -138,6 +138,16 @@ class TestDateTime(object):
             assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
             assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
 
+    @pytest.mark.parametrize("arr, expected_repr", [
+    (np.zeros(1, np.dtype([('b', np.datetime64)])),
+     "array([('NaT',)], dtype=[('b', '<M8')])"),
+    (np.zeros(2, np.datetime64),
+     "array(['NaT', 'NaT'], dtype=datetime64)"),
+    ])
+    def test_repr_generic_datetime(self, arr, expected_repr):
+        # regression test for gh-11752
+        assert_equal(repr(arr), expected_repr)
+
     def test_datetime_scalar_construction(self):
         # Construct with different units
         assert_equal(np.datetime64('1950-03-12', 'D'),

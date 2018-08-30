@@ -424,18 +424,14 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
     out->month = 1;
     out->day = 1;
 
-    /* NaT is signaled in the year */
-    if (dt == NPY_DATETIME_NAT) {
+    /* NaT is signaled in the year
+     * and we will also default to
+     * NaT when only generic units
+     * are retrieved
+     */
+    if (dt == NPY_DATETIME_NAT || meta->base == NPY_FR_GENERIC) {
         out->year = NPY_DATETIME_NAT;
         return 0;
-    }
-
-    /* Datetimes can't be in generic units */
-    if (meta->base == NPY_FR_GENERIC) {
-        PyErr_SetString(PyExc_ValueError,
-                    "Cannot convert a NumPy datetime value other than NaT "
-                    "with generic units");
-        return -1;
     }
 
     /* TODO: Change to a mechanism that avoids the potential overflow */
