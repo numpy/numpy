@@ -552,9 +552,9 @@ class matrix(N.ndarray):
         ----------
         axis : int, optional
             Axis along which logical OR is performed
-        out : ndarray, optional
+        out : ndarray, optional.
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         Returns
         -------
@@ -604,7 +604,7 @@ class matrix(N.ndarray):
             Axis along which logical AND is performed.
         out : ndarray, optional
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         Returns
         -------
@@ -652,9 +652,9 @@ class matrix(N.ndarray):
         ----------
         axis : int, optional
             Axis or axes along which to operate.
-        out : ndarray, optional
+        out : ndarray, optional.
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         Parameters
         ----------
@@ -701,7 +701,7 @@ class matrix(N.ndarray):
             Axis or axes along which to operate.
         out : ndarray, optional
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         See Also
         --------
@@ -740,7 +740,7 @@ class matrix(N.ndarray):
             Axis or axes along which to operate.
         out : ndarray, optional
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         See Also
         --------
@@ -783,7 +783,7 @@ class matrix(N.ndarray):
             Axis or axes along which to operate.
         out : ndarray, optional
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         See Also
         --------
@@ -824,7 +824,7 @@ class matrix(N.ndarray):
             Axis or axes along which to operate.
         out : ndarray, optional
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         See Also
         --------
