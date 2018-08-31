@@ -3747,6 +3747,27 @@ recursive_find_object_datetime64_type(PyObject *obj,
 }
 
 /*
+ * handler function for PyDelta values
+ * which may also be in a 0 dimensional
+ * NumPy array
+ */
+static int
+delta_checker(PyArray_DatetimeMetaData *meta)
+{
+    PyArray_DatetimeMetaData tmp_meta;
+
+    tmp_meta.base = NPY_FR_us;
+    tmp_meta.num = 1;
+
+    /* Combine it with 'meta' */
+    if (compute_datetime_metadata_greatest_common_divisor(
+            meta, &tmp_meta, meta, 0, 0) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+/*
  * Recursively determines the metadata for an NPY_TIMEDELTA dtype.
  *
  * Returns 0 on success, -1 on failure.
@@ -3783,6 +3804,28 @@ recursive_find_object_timedelta64_type(PyObject *obj,
         else if (arr_dtype->type_num != NPY_OBJECT) {
             return 0;
         }
+        else {
+            if (PyArray_NDIM(arr) == 0) {
+                /*
+                 * special handling of 0 dimensional NumPy object
+                 * arrays, which may be indexed to retrieve their
+                 * single object using [()], but not by using
+                 * __getitem__(integer) approaches
+                 */
+                PyObject *item, *meth, *args;
+
+                meth = PyObject_GetAttrString(obj, "__getitem__");
+                args = Py_BuildValue("(())");
+                item = PyObject_CallObject(meth, args);
+                /*
+                 * NOTE: may need other type checks here in the future
+                 * for expanded 0 D datetime array conversions?
+                 */
+                if (PyDelta_Check(item)) {
+                    return delta_checker(meta);
+                }
+            }
+        }
     }
     /* Datetime scalar -> use its metadata */
     else if (PyArray_IsScalar(obj, Timedelta)) {
@@ -3803,18 +3846,7 @@ recursive_find_object_timedelta64_type(PyObject *obj,
     }
     /* Python timedelta object -> 'us' */
     else if (PyDelta_Check(obj)) {
-        PyArray_DatetimeMetaData tmp_meta;
-
-        tmp_meta.base = NPY_FR_us;
-        tmp_meta.num = 1;
-
-        /* Combine it with 'meta' */
-        if (compute_datetime_metadata_greatest_common_divisor(meta,
-                        &tmp_meta, meta, 0, 0) < 0) {
-            return -1;
-        }
-
-        return 0;
+        return delta_checker(meta);
     }
 
     /* Now check if what we have left is a sequence for recursion */
