@@ -1,23 +1,20 @@
 #!/usr/bin/env python
-"""NumPy: array processing for numbers, strings, records, and objects.
+""" NumPy is the fundamental package for array computing with Python.
 
-NumPy is a general-purpose array-processing package designed to
-efficiently manipulate large multi-dimensional arrays of arbitrary
-records without sacrificing too much speed for small multi-dimensional
-arrays.  NumPy is built on the Numeric code base and adds features
-introduced by numarray as well as an extended C-API and the ability to
-create arrays of arbitrary type which also makes NumPy suitable for
-interfacing with general-purpose data-base applications.
+It provides:
 
-There are also basic facilities for discrete fourier transform,
-basic linear algebra and random number generation.
+- a powerful N-dimensional array object
+- sophisticated (broadcasting) functions
+- tools for integrating C/C++ and Fortran code
+- useful linear algebra, Fourier transform, and random number capabilities
+- and much more
 
-All numpy wheels distributed from pypi are BSD licensed.
+Besides its obvious scientific uses, NumPy can also be used as an efficient
+multi-dimensional container of generic data. Arbitrary data-types can be
+defined. This allows NumPy to seamlessly and speedily integrate with a wide
+variety of databases.
 
-Windows wheels are linked against the ATLAS BLAS / LAPACK library, restricted
-to SSE2 instructions, so may not give optimal linear algebra performance for
-your machine. See https://docs.scipy.org/doc/numpy/user/install.html for
-alternatives.
+All NumPy wheels distributed on PyPI are BSD licensed.
 
 """
 from __future__ import division, print_function
@@ -352,6 +349,18 @@ def setup_package():
     # Rewrite the version file everytime
     write_version_py()
 
+    # The f2py scripts that will be installed
+    if sys.platform == 'win32':
+        f2py_cmds = [
+            'f2py = numpy.f2py.f2py2e:main',
+            ]
+    else:
+        f2py_cmds = [
+            'f2py = numpy.f2py.f2py2e:main',
+            'f2py%s = numpy.f2py.f2py2e:main' % sys.version_info[:1],
+            'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
+            ]
+
     metadata = dict(
         name = 'numpy',
         maintainer = "NumPy Developers",
@@ -369,11 +378,7 @@ def setup_package():
         python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
         zip_safe=False,
         entry_points={
-            'console_scripts': [
-                'f2py = numpy.f2py.__main__:main',
-                'conv-template = numpy.distutils.conv_template:main',
-                'from-template = numpy.distutils.from_template:main',
-            ]
+            'console_scripts': f2py_cmds
         },
     )
 

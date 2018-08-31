@@ -19,6 +19,7 @@
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -54,7 +55,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
-#include "ufunc_override.h"
 #include "multiarraymodule.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
@@ -65,6 +65,17 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "typeinfo.h"
 
 #include "get_attr_string.h"
+
+/*
+ *****************************************************************************
+ **                    INCLUDE GENERATED CODE                               **
+ *****************************************************************************
+ */
+#include "funcs.inc"
+#include "loops.h"
+#include "umathmodule.h"
+
+NPY_NO_EXPORT int initscalarmath(PyObject *);
 
 /*
  * global variable to determine if legacy printing is enabled, accessible from
@@ -2020,7 +2031,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         if (DEPRECATE(
                 "The binary mode of fromstring is deprecated, as it behaves "
                 "surprisingly on unicode inputs. Use frombuffer instead") < 0) {
-            Py_DECREF(descr);
+            Py_XDECREF(descr);
             return NULL;
         }
     }
@@ -4365,6 +4376,18 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
         METH_VARARGS, NULL},
+    /* from umath */
+    {"frompyfunc",
+        (PyCFunction) ufunc_frompyfunc,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"seterrobj",
+        (PyCFunction) ufunc_seterr,
+        METH_VARARGS, NULL},
+    {"geterrobj",
+        (PyCFunction) ufunc_geterr,
+        METH_VARARGS, NULL},
+    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4382,9 +4405,6 @@ static struct PyMethodDef array_module_methods[] = {
 static int
 setup_scalartypes(PyObject *NPY_UNUSED(dict))
 {
-    initialize_casting_tables();
-    initialize_numeric_types();
-
     if (PyType_Ready(&PyBool_Type) < 0) {
         return -1;
     }
@@ -4624,7 +4644,7 @@ intern_strings(void)
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        "multiarray",
+        "_multiarray_umath",
         NULL,
         -1,
         array_module_methods,
@@ -4638,10 +4658,10 @@ static struct PyModuleDef moduledef = {
 /* Initialization function for the module */
 #if defined(NPY_PY3K)
 #define RETVAL(x) x
-PyMODINIT_FUNC PyInit_multiarray(void) {
+PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 #else
 #define RETVAL(x)
-PyMODINIT_FUNC initmultiarray(void) {
+PyMODINIT_FUNC init_multiarray_umath(void) {
 #endif
     PyObject *m, *d, *s;
     PyObject *c_api;
@@ -4650,7 +4670,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule("multiarray", array_module_methods);
+    m = Py_InitModule("_multiarray_umath", array_module_methods);
 #endif
     if (!m) {
         goto err;
@@ -4684,6 +4704,17 @@ PyMODINIT_FUNC initmultiarray(void) {
      * static structure slots with functions from the Python C_API.
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
+
+    /* Load the ufunc operators into the array module's namespace */
+    if (InitOperators(d) < 0) {
+        goto err;
+    }
+
+    initialize_casting_tables();
+    initialize_numeric_types();
+    if(initscalarmath(m) < 0)
+        goto err;
+
     if (PyType_Ready(&PyArray_Type) < 0) {
         goto err;
     }
@@ -4729,6 +4760,16 @@ PyMODINIT_FUNC initmultiarray(void) {
     }
     PyDict_SetItemString(d, "_ARRAY_API", c_api);
     Py_DECREF(c_api);
+
+    c_api = NpyCapsule_FromVoidPtr((void *)PyUFunc_API, NULL);
+    if (c_api == NULL) {
+        goto err;
+    }
+    PyDict_SetItemString(d, "_UFUNC_API", c_api);
+    Py_DECREF(c_api);
+    if (PyErr_Occurred()) {
+        goto err;
+    }
 
     /*
      * PyExc_Exception should catch all the standard errors that are
@@ -4806,7 +4847,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-
+    if (initumath(m) != 0) {
+        goto err;
+    }
     return RETVAL(m);
 
  err:

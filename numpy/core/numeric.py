@@ -2850,16 +2850,11 @@ class errstate(object):
 
     Notes
     -----
-    The ``with`` statement was introduced in Python 2.5, and can only be used
-    there by importing it: ``from __future__ import with_statement``. In
-    earlier Python versions the ``with`` statement is not available.
-
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
     Examples
     --------
-    >>> from __future__ import with_statement  # use 'with' in Python 2.5
     >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
 
     >>> np.arange(3) / 0.
@@ -2919,10 +2914,7 @@ True_ = bool_(True)
 
 def extend_all(module):
     existing = set(__all__)
-    try:
-        mall = getattr(module, '__all__')
-    except AttributeError:
-        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
+    mall = getattr(module, '__all__')
     for a in mall:
         if a not in existing:
             __all__.append(a)

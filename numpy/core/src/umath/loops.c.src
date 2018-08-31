@@ -1,14 +1,12 @@
 /* -*- c -*- */
 
 #define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 
 #include "npy_config.h"
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
-#define NO_IMPORT_ARRAY
-
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -1874,9 +1872,13 @@ NPY_NO_EXPORT void
     }
     else {
         BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
+            @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
-            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+            in1 = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+            if (npy_isnan(in1)) {
+                npy_set_floatstatus_invalid();
+            }
+            *((@type@ *)op1) = in1;
         }
     }
 }

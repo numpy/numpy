@@ -92,6 +92,7 @@ swab_separator(const char *sep)
 
     s = start = malloc(strlen(sep)+3);
     if (s == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
     /* add space to front if there isn't one */
@@ -1390,10 +1391,12 @@ _array_from_buffer_3118(PyObject *memoryview)
 
         if (!is_ctypes) {
             /* This object has no excuse for a broken PEP3118 buffer */
-            PyErr_SetString(
+            PyErr_Format(
                     PyExc_RuntimeError,
-                    "Item size computed from the PEP 3118 buffer format "
-                    "string does not match the actual item size.");
+                   "Item size %zd for PEP 3118 buffer format "
+                    "string %s does not match the dtype %c item size %d.",
+                    view->itemsize, view->format, descr->type,
+                    descr->elsize);
             Py_DECREF(descr);
             return NULL;
         }

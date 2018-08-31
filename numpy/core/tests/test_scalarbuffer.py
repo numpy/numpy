@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pytest
 
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, assert_raises
 
 # PEP3118 format strings for native (standard alignment and byteorder) types
 scalars_and_codes = [
@@ -77,3 +77,28 @@ class TestScalarPEP3118(object):
         mv_a = memoryview(a)
         assert_equal(mv_x.itemsize, mv_a.itemsize)
         assert_equal(mv_x.format, mv_a.format)
+
+    def test_datetime_memoryview(self):
+        # gh-11656
+        # Values verified with v1.13.3, shape is not () as in test_scalar_dim
+        def as_dict(m):
+            return dict(strides=m.strides, shape=m.shape, itemsize=m.itemsize,
+                        ndim=m.ndim, format=m.format)
+
+        dt1 = np.datetime64('2016-01-01')
+        dt2 = np.datetime64('2017-01-01')
+        expected = {'strides': (1,), 'itemsize': 1, 'ndim': 1,
+                    'shape': (8,), 'format': 'B'}
+        v = memoryview(dt1)
+        res = as_dict(v) 
+        assert_equal(res, expected)
+
+        v = memoryview(dt2 - dt1)
+        res = as_dict(v)
+        assert_equal(res, expected)
+
+        dt = np.dtype([('a', 'uint16'), ('b', 'M8[s]')])
+        a = np.empty(1, dt)
+        # Fails to create a PEP 3118 valid buffer
+        assert_raises((ValueError, BufferError), memoryview, a[0])
+

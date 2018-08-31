@@ -1,0 +1,9 @@
+path_classifiers:
+  library:
+    - tools
+  generated:
+    # The exports defined in __init__.py are defined in the Cython module
+    # np.random.mtrand. By excluding this file we suppress a number of
+    # "undefined export" alerts
+    - numpy/random/__init__.py
+

@@ -305,12 +305,17 @@ def average(a, axis=None, weights=None, returned=False):
 
     Returns
     -------
-    average, [sum_of_weights] : array_type or double
-        Return the average along the specified axis. When returned is `True`,
+    retval, [sum_of_weights] : array_type or double
+        Return the average along the specified axis. When `returned` is `True`,
         return a tuple with the average as the first element and the sum
-        of the weights as the second element. The return type is `Float`
-        if `a` is of integer type, otherwise it is of the same type as `a`.
-        `sum_of_weights` is of the same type as `average`.
+        of the weights as the second element. `sum_of_weights` is of the
+        same type as `retval`. The result dtype follows a genereal pattern.
+        If `weights` is None, the result dtype will be that of `a` , or ``float64``
+        if `a` is integral. Otherwise, if `weights` is not None and `a` is non-
+        integral, the result type will be the type of lowest precision capable of
+        representing values of both `a` and `weights`. If `a` happens to be
+        integral, the previous rules still applies but the result dtype will
+        at least be ``float64``.
 
     Raises
     ------
@@ -327,6 +332,8 @@ def average(a, axis=None, weights=None, returned=False):
 
     ma.average : average for masked arrays -- useful if your data contains
                  "missing" values
+    numpy.result_type : Returns the type that results from applying the
+                        numpy type promotion rules to the arguments.
 
     Examples
     --------
@@ -346,10 +353,16 @@ def average(a, axis=None, weights=None, returned=False):
     >>> np.average(data, axis=1, weights=[1./4, 3./4])
     array([ 0.75,  2.75,  4.75])
     >>> np.average(data, weights=[1./4, 3./4])
+    
     Traceback (most recent call last):
     ...
     TypeError: Axis must be specified when shapes of a and weights differ.
-
+    
+    >>> a = np.ones(5, dtype=np.float128)
+    >>> w = np.ones(5, dtype=np.complex64)
+    >>> avg = np.average(a, weights=w)
+    >>> print(avg.dtype)
+    complex256
     """
     a = np.asanyarray(a)
 
@@ -1769,8 +1782,8 @@ class vectorize(object):
     Generalized function class.
 
     Define a vectorized function which takes a nested sequence of objects or
-    numpy arrays as inputs and returns an single or tuple of numpy array as
-    output. The vectorized function evaluates `pyfunc` over successive tuples
+    numpy arrays as inputs and returns a single numpy array or a tuple of numpy
+    arrays. The vectorized function evaluates `pyfunc` over successive tuples
     of the input arrays like the python map function, except it uses the
     broadcasting rules of numpy.
 
