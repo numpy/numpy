@@ -215,26 +215,39 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             subarray_tuple = Py_BuildValue("(O)", descr->subarray->shape);
         }
 
-        if (_append_char(str, '(') < 0) return -1;
+        if (_append_char(str, '(') < 0) {
+            ret = -1;
+            goto subarray_fail;
+        }
         for (k = 0; k < PyTuple_GET_SIZE(subarray_tuple); ++k) {
             if (k > 0) {
-                if (_append_char(str, ',') < 0) return -1;
+                if (_append_char(str, ',') < 0) {
+                    ret = -1;
+                    goto subarray_fail;
+                }
             }
             item = PyTuple_GET_ITEM(subarray_tuple, k);
             dim_size = PyNumber_AsSsize_t(item, NULL);
 
             PyOS_snprintf(buf, sizeof(buf), "%ld", (long)dim_size);
-            if (_append_str(str, buf) < 0) return -1;
+            if (_append_str(str, buf) < 0) {
+                ret = -1;
+                goto subarray_fail;
+            }
             total_count *= dim_size;
         }
-        if (_append_char(str, ')') < 0) return -1;
-
-        Py_DECREF(subarray_tuple);
+        if (_append_char(str, ')') < 0) {
+            ret = -1;
+            goto subarray_fail;
+        }
 
         old_offset = *offset;
         ret = _buffer_format_string(descr->subarray->base, str, obj, offset,
                                     active_byteorder);
         *offset = old_offset + (*offset - old_offset) * total_count;
+
+        subarray_fail:
+            Py_DECREF(subarray_tuple);
         return ret;
     }
     else if (PyDataType_HASFIELDS(descr)) {
