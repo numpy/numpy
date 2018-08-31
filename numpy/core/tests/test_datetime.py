@@ -355,6 +355,16 @@ class TestDateTime(object):
         actual = np.array(inputs, dtype='timedelta64[D]')
         assert_equal(expected, actual)
 
+    def test_timedelta_0_dim_object_array_conversion(self):
+        # Regression test for gh-11151
+        test = np.array(datetime.timedelta(seconds=20))
+        actual = test.astype(np.timedelta64)
+        # expected value from the array constructor workaround
+        # described in above issue
+        expected = np.array(datetime.timedelta(seconds=20),
+                            np.timedelta64)
+        assert_equal(actual, expected)
+
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
         assert_equal(np.datetime64('2010').dtype,
