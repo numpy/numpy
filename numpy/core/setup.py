@@ -710,6 +710,17 @@ def configuration(parent_package='',top_path=None):
                        include_dirs=[])
 
     #######################################################################
+    #                     multiarray_tests module                         #
+    #######################################################################
+
+    config.add_extension('_multiarray_tests',
+                    sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
+                             join('src', 'common', 'mem_overlap.c')],
+                    depends=[join('src', 'common', 'mem_overlap.h'),
+                             join('src', 'common', 'npy_extint128.h')],
+                    libraries=['npymath'])
+
+    #######################################################################
     #             _multiarray_umath module - common part                  #
     #######################################################################
 
@@ -933,16 +944,6 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_struct_ufunc_tests',
                     sources=[join('src', 'umath', '_struct_ufunc_tests.c.src')])
 
-    #######################################################################
-    #                     multiarray_tests module                         #
-    #######################################################################
-
-    config.add_extension('_multiarray_tests',
-                    sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
-                             join('src', 'common', 'mem_overlap.c')],
-                    depends=[join('src', 'common', 'mem_overlap.h'),
-                             join('src', 'common', 'npy_extint128.h')],
-                    libraries=['npymath'])
 
     #######################################################################
     #                        operand_flag_tests module                    #
