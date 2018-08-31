@@ -138,6 +138,25 @@ class TestDateTime(object):
             assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
             assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
 
+    @pytest.mark.parametrize("arr, ind", [
+    # the exact test case reported in the issue
+    (np.zeros(5, dtype="M8[s]"), 2),
+    # similar thing with generic datetime64
+    (np.zeros(5, dtype="M8"), 1),
+    # multidimensional non-zero NaN to NaT
+    (np.ones((5, 3), dtype="M8[us]"), [1, 1]),
+    # and for generic datetime64
+    (np.ones((5, 3), dtype="M8"), [2, 1]),
+    ])
+    def test_nan_nat_casting(self, arr, ind):
+        # regression tests for gh-8780
+        if isinstance(ind, (list,)):
+            arr[ind[0], ind[1]] = np.nan
+            assert_equal(arr[ind[0], ind[1]], np.datetime64('NaT'))
+        else:
+            arr[ind] = np.nan
+            assert_equal(arr[ind], np.datetime64('NaT'))
+
     def test_datetime_scalar_construction(self):
         # Construct with different units
         assert_equal(np.datetime64('1950-03-12', 'D'),

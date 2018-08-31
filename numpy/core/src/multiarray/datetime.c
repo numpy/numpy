@@ -16,6 +16,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
+#include "numpy/npy_math.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -2570,9 +2571,14 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     /*
      * With unsafe casting, convert unrecognized objects into NaT
      * and with same_kind casting, convert None into NaT
+     * We now also allow NPY_NAN to be cast to NaT; if control flow
+     * reaches the npy_isnan() check, an obj that can't be cast to
+     * float of some kind will cause a -1 return from PyFloat_AsDouble
+     * and control flow continues to ValueError as usual
      */
     if (casting == NPY_UNSAFE_CASTING ||
-            (obj == Py_None && casting == NPY_SAME_KIND_CASTING)) {
+            (obj == Py_None && casting == NPY_SAME_KIND_CASTING) ||
+            (npy_isnan(PyFloat_AsDouble(obj)) && casting == NPY_SAME_KIND_CASTING)) {
         if (meta->base == NPY_FR_ERROR) {
             meta->base = NPY_FR_GENERIC;
             meta->num = 1;
