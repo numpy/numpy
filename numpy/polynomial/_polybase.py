@@ -418,7 +418,7 @@ class ABCPolyBase(object):
         return self.__class__(coef, self.domain, self.window)
 
     def __div__(self, other):
-        # set to __floordiv__,  /, for now.
+        # this can be removed when python 2 support is dropped.
         return self.__floordiv__(other)
 
     def __truediv__(self, other):
