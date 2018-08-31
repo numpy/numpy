@@ -552,15 +552,44 @@ class matrix(N.ndarray):
         ----------
         axis : int, optional
             Axis along which logical OR is performed
-        out : ndarray, optional
+        out : ndarray, optional.
             Output to existing array instead of creating new one, must have
-            same shape as expected output
+            same shape as expected output.
 
         Returns
         -------
             any : bool, ndarray
                 Returns a single bool if `axis` is ``None``; otherwise,
                 returns `ndarray`
+
+        See Also
+        --------
+        numpy.any
+
+        Notes
+        -----
+        This is the same as `ndarray.all`, but it returns a `matrix` object.
+
+        Examples
+        --------
+        >>> x = np.matrix(np.arange(12).reshape((3,4))); x
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> y = x[0]; y
+        matrix([[0, 1, 2, 3]])
+        >>> (x == y)
+        matrix([[ True,  True,  True,  True],
+                [False, False, False, False],
+                [False, False, False, False]])
+        >>> (x == y).any()
+        True
+        >>> (x == y).any(0)
+        matrix([[True, True, True, True]])
+        >>> (x == y).any(1)
+        matrix([[ True],
+                [False],
+                [False]])
 
         """
         return N.ndarray.any(self, axis, out, keepdims=True)._collapse(axis)
@@ -571,7 +600,17 @@ class matrix(N.ndarray):
 
         Parameters
         ----------
-        See `numpy.all` for complete descriptions
+        axis : int, optional
+            Axis along which logical AND is performed.
+        out : ndarray, optional
+            Output to existing array instead of creating new one, must have
+            same shape as expected output.
+
+        Returns
+        -------
+            any : bool, ndarray
+                Returns a single bool if `axis` is ``None``; otherwise,
+                returns `ndarray`
 
         See Also
         --------
@@ -608,6 +647,14 @@ class matrix(N.ndarray):
     def max(self, axis=None, out=None):
         """
         Return the maximum value along an axis.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis or axes along which to operate.
+        out : ndarray, optional.
+            Output to existing array instead of creating new one, must have
+            same shape as expected output.
 
         Parameters
         ----------
@@ -650,7 +697,11 @@ class matrix(N.ndarray):
 
         Parameters
         ----------
-        See `numpy.argmax` for complete descriptions
+        axis : int, optional
+            Axis or axes along which to operate.
+        out : ndarray, optional
+            Output to existing array instead of creating new one, must have
+            same shape as expected output.
 
         See Also
         --------
@@ -685,7 +736,11 @@ class matrix(N.ndarray):
 
         Parameters
         ----------
-        See `amin` for complete descriptions.
+        axis : int, optional
+            Axis or axes along which to operate.
+        out : ndarray, optional
+            Output to existing array instead of creating new one, must have
+            same shape as expected output.
 
         See Also
         --------
@@ -724,7 +779,11 @@ class matrix(N.ndarray):
 
         Parameters
         ----------
-        See `numpy.argmin` for complete descriptions.
+        axis : int, optional
+            Axis or axes along which to operate.
+        out : ndarray, optional
+            Output to existing array instead of creating new one, must have
+            same shape as expected output.
 
         See Also
         --------
@@ -758,6 +817,14 @@ class matrix(N.ndarray):
         Peak-to-peak (maximum - minimum) value along the given axis.
 
         Refer to `numpy.ptp` for full documentation.
+
+        Parameters
+        ----------
+        axis : int, optional
+            Axis or axes along which to operate.
+        out : ndarray, optional
+            Output to existing array instead of creating new one, must have
+            same shape as expected output.
 
         See Also
         --------
@@ -921,6 +988,16 @@ class matrix(N.ndarray):
         matrix.flatten : returns a similar output matrix but always a copy
         matrix.flat : a flat iterator on the array.
         numpy.ravel : related function which returns an ndarray
+
+        Examples
+        --------
+        >>> m = np.matrix([np.arange(4), np.arange(4,8), np.arange(8, 12)])
+        >>> m
+        matrix([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
+        >>> m.ravel()
+        matrix([[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]])
 
         """
         return N.ndarray.ravel(self, order=order)
