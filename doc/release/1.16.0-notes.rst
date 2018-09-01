@@ -6,6 +6,7 @@ NumPy 1.16.0 Release Notes
 Highlights
 ==========
 
+* I am testing
 
 New functions
 =============
