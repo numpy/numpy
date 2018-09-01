@@ -7,7 +7,7 @@ by importing from the extension module.
 
 from . import _multiarray_umath
 from numpy.core._multiarray_umath import *
-from numpy.core._multiarray_umath import _add_newdoc_ufunc, _arg
+from numpy.core._multiarray_umath import _add_newdoc_ufunc, _arg, _ones_like
 
 __all__ = ['ERR_CALL', 'ERR_DEFAULT', 'ERR_IGNORE', 'ERR_LOG', 'ERR_PRINT',
     'ERR_RAISE', 'ERR_WARN', 'FLOATING_POINT_SUPPORT', 'FPE_DIVIDEBYZERO',
@@ -29,4 +29,3 @@ __all__ = ['ERR_CALL', 'ERR_DEFAULT', 'ERR_IGNORE', 'ERR_LOG', 'ERR_PRINT',
     'power', 'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
     'rint', 'seterrobj', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
     'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
-
