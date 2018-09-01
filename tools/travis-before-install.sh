@@ -14,7 +14,8 @@ pushd builds
 # pinned `virtualenv` to the last known working version to avoid this failure.
 # Appears we had some issues with certificates on Travis. It looks like
 # bumping to 14.0.6 will help.
-pip install -U 'virtualenv==14.0.6'
+#pip install -U 'virtualenv==14.0.6'
+pip install -U virtualenv
 
 if [ -n "$USE_DEBUG" ]
 then
