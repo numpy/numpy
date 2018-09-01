@@ -7991,6 +7991,12 @@ add_newdoc('numpy.core.numerictypes', 'complex256',
 
     """)
 
+add_newdoc('numpy.core.numerictypes', 'float16',
+    """
+    16-bit floating-point number. Character code 'e'.
+
+    """)
+
 add_newdoc('numpy.core.numerictypes', 'float32',
     """
     32-bit floating-point number. Character code 'f'. C float compatible.
