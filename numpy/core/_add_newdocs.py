@@ -8029,3 +8029,31 @@ add_newdoc('numpy.core.numerictypes', 'int64',
 
 add_newdoc('numpy.core.numerictypes', 'object_',
     """Any Python object.  Character code: 'O'.""")
+
+add_newdoc('numpy.core.numerictypes', 'uint8',
+    """
+    8-bit unsigned integer. Character code ``'B'``. C unsigned char
+    compatible.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'uint16',
+    """
+    16-bit unsigned integer. Character code ``'H'``. C unsigned short
+    compatible.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'uint32',
+    """
+    32-bit unsigned integer. Character code ``'I'``. C unsigned int
+    compatible.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'uint64',
+    """
+    64-bit unsigned integer. Character code ``'L'``. C unsigned long long
+    compatible.
+
+    """)
