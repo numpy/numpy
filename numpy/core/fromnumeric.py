@@ -2394,8 +2394,14 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out,
-                          keepdims=keepdims, where=where)
+    result = _wrapreduction(a, np.logical_or, 'any', axis, None, out,
+                            keepdims=keepdims, where=where)
+    if result is None:
+        return None
+    try:
+        return result.astype('bool')
+    except:
+        return bool(result)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None, *,
@@ -2486,8 +2492,14 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     (28293632, 28293632, array(True)) # may vary
 
     """
-    return _wrapreduction(a, np.logical_and, 'all', axis, None, out,
-                          keepdims=keepdims, where=where)
+    result = _wrapreduction(a, np.logical_and, 'all', axis, None, out,
+                            keepdims=keepdims, where=where)
+    if result is None:
+        return None
+    try:
+        return result.astype('bool')
+    except:
+        return bool(result)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):

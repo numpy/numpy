@@ -3910,7 +3910,6 @@ def test_complex_nan_comparisons():
                 assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
                 assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
 
-
 def test_rint_big_int():
     # np.rint bug for large integer values on Windows 32-bit and MKL
     # https://github.com/numpy/numpy/issues/6685
@@ -4009,10 +4008,47 @@ def test_bad_legacy_ufunc_silent_errors():
     with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
         ncu_tests.always_error.at(arr, [0, 1, 2], arr)
 
-
 @pytest.mark.parametrize('x1', [np.arange(3.0), [0.0, 1.0, 2.0]])
 def test_bad_legacy_gufunc_silent_errors(x1):
     # Verify that an exception raised in a gufunc loop propagates correctly.
     # The signature of always_error_gufunc is '(i),()->()'.
     with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
         ncu_tests.always_error_gufunc(x1, 0.0)
+
+def test_any_as_bool():
+    """Regression test for gh-4352: any must return bool for object arrays"""
+    a = np.zeros(2, dtype='O')
+    b = np.ones(2, dtype='O')
+    c = np.array([1,0], dtype='O')
+    d = [a, b, c]
+    e = np.array([1.5, 2.4], dtype=object)
+    f = np.array([0.0, 2.4], dtype=object)
+    g = np.array([object(), 2.4], dtype=object)
+    h = np.array([np.array([3]), 0], dtype=object)
+    assert_equal(np.any(a), False)
+    assert_equal(np.any(b), True)
+    assert_equal(np.any(c), True)
+    assert_equal(np.any(d, axis=1), np.array([False, True, True]))
+    assert_equal(np.any(e), True)
+    assert_equal(np.any(f), True)
+    assert_equal(np.any(g), True)
+    assert_equal(np.any(h), True)
+
+def test_all_as_bool():
+    """Regression test for gh-4352: all must return bool for object arrays"""
+    a = np.zeros(2, dtype='O')
+    b = np.ones(2, dtype='O')
+    c = np.array([1,0], dtype='O')
+    d = [a, b, c]
+    e = np.array([1.5, 2.4], dtype=object)
+    f = np.array([0.0, 2.4], dtype=object)
+    g = np.array([object(), 2.4], dtype=object)
+    h = np.array([np.array([3]), 0], dtype=object)
+    assert_equal(np.all(a), False)
+    assert_equal(np.all(b), True)
+    assert_equal(np.all(c), False)
+    assert_equal(np.all(d, axis=1), np.array([False, True, False]))
+    assert_equal(np.all(e), True)
+    assert_equal(np.all(f), False)
+    assert_equal(np.all(g), True)
+    assert_equal(np.all(h), False)
