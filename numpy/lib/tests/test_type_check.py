@@ -429,6 +429,27 @@ class TestRealIfClose(object):
         assert_all(isrealobj(b))
 
 
+class TestAsScalar(object):
+
+    def test_basic(self):
+        s = np.asscalar(np.array([1.0]))
+        assert_equal(s, 1.0)
+        s = np.asscalar(1)
+        assert_equal(s, 1)
+        s = np.asscalar(2j)
+        assert_equal(s, 2j)
+
+    def test_badvalues(self):
+        assert_raises(ValueError,
+                      np.asscalar, np.array([1.0, 2.0]))
+        assert_raises(AttributeError,
+                      np.asscalar, [])
+        assert_raises(AttributeError,
+                      np.asscalar, [1])
+        assert_raises(AttributeError,
+                      np.asscalar, min)
+
+
 class TestArrayConversion(object):
 
     def test_asfarray(self):
