@@ -32,7 +32,6 @@ env:
 
 python:
   - 2.7
-  - 3.4
   - 3.5
   - 3.6
 matrix:
@@ -49,7 +48,9 @@ matrix:
           packages:
             - dpkg
             - debootstrap
-    - python: 3.4
+    - python: 3.5
+      dist: xenial  # Required for python3.5-dbg
+      sudo: true    # travis-ci/travis-ci#9069
       env: USE_DEBUG=1
       addons:
         apt:
