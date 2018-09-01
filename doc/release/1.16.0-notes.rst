@@ -2,6 +2,15 @@
 NumPy 1.16.0 Release Notes
 ==========================
 
+This NumPy release is the last one to support Python 2.7. It will be maintained
+as a long term release with bug fixes only through 2020. To that end, the
+planned code reorganization detailed in NEP-0015 has been made in order to
+facilitate backporting fixes from future releases, which will now have the
+same code organization.
+
+Support for Python 3.4 been dropped in this release, the supported Python
+versions are 2.7 and 3.5-3.7. The wheels are linked with OpenBLAS v0.3.0 .
+
 
 Highlights
 ==========
@@ -27,8 +36,11 @@ and not documented. They will be removed in the 1.18 release. Use
 These were deprecated in 1.10, had no tests, and seem to no longer work in
 1.15 anyway.
 
+
 Future Changes
 ==============
+
+* NumPy 1.17 will drop support for Python 2.7.
 
 
 Compatibility notes

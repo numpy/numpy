@@ -46,6 +46,8 @@ setup_base()
   if [ -z "$USE_DEBUG" ]; then
     $PIP install -v . 2>&1 | tee log
   else
+    # Python3.5-dbg on travis seems to need this
+    export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
     $PYTHON setup.py build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
