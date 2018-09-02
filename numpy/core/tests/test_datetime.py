@@ -260,6 +260,21 @@ class TestDateTime(object):
         arr = np.array([dt, dt]).astype('datetime64')
         assert_equal(arr.dtype, np.dtype('M8[us]'))
 
+    @pytest.mark.parametrize("unit", [
+    # test all date / time units and use
+    # "generic" to select generic unit
+    ("Y"), ("M"), ("W"), ("D"), ("h"), ("m"),
+    ("s"), ("ms"), ("us"), ("ns"), ("ps"),
+    ("fs"), ("as"), ("generic") ])
+    def test_timedelta_np_int_construction(self, unit):
+        # regression test for gh-7617
+        if unit != "generic":
+            assert_equal(np.timedelta64(np.int64(123), unit),
+                         np.timedelta64(123, unit))
+        else:
+            assert_equal(np.timedelta64(np.int64(123)),
+                         np.timedelta64(123))
+
     def test_timedelta_scalar_construction(self):
         # Construct with different units
         assert_equal(np.timedelta64(7, 'D'),
