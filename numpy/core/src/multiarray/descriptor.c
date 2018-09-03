@@ -1439,6 +1439,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         PyObject *obj2;
         obj2 = PyUnicode_AsASCIIString(obj);
         if (obj2 == NULL) {
+            /* Convert the exception into a TypeError */
+            PyObject *err = PyErr_Occurred();
+            if (PyErr_GivenExceptionMatches(err, PyExc_UnicodeEncodeError)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "data type not understood");
+            }
             return NPY_FAIL;
         }
         retval = PyArray_DescrConverter(obj2, at);
