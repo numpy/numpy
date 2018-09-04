@@ -317,13 +317,6 @@ class ABCPolyBase(object):
             )
             needs_parens = True
 
-        # filter out uninteresting coefficients
-        filtered_coeffs = [
-            (i, c)
-            for i, c in enumerate(self.coef)
-            # if not (c == 0)  # handle NaN
-        ]
-
         mute = r"\color{{LightGray}}{{{}}}".format
 
         parts = []
