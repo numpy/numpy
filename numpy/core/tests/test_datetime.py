@@ -7,7 +7,7 @@ import datetime
 import pytest
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
-    assert_raises_regex,
+    assert_raises_regex
     )
 from numpy.compat import pickle
 
@@ -709,12 +709,30 @@ class TestDateTime(object):
     def test_cast_overflow(self):
         # gh-4486
         def cast():
+            # this will raise a ValueError because fs *input* precision
+            # / units only has a span of 2.6 hours from the epoch
+            # see gh-5452; unreasonable time spans at initialization 
+            # are now caught before potential casting overflows
             numpy.datetime64("1971-01-01 00:00:00.000000000000000").astype("<M8[D]")
-        assert_raises(OverflowError, cast)
+        assert_raises(ValueError, cast)
 
         def cast2():
-            numpy.datetime64("2014").astype("<M8[fs]")
+            # this will raise an OverflowError because the time span
+            # from epoch is small enough but precision is too high
+            # for the casting operation
+            numpy.datetime64("1970-01-01 00:00:00.000000000000000").astype("<M8[D]")
         assert_raises(OverflowError, cast2)
+
+        def cast3():
+            # this currently still overflows because the initialization
+            # is clearly allowed and the time span only becomes
+            # unreasonable at casting time (whether this particular
+            # casting operation should raise an OverflowError or
+            # ValueError might be open to debate given the clearly
+            # unreasonable attempt to cast to a unit with 2.6 hour
+            # from the epoch span limit)
+            numpy.datetime64("2014").astype("<M8[fs]")
+        assert_raises(OverflowError, cast3)
 
     def test_pyobject_roundtrip(self):
         # All datetime types should be able to roundtrip through object
@@ -740,18 +758,46 @@ class TestDateTime(object):
         for unit in ['M8[as]', 'M8[16fs]', 'M8[ps]', 'M8[us]',
                      'M8[300as]', 'M8[20us]']:
             b = a.copy().view(dtype=unit)
-            b[0] = '-0001-01-01T00'
-            b[1] = '-0001-12-31T00'
-            b[2] = '0000-01-01T00'
-            b[3] = '0001-01-01T00'
+            # 1e-7 seconds from epoch:
+            b[0] = '1969-12-31T23:59:59.999999'
+            # 9.0 seconds from epoch, near as unit span limit:
+            b[1] = '1969-12-31T23:59:51.0'
+            # similar thing on other side of epoch:
+            b[2] = '1970-01-01T00:00:09.19'
+            # could perhaps use more creative values
+            # here, but must be cautious to respect
+            # allowable spans following fix to gh-5452
+            b[3] = '1969-12-31T23:59:59.999999'
             b[4] = '1969-12-31T23:59:59.999999'
             b[5] = '1970-01-01T00'
-            b[6] = '9999-12-31T23:59:59.999999'
-            b[7] = '10000-01-01T00'
+            b[6] = '1970-01-01T00'
+            b[7] = '1970-01-01T00'
             b[8] = 'NaT'
 
             assert_equal(b.astype(object).astype(unit), b,
                             "Error roundtripping unit %s" % unit)
+
+    @pytest.mark.parametrize("time_str", [
+        # original example from gh-5452
+        # sub-ns units / precision can't handle multiple year
+        # time spans from the epoch
+        ('2015-01-01T01:00:00.0000000000'),
+        # test a value just beyond the ps threshold of 106 days 
+        # we currently reject on the seconds resolution for ps
+        ('1970-04-17T00:00:01.0000000000'),
+        # likewise for fs threshold of 2.6 hours
+        # we currently reject on the seconds resolution for fs
+        ('1970-01-01T02:36:01.000000000000000'),
+        # likewise for as threshold of 9.2 seconds, also
+        # resolved on seconds resolution
+        # NOTE: may want to increase resolution here a bit in
+        # future
+        ('1970-01-01T00:00:10.000000000000000000'),
+        ])
+    def test_span_limit_handling(self, time_str):
+        # regression test for gh-5452
+        with assert_raises_regex(ValueError, 'Time span'):
+            numpy.datetime64(time_str)
 
     def test_month_truncation(self):
         # Make sure that months are truncating correctly
