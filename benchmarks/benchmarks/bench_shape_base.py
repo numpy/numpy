@@ -33,18 +33,6 @@ class Block(Benchmark):
         self.six = 6 * np.ones(5 * n)
         self.zero = np.zeros((2 * n, 6 * n))
 
-        self.a000 = np.ones((2 * n, 2 * n, 2 * n), int) * 1
-
-        self.a100 = np.ones((3 * n, 2 * n, 2 * n), int) * 2
-        self.a010 = np.ones((2 * n, 3 * n, 2 * n), int) * 3
-        self.a001 = np.ones((2 * n, 2 * n, 3 * n), int) * 4
-
-        self.a011 = np.ones((2 * n, 3 * n, 3 * n), int) * 5
-        self.a101 = np.ones((3 * n, 2 * n, 3 * n), int) * 6
-        self.a110 = np.ones((3 * n, 3 * n, 2 * n), int) * 7
-
-        self.a111 = np.ones((3 * n, 3 * n, 3 * n), int) * 8
-
     def time_block_simple_row_wise(self, n):
         np.block([self.a_2d, self.b_2d])
 
@@ -72,6 +60,29 @@ class Block(Benchmark):
             [self.zero]
         ])
 
+    def time_no_lists(self, n):
+        np.block(1)
+        np.block(np.eye(3 * n))
+
+
+class Block3D(Benchmark):
+    params = [1, 10, 100]
+    param_names = ['size']
+
+    def setup(self, n):
+        # Slow setup method: hence separated from the others above
+        self.a000 = np.ones((2 * n, 2 * n, 2 * n), int) * 1
+
+        self.a100 = np.ones((3 * n, 2 * n, 2 * n), int) * 2
+        self.a010 = np.ones((2 * n, 3 * n, 2 * n), int) * 3
+        self.a001 = np.ones((2 * n, 2 * n, 3 * n), int) * 4
+
+        self.a011 = np.ones((2 * n, 3 * n, 3 * n), int) * 5
+        self.a101 = np.ones((3 * n, 2 * n, 3 * n), int) * 6
+        self.a110 = np.ones((3 * n, 3 * n, 2 * n), int) * 7
+
+        self.a111 = np.ones((3 * n, 3 * n, 3 * n), int) * 8
+
     def time_3d(self, n):
         np.block([
             [
@@ -84,6 +95,5 @@ class Block(Benchmark):
             ]
         ])
 
-    def time_no_lists(self, n):
-        np.block(1)
-        np.block(np.eye(3 * n))
+    # Retain old benchmark name for backward compat
+    time_3d.benchmark_name = "bench_shape_base.Block.time_3d"
