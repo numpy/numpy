@@ -73,8 +73,8 @@
           fragment="NumPy_Backward_Compatibility")
 {
   SWIGINTERN int
+  SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val)
   {
-    PyArray_Descr * ulongDescr = PyArray_DescrNewFromType(NPY_ULONG);
     %#if PY_VERSION_HEX < 0x03000000
     if (PyInt_Check(obj)) 
     {
@@ -120,7 +120,7 @@
     }
 %#endif
     if (!PyArray_IsScalar(obj,Integer)) return SWIG_TypeError;
-    SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val)
+    PyArray_Descr * ulongDescr = PyArray_DescrNewFromType(NPY_ULONG);
     PyArray_CastScalarToCtype(obj, (void*)val, ulongDescr);
     Py_DECREF(ulongDescr);
     return SWIG_OK;
