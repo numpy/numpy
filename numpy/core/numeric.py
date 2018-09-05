@@ -1942,10 +1942,46 @@ def isscalar(num):
     val : bool
         True if `num` is a scalar type, False if it is not.
 
+    See Also
+    --------
+    ndim : Get the number of dimensions of an array
+
+    Notes
+    -----
+    In almost all cases ``np.ndim(x) == 0`` should be used instead of this
+    function, as that will also return true for 0d arrays. This is how
+    numpy overloads functions in the style of the ``dx`` arguments to `gradient`
+    and the ``bins`` argument to `histogram`. Some key differences:
+
+    +--------------------------------------+---------------+-------------------+
+    | x                                    |``isscalar(x)``|``np.ndim(x) == 0``|
+    +======================================+===============+===================+
+    | PEP 3141 numeric objects (including  | ``True``      | ``True``          |
+    | builtins)                            |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | builtin string and buffer objects    | ``True``      | ``True``          |
+    +--------------------------------------+---------------+-------------------+
+    | other builtin objects, like          | ``False``     | ``True``          |
+    | `pathlib.Path`, `Exception`,         |               |                   |
+    | the result of `re.compile`           |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | third-party objects like             | ``False``     | ``True``          |
+    | `matplotlib.figure.Figure`           |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | zero-dimensional numpy arrays        | ``False``     | ``True``          |
+    +--------------------------------------+---------------+-------------------+
+    | other numpy arrays                   | ``False``     | ``False``         |
+    +--------------------------------------+---------------+-------------------+
+    | `list`, `tuple`, and other sequence  | ``False``     | ``False``         |
+    | objects                              |               |                   |
+    +--------------------------------------+---------------+-------------------+
+
     Examples
     --------
     >>> np.isscalar(3.1)
     True
+    >>> np.isscalar(np.array(3.1))
+    False
     >>> np.isscalar([3.1])
     False
     >>> np.isscalar(False)
