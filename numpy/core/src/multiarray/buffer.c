@@ -299,13 +299,18 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             tmp = PyUnicode_AsUTF8String(name);
 #else
             tmp = name;
+            Py_INCREF(tmp);
 #endif
             if (tmp == NULL || PyBytes_AsStringAndSize(tmp, &p, &len) < 0) {
                 PyErr_Clear();
                 PyErr_SetString(PyExc_ValueError, "invalid field name");
+                Py_XDECREF(tmp);
                 return -1;
             }
-            if (_append_char(str, ':') < 0) return -1;
+            if (_append_char(str, ':') < 0) {
+                Py_DECREF(tmp);
+                return -1;
+            }
             while (len > 0) {
                 if (*p == ':') {
                     Py_DECREF(tmp);
@@ -314,14 +319,18 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                                     "field names");
                     return -1;
                 }
-                if (_append_char(str, *p) < 0) return -1;
+                if (_append_char(str, *p) < 0) {
+                    Py_DECREF(tmp);
+                    return -1;
+                }
                 ++p;
                 --len;
             }
-            if (_append_char(str, ':') < 0) return -1;
-#if defined(NPY_PY3K)
+            if (_append_char(str, ':') < 0) {
+                Py_DECREF(tmp);
+                return -1;
+            }
             Py_DECREF(tmp);
-#endif
         }
         if (_append_char(str, '}') < 0) return -1;
     }
