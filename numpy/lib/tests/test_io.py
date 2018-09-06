@@ -567,12 +567,12 @@ class LoadTxtBase(object):
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
     def test_encoding(self):
