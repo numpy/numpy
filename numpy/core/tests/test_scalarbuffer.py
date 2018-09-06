@@ -28,35 +28,36 @@ scalars_and_codes = [
     (np.cdouble, 'Zd'),
     (np.clongdouble, 'Zg'),
 ]
+scalars_only, codes_only = zip(*scalars_and_codes)
 
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="Python 2 scalars lack a buffer interface")
 class TestScalarPEP3118(object):
 
-    def test_scalar_match_array(self):
-        for scalar, _ in scalars_and_codes:
-            x = scalar()
-            a = np.array([], dtype=np.dtype(scalar))
-            mv_x = memoryview(x)
-            mv_a = memoryview(a)
-            assert_equal(mv_x.format, mv_a.format)
+    @pytest.mark.parametrize('scalar', scalars_only, ids=codes_only)
+    def test_scalar_match_array(self, scalar):
+        x = scalar()
+        a = np.array([], dtype=np.dtype(scalar))
+        mv_x = memoryview(x)
+        mv_a = memoryview(a)
+        assert_equal(mv_x.format, mv_a.format)
 
-    def test_scalar_dim(self):
-        for scalar, _ in scalars_and_codes:
-            x = scalar()
-            mv_x = memoryview(x)
-            assert_equal(mv_x.itemsize, np.dtype(scalar).itemsize)
-            assert_equal(mv_x.ndim, 0)
-            assert_equal(mv_x.shape, ())
-            assert_equal(mv_x.strides, ())
-            assert_equal(mv_x.suboffsets, ())
+    @pytest.mark.parametrize('scalar', scalars_only, ids=codes_only)
+    def test_scalar_dim(self, scalar):
+        x = scalar()
+        mv_x = memoryview(x)
+        assert_equal(mv_x.itemsize, np.dtype(scalar).itemsize)
+        assert_equal(mv_x.ndim, 0)
+        assert_equal(mv_x.shape, ())
+        assert_equal(mv_x.strides, ())
+        assert_equal(mv_x.suboffsets, ())
 
-    def test_scalar_known_code(self):
-        for scalar, code in scalars_and_codes:
-            x = scalar()
-            mv_x = memoryview(x)
-            assert_equal(mv_x.format, code)
+    @pytest.mark.parametrize('scalar, code', scalars_and_codes, ids=codes_only)
+    def test_scalar_known_code(self, scalar, code):
+        x = scalar()
+        mv_x = memoryview(x)
+        assert_equal(mv_x.format, code)
 
     def test_void_scalar_structured_data(self):
         dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
