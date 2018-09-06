@@ -1,9 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
-import unittest
 import os
 import sys
 import copy
+import pytest
+
 import pytest
 
 from numpy import (
@@ -305,9 +306,15 @@ class TestIntent(object):
         assert_(not intent.in_.is_intent('c'))
 
 
-class _test_shared_memory(object):
+class TestSharedMemory(object):
     num2seq = [1, 2]
     num23seq = [[1, 2, 3], [4, 5, 6]]
+
+    @pytest.fixture(autouse=True, scope='class', params=_type_names)
+    def setup_type(self, request):
+        request.cls.type = Type(request.param)
+        request.cls.array = lambda self, dims, intent, obj: \
+            Array(Type(request.param), dims, intent, obj)
 
     def test_in_from_2seq(self):
         a = self.array([2], intent.in_, self.num2seq)
@@ -574,12 +581,3 @@ class _test_shared_memory(object):
             assert_(obj.flags['FORTRAN'])  # obj attributes changed inplace!
             assert_(not obj.flags['CONTIGUOUS'])
             assert_(obj.dtype.type is self.type.dtype)  # obj changed inplace!
-
-
-for t in _type_names:
-    exec('''\
-class TestGen_%s(_test_shared_memory):
-    def setup(self):
-        self.type = Type(%r)
-    array = lambda self,dims,intent,obj: Array(Type(%r),dims,intent,obj)
-''' % (t, t, t))
