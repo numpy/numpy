@@ -189,13 +189,14 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
+
 def _reshape_dispatcher(a, newshape, order=None):
     return (a,)
 
 
 # not deprecated --- copy if necessary, view otherwise
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, newshape, order='C'):
+def reshape(a, newshape, order='C', copy=False):
     """
     Gives a new shape to an array without changing its data.
 
@@ -221,6 +222,12 @@ def reshape(a, newshape, order='C'):
         'A' means to read / write the elements in Fortran-like index
         order if `a` is Fortran *contiguous* in memory, C-like order
         otherwise.
+    copy : {True, False, np.never_copy}, optional
+        Whether or not a copy is forced. If ``False`` is given, a copy
+        will be made when necessary. ``np.never_copy`` will cause an
+        error to be raised if `a` cannot be reshaped without a copy.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------
@@ -228,6 +235,8 @@ def reshape(a, newshape, order='C'):
         This will be a new view object if possible; otherwise, it will
         be a copy.  Note there is no guarantee of the *memory layout* (C- or
         Fortran- contiguous) of the returned array.
+        The `copy` argument can be used to enforce a copy or raise an error
+        when a `copy` would be made but is not desired.
 
     See Also
     --------
