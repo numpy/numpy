@@ -7972,116 +7972,146 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 
 add_newdoc('numpy.core.numerictypes', 'bool_',
     """
-    Boolean type (True or False), stored as a byte. Character code: ``'?'``.
+    Boolean type (True or False), stored as a byte.
+    Character code: ``'?'``.
     Alias: bool8.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'complex64',
+add_newdoc('numpy.core.numerictypes', 'byte',
     """
-    Complex number type composed of two 32 bit floats. Character code:
-    ``'F'``.
+    Signed integer type, compatible with C ``char``.
+    Character code: ``'b'``.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'complex128',
+add_newdoc('numpy.core.numerictypes', 'short',
     """
-    Complex number type composed of two 64 bit floats. Character code:
-    ``'D'``. Python complex compatible.
+    Signed integer type, compatible with C ``short``.
+    Character code: ``'h'``.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'complex256',
+add_newdoc('numpy.core.numerictypes', 'intc',
     """
-    Complex number type composed of two 128-bit floats. Character code:
-    ``'G'``.
+    Signed integer type, compatible with C ``int``.
+    Character code: ``'i'``.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float16',
+add_newdoc('numpy.core.numerictypes', 'int_',
     """
-    16-bit floating-point number. Character code ``'e'``.
+    Signed integer type, compatible with Python `int` anc C ``long``.
+    Character code: ``'l'``.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float32',
+add_newdoc('numpy.core.numerictypes', 'longlong',
     """
-    32-bit floating-point number. Character code ``'f'``. C float compatible.
+    Signed integer type, compatible with C ``long long``. 
+    Character code: ``'q'``.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float64',
+add_newdoc('numpy.core.numerictypes', 'ubyte',
     """
-    64-bit floating-point number. Character code ``'d'``. Python float
-    compatible.
+    Unsigned integer type, compatible with C ``unsigned char``.
+    Character code: ``'B'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'ushort',
+    """
+    Unsigned integer type, compatible with C ``unsigned short``.
+    Character code: ``'H'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'uintc',
+    """
+    Unsigned integer type, compatible with C ``unsigned int``.
+    Character code: ``'I'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'uint',
+    """
+    Unsigned integer type, compatible with C ``unsigned long``.
+    Character code: ``'L'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'ulonglong',
+    """
+    Signed integer type, compatible with C ``unsigned long long``.
+    Character code: ``'Q'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'half',
+    """
+    Half-precision floating-point number type.
+    Character code ``'e'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'single',
+    """
+    Single-precision floating-point number type, compatible with C ``float``.
+    Character code ``'f'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'float_',
+    """
+    Double-precision floating-point number type, compatible with Python `float`
+    and C ``double``.
+    Character code ``'d'``.
+
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'longfloat',
+    """
+    Extended-precision floating-point number type, compatible with C
+    ``long double`` but not necessarily with IEEE 754 quadruple-precision. 
+    Character code: ``'g'``.
 
     """)
 
 add_newdoc('numpy.core.numerictypes', 'float96',
     """
+    96-bit extended-precision floating-point number type.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float128',
+
+add_newdoc('numpy.core.numerictypes', 'csingle',
     """
-    128-bit floating-point number. Character code: ``'g'``. C long float
-    compatible.
-
-    """)
-
-add_newdoc('numpy.core.numerictypes', 'int8',
-    """
-    8-bit integer. Character code ``'b'``. C char compatible.
-
-    """)
-
-add_newdoc('numpy.core.numerictypes', 'int16',
-    """
-    16-bit integer. Character code ``'h'``. C short compatible.
+    Complex number type composed of two single-precision floating-point
+    numbers.
+    Character code: `'F'``.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'int32',
+add_newdoc('numpy.core.numerictypes', 'complex_',
     """
-    32-bit integer. Character code ``'i'``. C int compatible.
+    Complex number type composed of two double-precision floating-point
+    numbers, compatible with Python `complex`.
+    Character code: ``'D'``.
 
     """)
 
-add_newdoc('numpy.core.numerictypes', 'int64',
+add_newdoc('numpy.core.numerictypes', 'clongfloat',
     """
-    64-bit integer. Character code ``'l'``. Python int compatible.
+    Complex number type composed of two extended-precision floating-point
+    numbers.
+    Character code: ``'G'``.
 
     """)
 
 add_newdoc('numpy.core.numerictypes', 'object_',
     """
-    Any Python object.  Character code: ``'O'``.
-
-    """)
-
-add_newdoc('numpy.core.numerictypes', 'uint8',
-    """
-    8-bit unsigned integer. Character code ``'B'``. C unsigned char
-    compatible.
-
-    """)
-
-add_newdoc('numpy.core.numerictypes', 'uint16',
-    """
-    16-bit unsigned integer. Character code ``'H'``. C unsigned short
-    compatible.
-
-    """)
-
-add_newdoc('numpy.core.numerictypes', 'uint32',
-    """
-    32-bit unsigned integer. Character code ``'I'``. C unsigned int
-    compatible.
-
-    """)
-
-add_newdoc('numpy.core.numerictypes', 'uint64',
-    """
-    64-bit unsigned integer. Character code ``'L'``. C unsigned long long
-    compatible.
+    Any Python object.
+    Character code: ``'O'``.
 
     """)
