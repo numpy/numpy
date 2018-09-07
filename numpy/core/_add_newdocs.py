@@ -7977,36 +7977,41 @@ def get_type(place, obj):
         return None
 
 def type_aliases(place, aliases):
-    return [(alias_type, doc) for (alias, doc) in aliases
-                for alias_type in (get_type(place, alias),)
-                if alias_type is not None]
+    def type_aliases_gen():
+        for (alias, doc) in aliases:
+            alias_type = get_type(place, alias)
+            if alias_type is not None:
+                yield (alias_type, doc)
+    return list(type_aliases_gen())
 
 integer_aliases = type_aliases('numpy.core.numerictypes', [
-    ('int8', '8-bit singed integer (-128 to 127)'),
-    ('int16', '16-bit singed integer (-32768 to 32767)'),
-    ('int32', '32-bit singed integer (-2147483648 to 2147483647)'),
-    ('int64', '64-bit singed integer (-9223372036854775808 to 9223372036854775807)'),
-    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``ssize_t``'),
+    ('int8', '8-bit signed integer (-128 to 127)'),
+    ('int16', '16-bit signed integer (-32768 to 32767)'),
+    ('int32', '32-bit signed integer (-2147483648 to 2147483647)'),
+    ('int64', '64-bit signed integer (-9223372036854775808 to 9223372036854775807)'),
+    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'),
     ])
 
 unsigned_integer_aliases = type_aliases('numpy.core.numerictypes', [
-    ('uint8', '8-bit unsinged integer (0 to 255)'),
-    ('uint16', '16-bit unsinged integer (0 to 65535)'),
-    ('uint32', '32-bit unsinged integer (0 to 4294967295)'),
-    ('uint64', '64-bit unsinged integer (0 to 18446744073709551615)'),
-    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``size_t``'),
+    ('uint8', '8-bit unsigned integer (0 to 255)'),
+    ('uint16', '16-bit unsigned integer (0 to 65535)'),
+    ('uint32', '32-bit unsigned integer (0 to 4294967295)'),
+    ('uint64', '64-bit unsigned integer (0 to 18446744073709551615)'),
+    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'),
     ])
 
 float_aliases = type_aliases('numpy.core.numerictypes', [
     ('float16', '16-bit-precision floating-point number type: sign bit, 5 bits exponent, 10 bits mantissa'),
     ('float32', '32-bit-precision floating-point number type: sign bit, 8 bits exponent, 23 bits mantissa'),
     ('float64', '64-bit precision floating-point number type: sign bit, 11 bits exponent, 52 bits mantissa'),
+    ('float96', '96-bit extended-precision floating-point number type'),
     ('float128', '128-bit extended-precision floating-point number type'),
     ])
 
 complex_aliases = type_aliases('numpy.core.numerictypes', [
     ('complex64', 'Complex number type composed of 2 32-bit-precision floating-point numbers'),
     ('complex128', 'Complex number type composed of 2 64-bit-precision floating-point numbers'),
+    ('complex192', 'Complex number type composed of 2 96-bit extended-precision floating-point numbers'),
     ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
     ])
 
@@ -8107,27 +8112,21 @@ add_newdoc('numpy.core.numerictypes', 'single',
     {}
     """.format(extra_alias_doc('numpy.core.numerictypes', 'single', float_aliases)))
 
-add_newdoc('numpy.core.numerictypes', 'float_',
+add_newdoc('numpy.core.numerictypes', 'double',
     """
     Double-precision floating-point number type, compatible with Python `float`
     and C ``double``.
     Character code ``'d'``.
     {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'float_', float_aliases)))
+    """.format(extra_alias_doc('numpy.core.numerictypes', 'double', float_aliases)))
 
-add_newdoc('numpy.core.numerictypes', 'longfloat',
+add_newdoc('numpy.core.numerictypes', 'longdouble',
     """
     Extended-precision floating-point number type, compatible with C
     ``long double`` but not necessarily with IEEE 754 quadruple-precision. 
     Character code: ``'g'``.
     {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'longfloat', float_aliases)))
-
-add_newdoc('numpy.core.numerictypes', 'float96',
-    """
-    96-bit extended-precision floating-point number type.
-    
-    """)
+    """.format(extra_alias_doc('numpy.core.numerictypes', 'longdouble', float_aliases)))
 
 
 add_newdoc('numpy.core.numerictypes', 'csingle',
@@ -8146,19 +8145,13 @@ add_newdoc('numpy.core.numerictypes', 'complex_',
     {}
     """.format(extra_alias_doc('numpy.core.numerictypes', 'complex_', complex_aliases)))
 
-add_newdoc('numpy.core.numerictypes', 'clongfloat',
+add_newdoc('numpy.core.numerictypes', 'clongdouble',
     """
     Complex number type composed of two extended-precision floating-point
     numbers.
     Character code: ``'G'``.
     {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'clongfloat', complex_aliases)))
-
-add_newdoc('numpy.core.numerictypes', 'complex192',
-    """
-    Complex number type composed of two 96-bit extended-precision numbers.
-
-    """)
+    """.format(extra_alias_doc('numpy.core.numerictypes', 'clongdouble', complex_aliases)))
 
 add_newdoc('numpy.core.numerictypes', 'object_',
     """
