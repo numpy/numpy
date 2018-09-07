@@ -4133,14 +4133,11 @@ class TestPutmask(object):
     def test_mask_size(self):
         assert_raises(ValueError, np.putmask, np.array([1, 2, 3]), [True], 5)
 
-    def tst_byteorder(self, dtype):
+    @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
+    def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
         np.putmask(x, [True, False, True], -1)
         assert_array_equal(x, [-1, 2, -1])
-
-    def test_ip_byteorder(self):
-        for dtype in ('>i4', '<i4'):
-            self.tst_byteorder(dtype)
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4191,13 +4188,10 @@ class TestTake(object):
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
 
-    def tst_byteorder(self, dtype):
+    @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
+    def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
         assert_array_equal(x.take([0, 2, 1]), [1, 3, 2])
-
-    def test_ip_byteorder(self):
-        for dtype in ('>i4', '<i4'):
-            self.tst_byteorder(dtype)
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4574,19 +4568,16 @@ class TestIO(object):
 
 
 class TestFromBuffer(object):
-    def tst_basic(self, buffer, expected, kwargs):
-        assert_array_equal(np.frombuffer(buffer,**kwargs), expected)
-
-    def test_ip_basic(self):
-        for byteorder in ['<', '>']:
-            for dtype in [float, int, complex]:
-                dt = np.dtype(dtype).newbyteorder(byteorder)
-                x = (np.random.random((4, 7))*5).astype(dt)
-                buf = x.tobytes()
-                self.tst_basic(buf, x.flat, {'dtype':dt})
+    @pytest.mark.parametrize('byteorder', ['<', '>'])
+    @pytest.mark.parametrize('dtype', [float, int, complex])
+    def test_basic(self, byteorder, dtype):
+        dt = np.dtype(dtype).newbyteorder(byteorder)
+        x = (np.random.random((4, 7)) * 5).astype(dt)
+        buf = x.tobytes()
+        assert_array_equal(np.frombuffer(buf, dtype=dt), x.flat)
 
     def test_empty(self):
-        self.tst_basic(b'', np.array([]), {})
+        assert_array_equal(np.frombuffer(b''), np.array([]))
 
 
 class TestFlat(object):
@@ -5940,9 +5931,10 @@ class TestRepeat(object):
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
 
 
+@pytest.mark.parametrize('dt', [float, Decimal], ids=['float', 'object'])
 class TestNeighborhoodIter(object):
     # Simple, 2d tests
-    def _test_simple2d(self, dt):
+    def test_simple2d(self, dt):
         # Test zero and one padding for simple data type
         x = np.array([[0, 1], [2, 3]], dtype=dt)
         r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt),
@@ -5969,13 +5961,7 @@ class TestNeighborhoodIter(object):
                 x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
-    def test_simple2d(self):
-        self._test_simple2d(float)
-
-    def test_simple2d_object(self):
-        self._test_simple2d(Decimal)
-
-    def _test_mirror2d(self, dt):
+    def test_mirror2d(self, dt):
         x = np.array([[0, 1], [2, 3]], dtype=dt)
         r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt),
              np.array([[0, 1, 1], [0, 1, 1]], dtype=dt),
@@ -5985,14 +5971,8 @@ class TestNeighborhoodIter(object):
                 x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
-    def test_mirror2d(self):
-        self._test_mirror2d(float)
-
-    def test_mirror2d_object(self):
-        self._test_mirror2d(Decimal)
-
     # Simple, 1d tests
-    def _test_simple(self, dt):
+    def test_simple(self, dt):
         # Test padding with constant values
         x = np.linspace(1, 5, 5).astype(dt)
         r = [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 0]]
@@ -6010,14 +5990,8 @@ class TestNeighborhoodIter(object):
                 x, [-1, 1], x[4], NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
-    def test_simple_float(self):
-        self._test_simple(float)
-
-    def test_simple_object(self):
-        self._test_simple(Decimal)
-
     # Test mirror modes
-    def _test_mirror(self, dt):
+    def test_mirror(self, dt):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[2, 1, 1, 2, 3], [1, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 5], [3, 4, 5, 5, 4]], dtype=dt)
@@ -6026,14 +6000,8 @@ class TestNeighborhoodIter(object):
         assert_([i.dtype == dt for i in l])
         assert_array_equal(l, r)
 
-    def test_mirror(self):
-        self._test_mirror(float)
-
-    def test_mirror_object(self):
-        self._test_mirror(Decimal)
-
     # Circular mode
-    def _test_circular(self, dt):
+    def test_circular(self, dt):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[4, 5, 1, 2, 3], [5, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 1], [3, 4, 5, 1, 2]], dtype=dt)
@@ -6041,11 +6009,6 @@ class TestNeighborhoodIter(object):
                 x, [-2, 2], x[0], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
-    def test_circular(self):
-        self._test_circular(float)
-
-    def test_circular_object(self):
-        self._test_circular(Decimal)
 
 # Test stacking neighborhood iterators
 class TestStackedNeighborhoodIter(object):
