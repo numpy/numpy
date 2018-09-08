@@ -18,7 +18,7 @@ from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, broadcast, can_cast, compare_chararrays,
-    concatenate, copyto, count_nonzero, dot, dtype, empty,
+    concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
     inner, int_asbuffer, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,

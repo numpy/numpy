@@ -42,7 +42,7 @@ from . import numerictypes as _nt
 from .umath import absolute, not_equal, isnan, isinf, isfinite, isnat
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, dtype, ndarray,
+                         datetime_as_string, datetime_data, ndarray,
                          set_legacy_print_mode)
 from .fromnumeric import ravel, any
 from .numeric import concatenate, asarray, errstate

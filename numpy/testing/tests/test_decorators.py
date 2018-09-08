@@ -29,7 +29,6 @@ class TestNoseDecorators(object):
         pass
 
     def test_slow(self):
-        import nose
         @dec.slow
         def slow_func(x, y, z):
             pass

@@ -9,7 +9,6 @@ from numpy.testing import (
         )
 from numpy import random
 import sys
-import warnings
 
 
 class TestSeed(object):

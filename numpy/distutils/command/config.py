@@ -436,7 +436,6 @@ int main (void)
                       "involving running executable on the target machine.\n" \
                       "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
                       DeprecationWarning, stacklevel=2)
-        from distutils.ccompiler import CompileError, LinkError
         self._check_compiler()
         exitcode, output = 255, ''
         try:
