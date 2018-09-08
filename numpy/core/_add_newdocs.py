@@ -6457,6 +6457,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
 
       (dtype, offset[, title])
 
+    Offset is limited to C int, which is signed and usually 32 bits.
     If present, the optional title can be any object (if it is a string
     or unicode then it will also be a key in the fields dictionary,
     otherwise it's meta-data). Notice also that the first two elements
