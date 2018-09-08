@@ -435,24 +435,19 @@ def _block(arrays, max_depth, result_ndim):
         # ones to `a.shape` as necessary
         return array(a, ndmin=ndim, copy=False, subok=True)
 
-    def block_recursion(arrays, depth=0):
+    def block_recursion(block_recursion, arrays, depth=0):
+        """ Prevent reference cycles by passing in the function"""
         if depth < max_depth:
             if len(arrays) == 0:
                 raise ValueError('Lists cannot be empty')
-            arrs = [block_recursion(arr, depth+1) for arr in arrays]
+            arrs = [block_recursion(block_recursion, arr, depth+1) for arr in arrays]
             return _nx.concatenate(arrs, axis=-(max_depth-depth))
         else:
             # We've 'bottomed out' - arrays is either a scalar or an array
             # type(arrays) is not list
             return atleast_nd(arrays, result_ndim)
 
-    try:
-        return block_recursion(arrays)
-    finally:
-        # recursive closures have a cyclic reference to themselves, which
-        # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
-        block_recursion = None
+    return block_recursion(block_recursion, arrays)
 
 
 def block(arrays):

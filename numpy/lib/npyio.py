@@ -944,8 +944,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         fencoding = locale.getpreferredencoding()
 
     # not to be confused with the flatten_dtype we import...
-    def flatten_dtype_internal(dt):
-        """Unpack a structured data-type, and produce re-packing info."""
+    def flatten_dtype_internal(flatten_dtype_internal, dt):
+        """Unpack a structured data-type, and produce re-packing info.
+           Prevent reference cycles by passing in the function"""
         if dt.names is None:
             # If the dtype is flattened, return.
             # If the dtype has a shape, the dtype occurs
@@ -964,7 +965,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             packing = []
             for field in dt.names:
                 tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = flatten_dtype_internal(tp)
+                flat_dt, flat_packing = flatten_dtype_internal(flatten_dtype_internal, tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
                 if tp.ndim > 0:
@@ -973,8 +974,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     packing.append((len(flat_dt), flat_packing))
             return (types, packing)
 
-    def pack_items(items, packing):
-        """Pack items into nested lists based on re-packing info."""
+    def pack_items(pack_items, items, packing):
+        """Pack items into nested lists based on re-packing info.
+           Prevent reference cycles by passing in the function"""
         if packing is None:
             return items[0]
         elif packing is tuple:
@@ -985,7 +987,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             start = 0
             ret = []
             for length, subpacking in packing:
-                ret.append(pack_items(items[start:start+length], subpacking))
+                ret.append(pack_items(pack_items, items[start:start+length], subpacking))
                 start += length
             return tuple(ret)
 
@@ -1029,7 +1031,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             items = [conv(val) for (conv, val) in zip(converters, vals)]
 
             # Then pack it according to the dtype's nesting
-            items = pack_items(items, packing)
+            items = pack_items(pack_items, items, packing)
             X.append(items)
             if len(X) > chunk_size:
                 yield X
@@ -1060,7 +1062,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             warnings.warn('loadtxt: Empty input file: "%s"' % fname, stacklevel=2)
         N = len(usecols or first_vals)
 
-        dtype_types, packing = flatten_dtype_internal(dtype)
+        dtype_types, packing = flatten_dtype_internal(flatten_dtype_internal, dtype)
         if len(dtype_types) > 1:
             # We're dealing with a structured array, each field of
             # the dtype matches a column
@@ -1111,9 +1113,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     finally:
         if fown:
             fh.close()
-        # recursive closures have a cyclic reference to themselves, which
-        # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
         flatten_dtype_internal = None
         pack_items = None
 
