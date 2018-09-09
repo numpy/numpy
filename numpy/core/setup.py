@@ -901,6 +901,7 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),
             join('src', 'multiarray', 'common.h'),
+            join('src', 'multiarray', 'number.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),

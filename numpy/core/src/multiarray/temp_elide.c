@@ -166,7 +166,7 @@ check_callers(int * cannot)
             return 0;
         }
         /* get multiarray base address */
-        if (dladdr(&PyArray_SetNumericOps, &info)) {
+        if (dladdr(&PyArray_INCREF, &info)) {
             pos_ma_start = info.dli_fbase;
             pos_ma_end = info.dli_fbase;
         }

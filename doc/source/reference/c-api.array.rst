@@ -3209,11 +3209,15 @@ Internal Flexibility
     setting a Python Error) if one of the objects being assigned is not
     callable.
 
+    .. deprecated:: 1.16
+
 .. c:function:: PyObject* PyArray_GetNumericOps(void)
 
     Return a Python dictionary containing the callable Python objects
     stored in the internal arithmetic operation table. The keys of
     this dictionary are given in the explanation for :c:func:`PyArray_SetNumericOps`.
+
+    .. deprecated:: 1.16
 
 .. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
 

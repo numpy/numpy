@@ -2990,7 +2990,7 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
 {
     PyObject *oldops = NULL;
 
-    if ((oldops = PyArray_GetNumericOps()) == NULL) {
+    if ((oldops = _PyArray_GetNumericOps()) == NULL) {
         return NULL;
     }
     /*
@@ -3000,8 +3000,10 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
      */
     if (kwds && PyArray_SetNumericOps(kwds) == -1) {
         Py_DECREF(oldops);
-        PyErr_SetString(PyExc_ValueError,
+        if (PyErr_Occurred() == NULL) {
+            PyErr_SetString(PyExc_ValueError,
                 "one or more objects not callable");
+        }
         return NULL;
     }
     return oldops;

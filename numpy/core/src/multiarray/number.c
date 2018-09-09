@@ -71,12 +71,8 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
         n_ops.op = temp; \
     }
 
-
-/*NUMPY_API
- *Set internal structure with number functions that all arrays will use
- */
 NPY_NO_EXPORT int
-PyArray_SetNumericOps(PyObject *dict)
+_PyArray_SetNumericOps(PyObject *dict)
 {
     PyObject *temp = NULL;
     SET(add);
@@ -119,16 +115,28 @@ PyArray_SetNumericOps(PyObject *dict)
     return 0;
 }
 
+/*NUMPY_API
+ *Set internal structure with number functions that all arrays will use
+ */
+NPY_NO_EXPORT int
+PyArray_SetNumericOps(PyObject *dict)
+{
+    /* 2018-09-09, 1.16 */
+    if (DEPRECATE("PyArray_SetNumericOps is deprecated. Use "
+        "PyUFunc_ReplaceLoopBySignature to replace ufunc inner loop functions "
+        "instead.") < 0) {
+        return -1;
+    }
+    return _PyArray_SetNumericOps(dict);
+}
+
 /* Note - macro contains goto */
 #define GET(op) if (n_ops.op &&                                         \
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
         goto fail;
 
-/*NUMPY_API
-  Get dictionary showing number functions that all arrays will use
-*/
 NPY_NO_EXPORT PyObject *
-PyArray_GetNumericOps(void)
+_PyArray_GetNumericOps(void)
 {
     PyObject *dict;
     if ((dict = PyDict_New())==NULL)
@@ -174,6 +182,19 @@ PyArray_GetNumericOps(void)
  fail:
     Py_DECREF(dict);
     return NULL;
+}
+
+/*NUMPY_API
+  Get dictionary showing number functions that all arrays will use
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_GetNumericOps(void)
+{
+    /* 2018-09-09, 1.16 */
+    if (DEPRECATE("PyArray_GetNumericOps is deprecated.") < 0) {
+        return NULL;
+    }
+    return _PyArray_GetNumericOps();
 }
 
 static PyObject *
