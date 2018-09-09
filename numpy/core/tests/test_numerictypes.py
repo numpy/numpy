@@ -444,3 +444,11 @@ class TestMaximumSctype(object):
     @pytest.mark.parametrize('t', [np.bool_, np.object_, np.unicode_, np.bytes_, np.void])
     def test_other(self, t):
         assert_equal(np.maximum_sctype(t), t)
+
+
+class TestDocStrings(object):
+    def test_platform_dependent_aliases(self):
+        if np.int64 is np.int_:
+            assert_('int64' in np.int_.__doc__)
+        elif np.int64 is np.longlong:
+            assert_('int64' in np.longlong.__doc__)
