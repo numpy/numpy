@@ -122,7 +122,7 @@ sub-types).
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Return (builtin) Python types and get a Python object from the ndarray, *arr*, 
+    Get a Python object of builtin type from the ndarray, *arr*, 
     at the location pointed to by itemptr. Return ``NULL`` on failure.
     
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
