@@ -4,7 +4,7 @@ NumPy 1.16.0 Release Notes
 
 This NumPy release is the last one to support Python 2.7. It will be maintained
 as a long term release with bug fixes only through 2020. To that end, the
-planned code reorganization detailed in NEP-0015 has been made in order to
+planned code reorganization detailed in `NEP 15`_ has been made in order to
 facilitate backporting fixes from future releases, which will now have the
 same code organization.
 
@@ -40,6 +40,13 @@ These were deprecated in 1.10, had no tests, and seem to no longer work in
 ------------------------------------
 It is an alias to the more powerful `numpy.ndarray.item`, not tested, and fails
 for scalars.
+
+`np.set_array_ops` and `np.get_array_ops` have been deprecated
+--------------------------------------------------------------
+As part of `NEP 15`, they have been deprecated along with the C-API functions
+:c:func:`PyArray_SetNumericOps` and :c:func:`PyArray_GetNumericOps`. Users who wish to override
+the inner loop functions in built-in ufuncs should use
+:c:func:`PyUFunc_ReplaceLoopBySignature`.
 
 Future Changes
 ==============

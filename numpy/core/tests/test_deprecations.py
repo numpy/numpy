@@ -523,3 +523,14 @@ class TestFromstring(_DeprecationTestCase):
     # 2017-10-19, 1.14
     def test_fromstring(self):
         self.assert_deprecated(np.fromstring, args=('\x00'*80,))
+
+class Test_GetSet_NumericOps(_DeprecationTestCase):
+    # 2018-09-20, 1.16.0
+    def test_get_numeric_ops(self):
+        from numpy.core._multiarray_tests import getset_numericops
+        self.assert_deprecated(getset_numericops, num=2)
+        
+        # empty kwargs prevents any state actually changing which would break
+        # other tests.
+        self.assert_deprecated(np.set_numeric_ops, kwargs={})
+        assert_raises(ValueError, np.set_numeric_ops, add='abc')
