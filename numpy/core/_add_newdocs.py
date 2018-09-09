@@ -7973,7 +7973,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 def get_type(place, obj):
     try:
         return getattr(__import__(place, globals(), {}, [obj]), obj)
-    except Exception:
+    except AttributeError:
         return None
 
 def type_aliases(place, aliases):
@@ -8018,7 +8018,7 @@ complex_aliases = type_aliases('numpy.core.numerictypes', [
 def extra_alias_doc(place, obj, possible_aliases):
     o = get_type(place, obj)
     return ''.join("Alias *on this platform*: {}: {}.\n".format(alias, doc)
-                   for (alias_type, alias, doc) in possible_aliases if alias is o)
+                   for (alias_type, alias, doc) in possible_aliases if alias_type is o)
 
 add_newdoc('numpy.core.numerictypes', 'bool_',
     """
