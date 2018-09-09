@@ -246,8 +246,8 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                                     active_byteorder);
         *offset = old_offset + (*offset - old_offset) * total_count;
 
-        subarray_fail:
-            Py_DECREF(subarray_tuple);
+    subarray_fail:
+        Py_DECREF(subarray_tuple);
         return ret;
     }
     else if (PyDataType_HASFIELDS(descr)) {
