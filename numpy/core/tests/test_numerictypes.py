@@ -448,6 +448,9 @@ class TestMaximumSctype(object):
 
 class TestDocStrings(object):
     def test_platform_dependent_aliases(self):
+        if sys.flags.optimize > 1:
+            # Docstrings do not get added if PYTHONOPTIMIZE/Py_OptimizeFlag > 1
+            return
         if np.int64 is np.int_:
             assert_('int64' in np.int_.__doc__)
         elif np.int64 is np.longlong:
