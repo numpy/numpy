@@ -122,9 +122,11 @@ sub-types).
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Get a Python object from the ndarray, *arr*, at the location
-    pointed to by itemptr. Return ``NULL`` on failure.
-
+    Get a Python object of a builtin type from the ndarray, *arr*, 
+    at the location pointed to by itemptr. Return ``NULL`` on failure.
+    
+    `numpy.ndarray.item` is identical to PyArray_GETITEM.
+    
 .. c:function:: int PyArray_SETITEM( \
         PyArrayObject* arr, void* itemptr, PyObject* obj)
 
