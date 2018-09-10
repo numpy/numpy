@@ -52,7 +52,7 @@ The list of existing modules within ``np.core`` is::
 
 The publicness of this API surface is contagious - in principle, ``np.core.numerictypes.array`` (an alias of ``np.core.multiarray.array``) is part of the API too.
 
-This is problematic - it means that if ``numeric.py`` contains ``from numpy.core.multiarray import array``, then we can never remove that line, without risking breaking someone using ``np.core.numeric.array``.
+This is problematic - it means that if ``numeric.py`` contains ``from numpy.core.multiarray import array``, then we can never remove that line without risking breaking someone using ``np.core.numeric.array``.
 
 The proposal here is to:
 
@@ -118,7 +118,9 @@ Something to be aware of here will be the fact that ``dir`` of ``np.core.numeric
 Backward compatibility
 ----------------------
 
-In some cases, there may be members at ``np.core.*.*`` which we intended to be public-facing. Users of these will receive ``DeprecationWarning``s until we lift these members to ``np.core.*``.
+In some cases, there may be members at ``np.core.*.*`` which we intended to be somewhat public-facing.
+An example of such a function is `numpy.core.numeric.normalize_axis_index`, which downstream libraries are starting to use to validate axis arguments.
+Users of these functions will receive ``DeprecationWarning``s until we lift these members to ``np.core.*``.
 
 Alternatives
 ------------
