@@ -66,6 +66,13 @@ New Features
 Improvements
 ============
 
+build shell independence
+------------------------
+NumPy builds should no longer interact with the host machine
+shell directly. ``exec_command`` has been replaced with
+``subprocess.check_output`` where appropriate.
+
+
 `np.polynomial.Polynomial` classes render in LaTeX in Jupyter notebooks
 -----------------------------------------------------------------------
 
