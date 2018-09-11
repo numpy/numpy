@@ -1373,7 +1373,7 @@ def einsum(*operands, **kwargs):
 
             # Find indices to contract over
             left_pos, right_pos = [], []
-            for s in idx_rm:
+            for s in sorted(idx_rm):
                 left_pos.append(input_left.find(s))
                 right_pos.append(input_right.find(s))
 
