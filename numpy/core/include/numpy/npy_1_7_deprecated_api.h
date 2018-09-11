@@ -12,8 +12,8 @@
 #pragma message(_WARN___LOC__"Using deprecated NumPy API, disable it with " \
                          "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION")
 #elif defined(__GNUC__)
-#warning "Using deprecated NumPy API, disable it by " \
-         "#defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
+#warning "Using deprecated NumPy API, disable it with " \
+         "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
 #endif
 /* TODO: How to do this warning message for other compilers? */
 
