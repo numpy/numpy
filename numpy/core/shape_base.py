@@ -7,6 +7,7 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
 from .multiarray import normalize_axis_index
+from ._internal import recursive
 
 def atleast_1d(*arys):
     """
@@ -435,19 +436,19 @@ def _block(arrays, max_depth, result_ndim):
         # ones to `a.shape` as necessary
         return array(a, ndmin=ndim, copy=False, subok=True)
 
-    def block_recursion(block_recursion, arrays, depth=0):
-        """ Prevent reference cycles by passing in the function"""
+    @recursive
+    def block_recursion(self, arrays, depth=0):
         if depth < max_depth:
             if len(arrays) == 0:
                 raise ValueError('Lists cannot be empty')
-            arrs = [block_recursion(block_recursion, arr, depth+1) for arr in arrays]
+            arrs = [self(arr, depth+1) for arr in arrays]
             return _nx.concatenate(arrs, axis=-(max_depth-depth))
         else:
             # We've 'bottomed out' - arrays is either a scalar or an array
             # type(arrays) is not list
             return atleast_nd(arrays, result_ndim)
 
-    return block_recursion(block_recursion, arrays)
+    return block_recursion(arrays)
 
 
 def block(arrays):

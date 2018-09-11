@@ -1,5 +1,5 @@
 """
-A place for code to be called from core C-code.
+A place for internal code
 
 Some things are more easily handled Python.
 
@@ -808,3 +808,11 @@ def _is_from_ctypes(obj):
         return 'ctypes' in ctype_base.__module__
     except Exception:
         return False
+
+
+class recursive(object):
+    def __init__(self, func):
+        self.func = func
+    def __call__(self, *args, **kwargs):
+        return self.func(self, *args, **kwargs)
+

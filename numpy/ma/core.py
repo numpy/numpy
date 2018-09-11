@@ -46,6 +46,7 @@ from numpy.compat import (
 from numpy import expand_dims
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
+from numpy.core._internal import recursive
 
 
 if sys.version_info[0] >= 3:
@@ -1729,13 +1730,13 @@ def mask_or(m1, m2, copy=False, shrink=True):
 
     """
 
-    def _recursive_mask_or(_recursive_mask_or, m1, m2, newmask):
-        """ Prevent reference cycles by passing in the function"""
+    @recursive
+    def _recursive_mask_or(self, m1, m2, newmask):
         names = m1.dtype.names
         for name in names:
             current1 = m1[name]
             if current1.dtype.names is not None:
-                _recursive_mask_or(_recursive_mask_or, current1, m2[name], newmask[name])
+                self(current1, m2[name], newmask[name])
             else:
                 umath.logical_or(current1, m2[name], newmask[name])
         return
@@ -1754,7 +1755,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
     if dtype1.names is not None:
         # Allocate an output mask array with the properly broadcast shape.
         newmask = np.empty(np.broadcast(m1, m2).shape, dtype1)
-        _recursive_mask_or(_recursive_mask_or, m1, m2, newmask)
+        _recursive_mask_or(m1, m2, newmask)
         return newmask
     return make_mask(umath.logical_or(m1, m2), copy=copy, shrink=shrink)
 
