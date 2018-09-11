@@ -415,6 +415,11 @@ class TestSctypeDict(object):
         assert_(np.sctypeDict['c16'] is not np.clongdouble)
 
 
+class TestBitName(object):
+    def test_abstract(self):
+        assert_raises(ValueError, np.core.numerictypes.bitname, np.floating)
+
+
 class TestMaximumSctype(object):
 
     # note that parametrizing with sctype['int'] and similar would skip types
