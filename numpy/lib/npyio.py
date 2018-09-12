@@ -447,7 +447,7 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
             fid.close()
 
 
-def save(file, arr, allow_pickle=True, fix_imports=True):
+def save(file, arr, allow_pickle=True, fix_imports=True, append=False):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
 
@@ -500,15 +500,28 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     if isinstance(file, basestring):
         if not file.endswith('.npy'):
             file = file + '.npy'
-        fid = open(file, "wb")
+        if append:
+            fid = open(file, "r+b")
+        else:
+            fid = open(file, "wb")
         own_fid = True
     elif is_pathlib_path(file):
         if not file.name.endswith('.npy'):
             file = file.parent / (file.name + '.npy')
-        fid = file.open("wb")
+        if append:
+            fid = file.open("r+b")
+        else:
+            fid = file.open("wb")
         own_fid = True
     else:
         fid = file
+        if sys.version_info[0] == 3 and isinstance(fid, io.BufferedWriter) or \
+                sys.version_info[0] == 2 and isinstance(fid, __builtins__['file']):
+                    if append or 'a' in fid.mode:
+                        name = fid.name
+                        fid.close()
+                        fid = open(name, "r+b")
+                        append = True
 
     if sys.version_info[0] >= 3:
         pickle_kwargs = dict(fix_imports=fix_imports)
@@ -519,7 +532,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     try:
         arr = np.asanyarray(arr)
         format.write_array(fid, arr, allow_pickle=allow_pickle,
-                           pickle_kwargs=pickle_kwargs)
+                           pickle_kwargs=pickle_kwargs, append=append)
     finally:
         if own_fid:
             fid.close()
