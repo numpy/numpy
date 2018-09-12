@@ -17,7 +17,7 @@ pieces of code. The purpose behind these explanations is to enable
 somebody to be able to understand the ideas behind the implementation
 somewhat more easily than just staring at the code. Perhaps in this
 way, the algorithms can be improved on, borrowed from, and/or
-optimized.
+optimized by more people.
 
 
 Memory model
@@ -133,9 +133,9 @@ Broadcasting
 .. index::
    single: broadcasting
 
-In Numeric, broadcasting was implemented in several lines of code
-buried deep in ufuncobject.c. In NumPy, the notion of broadcasting has
-been abstracted so that it can be performed in multiple places.
+In Numeric, the ancestor of Numpy, broadcasting was implemented in several
+lines of code buried deep in ufuncobject.c. In NumPy, the notion of broadcasting
+has been abstracted so that it can be performed in multiple places.
 Broadcasting is handled by the function :c:func:`PyArray_Broadcast`. This
 function requires a :c:type:`PyArrayMultiIterObject` (or something that is a
 binary equivalent) to be passed in. The :c:type:`PyArrayMultiIterObject` keeps
