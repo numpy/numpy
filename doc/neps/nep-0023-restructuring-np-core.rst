@@ -1,5 +1,5 @@
 ==============================================
-NEP 23 - Making details of ``np.core`` private
+NEP 23 — Making details of ``np.core`` private
 ==============================================
 
 :Author: Eric Wieser <wieser.eric+numpy@gmail.com>
@@ -11,16 +11,19 @@ NEP 23 - Making details of ``np.core`` private
 Abstract
 --------
 
-The ``np.core`` package consists of a collection of submodules, most of which have a name not prefixed with an underscore - the pythonic way to indicate a public API.
-As a result, the full set of members within any of these modules can be considered public API.
-Since these submodules import names from other submodules, these imported names appear to be part of the public API too.
+The ``np.core`` package consists of a collection of submodules, most of which
+have a name not prefixed with an underscore - the pythonic way to indicate a
+public API.  The naive user will consider the full set of members within any of
+these modules as a public API. Since these submodules import names from other
+submodules, these imported names appear to be part of the public API too.
 
 As a result of this, any of the following can be seen as a breaking change:
 
 * Moving a function from one file to another
 * Removing an "unused" import from a file
 
-This traps us into creating increasingly convoluted [1]_ and cyclic imports, under the constant fear that a reorganization will break downstream code.
+This traps us into creating increasingly convoluted [1]_ and cyclic imports,
+under the constant fear that a reorganization will break downstream code.
 
 This NEP does not consider ``np.lib``.
 
@@ -50,24 +53,34 @@ The list of existing modules within ``np.core`` is::
 	 'shape_base',
 	 'umath']
 
-The publicness of this API surface is contagious - in principle, ``np.core.numerictypes.array`` (an alias of ``np.core.multiarray.array``) is part of the API too.
+The publicness of this API surface is contagious - in principle,
+``np.core.numerictypes.array`` (an alias of ``np.core.multiarray.array``) is
+part of the API too.
 
-This is problematic - it means that if ``numeric.py`` contains ``from numpy.core.multiarray import array``, then we can never remove that line without risking breaking someone using ``np.core.numeric.array``.
+This is problematic - it means that if ``numeric.py`` contains ``from
+numpy.core.multiarray import array``, then we can never remove that line
+without risking breaking someone using ``np.core.numeric.array``.
 
 The proposal here is to:
 
-* Make all of the existing modules within `np.core` private, adding a leading underscore to their names.
+* Make all of the existing modules within `np.core` private, adding a leading
+  underscore to their names.
 * Introduce a set of new modules with the same names as the old ones, which:
-  * hard-code a list of the public API surface of their module at the time of its creation
-  * emit a ``DeprecationWarning`` upon import, warning the user that they are relying on implementation details.
+
+  * hard-code a list of the public API surface of their module at the time of
+    its creation
+  * emit a ``DeprecationWarning`` upon import, warning the user that they are
+    relying on implementation details.
 
 
 Implementation
 --------------
 
 1. Rename every module ``numpy/core/<module>.py`` to  ``numpy/core/_<module>.py``
-2. Change ``from <module> import ...`` in ``numpy/core/__init__.py`` to ``from _<module> import ...``, and similarly for other imports.
-3. Create a new module for each existing one. For instance, ``numpy/core/numeric.py`` would look like::
+2. Change ``from <module> import ...`` in ``numpy/core/__init__.py`` to
+   ``from _<module> import ...``, and similarly for other imports.
+3. Create a new module for each existing one. For instance,
+   ``numpy/core/numeric.py`` would look like::
 
     """
     This module exists to ensure compatibility of our public API. This is a
@@ -113,19 +126,25 @@ Implementation
     assert _exposed == set(__all__) | set(_old_dir)
 
 
-Something to be aware of here will be the fact that ``dir`` of ``np.core.numerictypes``, and of any module that does ``from np.core.numerictypes import *`` is platform-dependent, as it contains all the type aliases.
+Something to be aware of here will be the fact that ``dir`` of
+``np.core.numerictypes``, and of any module that does ``from
+np.core.numerictypes import *`` is platform-dependent, as it contains all the
+type aliases.
 
 Backward compatibility
 ----------------------
 
-In some cases, there may be members at ``np.core.*.*`` which we intended to be somewhat public-facing.
-An example of such a function is `numpy.core.numeric.normalize_axis_index`, which downstream libraries are starting to use to validate axis arguments.
-Users of these functions will receive ``DeprecationWarning``s until we lift these members to ``np.core.*``.
+In some cases, there may be members at ``np.core.*.*`` which we intended to be
+somewhat public-facing.  An example of such a function is
+`numpy.core.numeric.normalize_axis_index`, which downstream libraries are
+starting to use to validate axis arguments.  Users of these functions will
+receive ``DeprecationWarning``s until we lift these members to ``np.core.*``.
 
 Alternatives
 ------------
 
-* Declare our public API is determined solely by `__all__`, and that users relying on members not included there are on their own
+* Declare our public API is determined solely by `__all__`, and that users
+  relying on members not included there are on their own
 * Declare that only ``np.core.*`` is public API, and ``np.core.*.*`` is private
 
 Discussion
