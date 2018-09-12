@@ -486,13 +486,11 @@ _is_alnum_underscore(char ch)
  _get_size(const char* str)
  {
     char *stop;
-    #if defined(_MSC_VER)
-        #define strtoll _strtoi64
-    #endif
+#if defined(_MSC_VER)
+    npy_intp size = (npy_intp)_strtoi64(str, &stop, 10);
+#else
     npy_intp size = (npy_intp)strtoll(str, &stop, 10);
-    #if defined(_MSC_VER)
-        #undef strtoll
-    #endif
+#endif
 
     if (stop == str || _is_alpha_underscore(*stop)) {
         /* not a well formed number */
@@ -2065,23 +2063,20 @@ _validate_num_dims(PyUFuncObject *ufunc, PyArrayObject **op,
                     }
                 }
                 if (op_ndim < op_core_num_dims[i]) {
-                    goto fail;
+                    PyErr_Format(PyExc_ValueError,
+                         "%s: %s operand %d does not have enough "
+                         "dimensions (has %d, gufunc core with "
+                         "signature %s requires %d)",
+                         ufunc_get_name_cstr(ufunc),
+                         i < nin ? "Input" : "Output",
+                         i < nin ? i : i - nin, PyArray_NDIM(op[i]),
+                         ufunc->core_signature, op_core_num_dims[i]);
+                    return -1;
                 }
             }
         }
     }
     return 0;
-
-fail:
-    PyErr_Format(PyExc_ValueError,
-                 "%s: %s operand %d does not have enough "
-                 "dimensions (has %d, gufunc core with "
-                 "signature %s requires %d)",
-                 ufunc_get_name_cstr(ufunc),
-                 i < nin ? "Input" : "Output",
-                 i < nin ? i : i - nin, PyArray_NDIM(op[i]),
-                 ufunc->core_signature, op_core_num_dims[i]);
-    return -1;
 }
 
 /*
