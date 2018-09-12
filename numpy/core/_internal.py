@@ -811,6 +811,30 @@ def _is_from_ctypes(obj):
 
 
 class recursive(object):
+    '''
+    A decorator class for recursive nested functions.
+    Naive recursive nested functions hold a reference to themselves:
+
+    def outer(*args):
+        def stringify_leaky(arg0, *arg1):
+            if len(arg1) > 0:
+                return stringify_leaky(*arg1)  # <- HERE
+            return str(arg0)
+        stringify_leaky(*args)
+
+    This design pattern creates a reference cycle that is difficult for a
+    garbage collector to resolve. The decorator class prevents the
+    cycle by passing the nested function in as an argument `self`:
+
+    def outer(*args):
+        @recursive
+        def stringify(self, arg0, *arg1):
+            if len(arg1) > 0:
+                return self(*arg1)
+            return str(arg0)
+        stringify(*args)
+
+    '''
     def __init__(self, func):
         self.func = func
     def __call__(self, *args, **kwargs):
