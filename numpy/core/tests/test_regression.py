@@ -1557,7 +1557,10 @@ class TestRegression(object):
 
     def test_complex_nan_maximum(self):
         cnan = complex(0, np.nan)
-        assert_equal(np.maximum(1, cnan), cnan)
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_equal(np.maximum(1, cnan), cnan)
+        assert_equal(len(sup.log), 1)
 
     def test_subclass_int_tuple_assignment(self):
         # ticket #1563
@@ -1827,7 +1830,6 @@ class TestRegression(object):
             # on dtype=object
             assert_equal(oct(a), oct(0))
             assert_equal(hex(a), hex(0))
-
 
     def test_object_array_self_copy(self):
         # An object array being copied into itself DECREF'ed before INCREF'ing
@@ -2367,6 +2369,13 @@ class TestRegression(object):
         va[0] = b'\xff\xff\xff\xff'
         del va
         assert_equal(x, b'\x00\x00\x00\x00')
+
+    def test_void_getitem(self):
+        # Test fix for gh-11668.
+        assert_(np.array([b'a'], 'V1').astype('O') == b'a')
+        assert_(np.array([b'ab'], 'V2').astype('O') == b'ab')
+        assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
+        assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
 
     def test_structarray_title(self):
         # The following used to segfault on pypy, due to NPY_TITLE_KEY

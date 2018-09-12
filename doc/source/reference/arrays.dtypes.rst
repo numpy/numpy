@@ -391,8 +391,8 @@ Type strings
     When the optional keys *offsets* and *titles* are provided,
     their values must each be lists of the same length as the *names*
     and *formats* lists. The *offsets* value is a list of byte offsets
-    (integers) for each field, while the *titles* value is a list of
-    titles for each field (:const:`None` can be used if no title is
+    (limited to `ctypes.c_int`) for each field, while the *titles* value is a
+    list of titles for each field (:const:`None` can be used if no title is
     desired for that field). The *titles* can be any :class:`string`
     or :class:`unicode` object and will add another entry to the
     fields dictionary keyed by the title and referencing the same
@@ -402,7 +402,8 @@ Type strings
     The *itemsize* key allows the total size of the dtype to be
     set, and must be an integer large enough so all the fields
     are within the dtype. If the dtype being constructed is aligned,
-    the *itemsize* must also be divisible by the struct alignment.
+    the *itemsize* must also be divisible by the struct alignment. Total dtype
+    *itemsize* is limited to `ctypes.c_int`.
 
     .. admonition:: Example
 

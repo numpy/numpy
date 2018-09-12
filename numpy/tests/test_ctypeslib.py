@@ -12,11 +12,11 @@ try:
     cdll = None
     if hasattr(sys, 'gettotalrefcount'):
         try:
-            cdll = load_library('multiarray_d', np.core.multiarray.__file__)
+            cdll = load_library('_multiarray_umath_d', np.core._multiarray_umath.__file__)
         except OSError:
             pass
     if cdll is None:
-        cdll = load_library('multiarray', np.core.multiarray.__file__)
+        cdll = load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
     _HAS_CTYPE = True
 except ImportError:
     _HAS_CTYPE = False
@@ -30,7 +30,7 @@ class TestLoadLibrary(object):
     def test_basic(self):
         try:
             # Should succeed
-            load_library('multiarray', np.core.multiarray.__file__)
+            load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
                    " (import error was: %s)" % str(e))
@@ -43,7 +43,7 @@ class TestLoadLibrary(object):
             try:
                 so = get_shared_lib_extension(is_python_ext=True)
                 # Should succeed
-                load_library('multiarray%s' % so, np.core.multiarray.__file__)
+                load_library('_multiarray_umath%s' % so, np.core._multiarray_umath.__file__)
             except ImportError:
                 print("No distutils available, skipping test.")
         except ImportError as e:
@@ -170,3 +170,23 @@ class TestAsArray(object):
         check(as_array(pointer(c_array), shape=()))
         check(as_array(pointer(c_array[0]), shape=(2,)))
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
+
+    def test_reference_cycles(self):
+        # related to gh-6511
+        import ctypes
+
+        # create array to work with
+        # don't use int/long to avoid running into bpo-10746
+        N = 100
+        a = np.arange(N, dtype=np.short)
+
+        # get pointer to array
+        pnt = np.ctypeslib.as_ctypes(a)
+
+        with np.testing.assert_no_gc_cycles():
+            # decay the array above to a pointer to its first element
+            newpnt = ctypes.cast(pnt, ctypes.POINTER(ctypes.c_short))
+            # and construct an array using this data
+            b = np.ctypeslib.as_array(newpnt, (N,))
+            # now delete both, which should cleanup both objects
+            del newpnt, b

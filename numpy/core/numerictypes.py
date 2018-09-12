@@ -238,71 +238,53 @@ for k, v in typeinfo.items():
         _concrete_typeinfo[k] = v
 
 
-def _evalname(name):
-    k = 0
-    for ch in name:
-        if ch in '0123456789':
-            break
-        k += 1
+_kind_to_stem = {
+    'u': 'uint',
+    'i': 'int',
+    'c': 'complex',
+    'f': 'float',
+    'b': 'bool',
+    'V': 'void',
+    'O': 'object',
+    'M': 'datetime',
+    'm': 'timedelta'
+}
+if sys.version_info[0] >= 3:
+    _kind_to_stem.update({
+        'S': 'bytes',
+        'U': 'str'
+    })
+else:
+    _kind_to_stem.update({
+        'S': 'string',
+        'U': 'unicode'
+    })
+
+
+def _bits_of(obj):
     try:
-        bits = int(name[k:])
-    except ValueError:
-        bits = 0
-    base = name[:k]
-    return base, bits
+        info = next(v for v in _concrete_typeinfo.values() if v.type is obj)
+    except StopIteration:
+        if obj in _abstract_types.values():
+            raise ValueError("Cannot count the bits of an abstract type")
+
+        # some third-party type - make a best-guess
+        return dtype(obj).itemsize * 8
+    else:
+        return info.bits
+
 
 def bitname(obj):
     """Return a bit-width name for a given type object"""
-    name = obj.__name__
-    base = ''
-    char = ''
-    try:
-        if name[-1] == '_':
-            newname = name[:-1]
-        else:
-            newname = name
-        info = _concrete_typeinfo[english_lower(newname)]
-        assert(info.type == obj)  # sanity check
-        bits = info.bits
+    bits = _bits_of(obj)
+    char = dtype(obj).kind
+    base = _kind_to_stem[char]
 
-    except KeyError:     # bit-width name
-        base, bits = _evalname(name)
-        char = base[0]
-
-    if name == 'bool_':
-        char = 'b'
-        base = 'bool'
-    elif name == 'void':
-        char = 'V'
-        base = 'void'
-    elif name == 'object_':
-        char = 'O'
-        base = 'object'
+    if base == 'object':
         bits = 0
-    elif name == 'datetime64':
-        char = 'M'
-    elif name == 'timedelta64':
-        char = 'm'
 
-    if sys.version_info[0] >= 3:
-        if name == 'bytes_':
-            char = 'S'
-            base = 'bytes'
-        elif name == 'str_':
-            char = 'U'
-            base = 'str'
-    else:
-        if name == 'string_':
-            char = 'S'
-            base = 'string'
-        elif name == 'unicode_':
-            char = 'U'
-            base = 'unicode'
-
-    bytes = bits // 8
-
-    if char != '' and bytes != 0:
-        char = "%s%d" % (char, bytes)
+    if bits != 0:
+        char = "%s%d" % (char, bits // 8)
 
     return base, bits, char
 
@@ -336,7 +318,6 @@ def _add_aliases():
         # insert bit-width version for this class (if relevant)
         base, bit, char = bitname(info.type)
 
-        assert base != ''
         myname = "%s%d" % (base, bit)
 
         # ensure that (c)longdouble does not overwrite the aliases assigned to
@@ -363,7 +344,6 @@ def _add_aliases():
         sctypeNA[info.type] = na_name
         sctypeNA[info.char] = na_name
 
-        assert char != ''
         sctypeDict[char] = info.type
         sctypeNA[char] = na_name
 _add_aliases()
@@ -543,13 +523,12 @@ def maximum_sctype(t):
     if g is None:
         return t
     t = g
-    name = t.__name__
-    base, bits = _evalname(name)
-    if bits == 0:
-        return t
-    else:
+    bits = _bits_of(t)
+    base = _kind_to_stem[dtype(t).kind]
+    if base in sctypes:
         return sctypes[base][-1]
-
+    else:
+        return t
 
 def issctype(rep):
     """

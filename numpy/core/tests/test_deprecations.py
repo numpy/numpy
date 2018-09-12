@@ -505,9 +505,21 @@ class TestGeneratorSum(_DeprecationTestCase):
     def test_generator_sum(self):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
 
+
 class TestSctypeNA(_VisibleDeprecationTestCase):
     # 2018-06-24, 1.16
     def test_sctypeNA(self):
         self.assert_deprecated(lambda: np.sctypeNA['?'])
         self.assert_deprecated(lambda: np.typeNA['?'])
         self.assert_deprecated(lambda: np.typeNA.get('?'))
+
+
+class TestPositiveOnNonNumerical(_DeprecationTestCase):
+    # 2018-06-28, 1.16.0
+    def test_positive_on_non_number(self):
+        self.assert_deprecated(operator.pos, args=(np.array('foo'),))
+
+class TestFromstring(_DeprecationTestCase):
+    # 2017-10-19, 1.14
+    def test_fromstring(self):
+        self.assert_deprecated(np.fromstring, args=('\x00'*80,))

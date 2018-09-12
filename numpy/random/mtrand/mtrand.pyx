@@ -2505,7 +2505,7 @@ cdef class RandomState:
         Examples
         --------
         From Dalgaard page 83 [1]_, suppose the daily energy intake for 11
-        women in Kj is:
+        women in kilojoules (kJ) is:
 
         >>> intake = np.array([5260., 5470, 5640, 6180, 6390, 6515, 6805, 7515, \\
         ...                    7515, 8230, 8770])
@@ -4198,12 +4198,12 @@ cdef class RandomState:
         -----
         The probability density for the Hypergeometric distribution is
 
-        .. math:: P(x) = \\frac{\\binom{m}{n}\\binom{N-m}{n-x}}{\\binom{N}{n}},
+        .. math:: P(x) = \\frac{\\binom{g}{x}\\binom{b}{n-x}}{\\binom{g+b}{n}},
 
-        where :math:`0 \\le x \\le m` and :math:`n+m-N \\le x \\le n`
+        where :math:`0 \\le x \\le n` and :math:`n-b \\le x \\le g`
 
-        for P(x) the probability of x successes, n = ngood, m = nbad, and
-        N = number of samples.
+        for P(x) the probability of x successes, g = ngood, b = nbad, and
+        n = number of samples.
 
         Consider an urn with black and white marbles in it, ngood of them
         black and nbad are white. If you draw nsample balls without

@@ -62,32 +62,37 @@ def run_command(cmd, check_code=True):
 @pytest.mark.skipif(is_inplace, reason="Cannot test f2py command inplace")
 def test_f2py():
     # test that we can run f2py script
-    if sys.platform == 'win32':
-        exe_dir = dirname(sys.executable)
 
-        if exe_dir.endswith('Scripts'): # virtualenv
-            f2py_cmd = r"%s\f2py.py" % exe_dir
-        else:
-            f2py_cmd = r"%s\Scripts\f2py.py" % exe_dir
-
-        code, stdout, stderr = run_command([sys.executable, f2py_cmd, '-v'])
-        success = stdout.strip() == b'2'
-        assert_(success, "Warning: f2py not found in path")
-    else:
-        version = sys.version_info
-        major = str(version.major)
-        minor = str(version.minor)
-
-        f2py_cmds = ('f2py', 'f2py' + major, 'f2py' + major + '.' + minor)
-        success = False
-
-        for f2py_cmd in f2py_cmds:
+    def try_f2py_commands(cmds):
+        success = 0
+        for f2py_cmd in cmds:
             try:
                 code, stdout, stderr = run_command([f2py_cmd, '-v'])
                 assert_equal(stdout.strip(), b'2')
-                success = True
-                break
+                success += 1
             except Exception:
                 pass
-        msg = "Warning: neither %s nor %s nor %s found in path" % f2py_cmds
-        assert_(success, msg)
+        return success
+
+    if sys.platform == 'win32':
+        # Only the single 'f2py' script is installed in windows.
+        exe_dir = dirname(sys.executable)
+        if exe_dir.endswith('Scripts'): # virtualenv
+            f2py_cmds = [os.path.join(exe_dir, 'f2py')]
+        else:
+            f2py_cmds = [os.path.join(exe_dir, "Scripts", 'f2py')]
+        success = try_f2py_commands(f2py_cmds)
+        msg = "Warning: f2py not found in path"
+        assert_(success == 1, msg)
+    else:
+        # Three scripts are installed in Unix-like systems:
+        # 'f2py', 'f2py{major}', and 'f2py{major.minor}'. For example,
+        # if installed with python3.7 the scripts would be named
+        # 'f2py', 'f2py3', and 'f2py3.7'.
+        version = sys.version_info
+        major = str(version.major)
+        minor = str(version.minor)
+        f2py_cmds = ('f2py', 'f2py' + major, 'f2py' + major + '.' + minor)
+        success = try_f2py_commands(f2py_cmds)
+        msg = "Warning: not all of %s, %s, and %s are found in path" % f2py_cmds
+        assert_(success == 3, msg)

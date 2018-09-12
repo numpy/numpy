@@ -18,7 +18,7 @@ from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, broadcast, can_cast, compare_chararrays,
-    concatenate, copyto, count_nonzero, dot, dtype, empty,
+    concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
     inner, int_asbuffer, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
@@ -1942,10 +1942,46 @@ def isscalar(num):
     val : bool
         True if `num` is a scalar type, False if it is not.
 
+    See Also
+    --------
+    ndim : Get the number of dimensions of an array
+
+    Notes
+    -----
+    In almost all cases ``np.ndim(x) == 0`` should be used instead of this
+    function, as that will also return true for 0d arrays. This is how
+    numpy overloads functions in the style of the ``dx`` arguments to `gradient`
+    and the ``bins`` argument to `histogram`. Some key differences:
+
+    +--------------------------------------+---------------+-------------------+
+    | x                                    |``isscalar(x)``|``np.ndim(x) == 0``|
+    +======================================+===============+===================+
+    | PEP 3141 numeric objects (including  | ``True``      | ``True``          |
+    | builtins)                            |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | builtin string and buffer objects    | ``True``      | ``True``          |
+    +--------------------------------------+---------------+-------------------+
+    | other builtin objects, like          | ``False``     | ``True``          |
+    | `pathlib.Path`, `Exception`,         |               |                   |
+    | the result of `re.compile`           |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | third-party objects like             | ``False``     | ``True``          |
+    | `matplotlib.figure.Figure`           |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | zero-dimensional numpy arrays        | ``False``     | ``True``          |
+    +--------------------------------------+---------------+-------------------+
+    | other numpy arrays                   | ``False``     | ``False``         |
+    +--------------------------------------+---------------+-------------------+
+    | `list`, `tuple`, and other sequence  | ``False``     | ``False``         |
+    | objects                              |               |                   |
+    +--------------------------------------+---------------+-------------------+
+
     Examples
     --------
     >>> np.isscalar(3.1)
     True
+    >>> np.isscalar(np.array(3.1))
+    False
     >>> np.isscalar([3.1])
     False
     >>> np.isscalar(False)
@@ -2850,16 +2886,11 @@ class errstate(object):
 
     Notes
     -----
-    The ``with`` statement was introduced in Python 2.5, and can only be used
-    there by importing it: ``from __future__ import with_statement``. In
-    earlier Python versions the ``with`` statement is not available.
-
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
     Examples
     --------
-    >>> from __future__ import with_statement  # use 'with' in Python 2.5
     >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
 
     >>> np.arange(3) / 0.
@@ -2919,10 +2950,7 @@ True_ = bool_(True)
 
 def extend_all(module):
     existing = set(__all__)
-    try:
-        mall = getattr(module, '__all__')
-    except AttributeError:
-        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
+    mall = getattr(module, '__all__')
     for a in mall:
         if a not in existing:
             __all__.append(a)

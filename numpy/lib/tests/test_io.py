@@ -348,7 +348,6 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
@@ -568,12 +567,12 @@ class LoadTxtBase(object):
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
     def test_encoding(self):
@@ -2024,7 +2023,6 @@ M   33  21.99
                                  delimiter=',', encoding="UTF-8")
             assert_equal(test['f0'], 0)
             assert_equal(test['f1'], "testNonethe" + utf8.decode("UTF-8"))
-
 
     def test_utf8_file_nodtype_unicode(self):
         # bytes encoding with non-latin1 -> unicode upcast

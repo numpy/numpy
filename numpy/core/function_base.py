@@ -71,7 +71,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     --------
     arange : Similar to `linspace`, but uses a step size (instead of the
              number of samples).
-    logspace : Samples uniformly distributed in log space.
+    geomspace : Similar to `linspace`, but with numbers spaced evenly on a log
+                scale (a geometric progression).
+    logspace : Similar to `geomspace`, but with the end points specified as
+               logarithms.
 
     Examples
     --------

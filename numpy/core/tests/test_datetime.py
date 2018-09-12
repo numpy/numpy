@@ -355,6 +355,16 @@ class TestDateTime(object):
         actual = np.array(inputs, dtype='timedelta64[D]')
         assert_equal(expected, actual)
 
+    def test_timedelta_0_dim_object_array_conversion(self):
+        # Regression test for gh-11151
+        test = np.array(datetime.timedelta(seconds=20))
+        actual = test.astype(np.timedelta64)
+        # expected value from the array constructor workaround
+        # described in above issue
+        expected = np.array(datetime.timedelta(seconds=20),
+                            np.timedelta64)
+        assert_equal(actual, expected)
+
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
         assert_equal(np.datetime64('2010').dtype,
@@ -620,6 +630,10 @@ class TestDateTime(object):
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
         dt = np.dtype('M8[W]')
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
+        scalar = np.datetime64('2016-01-01T00:00:00.000000000')
+        assert_equal(pickle.loads(pickle.dumps(scalar)), scalar)
+        delta = scalar - np.datetime64('2015-01-01T00:00:00.000000000')
+        assert_equal(pickle.loads(pickle.dumps(delta)), delta)
 
         # Check that loading pickles from 1.6 works
         pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
@@ -1697,7 +1711,6 @@ class TestDateTime(object):
                      np.datetime64('NaT'))
         assert_equal(np.busday_offset(np.datetime64('NaT'), 1, roll='preceding'),
                      np.datetime64('NaT'))
-
 
     def test_datetime_busdaycalendar(self):
         # Check that it removes NaT, duplicates, and weekends

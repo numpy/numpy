@@ -22,7 +22,7 @@
  * nor to the default __array_ufunc__ method, so instead we import locally.
  * TODO: Can this really not be done more smartly?
  */
-static PyObject *
+NPY_NO_EXPORT PyObject *
 get_non_default_array_ufunc(PyObject *obj)
 {
     static PyObject *ndarray = NULL;
@@ -61,7 +61,7 @@ get_non_default_array_ufunc(PyObject *obj)
  * Returns 1 if this is the case, 0 if not.
  */
 
-static int
+NPY_NO_EXPORT int
 has_non_default_array_ufunc(PyObject * obj)
 {
     PyObject *method = get_non_default_array_ufunc(obj);

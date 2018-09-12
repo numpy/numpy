@@ -2358,7 +2358,6 @@ class TestIterNested(object):
         j.close()
         assert_equal(a, [[1, 2, 3], [4, 5, 6]])
 
-
     def test_dtype_buffered(self):
         # Test nested iteration with buffering to change dtype
 

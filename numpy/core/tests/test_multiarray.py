@@ -108,7 +108,6 @@ class TestFlags(object):
         assert_equal(self.a.flags['X'], False)
         assert_equal(self.a.flags['WRITEBACKIFCOPY'], False)
 
-
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
         assert_(a.flags.aligned)
@@ -688,6 +687,9 @@ class TestScalarIndexing(object):
 
 
 class TestCreation(object):
+    """
+    Test the np.array constructor
+    """
     def test_from_attribute(self):
         class x(object):
             def __array__(self, dtype=None):
@@ -902,6 +904,34 @@ class TestCreation(object):
                        shape=(max_bytes//itemsize,), dtype=dtype)
             assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
+
+    def test_jagged_ndim_object(self):
+        # Lists of mismatching depths are treated as object arrays
+        a = np.array([[1], 2, 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, [2], 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, 2, [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+    def test_jagged_shape_object(self):
+        # The jagged dimension of a list is turned into an object array
+        a = np.array([[1, 1], [2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2, 2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2], [3, 3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
 
 
 class TestStructured(object):
@@ -2698,7 +2728,6 @@ class TestMethods(object):
         # Order of axis argument doesn't matter:
         assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
 
-
     def test_diagonal_view_notwriteable(self):
         # this test is only for 1.9, the diagonal view will be
         # writeable in 1.10.
@@ -3382,6 +3411,16 @@ class TestBinop(object):
         assert_equal(obj_arr ** 1, pow_for(1, obj_arr))
         assert_equal(obj_arr ** -1, pow_for(-1, obj_arr))
         assert_equal(obj_arr ** 2, pow_for(2, obj_arr))
+
+    def test_pos_array_ufunc_override(self):
+        class A(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return getattr(ufunc, method)(*[i.view(np.ndarray) for
+                                                i in inputs], **kwargs)
+        tst = np.array('foo').view(A)
+        with assert_raises(TypeError):
+            +tst
+
 
 class TestTemporaryElide(object):
     # elision is only triggered on relatively large arrays
@@ -4094,14 +4133,11 @@ class TestPutmask(object):
     def test_mask_size(self):
         assert_raises(ValueError, np.putmask, np.array([1, 2, 3]), [True], 5)
 
-    def tst_byteorder(self, dtype):
+    @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
+    def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
         np.putmask(x, [True, False, True], -1)
         assert_array_equal(x, [-1, 2, -1])
-
-    def test_ip_byteorder(self):
-        for dtype in ('>i4', '<i4'):
-            self.tst_byteorder(dtype)
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4152,13 +4188,10 @@ class TestTake(object):
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
 
-    def tst_byteorder(self, dtype):
+    @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
+    def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
         assert_array_equal(x.take([0, 2, 1]), [1, 3, 2])
-
-    def test_ip_byteorder(self):
-        for dtype in ('>i4', '<i4'):
-            self.tst_byteorder(dtype)
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4344,7 +4377,6 @@ class TestIO(object):
         with open(self.filename, "ab") as f:
             d.tofile(f)
         assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
-
 
     def test_io_open_buffered_fromfile(self):
         # gh-6632
@@ -4536,19 +4568,16 @@ class TestIO(object):
 
 
 class TestFromBuffer(object):
-    def tst_basic(self, buffer, expected, kwargs):
-        assert_array_equal(np.frombuffer(buffer,**kwargs), expected)
-
-    def test_ip_basic(self):
-        for byteorder in ['<', '>']:
-            for dtype in [float, int, complex]:
-                dt = np.dtype(dtype).newbyteorder(byteorder)
-                x = (np.random.random((4, 7))*5).astype(dt)
-                buf = x.tobytes()
-                self.tst_basic(buf, x.flat, {'dtype':dt})
+    @pytest.mark.parametrize('byteorder', ['<', '>'])
+    @pytest.mark.parametrize('dtype', [float, int, complex])
+    def test_basic(self, byteorder, dtype):
+        dt = np.dtype(dtype).newbyteorder(byteorder)
+        x = (np.random.random((4, 7)) * 5).astype(dt)
+        buf = x.tobytes()
+        assert_array_equal(np.frombuffer(buf, dtype=dt), x.flat)
 
     def test_empty(self):
-        self.tst_basic(b'', np.array([]), {})
+        assert_array_equal(np.frombuffer(b''), np.array([]))
 
 
 class TestFlat(object):
@@ -4707,55 +4736,72 @@ class TestRecord(object):
         # Error raised when multiple fields have the same name
         assert_raises(ValueError, test_assign)
 
-    if sys.version_info[0] >= 3:
-        def test_bytes_fields(self):
-            # Bytes are not allowed in field names and not recognized in titles
-            # on Py3
-            assert_raises(TypeError, np.dtype, [(b'a', int)])
-            assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
+    def test_bytes_fields(self):
+        # Bytes are not allowed in field names and not recognized in titles
+        # on Py3
+        assert_raises(TypeError, np.dtype, [(b'a', int)])
+        assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
 
-            dt = np.dtype([((b'a', 'b'), int)])
-            assert_raises(TypeError, dt.__getitem__, b'a')
+        dt = np.dtype([((b'a', 'b'), int)])
+        assert_raises(TypeError, dt.__getitem__, b'a')
 
-            x = np.array([(1,), (2,), (3,)], dtype=dt)
-            assert_raises(IndexError, x.__getitem__, b'a')
+        x = np.array([(1,), (2,), (3,)], dtype=dt)
+        assert_raises(IndexError, x.__getitem__, b'a')
 
-            y = x[0]
-            assert_raises(IndexError, y.__getitem__, b'a')
+        y = x[0]
+        assert_raises(IndexError, y.__getitem__, b'a')
 
-        def test_multiple_field_name_unicode(self):
-            def test_assign_unicode():
-                dt = np.dtype([("\u20B9", "f8"),
-                               ("B", "f8"),
-                               ("\u20B9", "f8")])
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
+    def test_multiple_field_name_unicode(self):
+        def test_assign_unicode():
+            dt = np.dtype([("\u20B9", "f8"),
+                           ("B", "f8"),
+                           ("\u20B9", "f8")])
 
-            # Error raised when multiple fields have the same name(unicode included)
-            assert_raises(ValueError, test_assign_unicode)
+        # Error raised when multiple fields have the same name(unicode included)
+        assert_raises(ValueError, test_assign_unicode)
 
-    else:
-        def test_unicode_field_titles(self):
-            # Unicode field titles are added to field dict on Py2
-            title = u'b'
-            dt = np.dtype([((title, 'a'), int)])
-            dt[title]
-            dt['a']
-            x = np.array([(1,), (2,), (3,)], dtype=dt)
-            x[title]
-            x['a']
-            y = x[0]
-            y[title]
-            y['a']
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
+    def test_unicode_field_titles(self):
+        # Unicode field titles are added to field dict on Py2
+        title = u'b'
+        dt = np.dtype([((title, 'a'), int)])
+        dt[title]
+        dt['a']
+        x = np.array([(1,), (2,), (3,)], dtype=dt)
+        x[title]
+        x['a']
+        y = x[0]
+        y[title]
+        y['a']
 
-        def test_unicode_field_names(self):
-            # Unicode field names are converted to ascii on Python 2:
-            encodable_name = u'b'
-            assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
-            assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
+    def test_unicode_field_names(self):
+        # Unicode field names are converted to ascii on Python 2:
+        encodable_name = u'b'
+        assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
+        assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
 
-            # But raises UnicodeEncodeError if it can't be encoded:
-            nonencodable_name = u'\uc3bc'
-            assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
-            assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
+        # But raises UnicodeEncodeError if it can't be encoded:
+        nonencodable_name = u'\uc3bc'
+        assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
+        assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
+
+    def test_fromarrays_unicode(self):
+        # A single name string provided to fromarrays() is allowed to be unicode
+        # on both Python 2 and 3:
+        x = np.core.records.fromarrays([[0], [1]], names=u'a,b', formats=u'i4,i4')
+        assert_equal(x['a'][0], 0)
+        assert_equal(x['b'][0], 1)
+
+    def test_unicode_order(self):
+        # Test that we can sort with order as a unicode field name in both Python 2 and
+        # 3:
+        name = u'b'
+        x = np.array([1, 3, 2], dtype=[(name, int)])
+        x.sort(order=name)
+        assert_equal(x[u'b'], np.array([1, 2, 3]))
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
@@ -4867,7 +4913,6 @@ class TestRecord(object):
         c = np.zeros(3, dtype='i8,i8,i8')
         assert_equal(collect_warnings(c[['f0', 'f2']].view, 'i8,i8'),
                      [FutureWarning])
-
 
     def test_record_hash(self):
         a = np.array([(1, 2), (1, 2)], dtype='i1,i2')
@@ -5886,9 +5931,10 @@ class TestRepeat(object):
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
 
 
+@pytest.mark.parametrize('dt', [float, Decimal], ids=['float', 'object'])
 class TestNeighborhoodIter(object):
     # Simple, 2d tests
-    def _test_simple2d(self, dt):
+    def test_simple2d(self, dt):
         # Test zero and one padding for simple data type
         x = np.array([[0, 1], [2, 3]], dtype=dt)
         r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt),
@@ -5915,13 +5961,7 @@ class TestNeighborhoodIter(object):
                 x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
-    def test_simple2d(self):
-        self._test_simple2d(float)
-
-    def test_simple2d_object(self):
-        self._test_simple2d(Decimal)
-
-    def _test_mirror2d(self, dt):
+    def test_mirror2d(self, dt):
         x = np.array([[0, 1], [2, 3]], dtype=dt)
         r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt),
              np.array([[0, 1, 1], [0, 1, 1]], dtype=dt),
@@ -5931,14 +5971,8 @@ class TestNeighborhoodIter(object):
                 x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
-    def test_mirror2d(self):
-        self._test_mirror2d(float)
-
-    def test_mirror2d_object(self):
-        self._test_mirror2d(Decimal)
-
     # Simple, 1d tests
-    def _test_simple(self, dt):
+    def test_simple(self, dt):
         # Test padding with constant values
         x = np.linspace(1, 5, 5).astype(dt)
         r = [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 0]]
@@ -5956,14 +5990,8 @@ class TestNeighborhoodIter(object):
                 x, [-1, 1], x[4], NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
-    def test_simple_float(self):
-        self._test_simple(float)
-
-    def test_simple_object(self):
-        self._test_simple(Decimal)
-
     # Test mirror modes
-    def _test_mirror(self, dt):
+    def test_mirror(self, dt):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[2, 1, 1, 2, 3], [1, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 5], [3, 4, 5, 5, 4]], dtype=dt)
@@ -5972,14 +6000,8 @@ class TestNeighborhoodIter(object):
         assert_([i.dtype == dt for i in l])
         assert_array_equal(l, r)
 
-    def test_mirror(self):
-        self._test_mirror(float)
-
-    def test_mirror_object(self):
-        self._test_mirror(Decimal)
-
     # Circular mode
-    def _test_circular(self, dt):
+    def test_circular(self, dt):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[4, 5, 1, 2, 3], [5, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 1], [3, 4, 5, 1, 2]], dtype=dt)
@@ -5987,11 +6009,6 @@ class TestNeighborhoodIter(object):
                 x, [-2, 2], x[0], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
-    def test_circular(self):
-        self._test_circular(float)
-
-    def test_circular_object(self):
-        self._test_circular(Decimal)
 
 # Test stacking neighborhood iterators
 class TestStackedNeighborhoodIter(object):
@@ -6428,6 +6445,14 @@ class TestNewBufferProtocol(object):
     def test_roundtrip_scalar(self):
         # Issue #4015.
         self._check_roundtrip(0)
+
+    def test_invalid_buffer_format(self):
+        # datetime64 cannot be used fully in a buffer yet
+        # Should be fixed in the next Numpy major release
+        dt = np.dtype([('a', 'uint16'), ('b', 'M8[s]')])
+        a = np.empty(3, dt)
+        assert_raises((ValueError, BufferError), memoryview, a)
+        assert_raises((ValueError, BufferError), memoryview, np.array((3), 'M8[D]'))
 
     def test_export_simple_1d(self):
         x = np.array([1, 2, 3, 4, 5], dtype='i')

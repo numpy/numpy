@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data,
+    _gen_alignment_data, assert_warns
     )
 
 
@@ -1173,7 +1173,6 @@ class TestBitwiseUFuncs(object):
             assert_(np.bitwise_xor(zeros, zeros).dtype == dt, msg)
             assert_(np.bitwise_and(zeros, zeros).dtype == dt, msg)
 
-
     def test_identity(self):
         assert_(np.bitwise_or.identity == 0, 'bitwise_or')
         assert_(np.bitwise_xor.identity == 0, 'bitwise_xor')
@@ -1333,11 +1332,16 @@ class TestMinMax(object):
         # and put it before the call to an intrisic function that causes
         # invalid status to be set. Also make sure warnings are emitted
         for n in (2, 4, 8, 16, 32):
-            with suppress_warnings() as sup:
-                sup.record(RuntimeWarning)
-                for r in np.diagflat([np.nan] * n):
-                    assert_equal(np.min(r), np.nan)
+            for dt in (np.float32, np.float16, np.complex64):
+                with suppress_warnings() as sup:
+                    sup.record(RuntimeWarning)
+                    for r in np.diagflat(np.array([np.nan] * n, dtype=dt)):
+                        assert_equal(np.min(r), np.nan)
                 assert_equal(len(sup.log), n)
+
+    def test_minimize_warns(self):
+        # gh 11589
+        assert_warns(RuntimeWarning, np.minimum, np.nan, 1)
 
 
 class TestAbsoluteNegative(object):
@@ -1568,13 +1572,14 @@ class TestSpecialMethods(object):
 
         class A(object):
             def __array__(self):
-                return np.zeros(1)
+                return np.zeros(2)
 
             def __array_wrap__(self, arr, context):
                 raise RuntimeError
 
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum.reduce, a)
 
     def test_failing_out_wrap(self):
 

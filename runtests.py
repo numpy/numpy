@@ -34,7 +34,7 @@ from __future__ import division, print_function
 
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
-SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
+SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
@@ -328,19 +328,22 @@ def build_project(args):
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
     cvars = distutils.sysconfig.get_config_vars()
-    if 'gcc' in cvars.get('CC', ''):
-        # add flags used as werrors
-        warnings_as_errors = ' '.join([
-            # from tools/travis-test.sh
-            '-Werror=declaration-after-statement',
-            '-Werror=vla',
-            '-Werror=nonnull',
-            '-Werror=pointer-arith',
-            '-Wlogical-op',
-            # from sysconfig
-            '-Werror=unused-function',
-        ])
-        env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
+    compiler = env.get('CC') or cvars.get('CC', '')
+    if 'gcc' in compiler:
+        # Check that this isn't clang masquerading as gcc.
+        if sys.platform != 'darwin' or 'gnu-gcc' in compiler:
+            # add flags used as werrors
+            warnings_as_errors = ' '.join([
+                # from tools/travis-test.sh
+                '-Werror=declaration-after-statement',
+                '-Werror=vla',
+                '-Werror=nonnull',
+                '-Werror=pointer-arith',
+                '-Wlogical-op',
+                # from sysconfig
+                '-Werror=unused-function',
+            ])
+            env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'

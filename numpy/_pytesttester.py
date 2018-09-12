@@ -160,6 +160,24 @@ class PytestTester(object):
             "-W ignore::UserWarning:cpuinfo",
             ]
 
+        # When testing matrices, ignore their PendingDeprecationWarnings
+        pytest_args += [
+            "-W ignore:the matrix subclass is not",
+            ]
+
+        # Ignore python2.7 -3 warnings
+        pytest_args += [
+            r"-W ignore:sys\.exc_clear\(\) not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:in 3\.x, __setslice__:DeprecationWarning",
+            r"-W ignore:in 3\.x, __getslice__:DeprecationWarning",
+            r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:CObject type is not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:comparing unequal types not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:the commands module has been removed in Python 3\.0:DeprecationWarning",
+            r"-W ignore:The 'new' module has been removed in Python 3\.0:DeprecationWarning",
+            ]
+
+
         if doctests:
             raise ValueError("Doctests not supported")
 

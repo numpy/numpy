@@ -11,6 +11,7 @@ import numpy.core.numeric as nx
 import warnings
 import functools
 
+
 def _deprecate_out_named_y(f):
     """
     Allow the out argument to be passed as the name `y` (deprecated)
@@ -81,6 +82,7 @@ def fix(x, out=None):
         res = res[()]
     return res
 
+
 @_deprecate_out_named_y
 def isposinf(x, out=None):
     """
@@ -116,8 +118,9 @@ def isposinf(x, out=None):
     NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
     (IEEE 754).
 
-    Errors result if the second argument is also supplied when `x` is a
-    scalar input, or if first and second arguments have different shapes.
+    Errors result if the second argument is also supplied when x is a scalar
+    input, if first and second arguments have different shapes, or if the
+    first argument has complex values
 
     Examples
     --------
@@ -138,7 +141,14 @@ def isposinf(x, out=None):
     array([0, 0, 1])
 
     """
-    return nx.logical_and(nx.isinf(x), ~nx.signbit(x), out)
+    is_inf = nx.isinf(x)
+    try:
+        signbit = ~nx.signbit(x)
+    except TypeError:
+        raise TypeError('This operation is not supported for complex values '
+                        'because it would be ambiguous.')
+    else:
+        return nx.logical_and(is_inf, signbit, out)
 
 
 @_deprecate_out_named_y
@@ -178,7 +188,8 @@ def isneginf(x, out=None):
     (IEEE 754).
 
     Errors result if the second argument is also supplied when x is a scalar
-    input, or if first and second arguments have different shapes.
+    input, if first and second arguments have different shapes, or if the
+    first argument has complex values.
 
     Examples
     --------
@@ -199,4 +210,11 @@ def isneginf(x, out=None):
     array([1, 0, 0])
 
     """
-    return nx.logical_and(nx.isinf(x), nx.signbit(x), out)
+    is_inf = nx.isinf(x)
+    try:
+        signbit = nx.signbit(x)
+    except TypeError:
+        raise TypeError('This operation is not supported for complex values '
+                        'because it would be ambiguous.')
+    else:
+        return nx.logical_and(is_inf, signbit, out)
