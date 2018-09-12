@@ -73,8 +73,11 @@ def _construction_repr(dtype, include_align=False, short=False):
         return _struct_str(dtype, include_align=include_align)
     elif dtype.subdtype:
         return _subarray_str(dtype)
+    else:
+        return _scalar_str(dtype, short=short)
 
 
+def _scalar_str(dtype, short):
     byteorder = _byte_order_str(dtype)
 
     if dtype.type == np.bool_:
