@@ -20,10 +20,10 @@ def __str__(dtype):
 
 
 def __repr__(dtype):
-    if dtype.fields is not None:
-        return _struct_repr(dtype)
-    else:
-        return "dtype({})".format(_construction_repr(dtype, include_align=True))
+    arg_str = _construction_repr(dtype, include_align=False)
+    if dtype.isalignedstruct:
+        arg_str = arg_str + ", align=True"
+    return "dtype({})".format(arg_str)
 
 
 def _unpack_field(dtype, offset, title=None):
@@ -290,15 +290,6 @@ def _subarray_str(dtype):
         _construction_repr(base, short=True),
         shape
     )
-
-
-def _struct_repr(dtype):
-    s = "dtype("
-    s += _struct_str(dtype, include_align=False)
-    if dtype.isalignedstruct:
-        s += ", align=True"
-    s += ")"
-    return s
 
 
 def _name_get(dtype):
