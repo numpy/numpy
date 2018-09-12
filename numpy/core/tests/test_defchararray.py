@@ -631,7 +631,8 @@ class TestOperations(object):
             except ValueError:
                 pass
             else:
-                self.fail("chararray can only be multiplied by integers")
+                raise ValueError(
+                        "chararray can only be multiplied by integers")
 
     def test_rmul(self):
         A = self.A
@@ -646,7 +647,8 @@ class TestOperations(object):
             except ValueError:
                 pass
             else:
-                self.fail("chararray can only be multiplied by integers")
+                raise ValueError(
+                        "chararray can only be multiplied by integers")
 
     def test_mod(self):
         """Ticket #856"""
@@ -673,8 +675,8 @@ class TestOperations(object):
             except TypeError:
                 pass
             else:
-                self.fail("chararray __rmod__ should fail with "
-                          "non-string objects")
+                raise ValueError("chararray __rmod__ should fail with "
+                                 "non-string objects")
 
     def test_slice(self):
         """Regression test for https://github.com/numpy/numpy/issues/5982"""

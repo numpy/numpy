@@ -273,7 +273,7 @@ class TestAlgebra(object):
         except TypeError:
             pass
         else:
-            self.fail("matrix.__rpow__ doesn't raise a TypeError")
+            raise ValueError("matrix.__rpow__ doesn't raise a TypeError")
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
         try:
@@ -281,8 +281,9 @@ class TestAlgebra(object):
         except TypeError:
             pass
         else:
-            self.fail("matrix.__mul__ with non-numeric object doesn't raise"
-                      "a TypeError")
+            raise ValueError("matrix.__mul__ with non-numeric object doesn't "
+                             "raise a TypeError")
+
 
 class TestMatrixReturn(object):
     def test_instance_methods(self):

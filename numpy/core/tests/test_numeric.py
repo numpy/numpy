@@ -476,7 +476,7 @@ class TestSeterr(object):
             except FloatingPointError:
                 pass
             else:
-                self.fail()
+                raise
             np.seterr(divide='ignore')
             np.array([1.]) / np.array([0.])
 

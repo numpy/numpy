@@ -21,7 +21,7 @@ class TestErrstate(object):
             except FloatingPointError:
                 pass
             else:
-                self.fail("Did not raise an invalid error")
+                raise ValueError("Did not raise an invalid error")
 
     def test_divide(self):
         with np.errstate(all='raise', under='ignore'):
@@ -35,7 +35,7 @@ class TestErrstate(object):
             except FloatingPointError:
                 pass
             else:
-                self.fail("Did not raise divide by zero error")
+                raise ValueError("Did not raise divide by zero error")
 
     def test_errcall(self):
         def foo(*args):
