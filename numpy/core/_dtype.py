@@ -161,8 +161,14 @@ def _byte_order_str(dtype):
 
 
 def _datetime_metadata_str(dtype):
-    # This is a hack since the data is not exposed to python in any other way
-    return dtype.name[dtype.name.rfind('['):]
+    # TODO: this duplicates the C append_metastr_to_string
+    unit, count = np.datetime_data(dtype)
+    if unit == 'generic':
+        return ''
+    elif count == 1:
+        return '[{}]'.format(unit)
+    else:
+        return '[{}{}]'.format(count, unit)
 
 
 def _struct_dict_str(dtype, includealignedflag):
@@ -292,3 +298,26 @@ def _struct_repr(dtype):
     return s
 
 
+def _name_get(dtype):
+    # provides dtype.name.__get__
+
+    if dtype.isbuiltin == 2:
+        # user dtypes don't promise to do anything special
+        return dtype.type.__name__
+
+    # Builtin classes are documented as returning a "bit name"
+    name = dtype.type.__name__
+
+    # handle bool_, str_, etc
+    if name[-1] == '_':
+        name = name[:-1]
+
+    # append bit counts to str, unicode, and void
+    if np.issubdtype(dtype, np.flexible) and not _isunsized(dtype):
+        name += "{}".format(dtype.itemsize * 8)
+
+    # append metadata to datetimes
+    elif dtype.type in (np.datetime64, np.timedelta64):
+        name += _datetime_metadata_str(dtype)
+
+    return name

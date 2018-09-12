@@ -1859,72 +1859,17 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_typename_get(PyArray_Descr *self)
+arraydescr_name_get(PyArray_Descr *self)
 {
-    static const char np_prefix[] = "numpy.";
-    const int np_prefix_len = sizeof(np_prefix) - 1;
-    PyTypeObject *typeobj = self->typeobj;
+    /* let python handle this */
+    PyObject *_numpy_dtype;
     PyObject *res;
-    char *s;
-    int len;
-    int prefix_len;
-    int suffix_len;
-
-    if (PyTypeNum_ISUSERDEF(self->type_num)) {
-        s = strrchr(typeobj->tp_name, '.');
-        if (s == NULL) {
-            res = PyUString_FromString(typeobj->tp_name);
-        }
-        else {
-            res = PyUString_FromStringAndSize(s + 1, strlen(s) - 1);
-        }
-        return res;
+    _numpy_dtype = PyImport_ImportModule("numpy.core._dtype");
+    if (_numpy_dtype == NULL) {
+        return NULL;
     }
-    else {
-        /*
-         * NumPy type or subclass
-         *
-         * res is derived from typeobj->tp_name with the following rules:
-         * - if starts with "numpy.", that prefix is removed
-         * - if ends with "_", that suffix is removed
-         */
-        len = strlen(typeobj->tp_name);
-
-        if (! strncmp(typeobj->tp_name, np_prefix, np_prefix_len)) {
-            prefix_len = np_prefix_len;
-        }
-        else {
-            prefix_len = 0;
-        }
-
-        if (typeobj->tp_name[len - 1] == '_') {
-            suffix_len = 1;
-        }
-        else {
-            suffix_len = 0;
-        }
-
-        len -= prefix_len;
-        len -= suffix_len;
-        res = PyUString_FromStringAndSize(typeobj->tp_name+prefix_len, len);
-    }
-    if (PyTypeNum_ISFLEXIBLE(self->type_num) && !PyDataType_ISUNSIZED(self)) {
-        PyObject *p;
-        p = PyUString_FromFormat("%d", self->elsize * 8);
-        PyUString_ConcatAndDel(&res, p);
-    }
-    if (PyDataType_ISDATETIME(self)) {
-        PyArray_DatetimeMetaData *meta;
-
-        meta = get_datetime_metadata_from_dtype(self);
-        if (meta == NULL) {
-            Py_DECREF(res);
-            return NULL;
-        }
-
-        res = append_metastr_to_string(meta, 0, res);
-    }
-
+    res = PyObject_CallMethod(_numpy_dtype, "_name_get", "O", self);
+    Py_DECREF(_numpy_dtype);
     return res;
 }
 
@@ -2218,7 +2163,7 @@ static PyGetSetDef arraydescr_getsets[] = {
         (getter)arraydescr_protocol_typestr_get,
         NULL, NULL, NULL},
     {"name",
-        (getter)arraydescr_typename_get,
+        (getter)arraydescr_name_get,
         NULL, NULL, NULL},
     {"base",
         (getter)arraydescr_base_get,
