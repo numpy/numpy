@@ -1314,10 +1314,10 @@ class TestRegression(object):
             np.empty(sz)
         except ValueError as e:
             if not str(e) == good:
-                raise ValueError("Got msg '%s', expected '%s'" % (e, good))
+                raise AssertionError("Got msg '%s', expected '%s'" % (e, good))
         except Exception as e:
-            raise TypeError("Got exception of type %s instead of ValueError"
-                            % type(e))
+            raise AssertionError("Got exception of type %s instead "
+                                 "of ValueError" % type(e))
 
     def test_huge_arange(self):
         # Regression test for #1062.
@@ -1329,10 +1329,10 @@ class TestRegression(object):
             assert_(np.size == sz)
         except ValueError as e:
             if not str(e) == good:
-                raise ValueError("Got msg '%s', expected '%s'" % (e, good))
+                raise AssertionError("Got msg '%s', expected '%s'" % (e, good))
         except Exception as e:
-            raise TypeError("Got exception of type %s instead of ValueError"
-                            % type(e))
+            raise AssertionError("Got exception of type %s instead "
+                                 "of ValueError" % type(e))
 
     def test_fromiter_bytes(self):
         # Ticket #1058

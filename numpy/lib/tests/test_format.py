@@ -286,7 +286,8 @@ from io import BytesIO
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, raises, SkipTest
+    assert_, assert_array_equal, assert_raises, assert_raises_regex,
+    raises, SkipTest
     )
 from numpy.lib import format
 
@@ -678,12 +679,9 @@ def test_write_version():
         (255, 255),
     ]
     for version in bad_versions:
-        try:
+        with assert_raises_regex(ValueError,
+                                 'we only support format version.*'):
             format.write_array(f, arr, version=version)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
 bad_version_magic = [

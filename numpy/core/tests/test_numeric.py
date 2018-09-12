@@ -13,7 +13,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    suppress_warnings, HAS_REFCOUNT
+    assert_raises, suppress_warnings, HAS_REFCOUNT
     )
 
 
@@ -471,12 +471,9 @@ class TestSeterr(object):
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_divide_err(self):
         with np.errstate(divide='raise'):
-            try:
+            with assert_raises(FloatingPointError):
                 np.array([1.]) / np.array([0.])
-            except FloatingPointError:
-                pass
-            else:
-                raise
+
             np.seterr(divide='ignore')
             np.array([1.]) / np.array([0.])
 
