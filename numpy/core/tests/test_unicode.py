@@ -62,6 +62,18 @@ def test_string_cast():
         assert_(str_arr != uni_arr2)
     assert_array_equal(uni_arr1, uni_arr2)
 
+def test_native_unicode_add():
+    # element-wise array concat for unicode_ arrays
+    # experimental, and probably belongs in a different
+    # testing module
+    # provides more natural interface than requiring
+    # numpy.core.defchararray.add(a, b)
+    test = np.array(['a', 'b'], dtype='U1')
+    test2 = np.array(['c', 'd'], dtype='U1')
+    actual = test + test2
+    expected = np.array(['ac', 'bd'], dtype='U2')
+    assert_equal(actual, expected)
+
 
 ############################################################
 #    Creation tests

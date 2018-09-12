@@ -4244,12 +4244,23 @@ initialize_numeric_types(void)
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;
 
+    /*
+     * NOTE: these slots aren't actually being used for
+     * string and unicode NumPy arrays -- the repr handling
+     * appears to funnel through np.ndarray Type struct and indeed
+     * none of the functions pointed to here even exist; trying
+     * to create them has no effect on behavior -- they
+     * are currently circumvented
+     */
     PyStringArrType_Type.tp_repr = stringtype_repr;
     PyStringArrType_Type.tp_str = stringtype_str;
 
     PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
     PyUnicodeArrType_Type.tp_str = unicodetype_str;
 
+    /*
+     * we do actually use the void type slots
+     */
     PyVoidArrType_Type.tp_methods = voidtype_methods;
     PyVoidArrType_Type.tp_getset = voidtype_getsets;
     PyVoidArrType_Type.tp_as_mapping = &voidtype_as_mapping;

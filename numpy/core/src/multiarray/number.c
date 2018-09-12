@@ -258,6 +258,13 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
         return Py_NotImplemented;
     }
 
+    /*
+     * previously, for unicode_ array __add__, control flow
+     * would return a NULL from below and then somehow
+     * we get an error because ufunc inner loops aren't
+     * defined for the unicode add ufunc
+     */
+
     return PyObject_CallFunctionObjArgs(op, m1, m2, NULL);
 }
 
@@ -292,10 +299,98 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
     return PyObject_CallFunctionObjArgs(op, m1, m1, NULL);
 }
 
+/*
+ * element-wise concatenation of two NumPy unicode arrays
+ * without the gymnastics required by sending control flow
+ * through numpy/core/defchararray.py and
+ * numpy/core/src/multiarray/multiarraymodule.c _vec_string()
+ * calls
+ */
+static PyObject *
+unicodetype_concat(PyObject *self, PyObject *other)
+{
+    /*
+     * I initially aimed to place unicodetype_concat
+     * in a function pointer slot within a
+     * PySequenceMethods struct for the PyUnicodeArrType_Type
+     * struct, but it seems we still prefer to call nb_add
+     * from np.ndarray type struct instead, and that calls
+     * array_add, which now experimentally dispatches to
+     * this function if two unicode_ arrays are detected
+     */
+    PyObject *item, *other_item;
+    PyArrayIterObject *self_iter;
+    PyArrayIterObject *other_iter;
+    PyArrayIterObject *ret_iter;
+    PyObject *combined;
+    PyObject *ret;
+    PyObject *ret2;
+
+    /*
+     * I think what I'd really like to do here is specify a
+     * return unicode array that has been pre-sized on an
+     * element-wise basis for the concatented unicode elements;
+     * perhaps it is possible to iterate through and determine
+     * the largest result element and then pre-allocate to
+     * U(largest) type; not quite sure how to do that so I
+     * instead use a more flexible object array and then force
+     * cast back to NPY_UNICODE before returning
+     */
+
+    ret = PyArray_NewLikeArray(self,
+                               NPY_ANYORDER,
+                               PyArray_DescrFromType(NPY_OBJECT),
+                               NULL);
+
+    self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+    other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
+    ret_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret);
+
+    while (other_iter->index < other_iter->size) {
+        /* retrieve item from self */
+        item = PyArray_GETITEM(self, PyArray_ITER_DATA(self_iter));
+        /* retrieve item from other array in concat op */
+        other_item = PyArray_GETITEM(other, PyArray_ITER_DATA(other_iter));
+
+        /*
+         * concat the two Unicode PyObject elements and
+         * place them at appropriate index in ret
+         */
+        combined = PyUnicode_Concat(item, other_item);
+        PyArray_SETITEM(ret,
+                        PyArray_ITER_DATA(ret_iter),
+                        combined);
+        /* probably need XDECREFs */
+        PyArray_ITER_NEXT(self_iter);
+        PyArray_ITER_NEXT(other_iter);
+        PyArray_ITER_NEXT(ret_iter);
+    }
+
+    Py_INCREF(ret);
+
+    /* perhaps a little ugly to have to force cast back */
+    ret2 = PyArray_FROM_OTF(ret,
+                            NPY_UNICODE,
+                            NPY_ARRAY_FORCECAST);
+    return ret2;
+}
+
 static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
     PyObject *res;
+    /*
+     * this function is pointed to by the nb_add
+     * slot used by np.ndarray, and apparently also
+     * for Unicode arrays
+     * I suppose long-term we want to have a graceful structure
+     * for specifying these slots instead of intercepting
+     * inside the general __add__ function pointer as I've done here
+     */
+    if (PyArray_DESCR(m1)->type_num == NPY_UNICODE &&
+        PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE) {
+        return unicodetype_concat(m1, m2);
+    }
 
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_add, array_add);
     if (try_binary_elide(m1, m2, &array_inplace_add, &res, 1)) {
