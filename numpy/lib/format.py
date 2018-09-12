@@ -531,7 +531,29 @@ def _read_array_header(fp, version):
 
     return d['shape'], d['fortran_order'], dtype
 
-def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
+
+def _append_array_header(fp, array, version=None):
+    fp.seek(0)
+    old_version = read_magic(fp)
+    _check_version(old_version)
+    if version is not None and old_version != version:
+        raise ValueError("npy file version mismatch. Found %s, new %s"%(old_version, version))
+    shape, fortran_order, dtype = _read_array_header(fp, old_version)
+    new_header = header_data_from_array_1_0(array)
+    if shape[1:] != new_header['shape'][1:]:
+        raise ValueError("shapes of appended array and saved array do not match.")
+    if fortran_order != new_header['fortran_order']:
+        raise ValueError("fortran order of appended array and saved array do not match.")
+    if dtype_to_descr(dtype) != new_header['descr']:
+        raise ValueError("dtype of appended array and saved array does not match.")
+    new_header['shape'] = (shape[0] + new_header['shape'][0], *(shape[1:]))
+    fp.seek(0)
+    used_ver = _write_array_header(fp, new_header, version)
+    fp.seek(0, 2)
+    return used_ver
+
+
+def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None, append=False):
     """
     Write an array to an NPY file, including a header.
 
@@ -568,7 +590,10 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
 
     """
     _check_version(version)
-    used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
+    if append:
+        used_ver = _append_array_header(fp, array, version)
+    else:
+        used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
                                    version)
     # this warning can be removed when 1.9 has aged enough
     if version != (2, 0) and used_ver == (2, 0):
