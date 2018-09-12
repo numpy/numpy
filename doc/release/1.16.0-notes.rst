@@ -146,6 +146,7 @@ will have shape ``()``. In this way, the signature allows one to use a
 single elementary function for four related but different signatures,
 ``(m,n),(n,p)->(m,p)``, ``(n),(n,p)->(p)``, ``(m,n),(n)->(m)`` and
 ``(n),(n)->()``.
+
 ``np.clip`` and the ``clip`` method check for memory overlap
 ------------------------------------------------------------
 The ``out`` argument to these functions is now always tested for memory overlap

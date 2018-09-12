@@ -286,19 +286,20 @@ class TestUfunc(object):
         """
         pass
 
-    def test_signature(self):
+    size_unset = 2
+    can_ignore = 4
+    def test_signature0(self):
         # from include/numpy/ufuncobject.h
-        size_unset = 2
-        can_ignore = 4
         # the arguments to test_signature are: nin, nout, core_signature
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, "(i),(i)->()")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1,  1,  0))
         assert_equal(ixs, (0, 0))
-        assert_equal(flags, (size_unset,))
+        assert_equal(flags, (self.size_unset,))
         assert_equal(sizes, (-1,))
 
+    def test_signature1(self):
         # empty core signature; treat as plain ufunc (with trivial core)
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, "(),()->()")
@@ -308,41 +309,48 @@ class TestUfunc(object):
         assert_equal(flags, ())
         assert_equal(sizes, ())
 
+    def test_signature2(self):
         # more complicated names for variables
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, "(i1,i2),(J_1)->(_kAB)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 1, 1))
         assert_equal(ixs, (0, 1, 2, 3))
-        assert_equal(flags, (size_unset,)*4)
+        assert_equal(flags, (self.size_unset,)*4)
         assert_equal(sizes, (-1, -1, -1, -1))
 
+    def test_signature3(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, u"(i1, i12),   (J_1)->(i12, i2)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 1, 2))
         assert_equal(ixs, (0, 1, 2, 1, 3))
-        assert_equal(flags, (size_unset,)*4)
+        assert_equal(flags, (self.size_unset,)*4)
         assert_equal(sizes, (-1, -1, -1, -1))
+
+    def test_signature4(self):
         # matrix_multiply signature from _umath_tests
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, "(n,k),(k,m)->(n,m)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 2, 2))
         assert_equal(ixs, (0, 1, 1, 2, 0, 2))
-        assert_equal(flags, (size_unset,)*3)
+        assert_equal(flags, (self.size_unset,)*3)
         assert_equal(sizes, (-1, -1, -1))
+
+    def test_signature5(self):
         # matmul signature from _umath_tests
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, "(n?,k),(k,m?)->(n?,m?)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 2, 2))
         assert_equal(ixs, (0, 1, 1, 2, 0, 2))
-        assert_equal(flags, (size_unset | can_ignore,
-                             size_unset,
-                             size_unset | can_ignore))
+        assert_equal(flags, (self.size_unset | self.can_ignore,
+                             self.size_unset,
+                             self.size_unset | self.can_ignore))
         assert_equal(sizes, (-1, -1, -1))
 
+    def test_signature6(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             1, 1, "(3)->()")
         assert_equal(enabled, 1)
@@ -351,22 +359,25 @@ class TestUfunc(object):
         assert_equal(flags, (0,))
         assert_equal(sizes, (3,))
 
+    def test_signature7(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             3, 1, "(3),(03,3),(n)->(9)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 2, 1, 1))
         assert_equal(ixs, (0, 0, 0, 1, 2))
-        assert_equal(flags, (0, size_unset, 0))
+        assert_equal(flags, (0, self.size_unset, 0))
         assert_equal(sizes, (3, -1, 9))
 
+    def test_signature8(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             3, 1, "(3?),(3?,3?),(n)->(9)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 2, 1, 1))
         assert_equal(ixs, (0, 0, 0, 1, 2))
-        assert_equal(flags, (can_ignore, size_unset, 0))
+        assert_equal(flags, (self.can_ignore, self.size_unset, 0))
         assert_equal(sizes, (3, -1, 9))
 
+    def test_signature_failure0(self):
         # in the following calls, a ValueError should be raised because
         # of error in core signature
         # FIXME These should be using assert_raises
@@ -379,6 +390,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure1(self):
         # error: parenthesis matching
         msg = "core_sig: parenthesis matching"
         try:
@@ -387,6 +399,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure2(self):
         # error: incomplete signature. letters outside of parenthesis are ignored
         msg = "core_sig: incomplete signature"
         try:
@@ -395,6 +408,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure3(self):
         # error: incomplete signature. 2 output arguments are specified
         msg = "core_sig: incomplete signature"
         try:
