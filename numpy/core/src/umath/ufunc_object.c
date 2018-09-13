@@ -2013,7 +2013,7 @@ fail:
 }
 
 /*
- * Validate that operands have enough dimenions, accounting for
+ * Validate that operands have enough dimensions, accounting for
  * possible flexible dimensions that may be absent.
  */
 static int
