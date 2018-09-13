@@ -46,7 +46,7 @@
 #include "npy_import.h"
 #include "extobj.h"
 #include "common.h"
-#include <convert.h>
+#include "wrapper.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -480,12 +480,10 @@ _is_alnum_underscore(char ch)
     return _is_alpha_underscore(ch) || (ch >= '0' && ch <= '9');
 }
 
-NPY_NO_EXPORT npy_longlong
-npy_strtoll(const char *str, char **endptr, int base);
 /*
  * Convert a string into a number
  */
-static npy_longlong
+static npy_int
 _get_size(const char* str)
 {
     char *stop;
@@ -494,6 +492,10 @@ _get_size(const char* str)
     if (stop == str || _is_alpha_underscore(*stop)) {
         /* not a well formed number */
          return -1;
+    }
+    if (size >= NPY_MAX_INTP || size <= NPY_MIN_INTP) {
+        /* len(str) too long */
+        return -1;
     }
     return size;
  }
@@ -4851,39 +4853,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
 {
     PyUFuncObject *ufunc;
     /*
-     * Use memcpy and an initialzed instance to set the newly allocated PyUFuncObject.
-       The version field is a constant and cannot be initialzed in C directly
+     * The version field is a constant and cannot be initialzed in C directly
      */
-    PyUFuncObject PyUFuncObject_init = {
-        PyObject_HEAD_INIT(0)
-        0, 0, 0,       /* nin, nout, nargs */
-        0,             /* identity */
-        NULL,          /* functions */
-        NULL,          /* data */
-        0,             /* ntypes */
-        UFUNC_VERSION, /* version */
-        NULL,          /* name */
-        NULL,          /* types */
-        NULL,          /* doc */
-        NULL,          /* ptr */
-        NULL,          /* obj */
-        NULL,          /* userloops */
-        0,             /* core_enabled */
-        0,             /* core_num_dim_ix */
-        NULL,          /* core_num_dims */
-        NULL,          /* core_dim_ixs */
-        NULL,          /* core_offsets */
-        NULL,          /* core_signature */
-        NULL,          /* type_resolver */
-        NULL,          /* legacy_inner_loop_selector */
-        NULL,          /* reserved2 */
-        NULL,          /* masked_inner_loop_selector */
-        NULL,          /* op_flags */
-        0,             /* iter_flags */
-        NULL,          /* core_dim_sizes */
-        NULL,          /* core_dim_flags */
-    };
-
     if (nin + nout > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
                      "Cannot construct a ufunc with more than %d operands "
@@ -4896,7 +4867,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     if (ufunc == NULL) {
         return NULL;
     }
-    memcpy(ufunc, &PyUFuncObject_init, sizeof(PyUFuncObject));
+    memset(ufunc, 0, sizeof(PyUFuncObject));
+    *((int*)&ufunc->version) = UFUNC_VERSION;
     PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
 
     ufunc->nin = nin;

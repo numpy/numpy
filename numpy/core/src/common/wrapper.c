@@ -1,5 +1,8 @@
-#include <numpy/ndarraytypes.h>
-#include "convert.h"
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#include <Python.h>
+#include <numpy/arrayobject.h>
+#include "wrapper.h"
 
 NPY_NO_EXPORT npy_longlong
 npy_strtoll(const char *str, char **endptr, int base)

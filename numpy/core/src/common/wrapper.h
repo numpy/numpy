@@ -1,5 +1,5 @@
-#ifndef _COMMON_CONVERT_H
-#define _COMMON_CONVERT_H
+#ifndef _COMMON_WRAPPER_H
+#define _COMMON_WRAPPER_H
 
 
 /* Convert a string to an int in an arbitrary base */

@@ -34,9 +34,9 @@
 
 #include "cblasfuncs.h"
 #include "npy_cblas.h"
+#include "wrapper.h"
 #include <limits.h>
 #include <assert.h>
-#include <convert.h>
 
 /* check for sequences, but ignore the types numpy considers scalars */
 static NPY_INLINE npy_bool
