@@ -737,6 +737,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ucsnarrow.h'),
             join('src', 'common', 'ufunc_override.h'),
             join('src', 'common', 'umathmodule.h'),
+            join('src', 'common', 'convert.h'),
             ]
 
     common_src = [
@@ -746,6 +747,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.c'),
             join('src', 'common', 'ufunc_override.c'),
+            join('src', 'common', 'convert.c'),
             ]
 
     blas_info = get_info('blas_opt', 0)
