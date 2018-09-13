@@ -25,12 +25,8 @@ class _GenericTest(object):
         self._assert_func(a, b)
 
     def _test_not_equal(self, a, b):
-        try:
+        with assert_raises(AssertionError):
             self._assert_func(a, b)
-        except AssertionError:
-            pass
-        else:
-            raise AssertionError("a and b are found equal but are not")
 
     def test_array_rank1_eq(self):
         """Test two equal array of rank 1 are found equal."""
