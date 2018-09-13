@@ -131,7 +131,7 @@ typedef struct _tagPyUFuncObject {
         int ntypes;
 
         /* Used to be unused field 'check_return', repurposed in 1.16 */
-        int version;
+        const int version;
 
         /* The name of the ufunc */
         const char *name;
@@ -226,6 +226,8 @@ typedef struct _tagPyUFuncObject {
         npy_uint32 *core_dim_flags;
 
 } PyUFuncObject;
+
+#define UFUNC_VERSION 1
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
