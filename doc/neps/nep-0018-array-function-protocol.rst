@@ -84,6 +84,16 @@ instance and method.
 A prototype implementation can be found in
 `this notebook <https://nbviewer.jupyter.org/gist/shoyer/1f0a308a06cd96df20879a1ddb8f0006>`_.
 
+.. warning::
+
+  The ``__array_function__`` protocol, and its use on particular functions,
+  is *experimental*. We plan to retain an interface that makes it possible
+  to override NumPy functions, but the way to do so for particular functions
+  **can and will change** with little warning. If such reduced backwards
+  compatibility guarantees are not accepted to you, do not rely upon overrides
+  of NumPy functions for non-NumPy arrays. See "Non-goals" below for more
+  details.
+
 The interface
 ~~~~~~~~~~~~~
 
@@ -96,8 +106,9 @@ We propose the following signature for implementations of
 
 -  ``func`` is an arbitrary callable exposed by NumPy's public API,
    which was called in the form ``func(*args, **kwargs)``.
--  ``types`` is a ``frozenset`` of unique argument types from the original NumPy
-   function call that implement ``__array_function__``.
+-  ``types`` is a `collection <https://docs.python.org/3/library/collections.abc.html#collections.abc.Collection>`_
+   of unique argument types from the original NumPy function call that
+   implement ``__array_function__``.
 -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
    original call.
 
@@ -108,11 +119,12 @@ implementing the array API.
 As a convenience for ``__array_function__`` implementors, ``types`` provides all
 argument types with an ``'__array_function__'`` attribute. This
 allows downstream implementations to quickly determine if they are likely able
-to support the operation. A ``frozenset`` is used to ensure that
-``__array_function__`` implementations cannot rely on the iteration order of
-``types``, which would facilitate violating the well-defined "Type casting
-hierarchy" described in
-`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
+to support the operation. The type of ``types`` is intentionally vague:
+``frozenset`` would most closely match intended use, but we may use ``tuple``
+instead for performance reasons. In any case, ``__array_function__``
+implementations should not rely on the iteration order of ``types``, which
+would violate a well-defined "Type casting hierarchy" (as described in
+`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_).
 
 Example for a project implementing the NumPy API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -493,7 +505,10 @@ wait for an optimal implementation. The price of moving fast is that for
 now **this protocol should be considered strictly experimental**. We
 reserve the right to change the details of this protocol and how
 specific NumPy functions use it at any time in the future -- even in
-otherwise bug-fix only releases of NumPy.
+otherwise bug-fix only releases of NumPy. In practice, once initial
+issues with ``__array_function__`` are worked out, we will use abbreviated
+deprecation cycles as short as a single major NumPy release (e.g., as
+little as four months).
 
 In particular, we don't plan to write additional NEPs that list all
 specific functions to overload, with exactly how they should be
@@ -511,11 +526,13 @@ own protocols:
 -  dispatch for methods of any kind, e.g., methods on
    ``np.random.RandomState`` objects.
 
-As a concrete example of how we expect to break behavior in the future,
-some functions such as ``np.where`` are currently not NumPy universal
-functions, but conceivably could become universal functions in the
-future. When/if this happens, we will change such overloads from using
-``__array_function__`` to the more specialized ``__array_ufunc__``.
+We also expect that the mechanism for overriding specific functions
+that will initially use the ``__array_function__`` protocol can and will
+change in the future. As a concrete example of how we expect to break
+behavior in the future, some functions such as ``np.where`` are currently
+not NumPy universal functions, but conceivably could become universal
+functions in the future. When/if this happens, we will change such overloads
+from using ``__array_function__`` to the more specialized ``__array_ufunc__``.
 
 
 Backward compatibility
@@ -538,6 +555,17 @@ As mentioned above, if this means that some functions that we overload
 with ``__array_function__`` should switch to a new protocol instead,
 that is explicitly OK for as long as ``__array_function__`` retains its
 experimental status.
+
+Switching to a new protocol should use an abbreviated version of NumPy's
+normal deprecation cycle:
+
+- For a single major release, NumPy should check for ``__array_function__``
+  methods that implement the given function, followed by checks for the new
+  protocol. If any argument returns a value other than ``NotImplemented``
+  from ``__array_function__``, a descriptive ``FutureWarning`` should be
+  raised.
+- In the next major release, the checks for ``__array_function__`` will be
+  removed.
 
 Separate namespace
 ~~~~~~~~~~~~~~~~~~
