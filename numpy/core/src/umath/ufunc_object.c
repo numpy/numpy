@@ -4851,6 +4851,39 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
                                      int unused, const char *signature)
 {
     PyUFuncObject *ufunc;
+    /*
+     * Use memcpy and an initialzed instance to set the newly allocated PyUFuncObject.
+       The version field is a constant and cannot be initialzed in C directly
+     */
+    PyUFuncObject PyUFuncObject_init = {
+        PyObject_HEAD_INIT(0)
+        0, 0, 0,       /* nin, nout, nargs */
+        0,             /* identity */
+        NULL,          /* functions */
+        NULL,          /* data */
+        0,             /* ntypes */
+        UFUNC_VERSION, /* version */
+        NULL,          /* name */
+        NULL,          /* types */
+        NULL,          /* doc */
+        NULL,          /* ptr */
+        NULL,          /* obj */
+        NULL,          /* userloops */
+        0,             /* core_enabled */
+        0,             /* core_num_dim_ix */
+        NULL,          /* core_num_dims */
+        NULL,          /* core_dim_ixs */
+        NULL,          /* core_offsets */
+        NULL,          /* core_signature */
+        NULL,          /* type_resolver */
+        NULL,          /* legacy_inner_loop_selector */
+        NULL,          /* reserved2 */
+        NULL,          /* masked_inner_loop_selector */
+        NULL,          /* op_flags */
+        0,             /* iter_flags */
+        NULL,          /* core_dim_sizes */
+        NULL,          /* core_dim_flags */
+    };
 
     if (nin + nout > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -4864,10 +4897,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     if (ufunc == NULL) {
         return NULL;
     }
+    memcpy(ufunc, &PyUFuncObject_init, sizeof(PyUFuncObject));
     PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
-
-    ufunc->version = 1;  /* NumPy 1.16 and up */
-    ufunc->reserved2 = NULL;
 
     ufunc->nin = nin;
     ufunc->nout = nout;
@@ -4878,9 +4909,6 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->data = data;
     ufunc->types = types;
     ufunc->ntypes = ntypes;
-    ufunc->ptr = NULL;
-    ufunc->obj = NULL;
-    ufunc->userloops=NULL;
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
@@ -4901,17 +4929,6 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     }
     memset(ufunc->op_flags, 0, sizeof(npy_uint32)*ufunc->nargs);
 
-    ufunc->iter_flags = 0;
-
-    /* generalized ufunc */
-    ufunc->core_enabled = 0;
-    ufunc->core_num_dim_ix = 0;
-    ufunc->core_num_dims = NULL;
-    ufunc->core_dim_ixs = NULL;
-    ufunc->core_offsets = NULL;
-    ufunc->core_signature = NULL;
-    ufunc->core_dim_flags = NULL;
-    ufunc->core_dim_sizes = NULL;
     if (signature != NULL) {
         if (_parse_signature(ufunc, signature) != 0) {
             Py_DECREF(ufunc);
