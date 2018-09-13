@@ -16,7 +16,8 @@ import numpy as np
 from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
-        assert_warns, suppress_warnings, _assert_valid_refcount, HAS_REFCOUNT,
+        assert_raises_regex, assert_warns, suppress_warnings,
+        _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long
 
@@ -1309,28 +1310,18 @@ class TestRegression(object):
         # Regression test for #1061.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
-        good = 'Maximum allowed dimension exceeded'
-        try:
+        with assert_raises_regex(ValueError,
+                                 'Maximum allowed dimension exceeded'):
             np.empty(sz)
-        except ValueError as e:
-            if not str(e) == good:
-                self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception as e:
-            self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_huge_arange(self):
         # Regression test for #1062.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
-        good = 'Maximum allowed size exceeded'
-        try:
+        with assert_raises_regex(ValueError,
+                                 'Maximum allowed size exceeded'):
             np.arange(sz)
             assert_(np.size == sz)
-        except ValueError as e:
-            if not str(e) == good:
-                self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception as e:
-            self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_fromiter_bytes(self):
         # Ticket #1058

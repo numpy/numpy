@@ -3806,12 +3806,8 @@ class TestMaskedArrayFunctions(object):
 
     def test_masked_where_shape_constraint(self):
         a = arange(10)
-        try:
-            test = masked_equal(1, a)
-        except IndexError:
-            pass
-        else:
-            raise AssertionError("Should have failed...")
+        with assert_raises(IndexError):
+            masked_equal(1, a)
         test = masked_equal(a, 1)
         assert_equal(test.mask, [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
