@@ -4461,7 +4461,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(Character, Flexible);
 
 #define DUAL_INHERIT(child, parent1, parent2)                           \
-    Py##child##ArrType_Type.tp_base = &Py##parent2##ArrType_Type;       \
+    Py##child##ArrType_Type.tp_base = &Py##parent1##_Type;       \
     Py##child##ArrType_Type.tp_bases =                                  \
         Py_BuildValue("(OO)", &Py##parent2##ArrType_Type,               \
                       &Py##parent1##_Type);                             \
