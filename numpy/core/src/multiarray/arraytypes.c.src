@@ -36,6 +36,7 @@
 #include "npy_cblas.h"
 #include <limits.h>
 #include <assert.h>
+#include <convert.h>
 
 /* check for sequences, but ignore the types numpy considers scalars */
 static NPY_INLINE npy_bool
@@ -149,32 +150,6 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 }
 
 /**end repeat**/
-
-static npy_longlong
-npy_strtoll(const char *str, char **endptr, int base)
-{
-#if defined HAVE_STRTOLL
-    return strtoll(str, endptr, base);
-#elif defined _MSC_VER
-    return _strtoi64(str, endptr, base);
-#else
-    /* ok on 64 bit posix */
-    return PyOS_strtol(str, endptr, base);
-#endif
-}
-
-static npy_ulonglong
-npy_strtoull(const char *str, char **endptr, int base)
-{
-#if defined HAVE_STRTOULL
-    return strtoull(str, endptr, base);
-#elif defined _MSC_VER
-    return _strtoui64(str, endptr, base);
-#else
-    /* ok on 64 bit posix */
-    return PyOS_strtoul(str, endptr, base);
-#endif
-}
 
 /*
  *****************************************************************************

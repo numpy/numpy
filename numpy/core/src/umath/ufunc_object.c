@@ -46,6 +46,7 @@
 #include "npy_import.h"
 #include "extobj.h"
 #include "common.h"
+#include <convert.h>
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -479,18 +480,16 @@ _is_alnum_underscore(char ch)
     return _is_alpha_underscore(ch) || (ch >= '0' && ch <= '9');
 }
 
+NPY_NO_EXPORT npy_longlong
+npy_strtoll(const char *str, char **endptr, int base);
 /*
  * Convert a string into a number
  */
- static npy_intp
- _get_size(const char* str)
- {
+static npy_longlong
+_get_size(const char* str)
+{
     char *stop;
-#if defined(_MSC_VER)
-    npy_intp size = (npy_intp)_strtoi64(str, &stop, 10);
-#else
-    npy_intp size = (npy_intp)strtoll(str, &stop, 10);
-#endif
+    npy_longlong size = npy_strtoll(str, &stop, 10);
 
     if (stop == str || _is_alpha_underscore(*stop)) {
         /* not a well formed number */
@@ -622,7 +621,7 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
                 frozen_size = -1;
             }
             else {
-                frozen_size = _get_size(signature + i);
+                frozen_size = (npy_intp)_get_size(signature + i);
                 if (frozen_size <= 0) {
                     parse_error = "expect dimension name or non-zero frozen size";
                     goto fail;
