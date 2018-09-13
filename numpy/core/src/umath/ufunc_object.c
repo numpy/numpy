@@ -499,7 +499,7 @@ _get_size(const char* str)
  }
 
 /*
- * Return the ending position of a variable name
+ * Return the ending position of a variable name including optional modifier
  */
 static int
 _get_end_of_name(const char* str, int offset)
