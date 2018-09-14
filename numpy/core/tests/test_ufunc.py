@@ -286,7 +286,7 @@ class TestUfunc(object):
         """
         pass
 
-    def test_signature(self):
+    def test_signature0(self):
         # the arguments to test_signature are: nin, nout, core_signature
         # pass
         enabled, num_dims, ixs = umt.test_signature(2, 1, "(i),(i)->()")
@@ -294,12 +294,21 @@ class TestUfunc(object):
         assert_equal(num_dims, (1,  1,  0))
         assert_equal(ixs, (0, 0))
 
+    def test_signature1(self):
         # empty core signature; treat as plain ufunc (with trivial core)
         enabled, num_dims, ixs = umt.test_signature(2, 1, "(),()->()")
         assert_equal(enabled, 0)
         assert_equal(num_dims, (0,  0,  0))
         assert_equal(ixs, ())
 
+    def test_signature2(self):
+        # more complicated names for variables
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 1))
+        assert_equal(ixs, (0, 1, 2, 3))
+
+    def test_signature_failure0(self):
         # in the following calls, a ValueError should be raised because
         # of error in core signature
         # FIXME These should be using assert_raises
@@ -312,6 +321,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure1(self):
         # error: parenthesis matching
         msg = "core_sig: parenthesis matching"
         try:
@@ -320,6 +330,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure2(self):
         # error: incomplete signature. letters outside of parenthesis are ignored
         msg = "core_sig: incomplete signature"
         try:
@@ -328,6 +339,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure3(self):
         # error: incomplete signature. 2 output arguments are specified
         msg = "core_sig: incomplete signature"
         try:
@@ -335,12 +347,6 @@ class TestUfunc(object):
             assert_equal(ret, None, err_msg=msg)
         except ValueError:
             pass
-
-        # more complicated names for variables
-        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
-        assert_equal(enabled, 1)
-        assert_equal(num_dims, (2, 1, 1))
-        assert_equal(ixs, (0, 1, 2, 3))
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
