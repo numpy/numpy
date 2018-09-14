@@ -1327,27 +1327,12 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    npy_bool give_future_warning = 0;
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        const npy_bool res = in1 @OP@ in2;
-        *((npy_bool *)op1) = res;
-
-        if ((in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) && res) {
-            give_future_warning = 1;
-        }
-    }
-    if (give_future_warning) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        /* 2016-01-18, 1.11 */
-        if (DEPRECATE_FUTUREWARNING(
-                "In the future, 'NAT @OP@ x' and 'x @OP@ NAT' "
-                "will always be False.") < 0) {
-            /* nothing to do, we return anyway */
-        }
-        NPY_DISABLE_C_API;
+        *((npy_bool *)op1) = (in1 @OP@ in2 &&
+                              in1 != NPY_DATETIME_NAT &&
+                              in2 != NPY_DATETIME_NAT);
     }
 }
 /**end repeat1**/
@@ -1355,26 +1340,12 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_not_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    npy_bool give_future_warning = 0;
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1) = in1 != in2;
-
-        if (in1 == NPY_DATETIME_NAT && in2 == NPY_DATETIME_NAT) {
-            give_future_warning = 1;
-        }
-    }
-    if (give_future_warning) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        /* 2016-01-18, 1.11 */
-        if (DEPRECATE_FUTUREWARNING(
-                "In the future, NAT != NAT will be True "
-                "rather than False.") < 0) {
-            /* nothing to do, we return anyway */
-        }
-        NPY_DISABLE_C_API;
+        *((npy_bool *)op1) = (in1 != in2 ||
+                              in1 == NPY_DATETIME_NAT ||
+                              in2 == NPY_DATETIME_NAT);
     }
 }
 
