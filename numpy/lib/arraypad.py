@@ -1256,10 +1256,6 @@ def pad(array, pad_width, mode, **kwargs):
                 _mutate_starting_edge(newmat, axis, pad_before, c_before)
             if pad_after:
                 _mutate_ending_edge(newmat, axis, pad_after, c_after)
-
-    # I haven't had a chance to refactor these modes.
-    # I removed anarray.copy()
-    # since anyway, these matricies are getting concatenated...
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if pad_before:
