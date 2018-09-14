@@ -972,9 +972,13 @@ def pad(array, pad_width, mode, **kwargs):
         for axis, ((pad_before, pad_after), (c_before, c_after)) in enumerate(
                 zip(pad_width, kwargs['constant_values'])):
             if pad_before:
-                _mutate_starting_edge(newmat, axis, pad_before, c_before)
+                chosen_slice = (slice(None), ) * axis + (slice(0, pad_before), )
+                final_slices = tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:])
+                newmat[chosen_slice + final_slices] += np.array(c_before).astype(newmat.dtype)
             if pad_after:
-                _mutate_ending_edge(newmat, axis, pad_after, c_after)
+                chosen_slice = (slice(None), ) * axis + (slice(-pad_after, None), )
+                final_slices = tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:])
+                newmat[chosen_slice + final_slices] += np.array(c_after).astype(newmat.dtype)
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if pad_before:
