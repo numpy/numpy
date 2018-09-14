@@ -258,7 +258,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     return _do_append(arr, ramp_arr, axis)
 
 
-def _prepend_max(arr, pad_amt, num, axis=-1):
+def _prepend_max(arr, pad_amt, num, axis, old_area):
     """
     Prepend `pad_amt` maximum values along `axis`.
 
@@ -283,28 +283,30 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
 
     """
     if pad_amt == 0:
-        return arr
+        return
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
+        _pad_starting_edge(arr, axis, pad_amt)
+        return
 
     # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
+    if num and num >= arr.shape[axis]:
+        num = None
+    if num is None:
+        max_chunk = arr[old_area].max()
+    else:
+        # Slice a chunk from the edge to calculate stats on
+        max_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
 
-    # Slice a chunk from the edge to calculate stats on
-    max_slice = _slice_first(arr.shape, num, axis=axis)
+        # Extract slice, calculate max
+        max_chunk = arr[max_slice].max(axis=-1, keepdims=True)
 
-    # Extract slice, calculate max
-    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
-
-    # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
+    # Mutate the edge using the max_chunk
+    _mutate_starting_edge(arr, axis, pad_amt, max_chunk)
 
 
-def _append_max(arr, pad_amt, num, axis=-1):
+def _append_max(arr, pad_amt, num, axis, old_area):
     """
     Pad one `axis` of `arr` with the maximum of the last `num` elements.
 
@@ -328,28 +330,27 @@ def _append_max(arr, pad_amt, num, axis=-1):
 
     """
     if pad_amt == 0:
-        return arr
+        return
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _append_edge(arr, pad_amt, axis)
+        _pad_ending_edge(arr, axis, pad_amt)
+        return
 
     # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    if num is not None:
-        max_slice = _slice_last(arr.shape, num, axis=axis)
+    if num and num >= arr.shape[axis]:
+        num = None
+    if num is None:
+        max_chunk = arr[old_area].max()
     else:
-        max_slice = tuple(slice(None) for x in arr.shape)
+        # Slice a chunk from the edge to calculate stats on
+        max_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
 
-    # Extract slice, calculate max
-    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
+        # Extract slice, calculate max
+        max_chunk = arr[max_slice].max(axis=-1, keepdims=True)
 
-    # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
+    # Mutate the edge using the max_chunk
+    _mutate_ending_edge(arr, axis, pad_amt, max_chunk)
 
 
 def _prepend_mean(arr, pad_amt, num, axis=-1):
@@ -926,17 +927,24 @@ def _validate_lengths(narray, number_elements):
             raise ValueError(fmt % (number_elements,))
     return normshp
 
+def _end_edge_slice(shape, axis, pad_after, n=1):
+    return ((slice(None), ) * axis +
+            (slice(shape[axis] - pad_after - n,
+                   shape[axis] - pad_after), ))
+
+
+def _start_edge_slice(shape, axis, pad_before, n=1):
+    # Shape is unused, but kept to keep the symmetry with _end_edge_slice
+    return ((slice(None), ) * axis + (slice(pad_before, pad_before + n), ))
+
 
 def _pad_starting_edge(newmat, axis, pad_before):
-    edge_slice = ((slice(None), ) * axis +
-                  (slice(pad_before, pad_before + 1), ))
+    edge_slice = _start_edge_slice(newmat.shape, axis, pad_before)
     _mutate_starting_edge(newmat, axis, pad_before, newmat[edge_slice])
 
 
 def _pad_ending_edge(newmat, axis, pad_after):
-    edge_slice = ((slice(None), ) * axis +
-                  (slice(newmat.shape[axis] - pad_after - 1,
-                         newmat.shape[axis] - pad_after), ))
+    edge_slice = _end_edge_slice(newmat.shape, axis, pad_after)
     _mutate_ending_edge(newmat, axis, pad_after, newmat[edge_slice])
 
 
@@ -1228,7 +1236,7 @@ def pad(array, pad_width, mode, **kwargs):
         return newmat
 
     # these modes have been rewritten to only use a single copy
-    if mode in ['constant', 'edge']:
+    if mode in ['constant', 'edge', 'maximum']:
         shape = np.asarray(narray.shape)
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
@@ -1274,8 +1282,8 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'maximum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_max(newmat, pad_before, chunk_before, axis)
-            newmat = _append_max(newmat, pad_after, chunk_after, axis)
+            _prepend_max(newmat, pad_before, chunk_before, axis, old_area)
+            _append_max(newmat, pad_after, chunk_after, axis, old_area)
 
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
