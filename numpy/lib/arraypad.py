@@ -259,7 +259,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     return _do_append(arr, ramp_arr, axis)
 
 
-def _prepend_stat(arr, pad_amt, num, axis, old_area, stat):
+def _prepend_stat(arr, pad_amt, num, axis, stat):
     """
     Mutate mat prepending `pad_amt` maximum values along `axis`.
 
@@ -300,7 +300,7 @@ def _prepend_stat(arr, pad_amt, num, axis, old_area, stat):
     _mutate_starting_edge(arr, axis, pad_amt, chunk)
 
 
-def _append_stat(arr, pad_amt, num, axis, old_area, stat):
+def _append_stat(arr, pad_amt, num, axis, stat):
     """
     Mutate mat appending `pad_amt` maximum values along `axis`.
 
@@ -1001,26 +1001,26 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'maximum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_max(newmat, pad_before, chunk_before, axis, old_area)
-            _append_max(newmat, pad_after, chunk_after, axis, old_area)
+            _prepend_max(newmat, pad_before, chunk_before, axis)
+            _append_max(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_mean(newmat, pad_before, chunk_before, axis, old_area)
-            _append_mean(newmat, pad_after, chunk_after, axis, old_area)
+            _prepend_mean(newmat, pad_before, chunk_before, axis)
+            _append_mean(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'median':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_median(newmat, pad_before, chunk_before, axis, old_area)
-            _append_median(newmat, pad_after, chunk_after, axis, old_area)
+            _prepend_median(newmat, pad_before, chunk_before, axis)
+            _append_median(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'minimum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_min(newmat, pad_before, chunk_before, axis, old_area)
-            _append_min(newmat, pad_after, chunk_after, axis, old_area)
+            _prepend_min(newmat, pad_before, chunk_before, axis)
+            _append_min(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
