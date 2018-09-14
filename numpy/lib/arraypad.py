@@ -344,100 +344,8 @@ _append_max = functools.partial(_append_stat, stat='max')
 _prepend_max = functools.partial(_prepend_stat, stat='max')
 _append_min = functools.partial(_append_stat, stat='min')
 _prepend_min = functools.partial(_prepend_stat, stat='min')
-
-def _prepend_mean(arr, pad_amt, num, axis=-1):
-    """
-    Prepend `pad_amt` mean values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate mean.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the mean of the first `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    mean_slice = _slice_first(arr.shape, num, axis=axis)
-
-    # Extract slice, calculate mean
-    mean_chunk = arr[mean_slice].mean(axis, keepdims=True)
-    _round_ifneeded(mean_chunk, arr.dtype)
-
-    # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _append_mean(arr, pad_amt, num, axis=-1):
-    """
-    Append `pad_amt` mean values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    num : int
-        Depth into `arr` along `axis` to calculate mean.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the maximum of the final `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _append_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    if num is not None:
-        mean_slice = _slice_last(arr.shape, num, axis=axis)
-    else:
-        mean_slice = tuple(slice(None) for x in arr.shape)
-
-    # Extract slice, calculate mean
-    mean_chunk = arr[mean_slice].mean(axis=axis, keepdims=True)
-    _round_ifneeded(mean_chunk, arr.dtype)
-
-    # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
+_append_mean = functools.partial(_append_stat, stat='mean')
+_prepend_mean = functools.partial(_prepend_stat, stat='mean')
 
 
 def _prepend_med(arr, pad_amt, num, axis=-1):
@@ -1140,7 +1048,7 @@ def pad(array, pad_width, mode, **kwargs):
         return newmat
 
     # these modes have been rewritten to only use a single copy
-    if mode in ['constant', 'edge', 'maximum', 'minimum']:
+    if mode in ['constant', 'edge', 'maximum', 'minimum', 'mean']:
         shape = np.asarray(narray.shape)
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
@@ -1192,8 +1100,8 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_mean(newmat, pad_before, chunk_before, axis)
-            newmat = _append_mean(newmat, pad_after, chunk_after, axis)
+            _prepend_mean(newmat, pad_before, chunk_before, axis, old_area)
+            _append_mean(newmat, pad_after, chunk_after, axis, old_area)
 
     elif mode == 'median':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
