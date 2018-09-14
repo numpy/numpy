@@ -22,7 +22,15 @@
 #include "npy_config.h"
 #include "alloc.h"
 
+
 #include <assert.h>
+
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#if defined MADV_HUGEPAGE && defined HAVE_MADVISE
+#define HAVE_MADV_HUGEPAGE
+#endif
+#endif
 
 #define NBUCKETS 1024 /* number of buckets for data*/
 #define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
@@ -52,6 +60,7 @@ static NPY_INLINE void *
 _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
                  cache_bucket * cache, void * (*alloc)(size_t))
 {
+    void * p;
     assert((esz == 1 && cache == datacache) ||
            (esz == sizeof(npy_intp) && cache == dimcache));
     assert(NPY_CHECK_GIL_HELD());
@@ -60,19 +69,21 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
             return cache[nelem].ptrs[--(cache[nelem].available)];
         }
     }
+    p = alloc(nelem * esz);
+    if (p) {
 #ifdef _PyPyGC_AddMemoryPressure
-    {
-        size_t size = nelem * esz;
-        void * ret = alloc(size);
-        if (ret != NULL)
-        {
-            _PyPyPyGC_AddMemoryPressure(size);
-        }
-        return ret;
-    }
-#else
-     return alloc(nelem * esz);
+        _PyPyPyGC_AddMemoryPressure(nelem * esz);
 #endif
+#ifdef HAVE_MADV_HUGEPAGE
+        /* allow kernel allocating huge pages for large arrays */
+        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u)))) {
+            npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
+            npy_uintp length = nelem * esz - offset;
+            madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
+        }
+#endif
+    }
+    return p;
 }
 
 /*
