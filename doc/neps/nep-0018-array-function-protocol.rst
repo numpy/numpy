@@ -559,11 +559,11 @@ experimental status.
 Switching to a new protocol should use an abbreviated version of NumPy's
 normal deprecation cycle:
 
-- For a single major release, NumPy should check for ``__array_function__``
-  methods that implement the given function, followed by checks for the new
-  protocol. If any argument returns a value other than ``NotImplemented``
-  from ``__array_function__``, a descriptive ``FutureWarning`` should be
-  raised.
+- For a single major release, after checking for any new protocols, NumPy
+  should still check for ``__array_function__`` methods that implement the
+  given function. If any argument returns a value other than
+  ``NotImplemented`` from ``__array_function__``, a descriptive
+  ``FutureWarning`` should be issued.
 - In the next major release, the checks for ``__array_function__`` will be
   removed.
 
