@@ -683,7 +683,9 @@ PyUFunc_Type
 
    The core of the ufunc is the :c:type:`PyUFuncObject` which contains all
    the information needed to call the underlying C-code loops that
-   perform the actual work. It has the following structure:
+   perform the actual work. While it is described here for completeness, it
+   should be considered internal to NumPy and manipulated via ``PyUFunc_*``
+   functions. It has the following structure:
 
    .. code-block:: c
 
@@ -703,6 +705,16 @@ PyUFunc_Type
           void *ptr;
           PyObject *obj;
           PyObject *userloops;
+          int core_enabled;
+          int core_num_dim_ix;
+          int *core_num_dims;
+          int *core_dim_ixs;
+          int *core_offsets;
+          char *core_signature;
+          PyUFunc_TypeResolutionFunc *type_resolver;
+          PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
+          void *reserved2;
+          PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
       } PyUFuncObject;
@@ -804,6 +816,51 @@ PyUFunc_Type
        User defined type numbers are always larger than
        :c:data:`NPY_USERDEF`.
 
+   .. c:member:: int PyUFuncObject.core_enabled
+
+       0 for scalar ufuncs; 1 for generalized ufuncs
+
+   .. c:member:: int PyUFuncObject.core_num_dim_ix
+
+       Number of distinct core dimension names in the signature
+
+   .. c:member:: int *PyUFuncObject.core_num_dims
+
+       Number of core dimensions of each argument
+
+   .. c:member:: int *PyUFuncObject.core_dim_ixs
+
+       Dimension indices in a flattened form; indices of argument ``k`` are
+       stored in ``core_dim_ixs[core_offsets[k] : core_offsets[k] +
+       core_numdims[k]]``
+
+   .. c:member:: int *PyUFuncObject.core_offsets
+
+       Position of 1st core dimension of each argument in ``core_dim_ixs``,
+       equivalent to cumsum(``core_num_dims``)
+
+   .. c:member:: char *PyUFuncObject.core_signature
+
+       Core signature string
+
+   .. c:member:: PyUFunc_TypeResolutionFunc *PyUFuncObject.type_resolver
+
+       A function which resolves the types and fills an array with the dtypes
+       for the inputs and outputs
+
+   .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *PyUFuncObject.legacy_inner_loop_selector
+
+       A function which returns an inner loop. The ``legacy`` in the name arises
+       because for NumPy 1.6 a better variant had been planned. This variant
+       has not yet come about.
+
+   .. c:member:: void *PyUFuncObject.reserved2
+
+       For a possible future loop selector with a different signature.
+
+   .. c:member:: PyUFunc_MaskedInnerLoopSelectionFunc *PyUFuncObject.masked_inner_loop_selector
+
+       Function which returns a masked inner loop for the ufunc
 
    .. c:member:: npy_uint32 PyUFuncObject.op_flags
 
