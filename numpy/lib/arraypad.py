@@ -1205,20 +1205,31 @@ def pad(array, pad_width, mode, **kwargs):
                                 kwargs)
         return newmat
 
-    # API preserved, but completely new algorithm which pads by building the
-    # entire block to pad before/after `arr` with in one step, for each axis.
-    if mode == 'constant':
+    # these modes have been rewritten to only use a single copy
+    if mode in ['constant', 'edge']:
         shape = np.asarray(narray.shape)
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
 
         newmat = np.empty(shape=new_shape, dtype=narray.dtype)
-        old_area = tuple(slice(left, left + dim)
-                         for (left, right), dim in zip(pad_width,
-                                                       narray.shape))
+        old_left = [left for left, _ in pad_width]
+        old_right = [left + dim for (left, _), dim in zip(pad_width, narray.shape)]
+        old_area = tuple(slice(left, right)
+                         for left, right in zip(old_left, old_right))
+
         newmat[old_area] = narray
-        for i, (pad_before, pad_after), (c_before, c_after) in zip(
-                np.arange(narray.ndim), pad_width, kwargs['constant_values']):
+    # all other mode still use concatenate
+    else:
+        newmat = narray
+
+    # API preserved, but completely new algorithm which pads by building the
+    # entire block to pad before/after `arr` with in one step, for each axis.
+    # The array is only copied once, boundary conditions are filled in.
+    # Currently, corners are being overwritten, though, this is a much less
+    # costly operation than copying the array over for large matricies.
+    if mode == 'constant':
+        for i, ((pad_before, pad_after), (c_before, c_after)) in enumerate(
+                zip(pad_width, kwargs['constant_values'])):
             if pad_before:
                 chosen_slice = (slice(None), ) * i + (slice(0, pad_before), )
                 newmat[chosen_slice] = c_before
@@ -1230,13 +1241,18 @@ def pad(array, pad_width, mode, **kwargs):
     # I removed anarray.copy()
     # since anyway, these matricies are getting concatenated...
     elif mode == 'edge':
-        newmat = narray
-        for axis, (pad_before, pad_after) in enumerate(pad_width):
-            newmat = _prepend_edge(newmat, pad_before, axis)
-            newmat = _append_edge(newmat, pad_after, axis)
+        for i, (pad_before, pad_after) in enumerate(pad_width):
+            if pad_before:
+                chosen_slice = (slice(None), ) * i + (slice(0, pad_before), )
+                edge_slice = (slice(None), ) * i + (slice(pad_before, pad_before + 1), )
+                newmat[chosen_slice] = newmat[edge_slice]
+            if pad_after:
+                chosen_slice = (slice(None), ) * i + (slice(-pad_after, None), )
+                edge_slice = ((slice(None), ) * i +
+                              (slice(old_right[i]-1, old_right[i]), ))
+                newmat[chosen_slice] = newmat[edge_slice]
 
     elif mode == 'linear_ramp':
-        newmat = narray
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
             newmat = _prepend_ramp(newmat, pad_before, before_val, axis)
