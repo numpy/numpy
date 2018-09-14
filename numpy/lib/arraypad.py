@@ -289,16 +289,18 @@ def _prepend_stat(arr, pad_amt, num, axis, old_area, stat):
         return
 
     # Use entire array if `num` is too large
-    if num and num >= arr.shape[axis]:
-        num = None
     if num is None:
-        chunk = getattr(arr[old_area], stat)()
+        chunk = getattr(np, stat)(arr[old_area])
+        if np.issubdtype(arr.dtype, np.integer):
+            chunk = np.round(chunk)
     else:
         # Slice a chunk from the edge to calculate stats on
         the_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
 
         # Extract slice, calculate statistic
-        chunk = getattr(arr[the_slice], stat)(axis=-1, keepdims=True)
+        chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
+
+        _round_ifneeded(chunk, arr.dtype)
 
     # Mutate the edge using the max_chunk
     _mutate_starting_edge(arr, axis, pad_amt, chunk)
@@ -334,17 +336,18 @@ def _append_stat(arr, pad_amt, num, axis, old_area, stat):
         return
 
     # Use entire array if `num` is too large
-    if num and num >= arr.shape[axis]:
-        num = None
     if num is None:
-        chunk = getattr(arr[old_area], stat)()
+        chunk = getattr(np, stat)(arr[old_area])
+        if np.issubdtype(arr.dtype, np.integer):
+            chunk = np.round(chunk)
     else:
         # Slice a chunk from the edge to calculate stats on
         the_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
 
         # Extract slice, calculate statistic
-        chunk = getattr(arr[the_slice], stat)(axis=-1, keepdims=True)
+        chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
 
+        _round_ifneeded(chunk, arr.dtype)
     # Mutate the edge using the max_chunk
     _mutate_ending_edge(arr, axis, pad_amt, chunk)
 
@@ -1111,7 +1114,13 @@ def pad(array, pad_width, mode, **kwargs):
         # Need to only normalize particular keywords.
         for i in kwargs:
             if i == 'stat_length':
-                kwargs[i] = _validate_lengths(narray, kwargs[i])
+                stat_length = _validate_lengths(narray, kwargs[i])
+                stat_length = tuple(
+                    tuple((chunk_before if chunk_before and chunk_before <= dim else None,
+                           chunk_after if chunk_after and chunk_after <= dim else None))
+                    for (chunk_before, chunk_after), dim in zip(stat_length, narray.shape)
+                )
+                kwargs[i] = stat_length
             if i in ['end_values', 'constant_values']:
                 kwargs[i] = _normalize_shape(narray, kwargs[i],
                                              cast_to_int=False)
