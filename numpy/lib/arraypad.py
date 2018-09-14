@@ -4,6 +4,7 @@ of an n-dimensional array.
 
 """
 from __future__ import division, absolute_import, print_function
+import functools
 
 import numpy as np
 
@@ -258,14 +259,14 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     return _do_append(arr, ramp_arr, axis)
 
 
-def _prepend_max(arr, pad_amt, num, axis, old_area):
+def _prepend_stat(arr, pad_amt, num, axis, old_area, stat):
     """
-    Prepend `pad_amt` maximum values along `axis`.
+    Mutate mat prepending `pad_amt` maximum values along `axis`.
 
     Parameters
     ----------
     arr : ndarray
-        Input array of arbitrary shape.
+        Input/Output array of arbitrary shape.
     pad_amt : int
         Amount of padding to prepend.
     num : int
@@ -273,13 +274,10 @@ def _prepend_max(arr, pad_amt, num, axis, old_area):
         Range: [1, `arr.shape[axis]`] or None (entire axis)
     axis : int
         Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        prepended region is the maximum of the first `num` values along
-        `axis`.
+    old_area: slice
+        The area associated with the old array.
+    stat: string
+        The numpy function stat to use.
 
     """
     if pad_amt == 0:
@@ -294,39 +292,37 @@ def _prepend_max(arr, pad_amt, num, axis, old_area):
     if num and num >= arr.shape[axis]:
         num = None
     if num is None:
-        max_chunk = arr[old_area].max()
+        chunk = getattr(arr[old_area], stat)()
     else:
         # Slice a chunk from the edge to calculate stats on
-        max_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
+        the_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
 
-        # Extract slice, calculate max
-        max_chunk = arr[max_slice].max(axis=-1, keepdims=True)
+        # Extract slice, calculate statistic
+        chunk = getattr(arr[the_slice], stat)(axis=-1, keepdims=True)
 
     # Mutate the edge using the max_chunk
-    _mutate_starting_edge(arr, axis, pad_amt, max_chunk)
+    _mutate_starting_edge(arr, axis, pad_amt, chunk)
 
 
-def _append_max(arr, pad_amt, num, axis, old_area):
+def _append_stat(arr, pad_amt, num, axis, old_area, stat):
     """
-    Pad one `axis` of `arr` with the maximum of the last `num` elements.
+    Mutate mat appending `pad_amt` maximum values along `axis`.
 
     Parameters
     ----------
     arr : ndarray
-        Input array of arbitrary shape.
+        Input/Output array of arbitrary shape.
     pad_amt : int
-        Amount of padding to append.
+        Amount of padding to prepend.
     num : int
         Depth into `arr` along `axis` to calculate maximum.
         Range: [1, `arr.shape[axis]`] or None (entire axis)
     axis : int
         Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the maximum of the final `num` values along `axis`.
+    old_area: slice
+        The area associated with the old array.
+    stat: string
+        The numpy function stat to use.
 
     """
     if pad_amt == 0:
@@ -341,17 +337,20 @@ def _append_max(arr, pad_amt, num, axis, old_area):
     if num and num >= arr.shape[axis]:
         num = None
     if num is None:
-        max_chunk = arr[old_area].max()
+        chunk = getattr(arr[old_area], stat)()
     else:
         # Slice a chunk from the edge to calculate stats on
-        max_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
+        the_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
 
-        # Extract slice, calculate max
-        max_chunk = arr[max_slice].max(axis=-1, keepdims=True)
+        # Extract slice, calculate statistic
+        chunk = getattr(arr[the_slice], stat)(axis=-1, keepdims=True)
 
     # Mutate the edge using the max_chunk
-    _mutate_ending_edge(arr, axis, pad_amt, max_chunk)
+    _mutate_ending_edge(arr, axis, pad_amt, chunk)
 
+
+_append_max = functools.partial(_append_stat, stat='max')
+_prepend_max = functools.partial(_prepend_stat, stat='max')
 
 def _prepend_mean(arr, pad_amt, num, axis=-1):
     """
