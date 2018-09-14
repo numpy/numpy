@@ -103,65 +103,6 @@ def _do_append(arr, pad_chunk, axis):
         (arr, pad_chunk.astype(arr.dtype, copy=False)), axis=axis)
 
 
-def _prepend_const(arr, pad_amt, val, axis=-1):
-    """
-    Prepend constant `val` along `axis` of `arr`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    val : scalar
-        Constant value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` constant `val` prepended along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-    return _do_prepend(arr, np.full(padshape, val, dtype=arr.dtype), axis)
-
-
-def _append_const(arr, pad_amt, val, axis=-1):
-    """
-    Append constant `val` along `axis` of `arr`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    val : scalar
-        Constant value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` constant `val` appended along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-    return _do_append(arr, np.full(padshape, val, dtype=arr.dtype), axis)
-
-
-
 def _prepend_edge(arr, pad_amt, axis=-1):
     """
     Prepend `pad_amt` to `arr` along `axis` by extending edge values.
@@ -1264,53 +1205,73 @@ def pad(array, pad_width, mode, **kwargs):
                                 kwargs)
         return newmat
 
-    # If we get here, use new padding method
-    newmat = narray.copy()
-
     # API preserved, but completely new algorithm which pads by building the
     # entire block to pad before/after `arr` with in one step, for each axis.
     if mode == 'constant':
-        for axis, ((pad_before, pad_after), (before_val, after_val)) \
-                in enumerate(zip(pad_width, kwargs['constant_values'])):
-            newmat = _prepend_const(newmat, pad_before, before_val, axis)
-            newmat = _append_const(newmat, pad_after, after_val, axis)
+        shape = np.asarray(narray.shape)
+        pad_width = np.asarray(pad_width)
+        new_shape = shape + np.sum(pad_width, axis=1)
 
+        newmat = np.empty(shape=new_shape, dtype=narray.dtype)
+        old_area = tuple(slice(left, left + dim)
+                         for (left, right), dim in zip(pad_width,
+                                                       narray.shape))
+        newmat[old_area] = narray
+        for i, (pad_before, pad_after), (c_before, c_after) in zip(
+                np.arange(narray.ndim), pad_width, kwargs['constant_values']):
+            if pad_before:
+                chosen_slice = (slice(None), ) * i + (slice(0, pad_before), )
+                newmat[chosen_slice] = c_before
+            if pad_after:
+                chosen_slice = (slice(None), ) * i + (slice(-pad_after, None), )
+                newmat[chosen_slice] = c_after
+
+    # I haven't had a chance to refactor these modes.
+    # I removed anarray.copy()
+    # since anyway, these matricies are getting concatenated...
     elif mode == 'edge':
+        newmat = narray
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             newmat = _prepend_edge(newmat, pad_before, axis)
             newmat = _append_edge(newmat, pad_after, axis)
 
     elif mode == 'linear_ramp':
+        newmat = narray
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
             newmat = _prepend_ramp(newmat, pad_before, before_val, axis)
             newmat = _append_ramp(newmat, pad_after, after_val, axis)
 
     elif mode == 'maximum':
+        newmat = narray
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
             newmat = _prepend_max(newmat, pad_before, chunk_before, axis)
             newmat = _append_max(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'mean':
+        newmat = narray
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
             newmat = _prepend_mean(newmat, pad_before, chunk_before, axis)
             newmat = _append_mean(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'median':
+        newmat = narray
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
             newmat = _prepend_med(newmat, pad_before, chunk_before, axis)
             newmat = _append_med(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'minimum':
+        newmat = narray
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
             newmat = _prepend_min(newmat, pad_before, chunk_before, axis)
             newmat = _append_min(newmat, pad_after, chunk_after, axis)
 
     elif mode == 'reflect':
+        newmat = narray
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if narray.shape[axis] == 0:
                 # Axes with non-zero padding cannot be empty.
@@ -1345,6 +1306,7 @@ def pad(array, pad_width, mode, **kwargs):
             newmat = _pad_ref(newmat, (pad_before, pad_after), method, axis)
 
     elif mode == 'symmetric':
+        newmat = narray
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             # Recursive padding along any axis where `pad_amt` is too large
             # for indexing tricks. We can only safely pad the original axis
@@ -1364,6 +1326,7 @@ def pad(array, pad_width, mode, **kwargs):
             newmat = _pad_sym(newmat, (pad_before, pad_after), method, axis)
 
     elif mode == 'wrap':
+        newmat = narray
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             # Recursive padding along any axis where `pad_amt` is too large
             # for indexing tricks. We can only safely pad the original axis
