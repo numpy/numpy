@@ -1242,7 +1242,10 @@ def pad(array, pad_width, mode, **kwargs):
         newmat[old_area] = narray
     # all other mode still use concatenate
     else:
-        newmat = narray
+        # Force a copy.
+        # I guess this address the case where no padding is but yet we want.
+        # to return a distinct copy of the array.
+        newmat = narray.copy()
 
     # API preserved, but completely new algorithm which pads by building the
     # entire block to pad before/after `arr` with in one step, for each axis.
