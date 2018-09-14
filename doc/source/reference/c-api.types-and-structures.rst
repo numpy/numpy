@@ -133,9 +133,9 @@ PyArray_Type
     is related to this array. There are two use cases: 1) If this array
     does not own its own memory, then base points to the Python object
     that owns it (perhaps another array object), 2) If this array has
-    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or 
+    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or
     :c:data:NPY_ARRAY_WRITEBACKIFCOPY`: flag set, then this array is
-    a working copy of a "misbehaved" array. When 
+    a working copy of a "misbehaved" array. When
     ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to by base
     will be updated with the contents of this array.
 
