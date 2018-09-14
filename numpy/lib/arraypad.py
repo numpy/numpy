@@ -351,6 +351,8 @@ def _append_stat(arr, pad_amt, num, axis, old_area, stat):
 
 _append_max = functools.partial(_append_stat, stat='max')
 _prepend_max = functools.partial(_prepend_stat, stat='max')
+_append_min = functools.partial(_append_stat, stat='min')
+_prepend_min = functools.partial(_prepend_stat, stat='min')
 
 def _prepend_mean(arr, pad_amt, num, axis=-1):
     """
@@ -540,100 +542,6 @@ def _append_med(arr, pad_amt, num, axis=-1):
 
     # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
     return _do_append(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _prepend_min(arr, pad_amt, num, axis=-1):
-    """
-    Prepend `pad_amt` minimum values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate minimum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the minimum of the first `num` values along
-        `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    min_slice = _slice_first(arr.shape, num, axis=axis)
-
-    # Extract slice, calculate min
-    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
-
-    # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _append_min(arr, pad_amt, num, axis=-1):
-    """
-    Append `pad_amt` median values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    num : int
-        Depth into `arr` along `axis` to calculate minimum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the minimum of the final `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _append_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    if num is not None:
-        min_slice = _slice_last(arr.shape, num, axis=axis)
-    else:
-        min_slice = tuple(slice(None) for x in arr.shape)
-
-    # Extract slice, calculate min
-    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
-
-    # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -1235,7 +1143,7 @@ def pad(array, pad_width, mode, **kwargs):
         return newmat
 
     # these modes have been rewritten to only use a single copy
-    if mode in ['constant', 'edge', 'maximum']:
+    if mode in ['constant', 'edge', 'maximum', 'minimum']:
         shape = np.asarray(narray.shape)
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
@@ -1299,8 +1207,8 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'minimum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_min(newmat, pad_before, chunk_before, axis)
-            newmat = _append_min(newmat, pad_after, chunk_after, axis)
+            _prepend_min(newmat, pad_before, chunk_before, axis, old_area)
+            _append_min(newmat, pad_after, chunk_after, axis, old_area)
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
