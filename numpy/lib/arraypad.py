@@ -927,6 +927,28 @@ def _validate_lengths(narray, number_elements):
     return normshp
 
 
+def _pad_starting_edge(newmat, axis, pad_before):
+    edge_slice = ((slice(None), ) * axis +
+                  (slice(pad_before, pad_before + 1), ))
+    _mutate_starting_edge(newmat, axis, pad_before, newmat[edge_slice])
+
+
+def _pad_ending_edge(newmat, axis, pad_after):
+    edge_slice = ((slice(None), ) * axis +
+                  (slice(newmat.shape[axis] - pad_after - 1,
+                         newmat.shape[axis] - pad_after), ))
+    _mutate_ending_edge(newmat, axis, pad_after, newmat[edge_slice])
+
+
+def _mutate_starting_edge(newmat, axis, pad_before, edge):
+    chosen_slice = (slice(None), ) * axis + (slice(0, pad_before), )
+    newmat[chosen_slice] = edge
+
+
+def _mutate_ending_edge(newmat, axis, pad_after, edge):
+    chosen_slice = (slice(None), ) * axis + (slice(-pad_after, None), )
+    newmat[chosen_slice] = edge
+
 ###############################################################################
 # Public functions
 
@@ -1228,30 +1250,22 @@ def pad(array, pad_width, mode, **kwargs):
     # Currently, corners are being overwritten, though, this is a much less
     # costly operation than copying the array over for large matricies.
     if mode == 'constant':
-        for i, ((pad_before, pad_after), (c_before, c_after)) in enumerate(
+        for axis, ((pad_before, pad_after), (c_before, c_after)) in enumerate(
                 zip(pad_width, kwargs['constant_values'])):
             if pad_before:
-                chosen_slice = (slice(None), ) * i + (slice(0, pad_before), )
-                newmat[chosen_slice] = c_before
+                _mutate_starting_edge(newmat, axis, pad_before, c_before)
             if pad_after:
-                chosen_slice = (slice(None), ) * i + (slice(-pad_after, None), )
-                newmat[chosen_slice] = c_after
+                _mutate_ending_edge(newmat, axis, pad_after, c_after)
 
     # I haven't had a chance to refactor these modes.
     # I removed anarray.copy()
     # since anyway, these matricies are getting concatenated...
     elif mode == 'edge':
-        for i, (pad_before, pad_after) in enumerate(pad_width):
+        for axis, (pad_before, pad_after) in enumerate(pad_width):
             if pad_before:
-                chosen_slice = (slice(None), ) * i + (slice(0, pad_before), )
-                edge_slice = (slice(None), ) * i + (slice(pad_before, pad_before + 1), )
-                newmat[chosen_slice] = newmat[edge_slice]
+                _pad_starting_edge(newmat, axis, pad_before)
             if pad_after:
-                chosen_slice = (slice(None), ) * i + (slice(-pad_after, None), )
-                edge_slice = ((slice(None), ) * i +
-                              (slice(old_right[i]-1, old_right[i]), ))
-                newmat[chosen_slice] = newmat[edge_slice]
-
+                _pad_ending_edge(newmat, axis, pad_after)
     elif mode == 'linear_ramp':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
