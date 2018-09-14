@@ -4,7 +4,6 @@ of an n-dimensional array.
 
 """
 from __future__ import division, absolute_import, print_function
-import functools
 
 import numpy as np
 
@@ -259,7 +258,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     return _do_append(arr, ramp_arr, axis)
 
 
-def _prepend_stat(arr, pad_amt, num, axis, stat):
+def _prepend_stat(arr, pad_amt, num, axis, stat_func):
     """
     Mutate mat prepending `pad_amt` maximum values along `axis`.
 
@@ -292,7 +291,7 @@ def _prepend_stat(arr, pad_amt, num, axis, stat):
     the_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
 
     # Extract slice, calculate statistic
-    chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
+    chunk = stat_func(arr[the_slice], axis=axis, keepdims=True)
 
     _round_ifneeded(chunk, arr.dtype)
 
@@ -300,7 +299,7 @@ def _prepend_stat(arr, pad_amt, num, axis, stat):
     _mutate_starting_edge(arr, axis, pad_amt, chunk)
 
 
-def _append_stat(arr, pad_amt, num, axis, stat):
+def _append_stat(arr, pad_amt, num, axis, stat_func):
     """
     Mutate mat appending `pad_amt` maximum values along `axis`.
 
@@ -333,21 +332,11 @@ def _append_stat(arr, pad_amt, num, axis, stat):
     the_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
 
     # Extract slice, calculate statistic
-    chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
+    chunk = stat_func(arr[the_slice], axis=axis, keepdims=True)
 
     _round_ifneeded(chunk, arr.dtype)
     # Mutate the edge using the max_chunk
     _mutate_ending_edge(arr, axis, pad_amt, chunk)
-
-
-_append_max = functools.partial(_append_stat, stat='max')
-_prepend_max = functools.partial(_prepend_stat, stat='max')
-_append_min = functools.partial(_append_stat, stat='min')
-_prepend_min = functools.partial(_prepend_stat, stat='min')
-_append_mean = functools.partial(_append_stat, stat='mean')
-_prepend_mean = functools.partial(_prepend_stat, stat='mean')
-_append_median = functools.partial(_append_stat, stat='median')
-_prepend_median = functools.partial(_prepend_stat, stat='median')
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -939,7 +928,7 @@ def pad(array, pad_width, mode, **kwargs):
             slice(pad_width[i][0], pad_width[i][0] + narray.shape[i])
             for i in rank)
         new_shape = np.array(narray.shape) + total_dim_increase
-        newmat = np.zeros(new_shape, narray.dtype)
+        newmat = np.empty(new_shape, narray.dtype)
 
         # Insert the original array into the padded array
         newmat[offset_slices] = narray
@@ -960,7 +949,7 @@ def pad(array, pad_width, mode, **kwargs):
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
 
-        newmat = np.empty(shape=new_shape, dtype=narray.dtype)
+        newmat = np.zeros(shape=new_shape, dtype=narray.dtype)
         old_left = [left for left, _ in pad_width]
         old_right = [left + dim for (left, _), dim in zip(pad_width, narray.shape)]
         old_area = tuple(slice(left, right)
@@ -1001,26 +990,26 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'maximum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_max(newmat, pad_before, chunk_before, axis)
-            _append_max(newmat, pad_after, chunk_after, axis)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, np.max)
+            _append_stat(newmat, pad_after, chunk_after, axis, np.max)
 
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_mean(newmat, pad_before, chunk_before, axis)
-            _append_mean(newmat, pad_after, chunk_after, axis)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, np.mean)
+            _append_stat(newmat, pad_after, chunk_after, axis, np.mean)
 
     elif mode == 'median':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_median(newmat, pad_before, chunk_before, axis)
-            _append_median(newmat, pad_after, chunk_after, axis)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, np.median)
+            _append_stat(newmat, pad_after, chunk_after, axis, np.median)
 
     elif mode == 'minimum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_min(newmat, pad_before, chunk_before, axis)
-            _append_min(newmat, pad_after, chunk_after, axis)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, np.min)
+            _append_stat(newmat, pad_after, chunk_after, axis, np.min)
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
