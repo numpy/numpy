@@ -288,19 +288,13 @@ def _prepend_stat(arr, pad_amt, num, axis, old_area, stat):
         _pad_starting_edge(arr, axis, pad_amt)
         return
 
-    # Use entire array if `num` is too large
-    if num is None:
-        chunk = getattr(np, stat)(arr[old_area])
-        if np.issubdtype(arr.dtype, np.integer):
-            chunk = np.round(chunk)
-    else:
-        # Slice a chunk from the edge to calculate stats on
-        the_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
+    # Slice a chunk from the edge to calculate stats on
+    the_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
 
-        # Extract slice, calculate statistic
-        chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
+    # Extract slice, calculate statistic
+    chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
 
-        _round_ifneeded(chunk, arr.dtype)
+    _round_ifneeded(chunk, arr.dtype)
 
     # Mutate the edge using the max_chunk
     _mutate_starting_edge(arr, axis, pad_amt, chunk)
@@ -335,19 +329,13 @@ def _append_stat(arr, pad_amt, num, axis, old_area, stat):
         _pad_ending_edge(arr, axis, pad_amt)
         return
 
-    # Use entire array if `num` is too large
-    if num is None:
-        chunk = getattr(np, stat)(arr[old_area])
-        if np.issubdtype(arr.dtype, np.integer):
-            chunk = np.round(chunk)
-    else:
-        # Slice a chunk from the edge to calculate stats on
-        the_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
+    # Slice a chunk from the edge to calculate stats on
+    the_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
 
-        # Extract slice, calculate statistic
-        chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
+    # Extract slice, calculate statistic
+    chunk = getattr(np, stat)(arr[the_slice], axis=axis, keepdims=True)
 
-        _round_ifneeded(chunk, arr.dtype)
+    _round_ifneeded(chunk, arr.dtype)
     # Mutate the edge using the max_chunk
     _mutate_ending_edge(arr, axis, pad_amt, chunk)
 
@@ -1116,8 +1104,8 @@ def pad(array, pad_width, mode, **kwargs):
             if i == 'stat_length':
                 stat_length = _validate_lengths(narray, kwargs[i])
                 stat_length = tuple(
-                    tuple((chunk_before if chunk_before and chunk_before <= dim else None,
-                           chunk_after if chunk_after and chunk_after <= dim else None))
+                    tuple((chunk_before if chunk_before and chunk_before <= dim else dim,
+                           chunk_after if chunk_after and chunk_after <= dim else dim))
                     for (chunk_before, chunk_after), dim in zip(stat_length, narray.shape)
                 )
                 kwargs[i] = stat_length
