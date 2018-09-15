@@ -129,7 +129,7 @@ def _prepend_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    return _do_prepend(arr, np.full(padshape, val, dtype=arr.dtype), axis)
+    return np.full(padshape, val, dtype=arr.dtype)
 
 
 def _append_const(arr, pad_amt, val, axis=-1):
@@ -158,7 +158,7 @@ def _append_const(arr, pad_amt, val, axis=-1):
         return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
-    return _do_append(arr, np.full(padshape, val, dtype=arr.dtype), axis)
+    return np.full(padshape, val, dtype=arr.dtype)
 
 
 
@@ -186,7 +186,7 @@ def _prepend_edge(arr, pad_amt, axis=-1):
 
     edge_slice = _slice_first(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
-    return _do_prepend(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
+    return edge_arr.repeat(pad_amt, axis=axis)
 
 
 def _append_edge(arr, pad_amt, axis=-1):
@@ -214,7 +214,7 @@ def _append_edge(arr, pad_amt, axis=-1):
 
     edge_slice = _slice_last(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
-    return _do_append(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
+    return edge_arr.repeat(pad_amt, axis=axis)
 
 
 def _prepend_ramp(arr, pad_amt, end, axis=-1):
@@ -264,7 +264,7 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
     _round_ifneeded(ramp_arr, arr.dtype)
 
     # Ramp values will most likely be float, cast them to the same type as arr
-    return _do_prepend(arr, ramp_arr, axis)
+    return ramp_arr
 
 
 def _append_ramp(arr, pad_amt, end, axis=-1):
@@ -314,7 +314,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     _round_ifneeded(ramp_arr, arr.dtype)
 
     # Ramp values will most likely be float, cast them to the same type as arr
-    return _do_append(arr, ramp_arr, axis)
+    return ramp_arr
 
 
 def _prepend_max(arr, pad_amt, num, axis=-1):
@@ -359,8 +359,8 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
     # Extract slice, calculate max
     max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
-    # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
+    # Extend along `axis` by `pad_amt`
+    return max_chunk.repeat(pad_amt, axis=axis)
 
 
 def _append_max(arr, pad_amt, num, axis=-1):
@@ -407,8 +407,8 @@ def _append_max(arr, pad_amt, num, axis=-1):
     # Extract slice, calculate max
     max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
 
-    # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
+    # Extend along `axis` by `pad_amt`
+    return max_chunk.repeat(pad_amt, axis=axis)
 
 
 def _prepend_mean(arr, pad_amt, num, axis=-1):
@@ -453,8 +453,8 @@ def _prepend_mean(arr, pad_amt, num, axis=-1):
     mean_chunk = arr[mean_slice].mean(axis, keepdims=True)
     _round_ifneeded(mean_chunk, arr.dtype)
 
-    # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
+    # Extend along `axis` by `pad_amt`
+    return mean_chunk.repeat(pad_amt, axis)
 
 
 def _append_mean(arr, pad_amt, num, axis=-1):
@@ -502,8 +502,8 @@ def _append_mean(arr, pad_amt, num, axis=-1):
     mean_chunk = arr[mean_slice].mean(axis=axis, keepdims=True)
     _round_ifneeded(mean_chunk, arr.dtype)
 
-    # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
+    # Extend along `axis` by `pad_amt`
+    return mean_chunk.repeat(pad_amt, axis)
 
 
 def _prepend_med(arr, pad_amt, num, axis=-1):
@@ -548,8 +548,8 @@ def _prepend_med(arr, pad_amt, num, axis=-1):
     med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
     _round_ifneeded(med_chunk, arr.dtype)
 
-    # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
+    # Extend along `axis` by `pad_amt`
+    return med_chunk.repeat(pad_amt, axis)
 
 
 def _append_med(arr, pad_amt, num, axis=-1):
@@ -597,8 +597,8 @@ def _append_med(arr, pad_amt, num, axis=-1):
     med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
     _round_ifneeded(med_chunk, arr.dtype)
 
-    # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
+    # Extend along `axis` by `pad_amt`
+    return med_chunk.repeat(pad_amt, axis)
 
 
 def _prepend_min(arr, pad_amt, num, axis=-1):
@@ -643,8 +643,8 @@ def _prepend_min(arr, pad_amt, num, axis=-1):
     # Extract slice, calculate min
     min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
-    # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
+    # Extend along `axis` by `pad_amt`
+    return min_chunk.repeat(pad_amt, axis)
 
 
 def _append_min(arr, pad_amt, num, axis=-1):
@@ -691,8 +691,8 @@ def _append_min(arr, pad_amt, num, axis=-1):
     # Extract slice, calculate min
     min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
 
-    # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
+    # Extend along `axis` by `pad_amt`
+    return min_chunk.repeat(pad_amt, axis)
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -1272,43 +1272,43 @@ def pad(array, pad_width, mode, **kwargs):
     if mode == 'constant':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['constant_values'])):
-            newmat = _prepend_const(newmat, pad_before, before_val, axis)
-            newmat = _append_const(newmat, pad_after, after_val, axis)
+            newmat = _do_prepend(newmat, _prepend_const(newmat, pad_before, before_val, axis), axis)
+            newmat = _do_append(newmat, _append_const(newmat, pad_after, after_val, axis), axis)
 
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
-            newmat = _prepend_edge(newmat, pad_before, axis)
-            newmat = _append_edge(newmat, pad_after, axis)
+            newmat = _do_prepend(newmat, _prepend_edge(newmat, pad_before, axis), axis)
+            newmat = _do_append(newmat, _append_edge(newmat, pad_after, axis), axis)
 
     elif mode == 'linear_ramp':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
-            newmat = _prepend_ramp(newmat, pad_before, before_val, axis)
-            newmat = _append_ramp(newmat, pad_after, after_val, axis)
+            newmat = _do_prepend(newmat, _prepend_ramp(newmat, pad_before, before_val, axis), axis)
+            newmat = _do_append(newmat, _append_ramp(newmat, pad_after, after_val, axis), axis)
 
     elif mode == 'maximum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_max(newmat, pad_before, chunk_before, axis)
-            newmat = _append_max(newmat, pad_after, chunk_after, axis)
+            newmat = _do_prepend(newmat, _prepend_max(newmat, pad_before, chunk_before, axis), axis)
+            newmat = _do_append(newmat, _append_max(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_mean(newmat, pad_before, chunk_before, axis)
-            newmat = _append_mean(newmat, pad_after, chunk_after, axis)
+            newmat = _do_prepend(newmat, _prepend_mean(newmat, pad_before, chunk_before, axis), axis)
+            newmat = _do_append(newmat, _append_mean(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'median':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_med(newmat, pad_before, chunk_before, axis)
-            newmat = _append_med(newmat, pad_after, chunk_after, axis)
+            newmat = _do_prepend(newmat, _prepend_med(newmat, pad_before, chunk_before, axis), axis)
+            newmat = _do_append(newmat, _append_med(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'minimum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_min(newmat, pad_before, chunk_before, axis)
-            newmat = _append_min(newmat, pad_after, chunk_after, axis)
+            newmat = _do_prepend(newmat, _leading_min(newmat, pad_before, chunk_before, axis), axis)
+            newmat = _do_append(newmat, _trailing_min(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
@@ -1327,8 +1327,8 @@ def pad(array, pad_width, mode, **kwargs):
                     (pad_after > 0)) and newmat.shape[axis] == 1:
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
-                newmat = _prepend_edge(newmat, pad_before, axis)
-                newmat = _append_edge(newmat, pad_after, axis)
+                newmat = _do_prepend(newmat, _prepend_edge(newmat, pad_before, axis), axis)
+                newmat = _do_append(newmat, _append_edge(newmat, pad_after, axis), axis)
                 continue
 
             method = kwargs['reflect_type']
