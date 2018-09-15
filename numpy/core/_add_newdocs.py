@@ -7989,7 +7989,7 @@ integer_aliases = type_aliases('numpy.core.numerictypes', [
     ('int16', '16-bit signed integer (-32768 to 32767)'),
     ('int32', '32-bit signed integer (-2147483648 to 2147483647)'),
     ('int64', '64-bit signed integer (-9223372036854775808 to 9223372036854775807)'),
-    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``. Alias: int0'),
+    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'),
     ])
 
 unsigned_integer_aliases = type_aliases('numpy.core.numerictypes', [
@@ -7997,7 +7997,7 @@ unsigned_integer_aliases = type_aliases('numpy.core.numerictypes', [
     ('uint16', '16-bit unsigned integer (0 to 65535)'),
     ('uint32', '32-bit unsigned integer (0 to 4294967295)'),
     ('uint64', '64-bit unsigned integer (0 to 18446744073709551615)'),
-    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``. Alias: uint0'),
+    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'),
     ])
 
 float_aliases = type_aliases('numpy.core.numerictypes', [
@@ -8015,153 +8015,124 @@ complex_aliases = type_aliases('numpy.core.numerictypes', [
     ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
     ])
 
-def extra_alias_doc(place, obj, possible_aliases):
-    o = get_type(place, obj)
-    return ''.join("Alias *on this platform*: {}: {}.\n    ".format(alias, doc)
-                   for (alias_type, alias, doc) in possible_aliases if alias_type is o)
 
-add_newdoc('numpy.core.numerictypes', 'bool_',
+def add_newdoc_for_numeric_type(obj, character_code, fixed_aliases, possible_aliases, doc):
+    place = 'numpy.core.numerictypes'
+    o = get_type(place, obj)
+    if o is None:
+        return
+
+    canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``{}``.\n".format(obj)
+    alias_doc = ''.join("Alias: ``{}``.\n    ".format(alias) for alias in fixed_aliases)
+    alias_doc += ''.join("Alias *on this platform*: ``{}``: {}.\n    ".format(alias, doc)
+                         for (alias_type, alias, doc) in possible_aliases if alias_type is o)
+
+    docstring = """
+    {doc}
+    Character code: ``'{character_code}'``.
+    {canonical_name_doc}{alias_doc}
+    """.format(doc=doc.strip(), character_code=character_code,
+               canonical_name_doc=canonical_name_doc, alias_doc=alias_doc)
+
+    add_newdoc(place, obj, docstring)
+
+
+add_newdoc_for_numeric_type('bool_', '?', ['bool8'], [],
     """
     Boolean type (True or False), stored as a byte.
-    Character code: ``'?'``.
-    Alias: ``bool8``.
-
     """)
 
-add_newdoc('numpy.core.numerictypes', 'byte',
+add_newdoc_for_numeric_type('byte', 'b', [], integer_aliases,
     """
     Signed integer type, compatible with C ``char``.
-    Character code: ``'b'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'byte', integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'short',
+add_newdoc_for_numeric_type('short', 'h', [], integer_aliases,
     """
     Signed integer type, compatible with C ``short``.
-    Character code: ``'h'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'short', integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'intc',
+add_newdoc_for_numeric_type('intc', 'i', [], integer_aliases,
     """
     Signed integer type, compatible with C ``int``.
-    Character code: ``'i'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'intc', integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'int_',
+add_newdoc_for_numeric_type('int_', 'l', [], integer_aliases,
     """
     Signed integer type, compatible with Python `int` anc C ``long``.
-    Character code: ``'l'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'int_', integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'longlong',
+add_newdoc_for_numeric_type('longlong', 'q', [], integer_aliases,
     """
-    Signed integer type, compatible with C ``long long``. 
-    Character code: ``'q'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'longlong', integer_aliases)))
+    Signed integer type, compatible with C ``long long``.
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'ubyte',
+add_newdoc_for_numeric_type('ubyte', 'B', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned char``.
-    Character code: ``'B'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'ubyte', unsigned_integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'ushort',
+add_newdoc_for_numeric_type('ushort', 'H', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned short``.
-    Character code: ``'H'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'ushort', unsigned_integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'uintc',
+add_newdoc_for_numeric_type('uintc', 'I', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned int``.
-    Character code: ``'I'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'uintc', unsigned_integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'uint',
+add_newdoc_for_numeric_type('uint', 'L', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned long``.
-    Character code: ``'L'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'uint', unsigned_integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'ulonglong',
+add_newdoc_for_numeric_type('ulonglong', 'Q', [], unsigned_integer_aliases,
     """
     Signed integer type, compatible with C ``unsigned long long``.
-    Character code: ``'Q'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'ulonglong', unsigned_integer_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'half',
+add_newdoc_for_numeric_type('half', 'e', [], float_aliases,
     """
     Half-precision floating-point number type.
-    Character code ``'e'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'half', float_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'single',
+add_newdoc_for_numeric_type('single', 'f', [], float_aliases,
     """
     Single-precision floating-point number type, compatible with C ``float``.
-    Character code ``'f'``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'single', float_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'double',
+add_newdoc_for_numeric_type('double', 'd', ['float_'], float_aliases,
     """
     Double-precision floating-point number type, compatible with Python `float`
     and C ``double``.
-    Character code ``'d'``.
-    Alias: ``float_``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'double', float_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'longdouble',
+add_newdoc_for_numeric_type('longdouble', 'g', ['longfloat'], float_aliases,
     """
     Extended-precision floating-point number type, compatible with C
-    ``long double`` but not necessarily with IEEE 754 quadruple-precision. 
-    Character code: ``'g'``.
-    Alias: ``longfloat``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'longdouble', float_aliases)))
+    ``long double`` but not necessarily with IEEE 754 quadruple-precision.
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'csingle',
+add_newdoc_for_numeric_type('csingle', 'F', ['singlecomplex'], float_aliases,
     """
     Complex number type composed of two single-precision floating-point
     numbers.
-    Character code: `'F'``.
-    Alias: ``singlecomplex``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'csingle', complex_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'cdouble',
+add_newdoc_for_numeric_type('cdouble', 'D', ['cfloat', 'complex_'], float_aliases,
     """
     Complex number type composed of two double-precision floating-point
     numbers, compatible with Python `complex`.
-    Character code: ``'D'``.
-    Alias: ``cfloat``.
-    Alias: ``complex_``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'cdouble', complex_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'clongdouble',
+add_newdoc_for_numeric_type('clongdouble', 'G', ['clongfloat', 'longcomplex'], float_aliases,
     """
     Complex number type composed of two extended-precision floating-point
     numbers.
-    Character code: ``'G'``.
-    Alias: ``clongfloat``.
-    Alias: ``longcomplex``.
-    {}
-    """.format(extra_alias_doc('numpy.core.numerictypes', 'clongdouble', complex_aliases)))
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'object_',
+add_newdoc_for_numeric_type('object_', 'O', [], [],
     """
     Any Python object.
-    Character code: ``'O'``.
-
     """)
