@@ -511,7 +511,7 @@ class TestConstant(object):
         arr = np.pad(arr, pad_width=1, mode='constant',
                      constant_values=(obj_b, obj_c))
 
-        expected = np.empty((3, ), dtype=object)
+        expected = np.empty((3,), dtype=object)
         expected[0] = obj_b
         expected[1] = obj_a
         expected[2] = obj_c
