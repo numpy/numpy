@@ -37,13 +37,12 @@ class IBMFCompiler(FCompiler):
             xlf = find_executable('xlf')
             if os.path.exists(xlf) and os.path.exists(lslpp):
                 try:
-                    o = subprocess.check_output([lslpp] + ['-Lc', 'xlfcmp'])
+                    o = subprocess.check_output([lslpp, '-Lc', 'xlfcmp'])
                 except (OSError, subprocess.CalledProcessError):
                     pass
                 else:
                     m = re.search(r'xlfcmp:(?P<version>\d+([.]\d+)+)', o)
                     if m: version = m.group('version')
-
 
         xlf_dir = '/etc/opt/ibmcmp/xlf'
         if version is None and os.path.isdir(xlf_dir):
