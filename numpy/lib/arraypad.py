@@ -730,11 +730,9 @@ def pad(array, pad_width, mode, **kwargs):
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
 
-        newmat = np.zeros(shape=new_shape, dtype=narray.dtype)
-        old_left = [left for left, _ in pad_width]
-        old_right = [left + dim for (left, _), dim in zip(pad_width, narray.shape)]
-        old_area = tuple(slice(left, right)
-                         for left, right in zip(old_left, old_right))
+        newmat = np.empty(shape=new_shape, dtype=narray.dtype)
+        old_area = tuple(slice(left, left + dim)
+                         for (left, right), dim in zip(pad_width, narray.shape))
 
         trailing_slices = tuple(slice(b, -a if a else None)
                                 for b, a in pad_width)
