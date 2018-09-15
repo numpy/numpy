@@ -405,36 +405,36 @@ def _validate_lengths(narray, number_elements):
             raise ValueError(fmt % (number_elements,))
     return normshp
 
-def _end_edge_slice(shape, axis, pad_after, pad_width, n=1):
+def _trailing_slice(shape, axis, pad_after, pad_width, n=1):
     return ((slice(None), ) * axis +
             (slice(shape[axis] - pad_after - n,
                    shape[axis] - pad_after), ) +
             tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
 
 
-def _start_edge_slice(shape, axis, pad_before, pad_width, n=1):
-    # Shape is unused, but kept to keep the symmetry with _end_edge_slice
+def _leading_slice(shape, axis, pad_before, pad_width, n=1):
+    # Shape is unused, but kept to keep the symmetry with _trailing_slice
     return ((slice(None), ) * axis + (slice(pad_before, pad_before + n), ) +
             tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
 
 
 def _pad_starting_edge(newmat, axis, pad_before, pad_width):
-    edge_slice = _start_edge_slice(newmat.shape, axis, pad_before, pad_width)
-    _mutate_starting_edge(newmat, axis, pad_before, pad_width, newmat[edge_slice])
+    edge_slice = _leading_slice(newmat.shape, axis, pad_before, pad_width)
+    _mutate_leading_edge(newmat, axis, pad_before, pad_width, newmat[edge_slice])
 
 
 def _pad_ending_edge(newmat, axis, pad_after, pad_width):
-    edge_slice = _end_edge_slice(newmat.shape, axis, pad_after, pad_width)
-    _mutate_ending_edge(newmat, axis, pad_after, pad_width, newmat[edge_slice])
+    edge_slice = _trailing_slice(newmat.shape, axis, pad_after, pad_width)
+    _mutate_trailing_edge(newmat, axis, pad_after, pad_width, newmat[edge_slice])
 
 
-def _mutate_starting_edge(newmat, axis, pad_before, pad_width, edge):
+def _mutate_leading_edge(newmat, axis, pad_before, pad_width, edge):
     chosen_slice = ((slice(None), ) * axis + (slice(0, pad_before), ) +
                     tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
     newmat[chosen_slice] = edge
 
 
-def _mutate_ending_edge(newmat, axis, pad_after, pad_width, edge):
+def _mutate_trailing_edge(newmat, axis, pad_after, pad_width, edge):
     chosen_slice = ((slice(None), ) * axis + (slice(-pad_after, None), ) +
                     tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
     newmat[chosen_slice] = edge
@@ -761,9 +761,9 @@ def pad(array, pad_width, mode, **kwargs):
         for axis, ((pad_before, pad_after), (c_before, c_after)) in enumerate(
                 zip(pad_width, kwargs['constant_values'])):
             if pad_before:
-                _mutate_starting_edge(newmat, axis, pad_before, pad_width, c_before)
+                _mutate_leading_edge(newmat, axis, pad_before, pad_width, c_before)
             if pad_after:
-                _mutate_ending_edge(newmat, axis, pad_after, pad_width, c_after)
+                _mutate_trailing_edge(newmat, axis, pad_after, pad_width, c_after)
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if pad_before:
@@ -780,7 +780,7 @@ def pad(array, pad_width, mode, **kwargs):
             if pad_before:
                 ramp_arr = np.arange(0, pad_before)[broadcast]
                 # Extract edge
-                edge_slice = _start_edge_slice(new_shape, axis,
+                edge_slice = _leading_slice(new_shape, axis,
                                                pad_before, pad_width)
 
                 # Linear ramp, and extend along `axis`
@@ -792,11 +792,11 @@ def pad(array, pad_width, mode, **kwargs):
                     chunk += inverse_ramp
                 _round_ifneeded(chunk, newmat.dtype)
 
-                _mutate_starting_edge(newmat, axis, pad_before, pad_width, chunk)
+                _mutate_leading_edge(newmat, axis, pad_before, pad_width, chunk)
             if pad_after:
                 ramp_arr = np.arange((pad_after-1), -1, -1)[broadcast]
                 # Extract edge
-                edge_slice = _end_edge_slice(new_shape, axis, pad_after, pad_width)
+                edge_slice = _trailing_slice(new_shape, axis, pad_after, pad_width)
 
                 # Linear ramp, and extend along `axis`
                 chunk = newmat[edge_slice] * ((ramp_arr) / (pad_after))
@@ -806,7 +806,7 @@ def pad(array, pad_width, mode, **kwargs):
                     chunk += inverse_ramp
                 _round_ifneeded(chunk, newmat.dtype)
 
-                _mutate_ending_edge(newmat, axis, pad_after,
+                _mutate_trailing_edge(newmat, axis, pad_after,
                                     pad_width, chunk)
 
     elif mode in ['maximum', 'minimum', 'median', 'mean']:
@@ -818,7 +818,7 @@ def pad(array, pad_width, mode, **kwargs):
                     _pad_starting_edge(newmat, axis, pad_before, pad_width)
                 else:
                     # Slice a chunk from the edge to calculate stats on
-                    stat_slice = _start_edge_slice(new_shape, axis, pad_before,
+                    stat_slice = _leading_slice(new_shape, axis, pad_before,
                                                    pad_width, n=chunk_before)
                     # Extract slice, calculate statistic
                     chunk = stat_func(newmat[stat_slice], axis=axis,
@@ -826,14 +826,14 @@ def pad(array, pad_width, mode, **kwargs):
                     _round_ifneeded(chunk, newmat.dtype)
 
                     # Mutate the edge using the max_chunk
-                    _mutate_starting_edge(newmat, axis, pad_before,
+                    _mutate_leading_edge(newmat, axis, pad_before,
                                           pad_width, chunk)
             if pad_after:
                 if chunk_after == 1:
                     _pad_ending_edge(newmat, axis, pad_after, pad_width)
                 else:
                     # Slice a chunk from the edge to calculate stats on
-                    stat_slice = _end_edge_slice(new_shape, axis, pad_after,
+                    stat_slice = _trailing_slice(new_shape, axis, pad_after,
                                                  pad_width, n=chunk_after)
 
                     # Extract slice, calculate statistic
@@ -842,7 +842,7 @@ def pad(array, pad_width, mode, **kwargs):
                     _round_ifneeded(chunk, newmat.dtype)
 
                     # Mutate the edge using the max_chunk
-                    _mutate_ending_edge(newmat, axis, pad_after,
+                    _mutate_trailing_edge(newmat, axis, pad_after,
                                         pad_width, chunk)
 
     elif mode == 'reflect':
