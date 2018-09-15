@@ -504,13 +504,16 @@ class TestConstant(object):
 
     def test_check_object_array(self):
         arr = np.empty(1, dtype=object)
-        obj = object()
-        arr = np.pad(arr, pad_width=1, mode='constant', constant_values=obj)
+        obj_a = object()
+        arr[0] = obj_a
+        obj_b = object()
+        arr = np.pad(arr, pad_width=1, mode='constant', constant_values=obj_b)
 
         expected = np.empty((3, ), dtype=object)
-        expected[...] = obj
-        expected[1] = None
-
+        expected[0] = obj_b
+        expected[1] = obj_a
+        expected[2] = obj_b
+        
         assert_array_equal(arr, expected)
 
 class TestLinearRamp(object):
