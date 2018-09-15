@@ -103,7 +103,7 @@ def _do_append(arr, pad_chunk, axis):
         (arr, pad_chunk.astype(arr.dtype, copy=False)), axis=axis)
 
 
-def _prepend_const(arr, pad_amt, val, axis=-1):
+def _leading_const(arr, pad_amt, val, axis=-1):
     """
     Prepend constant `val` along `axis` of `arr`.
 
@@ -132,7 +132,7 @@ def _prepend_const(arr, pad_amt, val, axis=-1):
     return np.full(padshape, val, dtype=arr.dtype)
 
 
-def _append_const(arr, pad_amt, val, axis=-1):
+def _trailing_const(arr, pad_amt, val, axis=-1):
     """
     Append constant `val` along `axis` of `arr`.
 
@@ -162,7 +162,7 @@ def _append_const(arr, pad_amt, val, axis=-1):
 
 
 
-def _prepend_edge(arr, pad_amt, axis=-1):
+def _leading_edge(arr, pad_amt, axis=-1):
     """
     Prepend `pad_amt` to `arr` along `axis` by extending edge values.
 
@@ -189,7 +189,7 @@ def _prepend_edge(arr, pad_amt, axis=-1):
     return edge_arr.repeat(pad_amt, axis=axis)
 
 
-def _append_edge(arr, pad_amt, axis=-1):
+def _trailing_edge(arr, pad_amt, axis=-1):
     """
     Append `pad_amt` to `arr` along `axis` by extending edge values.
 
@@ -217,7 +217,7 @@ def _append_edge(arr, pad_amt, axis=-1):
     return edge_arr.repeat(pad_amt, axis=axis)
 
 
-def _prepend_ramp(arr, pad_amt, end, axis=-1):
+def _leading_ramp(arr, pad_amt, end, axis=-1):
     """
     Prepend linear ramp along `axis`.
 
@@ -267,7 +267,7 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
     return ramp_arr
 
 
-def _append_ramp(arr, pad_amt, end, axis=-1):
+def _trailing_ramp(arr, pad_amt, end, axis=-1):
     """
     Append linear ramp along `axis`.
 
@@ -317,7 +317,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     return ramp_arr
 
 
-def _prepend_max(arr, pad_amt, num, axis=-1):
+def _leading_max(arr, pad_amt, num, axis=-1):
     """
     Prepend `pad_amt` maximum values along `axis`.
 
@@ -346,7 +346,7 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
+        return _leading_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -363,7 +363,7 @@ def _prepend_max(arr, pad_amt, num, axis=-1):
     return max_chunk.repeat(pad_amt, axis=axis)
 
 
-def _append_max(arr, pad_amt, num, axis=-1):
+def _trailing_max(arr, pad_amt, num, axis=-1):
     """
     Pad one `axis` of `arr` with the maximum of the last `num` elements.
 
@@ -391,7 +391,7 @@ def _append_max(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _append_edge(arr, pad_amt, axis)
+        return _trailing_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -411,7 +411,7 @@ def _append_max(arr, pad_amt, num, axis=-1):
     return max_chunk.repeat(pad_amt, axis=axis)
 
 
-def _prepend_mean(arr, pad_amt, num, axis=-1):
+def _leading_mean(arr, pad_amt, num, axis=-1):
     """
     Prepend `pad_amt` mean values along `axis`.
 
@@ -439,7 +439,7 @@ def _prepend_mean(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
+        return _leading_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -457,7 +457,7 @@ def _prepend_mean(arr, pad_amt, num, axis=-1):
     return mean_chunk.repeat(pad_amt, axis)
 
 
-def _append_mean(arr, pad_amt, num, axis=-1):
+def _trailing_mean(arr, pad_amt, num, axis=-1):
     """
     Append `pad_amt` mean values along `axis`.
 
@@ -485,7 +485,7 @@ def _append_mean(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _append_edge(arr, pad_amt, axis)
+        return _trailing_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -506,7 +506,7 @@ def _append_mean(arr, pad_amt, num, axis=-1):
     return mean_chunk.repeat(pad_amt, axis)
 
 
-def _prepend_med(arr, pad_amt, num, axis=-1):
+def _leading_med(arr, pad_amt, num, axis=-1):
     """
     Prepend `pad_amt` median values along `axis`.
 
@@ -534,7 +534,7 @@ def _prepend_med(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
+        return _leading_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -552,7 +552,7 @@ def _prepend_med(arr, pad_amt, num, axis=-1):
     return med_chunk.repeat(pad_amt, axis)
 
 
-def _append_med(arr, pad_amt, num, axis=-1):
+def _trailing_med(arr, pad_amt, num, axis=-1):
     """
     Append `pad_amt` median values along `axis`.
 
@@ -580,7 +580,7 @@ def _append_med(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _append_edge(arr, pad_amt, axis)
+        return _trailing_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -601,7 +601,7 @@ def _append_med(arr, pad_amt, num, axis=-1):
     return med_chunk.repeat(pad_amt, axis)
 
 
-def _prepend_min(arr, pad_amt, num, axis=-1):
+def _leading_min(arr, pad_amt, num, axis=-1):
     """
     Prepend `pad_amt` minimum values along `axis`.
 
@@ -630,7 +630,7 @@ def _prepend_min(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
+        return _leading_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -647,7 +647,7 @@ def _prepend_min(arr, pad_amt, num, axis=-1):
     return min_chunk.repeat(pad_amt, axis)
 
 
-def _append_min(arr, pad_amt, num, axis=-1):
+def _trailing_min(arr, pad_amt, num, axis=-1):
     """
     Append `pad_amt` median values along `axis`.
 
@@ -675,7 +675,7 @@ def _append_min(arr, pad_amt, num, axis=-1):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        return _append_edge(arr, pad_amt, axis)
+        return _trailing_edge(arr, pad_amt, axis)
 
     # Use entire array if `num` is too large
     if num is not None:
@@ -1272,37 +1272,37 @@ def pad(array, pad_width, mode, **kwargs):
     if mode == 'constant':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['constant_values'])):
-            newmat = _do_prepend(newmat, _prepend_const(newmat, pad_before, before_val, axis), axis)
-            newmat = _do_append(newmat, _append_const(newmat, pad_after, after_val, axis), axis)
+            newmat = _do_prepend(newmat, _leading_const(newmat, pad_before, before_val, axis), axis)
+            newmat = _do_append(newmat, _trailing_const(newmat, pad_after, after_val, axis), axis)
 
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
-            newmat = _do_prepend(newmat, _prepend_edge(newmat, pad_before, axis), axis)
-            newmat = _do_append(newmat, _append_edge(newmat, pad_after, axis), axis)
+            newmat = _do_prepend(newmat, _leading_edge(newmat, pad_before, axis), axis)
+            newmat = _do_append(newmat, _trailing_edge(newmat, pad_after, axis), axis)
 
     elif mode == 'linear_ramp':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
-            newmat = _do_prepend(newmat, _prepend_ramp(newmat, pad_before, before_val, axis), axis)
-            newmat = _do_append(newmat, _append_ramp(newmat, pad_after, after_val, axis), axis)
+            newmat = _do_prepend(newmat, _leading_ramp(newmat, pad_before, before_val, axis), axis)
+            newmat = _do_append(newmat, _trailing_ramp(newmat, pad_after, after_val, axis), axis)
 
     elif mode == 'maximum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _do_prepend(newmat, _prepend_max(newmat, pad_before, chunk_before, axis), axis)
-            newmat = _do_append(newmat, _append_max(newmat, pad_after, chunk_after, axis), axis)
+            newmat = _do_prepend(newmat, _leading_max(newmat, pad_before, chunk_before, axis), axis)
+            newmat = _do_append(newmat, _trailing_max(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _do_prepend(newmat, _prepend_mean(newmat, pad_before, chunk_before, axis), axis)
-            newmat = _do_append(newmat, _append_mean(newmat, pad_after, chunk_after, axis), axis)
+            newmat = _do_prepend(newmat, _leading_mean(newmat, pad_before, chunk_before, axis), axis)
+            newmat = _do_append(newmat, _trailing_mean(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'median':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _do_prepend(newmat, _prepend_med(newmat, pad_before, chunk_before, axis), axis)
-            newmat = _do_append(newmat, _append_med(newmat, pad_after, chunk_after, axis), axis)
+            newmat = _do_prepend(newmat, _leading_med(newmat, pad_before, chunk_before, axis), axis)
+            newmat = _do_append(newmat, _trailing_med(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'minimum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
@@ -1327,8 +1327,8 @@ def pad(array, pad_width, mode, **kwargs):
                     (pad_after > 0)) and newmat.shape[axis] == 1:
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
-                newmat = _do_prepend(newmat, _prepend_edge(newmat, pad_before, axis), axis)
-                newmat = _do_append(newmat, _append_edge(newmat, pad_after, axis), axis)
+                newmat = _do_prepend(newmat, _leading_edge(newmat, pad_before, axis), axis)
+                newmat = _do_append(newmat, _trailing_edge(newmat, pad_after, axis), axis)
                 continue
 
             method = kwargs['reflect_type']
