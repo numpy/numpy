@@ -268,21 +268,13 @@ class TestAlgebra(object):
                     [3., 4.]])
 
         # __rpow__
-        try:
+        with assert_raises(TypeError):
             1.0**A
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__rpow__ doesn't raise a TypeError")
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
-        try:
+        with assert_raises(TypeError):
             A*object()
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__mul__ with non-numeric object doesn't raise"
-                      "a TypeError")
+
 
 class TestMatrixReturn(object):
     def test_instance_methods(self):

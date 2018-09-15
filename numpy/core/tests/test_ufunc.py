@@ -286,10 +286,10 @@ class TestUfunc(object):
         """
         pass
 
+    # from include/numpy/ufuncobject.h
     size_unset = 2
     can_ignore = 4
     def test_signature0(self):
-        # from include/numpy/ufuncobject.h
         # the arguments to test_signature are: nin, nout, core_signature
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             2, 1, "(i),(i)->()")

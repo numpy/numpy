@@ -20,10 +20,10 @@ def __str__(dtype):
 
 
 def __repr__(dtype):
-    if dtype.fields is not None:
-        return _struct_repr(dtype)
-    else:
-        return "dtype({})".format(_construction_repr(dtype, include_align=True))
+    arg_str = _construction_repr(dtype, include_align=False)
+    if dtype.isalignedstruct:
+        arg_str = arg_str + ", align=True"
+    return "dtype({})".format(arg_str)
 
 
 def _unpack_field(dtype, offset, title=None):
@@ -73,8 +73,11 @@ def _construction_repr(dtype, include_align=False, short=False):
         return _struct_str(dtype, include_align=include_align)
     elif dtype.subdtype:
         return _subarray_str(dtype)
+    else:
+        return _scalar_str(dtype, short=short)
 
 
+def _scalar_str(dtype, short):
     byteorder = _byte_order_str(dtype)
 
     if dtype.type == np.bool_:
@@ -161,8 +164,14 @@ def _byte_order_str(dtype):
 
 
 def _datetime_metadata_str(dtype):
-    # This is a hack since the data is not exposed to python in any other way
-    return dtype.name[dtype.name.rfind('['):]
+    # TODO: this duplicates the C append_metastr_to_string
+    unit, count = np.datetime_data(dtype)
+    if unit == 'generic':
+        return ''
+    elif count == 1:
+        return '[{}]'.format(unit)
+    else:
+        return '[{}{}]'.format(count, unit)
 
 
 def _struct_dict_str(dtype, includealignedflag):
@@ -283,12 +292,26 @@ def _subarray_str(dtype):
     )
 
 
-def _struct_repr(dtype):
-    s = "dtype("
-    s += _struct_str(dtype, include_align=False)
-    if dtype.isalignedstruct:
-        s += ", align=True"
-    s += ")"
-    return s
+def _name_get(dtype):
+    # provides dtype.name.__get__
 
+    if dtype.isbuiltin == 2:
+        # user dtypes don't promise to do anything special
+        return dtype.type.__name__
 
+    # Builtin classes are documented as returning a "bit name"
+    name = dtype.type.__name__
+
+    # handle bool_, str_, etc
+    if name[-1] == '_':
+        name = name[:-1]
+
+    # append bit counts to str, unicode, and void
+    if np.issubdtype(dtype, np.flexible) and not _isunsized(dtype):
+        name += "{}".format(dtype.itemsize * 8)
+
+    # append metadata to datetimes
+    elif dtype.type in (np.datetime64, np.timedelta64):
+        name += _datetime_metadata_str(dtype)
+
+    return name

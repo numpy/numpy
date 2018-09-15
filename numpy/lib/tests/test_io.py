@@ -1454,14 +1454,10 @@ M   33  21.99
         assert_equal(test, control)
 
         ndtype = [('nest', [('idx', int), ('code', object)])]
-        try:
+        with assert_raises_regex(NotImplementedError,
+                                 'Nested fields.* not supported.*'):
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
-        except NotImplementedError:
-            pass
-        else:
-            errmsg = "Nested dtype involving objects should be supported."
-            raise AssertionError(errmsg)
 
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype

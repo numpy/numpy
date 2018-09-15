@@ -163,12 +163,12 @@ Here are some examples of signatures:
 +-------------+----------------------------+-----------------------------------+
 | matmul      | ``(m?,n),(n,p?)->(m?,p?)`` | combination of the four above     |
 +-------------+----------------------------+-----------------------------------+
-| cross1d     | ``(3),(3)->(3)``           | cross product where the last      |
-|             |                            | dimension must be 3               |
-+-------------+----------------------------+-----------------------------------+
 | outer_inner | ``(i,t),(j,t)->(i,j)``     | inner over the last dimension,    |
 |             |                            | outer over the second to last,    |
 |             |                            | and loop/broadcast over the rest. |
++-------------+----------------------------+-----------------------------------+
+| cross1d     | ``(3),(3)->(3)``           | cross product where the last      |
+|             |                            | dimension must be 3               |
 +-------------+----------------------------+-----------------------------------+
 
 C-API for implementing Elementary Functions
