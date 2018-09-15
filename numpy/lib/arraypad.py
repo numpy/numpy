@@ -649,7 +649,7 @@ def pad(array, pad_width, mode, **kwargs):
     if not np.asarray(pad_width).dtype.kind == 'i':
         raise TypeError('`pad_width` must be of integral type.')
 
-    narray = np.array(array)
+    narray = np.asarray(array)
     pad_width = _validate_lengths(narray, pad_width)
 
     allowedkwargs = {
