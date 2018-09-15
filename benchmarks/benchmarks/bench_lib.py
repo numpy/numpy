@@ -19,7 +19,10 @@ class Pad(Benchmark):
     ]
 
     def setup(self, shape, pad_width, mode):
-        self.array = np.empty(shape)
+        # avoid np.zeros or np.empty's lazy allocation.
+        # np.full causes pagefaults to occur during setup
+        # instead of during the benchmark
+        self.array = np.full(shape, 0)
 
     def time_pad(self, shape, pad_width, mode):
         np.pad(self.array, pad_width, mode)
