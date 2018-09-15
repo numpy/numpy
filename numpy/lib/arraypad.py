@@ -258,85 +258,6 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     return _do_append(arr, ramp_arr, axis)
 
 
-def _prepend_stat(arr, pad_amt, num, axis, pad_width, stat_func):
-    """
-    Mutate mat prepending `pad_amt` maximum values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input/Output array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate maximum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-    old_area: slice
-        The area associated with the old array.
-    stat: string
-        The numpy function stat to use.
-
-    """
-    if pad_amt == 0:
-        return
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        _pad_starting_edge(arr, axis, pad_amt, pad_width)
-        return
-
-    # Slice a chunk from the edge to calculate stats on
-    the_slice = _start_edge_slice(arr.shape, axis, pad_amt, pad_width, n=num)
-
-    # Extract slice, calculate statistic
-    chunk = stat_func(arr[the_slice], axis=axis, keepdims=True)
-
-    _round_ifneeded(chunk, arr.dtype)
-
-    # Mutate the edge using the max_chunk
-    _mutate_starting_edge(arr, axis, pad_amt, pad_width, chunk)
-
-
-def _append_stat(arr, pad_amt, num, axis, pad_width, stat_func):
-    """
-    Mutate mat appending `pad_amt` maximum values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input/Output array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate maximum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-    old_area: slice
-        The area associated with the old array.
-    stat: string
-        The numpy function stat to use.
-
-    """
-    if pad_amt == 0:
-        return
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        _pad_ending_edge(arr, axis, pad_amt, pad_width)
-        return
-
-    # Slice a chunk from the edge to calculate stats on
-    the_slice = _end_edge_slice(arr.shape, axis, pad_amt, pad_width, n=num)
-
-    # Extract slice, calculate statistic
-    chunk = stat_func(arr[the_slice], axis=axis, keepdims=True)
-
-    _round_ifneeded(chunk, arr.dtype)
-    # Mutate the edge using the max_chunk
-    _mutate_ending_edge(arr, axis, pad_amt, pad_width, chunk)
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -960,6 +881,14 @@ def pad(array, pad_width, mode, **kwargs):
                          for left, right in zip(old_left, old_right))
 
         newmat[old_area] = narray
+        if mode == 'maximum':
+            stat_func = np.max
+        elif mode == 'minimum':
+            stat_func = np.min
+        elif mode == 'mean':
+            stat_func = np.mean
+        elif mode == 'median':
+            stat_func = np.median
     # all other mode still use concatenate
     else:
         # Force a copy.
@@ -991,29 +920,41 @@ def pad(array, pad_width, mode, **kwargs):
             newmat = _prepend_ramp(newmat, pad_before, before_val, axis)
             newmat = _append_ramp(newmat, pad_after, after_val, axis)
 
-    elif mode == 'maximum':
+    elif mode in ['maximum', 'minimum', 'median', 'mean']:
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.max)
-            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.max)
+            if pad_before:
+                if chunk_before == 1:
+                    # In this case, computing the stat would give the edge
+                    _pad_starting_edge(newmat, axis, pad_before, pad_width)
+                else:
+                    # Slice a chunk from the edge to calculate stats on
+                    stat_slice = _start_edge_slice(new_shape, axis, pad_before,
+                                                   pad_width, n=chunk_before)
+                    # Extract slice, calculate statistic
+                    chunk = stat_func(newmat[stat_slice], axis=axis,
+                                      keepdims=True)
+                    _round_ifneeded(chunk, newmat.dtype)
 
-    elif mode == 'mean':
-        for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.mean)
-            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.mean)
+                    # Mutate the edge using the max_chunk
+                    _mutate_starting_edge(newmat, axis, pad_before,
+                                          pad_width, chunk)
+            if pad_after:
+                if chunk_after == 1:
+                    _pad_ending_edge(newmat, axis, pad_after, pad_width)
+                else:
+                    # Slice a chunk from the edge to calculate stats on
+                    stat_slice = _end_edge_slice(new_shape, axis, pad_after,
+                                                 pad_width, n=chunk_after)
 
-    elif mode == 'median':
-        for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.median)
-            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.median)
+                    # Extract slice, calculate statistic
+                    chunk = stat_func(newmat[stat_slice], axis=axis,
+                                      keepdims=True)
+                    _round_ifneeded(chunk, newmat.dtype)
 
-    elif mode == 'minimum':
-        for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.min)
-            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.min)
+                    # Mutate the edge using the max_chunk
+                    _mutate_ending_edge(newmat, axis, pad_after,
+                                        pad_width, chunk)
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
