@@ -125,8 +125,6 @@ def _leading_const(arr, pad_amt, val, axis=-1):
         Output array, with `pad_amt` constant `val` along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
     return np.full(padshape, val, dtype=arr.dtype)
@@ -154,8 +152,6 @@ def _trailing_const(arr, pad_amt, val, axis=-1):
         Output array, with `pad_amt` constant `val` along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
     return np.full(padshape, val, dtype=arr.dtype)
@@ -181,9 +177,6 @@ def _leading_edge(arr, pad_amt, axis=-1):
         Output array, with `pad_amt` edge values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
-
     edge_slice = _slice_first(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
     return edge_arr.repeat(pad_amt, axis=axis)
@@ -208,9 +201,6 @@ def _trailing_edge(arr, pad_amt, axis=-1):
         Output array, with `pad_amt` edge values  along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
-
     edge_slice = _slice_last(arr.shape, 1, axis=axis)
     edge_arr = arr[edge_slice]
     return edge_arr.repeat(pad_amt, axis=axis)
@@ -239,9 +229,6 @@ def _leading_ramp(arr, pad_amt, end, axis=-1):
         This ramps linearly from the edge value to `end`.
 
     """
-    if pad_amt == 0:
-        return arr
-
     # Generate shape for final concatenated array
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
@@ -289,9 +276,6 @@ def _trailing_ramp(arr, pad_amt, end, axis=-1):
         This ramps linearly from the edge value to `end`.
 
     """
-    if pad_amt == 0:
-        return arr
-
     # Generate shape for final concatenated array
     padshape = tuple(x if i != axis else pad_amt
                      for (i, x) in enumerate(arr.shape))
@@ -339,8 +323,6 @@ def _leading_max(arr, pad_amt, num, axis=-1):
         This is the maximum of the first `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
@@ -384,9 +366,6 @@ def _trailing_max(arr, pad_amt, num, axis=-1):
         This is the maximum of the final `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
-
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
         return _trailing_edge(arr, pad_amt, axis)
@@ -432,8 +411,6 @@ def _leading_mean(arr, pad_amt, num, axis=-1):
         This is the mean of the first `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
@@ -478,8 +455,6 @@ def _trailing_mean(arr, pad_amt, num, axis=-1):
         This is the maximum of the final `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
@@ -527,8 +502,6 @@ def _leading_med(arr, pad_amt, num, axis=-1):
         This is the median of the first `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
@@ -573,8 +546,6 @@ def _trailing_med(arr, pad_amt, num, axis=-1):
         This is the median of the final `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
@@ -622,8 +593,6 @@ def _leading_min(arr, pad_amt, num, axis=-1):
         This is the minimum of the first `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
@@ -667,8 +636,6 @@ def _trailing_min(arr, pad_amt, num, axis=-1):
         This is the minimum of the final `num` values along `axis`.
 
     """
-    if pad_amt == 0:
-        return arr
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
@@ -1269,43 +1236,57 @@ def pad(array, pad_width, mode, **kwargs):
     if mode == 'constant':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['constant_values'])):
-            newmat = _do_prepend(newmat, _leading_const(newmat, pad_before, before_val, axis), axis)
-            newmat = _do_append(newmat, _trailing_const(newmat, pad_after, after_val, axis), axis)
+            if pad_before:
+                newmat = _do_prepend(newmat, _leading_const(newmat, pad_before, before_val, axis), axis)
+            if pad_after:
+                newmat = _do_append(newmat, _trailing_const(newmat, pad_after, after_val, axis), axis)
 
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
-            newmat = _do_prepend(newmat, _leading_edge(newmat, pad_before, axis), axis)
-            newmat = _do_append(newmat, _trailing_edge(newmat, pad_after, axis), axis)
+            if pad_before:
+                newmat = _do_prepend(newmat, _leading_edge(newmat, pad_before, axis), axis)
+            if pad_after:
+                newmat = _do_append(newmat, _trailing_edge(newmat, pad_after, axis), axis)
 
     elif mode == 'linear_ramp':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
-            newmat = _do_prepend(newmat, _leading_ramp(newmat, pad_before, before_val, axis), axis)
-            newmat = _do_append(newmat, _trailing_ramp(newmat, pad_after, after_val, axis), axis)
+            if pad_before:
+                newmat = _do_prepend(newmat, _leading_ramp(newmat, pad_before, before_val, axis), axis)
+            if pad_after:
+                newmat = _do_append(newmat, _trailing_ramp(newmat, pad_after, after_val, axis), axis)
 
     elif mode == 'maximum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _do_prepend(newmat, _leading_max(newmat, pad_before, chunk_before, axis), axis)
-            newmat = _do_append(newmat, _trailing_max(newmat, pad_after, chunk_after, axis), axis)
+            if pad_before:
+                newmat = _do_prepend(newmat, _leading_max(newmat, pad_before, chunk_before, axis), axis)
+            if pad_after:
+                newmat = _do_append(newmat, _trailing_max(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _do_prepend(newmat, _leading_mean(newmat, pad_before, chunk_before, axis), axis)
-            newmat = _do_append(newmat, _trailing_mean(newmat, pad_after, chunk_after, axis), axis)
+            if pad_before:
+                newmat = _do_prepend(newmat, _leading_mean(newmat, pad_before, chunk_before, axis), axis)
+            if pad_after:
+                newmat = _do_append(newmat, _trailing_mean(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'median':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _do_prepend(newmat, _leading_med(newmat, pad_before, chunk_before, axis), axis)
-            newmat = _do_append(newmat, _trailing_med(newmat, pad_after, chunk_after, axis), axis)
+            if pad_before:
+                newmat = _do_prepend(newmat, _leading_med(newmat, pad_before, chunk_before, axis), axis)
+            if pad_after:
+                newmat = _do_append(newmat, _trailing_med(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'minimum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _do_prepend(newmat, _leading_min(newmat, pad_before, chunk_before, axis), axis)
-            newmat = _do_append(newmat, _trailing_min(newmat, pad_after, chunk_after, axis), axis)
+            if pad_before:
+                newmat = _do_prepend(newmat, _leading_min(newmat, pad_before, chunk_before, axis), axis)
+            if pad_after:
+                newmat = _do_append(newmat, _trailing_min(newmat, pad_after, chunk_after, axis), axis)
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
@@ -1324,8 +1305,10 @@ def pad(array, pad_width, mode, **kwargs):
                     (pad_after > 0)) and newmat.shape[axis] == 1:
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
-                newmat = _do_prepend(newmat, _leading_edge(newmat, pad_before, axis), axis)
-                newmat = _do_append(newmat, _trailing_edge(newmat, pad_after, axis), axis)
+                if pad_before:
+                    newmat = _do_prepend(newmat, _leading_edge(newmat, pad_before, axis), axis)
+                if pad_after:
+                    newmat = _do_append(newmat, _trailing_edge(newmat, pad_after, axis), axis)
                 continue
 
             method = kwargs['reflect_type']
