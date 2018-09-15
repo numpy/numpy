@@ -572,17 +572,18 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     ufunc->core_offsets = PyArray_malloc(sizeof(int) * ufunc->nargs);
     /* The next three items will be shrunk later */
     ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len);
-    ufunc->core_dim_flags = PyArray_malloc(sizeof(npy_uint32) * len);
-    ufunc->core_dim_sizes = PyArray_malloc(sizeof(npy_intp) * len);
+    ufunc->extension->core_dim_sizes = PyArray_malloc(sizeof(npy_intp) * len);
+    ufunc->extension->core_dim_flags = PyArray_malloc(sizeof(npy_uint32) * len);
 
     if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL ||
-        ufunc->core_offsets == NULL || ufunc->core_dim_flags == NULL ||
-        ufunc->core_dim_sizes == NULL) {
+        ufunc->core_offsets == NULL ||
+        ufunc->extension->core_dim_sizes == NULL ||
+        ufunc->extension->core_dim_flags == NULL) {
         PyErr_NoMemory();
         goto fail;
     }
     for (i = 0; i < len; i++) {
-        ufunc->core_dim_flags[i] = 0;
+        ufunc->extension->core_dim_flags[i] = 0;
     }
 
     i = _next_non_white_space(signature, 0);
@@ -638,7 +639,7 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
              */
             for(ix = 0; ix < ufunc->core_num_dim_ix; ix++) {
                 if (frozen_size > 0 ?
-                    frozen_size == ufunc->core_dim_sizes[ix] :
+                    frozen_size == ufunc->extension->core_dim_sizes[ix] :
                     _is_same_name(signature + i, var_names[ix])) {
                     break;
                 }
@@ -649,20 +650,20 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
             if (ix == ufunc->core_num_dim_ix) {
                 ufunc->core_num_dim_ix++;
                 var_names[ix] = signature + i;
-                ufunc->core_dim_sizes[ix] = frozen_size;
+                ufunc->extension->core_dim_sizes[ix] = frozen_size;
                 if (frozen_size < 0) {
-                    ufunc->core_dim_flags[ix] |= UFUNC_CORE_DIM_SIZE_UNSET;
+                    ufunc->extension->core_dim_flags[ix] |= UFUNC_CORE_DIM_SIZE_UNSET;
                 }
                 if (can_ignore) {
-                    ufunc->core_dim_flags[ix] |= UFUNC_CORE_DIM_CAN_IGNORE;
+                    ufunc->extension->core_dim_flags[ix] |= UFUNC_CORE_DIM_CAN_IGNORE;
                 }
             } else {
-                if (can_ignore && !(ufunc->core_dim_flags[ix] &
+                if (can_ignore && !(ufunc->extension->core_dim_flags[ix] &
                                     UFUNC_CORE_DIM_CAN_IGNORE)) {
                     parse_error = "? cannot be used, name already seen without ?";
                     goto fail;
                 }
-                if (!can_ignore && (ufunc->core_dim_flags[ix] &
+                if (!can_ignore && (ufunc->extension->core_dim_flags[ix] &
                                     UFUNC_CORE_DIM_CAN_IGNORE)) {
                     parse_error = "? must be used, name already seen with ?";
                     goto fail;
@@ -709,9 +710,11 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
     }
     ufunc->core_dim_ixs = PyArray_realloc(ufunc->core_dim_ixs,
             sizeof(int) * cur_core_dim);
-    ufunc->core_dim_sizes = PyArray_realloc(ufunc->core_dim_sizes,
+    ufunc->extension->core_dim_sizes = PyArray_realloc(
+            ufunc->extension->core_dim_sizes,
             sizeof(npy_intp) * ufunc->core_num_dim_ix);
-    ufunc->core_dim_flags = PyArray_realloc(ufunc->core_dim_flags,
+    ufunc->extension->core_dim_flags = PyArray_realloc(
+            ufunc->extension->core_dim_flags,
             sizeof(npy_uint32) * ufunc->core_num_dim_ix);
 
     /* check for trivial core-signature, e.g. "(),()->()" */
@@ -2489,10 +2492,10 @@ _initialize_variable_parts(PyUFuncObject *ufunc,
     for (i = 0; i < ufunc->nargs; i++) {
         op_core_num_dims[i] = ufunc->core_num_dims[i];
     }
-    if (ufunc->version == 1) {
+    if (ufunc->version == 1 && ufunc->extension != NULL) {
         for (i = 0; i < ufunc->core_num_dim_ix; i++) {
-            core_dim_sizes[i] = ufunc->core_dim_sizes[i];
-            core_dim_flags[i] = ufunc->core_dim_flags[i];
+            core_dim_sizes[i] = ufunc->extension->core_dim_sizes[i];
+            core_dim_flags[i] = ufunc->extension->core_dim_flags[i];
         }
     }
     else if (ufunc->version == 0) {
@@ -2503,7 +2506,7 @@ _initialize_variable_parts(PyUFuncObject *ufunc,
     }
     else {
         PyErr_Format(PyExc_TypeError,
-                     "'%s': unrecognized version number %d.",
+                     "'%s': unrecognized version number %d or corrupted data.",
                      ufunc_get_name_cstr(ufunc), ufunc->version);
         return -1;
     }
@@ -4870,6 +4873,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     memset(ufunc, 0, sizeof(PyUFuncObject));
     *((int*)&ufunc->version) = UFUNC_VERSION;
     PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
+    ufunc->extension = &ufunc->s_extension;
 
     ufunc->nin = nin;
     ufunc->nout = nout;
@@ -5246,8 +5250,8 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 {
     PyArray_free(ufunc->core_num_dims);
     PyArray_free(ufunc->core_dim_ixs);
-    PyArray_free(ufunc->core_dim_flags);
-    PyArray_free(ufunc->core_dim_sizes);
+    PyArray_free(ufunc->extension->core_dim_sizes);
+    PyArray_free(ufunc->extension->core_dim_flags);
     PyArray_free(ufunc->core_offsets);
     PyArray_free(ufunc->core_signature);
     PyArray_free(ufunc->ptr);

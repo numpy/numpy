@@ -217,16 +217,20 @@ static void
     INIT_OUTER_LOOP_3
     npy_intp is1=steps[0], is2=steps[1], os = steps[2];
     BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
+        @typ@ i1_x = *(@typ@ *)(args[0] + 0*is1);
+        @typ@ i1_y = *(@typ@ *)(args[0] + 1*is1);
+        @typ@ i1_z = *(@typ@ *)(args[0] + 2*is1);
 
-        *(@typ@ *)op = *(@typ@ *)(ip1 + is1) * *(@typ@ *)(ip2 + 2*is2) -
-                       *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)(ip2 + is2);
+        @typ@ i2_x = *(@typ@ *)(args[1] + 0*is2);
+        @typ@ i2_y = *(@typ@ *)(args[1] + 1*is2);
+        @typ@ i2_z = *(@typ@ *)(args[1] + 2*is2);
+        char *op = args[2];
+
+        *(@typ@ *)op = i1_y * i2_z - i1_z * i2_y;
         op += os;
-        *(@typ@ *)op = *(@typ@ *)(ip1 + 2*is1) * *(@typ@ *)ip2 -
-                       *(@typ@ *)ip1 * *(@typ@ *)(ip2 + 2*is2);
+        *(@typ@ *)op = i1_z * i2_x - i1_x * i2_z;
         op += os;
-        *(@typ@ *)op = *(@typ@ *)ip1 * *(@typ@ *)(ip2 + is2) -
-                       *(@typ@ *)(ip1 + is1) * *(@typ@ *)ip2;
+        *(@typ@ *)op = i1_x * i2_y - i1_y * i2_x;
     END_OUTER_LOOP
 }
 
@@ -531,13 +535,13 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_INCREF(Py_None);
         core_dim_ixs = Py_None;
     }
-    if (f->core_dim_flags != NULL) {
+    if (f->extension->core_dim_flags != NULL) {
         core_dim_flags = PyTuple_New(f->core_num_dim_ix);
         if (core_dim_flags == NULL) {
             goto fail;
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
-            PyObject * val = PyLong_FromLong(f->core_dim_flags[i]);
+            PyObject * val = PyLong_FromLong(f->extension->core_dim_flags[i]);
             PyTuple_SET_ITEM(core_dim_flags, i, val);
         }
     }
@@ -545,13 +549,13 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_INCREF(Py_None);
         core_dim_flags = Py_None;
     }
-    if (f->core_dim_sizes != NULL) {
+    if (f->extension->core_dim_sizes != NULL) {
         core_dim_sizes = PyTuple_New(f->core_num_dim_ix);
         if (core_dim_sizes == NULL) {
             goto fail;
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
-            PyObject * val = PyLong_FromLong(f->core_dim_sizes[i]);
+            PyObject * val = PyLong_FromLong(f->extension->core_dim_sizes[i]);
             PyTuple_SET_ITEM(core_dim_sizes, i, val);
         }
     }
