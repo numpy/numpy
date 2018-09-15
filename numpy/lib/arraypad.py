@@ -15,47 +15,78 @@ __all__ = ['pad']
 # Private utility functions.
 
 
-def _arange_ndarray(arr, shape, axis, reverse=False):
+def _as_pairs(x, ndim, as_index=False, assert_number=False):
     """
-    Create an ndarray of `shape` with increments along specified `axis`
+    Broadcast `x` to an array with the shape (`ndim`, 2).
+
+    A helper function for `pad` that prepares and validates arguments like
+    `pad_width` to be iterated in pairs.
 
     Parameters
     ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    shape : tuple of ints
-        Shape of desired array. Should be equivalent to `arr.shape` except
-        `shape[axis]` which may have any positive value.
-    axis : int
-        Axis to increment along.
-    reverse : bool
-        If False, increment in a positive fashion from 1 to `shape[axis]`,
-        inclusive. If True, the bounds are the same but the order reversed.
+    x : {None, scalar, array-like}
+        The object to broadcast to the shape (`ndim`, 2). None is only allowed
+        as a special case if `as_index` is True.
+    ndim : int
+        Number of pairs the broadcasted `x` will have.
+    as_index : bool, optional
+        If `x` is not None, try to round each element of `x` to a non-negative
+        integer.
+    assert_number : bool, optional
+        Raise a TypeError if the dtype of `x` is not a subdtype of `np.number`.
 
     Returns
     -------
-    padarr : ndarray
-        Output array sized to pad `arr` along `axis`, with linear range from
-        1 to `shape[axis]` along specified `axis`.
+    pairs : nested structure with shape (`ndim`, 2)
+        The broadcasted version of `x`.
 
-    Notes
-    -----
-    The range is deliberately 1-indexed for this specific use case. Think of
-    this algorithm as broadcasting `np.arange` to a single `axis` of an
-    arbitrarily shaped ndarray.
-
+    Raises
+    ------
+    TypeError
+        If `as_index` is True and `x` is not None and can't be rounded to an
+        array of integer type.
+        Or if `assert_number` is True and the dtype of `x` is not a subdtype
+        of `np.number`.
+    ValueError
+        If `as_index` is True and `x` contains negative elements.
+        Or if `x` is not broadcastable to the shape (`ndim`, 2).
     """
-    initshape = tuple(1 if i != axis else shape[axis]
-                      for (i, x) in enumerate(arr.shape))
-    if not reverse:
-        padarr = np.arange(1, shape[axis] + 1)
-    else:
-        padarr = np.arange(shape[axis], 0, -1)
-    padarr = padarr.reshape(initshape)
-    for i, dim in enumerate(shape):
-        if padarr.shape[i] != dim:
-            padarr = padarr.repeat(dim, axis=i)
-    return padarr
+    if as_index and x is None:
+        # Pass through None as a special case for indices
+        return ((None, None),) * ndim
+
+    x = np.asarray(x)
+    if assert_number and not np.issubdtype(x.dtype, np.number):
+        raise TypeError("keyword argument must be subdtype of np.number")
+
+    if as_index:
+        try:
+            x = x.round().astype(np.intp, copy=False)
+        except AttributeError:
+            raise TypeError("can't cast `x` to int")
+
+    if x.size == 1:
+        # Single value case
+        x = x.ravel()  # Reduce superfluous dimensions
+        if as_index and x < 0:
+            raise ValueError("index can't contain negative values")
+        return ((x[0], x[0]),) * ndim
+
+    if x.size == 2 and ndim == 2 and x.shape != (2, 1):
+        # Pair value case, but except special case when each dimension has a
+        # single value which should be broadcasted to a pair
+        x = x.ravel()  # Reduce superfluous dimensions
+        if as_index and x[0] < 0 and x[1] < 0:
+            raise ValueError("index can't contain negative values")
+        return ((x[0], x[1]),) * ndim
+
+    if as_index and x.min() < 0:
+        raise ValueError("index can't contain negative values")
+    try:
+        return np.broadcast_to(x, (ndim, 2)).tolist()
+    except ValueError:
+        raise ValueError("unable to broadcast '{}' to shape {}"
+                         .format(x, (ndim, 2)))
 
 
 def _round_ifneeded(arr, dtype):
@@ -101,65 +132,6 @@ def _do_prepend(arr, pad_chunk, axis):
 def _do_append(arr, pad_chunk, axis):
     return np.concatenate(
         (arr, pad_chunk.astype(arr.dtype, copy=False)), axis=axis)
-
-
-def _prepend_const(arr, pad_amt, val, axis=-1):
-    """
-    Prepend constant `val` along `axis` of `arr`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    val : scalar
-        Constant value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` constant `val` prepended along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-    return _do_prepend(arr, np.full(padshape, val, dtype=arr.dtype), axis)
-
-
-def _append_const(arr, pad_amt, val, axis=-1):
-    """
-    Append constant `val` along `axis` of `arr`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    val : scalar
-        Constant value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` constant `val` appended along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-    return _do_append(arr, np.full(padshape, val, dtype=arr.dtype), axis)
-
 
 
 def _prepend_edge(arr, pad_amt, axis=-1):
@@ -216,483 +188,6 @@ def _append_edge(arr, pad_amt, axis=-1):
     edge_arr = arr[edge_slice]
     return _do_append(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
 
-
-def _prepend_ramp(arr, pad_amt, end, axis=-1):
-    """
-    Prepend linear ramp along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    end : scalar
-        Constal value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region ramps linearly from the edge value to `end`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Generate shape for final concatenated array
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-
-    # Generate an n-dimensional array incrementing along `axis`
-    ramp_arr = _arange_ndarray(arr, padshape, axis,
-                               reverse=True).astype(np.float64)
-
-    # Appropriate slicing to extract n-dimensional edge along `axis`
-    edge_slice = _slice_first(arr.shape, 1, axis=axis)
-
-    # Extract edge, and extend along `axis`
-    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
-
-    # Linear ramp
-    slope = (end - edge_pad) / float(pad_amt)
-    ramp_arr = ramp_arr * slope
-    ramp_arr += edge_pad
-    _round_ifneeded(ramp_arr, arr.dtype)
-
-    # Ramp values will most likely be float, cast them to the same type as arr
-    return _do_prepend(arr, ramp_arr, axis)
-
-
-def _append_ramp(arr, pad_amt, end, axis=-1):
-    """
-    Append linear ramp along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    end : scalar
-        Constal value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region ramps linearly from the edge value to `end`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Generate shape for final concatenated array
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-
-    # Generate an n-dimensional array incrementing along `axis`
-    ramp_arr = _arange_ndarray(arr, padshape, axis,
-                               reverse=False).astype(np.float64)
-
-    # Slice a chunk from the edge to calculate stats on
-    edge_slice = _slice_last(arr.shape, 1, axis=axis)
-
-    # Extract edge, and extend along `axis`
-    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
-
-    # Linear ramp
-    slope = (end - edge_pad) / float(pad_amt)
-    ramp_arr = ramp_arr * slope
-    ramp_arr += edge_pad
-    _round_ifneeded(ramp_arr, arr.dtype)
-
-    # Ramp values will most likely be float, cast them to the same type as arr
-    return _do_append(arr, ramp_arr, axis)
-
-
-def _prepend_max(arr, pad_amt, num, axis=-1):
-    """
-    Prepend `pad_amt` maximum values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate maximum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        prepended region is the maximum of the first `num` values along
-        `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    max_slice = _slice_first(arr.shape, num, axis=axis)
-
-    # Extract slice, calculate max
-    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
-
-    # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
-
-
-def _append_max(arr, pad_amt, num, axis=-1):
-    """
-    Pad one `axis` of `arr` with the maximum of the last `num` elements.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    num : int
-        Depth into `arr` along `axis` to calculate maximum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the maximum of the final `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _append_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    if num is not None:
-        max_slice = _slice_last(arr.shape, num, axis=axis)
-    else:
-        max_slice = tuple(slice(None) for x in arr.shape)
-
-    # Extract slice, calculate max
-    max_chunk = arr[max_slice].max(axis=axis, keepdims=True)
-
-    # Concatenate `arr` with `max_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, max_chunk.repeat(pad_amt, axis=axis), axis)
-
-
-def _prepend_mean(arr, pad_amt, num, axis=-1):
-    """
-    Prepend `pad_amt` mean values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate mean.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the mean of the first `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    mean_slice = _slice_first(arr.shape, num, axis=axis)
-
-    # Extract slice, calculate mean
-    mean_chunk = arr[mean_slice].mean(axis, keepdims=True)
-    _round_ifneeded(mean_chunk, arr.dtype)
-
-    # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _append_mean(arr, pad_amt, num, axis=-1):
-    """
-    Append `pad_amt` mean values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    num : int
-        Depth into `arr` along `axis` to calculate mean.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the maximum of the final `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _append_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    if num is not None:
-        mean_slice = _slice_last(arr.shape, num, axis=axis)
-    else:
-        mean_slice = tuple(slice(None) for x in arr.shape)
-
-    # Extract slice, calculate mean
-    mean_chunk = arr[mean_slice].mean(axis=axis, keepdims=True)
-    _round_ifneeded(mean_chunk, arr.dtype)
-
-    # Concatenate `arr` with `mean_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, mean_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _prepend_med(arr, pad_amt, num, axis=-1):
-    """
-    Prepend `pad_amt` median values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate median.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the median of the first `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    med_slice = _slice_first(arr.shape, num, axis=axis)
-
-    # Extract slice, calculate median
-    med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
-    _round_ifneeded(med_chunk, arr.dtype)
-
-    # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _append_med(arr, pad_amt, num, axis=-1):
-    """
-    Append `pad_amt` median values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    num : int
-        Depth into `arr` along `axis` to calculate median.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the median of the final `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _append_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    if num is not None:
-        med_slice = _slice_last(arr.shape, num, axis=axis)
-    else:
-        med_slice = tuple(slice(None) for x in arr.shape)
-
-    # Extract slice, calculate median
-    med_chunk = np.median(arr[med_slice], axis=axis, keepdims=True)
-    _round_ifneeded(med_chunk, arr.dtype)
-
-    # Concatenate `arr` with `med_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, med_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _prepend_min(arr, pad_amt, num, axis=-1):
-    """
-    Prepend `pad_amt` minimum values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    num : int
-        Depth into `arr` along `axis` to calculate minimum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the minimum of the first `num` values along
-        `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _prepend_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    min_slice = _slice_first(arr.shape, num, axis=axis)
-
-    # Extract slice, calculate min
-    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
-
-    # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return _do_prepend(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
-
-
-def _append_min(arr, pad_amt, num, axis=-1):
-    """
-    Append `pad_amt` median values along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    num : int
-        Depth into `arr` along `axis` to calculate minimum.
-        Range: [1, `arr.shape[axis]`] or None (entire axis)
-    axis : int
-        Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the minimum of the final `num` values along `axis`.
-
-    """
-    if pad_amt == 0:
-        return arr
-
-    # Equivalent to edge padding for single value, so do that instead
-    if num == 1:
-        return _append_edge(arr, pad_amt, axis)
-
-    # Use entire array if `num` is too large
-    if num is not None:
-        if num >= arr.shape[axis]:
-            num = None
-
-    # Slice a chunk from the edge to calculate stats on
-    if num is not None:
-        min_slice = _slice_last(arr.shape, num, axis=axis)
-    else:
-        min_slice = tuple(slice(None) for x in arr.shape)
-
-    # Extract slice, calculate min
-    min_chunk = arr[min_slice].min(axis=axis, keepdims=True)
-
-    # Concatenate `arr` with `min_chunk`, extended along `axis` by `pad_amt`
-    return _do_append(arr, min_chunk.repeat(pad_amt, axis), axis=axis)
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -885,106 +380,39 @@ def _pad_wrap(arr, pad_amt, axis=-1):
     return np.concatenate((wrap_chunk1, arr, wrap_chunk2), axis=axis)
 
 
-def _normalize_shape(ndarray, shape, cast_to_int=True):
-    """
-    Private function which does some checks and normalizes the possibly
-    much simpler representations of 'pad_width', 'stat_length',
-    'constant_values', 'end_values'.
-
-    Parameters
-    ----------
-    narray : ndarray
-        Input ndarray
-    shape : {sequence, array_like, float, int}, optional
-        The width of padding (pad_width), the number of elements on the
-        edge of the narray used for statistics (stat_length), the constant
-        value(s) to use when filling padded regions (constant_values), or the
-        endpoint target(s) for linear ramps (end_values).
-        ((before_1, after_1), ... (before_N, after_N)) unique number of
-        elements for each axis where `N` is rank of `narray`.
-        ((before, after),) yields same before and after constants for each
-        axis.
-        (constant,) or val is a shortcut for before = after = constant for
-        all axes.
-    cast_to_int : bool, optional
-        Controls if values in ``shape`` will be rounded and cast to int
-        before being returned.
-
-    Returns
-    -------
-    normalized_shape : tuple of tuples
-        val                               => ((val, val), (val, val), ...)
-        [[val1, val2], [val3, val4], ...] => ((val1, val2), (val3, val4), ...)
-        ((val1, val2), (val3, val4), ...) => no change
-        [[val1, val2], ]                  => ((val1, val2), (val1, val2), ...)
-        ((val1, val2), )                  => ((val1, val2), (val1, val2), ...)
-        [[val ,     ], ]                  => ((val, val), (val, val), ...)
-        ((val ,     ), )                  => ((val, val), (val, val), ...)
-
-    """
-    ndims = ndarray.ndim
-
-    # Shortcut shape=None
-    if shape is None:
-        return ((None, None), ) * ndims
-
-    # Convert any input `info` to a NumPy array
-    shape_arr = np.asarray(shape)
-
-    try:
-        shape_arr = np.broadcast_to(shape_arr, (ndims, 2))
-    except ValueError:
-        fmt = "Unable to create correctly shaped tuple from %s"
-        raise ValueError(fmt % (shape,))
-
-    # Cast if necessary
-    if cast_to_int is True:
-        shape_arr = np.round(shape_arr).astype(int)
-
-    # Convert list of lists to tuple of tuples
-    return tuple(tuple(axis) for axis in shape_arr.tolist())
+def _trailing_slice(shape, axis, pad_after, trailing_slices, n=1):
+    return ((slice(None), ) * axis +
+            (slice(shape[axis] - pad_after - n,
+                   shape[axis] - pad_after), ) +
+            trailing_slices[axis+1:])
 
 
-def _validate_lengths(narray, number_elements):
-    """
-    Private function which does some checks and reformats pad_width and
-    stat_length using _normalize_shape.
+def _leading_slice(shape, axis, pad_before, trailing_slices, n=1):
+    # Shape is unused, but kept to keep the symmetry with _trailing_slice
+    return ((slice(None), ) * axis + (slice(pad_before, pad_before + n), ) +
+            trailing_slices[axis+1:])
 
-    Parameters
-    ----------
-    narray : ndarray
-        Input ndarray
-    number_elements : {sequence, int}, optional
-        The width of padding (pad_width) or the number of elements on the edge
-        of the narray used for statistics (stat_length).
-        ((before_1, after_1), ... (before_N, after_N)) unique number of
-        elements for each axis.
-        ((before, after),) yields same before and after constants for each
-        axis.
-        (constant,) or int is a shortcut for before = after = constant for all
-        axes.
 
-    Returns
-    -------
-    _validate_lengths : tuple of tuples
-        int                               => ((int, int), (int, int), ...)
-        [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
-        ((int1, int2), (int3, int4), ...) => no change
-        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...)
-        ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
-        [[int ,     ], ]                  => ((int, int), (int, int), ...)
-        ((int ,     ), )                  => ((int, int), (int, int), ...)
+def _pad_starting_edge(newmat, axis, pad_before, trailing_slices):
+    edge_slice = _leading_slice(newmat.shape, axis, pad_before, trailing_slices)
+    _mutate_leading_edge(newmat, axis, pad_before, trailing_slices, newmat[edge_slice])
 
-    """
-    normshp = _normalize_shape(narray, number_elements)
-    for i in normshp:
-        chk = [1 if x is None else x for x in i]
-        chk = [1 if x >= 0 else -1 for x in chk]
-        if (chk[0] < 0) or (chk[1] < 0):
-            fmt = "%s cannot contain negative values."
-            raise ValueError(fmt % (number_elements,))
-    return normshp
 
+def _pad_ending_edge(newmat, axis, pad_after, trailing_slices):
+    edge_slice = _trailing_slice(newmat.shape, axis, pad_after, trailing_slices)
+    _mutate_trailing_edge(newmat, axis, pad_after, trailing_slices, newmat[edge_slice])
+
+
+def _mutate_leading_edge(newmat, axis, pad_before, trailing_slices, edge):
+    chosen_slice = ((slice(None), ) * axis + (slice(0, pad_before), ) +
+                    trailing_slices[axis+1:])
+    newmat[chosen_slice] = edge
+
+
+def _mutate_trailing_edge(newmat, axis, pad_after, trailing_slices, edge):
+    chosen_slice = ((slice(None), ) * axis + (slice(-pad_after, None), ) +
+                    trailing_slices[axis+1:])
+    newmat[chosen_slice] = edge
 
 ###############################################################################
 # Public functions
@@ -1193,13 +621,15 @@ def pad(array, pad_width, mode, **kwargs):
            [100, 100, 100, 100, 100, 100, 100],
            [100, 100, 100, 100, 100, 100, 100]])
     """
+    pad_width = np.asarray(pad_width)
+    narray = np.asarray(array)
+
     if not np.asarray(pad_width).dtype.kind == 'i':
         raise TypeError('`pad_width` must be of integral type.')
 
-    narray = np.array(array)
-    pad_width = _validate_lengths(narray, pad_width)
+    pad_width = _as_pairs(pad_width, narray.ndim, as_index=True)
 
-    allowedkwargs = {
+    allowed_kwargs = {
         'constant': ['constant_values'],
         'edge': [],
         'linear_ramp': ['end_values'],
@@ -1212,105 +642,161 @@ def pad(array, pad_width, mode, **kwargs):
         'wrap': [],
         }
 
-    kwdefaults = {
-        'stat_length': None,
-        'constant_values': 0,
-        'end_values': 0,
-        'reflect_type': 'even',
-        }
-
-    if isinstance(mode, np.compat.basestring):
-        # Make sure have allowed kwargs appropriate for mode
-        for key in kwargs:
-            if key not in allowedkwargs[mode]:
-                raise ValueError('%s keyword not in allowed keywords %s' %
-                                 (key, allowedkwargs[mode]))
-
-        # Set kwarg defaults
-        for kw in allowedkwargs[mode]:
-            kwargs.setdefault(kw, kwdefaults[kw])
-
-        # Need to only normalize particular keywords.
-        for i in kwargs:
-            if i == 'stat_length':
-                kwargs[i] = _validate_lengths(narray, kwargs[i])
-            if i in ['end_values', 'constant_values']:
-                kwargs[i] = _normalize_shape(narray, kwargs[i],
-                                             cast_to_int=False)
-    else:
+    if not isinstance(mode, np.compat.basestring):
         # Drop back to old, slower np.apply_along_axis mode for user-supplied
         # vector function
-        function = mode
-
-        # Create a new padded array
-        rank = list(range(narray.ndim))
-        total_dim_increase = [np.sum(pad_width[i]) for i in rank]
-        offset_slices = tuple(
-            slice(pad_width[i][0], pad_width[i][0] + narray.shape[i])
-            for i in rank)
-        new_shape = np.array(narray.shape) + total_dim_increase
-        newmat = np.zeros(new_shape, narray.dtype)
-
-        # Insert the original array into the padded array
-        newmat[offset_slices] = narray
-
-        # This is the core of pad ...
-        for iaxis in rank:
-            np.apply_along_axis(function,
-                                iaxis,
-                                newmat,
-                                pad_width[iaxis],
-                                iaxis,
-                                kwargs)
+        newmat = pad(narray, pad_width=pad_width,
+                     mode='constant', constant_values= 0)
+        for axis in range(newmat.ndim):
+            np.apply_along_axis(mode, axis, newmat, pad_width[axis],
+                                axis, kwargs)
         return newmat
 
-    # If we get here, use new padding method
-    newmat = narray.copy()
+    unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
+    if unsupported_kwargs:
+        raise ValueError("unsupported keyword arguments for mode '{}': {}"
+                         .format(mode, unsupported_kwargs))
+
+    # these modes have been rewritten to only use a single copy
+    if mode in ['constant', 'edge', 'maximum', 'minimum', 'mean', 'median',
+                'linear_ramp']:
+        # Allocate grown array
+        new_shape = tuple(
+            left + size + right
+            for size, (left, right) in zip(narray.shape, pad_width)
+        )
+        newmat = np.empty(shape=new_shape, dtype=narray.dtype)
+        old_area = tuple(slice(left, left + dim)
+                         for (left, right), dim in zip(pad_width, narray.shape))
+
+        trailing_slices = tuple(slice(b, -a if a else None)
+                                for b, a in pad_width)
+        newmat[old_area] = narray
+        if mode == 'maximum':
+            stat_func = np.max
+        elif mode == 'minimum':
+            stat_func = np.min
+        elif mode == 'mean':
+            stat_func = np.mean
+        elif mode == 'median':
+            stat_func = np.median
+    # all other mode still use concatenate
+    else:
+        # Force a copy.
+        # I guess this address the case where no padding is but yet we want.
+        # to return a distinct copy of the array.
+        newmat = narray.copy()
 
     # API preserved, but completely new algorithm which pads by building the
     # entire block to pad before/after `arr` with in one step, for each axis.
+    # The array is only copied once, boundary conditions are filled in.
+    # Currently, corners are being overwritten, though, this is a much less
+    # costly operation than copying the array over for large matricies.
     if mode == 'constant':
-        for axis, ((pad_before, pad_after), (before_val, after_val)) \
-                in enumerate(zip(pad_width, kwargs['constant_values'])):
-            newmat = _prepend_const(newmat, pad_before, before_val, axis)
-            newmat = _append_const(newmat, pad_after, after_val, axis)
-
+        values = kwargs.get("constant_values", 0)
+        values = _as_pairs(values, newmat.ndim, assert_number=True)
+        axes = range(newmat.ndim)
+        for axis, (pad_before, pad_after), const in zip(axes, pad_width, values):
+            if pad_before:
+                _mutate_leading_edge(newmat, axis, pad_before, trailing_slices,
+                                     const[0])
+            if pad_after:
+                _mutate_trailing_edge(newmat, axis, pad_after, trailing_slices,
+                                      const[1])
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
-            newmat = _prepend_edge(newmat, pad_before, axis)
-            newmat = _append_edge(newmat, pad_after, axis)
-
+            if pad_before:
+                _pad_starting_edge(newmat, axis, pad_before, trailing_slices)
+            if pad_after:
+                _pad_ending_edge(newmat, axis, pad_after, trailing_slices)
     elif mode == 'linear_ramp':
+        end_values = kwargs.get("end_values", 0)
+        end_values = _as_pairs(end_values, newmat.ndim, assert_number=True)
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
-                in enumerate(zip(pad_width, kwargs['end_values'])):
-            newmat = _prepend_ramp(newmat, pad_before, before_val, axis)
-            newmat = _append_ramp(newmat, pad_after, after_val, axis)
+                in enumerate(zip(pad_width, end_values)):
+            # This makes it easier to broadcast lines ramps onto the correct
+            # Axis of the matrix
+            broadcast = ((np.newaxis, ) *axis + (slice(None), ) +
+                         (np.newaxis, ) *(newmat.ndim - axis - 1))
+            if pad_before:
+                ramp_arr = np.arange(0, pad_before)[broadcast]
+                # Extract edge
+                edge_slice = _leading_slice(new_shape, axis,
+                                            pad_before, trailing_slices)
 
-    elif mode == 'maximum':
-        for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_max(newmat, pad_before, chunk_before, axis)
-            newmat = _append_max(newmat, pad_after, chunk_after, axis)
+                # Linear ramp, and extend along `axis`
+                chunk = newmat[edge_slice] * ((ramp_arr) / (pad_before))
 
-    elif mode == 'mean':
-        for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_mean(newmat, pad_before, chunk_before, axis)
-            newmat = _append_mean(newmat, pad_after, chunk_after, axis)
+                if pad_before > 1:
+                    inverse_ramp = np.linspace(before_val, 0, num=pad_before,
+                                               endpoint=False)[broadcast]
+                    chunk += inverse_ramp
+                _round_ifneeded(chunk, newmat.dtype)
 
-    elif mode == 'median':
-        for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_med(newmat, pad_before, chunk_before, axis)
-            newmat = _append_med(newmat, pad_after, chunk_after, axis)
+                _mutate_leading_edge(newmat, axis, pad_before, trailing_slices, chunk)
+            if pad_after:
+                ramp_arr = np.arange((pad_after-1), -1, -1)[broadcast]
+                # Extract edge
+                edge_slice = _trailing_slice(new_shape, axis,
+                                             pad_after, trailing_slices)
 
-    elif mode == 'minimum':
+                # Linear ramp, and extend along `axis`
+                chunk = newmat[edge_slice] * ((ramp_arr) / (pad_after))
+                if pad_after > 1:
+                    inverse_ramp = np.linspace(0, after_val, num=pad_after+1,
+                                               endpoint=True)[1:][broadcast]
+                    chunk += inverse_ramp
+                _round_ifneeded(chunk, newmat.dtype)
+
+                _mutate_trailing_edge(newmat, axis, pad_after,
+                                      trailing_slices, chunk)
+
+    elif mode in ['maximum', 'minimum', 'median', 'mean']:
+        length = kwargs.get("stat_length", None)
+        length = _as_pairs(length, newmat.ndim, as_index=True)
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
-            newmat = _prepend_min(newmat, pad_before, chunk_before, axis)
-            newmat = _append_min(newmat, pad_after, chunk_after, axis)
+                in enumerate(zip(pad_width, length)):
+            max_length = newmat.shape[axis] - pad_before - pad_after
+            if pad_before:
+                if chunk_before is None or chunk_before > max_length:
+                    chunk_before = max_length
+                if chunk_before == 1:
+                    # In this case, computing the stat would give the edge
+                    _pad_starting_edge(newmat, axis, pad_before, trailing_slices)
+                else:
+                    # Slice a chunk from the edge to calculate stats on
+                    stat_slice = _leading_slice(new_shape, axis, pad_before,
+                                                trailing_slices, n=chunk_before)
+                    # Extract slice, calculate statistic
+                    chunk = stat_func(newmat[stat_slice], axis=axis,
+                                      keepdims=True)
+                    _round_ifneeded(chunk, newmat.dtype)
+
+                    # Mutate the edge using the max_chunk
+                    _mutate_leading_edge(newmat, axis, pad_before,
+                                         trailing_slices, chunk)
+            if pad_after:
+                if chunk_after is None or chunk_after > max_length:
+                    chunk_after = max_length
+                if chunk_after == 1:
+                    _pad_ending_edge(newmat, axis, pad_after, trailing_slices)
+                else:
+                    # Slice a chunk from the edge to calculate stats on
+                    stat_slice = _trailing_slice(new_shape, axis, pad_after,
+                                                 trailing_slices, n=chunk_after)
+
+                    # Extract slice, calculate statistic
+                    chunk = stat_func(newmat[stat_slice], axis=axis,
+                                      keepdims=True)
+                    _round_ifneeded(chunk, newmat.dtype)
+
+                    # Mutate the edge using the max_chunk
+                    _mutate_trailing_edge(newmat, axis, pad_after,
+                                          trailing_slices, chunk)
 
     elif mode == 'reflect':
+        method = kwargs.get("reflect_type", "even")
+
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if narray.shape[axis] == 0:
                 # Axes with non-zero padding cannot be empty.
@@ -1331,7 +817,6 @@ def pad(array, pad_width, mode, **kwargs):
                 newmat = _append_edge(newmat, pad_after, axis)
                 continue
 
-            method = kwargs['reflect_type']
             safe_pad = newmat.shape[axis] - 1
             while ((pad_before > safe_pad) or (pad_after > safe_pad)):
                 pad_iter_b = min(safe_pad,
@@ -1345,11 +830,12 @@ def pad(array, pad_width, mode, **kwargs):
             newmat = _pad_ref(newmat, (pad_before, pad_after), method, axis)
 
     elif mode == 'symmetric':
+        method = kwargs.get("reflect_type", "even")
+
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             # Recursive padding along any axis where `pad_amt` is too large
             # for indexing tricks. We can only safely pad the original axis
             # length, to keep the period of the reflections consistent.
-            method = kwargs['reflect_type']
             safe_pad = newmat.shape[axis]
             while ((pad_before > safe_pad) or
                    (pad_after > safe_pad)):
