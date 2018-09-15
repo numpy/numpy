@@ -14,6 +14,81 @@ __all__ = ['pad']
 ###############################################################################
 # Private utility functions.
 
+
+def _as_pairs(x, ndim, as_index=False, assert_number=False):
+    """
+    Broadcast `x` to an array with the shape (`ndim`, 2).
+
+    A helper function for `pad` that prepares and validates arguments like
+    `pad_width` to be iterated in pairs.
+
+    Parameters
+    ----------
+    x : {None, scalar, array-like}
+        The object to broadcast to the shape (`ndim`, 2). None is only allowed
+        as a special case if `as_index` is True.
+    ndim : int
+        Number of pairs the broadcasted `x` will have.
+    as_index : bool, optional
+        If `x` is not None, try to round each element of `x` to a non-negative
+        integer.
+    assert_number : bool, optional
+        Raise a TypeError if the dtype of `x` is not a subdtype of `np.number`.
+
+    Returns
+    -------
+    pairs : nested structure with shape (`ndim`, 2)
+        The broadcasted version of `x`.
+
+    Raises
+    ------
+    TypeError
+        If `as_index` is True and `x` is not None and can't be rounded to an
+        array of integer type.
+        Or if `assert_number` is True and the dtype of `x` is not a subdtype
+        of `np.number`.
+    ValueError
+        If `as_index` is True and `x` contains negative elements.
+        Or if `x` is not broadcastable to the shape (`ndim`, 2).
+    """
+    if as_index and x is None:
+        # Pass through None as a special case for indices
+        return ((None, None),) * ndim
+
+    x = np.asarray(x)
+    if assert_number and not np.issubdtype(x.dtype, np.number):
+        raise TypeError("keyword argument must be subdtype of np.number")
+
+    if as_index:
+        try:
+            x = x.round().astype(np.intp, copy=False)
+        except AttributeError:
+            raise TypeError("can't cast `x` to int")
+
+    if x.size == 1:
+        # Single value case
+        x = x.ravel()  # Reduce superfluous dimensions
+        if as_index and x < 0:
+            raise ValueError("index can't contain negative values")
+        return ((x[0], x[0]),) * ndim
+
+    if x.size == 2 and ndim == 2 and x.shape != (2, 1):
+        # Pair value case, but except special case when each dimension has a
+        # single value which should be broadcasted to a pair
+        x = x.ravel()  # Reduce superfluous dimensions
+        if as_index and x[0] < 0 and x[1] < 0:
+            raise ValueError("index can't contain negative values")
+        return ((x[0], x[1]),) * ndim
+
+    if as_index and x.min() < 0:
+        raise ValueError("index can't contain negative values")
+    try:
+        return np.broadcast_to(x, (ndim, 2)).tolist()
+    except ValueError:
+        raise ValueError("unable to broadcast '{}' to shape {}"
+                         .format(x, (ndim, 2)))
+
+
 def _round_ifneeded(arr, dtype):
     """
     Rounds arr inplace if destination dtype is integer.
@@ -646,13 +721,15 @@ def pad(array, pad_width, mode, **kwargs):
            [100, 100, 100, 100, 100, 100, 100],
            [100, 100, 100, 100, 100, 100, 100]])
     """
+    pad_width = np.asarray(pad_width)
+    narray = np.asarray(array)
+
     if not np.asarray(pad_width).dtype.kind == 'i':
         raise TypeError('`pad_width` must be of integral type.')
 
-    narray = np.asarray(array)
     pad_width = _validate_lengths(narray, pad_width)
 
-    allowedkwargs = {
+    allowed_kwargs = {
         'constant': ['constant_values'],
         'edge': [],
         'linear_ramp': ['end_values'],
@@ -665,63 +742,20 @@ def pad(array, pad_width, mode, **kwargs):
         'wrap': [],
         }
 
-    kwdefaults = {
-        'stat_length': None,
-        'constant_values': 0,
-        'end_values': 0,
-        'reflect_type': 'even',
-        }
-
-    if isinstance(mode, np.compat.basestring):
-        # Make sure have allowed kwargs appropriate for mode
-        for key in kwargs:
-            if key not in allowedkwargs[mode]:
-                raise ValueError('%s keyword not in allowed keywords %s' %
-                                 (key, allowedkwargs[mode]))
-
-        # Set kwarg defaults
-        for kw in allowedkwargs[mode]:
-            kwargs.setdefault(kw, kwdefaults[kw])
-
-        # Need to only normalize particular keywords.
-        for i in kwargs:
-            if i == 'stat_length':
-                stat_length = _validate_lengths(narray, kwargs[i])
-                stat_length = tuple(
-                    tuple((chunk_before if chunk_before and chunk_before <= dim else dim,
-                           chunk_after if chunk_after and chunk_after <= dim else dim))
-                    for (chunk_before, chunk_after), dim in zip(stat_length, narray.shape)
-                )
-                kwargs[i] = stat_length
-            if i in ['end_values', 'constant_values']:
-                kwargs[i] = _normalize_shape(narray, kwargs[i],
-                                             cast_to_int=False)
-    else:
+    if not isinstance(mode, np.compat.basestring):
         # Drop back to old, slower np.apply_along_axis mode for user-supplied
         # vector function
-        function = mode
-
-        # Create a new padded array
-        rank = list(range(narray.ndim))
-        total_dim_increase = [np.sum(pad_width[i]) for i in rank]
-        offset_slices = tuple(
-            slice(pad_width[i][0], pad_width[i][0] + narray.shape[i])
-            for i in rank)
-        new_shape = np.array(narray.shape) + total_dim_increase
-        newmat = np.empty(new_shape, narray.dtype)
-
-        # Insert the original array into the padded array
-        newmat[offset_slices] = narray
-
-        # This is the core of pad ...
-        for iaxis in rank:
-            np.apply_along_axis(function,
-                                iaxis,
-                                newmat,
-                                pad_width[iaxis],
-                                iaxis,
-                                kwargs)
+        newmat = pad(narray, pad_width=pad_width,
+                     mode='constant', constant_values= 0)
+        for axis in range(newmat.ndim):
+            np.apply_along_axis(mode, axis, newmat, pad_width[axis],
+                                axis, kwargs)
         return newmat
+
+    unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
+    if unsupported_kwargs:
+        raise ValueError("unsupported keyword arguments for mode '{}': {}"
+                         .format(mode, unsupported_kwargs))
 
     # these modes have been rewritten to only use a single copy
     if mode in ['constant', 'edge', 'maximum', 'minimum', 'mean', 'median',
@@ -759,12 +793,15 @@ def pad(array, pad_width, mode, **kwargs):
     # costly operation than copying the array over for large matricies.
     if mode == 'constant':
         values = kwargs.get("constant_values", 0)
+        values = _as_pairs(values, newmat.ndim, assert_number=True)
         axes = range(newmat.ndim)
-        for axis, pad, const in zip(axes, pad_width, values):
-            if pad[0]:
-                _mutate_leading_edge(newmat, axis, pad[0], trailing_slices, const[0])
-            if pad[1]:
-                _mutate_trailing_edge(newmat, axis, pad[1], trailing_slices, const[1])
+        for axis, (pad_before, pad_after), const in zip(axes, pad_width, values):
+            if pad_before:
+                _mutate_leading_edge(newmat, axis, pad_before, trailing_slices,
+                                     const[0])
+            if pad_after:
+                _mutate_trailing_edge(newmat, axis, pad_after, trailing_slices,
+                                      const[1])
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if pad_before:
@@ -772,8 +809,10 @@ def pad(array, pad_width, mode, **kwargs):
             if pad_after:
                 _pad_ending_edge(newmat, axis, pad_after, trailing_slices)
     elif mode == 'linear_ramp':
+        end_values = kwargs.get("end_values", 0)
+        end_values = _as_pairs(end_values, newmat.ndim, assert_number=True)
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
-                in enumerate(zip(pad_width, kwargs['end_values'])):
+                in enumerate(zip(pad_width, end_values)):
             # This makes it easier to broadcast lines ramps onto the correct
             # Axis of the matrix
             broadcast = ((np.newaxis, ) *axis + (slice(None), ) +
@@ -812,9 +851,14 @@ def pad(array, pad_width, mode, **kwargs):
                                       trailing_slices, chunk)
 
     elif mode in ['maximum', 'minimum', 'median', 'mean']:
+        length = kwargs.get("stat_length", None)
+        length = _as_pairs(length, newmat.ndim, as_index=True)
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
-                in enumerate(zip(pad_width, kwargs['stat_length'])):
+                in enumerate(zip(pad_width, length)):
+            max_length = newmat.shape[axis] - pad_before - pad_after
             if pad_before:
+                if chunk_before is None or chunk_before > max_length:
+                    chunk_before = max_length
                 if chunk_before == 1:
                     # In this case, computing the stat would give the edge
                     _pad_starting_edge(newmat, axis, pad_before, trailing_slices)
@@ -831,6 +875,8 @@ def pad(array, pad_width, mode, **kwargs):
                     _mutate_leading_edge(newmat, axis, pad_before,
                                          trailing_slices, chunk)
             if pad_after:
+                if chunk_after is None or chunk_after > max_length:
+                    chunk_after = max_length
                 if chunk_after == 1:
                     _pad_ending_edge(newmat, axis, pad_after, trailing_slices)
                 else:
@@ -848,6 +894,8 @@ def pad(array, pad_width, mode, **kwargs):
                                           trailing_slices, chunk)
 
     elif mode == 'reflect':
+        method = kwargs.get("reflect_type", "even")
+
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if narray.shape[axis] == 0:
                 # Axes with non-zero padding cannot be empty.
@@ -868,7 +916,6 @@ def pad(array, pad_width, mode, **kwargs):
                 newmat = _append_edge(newmat, pad_after, axis)
                 continue
 
-            method = kwargs['reflect_type']
             safe_pad = newmat.shape[axis] - 1
             while ((pad_before > safe_pad) or (pad_after > safe_pad)):
                 pad_iter_b = min(safe_pad,
@@ -882,11 +929,12 @@ def pad(array, pad_width, mode, **kwargs):
             newmat = _pad_ref(newmat, (pad_before, pad_after), method, axis)
 
     elif mode == 'symmetric':
+        method = kwargs.get("reflect_type", "even")
+
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             # Recursive padding along any axis where `pad_amt` is too large
             # for indexing tricks. We can only safely pad the original axis
             # length, to keep the period of the reflections consistent.
-            method = kwargs['reflect_type']
             safe_pad = newmat.shape[axis]
             while ((pad_before > safe_pad) or
                    (pad_after > safe_pad)):
