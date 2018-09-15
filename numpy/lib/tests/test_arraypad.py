@@ -507,13 +507,15 @@ class TestConstant(object):
         obj_a = object()
         arr[0] = obj_a
         obj_b = object()
-        arr = np.pad(arr, pad_width=1, mode='constant', constant_values=obj_b)
+        obj_c = object()
+        arr = np.pad(arr, pad_width=1, mode='constant',
+                     constant_values=(obj_b, obj_c))
 
         expected = np.empty((3, ), dtype=object)
         expected[0] = obj_b
         expected[1] = obj_a
-        expected[2] = obj_b
-        
+        expected[2] = obj_c
+
         assert_array_equal(arr, expected)
 
 class TestLinearRamp(object):
