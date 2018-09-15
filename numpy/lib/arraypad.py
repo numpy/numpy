@@ -105,7 +105,7 @@ def _do_append(arr, pad_chunk, axis):
 
 def _leading_const(arr, pad_amt, val, axis=-1):
     """
-    Prepend constant `val` along `axis` of `arr`.
+    Get a constant array of `val` to prepend along `axis` of `arr`.
 
     Parameters
     ----------
@@ -122,7 +122,7 @@ def _leading_const(arr, pad_amt, val, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` constant `val` prepended along `axis`.
+        Output array, with `pad_amt` constant `val` along `axis`.
 
     """
     if pad_amt == 0:
@@ -134,7 +134,7 @@ def _leading_const(arr, pad_amt, val, axis=-1):
 
 def _trailing_const(arr, pad_amt, val, axis=-1):
     """
-    Append constant `val` along `axis` of `arr`.
+    Get a constant array of `val` to append along `axis` of `arr`.
 
     Parameters
     ----------
@@ -151,7 +151,7 @@ def _trailing_const(arr, pad_amt, val, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` constant `val` appended along `axis`.
+        Output array, with `pad_amt` constant `val` along `axis`.
 
     """
     if pad_amt == 0:
@@ -164,7 +164,7 @@ def _trailing_const(arr, pad_amt, val, axis=-1):
 
 def _leading_edge(arr, pad_amt, axis=-1):
     """
-    Prepend `pad_amt` to `arr` along `axis` by extending edge values.
+    Get an array of `pad_amt` extended edge values to prepend to `arr` along `axis`
 
     Parameters
     ----------
@@ -178,7 +178,7 @@ def _leading_edge(arr, pad_amt, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, extended by `pad_amt` edge values appended along `axis`.
+        Output array, with `pad_amt` edge values along `axis`.
 
     """
     if pad_amt == 0:
@@ -191,7 +191,7 @@ def _leading_edge(arr, pad_amt, axis=-1):
 
 def _trailing_edge(arr, pad_amt, axis=-1):
     """
-    Append `pad_amt` to `arr` along `axis` by extending edge values.
+    Get an array of `pad_amt` extended edge values to append to `arr` along `axis`
 
     Parameters
     ----------
@@ -205,8 +205,7 @@ def _trailing_edge(arr, pad_amt, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, extended by `pad_amt` edge values prepended along
-        `axis`.
+        Output array, with `pad_amt` edge values  along `axis`.
 
     """
     if pad_amt == 0:
@@ -219,7 +218,7 @@ def _trailing_edge(arr, pad_amt, axis=-1):
 
 def _leading_ramp(arr, pad_amt, end, axis=-1):
     """
-    Prepend linear ramp along `axis`.
+    Get a linear ramp to prepend along `axis`.
 
     Parameters
     ----------
@@ -236,8 +235,8 @@ def _leading_ramp(arr, pad_amt, end, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region ramps linearly from the edge value to `end`.
+        Output array, with `pad_amt` values along `axis`.
+        This ramps linearly from the edge value to `end`.
 
     """
     if pad_amt == 0:
@@ -269,7 +268,7 @@ def _leading_ramp(arr, pad_amt, end, axis=-1):
 
 def _trailing_ramp(arr, pad_amt, end, axis=-1):
     """
-    Append linear ramp along `axis`.
+    Get a linear ramp to append along `axis`.
 
     Parameters
     ----------
@@ -286,8 +285,8 @@ def _trailing_ramp(arr, pad_amt, end, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region ramps linearly from the edge value to `end`.
+        Output array, with `pad_amt` values along `axis`.
+        This ramps linearly from the edge value to `end`.
 
     """
     if pad_amt == 0:
@@ -319,7 +318,7 @@ def _trailing_ramp(arr, pad_amt, end, axis=-1):
 
 def _leading_max(arr, pad_amt, num, axis=-1):
     """
-    Prepend `pad_amt` maximum values along `axis`.
+    Get `pad_amt` maximum values to prepend along `axis`.
 
     Parameters
     ----------
@@ -336,9 +335,8 @@ def _leading_max(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        prepended region is the maximum of the first `num` values along
-        `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the maximum of the first `num` values along `axis`.
 
     """
     if pad_amt == 0:
@@ -365,7 +363,7 @@ def _leading_max(arr, pad_amt, num, axis=-1):
 
 def _trailing_max(arr, pad_amt, num, axis=-1):
     """
-    Pad one `axis` of `arr` with the maximum of the last `num` elements.
+    Get `pad_amt` maximum values to append along `axis`.
 
     Parameters
     ----------
@@ -382,8 +380,8 @@ def _trailing_max(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the maximum of the final `num` values along `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the maximum of the final `num` values along `axis`.
 
     """
     if pad_amt == 0:
@@ -413,7 +411,7 @@ def _trailing_max(arr, pad_amt, num, axis=-1):
 
 def _leading_mean(arr, pad_amt, num, axis=-1):
     """
-    Prepend `pad_amt` mean values along `axis`.
+    Get `pad_amt` mean values to prepend along `axis`.
 
     Parameters
     ----------
@@ -430,8 +428,8 @@ def _leading_mean(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the mean of the first `num` values along `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the mean of the first `num` values along `axis`.
 
     """
     if pad_amt == 0:
@@ -459,7 +457,7 @@ def _leading_mean(arr, pad_amt, num, axis=-1):
 
 def _trailing_mean(arr, pad_amt, num, axis=-1):
     """
-    Append `pad_amt` mean values along `axis`.
+    Get `pad_amt` mean values to append along `axis`.
 
     Parameters
     ----------
@@ -476,8 +474,8 @@ def _trailing_mean(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the maximum of the final `num` values along `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the maximum of the final `num` values along `axis`.
 
     """
     if pad_amt == 0:
@@ -508,7 +506,7 @@ def _trailing_mean(arr, pad_amt, num, axis=-1):
 
 def _leading_med(arr, pad_amt, num, axis=-1):
     """
-    Prepend `pad_amt` median values along `axis`.
+    Get `pad_amt` median values to prepend along `axis`.
 
     Parameters
     ----------
@@ -525,8 +523,8 @@ def _leading_med(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the median of the first `num` values along `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the median of the first `num` values along `axis`.
 
     """
     if pad_amt == 0:
@@ -554,7 +552,7 @@ def _leading_med(arr, pad_amt, num, axis=-1):
 
 def _trailing_med(arr, pad_amt, num, axis=-1):
     """
-    Append `pad_amt` median values along `axis`.
+    Get `pad_amt` median values to append along `axis`.
 
     Parameters
     ----------
@@ -571,8 +569,8 @@ def _trailing_med(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the median of the final `num` values along `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the median of the final `num` values along `axis`.
 
     """
     if pad_amt == 0:
@@ -603,7 +601,7 @@ def _trailing_med(arr, pad_amt, num, axis=-1):
 
 def _leading_min(arr, pad_amt, num, axis=-1):
     """
-    Prepend `pad_amt` minimum values along `axis`.
+    Get `pad_amt` minimum values to prepend along `axis`.
 
     Parameters
     ----------
@@ -620,9 +618,8 @@ def _leading_min(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region is the minimum of the first `num` values along
-        `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the minimum of the first `num` values along `axis`.
 
     """
     if pad_amt == 0:
@@ -649,7 +646,7 @@ def _leading_min(arr, pad_amt, num, axis=-1):
 
 def _trailing_min(arr, pad_amt, num, axis=-1):
     """
-    Append `pad_amt` median values along `axis`.
+    Get `pad_amt` median values to append along `axis`.
 
     Parameters
     ----------
@@ -666,8 +663,8 @@ def _trailing_min(arr, pad_amt, num, axis=-1):
     Returns
     -------
     padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region is the minimum of the final `num` values along `axis`.
+        Output array, with `pad_amt` values along `axis`.
+        This is the minimum of the final `num` values along `axis`.
 
     """
     if pad_amt == 0:
