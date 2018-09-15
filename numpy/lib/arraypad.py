@@ -258,7 +258,7 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     return _do_append(arr, ramp_arr, axis)
 
 
-def _prepend_stat(arr, pad_amt, num, axis, stat_func):
+def _prepend_stat(arr, pad_amt, num, axis, pad_width, stat_func):
     """
     Mutate mat prepending `pad_amt` maximum values along `axis`.
 
@@ -284,11 +284,11 @@ def _prepend_stat(arr, pad_amt, num, axis, stat_func):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        _pad_starting_edge(arr, axis, pad_amt)
+        _pad_starting_edge(arr, axis, pad_amt, pad_width)
         return
 
     # Slice a chunk from the edge to calculate stats on
-    the_slice = _start_edge_slice(arr.shape, axis, pad_amt, n=num)
+    the_slice = _start_edge_slice(arr.shape, axis, pad_amt, pad_width, n=num)
 
     # Extract slice, calculate statistic
     chunk = stat_func(arr[the_slice], axis=axis, keepdims=True)
@@ -296,10 +296,10 @@ def _prepend_stat(arr, pad_amt, num, axis, stat_func):
     _round_ifneeded(chunk, arr.dtype)
 
     # Mutate the edge using the max_chunk
-    _mutate_starting_edge(arr, axis, pad_amt, chunk)
+    _mutate_starting_edge(arr, axis, pad_amt, pad_width, chunk)
 
 
-def _append_stat(arr, pad_amt, num, axis, stat_func):
+def _append_stat(arr, pad_amt, num, axis, pad_width, stat_func):
     """
     Mutate mat appending `pad_amt` maximum values along `axis`.
 
@@ -325,18 +325,18 @@ def _append_stat(arr, pad_amt, num, axis, stat_func):
 
     # Equivalent to edge padding for single value, so do that instead
     if num == 1:
-        _pad_ending_edge(arr, axis, pad_amt)
+        _pad_ending_edge(arr, axis, pad_amt, pad_width)
         return
 
     # Slice a chunk from the edge to calculate stats on
-    the_slice = _end_edge_slice(arr.shape, axis, pad_amt, n=num)
+    the_slice = _end_edge_slice(arr.shape, axis, pad_amt, pad_width, n=num)
 
     # Extract slice, calculate statistic
     chunk = stat_func(arr[the_slice], axis=axis, keepdims=True)
 
     _round_ifneeded(chunk, arr.dtype)
     # Mutate the edge using the max_chunk
-    _mutate_ending_edge(arr, axis, pad_amt, chunk)
+    _mutate_ending_edge(arr, axis, pad_amt, pad_width, chunk)
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -629,34 +629,38 @@ def _validate_lengths(narray, number_elements):
             raise ValueError(fmt % (number_elements,))
     return normshp
 
-def _end_edge_slice(shape, axis, pad_after, n=1):
+def _end_edge_slice(shape, axis, pad_after, pad_width, n=1):
     return ((slice(None), ) * axis +
             (slice(shape[axis] - pad_after - n,
-                   shape[axis] - pad_after), ))
+                   shape[axis] - pad_after), ) +
+            tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
 
 
-def _start_edge_slice(shape, axis, pad_before, n=1):
+def _start_edge_slice(shape, axis, pad_before, pad_width, n=1):
     # Shape is unused, but kept to keep the symmetry with _end_edge_slice
-    return ((slice(None), ) * axis + (slice(pad_before, pad_before + n), ))
+    return ((slice(None), ) * axis + (slice(pad_before, pad_before + n), ) +
+            tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
 
 
-def _pad_starting_edge(newmat, axis, pad_before):
-    edge_slice = _start_edge_slice(newmat.shape, axis, pad_before)
-    _mutate_starting_edge(newmat, axis, pad_before, newmat[edge_slice])
+def _pad_starting_edge(newmat, axis, pad_before, pad_width):
+    edge_slice = _start_edge_slice(newmat.shape, axis, pad_before, pad_width)
+    _mutate_starting_edge(newmat, axis, pad_before, pad_width, newmat[edge_slice])
 
 
-def _pad_ending_edge(newmat, axis, pad_after):
-    edge_slice = _end_edge_slice(newmat.shape, axis, pad_after)
-    _mutate_ending_edge(newmat, axis, pad_after, newmat[edge_slice])
+def _pad_ending_edge(newmat, axis, pad_after, pad_width):
+    edge_slice = _end_edge_slice(newmat.shape, axis, pad_after, pad_width)
+    _mutate_ending_edge(newmat, axis, pad_after, pad_width, newmat[edge_slice])
 
 
-def _mutate_starting_edge(newmat, axis, pad_before, edge):
-    chosen_slice = (slice(None), ) * axis + (slice(0, pad_before), )
+def _mutate_starting_edge(newmat, axis, pad_before, pad_width, edge):
+    chosen_slice = ((slice(None), ) * axis + (slice(0, pad_before), ) +
+                    tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
     newmat[chosen_slice] = edge
 
 
-def _mutate_ending_edge(newmat, axis, pad_after, edge):
-    chosen_slice = (slice(None), ) * axis + (slice(-pad_after, None), )
+def _mutate_ending_edge(newmat, axis, pad_after, pad_width, edge):
+    chosen_slice = ((slice(None), ) * axis + (slice(-pad_after, None), ) +
+                    tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:]))
     newmat[chosen_slice] = edge
 
 ###############################################################################
@@ -949,7 +953,7 @@ def pad(array, pad_width, mode, **kwargs):
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
 
-        newmat = np.zeros(shape=new_shape, dtype=narray.dtype)
+        newmat = np.empty(shape=new_shape, dtype=narray.dtype)
         old_left = [left for left, _ in pad_width]
         old_right = [left + dim for (left, _), dim in zip(pad_width, narray.shape)]
         old_area = tuple(slice(left, right)
@@ -972,19 +976,15 @@ def pad(array, pad_width, mode, **kwargs):
         for axis, ((pad_before, pad_after), (c_before, c_after)) in enumerate(
                 zip(pad_width, kwargs['constant_values'])):
             if pad_before:
-                chosen_slice = (slice(None), ) * axis + (slice(0, pad_before), )
-                final_slices = tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:])
-                newmat[chosen_slice + final_slices] += np.array(c_before).astype(newmat.dtype)
+                _mutate_starting_edge(newmat, axis, pad_before, pad_width, c_before)
             if pad_after:
-                chosen_slice = (slice(None), ) * axis + (slice(-pad_after, None), )
-                final_slices = tuple(slice(b, -a if a else None) for b, a in pad_width[axis+1:])
-                newmat[chosen_slice + final_slices] += np.array(c_after).astype(newmat.dtype)
+                _mutate_ending_edge(newmat, axis, pad_after, pad_width, c_after)
     elif mode == 'edge':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
             if pad_before:
-                _pad_starting_edge(newmat, axis, pad_before)
+                _pad_starting_edge(newmat, axis, pad_before, pad_width)
             if pad_after:
-                _pad_ending_edge(newmat, axis, pad_after)
+                _pad_ending_edge(newmat, axis, pad_after, pad_width)
     elif mode == 'linear_ramp':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
@@ -994,26 +994,26 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'maximum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, np.max)
-            _append_stat(newmat, pad_after, chunk_after, axis, np.max)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.max)
+            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.max)
 
     elif mode == 'mean':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, np.mean)
-            _append_stat(newmat, pad_after, chunk_after, axis, np.mean)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.mean)
+            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.mean)
 
     elif mode == 'median':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, np.median)
-            _append_stat(newmat, pad_after, chunk_after, axis, np.median)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.median)
+            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.median)
 
     elif mode == 'minimum':
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
                 in enumerate(zip(pad_width, kwargs['stat_length'])):
-            _prepend_stat(newmat, pad_before, chunk_before, axis, np.min)
-            _append_stat(newmat, pad_after, chunk_after, axis, np.min)
+            _prepend_stat(newmat, pad_before, chunk_before, axis, pad_width, np.min)
+            _append_stat(newmat, pad_after, chunk_after, axis, pad_width, np.min)
 
     elif mode == 'reflect':
         for axis, (pad_before, pad_after) in enumerate(pad_width):
