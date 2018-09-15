@@ -737,7 +737,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ucsnarrow.h'),
             join('src', 'common', 'ufunc_override.h'),
             join('src', 'common', 'umathmodule.h'),
-            join('src', 'common', 'wrapper.h'),
+            join('src', 'common', 'numpyos.h'),
             ]
 
     common_src = [
@@ -747,7 +747,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.c'),
             join('src', 'common', 'ufunc_override.c'),
-            join('src', 'common', 'wrapper.c'),
+            join('src', 'common', 'numpyos.c'),
             ]
 
     blas_info = get_info('blas_opt', 0)
@@ -787,7 +787,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'multiarraymodule.h'),
             join('src', 'multiarray', 'nditer_impl.h'),
             join('src', 'multiarray', 'number.h'),
-            join('src', 'multiarray', 'numpyos.h'),
             join('src', 'multiarray', 'refcount.h'),
             join('src', 'multiarray', 'scalartypes.h'),
             join('src', 'multiarray', 'sequence.h'),
@@ -853,7 +852,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'nditer_constr.c'),
             join('src', 'multiarray', 'nditer_pywrap.c'),
             join('src', 'multiarray', 'number.c'),
-            join('src', 'multiarray', 'numpyos.c'),
             join('src', 'multiarray', 'refcount.c'),
             join('src', 'multiarray', 'sequence.c'),
             join('src', 'multiarray', 'shape.c'),

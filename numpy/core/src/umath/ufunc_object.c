@@ -46,7 +46,7 @@
 #include "npy_import.h"
 #include "extobj.h"
 #include "common.h"
-#include "wrapper.h"
+#include "numpyos.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -487,7 +487,7 @@ static npy_int
 _get_size(const char* str)
 {
     char *stop;
-    npy_longlong size = npy_strtoll(str, &stop, 10);
+    npy_longlong size = NumPyOS_strtoll(str, &stop, 10);
 
     if (stop == str || _is_alpha_underscore(*stop)) {
         /* not a well formed number */
