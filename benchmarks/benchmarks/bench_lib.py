@@ -16,13 +16,23 @@ class Pad(Benchmark):
         [(1000,),
          (10, 100),
          (10, 10, 10),
+         (10, 10, 10, 10),
          (64, 64),
          (512, 512),
-         (10, 512, 512)],
-        [1, 3, (0, 5)],
-        ["constant", "edge", "linear_ramp",
+         (50, 512, 512)],
+        [
+            # 0,
+            # 1,
+            # 3,
+            10,
+            # (0, 5)
+            ],
+        ["constant",
+         "edge", "linear_ramp",
          "mean", "median", "minimum", "maximum",
-         "reflect", "symmetric", 'wrap']
+         # "reflect", "symmetric",
+         # "wrap"
+         ]
     ]
 
     def setup(self, shape, pad_width, mode):
