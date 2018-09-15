@@ -114,80 +114,6 @@ def _append_edge(arr, pad_amt, axis=-1):
     return _do_append(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
 
 
-def _leading_ramp(arr, pad_amt, end, axis, pad_width):
-    """
-    Mutate `arr` by prepending linear ramp along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to prepend.
-    end : scalar
-        Constal value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-    pad_width :  tuple of tuples
-        normalized pad_width containing all the information about
-        the pad widths
-
-    """
-    # Generate an n-dimensional array incrementing along `axis`
-    broadcast = ((np.newaxis, ) *axis + (slice(None), ) +
-                 (np.newaxis, ) *(arr.ndim - axis - 1))
-    ramp_arr = np.arange(0, pad_amt)[broadcast]
-    # Extract edge
-    edge_slice = _start_edge_slice(arr.shape, axis, pad_amt, pad_width)
-
-    # Linear ramp, and extend along `axis`
-    edge_pad = arr[edge_slice] * ((ramp_arr) / (pad_amt))
-
-    if pad_amt > 1:
-        inverse_ramp = np.linspace(end, 0, num=pad_amt,
-                                   endpoint=False)[broadcast]
-        edge_pad += inverse_ramp
-    _round_ifneeded(edge_pad, arr.dtype)
-    return edge_pad
-
-
-def _trailing_ramp(arr, pad_amt, end, axis, pad_width):
-    """
-    Mutate `arr` by appending linear ramp along `axis`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    pad_amt : int
-        Amount of padding to append.
-    end : scalar
-        Constal value to use. For best results should be of type `arr.dtype`;
-        if not `arr.dtype` will be cast to `arr.dtype`.
-    axis : int
-        Axis along which to pad `arr`.
-    pad_width :  tuple of tuples
-        normalized pad_width containing all the information about
-        the pad widths
-
-    """
-    # Generate an n-dimensional array incrementing along `axis`
-    broadcast = ((np.newaxis, ) *axis + (slice(None), ) +
-                 (np.newaxis, ) *(arr.ndim - axis - 1))
-    ramp_arr = np.arange((pad_amt-1), -1, -1)[broadcast]
-    # Extract edge
-    edge_slice = _end_edge_slice(arr.shape, axis, pad_amt, pad_width)
-
-    # Linear ramp, and extend along `axis`
-    edge_pad = arr[edge_slice] * ((ramp_arr) / (pad_amt))
-    if pad_amt > 1:
-        inverse_ramp = np.linspace(0, end, num=pad_amt+1,
-                                   endpoint=True)[1:][broadcast]
-        edge_pad += inverse_ramp
-    _round_ifneeded(edge_pad, arr.dtype)
-    return edge_pad
-
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
     """
@@ -847,13 +773,39 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'linear_ramp':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
+            # This makes it easier to broadcast lines ramps onto the correct
+            # Axis of the matrix
+            broadcast = ((np.newaxis, ) *axis + (slice(None), ) +
+                         (np.newaxis, ) *(newmat.ndim - axis - 1))
             if pad_before:
-                chunk = _leading_ramp(newmat, pad_before, before_val,
-                                      axis, pad_width)
+                ramp_arr = np.arange(0, pad_before)[broadcast]
+                # Extract edge
+                edge_slice = _start_edge_slice(new_shape, axis,
+                                               pad_before, pad_width)
+
+                # Linear ramp, and extend along `axis`
+                chunk = newmat[edge_slice] * ((ramp_arr) / (pad_before))
+
+                if pad_before > 1:
+                    inverse_ramp = np.linspace(before_val, 0, num=pad_before,
+                                               endpoint=False)[broadcast]
+                    chunk += inverse_ramp
+                _round_ifneeded(chunk, newmat.dtype)
+
                 _mutate_starting_edge(newmat, axis, pad_before, pad_width, chunk)
             if pad_after:
-                chunk = _trailing_ramp(newmat, pad_after, after_val,
-                                     axis, pad_width)
+                ramp_arr = np.arange((pad_after-1), -1, -1)[broadcast]
+                # Extract edge
+                edge_slice = _end_edge_slice(new_shape, axis, pad_after, pad_width)
+
+                # Linear ramp, and extend along `axis`
+                chunk = newmat[edge_slice] * ((ramp_arr) / (pad_after))
+                if pad_after > 1:
+                    inverse_ramp = np.linspace(0, after_val, num=pad_after+1,
+                                               endpoint=True)[1:][broadcast]
+                    chunk += inverse_ramp
+                _round_ifneeded(chunk, newmat.dtype)
+
                 _mutate_ending_edge(newmat, axis, pad_after,
                                     pad_width, chunk)
 
