@@ -14,50 +14,6 @@ __all__ = ['pad']
 ###############################################################################
 # Private utility functions.
 
-
-def _arange_ndarray(arr, shape, axis, reverse=False):
-    """
-    Create an ndarray of `shape` with increments along specified `axis`
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array of arbitrary shape.
-    shape : tuple of ints
-        Shape of desired array. Should be equivalent to `arr.shape` except
-        `shape[axis]` which may have any positive value.
-    axis : int
-        Axis to increment along.
-    reverse : bool
-        If False, increment in a positive fashion from 1 to `shape[axis]`,
-        inclusive. If True, the bounds are the same but the order reversed.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array sized to pad `arr` along `axis`, with linear range from
-        1 to `shape[axis]` along specified `axis`.
-
-    Notes
-    -----
-    The range is deliberately 1-indexed for this specific use case. Think of
-    this algorithm as broadcasting `np.arange` to a single `axis` of an
-    arbitrarily shaped ndarray.
-
-    """
-    initshape = tuple(1 if i != axis else shape[axis]
-                      for (i, x) in enumerate(arr.shape))
-    if not reverse:
-        padarr = np.arange(1, shape[axis] + 1)
-    else:
-        padarr = np.arange(shape[axis], 0, -1)
-    padarr = padarr.reshape(initshape)
-    for i, dim in enumerate(shape):
-        if padarr.shape[i] != dim:
-            padarr = padarr.repeat(dim, axis=i)
-    return padarr
-
-
 def _round_ifneeded(arr, dtype):
     """
     Rounds arr inplace if destination dtype is integer.
@@ -158,9 +114,9 @@ def _append_edge(arr, pad_amt, axis=-1):
     return _do_append(arr, edge_arr.repeat(pad_amt, axis=axis), axis)
 
 
-def _prepend_ramp(arr, pad_amt, end, axis=-1):
+def _leading_ramp(arr, pad_amt, end, axis, pad_width):
     """
-    Prepend linear ramp along `axis`.
+    Mutate `arr` by prepending linear ramp along `axis`.
 
     Parameters
     ----------
@@ -173,44 +129,32 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
         if not `arr.dtype` will be cast to `arr.dtype`.
     axis : int
         Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values prepended along `axis`. The
-        prepended region ramps linearly from the edge value to `end`.
+    pad_width :  tuple of tuples
+        normalized pad_width containing all the information about
+        the pad widths
 
     """
-    if pad_amt == 0:
-        return arr
-
-    # Generate shape for final concatenated array
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-
     # Generate an n-dimensional array incrementing along `axis`
-    ramp_arr = _arange_ndarray(arr, padshape, axis,
-                               reverse=True).astype(np.float64)
+    broadcast = ((np.newaxis, ) *axis + (slice(None), ) +
+                 (np.newaxis, ) *(arr.ndim - axis - 1))
+    ramp_arr = np.arange(0, pad_amt)[broadcast]
+    # Extract edge
+    edge_slice = _start_edge_slice(arr.shape, axis, pad_amt, pad_width)
 
-    # Appropriate slicing to extract n-dimensional edge along `axis`
-    edge_slice = _slice_first(arr.shape, 1, axis=axis)
+    # Linear ramp, and extend along `axis`
+    edge_pad = arr[edge_slice] * ((ramp_arr) / (pad_amt))
 
-    # Extract edge, and extend along `axis`
-    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
-
-    # Linear ramp
-    slope = (end - edge_pad) / float(pad_amt)
-    ramp_arr = ramp_arr * slope
-    ramp_arr += edge_pad
-    _round_ifneeded(ramp_arr, arr.dtype)
-
-    # Ramp values will most likely be float, cast them to the same type as arr
-    return _do_prepend(arr, ramp_arr, axis)
+    if pad_amt > 1:
+        inverse_ramp = np.linspace(end, 0, num=pad_amt,
+                                   endpoint=False)[broadcast]
+        edge_pad += inverse_ramp
+    _round_ifneeded(edge_pad, arr.dtype)
+    return edge_pad
 
 
-def _append_ramp(arr, pad_amt, end, axis=-1):
+def _trailing_ramp(arr, pad_amt, end, axis, pad_width):
     """
-    Append linear ramp along `axis`.
+    Mutate `arr` by appending linear ramp along `axis`.
 
     Parameters
     ----------
@@ -223,41 +167,26 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
         if not `arr.dtype` will be cast to `arr.dtype`.
     axis : int
         Axis along which to pad `arr`.
-
-    Returns
-    -------
-    padarr : ndarray
-        Output array, with `pad_amt` values appended along `axis`. The
-        appended region ramps linearly from the edge value to `end`.
+    pad_width :  tuple of tuples
+        normalized pad_width containing all the information about
+        the pad widths
 
     """
-    if pad_amt == 0:
-        return arr
-
-    # Generate shape for final concatenated array
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-
     # Generate an n-dimensional array incrementing along `axis`
-    ramp_arr = _arange_ndarray(arr, padshape, axis,
-                               reverse=False).astype(np.float64)
+    broadcast = ((np.newaxis, ) *axis + (slice(None), ) +
+                 (np.newaxis, ) *(arr.ndim - axis - 1))
+    ramp_arr = np.arange((pad_amt-1), -1, -1)[broadcast]
+    # Extract edge
+    edge_slice = _end_edge_slice(arr.shape, axis, pad_amt, pad_width)
 
-    # Slice a chunk from the edge to calculate stats on
-    edge_slice = _slice_last(arr.shape, 1, axis=axis)
-
-    # Extract edge, and extend along `axis`
-    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
-
-    # Linear ramp
-    slope = (end - edge_pad) / float(pad_amt)
-    ramp_arr = ramp_arr * slope
-    ramp_arr += edge_pad
-    _round_ifneeded(ramp_arr, arr.dtype)
-
-    # Ramp values will most likely be float, cast them to the same type as arr
-    return _do_append(arr, ramp_arr, axis)
-
-
+    # Linear ramp, and extend along `axis`
+    edge_pad = arr[edge_slice] * ((ramp_arr) / (pad_amt))
+    if pad_amt > 1:
+        inverse_ramp = np.linspace(0, end, num=pad_amt+1,
+                                   endpoint=True)[1:][broadcast]
+        edge_pad += inverse_ramp
+    _round_ifneeded(edge_pad, arr.dtype)
+    return edge_pad
 
 
 def _pad_ref(arr, pad_amt, method, axis=-1):
@@ -869,12 +798,13 @@ def pad(array, pad_width, mode, **kwargs):
         return newmat
 
     # these modes have been rewritten to only use a single copy
-    if mode in ['constant', 'edge', 'maximum', 'minimum', 'mean', 'median']:
+    if mode in ['constant', 'edge', 'maximum', 'minimum', 'mean', 'median',
+                'linear_ramp']:
         shape = np.asarray(narray.shape)
         pad_width = np.asarray(pad_width)
         new_shape = shape + np.sum(pad_width, axis=1)
 
-        newmat = np.empty(shape=new_shape, dtype=narray.dtype)
+        newmat = np.zeros(shape=new_shape, dtype=narray.dtype)
         old_left = [left for left, _ in pad_width]
         old_right = [left + dim for (left, _), dim in zip(pad_width, narray.shape)]
         old_area = tuple(slice(left, right)
@@ -917,8 +847,15 @@ def pad(array, pad_width, mode, **kwargs):
     elif mode == 'linear_ramp':
         for axis, ((pad_before, pad_after), (before_val, after_val)) \
                 in enumerate(zip(pad_width, kwargs['end_values'])):
-            newmat = _prepend_ramp(newmat, pad_before, before_val, axis)
-            newmat = _append_ramp(newmat, pad_after, after_val, axis)
+            if pad_before:
+                chunk = _leading_ramp(newmat, pad_before, before_val,
+                                      axis, pad_width)
+                _mutate_starting_edge(newmat, axis, pad_before, pad_width, chunk)
+            if pad_after:
+                chunk = _trailing_ramp(newmat, pad_after, after_val,
+                                     axis, pad_width)
+                _mutate_ending_edge(newmat, axis, pad_after,
+                                    pad_width, chunk)
 
     elif mode in ['maximum', 'minimum', 'median', 'mean']:
         for axis, ((pad_before, pad_after), (chunk_before, chunk_after)) \
