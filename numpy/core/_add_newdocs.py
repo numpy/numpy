@@ -8019,9 +8019,9 @@ def add_newdoc_for_numeric_type(obj, fixed_aliases, possible_aliases, doc):
         return
 
     character_code = dtype(o).char
-    canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``{}``.\n    ".format(obj)
+    canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``np.{}``.\n    ".format(obj)
     alias_doc = ''.join("Alias: ``{}``.\n    ".format(alias) for alias in fixed_aliases)
-    alias_doc += ''.join("Alias *on this platform*: ``{}``: {}.\n    ".format(alias, doc)
+    alias_doc += ''.join("Alias *on this platform*: ``np.{}``: {}.\n    ".format(alias, doc)
                          for (alias_type, alias, doc) in possible_aliases if alias_type is o)
 
     docstring = """
