@@ -8112,19 +8112,19 @@ add_newdoc_for_scalar_type('longdouble', ['longfloat'], float_aliases,
     ``long double`` but not necessarily with IEEE 754 quadruple-precision.
     """)
 
-add_newdoc_for_scalar_type('csingle', ['singlecomplex'], float_aliases,
+add_newdoc_for_scalar_type('csingle', ['singlecomplex'], complex_aliases,
     """
     Complex number type composed of two single-precision floating-point
     numbers.
     """)
 
-add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'], float_aliases,
+add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'], complex_aliases,
     """
     Complex number type composed of two double-precision floating-point
     numbers, compatible with Python `complex`.
     """)
 
-add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'], float_aliases,
+add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'], complex_aliases,
     """
     Complex number type composed of two extended-precision floating-point
     numbers.
