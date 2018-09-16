@@ -631,11 +631,7 @@ def _as_pairs(x, ndim, as_index=False, assert_number=False):
 
     if as_index and x.min() < 0:
         raise ValueError("index can't contain negative values")
-    try:
-        return np.broadcast_to(x, (ndim, 2)).tolist()
-    except ValueError:
-        raise ValueError("unable to broadcast '{}' to shape {}"
-                         .format(x, (ndim, 2)))
+    return np.broadcast_to(x, (ndim, 2)).tolist()
 
 
 def pad(array, pad_width, mode, **kwargs):
