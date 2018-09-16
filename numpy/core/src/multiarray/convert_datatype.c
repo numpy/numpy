@@ -256,7 +256,8 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                              */
                             PyArray_Descr *dtype = NULL;
                             PyArrayObject *arr = NULL;
-                            int result, ndim = 0;
+                            int result;
+                            int ndim = 0;
                             npy_intp dims[NPY_MAXDIMS];
                             list = PyArray_ToList((PyArrayObject *)data_obj);
                             result = PyArray_GetArrayParamsFromObject(
