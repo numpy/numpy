@@ -3,6 +3,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,)
 from numpy.lib import pad
@@ -49,6 +51,22 @@ class TestConditionalShortcuts(object):
         for mode in modes:
             assert_array_equal(pad(test, pad_amt, mode=mode),
                                pad(test, pad_amt, mode=mode, stat_length=30))
+
+    def test_full_mean_range_calculation1(self):
+        test = np.array([-1, 2, -1]) + np.array([0, 1e-12, 0], dtype=np.float64)
+        padded_test = pad(test, 1, mode='mean', stat_length=[(3, 3)])
+        assert padded_test[0] == padded_test[-1]
+
+    @pytest.mark.xfail(reason='This is a bug that has been reported in '
+                              'https://github.com/numpy/numpy/issues/11216')
+    def test_full_mean_range_calculation2(self):
+        test = np.array([-1, 2, -1]) + np.array([0, 1e-12, 0], dtype=np.float64)
+        # Without specifying the stat_length, the leading and lagging pad
+        # could different on the order of epsilon. This is because the mean
+        # could be calculated with the newly added term, (a number very close to 0)
+        # This was a bug in numpy version<=1.15.1
+        padded_test = pad(test, 1, mode='mean', stat_length=None)
+        assert padded_test[0] == padded_test[-1]
 
 
 class TestStatistic(object):
