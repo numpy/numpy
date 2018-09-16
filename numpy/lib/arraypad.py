@@ -110,6 +110,36 @@ def _slice_at_axis(shape, axis, sl):
     return slice_tup * axis + (sl,) + slice_tup * (len(shape) - axis - 1)
 
 
+def _view_roi(array, old_region_slice, axis):
+    """Get a view of the current region of interest during iterative padding.
+
+    When padding multiple dimensions iteratively corner values are
+    unnecessarily overwritten multiple times. This function reduces the
+    working area for the first dimensions so that corners are excluded.
+
+    Parameters
+    ----------
+    array : ndarray
+        The array with the region of interest.
+    old_region_slice : tuple of slices
+        Denotes the area with original values of the unpadded array.
+    axis : int
+        The currently padded dimension assuming that `axis` is padded before
+        `axis` + 1.
+
+    Returns
+    -------
+    roi : ndarray
+        The region of interest of the original `array`.
+    """
+    if axis == array.ndim:
+        return array
+    else:
+        axis += 1
+        sl = (slice(None),) * axis + old_region_slice[axis:]
+        return array[sl]
+
+
 def _pad_simple(array, pad_width, fill_value=None):
     """Pad array on all sides with either a single value or undefined values.
 
@@ -549,6 +579,12 @@ def _as_pairs(x, ndim, as_index=False, assert_number=False):
         return ((None, None),) * ndim
 
     x = np.asarray(x)
+
+    if x.ndim > 2:
+        # Fail explicitly when `x` already has more dimensions than
+        # desired shape (ndim, 2) accounts for
+        raise ValueError("keyword argument must not have more than 2 "
+                         "dimensions, got {}".format(x.ndim))
     if assert_number and not np.issubdtype(x.dtype, np.number):
         raise TypeError("keyword argument must be subdtype of np.number")
 
@@ -565,10 +601,11 @@ def _as_pairs(x, ndim, as_index=False, assert_number=False):
             raise ValueError("index can't contain negative values")
         return ((x[0], x[0]),) * ndim
 
-    if x.size == 2 and ndim == 2 and x.shape != (2, 1):
+    if x.size == 2 and x.shape != (2, 1):
         # Pair value case, but except special case when each dimension has a
-        # single value which should be broadcasted to a pair
-        x = x.ravel()  # Reduce superfluous dimensions
+        # single value which should be broadcasted to a pair, e.g.
+        # [[1], [2]] -> [[1, 1], [2, 2]]
+        x = x.ravel()
         if as_index and x[0] < 0 and x[1] < 0:
             raise ValueError("index can't contain negative values")
         return ((x[0], x[1]),) * ndim
@@ -829,7 +866,7 @@ def pad(array, pad_width, mode, **kwargs):
 
     # Create array with final shape and original values
     # (padded area is undefined)
-    padded, _ = _pad_simple(array, pad_width)
+    padded, old_region_sl = _pad_simple(array, pad_width)
     # And prepare iteration over all dimensions
     # (zipping may be more readable than using enumerate)
     axes = range(padded.ndim)
@@ -852,29 +889,33 @@ def pad(array, pad_width, mode, **kwargs):
 
     if mode == "constant":
         values = kwargs.get("constant_values", 0)
-        values = _as_pairs(values, padded.ndim, assert_number=True)
+        values = _as_pairs(values, padded.ndim)
         for axis, index_pair, value_pair in zip(axes, pad_width, values):
-            _set_pad_area(padded, axis, index_pair, value_pair)
+            roi = _view_roi(padded, old_region_sl, axis)
+            _set_pad_area(roi, axis, index_pair, value_pair)
 
     elif mode == "edge":
         for axis, index_pair in zip(axes, pad_width):
-            edge_pair = _get_edges(padded, axis, index_pair)
-            _set_pad_area(padded, axis, index_pair, edge_pair)
+            roi = _view_roi(padded, old_region_sl, axis)
+            edge_pair = _get_edges(roi, axis, index_pair)
+            _set_pad_area(roi, axis, index_pair, edge_pair)
 
     elif mode == "linear_ramp":
         end_values = kwargs.get("end_values", 0)
         end_values = _as_pairs(end_values, padded.ndim, assert_number=True)
         for axis, index_pair, value_pair in zip(axes, pad_width, end_values):
-            ramp_pair = _get_linear_ramps(padded, axis, index_pair, value_pair)
-            _set_pad_area(padded, axis, index_pair, ramp_pair)
+            roi = _view_roi(padded, old_region_sl, axis)
+            ramp_pair = _get_linear_ramps(roi, axis, index_pair, value_pair)
+            _set_pad_area(roi, axis, index_pair, ramp_pair)
 
     elif mode in stat_functions:
         func = stat_functions[mode]
         length = kwargs.get("stat_length", None)
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, index_pair, length_pair in zip(axes, pad_width, length):
-            stat_pair = _get_stats(padded, axis, index_pair, length_pair, func)
-            _set_pad_area(padded, axis, index_pair, stat_pair)
+            roi = _view_roi(padded, old_region_sl, axis)
+            stat_pair = _get_stats(roi, axis, index_pair, length_pair, func)
+            _set_pad_area(roi, axis, index_pair, stat_pair)
 
     elif mode in {"reflect", "symmetric"}:
         method = kwargs.get("reflect_type", "even")
@@ -887,23 +928,25 @@ def pad(array, pad_width, mode, **kwargs):
                 _set_pad_area(padded, axis, (left_index, right_index), edge_pair)
                 continue
 
+            roi = _view_roi(padded, old_region_sl, axis)
             while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with reflected
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_reflect_both(
-                    padded, axis, (left_index, right_index),
+                    roi, axis, (left_index, right_index),
                     method, include_edge
                 )
 
     elif mode == "wrap":
         for axis, (left_index, right_index) in zip(axes, pad_width):
+            roi = _view_roi(padded, old_region_sl, axis)
             while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with wrapped
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_wrap_both(
-                    padded, axis, (left_index, right_index))
+                    roi, axis, (left_index, right_index))
 
     elif mode == "empty":
         pass  # Do nothing as padded is already prepared
