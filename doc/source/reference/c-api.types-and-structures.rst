@@ -713,13 +713,12 @@ PyUFunc_Type
           char *core_signature;
           PyUFunc_TypeResolutionFunc *type_resolver;
           PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
-          void *reserved2;
+          ufunc_extension *extension;
           PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
           /* new in version 1 */
-          npy_intp *core_dim_sizes;
-          npy_uint32 *core_dim_flags;
+          ufunc_extension s_extension;
 
       } PyUFuncObject;
 
@@ -880,12 +879,12 @@ PyUFunc_Type
 
    Added in version 1
 
-   .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
+   .. c:member:: npy_intp *PyUFuncObject.extension->core_dim_sizes
 
        For each distinct core dimension, the possible
        "frozen" size (``-1`` if not frozen)
 
-   .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
+   .. c:member:: npy_uint32 *PyUFuncObject.extension->core_dim_flags
 
        For each distinct core dimension, a set of flags ``OR`` ed together:
 
