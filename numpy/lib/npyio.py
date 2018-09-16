@@ -773,7 +773,7 @@ _loadtxt_chunksize = 50000
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes'):
+            ndmin=0, encoding='bytes', max_rows=None):
     """
     Load data from a text file.
 
@@ -835,6 +835,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+    max_rows : int, optional
+        Read `max_rows` lines of content after `skiprows` lines. The default
+        (`None`) is to read all the lines.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------
@@ -1014,7 +1019,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         """
         X = []
-        for i, line in enumerate(itertools.chain([first_line], fh)):
+        line_iter = itertools.chain([first_line], fh)
+        line_iter = itertools.islice(line_iter, max_rows)
+        for i, line in enumerate(line_iter):
             vals = split_line(line)
             if len(vals) == 0:
                 continue
