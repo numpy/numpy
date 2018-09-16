@@ -7975,8 +7975,11 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 def numeric_type_aliases(aliases):
     def type_aliases_gen():
         for alias, doc in aliases:
-            alias_type = getattr(_numerictypes, alias, None)
-            if alias_type is not None:
+            try:
+                alias_type = getattr(_numerictypes, alias)
+            except AttributeError:
+                pass
+            else:
                 yield (alias_type, alias, doc)
     return list(type_aliases_gen())
 
