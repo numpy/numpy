@@ -76,6 +76,11 @@ C API changes
 New Features
 ============
 
+``max_rows`` keyword added for ``np.loadtxt``
+---------------------------------------------
+New keyword ``max_rows`` in `numpy.loadtxt` sets the maximum rows of the
+content to be read after ``skiprows``, as in `numpy.genfromtxt`.
+
 
 Improvements
 ============
