@@ -82,7 +82,7 @@ def _round_if_needed(arr, dtype):
         arr.round(out=arr)
 
 
-def _slice_at_axis(shape, axis, sl):
+def _slice_at_axis(shape, sl, axis):
     """
     Construct tuple of slices to slice an array in the given dimension.
 
@@ -90,11 +90,11 @@ def _slice_at_axis(shape, axis, sl):
     ----------
     shape : tuple
         Shape of the array to slice as returned by its `shape` attribute.
+    sl : slice
+        The slice for the given dimension.
     axis : int
         The axis to which `sl` is applied. All other dimensions are left
         "unsliced".
-    sl : slice
-        The slice for the given dimension.
 
     Returns
     -------
@@ -103,7 +103,7 @@ def _slice_at_axis(shape, axis, sl):
 
     Examples
     --------
-    >>> _slice_at_axis((3, 4, 5), 1, slice(None, 3, -1))
+    >>> _slice_at_axis((3, 4, 5), slice(None, 3, -1), 1)
     (slice(None, None, None), slice(None, 3, -1), slice(None, None, None))
     """
     slice_tup = (slice(None),)
@@ -200,13 +200,13 @@ def _set_pad_area(padded, axis, index_pair, value_pair):
     if index_pair[0] > 0:
         # Set pad values on the left
         left_slice = _slice_at_axis(
-            padded.shape, axis, slice(None, index_pair[0]))
+            padded.shape, slice(None, index_pair[0]), axis)
         padded[left_slice] = value_pair[0]
 
     if index_pair[1] > 0:
         # Set pad values on the right
         right_slice = _slice_at_axis(
-            padded.shape, axis, slice(-index_pair[1], None))
+            padded.shape, slice(-index_pair[1], None), axis)
         padded[right_slice] = value_pair[1]
 
 
@@ -231,14 +231,14 @@ def _get_edges(padded, axis, index_pair):
     """
     if index_pair[0] > 0:
         left_slice = _slice_at_axis(
-            padded.shape, axis, slice(index_pair[0], index_pair[0] + 1))
+            padded.shape, slice(index_pair[0], index_pair[0] + 1), axis)
         left_edge = padded[left_slice]
     else:
         left_edge = np.array([], dtype=padded.dtype)
 
     if index_pair[1] > 0:
         right_slice = _slice_at_axis(
-            padded.shape, axis, slice(-index_pair[1] - 1, -index_pair[1]))
+            padded.shape, slice(-index_pair[1] - 1, -index_pair[1]), axis)
         right_edge = padded[right_slice]
     else:
         right_edge = np.array([], dtype=padded.dtype)
@@ -325,8 +325,9 @@ def _get_stats(padded, axis, index_pair, length_pair, stat_func):
         else:
             left_length = max_length
         left_slice = _slice_at_axis(
-            padded.shape, axis,
-            slice(index_pair[0], index_pair[0] + left_length)
+            padded.shape,
+            slice(index_pair[0], index_pair[0] + left_length),
+            axis,
         )
         left_chunk = padded[left_slice]
         left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
@@ -340,8 +341,9 @@ def _get_stats(padded, axis, index_pair, length_pair, stat_func):
         else:
             right_length = max_length
         right_slice = _slice_at_axis(
-            padded.shape, axis,
-            slice(-index_pair[1] - right_length, -index_pair[1])
+            padded.shape,
+            slice(-index_pair[1] - right_length, -index_pair[1]),
+            axis,
         )
         right_chunk = padded[right_slice]
         right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
@@ -399,14 +401,15 @@ def _set_reflect_both(padded, axis, index_pair, method, include_edge=False):
         # pad area
         left_index = left_pad - offset
         left_slice = _slice_at_axis(
-            padded.shape, axis,
-            slice(left_index + min(period, left_pad), left_index, -1)
+            padded.shape,
+            slice(left_index + min(period, left_pad), left_index, -1),
+            axis,
         )
         left_chunk = padded[left_slice]
 
         if method == "odd":
             edge_slice = _slice_at_axis(
-                padded.shape, axis, slice(left_pad, left_pad + 1)
+                padded.shape, slice(left_pad, left_pad + 1), axis
             )
             left_chunk = 2 * padded[edge_slice] - left_chunk
 
@@ -414,10 +417,13 @@ def _set_reflect_both(padded, axis, index_pair, method, include_edge=False):
             # Chunk is smaller than pad area
             left_pad -= period
             pad_area = _slice_at_axis(
-                padded.shape, axis, slice(left_pad, left_pad + period))
+                padded.shape, slice(left_pad, left_pad + period), axis
+            )
         else:
             # Chunk matches pad area
-            pad_area = _slice_at_axis(padded.shape, axis, slice(None, left_pad))
+            pad_area = _slice_at_axis(
+                padded.shape, slice(None, left_pad), axis
+            )
             left_pad = 0
         padded[pad_area] = left_chunk
 
@@ -428,25 +434,30 @@ def _set_reflect_both(padded, axis, index_pair, method, include_edge=False):
         # pad area
         right_index = -right_pad + offset - 2
         right_slice = _slice_at_axis(
-            padded.shape, axis,
-            slice(right_index, right_index - min(period, right_pad), -1)
+            padded.shape,
+            slice(right_index, right_index - min(period, right_pad), -1),
+            axis,
         )
         right_chunk = padded[right_slice]
 
         if method == "odd":
             edge_slice = _slice_at_axis(
-                padded.shape, axis, slice(-right_pad - 1, -right_pad))
+                padded.shape, slice(-right_pad - 1, -right_pad), axis
+            )
             right_chunk = 2 * padded[edge_slice] - right_chunk
 
         if right_pad > period:
             # Chunk is smaller than pad area
             right_pad -= period
             pad_area = _slice_at_axis(
-                padded.shape, axis, slice(-right_pad - period, -right_pad))
+                padded.shape, slice(-right_pad - period, -right_pad), axis
+            )
 
         else:
             # Chunk matches pad area
-            pad_area = _slice_at_axis(padded.shape, axis, slice(-right_pad, None))
+            pad_area = _slice_at_axis(
+                padded.shape, slice(-right_pad, None), axis
+            )
             right_pad = 0
         padded[pad_area] = right_chunk
 
@@ -498,20 +509,24 @@ def _set_wrap_both(padded, axis, index_pair):
         # Use min(period, left_pad) to ensure that chunk is not larger than
         # pad area
         right_slice = _slice_at_axis(
-            padded.shape, axis,
+            padded.shape,
             slice(-right_pad - min(period, left_pad),
-                  -right_pad if right_pad != 0 else None)
+                  -right_pad if right_pad != 0 else None),
+            axis,
         )
         right_chunk = padded[right_slice]
 
         if left_pad > period:
             # Chunk is smaller than pad area
             pad_area = _slice_at_axis(
-                padded.shape, axis, slice(left_pad - period, left_pad))
+                padded.shape, slice(left_pad - period, left_pad), axis
+            )
             new_left_pad = left_pad - period
         else:
             # Chunk matches pad area
-            pad_area = _slice_at_axis(padded.shape, axis, slice(None, left_pad))
+            pad_area = _slice_at_axis(
+                padded.shape, slice(None, left_pad), axis
+            )
         padded[pad_area] = right_chunk
 
     if right_pad > 0:
@@ -520,19 +535,23 @@ def _set_wrap_both(padded, axis, index_pair):
         # Use min(period, right_pad) to ensure that chunk is not larger than
         # pad area
         left_slice = _slice_at_axis(
-            padded.shape, axis,
-            slice(left_pad, left_pad + min(period, right_pad))
+            padded.shape,
+            slice(left_pad, left_pad + min(period, right_pad),),
+            axis,
         )
         left_chunk = padded[left_slice]
 
         if right_pad > period:
             # Chunk is smaller than pad area
             pad_area = _slice_at_axis(
-                padded.shape, axis, slice(-right_pad, -right_pad + period))
+                padded.shape, slice(-right_pad, -right_pad + period), axis
+            )
             new_right_pad = right_pad - period
         else:
             # Chunk matches pad area
-            pad_area = _slice_at_axis(padded.shape, axis, slice(-right_pad, None))
+            pad_area = _slice_at_axis(
+                padded.shape, slice(-right_pad, None), axis
+            )
         padded[pad_area] = left_chunk
 
     return new_left_pad, new_right_pad
