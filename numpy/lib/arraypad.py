@@ -917,7 +917,7 @@ def pad(array, pad_width, mode, **kwargs):
 
     elif mode == "linear_ramp":
         end_values = kwargs.get("end_values", 0)
-        end_values = _as_pairs(end_values, padded.ndim, assert_number=True)
+        end_values = _as_pairs(end_values, padded.ndim)
         for axis, index_pair, value_pair in zip(axes, pad_width, end_values):
             roi = _view_roi(padded, old_region_sl, axis)
             ramp_pair = _get_linear_ramps(roi, axis, index_pair, value_pair)
