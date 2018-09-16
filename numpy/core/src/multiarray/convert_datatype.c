@@ -149,11 +149,6 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
 {
     PyArray_DatetimeMetaData *meta;
     int flex_type_num;
-    PyArrayObject *arr = NULL;
-    PyArray_Descr *dtype = NULL;
-    int ndim = 0;
-    npy_intp dims[NPY_MAXDIMS];
-    int result;
 
     if (*flex_dtype == NULL) {
         if (!PyErr_Occurred()) {
@@ -168,7 +163,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
 
     /* Flexible types with expandable size */
     if (PyDataType_ISUNSIZED(*flex_dtype)) {
-        /* First replace the flex dtype */
+        /* First replace the flex_dtype */
         PyArray_DESCR_REPLACE(*flex_dtype);
         if (*flex_dtype == NULL) {
             return;
@@ -259,6 +254,11 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                              * GetArrayParamsFromObject won't iterate over
                              * array.
                              */
+                            PyArray_Descr *dtype = NULL;
+                            PyArrayObject *arr = NULL;
+                            int result;
+                            int ndim = 0;
+                            npy_intp dims[NPY_MAXDIMS];
                             list = PyArray_ToList((PyArrayObject *)data_obj);
                             result = PyArray_GetArrayParamsFromObject(
                                     list,
@@ -273,6 +273,8 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                     size = dtype->elsize;
                                 }
                             }
+                            Py_XDECREF(dtype);
+                            Py_XDECREF(arr);
                             Py_DECREF(list);
                         }
                         else if (PyArray_IsPythonScalar(data_obj)) {
