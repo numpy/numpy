@@ -7974,7 +7974,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 
 def numeric_type_aliases(aliases):
     def type_aliases_gen():
-        for (alias, doc) in aliases:
+        for alias, doc in aliases:
             alias_type = getattr(_numerictypes, alias, None)
             if alias_type is not None:
                 yield (alias_type, alias, doc)
@@ -8013,10 +8013,8 @@ complex_aliases = numeric_type_aliases([
     ])
 
 
-def add_newdoc_for_numeric_type(obj, fixed_aliases, possible_aliases, doc):
-    o = getattr(_numerictypes, obj, None)
-    if o is None:
-        return
+def add_newdoc_for_scalar_type(obj, fixed_aliases, possible_aliases, doc):
+    o = getattr(_numerictypes, obj)
 
     character_code = dtype(o).char
     canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``np.{}``.\n    ".format(obj)
@@ -8034,102 +8032,102 @@ def add_newdoc_for_numeric_type(obj, fixed_aliases, possible_aliases, doc):
     add_newdoc('numpy.core.numerictypes', obj, docstring)
 
 
-add_newdoc_for_numeric_type('bool_', ['bool8'], [],
+add_newdoc_for_scalar_type('bool_', ['bool8'], [],
     """
     Boolean type (True or False), stored as a byte.
     """)
 
-add_newdoc_for_numeric_type('byte', [], integer_aliases,
+add_newdoc_for_scalar_type('byte', [], integer_aliases,
     """
     Signed integer type, compatible with C ``char``.
     """)
 
-add_newdoc_for_numeric_type('short', [], integer_aliases,
+add_newdoc_for_scalar_type('short', [], integer_aliases,
     """
     Signed integer type, compatible with C ``short``.
     """)
 
-add_newdoc_for_numeric_type('intc', [], integer_aliases,
+add_newdoc_for_scalar_type('intc', [], integer_aliases,
     """
     Signed integer type, compatible with C ``int``.
     """)
 
-add_newdoc_for_numeric_type('int_', [], integer_aliases,
+add_newdoc_for_scalar_type('int_', [], integer_aliases,
     """
     Signed integer type, compatible with Python `int` anc C ``long``.
     """)
 
-add_newdoc_for_numeric_type('longlong', [], integer_aliases,
+add_newdoc_for_scalar_type('longlong', [], integer_aliases,
     """
     Signed integer type, compatible with C ``long long``.
     """)
 
-add_newdoc_for_numeric_type('ubyte', [], unsigned_integer_aliases,
+add_newdoc_for_scalar_type('ubyte', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned char``.
     """)
 
-add_newdoc_for_numeric_type('ushort', [], unsigned_integer_aliases,
+add_newdoc_for_scalar_type('ushort', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned short``.
     """)
 
-add_newdoc_for_numeric_type('uintc', [], unsigned_integer_aliases,
+add_newdoc_for_scalar_type('uintc', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned int``.
     """)
 
-add_newdoc_for_numeric_type('uint', [], unsigned_integer_aliases,
+add_newdoc_for_scalar_type('uint', [], unsigned_integer_aliases,
     """
     Unsigned integer type, compatible with C ``unsigned long``.
     """)
 
-add_newdoc_for_numeric_type('ulonglong', [], unsigned_integer_aliases,
+add_newdoc_for_scalar_type('ulonglong', [], unsigned_integer_aliases,
     """
     Signed integer type, compatible with C ``unsigned long long``.
     """)
 
-add_newdoc_for_numeric_type('half', [], float_aliases,
+add_newdoc_for_scalar_type('half', [], float_aliases,
     """
     Half-precision floating-point number type.
     """)
 
-add_newdoc_for_numeric_type('single', [], float_aliases,
+add_newdoc_for_scalar_type('single', [], float_aliases,
     """
     Single-precision floating-point number type, compatible with C ``float``.
     """)
 
-add_newdoc_for_numeric_type('double', ['float_'], float_aliases,
+add_newdoc_for_scalar_type('double', ['float_'], float_aliases,
     """
     Double-precision floating-point number type, compatible with Python `float`
     and C ``double``.
     """)
 
-add_newdoc_for_numeric_type('longdouble', ['longfloat'], float_aliases,
+add_newdoc_for_scalar_type('longdouble', ['longfloat'], float_aliases,
     """
     Extended-precision floating-point number type, compatible with C
     ``long double`` but not necessarily with IEEE 754 quadruple-precision.
     """)
 
-add_newdoc_for_numeric_type('csingle', ['singlecomplex'], float_aliases,
+add_newdoc_for_scalar_type('csingle', ['singlecomplex'], float_aliases,
     """
     Complex number type composed of two single-precision floating-point
     numbers.
     """)
 
-add_newdoc_for_numeric_type('cdouble', ['cfloat', 'complex_'], float_aliases,
+add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'], float_aliases,
     """
     Complex number type composed of two double-precision floating-point
     numbers, compatible with Python `complex`.
     """)
 
-add_newdoc_for_numeric_type('clongdouble', ['clongfloat', 'longcomplex'], float_aliases,
+add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'], float_aliases,
     """
     Complex number type composed of two extended-precision floating-point
     numbers.
     """)
 
-add_newdoc_for_numeric_type('object_', [], [],
+add_newdoc_for_scalar_type('object_', [], [],
     """
     Any Python object.
     """)
