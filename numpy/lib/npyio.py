@@ -13,6 +13,7 @@ import numpy as np
 from . import format
 from ._datasource import DataSource
 from numpy.core.multiarray import packbits, unpackbits
+from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -944,7 +945,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         fencoding = locale.getpreferredencoding()
 
     # not to be confused with the flatten_dtype we import...
-    def flatten_dtype_internal(dt):
+    @recursive
+    def flatten_dtype_internal(self, dt):
         """Unpack a structured data-type, and produce re-packing info."""
         if dt.names is None:
             # If the dtype is flattened, return.
@@ -964,7 +966,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             packing = []
             for field in dt.names:
                 tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = flatten_dtype_internal(tp)
+                flat_dt, flat_packing = self(tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
                 if tp.ndim > 0:
@@ -973,7 +975,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     packing.append((len(flat_dt), flat_packing))
             return (types, packing)
 
-    def pack_items(items, packing):
+    @recursive
+    def pack_items(self, items, packing):
         """Pack items into nested lists based on re-packing info."""
         if packing is None:
             return items[0]
@@ -985,7 +988,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             start = 0
             ret = []
             for length, subpacking in packing:
-                ret.append(pack_items(items[start:start+length], subpacking))
+                ret.append(self(items[start:start+length], subpacking))
                 start += length
             return tuple(ret)
 
@@ -1111,11 +1114,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     finally:
         if fown:
             fh.close()
-        # recursive closures have a cyclic reference to themselves, which
-        # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
-        flatten_dtype_internal = None
-        pack_items = None
 
     if X is None:
         X = np.array([], dtype)
