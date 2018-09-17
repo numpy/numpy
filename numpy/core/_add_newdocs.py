@@ -7978,6 +7978,7 @@ def numeric_type_aliases(aliases):
             try:
                 alias_type = getattr(_numerictypes, alias)
             except AttributeError:
+                # The set of aliases that actually exist varies between platforms
                 pass
             else:
                 yield (alias_type, alias, doc)
