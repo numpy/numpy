@@ -559,6 +559,25 @@ class TestLinearRamp(object):
              [0.,   0.,   0.,   0.,   0.,   0.,   0.,    0.,   0.]])
         assert_allclose(test, expected)
 
+    @pytest.mark.xfail(exceptions=(AssertionError,))
+    def test_object_array(self):
+        from fractions import Fraction
+        arr = np.array([Fraction(1, 2), Fraction(-1, 2)])
+        actual = np.pad(arr, (2, 3), mode='linear_ramp', end_values=0)
+
+        # deliberately chosen to have a non-power-of-2 denominator such that
+        # rounding to floats causes a failure.
+        expected = np.array([
+            Fraction( 0, 12),
+            Fraction( 3, 12),
+            Fraction( 6, 12),
+            Fraction(-6, 12),
+            Fraction(-4, 12),
+            Fraction(-2, 12),
+            Fraction(-0, 12),
+        ])
+        assert_equal(actual, expected)
+
 
 class TestReflect(object):
     def test_check_simple(self):
