@@ -182,8 +182,18 @@ PyArrayDescr_Type
 
 .. c:type:: PyArray_Descr
 
-   The format of the :c:type:`PyArray_Descr` structure that lies at the
-   heart of the :c:data:`PyArrayDescr_Type` is
+   The :c:type:`PyArray_Descr` structure lies at the heart of the
+   :c:data:`PyArrayDescr_Type`. While it is described here for
+   completeness, it should be considered internal to NumPy and manipulated via
+   ``PyArrayDescr_*`` or ``PyDataType*`` functions and macros. The size of this
+   structure is subject to change across versions of NumPy. To ensure
+   compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmatic
+   - Never use ``sizof(PyArray_Descr)``
+
+   It has the following structure:
 
    .. code-block:: c
 
@@ -685,7 +695,14 @@ PyUFunc_Type
    the information needed to call the underlying C-code loops that
    perform the actual work. While it is described here for completeness, it
    should be considered internal to NumPy and manipulated via ``PyUFunc_*``
-   functions. It has the following structure:
+   functions. The size of this structure is subject to change across versions
+   of NumPy. To ensure compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmatic
+   - Never use ``sizof(PyUFuncObject)``
+
+   It has the following structure:
 
    .. code-block:: c
 
