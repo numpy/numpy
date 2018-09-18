@@ -361,6 +361,14 @@ def stack(arrays, axis=0, out=None):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out)
 
 
+def _block_format_index(index):
+    """
+    Convert a list of indices ``[0, 1, 2]`` into ``"arrays[0][1][2]"``.
+    """
+    idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
+    return 'arrays' + idx_str
+
+
 def _block_check_depths_match(arrays, parent_index=[]):
     """
     Recursive function checking that the depths of nested lists in `arrays`
@@ -382,15 +390,12 @@ def _block_check_depths_match(arrays, parent_index=[]):
     Returns
     -------
     first_index : list of int
-        The full index of the first element from the bottom of the  nesting in
-        `arrays`. An empty list at the bottom of the nesting is represented by
-        a `None` index.
+        The full index of an element from the bottom of the nesting in
+        `arrays`. If any element at the bottom is an empty list, this will
+        refer to it, and the last index along the empty axis will be `None`.
     max_arr_ndim : int
         The maximum of the ndims of the arrays nested in `arrays`.
     """
-    def format_index(index):
-        idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
-        return 'arrays' + idx_str
     if type(arrays) is tuple:
         # not strictly necessary, but saves us from:
         #  - more than one way to do things - no point treating tuples like
@@ -401,7 +406,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
             '{} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
             'not allow implicit conversion from tuple to ndarray.'.format(
-                format_index(parent_index)
+                _block_format_index(parent_index)
             )
         )
     elif type(arrays) is list and len(arrays) > 0:
@@ -418,9 +423,12 @@ def _block_check_depths_match(arrays, parent_index=[]):
                     "{}, but there is an element at depth {} ({})".format(
                         len(first_index),
                         len(index),
-                        format_index(index)
+                        _block_format_index(index)
                     )
                 )
+            # propagate our flag that indicates an empty list at the bottom
+            if index[-1] is None:
+                first_index = index
         return first_index, max_arr_ndim
     elif type(arrays) is list and len(arrays) == 0:
         # We've 'bottomed out' on an empty list
@@ -446,8 +454,6 @@ def _block(arrays, max_depth, result_ndim):
     @recursive
     def block_recursion(self, arrays, depth=0):
         if depth < max_depth:
-            if len(arrays) == 0:
-                raise ValueError('Lists cannot be empty')
             arrs = [self(arr, depth+1) for arr in arrays]
             return _nx.concatenate(arrs, axis=-(max_depth-depth))
         else:
@@ -608,4 +614,10 @@ def block(arrays):
     """
     bottom_index, arr_ndim = _block_check_depths_match(arrays)
     list_ndim = len(bottom_index)
+    if bottom_index and bottom_index[-1] is None:
+        raise ValueError(
+            'List at {} cannot be empty'.format(
+                _block_format_index(bottom_index)
+            )
+        )
     return _block(arrays, list_ndim, max(arr_ndim, list_ndim))
