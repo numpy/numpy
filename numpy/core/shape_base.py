@@ -371,15 +371,22 @@ def _block_check_depths_match(arrays, parent_index=[]):
     for each innermost list, in case an error needs to be raised, so that
     the index of the offending list can be printed as part of the error.
 
-    The parameter `parent_index` is the full index of `arrays` within the
-    nested lists passed to _block_check_depths_match at the top of the
-    recursion.
-    The return value is a pair. The first item returned is the full index
-    of an element (specifically the first element) from the bottom of the
-    nesting in `arrays`. An empty list at the bottom of the nesting is
-    represented by a `None` index.
-    The second item is the maximum of the ndims of the arrays nested in
-    `arrays`.
+    Parameters
+    ----------
+    arrays : nested list of arrays
+        The arrays to check
+    parent_index : list of int
+        The full index of `arrays` within the nested lists passed to
+        `_block_check_depths_match` at the top of the recursion.
+
+    Returns
+    -------
+    first_index : list of int
+        The full index of the first element from the bottom of the  nesting in
+        `arrays`. An empty list at the bottom of the nesting is represented by
+        a `None` index.
+    max_arr_ndim : int
+        The maximum of the ndims of the arrays nested in `arrays`.
     """
     def format_index(index):
         idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
