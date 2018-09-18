@@ -2110,6 +2110,29 @@ def chebpts2(npts):
 
     x = np.linspace(-np.pi, 0, _npts)
     return np.cos(x)
+  
+def approxChebyshev(N, f):
+    '''N: number of Chebyshev polynomials; f: function approximated
+    Ans: f(t) = -0.5*c[0] + np.polynomial.chebyshev.chebval(t, c)
+    
+    Example
+    c = np.polynomial.chebyshev.approxChebyshev(4, np.exp); 
+    xRange=np.linspace(-1, 1,32)
+    yy = -0.5*c[0]+np.polynomial.chebyshev.chebval(xRange, c)
+    plt.plot(xRange, np.exp(xRange), 'r-')
+    plt.plot(xRange, yy, 'b--')
+    
+    '''
+    
+    
+    c=np.zeros(N);  fac=2.0/N
+    for j in range(N):
+        dd=0
+        for k in range(N):
+            theta=np.pi*(k+0.5)/(N)
+            dd += f(np.cos(theta))*np.cos(j*theta)
+        c[j]=fac*dd
+    return c
 
 
 #
