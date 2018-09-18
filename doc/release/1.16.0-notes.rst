@@ -127,6 +127,12 @@ details.
 The ``out`` argument to these functions is now always tested for memory overlap
 to avoid corrupted results when memory overlap occurs.
 
+Detailed docstrings for scalar numeric types
+--------------------------------------------
+The ``help`` function, when applied to numeric types such as `np.intc`,
+`np.int_`, and `np.longlong`, now lists all of the aliased names for that type,
+distinguishing between platform -dependent and -independent aliases.
+
 
 Changes
 =======
