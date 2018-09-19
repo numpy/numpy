@@ -4996,6 +4996,12 @@ class TestMaskedWhereAliases(object):
         res = np.ma.masked_values(np.inf, -np.inf)
         assert_equal(res.mask, False)
 
+        res = np.ma.masked_values([1, 2, 3, 4], 5, shrink=True)
+        assert_(res.mask is np.ma.nomask)
+
+        res = np.ma.masked_values([1, 2, 3, 4], 5, shrink=False)
+        assert_equal(res.mask, [False] * 4)
+
 
 def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
