@@ -337,10 +337,10 @@ unicodetype_concat(PyObject *self, PyObject *other)
      * cast back to NPY_UNICODE before returning
      */
 
-    ret = PyArray_NewLikeArray(self,
+    ret = PyArray_NewLikeArray((PyArrayObject *)self,
                                NPY_ANYORDER,
                                PyArray_DescrFromType(NPY_OBJECT),
-                               NULL);
+                               0);
 
     self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
     other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
@@ -348,18 +348,20 @@ unicodetype_concat(PyObject *self, PyObject *other)
 
     while (other_iter->index < other_iter->size) {
         /* retrieve item from self */
-        item = PyArray_GETITEM(self, PyArray_ITER_DATA(self_iter));
+        item = PyArray_GETITEM((PyArrayObject *)self,
+                               PyArray_ITER_DATA(self_iter));
         /* retrieve item from other array in concat op */
-        other_item = PyArray_GETITEM(other, PyArray_ITER_DATA(other_iter));
+        other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                     PyArray_ITER_DATA(other_iter));
 
         /*
          * concat the two Unicode PyObject elements and
          * place them at appropriate index in ret
          */
         combined = PyUnicode_Concat(item, other_item);
-        PyArray_SETITEM(ret,
-                        PyArray_ITER_DATA(ret_iter),
-                        combined);
+        PyArray_SETITEM((PyArrayObject *)ret,
+                         PyArray_ITER_DATA(ret_iter),
+                         combined);
         /* probably need XDECREFs */
         PyArray_ITER_NEXT(self_iter);
         PyArray_ITER_NEXT(other_iter);
@@ -397,7 +399,7 @@ array_add(PyArrayObject *m1, PyObject *m2)
          */
         if (PyArray_DESCR(m1)->type_num == NPY_UNICODE &&
             PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE) {
-            return unicodetype_concat(m1, m2);
+            return unicodetype_concat((PyObject *)m1, m2);
         }
     }
 
