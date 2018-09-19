@@ -1125,7 +1125,7 @@ array_boolean_subscript(PyArrayObject *self,
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 Py_TYPE(self), dtype,
                 1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
+                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)tmp);
 
         if (ret == NULL) {
             Py_DECREF(tmp);
