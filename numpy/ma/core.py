@@ -47,12 +47,8 @@ from numpy import expand_dims
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core._internal import recursive
+from numpy.core.numeric import pickle
 
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',

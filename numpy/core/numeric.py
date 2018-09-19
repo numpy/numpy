@@ -40,7 +40,13 @@ ufunc = type(sin)
 newaxis = None
 
 if sys.version_info[0] >= 3:
-    import pickle
+    if sys.version_info[1] in (6, 7):
+        try:
+            import pickle5 as pickle
+        except ImportError:
+            import pickle
+    else:
+        import pickle
     basestring = str
     import builtins
 else:

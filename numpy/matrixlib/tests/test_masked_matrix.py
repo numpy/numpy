@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import pickle
 import pytest
 
 import numpy as np
@@ -10,6 +9,7 @@ from numpy.ma.core import (masked_array, masked_values, masked, allequal,
                            MaskType, getmask, MaskedArray, nomask,
                            log, add, hypot, divide)
 from numpy.ma.extras import mr_
+from numpy.core.numeric import pickle
 
 
 class MMatrix(MaskedArray, np.matrix,):

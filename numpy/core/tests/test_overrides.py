@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import pickle
 import sys
 
 import numpy as np
@@ -9,6 +8,7 @@ from numpy.testing import (
 from numpy.core.overrides import (
     get_overloaded_types_and_args, array_function_dispatch,
     verify_matching_signatures)
+from numpy.core.numeric import pickle
 
 
 def _get_overloaded_args(relevant_args):
@@ -168,8 +168,10 @@ def dispatched_one_arg(array):
 class TestArrayFunctionDispatch(object):
 
     def test_pickle(self):
-        roundtripped = pickle.loads(pickle.dumps(dispatched_one_arg))
-        assert_(roundtripped is dispatched_one_arg)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            roundtripped = pickle.loads(
+                    pickle.dumps(dispatched_one_arg, protocol=proto))
+            assert_(roundtripped is dispatched_one_arg)
 
     def test_name_and_docstring(self):
         assert_equal(dispatched_one_arg.__name__, 'dispatched_one_arg')

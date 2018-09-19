@@ -23,12 +23,11 @@ from numpy.compat import (
     asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
     is_pathlib_path
     )
+from numpy.core.numeric import pickle
 
 if sys.version_info[0] >= 3:
-    import pickle
     from collections.abc import Mapping
 else:
-    import cPickle as pickle
     from future_builtins import map
     from collections import Mapping
 

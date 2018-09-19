@@ -7,7 +7,6 @@ try:
     import collections.abc as collections_abc
 except ImportError:
     import collections as collections_abc
-import pickle
 import warnings
 import textwrap
 from os import path
@@ -18,6 +17,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, assert_warns
     )
+from numpy.core.numeric import pickle
 
 
 class TestFromrecords(object):

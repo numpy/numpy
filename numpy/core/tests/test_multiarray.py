@@ -20,6 +20,9 @@ import gc
 import weakref
 import pytest
 from contextlib import contextmanager
+
+from numpy.core.numeric import pickle
+
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -1371,7 +1374,6 @@ class TestZeroSizeFlexible(object):
             assert_equal(zs.view((dt, 1)).shape, (0,))
 
     def test_pickle(self):
-        import pickle
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             for dt in [bytes, np.void, unicode]:
                 zs = self._zeros(10, dt)
@@ -3549,8 +3551,18 @@ class TestSubscripting(object):
 
 
 class TestPickling(object):
+    def test_highest_available_pickle_protocol(self):
+        try:
+            import pickle5
+        except ImportError:
+            pickle5 = None
+
+        if sys.version_info[:2] >= (3, 8) or pickle5 is not None:
+            assert pickle.HIGHEST_PROTOCOL >= 5
+        else:
+            assert pickle.HIGHEST_PROTOCOL < 5
+
     def test_roundtrip(self):
-        import pickle
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             carray = np.array([[2, 9], [7, 0], [3, 8]])
             DATA = [
@@ -3566,7 +3578,6 @@ class TestPickling(object):
                         err_msg="%r" % a)
 
     def _loads(self, obj):
-        import pickle
         if sys.version_info[0] >= 3:
             return pickle.loads(obj, encoding='latin1')
         else:

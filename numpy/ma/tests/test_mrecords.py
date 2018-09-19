@@ -8,7 +8,6 @@
 from __future__ import division, absolute_import, print_function
 
 import warnings
-import pickle
 
 import numpy as np
 import numpy.ma as ma
@@ -26,6 +25,7 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
+from numpy.core.numeric import pickle
 
 
 class TestMRecords(object):
@@ -288,12 +288,13 @@ class TestMRecords(object):
         # Test pickling
         base = self.base.copy()
         mrec = base.view(mrecarray)
-        _ = pickle.dumps(mrec)
-        mrec_ = pickle.loads(_)
-        assert_equal(mrec_.dtype, mrec.dtype)
-        assert_equal_records(mrec_._data, mrec._data)
-        assert_equal(mrec_._mask, mrec._mask)
-        assert_equal_records(mrec_._mask, mrec._mask)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            _ = pickle.dumps(mrec, protocol=proto)
+            mrec_ = pickle.loads(_)
+            assert_equal(mrec_.dtype, mrec.dtype)
+            assert_equal_records(mrec_._data, mrec._data)
+            assert_equal(mrec_._mask, mrec._mask)
+            assert_equal_records(mrec_._mask, mrec._mask)
 
     def test_filled(self):
         # Test filling the array

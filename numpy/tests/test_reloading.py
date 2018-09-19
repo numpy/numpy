@@ -1,9 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import pickle
 
 from numpy.testing import assert_raises, assert_, assert_equal
+from numpy.core.numeric import pickle
 
 if sys.version_info[:2] >= (3, 4):
     from importlib import reload
@@ -32,5 +32,7 @@ def test_numpy_reloading():
 
 def test_novalue():
     import numpy as np
-    assert_equal(repr(np._NoValue), '<no value>')
-    assert_(pickle.loads(pickle.dumps(np._NoValue)) is np._NoValue)
+    for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+        assert_equal(repr(np._NoValue), '<no value>')
+        assert_(pickle.loads(pickle.dumps(np._NoValue,
+                                          protocol=proto)) is np._NoValue)
