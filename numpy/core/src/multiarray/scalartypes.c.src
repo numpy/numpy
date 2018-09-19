@@ -117,23 +117,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 static PyObject *
 gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 {
-    PyObject *obj;
-    const size_t size = _PyObject_VAR_SIZE(type, nitems + 1);
-
-    obj = (PyObject *)PyObject_Malloc(size);
-    /*
-     * Fixme. Need to check for no memory.
-     * If we don't need to zero memory, we could use
-     * PyObject_{New, NewVar} for this whole function.
-     */
-    memset(obj, 0, size);
-    if (type->tp_itemsize == 0) {
-        PyObject_Init(obj, type);
-    }
-    else {
-        (void) PyObject_InitVar((PyVarObject *)obj, type, nitems);
-    }
-    return obj;
+    return (PyTypeObject *) PyObject_NewVar(PyTypeObject *, type, nitems);
 }
 
 static void
