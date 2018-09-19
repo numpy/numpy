@@ -387,9 +387,18 @@ array_add(PyArrayObject *m1, PyObject *m2)
      * for specifying these slots instead of intercepting
      * inside the general __add__ function pointer as I've done here
      */
-    if (PyArray_DESCR(m1)->type_num == NPY_UNICODE &&
-        PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE) {
-        return unicodetype_concat(m1, m2);
+    if (PyArray_Check(m1)) {
+        /*
+         * specialized dispatch for nb_add for different array
+         * types is now guarded above against the case where
+         * PyArrayObject m1 is not a PyArrayObject, which seems
+         * like a sensible requirement for __add__ for np.ndarray
+         * type struct, but so far we haven't been checking this
+         */
+        if (PyArray_DESCR(m1)->type_num == NPY_UNICODE &&
+            PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE) {
+            return unicodetype_concat(m1, m2);
+        }
     }
 
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_add, array_add);
