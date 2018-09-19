@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import pickle
 import sys
 import operator
 import pytest
@@ -9,6 +8,7 @@ import ctypes
 import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.core.numeric import pickle
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
