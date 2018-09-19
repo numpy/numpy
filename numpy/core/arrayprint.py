@@ -918,7 +918,24 @@ class FloatingFormat(object):
         if data.size != finite_vals.size:
             neginf = self.sign != '-' or any(data[isinf(data)] < 0)
             nanlen = len(_format_options['nanstr'])
-            inflen = len(_format_options['infstr']) + neginf
+
+            # it is not appropriate to use the NumPy ndarray
+            # nb_add slot array_add() function for a simple
+            # sum of int and bool to determine repr padding;
+            # since neginf is of type np.bool_, coerce to
+            # a standard type for the purpose of simple padding
+            # integer value calculation;
+
+            # this will reduce our burden for handling strange and
+            # unnecessary inputs to array_add() at the C level,
+            # and potentially assist with the issues regarding
+            # repr crashes noted by njs in comments in
+            # PyArray_GenericBinaryFunction() in number.c
+
+            # NOTE: without this fix, my current unicode_
+            # array cat implementation would segfault certain
+            # reprs
+            inflen = len(_format_options['infstr']) + np.bool(neginf)
             offset = self.pad_right + 1  # +1 for decimal pt
             self.pad_left = max(self.pad_left, nanlen - offset, inflen - offset)
 
