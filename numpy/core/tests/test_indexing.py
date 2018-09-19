@@ -581,15 +581,33 @@ class TestBroadcastedAssignments(object):
 
 class TestSubclasses(object):
     def test_basic(self):
+        # Test that indexing in various ways produces SubClass instances,
+        # and that the base is set up correctly: the original subclass
+        # instance for views, and a new ndarray for advanced/boolean indexing
+        # where a copy was made (latter a regression test for gh-11983).
         class SubClass(np.ndarray):
             pass
 
-        s = np.arange(5).view(SubClass)
-        assert_(isinstance(s[:3], SubClass))
-        assert_(s[:3].base is s)
+        a = np.arange(5)
+        s = a.view(SubClass)
+        s_slice = s[:3]
+        assert_(type(s_slice) is SubClass)
+        assert_(s_slice.base is s)
+        assert_array_equal(s_slice, a[:3])
 
-        assert_(isinstance(s[[0, 1, 2]], SubClass))
-        assert_(isinstance(s[s > 0], SubClass))
+        s_fancy = s[[0, 1, 2]]
+        assert_(type(s_fancy) is SubClass)
+        assert_(s_fancy.base is not s)
+        assert_(type(s_fancy.base) is np.ndarray)
+        assert_array_equal(s_fancy, a[[0, 1, 2]])
+        assert_array_equal(s_fancy.base, a[[0, 1, 2]])
+
+        s_bool = s[s > 0]
+        assert_(type(s_bool) is SubClass)
+        assert_(s_bool.base is not s)
+        assert_(type(s_bool.base) is np.ndarray)
+        assert_array_equal(s_bool, a[a > 0])
+        assert_array_equal(s_bool.base, a[a > 0])
 
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.
