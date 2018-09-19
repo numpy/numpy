@@ -65,6 +65,24 @@ class Block(Benchmark):
         np.block(np.eye(3 * n))
 
 
+class Block2D(Benchmark):
+    params = [[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)],
+              ['uint8', 'uint16', 'uint32', 'uint64'],
+              [(2, 2), (4, 4)]]
+    param_names = ['shape', 'dtype', 'n_chunks']
+
+    def setup(self, shape, dtype, n_chunks):
+
+        self.block_list = [
+             [np.full(shape=[s//n_chunk for s, n_chunk in zip(shape, n_chunks)],
+                     fill_value=1, dtype=dtype) for _ in range(n_chunks[1])]
+            for _ in range(n_chunks[0])
+        ]
+
+    def time_block2d(self, shape, dtype, n_chunks):
+        np.block(self.block_list)
+
+
 class Block3D(Benchmark):
     params = [1, 10, 100]
     param_names = ['size']
