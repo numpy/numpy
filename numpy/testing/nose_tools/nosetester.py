@@ -475,7 +475,10 @@ class NoseTester(object):
 
             from .noseclasses import NumpyTestProgram
 
-            t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
+            with suppress_warnings() as sup:
+                # Needed for Python 3.7
+                sup.filter(DeprecationWarning)
+                t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
 
         return t.result
 

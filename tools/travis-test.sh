@@ -33,7 +33,7 @@ setup_base()
   # use default python flags but remoge sign-compare
   sysflags="$($PYTHON -c "from distutils import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
-  export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
+  export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare -Wno-deprecated-declarations"
   # We used to use 'setup.py install' here, but that has the terrible
   # behaviour that if a copy of the package is already installed in the
   # install location, then the new copy just gets dropped on top of it.
