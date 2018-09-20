@@ -57,7 +57,9 @@ def import_nose():
     nose_is_good = True
     minimum_nose_version = (1, 0, 0)
     try:
-        import nose
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning)
+            import nose
     except ImportError:
         nose_is_good = False
     else:

@@ -12,14 +12,18 @@ import doctest
 import inspect
 
 import numpy
-import nose
-from nose.plugins import doctests as npd
-from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
-from nose.plugins.base import Plugin
-from nose.util import src
 from .nosetester import get_package_name
-from .utils import KnownFailureException, KnownFailureTest
+from .utils import KnownFailureException, KnownFailureTest, suppress_warnings
 
+with suppress_warnings() as sup:
+    # Needed for Python 3.7
+    sup.filter(DeprecationWarning)
+    import nose
+    from nose.plugins import doctests as npd
+    from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
+    from nose.plugins.base import Plugin
+    from nose.util import src
+    import nose.core
 
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish
 # them from the plethora of very similar names from nose/unittest/doctest
@@ -345,6 +349,7 @@ class FPUModeCheckPlugin(Plugin):
 
 # Class allows us to save the results of the tests in runTests - see runTests
 # method docstring for details
+
 class NumpyTestProgram(nose.core.TestProgram):
     def runTests(self):
         """Run Tests. Returns true on success, false on failure, and
