@@ -746,9 +746,10 @@ def sctype2char(sctype):
 
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
-
-
 cast = _typedict()
+for key in _sctype2char_dict.keys():
+    cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
+
 try:
     ScalarType = [_types.IntType, _types.FloatType, _types.ComplexType,
                   _types.LongType, _types.BooleanType,
@@ -759,8 +760,6 @@ except AttributeError:
 
 ScalarType.extend(_sctype2char_dict.keys())
 ScalarType = tuple(ScalarType)
-for key in _sctype2char_dict.keys():
-    cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
 # Create the typestring lookup dictionary
 _typestr = _typedict()
@@ -776,7 +775,6 @@ for key, val in _typestr.items():
         sctypeDict[val] = key
 
 # Add additional strings to the sctypeDict
-
 if sys.version_info[0] >= 3:
     _toadd = ['int', 'float', 'complex', 'bool', 'object',
               'str', 'bytes', 'object', ('a', allTypes['bytes_'])]
