@@ -348,7 +348,6 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
@@ -568,12 +567,12 @@ class LoadTxtBase(object):
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
     def test_encoding(self):
@@ -1455,14 +1454,10 @@ M   33  21.99
         assert_equal(test, control)
 
         ndtype = [('nest', [('idx', int), ('code', object)])]
-        try:
+        with assert_raises_regex(NotImplementedError,
+                                 'Nested fields.* not supported.*'):
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
-        except NotImplementedError:
-            pass
-        else:
-            errmsg = "Nested dtype involving objects should be supported."
-            raise AssertionError(errmsg)
 
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
@@ -2025,7 +2020,6 @@ M   33  21.99
             assert_equal(test['f0'], 0)
             assert_equal(test['f1'], "testNonethe" + utf8.decode("UTF-8"))
 
-
     def test_utf8_file_nodtype_unicode(self):
         # bytes encoding with non-latin1 -> unicode upcast
         utf8 = u'\u03d6'
@@ -2418,3 +2412,9 @@ def test_load_refcount():
 
     with assert_no_gc_cycles():
         np.load(f)
+
+    f.seek(0)
+    dt = [("a", 'u1', 2), ("b", 'u1', 2)]
+    with assert_no_gc_cycles():
+        x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
+        assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))

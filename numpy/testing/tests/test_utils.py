@@ -25,12 +25,8 @@ class _GenericTest(object):
         self._assert_func(a, b)
 
     def _test_not_equal(self, a, b):
-        try:
+        with assert_raises(AssertionError):
             self._assert_func(a, b)
-        except AssertionError:
-            pass
-        else:
-            raise AssertionError("a and b are found equal but are not")
 
     def test_array_rank1_eq(self):
         """Test two equal array of rank 1 are found equal."""
@@ -1081,6 +1077,12 @@ class TestStringEqual(object):
 
         assert_raises(AssertionError,
                       lambda: assert_string_equal("foo", "hello"))
+        
+    def test_regex(self):
+        assert_string_equal("a+*b", "a+*b")
+
+        assert_raises(AssertionError,
+                      lambda: assert_string_equal("aaa", "a+b"))
 
 
 def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
@@ -1385,7 +1387,6 @@ class TestAssertNoGcCycles(object):
 
         assert_no_gc_cycles(no_cycle)
 
-
     def test_asserts(self):
         def make_cycle():
             a = []
@@ -1399,7 +1400,6 @@ class TestAssertNoGcCycles(object):
 
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
-
 
     def test_fails(self):
         """

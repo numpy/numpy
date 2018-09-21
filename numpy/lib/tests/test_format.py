@@ -286,7 +286,8 @@ from io import BytesIO
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, raises, SkipTest
+    assert_, assert_array_equal, assert_raises, assert_raises_regex,
+    raises, SkipTest
     )
 from numpy.lib import format
 
@@ -479,7 +480,7 @@ def test_long_str():
 
 @pytest.mark.slow
 def test_memmap_roundtrip():
-    # Fixme: test crashes nose on windows.
+    # Fixme: used to crash on windows
     if not (sys.platform == 'win32' or sys.platform == 'cygwin'):
         for arr in basic_arrays + record_arrays:
             if arr.dtype.hasobject:
@@ -678,12 +679,9 @@ def test_write_version():
         (255, 255),
     ]
     for version in bad_versions:
-        try:
+        with assert_raises_regex(ValueError,
+                                 'we only support format version.*'):
             format.write_array(f, arr, version=version)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
 bad_version_magic = [
@@ -852,3 +850,10 @@ def test_large_archive():
         new_a = np.load(f)["arr"]
 
     assert_(a.shape == new_a.shape)
+
+
+def test_empty_npz():
+    # Test for gh-9989
+    fname = os.path.join(tempdir, "nothing.npz")
+    np.savez(fname)
+    np.load(fname)

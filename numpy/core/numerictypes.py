@@ -92,7 +92,7 @@ from numpy.core.multiarray import (
         datetime_as_string, busday_offset, busday_count, is_busday,
         busdaycalendar
         )
-
+from numpy._globals import VisibleDeprecationWarning
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
@@ -102,6 +102,11 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
 
+# we don't need all these imports, but we need to keep them for compatibility
+# for users using np.core.numerictypes.UPPER_TABLE
+from ._string_helpers import (
+    english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
+)
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
@@ -112,106 +117,21 @@ else:
     from __builtin__ import bool, int, float, complex, object, unicode, str
 
 
-# String-handling utilities to avoid locale-dependence.
-
-# "import string" is costly to import!
-# Construct the translation tables directly
-#   "A" = chr(65), "a" = chr(97)
-_all_chars = [chr(_m) for _m in range(256)]
-_ascii_upper = _all_chars[65:65+26]
-_ascii_lower = _all_chars[97:97+26]
-LOWER_TABLE = "".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])
-UPPER_TABLE = "".join(_all_chars[:97] + _ascii_upper + _all_chars[97+26:])
-
-
-def english_lower(s):
-    """ Apply English case rules to convert ASCII strings to all lower case.
-
-    This is an internal utility function to replace calls to str.lower() such
-    that we can avoid changing behavior with changing locales. In particular,
-    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
-    both lowercase and uppercase. Thus, "I".lower() != "i" in a "tr" locale.
-
-    Parameters
-    ----------
-    s : str
-
-    Returns
-    -------
-    lowered : str
-
-    Examples
-    --------
-    >>> from numpy.core.numerictypes import english_lower
-    >>> english_lower('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
-    'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'
-    >>> english_lower('')
-    ''
-    """
-    lowered = s.translate(LOWER_TABLE)
-    return lowered
-
-def english_upper(s):
-    """ Apply English case rules to convert ASCII strings to all upper case.
-
-    This is an internal utility function to replace calls to str.upper() such
-    that we can avoid changing behavior with changing locales. In particular,
-    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
-    both lowercase and uppercase. Thus, "i".upper() != "I" in a "tr" locale.
-
-    Parameters
-    ----------
-    s : str
-
-    Returns
-    -------
-    uppered : str
-
-    Examples
-    --------
-    >>> from numpy.core.numerictypes import english_upper
-    >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
-    >>> english_upper('')
-    ''
-    """
-    uppered = s.translate(UPPER_TABLE)
-    return uppered
-
-def english_capitalize(s):
-    """ Apply English case rules to convert the first character of an ASCII
-    string to upper case.
-
-    This is an internal utility function to replace calls to str.capitalize()
-    such that we can avoid changing behavior with changing locales.
-
-    Parameters
-    ----------
-    s : str
-
-    Returns
-    -------
-    capitalized : str
-
-    Examples
-    --------
-    >>> from numpy.core.numerictypes import english_capitalize
-    >>> english_capitalize('int8')
-    'Int8'
-    >>> english_capitalize('Int8')
-    'Int8'
-    >>> english_capitalize('')
-    ''
-    """
-    if s:
-        return english_upper(s[0]) + s[1:]
-    else:
-        return s
-
-
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
-sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
-allTypes = {}      # Collect the types we will add to the module here
+class TypeNADict(dict):
+    def __getitem__(self, key):
+        # 2018-06-24, 1.16
+        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
+                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
+        return dict.__getitem__(self, key)
+    def get(self, key, default=None):
+        # 2018-06-24, 1.16
+        warnings.warn('sctypeNA and typeNA will be removed in v1.18 '
+                      'of numpy', VisibleDeprecationWarning, stacklevel=2)
+        return dict.get(self, key, default)
+
+sctypeNA = TypeNADict()  # Contails all leaf-node types -> numarray type equivalences
+allTypes = {}            # Collect the types we will add to the module here
 
 
 # separate the actual type info from the abtract base classes
@@ -226,71 +146,53 @@ for k, v in typeinfo.items():
         _concrete_typeinfo[k] = v
 
 
-def _evalname(name):
-    k = 0
-    for ch in name:
-        if ch in '0123456789':
-            break
-        k += 1
+_kind_to_stem = {
+    'u': 'uint',
+    'i': 'int',
+    'c': 'complex',
+    'f': 'float',
+    'b': 'bool',
+    'V': 'void',
+    'O': 'object',
+    'M': 'datetime',
+    'm': 'timedelta'
+}
+if sys.version_info[0] >= 3:
+    _kind_to_stem.update({
+        'S': 'bytes',
+        'U': 'str'
+    })
+else:
+    _kind_to_stem.update({
+        'S': 'string',
+        'U': 'unicode'
+    })
+
+
+def _bits_of(obj):
     try:
-        bits = int(name[k:])
-    except ValueError:
-        bits = 0
-    base = name[:k]
-    return base, bits
+        info = next(v for v in _concrete_typeinfo.values() if v.type is obj)
+    except StopIteration:
+        if obj in _abstract_types.values():
+            raise ValueError("Cannot count the bits of an abstract type")
+
+        # some third-party type - make a best-guess
+        return dtype(obj).itemsize * 8
+    else:
+        return info.bits
+
 
 def bitname(obj):
     """Return a bit-width name for a given type object"""
-    name = obj.__name__
-    base = ''
-    char = ''
-    try:
-        if name[-1] == '_':
-            newname = name[:-1]
-        else:
-            newname = name
-        info = _concrete_typeinfo[english_lower(newname)]
-        assert(info.type == obj)  # sanity check
-        bits = info.bits
+    bits = _bits_of(obj)
+    char = dtype(obj).kind
+    base = _kind_to_stem[char]
 
-    except KeyError:     # bit-width name
-        base, bits = _evalname(name)
-        char = base[0]
-
-    if name == 'bool_':
-        char = 'b'
-        base = 'bool'
-    elif name == 'void':
-        char = 'V'
-        base = 'void'
-    elif name == 'object_':
-        char = 'O'
-        base = 'object'
+    if base == 'object':
         bits = 0
-    elif name == 'datetime64':
-        char = 'M'
-    elif name == 'timedelta64':
-        char = 'm'
 
-    if sys.version_info[0] >= 3:
-        if name == 'bytes_':
-            char = 'S'
-            base = 'bytes'
-        elif name == 'str_':
-            char = 'U'
-            base = 'str'
-    else:
-        if name == 'string_':
-            char = 'S'
-            base = 'string'
-        elif name == 'unicode_':
-            char = 'U'
-            base = 'unicode'
-
-    bytes = bits // 8
-
-    if char != '' and bytes != 0:
-        char = "%s%d" % (char, bytes)
+    if bits != 0:
+        char = "%s%d" % (char, bits // 8)
 
     return base, bits, char
 
@@ -324,7 +226,6 @@ def _add_aliases():
         # insert bit-width version for this class (if relevant)
         base, bit, char = bitname(info.type)
 
-        assert base != ''
         myname = "%s%d" % (base, bit)
 
         # ensure that (c)longdouble does not overwrite the aliases assigned to
@@ -351,7 +252,6 @@ def _add_aliases():
         sctypeNA[info.type] = na_name
         sctypeNA[info.char] = na_name
 
-        assert char != ''
         sctypeDict[char] = info.type
         sctypeNA[char] = na_name
 _add_aliases()
@@ -531,13 +431,12 @@ def maximum_sctype(t):
     if g is None:
         return t
     t = g
-    name = t.__name__
-    base, bits = _evalname(name)
-    if bits == 0:
-        return t
-    else:
+    bits = _bits_of(t)
+    base = _kind_to_stem[dtype(t).kind]
+    if base in sctypes:
         return sctypes[base][-1]
-
+    else:
+        return t
 
 def issctype(rep):
     """

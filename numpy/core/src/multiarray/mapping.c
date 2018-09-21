@@ -1125,7 +1125,7 @@ array_boolean_subscript(PyArrayObject *self,
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 Py_TYPE(self), dtype,
                 1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
+                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)tmp);
 
         if (ret == NULL) {
             Py_DECREF(tmp);
@@ -1540,13 +1540,11 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
                                 "cannot use field titles in multi-field index");
                 }
                 if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
-                    Py_DECREF(title);
                     Py_DECREF(name);
                     Py_DECREF(fields);
                     Py_DECREF(names);
                     return 0;
                 }
-                Py_DECREF(title);
             }
             /* disallow duplicate field indices */
             if (PyDict_Contains(fields, name)) {
@@ -2917,20 +2915,20 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         Py_INCREF(extra_op_dtype);
         mit->extra_op_dtype = extra_op_dtype;
 
-        /* Create an iterator, just to broadcast the arrays?! */
-        tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
-                                    NPY_ITER_ZEROSIZE_OK |
-                                    NPY_ITER_REFS_OK |
-                                    NPY_ITER_MULTI_INDEX |
-                                    NPY_ITER_DONT_NEGATE_STRIDES,
-                                    NPY_KEEPORDER,
-                                    NPY_UNSAFE_CASTING,
-                                    tmp_op_flags, NULL);
-        if (tmp_iter == NULL) {
-            goto fail;
-        }
-
         if (PyArray_SIZE(subspace) == 1) {
+            /* Create an iterator, just to broadcast the arrays?! */
+            tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
+                                        NPY_ITER_ZEROSIZE_OK |
+                                        NPY_ITER_REFS_OK |
+                                        NPY_ITER_MULTI_INDEX |
+                                        NPY_ITER_DONT_NEGATE_STRIDES,
+                                        NPY_KEEPORDER,
+                                        NPY_UNSAFE_CASTING,
+                                        tmp_op_flags, NULL);
+            if (tmp_iter == NULL) {
+                goto fail;
+            }
+
             /*
              * nditer allows itemsize with npy_intp type, so it works
              * here, but it would *not* work directly, since elsize
@@ -2943,6 +2941,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                         "internal error: failed to find output array strides");
                 goto fail;
             }
+            NpyIter_Deallocate(tmp_iter);
         }
         else {
             /* Just use C-order strides (TODO: allow also F-order) */
@@ -2952,7 +2951,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                 stride *= mit->dimensions[i];
             }
         }
-        NpyIter_Deallocate(tmp_iter);
 
         /* shape is set, and strides is set up to mit->nd, set rest */
         PyArray_CreateSortedStridePerm(PyArray_NDIM(subspace),

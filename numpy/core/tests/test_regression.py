@@ -16,7 +16,8 @@ import numpy as np
 from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
-        assert_warns, suppress_warnings, _assert_valid_refcount, HAS_REFCOUNT,
+        assert_raises_regex, assert_warns, suppress_warnings,
+        _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long
 
@@ -46,9 +47,11 @@ class TestRegression(object):
         assert_array_equal(a, b)
 
     def test_typeNA(self):
-        # Ticket #31
-        assert_equal(np.typeNA[np.int64], 'Int64')
-        assert_equal(np.typeNA[np.uint64], 'UInt64')
+        # Issue gh-515 
+        with suppress_warnings() as sup:
+            sup.filter(np.VisibleDeprecationWarning)
+            assert_equal(np.typeNA[np.int64], 'Int64')
+            assert_equal(np.typeNA[np.uint64], 'UInt64')
 
     def test_dtype_names(self):
         # Ticket #35
@@ -1307,28 +1310,18 @@ class TestRegression(object):
         # Regression test for #1061.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
-        good = 'Maximum allowed dimension exceeded'
-        try:
+        with assert_raises_regex(ValueError,
+                                 'Maximum allowed dimension exceeded'):
             np.empty(sz)
-        except ValueError as e:
-            if not str(e) == good:
-                self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception as e:
-            self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_huge_arange(self):
         # Regression test for #1062.
         # Set a size which cannot fit into a 64 bits signed integer
         sz = 2 ** 64
-        good = 'Maximum allowed size exceeded'
-        try:
+        with assert_raises_regex(ValueError,
+                                 'Maximum allowed size exceeded'):
             np.arange(sz)
             assert_(np.size == sz)
-        except ValueError as e:
-            if not str(e) == good:
-                self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception as e:
-            self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_fromiter_bytes(self):
         # Ticket #1058
@@ -1555,7 +1548,10 @@ class TestRegression(object):
 
     def test_complex_nan_maximum(self):
         cnan = complex(0, np.nan)
-        assert_equal(np.maximum(1, cnan), cnan)
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_equal(np.maximum(1, cnan), cnan)
+        assert_equal(len(sup.log), 1)
 
     def test_subclass_int_tuple_assignment(self):
         # ticket #1563
@@ -1825,7 +1821,6 @@ class TestRegression(object):
             # on dtype=object
             assert_equal(oct(a), oct(0))
             assert_equal(hex(a), hex(0))
-
 
     def test_object_array_self_copy(self):
         # An object array being copied into itself DECREF'ed before INCREF'ing
@@ -2366,6 +2361,13 @@ class TestRegression(object):
         del va
         assert_equal(x, b'\x00\x00\x00\x00')
 
+    def test_void_getitem(self):
+        # Test fix for gh-11668.
+        assert_(np.array([b'a'], 'V1').astype('O') == b'a')
+        assert_(np.array([b'ab'], 'V2').astype('O') == b'ab')
+        assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
+        assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
+
     def test_structarray_title(self):
         # The following used to segfault on pypy, due to NPY_TITLE_KEY
         # not working properly and resulting to double-decref of the
@@ -2391,3 +2393,15 @@ class TestRegression(object):
                 squeezed = scvalue.squeeze(axis=axis)
                 assert_equal(squeezed, scvalue)
                 assert_equal(type(squeezed), type(scvalue))
+
+    def test_field_access_by_title(self):
+        # gh-11507
+        s = 'Some long field name'
+        if HAS_REFCOUNT:
+            base = sys.getrefcount(s)
+        t = np.dtype([((s, 'f1'), np.float64)])
+        data = np.zeros(10, t)
+        for i in range(10):
+            v = str(data[['f1']])
+            if HAS_REFCOUNT:
+                assert_(base <= sys.getrefcount(s))

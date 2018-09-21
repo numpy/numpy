@@ -9,7 +9,6 @@ from numpy.testing import (
         )
 from numpy import random
 import sys
-import warnings
 
 
 class TestSeed(object):
@@ -1453,7 +1452,6 @@ class TestBroadcast(object):
         with np.errstate(invalid='ignore'):
             assert_raises(ValueError, zipf, np.nan)
             assert_raises(ValueError, zipf, [0, 0, np.nan])
-
 
     def test_geometric(self):
         p = [0.5]

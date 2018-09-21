@@ -133,11 +133,6 @@ def _linalgRealType(t):
     """Cast the type t to either double or cdouble."""
     return double
 
-_complex_types_map = {single : csingle,
-                      double : cdouble,
-                      csingle : csingle,
-                      cdouble : cdouble}
-
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
     result_type = single
@@ -542,6 +537,8 @@ def matrix_power(a, n):
     of the same shape as M is returned. If ``n < 0``, the inverse
     is computed and then raised to the ``abs(n)``.
 
+    .. note:: Stacks of object matrices are not currently supported.
+
     Parameters
     ----------
     a : (..., M, M) array_like
@@ -604,6 +601,16 @@ def matrix_power(a, n):
     except TypeError:
         raise TypeError("exponent must be an integer")
 
+    # Fall back on dot for object arrays. Object arrays are not supported by
+    # the current implementation of matmul using einsum
+    if a.dtype != object:
+        fmatmul = matmul
+    elif a.ndim == 2:
+        fmatmul = dot
+    else:
+        raise NotImplementedError(
+            "matrix_power not supported for stacks of object arrays")
+
     if n == 0:
         a = empty_like(a)
         a[...] = eye(a.shape[-2], dtype=a.dtype)
@@ -618,20 +625,20 @@ def matrix_power(a, n):
         return a
 
     elif n == 2:
-        return matmul(a, a)
+        return fmatmul(a, a)
 
     elif n == 3:
-        return matmul(matmul(a, a), a)
+        return fmatmul(fmatmul(a, a), a)
 
     # Use binary decomposition to reduce the number of matrix multiplications.
     # Here, we iterate over the bits of n, from LSB to MSB, raise `a` to
     # increasing powers of 2, and multiply into the result as needed.
     z = result = None
     while n > 0:
-        z = a if z is None else matmul(z, z)
+        z = a if z is None else fmatmul(z, z)
         n, bit = divmod(n, 2)
         if bit:
-            result = z if result is None else matmul(result, z)
+            result = z if result is None else fmatmul(result, z)
 
     return result
 
@@ -858,13 +865,13 @@ def qr(a, mode='reduced'):
 
     a, wrap = _makearray(a)
     _assertRank2(a)
-    _assertNoEmpty2d(a)
     m, n = a.shape
     t, result_t = _commonType(a)
     a = _fastCopyAndTranspose(t, a)
     a = _to_native_byte_order(a)
     mn = min(m, n)
     tau = zeros((mn,), t)
+
     if isComplexType(t):
         lapack_routine = lapack_lite.zgeqrf
         routine_name = 'zgeqrf'
@@ -875,14 +882,14 @@ def qr(a, mode='reduced'):
     # calculate optimal size of work data 'work'
     lwork = 1
     work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, m, tau, work, -1, 0)
+    results = lapack_routine(m, n, a, max(1, m), tau, work, -1, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # do qr decomposition
-    lwork = int(abs(work[0]))
+    lwork = max(1, n, int(abs(work[0])))
     work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, m, tau, work, lwork, 0)
+    results = lapack_routine(m, n, a, max(1, m), tau, work, lwork, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
@@ -918,14 +925,14 @@ def qr(a, mode='reduced'):
     # determine optimal lwork
     lwork = 1
     work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, m, tau, work, -1, 0)
+    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, -1, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # compute q
-    lwork = int(abs(work[0]))
+    lwork = max(1, n, int(abs(work[0])))
     work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, m, tau, work, lwork, 0)
+    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, lwork, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
@@ -965,8 +972,10 @@ def eigvals(a):
     See Also
     --------
     eig : eigenvalues and right eigenvectors of general arrays
-    eigvalsh : eigenvalues of symmetric or Hermitian arrays.
-    eigh : eigenvalues and eigenvectors of symmetric/Hermitian arrays.
+    eigvalsh : eigenvalues of real symmetric or complex Hermitian 
+               (conjugate symmetric) arrays.
+    eigh : eigenvalues and eigenvectors of real symmetric or complex
+           Hermitian (conjugate symmetric) arrays.
 
     Notes
     -----
@@ -1027,7 +1036,7 @@ def eigvals(a):
 
 def eigvalsh(a, UPLO='L'):
     """
-    Compute the eigenvalues of a Hermitian or real symmetric matrix.
+    Compute the eigenvalues of a complex Hermitian or real symmetric matrix.
 
     Main difference from eigh: the eigenvectors are not computed.
 
@@ -1057,7 +1066,8 @@ def eigvalsh(a, UPLO='L'):
 
     See Also
     --------
-    eigh : eigenvalues and eigenvectors of symmetric/Hermitian arrays.
+    eigh : eigenvalues and eigenvectors of real symmetric or complex Hermitian
+           (conjugate symmetric) arrays.
     eigvals : eigenvalues of general real or complex arrays.
     eig : eigenvalues and right eigenvectors of general real or complex
           arrays.
@@ -1159,11 +1169,11 @@ def eig(a):
     --------
     eigvals : eigenvalues of a non-symmetric array.
 
-    eigh : eigenvalues and eigenvectors of a symmetric or Hermitian
-           (conjugate symmetric) array.
+    eigh : eigenvalues and eigenvectors of a real symmetric or complex 
+           Hermitian (conjugate symmetric) array.
 
-    eigvalsh : eigenvalues of a symmetric or Hermitian (conjugate symmetric)
-               array.
+    eigvalsh : eigenvalues of a real symmetric or complex Hermitian
+               (conjugate symmetric) array.
 
     Notes
     -----
@@ -1268,7 +1278,8 @@ def eig(a):
 
 def eigh(a, UPLO='L'):
     """
-    Return the eigenvalues and eigenvectors of a Hermitian or symmetric matrix.
+    Return the eigenvalues and eigenvectors of a complex Hermitian
+    (conjugate symmetric) or a real symmetric matrix.
 
     Returns two objects, a 1-D array containing the eigenvalues of `a`, and
     a 2-D square array or matrix (depending on the input type) of the
@@ -1277,7 +1288,7 @@ def eigh(a, UPLO='L'):
     Parameters
     ----------
     a : (..., M, M) array
-        Hermitian/Symmetric matrices whose eigenvalues and
+        Hermitian or real symmetric matrices whose eigenvalues and
         eigenvectors are to be computed.
     UPLO : {'L', 'U'}, optional
         Specifies whether the calculation is done with the lower triangular
@@ -1304,7 +1315,8 @@ def eigh(a, UPLO='L'):
 
     See Also
     --------
-    eigvalsh : eigenvalues of symmetric or Hermitian arrays.
+    eigvalsh : eigenvalues of real symmetric or complex Hermitian
+               (conjugate symmetric) arrays.
     eig : eigenvalues and right eigenvectors for non-symmetric arrays.
     eigvals : eigenvalues of non-symmetric arrays.
 
@@ -2110,7 +2122,6 @@ def lstsq(a, b, rcond="warn"):
     if is_1d:
         b = b[:, newaxis]
     _assertRank2(a, b)
-    _assertNoEmpty2d(a, b)  # TODO: relax this constraint
     m, n = a.shape[-2:]
     m2, n_rhs = b.shape[-2:]
     if m != m2:
@@ -2141,7 +2152,16 @@ def lstsq(a, b, rcond="warn"):
 
     signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
     extobj = get_linalg_error_extobj(_raise_linalgerror_lstsq)
+    if n_rhs == 0:
+        # lapack can't handle n_rhs = 0 - so allocate the array one larger in that axis
+        b = zeros(b.shape[:-2] + (m, n_rhs + 1), dtype=b.dtype)
     x, resids, rank, s = gufunc(a, b, rcond, signature=signature, extobj=extobj)
+    if m == 0:
+        x[...] = 0
+    if n_rhs == 0:
+        # remove the item we added
+        x = x[..., :n_rhs]
+        resids = resids[..., :n_rhs]
 
     # remove the axis we added
     if is_1d:

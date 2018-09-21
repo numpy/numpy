@@ -260,6 +260,32 @@ def _get_outer_edges(a, range):
     return first_edge, last_edge
 
 
+def _unsigned_subtract(a, b):
+    """
+    Subtract two values where a >= b, and produce an unsigned result
+
+    This is needed when finding the difference between the upper and lower
+    bound of an int16 histogram
+    """
+    # coerce to a single type
+    signed_to_unsigned = {
+        np.byte: np.ubyte,
+        np.short: np.ushort,
+        np.intc: np.uintc,
+        np.int_: np.uint,
+        np.longlong: np.ulonglong
+    }
+    dt = np.result_type(a, b)
+    try:
+        dt = signed_to_unsigned[dt.type]
+    except KeyError:
+        return np.subtract(a, b, dtype=dt)
+    else:
+        # we know the inputs are integers, and we are deliberately casting
+        # signed to unsigned
+        return np.subtract(a, b, casting='unsafe', dtype=dt)
+
+
 def _get_bin_edges(a, bins, range, weights):
     """
     Computes the bins used internally by `histogram`.
@@ -311,7 +337,7 @@ def _get_bin_edges(a, bins, range, weights):
             # Do not call selectors on empty arrays
             width = _hist_bin_selectors[bin_name](a)
             if width:
-                n_equal_bins = int(np.ceil((last_edge - first_edge) / width))
+                n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
                 # the IQR of the data is zero.
@@ -703,7 +729,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         n = np.zeros(n_equal_bins, ntype)
 
         # Pre-compute histogram scaling factor
-        norm = n_equal_bins / (last_edge - first_edge)
+        norm = n_equal_bins / _unsigned_subtract(last_edge, first_edge)
 
         # We iterate over blocks here for two reasons: the first is that for
         # large arrays, it is actually faster (for example for a 10^8 array it
@@ -731,7 +757,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
 
             # Compute the bin indices, and for values that lie exactly on
             # last_edge we need to subtract one
-            f_indices = (tmp_a - first_edge) * norm
+            f_indices = _unsigned_subtract(tmp_a, first_edge) * norm
             indices = f_indices.astype(np.intp)
             indices[indices == n_equal_bins] -= 1
 
@@ -812,7 +838,8 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         return n, bin_edges
 
 
-def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
+def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
+                density=None):
     """
     Compute the multidimensional histogram of some data.
 
@@ -845,9 +872,14 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
         An entry of None in the sequence results in the minimum and maximum
         values being used for the corresponding dimension.
         The default, None, is equivalent to passing a tuple of D None values.
+    density : bool, optional
+        If False, the default, returns the number of samples in each bin.
+        If True, returns the probability *density* function at the bin,
+        ``bin_count / sample_count / bin_volume``.
     normed : bool, optional
-        If False, returns the number of samples in each bin. If True,
-        returns the bin density ``bin_count / sample_count / bin_volume``.
+        An alias for the density argument that behaves identically. To avoid
+        confusion with the broken normed argument to `histogram`, `density`
+        should be preferred.
     weights : (N,) array_like, optional
         An array of values `w_i` weighing each sample `(x_i, y_i, z_i, ...)`.
         Weights are normalized to 1 if normed is True. If normed is False,
@@ -961,8 +993,18 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     core = D*(slice(1, -1),)
     hist = hist[core]
 
-    # Normalize if normed is True
-    if normed:
+    # handle the aliasing normed argument
+    if normed is None:
+        if density is None:
+            density = False
+    elif density is None:
+        # an explicit normed argument was passed, alias it to the new name
+        density = normed
+    else:
+        raise TypeError("Cannot specify both 'normed' and 'density'")
+
+    if density:
+        # calculate the probability density function
         s = hist.sum()
         for i in _range(D):
             shape = np.ones(D, int)

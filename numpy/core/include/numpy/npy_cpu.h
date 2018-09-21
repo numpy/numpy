@@ -39,17 +39,19 @@
      * _M_AMD64 defined by MS compiler
      */
     #define NPY_CPU_AMD64
+#elif defined(__powerpc64__) && defined(__LITTLE_ENDIAN__)
+    #define NPY_CPU_PPC64LE
+#elif defined(__powerpc64__) && defined(__BIG_ENDIAN__)
+    #define NPY_CPU_PPC64
 #elif defined(__ppc__) || defined(__powerpc__) || defined(_ARCH_PPC)
     /*
      * __ppc__ is defined by gcc, I remember having seen __powerpc__ once,
      * but can't find it ATM
      * _ARCH_PPC is used by at least gcc on AIX
+     * As __powerpc__ and _ARCH_PPC are also defined by PPC64 check
+     * for those specifically first before defaulting to ppc
      */
     #define NPY_CPU_PPC
-#elif defined(__ppc64le__)
-    #define NPY_CPU_PPC64LE
-#elif defined(__ppc64__)
-    #define NPY_CPU_PPC64
 #elif defined(__sparc__) || defined(__sparc)
     /* __sparc__ is defined by gcc and Forte (e.g. Sun) compilers */
     #define NPY_CPU_SPARC
@@ -61,8 +63,8 @@
     #define NPY_CPU_HPPA
 #elif defined(__alpha__)
     #define NPY_CPU_ALPHA
-#elif defined(__arm__)
-    #if defined(__ARMEB__)
+#elif defined(__arm__) || defined(__aarch64__)
+    #if defined(__ARMEB__) || defined(__AARCH64EB__)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEB_AARCH32
         #elif defined(__ARM_64BIT_STATE)
@@ -70,7 +72,7 @@
         #else
             #define NPY_CPU_ARMEB
         #endif
-    #elif defined(__ARMEL__)
+    #elif defined(__ARMEL__) || defined(__AARCH64EL__)
         #if defined(__ARM_32BIT_STATE)
             #define NPY_CPU_ARMEL_AARCH32
         #elif defined(__ARM_64BIT_STATE)

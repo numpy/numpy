@@ -15,6 +15,7 @@
 #include "temp_elide.h"
 
 #include "binop_override.h"
+#include "ufunc_override.h"
 
 /*************************************************************************
  ****************   Implement Number Protocol ****************************
@@ -118,7 +119,7 @@ PyArray_SetNumericOps(PyObject *dict)
     return 0;
 }
 
-/* FIXME - macro contains goto */
+/* Note - macro contains goto */
 #define GET(op) if (n_ops.op &&                                         \
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
         goto fail;
@@ -550,6 +551,50 @@ array_power(PyArrayObject *a1, PyObject *o2, PyObject *modulo)
     return value;
 }
 
+static PyObject *
+array_positive(PyArrayObject *m1)
+{
+    /*
+     * For backwards compatibility, where + just implied a copy,
+     * we cannot just call n_ops.positive.  Instead, we do the following
+     * 1. Try n_ops.positive
+     * 2. If we get an exception, check whether __array_ufunc__ is
+     *    overridden; if so, we live in the future and we allow the
+     *    TypeError to be passed on.
+     * 3. If not, give a deprecation warning and return a copy.
+     */
+    PyObject *value;
+    if (can_elide_temp_unary(m1)) {
+        value = PyArray_GenericInplaceUnaryFunction(m1, n_ops.positive);
+    }
+    else {
+        value = PyArray_GenericUnaryFunction(m1, n_ops.positive);
+    }
+    if (value == NULL) {
+        /*
+         * We first fetch the error, as it needs to be clear to check
+         * for the override.  When the deprecation is removed,
+         * this whole stanza can be deleted.
+         */
+        PyObject *exc, *val, *tb;
+        PyErr_Fetch(&exc, &val, &tb);
+        if (has_non_default_array_ufunc((PyObject *)m1)) {
+            PyErr_Restore(exc, val, tb);
+            return NULL;
+        }
+        /* 2018-06-28, 1.16.0 */
+        if (DEPRECATE("Applying '+' to a non-numerical array is "
+                      "ill-defined. Returning a copy, but in the future "
+                      "this will error.") < 0) {
+            return NULL;
+        }
+        Py_XDECREF(exc);
+        Py_XDECREF(val);
+        Py_XDECREF(tb);
+        value = PyArray_Return((PyArrayObject *)PyArray_Copy(m1));
+    }
+    return value;
+}
 
 static PyObject *
 array_negative(PyArrayObject *m1)
@@ -927,12 +972,6 @@ array_hex(PyArrayObject *v)
 #endif
 
 static PyObject *
-_array_copy_nice(PyArrayObject *self)
-{
-    return PyArray_Return((PyArrayObject *) PyArray_Copy(self));
-}
-
-static PyObject *
 array_index(PyArrayObject *v)
 {
     if (!PyArray_ISINTEGER(v) || PyArray_NDIM(v) != 0) {
@@ -955,7 +994,7 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_divmod,                   /*nb_divmod*/
     (ternaryfunc)array_power,                   /*nb_power*/
     (unaryfunc)array_negative,                  /*nb_neg*/
-    (unaryfunc)_array_copy_nice,                /*nb_pos*/
+    (unaryfunc)array_positive,                  /*nb_pos*/
     (unaryfunc)array_absolute,                  /*(unaryfunc)array_abs,*/
     (inquiry)_array_nonzero,                    /*nb_nonzero*/
     (unaryfunc)array_invert,                    /*nb_invert*/

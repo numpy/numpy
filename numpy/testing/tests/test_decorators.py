@@ -29,7 +29,6 @@ class TestNoseDecorators(object):
         pass
 
     def test_slow(self):
-        import nose
         @dec.slow
         def slow_func(x, y, z):
             pass
@@ -52,7 +51,6 @@ class TestNoseDecorators(object):
         assert_(f_default.__test__)
         assert_(f_istest.__test__)
         assert_(not f_isnottest.__test__)
-
 
     def test_skip_functions_hardcoded(self):
         @dec.skipif(True)

@@ -3,8 +3,11 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
-from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,)
+from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,
+                           assert_equal)
 from numpy.lib import pad
 
 
@@ -344,6 +347,20 @@ class TestStatistic(object):
             )
         assert_array_equal(a, b)
 
+    @pytest.mark.parametrize("mode", [
+        pytest.param("mean", marks=pytest.mark.xfail(reason="gh-11216")),
+        "median",
+        "minimum",
+        "maximum"
+    ])
+    def test_same_prepend_append(self, mode):
+        """ Test that appended and prepended values are equal """
+        # This test is constructed to trigger floating point rounding errors in
+        # a way that caused gh-11216 for mode=='mean'
+        a = np.array([-1, 2, -1]) + np.array([0, 1e-12, 0], dtype=np.float64)
+        a = np.pad(a, (1, 1), mode)
+        assert_equal(a[0], a[-1])
+
 
 class TestConstant(object):
     def test_check_constant(self):
@@ -502,6 +519,21 @@ class TestConstant(object):
         expected = np.full(7, int64_max, dtype=np.int64)
         assert_array_equal(test, expected)
 
+    def test_check_object_array(self):
+        arr = np.empty(1, dtype=object)
+        obj_a = object()
+        arr[0] = obj_a
+        obj_b = object()
+        obj_c = object()
+        arr = np.pad(arr, pad_width=1, mode='constant',
+                     constant_values=(obj_b, obj_c))
+
+        expected = np.empty((3,), dtype=object)
+        expected[0] = obj_b
+        expected[1] = obj_a
+        expected[2] = obj_c
+
+        assert_array_equal(arr, expected)
 
 class TestLinearRamp(object):
     def test_check_simple(self):
@@ -541,6 +573,25 @@ class TestLinearRamp(object):
              [0., 3.75,  7.5,   8.,  8.5,   9.,  9.5,  4.75,   0.],
              [0.,   0.,   0.,   0.,   0.,   0.,   0.,    0.,   0.]])
         assert_allclose(test, expected)
+
+    @pytest.mark.xfail(exceptions=(AssertionError,))
+    def test_object_array(self):
+        from fractions import Fraction
+        arr = np.array([Fraction(1, 2), Fraction(-1, 2)])
+        actual = np.pad(arr, (2, 3), mode='linear_ramp', end_values=0)
+
+        # deliberately chosen to have a non-power-of-2 denominator such that
+        # rounding to floats causes a failure.
+        expected = np.array([
+            Fraction( 0, 12),
+            Fraction( 3, 12),
+            Fraction( 6, 12),
+            Fraction(-6, 12),
+            Fraction(-4, 12),
+            Fraction(-2, 12),
+            Fraction(-0, 12),
+        ])
+        assert_equal(actual, expected)
 
 
 class TestReflect(object):
@@ -886,6 +937,11 @@ class TestWrap(object):
         a = pad([1, 2, 3], 4, 'wrap')
         b = np.array([3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
         assert_array_equal(a, b)
+
+    def test_pad_with_zero(self):
+        a = np.ones((3, 5))
+        b = np.pad(a, (0, 5), mode="wrap")
+        assert_array_equal(a, b[:-5, :-5])
 
 
 class TestStatLen(object):

@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import pytest
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns, suppress_warnings
+    assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
     )
 
 # Use pytz to test out various time zones if available
@@ -130,13 +130,10 @@ class TestDateTime(object):
 
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
-        assert_equal(np.datetime64('NaT'),
-                     np.datetime64('2000') + np.timedelta64('NaT'))
-        # nb. we may want to make NaT != NaT true in the future
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, ".*NAT ==")
-            assert_(np.datetime64('NaT') == np.datetime64('NaT', 'us'))
-            assert_(np.datetime64('NaT', 'us') == np.datetime64('NaT'))
+        assert_(np.datetime64('NaT') !=
+                np.datetime64('2000') + np.timedelta64('NaT'))
+        assert_(np.datetime64('NaT') != np.datetime64('NaT', 'us'))
+        assert_(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
 
     def test_datetime_scalar_construction(self):
         # Construct with different units
@@ -354,6 +351,16 @@ class TestDateTime(object):
         expected = np.array([28, 30, 31], dtype='timedelta64[D]')
         actual = np.array(inputs, dtype='timedelta64[D]')
         assert_equal(expected, actual)
+
+    def test_timedelta_0_dim_object_array_conversion(self):
+        # Regression test for gh-11151
+        test = np.array(datetime.timedelta(seconds=20))
+        actual = test.astype(np.timedelta64)
+        # expected value from the array constructor workaround
+        # described in above issue
+        expected = np.array(datetime.timedelta(seconds=20),
+                            np.timedelta64)
+        assert_equal(actual, expected)
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
@@ -620,6 +627,10 @@ class TestDateTime(object):
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
         dt = np.dtype('M8[W]')
         assert_equal(pickle.loads(pickle.dumps(dt)), dt)
+        scalar = np.datetime64('2016-01-01T00:00:00.000000000')
+        assert_equal(pickle.loads(pickle.dumps(scalar)), scalar)
+        delta = scalar - np.datetime64('2015-01-01T00:00:00.000000000')
+        assert_equal(pickle.loads(pickle.dumps(delta)), delta)
 
         # Check that loading pickles from 1.6 works
         pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
@@ -1140,47 +1151,23 @@ class TestDateTime(object):
         td_nat = np.timedelta64('NaT', 'h')
         td_other = np.timedelta64(1, 'h')
 
-        with suppress_warnings() as sup:
-            # The assert warns contexts will again see the warning:
-            sup.filter(FutureWarning, ".*NAT")
-
-            for op in [np.equal, np.less, np.less_equal,
-                       np.greater, np.greater_equal]:
-                if op(dt_nat, dt_nat):
-                    assert_warns(FutureWarning, op, dt_nat, dt_nat)
-                if op(dt_nat, dt_other):
-                    assert_warns(FutureWarning, op, dt_nat, dt_other)
-                if op(dt_other, dt_nat):
-                    assert_warns(FutureWarning, op, dt_other, dt_nat)
-                if op(td_nat, td_nat):
-                    assert_warns(FutureWarning, op, td_nat, td_nat)
-                if op(td_nat, td_other):
-                    assert_warns(FutureWarning, op, td_nat, td_other)
-                if op(td_other, td_nat):
-                    assert_warns(FutureWarning, op, td_other, td_nat)
-
-            assert_warns(FutureWarning, np.not_equal, dt_nat, dt_nat)
-            assert_warns(FutureWarning, np.not_equal, td_nat, td_nat)
-
-        with suppress_warnings() as sup:
-            sup.record(FutureWarning)
-            assert_(np.not_equal(dt_nat, dt_other))
-            assert_(np.not_equal(dt_other, dt_nat))
-            assert_(np.not_equal(td_nat, td_other))
-            assert_(np.not_equal(td_other, td_nat))
-            assert_equal(len(sup.log), 0)
-
-    def test_datetime_futurewarning_once_nat(self):
-        # Test that the futurewarning is only given once per inner loop
-        arr1 = np.array(['NaT', 'NaT', '2000-01-01'] * 2, dtype='M8[s]')
-        arr2 = np.array(['NaT', '2000-01-01', 'NaT'] * 2, dtype='M8[s]')
-        # All except less, because for less it can't be wrong (NaT is min)
         for op in [np.equal, np.less, np.less_equal,
                    np.greater, np.greater_equal]:
-            with suppress_warnings() as sup:
-                rec = sup.record(FutureWarning, ".*NAT")
-                op(arr1, arr2)
-                assert_(len(rec) == 1, "failed for {}".format(op))
+            assert_(not op(dt_nat, dt_nat))
+            assert_(not op(dt_nat, dt_other))
+            assert_(not op(dt_other, dt_nat))
+
+            assert_(not op(td_nat, td_nat))
+            assert_(not op(td_nat, td_other))
+            assert_(not op(td_other, td_nat))
+
+        assert_(np.not_equal(dt_nat, dt_nat))
+        assert_(np.not_equal(dt_nat, dt_other))
+        assert_(np.not_equal(dt_other, dt_nat))
+
+        assert_(np.not_equal(td_nat, td_nat))
+        assert_(np.not_equal(td_nat, td_other))
+        assert_(np.not_equal(td_other, td_nat))
 
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
@@ -1697,7 +1684,6 @@ class TestDateTime(object):
                      np.datetime64('NaT'))
         assert_equal(np.busday_offset(np.datetime64('NaT'), 1, roll='preceding'),
                      np.datetime64('NaT'))
-
 
     def test_datetime_busdaycalendar(self):
         # Check that it removes NaT, duplicates, and weekends

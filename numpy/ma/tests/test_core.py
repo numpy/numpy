@@ -514,8 +514,6 @@ class TestMaskedArray(object):
               fill_value=999999)''')
         )
 
-
-
     def test_str_repr_legacy(self):
         oldopts = np.get_printoptions()
         np.set_printoptions(legacy='1.13')
@@ -787,7 +785,6 @@ class TestMaskedArray(object):
                              dtype = "int, (2,3)float, float")
         control = "(0, [[--, 0.0, --], [0.0, 0.0, --]], 0.0)"
         assert_equal(str(t_2d0), control)
-
 
     def test_flatten_structured_array(self):
         # Test flatten_structured_array on arrays
@@ -3174,18 +3171,13 @@ class TestMaskedArrayMethods(object):
         assert_equal(test.mask, mask_first.mask)
 
         # Test sort on dtype with subarray (gh-8069)
+        # Just check that the sort does not error, structured array subarrays
+        # are treated as byte strings and that leads to differing behavior
+        # depending on endianess and `endwith`.
         dt = np.dtype([('v', int, 2)])
         a = a.view(dt)
-        mask_last = mask_last.view(dt)
-        mask_first = mask_first.view(dt)
-
         test = sort(a)
-        assert_equal(test, mask_last)
-        assert_equal(test.mask, mask_last.mask)
-
         test = sort(a, endwith=False)
-        assert_equal(test, mask_first)
-        assert_equal(test.mask, mask_first.mask)
 
     def test_argsort(self):
         # Test argsort
@@ -3814,12 +3806,8 @@ class TestMaskedArrayFunctions(object):
 
     def test_masked_where_shape_constraint(self):
         a = arange(10)
-        try:
-            test = masked_equal(1, a)
-        except IndexError:
-            pass
-        else:
-            raise AssertionError("Should have failed...")
+        with assert_raises(IndexError):
+            masked_equal(1, a)
         test = masked_equal(a, 1)
         assert_equal(test.mask, [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
@@ -5022,3 +5010,18 @@ def test_astype():
     x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
     assert_(x_f2.flags.f_contiguous)
     assert_(x_f2.mask.flags.f_contiguous)
+
+
+def test_fieldless_void():
+    dt = np.dtype([])  # a void dtype with no fields
+    x = np.empty(4, dt)
+
+    # these arrays contain no values, so there's little to test - but this
+    # shouldn't crash
+    mx = np.ma.array(x)
+    assert_equal(mx.dtype, x.dtype)
+    assert_equal(mx.shape, x.shape)
+
+    mx = np.ma.array(x, mask=x)
+    assert_equal(mx.dtype, x.dtype)
+    assert_equal(mx.shape, x.shape)

@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import itertools
 
+import pytest
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
@@ -408,7 +409,48 @@ class TestIsSubDType(object):
             assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
 
 
-def TestSctypeDict(object):
+class TestSctypeDict(object):
     def test_longdouble(self):
         assert_(np.sctypeDict['f8'] is not np.longdouble)
         assert_(np.sctypeDict['c16'] is not np.clongdouble)
+
+
+class TestBitName(object):
+    def test_abstract(self):
+        assert_raises(ValueError, np.core.numerictypes.bitname, np.floating)
+
+
+class TestMaximumSctype(object):
+
+    # note that parametrizing with sctype['int'] and similar would skip types
+    # with the same size (gh-11923)
+
+    @pytest.mark.parametrize('t', [np.byte, np.short, np.intc, np.int_, np.longlong])
+    def test_int(self, t):
+        assert_equal(np.maximum_sctype(t), np.sctypes['int'][-1])
+
+    @pytest.mark.parametrize('t', [np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong])
+    def test_uint(self, t):
+        assert_equal(np.maximum_sctype(t), np.sctypes['uint'][-1])
+
+    @pytest.mark.parametrize('t', [np.half, np.single, np.double, np.longdouble])
+    def test_float(self, t):
+        assert_equal(np.maximum_sctype(t), np.sctypes['float'][-1])
+
+    @pytest.mark.parametrize('t', [np.csingle, np.cdouble, np.clongdouble])
+    def test_complex(self, t):
+        assert_equal(np.maximum_sctype(t), np.sctypes['complex'][-1])
+
+    @pytest.mark.parametrize('t', [np.bool_, np.object_, np.unicode_, np.bytes_, np.void])
+    def test_other(self, t):
+        assert_equal(np.maximum_sctype(t), t)
+
+
+@pytest.mark.skipif(sys.flags.optimize > 1,
+                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
+class TestDocStrings(object):
+    def test_platform_dependent_aliases(self):
+        if np.int64 is np.int_:
+            assert_('int64' in np.int_.__doc__)
+        elif np.int64 is np.longlong:
+            assert_('int64' in np.longlong.__doc__)

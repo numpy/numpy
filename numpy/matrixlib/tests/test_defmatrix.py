@@ -1,12 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-# As we are testing matrices, we ignore its PendingDeprecationWarnings
-try:
-    import pytest
-    pytestmark = pytest.mark.filterwarnings(
-        'ignore:the matrix subclass is not:PendingDeprecationWarning')
-except ImportError:
-    pass
+import pytest
 
 try:
     # Accessing collections abstract classes from collections
@@ -274,21 +268,13 @@ class TestAlgebra(object):
                     [3., 4.]])
 
         # __rpow__
-        try:
+        with assert_raises(TypeError):
             1.0**A
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__rpow__ doesn't raise a TypeError")
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
-        try:
+        with assert_raises(TypeError):
             A*object()
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__mul__ with non-numeric object doesn't raise"
-                      "a TypeError")
+
 
 class TestMatrixReturn(object):
     def test_instance_methods(self):
@@ -466,3 +452,11 @@ class TestShape(object):
     def test_matrix_memory_sharing(self):
         assert_(np.may_share_memory(self.m, self.m.ravel()))
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
+
+    def test_expand_dims_matrix(self):
+        # matrices are always 2d - so expand_dims only makes sense when the
+        # type is changed away from matrix.
+        a = np.arange(10).reshape((2, 5)).view(np.matrix)
+        expanded = np.expand_dims(a, axis=1)
+        assert_equal(expanded.ndim, 3)
+        assert_(not isinstance(expanded, np.matrix))

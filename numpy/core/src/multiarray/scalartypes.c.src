@@ -538,19 +538,22 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 }
 
 static PyObject *
+_void_scalar_repr(PyObject *obj) {
+    static PyObject *reprfunc = NULL;
+    npy_cache_import("numpy.core.arrayprint",
+                     "_void_scalar_repr", &reprfunc);
+    if (reprfunc == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(reprfunc, "O", obj);
+}
+
+static PyObject *
 voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        static PyObject *reprfunc = NULL;
-
-        npy_cache_import("numpy.core.arrayprint",
-                         "_void_scalar_repr", &reprfunc);
-        if (reprfunc == NULL) {
-            return NULL;
-        }
-
-        return PyObject_CallFunction(reprfunc, "O", self);
+        return _void_scalar_repr(self);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
 }
@@ -560,15 +563,7 @@ voidtype_str(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        static PyObject *reprfunc = NULL;
-
-        npy_cache_import("numpy.core.arrayprint",
-                         "_void_scalar_repr", &reprfunc);
-        if (reprfunc == NULL) {
-            return NULL;
-        }
-
-        return PyObject_CallFunction(reprfunc, "O", self);
+        return _void_scalar_repr(self);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "b'", "\\x", "'");
 }
@@ -1875,7 +1870,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     }
 #endif
 
-    mod = PyImport_ImportModule("numpy.core.multiarray");
+    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
         return NULL;
     }
@@ -3753,29 +3748,20 @@ static PyMappingMethods gentype_as_mapping = {
  * #CNAME = FLOAT, DOUBLE, LONGDOUBLE#
  */
 #if NPY_BITSOF_@CNAME@ == 16
-#define _THIS_SIZE2 "16"
-#define _THIS_SIZE1 "32"
+#define _THIS_SIZE "32"
 #elif NPY_BITSOF_@CNAME@ == 32
-#define _THIS_SIZE2 "32"
-#define _THIS_SIZE1 "64"
+#define _THIS_SIZE "64"
 #elif NPY_BITSOF_@CNAME@ == 64
-#define _THIS_SIZE2 "64"
-#define _THIS_SIZE1 "128"
+#define _THIS_SIZE "128"
 #elif NPY_BITSOF_@CNAME@ == 80
-#define _THIS_SIZE2 "80"
-#define _THIS_SIZE1 "160"
+#define _THIS_SIZE "160"
 #elif NPY_BITSOF_@CNAME@ == 96
-#define _THIS_SIZE2 "96"
-#define _THIS_SIZE1 "192"
+#define _THIS_SIZE "192"
 #elif NPY_BITSOF_@CNAME@ == 128
-#define _THIS_SIZE2 "128"
-#define _THIS_SIZE1 "256"
+#define _THIS_SIZE "256"
 #elif NPY_BITSOF_@CNAME@ == 256
-#define _THIS_SIZE2 "256"
-#define _THIS_SIZE1 "512"
+#define _THIS_SIZE "512"
 #endif
-
-#define _THIS_DOC "Composed of two " _THIS_SIZE2 " bit floats"
 
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 #if defined(NPY_PY3K)
@@ -3784,7 +3770,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(0)
     0,                                          /* ob_size */
 #endif
-    "numpy.@name@" _THIS_SIZE1,                 /* tp_name*/
+    "numpy.@name@" _THIS_SIZE,                  /* tp_name*/
     sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
     0,                                          /* tp_itemsize*/
     0,                                          /* tp_dealloc*/
@@ -3807,7 +3793,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_setattro*/
     0,                                          /* tp_as_buffer*/
     Py_TPFLAGS_DEFAULT,                         /* tp_flags*/
-    _THIS_DOC,                                  /* tp_doc */
+    0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
@@ -3835,9 +3821,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_del */
     0,                                          /* tp_version_tag */
 };
-#undef _THIS_SIZE1
-#undef _THIS_SIZE2
-#undef _THIS_DOC
+#undef _THIS_SIZE
 
 /**end repeat**/
 

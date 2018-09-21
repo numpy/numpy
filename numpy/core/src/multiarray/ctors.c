@@ -92,6 +92,7 @@ swab_separator(const char *sep)
 
     s = start = malloc(strlen(sep)+3);
     if (s == NULL) {
+        PyErr_NoMemory();
         return NULL;
     }
     /* add space to front if there isn't one */
@@ -666,7 +667,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int *out_is_object)
 {
     PyObject *e;
-    int r;
     npy_intp n, i;
     Py_buffer buffer_view;
     PyObject * seq;
@@ -846,46 +846,48 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         return 0;
     }
     else {
-        npy_intp dtmp[NPY_MAXDIMS];
-        int j, maxndim_m1 = *maxndim - 1;
-        e = PySequence_Fast_GET_ITEM(seq, 0);
+        int all_elems_maxndim = *maxndim - 1;
+        npy_intp *all_elems_d = d + 1;
+        int all_dimensions_match = 1;
 
-        r = discover_dimensions(e, &maxndim_m1, d + 1, check_it,
-                                        stop_at_string, stop_at_tuple,
-                                        out_is_object);
-        if (r < 0) {
+        /* Get the dimensions of the first item as a baseline */
+        PyObject *first = PySequence_Fast_GET_ITEM(seq, 0);
+        if (discover_dimensions(
+                first, &all_elems_maxndim, all_elems_d, check_it,
+                stop_at_string, stop_at_tuple, out_is_object) < 0) {
             Py_DECREF(seq);
-            return r;
+            return -1;
         }
 
-        /* For the dimension truncation check below */
-        *maxndim = maxndim_m1 + 1;
+        /* Compare the dimensions of all the remaining items */
         for (i = 1; i < n; ++i) {
-            e = PySequence_Fast_GET_ITEM(seq, i);
-            /* Get the dimensions of the first item */
-            r = discover_dimensions(e, &maxndim_m1, dtmp, check_it,
-                                            stop_at_string, stop_at_tuple,
-                                            out_is_object);
-            if (r < 0) {
+            int j;
+            int elem_maxndim = *maxndim - 1;
+            npy_intp elem_d[NPY_MAXDIMS];
+
+            PyObject *elem = PySequence_Fast_GET_ITEM(seq, i);
+            if (discover_dimensions(
+                    elem, &elem_maxndim, elem_d, check_it,
+                    stop_at_string, stop_at_tuple, out_is_object) < 0) {
                 Py_DECREF(seq);
-                return r;
+                return -1;
             }
 
-            /* Reduce max_ndim_m1 to just items which match */
-            for (j = 0; j < maxndim_m1; ++j) {
-                if (dtmp[j] != d[j+1]) {
-                    maxndim_m1 = j;
+            /* Find the number of left-dimensions which match, j */
+            for (j = 0; j < elem_maxndim && j < all_elems_maxndim; ++j) {
+                if (elem_d[j] != all_elems_d[j]) {
                     break;
                 }
             }
+            if (j != elem_maxndim || j != all_elems_maxndim) {
+                all_dimensions_match = 0;
+            }
+            all_elems_maxndim = j;
         }
-        /*
-         * If the dimensions are truncated, need to produce
-         * an object array.
-         */
-        if (maxndim_m1 + 1 < *maxndim) {
+        *maxndim = all_elems_maxndim + 1;
+        if (!all_dimensions_match) {
+            /* typically results in an array containing variable-length lists */
             *out_is_object = 1;
-            *maxndim = maxndim_m1 + 1;
         }
     }
 
@@ -1389,10 +1391,12 @@ _array_from_buffer_3118(PyObject *memoryview)
 
         if (!is_ctypes) {
             /* This object has no excuse for a broken PEP3118 buffer */
-            PyErr_SetString(
+            PyErr_Format(
                     PyExc_RuntimeError,
-                    "Item size computed from the PEP 3118 buffer format "
-                    "string does not match the actual item size.");
+                   "Item size %zd for PEP 3118 buffer format "
+                    "string %s does not match the dtype %c item size %d.",
+                    view->itemsize, view->format, descr->type,
+                    descr->elsize);
             Py_DECREF(descr);
             return NULL;
         }
@@ -1704,9 +1708,9 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 
         *out_ndim = NPY_MAXDIMS;
         is_object = 0;
-        if (discover_dimensions(op, out_ndim, out_dims, check_it,
-                                    stop_at_string, stop_at_tuple,
-                                    &is_object) < 0) {
+        if (discover_dimensions(
+                op, out_ndim, out_dims, check_it,
+                stop_at_string, stop_at_tuple, &is_object) < 0) {
             Py_DECREF(*out_dtype);
             if (PyErr_Occurred()) {
                 return -1;

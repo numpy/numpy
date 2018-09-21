@@ -10,6 +10,8 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 from __future__ import division, absolute_import, print_function
 
+from numpy.core import numerictypes as _numerictypes
+from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
 
 ###############################################################################
@@ -1319,6 +1321,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     hstack : Stack arrays in sequence horizontally (column wise)
     vstack : Stack arrays in sequence vertically (row wise)
     dstack : Stack arrays in sequence depth wise (along third dimension)
+    block : Assemble arrays from blocks.
 
     Notes
     -----
@@ -1348,19 +1351,19 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     >>> a[1] = np.ma.masked
     >>> b = np.arange(2, 5)
     >>> a
-    masked_array(data = [0 -- 2],
-                 mask = [False  True False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2],
+                 mask=[False,  True, False],
+           fill_value=999999)
     >>> b
     array([2, 3, 4])
     >>> np.concatenate([a, b])
-    masked_array(data = [0 1 2 2 3 4],
-                 mask = False,
-           fill_value = 999999)
+    masked_array(data=[0, 1, 2, 2, 3, 4],
+                 mask=False,
+           fill_value=999999)
     >>> np.ma.concatenate([a, b])
-    masked_array(data = [0 -- 2 2 3 4],
-                 mask = [False  True False False False False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2, 2, 3, 4],
+                 mask=[False,  True, False, False, False, False],
+           fill_value=999999)
 
     """)
 
@@ -1453,11 +1456,10 @@ add_newdoc('numpy.core.multiarray', 'arange',
     Values are generated within the half-open interval ``[start, stop)``
     (in other words, the interval including `start` but excluding `stop`).
     For integer arguments the function is equivalent to the Python built-in
-    `range <https://docs.python.org/library/functions.html#func-range>`_ function,
-    but returns an ndarray rather than a list.
+    `range` function, but returns an ndarray rather than a list.
 
     When using a non-integer step, such as 0.1, the results will often not
-    be consistent.  It is better to use ``linspace`` for these cases.
+    be consistent.  It is better to use `numpy.linspace` for these cases.
 
     Parameters
     ----------
@@ -2842,40 +2844,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
     -----
     Below are the public attributes of this object which were documented
     in "Guide to NumPy" (we have omitted undocumented public attributes,
-    as well as documented private attributes):
+    as well as documented private attributes): 
 
-    * data: A pointer to the memory area of the array as a Python integer.
-      This memory area may contain data that is not aligned, or not in correct
-      byte-order. The memory area may not even be writeable. The array
-      flags and data-type of this array should be respected when passing this
-      attribute to arbitrary C-code to avoid trouble that can include Python
-      crashing. User Beware! The value of this attribute is exactly the same
-      as self._array_interface_['data'][0].
+    .. autoattribute:: numpy.core._internal._ctypes.data
 
-    * shape (c_intp*self.ndim): A ctypes array of length self.ndim where
-      the basetype is the C-integer corresponding to dtype('p') on this
-      platform. This base-type could be c_int, c_long, or c_longlong
-      depending on the platform. The c_intp type is defined accordingly in
-      numpy.ctypeslib. The ctypes array contains the shape of the underlying
-      array.
+    .. autoattribute:: numpy.core._internal._ctypes.shape
 
-    * strides (c_intp*self.ndim): A ctypes array of length self.ndim where
-      the basetype is the same as for the shape attribute. This ctypes array
-      contains the strides information from the underlying array. This strides
-      information is important for showing how many bytes must be jumped to
-      get to the next element in the array.
+    .. autoattribute:: numpy.core._internal._ctypes.strides
 
-    * data_as(obj): Return the data pointer cast to a particular c-types object.
-      For example, calling self._as_parameter_ is equivalent to
-      self.data_as(ctypes.c_void_p). Perhaps you want to use the data as a
-      pointer to a ctypes array of floating-point data:
-      self.data_as(ctypes.POINTER(ctypes.c_double)).
+    .. automethod:: numpy.core._internal._ctypes.data_as
 
-    * shape_as(obj): Return the shape tuple as an array of some other c-types
-      type. For example: self.shape_as(ctypes.c_short).
+    .. automethod:: numpy.core._internal._ctypes.shape_as
 
-    * strides_as(obj): Return the strides tuple as an array of some other
-      c-types type. For example: self.strides_as(ctypes.c_longlong).
+    .. automethod:: numpy.core._internal._ctypes.strides_as
 
     Be careful using the ctypes attribute - especially on temporary
     arrays or arrays constructed on the fly. For example, calling
@@ -5296,99 +5277,6 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 #
 ##############################################################################
 
-add_newdoc('numpy.core.multiarray', 'digitize',
-    """
-    digitize(x, bins, right=False)
-
-    Return the indices of the bins to which each value in input array belongs.
-
-    =========  =============  ============================
-    `right`    order of bins  returned index `i` satisfies
-    =========  =============  ============================
-    ``False``  increasing     ``bins[i-1] <= x < bins[i]``
-    ``True``   increasing     ``bins[i-1] < x <= bins[i]``
-    ``False``  decreasing     ``bins[i-1] > x >= bins[i]``
-    ``True``   decreasing     ``bins[i-1] >= x > bins[i]``
-    =========  =============  ============================
-
-    If values in `x` are beyond the bounds of `bins`, 0 or ``len(bins)`` is
-    returned as appropriate.
-
-    Parameters
-    ----------
-    x : array_like
-        Input array to be binned. Prior to NumPy 1.10.0, this array had to
-        be 1-dimensional, but can now have any shape.
-    bins : array_like
-        Array of bins. It has to be 1-dimensional and monotonic.
-    right : bool, optional
-        Indicating whether the intervals include the right or the left bin
-        edge. Default behavior is (right==False) indicating that the interval
-        does not include the right edge. The left bin end is open in this
-        case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
-        monotonically increasing bins.
-
-    Returns
-    -------
-    indices : ndarray of ints
-        Output array of indices, of same shape as `x`.
-
-    Raises
-    ------
-    ValueError
-        If `bins` is not monotonic.
-    TypeError
-        If the type of the input is complex.
-
-    See Also
-    --------
-    bincount, histogram, unique, searchsorted
-
-    Notes
-    -----
-    If values in `x` are such that they fall outside the bin range,
-    attempting to index `bins` with the indices that `digitize` returns
-    will result in an IndexError.
-
-    .. versionadded:: 1.10.0
-
-    `np.digitize` is  implemented in terms of `np.searchsorted`. This means
-    that a binary search is used to bin the values, which scales much better
-    for larger number of bins than the previous linear search. It also removes
-    the requirement for the input array to be 1-dimensional.
-
-    For monotonically _increasing_ `bins`, the following are equivalent::
-
-        np.digitize(x, bins, right=True)
-        np.searchsorted(bins, x, side='left')
-
-    Note that as the order of the arguments are reversed, the side must be too.
-    The `searchsorted` call is marginally faster, as it does not do any
-    monotonicity checks. Perhaps more importantly, it supports all dtypes.
-
-    Examples
-    --------
-    >>> x = np.array([0.2, 6.4, 3.0, 1.6])
-    >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
-    >>> inds = np.digitize(x, bins)
-    >>> inds
-    array([1, 4, 3, 2])
-    >>> for n in range(x.size):
-    ...   print(bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]])
-    ...
-    0.0 <= 0.2 < 1.0
-    4.0 <= 6.4 < 10.0
-    2.5 <= 3.0 < 4.0
-    1.0 <= 1.6 < 2.5
-
-    >>> x = np.array([1.2, 10.0, 12.4, 15.5, 20.])
-    >>> bins = np.array([0, 5, 10, 15, 20])
-    >>> np.digitize(x,bins,right=True)
-    array([1, 2, 3, 4, 4])
-    >>> np.digitize(x,bins,right=False)
-    array([1, 3, 3, 4, 5])
-    """)
-
 add_newdoc('numpy.core.multiarray', 'bincount',
     """
     bincount(x, weights=None, minlength=0)
@@ -6571,6 +6459,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
 
       (dtype, offset[, title])
 
+    Offset is limited to C int, which is signed and usually 32 bits.
     If present, the optional title can be any object (if it is a string
     or unicode then it will also be a key in the fields dictionary,
     otherwise it's meta-data). Notice also that the first two elements
@@ -7250,10 +7139,10 @@ add_newdoc('numpy.core.multiarray', 'datetime_data',
     array(250, dtype='timedelta64[s]')
 
     The result can be used to construct a datetime that uses the same units
-    as a timedelta::
+    as a timedelta
 
     >>> np.datetime64('2010', np.datetime_data(dt_25s))
-    numpy.datetime64('2010-01-01T00:00:00','25s')
+    numpy.datetime64('2010-01-01T00:00:00', '25s')
     """)
 
 
@@ -8083,62 +7972,157 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 #
 ##############################################################################
 
-add_newdoc('numpy.core.numerictypes', 'bool_',
-    """NumPy's Boolean type.  Character code: ``?``.  Alias: bool8""")
+def numeric_type_aliases(aliases):
+    def type_aliases_gen():
+        for alias, doc in aliases:
+            try:
+                alias_type = getattr(_numerictypes, alias)
+            except AttributeError:
+                # The set of aliases that actually exist varies between platforms
+                pass
+            else:
+                yield (alias_type, alias, doc)
+    return list(type_aliases_gen())
 
-add_newdoc('numpy.core.numerictypes', 'complex64',
+
+possible_aliases = numeric_type_aliases([
+    ('int8', '8-bit signed integer (-128 to 127)'),
+    ('int16', '16-bit signed integer (-32768 to 32767)'),
+    ('int32', '32-bit signed integer (-2147483648 to 2147483647)'),
+    ('int64', '64-bit signed integer (-9223372036854775808 to 9223372036854775807)'),
+    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'),
+    ('uint8', '8-bit unsigned integer (0 to 255)'),
+    ('uint16', '16-bit unsigned integer (0 to 65535)'),
+    ('uint32', '32-bit unsigned integer (0 to 4294967295)'),
+    ('uint64', '64-bit unsigned integer (0 to 18446744073709551615)'),
+    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'),
+    ('float16', '16-bit-precision floating-point number type: sign bit, 5 bits exponent, 10 bits mantissa'),
+    ('float32', '32-bit-precision floating-point number type: sign bit, 8 bits exponent, 23 bits mantissa'),
+    ('float64', '64-bit precision floating-point number type: sign bit, 11 bits exponent, 52 bits mantissa'),
+    ('float96', '96-bit extended-precision floating-point number type'),
+    ('float128', '128-bit extended-precision floating-point number type'),
+    ('complex64', 'Complex number type composed of 2 32-bit-precision floating-point numbers'),
+    ('complex128', 'Complex number type composed of 2 64-bit-precision floating-point numbers'),
+    ('complex192', 'Complex number type composed of 2 96-bit extended-precision floating-point numbers'),
+    ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
+    ])
+
+
+def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
+    o = getattr(_numerictypes, obj)
+
+    character_code = dtype(o).char
+    canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``np.{}``.\n    ".format(obj)
+    alias_doc = ''.join("Alias: ``np.{}``.\n    ".format(alias) for alias in fixed_aliases)
+    alias_doc += ''.join("Alias *on this platform*: ``np.{}``: {}.\n    ".format(alias, doc)
+                         for (alias_type, alias, doc) in possible_aliases if alias_type is o)
+
+    docstring = """
+    {doc}
+    Character code: ``'{character_code}'``.
+    {canonical_name_doc}{alias_doc}
+    """.format(doc=doc.strip(), character_code=character_code,
+               canonical_name_doc=canonical_name_doc, alias_doc=alias_doc)
+
+    add_newdoc('numpy.core.numerictypes', obj, docstring)
+
+
+add_newdoc_for_scalar_type('bool_', ['bool8'],
     """
-    Complex number type composed of two 32 bit floats. Character code: 'F'.
-
+    Boolean type (True or False), stored as a byte.
     """)
 
-add_newdoc('numpy.core.numerictypes', 'complex128',
+add_newdoc_for_scalar_type('byte', [],
     """
-    Complex number type composed of two 64 bit floats. Character code: 'D'.
-    Python complex compatible.
-
+    Signed integer type, compatible with C ``char``.
     """)
 
-add_newdoc('numpy.core.numerictypes', 'complex256',
+add_newdoc_for_scalar_type('short', [],
     """
-    Complex number type composed of two 128-bit floats. Character code: 'G'.
-
+    Signed integer type, compatible with C ``short``.
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float32',
+add_newdoc_for_scalar_type('intc', [],
     """
-    32-bit floating-point number. Character code 'f'. C float compatible.
-
+    Signed integer type, compatible with C ``int``.
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float64',
+add_newdoc_for_scalar_type('int_', [],
     """
-    64-bit floating-point number. Character code 'd'. Python float compatible.
-
+    Signed integer type, compatible with Python `int` anc C ``long``.
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float96',
+add_newdoc_for_scalar_type('longlong', [],
     """
+    Signed integer type, compatible with C ``long long``.
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float128',
+add_newdoc_for_scalar_type('ubyte', [],
     """
-    128-bit floating-point number. Character code: 'g'. C long float
-    compatible.
-
+    Unsigned integer type, compatible with C ``unsigned char``.
     """)
 
-add_newdoc('numpy.core.numerictypes', 'int8',
-    """8-bit integer. Character code ``b``. C char compatible.""")
+add_newdoc_for_scalar_type('ushort', [],
+    """
+    Unsigned integer type, compatible with C ``unsigned short``.
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'int16',
-    """16-bit integer. Character code ``h``. C short compatible.""")
+add_newdoc_for_scalar_type('uintc', [],
+    """
+    Unsigned integer type, compatible with C ``unsigned int``.
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'int32',
-    """32-bit integer. Character code 'i'. C int compatible.""")
+add_newdoc_for_scalar_type('uint', [],
+    """
+    Unsigned integer type, compatible with C ``unsigned long``.
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'int64',
-    """64-bit integer. Character code 'l'. Python int compatible.""")
+add_newdoc_for_scalar_type('ulonglong', [],
+    """
+    Signed integer type, compatible with C ``unsigned long long``.
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'object_',
-    """Any Python object.  Character code: 'O'.""")
+add_newdoc_for_scalar_type('half', [],
+    """
+    Half-precision floating-point number type.
+    """)
+
+add_newdoc_for_scalar_type('single', [],
+    """
+    Single-precision floating-point number type, compatible with C ``float``.
+    """)
+
+add_newdoc_for_scalar_type('double', ['float_'],
+    """
+    Double-precision floating-point number type, compatible with Python `float`
+    and C ``double``.
+    """)
+
+add_newdoc_for_scalar_type('longdouble', ['longfloat'],
+    """
+    Extended-precision floating-point number type, compatible with C
+    ``long double`` but not necessarily with IEEE 754 quadruple-precision.
+    """)
+
+add_newdoc_for_scalar_type('csingle', ['singlecomplex'],
+    """
+    Complex number type composed of two single-precision floating-point
+    numbers.
+    """)
+
+add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'],
+    """
+    Complex number type composed of two double-precision floating-point
+    numbers, compatible with Python `complex`.
+    """)
+
+add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'],
+    """
+    Complex number type composed of two extended-precision floating-point
+    numbers.
+    """)
+
+add_newdoc_for_scalar_type('object_', [],
+    """
+    Any Python object.
+    """)
