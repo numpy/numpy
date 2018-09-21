@@ -774,6 +774,7 @@ for key in _sctype2char_dict.keys():
 for key, val in _typestr.items():
     if val not in sctypeDict:
         sctypeDict[val] = key
+        raise RuntimeError('{!r}: {!r} was not in sctype'.format(key, val))
 
 # Add additional strings to the sctypeDict
 
