@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import pickle
+import sys
 
 import numpy as np
 from numpy.testing import (
@@ -152,8 +153,10 @@ class TestArrayFunctionDispatch(object):
         roundtripped = pickle.loads(pickle.dumps(dispatched_one_arg))
         assert_(roundtripped is dispatched_one_arg)
 
-    def test_docstring(self):
-        assert_equal(dispatched_one_arg.__doc__, 'Docstring.')
+    def test_name_and_docstring(self):
+        assert_equal(dispatched_one_arg.__name__, 'dispatched_one_arg')
+        if sys.flags.optimize < 2:
+            assert_equal(dispatched_one_arg.__doc__, 'Docstring.')
 
     def test_interface(self):
 
