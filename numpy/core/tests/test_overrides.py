@@ -155,6 +155,20 @@ class TestArrayFunctionDispatch(object):
     def test_docstring(self):
         assert_equal(dispatched_one_arg.__doc__, 'Docstring.')
 
+    def test_interface(self):
+
+        class MyArray(object):
+            def __array_function__(self, func, types, args, kwargs):
+                return (self, func, types, args, kwargs)
+
+        original = MyArray()
+        (obj, func, types, args, kwargs) = dispatched_one_arg(original)
+        assert_(obj is original)
+        assert_(func is dispatched_one_arg)
+        assert_equal(set(types), {MyArray})
+        assert_equal(args, (original,))
+        assert_equal(kwargs, {})
+
 
 def _new_duck_type_and_implements():
     """Create a duck array type and implements functions."""
