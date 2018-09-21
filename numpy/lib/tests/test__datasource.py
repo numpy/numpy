@@ -8,7 +8,7 @@ from shutil import rmtree
 
 import numpy.lib._datasource as datasource
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns, SkipTest
+    assert_, assert_equal, assert_raises, assert_warns
     )
 
 if sys.version_info[0] >= 3:
@@ -137,7 +137,7 @@ class TestDataSourceOpen(object):
             import gzip
         except ImportError:
             # We don't have the gzip capabilities to test.
-            raise SkipTest
+            pytest.skip()
         # Test datasource's internal file_opener for Gzip files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.gz')
         fp = gzip.open(filepath, 'w')
@@ -153,7 +153,7 @@ class TestDataSourceOpen(object):
             import bz2
         except ImportError:
             # We don't have the bz2 capabilities to test.
-            raise SkipTest
+            pytest.skip()
         # Test datasource's internal file_opener for BZip2 files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
         fp = bz2.BZ2File(filepath, 'w')
@@ -170,7 +170,7 @@ class TestDataSourceOpen(object):
             import bz2
         except ImportError:
             # We don't have the bz2 capabilities to test.
-            raise SkipTest
+            pytest.skip()
         # Test datasource's internal file_opener for BZip2 files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
         fp = bz2.BZ2File(filepath, 'w')

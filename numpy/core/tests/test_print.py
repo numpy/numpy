@@ -5,7 +5,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import assert_, assert_equal, SkipTest
+from numpy.testing import assert_, assert_equal
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
 

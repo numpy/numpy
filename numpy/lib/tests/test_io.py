@@ -21,7 +21,7 @@ from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    assert_warns, assert_, SkipTest, assert_raises_regex, assert_raises,
+    assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
     HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles,
     )
@@ -2033,8 +2033,8 @@ M   33  21.99
             encoding = locale.getpreferredencoding()
             utf8.encode(encoding)
         except (UnicodeError, ImportError):
-            raise SkipTest('Skipping test_utf8_file_nodtype_unicode, '
-                           'unable to encode utf8 in preferred encoding')
+            pytest.skip('Skipping test_utf8_file_nodtype_unicode, '
+                        'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
             with io.open(path, "wt") as f:
