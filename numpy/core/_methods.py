@@ -154,3 +154,15 @@ def _ptp(a, axis=None, out=None, keepdims=False):
         umr_minimum(a, axis, None, None, keepdims),
         out
     )
+
+def _array_function(self, func, types, args, kwargs):
+    # TODO: rewrite this in C
+    # Cannot handle items that have __array_function__ other than our own.
+    for t in types:
+        if (hasattr(t, '__array_function__') and
+                t.__array_function__ is not mu.ndarray.__array_function__):
+            return NotImplemented
+
+    # Arguments contain no overrides, so we can safely call the
+    # overloaded function again.
+    return func(*args, **kwargs)

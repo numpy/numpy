@@ -1022,6 +1022,13 @@ cleanup:
 
 
 static PyObject *
+array_function(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    NPY_FORWARD_NDARRAY_METHOD("_array_function");
+}
+
+
+static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     NPY_ORDER order = NPY_CORDER;
@@ -2471,6 +2478,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"__array_ufunc__",
         (PyCFunction)array_ufunc,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"__array_function__",
+        (PyCFunction)array_function,
         METH_VARARGS | METH_KEYWORDS, NULL},
 
 #ifndef NPY_PY3K
