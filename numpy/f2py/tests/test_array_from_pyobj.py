@@ -8,7 +8,7 @@ import copy
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
     )
-from numpy.testing import assert_, assert_equal, SkipTest
+from numpy.testing import assert_, assert_equal
 from numpy.core.multiarray import typeinfo
 from . import util
 
@@ -24,7 +24,7 @@ def setup_module():
 
     # Check compiler availability first
     if not util.has_c_compiler():
-        raise SkipTest("No C compiler available")
+        pytest.skip("No C compiler available")
 
     if wrap is None:
         config_code = """

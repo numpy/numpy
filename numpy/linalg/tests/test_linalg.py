@@ -19,7 +19,7 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, SkipTest, suppress_warnings
+    assert_almost_equal, assert_allclose, suppress_warnings
     )
 
 
@@ -1751,7 +1751,7 @@ def test_xerbla_override():
         pid = os.fork()
     except (OSError, AttributeError):
         # fork failed, or not running on POSIX
-        raise SkipTest("Not POSIX or fork failed.")
+        pytest.skip("Not POSIX or fork failed.")
 
     if pid == 0:
         # child; close i/o file handles
@@ -1786,7 +1786,7 @@ def test_xerbla_override():
         # parent
         pid, status = os.wait()
         if os.WEXITSTATUS(status) != XERBLA_OK:
-            raise SkipTest('Numpy xerbla not linked in.')
+            pytest.skip('Numpy xerbla not linked in.')
 
 
 def test_sdot_bug_8577():
