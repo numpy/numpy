@@ -287,17 +287,15 @@ _set_array_types()
 
 
 # Add additional strings to the sctypeDict
+_toadd = ['int', 'float', 'complex', 'bool', 'object']
 if sys.version_info[0] >= 3:
-    _toadd = ['int', 'float', 'complex', 'bool', 'object',
-              'str', 'bytes', 'object', ('a', allTypes['bytes_'])]
+    _toadd.extend(['str', 'bytes', ('a', 'bytes_')])
 else:
-    _toadd = ['int', 'float', 'complex', 'bool', 'object', 'string',
-              ('str', allTypes['string_']),
-              'unicode', 'object', ('a', allTypes['string_'])]
+    _toadd.extend(['string', ('str', 'string_'), 'unicode', ('a', 'string_')])
 
 for name in _toadd:
     if isinstance(name, tuple):
-        sctypeDict[name[0]] = name[1]
+        sctypeDict[name[0]] = allTypes[name[1]]
     else:
         sctypeDict[name] = allTypes['%s_' % name]
 
