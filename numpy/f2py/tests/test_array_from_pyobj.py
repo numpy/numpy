@@ -4,6 +4,7 @@ import unittest
 import os
 import sys
 import copy
+import pytest
 
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
