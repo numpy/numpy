@@ -48,7 +48,7 @@ sctypeNA = TypeNADict()  # Contails all leaf-node types -> numarray type equival
 allTypes = {}            # Collect the types we will add to the module
 
 
-# separate the actual type info from the abtract base classes
+# separate the actual type info from the abstract base classes
 _abstract_types = {}
 _concrete_typeinfo = {}
 for k, v in typeinfo.items():
