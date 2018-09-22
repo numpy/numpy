@@ -233,14 +233,13 @@ def _set_up_aliases():
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
-    to_remove = ['ulong', 'object', 'unicode', 'int', 'long', 'float',
+    to_remove = ['ulong', 'object', 'int', 'float',
                  'complex', 'bool', 'string', 'datetime', 'timedelta']
     if sys.version_info[0] >= 3:
-        # Py3K
-        to_remove.append('bytes')
-        to_remove.append('str')
-        to_remove.remove('unicode')
-        to_remove.remove('long')
+        to_remove.extend(['bytes', 'str'])
+    else:
+        to_remove.extend(['unicode', 'long'])
+
     for t in to_remove:
         try:
             del allTypes[t]
