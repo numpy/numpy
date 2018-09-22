@@ -23,7 +23,14 @@ type_info = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000U
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
 
 cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
-    """Array path for smaller integer types"""
+    """
+    Array path for smaller integer types
+
+    This path is simpler since the high value in the open interval [low, high)
+    must be in-range for the next larger type, {{nptype_up}}. Here we case to
+    this type for checking and the recast to {{nptype}} when producing the
+    random integers.
+    """
     cdef {{utype}}_t rng, last_rng, off, val, mask, out_val
     cdef uint32_t buf
     cdef {{utype}}_t *out_data
@@ -61,6 +68,7 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
         for i in range(cnt):
             low_v = (<{{nptype_up}}_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
             high_v = (<{{nptype_up}}_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
+            # Subtract 1 since generator produces values on the closed int [off, off+rng]
             rng = <{{utype}}_t>((high_v - 1) - low_v)
             off = <{{utype}}_t>(<{{nptype_up}}_t>low_v)
 
@@ -82,7 +90,18 @@ big_type_info = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFF
 {{for  nptype, utype, npctype, lb, ub in big_type_info}}
 {{ py: otype = nptype}}
 cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, brng_t *state, object lock):
-    """Array path for 64-bit integer types"""
+    """
+    Array path for 64-bit integer types
+
+    Requires special treatment since the high value can be out-of-range for
+    the largest (64 bit) integer type since the generator is specified on the
+    interval [low,high).
+
+    The internal generator does not have this issue since it generates from
+    the closes interval [low, high-1] and high-1 is always in range for the
+    64 bit integer type.
+    """
+
     cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
     cdef np.npy_intp i, cnt, n
     cdef np.broadcast it
@@ -103,6 +122,7 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, brn
     cnt = np.PyArray_SIZE(high_arr)
     flat = high_arr.flat
     for i in range(cnt):
+        # Subtract 1 since generator produces values on the closed int [off, off+rng]
         closed_upper = int(flat[i]) - 1
         if closed_upper > {{ub}}:
             raise ValueError('high is out of bounds for {{nptype}}')
@@ -130,7 +150,8 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, brn
         for i in range(n):
             low_v = (<{{nptype}}_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
             high_v = (<{{nptype}}_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
-            rng = <{{utype}}_t>(high_v - low_v) # No -1 here since implemented above
+            # Generator produces values on the closed int [off, off+rng], -1 subtracted above
+            rng = <{{utype}}_t>(high_v - low_v)
             off = <{{utype}}_t>(<{{nptype}}_t>low_v)
 
             if rng != last_rng:
@@ -190,6 +211,14 @@ cdef object _rand_{{nptype}}(object low, object high, object size, brng_t *state
     out : python scalar or ndarray of np.{{nptype}}
           `size`-shaped array of random integers from the appropriate
           distribution, or a single such random int if `size` not provided.
+
+    Notes
+    -----
+    The internal integer generator produces values from the closed
+    interval [low, high-1].  This requires some care since high can be
+    out-of-range for {{utype}}. The scalar path leaves integers as Python
+    integers until the 1 has been subtracted to avoid needing to cast
+    to a larger type.
     """
     cdef np.ndarray out_arr, low_arr, high_arr
     cdef {{utype}}_t rng, off, out_val
@@ -208,6 +237,7 @@ cdef object _rand_{{nptype}}(object low, object high, object size, brng_t *state
             (high_ndim == 0 or (high_ndim==1 and high_arr.size==1 and size is not None))):
         low = int(low_arr)
         high = int(high_arr)
+        # Subtract 1 since internal generator produces on closed interval [low, high]
         high -= 1
 
         if low < {{lb}}:
