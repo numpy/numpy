@@ -105,9 +105,9 @@ cf2py    intent(out) td
     """
 
     @pytest.mark.slow
-    def test_all(self):
-        for name in "t0,t8,t16,td,s0,s8,s16,sd".split(","):
-            self.check_function(getattr(self.module, name))
+    @pytest.mark.parametrize('name', 't0,t8,t16,td,s0,s8,s16,sd'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module, name))
 
 
 class TestF90ReturnComplex(TestReturnComplex):
@@ -164,6 +164,6 @@ end module f90_return_complex
     """
 
     @pytest.mark.slow
-    def test_all(self):
-        for name in "t0,t8,t16,td,s0,s8,s16,sd".split(","):
-            self.check_function(getattr(self.module.f90_return_complex, name))
+    @pytest.mark.parametrize('name', 't0,t8,t16,td,s0,s8,s16,sd'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module.f90_return_complex, name))
