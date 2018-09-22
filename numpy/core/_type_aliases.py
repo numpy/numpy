@@ -59,6 +59,7 @@ for k, v in typeinfo.items():
     else:
         _concrete_typeinfo[k] = v
 
+_concrete_types = set(v.type for k, v in _concrete_typeinfo.items())
 
 _kind_to_stem = {
     'u': 'uint',
@@ -247,14 +248,6 @@ def _set_up_aliases():
         except KeyError:
             pass
 _set_up_aliases()
-
-# Now, construct dictionary to lookup character codes from types
-_sctype2char_dict = {}
-def _construct_char_code_lookup():
-    for name, info in _concrete_typeinfo.items():
-        if info.char not in ['p', 'P']:
-            _sctype2char_dict[info.type] = info.char
-_construct_char_code_lookup()
 
 
 sctypes = {'int': [],
