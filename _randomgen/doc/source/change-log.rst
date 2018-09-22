@@ -1,9 +1,10 @@
 Change Log
 ----------
 
-Changes since v1.14
-===================
-
+v1.15
+=====
+- Synced empty choice changes
+- Synced upstream docstring changes
 - Synced upstream changes in permutation
 - Synced upstream doc fixes
 - Added absolute_import to avoid import noise on Python 2.7
@@ -12,5 +13,3 @@ Changes since v1.14
 - Switch to array-fillers for 0 parameter distribution to improve performance
 - Small changes to build on manylinux
 - Build wheels using multibuild
-
-
