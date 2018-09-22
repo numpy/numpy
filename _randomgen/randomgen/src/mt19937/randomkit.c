@@ -568,7 +568,7 @@ double rk_gauss(rk_state *state) {
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
-    /* Box-Muller transform */
+    /* Polar method, a more efficient version of the Box-Muller approach. */
     f = sqrt(-2.0 * log(r2) / r2);
     /* Keep for next call */
     state->gauss = f * x1;

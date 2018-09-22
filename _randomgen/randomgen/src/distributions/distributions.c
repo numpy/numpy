@@ -49,9 +49,9 @@ double random_gauss(brng_t *brng_state) {
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
-    // Box-Muller transform
+    /* Polar method, a more efficient version of the Box-Muller approach.
     f = sqrt(-2.0 * log(r2) / r2);
-    // Keep for next call
+    /* Keep for next call
     brng_state->gauss = f * x1;
     brng_state->has_gauss = true;
     return f * x2;
@@ -73,9 +73,9 @@ float random_gauss_f(brng_t *brng_state) {
       r2 = x1 * x1 + x2 * x2;
     } while (r2 >= 1.0 || r2 == 0.0);
 
-    // Box-Muller transform
+    /* Polar method, a more efficient version of the Box-Muller approach.
     f = sqrtf(-2.0f * logf(r2) / r2);
-    // Keep for next call
+    /* Keep for next call
     brng_state->gauss_f = f * x1;
     brng_state->has_gauss_f = true;
     return f * x2;
@@ -108,7 +108,7 @@ static NPY_INLINE double standard_exponential_zig(brng_t *brng_state) {
   ri >>= 8;
   x = ri * we_double[idx];
   if (ri < ke_double[idx]) {
-    return x; // 98.9% of the time we return here 1st try
+    return x; /* 98.9% of the time we return here 1st try */
   }
   return standard_exponential_zig_unlikely(brng_state, idx, x);
 }
@@ -150,7 +150,7 @@ static NPY_INLINE float standard_exponential_zig_f(brng_t *brng_state) {
   ri >>= 8;
   x = ri * we_float[idx];
   if (ri < ke_float[idx]) {
-    return x; // 98.9% of the time we return here 1st try
+    return x; /* 98.9% of the time we return here 1st try */
   }
   return standard_exponential_zig_unlikely_f(brng_state, idx, x);
 }
@@ -176,7 +176,7 @@ static NPY_INLINE double next_gauss_zig(brng_t *brng_state) {
     if (sign & 0x1)
       x = -x;
     if (rabs < ki_double[idx])
-      return x; // # 99.3% of the time return here
+      return x; /* 99.3% of the time return here */
     if (idx == 0) {
       for (;;) {
         xx = -ziggurat_nor_inv_r * log(next_double(brng_state));
@@ -220,7 +220,7 @@ float random_gauss_zig_f(brng_t *brng_state) {
     if (sign & 0x1)
       x = -x;
     if (rabs < ki_float[idx])
-      return x; // # 99.3% of the time return here
+      return x; /* # 99.3% of the time return here */
     if (idx == 0) {
       for (;;) {
         xx = -ziggurat_nor_inv_r_f * logf(next_float(brng_state));

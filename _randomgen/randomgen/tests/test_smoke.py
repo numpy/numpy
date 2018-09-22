@@ -8,6 +8,7 @@ import pytest
 from numpy.testing import assert_almost_equal, assert_equal, assert_, \
     assert_array_equal
 
+from randomgen._testing import suppress_warnings
 from randomgen import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
     PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024
 from randomgen import entropy
@@ -467,7 +468,9 @@ class RNG(object):
         assert_(len(vals) == 10)
 
     def test_random_integers(self):
-        vals = self.rg.random_integers(10, 20, 10)
+        with suppress_warnings() as sup:
+            sup.record(DeprecationWarning)
+            vals = self.rg.random_integers(10, 20, 10)
         assert_(len(vals) == 10)
 
     def test_rayleigh(self):
