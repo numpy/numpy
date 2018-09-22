@@ -171,14 +171,15 @@ cdef class LegacyGenerator:
         Get or set the augmented state
 
         Returns the basic RNGs state as well as two values added to track
-        normal generation using the Box-Muller method. 
+        normal generation using the Polar (Box-Muller-like) method.
 
         Returns
         -------
         state : dict
             Dictionary containing the information required to describe the
             state of the Basic RNG with two additional fields, gauss and
-            has_gauss, required to store generated Box-Muller normals.
+            has_gauss, required to store generated Polar transformation
+            (Box-Muller-like) normals.
         """
         st = self._basicrng.state
         st['has_gauss'] = self._aug_state.has_gauss

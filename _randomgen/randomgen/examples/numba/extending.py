@@ -68,10 +68,10 @@ normalsj(1, state_addr)
 start = dt.datetime.now()
 normalsj(1000000, state_addr)
 ms = 1000 * (dt.datetime.now() - start).total_seconds()
-print('1,000,000 Box-Muller (numba/Xoroshiro128) randoms in '
+print('1,000,000 Polar-transform (numba/Xoroshiro128) randoms in '
       '{ms:0.1f}ms'.format(ms=ms))
 
 start = dt.datetime.now()
 np.random.standard_normal(1000000)
 ms = 1000 * (dt.datetime.now() - start).total_seconds()
-print('1,000,000 Box-Muller (NumPy) randoms in {ms:0.1f}ms'.format(ms=ms))
+print('1,000,000 Polar-transform (NumPy) randoms in {ms:0.1f}ms'.format(ms=ms))

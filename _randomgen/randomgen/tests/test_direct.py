@@ -146,7 +146,7 @@ class Base(object):
         uints = rs.random_raw(1000)
         assert_equal(uints, self.data2['data'])
 
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
+    @pytest.mark.skip(reason='Polar transform no longer supported')
     def test_gauss_inv(self):
         n = 25
         rs = RandomGenerator(self.brng(*self.data1['seed']))
@@ -352,7 +352,7 @@ class TestDSFMT(Base):
         assert_equal(uniform_from_dsfmt(self.data2['data']),
                      rs.random_sample(1000))
 
-    @pytest.mark.skip(reason='Box-Muller no longer supported')
+    @pytest.mark.skip(reason='Polar transform no longer supported')
     def test_gauss_inv(self):
         n = 25
         rs = RandomGenerator(self.brng(*self.data1['seed']))

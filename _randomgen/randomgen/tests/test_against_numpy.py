@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose, assert_array_equal, assert_equal
 
 import randomgen
 from randomgen import RandomGenerator, MT19937
+from randomgen._testing import suppress_warnings
 from randomgen.legacy import LegacyGenerator
 
 
@@ -263,9 +264,11 @@ class TestAgainstNumPy(object):
     def test_random_integers(self):
         self._set_common_state()
         self._is_state_common()
-        compare_2_input(self.nprs.random_integers,
-                        self.rg.random_integers,
-                        is_scalar=True)
+        with suppress_warnings() as sup:
+            sup.record(DeprecationWarning)
+            compare_2_input(self.nprs.random_integers,
+                            self.rg.random_integers,
+                            is_scalar=True)
         self._is_state_common()
 
     def test_binomial(self):
