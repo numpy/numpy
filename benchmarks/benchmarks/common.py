@@ -113,4 +113,4 @@ def get_indexes_rand_():
 
 
 class Benchmark(object):
-    goal_time = 0.25
+    sample_time = 0.25
