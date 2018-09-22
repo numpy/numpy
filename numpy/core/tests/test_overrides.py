@@ -172,6 +172,16 @@ class TestArrayFunctionDispatch(object):
         assert_equal(args, (original,))
         assert_equal(kwargs, {})
 
+    def test_not_implemented(self):
+
+        class MyArray(object):
+            def __array_function__(self, func, types, args, kwargs):
+                return NotImplemented
+
+        array = MyArray()
+        with assert_raises_regex(TypeError, 'no implementation found'):
+            dispatched_one_arg(array)
+
 
 def _new_duck_type_and_implements():
     """Create a duck array type and implements functions."""
@@ -232,7 +242,7 @@ class TestArrayFunctionImplementation(object):
         with assert_raises(TypeError):
             func_with_option(MyArray(), new_option='no')
 
-    def test_unimplemented(self):
+    def test_not_implemented(self):
         MyArray, implements = _new_duck_type_and_implements()
 
         @array_function_dispatch(lambda array: (array,))
