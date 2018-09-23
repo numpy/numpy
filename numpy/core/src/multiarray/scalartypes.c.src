@@ -4245,12 +4245,9 @@ initialize_numeric_types(void)
     PyStringArrType_Type.tp_free = NULL;
 
     /*
-     * NOTE: these slots aren't actually being used for
-     * string and unicode NumPy arrays -- the repr handling
-     * appears to funnel through np.ndarray Type struct and indeed
-     * none of the functions pointed to here even exist; trying
-     * to create them has no effect on behavior -- they
-     * are currently circumvented
+     * NOTE: the string and unicode str and repr
+     * slots point to functions generated above
+     * using our type template language
      */
     PyStringArrType_Type.tp_repr = stringtype_repr;
     PyStringArrType_Type.tp_str = stringtype_str;

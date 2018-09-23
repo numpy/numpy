@@ -318,7 +318,8 @@ unicodetype_concat(PyObject *self, PyObject *other)
      * array_add, which now experimentally dispatches to
      * this function if two unicode_ arrays are detected
      */
-    PyObject *item, *other_item;
+    PyObject *item;
+    PyObject *other_item;
     PyArrayIterObject *self_iter;
     PyArrayIterObject *other_iter;
     PyArrayIterObject *ret_iter;
@@ -346,13 +347,25 @@ unicodetype_concat(PyObject *self, PyObject *other)
     other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
     ret_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret);
 
-    while (other_iter->index < other_iter->size) {
+    /* TODO: handle shape mismatches and so on */
+
+    /* handle case where other has only a single element */
+    if (other_iter->size == 1) {
+        /* we'll iterate over self & add other each time */
+        other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                     PyArray_ITER_DATA(other_iter));
+    }
+
+    while (self_iter->index < self_iter->size) {
         /* retrieve item from self */
         item = PyArray_GETITEM((PyArrayObject *)self,
                                PyArray_ITER_DATA(self_iter));
         /* retrieve item from other array in concat op */
-        other_item = PyArray_GETITEM((PyArrayObject *)other,
-                                     PyArray_ITER_DATA(other_iter));
+        if (other_iter->size > 1) {
+            /* if other has a single item we can skip this */
+            other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                         PyArray_ITER_DATA(other_iter));
+        }
 
         /*
          * concat the two Unicode PyObject elements and
@@ -364,7 +377,10 @@ unicodetype_concat(PyObject *self, PyObject *other)
                          combined);
         /* probably need XDECREFs */
         PyArray_ITER_NEXT(self_iter);
-        PyArray_ITER_NEXT(other_iter);
+        if (other_iter->size > 1) {
+            /* only iterate over other if it is not "scalar" */
+            PyArray_ITER_NEXT(other_iter);
+        }
         PyArray_ITER_NEXT(ret_iter);
     }
 
@@ -381,6 +397,7 @@ static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
     PyObject *res;
+    PyObject *m2_converted;
     /*
      * this function is pointed to by the nb_add
      * slot used by np.ndarray, and apparently also
@@ -397,9 +414,27 @@ array_add(PyArrayObject *m1, PyObject *m2)
          * like a sensible requirement for __add__ for np.ndarray
          * type struct, but so far we haven't been checking this
          */
-        if (PyArray_DESCR(m1)->type_num == NPY_UNICODE &&
-            PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE) {
-            return unicodetype_concat((PyObject *)m1, m2);
+        if (!PyArray_Check(m2)) {
+            if (PyUnicode_Check(m2)) {
+                /* should be able to convert to a Unicode array */
+                m2_converted = PyArray_FROM_OTF(m2,
+                                                NPY_UNICODE,
+                                                NPY_ARRAY_FORCECAST);
+                if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
+                    PyArray_DESCR((PyArrayObject *)m2_converted)->type_num == NPY_UNICODE)) {
+                    return unicodetype_concat((PyObject *)m1, 
+                                              (PyObject *)m2_converted);
+                }
+            }
+            /* 
+             * if m2 isn't an array and can't be cast to NPY_UNICODE
+             * we will just let control flow pass through, for now
+             */
+        }
+        else if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
+                 PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE)) {
+            /* both m1 and m2 are unicode_ arrays */
+            return unicodetype_concat((PyObject *)m1, (PyObject *)m2);
         }
     }
 

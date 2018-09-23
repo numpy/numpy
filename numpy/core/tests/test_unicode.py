@@ -6,6 +6,8 @@ import numpy as np
 from numpy.compat import unicode
 from numpy.testing import assert_, assert_equal, assert_array_equal
 
+import pytest
+
 # Guess the UCS length for this python interpreter
 if sys.version_info[:2] >= (3, 3):
     # Python 3.3 uses a flexible string representation
@@ -62,16 +64,24 @@ def test_string_cast():
         assert_(str_arr != uni_arr2)
     assert_array_equal(uni_arr1, uni_arr2)
 
-def test_native_unicode_add():
+@pytest.mark.parametrize("arr1, arr2, expected", [
+    # concat two 1D unicode_ arrays of same size
+    (np.array(['a', 'b'], dtype='U1'),
+     np.array(['c', 'd'], dtype='U1'),
+     np.array(['ac', 'bd'], dtype='U2')),
+    # concat 1D unicode array with Python unicode
+    # object
+    (np.array(['x', 'y'], dtype='U1'),
+     u'abc',
+     np.array(['xabc', 'yabc'], dtype='U4')),
+    ])
+def test_native_unicode_add(arr1, arr2, expected):
     # element-wise array concat for unicode_ arrays
     # experimental, and probably belongs in a different
     # testing module
     # provides more natural interface than requiring
     # numpy.core.defchararray.add(a, b)
-    test = np.array(['a', 'b'], dtype='U1')
-    test2 = np.array(['c', 'd'], dtype='U1')
-    actual = test + test2
-    expected = np.array(['ac', 'bd'], dtype='U2')
+    actual = arr1 + arr2
     assert_equal(actual, expected)
 
 
