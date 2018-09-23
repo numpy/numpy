@@ -1,0 +1,21 @@
+
+Contributors
+============
+
+A total of 4 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Julian Taylor
+* Marten van Kerkwijk
+* Matti Picus
+
+Pull requests merged
+====================
+
+A total of 4 pull requests were merged for this release.
+
+* `#11902 <https://github.com/numpy/numpy/pull/11902>`__: BUG: Fix matrix PendingDeprecationWarning suppression for pytest...
+* `#11981 <https://github.com/numpy/numpy/pull/11981>`__: BUG: fix cached allocations without the GIL for 1.15.x
+* `#11982 <https://github.com/numpy/numpy/pull/11982>`__: BUG: fix refcount leak in PyArray_AdaptFlexibleDType
+* `#11992 <https://github.com/numpy/numpy/pull/11992>`__: BUG: Ensure boolean indexing of subclasses sets base correctly.
