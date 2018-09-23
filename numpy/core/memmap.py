@@ -219,9 +219,9 @@ class memmap(ndarray):
         if hasattr(filename, 'read'):
             f_ctx = contextlib_nullcontext(filename)
         elif is_pathlib_path(filename):
-            f_ctx = filename.open((mode == 'c' and 'r' or mode)+'b')
+            f_ctx = filename.open(('r' if mode == 'c' else mode)+'b')
         else:
-            f_ctx = open(filename, (mode == 'c' and 'r' or mode)+'b')
+            f_ctx = open(filename, ('r' if mode == 'c' else mode)+'b')
 
         with f_ctx as fid:
             fid.seek(0, 2)
