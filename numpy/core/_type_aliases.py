@@ -48,7 +48,7 @@ sctypeNA = TypeNADict()  # Contails all leaf-node types -> numarray type equival
 allTypes = {}            # Collect the types we will add to the module
 
 
-# separate the actual type info from the abtract base classes
+# separate the actual type info from the abstract base classes
 _abstract_types = {}
 _concrete_typeinfo = {}
 for k, v in typeinfo.items():
@@ -59,6 +59,7 @@ for k, v in typeinfo.items():
     else:
         _concrete_typeinfo[k] = v
 
+_concrete_types = set(v.type for k, v in _concrete_typeinfo.items())
 
 _kind_to_stem = {
     'u': 'uint',
@@ -232,14 +233,13 @@ def _set_up_aliases():
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
-    to_remove = ['ulong', 'object', 'unicode', 'int', 'long', 'float',
+    to_remove = ['ulong', 'object', 'int', 'float',
                  'complex', 'bool', 'string', 'datetime', 'timedelta']
     if sys.version_info[0] >= 3:
-        # Py3K
-        to_remove.append('bytes')
-        to_remove.append('str')
-        to_remove.remove('unicode')
-        to_remove.remove('long')
+        to_remove.extend(['bytes', 'str'])
+    else:
+        to_remove.extend(['unicode', 'long'])
+
     for t in to_remove:
         try:
             del allTypes[t]
@@ -247,14 +247,6 @@ def _set_up_aliases():
         except KeyError:
             pass
 _set_up_aliases()
-
-# Now, construct dictionary to lookup character codes from types
-_sctype2char_dict = {}
-def _construct_char_code_lookup():
-    for name, info in _concrete_typeinfo.items():
-        if info.char not in ['p', 'P']:
-            _sctype2char_dict[info.type] = info.char
-_construct_char_code_lookup()
 
 
 sctypes = {'int': [],
@@ -295,17 +287,15 @@ _set_array_types()
 
 
 # Add additional strings to the sctypeDict
+_toadd = ['int', 'float', 'complex', 'bool', 'object']
 if sys.version_info[0] >= 3:
-    _toadd = ['int', 'float', 'complex', 'bool', 'object',
-              'str', 'bytes', 'object', ('a', allTypes['bytes_'])]
+    _toadd.extend(['str', 'bytes', ('a', 'bytes_')])
 else:
-    _toadd = ['int', 'float', 'complex', 'bool', 'object', 'string',
-              ('str', allTypes['string_']),
-              'unicode', 'object', ('a', allTypes['string_'])]
+    _toadd.extend(['string', ('str', 'string_'), 'unicode', ('a', 'string_')])
 
 for name in _toadd:
     if isinstance(name, tuple):
-        sctypeDict[name[0]] = name[1]
+        sctypeDict[name[0]] = allTypes[name[1]]
     else:
         sctypeDict[name] = allTypes['%s_' % name]
 

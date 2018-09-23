@@ -113,7 +113,7 @@ from ._type_aliases import (
     allTypes,
     bitname,
     sctypes,
-    _sctype2char_dict,
+    _concrete_types,
     _concrete_typeinfo,
     _bits_of,
     _kind_to_stem,
@@ -492,12 +492,15 @@ def sctype2char(sctype):
     sctype = obj2sctype(sctype)
     if sctype is None:
         raise ValueError("unrecognized type")
-    return _sctype2char_dict[sctype]
+    if sctype not in _concrete_types:
+        # for compatibility
+        raise KeyError(sctype)
+    return dtype(sctype).char
 
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
 cast = _typedict()
-for key in _sctype2char_dict.keys():
+for key in _concrete_types:
     cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
 try:
@@ -508,7 +511,7 @@ except AttributeError:
     # Py3K
     ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
 
-ScalarType.extend(_sctype2char_dict.keys())
+ScalarType.extend(_concrete_types)
 ScalarType = tuple(ScalarType)
 
 
