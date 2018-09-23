@@ -446,6 +446,36 @@ class TestMaximumSctype(object):
         assert_equal(np.maximum_sctype(t), t)
 
 
+class Test_sctype2char(object):
+    # This function is old enough that we're really just documenting the quirks
+    # at this point.
+
+    def test_scalar_type(self):
+        assert_equal(np.sctype2char(np.double), 'd')
+        assert_equal(np.sctype2char(np.int_), 'l')
+        assert_equal(np.sctype2char(np.unicode_), 'U')
+        assert_equal(np.sctype2char(np.bytes_), 'S')
+
+    def test_other_type(self):
+        assert_equal(np.sctype2char(float), 'd')
+        assert_equal(np.sctype2char(list), 'O')
+        assert_equal(np.sctype2char(np.ndarray), 'O')
+
+    def test_third_party_scalar_type(self):
+        from numpy.core._rational_tests import rational
+        assert_raises(KeyError, np.sctype2char, rational)
+        assert_raises(KeyError, np.sctype2char, rational(1))
+
+    def test_array_instance(self):
+        assert_equal(np.sctype2char(np.array([1.0, 2.0])), 'd')
+
+    def test_abstract_type(self):
+        assert_raises(KeyError, np.sctype2char, np.floating)
+
+    def test_non_type(self):
+        assert_raises(ValueError, np.sctype2char, 1)
+
+
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
 class TestDocStrings(object):
