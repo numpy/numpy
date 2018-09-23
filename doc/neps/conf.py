@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'NumPy Enhancement Proposals'
-copyright = u'2017, NumPy Developers'
+copyright = u'2017-2018, NumPy Developers'
 author = u'NumPy Developers'
 
 # The version info for the project you're documenting, acts as replacement for
