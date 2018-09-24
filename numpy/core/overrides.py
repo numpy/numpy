@@ -26,6 +26,9 @@ def get_overloaded_types_and_args(relevant_args):
             overloaded_types.append(arg_type)
 
             if array_function is not ndarray.__array_function__:
+                # By default, insert this argument at the end, but if it is
+                # subclass of another argument, insert it before that argument.
+                # This ensures "subclasses before superclasses".
                 index = len(overloaded_args)
                 for i, old_arg in enumerate(overloaded_args):
                     if issubclass(arg_type, type(old_arg)):
