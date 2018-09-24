@@ -110,7 +110,3 @@ def get_indexes_rand_():
     indexes_rand = get_indexes_rand()
     indexes_rand_ = indexes_rand[indexes_rand < nxs]
     return indexes_rand_
-
-
-class Benchmark(object):
-    sample_time = 0.25

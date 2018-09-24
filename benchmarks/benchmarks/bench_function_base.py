@@ -1,11 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark
-
 import numpy as np
 
 
-class Histogram1D(Benchmark):
+class Histogram1D(object):
     def setup(self):
         self.d = np.linspace(0, 100, 100000)
 
@@ -19,7 +17,7 @@ class Histogram1D(Benchmark):
         np.histogram(self.d, 10000, (0, 100))
 
 
-class Histogram2D(Benchmark):
+class Histogram2D(object):
     def setup(self):
         self.d = np.linspace(0, 100, 200000).reshape((-1,2))
 
@@ -33,7 +31,7 @@ class Histogram2D(Benchmark):
         np.histogramdd(self.d, (10000, 10000), ((0, 100), (0, 100)))
 
 
-class Bincount(Benchmark):
+class Bincount(object):
     def setup(self):
         self.d = np.arange(80000, dtype=np.intp)
         self.e = self.d.astype(np.float64)
@@ -45,7 +43,7 @@ class Bincount(Benchmark):
         np.bincount(self.d, weights=self.e)
 
 
-class Median(Benchmark):
+class Median(object):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
@@ -69,7 +67,7 @@ class Median(Benchmark):
         np.median(self.o[:500], overwrite_input=True)
 
 
-class Percentile(Benchmark):
+class Percentile(object):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
@@ -81,7 +79,7 @@ class Percentile(Benchmark):
         np.percentile(self.e, [25, 35, 55, 65, 75])
 
 
-class Select(Benchmark):
+class Select(object):
     def setup(self):
         self.d = np.arange(20000)
         self.e = self.d.copy()
@@ -95,7 +93,7 @@ class Select(Benchmark):
         np.select(self.cond_large, ([self.d, self.e] * 10))
 
 
-class Sort(Benchmark):
+class Sort(object):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
@@ -138,7 +136,7 @@ class Sort(Benchmark):
         self.o.argsort()
 
 
-class Where(Benchmark):
+class Where(object):
     def setup(self):
         self.d = np.arange(20000)
         self.e = self.d.copy()

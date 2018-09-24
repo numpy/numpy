@@ -1,11 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark
-
 import numpy as np
 
 
-class MA(Benchmark):
+class MA(object):
     def setup(self):
         self.l100 = range(100)
         self.t100 = ([True] * 100)
@@ -20,7 +18,7 @@ class MA(Benchmark):
         np.ma.masked_array(self.l100, self.t100)
 
 
-class Indexing(Benchmark):
+class Indexing(object):
     param_names = ['masked', 'ndim', 'size']
     params = [[True, False],
               [1, 2],
@@ -47,7 +45,7 @@ class Indexing(Benchmark):
         self.m[self.idx_1d]
 
 
-class UFunc(Benchmark):
+class UFunc(object):
     param_names = ['a_masked', 'b_masked', 'size']
     params = [[True, False],
               [True, False],
@@ -79,7 +77,7 @@ class UFunc(Benchmark):
         np.ma.add(self.a_2d, self.b_2d)
 
 
-class Concatenate(Benchmark):
+class Concatenate(object):
     param_names = ['mode', 'n']
     params = [
         ['ndarray', 'unmasked',

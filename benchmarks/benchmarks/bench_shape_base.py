@@ -1,11 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark
-
 import numpy as np
 
 
-class Block(Benchmark):
+class Block(object):
     params = [1, 10, 100]
     param_names = ['size']
 
@@ -65,7 +63,7 @@ class Block(Benchmark):
         np.block(np.eye(3 * n))
 
 
-class Block3D(Benchmark):
+class Block3D(object):
     params = [1, 10, 100]
     param_names = ['size']
 
