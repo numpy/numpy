@@ -29,8 +29,10 @@ class AddReduceSeparate(object):
 
 class AnyAll(object):
     def setup(self):
-        self.zeros = np.zeros(100000, bool)
-        self.ones = np.ones(100000, bool)
+        # avoid np.zeros's lazy allocation that would
+        # cause page faults during benchmark
+        self.zeros = np.full(100000, 0, bool)
+        self.ones = np.full(100000, 0, bool)
 
     def time_all_fast(self):
         self.zeros.all()

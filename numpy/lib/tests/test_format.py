@@ -287,7 +287,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    raises, SkipTest
+    raises
     )
 from numpy.lib import format
 
@@ -807,7 +807,7 @@ def test_bad_header():
 
 def test_large_file_support():
     if (sys.platform == 'win32' or sys.platform == 'cygwin'):
-        raise SkipTest("Unknown if Windows has sparse filesystems")
+        pytest.skip("Unknown if Windows has sparse filesystems")
     # try creating a large sparse file
     tf_name = os.path.join(tempdir, 'sparse_file')
     try:
@@ -817,7 +817,7 @@ def test_large_file_support():
         import subprocess as sp
         sp.check_call(["truncate", "-s", "5368709120", tf_name])
     except Exception:
-        raise SkipTest("Could not create 5GB large file")
+        pytest.skip("Could not create 5GB large file")
     # write a small array to the end
     with open(tf_name, "wb") as f:
         f.seek(5368709120)
@@ -839,7 +839,7 @@ def test_large_archive():
     try:
         a = np.empty((2**30, 2), dtype=np.uint8)
     except MemoryError:
-        raise SkipTest("Could not create large file")
+        pytest.skip("Could not create large file")
 
     fname = os.path.join(tempdir, "large_archive")
 

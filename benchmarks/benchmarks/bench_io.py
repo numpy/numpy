@@ -21,6 +21,10 @@ class Copy(object):
     def time_memcpy(self, typename):
         self.d[...] = self.e_d
 
+    def time_memcpy_large_out_of_place(self, typename):
+        l = np.ones(1024**2, dtype=np.dtype(typename))
+        l.copy()
+
     def time_cont_assign(self, typename):
         self.d[...] = 1
 

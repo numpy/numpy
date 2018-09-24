@@ -21,7 +21,9 @@ class Block(object):
         self.four_1d = np.ones(6 * n)
         self.five_0d = np.ones(1 * n)
         self.six_1d = np.ones(5 * n)
-        self.zero_2d = np.zeros((2 * n, 6 * n))
+        # avoid np.zeros's lazy allocation that might cause
+        # page faults during benchmark
+        self.zero_2d = np.full((2 * n, 6 * n), 0)
 
         self.one = np.ones(3 * n)
         self.two = 2 * np.ones((3, 3 * n))
@@ -29,7 +31,9 @@ class Block(object):
         self.four = 4 * np.ones(3 * n)
         self.five = 5 * np.ones(1 * n)
         self.six = 6 * np.ones(5 * n)
-        self.zero = np.zeros((2 * n, 6 * n))
+        # avoid np.zeros's lazy allocation that might cause
+        # page faults during benchmark
+        self.zero = np.full((2 * n, 6 * n), 0)
 
     def time_block_simple_row_wise(self, n):
         np.block([self.a_2d, self.b_2d])

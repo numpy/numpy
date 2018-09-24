@@ -87,7 +87,9 @@ class Concatenate(object):
     ]
 
     def setup(self, mode, n):
-        normal = np.zeros((n, n), int)
+        # avoid np.zeros's lazy allocation that cause page faults during benchmark.
+        # np.fill will cause pagefaults to happen during setup.
+        normal = np.full((n, n), 0, int)
         unmasked = np.ma.zeros((n, n), int)
         masked = np.ma.array(normal, mask=True)
 

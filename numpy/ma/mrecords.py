@@ -29,7 +29,6 @@ from numpy.core.records import (
         )
 
 _byteorderconv = np.core.records._byteorderconv
-_typestr = ntypes._typestr
 
 import numpy.ma as ma
 from numpy.ma import (
@@ -46,24 +45,6 @@ __all__ = [
     ]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
-
-
-def _getformats(data):
-    """
-    Returns the formats of arrays in arraylist as a comma-separated string.
-
-    """
-    if hasattr(data, 'dtype'):
-        return ",".join([desc[1] for desc in data.dtype.descr])
-
-    formats = ''
-    for obj in data:
-        obj = np.asarray(obj)
-        formats += _typestr[obj.dtype.type]
-        if issubclass(obj.dtype.type, ntypes.flexible):
-            formats += repr(obj.itemsize)
-        formats += ','
-    return formats[:-1]
 
 
 def _checknames(descr, names=None):

@@ -261,16 +261,7 @@ consider carefully if any surprising behavior results.
 
    Type casting hierarchy.
 
-   .. graphviz::
-
-      digraph array_ufuncs {
-         rankdir=BT;
-         A -> C [label="C"];
-         B -> C [label="C"];
-         D -> B [label="B"];
-         ndarray -> C [label="A"];
-         ndarray -> B [label="B"];
-      }
+   .. image:: _static/nep0013_image1.png
 
    The ``__array_ufunc__`` of type A can handle ndarrays returning C,
    B can handle ndarray and D returning B, and C can handle A and B returning C,
@@ -286,14 +277,7 @@ consider carefully if any surprising behavior results.
 
    One-cycle in the ``__array_ufunc__`` graph.
 
-   .. graphviz::
-
-      digraph array_ufuncs {
-         rankdir=BT;
-         A -> B [label="B"];
-         B -> A [label="A"];
-      }
-
+   .. image:: _static/nep0013_image2.png
 
    In this case, the ``__array_ufunc__`` relations have a cycle of length 1,
    and a type casting hierarchy does not exist. Binary operations are not
@@ -303,15 +287,7 @@ consider carefully if any surprising behavior results.
 
    Longer cycle in the ``__array_ufunc__`` graph.
 
-   .. graphviz::
-
-      digraph array_ufuncs {
-         rankdir=BT;
-         A -> B [label="B"];
-         B -> C [label="C"];
-         C -> A [label="A"];
-      }
-
+   .. image:: _static/nep0013_image3.png
 
    In this case, the ``__array_ufunc__`` relations have a longer cycle, and a
    type casting hierarchy does not exist. Binary operations are still

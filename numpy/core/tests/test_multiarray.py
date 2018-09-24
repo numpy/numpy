@@ -33,7 +33,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    SkipTest, temppath, suppress_warnings
+    temppath, suppress_warnings
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -4864,8 +4864,8 @@ class TestRecord(object):
 
         # non-ascii unicode field indexing is well behaved
         if not is_py3:
-            raise SkipTest('non ascii unicode field indexing skipped; '
-                           'raises segfault on python 2.x')
+            pytest.skip('non ascii unicode field indexing skipped; '
+                        'raises segfault on python 2.x')
         else:
             assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
             assert_raises(ValueError, a.__getitem__, u'\u03e0')

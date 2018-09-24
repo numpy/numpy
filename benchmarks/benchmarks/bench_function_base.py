@@ -103,14 +103,6 @@ class Sort(object):
         self.equal = np.ones(10000)
         self.many_equal = np.sort(np.arange(10000) % 10)
 
-        # quicksort median of 3 worst case
-        self.worst = np.arange(1000000)
-        x = self.worst
-        while x.size > 3:
-            mid = x.size // 2
-            x[mid], x[-2] = x[-2], x[mid]
-            x = x[:-2]
-
     def time_sort(self):
         np.sort(self.e)
 
@@ -126,14 +118,28 @@ class Sort(object):
     def time_sort_many_equal(self):
         self.many_equal.sort()
 
-    def time_sort_worst(self):
-        np.sort(self.worst)
-
     def time_argsort(self):
         self.e.argsort()
 
     def time_argsort_random(self):
         self.o.argsort()
+
+
+class SortWorst(object):
+    def setup(self):
+        # quicksort median of 3 worst case
+        self.worst = np.arange(1000000)
+        x = self.worst
+        while x.size > 3:
+            mid = x.size // 2
+            x[mid], x[-2] = x[-2], x[mid]
+            x = x[:-2]
+
+    def time_sort_worst(self):
+        np.sort(self.worst)
+
+    # Retain old benchmark name for backward compatability
+    time_sort_worst.benchmark_name = "bench_function_base.Sort.time_sort_worst"
 
 
 class Where(object):
