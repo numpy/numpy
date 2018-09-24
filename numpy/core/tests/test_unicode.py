@@ -4,7 +4,8 @@ import sys
 
 import numpy as np
 from numpy.compat import unicode
-from numpy.testing import assert_, assert_equal, assert_array_equal
+from numpy.testing import (assert_, assert_equal, assert_array_equal,
+                           assert_raises_regex)
 
 import pytest
 
@@ -83,6 +84,15 @@ def test_native_unicode_add(arr1, arr2, expected):
     # numpy.core.defchararray.add(a, b)
     actual = arr1 + arr2
     assert_equal(actual, expected)
+
+def test_native_unicode_add_shape_mismatch():
+    # a ValueError should be raised for unicode_
+    # array __add__ with shape mismatch if one
+    # of the inputs is not a "scalar"
+    arr = np.array(['a', 'b'], dtype='U1')
+    arr2 = np.array(['a', 'b', 'c', 'd'], dtype='U1')
+    with assert_raises_regex(ValueError, 'Array shape mismatch'):
+        arr + arr2
 
 
 ############################################################

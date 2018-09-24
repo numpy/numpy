@@ -355,10 +355,8 @@ unicodetype_concat(PyObject *self, PyObject *other)
                                      PyArray_ITER_DATA(other_iter));
     }
     else if (other_iter->size != self_iter->size) {
-        /* TODO: handle shape mismatches and so on */
-        /* this is just a placeholder */
-        other_item = PyArray_GETITEM((PyArrayObject *)other,
-                                     PyArray_ITER_DATA(other_iter));
+        /* handle shape mismatches */
+        return NULL;
     }
     else {
         /* placeholder catch-all for initialization of other_item */
@@ -408,6 +406,7 @@ array_add(PyArrayObject *m1, PyObject *m2)
 {
     PyObject *res;
     PyObject *m2_converted;
+    PyObject *ret_val;
     /*
      * this function is pointed to by the nb_add
      * slot used by np.ndarray, and apparently also
@@ -444,7 +443,14 @@ array_add(PyArrayObject *m1, PyObject *m2)
         else if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
                  PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE)) {
             /* both m1 and m2 are unicode_ arrays */
-            return unicodetype_concat((PyObject *)m1, (PyObject *)m2);
+            ret_val = unicodetype_concat((PyObject *)m1, (PyObject *)m2);
+            if (ret_val == NULL) {
+                PyErr_SetString(PyExc_ValueError, "Array shape mismatch");
+                return NULL;
+            }
+            else {
+                return ret_val;
+            }
         }
     }
 
