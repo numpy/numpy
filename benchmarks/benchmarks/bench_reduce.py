@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, TYPES1, get_squares
+from .common import TYPES1, get_squares
 
 import numpy as np
 
 
-class AddReduce(Benchmark):
+class AddReduce(object):
     def setup(self):
         self.squares = get_squares().values()
 
@@ -16,7 +16,7 @@ class AddReduce(Benchmark):
         [np.add.reduce(a, axis=1) for a in self.squares]
 
 
-class AddReduceSeparate(Benchmark):
+class AddReduceSeparate(object):
     params = [[0, 1], TYPES1]
     param_names = ['axis', 'type']
 
@@ -27,7 +27,7 @@ class AddReduceSeparate(Benchmark):
         np.add.reduce(self.a, axis=axis)
 
 
-class AnyAll(Benchmark):
+class AnyAll(object):
     def setup(self):
         # avoid np.zeros's lazy allocation that would
         # cause page faults during benchmark
@@ -47,7 +47,7 @@ class AnyAll(Benchmark):
         self.zeros.any()
 
 
-class MinMax(Benchmark):
+class MinMax(object):
     params = [np.float32, np.float64, np.intp]
     param_names = ['dtype']
 
@@ -61,7 +61,7 @@ class MinMax(Benchmark):
         np.max(self.d)
 
 
-class SmallReduction(Benchmark):
+class SmallReduction(object):
     def setup(self):
         self.d = np.ones(100, dtype=np.float32)
 

@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark
-
 from numpy.core.overrides import array_function_dispatch
 import numpy as np
 
@@ -32,7 +30,7 @@ class DuckArray(object):
         pass
 
 
-class ArrayFunction(Benchmark):
+class ArrayFunction(object):
 
     def setup(self):
         self.numpy_array = np.array(1)

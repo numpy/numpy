@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, get_squares_
+from .common import get_squares_
 
 import numpy as np
 
@@ -27,7 +27,7 @@ for name in dir(np):
         print("Missing ufunc %r" % (name,))
 
 
-class Broadcast(Benchmark):
+class Broadcast(object):
     def setup(self):
         self.d = np.ones((50000, 100), dtype=np.float64)
         self.e = np.ones((100,), dtype=np.float64)
@@ -36,7 +36,7 @@ class Broadcast(Benchmark):
         self.d - self.e
 
 
-class UFunc(Benchmark):
+class UFunc(object):
     params = [ufuncs]
     param_names = ['ufunc']
     timeout = 10
@@ -60,7 +60,7 @@ class UFunc(Benchmark):
         [self.f(*arg) for arg in self.args]
 
 
-class Custom(Benchmark):
+class Custom(object):
     def setup(self):
         self.b = np.ones(20000, dtype=bool)
 
@@ -77,7 +77,7 @@ class Custom(Benchmark):
         (self.b | self.b)
 
 
-class CustomInplace(Benchmark):
+class CustomInplace(object):
     def setup(self):
         self.c = np.ones(500000, dtype=np.int8)
         self.i = np.ones(150000, dtype=np.int32)
@@ -116,7 +116,7 @@ class CustomInplace(Benchmark):
         1. + self.d + 1.
 
 
-class CustomScalar(Benchmark):
+class CustomScalar(object):
     params = [np.float32, np.float64]
     param_names = ['dtype']
 
@@ -136,7 +136,7 @@ class CustomScalar(Benchmark):
         (self.d < 1)
 
 
-class Scalar(Benchmark):
+class Scalar(object):
     def setup(self):
         self.x = np.asarray(1.0)
         self.y = np.asarray((1.0 + 1j))
@@ -164,7 +164,7 @@ class ArgPack(object):
         ))
 
 
-class ArgParsing(Benchmark):
+class ArgParsing(object):
     # In order to benchmark the speed of argument parsing, all but the
     # out arguments are chosen such that they have no effect on the
     # calculation.  In particular, subok=True and where=True are
@@ -189,7 +189,7 @@ class ArgParsing(Benchmark):
         np.add(*arg_pack.args, **arg_pack.kwargs)
 
 
-class ArgParsingReduce(Benchmark):
+class ArgParsingReduce(object):
     # In order to benchmark the speed of argument parsing, all but the
     # out arguments are chosen such that they have minimal effect on the
     # calculation.
