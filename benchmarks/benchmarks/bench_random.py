@@ -1,9 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
+from .common import Benchmark
+
 import numpy as np
 
 
-class Random(object):
+class Random(Benchmark):
     params = ['normal', 'uniform', 'weibull 1', 'binomial 10 0.5',
               'poisson 10']
 
@@ -19,7 +21,7 @@ class Random(object):
         self.func(*self.params)
 
 
-class Shuffle(object):
+class Shuffle(Benchmark):
     def setup(self):
         self.a = np.arange(100000)
 
@@ -27,7 +29,7 @@ class Shuffle(object):
         np.random.shuffle(self.a)
 
 
-class Randint(object):
+class Randint(Benchmark):
 
     def time_randint_fast(self):
         """Compare to uint32 below"""
@@ -38,7 +40,7 @@ class Randint(object):
         np.random.randint(0, 2**30 + 1, size=10**5)
 
 
-class Randint_dtype(object):
+class Randint_dtype(Benchmark):
     high = {
         'bool': 1,
         'uint8': 2**7,
@@ -64,7 +66,7 @@ class Randint_dtype(object):
         np.random.randint(0, high + 1, size=10**5, dtype=name)
 
 
-class Permutation(object):
+class Permutation(Benchmark):
     def setup(self):
         self.n = 10000
         self.a_1d = np.random.random_sample(self.n)

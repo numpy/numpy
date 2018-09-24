@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import get_squares_, get_indexes_, get_indexes_rand_
+from .common import Benchmark, get_squares_, get_indexes_, get_indexes_rand_
 
 from os.path import join as pjoin
 import shutil
@@ -11,7 +11,7 @@ import numpy as np
 from tempfile import mkdtemp
 
 
-class Indexing(object):
+class Indexing(Benchmark):
     params = [["indexes_", "indexes_rand_"],
               ['I', ':,I', 'np.ix_(I, I)'],
               ['', '=1']]
@@ -38,7 +38,7 @@ class Indexing(object):
         self.func()
 
 
-class IndexingSeparate(object):
+class IndexingSeparate(Benchmark):
     def setup(self):
         self.tmp_dir = mkdtemp()
         self.fp = memmap(pjoin(self.tmp_dir, 'tmp.dat'),
@@ -58,7 +58,7 @@ class IndexingSeparate(object):
             self.fp[self.indexes]
 
 
-class IndexingStructured0D(object):
+class IndexingStructured0D(Benchmark):
     def setup(self):
         self.dt = np.dtype([('a', 'f4', 256)])
 

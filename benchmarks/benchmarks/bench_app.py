@@ -1,11 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
+from .common import Benchmark
+
 import numpy as np
 
 from six.moves import xrange
 
 
-class LaplaceInplace(object):
+class LaplaceInplace(Benchmark):
     params = ['inplace', 'normal']
     param_names = ['update']
 
@@ -51,7 +53,7 @@ class LaplaceInplace(object):
         self.run()
 
 
-class MaxesOfDots(object):
+class MaxesOfDots(Benchmark):
     def setup(self):
         np.random.seed(1)
         nsubj = 5
