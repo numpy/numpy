@@ -37,6 +37,7 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 
 from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
                         take, sqrt)
+from numpy.core.multiarray import normalize_axis_index
 from . import fftpack_lite as fftpack
 from .helper import _FFTCache
 
@@ -47,6 +48,7 @@ _real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
              work_function=fftpack.cfftf, fft_cache=_fft_cache):
     a = asarray(a)
+    axis = normalize_axis_index(axis, a.ndim)
 
     if n is None:
         n = a.shape[axis]
@@ -78,10 +80,10 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
             z[tuple(index)] = a
             a = z
 
-    if axis != -1:
+    if axis != a.ndim - 1:
         a = swapaxes(a, axis, -1)
     r = work_function(a, wsave)
-    if axis != -1:
+    if axis != a.ndim - 1:
         r = swapaxes(r, axis, -1)
 
     # As soon as we put wsave back into the cache, another thread could pick it
