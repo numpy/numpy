@@ -82,6 +82,23 @@ class TestGetOverloadedTypesAndArgs(object):
         assert_equal(set(types), {np.ndarray, Other})
         assert_equal(list(args), [other])
 
+    def test_ndarray_subclass_and_duck_array(self):
+
+        class OverrideSub(np.ndarray):
+            __array_function__ = _return_self
+
+        class Other(object):
+            __array_function__ = _return_self
+
+        array = np.array(1)
+        subarray = np.array(1).view(OverrideSub)
+        other = Other()
+
+        assert_equal(_get_overloaded_args([array, subarray, other]),
+                     [subarray, other])
+        assert_equal(_get_overloaded_args([array, other, subarray]),
+                     [subarray, other])
+
     def test_many_duck_arrays(self):
 
         class A(object):
