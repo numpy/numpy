@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import get_squares
+from .common import Benchmark, get_squares
 
 import numpy as np
 from io import StringIO
 
 
-class Copy(object):
+class Copy(Benchmark):
     params = ["int8", "int16", "float32", "float64",
               "complex64", "complex128"]
     param_names = ['type']
@@ -35,7 +35,7 @@ class Copy(object):
         self.dflat[::2] = 2
 
 
-class CopyTo(object):
+class CopyTo(Benchmark):
     def setup(self):
         self.d = np.ones(50000)
         self.e = self.d.copy()
@@ -61,14 +61,14 @@ class CopyTo(object):
         np.copyto(self.d, self.e, where=self.im8)
 
 
-class Savez(object):
+class Savez(Benchmark):
     def setup(self):
         self.squares = get_squares()
 
     def time_vb_savez_squares(self):
         np.savez('tmp.npz', self.squares)
 
-class LoadtxtCSVComments(object):
+class LoadtxtCSVComments(Benchmark):
     # benchmarks for np.loadtxt comment handling
     # when reading in CSV files
 
@@ -97,7 +97,7 @@ class LoadtxtCSVComments(object):
                    delimiter=u',')
         self.data_comments.seek(0)
 
-class LoadtxtCSVdtypes(object):
+class LoadtxtCSVdtypes(Benchmark):
     # benchmarks for np.loadtxt operating with
     # different dtypes parsed / cast from CSV files
 
@@ -122,7 +122,7 @@ class LoadtxtCSVdtypes(object):
                    dtype=dtype)
         self.csv_data.seek(0)
 
-class LoadtxtCSVStructured(object):
+class LoadtxtCSVStructured(Benchmark):
     # benchmarks for np.loadtxt operating with
     # a structured data type & CSV file
 
@@ -145,7 +145,7 @@ class LoadtxtCSVStructured(object):
         self.csv_data.seek(0)
 
 
-class LoadtxtCSVSkipRows(object):
+class LoadtxtCSVSkipRows(Benchmark):
     # benchmarks for loadtxt row skipping when
     # reading in csv file data; a similar benchmark
     # is present in the pandas asv suite
@@ -166,7 +166,7 @@ class LoadtxtCSVSkipRows(object):
                    delimiter=',',
                    skiprows=skiprows)
 
-class LoadtxtReadUint64Integers(object):
+class LoadtxtReadUint64Integers(Benchmark):
     # pandas has a similar CSV reading benchmark
     # modified to suit np.loadtxt
 
@@ -192,7 +192,7 @@ class LoadtxtReadUint64Integers(object):
         np.loadtxt(self.data2)
         self.data2.seek(0)
 
-class LoadtxtUseColsCSV(object):
+class LoadtxtUseColsCSV(Benchmark):
     # benchmark selective column reading from CSV files
     # using np.loadtxt
 
@@ -212,7 +212,7 @@ class LoadtxtUseColsCSV(object):
                    usecols=usecols)
         self.csv_data.seek(0)
 
-class LoadtxtCSVDateTime(object):
+class LoadtxtCSVDateTime(Benchmark):
     # benchmarks for np.loadtxt operating with
     # datetime data in a CSV file
 

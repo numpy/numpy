@@ -1,13 +1,15 @@
-"""objects for `numpy.lib`."""
+"""Benchmarks for `numpy.lib`."""
 
 
 from __future__ import absolute_import, division, print_function
 
+from .common import Benchmark
+
 import numpy as np
 
 
-class Pad(object):
-    """objects for `numpy.pad`."""
+class Pad(Benchmark):
+    """Benchmarks for `numpy.pad`."""
 
     param_names = ["shape", "pad_width", "mode"]
     params = [

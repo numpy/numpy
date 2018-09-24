@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import get_squares_, get_indexes_rand, TYPES1
+from .common import Benchmark, get_squares_, get_indexes_rand, TYPES1
 
 import numpy as np
 
 
-class Eindot(object):
+class Eindot(Benchmark):
     def setup(self):
         self.a = np.arange(60000.0).reshape(150, 400)
         self.ac = self.a.copy()
@@ -73,7 +73,7 @@ class Eindot(object):
         np.tensordot(self.a3, self.b3, axes=([1, 0], [0, 1]))
 
 
-class Linalg(object):
+class Linalg(Benchmark):
     params = [['svd', 'pinv', 'det', 'norm'],
               TYPES1]
     param_names = ['op', 'type']
@@ -100,7 +100,7 @@ class Linalg(object):
         self.func(self.a)
 
 
-class Lstsq(object):
+class Lstsq(Benchmark):
     def setup(self):
         self.a = get_squares_()['float64']
         self.b = get_indexes_rand()[:100].astype(np.float64)

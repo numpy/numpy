@@ -1,9 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
+from .common import Benchmark
+
 import numpy as np
 
 
-class Histogram1D(object):
+class Histogram1D(Benchmark):
     def setup(self):
         self.d = np.linspace(0, 100, 100000)
 
@@ -17,7 +19,7 @@ class Histogram1D(object):
         np.histogram(self.d, 10000, (0, 100))
 
 
-class Histogram2D(object):
+class Histogram2D(Benchmark):
     def setup(self):
         self.d = np.linspace(0, 100, 200000).reshape((-1,2))
 
@@ -31,7 +33,7 @@ class Histogram2D(object):
         np.histogramdd(self.d, (10000, 10000), ((0, 100), (0, 100)))
 
 
-class Bincount(object):
+class Bincount(Benchmark):
     def setup(self):
         self.d = np.arange(80000, dtype=np.intp)
         self.e = self.d.astype(np.float64)
@@ -43,7 +45,7 @@ class Bincount(object):
         np.bincount(self.d, weights=self.e)
 
 
-class Median(object):
+class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
@@ -67,7 +69,7 @@ class Median(object):
         np.median(self.o[:500], overwrite_input=True)
 
 
-class Percentile(object):
+class Percentile(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
@@ -79,7 +81,7 @@ class Percentile(object):
         np.percentile(self.e, [25, 35, 55, 65, 75])
 
 
-class Select(object):
+class Select(Benchmark):
     def setup(self):
         self.d = np.arange(20000)
         self.e = self.d.copy()
@@ -93,7 +95,7 @@ class Select(object):
         np.select(self.cond_large, ([self.d, self.e] * 10))
 
 
-class Sort(object):
+class Sort(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
         self.o = np.arange(10001, dtype=np.float32)
@@ -102,14 +104,6 @@ class Sort(object):
         # quicksort implementations can have issues with equal elements
         self.equal = np.ones(10000)
         self.many_equal = np.sort(np.arange(10000) % 10)
-
-        # quicksort median of 3 worst case
-        self.worst = np.arange(1000000)
-        x = self.worst
-        while x.size > 3:
-            mid = x.size // 2
-            x[mid], x[-2] = x[-2], x[mid]
-            x = x[:-2]
 
     def time_sort(self):
         np.sort(self.e)
@@ -126,9 +120,6 @@ class Sort(object):
     def time_sort_many_equal(self):
         self.many_equal.sort()
 
-    def time_sort_worst(self):
-        np.sort(self.worst)
-
     def time_argsort(self):
         self.e.argsort()
 
@@ -136,7 +127,24 @@ class Sort(object):
         self.o.argsort()
 
 
-class Where(object):
+class SortWorst(Benchmark):
+    def setup(self):
+        # quicksort median of 3 worst case
+        self.worst = np.arange(1000000)
+        x = self.worst
+        while x.size > 3:
+            mid = x.size // 2
+            x[mid], x[-2] = x[-2], x[mid]
+            x = x[:-2]
+
+    def time_sort_worst(self):
+        np.sort(self.worst)
+
+    # Retain old benchmark name for backward compatability
+    time_sort_worst.benchmark_name = "bench_function_base.Sort.time_sort_worst"
+
+
+class Where(Benchmark):
     def setup(self):
         self.d = np.arange(20000)
         self.e = self.d.copy()

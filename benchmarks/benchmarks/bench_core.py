@@ -1,9 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
+from .common import Benchmark
+
 import numpy as np
 
 
-class Core(object):
+class Core(Benchmark):
     def setup(self):
         self.l100 = range(100)
         self.l50 = range(50)
@@ -74,7 +76,7 @@ class Core(object):
         np.tril(self.l10x10)
 
 
-class Temporaries(object):
+class Temporaries(Benchmark):
     def setup(self):
         self.amid = np.ones(50000)
         self.bmid = np.ones(50000)
@@ -94,7 +96,7 @@ class Temporaries(object):
         (self.alarge + self.blarge) - 2
 
 
-class CorrConv(object):
+class CorrConv(Benchmark):
     params = [[50, 1000, 1e5],
               [10, 100, 1000, 1e4],
               ['valid', 'same', 'full']]
@@ -111,7 +113,7 @@ class CorrConv(object):
         np.convolve(self.x1, self.x2, mode=mode)
 
 
-class CountNonzero(object):
+class CountNonzero(Benchmark):
     param_names = ['numaxes', 'size', 'dtype']
     params = [
         [1, 2, 3],
@@ -135,7 +137,7 @@ class CountNonzero(object):
                 self.x.ndim - 1, self.x.ndim - 2))
 
 
-class PackBits(object):
+class PackBits(Benchmark):
     param_names = ['dtype']
     params = [[bool, np.uintp]]
     def setup(self, dtype):
@@ -152,7 +154,7 @@ class PackBits(object):
         np.packbits(self.d2, axis=1)
 
 
-class UnpackBits(object):
+class UnpackBits(Benchmark):
     def setup(self):
         self.d = np.ones(10000, dtype=np.uint8)
         self.d2 = np.ones((200, 1000), dtype=np.uint8)
@@ -167,6 +169,6 @@ class UnpackBits(object):
         np.unpackbits(self.d2, axis=1)
 
 
-class Indices(object):
+class Indices(Benchmark):
     def time_indices(self):
         np.indices((1000, 500))
