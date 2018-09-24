@@ -347,11 +347,21 @@ unicodetype_concat(PyObject *self, PyObject *other)
     other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
     ret_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret);
 
-    /* TODO: handle shape mismatches and so on */
 
     /* handle case where other has only a single element */
     if (other_iter->size == 1) {
         /* we'll iterate over self & add other each time */
+        other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                     PyArray_ITER_DATA(other_iter));
+    }
+    else if (other_iter->size != self_iter->size) {
+        /* TODO: handle shape mismatches and so on */
+        /* this is just a placeholder */
+        other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                     PyArray_ITER_DATA(other_iter));
+    }
+    else {
+        /* placeholder catch-all for initialization of other_item */
         other_item = PyArray_GETITEM((PyArrayObject *)other,
                                      PyArray_ITER_DATA(other_iter));
     }
@@ -361,7 +371,7 @@ unicodetype_concat(PyObject *self, PyObject *other)
         item = PyArray_GETITEM((PyArrayObject *)self,
                                PyArray_ITER_DATA(self_iter));
         /* retrieve item from other array in concat op */
-        if (other_iter->size > 1) {
+        if (other_iter->size > 1 && self_iter->index > 0) {
             /* if other has a single item we can skip this */
             other_item = PyArray_GETITEM((PyArrayObject *)other,
                                          PyArray_ITER_DATA(other_iter));
