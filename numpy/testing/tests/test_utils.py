@@ -1086,7 +1086,18 @@ class TestStringEqual(object):
 
 
 def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
-    mod_warns = mod.__warningregistry__
+    try:
+        mod_warns = mod.__warningregistry__
+    except AttributeError:
+        # the lack of a __warningregistry__
+        # attribute means that no warning has
+        # occurred; this can be triggered in
+        # a parallel test scenario, while in
+        # a serial test scenario an initial
+        # warning (and therefore the attribute)
+        # are always created first
+        mod_warns = {}
+
     num_warns = len(mod_warns)
     # Python 3.4 appears to clear any pre-existing warnings of the same type,
     # when raising warnings inside a catch_warnings block. So, there is a
@@ -1107,6 +1118,33 @@ def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
             if py34 is not None:
                 n_in_context = py34
     assert_equal(num_warns, n_in_context)
+
+def test_warn_len_equal_call_scenarios():
+    # assert_warn_len_equal is called under
+    # varying circumstances depending on serial
+    # vs. parallel test scenarios; this test
+    # simply aims to probe both code paths and
+    # check that no assertion is uncaught
+
+    # parallel scenario -- no warning issued yet
+    class mod(object):
+        pass
+
+    mod_inst = mod()
+
+    assert_warn_len_equal(mod=mod_inst,
+                          n_in_context=0)
+
+    # serial test scenario -- the __warningregistry__
+    # attribute should be present
+    class mod(object):
+        def __init__(self):
+            self.__warningregistry__ = {'warning1':1,
+                                        'warning2':2}
+
+    mod_inst = mod()
+    assert_warn_len_equal(mod=mod_inst,
+                          n_in_context=2)
 
 
 def _get_fresh_mod():
