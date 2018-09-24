@@ -26,8 +26,10 @@ subst = {
             a freshly-allocated array is returned. A tuple (possible only as a
             keyword argument) must have length equal to the number of outputs.
         where : array_like, optional
-            Values of True indicate to calculate the ufunc at that position, values
-            of False indicate to leave the value in the output alone.
+            Broadcast over the input. If the value is True, output will be set
+            to the ufunc output; otherwise it is left unchanged. Note that if an
+            uninitialized return array is created via the default ``out=None``,
+            output where the values are False will remain uninitialized.
         **kwargs
             For other keyword-only arguments, see the
             :ref:`ufunc docs <ufuncs.kwargs>`.
