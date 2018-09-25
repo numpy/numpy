@@ -2028,7 +2028,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 {
     int i, n, allscalars = 0;
     PyArrayObject **mps = NULL;
-    PyObject *otmp;
+    PyObject *otmp = NULL;
     PyArray_Descr *intype = NULL, *stype = NULL;
     PyArray_Descr *newtype = NULL;
     NPY_SCALARKIND scalarkind = NPY_NOSCALAR, intypekind = NPY_NOSCALAR;
@@ -2112,6 +2112,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             newtype = PyArray_PromoteTypes(intype, stype);
             Py_XDECREF(intype);
             intype = newtype;
+            if (newtype == NULL) {
+                goto fail;
+            }
         }
         for (i = 0; i < n; i++) {
             Py_XDECREF(mps[i]);
@@ -2147,6 +2150,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
  fail:
     Py_XDECREF(intype);
     Py_XDECREF(stype);
+    Py_XDECREF(otmp);
     *retn = 0;
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
