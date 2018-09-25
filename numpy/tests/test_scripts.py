@@ -9,6 +9,7 @@ import os
 import pytest
 from os.path import join as pathjoin, isfile, dirname, basename
 from subprocess import Popen, PIPE
+import warnings
 
 import numpy as np
 from numpy.compat.py3k import basestring
@@ -92,7 +93,14 @@ def test_f2py():
         version = sys.version_info
         major = str(version.major)
         minor = str(version.minor)
+        f2py_success = try_f2py_commands(('f2py',))
         f2py_cmds = ('f2py', 'f2py' + major, 'f2py' + major + '.' + minor)
-        success = try_f2py_commands(f2py_cmds)
-        msg = "Warning: not all of %s, %s, and %s are found in path" % f2py_cmds
-        assert_(success == 3, msg)
+        all_success = try_f2py_commands(f2py_cmds)
+        if all_success == 3:
+            return
+        elif f2py_success == 1:
+            msg = "f2py fails"
+            warnings.warn(msg)
+        else:
+            msg = "No {}, {}, {} found".format(f2py_cmds)
+            assert_(f2py_success > 0, msg)
