@@ -9,7 +9,6 @@ import os
 import pytest
 from os.path import join as pathjoin, isfile, dirname, basename
 from subprocess import Popen, PIPE
-import warnings
 
 import numpy as np
 from numpy.compat.py3k import basestring
