@@ -307,7 +307,7 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
  * calls
  */
 static PyObject *
-unicodetype_concat(PyObject *self, PyObject *other)
+unicodetype_concat(PyObject *self, PyObject *other, int radd)
 {
     /*
      * I initially aimed to place unicodetype_concat
@@ -379,7 +379,13 @@ unicodetype_concat(PyObject *self, PyObject *other)
          * concat the two Unicode PyObject elements and
          * place them at appropriate index in ret
          */
-        combined = PyUnicode_Concat(item, other_item);
+        if (radd == 0) {
+            combined = PyUnicode_Concat(item, other_item);
+        }
+        else {
+            /* mimic __radd__ with order reversal */
+            combined = PyUnicode_Concat(other_item, item);
+        }
         PyArray_SETITEM((PyArrayObject *)ret,
                          PyArray_ITER_DATA(ret_iter),
                          combined);
@@ -405,7 +411,7 @@ static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
     PyObject *res;
-    PyObject *m2_converted;
+    PyObject *m_converted;
     PyObject *ret_val;
     /*
      * this function is pointed to by the nb_add
@@ -426,13 +432,14 @@ array_add(PyArrayObject *m1, PyObject *m2)
         if (!PyArray_Check(m2)) {
             if (PyUnicode_Check(m2)) {
                 /* should be able to convert to a Unicode array */
-                m2_converted = PyArray_FROM_OTF(m2,
-                                                NPY_UNICODE,
-                                                NPY_ARRAY_FORCECAST);
+                m_converted = PyArray_FROM_OTF(m2,
+                                               NPY_UNICODE,
+                                               NPY_ARRAY_FORCECAST);
                 if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
-                    PyArray_DESCR((PyArrayObject *)m2_converted)->type_num == NPY_UNICODE)) {
+                    PyArray_DESCR((PyArrayObject *)m_converted)->type_num == NPY_UNICODE)) {
                     return unicodetype_concat((PyObject *)m1, 
-                                              (PyObject *)m2_converted);
+                                              (PyObject *)m_converted,
+                                              0);
                 }
             }
             /* 
@@ -443,13 +450,31 @@ array_add(PyArrayObject *m1, PyObject *m2)
         else if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
                  PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE)) {
             /* both m1 and m2 are unicode_ arrays */
-            ret_val = unicodetype_concat((PyObject *)m1, (PyObject *)m2);
+            ret_val = unicodetype_concat((PyObject *)m1, (PyObject *)m2, 0);
             if (ret_val == NULL) {
                 PyErr_SetString(PyExc_ValueError, "Array shape mismatch");
                 return NULL;
             }
             else {
                 return ret_val;
+            }
+        }
+    }
+    else if (PyArray_Check(m2)) {
+        /*
+         * Reverse the logic from above -- effectively
+         * supporting __radd__ indirectly
+         */
+            if (PyUnicode_Check(m1)) {
+                /* should be able to convert to a Unicode array */
+                m_converted = PyArray_FROM_OTF((PyObject *)m1,
+                                               NPY_UNICODE,
+                                               NPY_ARRAY_FORCECAST);
+                if (PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE && (
+                    PyArray_DESCR((PyArrayObject *)m_converted)->type_num == NPY_UNICODE)) {
+                    return unicodetype_concat((PyObject *)m2,
+                                              (PyObject *)m_converted,
+                                              1);
             }
         }
     }

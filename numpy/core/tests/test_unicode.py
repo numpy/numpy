@@ -75,6 +75,11 @@ def test_string_cast():
     (np.array(['x', 'y'], dtype='U1'),
      u'abc',
      np.array(['xabc', 'yabc'], dtype='U4')),
+    # check for commutative Python unicode object
+    # handling (somewhat similar to  __radd__)
+    (u'abc',
+     np.array(['x', 'y'], dtype='U1'),
+     np.array(['abcx', 'abcy'], dtype='U4')),
     ])
 def test_native_unicode_add(arr1, arr2, expected):
     # element-wise array concat for unicode_ arrays
