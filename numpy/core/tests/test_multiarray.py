@@ -1416,6 +1416,10 @@ class TestMethods(object):
         A = ind.choose((x, y2))
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
+        oned = np.ones(1)
+        # gh-12031, caused SEGFAULT
+        assert_raises(TypeError, oned.choose,np.void(0), [oned])
+
     def test_prod(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
         ba2 = [[1, 2, 3, 4], [5, 6, 7, 9], [10, 3, 4, 5]]
