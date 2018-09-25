@@ -61,6 +61,7 @@ def run_command(cmd, check_code=True):
 
 
 @pytest.mark.skipif(is_inplace, reason="Cannot test f2py command inplace")
+@pytest.mark.xfail(reason="Test is unreliable")
 def test_f2py():
     # test that we can run f2py script
 
@@ -93,14 +94,7 @@ def test_f2py():
         version = sys.version_info
         major = str(version.major)
         minor = str(version.minor)
-        f2py_success = try_f2py_commands(('f2py',))
         f2py_cmds = ('f2py', 'f2py' + major, 'f2py' + major + '.' + minor)
-        all_success = try_f2py_commands(f2py_cmds)
-        if all_success == 3:
-            return
-        elif f2py_success == 1:
-            msg = "f2py fails"
-            warnings.warn(msg)
-        else:
-            msg = "No {}, {}, {} found".format(f2py_cmds)
-            assert_(f2py_success > 0, msg)
+        success = try_f2py_commands(f2py_cmds)
+        msg = "Warning: not all of %s, %s, and %s are found in path" % f2py_cmds
+        assert_(success == 3, msg)
