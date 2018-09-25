@@ -6,6 +6,7 @@ import sys
 import types
 import shlex
 import time
+import subprocess
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import *
@@ -16,7 +17,7 @@ from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.compat import get_exception
-from numpy.distutils.exec_command import exec_command
+from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       quote_args, get_num_build_jobs, \
                                       _commandline_dep_string
@@ -136,20 +137,39 @@ def CCompiler_spawn(self, cmd, display=None):
         if is_sequence(display):
             display = ' '.join(list(display))
     log.info(display)
-    s, o = exec_command(cmd)
-    if s:
-        if is_sequence(cmd):
-            cmd = ' '.join(list(cmd))
-        try:
-            print(o)
-        except UnicodeError:
-            # When installing through pip, `o` can contain non-ascii chars
-            pass
-        if re.search('Too many open files', o):
-            msg = '\nTry rerunning setup command until build succeeds.'
-        else:
-            msg = ''
-        raise DistutilsExecError('Command "%s" failed with exit status %d%s' % (cmd, s, msg))
+    try:
+        subprocess.check_output(cmd)
+    except subprocess.CalledProcessError as exc:
+        o = exc.output
+        s = exc.returncode
+    except OSError:
+        # OSError doesn't have the same hooks for the exception
+        # output, but exec_command() historically would use an
+        # empty string for EnvironmentError (base class for
+        # OSError)
+        o = b''
+        # status previously used by exec_command() for parent
+        # of OSError
+        s = 127
+    else:
+        # use a convenience return here so that any kind of
+        # caught exception will execute the default code after the
+        # try / except block, which handles various exceptions
+        return None
+
+    if is_sequence(cmd):
+        cmd = ' '.join(list(cmd))
+    try:
+        print(o)
+    except UnicodeError:
+        # When installing through pip, `o` can contain non-ascii chars
+        pass
+    if re.search(b'Too many open files', o):
+        msg = '\nTry rerunning setup command until build succeeds.'
+    else:
+        msg = ''
+    raise DistutilsExecError('Command "%s" failed with exit status %d%s' %
+                            (cmd, s, msg))
 
 replace_method(CCompiler, 'spawn', CCompiler_spawn)
 
@@ -620,7 +640,21 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
             version = m.group('version')
             return version
 
-    status, output = exec_command(version_cmd, use_tee=0)
+    try:
+        output = subprocess.check_output(version_cmd)
+    except subprocess.CalledProcessError as exc:
+        output = exc.output
+        status = exc.returncode
+    except OSError:
+        # match the historical returns for a parent
+        # exception class caught by exec_command()
+        status = 127
+        output = b''
+    else:
+        # output isn't actually a filepath but we do this
+        # for now to match previous distutils behavior
+        output = filepath_from_subprocess_output(output)
+        status = 0
 
     version = None
     if status in ok_status:
