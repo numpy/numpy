@@ -107,6 +107,12 @@ Previously, a ``LinAlgError`` would be raised when an empty matrix/empty
 matrices (with zero rows and/or columns) is/are passed in. Now outputs of
 appropriate shapes are returned.
 
+``np.diff`` Added kwargs prepend and append
+-------------------------------------------
+Add kwargs prepend and append, allowing for values to be inserted
+on either end of the differences.  Similar to options for ediff1d.
+Allows for the inverse of cumsum easily via prepend=0
+
 ARM support updated
 -------------------
 Support for ARM CPUs has been updated to accommodate 32 and 64 bit targets,
