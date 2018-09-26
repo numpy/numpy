@@ -5,8 +5,6 @@ import sys
 import copy
 import pytest
 
-import pytest
-
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
     )
