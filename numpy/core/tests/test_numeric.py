@@ -13,7 +13,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_raises, suppress_warnings, HAS_REFCOUNT
+    suppress_warnings, HAS_REFCOUNT
     )
 
 
