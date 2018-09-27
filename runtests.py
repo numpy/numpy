@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 runtests.py [OPTIONS] [-- ARGS]
-Microsoft Visual C++ 14.0 is required to run tests!
+Note: MSVC compiler versions needed on Windows for runtests.py to execute successfully
 Run tests, building the project first.
 
 Examples::
