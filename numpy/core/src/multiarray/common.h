@@ -197,15 +197,12 @@ static NPY_INLINE int
 npy_is_aligned(const void * p, const npy_uintp alignment)
 {
     /*
-     * alignment is usually a power of two
-     * the test is faster than a direct modulo
+     * Assumes alignment is a power of two, as required by the C standard.
+     * Assumes cast from pointer to uintp gives a sensible representation we
+     * can use bitwise & on (not required by C standard, but used by glibc).
+     * This test is faster than a direct modulo.
      */
-    if (NPY_LIKELY((alignment & (alignment - 1)) == 0)) {
-        return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
-    }
-    else {
-        return ((npy_uintp)(p) % alignment) == 0;
-    }
+    return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
