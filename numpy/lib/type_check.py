@@ -486,7 +486,10 @@ def asscalar(a):
     24
 
     """
-    return a.item()
+    if np.isscalar(a):
+        return a
+    else:
+        return a.item()
 
 #-----------------------------------------------------------------------------
 
