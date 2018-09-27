@@ -107,6 +107,12 @@ Previously, a ``LinAlgError`` would be raised when an empty matrix/empty
 matrices (with zero rows and/or columns) is/are passed in. Now outputs of
 appropriate shapes are returned.
 
+``np.diff`` Added kwargs prepend and append
+-------------------------------------------
+Add kwargs prepend and append, allowing for values to be inserted
+on either end of the differences.  Similar to options for ediff1d.
+Allows for the inverse of cumsum easily via prepend=0
+
 ARM support updated
 -------------------
 Support for ARM CPUs has been updated to accommodate 32 and 64 bit targets,
@@ -132,6 +138,21 @@ Detailed docstrings for scalar numeric types
 The ``help`` function, when applied to numeric types such as `np.intc`,
 `np.int_`, and `np.longlong`, now lists all of the aliased names for that type,
 distinguishing between platform -dependent and -independent aliases.
+
+Large allocations marked as suitable for transparent hugepages
+--------------------------------------------------------------
+On systems that support transparent hugepages over the madvise system call
+numpy now marks that large memory allocations can be backed by hugepages which
+reduces page fault overhead and can in some fault heavy cases improve
+performance significantly.
+On Linux for huge pages to be used the setting
+`/sys/kernel/mm/transparent_hugepage/enabled` must be at least `madvise`.
+Systems which already have it set to `always` will not see much difference as
+the kernel will automatically use huge pages where appropriate.
+
+Users of very old Linux kernels (~3.x and older) should make sure that
+`/sys/kernel/mm/transparent_hugepage/defrag` is not set to `always` to avoid
+performance problems due concurrency issues in the memory defragmentation.
 
 
 Changes

@@ -104,9 +104,10 @@ cf2py    intent(out) t8
     """
 
     @pytest.mark.slow
-    def test_all(self):
-        for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
-            self.check_function(getattr(self.module, name))
+    @pytest.mark.parametrize('name',
+                             't0,t1,t2,t4,t8,s0,s1,s2,s4,s8'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module, name))
 
 
 class TestF90ReturnInteger(TestReturnInteger):
@@ -174,6 +175,7 @@ end module f90_return_integer
     """
 
     @pytest.mark.slow
-    def test_all(self):
-        for name in "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","):
-            self.check_function(getattr(self.module.f90_return_integer, name))
+    @pytest.mark.parametrize('name',
+                             't0,t1,t2,t4,t8,s0,s1,s2,s4,s8'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module.f90_return_integer, name))

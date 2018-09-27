@@ -944,7 +944,7 @@ Linux system this is accomplished using::
 Which creates a shared_library named code.so in the current directory.
 On Windows don't forget to either add ``__declspec(dllexport)`` in front
 of void on the line preceding each function definition, or write a
-code.def file that lists the names of the functions to be exported.
+``code.def`` file that lists the names of the functions to be exported.
 
 A suitable Python interface to this shared library should be
 constructed. To do this create a file named interface.py with the
@@ -954,25 +954,25 @@ following lines at the top:
 
     __all__ = ['add', 'filter2d']
 
-    import numpy as N
+    import numpy as np
     import os
 
     _path = os.path.dirname('__file__')
-    lib = N.ctypeslib.load_library('code', _path)
-    _typedict = {'zadd' : complex, 'sadd' : N.single,
-                 'cadd' : N.csingle, 'dadd' : float}
+    lib = np.ctypeslib.load_library('code', _path)
+    _typedict = {'zadd' : complex, 'sadd' : np.single,
+                 'cadd' : np.csingle, 'dadd' : float}
     for name in _typedict.keys():
         val = getattr(lib, name)
         val.restype = None
         _type = _typedict[name]
-        val.argtypes = [N.ctypeslib.ndpointer(_type,
+        val.argtypes = [np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type,
+                        np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type,
+                        np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous,'\
                                 'writeable'),
-                        N.ctypeslib.c_intp]
+                        np.ctypeslib.c_intp]
 
 This code loads the shared library named ``code.{ext}`` located in the
 same path as this file. It then adds a return type of void to the
@@ -989,13 +989,13 @@ strides and shape of an ndarray) as the last two arguments.:
 .. code-block:: python
 
     lib.dfilter2d.restype=None
-    lib.dfilter2d.argtypes = [N.ctypeslib.ndpointer(float, ndim=2,
+    lib.dfilter2d.argtypes = [np.ctypeslib.ndpointer(float, ndim=2,
                                            flags='aligned'),
-                              N.ctypeslib.ndpointer(float, ndim=2,
+                              np.ctypeslib.ndpointer(float, ndim=2,
                                      flags='aligned, contiguous,'\
                                            'writeable'),
-                              ctypes.POINTER(N.ctypeslib.c_intp),
-                              ctypes.POINTER(N.ctypeslib.c_intp)]
+                              ctypes.POINTER(np.ctypeslib.c_intp),
+                              ctypes.POINTER(np.ctypeslib.c_intp)]
 
 Next, define a simple selection function that chooses which addition
 function to call in the shared library based on the data-type:
@@ -1020,11 +1020,11 @@ written simply as:
 
     def add(a, b):
         requires = ['CONTIGUOUS', 'ALIGNED']
-        a = N.asanyarray(a)
+        a = np.asanyarray(a)
         func, dtype = select(a.dtype)
-        a = N.require(a, dtype, requires)
-        b = N.require(b, dtype, requires)
-        c = N.empty_like(a)
+        a = np.require(a, dtype, requires)
+        b = np.require(b, dtype, requires)
+        c = np.empty_like(a)
         func(a,b,c,a.size)
         return c
 
@@ -1033,8 +1033,8 @@ and:
 .. code-block:: python
 
     def filter2d(a):
-        a = N.require(a, float, ['ALIGNED'])
-        b = N.zeros_like(a)
+        a = np.require(a, float, ['ALIGNED'])
+        b = np.zeros_like(a)
         lib.dfilter2d(a, b, a.ctypes.strides, a.ctypes.shape)
         return b
 

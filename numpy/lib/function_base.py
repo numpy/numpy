@@ -1090,7 +1090,7 @@ def gradient(f, *varargs, **kwargs):
         return outvals
 
 
-def diff(a, n=1, axis=-1):
+def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     """
     Calculate the n-th discrete difference along the given axis.
 
@@ -1108,6 +1108,12 @@ def diff(a, n=1, axis=-1):
     axis : int, optional
         The axis along which the difference is taken, default is the
         last axis.
+    prepend, append : array_like, optional
+        Values to prepend or append to "a" along axis prior to
+        performing the difference.  Scalar values are expanded to
+        arrays with length 1 in the direction of axis and the shape
+        of the input array in along all other axes.  Otherwise the
+        dimension and shape must match "a" except along axis.
 
     Returns
     -------
@@ -1175,6 +1181,28 @@ def diff(a, n=1, axis=-1):
     a = asanyarray(a)
     nd = a.ndim
     axis = normalize_axis_index(axis, nd)
+
+    combined = []
+    if prepend is not np._NoValue:
+        prepend = np.asanyarray(prepend)
+        if prepend.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            prepend = np.broadcast_to(prepend, tuple(shape))
+        combined.append(prepend)
+
+    combined.append(a)
+
+    if append is not np._NoValue:
+        append = np.asanyarray(append)
+        if append.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            append = np.broadcast_to(append, tuple(shape))
+        combined.append(append)
+
+    if len(combined) > 1:
+        a = np.concatenate(combined, axis)
 
     slice1 = [slice(None)] * nd
     slice2 = [slice(None)] * nd
