@@ -15,7 +15,7 @@ import pytest
 
 
 
-class TestSetOps(object):
+class TestSetOps1d(object):
 
     def test_intersect1d(self):
         # unique inputs
@@ -189,47 +189,6 @@ class TestSetOps(object):
                             to_begin=prepend)
         assert_equal(actual, expected)
 
-
-    def test_isin(self):
-        # the tests for in1d cover most of isin's behavior
-        # if in1d is removed, would need to change those tests to test
-        # isin instead.
-        def _isin_slow(a, b):
-            b = np.asarray(b).flatten().tolist()
-            return a in b
-        isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
-        def assert_isin_equal(a, b):
-            x = isin(a, b)
-            y = isin_slow(a, b)
-            assert_array_equal(x, y)
-
-        #multidimensional arrays in both arguments
-        a = np.arange(24).reshape([2, 3, 4])
-        b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
-        assert_isin_equal(a, b)
-
-        #array-likes as both arguments
-        c = [(9, 8), (7, 6)]
-        d = (9, 7)
-        assert_isin_equal(c, d)
-
-        #zero-d array:
-        f = np.array(3)
-        assert_isin_equal(f, b)
-        assert_isin_equal(a, f)
-        assert_isin_equal(f, f)
-
-        #scalar:
-        assert_isin_equal(5, b)
-        assert_isin_equal(a, 6)
-        assert_isin_equal(5, 6)
-
-        #empty array-like:
-        x = []
-        assert_isin_equal(x, b)
-        assert_isin_equal(a, x)
-        assert_isin_equal(x, x)
-
     def test_in1d(self):
         # we use two different sizes for the b array here to test the
         # two different paths in in1d().
@@ -352,6 +311,42 @@ class TestSetOps(object):
         result = np.in1d(ar1, ar2)
         assert_array_equal(result, expected)
 
+#    def test_xor1d_indices(self):
+#        # unique inputs
+#        a = np.array([1, 2, 3, 4])
+#        ee = np.array([0, 3])
+#        for b in (np.array([2, 1, 4, 6]), np.append(np.array([2, 1, 4, 6]), np.zeros(300))):
+#            c, i2 = np.setxor1d(a, b, assume_unique=True, return_indices=True)
+#            assert_array_equal(a[c], ee)
+#            assert_array_equal(b[i2], ee)
+#
+#        # non-unique inputs
+#        a = np.array([1, 2, 2, 3, 4, 3, 2, 0, np.Inf, 7, 11])
+#        b = np.array([1, 8, 4, 2, 2, 3, 2, 3, 1, 8, 4, 2, 2, 3, 2, 3, 1, 8, 4, 2, 2, 3, 2, 3, 1, 8, 4, 2, 2, 3, 2, 3])
+#        c, i2 = np.setxor1d(a, b, return_indices=True)
+#        ef = np.array([1, 2, 3, 4])
+#        assert_array_equal(c, np.array(7*[True]+4*[False]))
+#        assert_array_equal(b[i2], ef)
+#        assert_array_equal(i2, np.array([[0, 8, 16, 24], [3, 4, 6, 11, 12, 14, 19, 20, 22, 27, 28, 30], [5, 13, 21, 29], [2, 10, 18, 26]]))
+#
+#        # non1d, unique inputs
+#        a = np.array([[2, 4, 5, 6], [7, 8, 1, 15]])
+#        b = np.array([[3, 2, 7, 6], [10, 12, 8, 9]])
+#        c, i1, i2 = np.setxor1d(a, b, return_indices=True)
+#        ui1 = np.unravel_index(i1, a.shape)
+#        ui2 = np.unravel_index(i2, b.shape)
+#        ea = np.array([2, 6, 7, 8])
+#        assert_array_equal(ea, a[ui1])
+#        assert_array_equal(ea, b[ui2])
+#
+#        # non1d, not assumed to be uniqueinputs
+#        a = np.array([[2, 4, 5, 6, 6], [4, 7, 8, 7, 2]])
+#        b = np.array([[3, 2, 7, 7], [10, 12, 8, 7]])
+#        c, i2 = np.setxor1d(a, b, return_indices=True)
+#        ui2 = np.unravel_index(i2, b.shape)
+#        ea = np.array([2, 7, 8])
+#        assert_array_equal(ea, b[ui2])
+
     def test_union1d(self):
         a = np.array([5, 4, 7, 1, 2])
         b = np.array([2, 4, 3, 3, 2, 1, 5])
@@ -402,12 +397,8 @@ class TestSetOps(object):
         aux2 = union1d(a, b)
         c2 = setdiff1d(aux2, aux1)
         assert_array_equal(c1, c2)
-
-
-class TestUnique(object):
-
+    
     def test_unique_1d(self):
-
         def check_all(a, b, i1, i2, c, dt):
             base_msg = 'check {0} failed for type {1}'
 
@@ -517,6 +508,49 @@ class TestUnique(object):
         assert_equal(a3_idx.dtype, np.intp)
         assert_equal(a3_inv.dtype, np.intp)
 
+
+
+class TestSetOpsNd(object):
+    def test_isin(self):
+        # the tests for in1d cover most of isin's behavior
+        # if in1d is removed, would need to change those tests to test
+        # isin instead.
+        def _isin_slow(a, b):
+            b = np.asarray(b).flatten().tolist()
+            return a in b
+        isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
+        def assert_isin_equal(a, b):
+            x = isin(a, b)
+            y = isin_slow(a, b)
+            assert_array_equal(x, y)
+
+        #multidimensional arrays in both arguments
+        a = np.arange(24).reshape([2, 3, 4])
+        b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
+        assert_isin_equal(a, b)
+
+        #array-likes as both arguments
+        c = [(9, 8), (7, 6)]
+        d = (9, 7)
+        assert_isin_equal(c, d)
+
+        #zero-d array:
+        f = np.array(3)
+        assert_isin_equal(f, b)
+        assert_isin_equal(a, f)
+        assert_isin_equal(f, f)
+
+        #scalar:
+        assert_isin_equal(5, b)
+        assert_isin_equal(a, 6)
+        assert_isin_equal(5, 6)
+
+        #empty array-like:
+        x = []
+        assert_isin_equal(x, b)
+        assert_isin_equal(a, x)
+        assert_isin_equal(x, x)
+
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
         assert_raises(TypeError, self._run_axis_tests,
@@ -603,15 +637,25 @@ class TestUnique(object):
         msg = "Unique's return_index=True failed with axis=0"
         assert_array_equal(data[idx], uniq, msg)
         msg = "Unique's return_inverse=True failed with axis=0"
-        assert_array_equal(uniq[inv], data)
+        assert_array_equal(uniq[inv], data, msg)
         msg = "Unique's return_counts=True failed with axis=0"
         assert_array_equal(cnt, np.array([2, 2]), msg)
 
         uniq, idx, inv, cnt = unique(data, axis=1, return_index=True,
                                      return_inverse=True, return_counts=True)
         msg = "Unique's return_index=True failed with axis=1"
-        assert_array_equal(data[:, idx], uniq)
+        assert_array_equal(data[:, idx], uniq, msg)
         msg = "Unique's return_inverse=True failed with axis=1"
-        assert_array_equal(uniq[:, inv], data)
+        assert_array_equal(uniq[:, inv], data, msg)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+
+    def test_axis_argument(self):
+        funcs = (np.intersect, np.setxor, np.union, np.setdiff)
+        a = np.array([[1,2,3], [928,3,0], [7,8,2]])
+        b = np.array(3*[[1,2,3], [3,3,3], [3,9,1], [7,8,2]])
+        results = (np.array([[1,2,3], [7, 8, 2]]), np.array([[3,3,3], [3,9,1], [928,3,0]]), 
+                    np.array([[1,2,3], [3,3,3], [3,9,1], [7,8,2], [928,3,0]]), np.array([[928,3,0]]))
+        for f, r in zip(funcs, results):
+            msg = "{} failed with axis=0".format(f.__name__)
+            assert_array_equal(f(a, b, axis=0), r, msg)

@@ -20,7 +20,7 @@ Speed could be gained in some operations by an implementation of
 sort(), that can provide directly the permutation vectors, avoiding
 thus calls to argsort().
 
-To do: Optionally return indices analogously to unique for all functions.
+To do: Optionally return indices analogously to unique for in1d functions.
 
 :Author: Robert Cimrman
 
@@ -31,11 +31,55 @@ import numpy as np
 
 
 __all__ = [
-    'ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d', 'unique',
+    'ediff1d', 'intersect1d', 'intersect', 'setxor1d', 'setxor',
+    'union1d', 'union', 'setdiff1d', 'setdiff', 'unique',
     'in1d', 'isin'
     ]
 
+def _concentrate(ar):
+    """ view array as contiguous for 1D set-opterations """
+    ar = ar.reshape(ar.shape[0], -1)
+    ar = np.ascontiguousarray(ar)
+    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
+    try:
+        return ar.view(dtype)
+    except TypeError:
+        # There's no good way to do this for object arrays, etc...
+        # maybe hashing?
+        msg = 'The axis argument is not supported for dtype {dt}'
+        raise TypeError(msg.format(dt=ar.dtype))
+
+def _eval_over_axis(axis, func, arr_count, *args):
+    """ apply a function for 1D arrays func on  ND Arrays along axis with args for func, of which the first arr_count <3 are arrays. """
+    ar = []
+    try:
+        ar.append( np.swapaxes(args[0], axis, 0))
+    except np.AxisError:
+        # this removes the "axis1" or "axis2" prefix from the error message
+        raise np.AxisError(axis, args[0].ndim)
+    if arr_count==2:
+        try:
+            ar.append( np.swapaxes(args[1], axis, 0))
+        except np.AxisError:
+            raise np.AxisError(axis, args[1].ndim)
+
+        # Must reshape to a contiguous 2D array for this to work...
+    orig_shape, orig_dtype = ar[0].shape, ar[0].dtype
+
+    rtn = func(*map(_concentrate, ar), *args[arr_count:])
+    if isinstance(rtn, tuple):
+        uniq = rtn[0].view(orig_dtype)
+        uniq = uniq.reshape(-1, *orig_shape[1:])
+        uniq = np.swapaxes(uniq, 0, axis)
+        rtn = (uniq,) + rtn[1:]
+    else:
+        uniq = rtn.view(orig_dtype)    
+        uniq = uniq.reshape(-1, *orig_shape[1:])
+        rtn = np.swapaxes(uniq, 0, axis)
+    return rtn
+    
+    
 def ediff1d(ary, to_end=None, to_begin=None):
     """
     The differences between consecutive elements of an array.
@@ -246,39 +290,11 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts)
-        return _unpack_tuple(ret)
+        return ret
 
     # axis was specified and not None
-    try:
-        ar = np.swapaxes(ar, axis, 0)
-    except np.AxisError:
-        # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.AxisError(axis, ar.ndim)
-
-    # Must reshape to a contiguous 2D array for this to work...
-    orig_shape, orig_dtype = ar.shape, ar.dtype
-    ar = ar.reshape(orig_shape[0], -1)
-    ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
-
-    try:
-        consolidated = ar.view(dtype)
-    except TypeError:
-        # There's no good way to do this for object arrays, etc...
-        msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype))
-
-    def reshape_uniq(uniq):
-        uniq = uniq.view(orig_dtype)
-        uniq = uniq.reshape(-1, *orig_shape[1:])
-        uniq = np.swapaxes(uniq, 0, axis)
-        return uniq
-
-    output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts)
-    output = (reshape_uniq(output[0]),) + output[1:]
-    return _unpack_tuple(output)
-
+    return _eval_over_axis(axis, _unique1d, 1,
+        ar, return_index, return_inverse, return_counts)
 
 def _unique1d(ar, return_index=False, return_inverse=False,
               return_counts=False):
@@ -310,8 +326,48 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
-    return ret
+    return _unpack_tuple(ret)
+#print(unique(np.array([[1,3],[1,4], [1,3]]), axis=0))
 
+def intersect(ar1, ar2, assume_unique=False, return_indices=False, axis=0):
+    """
+    Find the intersection of two arrays with 1D arrays along axis as items.
+
+    Return the sorted, unique values that are in both of the input arrays.
+
+    Parameters
+    ----------
+    ar1, ar2 : array_like
+        Input arrays.
+    assume_unique : bool
+        If True, the input arrays are both assumed to be unique, which
+        can speed up the calculation.  Default is False.
+    return_indices : bool
+        If True, the indices which correspond to the intersection of the two
+        arrays are returned. The first instance of a value is used if there are
+        multiple. Default is False.
+    axis : int
+        The axis to operate on. The subarrays indexed by the given axis will 
+        be flattened and treated as the elements of a 1-D array with the 
+        dimension of the given axis, see the notes for more details.  Object arrays 
+        or structured arrays that contain objects are not supported. The
+        default is 0.
+        
+        .. versionadded:: 1.16.0
+
+    Returns
+    -------
+    intersect : ndarray
+        Sorted array of common and unique elements.
+    comm1 : ndarray
+        The indices of the first occurrences of the common values in `ar1`.
+        Only provided if `return_indices` is True.
+    comm2 : ndarray
+        The indices of the first occurrences of the common values in `ar2`.
+        Only provided if `return_indices` is True.
+    """
+    return _eval_over_axis(axis, intersect1d, 2,
+        ar1, ar2, assume_unique, return_indices)
 
 def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
@@ -407,8 +463,47 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     else:
         return int1d
 
+def setxor(ar1, ar2, assume_unique=False, return_indices=False, axis=0):
+    """
+    Find the exclusives of two arrays with 1D arrays along axis as items.
 
-def setxor1d(ar1, ar2, assume_unique=False):
+    Return the sorted, unique values that are in one of either input arrays.
+
+    Parameters
+    ----------
+    ar1, ar2 : array_like
+        Input arrays.
+    assume_unique : bool
+        If True, the input arrays are both assumed to be unique, which
+        can speed up the calculation.  Default is False.
+    return_indices : bool
+        If True, the indices which correspond to the intersection of the two
+        arrays are returned. The first instance of a value is used if there are
+        multiple. Default is False.
+    axis : int
+        The axis to operate on. The subarrays indexed by the given axis will 
+        be flattened and treated as the elements of a 1-D array with the 
+        dimension of the given axis, see the notes for more details.  Object arrays 
+        or structured arrays that contain objects are not supported. The
+        default is 0.
+
+        .. versionadded:: 1.16.0
+
+    Returns
+    -------
+    intersect : ndarray
+        Sorted array of common and unique elements.
+    comm1 : ndarray
+        The indices of the first occurrences of the common values in `ar1`.
+        Only provided if `return_indices` is True.
+    comm2 : ndarray
+        The indices of the first occurrences of the common values in `ar2`.
+        Only provided if `return_indices` is True.
+    """
+    return _eval_over_axis(axis, setxor1d, 2,
+        ar1, ar2, assume_unique, return_indices)
+
+def setxor1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
     Find the set exclusive-or of two arrays.
 
@@ -422,12 +517,22 @@ def setxor1d(ar1, ar2, assume_unique=False):
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
+    return_indices : bool
+        If True, the indices which correspond to the intersection of the two
+        arrays are returned. The first instance of a value is used if there are
+        multiple. Default is False.
 
     Returns
     -------
     setxor1d : ndarray
         Sorted 1D array of unique values that are in only one of the input
         arrays.
+    comm1 : ndarray
+        The indices of the first occurrences of the common values in `ar1`.
+        Only provided if `return_indices` is True.
+    comm2 : ndarray
+        The indices of the first occurrences of the common values in `ar2`.
+        Only provided if `return_indices` is True.
 
     Examples
     --------
@@ -437,20 +542,41 @@ def setxor1d(ar1, ar2, assume_unique=False):
     array([1, 4, 5, 7])
 
     """
+    ar1 = np.asanyarray(ar1)
+    ar2 = np.asanyarray(ar2)
+    
     if not assume_unique:
-        ar1 = unique(ar1)
-        ar2 = unique(ar2)
+        if return_indices:
+            ar1, ind1 = unique(ar1, return_index=True)
+            ar2, ind2 = unique(ar2, return_index=True)
+        else:
+            ar1 = unique(ar1)
+            ar2 = unique(ar2)
 
     aux = np.concatenate((ar1, ar2))
     if aux.size == 0:
         return aux
 
-    aux.sort()
+    if return_indices:
+        aux_sort_indices = np.argsort(aux, kind='mergesort')
+        aux = aux[aux_sort_indices]
+    else:
+        aux.sort()
     flag = np.concatenate(([True], aux[1:] != aux[:-1], [True]))
-    return aux[flag[1:] & flag[:-1]]
+    if return_indices:
+        fl = flag[1:] & flag[:-1] 
+        ar1_indices = aux_sort_indices[:-1][fl]
+        ar2_indices = aux_sort_indices[1:][fl] - ar1.size
+        if not assume_unique:
+            ar1_indices = ind1[ar1_indices]
+            ar2_indices = ind2[ar2_indices]
+
+        return aux[fl], ar1_indices, ar2_indices
+    else:
+        return aux[flag[1:] & flag[:-1]]
 
 
-def in1d(ar1, ar2, assume_unique=False, invert=False):
+def in1d(ar1, ar2, assume_unique=False, invert=False, indices_number=None):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -562,7 +688,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
-def isin(element, test_elements, assume_unique=False, invert=False):
+def isin(element, test_elements, assume_unique=False, invert=False,
+         return_indices=False, axis=None):
     """
     Calculates `element in test_elements`, broadcasting over `element` only.
     Returns a boolean array of the same shape as `element` that is True
@@ -584,6 +711,15 @@ def isin(element, test_elements, assume_unique=False, invert=False):
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
+    axis : int or None, optional
+        The axis to operate on. If None, `ar` will be flattened. If an integer,
+        the subarrays indexed by the given axis will be flattened and treated
+        as the elements of a 1-D array with the dimension of the given axis,
+        see the notes for more details.  Object arrays or structured arrays
+        that contain objects are not supported if the `axis` kwarg is used. The
+        default is None.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------
@@ -656,9 +792,45 @@ def isin(element, test_elements, assume_unique=False, invert=False):
            [ True,  False]])
     """
     element = np.asarray(element)
-    return in1d(element, test_elements, assume_unique=assume_unique,
+    if not axis:
+        return in1d(element, test_elements, assume_unique=assume_unique,
                 invert=invert).reshape(element.shape)
+        
+    # axis was specified and not None
+    return _eval_over_axis(axis, in1d, 2,
+        element, test_elements, assume_unique, invert, return_indices)
 
+def union(ar1, ar2, axis=None):
+    """
+    Find the union of two arrays.
+
+    Return the unique, sorted array of values combinations that are in either of the two
+    input arrays along axis.
+
+    Parameters
+    ----------
+    ar1, ar2 : array_like
+        Input arrays. They are flattened if they are not already 1D.
+    axis : int
+        The axis to operate on. The subarrays indexed by the given axis will 
+        be flattened and treated as the elements of a 1-D array with the 
+        dimension of the given axis, see the notes for more details.  Object arrays 
+        or structured arrays that contain objects are not supported. The
+        default is 0.
+
+    Returns
+    -------
+    union : ndarray
+        Unique, sorted union of the input arrays.
+
+    See Also
+    --------
+    numpy.lib.arraysetops : Module with a number of other functions for
+                            performing set operations on arrays.
+
+    .. versionadded:: 1.16.0
+    """
+    return unique(np.concatenate((ar1, ar2), axis=axis), axis=axis)
 
 def union1d(ar1, ar2):
     """
@@ -694,6 +866,13 @@ def union1d(ar1, ar2):
     array([1, 2, 3, 4, 6])
     """
     return unique(np.concatenate((ar1, ar2), axis=None))
+
+def setdiff(ar1, ar2, assume_unique=False, axis=0):
+    """
+    Find the set difference of two arrays.
+    """
+    return _eval_over_axis(axis, setdiff1d, 2,
+        ar1, ar2, assume_unique)
 
 def setdiff1d(ar1, ar2, assume_unique=False):
     """
@@ -734,5 +913,6 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
+
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
 
