@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 runtests.py [OPTIONS] [-- ARGS]
-Note: MSVC compiler versions needed on Windows for runtests.py to execute successfully
+Note: A C compiler needed on Windows for runtests.py to execute successfully
 Run tests, building the project first.
 
 Examples::
