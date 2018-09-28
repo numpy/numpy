@@ -31,6 +31,9 @@ def get_overloaded_types_and_args(relevant_args):
     overloaded_args = []
     for arg in relevant_args:
         arg_type = type(arg)
+        # We only collect arguments if they have a unique type, which ensures
+        # reasonable performance even with a long list of possibly overloaded
+        # arguments.
         if (arg_type not in overloaded_types and
                 hasattr(arg_type, '__array_function__')):
 
@@ -56,74 +59,61 @@ def get_overloaded_types_and_args(relevant_args):
 
 
 def array_function_implementation_or_override(
-        implementation_func, api_func, dispatcher, args, kwargs):
+        implementation, public_api, relevant_args, args, kwargs):
     """Implement a function with checks for __array_function__ overrides.
 
     Arguments
     ---------
-    implementation_func : function
+    implementation : function
         Function that implements the operation on NumPy array without
-        overrides when called like `implementation_func(*args, **kwargs)`.
-    api_func : function
-        Function exposed by NumPy's public API  on which overrides are being
-        checked here.
-    dispatcher : callable
-        Function that when called like `dispatcher(*args, **kwargs)` returns an
-        iterable of relevant argument to check to for __array_function__
-        attributes.
+        overrides when called like ``implementation(*args, **kwargs)``.
+    public_api : function
+        Function exposed by NumPy's public API riginally called like
+        ``public_api(*args, **kwargs`` on which arguments are now being
+        checked.
+    relevant_args : iterable
+        Iterable of arguments to check for __array_function__ methods.
     args : tuple
-        Arbitrary positional arguments originally passed into api_func.
+        Arbitrary positional arguments originally passed into ``public_api``.
     kwargs : tuple
-        Arbitrary keyword arguments originally passed into api_func.
+        Arbitrary keyword arguments originally passed into ``public_api``.
 
     Returns
     -------
-    Result from calling `implementation_func()` or an `__array_function__`
+    Result from calling `implementation()` or an `__array_function__`
     method, as appropriate.
 
     Raises
     ------
     TypeError : if no implementation is found.
     """
-
-    # Collect array-like arguments.
-    relevant_arguments = dispatcher(*args, **kwargs)
-
     # Check for __array_function__ methods.
-    types, overloaded_args = get_overloaded_types_and_args(
-        relevant_arguments)
-
-    # Fast path
+    types, overloaded_args = get_overloaded_types_and_args(relevant_args)
     if not overloaded_args:
-        return implementation_func(*args, **kwargs)
+        return implementation(*args, **kwargs)
 
     # Call overrides
     for overloaded_arg in overloaded_args:
-        # Note that we're only calling __array_function__ on the *first*
-        # occurence of each argument type. This is necessary for reasonable
-        # performance with a possibly long list of overloaded arguments, for
-        # which each __array_function__ implementation might reasonably need to
-        # check all argument types.
-        # api_func is the function exposed in NumPy's public API. We
-        # use it instead of func so __array_function__ implementations
-        # can do equality/identity comparisons.
+        # Use `public_api` instead of `implemenation` so __array_function__
+        # implementations can do equality/identity comparisons.
         result = overloaded_arg.__array_function__(
-            api_func, types, args, kwargs)
+            public_api, types, args, kwargs)
 
         if result is not NotImplemented:
             return result
 
     raise TypeError('no implementation found for {} on types that implement '
                     '__array_function__: {}'
-                    .format(api_func, list(map(type, overloaded_args))))
+                    .format(public_api, list(map(type, overloaded_args))))
 
 
 def array_function_dispatch(dispatcher):
-    """Wrap a function for dispatch with the __array_function__ protocol."""
-    def decorator(implementation_func):
-        @functools.wraps(implementation_func)
-        def api_func(*args, **kwargs):
+    """Decorator for adding dispatch with the __array_function__ protocol."""
+    def decorator(implementation):
+        @functools.wraps(implementation)
+        def public_api(*args, **kwargs):
+            relevant_args = dispatcher(*args, **kwargs)
             return array_function_implementation_or_override(
-                implementation_func, api_func, dispatcher, args, kwargs)
-        return api_func
+                implementation, public_api, relevant_args, args, kwargs)
+        return public_api
     return decorator
