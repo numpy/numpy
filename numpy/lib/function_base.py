@@ -9,24 +9,23 @@ except ImportError:
 import re
 import sys
 import warnings
-import operator
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import linspace, atleast_1d, atleast_2d, transpose
+from numpy.core import atleast_1d, transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar, absolute, AxisError
+    integer, isscalar, absolute
     )
 from numpy.core.umath import (
-    pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, log10, not_equal, subtract
+    pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
+    mod, exp, not_equal, subtract
     )
 from numpy.core.fromnumeric import (
-    ravel, nonzero, sort, partition, mean, any, sum
+    ravel, nonzero, partition, mean, any, sum
     )
-from numpy.core.numerictypes import typecodes, number
+from numpy.core.numerictypes import typecodes
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
@@ -36,7 +35,6 @@ from numpy.core.multiarray import (
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
-from numpy.compat.py3k import basestring
 
 if sys.version_info[0] < 3:
     # Force range to be a generator, for np.delete's usage.

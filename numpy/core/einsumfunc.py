@@ -8,7 +8,7 @@ import itertools
 
 from numpy.compat import basestring
 from numpy.core.multiarray import c_einsum
-from numpy.core.numeric import asarray, asanyarray, result_type, tensordot, dot
+from numpy.core.numeric import asanyarray, tensordot
 
 __all__ = ['einsum', 'einsum_path']
 
