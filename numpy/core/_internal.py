@@ -9,13 +9,12 @@ from __future__ import division, absolute_import, print_function
 import re
 import sys
 
-from numpy.compat import basestring, unicode
+from numpy.compat import unicode
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
 except ImportError:
     ctypes = None
-from .numerictypes import object_
 
 if (sys.byteorder == 'little'):
     _nbo = b'<'
