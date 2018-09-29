@@ -1,0 +1,56 @@
+jobs:
+- job: macOS
+  pool:
+    # NOTE: at time of writing, there is a danger
+    # that using an invalid vmIMage string for macOS
+    # image silently redirects to a Windows build on Azure;
+    # for now, use the only image name officially present in
+    # the docs even though i.e., numba uses another in their
+    # azure config for mac os -- Microsoft has indicated
+    # they will patch this issue
+    vmIMage: macOS-10.13
+  steps:
+  # the @0 refers to the (major) version of the *task* on Microsoft's
+  # end, not the order in the build matrix nor anything to do
+  # with version of Python selected
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.6'
+      addToPath: true
+      architecture: 'x64'
+  # NOTE: do we have a compelling reason to use older / newer
+  # versions of Xcode toolchain for testing?
+  - script: /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
+    displayName: 'select Xcode version'
+  # NOTE: might be better if we could avoid installing
+  # two C compilers, but with homebrew looks like we're
+  # now stuck getting the full gcc toolchain instead of
+  # just pulling in gfortran
+  - script: brew install gcc
+    displayName: 'make gfortran available on mac os vm'
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - script: python -m pip install cython nose pytest-xdist pytz
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  # NOTE: init_dgelsd failed init issue with current ACCELERATE /
+  # LAPACK configuration on Azure macos image; at the time of writing
+  # this plagues homebrew / macports NumPy builds, but we will
+  # circumvent for now by aggressively disabling acceleration for
+  # macos NumPy builds / tests; ACCELERATE=None on its own is not
+  # sufficient
+  # also, might as well prefer usage of clang over gcc proper
+  # to match likely scenario on many user mac machines
+  - script: python setup.py build -j 4 install
+    displayName: 'Build NumPy'
+    env:
+      BLAS: None
+      LAPACK: None
+      ATLAS: None
+      ACCELERATE: None
+      CC: /usr/bin/clang
+  - script: python runtests.py --mode=full -- -n auto -rsx --junitxml=junit/test-results.xml
+    displayName: 'Run Full NumPy Test Suite'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for Python $(python.version)'

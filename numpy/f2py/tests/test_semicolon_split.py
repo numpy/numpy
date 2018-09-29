@@ -1,5 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
+import platform
+import pytest
+
 from . import util
 from numpy.testing import assert_equal
 
@@ -23,6 +26,10 @@ void foo(int* x) {{
 end python module {module}
     """.format(module=module_name)
 
+    @pytest.mark.skipif(platform.system() == 'Darwin',
+                        reason="Prone to error when run with "
+                               "numpy/f2py/tests on mac os, "
+                               "but not when run in isolation")
     def test_multiline(self):
         assert_equal(self.module.foo(), 42)
 
