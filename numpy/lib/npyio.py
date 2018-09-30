@@ -837,7 +837,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         .. versionadded:: 1.14.0
     max_rows : int, optional
         Read `max_rows` lines of content after `skiprows` lines. The default
-        (`None`) is to read all the lines.
+        (None) is to read all the lines.
 
         .. versionadded:: 1.16.0
 
