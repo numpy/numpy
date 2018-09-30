@@ -2008,7 +2008,6 @@ class Configuration(object):
                     f.write('version = %r\n' % (version))
                     f.close()
 
-                import atexit
                 def rm_file(f=target,p=self.info):
                     if delete:
                         try: os.remove(f); p('removed '+f)
@@ -2050,7 +2049,6 @@ class Configuration(object):
                     f.write('version = %r\n' % (version))
                     f.close()
 
-                import atexit
                 def rm_file(f=target,p=self.info):
                     if delete:
                         try: os.remove(f); p('removed '+f)
