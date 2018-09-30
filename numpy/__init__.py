@@ -163,6 +163,8 @@ else:
         from __builtin__ import bool, int, float, complex, object, unicode, str
 
     from .core import round, abs, max, min
+    # now that numpy modules are imported, can initialize limits
+    core.getlimits._init_getlimits()
 
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
