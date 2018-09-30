@@ -1489,10 +1489,14 @@ OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
 
     for (i = 0; i < n; i++, ip++, op += skip) {
         if (*ip == NULL) {
-            @TOTYPE@_setitem(Py_False, op, aop);
+            if (@TOTYPE@_setitem(Py_False, op, aop) < 0) {
+                return;
+            }
         }
         else {
-            @TOTYPE@_setitem(*ip, op, aop);
+            if (@TOTYPE@_setitem(*ip, op, aop) < 0) {
+                return;
+            }
         }
     }
 }
