@@ -142,6 +142,53 @@ _append_str(_tmp_string_t *s, char const *p)
 }
 
 /*
+ * Append a PEP3118-formatted field name, ":name:", to str
+ */
+static int
+_append_field_name(_tmp_string_t *str, PyObject *name)
+{
+    int ret = -1;
+    char *p;
+    Py_ssize_t len;
+    PyObject *tmp;
+#if defined(NPY_PY3K)
+    /* FIXME: XXX -- should it use UTF-8 here? */
+    tmp = PyUnicode_AsUTF8String(name);
+#else
+    tmp = name;
+    Py_INCREF(tmp);
+#endif
+    if (tmp == NULL || PyBytes_AsStringAndSize(tmp, &p, &len) < 0) {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_ValueError, "invalid field name");
+        goto fail;
+    }
+    if (_append_char(str, ':') < 0) {
+        goto fail;
+    }
+    while (len > 0) {
+        if (*p == ':') {
+            PyErr_SetString(PyExc_ValueError,
+                            "':' is not an allowed character in buffer "
+                            "field names");
+            goto fail;
+        }
+        if (_append_char(str, *p) < 0) {
+            goto fail;
+        }
+        ++p;
+        --len;
+    }
+    if (_append_char(str, ':') < 0) {
+        goto fail;
+    }
+    ret = 0;
+fail:
+    Py_XDECREF(tmp);
+    return ret;
+}
+
+/*
  * Return non-zero if a type is aligned in each item in the given array,
  * AND, the descr element size is a multiple of the alignment,
  * AND, the array data is positioned to alignment granularity.
@@ -255,10 +302,9 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
         if (_append_str(str, "T{") < 0) return -1;
         for (k = 0; k < PyTuple_GET_SIZE(descr->names); ++k) {
-            PyObject *name, *item, *offset_obj, *tmp;
+            PyObject *name, *item, *offset_obj;
             PyArray_Descr *child;
-            char *p;
-            Py_ssize_t len, new_offset;
+            Py_ssize_t new_offset;
             int ret;
 
             name = PyTuple_GET_ITEM(descr->names, k);
@@ -294,34 +340,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             }
 
             /* Insert field name */
-#if defined(NPY_PY3K)
-            /* FIXME: XXX -- should it use UTF-8 here? */
-            tmp = PyUnicode_AsUTF8String(name);
-#else
-            tmp = name;
-#endif
-            if (tmp == NULL || PyBytes_AsStringAndSize(tmp, &p, &len) < 0) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_ValueError, "invalid field name");
-                return -1;
-            }
-            if (_append_char(str, ':') < 0) return -1;
-            while (len > 0) {
-                if (*p == ':') {
-                    Py_DECREF(tmp);
-                    PyErr_SetString(PyExc_ValueError,
-                                    "':' is not an allowed character in buffer "
-                                    "field names");
-                    return -1;
-                }
-                if (_append_char(str, *p) < 0) return -1;
-                ++p;
-                --len;
-            }
-            if (_append_char(str, ':') < 0) return -1;
-#if defined(NPY_PY3K)
-            Py_DECREF(tmp);
-#endif
+            if (_append_field_name(str, name) < 0) return -1;
         }
         if (_append_char(str, '}') < 0) return -1;
     }
