@@ -6,6 +6,7 @@
 #include "numpy/arrayscalars.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
+#include "common.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "common.h"
@@ -1641,6 +1642,42 @@ extint_ceildiv_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
     return pylong_from_int128(c);
 }
 
+struct TestStruct1 {
+    npy_uint8 a;
+    npy_complex64 b;
+};
+
+struct TestStruct2 {
+    npy_uint32 a;
+    npy_complex64 b;
+};
+
+struct TestStruct3 {
+    npy_uint8 a;
+    struct TestStruct1 b;
+};
+
+static PyObject *
+get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *ret = PyTuple_New(3);
+    PyObject *alignment, *size, *val;
+
+/**begin repeat
+ * #N = 1,2,3#
+ */
+    alignment = PyInt_FromLong(_ALIGN(struct TestStruct@N@));
+    size = PyInt_FromLong(sizeof(struct TestStruct@N@));
+    val = PyTuple_Pack(2, alignment, size);
+    Py_DECREF(alignment);
+    Py_DECREF(size);
+    if (val == NULL) {
+        return NULL;
+    }
+    PyTuple_SET_ITEM(ret, @N@-1, val);
+/**end repeat**/
+    return ret;
+}
+
 
 static char get_fpu_mode_doc[] = (
     "get_fpu_mode()\n"
@@ -1956,6 +1993,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"format_float_OSprintf_g",
         (PyCFunction)printf_float_g,
         METH_VARARGS , NULL},
+    {"get_struct_alignments",
+        get_struct_alignments,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
