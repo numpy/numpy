@@ -4,7 +4,6 @@ import os
 import sys
 import pickle
 import copy
-import sysconfig
 import warnings
 import platform
 from os.path import join
