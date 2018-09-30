@@ -1068,6 +1068,55 @@ class TestLoadTxt(LoadTxtBase):
             x = [b'5,6,7,\xc3\x95scarscar', b'15,2,3,hello', b'20,2,3,\xc3\x95scar']
             assert_array_equal(x, np.array(x, dtype="S"))
 
+    def test_max_rows(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_skiprows(self):
+        c = TextIO()
+        c.write('comments\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_read_continuation(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+        # test continuation
+        x = np.loadtxt(c, dtype=int, delimiter=',')
+        a = np.array([2,1,4,5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_larger(self):
+        #test max_rows > num rows
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=6)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
+        assert_array_equal(x, a)
+
 class Testfromregex(object):
     def test_record(self):
         c = TextIO()
