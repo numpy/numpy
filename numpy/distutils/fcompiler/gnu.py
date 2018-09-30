@@ -10,7 +10,6 @@ import hashlib
 import base64
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
-from copy import copy
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
 from numpy.distutils.compat import get_exception

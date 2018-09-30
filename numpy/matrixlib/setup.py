@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
-import os
-
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('matrixlib', parent_package, top_path)

@@ -126,7 +126,6 @@ import os
 import re
 import copy
 import warnings
-import atexit
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:

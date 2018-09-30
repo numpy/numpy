@@ -2,7 +2,6 @@ from __future__ import division, absolute_import, print_function
 
 import re
 import sys
-import os
 import subprocess
 
 __doc__ = """This module generates a DEF file from the symbols in
