@@ -80,7 +80,6 @@ class _Deprecate(object):
         new_name = self.new_name
         message = self.message
 
-        import warnings
         if old_name is None:
             try:
                 old_name = func.__name__
