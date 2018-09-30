@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import io
 import sys
 import os
 import re

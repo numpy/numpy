@@ -89,7 +89,6 @@ References
 """
 from __future__ import division, absolute_import, print_function
 
-import numbers
 import warnings
 import numpy as np
 import numpy.linalg as la
