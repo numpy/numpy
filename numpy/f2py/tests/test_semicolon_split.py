@@ -56,5 +56,8 @@ void foo(int* x) {{
 end python module {module}
     """.format(module=module_name)
 
+    @pytest.mark.skipif(platform.system() == 'Darwin',
+                        reason="Can Fail in Azure MacOS CI "
+                               "see gh-12066")
     def test_callstatement(self):
         assert_equal(self.module.foo(), 42)
