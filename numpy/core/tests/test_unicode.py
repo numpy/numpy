@@ -80,6 +80,15 @@ def test_string_cast():
     (u'abc',
      np.array(['x', 'y'], dtype='U1'),
      np.array(['abcx', 'abcy'], dtype='U4')),
+    # concat 2D unicode_ arrays with same shape
+    (np.array([['a', 'b'], ['c', 'd']], dtype='U1'),
+     np.array([['e', 'f'], ['g', 'h']], dtype='U1'),
+     np.array([['ae', 'bf'], ['cg', 'dh']], dtype='U2')),
+    # verify broadcasted concat between 2D and 1D
+    # unicode_ arrays
+    (np.array(['x', 'y'], dtype='U1'),
+     np.array([['aa', 'bb'], ['gg', 'hh']], dtype='U2'),
+     np.array([['xaa', 'ybb'], ['xgg', 'yhh']], dtype='U3')),
     ])
 def test_native_unicode_add(arr1, arr2, expected):
     # element-wise array concat for unicode_ arrays
