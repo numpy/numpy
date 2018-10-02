@@ -593,6 +593,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     # Ensure that iteration through object arrays yields size-1 arrays
     if ar2.dtype == object:
         ar2 = ar2.reshape(-1, 1)
+    # Convert booleans to uint8 so we can use the fast integer algorithm
+    if ar1.dtype == np.bool_:
+        ar1 = ar1.view(np.uint8)
+    if ar2.dtype == np.bool_:
+        ar2 = ar2.view(np.uint8)
+
     # Check if we can use a fast integer algorithm:
     integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
                       np.issubdtype(ar2.dtype, np.integer))
