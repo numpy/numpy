@@ -7,7 +7,8 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
-    get_overloaded_types_and_args, array_function_dispatch)
+    get_overloaded_types_and_args, array_function_dispatch,
+    verify_matching_signatures)
 
 
 def _get_overloaded_args(relevant_args):
@@ -198,6 +199,24 @@ class TestArrayFunctionDispatch(object):
         array = MyArray()
         with assert_raises_regex(TypeError, 'no implementation found'):
             dispatched_one_arg(array)
+
+
+class TestVerifyMatchingSignatures(object):
+
+    def test_verify_matching_signatures(self):
+
+        verify_matching_signatures(lambda x: 0, lambda x: 0)
+        verify_matching_signatures(lambda x=None: 0, lambda x=None: 0)
+        verify_matching_signatures(lambda x=1: 0, lambda x=None: 0)
+
+        with assert_raises(RuntimeError):
+            verify_matching_signatures(lambda a: 0, lambda b: 0)
+        with assert_raises(RuntimeError):
+            verify_matching_signatures(lambda x: 0, lambda x=None: 0)
+        with assert_raises(RuntimeError):
+            verify_matching_signatures(lambda x=None: 0, lambda y=None: 0)
+        with assert_raises(RuntimeError):
+            verify_matching_signatures(lambda x=1: 0, lambda y=1: 0)
 
 
 def _new_duck_type_and_implements():
