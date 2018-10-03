@@ -93,6 +93,29 @@ def timer_32bit():
     run_timer(dist, command, command_numpy, SETUP, '32-bit unsigned integers')
 
 
+def timer_32bit_bounded():
+    # info = np.iinfo(np.uint32)
+    # min, max = info.min, info.max
+    min, max = 0, 1024  # Worst case for masking & rejection algorithm!
+
+    dist = 'random_uintegers'
+
+    # Note on performance of generating random numbers in an interval:
+    # use_masked=True : masking and rejection sampling is used to generate a random number in an interval.
+    # use_masked=False : Lemire's algorithm is used if available to generate a random number in an interval.
+    # Lemire's algorithm has improved performance when {max}+1 is not a power of two.
+
+    # command = 'rg.randint({min}, {max}+1, 1000000, dtype=np.uint32, use_masked=True)'  # Use masking & rejection.
+    command = 'rg.randint({min}, {max}+1, 1000000, dtype=np.uint32, use_masked=False)'  # Use Lemire's algo.
+
+    command = command.format(min=min, max=max)
+
+    command_numpy = 'rg.randint({min}, {max}+1, 1000000, dtype=np.uint32)'
+    command_numpy = command_numpy.format(min=min, max=max)
+
+    run_timer(dist, command, command_numpy, SETUP, '32-bit bounded unsigned integers')
+
+
 def timer_64bit():
     info = np.iinfo(np.uint64)
     min, max = info.min, info.max
@@ -121,5 +144,6 @@ if __name__ == '__main__':
     if args.full:
         timer_raw()
         timer_32bit()
+        timer_32bit_bounded()
         timer_64bit()
         timer_normal_zig()

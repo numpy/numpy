@@ -572,7 +572,7 @@ cdef class RandomGenerator:
                 randoms_data[i] = random_positive_int(self._brng)
         return randoms
 
-    def randint(self, low, high=None, size=None, dtype=int):
+    def randint(self, low, high=None, size=None, dtype=int, use_masked=True):
         """
         randint(low, high=None, size=None, dtype='l')
 
@@ -603,6 +603,13 @@ cdef class RandomGenerator:
             on the platform. The default value is 'np.int'.
 
             .. versionadded:: 1.11.0
+
+        use_masked : bool
+            If True the generator uses rejection sampling with a bit mask to
+            reject random numbers that are out of bounds. If False the generator
+            will use Lemire's rejection sampling algorithm when available.
+
+            .. versionadded:: 1.15.1
 
         Returns
         -------
@@ -655,23 +662,23 @@ cdef class RandomGenerator:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
 
         if key == 'int32':
-            ret =  _rand_int32(low, high, size, self._brng, self.lock)
+            ret =  _rand_int32(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'int64':
-            ret =  _rand_int64(low, high, size, self._brng, self.lock)
+            ret =  _rand_int64(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'int16':
-            ret =  _rand_int16(low, high, size, self._brng, self.lock)
+            ret =  _rand_int16(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'int8':
-            ret =  _rand_int8(low, high, size, self._brng, self.lock)
+            ret =  _rand_int8(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'uint64':
-            ret =  _rand_uint64(low, high, size, self._brng, self.lock)
+            ret =  _rand_uint64(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'uint32':
-            ret =  _rand_uint32(low, high, size, self._brng, self.lock)
+            ret =  _rand_uint32(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'uint16':
-            ret =  _rand_uint16(low, high, size, self._brng, self.lock)
+            ret =  _rand_uint16(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'uint8':
-            ret =  _rand_uint8(low, high, size, self._brng, self.lock)
+            ret =  _rand_uint8(low, high, size, use_masked, self._brng, self.lock)
         elif key == 'bool':
-            ret =  _rand_bool(low, high, size, self._brng, self.lock)
+            ret =  _rand_bool(low, high, size, use_masked, self._brng, self.lock)
         
         if size is None and dtype in (np.bool, np.int, np.long):
                 if np.array(ret).shape == ():
