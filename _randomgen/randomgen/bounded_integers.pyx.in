@@ -22,7 +22,9 @@ type_info = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000U
 {{for  nptype, utype, nptype_up, npctype, remaining, bitshift, lb, ub in type_info}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
 
-cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object size, brng_t *state, object lock):
+cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object size,
+                                       bint use_masked,
+                                       brng_t *state, object lock):
     """
     Array path for smaller integer types
 
@@ -76,7 +78,7 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
                 # Smallest bit mask >= max
                 mask = <{{utype}}_t>_gen_mask(rng)
 
-            out_data[i] = random_buffered_bounded_{{utype}}(state, off, rng, mask, &buf_rem, &buf)
+            out_data[i] = random_buffered_bounded_{{utype}}(state, off, rng, mask, use_masked, &buf_rem, &buf)
 
             np.PyArray_MultiIter_NEXT(it)
     return out_arr
@@ -89,7 +91,9 @@ big_type_info = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFF
 )}}
 {{for  nptype, utype, npctype, lb, ub in big_type_info}}
 {{ py: otype = nptype}}
-cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, brng_t *state, object lock):
+cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
+                                       bint use_masked,
+                                       brng_t *state, object lock):
     """
     Array path for 64-bit integer types
 
@@ -100,6 +104,8 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size, brn
     The internal generator does not have this issue since it generates from
     the closes interval [low, high-1] and high-1 is always in range for the
     64 bit integer type.
+
+    Note: use_masked currently ignored for 64bit generators.
     """
 
     cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
@@ -177,14 +183,16 @@ type_info = (('uint64', 'uint64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
 )}}
 {{for  nptype, utype, lb, ub in type_info}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
-cdef object _rand_{{nptype}}(object low, object high, object size, brng_t *state, object lock):
+cdef object _rand_{{nptype}}(object low, object high, object size,
+                             bint use_masked,
+                             brng_t *state, object lock):
     """
-    _rand_{{nptype}}(low, high, size, *state, lock)
+    _rand_{{nptype}}(low, high, size, use_masked, *state, lock)
 
-    Return random np.{{nptype}} integers between `low` and `high`, inclusive.
+    Return random np.{{nptype}} integers from `low` (inclusive) to `high` (exclusive).
 
     Return random integers from the "discrete uniform" distribution in the
-    closed interval [`low`, `high`).  If `high` is None (the default),
+    interval [`low`, `high`).  If `high` is None (the default),
     then results are from [0, `low`). On entry the arguments are presumed
     to have been validated for size and order for the np.{{nptype}} type.
 
@@ -195,12 +203,14 @@ cdef object _rand_{{nptype}}(object low, object high, object size, brng_t *state
         ``high=None``, in which case this parameter is the *highest* such
         integer).
     high : int or array-like
-        If provided, the largest (signed) integer to be drawn from the
+        If provided, one above the largest (signed) integer to be drawn from the
         distribution (see above for behavior if ``high=None``).
     size : int or tuple of ints
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
         single value is returned.
+    use_masked : bool
+        If True then rejection sampling with a range mask is used else Lemire's algorithm is used.
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
@@ -251,14 +261,14 @@ cdef object _rand_{{nptype}}(object low, object high, object size, brng_t *state
         off = <{{utype}}_t>(<{{nptype}}_t>low)
         if size is None:
             with lock:
-                random_bounded_{{utype}}_fill(state, off, rng, 1, &out_val)
+                random_bounded_{{utype}}_fill(state, off, rng, 1, use_masked, &out_val)
             return np.{{otype}}(<{{nptype}}_t>out_val)
         else:
             out_arr = <np.ndarray>np.empty(size, np.{{nptype}})
             cnt = np.PyArray_SIZE(out_arr)
             out_data = <{{utype}}_t *>np.PyArray_DATA(out_arr)
             with lock, nogil:
-                random_bounded_{{utype}}_fill(state, off, rng, cnt, out_data)
+                random_bounded_{{utype}}_fill(state, off, rng, cnt, use_masked, out_data)
             return out_arr
-    return _rand_{{nptype}}_broadcast(low_arr, high_arr, size, state, lock)
+    return _rand_{{nptype}}_broadcast(low_arr, high_arr, size, use_masked, state, lock)
 {{endfor}}
