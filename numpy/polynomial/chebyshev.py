@@ -685,18 +685,11 @@ def chebmulx(c):
     Examples
     --------
     >>> from numpy.polynomial import chebyshev as C
-    >>> c = (1,2,3)
+    >>> c = (1, 2, 3)
     >>> C.chebmulx(c)
     array([ 1. ,  2.5,  1. ,  1.5])
 
     .. versionadded:: 1.5.0
-
-    Examples
-    --------
-    >>> from numpy.polynomial import chebyshev as C
-    >>> C.chebmulx([1,2,3])
-    array([ 1.,  2.5,  3.,  1.5,  2.])
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
