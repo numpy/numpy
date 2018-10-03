@@ -1027,8 +1027,11 @@ _descriptor_from_pep3118_format(char *s)
     Py_DECREF(str);
     Py_DECREF(_numpy_internal);
     if (descr == NULL) {
+        PyObject *exc, *val, *tb;
+        PyErr_Fetch(&exc, &val, &tb);
         PyErr_Format(PyExc_ValueError,
                      "'%s' is not a valid PEP 3118 buffer format string", buf);
+        npy_PyErr_ChainExceptionsCause(exc, val, tb);
         free(buf);
         return NULL;
     }
