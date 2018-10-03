@@ -96,6 +96,7 @@ New Features
 Add support for any case where ``len(axis) == weights.ndim`` for ``np.average``.
 So for instance, ``np.average(arr_3d, weights_2d, axis=2d_tuple)`` can be
 interpreted unambiguously.
+
 ``max_rows`` keyword added for ``np.loadtxt``
 ---------------------------------------------
 New keyword ``max_rows`` in `numpy.loadtxt` sets the maximum rows of the
