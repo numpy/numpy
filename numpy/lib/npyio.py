@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import io
 import sys
 import os
 import re
@@ -380,16 +379,6 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     memmap([4, 5, 6])
 
     """
-    own_fid = False
-    if isinstance(file, basestring):
-        fid = open(file, "rb")
-        own_fid = True
-    elif is_pathlib_path(file):
-        fid = file.open("rb")
-        own_fid = True
-    else:
-        fid = file
-
     if encoding not in ('ASCII', 'latin1', 'bytes'):
         # The 'encoding' value for pickle also affects what encoding
         # the serialized binary data of NumPy arrays is loaded
@@ -410,6 +399,17 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         # Nothing to do on Python 2
         pickle_kwargs = {}
 
+    # TODO: Use contextlib.ExitStack once we drop Python 2
+    if isinstance(file, basestring):
+        fid = open(file, "rb")
+        own_fid = True
+    elif is_pathlib_path(file):
+        fid = file.open("rb")
+        own_fid = True
+    else:
+        fid = file
+        own_fid = False
+
     try:
         # Code to distinguish from NumPy binary files and pickles.
         _ZIP_PREFIX = b'PK\x03\x04'
@@ -422,10 +422,10 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
             # zip-file (assume .npz)
             # Transfer file ownership to NpzFile
-            tmp = own_fid
+            ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
+                          pickle_kwargs=pickle_kwargs)
             own_fid = False
-            return NpzFile(fid, own_fid=tmp, allow_pickle=allow_pickle,
-                           pickle_kwargs=pickle_kwargs)
+            return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
             if mmap_mode:
@@ -774,7 +774,7 @@ _loadtxt_chunksize = 50000
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes'):
+            ndmin=0, encoding='bytes', max_rows=None):
     """
     Load data from a text file.
 
@@ -836,6 +836,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+    max_rows : int, optional
+        Read `max_rows` lines of content after `skiprows` lines. The default
+        is to read all the lines.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------
@@ -1017,7 +1022,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         """
         X = []
-        for i, line in enumerate(itertools.chain([first_line], fh)):
+        line_iter = itertools.chain([first_line], fh)
+        line_iter = itertools.islice(line_iter, max_rows)
+        for i, line in enumerate(line_iter):
             vals = split_line(line)
             if len(vals) == 0:
                 continue

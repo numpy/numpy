@@ -765,6 +765,58 @@ class TestDiff(object):
         assert_array_equal(out3.mask, [[], [], [], [], []])
         assert_(type(out3) is type(x))
 
+    def test_prepend(self):
+        x = np.arange(5) + 1
+        assert_array_equal(diff(x, prepend=0), np.ones(5))
+        assert_array_equal(diff(x, prepend=[0]), np.ones(5))
+        assert_array_equal(np.cumsum(np.diff(x, prepend=0)), x)
+        assert_array_equal(diff(x, prepend=[-1, 0]), np.ones(6))
+
+        x = np.arange(4).reshape(2, 2)
+        result = np.diff(x, axis=1, prepend=0)
+        expected = [[0, 1], [2, 1]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=1, prepend=[[0], [0]])
+        assert_array_equal(result, expected)
+
+        result = np.diff(x, axis=0, prepend=0)
+        expected = [[0, 1], [2, 2]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=0, prepend=[[0, 0]])
+        assert_array_equal(result, expected)
+
+        assert_raises(ValueError, np.diff, x, prepend=np.zeros((3,3)))
+
+        assert_raises(np.AxisError, diff, x, prepend=0, axis=3)
+
+    def test_append(self):
+        x = np.arange(5)
+        result = diff(x, append=0)
+        expected = [1, 1, 1, 1, -4]
+        assert_array_equal(result, expected)
+        result = diff(x, append=[0])
+        assert_array_equal(result, expected)
+        result = diff(x, append=[0, 2])
+        expected = expected + [2]
+        assert_array_equal(result, expected)
+
+        x = np.arange(4).reshape(2, 2)
+        result = np.diff(x, axis=1, append=0)
+        expected = [[1, -1], [1, -3]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=1, append=[[0], [0]])
+        assert_array_equal(result, expected)
+
+        result = np.diff(x, axis=0, append=0)
+        expected = [[2, 2], [-2, -3]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=0, append=[[0, 0]])
+        assert_array_equal(result, expected)
+
+        assert_raises(ValueError, np.diff, x, append=np.zeros((3,3)))
+
+        assert_raises(np.AxisError, diff, x, append=0, axis=3)
+
 
 class TestDelete(object):
 

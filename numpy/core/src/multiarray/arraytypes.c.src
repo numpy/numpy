@@ -1489,10 +1489,14 @@ OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
 
     for (i = 0; i < n; i++, ip++, op += skip) {
         if (*ip == NULL) {
-            @TOTYPE@_setitem(Py_False, op, aop);
+            if (@TOTYPE@_setitem(Py_False, op, aop) < 0) {
+                return;
+            }
         }
         else {
-            @TOTYPE@_setitem(*ip, op, aop);
+            if (@TOTYPE@_setitem(*ip, op, aop) < 0) {
+                return;
+            }
         }
     }
 }
@@ -4322,12 +4326,11 @@ static PyArray_Descr @from@_Descr = {
  *         cfloat, cdouble, clongdouble,
  *         object, datetime, timedelta#
  * #sort = 1*18, 0*1, 1*2#
- * #num = 1*15, 2*3, 1*3#
  * #fromtype = npy_bool,
  *             npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *             npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_float, npy_double, npy_longdouble,
+ *             npy_cfloat, npy_cdouble, npy_clongdouble,
  *             PyObject *, npy_datetime, npy_timedelta#
  * #NAME = Bool,
  *         Byte, UByte, Short, UShort, Int, UInt,
@@ -4428,10 +4431,9 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     /* type_num */
     NPY_@from@,
     /* elsize */
-    @num@ * sizeof(@fromtype@),
+    sizeof(@fromtype@),
     /* alignment */
-    @num@ * _ALIGN(@fromtype@) > NPY_MAX_COPY_ALIGNMENT ?
-        NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@fromtype@),
+    _ALIGN(@fromtype@),
     /* subarray */
     NULL,
     /* fields */
@@ -4786,13 +4788,10 @@ set_typeinfo(PyObject *dict)
      *         CFLOAT, CDOUBLE, CLONGDOUBLE#
      * #Name = Half, Float, Double, LongDouble,
      *         CFloat, CDouble, CLongDouble#
-     * #num  = 1, 1, 1, 1, 2, 2, 2#
      */
     s = PyArray_typeinfo(
         NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@name@,
-        @num@ * _ALIGN(@type@) > NPY_MAX_COPY_ALIGNMENT ?
-            NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@type@),
-        &Py@Name@ArrType_Type
+        _ALIGN(@type@), &Py@Name@ArrType_Type
     );
     if (s == NULL) {
         return -1;

@@ -2028,7 +2028,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 {
     int i, n, allscalars = 0;
     PyArrayObject **mps = NULL;
-    PyObject *otmp;
     PyArray_Descr *intype = NULL, *stype = NULL;
     PyArray_Descr *newtype = NULL;
     NPY_SCALARKIND scalarkind = NPY_NOSCALAR, intypekind = NPY_NOSCALAR;
@@ -2067,9 +2066,13 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     }
 
     for (i = 0; i < n; i++) {
-        otmp = PySequence_GetItem(op, i);
+        PyObject *otmp = PySequence_GetItem(op, i);
+        if (otmp == NULL) {
+            goto fail;
+        }
         if (!PyArray_CheckAnyScalar(otmp)) {
             newtype = PyArray_DescrFromObject(otmp, intype);
+            Py_DECREF(otmp);
             Py_XDECREF(intype);
             if (newtype == NULL) {
                 goto fail;
@@ -2079,6 +2082,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         }
         else {
             newtype = PyArray_DescrFromObject(otmp, stype);
+            Py_DECREF(otmp);
             Py_XDECREF(stype);
             if (newtype == NULL) {
                 goto fail;
@@ -2088,7 +2092,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             mps[i] = (PyArrayObject *)Py_None;
             Py_INCREF(Py_None);
         }
-        Py_XDECREF(otmp);
     }
     if (intype == NULL) {
         /* all scalars */
@@ -2112,6 +2115,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             newtype = PyArray_PromoteTypes(intype, stype);
             Py_XDECREF(intype);
             intype = newtype;
+            if (newtype == NULL) {
+                goto fail;
+            }
         }
         for (i = 0; i < n; i++) {
             Py_XDECREF(mps[i]);
@@ -2123,8 +2129,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     /* Make sure all arrays are actual array objects. */
     for (i = 0; i < n; i++) {
         int flags = NPY_ARRAY_CARRAY;
+        PyObject *otmp = PySequence_GetItem(op, i);
 
-        if ((otmp = PySequence_GetItem(op, i)) == NULL) {
+        if (otmp == NULL) {
             goto fail;
         }
         if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
@@ -2133,8 +2140,8 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             Py_DECREF(Py_None);
         }
         Py_INCREF(intype);
-        mps[i] = (PyArrayObject*)
-            PyArray_FromAny(otmp, intype, 0, 0, flags, NULL);
+        mps[i] = (PyArrayObject*)PyArray_FromAny(otmp, intype, 0, 0,
+                                                 flags, NULL);
         Py_DECREF(otmp);
         if (mps[i] == NULL) {
             goto fail;

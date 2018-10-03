@@ -7968,7 +7968,74 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 
 ##############################################################################
 #
-# Documentation for other scalar classes
+# Documentation for scalar type abstract base classes in type hierarchy
+#
+##############################################################################
+
+
+add_newdoc('numpy.core.numerictypes', 'number',
+    """
+    Abstract base class of all numeric scalar types.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'integer',
+    """
+    Abstract base class of all integer scalar types.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'signedinteger',
+    """
+    Abstract base class of all signed integer scalar types.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'unsignedinteger',
+    """
+    Abstract base class of all unsigned integer scalar types.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'inexact',
+    """
+    Abstract base class of all numeric scalar types with a (potentially)
+    inexact representation of the values in its range, such as
+    floating-point numbers.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'floating',
+    """
+    Abstract base class of all floating-point scalar types.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'complexfloating',
+    """
+    Abstract base class of all complex number scalar types that are made up of
+    floating-point numbers.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'flexible',
+    """
+    Abstract base class of all scalar types without predefined length.
+    The actual size of these types depends on the specific `np.dtype`
+    instantiation.
+    
+    """)
+
+add_newdoc('numpy.core.numerictypes', 'character',
+    """
+    Abstract base class of all character string scalar types.
+    
+    """)
+
+
+##############################################################################
+#
+# Documentation for concrete scalar classes
 #
 ##############################################################################
 

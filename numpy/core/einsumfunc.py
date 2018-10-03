@@ -8,7 +8,7 @@ import itertools
 
 from numpy.compat import basestring
 from numpy.core.multiarray import c_einsum
-from numpy.core.numeric import asarray, asanyarray, result_type, tensordot, dot
+from numpy.core.numeric import asanyarray, tensordot
 
 __all__ = ['einsum', 'einsum_path']
 
@@ -1373,7 +1373,7 @@ def einsum(*operands, **kwargs):
 
             # Find indices to contract over
             left_pos, right_pos = [], []
-            for s in idx_rm:
+            for s in sorted(idx_rm):
                 left_pos.append(input_left.find(s))
                 right_pos.append(input_right.find(s))
 

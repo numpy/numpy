@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import locale
 
-from numpy.testing import SkipTest
+import pytest
 
 __ALL__ = ['CommaDecimalPointLocale']
 
@@ -52,7 +52,7 @@ class CommaDecimalPointLocale(object):
     tests with locale.LC_NUMERIC set to a locale where commas (',') are used as
     the decimal point instead of periods ('.'). On exit the locale is restored
     to the initial locale. It also serves as context manager with the same
-    effect. If no such locale is available, it raises SkipTest in both cases.
+    effect. If no such locale is available, the test is skipped.
 
     .. versionadded:: 1.15.0
 
@@ -61,7 +61,7 @@ class CommaDecimalPointLocale(object):
 
     def setup(self):
         if self.tst_locale is None:
-            raise SkipTest("No French locale available")
+            pytest.skip("No French locale available")
         locale.setlocale(locale.LC_NUMERIC, locale=self.tst_locale)
 
     def teardown(self):
@@ -69,7 +69,7 @@ class CommaDecimalPointLocale(object):
 
     def __enter__(self):
         if self.tst_locale is None:
-            raise SkipTest("No French locale available")
+            pytest.skip("No French locale available")
         locale.setlocale(locale.LC_NUMERIC, locale=self.tst_locale)
 
     def __exit__(self, type, value, traceback):

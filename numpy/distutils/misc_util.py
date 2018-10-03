@@ -1564,7 +1564,6 @@ class Configuration(object):
         """Common implementation for add_library and add_installed_library. Do
         not use directly"""
         build_info = copy.copy(build_info)
-        name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
 
         # Sometimes, depends is not set up to an empty list by default, and if
@@ -2009,7 +2008,6 @@ class Configuration(object):
                     f.write('version = %r\n' % (version))
                     f.close()
 
-                import atexit
                 def rm_file(f=target,p=self.info):
                     if delete:
                         try: os.remove(f); p('removed '+f)
@@ -2051,7 +2049,6 @@ class Configuration(object):
                     f.write('version = %r\n' % (version))
                     f.close()
 
-                import atexit
                 def rm_file(f=target,p=self.info):
                     if delete:
                         try: os.remove(f); p('removed '+f)
