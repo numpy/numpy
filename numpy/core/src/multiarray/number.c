@@ -320,12 +320,11 @@ unicodetype_concat(PyObject *self, PyObject *other, int radd)
      */
     PyObject *item;
     PyObject *other_item;
-    PyArrayIterObject *self_iter;
-    PyArrayIterObject *other_iter;
     PyArrayIterObject *ret_iter;
     PyObject *combined;
     PyObject *ret;
     PyObject *ret2;
+    PyArrayMultiIterObject *mobj;
 
     /*
      * I think what I'd really like to do here is specify a
@@ -338,42 +337,33 @@ unicodetype_concat(PyObject *self, PyObject *other, int radd)
      * cast back to NPY_UNICODE before returning
      */
 
-    ret = PyArray_NewLikeArray((PyArrayObject *)self,
-                               NPY_ANYORDER,
-                               PyArray_DescrFromType(NPY_OBJECT),
-                               0);
-
-    self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-    other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
-    ret_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret);
-
-
-    /* handle case where other has only a single element */
-    if (other_iter->size == 1) {
-        /* we'll iterate over self & add other each time */
-        other_item = PyArray_GETITEM((PyArrayObject *)other,
-                                     PyArray_ITER_DATA(other_iter));
-    }
-    else if (other_iter->size != self_iter->size) {
-        /* handle shape mismatches */
-        return NULL;
+    if (PyArray_Size(self) > PyArray_Size(other)) {
+        ret = PyArray_NewLikeArray((PyArrayObject *)self,
+                                   NPY_ANYORDER,
+                                   PyArray_DescrFromType(NPY_OBJECT),
+                                   0);
     }
     else {
-        /* placeholder catch-all for initialization of other_item */
-        other_item = PyArray_GETITEM((PyArrayObject *)other,
-                                     PyArray_ITER_DATA(other_iter));
+        ret = PyArray_NewLikeArray((PyArrayObject *)other,
+                                   NPY_ANYORDER,
+                                   PyArray_DescrFromType(NPY_OBJECT),
+                                   0);
     }
 
-    while (self_iter->index < self_iter->size) {
+    mobj = (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, self, other);
+    if (mobj == NULL) {
+        /* shapes are not compatible for broadcast */
+        return NULL;
+    }
+    ret_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret);
+
+    while (PyArray_MultiIter_NOTDONE(mobj)) {
         /* retrieve item from self */
         item = PyArray_GETITEM((PyArrayObject *)self,
-                               PyArray_ITER_DATA(self_iter));
+                             PyArray_MultiIter_DATA((PyObject *)mobj, 0));
         /* retrieve item from other array in concat op */
-        if (other_iter->size > 1 && self_iter->index > 0) {
-            /* if other has a single item we can skip this */
-            other_item = PyArray_GETITEM((PyArrayObject *)other,
-                                         PyArray_ITER_DATA(other_iter));
-        }
+        other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                  PyArray_MultiIter_DATA((PyObject *)mobj, 1));
 
         /*
          * concat the two Unicode PyObject elements and
@@ -390,11 +380,7 @@ unicodetype_concat(PyObject *self, PyObject *other, int radd)
                          PyArray_ITER_DATA(ret_iter),
                          combined);
         /* probably need XDECREFs */
-        PyArray_ITER_NEXT(self_iter);
-        if (other_iter->size > 1) {
-            /* only iterate over other if it is not "scalar" */
-            PyArray_ITER_NEXT(other_iter);
-        }
+        PyArray_MultiIter_NEXT(mobj);
         PyArray_ITER_NEXT(ret_iter);
     }
 
