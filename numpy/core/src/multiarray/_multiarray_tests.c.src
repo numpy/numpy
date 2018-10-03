@@ -9,6 +9,7 @@
 #include "common.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
+#include "npy_version.h"
 #include "common.h"
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
@@ -1709,6 +1710,16 @@ get_fpu_mode(PyObject *NPY_UNUSED(self), PyObject *args)
 #endif
 }
 
+static PyObject *
+get_hex_version(PyObject *NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    long ver = get_numpy_version_as_hex();
+    if (ver < 0) {
+        return NULL;
+    }
+    return PyLong_FromLong(ver);
+}
+
 /*
  * npymath wrappers
  */
@@ -1963,6 +1974,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_fpu_mode",
         get_fpu_mode,
         METH_VARARGS, get_fpu_mode_doc},
+    {"get_hex_version",
+        get_hex_version,
+        METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */

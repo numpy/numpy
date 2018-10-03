@@ -514,3 +514,44 @@ def test_broadcast_arrays():
     result = np.broadcast_arrays(a, b)
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+
+def test_hex_version():
+    from numpy.core._multiarray_tests import get_hex_version
+    from numpy import version
+    _orig = version.get_numpy_version_as_hex
+    try:
+        # Test error modes
+        def raise_value_error():
+            raise ValueError('bad call')
+        version.get_numpy_version_as_hex = raise_value_error
+        assert_raises(ValueError, get_hex_version)
+
+        def return_non_bytes():
+            return 3.14
+        version.get_numpy_version_as_hex = return_non_bytes
+        assert_raises(TypeError, get_hex_version)
+
+        def return_non_hex():
+            # First letter must be non-hex
+            return 'hello'
+        version.get_numpy_version_as_hex = return_non_hex
+        assert_raises(ValueError, get_hex_version)
+
+        def return_negative():
+            return '-1234'
+        version.get_numpy_version_as_hex = return_negative
+        assert_raises(ValueError, get_hex_version)
+
+    finally:
+        version.get_numpy_version_as_hex = _orig
+
+    ver = get_hex_version()
+    target = version.get_numpy_version_as_hex()
+    assert_equal(ver, int(target, 16))
+    # Make sure first successful call caches the value
+    try:
+        version.get_numpy_version_as_hex = raise_value_error
+        ver = get_hex_version()
+        assert_equal(ver, int(target, 16))
+    finally:
+        version.get_numpy_version_as_hex = _orig

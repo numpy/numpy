@@ -139,6 +139,10 @@ release = %(isrelease)s
 
 if not release:
     version = full_version
+
+def get_numpy_version_as_hex():
+    major, minor, micro = short_version.split('.')
+    return hex(int(major) << 24 | int(minor) << 16 | int(micro) << 8)
 """
     FULLVERSION, GIT_REVISION = get_version_info()
 
