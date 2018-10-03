@@ -296,6 +296,75 @@ class TestSetOps:
 
         assert_array_equal(in1d([], []), [])
 
+    def test_in1d_hit_alternate_algorithm_floats(self):
+        # Perform the above test but with floats
+        # This forces the old in1d (pre-Oct 1/2018) algorithm
+        for mult in (1, 10):
+            # One check without np.array to make sure lists are handled correct
+            a = [5, 7, 1, 2]
+            b = [2, 4, 3, 1, 5] * mult
+            ec = np.array([True, False, True, True])
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32), assume_unique=True)
+            assert_array_equal(c, ec)
+
+            a[0] = 8
+            ec = np.array([False, False, True, True])
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32), assume_unique=True)
+            assert_array_equal(c, ec)
+
+            a[0], a[3] = 4, 8
+            ec = np.array([True, False, True, False])
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32), assume_unique=True)
+            assert_array_equal(c, ec)
+
+            a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
+            b = [2, 3, 4] * mult
+            ec = [False, True, False, True, True, True, True, True, True,
+                  False, True, False, False, False]
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32))
+            assert_array_equal(c, ec)
+
+            b = b + [5, 5, 4] * mult
+            ec = [True, True, True, True, True, True, True, True, True, True,
+                  True, False, True, True]
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32))
+            assert_array_equal(c, ec)
+
+            a = np.array([5, 7, 1, 2])
+            b = np.array([2, 4, 3, 1, 5] * mult)
+            ec = np.array([True, False, True, True])
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32))
+            assert_array_equal(c, ec)
+
+            a = np.array([5, 7, 1, 1, 2])
+            b = np.array([2, 4, 3, 3, 1, 5] * mult)
+            ec = np.array([True, False, True, True, True])
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32))
+            assert_array_equal(c, ec)
+
+            a = np.array([5, 5])
+            b = np.array([2, 2] * mult)
+            ec = np.array([False, False])
+            c = in1d(np.array(a, dtype=np.float32),
+                     np.array(b, dtype=np.float32))
+            assert_array_equal(c, ec)
+
+        a = np.array([5])
+        b = np.array([2])
+        ec = np.array([False])
+        c = in1d(np.array(a, dtype=np.float32),
+                 np.array(b, dtype=np.float32))
+        assert_array_equal(c, ec)
+
+        assert_array_equal(in1d([], []), [])
+
     def test_in1d_char_array(self):
         a = np.array(['a', 'b', 'c', 'd', 'e', 'c', 'e', 'b'])
         b = np.array(['a', 'c'])
@@ -314,6 +383,13 @@ class TestSetOps:
             b = [2, 3, 4] * mult
             assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
 
+        for mult in (1, 10):
+            a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5],
+                         dtype=np.float32)
+            b = [2, 3, 4] * mult
+            b = np.array(b, dtype=np.float32)
+            assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
+
     def test_in1d_ravel(self):
         # Test that in1d ravels its input arrays. This is not documented
         # behavior however. The test is to ensure consistentency.
@@ -326,6 +402,29 @@ class TestSetOps:
         assert_array_equal(in1d(a, b, assume_unique=False), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
+
+    def test_in1d_hit_alternate_algorithm(self):
+        """Hit the standard isin code with integers"""
+        # Need extreme range to hit standard code
+        a = np.array([5, 4, 5, 3, 4, 4, 1e9], dtype=np.int64)
+        b = np.array([2, 3, 4, 1e9], dtype=np.int64)
+        expected = np.array([0, 1, 0, 1, 1, 1, 1], dtype=np.bool)
+        assert_array_equal(expected, in1d(a, b))
+        assert_array_equal(np.invert(expected), in1d(a, b, invert=True))
+
+        a = np.array([5, 7, 1, 2], dtype=np.int64)
+        b = np.array([2, 4, 3, 1, 5, 1e9], dtype=np.int64)
+        ec = np.array([True, False, True, True])
+        c = in1d(a, b, assume_unique=True)
+        assert_array_equal(c, ec)
+
+    def test_in1d_boolean(self):
+        """Test that in1d works for boolean input"""
+        a = np.array([True, False])
+        b = np.array([False, False, False])
+        expected = np.array([False, True])
+        assert_array_equal(expected, in1d(a, b))
+        assert_array_equal(np.invert(expected), in1d(a, b, invert=True))
 
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
