@@ -45,7 +45,7 @@
 
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER == 1900)
+#if defined(_MSC_VER) && (_MSC_VER >= 1900)
 
 #undef HAVE_CASIN
 #undef HAVE_CASINF
@@ -59,6 +59,19 @@
 #undef HAVE_CATANH
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
+
+#undef HAVE_CSQRT
+#undef HAVE_CSQRTF
+#undef HAVE_CSQRTL
+#undef HAVE_CLOG
+#undef HAVE_CLOGF
+#undef HAVE_CLOGL
+#undef HAVE_CACOS
+#undef HAVE_CACOSF
+#undef HAVE_CACOSL
+#undef HAVE_CACOSH
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSHL
 
 #endif
 
