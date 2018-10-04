@@ -58,7 +58,7 @@ jobs:
   pool:
     vmIMage: 'VS2017-Win2016'
   strategy:
-    maxParallel: 5
+    maxParallel: 6
     matrix:
         Python36-32bit-fast:
           PYTHON_VERSION: '3.6'
@@ -72,6 +72,10 @@ jobs:
           PYTHON_VERSION: '2.7'
           PYTHON_ARCH: 'x64'
           TEST_MODE: fast
+        Python35-64bit-full:
+          PYTHON_VERSION: '3.5'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
         Python36-64bit-full:
           PYTHON_VERSION: '3.6'
           PYTHON_ARCH: 'x64'
