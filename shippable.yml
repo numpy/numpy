@@ -46,7 +46,7 @@ build:
     - extra_path=$(printf "%s:" "${extra_directories[@]}")
     - export PATH="${extra_path}${PATH}"
     # run the test suite
-    - python runtests.py -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
+    - python runtests.py -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 96 --durations=10
 
     cache: true
     cache_dir_list:
