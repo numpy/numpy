@@ -30,7 +30,7 @@ jobs:
     displayName: 'make gfortran available on mac os vm'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytest-xdist pytz
+  - script: python -m pip install cython nose pytz pytest
     displayName: 'Install dependencies; some are optional to avoid test skips'
   # NOTE: init_dgelsd failed init issue with current ACCELERATE /
   # LAPACK configuration on Azure macos image; at the time of writing
@@ -48,8 +48,60 @@ jobs:
       ATLAS: None
       ACCELERATE: None
       CC: /usr/bin/clang
-  - script: python runtests.py --mode=full -- -n auto -rsx --junitxml=junit/test-results.xml
+  - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for Python $(python.version)'
+- job: Windows
+  pool:
+    vmIMage: 'VS2017-Win2016'
+  strategy:
+    maxParallel: 5
+    matrix:
+        Python36-32bit-fast:
+          PYTHON_VERSION: '3.6'
+          PYTHON_ARCH: 'x86'
+          TEST_MODE: fast
+        Python37-32bit-fast:
+          PYTHON_VERSION: '3.7'
+          PYTHON_ARCH: 'x86'
+          TEST_MODE: fast
+        Python27-64bit-fast:
+          PYTHON_VERSION: '2.7'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: fast
+        Python36-64bit-full:
+          PYTHON_VERSION: '3.6'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+        Python37-64bit-full:
+          PYTHON_VERSION: '3.7'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(PYTHON_VERSION)
+      addToPath: true
+      architecture: $(PYTHON_ARCH)
+   # as noted by numba project, currently need
+   # specific VC install for Python 2.7
+   # NOTE: had some issues splitting powershell
+   # command into bits and / or using condition
+   # directive, so squeezing operation to a single
+   # line for now
+  - powershell: if ($env:PYTHON_VERSION -eq 2.7) {$wc = New-Object net.webclient; $wc.Downloadfile("https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi", "VCForPython27.msi"); Start-Process "VCForPython27.msi" /qn -Wait}
+    displayName: 'Install VC 9.0'
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - script: python -m pip install cython nose pytz pytest
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  # NOTE: for Windows builds it seems much more tractable to use runtests.py
+  # vs. manual setup.py and then runtests.py for testing only
+  - script: python runtests.py --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Build NumPy & Run Full NumPy Test Suite'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
