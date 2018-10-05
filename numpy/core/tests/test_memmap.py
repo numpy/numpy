@@ -81,7 +81,10 @@ class TestMemmap(object):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
                        shape=self.shape)
-        abspath = os.path.realpath(os.path.abspath(tmpname))
+        # os.path.realpath does not resolve symlinks on Windows
+        # see: https://bugs.python.org/issue9949
+        # use Path.resolve, just as memmap class does internally
+        abspath = str(Path(tmpname).resolve())
         fp[:] = self.data[:]
         assert_equal(abspath, str(fp.filename.resolve()))
         b = fp[:1]
