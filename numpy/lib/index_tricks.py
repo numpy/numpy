@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import functools
+import itertools
 import sys
 import math
 
@@ -23,8 +24,8 @@ array_function_dispatch = functools.partial(
 
 __all__ = [
     'ravel_multi_index', 'unravel_index', 'mgrid', 'ogrid', 'r_', 'c_',
-    's_', 'index_exp', 'ix_', 'ndenumerate', 'ndindex', 'fill_diagonal',
-    'diag_indices', 'diag_indices_from'
+    's_', 'index_exp', 'ix_', 'ndenumerate', 'ndindex', 'ndrange',
+    'fill_diagonal', 'diag_indices', 'diag_indices_from'
     ]
 
 
@@ -524,7 +525,7 @@ class CClass(AxisConcatenator):
     useful because of its common occurrence. In particular, arrays will be
     stacked along their last axis after being upgraded to at least 2-D with
     1's post-pended to the shape (column vectors made out of 1-D arrays).
-    
+
     See Also
     --------
     column_stack : Stack 1-D arrays as columns into a 2-D array.
@@ -559,7 +560,7 @@ class ndenumerate(object):
 
     See Also
     --------
-    ndindex, flatiter
+    ndindex, flatiter, ndrange
 
     Examples
     --------
@@ -596,6 +597,385 @@ class ndenumerate(object):
     next = __next__
 
 
+class ndrange(_nx.collections_abc.Sequence):
+    """
+    The ndrange type represents an immutable sequence of numbers and can be
+    used for looping over specific multi-dimensional indicies in ``for`` loops.
+
+    # TODO: how do I get this to show up in the docs
+    class ndrange(stop)
+    class ndrange(start, stop[, step])
+
+    The arguments to the ``ndrange`` constructor must be iterables (lists,
+    tuple, 1D-arrays, etc.) of integers. Individual integers are also accepted
+    and are coerced to tuples of length 1.
+
+    The length of all provided arguments must be equal.
+
+    While conceptually similar to a multidimensional object, the iterator
+    returned by ndrange is a flat iterator that would be determined by the
+    array of tuples
+
+      r[i_0, i_1, ..., i_Nminus1] = (start[0] + step[0] * i_0,
+                                     start[1] + step[1] * i_1,
+                                     ...,
+                                     start[N-1] + step[N-1] * i_Nminus1)
+
+    where ``i0, i1, ..., iN_m1 >= 0``. For positive steps, at an axis ``j``,
+    the largest index is constrained such that
+    ``r[..., i_j, ...][j] < stop[j]``. For negative steps at an axis ``j``,
+    sthe smallest index at that axis is contrained by
+    ``r[..., i_j, ...][j] > stop[j]``.
+
+    An ndrange object will be empty if `r[(0,) * len(start)]` does not meet
+    the value constraints.
+
+    The sequence of tuples is traversed the conceptual matrix ``r`` in a
+    fashion consistent with C order indexing.
+
+    While the ndrange range returns a flat sequence, it can be sliced along
+    multiple axes. As an added convenience, the ``shape`` attribute is also
+    available, and returns the conceptual shape of the array ``r`` associated
+    which the sequence traverses.
+
+    The ndrange object is not designed as a substitute for vectorized numeric
+    code. Whenever possible, you should use vectorized routines for mathematical
+    functions. ndrange is provided primarily for convenient for iteration over
+    multi-dimensional collections when no vectorized primitives exist.
+
+    Like the Python 3 range object, ndrange objects implement the
+    ``collections.abc.Sequence`` ABC and provide features such as containment
+    tests, element index lookup, slicing, and support for negative indices.
+    See the `python class range documentation
+    <https://docs.python.org/3/library/stdtypes.html#range>`_ for more details.
+
+    Testing ndrange objects for equality with ``==`` and ``!=`` compares them
+    as sequences. See the examples for more details.
+
+    If ndrange is called with a single positional argument, that argument
+    is assumed to be ``stop`` and ``start`` defaults to a tuple of zeros.
+
+    Parameters
+    ----------
+    stop: tuple of ints (or single int)
+        Specifies the stop parameter along each axis.
+    start: tuple of ints (or single int)
+        If provided, must be the same length as stop. Specifies the start
+        parameter along each axis.
+    step: tuple of ints (or single int)
+        If provided, must be the same length as stop. Specifies the increment
+        along each axis. If step is not provided, it defaults to a tuple of
+        ones.
+
+    See Also
+    --------
+    flatiter, ndenumerate, ndindex
+
+    Notes
+    -----
+    .. versionadded:: 1.16.0
+
+    In Python 2.7, this object is based ``N = len(stop)`` range objects,
+    ``N`` lists, as opposed to ``N`` xrange objects to allow for slicing.
+
+    In addition to this, because neither `range` nor `xrange` are hashable
+    in Python 2.7, the ndrange object is not hashable either in Python 2.7.
+
+    Examples
+    --------
+    This is likely the most natural way to iterate through the sequence of
+    ndrange object. Here, the first parameter is the shape of the array
+    ``shape`` attribute of an array and we slice through the ``ndrange``
+    object.
+
+    >>> a = np.zeros((4, 4), dtype='object')
+    >>> # [...] # operate on ``a``
+    >>> for i in np.ndrange(a.shape)[::2, 1:-1]:
+    ...     print(i)
+    (0, 1)
+    (0, 2)
+    (2, 1)
+    (2, 2)
+
+    >>> list(np.ndrange((2, 3)))
+    [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)]
+
+    >>> list(np.ndrange((1, 2), (4, 4)))
+    [(1, 2), (1, 3), (2, 2), (2, 3), (3, 2), (3, 3)]
+
+    Reversed iteration is also possible
+
+    >>> for i in reversed(np.ndrange(3, 2)):
+    ...     print(i)
+    (2, 1)
+    (2, 0)
+    (1, 1)
+    (1, 0)
+    (0, 1)
+    (0, 0)
+
+    Keep in mind that ``ndrange`` is not an iterator. To obtain an iterator,
+    call ``iter`` first.
+
+    >>> ndrange_iter = iter(np.ndrange((2, 2)))
+    >>> next(ndrange_iter)
+    >>> for i in ndrange_iter:
+    ...     print(i)
+    (0, 1)
+    (1, 0)
+    (1, 1)
+
+    Equality comparison is also possible. Notice that
+
+    >>> np.ndrange((0, 0), (3, 3), (2, 2)) == np.ndrange((0, 0), (4, 4), (2, 2))
+    True
+
+    returns ``True``, since the sequence generated by both those pairs of
+    ``ndrange`` objects would be the same.
+
+    Testing for containment is also possible
+
+    >>> (1, 3) in np.ndrange((1, 2), (4, 4))
+    True
+
+    >>> (0, 3) in np.ndrange((1, 2), (4, 4))
+    False
+
+
+    While native support for Fortran iteration ordering isn't supported, it can
+    be acheived readily through:
+
+    >>> for i in np.ndrange((3, 2)[::-1]):
+    ...     i = i[::-1]
+    ...     print(i)
+    (0, 0)
+    (1, 0)
+    (2, 0)
+    (0, 1)
+    (1, 1)
+    (2, 1)
+
+    or
+
+    >>> for i_f in (i_c[::-1] for i_c in np.ndrange((3, 2)[::-1])):
+    ...     print(i_f)
+    (0, 0)
+    (1, 0)
+    (2, 0)
+    (0, 1)
+    (1, 1)
+    (2, 1)
+
+    """
+
+    __slots__ = ['_start', '_stop', '_step', '_ranges']
+
+    def __init__(self, start=None, stop=None, step=None):
+        if stop is None:
+            stop = start
+            start = None
+
+        if stop is None:
+            raise ValueError('``stop`` must be provided.')
+
+        # Is there a function that deals with this input sanitization for me?
+        if not isinstance(stop, _nx.collections_abc.Iterable):
+            stop = (stop,)
+        elif not isinstance(stop, tuple):
+            stop = tuple(stop)
+
+        if start is None:
+            start = (0,) * len(stop)
+        elif not isinstance(start, _nx.collections_abc.Iterable):
+            start = (start,)
+        elif not isinstance(start, tuple):
+            start = tuple(start)
+
+        if step is None:
+            step = (1,) * len(stop)
+        elif not isinstance(step, _nx.collections_abc.Iterable):
+            step = (step,)
+        elif not isinstance(step, tuple):
+            step = tuple(step)
+
+        if len(start) != len(stop):
+            raise ValueError(
+                "``start`` and ``stop`` must have the same length.")
+
+        if len(step) != len(stop):
+            raise ValueError(
+                "``start``, ``stop``, and ``step`` must have the same length.")
+
+        self._start = start
+        self._stop = stop
+        self._step = step
+        # The problem with using xrange objects in python2 is that
+        # they don't support being indexed by slices.
+
+        # Create the range objects here so that in case of invalid parameters
+        # ndrange fails early
+        self._ranges = tuple(range(*r) for r in zip(start, stop, step))
+
+    @property
+    def start(self):
+        """
+        The value of the start parameter (or ``(0,) * len(stop)`` if the
+        parameter was not supplied)
+        """
+        return self._start
+
+    @property
+    def stop(self):
+        """
+        The provided ``stop`` parameter as a tuple.
+        """
+        return self._stop
+
+    @property
+    def step(self):
+        """
+        Tuple containing the ``step`` parameter along each axis.
+        """
+        return self._step
+
+    def count(self, x):
+        """
+        Return number of occurrences of the provided tuple.
+        """
+        return 1 if x in self else 0
+
+    def index(self, x, start=None, stop=None):
+        """
+        Return the index of the provided tuple.
+
+        raises ``ValueError`` if the index is not found.
+
+        Parameters
+        ----------
+        x: tuple of ints, or int
+            Value for which to look for in the ndrange object.
+
+        Returns
+        -------
+        index: tuple of ints
+            Index of the value x.
+
+        """
+        # Note: It was empiracally found that indexing range objects does not
+        # support the additional ``start`` and ``stop`` parameters even in
+        # Python 3.7.0.
+        # A relevant bug report is found https://bugs.python.org/issue34848
+        if not isinstance(x, tuple):
+            x = (x,)
+
+        if len(x) != len(self._ranges):
+            raise ValueError("{} is not in numpy.range".format(x))
+
+        try:
+            return tuple(r.index(i) for r, i in zip(self._ranges, x))
+        except ValueError:
+            raise ValueError("{} is not in numpy.range".format(x))
+
+    @property
+    def shape(self):
+        return tuple(len(r) for r in self._ranges)
+
+    def __iter__(self):
+        return itertools.product(*(iter(r) for r in self._ranges))
+
+    def __reversed__(self):
+        return itertools.product(*(reversed(r) for r in self._ranges))
+
+    def __contains__(self, index):
+        # Should we accept lists/arrays in the containment operation?
+        if not isinstance(index, tuple):
+            index = (index,)
+
+        if len(index) != len(self._ranges):
+            return False
+
+        return all(i in r for i, r in zip(index, self._ranges))
+
+    def __getitem__(self, sl):
+        if not isinstance(sl, tuple):
+            sl = (sl,)
+
+        if len(sl) > len(self._ranges):
+            raise IndexError('too many indices for numpy.ndrange')
+
+        try:
+            sl = sl + (slice(None),) * (len(self._ranges) - len(sl))
+        except TypeError:
+            raise TypeError('numpy.ndrange indices must be tuple containing a '
+                            'mixture of slices or integers.')
+
+        new_ranges = tuple(r[s] for r, s in zip(self._ranges, sl))
+        if sys.version_info[0] < 3:
+            start = []
+            stop = []
+            step = []
+            singleton = True
+            for r in new_ranges:
+                if isinstance(r, list):
+                    singleton = False
+                    start.append(r[0])
+                    stop.append(r[-1] + 1 if r[-1] >= r[0] else r[-1] - 1)
+                    step.append(1 if len(r) <= 1 else (r[-1] - r[0]) // (len(r) - 1))
+                else:
+                    start.append(r)
+                    stop.append(r+1)
+                    step.append(1)
+
+            if singleton:
+                return tuple(start)
+            start = tuple(start)
+            stop = tuple(stop)
+            step = tuple(step)
+        else:
+            # If they are all singletons, then we need to return an index.
+            if all(not isinstance(r, range) for r in new_ranges):
+                return new_ranges
+            # If any of them are ranges, we need to cast all the other
+            # ones to ranges as well
+            start, stop, step = zip(
+                *((r.start, r.stop, r.step) if isinstance(r, range) else (r, r+1, 1)
+                for r in new_ranges))
+
+        return ndrange(start, stop, step)
+
+    def __len__(self):
+        length = 1
+        for r in self._ranges:
+            length = length * len(r)
+        return length
+
+    def __eq__(self, other):
+        # If they don't return the same length tuples, then it is always False
+        if len(self._ranges) != len(other._ranges):
+            return False
+
+        return all(s == o for s, o in zip(self._ranges, other._ranges))
+
+    def __ne__(self, other):
+        # Required for Python 2.7, Python 3 will default to this behaviour
+        # without explicitly defining the __ne__ method.
+        return not self == other
+
+    def __repr__(self):
+        s = "numpy.ndrange({start}, {stop}".format(start=self._start,
+                                                   stop=self._stop)
+        if any(step != 1 for step in self._step):
+            s += ", {step}".format(step=self._step)
+        s += ")"
+        return s
+
+    def __hash__(self):
+        if sys.version_info[0] < 3:
+            raise RuntimeError('numpy.ndrange is hot hashable in Python 2')
+        else:
+            return hash(tuple(hash(r) for r in self._ranges))
+
+
 class ndindex(object):
     """
     An N-dimensional iterator object to index arrays.
@@ -609,9 +989,16 @@ class ndindex(object):
     `*args` : ints
       The size of each dimension of the array.
 
+    Notes
+    -----
+    This function continues to be supported for backward compatibility, but you
+    should prefer ``ndrange``. Unlike ``ndindex``, ``ndrange`` is not an
+    iterator (but can return an iterator) and allows multi-dimensional slicing
+    for more flexible iteration.
+
     See Also
     --------
-    ndenumerate, flatiter
+    ndenumerate, flatiter, ndrange
 
     Examples
     --------
