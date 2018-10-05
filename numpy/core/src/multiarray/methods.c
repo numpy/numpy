@@ -1920,18 +1920,15 @@ PyArray_Dumps(PyObject *self, int protocol)
 
 
 static PyObject *
-array_dump(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_dump(PyArrayObject *self, PyObject *args)
 {
     PyObject *file = NULL;
-    int protocol = 2;
-    static char *kwlist[] = {"file", "protocol", NULL};
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|i:dump", kwlist,
-                                     &file, &protocol)) {
+    if (!PyArg_ParseTuple(args, "O:dump", &file)) {
         return NULL;
     }
-    ret = PyArray_Dump((PyObject *)self, file, protocol);
+    ret = PyArray_Dump((PyObject *)self, file, 2);
     if (ret < 0) {
         return NULL;
     }
@@ -1940,16 +1937,12 @@ array_dump(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-array_dumps(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_dumps(PyArrayObject *self, PyObject *args)
 {
-    int protocol = 2;
-    static char *kwlist[] = {"protocol", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|i:dumps", kwlist,
-                                     &protocol)) {
+    if (!PyArg_ParseTuple(args, "")) {
         return NULL;
     }
-    return PyArray_Dumps((PyObject *)self, protocol);
+    return PyArray_Dumps((PyObject *)self, 2);
 }
 
 
@@ -2519,10 +2512,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"dumps",
         (PyCFunction) array_dumps,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_VARARGS, NULL},
     {"dump",
         (PyCFunction) array_dump,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_VARARGS, NULL},
 
     {"__complex__",
         (PyCFunction) array_complex,
