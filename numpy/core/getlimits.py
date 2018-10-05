@@ -513,7 +513,7 @@ class iinfo(object):
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)
         if self.kind not in 'iu':
-            raise ValueError("Invalid integer data type.")
+            raise ValueError("Invalid integer data type %r." % (self.kind,))
 
     def min(self):
         """Minimum value of given dtype."""
