@@ -32,6 +32,10 @@
 #define inline __inline __forceinline
 #else
 #include <inttypes.h>
+#if _MSC_VER >= 1900 && _M_AMD64
+#include <intrin.h>
+#pragma intrinsic(_umul128)
+#endif
 #endif
 
 #if __GNUC_GNU_INLINE__ && !defined(__cplusplus)
@@ -94,6 +98,10 @@ static inline pcg128_t _pcg128_add(pcg128_t a, pcg128_t b) {
 
 static inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1,
                                uint64_t *z0) {
+
+#if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
+    z0[0] = _umul128(x, y, z1);
+#else
   uint64_t x0, x1, y0, y1;
   uint64_t w0, w1, w2, t;
   /* Lower 64 bits are straightforward clock-arithmetic. */
@@ -109,6 +117,8 @@ static inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1,
   w2 = t >> 32;
   w1 += x0 * y1;
   *z1 = x1 * y1 + w2 + (w1 >> 32);
+#endif
+
 }
 
 static inline pcg128_t _pcg128_mult(pcg128_t a, pcg128_t b) {
