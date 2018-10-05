@@ -231,9 +231,9 @@ else:
         savez_compressed, unpackbits, fromregex
     )
     from .lib._index_tricks_impl import (
-        diag_indices_from, diag_indices, fill_diagonal, ndindex, ndenumerate,
-        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index,
-        index_exp
+        diag_indices_from, diag_indices, fill_diagonal, ndindex, ndrange,
+        ndenumerate, ix_, c_, r_, s_, ogrid, mgrid, unravel_index,
+        ravel_multi_index, index_exp
     )
 
     from . import matrixlib as _mat

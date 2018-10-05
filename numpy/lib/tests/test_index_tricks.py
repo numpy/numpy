@@ -7,8 +7,12 @@ from numpy.testing import (
     )
 from numpy.lib._index_tricks_impl import (
     mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, c_, r_, s_, ix_
+    index_exp, ndindex, ndrange, c_, r_, s_, ix_
     )
+
+import collections.abc
+import pytest
+from random import shuffle
 
 
 class TestRavelUnravelIndex:
@@ -551,3 +555,228 @@ def test_ndindex():
     # Make sure 0-sized ndindex works correctly
     x = list(ndindex(*[0]))
     assert_equal(x, [])
+
+
+def ndrange_tester_helper(expected, not_expected,
+                          start=None, stop=None, step=None,
+                          slices=None):
+
+    kwargs = {}
+    if start is not None:
+        kwargs['start'] = start
+    if stop is not None:
+        kwargs['stop'] = stop
+    if step is not None:
+        kwargs['step'] = step
+
+    r = ndrange(**kwargs)
+    if isinstance(stop, collections.abc.Iterable):
+        assert r.ndim == len(stop)
+    else:
+        assert r.ndim == 1
+
+    if slices is not None:
+        r = r[slices]
+
+    assert_equal(len(expected), len(r))
+
+    assert stop not in r
+    assert isinstance(r, collections.abc.Sequence)
+
+    # copy the list
+    shuffled = list(expected)
+    shuffle(shuffled)
+    # Make sure we can assert identity in a random order.
+    # This is important since if `__contains__` traverses the iterator,
+    # Then it won't find an element when probed repeatedly.
+    for e in shuffled:
+        assert e in r
+        assert r.count(e) == 1
+
+    for e in not_expected:
+        assert e not in r
+        assert r.count(e) == 0
+        assert_raises(ValueError, r.index, e)
+
+    arr = np.asarray(r)
+    assert_equal(arr.shape, r.shape)
+    for i, e in enumerate(expected):
+        indx = np.unravel_index(i, r.shape)
+        assert_equal(expected[i], r[indx])
+        assert_equal(r.index(e), indx)
+        assert_equal(arr[indx], r[indx])
+
+    x = list(iter(r))
+    assert_array_equal(x, expected)
+    x_reversed = list(reversed(r))
+    e_reversed = expected[::-1]
+    assert_array_equal(x_reversed, e_reversed)
+
+    for arr_item, list_item in zip(r.flat, x):
+        assert arr_item == list_item
+
+    for indx, value in enumerate(r.ravel()):
+        assert expected[indx] == value
+
+    for order in 'CAK':
+        for indx, value in enumerate(r.ravel(order)):
+            assert expected[indx] == value
+
+    r_f_order = (i[::-1] for i in ndrange(start=r.start[::-1],
+                                          stop=r.stop[::-1],
+                                          step=r.step[::-1]))
+    for raveled, other in zip(r.ravel('F'), r_f_order):
+        assert raveled == other
+
+
+def test_ndrange():
+    expected = [(r,) for r in range(5)]
+    not_expected = [(-1,), (7,), (1, 2)]
+    ndrange_tester_helper(expected, not_expected, stop=5)
+    # 1D
+    expected = [(0,), (2,)]
+    ndrange_tester_helper(
+        expected, not_expected, stop=5, slices=slice(0, 4, 2))
+
+    # 2D
+    expected = [(1, 0), (1, 3), (1, 6),
+                (3, 0), (3, 3), (3, 6)]
+    ndrange_tester_helper(expected, not_expected,
+                          stop=(4, 9), slices=np.s_[1::2, ::3])
+    ndrange_tester_helper(expected, not_expected,
+                          stop=(4, 9), slices=np.s_[1::2, ::3])
+
+    expected = [(0, 0), (0, 1)]
+    not_expected = [(-1, 0), (3, 1), (0, 3)]
+    ndrange_tester_helper(expected, not_expected,
+                          stop=(1, 2))
+    ndrange_tester_helper(expected, not_expected,
+                          stop=(1, 2), start=(0, 0))
+
+    expected = [(0, 0), (1, 0)]
+    ndrange_tester_helper(expected, not_expected, stop=[2, 1])
+    ndrange_tester_helper(expected, not_expected, stop=(2, 1), start=(0, 0))
+
+    expected = []
+    ndrange_tester_helper(expected, not_expected, stop=(0, 0), start=(1, 2))
+    ndrange_tester_helper(expected, not_expected, stop=[5, 0], start=(1, 2))
+    expected = [(0, 1), (0, 3),
+                (3, 1), (3, 3)]
+    not_expected = [(-1, 0), (3, 2), (0, 4)]
+    ndrange_tester_helper(expected, not_expected,
+                          start=(0, 1), stop=(4, 5), step=(3, 2))
+
+
+def test_ndrange_failers():
+    assert_raises(ValueError, ndrange, (1,), (1, 2))
+    assert_raises(ValueError, ndrange, (0, 0), (1, 2), (0,))
+    assert_raises(ValueError, ndrange, (0, 0), (1,), (1, 2))
+    assert_raises(ValueError, ndrange, (0,), (1, 2), (1, 2))
+
+    assert_raises(ValueError, ndrange, (0, 0), (1, 2), 0)
+    assert_raises(ValueError, ndrange, (0, 0), 1, (1, 2))
+    assert_raises(ValueError, ndrange, 0, (1, 2), (1, 2))
+
+    assert_raises(ValueError, ndrange, (0, 0), (1, 2), (0, 1, 2))
+    assert_raises(ValueError, ndrange, (0, 0), (1, 2, 3), (1, 2))
+    assert_raises(ValueError, ndrange, (0, 1, 2), (1, 2), (1, 2))
+
+    assert_raises(TypeError, ndrange, (.0, 1, 2), (0, 1, 2), (1, 1, 2))
+
+    assert_raises(TypeError, ndrange,
+                  (np.float32(0.1), 1, 2), (0, 1, 2), (1, 1, 2))
+    assert_raises(TypeError, ndrange,
+                  (np.float64(0.1), 1, 2), (0, 1, 2), (1, 1, 2))
+    assert_raises(TypeError, ndrange, (0, 1, 2), (0, .1, 2), (1, 1, 2))
+    assert_raises(TypeError, ndrange, (0, 1, 2), (0, 1, 2), (1, .1, 2))
+
+    assert_raises(ValueError, ndrange, (0, 1, 2), (0, 1, 2), (0, 1, 1))
+    assert_raises(ValueError, ndrange, 0, 1, 0)
+
+    assert_raises(ValueError, ndrange((4, 2)).index, (4, 0))
+    assert_raises(ValueError, ndrange((4, 2)).index, (0, 2))
+    assert_raises(ValueError, ndrange((4, 2)).index, (0))
+    assert_raises(ValueError, ndrange((4, 2)).index, (-1, 0))
+
+    assert_raises(IndexError, ndrange((4, 2)).__getitem__, (0, 0, 0))
+
+    assert_raises(ValueError, ndrange)
+    assert_raises(ValueError, ndrange, None)
+
+    # Step can only be provided with both start and stop
+    assert_raises(ValueError, ndrange, 2, step=1)
+    assert_raises(ValueError, ndrange, stop=2, step=1)
+    assert_raises(ValueError, ndrange, start=1, stop=None, step=1)
+    assert_raises(ValueError, ndrange, start=None, stop=1, step=1)
+
+
+def test_ndrange_properties():
+    stop = (1, 2, 3)
+    r = ndrange(stop)
+    assert_equal(r.stop, stop)
+    assert_equal(r.start, (0,) * 3)
+    assert_equal(r.step, (1,) * 3)
+
+    start = (0, 1, 2)
+    r = ndrange(start, stop)
+    assert_equal(r.start, start)
+    assert_equal(r.stop, stop)
+    assert_equal(r.step, (1,) * 3)
+
+    step = (-1, 2, 2)
+    r = ndrange(start, stop, step)
+    assert_equal(r.start, start)
+    assert_equal(r.stop, stop)
+    assert_equal(r.step, step)
+
+
+def test_ndrange_equality():
+    r1 = np.ndrange((0, 0), (3, 3), (2, 2))
+    r2 = np.ndrange([0, 0], [4, 4], [2, 2])
+    r3 = np.ndrange([0, 0], [4, 4], [1, 2])
+    assert_equal(r1, r2)
+    assert r1 != r3
+    assert_equal(hash(r1), hash(r2))
+    assert hash(r1) != hash(r3)
+
+
+def test_ndrange_negative():
+    expected = [(r,) for r in range(4, -1, -1)]
+    not_expected = [(-1,), (7,), (1, 2)]
+    ndrange_tester_helper(expected, not_expected, start=4, stop=-1, step=-1)
+    # 1D
+    expected = [(2,), (0,)]
+    ndrange_tester_helper(
+        expected, not_expected, stop=5, slices=slice(2, None, -2))
+
+    # 2D
+    expected = [(1, -3), (1, 0), (1, 3), (1, 6),
+                (3, -3), (3, 0), (3, 3), (3, 6)]
+    ndrange_tester_helper(expected, not_expected,
+                          start=(np.uint8(0), np.int16(-3)),
+                          stop=(4, np.uint16(9)),
+                          slices=np.s_[1::2, ::3])
+
+    expected = [(0, 1), (0, 0)]
+    not_expected = [(-1, 0), (3, 1), (0, 3)]
+    ndrange_tester_helper(expected, not_expected,
+                          start=(0, 1), stop=(np.int64(-1), -1), step=(-1, -1))
+
+    expected = [(0, 0), (-1, 0)]
+    not_expected = [(0, 10), (3, -1), (0, 3)]
+    ndrange_tester_helper(expected, not_expected,
+                          start=(0, 0), stop=[-2, -1], step=(-1, -1))
+
+    expected = []
+    ndrange_tester_helper(expected, not_expected, stop=(-1, 0), start=(0, 2))
+    ndrange_tester_helper(expected, not_expected, stop=[5, -1], start=(-1, 2))
+
+
+@pytest.mark.parametrize('s_func', [str, repr])
+def test_ndrange_repr(s_func):
+    assert s_func(np.ndrange(5)) == 'numpy.ndrange((0,), (5,))'
+    assert s_func(np.ndrange(0, 5, 2)) == 'numpy.ndrange((0,), (5,), (2,))'
+    assert s_func(np.ndrange([0, 0], (1, 5), (1, 2))) == \
+           'numpy.ndrange((0, 0), (1, 5), (1, 2))'
+    assert s_func(np.ndrange((0, 0), [1, 5], (1, 1))) == \
+           'numpy.ndrange((0, 0), (1, 5))'
