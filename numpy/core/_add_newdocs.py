@@ -3761,7 +3761,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dot',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
-    """a.dump(file)
+    """a.dump(file, protocol=2)
 
     Dump a pickle of the array to the specified file.
     The array can be read back with pickle.load or numpy.load.
@@ -3770,20 +3770,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
     ----------
     file : str
         A string naming the dump file.
+    protocol : int, optional
+        The pickle protocol used to serialize the array.
+        The default is 2 (in order to maintain python 2 support).
+
 
     """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('dumps',
     """
-    a.dumps()
+    a.dumps(protocol=2)
 
     Returns the pickle of the array as a string.
     pickle.loads or numpy.loads will convert the string back to an array.
 
     Parameters
     ----------
-    None
+    protocol : int, optional
+        The pickle protocol used to serialize the array.
+        The default is 2 (in order to maintain python 2 support).
 
     """))
 
