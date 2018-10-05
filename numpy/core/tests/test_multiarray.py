@@ -1372,12 +1372,13 @@ class TestZeroSizeFlexible(object):
 
     def test_pickle(self):
         import pickle
-        for dt in [bytes, np.void, unicode]:
-            zs = self._zeros(10, dt)
-            p = pickle.dumps(zs)
-            zs2 = pickle.loads(p)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            for dt in [bytes, np.void, unicode]:
+                zs = self._zeros(10, dt)
+                p = pickle.dumps(zs, protocol=proto)
+                zs2 = pickle.loads(p)
 
-            assert_equal(zs.dtype, zs2.dtype)
+                assert_equal(zs.dtype, zs2.dtype)
 
 
 class TestMethods(object):
@@ -3550,16 +3551,19 @@ class TestSubscripting(object):
 class TestPickling(object):
     def test_roundtrip(self):
         import pickle
-        carray = np.array([[2, 9], [7, 0], [3, 8]])
-        DATA = [
-            carray,
-            np.transpose(carray),
-            np.array([('xxx', 1, 2.0)], dtype=[('a', (str, 3)), ('b', int),
-                                               ('c', float)])
-        ]
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            carray = np.array([[2, 9], [7, 0], [3, 8]])
+            DATA = [
+                carray,
+                np.transpose(carray),
+                np.array([('xxx', 1, 2.0)], dtype=[('a', (str, 3)), ('b', int),
+                                                   ('c', float)])
+            ]
 
-        for a in DATA:
-            assert_equal(a, pickle.loads(a.dumps()), err_msg="%r" % a)
+            for a in DATA:
+                assert_equal(
+                        a, pickle.loads(a.dumps(protocol=proto)),
+                        err_msg="%r" % a)
 
     def _loads(self, obj):
         import pickle
