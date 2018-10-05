@@ -80,7 +80,7 @@ class TestMaskedMatrix(object):
         # Test pickling w/ a subclass of ndarray
         a = masked_array(np.matrix(list(range(10))), mask=[1, 0, 1, 0, 0] * 2)
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            a_pickled = pickle.loads(a.dumps(protocol=proto))
+            a_pickled = pickle.loads(pickle.dumps(protocol=proto))
             assert_equal(a_pickled._mask, a._mask)
             assert_equal(a_pickled, a)
             assert_(isinstance(a_pickled._data, np.matrix))
