@@ -3562,7 +3562,7 @@ class TestPickling(object):
 
             for a in DATA:
                 assert_equal(
-                        a, pickle.loads(pickle.dumps(protocol=proto)),
+                        a, pickle.loads(pickle.dumps(a, protocol=proto)),
                         err_msg="%r" % a)
 
     def _loads(self, obj):
