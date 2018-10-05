@@ -5,5 +5,6 @@ include randomgen/_version.py
 include requirements.txt
 include README.md
 include README.rst
-recursive-include randomgen  *.py *.pyx *.px[di] *.h *.in *.csv
+include LICENSE.md
+recursive-include randomgen  *.py *.pyx *.px[di] *.h *.in *.csv *.md
 graft randomgen/src
