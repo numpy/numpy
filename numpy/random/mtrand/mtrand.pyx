@@ -4907,8 +4907,8 @@ cdef class RandomState:
     
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
-            # must return a copy
-            if arr is x:
+            # Return a copy if same memory
+            if np.may_share_memory(arr, x):
                 arr = np.array(arr)
             self.shuffle(arr)
             return arr
