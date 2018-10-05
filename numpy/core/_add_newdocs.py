@@ -3774,6 +3774,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
         The pickle protocol used to serialize the array.
         The default is 2 (in order to maintain python 2 support).
 
+        .. versionadded:: 1.16.0
+
     """))
 
 
@@ -3789,6 +3791,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dumps',
     protocol : int, optional
         The pickle protocol used to serialize the array.
         The default is 2 (in order to maintain python 2 support).
+
+        .. versionadded:: 1.16.0
 
     """))
 
