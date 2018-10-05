@@ -60,6 +60,7 @@ def run_command(cmd, check_code=True):
 
 
 @pytest.mark.skipif(is_inplace, reason="Cannot test f2py command inplace")
+@pytest.mark.xfail(reason="Test is unreliable")
 def test_f2py():
     # test that we can run f2py script
     if sys.platform == 'win32':
