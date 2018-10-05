@@ -9,6 +9,7 @@ import atexit
 import tempfile
 import subprocess
 import shutil
+import multiprocessing
 
 import distutils
 from distutils.errors import DistutilsError
@@ -83,7 +84,9 @@ def get_num_build_jobs():
     Get number of parallel build jobs set by the --parallel command line
     argument of setup.py
     If the command did not receive a setting the environment variable
-    NPY_NUM_BUILD_JOBS checked and if that is unset it returns 1.
+    NPY_NUM_BUILD_JOBS checked. If that is unset, return the number of
+    processors on the system, with a maximum of 8 (to prevent
+    overloading the system if there a lot of CPUs).
 
     Returns
     -------
@@ -92,7 +95,12 @@ def get_num_build_jobs():
 
     """
     from numpy.distutils.core import get_distribution
-    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", 1))
+    try:
+        cpu_count = len(os.sched_getaffinity(0))
+    except AttributeError:
+        cpu_count = multiprocessing.cpu_count()
+    cpu_count = min(cpu_count, 8)
+    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", cpu_count))
     dist = get_distribution()
     # may be None during configuration
     if dist is None:
@@ -2290,7 +2298,7 @@ def generate_config_py(target):
 import os
 import sys
 
-extra_dll_dir = os.path.join(os.path.dirname(__file__), 'extra-dll')
+extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
 if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
     os.environ.setdefault('PATH', '')
