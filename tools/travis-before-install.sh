@@ -20,6 +20,11 @@ fi
 
 source venv/bin/activate
 python -V
+
+if [ -n "$INSTALL_PICKLE5" ]; then
+  pip install pickle5
+fi
+
 pip install --upgrade pip setuptools
 pip install nose pytz cython pytest
 if [ -n "$USE_ASV" ]; then pip install asv; fi

@@ -193,6 +193,11 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   pushd dist
   pip install --pre --no-index --upgrade --find-links=. numpy
   pip install nose pytest
+
+  if [ -n "$INSTALL_PICKLE5" ]; then
+    pip install pickle5
+  fi
+
   popd
   run_test
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
@@ -212,6 +217,10 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   pushd dist
   pip install numpy*
   pip install nose pytest
+  if [ -n "$INSTALL_PICKLE5" ]; then
+    pip install pickle5
+  fi
+
   popd
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then

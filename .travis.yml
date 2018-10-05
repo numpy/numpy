@@ -39,6 +39,7 @@ matrix:
     - python: 3.7
       dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
+      env: INSTALL_PICKLE5=1
     - python: 3.6
       env: USE_CHROOT=1 ARCH=i386 DIST=bionic PYTHON=3.6
       sudo: true
@@ -61,7 +62,7 @@ matrix:
             - python3-dev
             - python3-setuptools
     - python: 3.6
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1
+      env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
     - python: 2.7
       env: USE_WHEEL=1 RUN_FULL_TESTS=1 PYTHON_OPTS="-3 -OO"
     - python: 3.6
