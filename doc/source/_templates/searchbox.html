@@ -20,4 +20,30 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+<div class="well">
+<strong>Docs for {{ release }}<br></strong>
+<a id="other">All versions</a>
+<ul id="versionList" style="display: none;">
+        <script type="text/javascript">
+            var versions = ['dev', '1.15.1', '1.14.5', '1.13.0', '1.12.0', '1.11.0', '1.10.1', '1.9.3', '1.8.1', '1.7.0'];
+            for (i = 0; i < versions.length; i++) {
+
+                if (i == 0) {
+                    base_url = 'https://www.numpy.org/devdocs/index.html'
+                }
+                else {
+                    base_url = 'https://docs.scipy.org/doc/numpy-VERSION'
+                }
+            document.write('<li><a href="URL">NumPy VERSION</a> </li>\n'
+                    .replace('URL', base_url)
+                    .replace(/VERSION/g, versions[i]));
+            }
+        </script>
+</ul>
+</div>
+<script type="text/javascript">
+	$("#other").click(function() {
+		$("#versionList").toggle();
+	});
+</script>
 {%- endif %}
