@@ -320,7 +320,7 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    def setup(self):
+    def setup_class(self):
         if sys.platform == 'win32':
             pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')
 
