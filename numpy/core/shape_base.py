@@ -7,7 +7,14 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
 from .multiarray import normalize_axis_index
+from .overrides import array_function_dispatch
 
+
+def _atleast_1d_dispatcher(*arys):
+    return arys
+
+
+@array_function_dispatch(_atleast_1d_dispatcher)
 def atleast_1d(*arys):
     """
     Convert inputs to arrays with at least one dimension.
@@ -60,6 +67,12 @@ def atleast_1d(*arys):
     else:
         return res
 
+
+def _atleast_2d_dispatcher(*arys):
+    return arys
+
+
+@array_function_dispatch(_atleast_2d_dispatcher)
 def atleast_2d(*arys):
     """
     View inputs as arrays with at least two dimensions.
@@ -112,6 +125,12 @@ def atleast_2d(*arys):
     else:
         return res
 
+
+def _atleast_3d_dispatcher(*arys):
+    return arys
+
+
+@array_function_dispatch(_atleast_3d_dispatcher)
 def atleast_3d(*arys):
     """
     View inputs as arrays with at least three dimensions.
@@ -179,6 +198,11 @@ def atleast_3d(*arys):
         return res
 
 
+def _vstack_dispatcher(tup):
+    return tup
+
+
+@array_function_dispatch(_vstack_dispatcher)
 def vstack(tup):
     """
     Stack arrays in sequence vertically (row wise).
@@ -233,6 +257,12 @@ def vstack(tup):
     """
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
+
+def _hstack_dispatcher(tup):
+    return tup
+
+
+@array_function_dispatch(_hstack_dispatcher)
 def hstack(tup):
     """
     Stack arrays in sequence horizontally (column wise).
@@ -288,6 +318,14 @@ def hstack(tup):
         return _nx.concatenate(arrs, 1)
 
 
+def _stack_dispatcher(arrays, axis=None, out=None):
+    for a in arrays:
+        yield a
+    if out is not None:
+        yield out
+
+
+@array_function_dispatch(_stack_dispatcher)
 def stack(arrays, axis=0, out=None):
     """
     Join a sequence of arrays along a new axis.
@@ -461,6 +499,7 @@ def _block(arrays, max_depth, result_ndim, depth=0):
         return _atleast_nd(arrays, result_ndim)
 
 
+# TODO: support array_function_dispatch
 def block(arrays):
     """
     Assemble an nd-array from nested lists of blocks.
