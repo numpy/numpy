@@ -135,13 +135,14 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
-def array_function_dispatch(dispatcher):
+def array_function_dispatch(dispatcher, check_signature=True):
     """Decorator for adding dispatch with the __array_function__ protocol."""
     def decorator(implementation):
         # TODO: only do this check when the appropriate flag is enabled or for
         # a dev install. We want this check for testing but don't want to
         # slow down all numpy imports.
-        verify_matching_signatures(implementation, dispatcher)
+        if check_signature:
+            verify_matching_signatures(implementation, dispatcher)
 
         @functools.wraps(implementation)
         def public_api(*args, **kwargs):

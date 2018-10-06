@@ -218,6 +218,18 @@ class TestVerifyMatchingSignatures(object):
         with assert_raises(RuntimeError):
             verify_matching_signatures(lambda x=1: 0, lambda y=1: 0)
 
+    def test_array_function_dispatch(self):
+
+        with assert_raises(RuntimeError):
+            @array_function_dispatch(lambda x: (x,))
+            def f(y):
+                pass
+
+        # should not raise
+        @array_function_dispatch(lambda x: (x,), check_signature=False)
+        def f(y):
+            pass
+
 
 def _new_duck_type_and_implements():
     """Create a duck array type and implements functions."""
