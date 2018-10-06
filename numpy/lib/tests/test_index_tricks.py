@@ -1,5 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
@@ -163,6 +165,22 @@ class TestGrid(object):
         grid_broadcast = np.broadcast_arrays(*grid_sparse)
         for f, b in zip(grid_full, grid_broadcast):
             assert_equal(f, b)
+
+    @pytest.mark.parametrize("start, stop, step, expected", [
+        (None, 10, 10j, (200, 10)),
+        (-10, 20, None, (1800, 30)),
+        ])
+    def test_mgrid_size_none_handling(self, start, stop, step, expected):
+        # regression test None value handling for
+        # start and step values used by mgrid;
+        # internally, this aims to cover previously
+        # unexplored code paths in nd_grid()
+        grid = mgrid[start:stop:step, start:stop:step]
+        # need a smaller grid to explore one of the
+        # untested code paths
+        grid_small = mgrid[start:stop:step]
+        assert_equal(grid.size, expected[0])
+        assert_equal(grid_small.size, expected[1])
 
 
 class TestConcatenator(object):
