@@ -246,6 +246,14 @@ Previously we had a broken default that sometimes would not report underflow,
 overflow, and invalid floating point operations. Now we can support non-glibc
 distrubutions like Alpine Linux as long as they ship `fenv.h`.
 
+Speedup ``np.block`` for large arrays
+-------------------------------------
+Large arrays (greater than ``512 * 512``) now use a blocking algorithm based on
+copying the data directly into the appropriate slice of the resulting array.
+This results in significant speedups for these large arrays, particularly for
+arrays being blocked along more than 2 dimensions.
+
+
 Changes
 =======
 
