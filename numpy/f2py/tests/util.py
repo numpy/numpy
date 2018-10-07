@@ -17,6 +17,7 @@ import textwrap
 import re
 import random
 import pytest
+import threading
 import numpy.f2py
 
 from numpy.compat import asbytes, asstr
@@ -27,6 +28,13 @@ try:
     from hashlib import md5
 except ImportError:
     from md5 import new as md5
+
+
+#
+# Lock to serialize builds
+#
+
+_build_lock = threading.Lock()
 
 #
 # Maintaining a temporary module directory
@@ -99,53 +107,54 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     Compile and import a f2py module, built from the given files.
 
     """
-
     code = ("import sys; sys.path = %s; import numpy.f2py as f2py2e; "
             "f2py2e.main()" % repr(sys.path))
 
-    d = get_module_dir()
+    # Directory changes and such need to be serialized.
+    with _build_lock:
+        d = get_module_dir()
 
-    # Copy files
-    dst_sources = []
-    for fn in source_files:
-        if not os.path.isfile(fn):
-            raise RuntimeError("%s is not a file" % fn)
-        dst = os.path.join(d, os.path.basename(fn))
-        shutil.copyfile(fn, dst)
-        dst_sources.append(dst)
-
-        fn = os.path.join(os.path.dirname(fn), '.f2py_f2cmap')
-        if os.path.isfile(fn):
+        # Copy files
+        dst_sources = []
+        for fn in source_files:
+            if not os.path.isfile(fn):
+                raise RuntimeError("%s is not a file" % fn)
             dst = os.path.join(d, os.path.basename(fn))
-            if not os.path.isfile(dst):
-                shutil.copyfile(fn, dst)
+            shutil.copyfile(fn, dst)
+            dst_sources.append(dst)
 
-    # Prepare options
-    if module_name is None:
-        module_name = get_temp_module_name()
-    f2py_opts = ['-c', '-m', module_name] + options + dst_sources
-    if skip:
-        f2py_opts += ['skip:'] + skip
-    if only:
-        f2py_opts += ['only:'] + only
+            fn = os.path.join(os.path.dirname(fn), '.f2py_f2cmap')
+            if os.path.isfile(fn):
+                dst = os.path.join(d, os.path.basename(fn))
+                if not os.path.isfile(dst):
+                    shutil.copyfile(fn, dst)
 
-    # Build
-    cwd = os.getcwd()
-    try:
-        os.chdir(d)
-        cmd = [sys.executable, '-c', code] + f2py_opts
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        out, err = p.communicate()
-        if p.returncode != 0:
-            raise RuntimeError("Running f2py failed: %s\n%s"
-                               % (cmd[4:], asstr(out)))
-    finally:
-        os.chdir(cwd)
+        # Prepare options
+        if module_name is None:
+            module_name = get_temp_module_name()
+        f2py_opts = ['-c', '-m', module_name] + options + dst_sources
+        if skip:
+            f2py_opts += ['skip:'] + skip
+        if only:
+            f2py_opts += ['only:'] + only
 
-        # Partial cleanup
-        for fn in dst_sources:
-            os.unlink(fn)
+        # Build
+        cwd = os.getcwd()
+        try:
+            os.chdir(d)
+            cmd = [sys.executable, '-c', code] + f2py_opts
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            out, err = p.communicate()
+            if p.returncode != 0:
+                raise RuntimeError("Running f2py failed: %s\n%s"
+                                   % (cmd[4:], asstr(out)))
+        finally:
+            os.chdir(cwd)
+
+            # Partial cleanup
+            for fn in dst_sources:
+                os.unlink(fn)
 
     # Import
     return import_module(module_name)
@@ -247,17 +256,6 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.core import setup
 
-    d = get_module_dir()
-
-    # Copy files
-    dst_sources = []
-    for fn in source_files:
-        if not os.path.isfile(fn):
-            raise RuntimeError("%s is not a file" % fn)
-        dst = os.path.join(d, os.path.basename(fn))
-        shutil.copyfile(fn, dst)
-        dst_sources.append(dst)
-
     # Build script
     config_code = textwrap.dedent(config_code).replace("\n", "\n    ")
 
@@ -277,29 +275,42 @@ if __name__ == "__main__":
     setup(configuration=configuration)
 """ % dict(config_code=config_code, syspath=repr(sys.path))
 
-    script = os.path.join(d, get_temp_module_name() + '.py')
-    dst_sources.append(script)
-    f = open(script, 'wb')
-    f.write(asbytes(code))
-    f.close()
+    # Directory changes and such need to be serialized.
+    with _build_lock:
+        d = get_module_dir()
 
-    # Build
-    cwd = os.getcwd()
-    try:
-        os.chdir(d)
-        cmd = [sys.executable, script, 'build_ext', '-i']
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        out, err = p.communicate()
-        if p.returncode != 0:
-            raise RuntimeError("Running distutils build failed: %s\n%s"
-                               % (cmd[4:], asstr(out)))
-    finally:
-        os.chdir(cwd)
+        # Copy files
+        dst_sources = []
+        for fn in source_files:
+            if not os.path.isfile(fn):
+                raise RuntimeError("%s is not a file" % fn)
+            dst = os.path.join(d, os.path.basename(fn))
+            shutil.copyfile(fn, dst)
+            dst_sources.append(dst)
 
-        # Partial cleanup
-        for fn in dst_sources:
-            os.unlink(fn)
+        script = os.path.join(d, get_temp_module_name() + '.py')
+        dst_sources.append(script)
+        f = open(script, 'wb')
+        f.write(asbytes(code))
+        f.close()
+
+        # Build
+        cwd = os.getcwd()
+        try:
+            os.chdir(d)
+            cmd = [sys.executable, script, 'build_ext', '-i']
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            out, err = p.communicate()
+            if p.returncode != 0:
+                raise RuntimeError("Running distutils build failed: %s\n%s"
+                                   % (cmd[4:], asstr(out)))
+        finally:
+            os.chdir(cwd)
+
+            # Partial cleanup
+            for fn in dst_sources:
+                os.unlink(fn)
 
     # Import
     __import__(module_name)
