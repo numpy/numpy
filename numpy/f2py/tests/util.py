@@ -101,7 +101,7 @@ def _memoize(func):
 #
 
 
-@_memoize
+#@_memoize
 def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     """
     Compile and import a f2py module, built from the given files.
@@ -160,7 +160,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     return import_module(module_name)
 
 
-@_memoize
+#@_memoize
 def build_code(source_code, options=[], skip=[], only=[], suffix=None,
                module_name=None):
     """
@@ -247,7 +247,7 @@ def has_f90_compiler():
 #
 
 
-@_memoize
+#@_memoize
 def build_module_distutils(source_files, config_code, module_name, **kw):
     """
     Build a module via distutils and import it.
