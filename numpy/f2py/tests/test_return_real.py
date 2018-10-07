@@ -87,7 +87,13 @@ end python module c_ext_return_real
     @pytest.mark.slow
     @pytest.mark.parametrize('name', 't4,t8,s4,s8'.split(','))
     def test_all(self, name):
-        self.check_function(getattr(self.module, name))
+        try:
+            self.check_function(getattr(self.module, name))
+        except:
+            print(self.module)
+            print(util.get_module_dir())
+            print(os.listdir(util.get_module_dir()))
+            raise
 
 
 class TestF77ReturnReal(TestReturnReal):
