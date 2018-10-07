@@ -107,6 +107,7 @@ jobs:
   # NOTE: for Windows builds it seems much more tractable to use runtests.py
   # vs. manual setup.py and then runtests.py for testing only
   - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
+    displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
   - script: python runtests.py --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Build NumPy & Run Full NumPy Test Suite'
   - task: PublishTestResults@2
