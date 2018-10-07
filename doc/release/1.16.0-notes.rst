@@ -72,6 +72,8 @@ comparisons.
 C API changes
 =============
 
+The ``NPY_API_VERSION`` was incremented to 0x0000D since the `PyUFuncObject`'s
+size changed.
 
 New Features
 ============

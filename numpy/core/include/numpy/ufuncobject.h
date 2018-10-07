@@ -111,24 +111,6 @@ typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
                             NpyAuxData **out_innerloopdata,
                             int *out_needs_api);
 
-typedef struct _ufunc_extension {
-        /* New in PyUFuncObject version 1 and above */
-
-        /*
-         * for each core_num_dim_ix distinct dimension names,
-         * the possible "frozen" size (-1 if not frozen).
-         */
-        npy_intp *core_dim_sizes;
-
-        /*
-         * for each distinct core dimension, a set of flags OR'd together
-         * e.g., UFUNC_CORE_DIM_CAN_IGNORE if signature has ?
-         *       UFUNC_CORE_DIM_SIZE_UNSET for non-frozen dimensions.
-         */
-        npy_uint32 *core_dim_flags;
-
-} ufunc_extension;
-
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
         /*
@@ -206,10 +188,9 @@ typedef struct _tagPyUFuncObject {
         /*
          * This was blocked off to be the "new" inner loop selector in 1.7,
          * but this was never implemented. (This is also why the above
-         * selector is called the "legacy" selector.) Repurposed in 1.16 to
-         * point to s_extension
+         * selector is called the "legacy" selector.)
          */
-        ufunc_extension * extension;
+        void *reserved2;
         /*
          * A function which returns a masked inner loop for the ufunc.
          */
@@ -229,11 +210,24 @@ typedef struct _tagPyUFuncObject {
          */
         npy_uint32 iter_flags;
 
-        ufunc_extension s_extension;
+        /* New in NPY_API_VERSION 0x0000000D and above */
+
+        /*
+         * for each core_num_dim_ix distinct dimension names,
+         * the possible "frozen" size (-1 if not frozen).
+         */
+        npy_intp *core_dim_sizes;
+
+        /*
+         * for each distinct core dimension, a set of flags OR'd together
+         * e.g., UFUNC_CORE_DIM_CAN_IGNORE if signature has ?
+         *       UFUNC_CORE_DIM_SIZE_UNSET for non-frozen dimensions.
+         */
+        npy_uint32 *core_dim_flags;
+
+
 
 } PyUFuncObject;
-
-#define UFUNC_VERSION 1
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
