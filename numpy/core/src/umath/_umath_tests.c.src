@@ -535,13 +535,13 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_INCREF(Py_None);
         core_dim_ixs = Py_None;
     }
-    if (f->extension->core_dim_flags != NULL) {
+    if (f->core_dim_flags != NULL) {
         core_dim_flags = PyTuple_New(f->core_num_dim_ix);
         if (core_dim_flags == NULL) {
             goto fail;
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
-            PyObject * val = PyLong_FromLong(f->extension->core_dim_flags[i]);
+            PyObject * val = PyLong_FromLong(f->core_dim_flags[i]);
             PyTuple_SET_ITEM(core_dim_flags, i, val);
         }
     }
@@ -549,13 +549,13 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_INCREF(Py_None);
         core_dim_flags = Py_None;
     }
-    if (f->extension->core_dim_sizes != NULL) {
+    if (f->core_dim_sizes != NULL) {
         core_dim_sizes = PyTuple_New(f->core_num_dim_ix);
         if (core_dim_sizes == NULL) {
             goto fail;
         }
         for (i = 0; i < f->core_num_dim_ix; i++) {
-            PyObject * val = PyLong_FromLong(f->extension->core_dim_sizes[i]);
+            PyObject * val = PyLong_FromLong(f->core_dim_sizes[i]);
             PyTuple_SET_ITEM(core_dim_sizes, i, val);
         }
     }
