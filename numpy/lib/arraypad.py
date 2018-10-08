@@ -6,6 +6,7 @@ of an n-dimensional array.
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+from numpy.core.overrides import array_function_dispatch
 
 
 __all__ = ['pad']
@@ -990,6 +991,11 @@ def _validate_lengths(narray, number_elements):
 # Public functions
 
 
+def _pad_dispatcher(array, pad_width, mode, **kwargs):
+    return (array,)
+
+
+@array_function_dispatch(_pad_dispatcher)
 def pad(array, pad_width, mode, **kwargs):
     """
     Pads an array.
