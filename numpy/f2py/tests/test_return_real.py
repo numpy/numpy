@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import platform
 import pytest
 
 from numpy import array
@@ -52,6 +53,11 @@ class TestReturnReal(util.F2PyTest):
             pass
 
 
+
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason="Prone to error when run with numpy/f2py/tests on mac os, "
+           "but not when run in isolation")
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"
     module_name = "c_ext_return_real"
