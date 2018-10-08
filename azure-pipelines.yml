@@ -30,7 +30,7 @@ jobs:
     displayName: 'make gfortran available on mac os vm'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest
+  - script: python -m pip install cython nose pytz pytest pickle5
     displayName: 'Install dependencies; some are optional to avoid test skips'
   # NOTE: init_dgelsd failed init issue with current ACCELERATE /
   # LAPACK configuration on Azure macos image; at the time of writing
@@ -80,10 +80,12 @@ jobs:
           PYTHON_VERSION: '3.6'
           PYTHON_ARCH: 'x64'
           TEST_MODE: full
+          INSTALL_PICKLE5: 1
         Python37-64bit-full:
           PYTHON_VERSION: '3.7'
           PYTHON_ARCH: 'x64'
           TEST_MODE: full
+          INSTALL_PICKLE5: 1
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -104,6 +106,8 @@ jobs:
     displayName: 'Install dependencies; some are optional to avoid test skips'
   # NOTE: for Windows builds it seems much more tractable to use runtests.py
   # vs. manual setup.py and then runtests.py for testing only
+  - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
+    displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
   - script: python runtests.py --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Build NumPy & Run Full NumPy Test Suite'
   - task: PublishTestResults@2
