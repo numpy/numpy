@@ -730,12 +730,12 @@ PyUFunc_Type
           char *core_signature;
           PyUFunc_TypeResolutionFunc *type_resolver;
           PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
-          ufunc_extension *extension;
           PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
-          /* new in version 1 */
-          ufunc_extension s_extension;
+          /* new in API version 0x0000000D */
+          npy_intp *core_dim_sizes; 
+          npy_intp *core_dim_flags; 
 
       } PyUFuncObject;
 
@@ -798,7 +798,9 @@ PyUFunc_Type
 
    .. c:member:: int PyUFuncObject.version
 
-       The version of this struct, currently set to 1
+       The ``NPY_API_VERSION`` used during the call to
+       :c:func:`PyUFunc_FromFuncAndDataAndSignature`. If less than
+        0x0000000D, ``core_dim_sizes`` and ``core_dim_flags`` will be ignored.
 
    .. c:member:: char *PyUFuncObject.name
 
@@ -894,14 +896,14 @@ PyUFunc_Type
 
        Override the default nditer flags for the ufunc.
 
-   Added in version 1
+   Added in API version 0x0000000D
 
-   .. c:member:: npy_intp *PyUFuncObject.extension->core_dim_sizes
+   .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
 
        For each distinct core dimension, the possible
        "frozen" size (``-1`` if not frozen)
 
-   .. c:member:: npy_uint32 *PyUFuncObject.extension->core_dim_flags
+   .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
 
        For each distinct core dimension, a set of flags ``OR`` ed together:
 

@@ -72,8 +72,8 @@ comparisons.
 C API changes
 =============
 
-The ``NPY_API_VERSION`` was incremented to 0x0000D since the `PyUFuncObject`'s
-size changed.
+The :c:data:`NPY_API_VERSION` was incremented to 0x0000D since
+``core_dim_flags`` and ``core_dim_sizes`` were added to :c:type:`PyUFuncObject`.
 
 New Features
 ============
