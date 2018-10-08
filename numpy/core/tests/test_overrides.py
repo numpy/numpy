@@ -226,7 +226,7 @@ class TestVerifyMatchingSignatures(object):
                 pass
 
         # should not raise
-        @array_function_dispatch(lambda x: (x,), check_signature=False)
+        @array_function_dispatch(lambda x: (x,), verify=False)
         def f(y):
             pass
 
