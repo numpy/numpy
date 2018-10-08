@@ -8,6 +8,7 @@ NumPy reference guide.
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+from numpy.core.overrides import array_function_dispatch
 
 __all__ = ['broadcast_to', 'broadcast_arrays']
 
@@ -135,6 +136,11 @@ def _broadcast_to(array, shape, subok, readonly):
     return result
 
 
+def _broadcast_to_dispatcher(array, shape, subok=None):
+    return (array,)
+
+
+@array_function_dispatch(_broadcast_to_dispatcher)
 def broadcast_to(array, shape, subok=False):
     """Broadcast an array to a new shape.
 
@@ -195,6 +201,11 @@ def _broadcast_shape(*args):
     return b.shape
 
 
+def _broadcast_arrays_dispatcher(*args, **kwargs):
+    return args
+
+
+@array_function_dispatch(_broadcast_arrays_dispatcher)
 def broadcast_arrays(*args, **kwargs):
     """
     Broadcast any number of arrays against each other.
