@@ -28,6 +28,7 @@ from numpy.core import (
     swapaxes, divide, count_nonzero, isnan
 )
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.overrides import array_function_dispatch
 from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import lapack_lite, _umath_linalg
 
@@ -242,6 +243,11 @@ def transpose(a):
 
 # Linear equations
 
+def _tensorsolve_dispatcher(a, b, axes=None):
+    return (a, b)
+
+
+@array_function_dispatch(_tensorsolve_dispatcher)
 def tensorsolve(a, b, axes=None):
     """
     Solve the tensor equation ``a x = b`` for x.
@@ -311,6 +317,12 @@ def tensorsolve(a, b, axes=None):
     res.shape = oldshape
     return res
 
+
+def _solve_dispatcher(a, b):
+    return (a, b)
+
+
+@array_function_dispatch(_solve_dispatcher)
 def solve(a, b):
     """
     Solve a linear matrix equation, or system of linear scalar equations.
@@ -391,6 +403,11 @@ def solve(a, b):
     return wrap(r.astype(result_t, copy=False))
 
 
+def _tensorinv_dispatcher(a, ind=None):
+    return (a,)
+
+
+@array_function_dispatch(_tensorinv_dispatcher)
 def tensorinv(a, ind=2):
     """
     Compute the 'inverse' of an N-dimensional array.
@@ -460,6 +477,11 @@ def tensorinv(a, ind=2):
 
 # Matrix inversion
 
+def _inv_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_inv_dispatcher)
 def inv(a):
     """
     Compute the (multiplicative) inverse of a matrix.
@@ -528,6 +550,11 @@ def inv(a):
     return wrap(ainv.astype(result_t, copy=False))
 
 
+def _matrix_power_dispatcher(a, n):
+    return (a,)
+
+
+@array_function_dispatch(_matrix_power_dispatcher)
 def matrix_power(a, n):
     """
     Raise a square matrix to the (integer) power `n`.
@@ -645,6 +672,11 @@ def matrix_power(a, n):
 
 # Cholesky decomposition
 
+def _cholesky_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_cholesky_dispatcher)
 def cholesky(a):
     """
     Cholesky decomposition.
@@ -728,8 +760,14 @@ def cholesky(a):
     r = gufunc(a, signature=signature, extobj=extobj)
     return wrap(r.astype(result_t, copy=False))
 
+
 # QR decompostion
 
+def _qr_dispatcher(a, mode=None):
+    return (a,)
+
+
+@array_function_dispatch(_qr_dispatcher)
 def qr(a, mode='reduced'):
     """
     Compute the qr factorization of a matrix.
@@ -944,7 +982,11 @@ def qr(a, mode='reduced'):
 
 # Eigenvalues
 
+def _eigvals_dispatcher(a):
+    return (a,)
 
+
+@array_function_dispatch(_eigvals_dispatcher)
 def eigvals(a):
     """
     Compute the eigenvalues of a general matrix.
@@ -1034,6 +1076,12 @@ def eigvals(a):
 
     return w.astype(result_t, copy=False)
 
+
+def _eigvalsh_dispatcher(a, UPLO=None):
+    return (a,)
+
+
+@array_function_dispatch(_eigvalsh_dispatcher)
 def eigvalsh(a, UPLO='L'):
     """
     Compute the eigenvalues of a complex Hermitian or real symmetric matrix.
@@ -1134,7 +1182,11 @@ def _convertarray(a):
 
 # Eigenvectors
 
+def _eig_dispatcher(a):
+    return (a,)
 
+
+@array_function_dispatch(_eig_dispatcher)
 def eig(a):
     """
     Compute the eigenvalues and right eigenvectors of a square array.
@@ -1276,6 +1328,11 @@ def eig(a):
     return w.astype(result_t, copy=False), wrap(vt)
 
 
+def _eigh_dispatcher(a, UPLO=None):
+    return (a,)
+
+
+@array_function_dispatch(_eigh_dispatcher)
 def eigh(a, UPLO='L'):
     """
     Return the eigenvalues and eigenvectors of a complex Hermitian
@@ -1415,6 +1472,11 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
+def _svd_dispatcher(a, full_matrices=None, compute_uv=None):
+    return (a,)
+
+
+@array_function_dispatch(_svd_dispatcher)
 def svd(a, full_matrices=True, compute_uv=True):
     """
     Singular Value Decomposition.
@@ -1575,6 +1637,11 @@ def svd(a, full_matrices=True, compute_uv=True):
         return s
 
 
+def _cond_dispatcher(x, p=None):
+    return (x,)
+
+
+@array_function_dispatch(_cond_dispatcher)
 def cond(x, p=None):
     """
     Compute the condition number of a matrix.
@@ -1692,6 +1759,11 @@ def cond(x, p=None):
     return r
 
 
+def _matrix_rank_dispatcher(M, tol=None, hermitian=None):
+    return (M,)
+
+
+@array_function_dispatch(_matrix_rank_dispatcher)
 def matrix_rank(M, tol=None, hermitian=False):
     """
     Return matrix rank of array using SVD method
@@ -1796,7 +1868,12 @@ def matrix_rank(M, tol=None, hermitian=False):
 
 # Generalized inverse
 
-def pinv(a, rcond=1e-15 ):
+def _pinv_dispatcher(a, rcond=None):
+    return (a,)
+
+
+@array_function_dispatch(_pinv_dispatcher)
+def pinv(a, rcond=1e-15):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
@@ -1880,8 +1957,14 @@ def pinv(a, rcond=1e-15 ):
     res = matmul(transpose(vt), multiply(s[..., newaxis], transpose(u)))
     return wrap(res)
 
+
 # Determinant
 
+def _slogdet_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_slogdet_dispatcher)
 def slogdet(a):
     """
     Compute the sign and (natural) logarithm of the determinant of an array.
@@ -1967,6 +2050,12 @@ def slogdet(a):
     logdet = logdet.astype(real_t, copy=False)
     return sign, logdet
 
+
+def _det_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_det_dispatcher)
 def det(a):
     """
     Compute the determinant of an array.
@@ -2023,8 +2112,14 @@ def det(a):
     r = r.astype(result_t, copy=False)
     return r
 
+
 # Linear Least Squares
 
+def _lstsq_dispatcher(a, b, rcond=None):
+    return (a, b)
+
+
+@array_function_dispatch(_lstsq_dispatcher)
 def lstsq(a, b, rcond="warn"):
     """
     Return the least-squares solution to a linear matrix equation.
@@ -2208,6 +2303,11 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     return result
 
 
+def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
+    return (x,)
+
+
+@array_function_dispatch(_norm_dispatcher)
 def norm(x, ord=None, axis=None, keepdims=False):
     """
     Matrix or vector norm.
@@ -2450,6 +2550,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
 # multi_dot
 
+def _multidot_dispatcher(arrays):
+    return arrays
+
+
+@array_function_dispatch(_multidot_dispatcher)
 def multi_dot(arrays):
     """
     Compute the dot product of two or more arrays in a single function call,
