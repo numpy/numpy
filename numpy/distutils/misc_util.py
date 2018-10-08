@@ -84,7 +84,7 @@ def get_num_build_jobs():
     Get number of parallel build jobs set by the --parallel command line
     argument of setup.py
     If the command did not receive a setting the environment variable
-    NPY_NUM_BUILD_JOBS checked. If that is unset, return the number of
+    NPY_NUM_BUILD_JOBS is checked. If that is unset, return the number of
     processors on the system, with a maximum of 8 (to prevent
     overloading the system if there a lot of CPUs).
 
