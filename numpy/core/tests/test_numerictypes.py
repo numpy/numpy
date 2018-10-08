@@ -475,6 +475,18 @@ class Test_sctype2char(object):
     def test_non_type(self):
         assert_raises(ValueError, np.sctype2char, 1)
 
+@pytest.mark.parametrize("rep, expected", [
+    (np.int32, True),
+    (list, False),
+    (1.1, False),
+    (str, True),
+    ])
+def test_issctype(rep, expected):
+    # ensure proper identification of scalar
+    # data-types by issctype()
+    actual = np.issctype(rep)
+    assert_equal(actual, expected)
+
 
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
