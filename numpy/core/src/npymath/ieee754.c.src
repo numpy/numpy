@@ -575,6 +575,15 @@ int npy_get_floatstatus() {
 #include <sys/param.h>
 #endif
 
+
+/*
+ * Define floating point status functions. We must define
+ * npy_get_floatstatus_barrier, npy_clear_floatstatus_barrier,
+ * npy_set_floatstatus_{divbyzero, overflow, underflow, invalid}
+ * for all supported platforms.
+ */
+
+
 /* Solaris --------------------------------------------------------*/
 /* --------ignoring SunOS ieee_flags approach, someone else can
 **         deal with that! */
@@ -626,62 +635,6 @@ void npy_set_floatstatus_invalid(void)
     fpsetsticky(FP_X_INV);
 }
 
-
-#elif defined(__GLIBC__) || defined(__APPLE__) || \
-      defined(__CYGWIN__) || defined(__MINGW32__) || \
-      (defined(__FreeBSD__) && (__FreeBSD_version >= 502114))
-#  include <fenv.h>
-
-int npy_get_floatstatus_barrier(char* param)
-{
-    int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
-                                FE_UNDERFLOW | FE_INVALID);
-    /*
-     * By using a volatile, the compiler cannot reorder this call
-     */
-    if (param != NULL) {
-        volatile char NPY_UNUSED(c) = *(char*)param;
-    }
-
-    return ((FE_DIVBYZERO  & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
-           ((FE_OVERFLOW   & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
-           ((FE_UNDERFLOW  & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
-           ((FE_INVALID    & fpstatus) ? NPY_FPE_INVALID : 0);
-}
-
-int npy_clear_floatstatus_barrier(char * param)
-{
-    /* testing float status is 50-100 times faster than clearing on x86 */
-    int fpstatus = npy_get_floatstatus_barrier(param);
-    if (fpstatus != 0) {
-        feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |
-                      FE_UNDERFLOW | FE_INVALID);
-    }
-
-    return fpstatus;
-}
-
-
-void npy_set_floatstatus_divbyzero(void)
-{
-    feraiseexcept(FE_DIVBYZERO);
-}
-
-void npy_set_floatstatus_overflow(void)
-{
-    feraiseexcept(FE_OVERFLOW);
-}
-
-void npy_set_floatstatus_underflow(void)
-{
-    feraiseexcept(FE_UNDERFLOW);
-}
-
-void npy_set_floatstatus_invalid(void)
-{
-    feraiseexcept(FE_INVALID);
-}
-
 #elif defined(_AIX)
 #include <float.h>
 #include <fpxcp.h>
@@ -729,13 +682,46 @@ void npy_set_floatstatus_invalid(void)
     fp_raise_xcp(FP_INVALID);
 }
 
-#else
+#elif defined(_MSC_VER) || (defined(__osf__) && defined(__alpha))
+
+/*
+ * By using a volatile floating point value,
+ * the compiler is forced to actually do the requested
+ * operations because of potential concurrency.
+ *
+ * We shouldn't write multiple values to a single
+ * global here, because that would cause
+ * a race condition.
+ */
+static volatile double _npy_floatstatus_x,
+    _npy_floatstatus_zero = 0.0, _npy_floatstatus_big = 1e300,
+    _npy_floatstatus_small = 1e-300, _npy_floatstatus_inf;
+
+void npy_set_floatstatus_divbyzero(void)
+{
+    _npy_floatstatus_x = 1.0 / _npy_floatstatus_zero;
+}
+
+void npy_set_floatstatus_overflow(void)
+{
+    _npy_floatstatus_x = _npy_floatstatus_big * 1e300;
+}
+
+void npy_set_floatstatus_underflow(void)
+{
+    _npy_floatstatus_x = _npy_floatstatus_small * 1e-300;
+}
+
+void npy_set_floatstatus_invalid(void)
+{
+    _npy_floatstatus_inf = NPY_INFINITY;
+    _npy_floatstatus_x = _npy_floatstatus_inf - NPY_INFINITY;
+}
 
 /* MS Windows -----------------------------------------------------*/
 #if defined(_MSC_VER)
 
 #include <float.h>
-
 
 int npy_get_floatstatus_barrier(char *param)
 {
@@ -796,53 +782,61 @@ int npy_clear_floatstatus_barrier(char *param)
     return fpstatus;
 }
 
-#else
-
-int npy_get_floatstatus_barrier(char *NPY_UNUSED(param))
-{
-    return 0;
-}
-
-int npy_clear_floatstatus_barrier(char *param)
-{
-    int fpstatus = npy_get_floatstatus_barrier(param);
-    return 0;
-}
-
 #endif
+/* End of defined(_MSC_VER) || (defined(__osf__) && defined(__alpha)) */
 
-/*
- * By using a volatile floating point value,
- * the compiler is forced to actually do the requested
- * operations because of potential concurrency.
- *
- * We shouldn't write multiple values to a single
- * global here, because that would cause
- * a race condition.
- */
-static volatile double _npy_floatstatus_x,
-    _npy_floatstatus_zero = 0.0, _npy_floatstatus_big = 1e300,
-    _npy_floatstatus_small = 1e-300, _npy_floatstatus_inf;
+#else
+/* General GCC code, should work on most platforms */
+#  include <fenv.h>
+
+int npy_get_floatstatus_barrier(char* param)
+{
+    int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
+                                FE_UNDERFLOW | FE_INVALID);
+    /*
+     * By using a volatile, the compiler cannot reorder this call
+     */
+    if (param != NULL) {
+        volatile char NPY_UNUSED(c) = *(char*)param;
+    }
+
+    return ((FE_DIVBYZERO  & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+           ((FE_OVERFLOW   & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+           ((FE_UNDERFLOW  & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+           ((FE_INVALID    & fpstatus) ? NPY_FPE_INVALID : 0);
+}
+
+int npy_clear_floatstatus_barrier(char * param)
+{
+    /* testing float status is 50-100 times faster than clearing on x86 */
+    int fpstatus = npy_get_floatstatus_barrier(param);
+    if (fpstatus != 0) {
+        feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |
+                      FE_UNDERFLOW | FE_INVALID);
+    }
+
+    return fpstatus;
+}
+
 
 void npy_set_floatstatus_divbyzero(void)
 {
-    _npy_floatstatus_x = 1.0 / _npy_floatstatus_zero;
+    feraiseexcept(FE_DIVBYZERO);
 }
 
 void npy_set_floatstatus_overflow(void)
 {
-    _npy_floatstatus_x = _npy_floatstatus_big * 1e300;
+    feraiseexcept(FE_OVERFLOW);
 }
 
 void npy_set_floatstatus_underflow(void)
 {
-    _npy_floatstatus_x = _npy_floatstatus_small * 1e-300;
+    feraiseexcept(FE_UNDERFLOW);
 }
 
 void npy_set_floatstatus_invalid(void)
 {
-    _npy_floatstatus_inf = NPY_INFINITY;
-    _npy_floatstatus_x = _npy_floatstatus_inf - NPY_INFINITY;
+    feraiseexcept(FE_INVALID);
 }
 
 #endif
