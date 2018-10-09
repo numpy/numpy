@@ -16,8 +16,8 @@ def _get_overloaded_args(relevant_args):
     return args
 
 
-def _return_self(self, *args, **kwargs):
-    return self
+def _return_not_implemented(self, *args, **kwargs):
+    return NotImplemented
 
 
 class TestGetOverloadedTypesAndArgs(object):
@@ -45,7 +45,7 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_ndarray_subclasses(self):
 
         class OverrideSub(np.ndarray):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         class NoOverrideSub(np.ndarray):
             pass
@@ -70,7 +70,7 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_ndarray_and_duck_array(self):
 
         class Other(object):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         array = np.array(1)
         other = Other()
@@ -86,10 +86,10 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_ndarray_subclass_and_duck_array(self):
 
         class OverrideSub(np.ndarray):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         class Other(object):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         array = np.array(1)
         subarray = np.array(1).view(OverrideSub)
@@ -103,16 +103,16 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_many_duck_arrays(self):
 
         class A(object):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         class B(A):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         class C(A):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         class D(object):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         a = A()
         b = B()
@@ -135,7 +135,7 @@ class TestNDArrayArrayFunction(object):
     def test_method(self):
 
         class SubOverride(np.ndarray):
-            __array_function__ = _return_self
+            __array_function__ = _return_not_implemented
 
         class NoOverrideSub(np.ndarray):
             pass
@@ -187,7 +187,8 @@ class TestArrayFunctionDispatch(object):
         assert_(obj is original)
         assert_(func is dispatched_one_arg)
         assert_equal(set(types), {MyArray})
-        assert_equal(args, (original,))
+        # assert_equal uses the overloaded np.iscomplexobj() internally
+        assert_(args == (original,))
         assert_equal(kwargs, {})
 
     def test_not_implemented(self):
