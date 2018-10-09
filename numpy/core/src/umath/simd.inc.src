@@ -17,8 +17,6 @@
 
 #include "lowlevel_strided_loops.h"
 #include "numpy/npy_common.h"
-/* for NO_FLOATING_POINT_SUPPORT */
-#include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 #include <emmintrin.h>
@@ -146,9 +144,6 @@ sse2_@func@_@TYPE@(@type@ *, @type@ *, const npy_intp n);
 static NPY_INLINE int
 run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if @minmax@ && (defined NO_FLOATING_POINT_SUPPORT)
-    return 0;
-#else
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (@check@(sizeof(@type@), 16)) {
         sse2_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0]);
@@ -156,7 +151,6 @@ run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
     }
 #endif
     return 0;
-#endif
 }
 
 /**end repeat1**/
