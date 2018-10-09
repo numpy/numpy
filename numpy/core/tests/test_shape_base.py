@@ -191,6 +191,12 @@ class TestVstack(object):
 
 
 class TestConcatenate(object):
+    def test_returns_copy(self):
+        a = np.eye(3)
+        b = np.concatenate([a])
+        b[0, 0] = 2
+        assert b[0, 0] != a[0, 0]
+
     def test_exceptions(self):
         # test axis must be in bounds
         for ndim in [1, 2, 3]:
@@ -367,6 +373,12 @@ def test_stack():
 
 
 class TestBlock(object):
+    def test_returns_copy(self):
+        a = np.eye(3)
+        b = np.block(a)
+        b[0, 0] = 2
+        assert b[0, 0] != a[0, 0]
+
     def test_block_simple_row_wise(self):
         a_2d = np.ones((2, 2))
         b_2d = 2 * a_2d
