@@ -9,7 +9,7 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'common_type']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, asanyarray, array, isnan, zeros
+from numpy.core.numeric import asarray, asanyarray, array, isnan, zeros, isscalar
 from .ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
@@ -472,7 +472,7 @@ def asscalar(a):
     Parameters
     ----------
     a : ndarray
-        Input array of size 1.
+        Input array of size 1 or a scalar.
 
     Returns
     -------
@@ -486,7 +486,13 @@ def asscalar(a):
     24
 
     """
-    return a.item()
+    try:
+        return a.item()
+    except AttributeError as e:
+        if isscalar(a):
+            return a
+        else:
+            raise e
 
 #-----------------------------------------------------------------------------
 
