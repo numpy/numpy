@@ -356,6 +356,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     PyObject *ret = NULL;
     PyObject *safe;
     static PyObject *checkfunc = NULL;
+    int self_elsize, typed_elsize;
 
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
@@ -372,6 +373,22 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
             return NULL;
         }
         Py_DECREF(safe);
+    }
+    self_elsize = PyArray_ITEMSIZE(self);
+    typed_elsize = typed->elsize;
+
+    /* check that values are valid */
+    if (typed_elsize > self_elsize) {
+        PyErr_SetString(PyExc_ValueError, "new type is larger than original type");
+        return NULL;
+    }
+    if (offset < 0) {
+        PyErr_SetString(PyExc_ValueError, "offset is negative");
+        return NULL;
+    }
+    if (offset > self_elsize - typed_elsize) {
+        PyErr_SetString(PyExc_ValueError, "new type plus offset is larger than original type");
+        return NULL;
     }
 
     ret = PyArray_NewFromDescr_int(

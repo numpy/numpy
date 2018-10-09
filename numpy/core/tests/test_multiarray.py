@@ -7662,3 +7662,19 @@ def test_uintalignment_and_alignment():
     # check that copy code doesn't complain in debug mode
     dst = np.zeros((2,2), dtype='c8')
     dst[:,1] = src[:,1]  # assert in lowlevel_strided_loops fails?
+
+def test_getfield():
+    a = np.arange(32, dtype='uint16')
+    if sys.byteorder == 'little':
+        i = 0
+        j = 1
+    else:
+        i = 1
+        j = 0
+    b = a.getfield('int8', i)
+    assert_equal(b, a)
+    b = a.getfield('int8', j)
+    assert_equal(b, 0)
+    pytest.raises(ValueError, a.getfield, 'uint8', -1)
+    pytest.raises(ValueError, a.getfield, 'uint8', 16)
+    pytest.raises(ValueError, a.getfield, 'uint64', 0)
