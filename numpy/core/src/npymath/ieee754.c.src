@@ -568,7 +568,6 @@ int npy_get_floatstatus() {
 
 /*
  * Functions to set the floating point status word.
- * keep in sync with NO_FLOATING_POINT_SUPPORT in ufuncobject.h
  */
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG)
