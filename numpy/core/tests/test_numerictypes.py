@@ -480,6 +480,9 @@ class Test_sctype2char(object):
     (list, False),
     (1.1, False),
     (str, True),
+    (np.dtype(np.float64), True),
+    (np.dtype((np.int16, (3, 4))), True),
+    (np.dtype([('a', np.int8)]), True),
     ])
 def test_issctype(rep, expected):
     # ensure proper identification of scalar
