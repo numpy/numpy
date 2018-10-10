@@ -1101,6 +1101,74 @@ def argmin(a, axis=None, out=None):
     return _wrapfunc(a, 'argmin', axis=axis, out=out)
 
 
+def search(a, v, fill_value=None, which='first'):
+    """
+    Find indices into flattened array `a` where elements in `v` match those
+    in `a`, such that`a[indices] == v`.
+
+    Parameters
+    ----------
+    a : 1-D array_like
+        Input array to search.
+    v : array_like
+        Values to search for in `a`.
+    fill_value : scalar or `None`
+        Index value to return for elements in `v` that are not in `a`.
+        If `None`, raise an error for such missing elements.
+    which : {'first', 'last'}
+        If an element in `v` matches multiple occurrences of the same
+        element in `a`, return only the index of the first or last matching
+        element in `a`.
+
+    Returns
+    -------
+    indices : array of ints
+        Array of indices into `a` with the same shape as `v`.
+
+    See Also
+    --------
+    searchsorted: Find indices into sorted array `a` where elements in `v`
+                  should be inserted to maintain order.
+
+    Notes
+    -----
+    ``np.search(a, v)`` is roughly equivalent to
+    ``np.array([a.index(item) for item in v])`` if `a` and `v` are 1-D sequences.
+
+    Adapted from http://stackoverflow.com/a/8251668
+
+    Examples
+    --------
+    >>> a = [3, -1, -2, -4, 1, 1, -1, 0, -3, 3]
+    >>> v = [[15, 1, -3, -2, -4], [-1, 3, 2, 1, 0]]
+    >>> np.search(a, v, fill_value=-1)
+    array([[-1,  4,  8,  2,  3],
+           [ 1,  0, -1,  4,  7]])
+    >>> np.search(a, v, fill_value=-1, which='last')
+    array([[-1,  5,  8,  2,  3],
+           [ 6,  9, -1,  5,  7]])
+    >>> np.search(a, v)
+    ValueError: array `v` is not a subset of input array `a`
+
+    """
+    a = np.ravel(a)
+    sortis = a.argsort()
+    lis = a.searchsorted(v, side='left', sorter=sortis)
+    ris = a.searchsorted(v, side='right', sorter=sortis)
+    sideis = {'first':lis, 'last':ris-1}[which]
+    hits = lis != ris # elements in v that are in a
+    misses = np.logical_not(hits) # elements in v that are not in a
+    if fill_value is None:
+        if misses.any():
+            raise ValueError("array `v` is not a subset of input array `a`")
+        indices = sortis[sideis]
+    else:
+        indices = np.zeros_like(v, dtype=int)
+        indices[hits] = sortis[sideis[hits]]
+        indices[misses] = fill_value
+    return indices
+
+
 def searchsorted(a, v, side='left', sorter=None):
     """
     Find indices where elements should be inserted to maintain order.
