@@ -2594,8 +2594,7 @@ add_newdoc('numpy.core.umath', 'multiply',
     Returns
     -------
     y : ndarray
-        The product of `x1` and `x2`, element-wise. Returns a scalar if
-        both `x1` and `x2` are scalars.
+        The product of `x1` and `x2`, element-wise.
         $OUT_SCALAR_2
 
     Notes
