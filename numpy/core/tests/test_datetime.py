@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import pickle
 
 import numpy
 import numpy as np
@@ -9,6 +8,7 @@ import pytest
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
     )
+from numpy.core.numeric import pickle
 
 # Use pytz to test out various time zones if available
 try:

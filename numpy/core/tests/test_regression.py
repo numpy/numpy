@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import copy
-import pickle
 import sys
 import platform
 import gc
@@ -20,6 +19,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long
+from numpy.core.numeric import pickle
 
 try:
     RecursionError
@@ -39,12 +39,13 @@ class TestRegression(object):
     def test_pickle_transposed(self):
         # Ticket #16
         a = np.transpose(np.array([[2, 9], [7, 0], [3, 8]]))
-        f = BytesIO()
-        pickle.dump(a, f)
-        f.seek(0)
-        b = pickle.load(f)
-        f.close()
-        assert_array_equal(a, b)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            f = BytesIO()
+            pickle.dump(a, f, protocol=proto)
+            f.seek(0)
+            b = pickle.load(f)
+            f.close()
+            assert_array_equal(a, b)
 
     def test_typeNA(self):
         # Issue gh-515 
@@ -95,12 +96,13 @@ class TestRegression(object):
 
     def test_char_dump(self):
         # Ticket #50
-        f = BytesIO()
         ca = np.char.array(np.arange(1000, 1010), itemsize=4)
-        ca.dump(f)
-        f.seek(0)
-        ca = np.load(f)
-        f.close()
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            f = BytesIO()
+            pickle.dump(ca, f, protocol=proto)
+            f.seek(0)
+            ca = np.load(f)
+            f.close()
 
     def test_noncontiguous_fill(self):
         # Ticket #58.
@@ -359,12 +361,13 @@ class TestRegression(object):
     def test_unpickle_dtype_with_object(self):
         # Implemented in r2840
         dt = np.dtype([('x', int), ('y', np.object_), ('z', 'O')])
-        f = BytesIO()
-        pickle.dump(dt, f)
-        f.seek(0)
-        dt_ = pickle.load(f)
-        f.close()
-        assert_equal(dt, dt_)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            f = BytesIO()
+            pickle.dump(dt, f, protocol=proto)
+            f.seek(0)
+            dt_ = pickle.load(f)
+            f.close()
+            assert_equal(dt, dt_)
 
     def test_mem_array_creation_invalid_specification(self):
         # Ticket #196
@@ -474,7 +477,8 @@ class TestRegression(object):
 
     def test_pickle_dtype(self):
         # Ticket #251
-        pickle.dumps(float)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            pickle.dumps(float, protocol=proto)
 
     def test_swap_real(self):
         # Ticket #265

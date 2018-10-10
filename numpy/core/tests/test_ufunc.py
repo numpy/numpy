@@ -13,6 +13,7 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose,
     )
+from numpy.core.numeric import pickle
 
 
 class TestUfuncKwargs(object):
@@ -43,16 +44,17 @@ class TestUfuncKwargs(object):
 
 class TestUfunc(object):
     def test_pickle(self):
-        import pickle
-        assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            assert_(pickle.loads(pickle.dumps(np.sin,
+                                              protocol=proto)) is np.sin)
 
-        # Check that ufunc not defined in the top level numpy namespace such as
-        # numpy.core._rational_tests.test_add can also be pickled
-        res = pickle.loads(pickle.dumps(_rational_tests.test_add))
-        assert_(res is _rational_tests.test_add)
+            # Check that ufunc not defined in the top level numpy namespace
+            # such as numpy.core._rational_tests.test_add can also be pickled
+            res = pickle.loads(pickle.dumps(_rational_tests.test_add,
+                                            protocol=proto))
+            assert_(res is _rational_tests.test_add)
 
     def test_pickle_withstring(self):
-        import pickle
         astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)

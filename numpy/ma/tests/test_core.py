@@ -10,7 +10,6 @@ __author__ = "Pierre GF Gerard-Marchant"
 
 import sys
 import warnings
-import pickle
 import operator
 import itertools
 import textwrap
@@ -50,6 +49,7 @@ from numpy.ma.core import (
     ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
+from numpy.core.numeric import pickle
 
 pi = np.pi
 
@@ -555,50 +555,55 @@ class TestMaskedArray(object):
                      True,                            # Fully masked
                      False)                           # Fully unmasked
 
-            for mask in masks:
-                a.mask = mask
-                a_pickled = pickle.loads(a.dumps())
-                assert_equal(a_pickled._mask, a._mask)
-                assert_equal(a_pickled._data, a._data)
-                if dtype in (object, int):
-                    assert_equal(a_pickled.fill_value, 999)
-                else:
-                    assert_equal(a_pickled.fill_value, dtype(999))
-                assert_array_equal(a_pickled.mask, mask)
+            for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+                for mask in masks:
+                    a.mask = mask
+                    a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+                    assert_equal(a_pickled._mask, a._mask)
+                    assert_equal(a_pickled._data, a._data)
+                    if dtype in (object, int):
+                        assert_equal(a_pickled.fill_value, 999)
+                    else:
+                        assert_equal(a_pickled.fill_value, dtype(999))
+                    assert_array_equal(a_pickled.mask, mask)
 
     def test_pickling_subbaseclass(self):
         # Test pickling w/ a subclass of ndarray
         x = np.array([(1.0, 2), (3.0, 4)],
                      dtype=[('x', float), ('y', int)]).view(np.recarray)
         a = masked_array(x, mask=[(True, False), (False, True)])
-        a_pickled = pickle.loads(a.dumps())
-        assert_equal(a_pickled._mask, a._mask)
-        assert_equal(a_pickled, a)
-        assert_(isinstance(a_pickled._data, np.recarray))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+            assert_equal(a_pickled._mask, a._mask)
+            assert_equal(a_pickled, a)
+            assert_(isinstance(a_pickled._data, np.recarray))
 
     def test_pickling_maskedconstant(self):
         # Test pickling MaskedConstant
         mc = np.ma.masked
-        mc_pickled = pickle.loads(mc.dumps())
-        assert_equal(mc_pickled._baseclass, mc._baseclass)
-        assert_equal(mc_pickled._mask, mc._mask)
-        assert_equal(mc_pickled._data, mc._data)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            mc_pickled = pickle.loads(pickle.dumps(mc, protocol=proto))
+            assert_equal(mc_pickled._baseclass, mc._baseclass)
+            assert_equal(mc_pickled._mask, mc._mask)
+            assert_equal(mc_pickled._data, mc._data)
 
     def test_pickling_wstructured(self):
         # Tests pickling w/ structured array
         a = array([(1, 1.), (2, 2.)], mask=[(0, 0), (0, 1)],
                   dtype=[('a', int), ('b', float)])
-        a_pickled = pickle.loads(a.dumps())
-        assert_equal(a_pickled._mask, a._mask)
-        assert_equal(a_pickled, a)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+            assert_equal(a_pickled._mask, a._mask)
+            assert_equal(a_pickled, a)
 
     def test_pickling_keepalignment(self):
         # Tests pickling w/ F_CONTIGUOUS arrays
         a = arange(10)
         a.shape = (-1, 2)
         b = a.T
-        test = pickle.loads(pickle.dumps(b))
-        assert_equal(test, b)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            test = pickle.loads(pickle.dumps(b, protocol=proto))
+            assert_equal(test, b)
 
     def test_single_element_subscript(self):
         # Tests single element subscripts of Maskedarrays.
@@ -4801,13 +4806,13 @@ class TestMaskedConstant(object):
 
     def test_pickle(self):
         from io import BytesIO
-        import pickle
 
-        with BytesIO() as f:
-            pickle.dump(np.ma.masked, f)
-            f.seek(0)
-            res = pickle.load(f)
-        assert_(res is np.ma.masked)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            with BytesIO() as f:
+                pickle.dump(np.ma.masked, f, protocol=proto)
+                f.seek(0)
+                res = pickle.load(f)
+            assert_(res is np.ma.masked)
 
     def test_copy(self):
         # gh-9328
