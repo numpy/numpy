@@ -141,6 +141,23 @@ class TestHistogram(object):
         counts_hist, xedges, yedges = np.histogram2d(x, y, bins=100)
         assert_equal(counts_hist.sum(), 3.)
 
+    def test_bool_conversion(self):
+        # gh-12107
+        # Reference integer histogram
+        a = np.array([1, 1, 0], dtype=np.uint8)
+        int_hist, int_edges = np.histogram(a)
+
+        # Should raise an warning on booleans
+        # Ensure that the histograms are equivalent, need to suppress
+        # the warnings to get the actual outputs
+        with suppress_warnings() as sup:
+            rec = sup.record(RuntimeWarning, 'Converting input from .*')
+            hist, edges = np.histogram([True, True, False])
+            # A warning should be issued
+            assert_equal(len(rec), 1)
+            assert_array_equal(hist, int_hist)
+            assert_array_equal(edges, int_edges)
+
     def test_weights(self):
         v = np.random.rand(100)
         w = np.ones(100) * 5
