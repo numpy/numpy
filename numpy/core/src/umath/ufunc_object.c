@@ -652,7 +652,7 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
                 var_names[ix] = signature + i;
                 ufunc->core_dim_sizes[ix] = frozen_size;
                 if (frozen_size < 0) {
-                    ufunc->core_dim_flags[ix] |= UFUNC_CORE_DIM_SIZE_UNSET;
+                    ufunc->core_dim_flags[ix] |= UFUNC_CORE_DIM_SIZE_INFERRED;
                 }
                 if (can_ignore) {
                     ufunc->core_dim_flags[ix] |= UFUNC_CORE_DIM_CAN_IGNORE;
@@ -2353,7 +2353,7 @@ _parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
  *    an output argument that were not specified in an input argument,
  *    and whose size could not be inferred from a passed in output
  *    argument, would have their size set to 1.
- *  * Core dimensions may be fixed, new in ufunc->version 1 (NumPy 1.16)
+ *  * Core dimensions may be fixed, new in NumPy 1.16
  */
 static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
@@ -2492,23 +2492,9 @@ _initialize_variable_parts(PyUFuncObject *ufunc,
     for (i = 0; i < ufunc->nargs; i++) {
         op_core_num_dims[i] = ufunc->core_num_dims[i];
     }
-    if (ufunc->version >= 0x0000d) {
-        for (i = 0; i < ufunc->core_num_dim_ix; i++) {
-            core_dim_sizes[i] = ufunc->core_dim_sizes[i];
-            core_dim_flags[i] = ufunc->core_dim_flags[i];
-        }
-    }
-    else if (ufunc->version == 0) {
-        for (i = 0; i < ufunc->core_num_dim_ix; i++) {
-            core_dim_sizes[i] = -1;
-            core_dim_flags[i] = UFUNC_CORE_DIM_SIZE_UNSET;
-        }
-    }
-    else {
-        PyErr_Format(PyExc_TypeError,
-                     "'%s': unrecognized version number %d or corrupted data.",
-                     ufunc_get_name_cstr(ufunc), ufunc->version);
-        return -1;
+    for (i = 0; i < ufunc->core_num_dim_ix; i++) {
+        core_dim_sizes[i] = ufunc->core_dim_sizes[i];
+        core_dim_flags[i] = ufunc->core_dim_flags[i];
     }
     return 0;
 }
@@ -4868,7 +4854,6 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
         return NULL;
     }
     memset(ufunc, 0, sizeof(PyUFuncObject));
-    *((int*)&ufunc->version) = NPY_API_VERSION;
     PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
 
     ufunc->nin = nin;

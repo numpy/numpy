@@ -734,8 +734,8 @@ PyUFunc_Type
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
           /* new in API version 0x0000000D */
-          npy_intp *core_dim_sizes; 
-          npy_intp *core_dim_flags; 
+          npy_intp *core_dim_sizes;
+          npy_intp *core_dim_flags;
 
       } PyUFuncObject;
 
@@ -796,11 +796,9 @@ PyUFunc_Type
        specifies how many different 1-d loops (of the builtin data
        types) are available.
 
-   .. c:member:: int PyUFuncObject.version
+   .. c:member:: int PyUFuncObject.reserved1
 
-       The ``NPY_API_VERSION`` used during the call to
-       :c:func:`PyUFunc_FromFuncAndDataAndSignature`. If less than
-        0x0000000D, ``core_dim_sizes`` and ``core_dim_flags`` will be ignored.
+       Unused.
 
    .. c:member:: char *PyUFuncObject.name
 
@@ -901,15 +899,15 @@ PyUFunc_Type
    .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
 
        For each distinct core dimension, the possible
-       "frozen" size (``-1`` if not frozen)
+       :ref:`frozen <frozen>` size (``-1`` if not frozen)
 
    .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
 
-       For each distinct core dimension, a set of flags ``OR`` ed together:
+       For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
 
-       - :c:data:`UFUNC_CORE_CAN_IGNORE` if the dim name ends in ``?``
-       - :c:data:`UFUNC_CORE_DIM_SIZE_UNSET` if the dim size will be
-         determined by the operands (not frozen)
+       - :c:data:`UFUNC_CORE_DIM_CAN_IGNORE` if the dim name ends in ``?``
+       - :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` if the dim size will be
+         determined from the operands and not from a :ref:`frozen <frozen>` signature
 
 PyArrayIter_Type
 ----------------
