@@ -148,6 +148,12 @@ behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,
 `F90FLAGS`, `FREEFLAGS`, `FOPT`, `FDEBUG`, and `FFLAGS`.  See gh-11525 for more
 details.
 
+Prefer our include files
+------------------------
+We now prepend the `include/numpy` directory to the `include_dirs` when using
+`nupy.distutils`'s `build_ext` and `build_clib` commands. Previously we appended
+our include dir, which sometimes caused problems when building NumPy.
+
 ``np.clip`` and the ``clip`` method check for memory overlap
 ------------------------------------------------------------
 The ``out`` argument to these functions is now always tested for memory overlap
