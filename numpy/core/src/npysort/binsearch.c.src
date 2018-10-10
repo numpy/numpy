@@ -66,9 +66,8 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
         }
 
         last_key_val = key_val;
-
+        npy_intp mid_idx = min_idx;
         while (min_idx < max_idx) {
-            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
             const @type@ mid_val = *(const @type@ *)(arr + mid_idx*arr_str);
             if (@TYPE@_@CMP@(mid_val, key_val)) {
                 min_idx = mid_idx + 1;
@@ -76,6 +75,7 @@ binsearch_@side@_@suff@(const char *arr, const char *key, char *ret,
             else {
                 max_idx = mid_idx;
             }
+            mid_idx = min_idx + ((max_idx - min_idx) >> 1);
         }
         *(npy_intp *)ret = min_idx;
     }
