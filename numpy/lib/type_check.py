@@ -493,7 +493,7 @@ def asscalar(a):
     """
 
     # 2018-10-10, 1.16
-    warnings.warn('np.asscalar(a) will be removed in v1.18 of numpy, use '
+    warnings.warn('np.asscalar(a) is deprecated since NumPy v1.16, use '
                   'a.item() instead', DeprecationWarning, stacklevel=1)
     return a.item()
 
