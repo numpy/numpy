@@ -19,6 +19,12 @@ Highlights
 New functions
 =============
 
+``get_numpy_version_as_hex``
+----------------------------------------
+Added `numpy.version.get_numpy_version_as_hex` which returns a hex string
+similar to ``PY_VERSION_HEX`` in the CPython headers. The value is cached in C
+for fast version comparison and initialized at import.
+
 
 Deprecations
 ============

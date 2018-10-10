@@ -58,6 +58,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('umath', 'ufunc_object.c'),
              join('umath', 'ufunc_type_resolution.c'),
              join('umath', 'reduction.c'),
+             join('common', 'npy_version.c'),
             ]
 THIS_DIR = os.path.dirname(__file__)
 API_FILES = [os.path.join(THIS_DIR, '..', 'src', a) for a in API_FILES]

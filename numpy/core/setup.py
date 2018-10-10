@@ -715,9 +715,13 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
-                             join('src', 'common', 'mem_overlap.c')],
+                             join('src', 'common', 'mem_overlap.c'),
+                             join('src', 'common', 'npy_version.c'),
+                            ],
                     depends=[join('src', 'common', 'mem_overlap.h'),
-                             join('src', 'common', 'npy_extint128.h')],
+                             join('src', 'common', 'npy_extint128.h'),
+                             join('src', 'common', 'npy_version.h'),
+                            ],
                     libraries=['npymath'])
 
     #######################################################################
@@ -733,6 +737,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_extint128.h'),
             join('src', 'common', 'npy_longdouble.h'),
+            join('src', 'common', 'npy_version.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
             join('src', 'common', 'ufunc_override.h'),
@@ -743,6 +748,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'array_assign.c'),
             join('src', 'common', 'mem_overlap.c'),
             join('src', 'common', 'npy_longdouble.c'),
+            join('src', 'common', 'npy_version.c'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.c'),
             join('src', 'common', 'ufunc_override.c'),
