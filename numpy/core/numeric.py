@@ -1175,9 +1175,42 @@ def tensordot(a, b, axes=2):
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
+    
+    It is worth noting that the axes of result could be reversed sometimes. 
+    And please refer to the example below:
 
     Examples
     --------
+    An axes shift test example:
+    >>> diagMat=np.diag([1,1,1])
+    >>> mat3D = np.array([[[ 0,  1,  2, 10],
+        [ 3,  4,  5, 0],
+        [ 6,  7,  8, 1]],
+       [[ 9, 10, 11, 2],
+        [12, 13, 14,3],
+        [15, 16, 17,0]]])
+    >>> newMat = np.tensordot(mat3D, diagMat, axes=([1],[1]))
+    >>> print mat3D
+    [[[ 0  1  2 10]
+      [ 3  4  5  0]
+      [ 6  7  8  1]]
+     [[ 9 10 11  2]
+      [12 13 14  3]
+      [15 16 17  0]]]
+    >>> print newMat
+    [[[ 0  3  6]
+      [ 1  4  7]
+      [ 2  5  8]
+      [10  0  1]]
+     [[ 9 12 15]
+      [10 13 16]
+      [11 14 17]
+      [ 2  3  0]]]
+    >>> print newMat.shape
+        (2, 4, 3)
+    >>> print mat3D.shape
+        (2, 3, 4)
+        
     A "traditional" example:
 
     >>> a = np.arange(60.).reshape(3,4,5)
