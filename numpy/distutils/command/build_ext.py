@@ -365,7 +365,7 @@ class build_ext (old_build_ext):
         kws = {'depends': ext.depends}
         output_dir = self.build_temp
 
-        include_dirs = ext.include_dirs + get_numpy_include_dirs()
+        include_dirs = get_numpy_include_dirs() + ext.include_dirs
 
         c_objects = []
         if c_sources:

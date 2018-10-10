@@ -207,7 +207,7 @@ class build_clib(old_build_clib):
             include_dirs = []
         extra_postargs = build_info.get('extra_compiler_args') or []
 
-        include_dirs.extend(get_numpy_include_dirs())
+        include_dirs[:0] = get_numpy_include_dirs()
         # where compiled F90 module files are:
         module_dirs = build_info.get('module_dirs') or []
         module_build_dir = os.path.dirname(lib_file)
