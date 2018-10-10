@@ -36,6 +36,10 @@ and not documented. They will be removed in the 1.18 release. Use
 These were deprecated in 1.10, had no tests, and seem to no longer work in
 1.15 anyway.
 
+`numpy.asscalar` has been deprecated
+------------------------------------
+It is an alias to the more powerful `numpy.ndarray.item`, not tested, and fails
+for scalars.
 
 Future Changes
 ==============
