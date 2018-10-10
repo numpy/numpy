@@ -104,6 +104,15 @@ content to be read after ``skiprows``, as in `numpy.genfromtxt`.
 Improvements
 ============
 
+no-copy pickling of numpy arrays
+--------------------------------
+Up to protocol 4, numpy array pickling created 2 spurious copies of the data
+being serlialized.
+With pickle protocol 5, and the ``PickleBuffer`` API, a large variety of numpy
+arrays can now be serialized without any copy using out-of-band buffers,
+and with one less copy using in-band buffers. This results, for large arrays,
+in an up to 66% drop in peak memory usage.
+
 build shell independence
 ------------------------
 NumPy builds should no longer interact with the host machine
