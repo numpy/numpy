@@ -287,7 +287,7 @@ class TestUfunc(object):
         pass
 
     # from include/numpy/ufuncobject.h
-    size_unset = 2
+    size_inferred = 2
     can_ignore = 4
     def test_signature0(self):
         # the arguments to test_signature are: nin, nout, core_signature
@@ -296,7 +296,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1,  1,  0))
         assert_equal(ixs, (0, 0))
-        assert_equal(flags, (self.size_unset,))
+        assert_equal(flags, (self.size_inferred,))
         assert_equal(sizes, (-1,))
 
     def test_signature1(self):
@@ -316,7 +316,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 1, 1))
         assert_equal(ixs, (0, 1, 2, 3))
-        assert_equal(flags, (self.size_unset,)*4)
+        assert_equal(flags, (self.size_inferred,)*4)
         assert_equal(sizes, (-1, -1, -1, -1))
 
     def test_signature3(self):
@@ -325,7 +325,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 1, 2))
         assert_equal(ixs, (0, 1, 2, 1, 3))
-        assert_equal(flags, (self.size_unset,)*4)
+        assert_equal(flags, (self.size_inferred,)*4)
         assert_equal(sizes, (-1, -1, -1, -1))
 
     def test_signature4(self):
@@ -335,7 +335,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 2, 2))
         assert_equal(ixs, (0, 1, 1, 2, 0, 2))
-        assert_equal(flags, (self.size_unset,)*3)
+        assert_equal(flags, (self.size_inferred,)*3)
         assert_equal(sizes, (-1, -1, -1))
 
     def test_signature5(self):
@@ -345,9 +345,9 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 2, 2))
         assert_equal(ixs, (0, 1, 1, 2, 0, 2))
-        assert_equal(flags, (self.size_unset | self.can_ignore,
-                             self.size_unset,
-                             self.size_unset | self.can_ignore))
+        assert_equal(flags, (self.size_inferred | self.can_ignore,
+                             self.size_inferred,
+                             self.size_inferred | self.can_ignore))
         assert_equal(sizes, (-1, -1, -1))
 
     def test_signature6(self):
@@ -365,7 +365,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 2, 1, 1))
         assert_equal(ixs, (0, 0, 0, 1, 2))
-        assert_equal(flags, (0, self.size_unset, 0))
+        assert_equal(flags, (0, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
 
     def test_signature8(self):
@@ -374,7 +374,7 @@ class TestUfunc(object):
         assert_equal(enabled, 1)
         assert_equal(num_dims, (1, 2, 1, 1))
         assert_equal(ixs, (0, 0, 0, 1, 2))
-        assert_equal(flags, (self.can_ignore, self.size_unset, 0))
+        assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
 
     def test_signature_failure0(self):

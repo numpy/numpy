@@ -149,11 +149,13 @@ Notes:
 Here are some examples of signatures:
 
 +-------------+----------------------------+-----------------------------------+
-| add         | ``(),()->()``              |                                   |
+| name        | signature                  | common usage                      |
++=============+============================+===================================+
+| add         | ``(),()->()``              | binary ufunc                      |
 +-------------+----------------------------+-----------------------------------+
-| sum1d       | ``(i)->()``                |                                   |
+| sum1d       | ``(i)->()``                | reduction                         |
 +-------------+----------------------------+-----------------------------------+
-| inner1d     | ``(i),(i)->()``            |                                   |
+| inner1d     | ``(i),(i)->()``            | vector-vector multiplication      |
 +-------------+----------------------------+-----------------------------------+
 | matmat      | ``(m,n),(n,p)->(m,p)``     | matrix multiplication             |
 +-------------+----------------------------+-----------------------------------+
@@ -167,9 +169,14 @@ Here are some examples of signatures:
 |             |                            | outer over the second to last,    |
 |             |                            | and loop/broadcast over the rest. |
 +-------------+----------------------------+-----------------------------------+
-| cross1d     | ``(3),(3)->(3)``           | cross product where the last      |
-|             |                            | dimension must be 3               |
+|  cross1d    | ``(3),(3)->(3)``           | cross product where the last      |
+|             |                            | dimension is frozen and must be 3 |
 +-------------+----------------------------+-----------------------------------+
+
+.. _frozen:
+
+The last is an instance of freezing a core dimension and can be used to
+improve ufunc performance
 
 C-API for implementing Elementary Functions
 -------------------------------------------
