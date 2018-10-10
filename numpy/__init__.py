@@ -164,7 +164,7 @@ else:
 
     from .core import round, abs, max, min
     # now that numpy modules are imported, can initialize limits
-    core.getlimits._init_getlimits()
+    core.getlimits._register_known_types()
 
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
