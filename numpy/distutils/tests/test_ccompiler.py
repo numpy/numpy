@@ -1,11 +1,11 @@
 from __future__ import division, absolute_import, print_function
-import os, sysconfig
+import os, sysconfig, sys
+import setuptools # monkeypatches distutils to find MSVC compilers
 
 from numpy.testing import tempdir, assert_raises
-from numpy.distutils import log
 from numpy.distutils.numpy_distribution import NumpyDistribution
-from numpy.distutils import ccompiler
-from numpy.distutils.command import build_ext, build_clib
+from numpy.distutils import ccompiler, system_info
+from numpy.distutils.core import numpy_cmdclass
 
 class Extension(object):
     depends = []
@@ -13,25 +13,24 @@ class Extension(object):
     extra_objects = []
     extra_link_args = []
     libraries = []
-    library_dirs = []
     runtime_library_dirs = []
     define_macros = []
     undef_macros = []
     language = 'C99'
     include_dirs = [sysconfig.get_paths()['platinclude']]
-    export_symbols = []
+    library_dirs = system_info.default_lib_dirs
+    export_symbols = ['adder']
 
 class DummyCompiler(object):
     extra_f77_compile_args = []
+    library_dirs = []
+    libraries = []
 
 dist = NumpyDistribution()
+dist.finalize_options()
+dist.cmdclass.update(numpy_cmdclass)
 
 testdefs = '''
-#ifdef __GNUC__
-#  define NPY_EXPORTED extern __attribute__((visibility("default")))
-#else
-#  define NPY_EXPORTED extern __declspec(dllexport)
-#endif
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 '''
 
@@ -39,19 +38,33 @@ testdefs = '''
 addercode = testdefs + '''
 #include <numpy/ndarraytypes.h>
 
-NPY_EXPORTED npy_intp
+npy_intp
 adder(npy_intp a, npy_intp b)
 {
     return a + b;
+}
+
+/* Fake the exported initialization functions since build_ext exports them */
+npy_intp
+initadder(void)
+{
+    return 0;
+}
+
+npy_intp
+PyInit_adder(void)
+{
+    return 0;
 }
 '''
 
 def test_build_ext():
     # baseline test - can we compile a C extension?
-    b = build_ext.build_ext(dist)
+    b = dist.get_command_obj('build_ext')
     b.compiler = ccompiler.new_compiler()
     b._f90_compiler = DummyCompiler()
     b._cxx_compiler = DummyCompiler()
+    b.swig_opts = None
     ext = Extension()
     ext.name = 'adder'
     src = 'adder.c'
@@ -61,15 +74,20 @@ def test_build_ext():
             fid.write(addercode)
         ext.sources = [tmpfile]
         b.build_lib = tmpdir
+        if b.library_dirs:
+            ext.library_dirs = b.library_dirs
+        b.finalize_options()
         b.build_extension(ext)
         # XXX try to import the extension with ctypes and call the function
+        # Do not try to import it, the init routine will not work
 
 def test_ext_include_dir_order():
     # Make sure the real numpy includes take precedence over ext.include_dirs
-    b = build_ext.build_ext(dist)
+    b = dist.get_command_obj('build_ext')
     b.compiler = ccompiler.new_compiler()
     b._f90_compiler = DummyCompiler()
     b._cxx_compiler = DummyCompiler()
+    b.swig_opts = None
     ext = Extension()
     ext.name = 'adder'
     src = 'adder.c'
@@ -79,18 +97,23 @@ def test_ext_include_dir_order():
         with open(fake_include, 'w') as fid:
             fid.write('#error got the wrong header file')
         # Put our dummy ndarraytypes.h at the front of the include path
+        # If not overridden, this will error out since the dummy include file is invalid
         ext.include_dirs.insert(0, os.path.join(tmpdir, 'dummy'))
 
         tmpfile = os.path.join(tmpdir, src)
         with open(tmpfile, 'w') as fid:
             fid.write(addercode)
         ext.sources = [tmpfile]
+        if b.library_dirs:
+            ext.library_dirs = b.library_dirs
+        b.finalize_options()
         b.build_lib = tmpdir
         b.build_extension(ext)
+        # Do not try to import it, the init routine will not work
 
 def test_build_clib():
     # baseline test - can we compile a C lib?
-    b = build_clib.build_clib(dist)
+    b = dist.get_command_obj('build_clib')
     b.compiler = ccompiler.new_compiler()
     b._f_compiler = DummyCompiler()
     # b._cxx_compiler = DummyCompiler()
@@ -108,7 +131,7 @@ def test_build_clib():
 
 def test_clib_build_clib():
     # baseline test - can we compile a C lib?
-    b = build_clib.build_clib(dist)
+    b = dist.get_command_obj('build_clib')
     b.compiler = ccompiler.new_compiler()
     b._f_compiler = DummyCompiler()
     # b._cxx_compiler = DummyCompiler()
@@ -125,6 +148,7 @@ def test_clib_build_clib():
         with open(fake_include, 'w') as fid:
             fid.write('#error got the wrong header file')
         # Put our dummy ndarraytypes.h at the front of the include path
+        # If not overridden, this will error out since the dummy include file is invalid
         ext['include_dirs'] = [os.path.join(tmpdir, 'dummy'),
                                sysconfig.get_paths()['platinclude']]
         b.build_clib = tmpdir
