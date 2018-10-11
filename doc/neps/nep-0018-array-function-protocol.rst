@@ -330,9 +330,9 @@ Changes within NumPy functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Given a function defining the above behavior, for now call it
-``try_array_function_override``, we now need to call that function from
-within every relevant NumPy function. This is a pervasive change, but of
-fairly simple and innocuous code that should complete quickly and
+``array_function_implementation_or_override``, we now need to call that
+function from within every relevant NumPy function. This is a pervasive change,
+but of fairly simple and innocuous code that should complete quickly and
 without effect if no arguments implement the ``__array_function__``
 protocol.
 
@@ -344,20 +344,17 @@ functions:
 
     def array_function_dispatch(dispatcher):
         """Wrap a function for dispatch with the __array_function__ protocol."""
-        def decorator(func):
-            @functools.wraps(func)
-            def new_func(*args, **kwargs):
-                relevant_arguments = dispatcher(*args, **kwargs)
-                success, value = try_array_function_override(
-                    new_func, relevant_arguments, args, kwargs)
-                if success:
-                    return value
-                return func(*args, **kwargs)
-            return new_func
+        def decorator(implementation):
+            @functools.wraps(implementation)
+            def public_api(*args, **kwargs):
+                relevant_args = dispatcher(*args, **kwargs)
+                return array_function_implementation_or_override(
+                    implementation, public_api, relevant_args, args, kwargs)
+            return public_api
         return decorator
 
     # example usage
-    def _broadcast_to_dispatcher(array, shape, subok=None, **ignored_kwargs):
+    def _broadcast_to_dispatcher(array, shape, subok=None):
         return (array,)
 
     @array_function_dispatch(_broadcast_to_dispatcher)
@@ -388,12 +385,12 @@ It's particularly worth calling out the decorator's use of
 
 In a few cases, it would not make sense to use the ``array_function_dispatch``
 decorator directly, but override implementation in terms of
-``try_array_function_override`` should still be straightforward.
+``array_function_implementation_or_override`` should still be straightforward.
 
 - Functions written entirely in C (e.g., ``np.concatenate``) can't use
   decorators, but they could still use a C equivalent of
-  ``try_array_function_override``. If performance is not a concern, they could
-  also be easily wrapped with a small Python wrapper.
+  ``array_function_implementation_or_override``. If performance is not a
+  concern, they could also be easily wrapped with a small Python wrapper.
 - ``np.einsum`` does complicated argument parsing to handle two different
   function signatures. It would probably be best to avoid the overhead of
   parsing it twice in the typical case of no overrides.
@@ -462,10 +459,10 @@ the difference in speed between the ``ndarray.sum()`` method (1.6 us) and
 ``numpy.sum()`` function (2.6 us).
 
 Fortunately, we expect significantly less overhead with a C implementation of
-``try_array_function_override``, which is where the bulk of the runtime is.
-This would leave the ``array_function_dispatch`` decorator and dispatcher
-function on their own adding about 0.5 microseconds of overhead, for perhaps ~1
-microsecond of overhead in the typical case.
+``array_function_implementation_or_override``, which is where the bulk of the
+runtime is. This would leave the ``array_function_dispatch`` decorator and
+dispatcher function on their own adding about 0.5 microseconds of overhead,
+for perhaps ~1 microsecond of overhead in the typical case.
 
 In our view, this level of overhead is reasonable to accept for code written
 in Python. We're pretty sure that the vast majority of NumPy users aren't
@@ -490,7 +487,7 @@ already wrap a limited subset of SciPy functionality (e.g.,
 
 If we want to do this, we should expose at least the decorator
 ``array_function_dispatch()`` and possibly also the lower level
-``try_array_function_override()`` as part of NumPy's public API.
+``array_function_implementation_or_override()`` as part of NumPy's public API.
 
 Non-goals
 ---------
@@ -794,9 +791,9 @@ public API.
 
 ``types`` is included because we can compute it almost for free as part of
 collecting ``__array_function__`` implementations to call in
-``try_array_function_override``. We also think it will be used by most
-``__array_function__`` methods, which otherwise would need to extract this
-information themselves. It would be equivalently easy to provide single
+``array_function_implementation_or_override``. We also think it will be used
+by many ``__array_function__`` methods, which otherwise would need to extract
+this information themselves. It would be equivalently easy to provide single
 instances of each type, but providing only types seemed cleaner.
 
 Taking this even further, it was suggested that ``__array_function__`` should be
@@ -807,10 +804,10 @@ worth breaking from the precedence of ``__array_ufunc__``.
 There are two other arguments that we think *might* be important to pass to
 ``__array_ufunc__`` implementations:
 
-- Access to the non-dispatched function (i.e., before wrapping with
+- Access to the non-dispatched implementation (i.e., before wrapping with
   ``array_function_dispatch``) in ``ndarray.__array_function__`` would allow
-  use to drop special case logic for that method from
-  ``try_array_function_override``.
+  us to drop special case logic for that method from
+  ``array_function_implementation_or_override``.
 - Access to the ``dispatcher`` function passed into
   ``array_function_dispatch()`` would allow ``__array_function__``
   implementations to determine the list of "array-like" arguments in a generic
