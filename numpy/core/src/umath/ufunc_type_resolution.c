@@ -1275,7 +1275,7 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
                                   PyObject *type_tup,
                                   PyArray_Descr **out_dtypes)
 {
- /* Depreciation checks needed only on python 2 */
+ /* Deprecation checks needed only on python 2 */
 #if !defined(NPY_PY3K)
     int type_num1, type_num2;
 
