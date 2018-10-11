@@ -2748,3 +2748,7 @@ class TestTensordot(object):
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))
+        # Test resolution to issue #12130
+        arr_0d = np.array(1)
+        ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
+        assert_array_equal(ret, arr_0d)
