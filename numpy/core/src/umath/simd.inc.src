@@ -130,7 +130,6 @@ abs_ptrdiff(char *a, char *b)
  * #func = sqrt, absolute, negative, minimum, maximum#
  * #check = IS_BLOCKABLE_UNARY*3, IS_BLOCKABLE_REDUCE*2 #
  * #name = unary*3, unary_reduce*2#
- * #minmax = 0*3, 1*2#
  */
 
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
