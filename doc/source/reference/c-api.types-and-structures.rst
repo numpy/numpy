@@ -699,8 +699,8 @@ PyUFunc_Type
    of NumPy. To ensure compatibility:
 
    - Never declare a non-pointer instance of the struct
-   - Never perform pointer arithmatic
-   - Never use ``sizof(PyUFuncObject)``
+   - Never perform pointer arithmetic
+   - Never use ``sizeof(PyUFuncObject)``
 
    It has the following structure:
 
@@ -899,7 +899,7 @@ PyUFunc_Type
    .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
 
        For each distinct core dimension, the possible
-       :ref:`frozen <frozen>` size (``-1`` if not frozen)
+       :ref:`frozen <frozen>` size if :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` is 0
 
    .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
 
