@@ -284,7 +284,9 @@ PyArray_XDECREF_ERR(PyArrayObject *arr)
 
 
 #ifdef __cplusplus
-}
+#define CONFUSE_EMACS2 }
+CONFUSE_EMACS2
+#undef CONFUSE_EMACS2
 #endif
 
 
