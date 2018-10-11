@@ -121,8 +121,7 @@ a conflict of interest in handling it, then they will recuse themselves from
 considering your report. Alternatively, if for any reason you feel
 uncomfortable making a report to the committee, then you can also contact:
 
-- NumFOCUS Executive Director: Leah Silen
-- NumFOCUS President: Andy Terrel
+- Senior `NumFOCUS staff <https://numfocus.org/code-of-conduct#persons-responsible>`__: conduct@numfocus.org
 
 
 Incident reporting resolution & Code of Conduct enforcement
