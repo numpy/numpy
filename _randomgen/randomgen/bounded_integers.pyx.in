@@ -104,8 +104,6 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
     The internal generator does not have this issue since it generates from
     the closes interval [low, high-1] and high-1 is always in range for the
     64 bit integer type.
-
-    Note: use_masked currently ignored for 64bit generators.
     """
 
     cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
@@ -162,7 +160,7 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
 
             if rng != last_rng:
                 mask = _gen_mask(rng)
-            out_data[i] = random_bounded_uint64(state, off, rng, mask)
+            out_data[i] = random_bounded_uint64(state, off, rng, mask, use_masked)
 
             np.PyArray_MultiIter_NEXT(it)
 

@@ -99,10 +99,12 @@ cdef extern from "src/distributions/distributions.h":
 
     uint64_t random_interval(brng_t *brng_state, uint64_t max) nogil
 
+    # Generate random uint64 numbers in closed interval [off, off + rng].
     uint64_t random_bounded_uint64(brng_t *brng_state,
                                    uint64_t off, uint64_t rng,
-                                   uint64_t mask) nogil
+                                   uint64_t mask, bint use_masked) nogil
 
+    # Generate random uint32 numbers in closed interval [off, off + rng].
     uint32_t random_buffered_bounded_uint32(brng_t *brng_state,
                                             uint32_t off, uint32_t rng,
                                             uint32_t mask, bint use_masked,

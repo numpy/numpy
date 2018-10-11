@@ -607,7 +607,7 @@ cdef class RandomGenerator:
         use_masked : bool
             If True the generator uses rejection sampling with a bit mask to
             reject random numbers that are out of bounds. If False the generator
-            will use Lemire's rejection sampling algorithm when available.
+            will use Lemire's rejection sampling algorithm.
 
             .. versionadded:: 1.15.1
 
