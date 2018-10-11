@@ -12,6 +12,7 @@ from . import multiarray as mu
 from . import umath as um
 from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
+from .overrides import array_function_dispatch
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -83,6 +84,11 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
 
+def _take_dispatcher(a, indices, axis=None, out=None, mode=None):
+    return (a, out)
+
+
+@array_function_dispatch(_take_dispatcher)
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
     Take elements from an array along an axis.
@@ -181,7 +187,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
+def _reshape_dispatcher(a, newshape, order=None):
+    return (a,)
+
+
 # not deprecated --- copy if necessary, view otherwise
+@array_function_dispatch(_reshape_dispatcher)
 def reshape(a, newshape, order='C'):
     """
     Gives a new shape to an array without changing its data.
@@ -279,6 +290,14 @@ def reshape(a, newshape, order='C'):
     return _wrapfunc(a, 'reshape', newshape, order=order)
 
 
+def _choose_dispatcher(a, choices, out=None, mode=None):
+    yield a
+    for c in choices:
+        yield c
+    yield out
+
+
+@array_function_dispatch(_choose_dispatcher)
 def choose(a, choices, out=None, mode='raise'):
     """
     Construct an array from an index array and a set of arrays to choose from.
@@ -401,6 +420,11 @@ def choose(a, choices, out=None, mode='raise'):
     return _wrapfunc(a, 'choose', choices, out=out, mode=mode)
 
 
+def _repeat_dispatcher(a, repeats, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_repeat_dispatcher)
 def repeat(a, repeats, axis=None):
     """
     Repeat elements of an array.
@@ -445,6 +469,11 @@ def repeat(a, repeats, axis=None):
     return _wrapfunc(a, 'repeat', repeats, axis=axis)
 
 
+def _put_dispatcher(a, ind, v, mode=None):
+    return (a, ind, v)
+
+
+@array_function_dispatch(_put_dispatcher)
 def put(a, ind, v, mode='raise'):
     """
     Replaces specified elements of an array with given values.
@@ -503,6 +532,11 @@ def put(a, ind, v, mode='raise'):
     return put(ind, v, mode=mode)
 
 
+def _swapaxes_dispatcher(a, axis1, axis2):
+    return (a,)
+
+
+@array_function_dispatch(_swapaxes_dispatcher)
 def swapaxes(a, axis1, axis2):
     """
     Interchange two axes of an array.
@@ -549,6 +583,11 @@ def swapaxes(a, axis1, axis2):
     return _wrapfunc(a, 'swapaxes', axis1, axis2)
 
 
+def _transpose_dispatcher(a, axes=None):
+    return (a,)
+
+
+@array_function_dispatch(_transpose_dispatcher)
 def transpose(a, axes=None):
     """
     Permute the dimensions of an array.
@@ -598,6 +637,11 @@ def transpose(a, axes=None):
     return _wrapfunc(a, 'transpose', axes)
 
 
+def _partition_dispatcher(a, kth, axis=None, kind=None, order=None):
+    return (a,)
+
+
+@array_function_dispatch(_partition_dispatcher)
 def partition(a, kth, axis=-1, kind='introselect', order=None):
     """
     Return a partitioned copy of an array.
@@ -689,6 +733,11 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     return a
 
 
+def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None):
+    return (a,)
+
+
+@array_function_dispatch(_argpartition_dispatcher)
 def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     """
     Perform an indirect partition along the given axis using the
@@ -757,6 +806,11 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
+def _sort_dispatcher(a, axis=None, kind=None, order=None):
+    return (a,)
+
+
+@array_function_dispatch(_sort_dispatcher)
 def sort(a, axis=-1, kind='quicksort', order=None):
     """
     Return a sorted copy of an array.
@@ -879,6 +933,11 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     return a
 
 
+def _argsort_dispatcher(a, axis=None, kind=None, order=None):
+    return (a,)
+
+
+@array_function_dispatch(_argsort_dispatcher)
 def argsort(a, axis=-1, kind='quicksort', order=None):
     """
     Returns the indices that would sort an array.
@@ -973,6 +1032,11 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
 
 
+def _argmax_dispatcher(a, axis=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_argmax_dispatcher)
 def argmax(a, axis=None, out=None):
     """
     Returns the indices of the maximum values along an axis.
@@ -1037,6 +1101,11 @@ def argmax(a, axis=None, out=None):
     return _wrapfunc(a, 'argmax', axis=axis, out=out)
 
 
+def _argmin_dispatcher(a, axis=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_argmin_dispatcher)
 def argmin(a, axis=None, out=None):
     """
     Returns the indices of the minimum values along an axis.
@@ -1101,6 +1170,11 @@ def argmin(a, axis=None, out=None):
     return _wrapfunc(a, 'argmin', axis=axis, out=out)
 
 
+def _searchsorted_dispatcher(a, v, side=None, sorter=None):
+    return (a, v, sorter)
+
+
+@array_function_dispatch(_searchsorted_dispatcher)
 def searchsorted(a, v, side='left', sorter=None):
     """
     Find indices where elements should be inserted to maintain order.
@@ -1170,6 +1244,11 @@ def searchsorted(a, v, side='left', sorter=None):
     return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
 
 
+def _resize_dispatcher(a, new_shape):
+    return (a,)
+
+
+@array_function_dispatch(_resize_dispatcher)
 def resize(a, new_shape):
     """
     Return a new array with the specified shape.
@@ -1243,6 +1322,11 @@ def resize(a, new_shape):
     return reshape(a, new_shape)
 
 
+def _squeeze_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_squeeze_dispatcher)
 def squeeze(a, axis=None):
     """
     Remove single-dimensional entries from the shape of an array.
@@ -1301,6 +1385,12 @@ def squeeze(a, axis=None):
     else:
         return squeeze(axis=axis)
 
+
+def _diagonal_dispatcher(a, offset=None, axis1=None, axis2=None):
+    return (a,)
+
+
+@array_function_dispatch(_diagonal_dispatcher)
 def diagonal(a, offset=0, axis1=0, axis2=1):
     """
     Return specified diagonals.
@@ -1415,6 +1505,12 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
         return asanyarray(a).diagonal(offset=offset, axis1=axis1, axis2=axis2)
 
 
+def _trace_dispatcher(
+        a, offset=None, axis1=None, axis2=None, dtype=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_trace_dispatcher)
 def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
     """
     Return the sum along diagonals of the array.
@@ -1478,6 +1574,11 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None, out=None):
         return asanyarray(a).trace(offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, out=out)
 
 
+def _ravel_dispatcher(a, order=None):
+    return (a,)
+
+
+@array_function_dispatch(_ravel_dispatcher)
 def ravel(a, order='C'):
     """Return a contiguous flattened array.
 
@@ -1584,6 +1685,11 @@ def ravel(a, order='C'):
         return asanyarray(a).ravel(order=order)
 
 
+def _nonzero_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_nonzero_dispatcher)
 def nonzero(a):
     """
     Return the indices of the elements that are non-zero.
@@ -1670,6 +1776,11 @@ def nonzero(a):
     return _wrapfunc(a, 'nonzero')
 
 
+def _shape_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_shape_dispatcher)
 def shape(a):
     """
     Return the shape of an array.
@@ -1715,6 +1826,11 @@ def shape(a):
     return result
 
 
+def _compress_dispatcher(condition, a, axis=None, out=None):
+    return (condition, a, out)
+
+
+@array_function_dispatch(_compress_dispatcher)
 def compress(condition, a, axis=None, out=None):
     """
     Return selected slices of an array along given axis.
@@ -1778,6 +1894,11 @@ def compress(condition, a, axis=None, out=None):
     return _wrapfunc(a, 'compress', condition, axis=axis, out=out)
 
 
+def _clip_dispatcher(a, a_min, a_max, out=None):
+    return (a, a_min, a_max)
+
+
+@array_function_dispatch(_clip_dispatcher)
 def clip(a, a_min, a_max, out=None):
     """
     Clip (limit) the values in an array.
@@ -1835,6 +1956,12 @@ def clip(a, a_min, a_max, out=None):
     return _wrapfunc(a, 'clip', a_min, a_max, out=out)
 
 
+def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
+                    initial=None):
+    return (a, out)
+
+
+@array_function_dispatch(_sum_dispatcher)
 def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Sum of array elements over a given axis.
@@ -1947,6 +2074,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._No
                           initial=initial)
 
 
+def _any_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_any_dispatcher)
 def any(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
@@ -2030,6 +2162,11 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     return _wrapreduction(a, np.logical_or, 'any', axis, None, out, keepdims=keepdims)
 
 
+def _all_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_all_dispatcher)
 def all(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -2106,6 +2243,11 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
 
 
+def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_cumsum_dispatcher)
 def cumsum(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative sum of the elements along a given axis.
@@ -2173,6 +2315,11 @@ def cumsum(a, axis=None, dtype=None, out=None):
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
 
 
+def _ptp_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_ptp_dispatcher)
 def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Range of values (maximum - minimum) along an axis.
@@ -2241,6 +2388,11 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 
+def _amax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None):
+    return (a, out)
+
+
+@array_function_dispatch(_amax_dispatcher)
 def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis.
@@ -2351,6 +2503,11 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
                           initial=initial)
 
 
+def _amin_dispatcher(a, axis=None, out=None, keepdims=None, initial=None):
+    return (a, out)
+
+
+@array_function_dispatch(_amin_dispatcher)
 def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the minimum of an array or minimum along an axis.
@@ -2459,6 +2616,11 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
                           initial=initial)
 
 
+def _alen_dispathcer(a):
+    return (a,)
+
+
+@array_function_dispatch(_alen_dispathcer)
 def alen(a):
     """
     Return the length of the first dimension of the input array.
@@ -2492,6 +2654,12 @@ def alen(a):
         return len(array(a, ndmin=1))
 
 
+def _prod_dispatcher(
+        a, axis=None, dtype=None, out=None, keepdims=None, initial=None):
+    return (a, out)
+
+
+@array_function_dispatch(_prod_dispatcher)
 def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue):
     """
     Return the product of array elements over a given axis.
@@ -2602,6 +2770,11 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._N
                           initial=initial)
 
 
+def _cumprod_dispatcher(a, axis=None, dtype=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_cumprod_dispatcher)
 def cumprod(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative product of elements along a given axis.
@@ -2665,6 +2838,11 @@ def cumprod(a, axis=None, dtype=None, out=None):
     return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
 
+def _ndim_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_ndim_dispatcher)
 def ndim(a):
     """
     Return the number of dimensions of an array.
@@ -2702,6 +2880,11 @@ def ndim(a):
         return asarray(a).ndim
 
 
+def _size_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_size_dispatcher)
 def size(a, axis=None):
     """
     Return the number of elements along a given axis.
@@ -2748,6 +2931,11 @@ def size(a, axis=None):
             return asarray(a).shape[axis]
 
 
+def _around_dispatcher(a, decimals=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_around_dispatcher)
 def around(a, decimals=0, out=None):
     """
     Evenly round to the given number of decimals.
@@ -2817,20 +3005,11 @@ def around(a, decimals=0, out=None):
     return _wrapfunc(a, 'round', decimals=decimals, out=out)
 
 
-def round_(a, decimals=0, out=None):
-    """
-    Round an array to the given number of decimals.
-
-    Refer to `around` for full documentation.
-
-    See Also
-    --------
-    around : equivalent function
-
-    """
-    return around(a, decimals=decimals, out=out)
+def _mean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
 
 
+@array_function_dispatch(_mean_dispatcher)
 def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Compute the arithmetic mean along the specified axis.
@@ -2937,6 +3116,12 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
                           out=out, **kwargs)
 
 
+def _std_dispatcher(
+        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_std_dispatcher)
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the standard deviation along the specified axis.
@@ -3055,6 +3240,12 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
                          **kwargs)
 
 
+def _var_dispatcher(
+        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_var_dispatcher)
 def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the variance along the specified axis.
@@ -3177,6 +3368,19 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
 # Aliases of other functions. These have their own definitions only so that
 # they can have unique docstrings.
 
+@array_function_dispatch(_around_dispatcher)
+def round_(a, decimals=0, out=None):
+    """
+    Round an array to the given number of decimals.
+
+    See Also
+    --------
+    around : equivalent function; see for details.
+    """
+    return around(a, decimals=decimals, out=out)
+
+
+@array_function_dispatch(_prod_dispatcher, verify=False)
 def product(*args, **kwargs):
     """
     Return the product of array elements over a given axis.
@@ -3188,6 +3392,7 @@ def product(*args, **kwargs):
     return prod(*args, **kwargs)
 
 
+@array_function_dispatch(_cumprod_dispatcher, verify=False)
 def cumproduct(*args, **kwargs):
     """
     Return the cumulative product over the given axis.
@@ -3199,6 +3404,7 @@ def cumproduct(*args, **kwargs):
     return cumprod(*args, **kwargs)
 
 
+@array_function_dispatch(_any_dispatcher, verify=False)
 def sometrue(*args, **kwargs):
     """
     Check whether some values are true.
@@ -3212,6 +3418,7 @@ def sometrue(*args, **kwargs):
     return any(*args, **kwargs)
 
 
+@array_function_dispatch(_all_dispatcher, verify=False)
 def alltrue(*args, **kwargs):
     """
     Check if all elements of input array are true.
@@ -3223,6 +3430,7 @@ def alltrue(*args, **kwargs):
     return all(*args, **kwargs)
 
 
+@array_function_dispatch(_ndim_dispatcher)
 def rank(a):
     """
     Return the number of dimensions of an array.
