@@ -175,10 +175,12 @@ DECLDIR int64_t random_hypergeometric(brng_t *brng_state, int64_t good,
 
 DECLDIR uint64_t random_interval(brng_t *brng_state, uint64_t max);
 
-DECLDIR uint64_t random_bounded_uint64(brng_t *brng_state,
-                                       uint64_t off, uint64_t rng,
-                                       uint64_t mask);
+/* Generate random uint64 numbers in closed interval [off, off + rng]. */
+DECLDIR uint64_t random_bounded_uint64(brng_t *brng_state, uint64_t off,
+                                       uint64_t rng, uint64_t mask,
+                                       bool use_masked);
 
+/* Generate random uint32 numbers in closed interval [off, off + rng]. */
 DECLDIR uint32_t random_buffered_bounded_uint32(brng_t *brng_state,
                                                 uint32_t off, uint32_t rng,
                                                 uint32_t mask, bool use_masked,
@@ -187,32 +189,27 @@ DECLDIR uint16_t random_buffered_bounded_uint16(brng_t *brng_state,
                                                 uint16_t off, uint16_t rng,
                                                 uint16_t mask, bool use_masked,
                                                 int *bcnt, uint32_t *buf);
-DECLDIR uint8_t random_buffered_bounded_uint8(brng_t *brng_state,
-                                              uint8_t off, uint8_t rng,
-                                              uint8_t mask, bool use_masked,
-                                              int *bcnt, uint32_t *buf);
-DECLDIR npy_bool random_buffered_bounded_bool(brng_t *brng_state,
-                                              npy_bool off, npy_bool rng,
-                                              npy_bool mask, bool use_masked,
-                                              int *bcnt, uint32_t *buf);
+DECLDIR uint8_t random_buffered_bounded_uint8(brng_t *brng_state, uint8_t off,
+                                              uint8_t rng, uint8_t mask,
+                                              bool use_masked, int *bcnt,
+                                              uint32_t *buf);
+DECLDIR npy_bool random_buffered_bounded_bool(brng_t *brng_state, npy_bool off,
+                                              npy_bool rng, npy_bool mask,
+                                              bool use_masked, int *bcnt,
+                                              uint32_t *buf);
 
-DECLDIR void random_bounded_uint64_fill(brng_t *brng_state,
-                                        uint64_t off, uint64_t rng, npy_intp cnt,
-                                        bool use_masked,
-                                        uint64_t *out);
-DECLDIR void random_bounded_uint32_fill(brng_t *brng_state,
-                                        uint32_t off, uint32_t rng, npy_intp cnt,
-                                        bool use_masked,
-                                        uint32_t *out);
-DECLDIR void random_bounded_uint16_fill(brng_t *brng_state,
-                                        uint16_t off, uint16_t rng, npy_intp cnt,
-                                        bool use_masked,
-                                        uint16_t *out);
-DECLDIR void random_bounded_uint8_fill(brng_t *brng_state,
-                                       npy_bool off, uint8_t rng, npy_intp cnt,
-                                       bool use_masked,
-                                       uint8_t *out);
-DECLDIR void random_bounded_bool_fill(brng_t *brng_state,
-                                      npy_bool off, npy_bool rng, npy_intp cnt,
-                                      bool use_masked,
-                                      npy_bool *out);
+DECLDIR void random_bounded_uint64_fill(brng_t *brng_state, uint64_t off,
+                                        uint64_t rng, npy_intp cnt,
+                                        bool use_masked, uint64_t *out);
+DECLDIR void random_bounded_uint32_fill(brng_t *brng_state, uint32_t off,
+                                        uint32_t rng, npy_intp cnt,
+                                        bool use_masked, uint32_t *out);
+DECLDIR void random_bounded_uint16_fill(brng_t *brng_state, uint16_t off,
+                                        uint16_t rng, npy_intp cnt,
+                                        bool use_masked, uint16_t *out);
+DECLDIR void random_bounded_uint8_fill(brng_t *brng_state, npy_bool off,
+                                       uint8_t rng, npy_intp cnt,
+                                       bool use_masked, uint8_t *out);
+DECLDIR void random_bounded_bool_fill(brng_t *brng_state, npy_bool off,
+                                      npy_bool rng, npy_intp cnt,
+                                      bool use_masked, npy_bool *out);
