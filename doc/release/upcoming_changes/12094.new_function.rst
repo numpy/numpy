@@ -1,0 +1,7 @@
+``ndrange`` a multi-dimensional range-like object
+-------------------------------------------------
+``ndrange`` behaves much like the Python 3 ``range`` object and allows
+multi-dimensional slicing, iteration, reversal and efficient membership lookup.
+``ndrange`` now supersedes the ``ndindex`` object for generating multi-index
+iterators. ``ndindex`` will continue to be maintained for backward
+compatibility.
