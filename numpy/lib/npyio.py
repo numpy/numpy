@@ -22,7 +22,7 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
-    is_pathlib_path
+    os_fspath, os_PathLike
     )
 from numpy.core.numeric import pickle
 
@@ -105,8 +105,8 @@ def zipfile_factory(file, *args, **kwargs):
     pathlib.Path objects. `args` and `kwargs` are passed to the zipfile.ZipFile
     constructor.
     """
-    if is_pathlib_path(file):
-        file = str(file)
+    if not hasattr(file, 'read'):
+        file = os_fspath(file)
     import zipfile
     kwargs['allowZip64'] = True
     return zipfile.ZipFile(file, *args, **kwargs)
@@ -400,15 +400,12 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         pickle_kwargs = {}
 
     # TODO: Use contextlib.ExitStack once we drop Python 2
-    if isinstance(file, basestring):
-        fid = open(file, "rb")
-        own_fid = True
-    elif is_pathlib_path(file):
-        fid = file.open("rb")
-        own_fid = True
-    else:
+    if hasattr(file, 'read'):
         fid = file
         own_fid = False
+    else:
+        fid = open(os_fspath(file), "rb")
+        own_fid = True
 
     try:
         # Code to distinguish from NumPy binary files and pickles.
@@ -503,18 +500,14 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     """
     own_fid = False
-    if isinstance(file, basestring):
+    if hasattr(file, 'read'):
+        fid = file
+    else:
+        file = os_fspath(file)
         if not file.endswith('.npy'):
             file = file + '.npy'
         fid = open(file, "wb")
         own_fid = True
-    elif is_pathlib_path(file):
-        if not file.name.endswith('.npy'):
-            file = file.parent / (file.name + '.npy')
-        fid = file.open("wb")
-        own_fid = True
-    else:
-        fid = file
 
     if sys.version_info[0] >= 3:
         pickle_kwargs = dict(fix_imports=fix_imports)
@@ -695,12 +688,10 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # component of the so-called standard library.
     import zipfile
 
-    if isinstance(file, basestring):
+    if not hasattr(file, 'read'):
+        file = os_fspath(file)
         if not file.endswith('.npz'):
             file = file + '.npz'
-    elif is_pathlib_path(file):
-        if not file.name.endswith('.npz'):
-            file = file.parent / (file.name + '.npz')
 
     namedict = kwds
     for i, val in enumerate(args):
@@ -948,8 +939,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     fown = False
     try:
-        if is_pathlib_path(fname):
-            fname = str(fname)
+        if isinstance(fname, os_PathLike):
+            fname = os_fspath(fname)
         if _is_string_like(fname):
             fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
             fencoding = getattr(fh, 'encoding', 'latin1')
@@ -1344,8 +1335,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 self.write = self.write_bytes
 
     own_fh = False
-    if is_pathlib_path(fname):
-        fname = str(fname)
+    if isinstance(fname, os_PathLike):
+        fname = os_fspath(fname)
     if _is_string_like(fname):
         # datasource doesn't support creating a new file ...
         open(fname, 'wt').close()
@@ -1728,8 +1719,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Initialize the filehandle, the LineSplitter and the NameValidator
     own_fhd = False
     try:
-        if is_pathlib_path(fname):
-            fname = str(fname)
+        if isinstance(fname, os_PathLike):
+            fname = os_fspath(fname)
         if isinstance(fname, basestring):
             fhd = iter(np.lib._datasource.open(fname, 'rt', encoding=encoding))
             own_fhd = True
