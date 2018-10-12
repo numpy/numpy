@@ -81,11 +81,7 @@ def fftshift(x, axes=None):
     return roll(x, shift, axes)
 
 
-def _ifftshift_dispatcher(x, axes=None):
-    return (x,)
-
-
-@array_function_dispatch(_ifftshift_dispatcher)
+@array_function_dispatch(_fftshift_dispatcher)
 def ifftshift(x, axes=None):
     """
     The inverse of `fftshift`. Although identical for even-length `x`, the
