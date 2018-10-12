@@ -738,7 +738,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     """
     Find the set difference of two arrays.
 
-    Return the sorted, unique values in `ar1` that are not in `ar2`.
+    Return the unique values in `ar1` that are not in `ar2`.
 
     Parameters
     ----------
@@ -753,7 +753,9 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     Returns
     -------
     setdiff1d : ndarray
-        Sorted 1D array of values in `ar1` that are not in `ar2`.
+        1D array of values in `ar1` that are not in `ar2`. The result
+        is sorted when `assume_unique=False`, but otherwise only sorted
+        if the input is sorted.
 
     See Also
     --------
