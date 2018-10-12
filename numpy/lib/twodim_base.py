@@ -34,11 +34,11 @@ def _min_int(low, high):
     return int64
 
 
-def _fliplr_dispatcher(m):
+def _flip_dispatcher(m):
     return (m,)
 
 
-@array_function_dispatch(_fliplr_dispatcher)
+@array_function_dispatch(_flip_dispatcher)
 def fliplr(m):
     """
     Flip array in the left/right direction.
@@ -89,11 +89,7 @@ def fliplr(m):
     return m[:, ::-1]
 
 
-def _flipud_dispatcher(m):
-    return (m,)
-
-
-@array_function_dispatch(_flipud_dispatcher)
+@array_function_dispatch(_flip_dispatcher)
 def flipud(m):
     """
     Flip array in the up/down direction.
@@ -281,11 +277,7 @@ def diag(v, k=0):
         raise ValueError("Input must be 1- or 2-d.")
 
 
-def _diagflat_dispatcher(v, k=None):
-    return (v,)
-
-
-@array_function_dispatch(_diagflat_dispatcher)
+@array_function_dispatch(_diag_dispatcher)
 def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
@@ -437,11 +429,7 @@ def tril(m, k=0):
     return where(mask, m, zeros(1, m.dtype))
 
 
-def _triu_dispatcher(m, k=None):
-    return (m,)
-
-
-@array_function_dispatch(_triu_dispatcher)
+@array_function_dispatch(_tril_dispatcher)
 def triu(m, k=0):
     """
     Upper triangle of an array.
@@ -969,11 +957,7 @@ def triu_indices(n, k=0, m=None):
     return nonzero(~tri(n, m, k=k-1, dtype=bool))
 
 
-def _triu_indices_form_dispatcher(arr, k=None):
-    return (arr,)
-
-
-@array_function_dispatch(_triu_indices_form_dispatcher)
+@array_function_dispatch(_tril_indices_form_dispatcher)
 def triu_indices_from(arr, k=0):
     """
     Return the indices for the upper-triangle of arr.
