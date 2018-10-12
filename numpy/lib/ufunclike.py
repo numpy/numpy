@@ -38,12 +38,28 @@ def _deprecate_out_named_y(f):
     return func
 
 
-def _fix_dispatcher(x, out=None, **kwargs):
+def _fix_out_named_y(f):
+    """
+    Allow the out argument to be passed as the name `y` (deprecated)
+
+    This decorator should only be used if _deprecate_out_named_y is used on
+    a corresponding dispatcher fucntion.
+    """
+    @functools.wraps(f)
+    def func(x, out=None, **kwargs):
+        if 'y' in kwargs:
+            # we already did error checking in _deprecate_out_named_y
+            out = kwargs.pop('y')
+        return f(x, out=out, **kwargs)
+
+
+@_deprecate_out_named_y
+def _dispatcher(x, out=None):
     return (x, out)
 
 
-@array_function_dispatch(_fix_dispatcher, verify=False)
-@_deprecate_out_named_y
+@array_function_dispatch(_dispatcher, verify=False)
+@_fix_out_named_y
 def fix(x, out=None):
     """
     Round to nearest integer towards zero.
@@ -89,12 +105,8 @@ def fix(x, out=None):
     return res
 
 
-def _isposinf_dispatcher(x, out=None, **kwargs):
-    return (x, out)
-
-
-@array_function_dispatch(_isposinf_dispatcher, verify=False)
-@_deprecate_out_named_y
+@array_function_dispatch(_dispatcher, verify=False)
+@_fix_out_named_y
 def isposinf(x, out=None):
     """
     Test element-wise for positive infinity, return result as bool array.
@@ -162,12 +174,8 @@ def isposinf(x, out=None):
         return nx.logical_and(is_inf, signbit, out)
 
 
-def _isneginf_dispatcher(x, out=None, **kwargs):
-    return (x, out)
-
-
-@array_function_dispatch(_isneginf_dispatcher, verify=False)
-@_deprecate_out_named_y
+@array_function_dispatch(_dispatcher, verify=False)
+@_fix_out_named_y
 def isneginf(x, out=None):
     """
     Test element-wise for negative infinity, return result as bool array.
