@@ -477,11 +477,11 @@ def tensorinv(a, ind=2):
 
 # Matrix inversion
 
-def _inv_dispatcher(a):
+def _unary_dispatcher(a):
     return (a,)
 
 
-@array_function_dispatch(_inv_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def inv(a):
     """
     Compute the (multiplicative) inverse of a matrix.
@@ -672,11 +672,8 @@ def matrix_power(a, n):
 
 # Cholesky decomposition
 
-def _cholesky_dispatcher(a):
-    return (a,)
 
-
-@array_function_dispatch(_cholesky_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def cholesky(a):
     """
     Cholesky decomposition.
@@ -982,11 +979,8 @@ def qr(a, mode='reduced'):
 
 # Eigenvalues
 
-def _eigvals_dispatcher(a):
-    return (a,)
 
-
-@array_function_dispatch(_eigvals_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def eigvals(a):
     """
     Compute the eigenvalues of a general matrix.
@@ -1182,11 +1176,8 @@ def _convertarray(a):
 
 # Eigenvectors
 
-def _eig_dispatcher(a):
-    return (a,)
 
-
-@array_function_dispatch(_eig_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def eig(a):
     """
     Compute the eigenvalues and right eigenvectors of a square array.
@@ -1328,11 +1319,7 @@ def eig(a):
     return w.astype(result_t, copy=False), wrap(vt)
 
 
-def _eigh_dispatcher(a, UPLO=None):
-    return (a,)
-
-
-@array_function_dispatch(_eigh_dispatcher)
+@array_function_dispatch(_eigvalsh_dispatcher)
 def eigh(a, UPLO='L'):
     """
     Return the eigenvalues and eigenvectors of a complex Hermitian
@@ -1960,11 +1947,8 @@ def pinv(a, rcond=1e-15):
 
 # Determinant
 
-def _slogdet_dispatcher(a):
-    return (a,)
 
-
-@array_function_dispatch(_slogdet_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def slogdet(a):
     """
     Compute the sign and (natural) logarithm of the determinant of an array.
@@ -2051,11 +2035,7 @@ def slogdet(a):
     return sign, logdet
 
 
-def _det_dispatcher(a):
-    return (a,)
-
-
-@array_function_dispatch(_det_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def det(a):
     """
     Compute the determinant of an array.
