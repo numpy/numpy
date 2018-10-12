@@ -52,6 +52,8 @@ def _fix_out_named_y(f):
             out = kwargs.pop('y')
         return f(x, out=out, **kwargs)
 
+    return func
+
 
 @_deprecate_out_named_y
 def _dispatcher(x, out=None):
