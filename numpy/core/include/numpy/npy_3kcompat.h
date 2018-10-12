@@ -69,6 +69,16 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
 #endif
 
+/* Py_SETREF was added in 3.5.2, and only if Py_LIMITED_API is absent */
+#if PY_VERSION_HEX < 0x03050200
+    #define Py_SETREF(op, op2)                      \
+        do {                                        \
+            PyObject *_py_tmp = (PyObject *)(op);   \
+            (op) = (op2);                           \
+            Py_DECREF(_py_tmp);                     \
+        } while (0)
+#endif
+
 /*
  * PyString -> PyBytes
  */
@@ -141,20 +151,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 static NPY_INLINE void
 PyUnicode_ConcatAndDel(PyObject **left, PyObject *right)
 {
-    PyObject *newobj;
-    newobj = PyUnicode_Concat(*left, right);
-    Py_DECREF(*left);
+    Py_SETREF(*left, PyUnicode_Concat(*left, right));
     Py_DECREF(right);
-    *left = newobj;
 }
 
 static NPY_INLINE void
 PyUnicode_Concat2(PyObject **left, PyObject *right)
 {
-    PyObject *newobj;
-    newobj = PyUnicode_Concat(*left, right);
-    Py_DECREF(*left);
-    *left = newobj;
+    Py_SETREF(*left, PyUnicode_Concat(*left, right));
 }
 
 /*
