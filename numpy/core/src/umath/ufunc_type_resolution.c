@@ -45,14 +45,20 @@ static int
 raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
     PyObject *errmsg;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-    errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                        "with types ", ufunc_name);
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-    PyUString_ConcatAndDel(&errmsg,
-            PyUString_FromString(" and "));
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
+    errmsg = PyUString_FromFormat(
+        "ufunc %s cannot use operands with types {!r} and {!r}", ufunc_name);
+    if (errmsg == NULL) {
+        return -1;
+    }
+    Py_SETREF(
+        errmsg, PyObject_CallMethodObjArgs(errmsg, "format",
+            (PyObject *)PyArray_DESCR(operands[0]),
+            (PyObject *)PyArray_DESCR(operands[1])
+        )
+    );
+    if (errmsg == NULL) {
+        return -1;
+    }
     PyErr_SetObject(PyExc_TypeError, errmsg);
     Py_DECREF(errmsg);
     return -1;
@@ -80,17 +86,23 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
         if (i < nin) {
             if (!PyArray_CanCastArrayTo(operands[i], dtypes[i], casting)) {
                 PyObject *errmsg;
-                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
-                                "input from ", ufunc_name);
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromString(" to "));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)dtypes[i]));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromFormat(" with casting rule %s",
-                                        npy_casting_to_string(casting)));
+                errmsg = PyUString_FromFormat(
+                    "Cannot cast ufunc %s input from {!r} to {!r} with casting rule %s",
+                    ufunc_name,
+                    npy_casting_to_string(casting)
+                );
+                if (errmsg == NULL) {
+                    return -1;
+                }
+                Py_SETREF(
+                    errmsg, PyObject_CallMethodObjArgs(errmsg, "format",
+                        (PyObject *)PyArray_DESCR(operands[i]),
+                        (PyObject *)dtypes[i]
+                    )
+                );
+                if (errmsg == NULL) {
+                    return -1;
+                }
                 PyErr_SetObject(PyExc_TypeError, errmsg);
                 Py_DECREF(errmsg);
                 return -1;
@@ -99,17 +111,22 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
             if (!PyArray_CanCastTypeTo(dtypes[i],
                                     PyArray_DESCR(operands[i]), casting)) {
                 PyObject *errmsg;
-                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
-                                "output from ", ufunc_name);
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)dtypes[i]));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromString(" to "));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromFormat(" with casting rule %s",
-                                        npy_casting_to_string(casting)));
+                errmsg = PyUString_FromFormat(
+                    "Cannot cast ufunc %s output from {!r} to {!r} with casting rule %s",
+                    npy_casting_to_string(casting)
+                );
+                if (errmsg == NULL) {
+                    return -1;
+                }
+                Py_SETREF(
+                    errmsg, PyObject_CallMethodObjArgs(errmsg, "format",
+                        (PyObject *)dtypes[i],
+                        (PyObject *)PyArray_DESCR(operands[i])
+                    )
+                );
+                if (errmsg == NULL) {
+                    return -1;
+                }
                 PyErr_SetObject(PyExc_TypeError, errmsg);
                 Py_DECREF(errmsg);
                 return -1;
@@ -1358,13 +1375,31 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    errmsg = PyUString_FromFormat("ufunc '%s' did not contain a loop "
-                    "with signature matching types ", ufunc_name);
+    errmsg = PyUString_FromFormat(
+        "ufunc '%s' did not contain a loop with signature matching types ",
+        ufunc_name
+    );
+    if (errmsg == NULL) {
+        return -1;
+    }
     for (i = 0; i < nargs; ++i) {
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)dtypes[i]));
+        PyObject *repr = PyObject_Repr((PyObject *)dtypes[i]);
+        if (repr == NULL) {
+            return -1;
+        }
+        PyUString_ConcatAndDel(&errmsg, repr);
+        if (errmsg == NULL) {
+            return -1;
+        }
         if (i < nargs - 1) {
-            PyUString_ConcatAndDel(&errmsg, PyUString_FromString(" "));
+            PyObject *space = PyUString_FromString(" ");
+            if (space == NULL) {
+                return -1;
+            }
+            PyUString_ConcatAndDel(&errmsg, space);
+            if (errmsg == NULL) {
+                return -1;
+            }
         }
     }
     PyErr_SetObject(PyExc_TypeError, errmsg);
