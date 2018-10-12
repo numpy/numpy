@@ -216,11 +216,7 @@ def zip_dtype(seqarrays, flatten=False):
     return np.dtype(newdtype)
 
 
-def _zip_descr_dispatcher(seqarrays, flatten=None):
-    return seqarrays
-
-
-@array_function_dispatch(_zip_descr_dispatcher)
+@array_function_dispatch(_zip_dtype_dispatcher)
 def zip_descr(seqarrays, flatten=False):
     """
     Combine the dtype description of a series of arrays.

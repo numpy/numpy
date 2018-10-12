@@ -717,11 +717,11 @@ def polyval(p, x):
     return y
 
 
-def _polyadd_dispatcher(a1, a2):
+def _binary_op_dispatcher(a1, a2):
     return (a1, a2)
 
 
-@array_function_dispatch(_polyadd_dispatcher)
+@array_function_dispatch(_binary_op_dispatcher)
 def polyadd(a1, a2):
     """
     Find the sum of two polynomials.
@@ -783,11 +783,7 @@ def polyadd(a1, a2):
     return val
 
 
-def _polysub_dispatcher(a1, a2):
-    return (a1, a2)
-
-
-@array_function_dispatch(_polysub_dispatcher)
+@array_function_dispatch(_binary_op_dispatcher)
 def polysub(a1, a2):
     """
     Difference (subtraction) of two polynomials.
@@ -835,11 +831,7 @@ def polysub(a1, a2):
     return val
 
 
-def _polymul_dispatcher(a1, a2):
-    return (a1, a2)
-
-
-@array_function_dispatch(_polymul_dispatcher)
+@array_function_dispatch(_binary_op_dispatcher)
 def polymul(a1, a2):
     """
     Find the product of two polynomials.

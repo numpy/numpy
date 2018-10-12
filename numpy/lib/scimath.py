@@ -178,11 +178,11 @@ def _fix_real_abs_gt_1(x):
     return x
 
 
-def _sqrt_dispatcher(x):
+def _unary_dispatcher(x):
     return (x,)
 
 
-@array_function_dispatch(_sqrt_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def sqrt(x):
     """
     Compute the square root of x.
@@ -226,11 +226,7 @@ def sqrt(x):
     return nx.sqrt(x)
 
 
-def _log_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_log_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def log(x):
     """
     Compute the natural logarithm of `x`.
@@ -278,11 +274,7 @@ def log(x):
     return nx.log(x)
 
 
-def _log10_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_log10_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def log10(x):
     """
     Compute the logarithm base 10 of `x`.
@@ -372,11 +364,7 @@ def logn(n, x):
     return nx.log(x)/nx.log(n)
 
 
-def _log2_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_log2_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def log2(x):
     """
     Compute the logarithm base 2 of `x`.
@@ -473,11 +461,7 @@ def power(x, p):
     return nx.power(x, p)
 
 
-def _arccos_dispatcher(x,):
-    return (x,)
-
-
-@array_function_dispatch(_arccos_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def arccos(x):
     """
     Compute the inverse cosine of x.
@@ -522,11 +506,7 @@ def arccos(x):
     return nx.arccos(x)
 
 
-def _arcsin_dispatcher(x,):
-    return (x,)
-
-
-@array_function_dispatch(_arcsin_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def arcsin(x):
     """
     Compute the inverse sine of x.
@@ -572,11 +552,7 @@ def arcsin(x):
     return nx.arcsin(x)
 
 
-def _arctanh_dispatcher(x,):
-    return (x,)
-
-
-@array_function_dispatch(_arctanh_dispatcher)
+@array_function_dispatch(_unary_dispatcher)
 def arctanh(x):
     """
     Compute the inverse hyperbolic tangent of `x`.
