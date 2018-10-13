@@ -310,11 +310,11 @@ def add(x1, x2):
     return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
 
 
-def _multiply_dispathcer(a, i):
+def _multiply_dispatcher(a, i):
     return (a,)
 
 
-@array_function_dispatch(_multiply_dispathcer)
+@array_function_dispatch(_multiply_dispatcher)
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
