@@ -11,6 +11,7 @@ except ImportError:
     import dummy_threading as threading
 from numpy.compat import integer_types
 from numpy.core import integer, empty, arange, asarray, roll
+from numpy.core.overrides import array_function_dispatch
 
 # Created by Pearu Peterson, September 2002
 
@@ -19,6 +20,11 @@ __all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq']
 integer_types = integer_types + (integer,)
 
 
+def _fftshift_dispatcher(x, axes=None):
+    return (x,)
+
+
+@array_function_dispatch(_fftshift_dispatcher)
 def fftshift(x, axes=None):
     """
     Shift the zero-frequency component to the center of the spectrum.
@@ -75,6 +81,7 @@ def fftshift(x, axes=None):
     return roll(x, shift, axes)
 
 
+@array_function_dispatch(_fftshift_dispatcher)
 def ifftshift(x, axes=None):
     """
     The inverse of `fftshift`. Although identical for even-length `x`, the
