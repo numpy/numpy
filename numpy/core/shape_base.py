@@ -499,7 +499,16 @@ def _block(arrays, max_depth, result_ndim, depth=0):
         return _atleast_nd(arrays, result_ndim)
 
 
-# TODO: support array_function_dispatch
+def _block_dispatcher(arrays):
+    if type(arrays) is list:
+        for subarrays in arrays:
+            for subarray in _block_dispatcher(subarrays):
+                yield subarray
+    else:
+        yield arrays
+
+
+@array_function_dispatch(_block_dispatcher)
 def block(arrays):
     """
     Assemble an nd-array from nested lists of blocks.
