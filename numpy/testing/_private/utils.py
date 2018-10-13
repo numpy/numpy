@@ -713,7 +713,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # such subclasses, but some used to work.
         x_id = func(x)
         y_id = func(y)
-        if npall(x_id == y_id) != True:
+        if (x_id == y_id).all() != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
