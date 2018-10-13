@@ -233,7 +233,7 @@ add_newdoc('numpy.core.umath', 'arccosh',
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
     .. [2] Wikipedia, "Inverse hyperbolic function",
-           http://en.wikipedia.org/wiki/Arccosh
+           https://en.wikipedia.org/wiki/Arccosh
 
     Examples
     --------
@@ -335,7 +335,7 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
     .. [2] Wikipedia, "Inverse hyperbolic function",
-           http://en.wikipedia.org/wiki/Arcsinh
+           https://en.wikipedia.org/wiki/Arcsinh
 
     Examples
     --------
@@ -535,7 +535,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
     .. [2] Wikipedia, "Inverse hyperbolic function",
-           http://en.wikipedia.org/wiki/Arctanh
+           https://en.wikipedia.org/wiki/Arctanh
 
     Examples
     --------
@@ -1136,7 +1136,7 @@ add_newdoc('numpy.core.umath', 'exp',
     References
     ----------
     .. [1] Wikipedia, "Exponential function",
-           http://en.wikipedia.org/wiki/Exponential_function
+           https://en.wikipedia.org/wiki/Exponential_function
     .. [2] M. Abramovitz and I. A. Stegun, "Handbook of Mathematical Functions
            with Formulas, Graphs, and Mathematical Tables," Dover, 1964, p. 69,
            http://www.math.sfu.ca/~cbm/aands/page_69.htm
@@ -1551,7 +1551,7 @@ add_newdoc('numpy.core.umath', 'invert',
     References
     ----------
     .. [1] Wikipedia, "Two's complement",
-        http://en.wikipedia.org/wiki/Two's_complement
+        https://en.wikipedia.org/wiki/Two's_complement
 
     Examples
     --------
@@ -1740,6 +1740,8 @@ add_newdoc('numpy.core.umath', 'isnat',
     """
     Test element-wise for NaT (not a time) and return result as a boolean array.
 
+    .. versionadded:: 1.13.0
+
     Parameters
     ----------
     x : array_like
@@ -1912,7 +1914,7 @@ add_newdoc('numpy.core.umath', 'log',
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Logarithm". http://en.wikipedia.org/wiki/Logarithm
+    .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
     --------
@@ -1961,7 +1963,7 @@ add_newdoc('numpy.core.umath', 'log10',
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Logarithm". http://en.wikipedia.org/wiki/Logarithm
+    .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
     --------
@@ -2147,7 +2149,7 @@ add_newdoc('numpy.core.umath', 'log1p',
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
            10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
-    .. [2] Wikipedia, "Logarithm". http://en.wikipedia.org/wiki/Logarithm
+    .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
     --------
@@ -2592,8 +2594,7 @@ add_newdoc('numpy.core.umath', 'multiply',
     Returns
     -------
     y : ndarray
-        The product of `x1` and `x2`, element-wise. Returns a scalar if
-        both `x1` and `x2` are scalars.
+        The product of `x1` and `x2`, element-wise.
         $OUT_SCALAR_2
 
     Notes
@@ -3578,7 +3579,7 @@ add_newdoc('numpy.core.umath', 'tanh',
            http://www.math.sfu.ca/~cbm/aands/
 
     .. [2] Wikipedia, "Hyperbolic function",
-           http://en.wikipedia.org/wiki/Hyperbolic_function
+           https://en.wikipedia.org/wiki/Hyperbolic_function
 
     Examples
     --------

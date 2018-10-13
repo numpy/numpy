@@ -6,21 +6,6 @@
 #include "numpy/npy_cpu.h"
 #include "numpy/npy_os.h"
 
-/*
- * largest alignment the copy loops might require
- * required as string, void and complex types might get copied using larger
- * instructions than required to operate on them. E.g. complex float is copied
- * in 8 byte moves but arithmetic on them only loads in 4 byte moves.
- * the sparc platform may need that alignment for long doubles.
- * amd64 is not harmed much by the bloat as the system provides 16 byte
- * alignment by default.
- */
-#if (defined NPY_CPU_X86 || defined _WIN32)
-#define NPY_MAX_COPY_ALIGNMENT 8
-#else
-#define NPY_MAX_COPY_ALIGNMENT 16
-#endif
-
 /* blacklist */
 
 /* Disable broken Sun Workshop Pro math functions */
@@ -45,7 +30,7 @@
 
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER == 1900)
+#if defined(_MSC_VER) && (_MSC_VER >= 1900)
 
 #undef HAVE_CASIN
 #undef HAVE_CASINF
@@ -59,6 +44,18 @@
 #undef HAVE_CATANH
 #undef HAVE_CATANHF
 #undef HAVE_CATANHL
+#undef HAVE_CSQRT
+#undef HAVE_CSQRTF
+#undef HAVE_CSQRTL
+#undef HAVE_CLOG
+#undef HAVE_CLOGF
+#undef HAVE_CLOGL
+#undef HAVE_CACOS
+#undef HAVE_CACOSF
+#undef HAVE_CACOSL
+#undef HAVE_CACOSH
+#undef HAVE_CACOSHF
+#undef HAVE_CACOSHL
 
 #endif
 

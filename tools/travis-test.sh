@@ -28,12 +28,16 @@ fi
 werrors="-Werror=declaration-after-statement -Werror=vla "
 werrors+="-Werror=nonnull -Werror=pointer-arith"
 
+# build with c99 by default
+
 setup_base()
 {
   # use default python flags but remoge sign-compare
   sysflags="$($PYTHON -c "from distutils import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
+  # use c99
+  export CFLAGS=$CFLAGS" -std=c99"
   # We used to use 'setup.py install' here, but that has the terrible
   # behaviour that if a copy of the package is already installed in the
   # install location, then the new copy just gets dropped on top of it.
@@ -46,6 +50,8 @@ setup_base()
   if [ -z "$USE_DEBUG" ]; then
     $PIP install -v . 2>&1 | tee log
   else
+    # Python3.5-dbg on travis seems to need this
+    export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
     $PYTHON setup.py build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
@@ -105,6 +111,11 @@ run_test()
     export PYTHONPATH=$PWD
   fi
 
+  if [ -n "$RUN_COVERAGE" ]; then
+    pip install pytest-cov
+    COVERAGE_FLAG=--coverage
+  fi
+
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
   mkdir -p empty
@@ -113,10 +124,33 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full
+    export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
+    $PYTHON ../tools/test-installed-numpy.py -v --mode=full $COVERAGE_FLAG
   else
     $PYTHON ../tools/test-installed-numpy.py -v
   fi
+
+  if [ -n "$RUN_COVERAGE" ]; then
+    # move back up to the source dir because we want to execute
+    # gcov on the source files after the tests have gone through
+    # the code paths
+    cd ..
+
+    # execute gcov on source files
+    find . -name '*.gcno' -type f -exec gcov -pb {} +
+
+    # move the C line coverage report files to the same path
+    # as the Python report data
+    mv *.gcov empty
+
+    # move back to the previous path for good measure
+    # as the Python coverage data is there
+    cd empty
+
+    # Upload coverage files to codecov
+    bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy
+  fi
+
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
     $PYTHON `which asv` machine --machine travis
@@ -141,6 +175,16 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   $PIP install -U virtualenv
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  # use c99
+  export CFLAGS=$CFLAGS" -std=c99"
+  # adjust gcc flags if C coverage requested
+  if [ -n "$RUN_COVERAGE" ]; then
+     export NPY_DISTUTILS_APPEND_FLAGS=1
+     export CC='gcc --coverage'
+     export F77='gfortran --coverage'
+     export F90='gfortran --coverage'
+     export LDFLAGS='--coverage'
+  fi
   $PYTHON setup.py bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
@@ -149,6 +193,11 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   pushd dist
   pip install --pre --no-index --upgrade --find-links=. numpy
   pip install nose pytest
+
+  if [ -n "$INSTALL_PICKLE5" ]; then
+    pip install pickle5
+  fi
+
   popd
   run_test
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
@@ -158,6 +207,8 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  # use c99
+  export CFLAGS=$CFLAGS" -std=c99"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
@@ -166,6 +217,10 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   pushd dist
   pip install numpy*
   pip install nose pytest
+  if [ -n "$INSTALL_PICKLE5" ]; then
+    pip install pickle5
+  fi
+
   popd
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
@@ -181,4 +236,3 @@ else
   setup_base
   run_test
 fi
-

@@ -1,8 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
+import platform
+import pytest
+
 from . import util
 from numpy.testing import assert_equal
 
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason="Prone to error when run with numpy/f2py/tests on mac os, "
+           "but not when run in isolation")
 class TestMultiline(util.F2PyTest):
     suffix = ".pyf"
     module_name = "multiline"
@@ -26,6 +33,11 @@ end python module {module}
     def test_multiline(self):
         assert_equal(self.module.foo(), 42)
 
+
+@pytest.mark.skipif(
+    platform.system() == 'Darwin',
+    reason="Prone to error when run with numpy/f2py/tests on mac os, "
+           "but not when run in isolation")
 class TestCallstatement(util.F2PyTest):
     suffix = ".pyf"
     module_name = "callstatement"

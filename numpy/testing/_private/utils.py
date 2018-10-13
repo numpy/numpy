@@ -69,7 +69,7 @@ def import_nose():
 
     if not nose_is_good:
         msg = ('Need nose >= %d.%d.%d for tests - see '
-               'http://nose.readthedocs.io' %
+               'https://nose.readthedocs.io' %
                minimum_nose_version)
         raise ImportError(msg)
 
@@ -177,7 +177,7 @@ if os.name == 'nt':
         # thread's CPU usage is either 0 or 100).  To read counters like this,
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
-        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp (dead link)
         # My older explanation for this was that the "AddCounter" process forced
         # the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -687,6 +687,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, isnan, inf, bool_
+    from numpy.core.fromnumeric import all as npall
+
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
@@ -697,14 +699,21 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         return x.dtype.char in "Mm"
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
-        """Handling nan/inf: combine results of running func on x and y,
-        checking that they are True at the same locations."""
-        # Both the != True comparison here and the cast to bool_ at
-        # the end are done to deal with `masked`, which cannot be
-        # compared usefully, and for which .all() yields masked.
+        """Handling nan/inf.
+
+        Combine results of running func on x and y, checking that they are True
+        at the same locations.
+
+        """
+        # Both the != True comparison here and the cast to bool_ at the end are
+        # done to deal with `masked`, which cannot be compared usefully, and
+        # for which np.all yields masked.  The use of the function np.all is
+        # for back compatibility with ndarray subclasses that changed the
+        # return values of the all method.  We are not committed to supporting
+        # such subclasses, but some used to work.
         x_id = func(x)
         y_id = func(y)
-        if (x_id == y_id).all() != True:
+        if npall(x_id == y_id) != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
@@ -1075,7 +1084,7 @@ def assert_string_equal(actual, desired):
         raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
         raise AssertionError(repr(type(desired)))
-    if re.match(r'\A'+desired+r'\Z', actual, re.M):
+    if desired == actual:
         return
 
     diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
@@ -1099,7 +1108,7 @@ def assert_string_equal(actual, desired):
                     l.append(d3)
                 else:
                     diff.insert(0, d3)
-            if re.match(r'\A'+d2[2:]+r'\Z', d1[2:]):
+            if d2[2:] == d1[2:]:
                 continue
             diff_list.extend(l)
             continue
@@ -1609,7 +1618,7 @@ def _integer_repr(x, vdt, comp):
     # Reinterpret binary representation of the float as sign-magnitude:
     # take into account two-complement representation
     # See also
-    # http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+    # https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
     rx = x.view(vdt)
     if not (rx.size == 1):
         rx[rx < 0] = comp - rx[rx < 0]
@@ -1917,7 +1926,7 @@ class suppress_warnings(object):
     ``warnings.catch_warnings``.
 
     However, it also provides a filter mechanism to work around
-    http://bugs.python.org/issue4180.
+    https://bugs.python.org/issue4180.
 
     This bug causes Python before 3.4 to not reliably show warnings again
     after they have been ignored once (even within catch_warnings). It

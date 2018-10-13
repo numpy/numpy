@@ -26,7 +26,7 @@ from .financial import *
 from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
-from numpy.core.multiarray import tracemalloc_domain
+from numpy.core._multiarray_umath import tracemalloc_domain
 
 __all__ = ['emath', 'math', 'tracemalloc_domain']
 __all__ += type_check.__all__
@@ -46,6 +46,6 @@ __all__ += financial.__all__
 __all__ += nanfunctions.__all__
 __all__ += histograms.__all__
 
-from numpy.testing._private.pytesttester import PytestTester
+from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester

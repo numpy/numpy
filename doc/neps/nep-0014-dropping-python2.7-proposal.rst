@@ -1,6 +1,6 @@
-====================================
-Plan for dropping Python 2.7 support
-====================================
+=============================================
+NEP 14 — Plan for dropping Python 2.7 support
+=============================================
 
 :Status: Accepted
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2017-November/077419.html
@@ -50,6 +50,6 @@ to Python3 only, see the python3-statement_.
 For more information on porting your code to run on Python 3, see the
 python3-howto_.
 
-.. _python3-statement: http://www.python3statement.org/
+.. _python3-statement: https://python3statement.org/
 
 .. _python3-howto: https://docs.python.org/3/howto/pyporting.html

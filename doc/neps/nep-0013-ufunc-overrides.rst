@@ -1,6 +1,6 @@
-=================================
-A Mechanism for Overriding Ufuncs
-=================================
+==========================================
+NEP 13 — A Mechanism for Overriding Ufuncs
+==========================================
 
 .. currentmodule:: numpy
 
@@ -53,7 +53,7 @@ changes in 3rd party code.
 .. [1] http://docs.python.org/doc/numpy/user/basics.subclassing.html
 .. [2] https://github.com/scipy/scipy/issues/2123
 .. [3] https://github.com/scipy/scipy/issues/1569
-.. [4] http://technicaldiscovery.blogspot.com/2013/07/thoughts-after-scipy-2013-and-specific.html
+.. [4] https://technicaldiscovery.blogspot.com/2013/07/thoughts-after-scipy-2013-and-specific.html
 
 
 Motivation
@@ -134,7 +134,7 @@ which have multiplication semantics incompatible with numpy arrays.
 However, the aim is to enable writing other custom array types that have
 strictly ndarray compatible semantics.
 
-.. [5] http://mail.python.org/pipermail/numpy-discussion/2011-June/056945.html
+.. [5] https://mail.python.org/pipermail/numpy-discussion/2011-June/056945.html
 
 .. [6] https://github.com/numpy/numpy/issues/5844
 
@@ -261,16 +261,7 @@ consider carefully if any surprising behavior results.
 
    Type casting hierarchy.
 
-   .. graphviz::
-
-      digraph array_ufuncs {
-         rankdir=BT;
-         A -> C [label="C"];
-         B -> C [label="C"];
-         D -> B [label="B"];
-         ndarray -> C [label="A"];
-         ndarray -> B [label="B"];
-      }
+   .. image:: _static/nep0013_image1.png
 
    The ``__array_ufunc__`` of type A can handle ndarrays returning C,
    B can handle ndarray and D returning B, and C can handle A and B returning C,
@@ -286,14 +277,7 @@ consider carefully if any surprising behavior results.
 
    One-cycle in the ``__array_ufunc__`` graph.
 
-   .. graphviz::
-
-      digraph array_ufuncs {
-         rankdir=BT;
-         A -> B [label="B"];
-         B -> A [label="A"];
-      }
-
+   .. image:: _static/nep0013_image2.png
 
    In this case, the ``__array_ufunc__`` relations have a cycle of length 1,
    and a type casting hierarchy does not exist. Binary operations are not
@@ -303,15 +287,7 @@ consider carefully if any surprising behavior results.
 
    Longer cycle in the ``__array_ufunc__`` graph.
 
-   .. graphviz::
-
-      digraph array_ufuncs {
-         rankdir=BT;
-         A -> B [label="B"];
-         B -> C [label="C"];
-         C -> A [label="A"];
-      }
-
+   .. image:: _static/nep0013_image3.png
 
    In this case, the ``__array_ufunc__`` relations have a longer cycle, and a
    type casting hierarchy does not exist. Binary operations are still
@@ -635,7 +611,7 @@ simplify the dispatch logic for binary operations with NumPy arrays
 as much as possible, by making it possible to use Python's dispatch rules
 or NumPy's dispatch rules, but not some mixture of both at the same time.
 
-.. [9] http://bugs.python.org/issue30140
+.. [9] https://bugs.python.org/issue30140
 
 .. _neps.ufunc-overrides.list-of-operators:
 

@@ -7,7 +7,9 @@
 /*
  * NOTE: This API should remain private for the time being, to allow
  *       for further refinement.  I think the 'aligned' mechanism
- *       needs changing, for example.
+ *       needs changing, for example. 
+ *
+ *       Note: Updated in 2018 to distinguish "true" from "uint" alignment.
  */
 
 /*
@@ -69,8 +71,9 @@ typedef void (PyArray_StridedBinaryOp)(char *dst, npy_intp dst_stride,
  * strided memory.  Returns NULL if there is a problem with the inputs.
  *
  * aligned:
- *      Should be 1 if the src and dst pointers are always aligned,
- *      0 otherwise.
+ *      Should be 1 if the src and dst pointers always point to
+ *      locations at which a uint of equal size to dtype->elsize
+ *      would be aligned, 0 otherwise.
  * src_stride:
  *      Should be the src stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
@@ -165,8 +168,9 @@ PyArray_GetDTypeCopySwapFn(int aligned,
  * function when the transfer function is no longer required.
  *
  * aligned:
- *      Should be 1 if the src and dst pointers are always aligned,
- *      0 otherwise.
+ *      Should be 1 if the src and dst pointers always point to
+ *      locations at which a uint of equal size to dtype->elsize
+ *      would be aligned, 0 otherwise.
  * src_stride:
  *      Should be the src stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
@@ -689,21 +693,16 @@ npy_bswap8_unaligned(char * x)
 #define PyArray_TRIVIALLY_ITERABLE_OP_NOREAD 0
 #define PyArray_TRIVIALLY_ITERABLE_OP_READ 1
 
-#define PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) (            \
-                        PyArray_NDIM(arr1) == PyArray_NDIM(arr2) && \
-                        PyArray_CompareLists(PyArray_DIMS(arr1), \
-                                             PyArray_DIMS(arr2), \
-                                             PyArray_NDIM(arr1)) && \
-                        (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
-                                      NPY_ARRAY_F_CONTIGUOUS)) & \
-                                (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
-                                              NPY_ARRAY_F_CONTIGUOUS)) \
-                        )
+#define PyArray_TRIVIALLY_ITERABLE(arr) ( \
+                    PyArray_NDIM(arr) <= 1 || \
+                    PyArray_CHKFLAGS(arr, NPY_ARRAY_C_CONTIGUOUS) || \
+                    PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) \
+                    )
 
 #define PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size, arr) ( \
-                        size == 1 ? 0 : ((PyArray_NDIM(arr) == 1) ? \
-                                          PyArray_STRIDE(arr, 0) : \
-                                          PyArray_ITEMSIZE(arr)))
+        assert(PyArray_TRIVIALLY_ITERABLE(arr)), \
+        size == 1 ? 0 : ((PyArray_NDIM(arr) == 1) ? \
+                             PyArray_STRIDE(arr, 0) : PyArray_ITEMSIZE(arr)))
 
 static NPY_INLINE int
 PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr2,
@@ -757,15 +756,22 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
     return (!arr1_read || arr1_ahead) && (!arr2_read || arr2_ahead);
 }
 
+#define PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) (            \
+                        PyArray_NDIM(arr1) == PyArray_NDIM(arr2) && \
+                        PyArray_CompareLists(PyArray_DIMS(arr1), \
+                                             PyArray_DIMS(arr2), \
+                                             PyArray_NDIM(arr1)) && \
+                        (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
+                                      NPY_ARRAY_F_CONTIGUOUS)) & \
+                                (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
+                                              NPY_ARRAY_F_CONTIGUOUS)) \
+                        )
+
 #define PyArray_EQUIVALENTLY_ITERABLE(arr1, arr2, arr1_read, arr2_read) ( \
                         PyArray_EQUIVALENTLY_ITERABLE_BASE(arr1, arr2) && \
                         PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK( \
                             arr1, arr2, arr1_read, arr2_read))
-#define PyArray_TRIVIALLY_ITERABLE(arr) ( \
-                    PyArray_NDIM(arr) <= 1 || \
-                    PyArray_CHKFLAGS(arr, NPY_ARRAY_C_CONTIGUOUS) || \
-                    PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) \
-                    )
+
 #define PyArray_PREPARE_TRIVIAL_ITERATION(arr, count, data, stride) \
                     count = PyArray_SIZE(arr); \
                     data = PyArray_BYTES(arr); \
@@ -773,7 +779,6 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                                     ((PyArray_NDIM(arr) == 1) ? \
                                             PyArray_STRIDE(arr, 0) : \
                                             PyArray_ITEMSIZE(arr)));
-
 
 #define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2, arr1_read, arr2_read) (   \
                     PyArray_TRIVIALLY_ITERABLE(arr1) && \

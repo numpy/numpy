@@ -126,7 +126,6 @@ import os
 import re
 import copy
 import warnings
-import atexit
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
@@ -147,7 +146,8 @@ from distutils import log
 from distutils.util import get_platform
 
 from numpy.distutils.exec_command import (
-    find_executable, exec_command, get_pythonexe)
+    find_executable, filepath_from_subprocess_output,
+    get_pythonexe)
 from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
@@ -487,7 +487,7 @@ class FFTWNotFoundError(NotFoundError):
 
 class DJBFFTNotFoundError(NotFoundError):
     """
-    DJBFFT (http://cr.yp.to/djbfft.html) libraries not found.
+    DJBFFT (https://cr.yp.to/djbfft.html) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [djbfft]) or by setting
     the DJBFFT environment variable."""
@@ -495,7 +495,7 @@ class DJBFFTNotFoundError(NotFoundError):
 
 class NumericNotFoundError(NotFoundError):
     """
-    Numeric (http://www.numpy.org/) module not found.
+    Numeric (https://www.numpy.org/) module not found.
     Get it from above location, install it, and retry setup.py."""
 
 
@@ -505,7 +505,7 @@ class X11NotFoundError(NotFoundError):
 
 class UmfpackNotFoundError(NotFoundError):
     """
-    UMFPACK sparse solver (http://www.cise.ufl.edu/research/sparse/umfpack/)
+    UMFPACK sparse solver (https://www.cise.ufl.edu/research/sparse/umfpack/)
     not found. Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [umfpack]) or by setting
     the UMFPACK environment variable."""
@@ -2243,8 +2243,12 @@ class _pkg_config_info(system_info):
 
     def get_config_output(self, config_exe, option):
         cmd = config_exe + ' ' + self.append_config_exe + ' ' + option
-        s, o = exec_command(cmd, use_tee=0)
-        if not s:
+        try:
+            o = subprocess.check_output(cmd)
+        except (OSError, subprocess.CalledProcessError):
+            pass
+        else:
+            o = filepath_from_subprocess_output(o)
             return o
 
     def calc_info(self):

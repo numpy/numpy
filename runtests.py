@@ -34,7 +34,7 @@ from __future__ import division, print_function
 
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
-SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
+SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
@@ -328,19 +328,22 @@ def build_project(args):
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
     cvars = distutils.sysconfig.get_config_vars()
-    if 'gcc' in cvars.get('CC', ''):
-        # add flags used as werrors
-        warnings_as_errors = ' '.join([
-            # from tools/travis-test.sh
-            '-Werror=declaration-after-statement',
-            '-Werror=vla',
-            '-Werror=nonnull',
-            '-Werror=pointer-arith',
-            '-Wlogical-op',
-            # from sysconfig
-            '-Werror=unused-function',
-        ])
-        env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
+    compiler = env.get('CC') or cvars.get('CC', '')
+    if 'gcc' in compiler:
+        # Check that this isn't clang masquerading as gcc.
+        if sys.platform != 'darwin' or 'gnu-gcc' in compiler:
+            # add flags used as werrors
+            warnings_as_errors = ' '.join([
+                # from tools/travis-test.sh
+                '-Werror=declaration-after-statement',
+                '-Werror=vla',
+                '-Werror=nonnull',
+                '-Werror=pointer-arith',
+                '-Wlogical-op',
+                # from sysconfig
+                '-Werror=unused-function',
+            ])
+            env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'
@@ -384,23 +387,27 @@ def build_project(args):
         with open(log_filename, 'w') as log:
             p = subprocess.Popen(cmd, env=env, stdout=log, stderr=log,
                                  cwd=ROOT_DIR)
+        try:
+            # Wait for it to finish, and print something to indicate the
+            # process is alive, but only if the log file has grown (to
+            # allow continuous integration environments kill a hanging
+            # process accurately if it produces no output)
+            last_blip = time.time()
+            last_log_size = os.stat(log_filename).st_size
+            while p.poll() is None:
+                time.sleep(0.5)
+                if time.time() - last_blip > 60:
+                    log_size = os.stat(log_filename).st_size
+                    if log_size > last_log_size:
+                        print("    ... build in progress")
+                        last_blip = time.time()
+                        last_log_size = log_size
 
-        # Wait for it to finish, and print something to indicate the
-        # process is alive, but only if the log file has grown (to
-        # allow continuous integration environments kill a hanging
-        # process accurately if it produces no output)
-        last_blip = time.time()
-        last_log_size = os.stat(log_filename).st_size
-        while p.poll() is None:
-            time.sleep(0.5)
-            if time.time() - last_blip > 60:
-                log_size = os.stat(log_filename).st_size
-                if log_size > last_log_size:
-                    print("    ... build in progress")
-                    last_blip = time.time()
-                    last_log_size = log_size
-
-        ret = p.wait()
+            ret = p.wait()
+        except:
+            p.kill()
+            p.wait()
+            raise
 
     if ret == 0:
         print("Build OK")

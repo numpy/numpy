@@ -3,7 +3,6 @@
 Setting up and using your development environment
 =================================================
 
-
 Recommended development setup
 -----------------------------
 
@@ -22,7 +21,7 @@ do one of::
 
     $ python runtests.py -v
     $ python runtests.py -v -s random
-    $ python runtests.py -v -t numpy/core/tests/test_iter.py:test_iter_c_order
+    $ python runtests.py -v -t numpy/core/tests/test_nditer.py::test_iter_c_order
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
@@ -35,9 +34,14 @@ any) found on current PYTHONPATH.
 When specifying a target using ``-s``, ``-t``, or ``--python``, additional
 arguments may be forwarded to the target embedded by ``runtests.py`` by passing
 the extra arguments after a bare ``--``. For example, to run a test method with
-the ``--pdb`` flag forwarded to nose, run the following::
+the ``--pdb`` flag forwarded to the target, run the following::
 
     $ python runtests.py -t numpy/tests/test_scripts.py:test_f2py -- --pdb
+
+When using pytest as a target (the default), you can
+`match test names using python operators`_ by passing the ``-k`` argument to pytest::
+
+    $ python runtests.py -v -t numpy/core/tests/test_multiarray.py -- -k "MatMul and not vector"
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
@@ -55,7 +59,7 @@ For development, you can set up an in-place build so that changes made to
 This allows you to import the in-place built NumPy *from the repo base
 directory only*.  If you want the in-place build to be visible outside that
 base dir, you need to point your ``PYTHONPATH`` environment variable to this
-directory.  Some IDEs (Spyder for example) have utilities to manage
+directory.  Some IDEs (`Spyder`_ for example) have utilities to manage
 ``PYTHONPATH``.  On Linux and OSX, you can run the command::
 
     $ export PYTHONPATH=$PWD
@@ -73,6 +77,8 @@ is with ``python setup.py develop``.  Instead of adjusting ``PYTHONPATH``, this
 installs a ``.egg-link`` file into your site-packages as well as adjusts the
 ``easy-install.pth`` there, so its a more permanent (and magical) operation.
 
+
+.. _Spyder: https://www.spyder-ide.org/
 
 Other build options
 -------------------
@@ -123,9 +129,8 @@ Or a similar way from the command line::
 
     $ python -c "import numpy as np; np.test()"
 
-Tests can also be run with ``nosetests numpy``, however then the NumPy-specific
-``nose`` plugin is not found which causes tests marked as ``KnownFailure`` to
-be reported as errors.
+Tests can also be run with ``pytest numpy``, however then the NumPy-specific
+plugin is not found which causes strange side effects
 
 Running individual test files can be useful; it's much faster than running the
 whole test suite or that of a whole module (example: ``np.random.test()``).
@@ -141,10 +146,9 @@ run the test suite with Python 3.4, use::
 
     $ tox -e py34
 
-For more extensive info on running and writing tests, see
-https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt .
+For more extensive information, see :ref:`testing-guidelines`
 
-*Note: do not run the tests from the root directory of your numpy git repo,
+*Note: do not run the tests from the root directory of your numpy git repo without ``runtests.py``,
 that will result in strange test errors.*
 
 
@@ -202,26 +206,23 @@ typically packaged as ``python-dbg``) is highly recommended.
 
 
 .. _DebuggingWithGdb: https://wiki.python.org/moin/DebuggingWithGdb
-
 .. _tox: https://tox.readthedocs.io/
-
 .. _virtualenv: http://www.virtualenv.org/
-
 .. _virtualenvwrapper: http://www.doughellmann.com/projects/virtualenvwrapper/
-
 .. _Waf: https://code.google.com/p/waf/
+.. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 
 Understanding the code & getting started
 ----------------------------------------
 
 The best strategy to better understand the code base is to pick something you
-want to change and start reading the code to figure out how it works. When in 
+want to change and start reading the code to figure out how it works. When in
 doubt, you can ask questions on the mailing list. It is perfectly okay if your
-pull requests aren't perfect, the community is always happy to help. As a 
-volunteer project, things do sometimes get dropped and it's totally fine to 
+pull requests aren't perfect, the community is always happy to help. As a
+volunteer project, things do sometimes get dropped and it's totally fine to
 ping us if something has sat without a response for about two to four weeks.
 
-So go ahead and pick something that annoys or confuses you about numpy, 
-experiment with the code, hang around for discussions or go through the 
-reference documents to try to fix it. Things will fall in place and soon 
+So go ahead and pick something that annoys or confuses you about numpy,
+experiment with the code, hang around for discussions or go through the
+reference documents to try to fix it. Things will fall in place and soon
 you'll have a pretty good understanding of the project as a whole. Good Luck!

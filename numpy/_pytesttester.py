@@ -5,7 +5,7 @@ This module implements the ``test()`` function for NumPy modules. The usual
 boiler plate for doing that is to put the following in the module
 ``__init__.py`` file::
 
-    from numpy.testing import PytestTester
+    from numpy._pytesttester import PytestTester
     test = PytestTester(__name__).test
     del PytestTester
 
@@ -23,6 +23,9 @@ whether or not that file is found as follows:
 In practice, tests run from the numpy repo are run in develop mode. That
 includes the standard ``python runtests.py`` invocation.
 
+This module is imported by every numpy subpackage, so lies at the top level to
+simplify circular import issues. For the same reason, it contains no numpy
+imports at module scope, instead importing numpy within function calls.
 """
 from __future__ import division, absolute_import, print_function
 
@@ -156,6 +159,24 @@ class PytestTester(object):
             "-W ignore:numpy.ufunc size changed",
             "-W ignore::UserWarning:cpuinfo",
             ]
+
+        # When testing matrices, ignore their PendingDeprecationWarnings
+        pytest_args += [
+            "-W ignore:the matrix subclass is not",
+            ]
+
+        # Ignore python2.7 -3 warnings
+        pytest_args += [
+            r"-W ignore:sys\.exc_clear\(\) not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:in 3\.x, __setslice__:DeprecationWarning",
+            r"-W ignore:in 3\.x, __getslice__:DeprecationWarning",
+            r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:CObject type is not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:comparing unequal types not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:the commands module has been removed in Python 3\.0:DeprecationWarning",
+            r"-W ignore:The 'new' module has been removed in Python 3\.0:DeprecationWarning",
+            ]
+
 
         if doctests:
             raise ValueError("Doctests not supported")

@@ -3,6 +3,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
@@ -109,6 +111,15 @@ class TestArithmetic(object):
                 tgt = cheb.chebadd(ci, cj)
                 quo, rem = cheb.chebdiv(tgt, ci)
                 res = cheb.chebadd(cheb.chebmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_chebpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(cheb.chebmul, [c]*j, np.array([1]))
+                res = cheb.chebpow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 

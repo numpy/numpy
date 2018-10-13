@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import io
 import sys
 import os
 import re
@@ -13,6 +12,7 @@ import numpy as np
 from . import format
 from ._datasource import DataSource
 from numpy.core.multiarray import packbits, unpackbits
+from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -23,12 +23,11 @@ from numpy.compat import (
     asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
     is_pathlib_path
     )
+from numpy.core.numeric import pickle
 
 if sys.version_info[0] >= 3:
-    import pickle
     from collections.abc import Mapping
 else:
-    import cPickle as pickle
     from future_builtins import map
     from collections import Mapping
 
@@ -379,16 +378,6 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     memmap([4, 5, 6])
 
     """
-    own_fid = False
-    if isinstance(file, basestring):
-        fid = open(file, "rb")
-        own_fid = True
-    elif is_pathlib_path(file):
-        fid = file.open("rb")
-        own_fid = True
-    else:
-        fid = file
-
     if encoding not in ('ASCII', 'latin1', 'bytes'):
         # The 'encoding' value for pickle also affects what encoding
         # the serialized binary data of NumPy arrays is loaded
@@ -409,21 +398,33 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         # Nothing to do on Python 2
         pickle_kwargs = {}
 
+    # TODO: Use contextlib.ExitStack once we drop Python 2
+    if isinstance(file, basestring):
+        fid = open(file, "rb")
+        own_fid = True
+    elif is_pathlib_path(file):
+        fid = file.open("rb")
+        own_fid = True
+    else:
+        fid = file
+        own_fid = False
+
     try:
         # Code to distinguish from NumPy binary files and pickles.
         _ZIP_PREFIX = b'PK\x03\x04'
+        _ZIP_SUFFIX = b'PK\x05\x06' # empty zip files start with this
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
-        if magic.startswith(_ZIP_PREFIX):
+        if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
             # zip-file (assume .npz)
             # Transfer file ownership to NpzFile
-            tmp = own_fid
+            ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
+                          pickle_kwargs=pickle_kwargs)
             own_fid = False
-            return NpzFile(fid, own_fid=tmp, allow_pickle=allow_pickle,
-                           pickle_kwargs=pickle_kwargs)
+            return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
             if mmap_mode:
@@ -772,7 +773,7 @@ _loadtxt_chunksize = 50000
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes'):
+            ndmin=0, encoding='bytes', max_rows=None):
     """
     Load data from a text file.
 
@@ -834,6 +835,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+    max_rows : int, optional
+        Read `max_rows` lines of content after `skiprows` lines. The default
+        is to read all the lines.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------
@@ -943,7 +949,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         fencoding = locale.getpreferredencoding()
 
     # not to be confused with the flatten_dtype we import...
-    def flatten_dtype_internal(dt):
+    @recursive
+    def flatten_dtype_internal(self, dt):
         """Unpack a structured data-type, and produce re-packing info."""
         if dt.names is None:
             # If the dtype is flattened, return.
@@ -963,7 +970,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             packing = []
             for field in dt.names:
                 tp, bytes = dt.fields[field]
-                flat_dt, flat_packing = flatten_dtype_internal(tp)
+                flat_dt, flat_packing = self(tp)
                 types.extend(flat_dt)
                 # Avoid extra nesting for subarrays
                 if tp.ndim > 0:
@@ -972,7 +979,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     packing.append((len(flat_dt), flat_packing))
             return (types, packing)
 
-    def pack_items(items, packing):
+    @recursive
+    def pack_items(self, items, packing):
         """Pack items into nested lists based on re-packing info."""
         if packing is None:
             return items[0]
@@ -984,7 +992,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             start = 0
             ret = []
             for length, subpacking in packing:
-                ret.append(pack_items(items[start:start+length], subpacking))
+                ret.append(self(items[start:start+length], subpacking))
                 start += length
             return tuple(ret)
 
@@ -1013,7 +1021,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         """
         X = []
-        for i, line in enumerate(itertools.chain([first_line], fh)):
+        line_iter = itertools.chain([first_line], fh)
+        line_iter = itertools.islice(line_iter, max_rows)
+        for i, line in enumerate(line_iter):
             vals = split_line(line)
             if len(vals) == 0:
                 continue
@@ -1110,11 +1120,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     finally:
         if fown:
             fh.close()
-        # recursive closures have a cyclic reference to themselves, which
-        # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
-        flatten_dtype_internal = None
-        pack_items = None
 
     if X is None:
         X = np.array([], dtype)
@@ -1259,8 +1264,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     References
     ----------
     .. [1] `Format Specification Mini-Language
-           <http://docs.python.org/library/string.html#
-           format-specification-mini-language>`_, Python Documentation.
+           <https://docs.python.org/library/string.html#format-specification-mini-language>`_,
+           Python Documentation.
 
     Examples
     --------
@@ -1624,7 +1629,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     References
     ----------
     .. [1] NumPy User Guide, section `I/O with NumPy
-           <http://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
+           <https://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
     ---------

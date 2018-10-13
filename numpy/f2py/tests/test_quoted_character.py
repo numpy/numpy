@@ -1,10 +1,19 @@
+"""See https://github.com/numpy/numpy/pull/10676.
+
+"""
 from __future__ import division, absolute_import, print_function
 
 import sys
+import os
+import uuid
+from importlib import import_module
 import pytest
+
+import numpy.f2py
 
 from numpy.testing import assert_equal
 from . import util
+
 
 class TestQuotedCharacter(util.F2PyTest):
     code = """

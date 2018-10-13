@@ -14,7 +14,7 @@
  * using static inline modifiers when defining npy_math functions
  * allows the compiler to make optimizations when possible
  */
-#if NPY_INTERNAL_BUILD
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
 #ifndef NPY_INLINE_MATH
 #define NPY_INLINE_MATH 1
 #endif

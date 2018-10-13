@@ -14,7 +14,7 @@ Python 2.6 support
 Python 2.6 is now supported on all previously supported platforms, including
 windows.
 
-http://www.python.org/dev/peps/pep-0361/
+https://www.python.org/dev/peps/pep-0361/
 
 Generalized ufuncs
 ------------------
@@ -235,7 +235,7 @@ This should make the porting to new platforms easier, and more robust. In
 particular, the configuration stage does not need to execute any code on the
 target platform, which is a first step toward cross-compilation.
 
-http://numpy.github.io/neps/math_config_clean.html
+https://www.numpy.org/neps/nep-0003-math_config_clean.html
 
 umath refactor
 --------------
@@ -247,7 +247,7 @@ Improvements to build warnings
 
 Numpy can now build with -W -Wall without warnings
 
-http://numpy.github.io/neps/warnfix.html
+https://www.numpy.org/neps/nep-0002-warnfix.html
 
 Separate core math library
 --------------------------

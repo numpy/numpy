@@ -21,7 +21,7 @@ from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.compat import asbytes, bytes, unicode, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    assert_warns, assert_, SkipTest, assert_raises_regex, assert_raises,
+    assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
     HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles,
     )
@@ -348,7 +348,6 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-
     def test_record(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
@@ -568,12 +567,12 @@ class LoadTxtBase(object):
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
     def test_encoding(self):
@@ -1069,6 +1068,55 @@ class TestLoadTxt(LoadTxtBase):
             x = [b'5,6,7,\xc3\x95scarscar', b'15,2,3,hello', b'20,2,3,\xc3\x95scar']
             assert_array_equal(x, np.array(x, dtype="S"))
 
+    def test_max_rows(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_skiprows(self):
+        c = TextIO()
+        c.write('comments\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_read_continuation(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+        # test continuation
+        x = np.loadtxt(c, dtype=int, delimiter=',')
+        a = np.array([2,1,4,5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_larger(self):
+        #test max_rows > num rows
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=6)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
+        assert_array_equal(x, a)
+
 class Testfromregex(object):
     def test_record(self):
         c = TextIO()
@@ -1455,14 +1503,10 @@ M   33  21.99
         assert_equal(test, control)
 
         ndtype = [('nest', [('idx', int), ('code', object)])]
-        try:
+        with assert_raises_regex(NotImplementedError,
+                                 'Nested fields.* not supported.*'):
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
-        except NotImplementedError:
-            pass
-        else:
-            errmsg = "Nested dtype involving objects should be supported."
-            raise AssertionError(errmsg)
 
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
@@ -2025,7 +2069,6 @@ M   33  21.99
             assert_equal(test['f0'], 0)
             assert_equal(test['f1'], "testNonethe" + utf8.decode("UTF-8"))
 
-
     def test_utf8_file_nodtype_unicode(self):
         # bytes encoding with non-latin1 -> unicode upcast
         utf8 = u'\u03d6'
@@ -2039,8 +2082,8 @@ M   33  21.99
             encoding = locale.getpreferredencoding()
             utf8.encode(encoding)
         except (UnicodeError, ImportError):
-            raise SkipTest('Skipping test_utf8_file_nodtype_unicode, '
-                           'unable to encode utf8 in preferred encoding')
+            pytest.skip('Skipping test_utf8_file_nodtype_unicode, '
+                        'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
             with io.open(path, "wt") as f:
@@ -2441,3 +2484,9 @@ def test_load_refcount():
 
     with assert_no_gc_cycles():
         np.load(f)
+
+    f.seek(0)
+    dt = [("a", 'u1', 2), ("b", 'u1', 2)]
+    with assert_no_gc_cycles():
+        x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
+        assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))

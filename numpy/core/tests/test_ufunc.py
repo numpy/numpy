@@ -13,6 +13,7 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose,
     )
+from numpy.core.numeric import pickle
 
 
 class TestUfuncKwargs(object):
@@ -43,16 +44,17 @@ class TestUfuncKwargs(object):
 
 class TestUfunc(object):
     def test_pickle(self):
-        import pickle
-        assert_(pickle.loads(pickle.dumps(np.sin)) is np.sin)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            assert_(pickle.loads(pickle.dumps(np.sin,
+                                              protocol=proto)) is np.sin)
 
-        # Check that ufunc not defined in the top level numpy namespace such as
-        # numpy.core._rational_tests.test_add can also be pickled
-        res = pickle.loads(pickle.dumps(_rational_tests.test_add))
-        assert_(res is _rational_tests.test_add)
+            # Check that ufunc not defined in the top level numpy namespace
+            # such as numpy.core._rational_tests.test_add can also be pickled
+            res = pickle.loads(pickle.dumps(_rational_tests.test_add,
+                                            protocol=proto))
+            assert_(res is _rational_tests.test_add)
 
     def test_pickle_withstring(self):
-        import pickle
         astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
@@ -286,7 +288,7 @@ class TestUfunc(object):
         """
         pass
 
-    def test_signature(self):
+    def test_signature0(self):
         # the arguments to test_signature are: nin, nout, core_signature
         # pass
         enabled, num_dims, ixs = umt.test_signature(2, 1, "(i),(i)->()")
@@ -294,12 +296,21 @@ class TestUfunc(object):
         assert_equal(num_dims, (1,  1,  0))
         assert_equal(ixs, (0, 0))
 
+    def test_signature1(self):
         # empty core signature; treat as plain ufunc (with trivial core)
         enabled, num_dims, ixs = umt.test_signature(2, 1, "(),()->()")
         assert_equal(enabled, 0)
         assert_equal(num_dims, (0,  0,  0))
         assert_equal(ixs, ())
 
+    def test_signature2(self):
+        # more complicated names for variables
+        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
+        assert_equal(enabled, 1)
+        assert_equal(num_dims, (2, 1, 1))
+        assert_equal(ixs, (0, 1, 2, 3))
+
+    def test_signature_failure0(self):
         # in the following calls, a ValueError should be raised because
         # of error in core signature
         # FIXME These should be using assert_raises
@@ -312,6 +323,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure1(self):
         # error: parenthesis matching
         msg = "core_sig: parenthesis matching"
         try:
@@ -320,6 +332,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure2(self):
         # error: incomplete signature. letters outside of parenthesis are ignored
         msg = "core_sig: incomplete signature"
         try:
@@ -328,6 +341,7 @@ class TestUfunc(object):
         except ValueError:
             pass
 
+    def test_signature_failure3(self):
         # error: incomplete signature. 2 output arguments are specified
         msg = "core_sig: incomplete signature"
         try:
@@ -335,12 +349,6 @@ class TestUfunc(object):
             assert_equal(ret, None, err_msg=msg)
         except ValueError:
             pass
-
-        # more complicated names for variables
-        enabled, num_dims, ixs = umt.test_signature(2, 1, "(i1,i2),(J_1)->(_kAB)")
-        assert_equal(enabled, 1)
-        assert_equal(num_dims, (2, 1, 1))
-        assert_equal(ixs, (0, 1, 2, 3))
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
@@ -1643,6 +1651,16 @@ class TestUfunc(object):
         target = np.array([ True, False, False, False], dtype=bool)
         assert_equal(np.all(target == (mra == ra[0])), True)
 
+    def test_scalar_equal(self):
+        # Scalar comparisons should always work, without deprecation warnings.
+        # even when the ufunc fails.
+        a = np.array(0.)
+        b = np.array('a')
+        assert_(a != b)
+        assert_(b != a)
+        assert_(not (a == b))
+        assert_(not (b == a))
+
     def test_NotImplemented_not_returned(self):
         # See gh-5964 and gh-2091. Some of these functions are not operator
         # related and were fixed for other reasons in the past.
@@ -1652,17 +1670,16 @@ class TestUfunc(object):
             np.bitwise_xor, np.left_shift, np.right_shift, np.fmax,
             np.fmin, np.fmod, np.hypot, np.logaddexp, np.logaddexp2,
             np.logical_and, np.logical_or, np.logical_xor, np.maximum,
-            np.minimum, np.mod
-            ]
-
-        # These functions still return NotImplemented. Will be fixed in
-        # future.
-        # bad = [np.greater, np.greater_equal, np.less, np.less_equal, np.not_equal]
+            np.minimum, np.mod,
+            np.greater, np.greater_equal, np.less, np.less_equal,
+            np.equal, np.not_equal]
 
         a = np.array('1')
         b = 1
+        c = np.array([1., 2.])
         for f in binary_funcs:
             assert_raises(TypeError, f, a, b)
+            assert_raises(TypeError, f, c, a)
 
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays

@@ -7,7 +7,14 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
 from .multiarray import normalize_axis_index
+from .overrides import array_function_dispatch
 
+
+def _atleast_1d_dispatcher(*arys):
+    return arys
+
+
+@array_function_dispatch(_atleast_1d_dispatcher)
 def atleast_1d(*arys):
     """
     Convert inputs to arrays with at least one dimension.
@@ -60,6 +67,12 @@ def atleast_1d(*arys):
     else:
         return res
 
+
+def _atleast_2d_dispatcher(*arys):
+    return arys
+
+
+@array_function_dispatch(_atleast_2d_dispatcher)
 def atleast_2d(*arys):
     """
     View inputs as arrays with at least two dimensions.
@@ -112,6 +125,12 @@ def atleast_2d(*arys):
     else:
         return res
 
+
+def _atleast_3d_dispatcher(*arys):
+    return arys
+
+
+@array_function_dispatch(_atleast_3d_dispatcher)
 def atleast_3d(*arys):
     """
     View inputs as arrays with at least three dimensions.
@@ -179,6 +198,11 @@ def atleast_3d(*arys):
         return res
 
 
+def _vstack_dispatcher(tup):
+    return tup
+
+
+@array_function_dispatch(_vstack_dispatcher)
 def vstack(tup):
     """
     Stack arrays in sequence vertically (row wise).
@@ -233,6 +257,12 @@ def vstack(tup):
     """
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
+
+def _hstack_dispatcher(tup):
+    return tup
+
+
+@array_function_dispatch(_hstack_dispatcher)
 def hstack(tup):
     """
     Stack arrays in sequence horizontally (column wise).
@@ -288,6 +318,14 @@ def hstack(tup):
         return _nx.concatenate(arrs, 1)
 
 
+def _stack_dispatcher(arrays, axis=None, out=None):
+    for a in arrays:
+        yield a
+    if out is not None:
+        yield out
+
+
+@array_function_dispatch(_stack_dispatcher)
 def stack(arrays, axis=0, out=None):
     """
     Join a sequence of arrays along a new axis.
@@ -360,6 +398,14 @@ def stack(arrays, axis=0, out=None):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out)
 
 
+def _block_format_index(index):
+    """
+    Convert a list of indices ``[0, 1, 2]`` into ``"arrays[0][1][2]"``.
+    """
+    idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
+    return 'arrays' + idx_str
+
+
 def _block_check_depths_match(arrays, parent_index=[]):
     """
     Recursive function checking that the depths of nested lists in `arrays`
@@ -370,19 +416,23 @@ def _block_check_depths_match(arrays, parent_index=[]):
     for each innermost list, in case an error needs to be raised, so that
     the index of the offending list can be printed as part of the error.
 
-    The parameter `parent_index` is the full index of `arrays` within the
-    nested lists passed to _block_check_depths_match at the top of the
-    recursion.
-    The return value is a pair. The first item returned is the full index
-    of an element (specifically the first element) from the bottom of the
-    nesting in `arrays`. An empty list at the bottom of the nesting is
-    represented by a `None` index.
-    The second item is the maximum of the ndims of the arrays nested in
-    `arrays`.
+    Parameters
+    ----------
+    arrays : nested list of arrays
+        The arrays to check
+    parent_index : list of int
+        The full index of `arrays` within the nested lists passed to
+        `_block_check_depths_match` at the top of the recursion.
+
+    Returns
+    -------
+    first_index : list of int
+        The full index of an element from the bottom of the nesting in
+        `arrays`. If any element at the bottom is an empty list, this will
+        refer to it, and the last index along the empty axis will be `None`.
+    max_arr_ndim : int
+        The maximum of the ndims of the arrays nested in `arrays`.
     """
-    def format_index(index):
-        idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
-        return 'arrays' + idx_str
     if type(arrays) is tuple:
         # not strictly necessary, but saves us from:
         #  - more than one way to do things - no point treating tuples like
@@ -393,7 +443,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
             '{} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
             'not allow implicit conversion from tuple to ndarray.'.format(
-                format_index(parent_index)
+                _block_format_index(parent_index)
             )
         )
     elif type(arrays) is list and len(arrays) > 0:
@@ -410,9 +460,12 @@ def _block_check_depths_match(arrays, parent_index=[]):
                     "{}, but there is an element at depth {} ({})".format(
                         len(first_index),
                         len(index),
-                        format_index(index)
+                        _block_format_index(index)
                     )
                 )
+            # propagate our flag that indicates an empty list at the bottom
+            if index[-1] is None:
+                first_index = index
         return first_index, max_arr_ndim
     elif type(arrays) is list and len(arrays) == 0:
         # We've 'bottomed out' on an empty list
@@ -422,7 +475,13 @@ def _block_check_depths_match(arrays, parent_index=[]):
         return parent_index, _nx.ndim(arrays)
 
 
-def _block(arrays, max_depth, result_ndim):
+def _atleast_nd(a, ndim):
+    # Ensures `a` has at least `ndim` dimensions by prepending
+    # ones to `a.shape` as necessary
+    return array(a, ndmin=ndim, copy=False, subok=True)
+
+
+def _block(arrays, max_depth, result_ndim, depth=0):
     """
     Internal implementation of block. `arrays` is the argument passed to
     block. `max_depth` is the depth of nested lists within `arrays` and
@@ -430,31 +489,17 @@ def _block(arrays, max_depth, result_ndim):
     `arrays` and the depth of the lists in `arrays` (see block docstring
     for details).
     """
-    def atleast_nd(a, ndim):
-        # Ensures `a` has at least `ndim` dimensions by prepending
-        # ones to `a.shape` as necessary
-        return array(a, ndmin=ndim, copy=False, subok=True)
-
-    def block_recursion(arrays, depth=0):
-        if depth < max_depth:
-            if len(arrays) == 0:
-                raise ValueError('Lists cannot be empty')
-            arrs = [block_recursion(arr, depth+1) for arr in arrays]
-            return _nx.concatenate(arrs, axis=-(max_depth-depth))
-        else:
-            # We've 'bottomed out' - arrays is either a scalar or an array
-            # type(arrays) is not list
-            return atleast_nd(arrays, result_ndim)
-
-    try:
-        return block_recursion(arrays)
-    finally:
-        # recursive closures have a cyclic reference to themselves, which
-        # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
-        block_recursion = None
+    if depth < max_depth:
+        arrs = [_block(arr, max_depth, result_ndim, depth+1)
+                for arr in arrays]
+        return _nx.concatenate(arrs, axis=-(max_depth-depth))
+    else:
+        # We've 'bottomed out' - arrays is either a scalar or an array
+        # type(arrays) is not list
+        return _atleast_nd(arrays, result_ndim)
 
 
+# TODO: support array_function_dispatch
 def block(arrays):
     """
     Assemble an nd-array from nested lists of blocks.
@@ -605,4 +650,17 @@ def block(arrays):
     """
     bottom_index, arr_ndim = _block_check_depths_match(arrays)
     list_ndim = len(bottom_index)
-    return _block(arrays, list_ndim, max(arr_ndim, list_ndim))
+    if bottom_index and bottom_index[-1] is None:
+        raise ValueError(
+            'List at {} cannot be empty'.format(
+                _block_format_index(bottom_index)
+            )
+        )
+    result = _block(arrays, list_ndim, max(arr_ndim, list_ndim))
+    if list_ndim == 0:
+        # Catch an edge case where _block returns a view because
+        # `arrays` is a single numpy array and not a list of numpy arrays.
+        # This might copy scalars or lists twice, but this isn't a likely
+        # usecase for those interested in performance
+        result = result.copy()
+    return result

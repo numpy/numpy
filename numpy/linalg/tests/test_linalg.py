@@ -19,7 +19,7 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, SkipTest, suppress_warnings
+    assert_almost_equal, assert_allclose, suppress_warnings
     )
 
 
@@ -462,12 +462,10 @@ class SolveCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestSolve(SolveCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(linalg.solve(x, x).dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(linalg.solve(x, x).dtype, dtype)
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
@@ -531,12 +529,10 @@ class InvCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestInv(InvCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(linalg.inv(x).dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(linalg.inv(x).dtype, dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -564,14 +560,12 @@ class EigvalsCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestEigvals(EigvalsCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(linalg.eigvals(x).dtype, dtype)
-            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
-            assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(linalg.eigvals(x).dtype, dtype)
+        x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+        assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -603,20 +597,17 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestEig(EigCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            w, v = np.linalg.eig(x)
-            assert_equal(w.dtype, dtype)
-            assert_equal(v.dtype, dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        w, v = np.linalg.eig(x)
+        assert_equal(w.dtype, dtype)
+        assert_equal(v.dtype, dtype)
 
-            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
-            w, v = np.linalg.eig(x)
-            assert_equal(w.dtype, get_complex_dtype(dtype))
-            assert_equal(v.dtype, get_complex_dtype(dtype))
-
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+        x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+        w, v = np.linalg.eig(x)
+        assert_equal(w.dtype, get_complex_dtype(dtype))
+        assert_equal(v.dtype, get_complex_dtype(dtype))
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -644,10 +635,6 @@ class TestEig(EigCases):
 class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.svd, a, 0)
-            return
-
         u, s, vt = linalg.svd(a, 0)
         assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
@@ -657,28 +644,29 @@ class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestSVD(SVDCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            u, s, vh = linalg.svd(x)
-            assert_equal(u.dtype, dtype)
-            assert_equal(s.dtype, get_real_dtype(dtype))
-            assert_equal(vh.dtype, dtype)
-            s = linalg.svd(x, compute_uv=False)
-            assert_equal(s.dtype, get_real_dtype(dtype))
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        u, s, vh = linalg.svd(x)
+        assert_equal(u.dtype, dtype)
+        assert_equal(s.dtype, get_real_dtype(dtype))
+        assert_equal(vh.dtype, dtype)
+        s = linalg.svd(x, compute_uv=False)
+        assert_equal(s.dtype, get_real_dtype(dtype))
 
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    def test_empty_identity(self):
+        """ Empty input should put an identity matrix in u or vh """
+        x = np.empty((4, 0))
+        u, s, vh = linalg.svd(x, compute_uv=True)
+        assert_equal(u.shape, (4, 4))
+        assert_equal(vh.shape, (0, 0))
+        assert_equal(u, np.eye(4))
 
-    def test_0_size(self):
-        # These raise errors currently
-        # (which does not mean that it may not make sense)
-        a = np.zeros((0, 0), dtype=np.complex64)
-        assert_raises(linalg.LinAlgError, linalg.svd, a)
-        a = np.zeros((0, 1), dtype=np.complex64)
-        assert_raises(linalg.LinAlgError, linalg.svd, a)
-        a = np.zeros((1, 0), dtype=np.complex64)
-        assert_raises(linalg.LinAlgError, linalg.svd, a)
+        x = np.empty((0, 4))
+        u, s, vh = linalg.svd(x, compute_uv=True)
+        assert_equal(u.shape, (0, 0))
+        assert_equal(vh.shape, (4, 4))
+        assert_equal(vh, np.eye(4))
 
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -842,15 +830,13 @@ class TestDet(DetCases):
         assert_equal(type(linalg.slogdet([[0.0j]])[0]), cdouble)
         assert_equal(type(linalg.slogdet([[0.0j]])[1]), double)
 
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(np.linalg.det(x).dtype, dtype)
-            ph, s = np.linalg.slogdet(x)
-            assert_equal(s.dtype, get_real_dtype(dtype))
-            assert_equal(ph.dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(np.linalg.det(x).dtype, dtype)
+        ph, s = np.linalg.slogdet(x)
+        assert_equal(s.dtype, get_real_dtype(dtype))
+        assert_equal(ph.dtype, dtype)
 
     def test_0_size(self):
         a = np.zeros((0, 0), dtype=np.complex64)
@@ -875,14 +861,12 @@ class TestDet(DetCases):
 class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.lstsq, a, b)
-            return
-
         arr = np.asarray(a)
         m, n = arr.shape
         u, s, vt = linalg.svd(a, 0)
         x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
+        if m == 0:
+            assert_((x == 0).all())
         if m <= n:
             assert_almost_equal(b, dot(a, x))
             assert_equal(rank, m)
@@ -923,78 +907,117 @@ class TestLstsq(LstsqCases):
             # Warning should be raised exactly once (first command)
             assert_(len(w) == 1)
 
+    @pytest.mark.parametrize(["m", "n", "n_rhs"], [
+        (4, 2, 2),
+        (0, 4, 1),
+        (0, 4, 2),
+        (4, 0, 1),
+        (4, 0, 2),
+        (4, 2, 0),
+        (0, 0, 0)
+    ])
+    def test_empty_a_b(self, m, n, n_rhs):
+        a = np.arange(m * n).reshape(m, n)
+        b = np.ones((m, n_rhs))
+        x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
+        if m == 0:
+            assert_((x == 0).all())
+        assert_equal(x.shape, (n, n_rhs))
+        assert_equal(residuals.shape, ((n_rhs,) if m > n else (0,)))
+        if m > n and n_rhs > 0:
+            # residuals are exactly the squared norms of b's columns
+            r = b - np.dot(a, x)
+            assert_almost_equal(residuals, (r * r).sum(axis=-2))
+        assert_equal(rank, min(m, n))
+        assert_equal(s.shape, (min(m, n),))
 
+
+@pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
 class TestMatrixPower(object):
-    R90 = array([[0, 1], [-1, 0]])
-    Arb22 = array([[4, -7], [-2, 10]])
+
+    rshft_0 = np.eye(4)
+    rshft_1 = rshft_0[[3, 0, 1, 2]]
+    rshft_2 = rshft_0[[2, 3, 0, 1]]
+    rshft_3 = rshft_0[[1, 2, 3, 0]]
+    rshft_all = [rshft_0, rshft_1, rshft_2, rshft_3]
     noninv = array([[1, 0], [0, 0]])
-    arbfloat = array([[[0.1, 3.2], [1.2, 0.7]],
-                      [[0.2, 6.4], [2.4, 1.4]]])
+    stacked = np.block([[[rshft_0]]]*2)
+    #FIXME the 'e' dtype might work in future
+    dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
-    large = identity(10)
-    t = large[1, :].copy()
-    large[1, :] = large[0, :]
-    large[0, :] = t
+    def test_large_power(self, dt):
+        power = matrix_power
+        rshft = self.rshft_1.astype(dt)
+        assert_equal(
+            matrix_power(rshft, 2**100 + 2**10 + 2**5 + 0), self.rshft_0)
+        assert_equal(
+            matrix_power(rshft, 2**100 + 2**10 + 2**5 + 1), self.rshft_1)
+        assert_equal(
+            matrix_power(rshft, 2**100 + 2**10 + 2**5 + 2), self.rshft_2)
+        assert_equal(
+            matrix_power(rshft, 2**100 + 2**10 + 2**5 + 3), self.rshft_3)
 
-    def test_large_power(self):
-        assert_equal(
-            matrix_power(self.R90, 2 ** 100 + 2 ** 10 + 2 ** 5 + 1), self.R90)
-        assert_equal(
-            matrix_power(self.R90, 2 ** 100 + 2 ** 10 + 1), self.R90)
-        assert_equal(
-            matrix_power(self.R90, 2 ** 100 + 2 + 1), -self.R90)
-
-    def test_large_power_trailing_zero(self):
-        assert_equal(
-            matrix_power(self.R90, 2 ** 100 + 2 ** 10 + 2 ** 5), identity(2))
-
-    def testip_zero(self):
+    def test_power_is_zero(self, dt):
         def tz(M):
             mz = matrix_power(M, 0)
             assert_equal(mz, identity_like_generalized(M))
             assert_equal(mz.dtype, M.dtype)
-        for M in [self.Arb22, self.arbfloat, self.large]:
-            tz(M)
+        
+        for mat in self.rshft_all:
+            tz(mat.astype(dt))
+            if dt != object:
+                tz(self.stacked.astype(dt))
 
-    def testip_one(self):
-        def tz(M):
-            mz = matrix_power(M, 1)
-            assert_equal(mz, M)
-            assert_equal(mz.dtype, M.dtype)
-        for M in [self.Arb22, self.arbfloat, self.large]:
-            tz(M)
+    def test_power_is_one(self, dt):
+        def tz(mat):
+            mz = matrix_power(mat, 1)
+            assert_equal(mz, mat)
+            assert_equal(mz.dtype, mat.dtype)
 
-    def testip_two(self):
-        def tz(M):
-            mz = matrix_power(M, 2)
-            assert_equal(mz, matmul(M, M))
-            assert_equal(mz.dtype, M.dtype)
-        for M in [self.Arb22, self.arbfloat, self.large]:
-            tz(M)
+        for mat in self.rshft_all:
+            tz(mat.astype(dt))
+            if dt != object:
+                tz(self.stacked.astype(dt))
 
-    def testip_invert(self):
-        def tz(M):
-            mz = matrix_power(M, -1)
-            assert_almost_equal(matmul(mz, M), identity_like_generalized(M))
-        for M in [self.R90, self.Arb22, self.arbfloat, self.large]:
-            tz(M)
+    def test_power_is_two(self, dt):
+        def tz(mat):
+            mz = matrix_power(mat, 2)
+            mmul = matmul if mat.dtype != object else dot
+            assert_equal(mz, mmul(mat, mat))
+            assert_equal(mz.dtype, mat.dtype)
 
-    def test_invert_noninvertible(self):
-        assert_raises(LinAlgError, matrix_power, self.noninv, -1)
+        for mat in self.rshft_all:
+            tz(mat.astype(dt))
+            if dt != object:
+                tz(self.stacked.astype(dt))
 
-    def test_invalid(self):
-        assert_raises(TypeError, matrix_power, self.R90, 1.5)
-        assert_raises(TypeError, matrix_power, self.R90, [1])
-        assert_raises(LinAlgError, matrix_power, np.array([1]), 1)
-        assert_raises(LinAlgError, matrix_power, np.array([[1], [2]]), 1)
-        assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2)), 1)
+    def test_power_is_minus_one(self, dt):
+        def tz(mat):
+            invmat = matrix_power(mat, -1)
+            mmul = matmul if mat.dtype != object else dot
+            assert_almost_equal(
+                mmul(invmat, mat), identity_like_generalized(mat))
 
+        for mat in self.rshft_all:
+            if dt not in self.dtnoinv:
+                tz(mat.astype(dt))
 
-class TestBoolPower(object):
+    def test_exceptions_bad_power(self, dt):
+        mat = self.rshft_0.astype(dt)
+        assert_raises(TypeError, matrix_power, mat, 1.5)
+        assert_raises(TypeError, matrix_power, mat, [1])
 
-    def test_square(self):
-        A = array([[True, False], [True, True]])
-        assert_equal(matrix_power(A, 2), A)
+    def test_exceptions_non_square(self, dt):
+        assert_raises(LinAlgError, matrix_power, np.array([1], dt), 1)
+        assert_raises(LinAlgError, matrix_power, np.array([[1], [2]], dt), 1)
+        assert_raises(LinAlgError, matrix_power, np.ones((4, 3, 2), dt), 1)
+
+    def test_exceptions_not_invertible(self, dt):
+        if dt in self.dtnoinv:
+            return
+        mat = self.noninv.astype(dt)
+        assert_raises(LinAlgError, matrix_power, mat, -1)
+
 
 
 class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
@@ -1012,13 +1035,11 @@ class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
 
 class TestEigvalsh(object):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            w = np.linalg.eigvalsh(x)
-            assert_equal(w.dtype, get_real_dtype(dtype))
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        w = np.linalg.eigvalsh(x)
+        assert_equal(w.dtype, get_real_dtype(dtype))
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -1090,14 +1111,12 @@ class TestEighCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
 
 class TestEigh(object):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            w, v = np.linalg.eigh(x)
-            assert_equal(w.dtype, get_real_dtype(dtype))
-            assert_equal(v.dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        w, v = np.linalg.eigh(x)
+        assert_equal(w.dtype, get_real_dtype(dtype))
+        assert_equal(v.dtype, dtype)
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -1582,9 +1601,25 @@ class TestQR(object):
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-    def test_qr_empty(self):
-        a = np.zeros((0, 2))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
+
+    @pytest.mark.parametrize(["m", "n"], [
+        (3, 0),
+        (0, 3),
+        (0, 0)
+    ])
+    def test_qr_empty(self, m, n):
+        k = min(m, n)
+        a = np.empty((m, n))
+        a_type = type(a)
+        a_dtype = a.dtype
+
+        self.check_qr(a)
+
+        h, tau = np.linalg.qr(a, mode='raw')
+        assert_equal(h.dtype, np.double)
+        assert_equal(tau.dtype, np.double)
+        assert_equal(h.shape, (n, m))
+        assert_equal(tau.shape, (k,))
 
     def test_mode_raw(self):
         # The factorization is not unique and varies between libraries,
@@ -1624,15 +1659,6 @@ class TestQR(object):
             self.check_qr(m1)
             self.check_qr(m2)
             self.check_qr(m2.T)
-
-    def test_0_size(self):
-        # There may be good ways to do (some of this) reasonably:
-        a = np.zeros((0, 0))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
-        a = np.zeros((0, 1))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
-        a = np.zeros((1, 0))
-        assert_raises(linalg.LinAlgError, linalg.qr, a)
 
 
 class TestCholesky(object):
@@ -1725,7 +1751,7 @@ def test_xerbla_override():
         pid = os.fork()
     except (OSError, AttributeError):
         # fork failed, or not running on POSIX
-        raise SkipTest("Not POSIX or fork failed.")
+        pytest.skip("Not POSIX or fork failed.")
 
     if pid == 0:
         # child; close i/o file handles
@@ -1760,7 +1786,7 @@ def test_xerbla_override():
         # parent
         pid, status = os.wait()
         if os.WEXITSTATUS(status) != XERBLA_OK:
-            raise SkipTest('Numpy xerbla not linked in.')
+            pytest.skip('Numpy xerbla not linked in.')
 
 
 def test_sdot_bug_8577():

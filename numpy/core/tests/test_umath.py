@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data,
+    _gen_alignment_data, assert_warns
     )
 
 
@@ -1173,7 +1173,6 @@ class TestBitwiseUFuncs(object):
             assert_(np.bitwise_xor(zeros, zeros).dtype == dt, msg)
             assert_(np.bitwise_and(zeros, zeros).dtype == dt, msg)
 
-
     def test_identity(self):
         assert_(np.bitwise_or.identity == 0, 'bitwise_or')
         assert_(np.bitwise_xor.identity == 0, 'bitwise_xor')
@@ -1333,11 +1332,16 @@ class TestMinMax(object):
         # and put it before the call to an intrisic function that causes
         # invalid status to be set. Also make sure warnings are emitted
         for n in (2, 4, 8, 16, 32):
-            with suppress_warnings() as sup:
-                sup.record(RuntimeWarning)
-                for r in np.diagflat([np.nan] * n):
-                    assert_equal(np.min(r), np.nan)
+            for dt in (np.float32, np.float16, np.complex64):
+                with suppress_warnings() as sup:
+                    sup.record(RuntimeWarning)
+                    for r in np.diagflat(np.array([np.nan] * n, dtype=dt)):
+                        assert_equal(np.min(r), np.nan)
                 assert_equal(len(sup.log), n)
+
+    def test_minimize_warns(self):
+        # gh 11589
+        assert_warns(RuntimeWarning, np.minimum, np.nan, 1)
 
 
 class TestAbsoluteNegative(object):
@@ -1568,13 +1572,14 @@ class TestSpecialMethods(object):
 
         class A(object):
             def __array__(self):
-                return np.zeros(1)
+                return np.zeros(2)
 
             def __array_wrap__(self, arr, context):
                 raise RuntimeError
 
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
+        assert_raises(RuntimeError, ncu.maximum.reduce, a)
 
     def test_failing_out_wrap(self):
 
@@ -1745,18 +1750,22 @@ class TestSpecialMethods(object):
                 return "B"
 
         class C(object):
+            def __init__(self):
+                self.count = 0
+
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
+                self.count += 1
                 return NotImplemented
 
         class CSub(C):
             def __array_ufunc__(self, func, method, *inputs, **kwargs):
+                self.count += 1
                 return NotImplemented
 
         a = A()
         a_sub = ASub()
         b = B()
         c = C()
-        c_sub = CSub()
 
         # Standard
         res = np.multiply(a, a_sub)
@@ -1767,11 +1776,27 @@ class TestSpecialMethods(object):
         # With 1 NotImplemented
         res = np.multiply(c, a)
         assert_equal(res, "A")
+        assert_equal(c.count, 1)
+        # Check our counter works, so we can trust tests below.
+        res = np.multiply(c, a)
+        assert_equal(c.count, 2)
 
         # Both NotImplemented.
+        c = C()
+        c_sub = CSub()
         assert_raises(TypeError, np.multiply, c, c_sub)
+        assert_equal(c.count, 1)
+        assert_equal(c_sub.count, 1)
+        c.count = c_sub.count = 0
         assert_raises(TypeError, np.multiply, c_sub, c)
+        assert_equal(c.count, 1)
+        assert_equal(c_sub.count, 1)
+        c.count = 0
+        assert_raises(TypeError, np.multiply, c, c)
+        assert_equal(c.count, 1)
+        c.count = 0
         assert_raises(TypeError, np.multiply, 2, c)
+        assert_equal(c.count, 1)
 
         # Ternary testing.
         assert_equal(three_mul_ufunc(a, 1, 2), "A")
@@ -1783,11 +1808,19 @@ class TestSpecialMethods(object):
         assert_equal(three_mul_ufunc(a, 2, b), "A")
         assert_equal(three_mul_ufunc(a, 2, a_sub), "ASub")
         assert_equal(three_mul_ufunc(a, a_sub, 3), "ASub")
+        c.count = 0
         assert_equal(three_mul_ufunc(c, a_sub, 3), "ASub")
+        assert_equal(c.count, 1)
+        c.count = 0
         assert_equal(three_mul_ufunc(1, a_sub, c), "ASub")
+        assert_equal(c.count, 0)
 
+        c.count = 0
         assert_equal(three_mul_ufunc(a, b, c), "A")
+        assert_equal(c.count, 0)
+        c_sub.count = 0
         assert_equal(three_mul_ufunc(a, b, c_sub), "A")
+        assert_equal(c_sub.count, 0)
         assert_equal(three_mul_ufunc(1, 2, b), "B")
 
         assert_raises(TypeError, three_mul_ufunc, 1, 2, c)
@@ -1806,9 +1839,25 @@ class TestSpecialMethods(object):
         assert_equal(four_mul_ufunc(a_sub, 1, 2, a), "ASub")
         assert_equal(four_mul_ufunc(a, 1, 2, a_sub), "ASub")
 
+        c = C()
+        c_sub = CSub()
         assert_raises(TypeError, four_mul_ufunc, 1, 2, 3, c)
+        assert_equal(c.count, 1)
+        c.count = 0
         assert_raises(TypeError, four_mul_ufunc, 1, 2, c_sub, c)
-        assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c)
+        assert_equal(c_sub.count, 1)
+        assert_equal(c.count, 1)
+        c2 = C()
+        c.count = c_sub.count = 0
+        assert_raises(TypeError, four_mul_ufunc, 1, c, c_sub, c2)
+        assert_equal(c_sub.count, 1)
+        assert_equal(c.count, 1)
+        assert_equal(c2.count, 0)
+        c.count = c2.count = c_sub.count = 0
+        assert_raises(TypeError, four_mul_ufunc, c2, c, c_sub, c)
+        assert_equal(c_sub.count, 1)
+        assert_equal(c.count, 0)
+        assert_equal(c2.count, 1)
 
     def test_ufunc_override_methods(self):
 

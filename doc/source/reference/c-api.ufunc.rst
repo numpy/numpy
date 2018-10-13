@@ -85,28 +85,77 @@ Functions
         Must to an array of length *ntypes* containing
         :c:type:`PyUFuncGenericFunction` items. These items are pointers to
         functions that actually implement the underlying
-        (element-by-element) function :math:`N` times.
+        (element-by-element) function :math:`N` times with the following
+        signature:
+
+        .. c:function:: void loopfunc(
+                char** args, npy_intp* dimensions, npy_intp* steps, void* data)
+
+            *args*
+
+                An array of pointers to the actual data for the input and output
+                arrays. The input arguments are given first followed by the output
+                arguments.
+
+            *dimensions*
+
+                A pointer to the size of the dimension over which this function is
+                looping.
+
+            *steps*
+
+                A pointer to the number of bytes to jump to get to the
+                next element in this dimension for each of the input and
+                output arguments.
+
+            *data*
+
+                Arbitrary data (extra arguments, function names, *etc.* )
+                that can be stored with the ufunc and will be passed in
+                when it is called.
+
+            This is an example of a func specialized for addition of doubles
+            returning doubles.
+
+            .. code-block:: c
+
+                static void
+                double_add(char **args, npy_intp *dimensions, npy_intp *steps,
+                   void *extra)
+                {
+                    npy_intp i;
+                    npy_intp is1 = steps[0], is2 = steps[1];
+                    npy_intp os = steps[2], n = dimensions[0];
+                    char *i1 = args[0], *i2 = args[1], *op = args[2];
+                    for (i = 0; i < n; i++) {
+                        *((double *)op) = *((double *)i1) +
+                                          *((double *)i2);
+                        i1 += is1;
+                        i2 += is2;
+                        op += os;
+                     }
+                }
 
     :param data:
         Should be ``NULL`` or a pointer to an array of size *ntypes*
         . This array may contain arbitrary extra-data to be passed to
-        the corresponding 1-d loop function in the func array.
+        the corresponding loop function in the func array.
 
     :param types:
        Length ``(nin + nout) * ntypes`` array of ``char`` encoding the
-       :ref:`PyArray_Descr.type_num` (built-in only) that the corresponding
+       `numpy.dtype.num` (built-in only) that the corresponding
        function in the ``func`` array accepts. For instance, for a comparison
        ufunc with three ``ntypes``, two ``nin`` and one ``nout``, where the
-       first function accepts :ref:`npy_int32` and the the second
-       :ref:`npy_int64`, with both returning :ref:`npy_bool`, ``types`` would
+       first function accepts `numpy.int32` and the the second
+       `numpy.int64`, with both returning `numpy.bool_`, ``types`` would
        be ``(char[]) {5, 5, 0, 7, 7, 0}`` since ``NPY_INT32`` is 5,
-       ``NPY_INT64`` is 7, and ``NPY_BOOL`` is 0 (on the python side, these
-       are exposed via :ref:`dtype.num`, i.e., for the example here,
-       ``dtype(np.int32).num``, ``dtype(np.int64).num``, and
-       ``dtype(np.bool_).num``, resp.).
+       ``NPY_INT64`` is 7, and ``NPY_BOOL`` is 0.
 
-        :ref:`casting-rules` will be used at runtime to find the first
-        ``func`` callable by the input/output provided.
+       The bit-width names can also be used (e.g. :c:data:`NPY_INT32`,
+       :c:data:`NPY_COMPLEX128` ) if desired.
+
+       :ref:`ufuncs.casting` will be used at runtime to find the first
+       ``func`` callable by the input/output provided.
 
     :param ntypes:
         How many different data-type-specific functions the ufunc has implemented.
@@ -117,13 +166,19 @@ Functions
     :param nout:
         The number of outputs
 
+    :param identity:
+
+        Either :c:data:`PyUFunc_One`, :c:data:`PyUFunc_Zero`,
+        :c:data:`PyUFunc_None`. This specifies what should be returned when
+        an empty array is passed to the reduce method of the ufunc.
+
     :param name:
-        The name for the ufunc.  Specifying a name of 'add' or
-        'multiply' enables a special behavior for  integer-typed
-        reductions when no dtype is given.  If the input type is an
-        integer (or boolean) data type smaller than the size of the int_
-        data type, it will be internally upcast to the int_ (or uint)
-        data type.
+        The name for the ufunc as a ``NULL`` terminated string.  Specifying
+        a name of 'add' or 'multiply' enables a special behavior for
+        integer-typed reductions when no dtype is given. If the input type is an
+        integer (or boolean) data type smaller than the size of the `numpy.int_`
+        data type, it will be internally upcast to the `numpy.int_` (or
+        `numpy.uint`) data type.
 
     :param doc:
         Allows passing in a documentation string to be stored with the

@@ -1,13 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
-import pickle
 import sys
 import operator
 import pytest
+import ctypes
 
 import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.core.numeric import pickle
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -20,26 +21,26 @@ def assert_dtype_not_equal(a, b):
             "two different types hash to the same value !")
 
 class TestBuiltin(object):
-    def test_run(self):
+    @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
+                                   np.unicode])
+    def test_run(self, t):
         """Only test hash runs at all."""
-        for t in [int, float, complex, np.int32, str, object,
-                np.unicode]:
-            dt = np.dtype(t)
-            hash(dt)
+        dt = np.dtype(t)
+        hash(dt)
 
-    def test_dtype(self):
+    @pytest.mark.parametrize('t', [int, float])
+    def test_dtype(self, t):
         # Make sure equivalent byte order char hash the same (e.g. < and = on
         # little endian)
-        for t in [int, float]:
-            dt = np.dtype(t)
-            dt2 = dt.newbyteorder("<")
-            dt3 = dt.newbyteorder(">")
-            if dt == dt2:
-                assert_(dt.byteorder != dt2.byteorder, "bogus test")
-                assert_dtype_equal(dt, dt2)
-            else:
-                assert_(dt.byteorder != dt3.byteorder, "bogus test")
-                assert_dtype_equal(dt, dt3)
+        dt = np.dtype(t)
+        dt2 = dt.newbyteorder("<")
+        dt3 = dt.newbyteorder(">")
+        if dt == dt2:
+            assert_(dt.byteorder != dt2.byteorder, "bogus test")
+            assert_dtype_equal(dt, dt2)
+        else:
+            assert_(dt.byteorder != dt3.byteorder, "bogus test")
+            assert_dtype_equal(dt, dt3)
 
     def test_equivalent_dtype_hashing(self):
         # Make sure equivalent dtypes with different type num hash equal
@@ -551,7 +552,7 @@ class TestString(object):
         assert_equal(str(dt),
                     "[('a', '<m8[D]'), ('b', '<M8[us]')]")
 
-    def test_complex_dtype_repr(self):
+    def test_repr_structured(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
                                 ('rtile', '>f4', (64, 36))], (3,)),
                        ('bottom', [('bleft', ('>f4', (8, 64)), (1,)),
@@ -571,6 +572,7 @@ class TestString(object):
                     "(('Green pixel', 'g'), 'u1'), "
                     "(('Blue pixel', 'b'), 'u1')], align=True)")
 
+    def test_repr_structured_not_packed(self):
         dt = np.dtype({'names': ['rgba', 'r', 'g', 'b'],
                        'formats': ['<u4', 'u1', 'u1', 'u1'],
                        'offsets': [0, 0, 1, 2],
@@ -595,9 +597,15 @@ class TestString(object):
                     "'titles':['Red pixel','Blue pixel'], "
                     "'itemsize':4})")
 
+    def test_repr_structured_datetime(self):
         dt = np.dtype([('a', '<M8[D]'), ('b', '<m8[us]')])
         assert_equal(repr(dt),
                     "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
+
+    def test_repr_str_subarray(self):
+        dt = np.dtype(('<i2', (1,)))
+        assert_equal(repr(dt), "dtype(('<i2', (1,)))")
+        assert_equal(str(dt), "('<i2', (1,))")
 
     @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
     def test_dtype_str_with_long_in_shape(self):
@@ -641,12 +649,12 @@ class TestDtypeAttributes(object):
         new_dtype = np.dtype(dtype.descr)
         assert_equal(new_dtype.itemsize, 16)
 
-    def test_name_builtin(self):
-        for t in np.typeDict.values():
-            name = t.__name__
-            if name.endswith('_'):
-                name = name[:-1]
-            assert_equal(np.dtype(t).name, name)
+    @pytest.mark.parametrize('t', np.typeDict.values())
+    def test_name_builtin(self, t):
+        name = t.__name__
+        if name.endswith('_'):
+            name = name[:-1]
+        assert_equal(np.dtype(t).name, name)
 
     def test_name_dtype_subclass(self):
         # Ticket #4357
@@ -670,38 +678,46 @@ class TestPickling(object):
             assert_equal(x, y)
             assert_equal(x[0], y[0])
 
-    def test_builtin(self):
-        for t in [int, float, complex, np.int32, str, object,
-                  np.unicode, bool]:
-            self.check_pickling(np.dtype(t))
+    @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
+                                   np.unicode, bool])
+    def test_builtin(self, t):
+        self.check_pickling(np.dtype(t))
 
     def test_structured(self):
         dt = np.dtype(([('a', '>f4', (2, 1)), ('b', '<f8', (1, 3))], (2, 2)))
         self.check_pickling(dt)
+
+    def test_structured_aligned(self):
         dt = np.dtype('i4, i1', align=True)
         self.check_pickling(dt)
+
+    def test_structured_unaligned(self):
         dt = np.dtype('i4, i1', align=False)
         self.check_pickling(dt)
+
+    def test_structured_padded(self):
         dt = np.dtype({
             'names': ['A', 'B'],
             'formats': ['f4', 'f4'],
             'offsets': [0, 8],
             'itemsize': 16})
         self.check_pickling(dt)
+
+    def test_structured_titles(self):
         dt = np.dtype({'names': ['r', 'b'],
                        'formats': ['u1', 'u1'],
                        'titles': ['Red pixel', 'Blue pixel']})
         self.check_pickling(dt)
 
-    def test_datetime(self):
-        for base in ['m8', 'M8']:
-            for unit in ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms',
-                         'us', 'ns', 'ps', 'fs', 'as']:
-                dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
-                self.check_pickling(dt)
-                if unit:
-                    dt = np.dtype('%s[7%s]' % (base, unit))
-                    self.check_pickling(dt)
+    @pytest.mark.parametrize('base', ['m8', 'M8'])
+    @pytest.mark.parametrize('unit', ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's',
+                                      'ms', 'us', 'ns', 'ps', 'fs', 'as'])
+    def test_datetime(self, base, unit):
+        dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+        self.check_pickling(dt)
+        if unit:
+            dt = np.dtype('%s[7%s]' % (base, unit))
+            self.check_pickling(dt)
 
     def test_metadata(self):
         dt = np.dtype(int, metadata={'datum': 1})
@@ -728,3 +744,75 @@ def test_dtypes_are_true():
 def test_invalid_dtype_string():
     # test for gh-10440
     assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
+    assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
+
+
+class TestFromCTypes(object):
+
+    @staticmethod
+    def check(ctype, dtype):
+        dtype = np.dtype(dtype)
+        assert_equal(np.dtype(ctype), dtype)
+        assert_equal(np.dtype(ctype()), dtype)
+
+    def test_array(self):
+        c8 = ctypes.c_uint8
+        self.check(     3 * c8,  (np.uint8, (3,)))
+        self.check(     1 * c8,  (np.uint8, (1,)))
+        self.check(     0 * c8,  (np.uint8, (0,)))
+        self.check(1 * (3 * c8), ((np.uint8, (3,)), (1,)))
+        self.check(3 * (1 * c8), ((np.uint8, (1,)), (3,)))
+
+    def test_padded_structure(self):
+        class PaddedStruct(ctypes.Structure):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', np.uint8),
+            ('b', np.uint16)
+        ], align=True)
+        self.check(PaddedStruct, expected)
+
+    @pytest.mark.xfail(reason="_pack_ is ignored - see gh-11651")
+    def test_packed_structure(self):
+        class PackedStructure(ctypes.Structure):
+            _pack_ = 1
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', np.uint8),
+            ('b', np.uint16)
+        ])
+        self.check(PackedStructure, expected)
+
+    @pytest.mark.xfail(sys.byteorder != 'little',
+        reason="non-native endianness does not work - see gh-10533")
+    def test_little_endian_structure(self):
+        class PaddedStruct(ctypes.LittleEndianStructure):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', '<B'),
+            ('b', '<H')
+        ], align=True)
+        self.check(PaddedStruct, expected)
+
+    @pytest.mark.xfail(sys.byteorder != 'big',
+        reason="non-native endianness does not work - see gh-10533")
+    def test_big_endian_structure(self):
+        class PaddedStruct(ctypes.BigEndianStructure):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16)
+            ]
+        expected = np.dtype([
+            ('a', '>B'),
+            ('b', '>H')
+        ], align=True)
+        self.check(PaddedStruct, expected)

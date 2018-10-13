@@ -10,7 +10,9 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.lib import add_newdoc
+from numpy.core import numerictypes as _numerictypes
+from numpy.core import dtype
+from numpy.core.function_base import add_newdoc
 
 ###############################################################################
 #
@@ -605,6 +607,7 @@ add_newdoc('numpy.core', 'broadcast',
 
     Examples
     --------
+
     Manually adding two vectors, using broadcasting:
 
     >>> x = np.array([[1], [2], [3]])
@@ -1318,6 +1321,7 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     hstack : Stack arrays in sequence horizontally (column wise)
     vstack : Stack arrays in sequence vertically (row wise)
     dstack : Stack arrays in sequence depth wise (along third dimension)
+    block : Assemble arrays from blocks.
 
     Notes
     -----
@@ -1347,19 +1351,19 @@ add_newdoc('numpy.core.multiarray', 'concatenate',
     >>> a[1] = np.ma.masked
     >>> b = np.arange(2, 5)
     >>> a
-    masked_array(data = [0 -- 2],
-                 mask = [False  True False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2],
+                 mask=[False,  True, False],
+           fill_value=999999)
     >>> b
     array([2, 3, 4])
     >>> np.concatenate([a, b])
-    masked_array(data = [0 1 2 2 3 4],
-                 mask = False,
-           fill_value = 999999)
+    masked_array(data=[0, 1, 2, 2, 3, 4],
+                 mask=False,
+           fill_value=999999)
     >>> np.ma.concatenate([a, b])
-    masked_array(data = [0 -- 2 2 3 4],
-                 mask = [False  True False False False False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2, 2, 3, 4],
+                 mask=[False,  True, False, False, False, False],
+           fill_value=999999)
 
     """)
 
@@ -1452,11 +1456,10 @@ add_newdoc('numpy.core.multiarray', 'arange',
     Values are generated within the half-open interval ``[start, stop)``
     (in other words, the interval including `start` but excluding `stop`).
     For integer arguments the function is equivalent to the Python built-in
-    `range <http://docs.python.org/lib/built-in-funcs.html>`_ function,
-    but returns an ndarray rather than a list.
+    `range` function, but returns an ndarray rather than a list.
 
     When using a non-integer step, such as 0.1, the results will often not
-    be consistent.  It is better to use ``linspace`` for these cases.
+    be consistent.  It is better to use `numpy.linspace` for these cases.
 
     Parameters
     ----------
@@ -1576,71 +1579,72 @@ add_newdoc('numpy.core.multiarray', 'where',
     """
     where(condition, [x, y])
 
-    Return elements, either from `x` or `y`, depending on `condition`.
+    Return elements chosen from `x` or `y` depending on `condition`.
 
-    If only `condition` is given, return ``condition.nonzero()``.
+    .. note::
+        When only `condition` is provided, this function is a shorthand for
+        ``np.asarray(condition).nonzero()``. Using `nonzero` directly should be
+        preferred, as it behaves correctly for subclasses. The rest of this
+        documentation covers only the case where all three arguments are
+        provided.
 
     Parameters
     ----------
     condition : array_like, bool
-        When True, yield `x`, otherwise yield `y`.
-    x, y : array_like, optional
+        Where True, yield `x`, otherwise yield `y`.
+    x, y : array_like
         Values from which to choose. `x`, `y` and `condition` need to be
         broadcastable to some shape.
 
     Returns
     -------
-    out : ndarray or tuple of ndarrays
-        If both `x` and `y` are specified, the output array contains
-        elements of `x` where `condition` is True, and elements from
-        `y` elsewhere.
-
-        If only `condition` is given, return the tuple
-        ``condition.nonzero()``, the indices where `condition` is True.
+    out : ndarray
+        An array with elements from `x` where `condition` is True, and elements
+        from `y` elsewhere.
 
     See Also
     --------
-    nonzero, choose
+    choose
+    nonzero : The function that is called when x and y are omitted
 
     Notes
     -----
-    If `x` and `y` are given and input arrays are 1-D, `where` is
-    equivalent to::
+    If all the arrays are 1-D, `where` is equivalent to::
 
-        [xv if c else yv for (c,xv,yv) in zip(condition,x,y)]
+        [xv if c else yv
+         for c, xv, yv in zip(condition, x, y)]
 
     Examples
     --------
+    >>> a = np.arange(10)
+    >>> a
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.where(a < 5, a, 10*a)
+    array([ 0,  1,  2,  3,  4, 50, 60, 70, 80, 90])
+
+    This can be used on multidimensional arrays too:
+
     >>> np.where([[True, False], [True, True]],
     ...          [[1, 2], [3, 4]],
     ...          [[9, 8], [7, 6]])
     array([[1, 8],
            [3, 4]])
 
-    >>> np.where([[0, 1], [1, 0]])
-    (array([0, 1]), array([1, 0]))
+    The shapes of x, y, and the condition are broadcast together:
 
-    >>> x = np.arange(9.).reshape(3, 3)
-    >>> np.where( x > 5 )
-    (array([2, 2, 2]), array([0, 1, 2]))
-    >>> x[np.where( x > 3.0 )]               # Note: result is 1D.
-    array([ 4.,  5.,  6.,  7.,  8.])
-    >>> np.where(x < 5, x, -1)               # Note: broadcasting.
-    array([[ 0.,  1.,  2.],
-           [ 3.,  4., -1.],
-           [-1., -1., -1.]])
+    >>> x, y = np.ogrid[:3, :4]
+    >>> np.where(x < y, x, 10 + y)  # both x and 10+y are broadcast
+    array([[10,  0,  0,  0],
+           [10, 11,  1,  1],
+           [10, 11, 12,  2]])
 
-    Find the indices of elements of `x` that are in `goodvalues`.
-
-    >>> goodvalues = [3, 4, 7]
-    >>> ix = np.isin(x, goodvalues)
-    >>> ix
-    array([[False, False, False],
-           [ True,  True, False],
-           [False,  True, False]])
-    >>> np.where(ix)
-    (array([1, 1, 2]), array([0, 1, 1]))
-
+    >>> a = np.array([[0, 1, 2],
+    ...               [0, 2, 4],
+    ...               [0, 3, 6]])
+    >>> np.where(a < 4, a, -1)  # -1 is broadcast
+    array([[ 0,  1,  2],
+           [ 0,  2, -1],
+           [ 0,  3, -1]])
     """)
 
 
@@ -2265,231 +2269,6 @@ add_newdoc('numpy.core', 'matmul',
 
     """)
 
-
-add_newdoc('numpy.core', 'c_einsum',
-    """
-    c_einsum(subscripts, *operands, out=None, dtype=None, order='K', casting='safe')
-
-    Evaluates the Einstein summation convention on the operands.
-
-    Using the Einstein summation convention, many common multi-dimensional
-    array operations can be represented in a simple fashion.  This function
-    provides a way to compute such summations. The best way to understand this
-    function is to try the examples below, which show how many common NumPy
-    functions can be implemented as calls to `einsum`.
-
-    This is the core C function.
-
-    Parameters
-    ----------
-    subscripts : str
-        Specifies the subscripts for summation.
-    operands : list of array_like
-        These are the arrays for the operation.
-    out : ndarray, optional
-        If provided, the calculation is done into this array.
-    dtype : {data-type, None}, optional
-        If provided, forces the calculation to use the data type specified.
-        Note that you may have to also give a more liberal `casting`
-        parameter to allow the conversions. Default is None.
-    order : {'C', 'F', 'A', 'K'}, optional
-        Controls the memory layout of the output. 'C' means it should
-        be C contiguous. 'F' means it should be Fortran contiguous,
-        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
-        'K' means it should be as close to the layout as the inputs as
-        is possible, including arbitrarily permuted axes.
-        Default is 'K'.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        Controls what kind of data casting may occur.  Setting this to
-        'unsafe' is not recommended, as it can adversely affect accumulations.
-
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
-
-        Default is 'safe'.
-
-    Returns
-    -------
-    output : ndarray
-        The calculation based on the Einstein summation convention.
-
-    See Also
-    --------
-    einsum, dot, inner, outer, tensordot
-
-    Notes
-    -----
-    .. versionadded:: 1.6.0
-
-    The subscripts string is a comma-separated list of subscript labels,
-    where each label refers to a dimension of the corresponding operand.
-    Repeated subscripts labels in one operand take the diagonal.  For example,
-    ``np.einsum('ii', a)`` is equivalent to ``np.trace(a)``.
-
-    Whenever a label is repeated, it is summed, so ``np.einsum('i,i', a, b)``
-    is equivalent to ``np.inner(a,b)``.  If a label appears only once,
-    it is not summed, so ``np.einsum('i', a)`` produces a view of ``a``
-    with no changes.
-
-    The order of labels in the output is by default alphabetical.  This
-    means that ``np.einsum('ij', a)`` doesn't affect a 2D array, while
-    ``np.einsum('ji', a)`` takes its transpose.
-
-    The output can be controlled by specifying output subscript labels
-    as well.  This specifies the label order, and allows summing to
-    be disallowed or forced when desired.  The call ``np.einsum('i->', a)``
-    is like ``np.sum(a, axis=-1)``, and ``np.einsum('ii->i', a)``
-    is like ``np.diag(a)``.  The difference is that `einsum` does not
-    allow broadcasting by default.
-
-    To enable and control broadcasting, use an ellipsis.  Default
-    NumPy-style broadcasting is done by adding an ellipsis
-    to the left of each term, like ``np.einsum('...ii->...i', a)``.
-    To take the trace along the first and last axes,
-    you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
-    product with the left-most indices instead of rightmost, you can do
-    ``np.einsum('ij...,jk...->ik...', a, b)``.
-
-    When there is only one operand, no axes are summed, and no output
-    parameter is provided, a view into the operand is returned instead
-    of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
-    produces a view.
-
-    An alternative way to provide the subscripts and operands is as
-    ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``. The examples
-    below have corresponding `einsum` calls with the two parameter methods.
-
-    .. versionadded:: 1.10.0
-
-    Views returned from einsum are now writeable whenever the input array
-    is writeable. For example, ``np.einsum('ijk...->kji...', a)`` will now
-    have the same effect as ``np.swapaxes(a, 0, 2)`` and
-    ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
-    of a 2D array.
-
-    Examples
-    --------
-    >>> a = np.arange(25).reshape(5,5)
-    >>> b = np.arange(5)
-    >>> c = np.arange(6).reshape(2,3)
-
-    >>> np.einsum('ii', a)
-    60
-    >>> np.einsum(a, [0,0])
-    60
-    >>> np.trace(a)
-    60
-
-    >>> np.einsum('ii->i', a)
-    array([ 0,  6, 12, 18, 24])
-    >>> np.einsum(a, [0,0], [0])
-    array([ 0,  6, 12, 18, 24])
-    >>> np.diag(a)
-    array([ 0,  6, 12, 18, 24])
-
-    >>> np.einsum('ij,j', a, b)
-    array([ 30,  80, 130, 180, 230])
-    >>> np.einsum(a, [0,1], b, [1])
-    array([ 30,  80, 130, 180, 230])
-    >>> np.dot(a, b)
-    array([ 30,  80, 130, 180, 230])
-    >>> np.einsum('...j,j', a, b)
-    array([ 30,  80, 130, 180, 230])
-
-    >>> np.einsum('ji', c)
-    array([[0, 3],
-           [1, 4],
-           [2, 5]])
-    >>> np.einsum(c, [1,0])
-    array([[0, 3],
-           [1, 4],
-           [2, 5]])
-    >>> c.T
-    array([[0, 3],
-           [1, 4],
-           [2, 5]])
-
-    >>> np.einsum('..., ...', 3, c)
-    array([[ 0,  3,  6],
-           [ 9, 12, 15]])
-    >>> np.einsum(3, [Ellipsis], c, [Ellipsis])
-    array([[ 0,  3,  6],
-           [ 9, 12, 15]])
-    >>> np.multiply(3, c)
-    array([[ 0,  3,  6],
-           [ 9, 12, 15]])
-
-    >>> np.einsum('i,i', b, b)
-    30
-    >>> np.einsum(b, [0], b, [0])
-    30
-    >>> np.inner(b,b)
-    30
-
-    >>> np.einsum('i,j', np.arange(2)+1, b)
-    array([[0, 1, 2, 3, 4],
-           [0, 2, 4, 6, 8]])
-    >>> np.einsum(np.arange(2)+1, [0], b, [1])
-    array([[0, 1, 2, 3, 4],
-           [0, 2, 4, 6, 8]])
-    >>> np.outer(np.arange(2)+1, b)
-    array([[0, 1, 2, 3, 4],
-           [0, 2, 4, 6, 8]])
-
-    >>> np.einsum('i...->...', a)
-    array([50, 55, 60, 65, 70])
-    >>> np.einsum(a, [0,Ellipsis], [Ellipsis])
-    array([50, 55, 60, 65, 70])
-    >>> np.sum(a, axis=0)
-    array([50, 55, 60, 65, 70])
-
-    >>> a = np.arange(60.).reshape(3,4,5)
-    >>> b = np.arange(24.).reshape(4,3,2)
-    >>> np.einsum('ijk,jil->kl', a, b)
-    array([[ 4400.,  4730.],
-           [ 4532.,  4874.],
-           [ 4664.,  5018.],
-           [ 4796.,  5162.],
-           [ 4928.,  5306.]])
-    >>> np.einsum(a, [0,1,2], b, [1,0,3], [2,3])
-    array([[ 4400.,  4730.],
-           [ 4532.,  4874.],
-           [ 4664.,  5018.],
-           [ 4796.,  5162.],
-           [ 4928.,  5306.]])
-    >>> np.tensordot(a,b, axes=([1,0],[0,1]))
-    array([[ 4400.,  4730.],
-           [ 4532.,  4874.],
-           [ 4664.,  5018.],
-           [ 4796.,  5162.],
-           [ 4928.,  5306.]])
-
-    >>> a = np.arange(6).reshape((3,2))
-    >>> b = np.arange(12).reshape((4,3))
-    >>> np.einsum('ki,jk->ij', a, b)
-    array([[10, 28, 46, 64],
-           [13, 40, 67, 94]])
-    >>> np.einsum('ki,...k->i...', a, b)
-    array([[10, 28, 46, 64],
-           [13, 40, 67, 94]])
-    >>> np.einsum('k...,jk', a, b)
-    array([[10, 28, 46, 64],
-           [13, 40, 67, 94]])
-
-    >>> # since version 1.10.0
-    >>> a = np.zeros((3, 3))
-    >>> np.einsum('ii->i', a)[:] = 1
-    >>> a
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0.,  1.]])
-
-    """)
-
 add_newdoc('numpy.core', 'vdot',
     """
     vdot(a, b)
@@ -2542,6 +2321,310 @@ add_newdoc('numpy.core', 'vdot',
     30
     >>> 1*4 + 4*1 + 5*2 + 6*2
     30
+
+    """)
+
+add_newdoc('numpy.core.multiarray', 'c_einsum',
+    """
+    c_einsum(subscripts, *operands, out=None, dtype=None, order='K',
+           casting='safe')
+           
+    *This documentation shadows that of the native python implementation of the `einsum` function,
+    except all references and examples related to the `optimize` argument (v 0.12.0) have been removed.*
+
+    Evaluates the Einstein summation convention on the operands.
+
+    Using the Einstein summation convention, many common multi-dimensional,
+    linear algebraic array operations can be represented in a simple fashion.
+    In *implicit* mode `einsum` computes these values.
+
+    In *explicit* mode, `einsum` provides further flexibility to compute
+    other array operations that might not be considered classical Einstein
+    summation operations, by disabling, or forcing summation over specified
+    subscript labels.
+
+    See the notes and examples for clarification.
+
+    Parameters
+    ----------
+    subscripts : str
+        Specifies the subscripts for summation as comma separated list of
+        subscript labels. An implicit (classical Einstein summation)
+        calculation is performed unless the explicit indicator '->' is
+        included as well as subscript labels of the precise output form.
+    operands : list of array_like
+        These are the arrays for the operation.
+    out : ndarray, optional
+        If provided, the calculation is done into this array.
+    dtype : {data-type, None}, optional
+        If provided, forces the calculation to use the data type specified.
+        Note that you may have to also give a more liberal `casting`
+        parameter to allow the conversions. Default is None.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Controls the memory layout of the output. 'C' means it should
+        be C contiguous. 'F' means it should be Fortran contiguous,
+        'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
+        'K' means it should be as close to the layout as the inputs as
+        is possible, including arbitrarily permuted axes.
+        Default is 'K'.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.  Setting this to
+        'unsafe' is not recommended, as it can adversely affect accumulations.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+
+        Default is 'safe'.
+    optimize : {False, True, 'greedy', 'optimal'}, optional
+        Controls if intermediate optimization should occur. No optimization
+        will occur if False and True will default to the 'greedy' algorithm.
+        Also accepts an explicit contraction list from the ``np.einsum_path``
+        function. See ``np.einsum_path`` for more details. Defaults to False.
+
+    Returns
+    -------
+    output : ndarray
+        The calculation based on the Einstein summation convention.
+
+    See Also
+    --------
+    einsum_path, dot, inner, outer, tensordot, linalg.multi_dot
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    The Einstein summation convention can be used to compute
+    many multi-dimensional, linear algebraic array operations. `einsum`
+    provides a succinct way of representing these.
+
+    A non-exhaustive list of these operations,
+    which can be computed by `einsum`, is shown below along with examples:
+
+    * Trace of an array, :py:func:`numpy.trace`.
+    * Return a diagonal, :py:func:`numpy.diag`.
+    * Array axis summations, :py:func:`numpy.sum`.
+    * Transpositions and permutations, :py:func:`numpy.transpose`.
+    * Matrix multiplication and dot product, :py:func:`numpy.matmul` :py:func:`numpy.dot`.
+    * Vector inner and outer products, :py:func:`numpy.inner` :py:func:`numpy.outer`.
+    * Broadcasting, element-wise and scalar multiplication, :py:func:`numpy.multiply`.
+    * Tensor contractions, :py:func:`numpy.tensordot`.
+    * Chained array operations, in efficient calculation order, :py:func:`numpy.einsum_path`.
+
+    The subscripts string is a comma-separated list of subscript labels,
+    where each label refers to a dimension of the corresponding operand.
+    Whenever a label is repeated it is summed, so ``np.einsum('i,i', a, b)``
+    is equivalent to :py:func:`np.inner(a,b) <numpy.inner>`. If a label
+    appears only once, it is not summed, so ``np.einsum('i', a)`` produces a
+    view of ``a`` with no changes. A further example ``np.einsum('ij,jk', a, b)``
+    describes traditional matrix multiplication and is equivalent to
+    :py:func:`np.matmul(a,b) <numpy.matmul>`. Repeated subscript labels in one
+    operand take the diagonal. For example, ``np.einsum('ii', a)`` is equivalent
+    to :py:func:`np.trace(a) <numpy.trace>`.
+
+    In *implicit mode*, the chosen subscripts are important
+    since the axes of the output are reordered alphabetically.  This
+    means that ``np.einsum('ij', a)`` doesn't affect a 2D array, while
+    ``np.einsum('ji', a)`` takes its transpose. Additionally,
+    ``np.einsum('ij,jk', a, b)`` returns a matrix multiplication, while,
+    ``np.einsum('ij,jh', a, b)`` returns the transpose of the
+    multiplication since subscript 'h' precedes subscript 'i'.
+
+    In *explicit mode* the output can be directly controlled by
+    specifying output subscript labels.  This requires the
+    identifier '->' as well as the list of output subscript labels.
+    This feature increases the flexibility of the function since
+    summing can be disabled or forced when required. The call
+    ``np.einsum('i->', a)`` is like :py:func:`np.sum(a, axis=-1) <numpy.sum>`,
+    and ``np.einsum('ii->i', a)`` is like :py:func:`np.diag(a) <numpy.diag>`.
+    The difference is that `einsum` does not allow broadcasting by default.
+    Additionally ``np.einsum('ij,jh->ih', a, b)`` directly specifies the
+    order of the output subscript labels and therefore returns matrix
+    multiplication, unlike the example above in implicit mode.
+
+    To enable and control broadcasting, use an ellipsis.  Default
+    NumPy-style broadcasting is done by adding an ellipsis
+    to the left of each term, like ``np.einsum('...ii->...i', a)``.
+    To take the trace along the first and last axes,
+    you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
+    product with the left-most indices instead of rightmost, one can do
+    ``np.einsum('ij...,jk...->ik...', a, b)``.
+
+    When there is only one operand, no axes are summed, and no output
+    parameter is provided, a view into the operand is returned instead
+    of a new array.  Thus, taking the diagonal as ``np.einsum('ii->i', a)``
+    produces a view (changed in version 1.10.0).
+
+    `einsum` also provides an alternative way to provide the subscripts
+    and operands as ``einsum(op0, sublist0, op1, sublist1, ..., [sublistout])``.
+    If the output shape is not provided in this format `einsum` will be
+    calculated in implicit mode, otherwise it will be performed explicitly.
+    The examples below have corresponding `einsum` calls with the two
+    parameter methods.
+
+    .. versionadded:: 1.10.0
+
+    Views returned from einsum are now writeable whenever the input array
+    is writeable. For example, ``np.einsum('ijk...->kji...', a)`` will now
+    have the same effect as :py:func:`np.swapaxes(a, 0, 2) <numpy.swapaxes>`
+    and ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
+    of a 2D array.
+
+    Examples
+    --------
+    >>> a = np.arange(25).reshape(5,5)
+    >>> b = np.arange(5)
+    >>> c = np.arange(6).reshape(2,3)
+
+    Trace of a matrix:
+
+    >>> np.einsum('ii', a)
+    60
+    >>> np.einsum(a, [0,0])
+    60
+    >>> np.trace(a)
+    60
+
+    Extract the diagonal (requires explicit form):
+
+    >>> np.einsum('ii->i', a)
+    array([ 0,  6, 12, 18, 24])
+    >>> np.einsum(a, [0,0], [0])
+    array([ 0,  6, 12, 18, 24])
+    >>> np.diag(a)
+    array([ 0,  6, 12, 18, 24])
+
+    Sum over an axis (requires explicit form):
+
+    >>> np.einsum('ij->i', a)
+    array([ 10,  35,  60,  85, 110])
+    >>> np.einsum(a, [0,1], [0])
+    array([ 10,  35,  60,  85, 110])
+    >>> np.sum(a, axis=1)
+    array([ 10,  35,  60,  85, 110])
+
+    For higher dimensional arrays summing a single axis can be done with ellipsis:
+
+    >>> np.einsum('...j->...', a)
+    array([ 10,  35,  60,  85, 110])
+    >>> np.einsum(a, [Ellipsis,1], [Ellipsis])
+    array([ 10,  35,  60,  85, 110])
+
+    Compute a matrix transpose, or reorder any number of axes:
+
+    >>> np.einsum('ji', c)
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+    >>> np.einsum('ij->ji', c)
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+    >>> np.einsum(c, [1,0])
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+    >>> np.transpose(c)
+    array([[0, 3],
+           [1, 4],
+           [2, 5]])
+
+    Vector inner products:
+
+    >>> np.einsum('i,i', b, b)
+    30
+    >>> np.einsum(b, [0], b, [0])
+    30
+    >>> np.inner(b,b)
+    30
+
+    Matrix vector multiplication:
+
+    >>> np.einsum('ij,j', a, b)
+    array([ 30,  80, 130, 180, 230])
+    >>> np.einsum(a, [0,1], b, [1])
+    array([ 30,  80, 130, 180, 230])
+    >>> np.dot(a, b)
+    array([ 30,  80, 130, 180, 230])
+    >>> np.einsum('...j,j', a, b)
+    array([ 30,  80, 130, 180, 230])
+
+    Broadcasting and scalar multiplication:
+
+    >>> np.einsum('..., ...', 3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+    >>> np.einsum(',ij', 3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+    >>> np.einsum(3, [Ellipsis], c, [Ellipsis])
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+    >>> np.multiply(3, c)
+    array([[ 0,  3,  6],
+           [ 9, 12, 15]])
+
+    Vector outer product:
+
+    >>> np.einsum('i,j', np.arange(2)+1, b)
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+    >>> np.einsum(np.arange(2)+1, [0], b, [1])
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+    >>> np.outer(np.arange(2)+1, b)
+    array([[0, 1, 2, 3, 4],
+           [0, 2, 4, 6, 8]])
+
+    Tensor contraction:
+
+    >>> a = np.arange(60.).reshape(3,4,5)
+    >>> b = np.arange(24.).reshape(4,3,2)
+    >>> np.einsum('ijk,jil->kl', a, b)
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+    >>> np.einsum(a, [0,1,2], b, [1,0,3], [2,3])
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+    >>> np.tensordot(a,b, axes=([1,0],[0,1]))
+    array([[ 4400.,  4730.],
+           [ 4532.,  4874.],
+           [ 4664.,  5018.],
+           [ 4796.,  5162.],
+           [ 4928.,  5306.]])
+
+    Writeable returned arrays (since version 1.10.0):
+
+    >>> a = np.zeros((3, 3))
+    >>> np.einsum('ii->i', a)[:] = 1
+    >>> a
+    array([[ 1.,  0.,  0.],
+           [ 0.,  1.,  0.],
+           [ 0.,  0.,  1.]])
+
+    Example of ellipsis use:
+
+    >>> a = np.arange(6).reshape((3,2))
+    >>> b = np.arange(12).reshape((4,3))
+    >>> np.einsum('ki,jk->ij', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
+    >>> np.einsum('ki,...k->i...', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
+    >>> np.einsum('k...,jk', a, b)
+    array([[10, 28, 46, 64],
+           [13, 40, 67, 94]])
 
     """)
 
@@ -2761,40 +2844,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
     -----
     Below are the public attributes of this object which were documented
     in "Guide to NumPy" (we have omitted undocumented public attributes,
-    as well as documented private attributes):
+    as well as documented private attributes): 
 
-    * data: A pointer to the memory area of the array as a Python integer.
-      This memory area may contain data that is not aligned, or not in correct
-      byte-order. The memory area may not even be writeable. The array
-      flags and data-type of this array should be respected when passing this
-      attribute to arbitrary C-code to avoid trouble that can include Python
-      crashing. User Beware! The value of this attribute is exactly the same
-      as self._array_interface_['data'][0].
+    .. autoattribute:: numpy.core._internal._ctypes.data
 
-    * shape (c_intp*self.ndim): A ctypes array of length self.ndim where
-      the basetype is the C-integer corresponding to dtype('p') on this
-      platform. This base-type could be c_int, c_long, or c_longlong
-      depending on the platform. The c_intp type is defined accordingly in
-      numpy.ctypeslib. The ctypes array contains the shape of the underlying
-      array.
+    .. autoattribute:: numpy.core._internal._ctypes.shape
 
-    * strides (c_intp*self.ndim): A ctypes array of length self.ndim where
-      the basetype is the same as for the shape attribute. This ctypes array
-      contains the strides information from the underlying array. This strides
-      information is important for showing how many bytes must be jumped to
-      get to the next element in the array.
+    .. autoattribute:: numpy.core._internal._ctypes.strides
 
-    * data_as(obj): Return the data pointer cast to a particular c-types object.
-      For example, calling self._as_parameter_ is equivalent to
-      self.data_as(ctypes.c_void_p). Perhaps you want to use the data as a
-      pointer to a ctypes array of floating-point data:
-      self.data_as(ctypes.POINTER(ctypes.c_double)).
+    .. automethod:: numpy.core._internal._ctypes.data_as
 
-    * shape_as(obj): Return the shape tuple as an array of some other c-types
-      type. For example: self.shape_as(ctypes.c_short).
+    .. automethod:: numpy.core._internal._ctypes.shape_as
 
-    * strides_as(obj): Return the strides tuple as an array of some other
-      c-types type. For example: self.strides_as(ctypes.c_longlong).
+    .. automethod:: numpy.core._internal._ctypes.strides_as
 
     Be careful using the ctypes attribute - especially on temporary
     arrays or arrays constructed on the fly. For example, calling
@@ -5215,99 +5277,6 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 #
 ##############################################################################
 
-add_newdoc('numpy.core.multiarray', 'digitize',
-    """
-    digitize(x, bins, right=False)
-
-    Return the indices of the bins to which each value in input array belongs.
-
-    =========  =============  ============================
-    `right`    order of bins  returned index `i` satisfies
-    =========  =============  ============================
-    ``False``  increasing     ``bins[i-1] <= x < bins[i]``
-    ``True``   increasing     ``bins[i-1] < x <= bins[i]``
-    ``False``  decreasing     ``bins[i-1] > x >= bins[i]``
-    ``True``   decreasing     ``bins[i-1] >= x > bins[i]``
-    =========  =============  ============================
-
-    If values in `x` are beyond the bounds of `bins`, 0 or ``len(bins)`` is
-    returned as appropriate.
-
-    Parameters
-    ----------
-    x : array_like
-        Input array to be binned. Prior to NumPy 1.10.0, this array had to
-        be 1-dimensional, but can now have any shape.
-    bins : array_like
-        Array of bins. It has to be 1-dimensional and monotonic.
-    right : bool, optional
-        Indicating whether the intervals include the right or the left bin
-        edge. Default behavior is (right==False) indicating that the interval
-        does not include the right edge. The left bin end is open in this
-        case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
-        monotonically increasing bins.
-
-    Returns
-    -------
-    indices : ndarray of ints
-        Output array of indices, of same shape as `x`.
-
-    Raises
-    ------
-    ValueError
-        If `bins` is not monotonic.
-    TypeError
-        If the type of the input is complex.
-
-    See Also
-    --------
-    bincount, histogram, unique, searchsorted
-
-    Notes
-    -----
-    If values in `x` are such that they fall outside the bin range,
-    attempting to index `bins` with the indices that `digitize` returns
-    will result in an IndexError.
-
-    .. versionadded:: 1.10.0
-
-    `np.digitize` is  implemented in terms of `np.searchsorted`. This means
-    that a binary search is used to bin the values, which scales much better
-    for larger number of bins than the previous linear search. It also removes
-    the requirement for the input array to be 1-dimensional.
-
-    For monotonically _increasing_ `bins`, the following are equivalent::
-
-        np.digitize(x, bins, right=True)
-        np.searchsorted(bins, x, side='left')
-
-    Note that as the order of the arguments are reversed, the side must be too.
-    The `searchsorted` call is marginally faster, as it does not do any
-    monotonicity checks. Perhaps more importantly, it supports all dtypes.
-
-    Examples
-    --------
-    >>> x = np.array([0.2, 6.4, 3.0, 1.6])
-    >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
-    >>> inds = np.digitize(x, bins)
-    >>> inds
-    array([1, 4, 3, 2])
-    >>> for n in range(x.size):
-    ...   print(bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]])
-    ...
-    0.0 <= 0.2 < 1.0
-    4.0 <= 6.4 < 10.0
-    2.5 <= 3.0 < 4.0
-    1.0 <= 1.6 < 2.5
-
-    >>> x = np.array([1.2, 10.0, 12.4, 15.5, 20.])
-    >>> bins = np.array([0, 5, 10, 15, 20])
-    >>> np.digitize(x,bins,right=True)
-    array([1, 2, 3, 4, 4])
-    >>> np.digitize(x,bins,right=False)
-    array([1, 3, 3, 4, 5])
-    """)
-
 add_newdoc('numpy.core.multiarray', 'bincount',
     """
     bincount(x, weights=None, minlength=0)
@@ -6490,6 +6459,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
 
       (dtype, offset[, title])
 
+    Offset is limited to C int, which is signed and usually 32 bits.
     If present, the optional title can be any object (if it is a string
     or unicode then it will also be a key in the fields dictionary,
     otherwise it's meta-data). Notice also that the first two elements
@@ -7144,8 +7114,8 @@ add_newdoc('numpy.core.multiarray', 'datetime_data',
 
     Get information about the step size of a date or time type.
 
-    The returned tuple can be passed as the second argument of `datetime64` and
-    `timedelta64`.
+    The returned tuple can be passed as the second argument of `numpy.datetime64` and
+    `numpy.timedelta64`.
 
     Parameters
     ----------
@@ -7169,98 +7139,10 @@ add_newdoc('numpy.core.multiarray', 'datetime_data',
     array(250, dtype='timedelta64[s]')
 
     The result can be used to construct a datetime that uses the same units
-    as a timedelta::
+    as a timedelta
 
     >>> np.datetime64('2010', np.datetime_data(dt_25s))
-    numpy.datetime64('2010-01-01T00:00:00','25s')
-    """)
-
-##############################################################################
-#
-# nd_grid instances
-#
-##############################################################################
-
-add_newdoc('numpy.lib.index_tricks', 'mgrid',
-    """
-    `nd_grid` instance which returns a dense multi-dimensional "meshgrid".
-
-    An instance of `numpy.lib.index_tricks.nd_grid` which returns an dense
-    (or fleshed out) mesh-grid when indexed, so that each returned argument
-    has the same shape.  The dimensions and number of the output arrays are
-    equal to the number of indexing dimensions.  If the step length is not a
-    complex number, then the stop is not inclusive.
-
-    However, if the step length is a **complex number** (e.g. 5j), then
-    the integer part of its magnitude is interpreted as specifying the
-    number of points to create between the start and stop values, where
-    the stop value **is inclusive**.
-
-    Returns
-    ----------
-    mesh-grid `ndarrays` all of the same dimensions
-
-    See Also
-    --------
-    numpy.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
-    ogrid : like mgrid but returns open (not fleshed out) mesh grids
-    r_ : array concatenator
-
-    Examples
-    --------
-    >>> np.mgrid[0:5,0:5]
-    array([[[0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1],
-            [2, 2, 2, 2, 2],
-            [3, 3, 3, 3, 3],
-            [4, 4, 4, 4, 4]],
-           [[0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4]]])
-    >>> np.mgrid[-1:1:5j]
-    array([-1. , -0.5,  0. ,  0.5,  1. ])
-
-    """)
-
-add_newdoc('numpy.lib.index_tricks', 'ogrid',
-    """
-    `nd_grid` instance which returns an open multi-dimensional "meshgrid".
-
-    An instance of `numpy.lib.index_tricks.nd_grid` which returns an open
-    (i.e. not fleshed out) mesh-grid when indexed, so that only one dimension
-    of each returned array is greater than 1.  The dimension and number of the
-    output arrays are equal to the number of indexing dimensions.  If the step
-    length is not a complex number, then the stop is not inclusive.
-
-    However, if the step length is a **complex number** (e.g. 5j), then
-    the integer part of its magnitude is interpreted as specifying the
-    number of points to create between the start and stop values, where
-    the stop value **is inclusive**.
-
-    Returns
-    ----------
-    mesh-grid `ndarrays` with only one dimension :math:`\\neq 1`
-
-    See Also
-    --------
-    np.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
-    mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
-    r_ : array concatenator
-
-    Examples
-    --------
-    >>> from numpy import ogrid
-    >>> ogrid[-1:1:5j]
-    array([-1. , -0.5,  0. ,  0.5,  1. ])
-    >>> ogrid[0:5,0:5]
-    [array([[0],
-            [1],
-            [2],
-            [3],
-            [4]]), array([[0, 1, 2, 3, 4]])]
-
+    numpy.datetime64('2010-01-01T00:00:00', '25s')
     """)
 
 
@@ -8086,66 +7968,228 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 
 ##############################################################################
 #
-# Documentation for other scalar classes
+# Documentation for scalar type abstract base classes in type hierarchy
 #
 ##############################################################################
 
-add_newdoc('numpy.core.numerictypes', 'bool_',
-    """NumPy's Boolean type.  Character code: ``?``.  Alias: bool8""")
 
-add_newdoc('numpy.core.numerictypes', 'complex64',
+add_newdoc('numpy.core.numerictypes', 'number',
     """
-    Complex number type composed of two 32 bit floats. Character code: 'F'.
-
+    Abstract base class of all numeric scalar types.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'complex128',
+add_newdoc('numpy.core.numerictypes', 'integer',
     """
-    Complex number type composed of two 64 bit floats. Character code: 'D'.
-    Python complex compatible.
-
+    Abstract base class of all integer scalar types.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'complex256',
+add_newdoc('numpy.core.numerictypes', 'signedinteger',
     """
-    Complex number type composed of two 128-bit floats. Character code: 'G'.
-
+    Abstract base class of all signed integer scalar types.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float32',
+add_newdoc('numpy.core.numerictypes', 'unsignedinteger',
     """
-    32-bit floating-point number. Character code 'f'. C float compatible.
-
+    Abstract base class of all unsigned integer scalar types.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float64',
+add_newdoc('numpy.core.numerictypes', 'inexact',
     """
-    64-bit floating-point number. Character code 'd'. Python float compatible.
-
+    Abstract base class of all numeric scalar types with a (potentially)
+    inexact representation of the values in its range, such as
+    floating-point numbers.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float96',
+add_newdoc('numpy.core.numerictypes', 'floating',
     """
+    Abstract base class of all floating-point scalar types.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'float128',
+add_newdoc('numpy.core.numerictypes', 'complexfloating',
     """
-    128-bit floating-point number. Character code: 'g'. C long float
-    compatible.
-
+    Abstract base class of all complex number scalar types that are made up of
+    floating-point numbers.
+    
     """)
 
-add_newdoc('numpy.core.numerictypes', 'int8',
-    """8-bit integer. Character code ``b``. C char compatible.""")
+add_newdoc('numpy.core.numerictypes', 'flexible',
+    """
+    Abstract base class of all scalar types without predefined length.
+    The actual size of these types depends on the specific `np.dtype`
+    instantiation.
+    
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'int16',
-    """16-bit integer. Character code ``h``. C short compatible.""")
+add_newdoc('numpy.core.numerictypes', 'character',
+    """
+    Abstract base class of all character string scalar types.
+    
+    """)
 
-add_newdoc('numpy.core.numerictypes', 'int32',
-    """32-bit integer. Character code 'i'. C int compatible.""")
 
-add_newdoc('numpy.core.numerictypes', 'int64',
-    """64-bit integer. Character code 'l'. Python int compatible.""")
+##############################################################################
+#
+# Documentation for concrete scalar classes
+#
+##############################################################################
 
-add_newdoc('numpy.core.numerictypes', 'object_',
-    """Any Python object.  Character code: 'O'.""")
+def numeric_type_aliases(aliases):
+    def type_aliases_gen():
+        for alias, doc in aliases:
+            try:
+                alias_type = getattr(_numerictypes, alias)
+            except AttributeError:
+                # The set of aliases that actually exist varies between platforms
+                pass
+            else:
+                yield (alias_type, alias, doc)
+    return list(type_aliases_gen())
+
+
+possible_aliases = numeric_type_aliases([
+    ('int8', '8-bit signed integer (-128 to 127)'),
+    ('int16', '16-bit signed integer (-32768 to 32767)'),
+    ('int32', '32-bit signed integer (-2147483648 to 2147483647)'),
+    ('int64', '64-bit signed integer (-9223372036854775808 to 9223372036854775807)'),
+    ('intp', 'Signed integer large enough to fit pointer, compatible with C ``intptr_t``'),
+    ('uint8', '8-bit unsigned integer (0 to 255)'),
+    ('uint16', '16-bit unsigned integer (0 to 65535)'),
+    ('uint32', '32-bit unsigned integer (0 to 4294967295)'),
+    ('uint64', '64-bit unsigned integer (0 to 18446744073709551615)'),
+    ('uintp', 'Unsigned integer large enough to fit pointer, compatible with C ``uintptr_t``'),
+    ('float16', '16-bit-precision floating-point number type: sign bit, 5 bits exponent, 10 bits mantissa'),
+    ('float32', '32-bit-precision floating-point number type: sign bit, 8 bits exponent, 23 bits mantissa'),
+    ('float64', '64-bit precision floating-point number type: sign bit, 11 bits exponent, 52 bits mantissa'),
+    ('float96', '96-bit extended-precision floating-point number type'),
+    ('float128', '128-bit extended-precision floating-point number type'),
+    ('complex64', 'Complex number type composed of 2 32-bit-precision floating-point numbers'),
+    ('complex128', 'Complex number type composed of 2 64-bit-precision floating-point numbers'),
+    ('complex192', 'Complex number type composed of 2 96-bit extended-precision floating-point numbers'),
+    ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
+    ])
+
+
+def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
+    o = getattr(_numerictypes, obj)
+
+    character_code = dtype(o).char
+    canonical_name_doc = "" if obj == o.__name__ else "Canonical name: ``np.{}``.\n    ".format(obj)
+    alias_doc = ''.join("Alias: ``np.{}``.\n    ".format(alias) for alias in fixed_aliases)
+    alias_doc += ''.join("Alias *on this platform*: ``np.{}``: {}.\n    ".format(alias, doc)
+                         for (alias_type, alias, doc) in possible_aliases if alias_type is o)
+
+    docstring = """
+    {doc}
+    Character code: ``'{character_code}'``.
+    {canonical_name_doc}{alias_doc}
+    """.format(doc=doc.strip(), character_code=character_code,
+               canonical_name_doc=canonical_name_doc, alias_doc=alias_doc)
+
+    add_newdoc('numpy.core.numerictypes', obj, docstring)
+
+
+add_newdoc_for_scalar_type('bool_', ['bool8'],
+    """
+    Boolean type (True or False), stored as a byte.
+    """)
+
+add_newdoc_for_scalar_type('byte', [],
+    """
+    Signed integer type, compatible with C ``char``.
+    """)
+
+add_newdoc_for_scalar_type('short', [],
+    """
+    Signed integer type, compatible with C ``short``.
+    """)
+
+add_newdoc_for_scalar_type('intc', [],
+    """
+    Signed integer type, compatible with C ``int``.
+    """)
+
+add_newdoc_for_scalar_type('int_', [],
+    """
+    Signed integer type, compatible with Python `int` anc C ``long``.
+    """)
+
+add_newdoc_for_scalar_type('longlong', [],
+    """
+    Signed integer type, compatible with C ``long long``.
+    """)
+
+add_newdoc_for_scalar_type('ubyte', [],
+    """
+    Unsigned integer type, compatible with C ``unsigned char``.
+    """)
+
+add_newdoc_for_scalar_type('ushort', [],
+    """
+    Unsigned integer type, compatible with C ``unsigned short``.
+    """)
+
+add_newdoc_for_scalar_type('uintc', [],
+    """
+    Unsigned integer type, compatible with C ``unsigned int``.
+    """)
+
+add_newdoc_for_scalar_type('uint', [],
+    """
+    Unsigned integer type, compatible with C ``unsigned long``.
+    """)
+
+add_newdoc_for_scalar_type('ulonglong', [],
+    """
+    Signed integer type, compatible with C ``unsigned long long``.
+    """)
+
+add_newdoc_for_scalar_type('half', [],
+    """
+    Half-precision floating-point number type.
+    """)
+
+add_newdoc_for_scalar_type('single', [],
+    """
+    Single-precision floating-point number type, compatible with C ``float``.
+    """)
+
+add_newdoc_for_scalar_type('double', ['float_'],
+    """
+    Double-precision floating-point number type, compatible with Python `float`
+    and C ``double``.
+    """)
+
+add_newdoc_for_scalar_type('longdouble', ['longfloat'],
+    """
+    Extended-precision floating-point number type, compatible with C
+    ``long double`` but not necessarily with IEEE 754 quadruple-precision.
+    """)
+
+add_newdoc_for_scalar_type('csingle', ['singlecomplex'],
+    """
+    Complex number type composed of two single-precision floating-point
+    numbers.
+    """)
+
+add_newdoc_for_scalar_type('cdouble', ['cfloat', 'complex_'],
+    """
+    Complex number type composed of two double-precision floating-point
+    numbers, compatible with Python `complex`.
+    """)
+
+add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'],
+    """
+    Complex number type composed of two extended-precision floating-point
+    numbers.
+    """)
+
+add_newdoc_for_scalar_type('object_', [],
+    """
+    Any Python object.
+    """)

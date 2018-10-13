@@ -19,6 +19,7 @@
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
+#include "array_assign.h"
 
 #include "item_selection.h"
 #include "npy_sort.h"
@@ -809,7 +810,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
     npy_intp astride = PyArray_STRIDE(op, axis);
     int swap = PyArray_ISBYTESWAPPED(op);
-    int needcopy = !PyArray_ISALIGNED(op) || swap || astride != elsize;
+    int needcopy = !IsAligned(op) || swap || astride != elsize;
     int hasrefs = PyDataType_REFCHK(PyArray_DESCR(op));
 
     PyArray_CopySwapNFunc *copyswapn = PyArray_DESCR(op)->f->copyswapn;
@@ -833,8 +834,6 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     }
     size = it->size;
 
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
-
     if (needcopy) {
         buffer = npy_alloc_cache(N * elsize);
         if (buffer == NULL) {
@@ -842,6 +841,8 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             goto fail;
         }
     }
+
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
 
     while (size--) {
         char *bufptr = it->dataptr;
@@ -917,8 +918,8 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     }
 
 fail:
-    npy_free_cache(buffer, N * elsize);
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
+    npy_free_cache(buffer, N * elsize);
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
@@ -937,7 +938,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
     npy_intp astride = PyArray_STRIDE(op, axis);
     int swap = PyArray_ISBYTESWAPPED(op);
-    int needcopy = !PyArray_ISALIGNED(op) || swap || astride != elsize;
+    int needcopy = !IsAligned(op) || swap || astride != elsize;
     int hasrefs = PyDataType_REFCHK(PyArray_DESCR(op));
     int needidxbuffer;
 
@@ -979,8 +980,6 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     }
     size = it->size;
 
-    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
-
     if (needcopy) {
         valbuffer = npy_alloc_cache(N * elsize);
         if (valbuffer == NULL) {
@@ -996,6 +995,8 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
             goto fail;
         }
     }
+
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
 
     while (size--) {
         char *valptr = it->dataptr;
@@ -1080,9 +1081,9 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     }
 
 fail:
+    NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     npy_free_cache(valbuffer, N * elsize);
     npy_free_cache(idxbuffer, N * sizeof(npy_intp));
-    NPY_END_THREADS_DESCR(PyArray_DESCR(op));
     if (ret < 0) {
         if (!PyErr_Occurred()) {
             /* Out of memory during sorting or buffer creation */
@@ -1498,13 +1499,13 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         char *valbuffer, *indbuffer;
         int *swaps;
 
-        valbuffer = npy_alloc_cache(N * maxelsize);
+        valbuffer = PyDataMem_NEW(N * maxelsize);
         if (valbuffer == NULL) {
             goto fail;
         }
-        indbuffer = npy_alloc_cache(N * sizeof(npy_intp));
+        indbuffer = PyDataMem_NEW(N * sizeof(npy_intp));
         if (indbuffer == NULL) {
-            npy_free_cache(indbuffer, N * sizeof(npy_intp));
+            PyDataMem_FREE(indbuffer);
             goto fail;
         }
         swaps = malloc(n*sizeof(int));
@@ -1547,8 +1548,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                                          sizeof(npy_intp), N, sizeof(npy_intp));
             PyArray_ITER_NEXT(rit);
         }
-        npy_free_cache(valbuffer, N * maxelsize);
-        npy_free_cache(indbuffer, N * sizeof(npy_intp));
+        PyDataMem_FREE(valbuffer);
+        PyDataMem_FREE(indbuffer);
         free(swaps);
     }
     else {

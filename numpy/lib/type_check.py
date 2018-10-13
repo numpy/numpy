@@ -2,6 +2,7 @@
 
 """
 from __future__ import division, absolute_import, print_function
+import warnings
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
@@ -215,7 +216,7 @@ def iscomplex(x):
     if issubclass(ax.dtype.type, _nx.complexfloating):
         return ax.imag != 0
     res = zeros(ax.shape, bool)
-    return +res  # convert to array-scalar if needed
+    return res[()]   # convert to scalar if needed
 
 def isreal(x):
     """
@@ -469,6 +470,10 @@ def asscalar(a):
     """
     Convert an array of size 1 to its scalar equivalent.
 
+    .. deprecated:: 1.16
+
+        Deprecated, use `numpy.ndarray.item()` instead.
+
     Parameters
     ----------
     a : ndarray
@@ -486,6 +491,10 @@ def asscalar(a):
     24
 
     """
+
+    # 2018-10-10, 1.16
+    warnings.warn('np.asscalar(a) is deprecated since NumPy v1.16, use '
+                  'a.item() instead', DeprecationWarning, stacklevel=1)
     return a.item()
 
 #-----------------------------------------------------------------------------

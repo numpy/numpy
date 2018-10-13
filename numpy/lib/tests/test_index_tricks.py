@@ -1,5 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
@@ -113,7 +115,6 @@ class TestRavelUnravelIndex(object):
         assert_(x.flags.writeable)
         assert_(y.flags.writeable)
 
-
     def test_0d(self):
         # gh-580
         x = np.unravel_index(0, ())
@@ -164,6 +165,22 @@ class TestGrid(object):
         grid_broadcast = np.broadcast_arrays(*grid_sparse)
         for f, b in zip(grid_full, grid_broadcast):
             assert_equal(f, b)
+
+    @pytest.mark.parametrize("start, stop, step, expected", [
+        (None, 10, 10j, (200, 10)),
+        (-10, 20, None, (1800, 30)),
+        ])
+    def test_mgrid_size_none_handling(self, start, stop, step, expected):
+        # regression test None value handling for
+        # start and step values used by mgrid;
+        # internally, this aims to cover previously
+        # unexplored code paths in nd_grid()
+        grid = mgrid[start:stop:step, start:stop:step]
+        # need a smaller grid to explore one of the
+        # untested code paths
+        grid_small = mgrid[start:stop:step]
+        assert_equal(grid.size, expected[0])
+        assert_equal(grid_small.size, expected[1])
 
 
 class TestConcatenator(object):
@@ -319,6 +336,19 @@ class TestFillDiagonal(object):
         i = np.array([0, 1, 2])
         assert_equal(np.where(a != 0), (i, i, i, i))
 
+    def test_low_dim_handling(self):
+        # raise error with low dimensionality
+        a = np.zeros(3, int)
+        with assert_raises_regex(ValueError, "at least 2-d"):
+            fill_diagonal(a, 5)
+
+    def test_hetero_shape_handling(self):
+        # raise error with high dimensionality and
+        # shape mismatch
+        a = np.zeros((3,3,7,3), int)
+        with assert_raises_regex(ValueError, "equal length"):
+            fill_diagonal(a, 2)
+
 
 def test_diag_indices():
     di = diag_indices(4)
@@ -348,11 +378,23 @@ def test_diag_indices():
         )
 
 
-def test_diag_indices_from():
-    x = np.random.random((4, 4))
-    r, c = diag_indices_from(x)
-    assert_array_equal(r, np.arange(4))
-    assert_array_equal(c, np.arange(4))
+class TestDiagIndicesFrom(object):
+
+    def test_diag_indices_from(self):
+        x = np.random.random((4, 4))
+        r, c = diag_indices_from(x)
+        assert_array_equal(r, np.arange(4))
+        assert_array_equal(c, np.arange(4))
+
+    def test_error_small_input(self):
+        x = np.ones(7)
+        with assert_raises_regex(ValueError, "at least 2-d"):
+            diag_indices_from(x)
+
+    def test_error_shape_mismatch(self):
+        x = np.zeros((3, 3, 2, 3), int)
+        with assert_raises_regex(ValueError, "equal length"):
+            diag_indices_from(x)
 
 
 def test_ndindex():

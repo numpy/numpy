@@ -7,7 +7,7 @@ developers to transparently support these accelerated functions when
 scipy is available but still support users who have only installed
 NumPy.
 
-.. _Scipy : http://www.scipy.org
+.. _Scipy : https://www.scipy.org
 
 """
 from __future__ import division, absolute_import, print_function

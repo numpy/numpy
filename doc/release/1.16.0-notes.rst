@@ -2,6 +2,15 @@
 NumPy 1.16.0 Release Notes
 ==========================
 
+This NumPy release is the last one to support Python 2.7. It will be maintained
+as a long term release with bug fixes only through 2020. To that end, the
+planned code reorganization detailed in NEP-0015 has been made in order to
+facilitate backporting fixes from future releases, which will now have the
+same code organization.
+
+Support for Python 3.4 been dropped in this release, the supported Python
+versions are 2.7 and 3.5-3.7. The wheels are linked with OpenBLAS v0.3.0 .
+
 
 Highlights
 ==========
@@ -14,13 +23,69 @@ New functions
 Deprecations
 ============
 
+`typeNA` and `sctypeNA` have been deprecated
+--------------------------------------------
+
+The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` were buggy
+and not documented. They will be removed in the 1.18 release. Use
+`numpy.sctypeDict` instead.
+
+
+``np.PackageLoader`` and ``np.pkgload`` have been removed
+---------------------------------------------------------
+These were deprecated in 1.10, had no tests, and seem to no longer work in
+1.15 anyway.
+
+`numpy.asscalar` has been deprecated
+------------------------------------
+It is an alias to the more powerful `numpy.ndarray.item`, not tested, and fails
+for scalars.
 
 Future Changes
 ==============
 
+* NumPy 1.17 will drop support for Python 2.7.
+
+Expired deprecations
+====================
+
+* NaT comparisons now return ``False`` without a warning, finishing a
+  deprecation cycle begun in NumPy 1.11.
 
 Compatibility notes
 ===================
+
+f2py script on Windows
+----------------------
+On Windows, the installed script for running f2py is now an ``.exe`` file
+rather than a ``*.py`` file and should be run from the command line as ``f2py``
+whenever the ``Scripts`` directory is in the path. Folks needing compatibility
+with earler versions of Numpy should run ``f2py`` as a module: ``python -m
+numpy.f2py [...]``.
+
+NaT comparisons
+---------------
+Consistent with the behavior of NaN, all comparisons other than inequality
+checks with datetime64 or timedelta64 NaT ("not-a-time") values now always
+return ``False``, and inequality checks with NaT now always return ``True``.
+This includes comparisons beteween NaT values. For compatibility with the
+old behavior, use ``np.isnat`` to explicitly check for NaT or convert
+datetime64/timedelta64 arrays with ``.astype(np.int64)`` before making
+comparisons.
+
+complex64/128 alignment has changed
+-----------------------------------
+The memory alignment of complex types is now the same as a C-struct composed of
+two floating point values, while before it was equal to the size of the type.
+For many users (for instance on x64/unix/gcc) this means that complex64 is now
+4-byte aligned instead of 8-byte aligned. An important consequence is that
+aligned structured dtypes may now have a different size. For instance,
+``np.dtype('c8,u1', align=True)`` used to have an itemsize of 16 (on x64/gcc)
+but now it is 12.
+
+More in detail, the complex64 type now has the same alignment as a C-struct
+``struct {float r, i;}``, according to the compiler used to compile numpy, and
+similarly for the complex128 and complex256 types.
 
 
 C API changes
@@ -30,10 +95,136 @@ C API changes
 New Features
 ============
 
+``max_rows`` keyword added for ``np.loadtxt``
+---------------------------------------------
+New keyword ``max_rows`` in `numpy.loadtxt` sets the maximum rows of the
+content to be read after ``skiprows``, as in `numpy.genfromtxt`.
+
 
 Improvements
 ============
 
+no-copy pickling of numpy arrays
+--------------------------------
+Up to protocol 4, numpy array pickling created 2 spurious copies of the data
+being serlialized.
+With pickle protocol 5, and the ``PickleBuffer`` API, a large variety of numpy
+arrays can now be serialized without any copy using out-of-band buffers,
+and with one less copy using in-band buffers. This results, for large arrays,
+in an up to 66% drop in peak memory usage.
+
+build shell independence
+------------------------
+NumPy builds should no longer interact with the host machine
+shell directly. ``exec_command`` has been replaced with
+``subprocess.check_output`` where appropriate.
+
+
+`np.polynomial.Polynomial` classes render in LaTeX in Jupyter notebooks
+-----------------------------------------------------------------------
+
+When used in a front-end that supports it, `Polynomial` instances are now
+rendered through LaTeX. The current format is experimental, and is subject to
+change.
+
+``randint`` and ``choice`` now work on empty distributions
+----------------------------------------------------------
+Even when no elements needed to be drawn, ``np.random.randint`` and
+``np.random.choice`` raised an error when the arguments described an empty
+distribution. This has been fixed so that e.g.
+``np.random.choice([], 0) == np.array([], dtype=float64)``.
+
+``linalg.lstsq`` and ``linalg.qr`` now work with empty matrices
+---------------------------------------------------------------
+Previously, a ``LinAlgError`` would be raised when an empty matrix/empty
+matrices (with zero rows and/or columns) is/are passed in. Now outputs of
+appropriate shapes are returned.
+
+``np.diff`` Added kwargs prepend and append
+-------------------------------------------
+Add kwargs prepend and append, allowing for values to be inserted
+on either end of the differences.  Similar to options for ediff1d.
+Allows for the inverse of cumsum easily via prepend=0
+
+ARM support updated
+-------------------
+Support for ARM CPUs has been updated to accommodate 32 and 64 bit targets,
+and also big and little endian byte ordering. AARCH32 memory alignment issues
+have been addressed.
+
+Appending to build flags
+------------------------
+`numpy.distutils` has always overridden rather than appended to `LDFLAGS` and
+other similar such environment variables for compiling Fortran extensions.
+Now, if the `NPY_DISTUTILS_APPEND_FLAGS` environment variable is set to 1, the
+behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,
+`F90FLAGS`, `FREEFLAGS`, `FOPT`, `FDEBUG`, and `FFLAGS`.  See gh-11525 for more
+details.
+
+``np.clip`` and the ``clip`` method check for memory overlap
+------------------------------------------------------------
+The ``out`` argument to these functions is now always tested for memory overlap
+to avoid corrupted results when memory overlap occurs.
+
+Detailed docstrings for scalar numeric types
+--------------------------------------------
+The ``help`` function, when applied to numeric types such as `np.intc`,
+`np.int_`, and `np.longlong`, now lists all of the aliased names for that type,
+distinguishing between platform -dependent and -independent aliases.
+
+Large allocations marked as suitable for transparent hugepages
+--------------------------------------------------------------
+On systems that support transparent hugepages over the madvise system call
+numpy now marks that large memory allocations can be backed by hugepages which
+reduces page fault overhead and can in some fault heavy cases improve
+performance significantly.
+On Linux for huge pages to be used the setting
+`/sys/kernel/mm/transparent_hugepage/enabled` must be at least `madvise`.
+Systems which already have it set to `always` will not see much difference as
+the kernel will automatically use huge pages where appropriate.
+
+Users of very old Linux kernels (~3.x and older) should make sure that
+`/sys/kernel/mm/transparent_hugepage/defrag` is not set to `always` to avoid
+performance problems due concurrency issues in the memory defragmentation.
+
 
 Changes
 =======
+
+Comparison ufuncs will now error rather than return NotImplemented
+------------------------------------------------------------------
+Previously, comparison ufuncs such as ``np.equal`` would return
+`NotImplemented` if their arguments had structured dtypes, to help comparison
+operators such as ``__eq__`` deal with those.  This is no longer needed, as the
+relevant logic has moved to the comparison operators proper (which thus do
+continue to return `NotImplemented` as needed). Hence, like all other ufuncs,
+the comparison ufuncs will now error on structured dtypes.
+
+Positive will now raise a deprecation warning for non-numerical arrays
+----------------------------------------------------------------------
+Previously, ``+array`` unconditionally returned a copy. Now, it will
+raise a ``DeprecationWarning`` if the array is not numerical (i.e.,
+if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
+subclasses that override the default ``__array_ufunc__`` implementation,
+the ``TypeError`` is passed on.
+
+``maximum`` and ``minimum`` set invalid float status for more dtypes
+--------------------------------------------------------------------
+Previously only ``float32`` and ``float64`` set invalid float status (by
+default emitting a `RuntimeWarning`) when a Nan is encountered in
+`numpy.maximum` and `numpy.minimum`. Now ``float16``, ``complex64``,
+``complex128`` and ``complex256`` will do so as well.
+
+Umath and multiarray c-extension modules merged into a single module
+--------------------------------------------------------------------
+The two modules were merged, according to the first step in `NEP 15`_.
+Previously `np.core.umath` and `np.core.multiarray` were the c-extension
+modules, they are now python wrappers to the single `np.core/_multiarray_math`
+c-extension module.
+
+``getfield`` validity checks extended
+----------------------------------------
+`numpy.ndarray.getfield` now checks the dtype and offset arguments to prevent
+accessing invalid memory locations.
+
+.. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html

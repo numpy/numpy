@@ -23,7 +23,9 @@ class Block(Benchmark):
         self.four_1d = np.ones(6 * n)
         self.five_0d = np.ones(1 * n)
         self.six_1d = np.ones(5 * n)
-        self.zero_2d = np.zeros((2 * n, 6 * n))
+        # avoid np.zeros's lazy allocation that might cause
+        # page faults during benchmark
+        self.zero_2d = np.full((2 * n, 6 * n), 0)
 
         self.one = np.ones(3 * n)
         self.two = 2 * np.ones((3, 3 * n))
@@ -31,19 +33,9 @@ class Block(Benchmark):
         self.four = 4 * np.ones(3 * n)
         self.five = 5 * np.ones(1 * n)
         self.six = 6 * np.ones(5 * n)
-        self.zero = np.zeros((2 * n, 6 * n))
-
-        self.a000 = np.ones((2 * n, 2 * n, 2 * n), int) * 1
-
-        self.a100 = np.ones((3 * n, 2 * n, 2 * n), int) * 2
-        self.a010 = np.ones((2 * n, 3 * n, 2 * n), int) * 3
-        self.a001 = np.ones((2 * n, 2 * n, 3 * n), int) * 4
-
-        self.a011 = np.ones((2 * n, 3 * n, 3 * n), int) * 5
-        self.a101 = np.ones((3 * n, 2 * n, 3 * n), int) * 6
-        self.a110 = np.ones((3 * n, 3 * n, 2 * n), int) * 7
-
-        self.a111 = np.ones((3 * n, 3 * n, 3 * n), int) * 8
+        # avoid np.zeros's lazy allocation that might cause
+        # page faults during benchmark
+        self.zero = np.full((2 * n, 6 * n), 0)
 
     def time_block_simple_row_wise(self, n):
         np.block([self.a_2d, self.b_2d])
@@ -72,6 +64,47 @@ class Block(Benchmark):
             [self.zero]
         ])
 
+    def time_no_lists(self, n):
+        np.block(1)
+        np.block(np.eye(3 * n))
+
+
+class Block2D(Benchmark):
+    params = [[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)],
+              ['uint8', 'uint16', 'uint32', 'uint64'],
+              [(2, 2), (4, 4)]]
+    param_names = ['shape', 'dtype', 'n_chunks']
+
+    def setup(self, shape, dtype, n_chunks):
+
+        self.block_list = [
+             [np.full(shape=[s//n_chunk for s, n_chunk in zip(shape, n_chunks)],
+                     fill_value=1, dtype=dtype) for _ in range(n_chunks[1])]
+            for _ in range(n_chunks[0])
+        ]
+
+    def time_block2d(self, shape, dtype, n_chunks):
+        np.block(self.block_list)
+
+
+class Block3D(Benchmark):
+    params = [1, 10, 100]
+    param_names = ['size']
+
+    def setup(self, n):
+        # Slow setup method: hence separated from the others above
+        self.a000 = np.ones((2 * n, 2 * n, 2 * n), int) * 1
+
+        self.a100 = np.ones((3 * n, 2 * n, 2 * n), int) * 2
+        self.a010 = np.ones((2 * n, 3 * n, 2 * n), int) * 3
+        self.a001 = np.ones((2 * n, 2 * n, 3 * n), int) * 4
+
+        self.a011 = np.ones((2 * n, 3 * n, 3 * n), int) * 5
+        self.a101 = np.ones((3 * n, 2 * n, 3 * n), int) * 6
+        self.a110 = np.ones((3 * n, 3 * n, 2 * n), int) * 7
+
+        self.a111 = np.ones((3 * n, 3 * n, 3 * n), int) * 8
+
     def time_3d(self, n):
         np.block([
             [
@@ -84,6 +117,5 @@ class Block(Benchmark):
             ]
         ])
 
-    def time_no_lists(self, n):
-        np.block(1)
-        np.block(np.eye(3 * n))
+    # Retain old benchmark name for backward compat
+    time_3d.benchmark_name = "bench_shape_base.Block.time_3d"

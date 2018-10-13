@@ -25,12 +25,8 @@ class _GenericTest(object):
         self._assert_func(a, b)
 
     def _test_not_equal(self, a, b):
-        try:
+        with assert_raises(AssertionError):
             self._assert_func(a, b)
-        except AssertionError:
-            pass
-        else:
-            raise AssertionError("a and b are found equal but are not")
 
     def test_array_rank1_eq(self):
         """Test two equal array of rank 1 are found equal."""
@@ -1081,10 +1077,27 @@ class TestStringEqual(object):
 
         assert_raises(AssertionError,
                       lambda: assert_string_equal("foo", "hello"))
+        
+    def test_regex(self):
+        assert_string_equal("a+*b", "a+*b")
+
+        assert_raises(AssertionError,
+                      lambda: assert_string_equal("aaa", "a+b"))
 
 
 def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
-    mod_warns = mod.__warningregistry__
+    try:
+        mod_warns = mod.__warningregistry__
+    except AttributeError:
+        # the lack of a __warningregistry__
+        # attribute means that no warning has
+        # occurred; this can be triggered in
+        # a parallel test scenario, while in
+        # a serial test scenario an initial
+        # warning (and therefore the attribute)
+        # are always created first
+        mod_warns = {}
+
     num_warns = len(mod_warns)
     # Python 3.4 appears to clear any pre-existing warnings of the same type,
     # when raising warnings inside a catch_warnings block. So, there is a
@@ -1105,6 +1118,33 @@ def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
             if py34 is not None:
                 n_in_context = py34
     assert_equal(num_warns, n_in_context)
+
+def test_warn_len_equal_call_scenarios():
+    # assert_warn_len_equal is called under
+    # varying circumstances depending on serial
+    # vs. parallel test scenarios; this test
+    # simply aims to probe both code paths and
+    # check that no assertion is uncaught
+
+    # parallel scenario -- no warning issued yet
+    class mod(object):
+        pass
+
+    mod_inst = mod()
+
+    assert_warn_len_equal(mod=mod_inst,
+                          n_in_context=0)
+
+    # serial test scenario -- the __warningregistry__
+    # attribute should be present
+    class mod(object):
+        def __init__(self):
+            self.__warningregistry__ = {'warning1':1,
+                                        'warning2':2}
+
+    mod_inst = mod()
+    assert_warn_len_equal(mod=mod_inst,
+                          n_in_context=2)
 
 
 def _get_fresh_mod():
@@ -1385,7 +1425,6 @@ class TestAssertNoGcCycles(object):
 
         assert_no_gc_cycles(no_cycle)
 
-
     def test_asserts(self):
         def make_cycle():
             a = []
@@ -1399,7 +1438,6 @@ class TestAssertNoGcCycles(object):
 
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
-
 
     def test_fails(self):
         """

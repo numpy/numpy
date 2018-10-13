@@ -56,4 +56,5 @@ Histograms
    histogram2d
    histogramdd
    bincount
+   histogram_bin_edges
    digitize
