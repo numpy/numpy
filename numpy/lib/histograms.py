@@ -8,6 +8,7 @@ import warnings
 
 import numpy as np
 from numpy.compat.py3k import basestring
+from numpy.core.overrides import array_function_dispatch
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
 
@@ -220,6 +221,14 @@ _hist_bin_selectors = {'auto': _hist_bin_auto,
 def _ravel_and_check_weights(a, weights):
     """ Check a and weights have matching shapes, and ravel both """
     a = np.asarray(a)
+
+    # Ensure that the array is a "subtractable" dtype
+    if a.dtype == np.bool_:
+        warnings.warn("Converting input from {} to {} for compatibility."
+                      .format(a.dtype, np.uint8),
+                      RuntimeWarning, stacklevel=2)
+        a = a.astype(np.uint8)
+
     if weights is not None:
         weights = np.asarray(weights)
         if weights.shape != a.shape:
@@ -392,6 +401,11 @@ def _search_sorted_inclusive(a, v):
     ))
 
 
+def _histogram_bin_edges_dispatcher(a, bins=None, range=None, weights=None):
+    return (a, bins, weights)
+
+
+@array_function_dispatch(_histogram_bin_edges_dispatcher)
 def histogram_bin_edges(a, bins=10, range=None, weights=None):
     r"""
     Function to calculate only the edges of the bins used by the `histogram` function.
@@ -586,6 +600,12 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     return bin_edges
 
 
+def _histogram_dispatcher(
+        a, bins=None, range=None, normed=None, weights=None, density=None):
+    return (a, bins, weights)
+
+
+@array_function_dispatch(_histogram_dispatcher)
 def histogram(a, bins=10, range=None, normed=None, weights=None,
               density=None):
     r"""
@@ -838,6 +858,12 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         return n, bin_edges
 
 
+def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
+                            weights=None, density=None):
+    return (sample, bins, weights)
+
+
+@array_function_dispatch(_histogramdd_dispatcher)
 def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
                 density=None):
     """

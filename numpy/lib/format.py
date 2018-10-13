@@ -162,11 +162,8 @@ import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, asstr, isfileobj, long, basestring
+from numpy.core.numeric import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2

@@ -20,6 +20,9 @@ import gc
 import weakref
 import pytest
 from contextlib import contextmanager
+
+from numpy.core.numeric import pickle
+
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -1371,7 +1374,6 @@ class TestZeroSizeFlexible(object):
             assert_equal(zs.view((dt, 1)).shape, (0,))
 
     def test_pickle(self):
-        import pickle
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             for dt in [bytes, np.void, unicode]:
                 zs = self._zeros(10, dt)
@@ -1379,6 +1381,21 @@ class TestZeroSizeFlexible(object):
                 zs2 = pickle.loads(p)
 
                 assert_equal(zs.dtype, zs2.dtype)
+
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
+                        reason="requires pickle protocol 5")
+    def test_pickle_with_buffercallback(self):
+        array = np.arange(10)
+        buffers = []
+        bytes_string = pickle.dumps(array, buffer_callback=buffers.append,
+                                    protocol=5)
+        array_from_buffer = pickle.loads(bytes_string, buffers=buffers)
+        # when using pickle protocol 5 with buffer callbacks,
+        # array_from_buffer is reconstructed from a buffer holding a view
+        # to the initial array's data, so modifying an element in array
+        # should modify it in array_from_buffer too.
+        array[0] = -1
+        assert array_from_buffer[0] == -1, array_from_buffer[0]
 
 
 class TestMethods(object):
@@ -3549,8 +3566,91 @@ class TestSubscripting(object):
 
 
 class TestPickling(object):
+    def test_highest_available_pickle_protocol(self):
+        try:
+            import pickle5
+        except ImportError:
+            pickle5 = None
+
+        if sys.version_info[:2] >= (3, 8) or pickle5 is not None:
+            assert pickle.HIGHEST_PROTOCOL >= 5
+        else:
+            assert pickle.HIGHEST_PROTOCOL < 5
+
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL >= 5,
+                        reason=('this tests the error messages when trying to'
+                                'protocol 5 although it is not available'))
+    def test_correct_protocol5_error_message(self):
+        array = np.arange(10)
+        f = io.BytesIO()
+
+        if sys.version_info[:2] in ((3, 6), (3, 7)):
+            # For the specific case of python3.6 and 3.7, raise a clear import
+            # error about the pickle5 backport when trying to use protocol=5
+            # without the pickle5 package
+            with pytest.raises(ImportError):
+                array.__reduce_ex__(5)
+
+        elif sys.version_info[:2] < (3, 6):
+            # when calling __reduce_ex__ explicitly with protocol=5 on python
+            # raise a ValueError saying that protocol 5 is not available for
+            # this python version
+            with pytest.raises(ValueError):
+                array.__reduce_ex__(5)
+
+    def test_record_array_with_object_dtype(self):
+        my_object = object()
+
+        arr_with_object = np.array(
+                [(my_object, 1, 2.0)],
+                dtype=[('a', object), ('b', int), ('c', float)])
+        arr_without_object = np.array(
+                [('xxx', 1, 2.0)],
+                dtype=[('a', str), ('b', int), ('c', float)])
+
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            depickled_arr_with_object = pickle.loads(
+                    pickle.dumps(arr_with_object, protocol=proto))
+            depickled_arr_without_object = pickle.loads(
+                    pickle.dumps(arr_without_object, protocol=proto))
+
+            assert_equal(arr_with_object.dtype,
+                         depickled_arr_with_object.dtype)
+            assert_equal(arr_without_object.dtype,
+                         depickled_arr_without_object.dtype)
+
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
+                        reason="requires pickle protocol 5")
+    def test_f_contiguous_array(self):
+        f_contiguous_array = np.array([[1, 2, 3], [4, 5, 6]], order='F')
+        buffers = []
+
+        # When using pickle protocol 5, Fortran-contiguous arrays can be
+        # serialized using out-of-band buffers
+        bytes_string = pickle.dumps(f_contiguous_array, protocol=5,
+                                    buffer_callback=buffers.append)
+
+        assert len(buffers) > 0
+
+        depickled_f_contiguous_array = pickle.loads(bytes_string,
+                                                    buffers=buffers)
+
+        assert_equal(f_contiguous_array, depickled_f_contiguous_array)
+
+    def test_non_contiguous_array(self):
+        non_contiguous_array = np.arange(12).reshape(3, 4)[:, :2]
+        assert not non_contiguous_array.flags.c_contiguous
+        assert not non_contiguous_array.flags.f_contiguous
+
+        # make sure non-contiguous arrays can be pickled-depickled
+        # using any protocol
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            depickled_non_contiguous_array = pickle.loads(
+                    pickle.dumps(non_contiguous_array, protocol=proto))
+
+            assert_equal(non_contiguous_array, depickled_non_contiguous_array)
+
     def test_roundtrip(self):
-        import pickle
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             carray = np.array([[2, 9], [7, 0], [3, 8]])
             DATA = [
@@ -3566,7 +3666,6 @@ class TestPickling(object):
                         err_msg="%r" % a)
 
     def _loads(self, obj):
-        import pickle
         if sys.version_info[0] >= 3:
             return pickle.loads(obj, encoding='latin1')
         else:
@@ -7662,3 +7761,19 @@ def test_uintalignment_and_alignment():
     # check that copy code doesn't complain in debug mode
     dst = np.zeros((2,2), dtype='c8')
     dst[:,1] = src[:,1]  # assert in lowlevel_strided_loops fails?
+
+def test_getfield():
+    a = np.arange(32, dtype='uint16')
+    if sys.byteorder == 'little':
+        i = 0
+        j = 1
+    else:
+        i = 1
+        j = 0
+    b = a.getfield('int8', i)
+    assert_equal(b, a)
+    b = a.getfield('int8', j)
+    assert_equal(b, 0)
+    pytest.raises(ValueError, a.getfield, 'uint8', -1)
+    pytest.raises(ValueError, a.getfield, 'uint8', 16)
+    pytest.raises(ValueError, a.getfield, 'uint64', 0)

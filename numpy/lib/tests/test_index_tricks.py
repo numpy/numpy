@@ -336,6 +336,19 @@ class TestFillDiagonal(object):
         i = np.array([0, 1, 2])
         assert_equal(np.where(a != 0), (i, i, i, i))
 
+    def test_low_dim_handling(self):
+        # raise error with low dimensionality
+        a = np.zeros(3, int)
+        with assert_raises_regex(ValueError, "at least 2-d"):
+            fill_diagonal(a, 5)
+
+    def test_hetero_shape_handling(self):
+        # raise error with high dimensionality and
+        # shape mismatch
+        a = np.zeros((3,3,7,3), int)
+        with assert_raises_regex(ValueError, "equal length"):
+            fill_diagonal(a, 2)
+
 
 def test_diag_indices():
     di = diag_indices(4)
@@ -365,11 +378,23 @@ def test_diag_indices():
         )
 
 
-def test_diag_indices_from():
-    x = np.random.random((4, 4))
-    r, c = diag_indices_from(x)
-    assert_array_equal(r, np.arange(4))
-    assert_array_equal(c, np.arange(4))
+class TestDiagIndicesFrom(object):
+
+    def test_diag_indices_from(self):
+        x = np.random.random((4, 4))
+        r, c = diag_indices_from(x)
+        assert_array_equal(r, np.arange(4))
+        assert_array_equal(c, np.arange(4))
+
+    def test_error_small_input(self):
+        x = np.ones(7)
+        with assert_raises_regex(ValueError, "at least 2-d"):
+            diag_indices_from(x)
+
+    def test_error_shape_mismatch(self):
+        x = np.zeros((3, 3, 2, 3), int)
+        with assert_raises_regex(ValueError, "equal length"):
+            diag_indices_from(x)
 
 
 def test_ndindex():

@@ -4143,15 +4143,15 @@ cdef class RandomState:
         if op.shape == ():
             fp = PyFloat_AsDouble(p)
 
-            if fp < 0.0:
-                raise ValueError("p < 0.0")
+            if fp <= 0.0:
+                raise ValueError("p <= 0.0")
             if fp > 1.0:
                 raise ValueError("p > 1.0")
             return discd_array_sc(self.internal_state, rk_geometric, size, fp,
                                   self.lock)
 
-        if np.any(np.less(op, 0.0)):
-            raise ValueError("p < 0.0")
+        if np.any(np.less_equal(op, 0.0)):
+            raise ValueError("p <= 0.0")
         if np.any(np.greater(op, 1.0)):
             raise ValueError("p > 1.0")
         return discd_array(self.internal_state, rk_geometric, size, op,
@@ -4836,9 +4836,8 @@ cdef class RandomState:
                     self._shuffle_raw(n, sizeof(npy_intp), stride, x_ptr, buf_ptr)
                 else:
                     self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim > 1 and x.size:
-            # Multidimensional ndarrays require a bounce buffer.
-            buf = np.empty_like(x[0])
+        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+            buf = np.empty_like(x[0,...])
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
@@ -4907,8 +4906,8 @@ cdef class RandomState:
     
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
-            # must return a copy
-            if arr is x:
+            # Return a copy if same memory
+            if np.may_share_memory(arr, x):
                 arr = np.array(arr)
             self.shuffle(arr)
             return arr

@@ -13,6 +13,7 @@ from . import function_base
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
+from numpy.core.overrides import array_function_dispatch
 from numpy.lib.stride_tricks import as_strided
 
 
@@ -23,6 +24,11 @@ __all__ = [
     ]
 
 
+def _ix__dispatcher(*args):
+    return args
+
+
+@array_function_dispatch(_ix__dispatcher)
 def ix_(*args):
     """
     Construct an open mesh from multiple sequences.
@@ -729,6 +735,12 @@ s_ = IndexExpression(maketuple=False)
 # The following functions complement those in twodim_base, but are
 # applicable to N-dimensions.
 
+
+def _fill_diagonal_dispatcher(a, val, wrap=None):
+    return (a,)
+
+
+@array_function_dispatch(_fill_diagonal_dispatcher)
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
@@ -911,6 +923,11 @@ def diag_indices(n, ndim=2):
     return (idx,) * ndim
 
 
+def _diag_indices_from(arr):
+    return (arr,)
+
+
+@array_function_dispatch(_diag_indices_from)
 def diag_indices_from(arr):
     """
     Return the indices to access the main diagonal of an n-dimensional array.

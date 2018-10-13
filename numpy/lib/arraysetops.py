@@ -28,6 +28,7 @@ To do: Optionally return indices analogously to unique for all functions.
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+from numpy.core.overrides import array_function_dispatch
 
 
 __all__ = [
@@ -36,6 +37,11 @@ __all__ = [
     ]
 
 
+def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
+    return (ary, to_end, to_begin)
+
+
+@array_function_dispatch(_ediff1d_dispatcher)
 def ediff1d(ary, to_end=None, to_begin=None):
     """
     The differences between consecutive elements of an array.
@@ -133,6 +139,12 @@ def _unpack_tuple(x):
         return x
 
 
+def _unique_dispatcher(ar, return_index=None, return_inverse=None,
+                       return_counts=None, axis=None):
+    return (ar,)
+
+
+@array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None):
     """
@@ -313,6 +325,12 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     return ret
 
 
+def _intersect1d_dispatcher(
+        ar1, ar2, assume_unique=None, return_indices=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_intersect1d_dispatcher)
 def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
     Find the intersection of two arrays.
@@ -408,6 +426,11 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         return int1d
 
 
+def _setxor1d_dispatcher(ar1, ar2, assume_unique=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_setxor1d_dispatcher)
 def setxor1d(ar1, ar2, assume_unique=False):
     """
     Find the set exclusive-or of two arrays.
@@ -562,6 +585,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
+def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None):
+    return (element, test_elements)
+
+
+@array_function_dispatch(_isin_dispatcher)
 def isin(element, test_elements, assume_unique=False, invert=False):
     """
     Calculates `element in test_elements`, broadcasting over `element` only.
@@ -660,6 +688,11 @@ def isin(element, test_elements, assume_unique=False, invert=False):
                 invert=invert).reshape(element.shape)
 
 
+def _union1d_dispatcher(ar1, ar2):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_union1d_dispatcher)
 def union1d(ar1, ar2):
     """
     Find the union of two arrays.
@@ -695,6 +728,12 @@ def union1d(ar1, ar2):
     """
     return unique(np.concatenate((ar1, ar2), axis=None))
 
+
+def _setdiff1d_dispatcher(ar1, ar2, assume_unique=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_setdiff1d_dispatcher)
 def setdiff1d(ar1, ar2, assume_unique=False):
     """
     Find the set difference of two arrays.
