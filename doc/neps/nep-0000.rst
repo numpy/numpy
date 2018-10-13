@@ -31,12 +31,18 @@ feature proposal [1]_.
 Types
 ^^^^^
 
-There are two kinds of NEP:
+There are three kinds of NEPs:
 
 1. A **Standards Track** NEP describes a new feature or implementation
    for NumPy.
 
-2. A **Process** NEP describes a process surrounding NumPy, or
+2. An **Informational** NEP describes a NumPy design issue, or provides
+   general guidelines or information to the Python community, but does not
+   propose a new feature. Informational NEPs do not necessarily represent a
+   NumPy community consensus or recommendation, so users and implementers are
+   free to ignore Informational NEPs or follow their advice.
+
+3. A **Process** NEP describes a process surrounding NumPy, or
    proposes a change to (or an event in) a process.  Process NEPs are
    like Standards Track NEPs but apply to areas other than the NumPy
    language itself.  They may propose an implementation, but not to
