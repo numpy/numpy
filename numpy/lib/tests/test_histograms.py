@@ -119,6 +119,13 @@ class TestHistogram(object):
         h, b = histogram(a, bins=8, range=[1, 9], weights=w)
         assert_equal(h, w[1:-1])
 
+    def test_arr_weights_mismatch(self):
+        a = np.arange(10) + .5
+        w = np.arange(11) + .5
+        with assert_raises_regex(ValueError, "same shape as"):
+            h, b = histogram(a, range=[1, 9], weights=w, density=True)
+
+
     def test_type(self):
         # Check the type of the returned histogram
         a = np.arange(10) + .5
