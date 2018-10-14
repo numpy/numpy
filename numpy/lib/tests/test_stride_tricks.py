@@ -443,3 +443,8 @@ def test_reference_types():
 
     actual, _ = broadcast_arrays(input_array, np.ones(3))
     assert_array_equal(expected, actual)
+
+
+def test_bogus_strides():
+    a = np.zeros((3, 1, 3), dtype='double')
+    assert a.strides == (24, 24, 8)
