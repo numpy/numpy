@@ -8,6 +8,7 @@ by importing from the extension module.
 
 from . import _multiarray_umath
 from .overrides import array_function_dispatch
+import numpy as np
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
@@ -271,12 +272,12 @@ def inner(a, b):
     return _multiarray_umath.inner(a, b)
 
 
-def _where_dispatcher(condition, x, y):
+def _where_dispatcher(condition, x=np._NoValue, y=np._NoValue):
     return (condition, x, y)
 
 
 @array_function_dispatch(_where_dispatcher)
-def where(condition, x, y):
+def where(condition, x=np._NoValue, y=np._NoValue):
     """
     where(condition, [x, y])
 
@@ -348,5 +349,5 @@ def where(condition, x, y):
            [ 0,  3, -1]])
     """
     # _multiarray_umath.where only accepts positional arguments
-    args = tuple(a for a in (x, y) if a is not None)
+    args = tuple(a for a in (x, y) if a is not np._NoValue)
     return _multiarray_umath.where(condition, *args)
