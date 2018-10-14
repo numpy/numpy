@@ -11,6 +11,7 @@ same code organization.
 Support for Python 3.4 been dropped in this release, the supported Python
 versions are 2.7 and 3.5-3.7. The wheels are linked with OpenBLAS v0.3.0 .
 
+Edit for testing.
 
 Highlights
 ==========
