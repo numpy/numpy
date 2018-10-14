@@ -514,6 +514,21 @@ def ndrange_tester_helper(expected, not_expected,
         assert arr_item == list_item
 
 
+    for indx, value in enumerate(r.ravel()):
+        assert expected[indx] == value
+
+    for order in 'CAK':
+        for indx, value in enumerate(r.ravel(order)):
+            assert expected[indx] == value
+
+
+    r_f_order = (i[::-1] for i in ndrange(start=r.start[::-1],
+                                          stop=r.stop[::-1],
+                                          step=r.step[::-1]))
+    for raveled, other in zip(r.ravel('F'), r_f_order):
+        assert raveled == other
+
+
 def test_ndrange():
     expected = [(r,) for r in range(5)]
     not_expected = [(-1,), (7,), (1, 2)]

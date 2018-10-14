@@ -993,9 +993,14 @@ class ndrange(_nx.collections_abc.Sequence):
 
     @property
     def flat(self):
+        # Does flat have to return a flatiter?
+        # Will flatiter even support lazy arrays like this one?
         return iter(self)
 
     def ravel(self, order='C'):
+        # Is there a special class I need to return?
+        # Once again, will that special class require the numpy array to be
+        # dense?
         if order in 'CAK':
             return iter(self)
         elif order == 'F':
