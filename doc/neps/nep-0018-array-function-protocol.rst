@@ -298,7 +298,7 @@ and this ensures that checking overloads has acceptable performance even when
 there are a large number of overloaded arguments. To avoid long-term divergence
 between these two dispatch protocols, we should
 `also update <https://github.com/numpy/numpy/issues/11306>`_
-``__array_ufunc__`` to match this behavior.
+``__array_ufunc__`` to match this behavior (update: this has happened).
 
 Special handling of ``numpy.ndarray``
 '''''''''''''''''''''''''''''''''''''
@@ -402,6 +402,11 @@ to ``__array_function__``. (In C, arguments for all Python functions are parsed
 from a tuple ``*args`` and dict ``**kwargs``.) This shouldn't stop us from
 writing overrides for functions with non-generic signatures that can't use the
 decorator, but we should consider these cases carefully.
+
+.. note::
+
+    The code for ``array_function_dispatch`` above has been updated from the
+    original version of this NEP to match the actual implementation in NumPy.
 
 Extensibility
 ~~~~~~~~~~~~~
