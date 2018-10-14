@@ -496,10 +496,13 @@ def ndrange_tester_helper(expected, not_expected,
         assert r.count(e) == 0
         assert_raises(ValueError, r.index, e)
 
+    arr = np.asarray(r)
+    assert_equal(arr.shape, r.shape)
     for i, e in enumerate(expected):
         indx = np.unravel_index(i, r.shape)
         assert_equal(expected[i], r[indx])
         assert_equal(r.index(e), indx)
+        assert_equal(arr[indx], r[indx])
 
     if reverse:
         expected = expected[::-1]

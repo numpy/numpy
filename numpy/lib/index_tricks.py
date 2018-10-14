@@ -7,8 +7,8 @@ import math
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, ScalarType, array, alltrue, cumprod, arange, ndim
-    )
+    asarray, ScalarType, array, alltrue, cumprod, arange, ndim,
+    empty)
 from numpy.core.numerictypes import find_common_type, issubdtype
 
 import numpy.matrixlib as matrixlib
@@ -766,6 +766,13 @@ class ndrange(_nx.collections_abc.Sequence):
     (1, 1)
     (2, 1)
 
+    The conceptual ``r`` can be obtained by making a call to ``np.asarray``.
+    We strongly against this method of array creation since it is slow.
+
+    >>> np.asarray(np.ndrange((4, 4))[::2, 1:-1])
+    array([[(0, 1), (0, 2)],
+           [(2, 1), (2, 2)]], dtype=object)
+
     """
 
     __slots__ = ['_start', '_stop', '_step', '_ranges']
@@ -974,6 +981,15 @@ class ndrange(_nx.collections_abc.Sequence):
             raise RuntimeError('numpy.ndrange is hot hashable in Python 2')
         else:
             return hash(tuple(hash(r) for r in self._ranges))
+
+    def __array__(self, dtype=None):
+        if dtype is not None:
+            raise ValueError('numpy.ndrange must not be specified.')
+        # How do I assert the dtype is object?
+        arr = empty(self.shape, dtype='object')
+        for i, value in zip(ndrange(self.shape), self):
+            arr[i] = value
+        return arr
 
 
 class ndindex(object):
