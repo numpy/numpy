@@ -3,10 +3,15 @@ An abstract base class for identifying "duck arrays"
 ====================================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>
-:Status: Draft
+:Status: Withdrawn
 :Type: Standards Track
 :Created: 2018-03-06
 
+.. note::
+
+    This NEP has been withdrawn in favor of the protocol based approach
+    described in
+    `NEP 22 <http://www.numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html>`__
 
 Abstract
 --------
@@ -224,7 +229,7 @@ well, since it's used by ``asabstractarray``. We might also want to go
 ahead and add some basic attributes like ``ndim``, ``shape``,
 ``dtype``.
 
-Adding new abstract methods will be a bit trick, because ABCs enforce
+Adding new abstract methods will be a bit tricky, because ABCs enforce
 these at subclass time; therefore, simply adding a new
 `@abstractmethod` will be a backwards compatibility break. If this
 becomes a problem then we can use some hacks to implement an
