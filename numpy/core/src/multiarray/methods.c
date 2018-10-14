@@ -7,8 +7,6 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "numpy/npy_math.h"
-#include "numpy/npy_common.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -843,47 +841,6 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
 
-        /*
-         * after casting from NPY_DATETIME_NAT to float64, we go back
-         * and replace the spurious floating point values with NPY_NAN
-         * at the appropriate indices; this may also be possible to
-         * achieve upstream, but the PyArray_CopyInto() operation above
-         * uses very low level general array iteration loops where it
-         * may not be desirable to perform a check for NAT on each
-         * iteration
-         */
-
-        /* confine the NaT to NaN substitution checks by type cast */
-        if ((PyArray_DESCR(self)->type_num == NPY_TIMEDELTA) &&
-            ((PyArray_DESCR(ret)->type_num == NPY_HALF)   ||
-            (PyArray_DESCR(ret)->type_num == NPY_FLOAT)   ||
-            (PyArray_DESCR(ret)->type_num == NPY_DOUBLE)  ||
-            (PyArray_DESCR(ret)->type_num == NPY_LONGDOUBLE))) {
-
-            PyObject *item;
-            PyArrayIterObject *self_iter;
-            PyObject *ret_iter;
-
-            /* array iterator objects */
-            self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-            ret_iter = PyArray_IterNew((PyObject *)ret);
-
-            while (self_iter->index < self_iter->size) {
-               /* GETITEM will retrieve Py_None for NaT */
-               item = PyArray_GETITEM(self, PyArray_ITER_DATA(self_iter));
-
-               /* Check if the item in original array looks like NaT */
-               if (item == Py_None) {
-                   /* replace with NPY_NAN in returned array if it does */
-                   PyArray_SETITEM(ret,
-                                   PyArray_ITER_DATA(ret_iter),
-                                   PyFloat_FromDouble(NPY_NAN));
-               }
-               Py_XDECREF(item);
-               PyArray_ITER_NEXT(self_iter);
-               PyArray_ITER_NEXT(ret_iter);
-            }
-        }
         return (PyObject *)ret;
     }
     else {

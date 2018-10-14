@@ -1086,6 +1086,95 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
 
 /* Assumes contiguous, and aligned, from and to */
 
+/* special case TIMEDELTA NPY_DATETIME_NAT handling */
+
+/**begin repeat
+ *
+ * #TYPE = TIMEDELTA#
+ * #type = npy_timedelta#
+ */
+
+static void
+@TYPE@_to_HALF(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
+{
+    const @type@ *ip = input;
+    npy_half *op = output;
+
+    while (n--) {
+        if (*ip == NPY_DATETIME_NAT) {
+            *op = NPY_HALF_NAN;
+        }
+        else {
+            *op = npy_float_to_half((float)(*ip));
+        }
+        ip++;
+        op++;
+    }
+}
+
+static void
+HALF_to_@TYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
+{
+    const npy_half *ip = input;
+    @type@ *op = output;
+
+    while (n--) {
+        *op++ = (@type@)npy_half_to_float(*ip++);
+    }
+}
+
+/**end repeat**/
+#if NPY_SIZEOF_SHORT == 2
+#define HALF_to_HALF SHORT_to_SHORT
+#elif NPY_SIZEOF_INT == 2
+#define HALF_to_HALF INT_to_INT
+#endif
+
+/**begin repeat
+ *
+ * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *           LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
+ *           TIMEDELTA#
+ * #totype = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *           npy_float, npy_double, npy_longdouble,
+ *           npy_datetime, npy_timedelta#
+ */
+
+/**begin repeat1
+ *
+ * #FROMTYPE = TIMEDELTA#
+ * #fromtype = npy_timedelta#
+ */
+static void
+@FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+        void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
+{
+    const @fromtype@ *ip = input;
+    @totype@ *op = output;
+
+    while (n--) {
+        if (*ip == NPY_DATETIME_NAT) {
+            if (*op == (npy_double)(*op)) {
+                *op = (double)NPY_NAN;
+            }
+            else if (*op == (npy_float)(*op)) {
+                *op = (float)NPY_NAN;
+            }
+        }
+        else {
+            *op = (@totype@)*ip;
+        }
+        ip++;
+        op++;
+    }
+}
+/**end repeat1**/
+
+/**end repeat**/
+
 
 /**begin repeat
  *
@@ -1101,12 +1190,11 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
 /**begin repeat1
  *
  * #FROMTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME,
- *             TIMEDELTA#
+ *             LONGLONG, ULONGLONG, FLOAT, DOUBLE, LONGDOUBLE, DATETIME#
  * #fromtype = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *             npy_float, npy_double, npy_longdouble,
- *             npy_datetime, npy_timedelta#
+ *             npy_datetime#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
@@ -1120,6 +1208,7 @@ static void
     }
 }
 /**end repeat1**/
+
 
 /**begin repeat1
  *
@@ -1146,12 +1235,11 @@ static void
 /**begin repeat
  *
  * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *         LONGLONG, ULONGLONG, LONGDOUBLE, DATETIME,
- *         TIMEDELTA#
+ *         LONGLONG, ULONGLONG, LONGDOUBLE, DATETIME#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_longdouble,
- *         npy_datetime, npy_timedelta#
+ *         npy_datetime#
  */
 
 static void
