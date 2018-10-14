@@ -1,11 +1,12 @@
-====================================================
-An abstract base class for identifying "duck arrays"
-====================================================
+=============================================================
+NEP 16 — An abstract base class for identifying "duck arrays"
+=============================================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>
 :Status: Withdrawn
 :Type: Standards Track
 :Created: 2018-03-06
+:Resolution: https://github.com/numpy/numpy/pull/12174
 
 .. note::
 
@@ -318,7 +319,7 @@ Links to discussion
 Appendix: Benchmark script
 --------------------------
 
-.. literal-include:: nep-0016-benchmark.py
+.. literalinclude:: nep-0016-benchmark.py
 
 
 Copyright
