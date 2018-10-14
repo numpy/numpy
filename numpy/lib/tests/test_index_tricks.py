@@ -461,7 +461,7 @@ def test_ndindex():
 
 def ndrange_tester_helper(expected, not_expected,
                           start=None, stop=None, step=None,
-                          slices=None, reverse=False):
+                          slices=None):
 
     kwargs = {}
     if start is not None:
@@ -504,18 +504,17 @@ def ndrange_tester_helper(expected, not_expected,
         assert_equal(r.index(e), indx)
         assert_equal(arr[indx], r[indx])
 
-    if reverse:
-        expected = expected[::-1]
-        i = reversed(r)
-    else:
-        i = iter(r)
-
-    x = list(i)
+    x = list(iter(r))
     assert_array_equal(x, expected)
+    x_reversed = list(reversed(r))
+    e_reversed = expected[::-1]
+    assert_array_equal(x_reversed, e_reversed)
+
+    for arr_item, list_item in zip(r.flat, x):
+        assert arr_item == list_item
 
 
-@pytest.mark.parametrize('reverse', [False, True])
-def test_ndrange(reverse):
+def test_ndrange():
     expected = [(r,) for r in range(5)]
     not_expected = [(-1,), (7,), (1, 2)]
     ndrange_tester_helper(expected, not_expected, stop=5)
