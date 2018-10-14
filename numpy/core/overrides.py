@@ -5,7 +5,7 @@ TODO: rewrite this in C for performance.
 import collections
 import functools
 
-from numpy.core.multiarray import ndarray
+from numpy.core._multiarray_umath import ndarray
 from numpy.compat._inspect import getargspec
 
 
