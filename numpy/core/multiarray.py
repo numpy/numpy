@@ -272,7 +272,7 @@ def inner(a, b):
     return _multiarray_umath.inner(a, b)
 
 
-def _where_dispatcher(condition, x=np._NoValue, y=np._NoValue):
+def _where_dispatcher(condition, x=None, y=None):
     return (condition, x, y)
 
 
