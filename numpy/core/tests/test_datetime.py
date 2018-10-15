@@ -154,6 +154,23 @@ class TestDateTime(object):
         for dtype in ['float16', 'float32', 'float64']:
             assert_equal(arr.astype(dtype),
                          expected_cast.astype(dtype))
+            # test the float->timedelta cast as well
+            assert_equal(expected_cast.astype(dtype).astype(arr.dtype),
+                         arr)
+
+    @pytest.mark.parametrize("float_type, cast_type", [
+    (np.float64, 'm8'),
+    (np.float32, 'm8'),
+    (np.float16, 'm8'),
+    (np.float64, 'm8[D]'),
+    (np.float32, 'm8[s]'),
+    (np.float16, 'm8[h]'),
+    ])
+    def test_float_cast_limits(self, float_type, cast_type):
+        arr = np.array([[np.iinfo(np.int64).max + 1],
+                        [np.iinfo(np.int64).min - 1]], dtype=float_type)
+        expected = np.array([['NaT'], ['NaT']], dtype=cast_type)
+        assert_equal(arr.astype(cast_type), expected)
 
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
