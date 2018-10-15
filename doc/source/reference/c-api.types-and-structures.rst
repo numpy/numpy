@@ -715,7 +715,7 @@ PyUFunc_Type
           PyUFuncGenericFunction *functions;
           void **data;
           int ntypes;
-          int version;
+          int reserved1;
           const char *name;
           char *types;
           const char *doc;

@@ -483,7 +483,7 @@ _is_alnum_underscore(char ch)
 /*
  * Convert a string into a number
  */
-static npy_int
+static npy_intp
 _get_size(const char* str)
 {
     char *stop;
@@ -2610,7 +2610,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
     /*
      * If keepdims is set and true, which means all input dimensions are
-     * the same.  Signal all output dimensions will be the same too.
+     * the same, signal that all output dimensions will be the same too.
      */
     if (keepdims == 1) {
         int num_dims = op_core_num_dims[0];
