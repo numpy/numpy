@@ -204,16 +204,16 @@ remains on what should be the type of the result - zero rank ndarray or ``x.dtyp
 Since most if not all numpy function automatically convert zero-rank arrays to scalars on return, there is no reason for
 ``[...]`` and ``[()]`` operations to be different. 
 
-See SVN changeset 1864 (which became git changeset `9024ff0`_) for
+See SVN changeset 1864 (which became git commit `9024ff0`_) for
 implementation of ``x[...]`` and ``x[()]`` returning numpy scalars.
 
-See SVN changeset 1866 (which became git changeset `743d922`_) for
+See SVN changeset 1866 (which became git commit `743d922`_) for
 implementation of ``x[...] = v`` and ``x[()] = v``
 
 Increasing rank with newaxis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Everyone who commented liked this feature, so as of SVN changeset 1871 (which became git changeset `b32744e`_) any number of ellipses and
+Everyone who commented liked this feature, so as of SVN changeset 1871 (which became git commit `b32744e`_) any number of ellipses and
 newaxis tokens can be placed as a subscript argument for a zero-rank array. For
 example::
 
