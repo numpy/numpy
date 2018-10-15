@@ -81,3 +81,13 @@ Rejected NEPs
 {% for nep, tags in neps.items() if tags['Status'] == 'Rejected' %}
    {{ tags['Title'] }} <{{ tags['Filename'] }}>
 {% endfor %}
+
+Withdrawn NEPs
+--------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Withdrawn' %}
+   {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
