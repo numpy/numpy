@@ -7,6 +7,7 @@ import datetime
 import pytest
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
+    assert_raises_regex,
     )
 from numpy.core.numeric import pickle
 
@@ -1610,6 +1611,76 @@ class TestDateTime(object):
                                 np.timedelta64(5, 'M'))
         assert_raises(TypeError, np.arange, np.timedelta64(0, 'Y'),
                                 np.timedelta64(5, 'D'))
+
+    @pytest.mark.parametrize("val1, val2, expected", [
+        # case from gh-12092
+        (np.timedelta64(7, 's'),
+         np.timedelta64(3, 's'),
+         np.timedelta64(1, 's')),
+        # negative value cases
+        (np.timedelta64(3, 's'),
+         np.timedelta64(-2, 's'),
+         np.timedelta64(-1, 's')),
+        (np.timedelta64(-3, 's'),
+         np.timedelta64(2, 's'),
+         np.timedelta64(1, 's')),
+        # larger value cases
+        (np.timedelta64(17, 's'),
+         np.timedelta64(22, 's'),
+         np.timedelta64(17, 's')),
+        (np.timedelta64(22, 's'),
+         np.timedelta64(17, 's'),
+         np.timedelta64(5, 's')),
+        # different units
+        (np.timedelta64(1, 'm'),
+         np.timedelta64(57, 's'),
+         np.timedelta64(3, 's')),
+        (np.timedelta64(1, 'us'),
+         np.timedelta64(727, 'ns'),
+         np.timedelta64(273, 'ns')),
+        # NaT is propagated
+        (np.timedelta64('NaT'),
+         np.timedelta64(50, 'ns'),
+         np.timedelta64('NaT')),
+        # Y % M works
+        (np.timedelta64(2, 'Y'),
+         np.timedelta64(22, 'M'),
+         np.timedelta64(2, 'M')),
+        ])
+    def test_timedelta_modulus(self, val1, val2, expected):
+        assert_equal(val1 % val2, expected)
+
+    @pytest.mark.parametrize("val1, val2", [
+        # years and months sometimes can't be unambiguously
+        # divided for modulus operation
+        (np.timedelta64(7, 'Y'),
+         np.timedelta64(3, 's')),
+        (np.timedelta64(7, 'M'),
+         np.timedelta64(1, 'D')),
+        ])
+    def test_timedelta_modulus_error(self, val1, val2):
+        with assert_raises_regex(TypeError, "common metadata divisor"):
+            val1 % val2
+
+    def test_timedelta_modulus_div_by_zero(self):
+        with assert_warns(RuntimeWarning):
+            actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
+            assert_equal(actual, np.timedelta64(0, 's'))
+
+    @pytest.mark.parametrize("val1, val2", [
+        # cases where one operand is not
+        # timedelta64
+        (np.timedelta64(7, 'Y'),
+         15,),
+        (7.5,
+         np.timedelta64(1, 'D')),
+        ])
+    def test_timedelta_modulus_type_resolution(self, val1, val2):
+        # NOTE: some of the operations may be supported
+        # in the future
+        with assert_raises_regex(TypeError,
+                                 "remainder cannot use operands with types"):
+            val1 % val2
 
     def test_timedelta_arange_no_dtype(self):
         d = np.array(5, dtype="m8[D]")

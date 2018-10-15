@@ -100,6 +100,12 @@ New Features
 New keyword ``max_rows`` in `numpy.loadtxt` sets the maximum rows of the
 content to be read after ``skiprows``, as in `numpy.genfromtxt`.
 
+modulus operator support added for ``np.timedelta64`` operands
+--------------------------------------------------------------
+The modulus (remainder) operator is now supported for two operands
+of type ``np.timedelta64``. The operands may have different units
+and the return value will match the type of the operands.
+
 
 Improvements
 ============
