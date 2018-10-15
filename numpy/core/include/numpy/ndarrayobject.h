@@ -5,13 +5,7 @@
 #ifndef NPY_NDARRAYOBJECT_H
 #define NPY_NDARRAYOBJECT_H
 #ifdef __cplusplus
-#define CONFUSE_EMACS {
-#define CONFUSE_EMACS2 }
-extern "C" CONFUSE_EMACS
-#undef CONFUSE_EMACS
-#undef CONFUSE_EMACS2
-/* ... otherwise a semi-smart identer (like emacs) tries to indent
-       everything when you're typing */
+extern "C" {
 #endif
 
 #include <Python.h>
