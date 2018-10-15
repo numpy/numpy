@@ -1173,6 +1173,57 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
 }
 
 
+NPY_NO_EXPORT int
+PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    int type_num1, type_num2;
+    int i;
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* Use the default when datetime and timedelta are not involved */
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                    type_tup, out_dtypes);
+    }
+    if (type_num1 == NPY_TIMEDELTA) {
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+        }
+        else {
+            return raise_binary_type_reso_error(ufunc, operands);
+        }
+    }
+    else {
+        return raise_binary_type_reso_error(ufunc, operands);
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 3; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    return 0;
+}
+
+
 /*
  * True division should return float64 results when both inputs are integer
  * types. The PyUFunc_DefaultTypeResolver promotes 8 bit integers to float16

@@ -92,6 +92,13 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
                              PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
 
+NPY_NO_EXPORT int
+PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc,
+                              NPY_CASTING casting,
+                              PyArrayObject **operands,
+                              PyObject *type_tup,
+                              PyArray_Descr **out_dtypes);
+
 /*
  * Does a linear search for the best inner loop of the ufunc.
  *

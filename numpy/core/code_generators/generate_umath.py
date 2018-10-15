@@ -791,8 +791,9 @@ defdict = {
 'remainder':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.remainder'),
-          None,
+          'PyUFunc_RemainderTypeResolver',
           TD(intflt),
+          [TypeDescription('m', FullTypeDescr, 'mm', 'm')],
           TD(O, f='PyNumber_Remainder'),
           ),
 'divmod':
