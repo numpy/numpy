@@ -56,10 +56,34 @@ def test_safe_eval_nameconstant():
     utils.safe_eval('None')
 
 
-def test_byte_bounds():
-    a = arange(12).reshape(3, 4)
-    low, high = utils.byte_bounds(a)
-    assert_equal(high - low, a.size * a.itemsize)
+class TestByteBounds(object):
+
+    def test_byte_bounds(self):
+        # pointer difference matches size * itemsize
+        # due to contiguity
+        a = arange(12).reshape(3, 4)
+        low, high = utils.byte_bounds(a)
+        assert_equal(high - low, a.size * a.itemsize)
+
+    def test_unusual_order_positive_stride(self):
+        a = arange(12).reshape(3, 4)
+        b = a.T
+        low, high = utils.byte_bounds(b)
+        assert_equal(high - low, b.size * b.itemsize)
+
+    def test_unusual_order_negative_stride(self):
+        a = arange(12).reshape(3, 4)
+        b = a.T[::-1]
+        low, high = utils.byte_bounds(b)
+        assert_equal(high - low, b.size * b.itemsize)
+
+    def test_strided(self):
+        a = arange(12)
+        b = a[::2]
+        low, high = utils.byte_bounds(b)
+        # the largest pointer address is lost (even numbers only in the
+        # stride), and compensate addresses for striding by 2
+        assert_equal(high - low, b.size * 2 * b.itemsize - b.itemsize)
 
 
 def test_assert_raises_regex_context_manager():
