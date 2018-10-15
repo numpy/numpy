@@ -298,7 +298,7 @@ and this ensures that checking overloads has acceptable performance even when
 there are a large number of overloaded arguments. To avoid long-term divergence
 between these two dispatch protocols, we should
 `also update <https://github.com/numpy/numpy/issues/11306>`_
-``__array_ufunc__`` to match this behavior (update: this has happened).
+``__array_ufunc__`` to match this behavior.
 
 Special handling of ``numpy.ndarray``
 '''''''''''''''''''''''''''''''''''''
@@ -406,7 +406,8 @@ decorator, but we should consider these cases carefully.
 .. note::
 
     The code for ``array_function_dispatch`` above has been updated from the
-    original version of this NEP to match the actual implementation in NumPy.
+    original version of this NEP to match the actual
+    `implementation in NumPy <https://github.com/numpy/numpy/blob/e104f03ac8f65ae5b92a9b413b0fa639f39e6de2/numpy/core/overrides.py>`_.
 
 Extensibility
 ~~~~~~~~~~~~~
