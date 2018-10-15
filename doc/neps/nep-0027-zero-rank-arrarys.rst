@@ -1,17 +1,21 @@
 =========================
-NEP 16 — Zero Rank Arrays
+NEP 27 — Zero Rank Arrays
 =========================
 
 :Author: Alexander Belopolsky (sasha), transcribed Matt Picus <matti.picus@gmail.com>
 :Status: Draft
 :Type: Informational
-:Created: 2018-10-14
+:Created: 2006-06-10
 
 Abstract
 --------
 
 NumPy has both zero rank arrays and scalars. This design document, adapted from
 a `2006 wiki entry`_, describes what zero rank arrays are and why they exist.
+It was transcribed 2018-10-13 into a NEP and links were updated.
+
+Note that some of the information here is dated, for instance indexing of 0-D
+arrays now is now implemented and does not error.
 
 Zero-Rank Arrays
 ----------------
@@ -155,7 +159,7 @@ Ellipsis and empty tuple
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sasha started a `Jan 2006 discussion`_ on scipy-dev
-with the folowing proposal:
+with the following proposal:
 
     ... it may be reasonable to allow ``a[...]``.  This way
     ellipsis can be interpereted as any number of  ``:`` s including zero. 
@@ -200,10 +204,16 @@ remains on what should be the type of the result - zero rank ndarray or ``x.dtyp
 Since most if not all numpy function automatically convert zero-rank arrays to scalars on return, there is no reason for
 ``[...]`` and ``[()]`` operations to be different. 
 
+See SVN changeset 1864 (which became git changeset `9024ff0`_) for
+implementation of ``x[...]`` and ``x[()]`` returning numpy scalars.
+
+See SVN changeset 1866 (which became git changeset `743d922`_) for
+implementation of ``x[...] = v`` and ``x[()] = v``
+
 Increasing rank with newaxis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Everyone who commented liked this feature, so now any number of ellipses and
+Everyone who commented liked this feature, so as of SVN changeset 1871 (which became git changeset `b32744e`_) any number of ellipses and
 newaxis tokens can be placed as a subscript argument for a zero-rank array. For
 example::
 
@@ -236,3 +246,6 @@ The original document appeared on the scipy.org wiki, with no Copyright notice, 
 .. _`Jan 2006 discussion`: https://mail.python.org/pipermail/numpy-discussion/2006-January/005579.html
 .. _`A case for rank-0 arrays`: https://mail.python.org/pipermail/numpy-discussion/2006-February/006384.html
 .. _`rank-0 arrays`: https://mail.python.org/pipermail/numpy-discussion/2002-September/001600.html
+.. _`9024ff0`: https://github.com/numpy/numpy/commit/9024ff0dc052888b5922dde0f3e615607a9e99d7
+.. _`743d922`: https://github.com/numpy/numpy/commit/743d922bf5893acf00ac92e823fe12f460726f90
+.. _`b32744e`: https://github.com/numpy/numpy/commit/b32744e3fc5b40bdfbd626dcc1f72907d77c01c4
