@@ -3,7 +3,7 @@ NEP 22 — Duck typing for NumPy arrays – high level overview
 ===========================================================
 
 :Author: Stephan Hoyer <shoyer@google.com>, Nathaniel J. Smith <njs@pobox.com>
-:Status: Accepted
+:Status: Final
 :Type: Informational
 :Created: 2018-03-22
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-September/078752.html
