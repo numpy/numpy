@@ -7,7 +7,7 @@ NEP 18 — A dispatch mechanism for NumPy's high level array functions
 :Author: Marten van Kerkwijk <mhvk@astro.utoronto.ca>
 :Author: Hameer Abbasi <hameerabbasi@yahoo.com>
 :Author: Eric Wieser <wieser.eric@gmail.com>
-:Status: Accepted
+:Status: Provisional
 :Type: Standards Track
 :Created: 2018-05-29
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-August/078493.html
