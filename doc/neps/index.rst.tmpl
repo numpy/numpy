@@ -29,8 +29,19 @@ Meta-NEPs (NEPs about NEPs or Processes)
 
    nep-template
 
-Accepted NEPs, implementation in progress
------------------------------------------
+Provisional NEPs (provisionally accepted; interface may change)
+---------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Provisional' %}
+   {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
+
+
+Accepted NEPs (implementation in progress)
+------------------------------------------
 
 .. toctree::
    :maxdepth: 1
