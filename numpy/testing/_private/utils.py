@@ -710,7 +710,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # for which np.all yields masked. We use the all() method instead of
         # np.all() so it still works if __array_function__ is defined but
         # doesn't implement np.all, but use np.all() on non-numpy arrays (e.g.,
-        # booleans) that may not define an all() method.
+        # booleans) that may not define an all() method. We are not committed
+        # to supporting such subclasses, but some used to work.
         x_id = func(x)
         y_id = func(y)
         result = x_id == y_id
