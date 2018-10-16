@@ -709,10 +709,15 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # done to deal with `masked`, which cannot be compared usefully, and
         # for which np.all yields masked. We use the all() method instead of
         # np.all() so it still works if __array_function__ is defined but
-        # doesn't implement np.all.
+        # doesn't implement np.all, but use np.all() on non-numpy arrays (e.g.,
+        # booleans) that may not define an all() method.
         x_id = func(x)
         y_id = func(y)
-        if (x_id == y_id).all() != True:
+        result = x_id == y_id
+        all_equal = (result.all()
+                     if isinstance(result, ndarray)
+                     else npall(result))
+        if all_equal != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
