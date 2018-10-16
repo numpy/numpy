@@ -87,6 +87,11 @@ More in detail, the complex64 type now has the same alignment as a C-struct
 ``struct {float r, i;}``, according to the compiler used to compile numpy, and
 similarly for the complex128 and complex256 types.
 
+nd_grid __len__ removal
+-----------------------
+``len(np.mgrid)`` and ``len(np.ogrid)`` are now considered nonsensical
+and raise a ``TypeError``.
+
 
 C API changes
 =============
