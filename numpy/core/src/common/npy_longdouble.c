@@ -1,17 +1,11 @@
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
-
-/* This is a backport of Py_SETREF */
-#define NPY_SETREF(op, op2)                      \
-    do {                                        \
-        PyObject *_py_tmp = (PyObject *)(op);   \
-        (op) = (op2);                           \
-        Py_DECREF(_py_tmp);                     \
-    } while (0)
-
+#include "npy_pycompat.h"
 
 /*
  * Heavily derived from PyLong_FromDouble
@@ -66,7 +60,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
         npy_ulonglong chunk = (npy_ulonglong)frac;
         PyObject *l_chunk;
         /* v = v << chunk_size */
-        NPY_SETREF(v, PyNumber_Lshift(v, l_chunk_size));
+        Py_SETREF(v, PyNumber_Lshift(v, l_chunk_size));
         if (v == NULL) {
             goto done;
         }
@@ -77,7 +71,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
             goto done;
         }
         /* v = v | chunk */
-        NPY_SETREF(v, PyNumber_Or(v, l_chunk));
+        Py_SETREF(v, PyNumber_Or(v, l_chunk));
         Py_DECREF(l_chunk);
         if (v == NULL) {
             goto done;
@@ -90,7 +84,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
 
     /* v = -v */
     if (neg) {
-        NPY_SETREF(v, PyNumber_Negative(v));
+        Py_SETREF(v, PyNumber_Negative(v));
         if (v == NULL) {
             goto done;
         }
