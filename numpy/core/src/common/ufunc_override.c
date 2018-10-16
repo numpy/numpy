@@ -20,7 +20,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
     static PyObject *ndarray_array_ufunc = NULL;
     PyObject *cls_array_ufunc;
 
-    /* On first entry, import and cache ndarray's __array_ufunc__ */
+    /* On first entry, cache ndarray's __array_ufunc__ */
     if (ndarray_array_ufunc == NULL) {
         ndarray_array_ufunc = PyObject_GetAttrString((PyObject *)&PyArray_Type,
                                                      "__array_ufunc__");
