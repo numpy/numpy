@@ -403,6 +403,12 @@ from a tuple ``*args`` and dict ``**kwargs``.) This shouldn't stop us from
 writing overrides for functions with non-generic signatures that can't use the
 decorator, but we should consider these cases carefully.
 
+.. note::
+
+    The code for ``array_function_dispatch`` above has been updated from the
+    original version of this NEP to match the actual
+    `implementation in NumPy <https://github.com/numpy/numpy/blob/e104f03ac8f65ae5b92a9b413b0fa639f39e6de2/numpy/core/overrides.py>`_.
+
 Extensibility
 ~~~~~~~~~~~~~
 
