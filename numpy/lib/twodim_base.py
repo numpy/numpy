@@ -386,11 +386,11 @@ def tri(N, M=None, k=0, dtype=float):
     return m
 
 
-def _tril_dispatcher(m, k=None):
+def _trilu_dispatcher(m, k=None):
     return (m,)
 
 
-@array_function_dispatch(_tril_dispatcher)
+@array_function_dispatch(_trilu_dispatcher)
 def tril(m, k=0):
     """
     Lower triangle of an array.
@@ -429,7 +429,7 @@ def tril(m, k=0):
     return where(mask, m, zeros(1, m.dtype))
 
 
-@array_function_dispatch(_tril_dispatcher)
+@array_function_dispatch(_trilu_dispatcher)
 def triu(m, k=0):
     """
     Upper triangle of an array.
@@ -842,11 +842,11 @@ def tril_indices(n, k=0, m=None):
     return nonzero(tri(n, m, k=k, dtype=bool))
 
 
-def _tril_indices_form_dispatcher(arr, k=None):
+def _trilu_indices_form_dispatcher(arr, k=None):
     return (arr,)
 
 
-@array_function_dispatch(_tril_indices_form_dispatcher)
+@array_function_dispatch(_trilu_indices_form_dispatcher)
 def tril_indices_from(arr, k=0):
     """
     Return the indices for the lower-triangle of arr.
@@ -957,7 +957,7 @@ def triu_indices(n, k=0, m=None):
     return nonzero(~tri(n, m, k=k-1, dtype=bool))
 
 
-@array_function_dispatch(_tril_indices_form_dispatcher)
+@array_function_dispatch(_trilu_indices_form_dispatcher)
 def triu_indices_from(arr, k=0):
     """
     Return the indices for the upper-triangle of arr.

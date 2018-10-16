@@ -194,11 +194,11 @@ def imag(val):
         return asanyarray(val).imag
 
 
-def _iscomplex_dispatcher(x):
+def _is_type_dispatcher(x):
     return (x,)
 
 
-@array_function_dispatch(_iscomplex_dispatcher)
+@array_function_dispatch(_is_type_dispatcher)
 def iscomplex(x):
     """
     Returns a bool array, where True if input element is complex.
@@ -235,11 +235,7 @@ def iscomplex(x):
     return res[()]   # convert to scalar if needed
 
 
-def _isreal_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_isreal_dispatcher)
+@array_function_dispatch(_is_type_dispatcher)
 def isreal(x):
     """
     Returns a bool array, where True if input element is real.
@@ -271,11 +267,7 @@ def isreal(x):
     return imag(x) == 0
 
 
-def _iscomplexobj_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_iscomplexobj_dispatcher)
+@array_function_dispatch(_is_type_dispatcher)
 def iscomplexobj(x):
     """
     Check for a complex type or an array of complex numbers.
@@ -316,11 +308,7 @@ def iscomplexobj(x):
     return issubclass(type_, _nx.complexfloating)
 
 
-def _isrealobj_dispatcher(x):
-    return (x,)
-
-
-@array_function_dispatch(_isrealobj_dispatcher)
+@array_function_dispatch(_is_type_dispatcher)
 def isrealobj(x):
     """
     Return True if x is a not complex type or an array of complex numbers.

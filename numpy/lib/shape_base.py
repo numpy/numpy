@@ -842,11 +842,11 @@ def split(ary, indices_or_sections, axis=0):
     return res
 
 
-def _split_dispatcher(ary, indices_or_sections):
+def _hvdsplit_dispatcher(ary, indices_or_sections):
     return (ary, indices_or_sections)
 
 
-@array_function_dispatch(_split_dispatcher)
+@array_function_dispatch(_hvdsplit_dispatcher)
 def hsplit(ary, indices_or_sections):
     """
     Split an array into multiple sub-arrays horizontally (column-wise).
@@ -910,7 +910,7 @@ def hsplit(ary, indices_or_sections):
         return split(ary, indices_or_sections, 0)
 
 
-@array_function_dispatch(_split_dispatcher)
+@array_function_dispatch(_hvdsplit_dispatcher)
 def vsplit(ary, indices_or_sections):
     """
     Split an array into multiple sub-arrays vertically (row-wise).
@@ -963,7 +963,7 @@ def vsplit(ary, indices_or_sections):
     return split(ary, indices_or_sections, 0)
 
 
-@array_function_dispatch(_split_dispatcher)
+@array_function_dispatch(_hvdsplit_dispatcher)
 def dsplit(ary, indices_or_sections):
     """
     Split array into multiple sub-arrays along the 3rd axis (depth).

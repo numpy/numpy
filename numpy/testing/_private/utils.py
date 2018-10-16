@@ -707,10 +707,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         """
         # Both the != True comparison here and the cast to bool_ at the end are
         # done to deal with `masked`, which cannot be compared usefully, and
-        # for which np.all yields masked.  The use of the function np.all is
-        # for back compatibility with ndarray subclasses that changed the
-        # return values of the all method.  We are not committed to supporting
-        # such subclasses, but some used to work.
+        # for which np.all yields masked. We use the all() method instead of
+        # np.all() so it still works if __array_function__ is defined but
+        # doesn't implement np.all.
         x_id = func(x)
         y_id = func(y)
         if (x_id == y_id).all() != True:
