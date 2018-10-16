@@ -325,7 +325,7 @@ def log10(x):
 
 
 def _logn_dispatcher(n, x):
-    return (x,)
+    return (n, x,)
 
 
 @array_function_dispatch(_logn_dispatcher)
@@ -338,8 +338,8 @@ def logn(n, x):
 
     Parameters
     ----------
-    n : int
-       The base in which the log is taken.
+    n : array_like
+       The integer base(s) in which the log is taken.
     x : array_like
        The value(s) whose log base `n` is (are) required.
 
