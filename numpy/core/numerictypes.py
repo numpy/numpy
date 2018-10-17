@@ -116,8 +116,8 @@ from ._type_aliases import (
     _concrete_types,
     _concrete_typeinfo,
     _bits_of,
-    _kind_to_stem,
 )
+from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
@@ -181,8 +181,7 @@ def maximum_sctype(t):
     if g is None:
         return t
     t = g
-    bits = _bits_of(t)
-    base = _kind_to_stem[dtype(t).kind]
+    base = _kind_name(dtype(t))
     if base in sctypes:
         return sctypes[base][-1]
     else:

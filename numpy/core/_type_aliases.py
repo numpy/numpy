@@ -29,6 +29,7 @@ from numpy.compat import unicode
 from numpy._globals import VisibleDeprecationWarning
 from numpy.core._string_helpers import english_lower, english_capitalize
 from numpy.core.multiarray import typeinfo, dtype
+from numpy.core._dtype import _kind_name
 
 
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
@@ -61,28 +62,6 @@ for k, v in typeinfo.items():
 
 _concrete_types = set(v.type for k, v in _concrete_typeinfo.items())
 
-_kind_to_stem = {
-    'u': 'uint',
-    'i': 'int',
-    'c': 'complex',
-    'f': 'float',
-    'b': 'bool',
-    'V': 'void',
-    'O': 'object',
-    'M': 'datetime',
-    'm': 'timedelta'
-}
-if sys.version_info[0] >= 3:
-    _kind_to_stem.update({
-        'S': 'bytes',
-        'U': 'str'
-    })
-else:
-    _kind_to_stem.update({
-        'S': 'string',
-        'U': 'unicode'
-    })
-
 
 def _bits_of(obj):
     try:
@@ -100,8 +79,9 @@ def _bits_of(obj):
 def bitname(obj):
     """Return a bit-width name for a given type object"""
     bits = _bits_of(obj)
-    char = dtype(obj).kind
-    base = _kind_to_stem[char]
+    dt = dtype(obj)
+    char = dt.kind
+    base = _kind_name(dt)
 
     if base == 'object':
         bits = 0
