@@ -107,18 +107,37 @@
   function on_version_switch() {
     console.log('on_version_switch checkpoint A');
     var selected_version = $(this).children('option:selected').attr('value') + '/';
+    console.log('selected_version: ' + selected_version);
     var url = window.location.href;
+    console.log('current url: ' + url);
     //var current_language = language_segment_from_url(url);
     var current_version = version_segment_in_url(url);
-    var new_url = url.replace('VERSION', selected_version);
+    console.log('current_version: ' + current_version);
+    if (selected_version != 'dev/') {
+	    // selected a version that is non-local
+	    // replace the hostname with known hostname so we
+	    // can navigate from local build page to same page
+            // in different version online
+  	    var pathname = url.split('/html/')[1];
+	    var new_url = 'https://docs.scipy.org/doc/numpy-' + selected_version +  pathname;
+    }
+    else {
+	    // need to worry about local doc build here
+	    var new_url = url.replace(current_version, selected_version);
+    }
+    console.log('on_version_switch checkpoint B');
+    console.log('new_url: ' + new_url);
     if (new_url != url) {
+      console.log('on_version_switch checkpoint C');
       navigate_to_first_existing([
         new_url,
-        url.replace('VERSION', selected_version),
-        'https://docs.scipy.org/doc/numpy-1.15.0',
-        'https://docs.python.org/'
+        //url.replace('VERSION', selected_version),
+        //'https://docs.scipy.org/doc/numpy-1.15.0',
+        //'https://docs.python.org/'
       ]);
+      console.log('on_version_switch checkpoint D');
     }
+  console.log('on_version_switch checkpoint E');
   }
 
   function on_language_switch() {
@@ -151,13 +170,32 @@
   // Returns the path segment of the version as a string, like '3.6/'
   // or '' if not found.
   function version_segment_in_url(url) {
+    console.log('version_segment_in_url checkpoint A');
     //var language_segment = '(?:[a-z]{2}(?:-[a-z]{2})?/)';
-    var version_segment = '(?:(?:' + version_regexs.join('|') + ')/)';
-    var version_regexp = '\\.org/' + '?(' + version_segment + ')';
-    var match = url.match(version_regexp);
-    if (match !== null)
-      return match[1];
-    return ''
+    //var version_segment = '(?:(?:' + version_regexs.join('|') + ')/)';
+    //console.log('version_segment: ' + version_segment);
+    //var version_regexp = '\\numpy-' + '?(' + version_segment + ')';
+    //var match = url.match(version_regexp);
+    //console.log('match: ', match);
+    url = 'https://docs.scipy.org/doc/numpy-1.15.0/index.html'
+    file:///Users/treddy/github_projects/numpy_linked_worktree/doc/build/html/index.html
+    if (url.includes('file:///')) {
+        console.log('local dev doc build detected');
+	return 'dev';
+    }
+    else if (url.includes('devdocs')) {
+	// online devdocs
+	return 'dev';
+    }
+    else {
+	// online stable release docs
+	// https://docs.scipy.org/doc/numpy-1.15.0/index.html
+	var pathname = new URL(url).pathname;
+	var version_field = pathname.split('/')[2];
+	console.log('pathname: ', pathname);
+	console.log('version_field: ', version_field);
+	return version_field;
+    }
   }
 
   $(document).ready(function() {
