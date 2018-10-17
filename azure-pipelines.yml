@@ -1,3 +1,10 @@
+trigger:
+  # start a new build for every push
+  batch: False
+  branches:
+    include:
+      - master
+      - maintenance/*
 jobs:
 - job: macOS
   pool:
