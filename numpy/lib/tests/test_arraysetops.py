@@ -388,6 +388,13 @@ class TestSetOps(object):
         a = np.array((), np.uint32)
         assert_equal(setdiff1d(a, []).dtype, np.uint32)
 
+    def test_setdiff1d_unique(self):
+        a = np.array([3, 2, 1])
+        b = np.array([7, 5, 2])
+        expected = np.array([3, 1])
+        actual = setdiff1d(a, b, assume_unique=True)
+        assert_equal(actual, expected)
+
     def test_setdiff1d_char_array(self):
         a = np.array(['a', 'b', 'c'])
         b = np.array(['a', 'b', 's'])
