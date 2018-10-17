@@ -1965,3 +1965,10 @@ class TestTensorinv(object):
         ainv = linalg.tensorinv(a, ind=1)
         b = np.ones(24)
         assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
+
+
+def test_unsupported_commontype():
+    # linalg gracefully handles unsupported type
+    arr = np.array([[1, -2], [2, 5]], dtype='float16')
+    with assert_raises_regex(TypeError, "unsupported in linalg"):
+        linalg.cholesky(arr)
