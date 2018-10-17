@@ -20,30 +20,163 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-<div class="well">
-<strong>Docs for {{ release }}<br></strong>
-<a id="other">All versions</a>
-<ul id="versionList" style="display: none;">
-        <script type="text/javascript">
-            var versions = ['dev', '1.15.1', '1.14.5', '1.13.0', '1.12.0', '1.11.0', '1.10.1', '1.9.3', '1.8.1', '1.7.0'];
-            for (i = 0; i < versions.length; i++) {
-
-                if (i == 0) {
-                    base_url = 'https://www.numpy.org/devdocs/index.html'
-                }
-                else {
-                    base_url = 'https://docs.scipy.org/doc/numpy-VERSION'
-                }
-            document.write('<li><a href="URL">NumPy VERSION</a> </li>\n'
-                    .replace('URL', base_url)
-                    .replace(/VERSION/g, versions[i]));
-            }
-        </script>
-</ul>
-</div>
-<script type="text/javascript">
-	$("#other").click(function() {
-		$("#versionList").toggle();
-	});
-</script>
 {%- endif %}
+
+<span class="version_switcher_placeholder">{{ release }}</span>
+<script type="text/javascript">
+(function() {
+  'use strict';
+
+  // Parses versions in URL segments like:
+  // "3", "dev", "release/2.7" or "3.6rc2"
+  var version_regexs = [
+    '(?:\\d)',
+    '(?:\\d\\.\\d[\\w\\d\\.]*)',
+    '(?:dev)',
+    '(?:release/\\d.\\d[\\x\\d\\.]*)'];
+
+  var all_versions = {
+    'dev': 'dev',
+    '1.15.1': '1.15.1',
+    '1.14.5': '1.14.5',
+    '1.13.0': '1.13.0',
+    '1.12.0': '1.12.0',
+    '1.11.0': '1.11.0',
+    '1.10.1': '1.10.1',
+    '1.9.3': '1.9.3',
+    '1.8.1': '1.8.1',
+    '1.7.0': '1.7.0',
+  };
+
+//  var all_languages = {
+ //     'en': 'English',
+  //    'fr': 'French',
+   //   'ja': 'Japanese',
+    //  'ko': 'Korean',
+  //};
+
+  function build_version_select(current_version, current_release) {
+    var buf = ['<select>'];
+    console.log('build_version_select checkpoint A');
+
+    $.each(all_versions, function(version, title) {
+      buf.push('<option value="' + version + '"');
+      if (version == current_version)
+        buf.push(' selected="selected">' + '</option>');
+      else
+        buf.push('>' + title + '</option>');
+    });
+
+    buf.push('</select>');
+    return buf.join('');
+  }
+
+  function build_language_select(current_language) {
+    var buf = ['<select>'];
+
+    $.each(all_languages, function(language, title) {
+      if (language == current_language)
+        buf.push('<option value="' + language + '" selected="selected">' +
+                 all_languages[current_language] + '</option>');
+      else
+        buf.push('<option value="' + language + '">' + title + '</option>');
+    });
+    buf.push('</select>');
+    return buf.join('');
+  }
+
+  function navigate_to_first_existing(urls) {
+    // Navigate to the first existing URL in urls.
+    console.log('navigate_to_first_existing checkpoint A');
+    var url = urls.shift();
+    if (urls.length == 0) {
+      window.location.href = url;
+      return;
+    }
+    $.ajax({
+      url: url,
+      success: function() {
+        window.location.href = url;
+      },
+      error: function() {
+        navigate_to_first_existing(urls);
+      }
+    });
+  }
+
+  function on_version_switch() {
+    console.log('on_version_switch checkpoint A');
+    var selected_version = $(this).children('option:selected').attr('value') + '/';
+    var url = window.location.href;
+    //var current_language = language_segment_from_url(url);
+    var current_version = version_segment_in_url(url);
+    var new_url = url.replace('VERSION', selected_version);
+    if (new_url != url) {
+      navigate_to_first_existing([
+        new_url,
+        url.replace('VERSION', selected_version),
+        'https://docs.scipy.org/doc/numpy-1.15.0',
+        'https://docs.python.org/'
+      ]);
+    }
+  }
+
+  function on_language_switch() {
+    var selected_language = $(this).children('option:selected').attr('value') + '/';
+    var url = window.location.href;
+    var current_language = language_segment_from_url(url);
+    var current_version = version_segment_in_url(url);
+    if (selected_language == 'en/') // Special 'default' case for english.
+      selected_language = '';
+    var new_url = url.replace('.org/' + current_language + current_version,
+                              '.org/' + selected_language + current_version);
+    if (new_url != url) {
+      navigate_to_first_existing([
+        new_url,
+        'https://docs.python.org/'
+      ]);
+    }
+  }
+
+  // Returns the path segment of the language as a string, like 'fr/'
+  // or '' if not found.
+  function language_segment_from_url(url) {
+    var language_regexp = '\.org/([a-z]{2}(?:-[a-z]{2})?/)';
+    var match = url.match(language_regexp);
+    if (match !== null)
+        return match[1];
+    return '';
+  }
+
+  // Returns the path segment of the version as a string, like '3.6/'
+  // or '' if not found.
+  function version_segment_in_url(url) {
+    //var language_segment = '(?:[a-z]{2}(?:-[a-z]{2})?/)';
+    var version_segment = '(?:(?:' + version_regexs.join('|') + ')/)';
+    var version_regexp = '\\.org/' + '?(' + version_segment + ')';
+    var match = url.match(version_regexp);
+    if (match !== null)
+      return match[1];
+    return ''
+  }
+
+  $(document).ready(function() {
+    console.log('testing console!');
+    var release = DOCUMENTATION_OPTIONS.VERSION;
+    //var language_segment = language_segment_from_url(window.location.href);
+    //var current_language = language_segment.replace(/\/+$/g, '') || 'en';
+    var version = release.substr(0, 3);
+    console.log('before build_version_select');
+    var version_select = build_version_select(version, '');
+    console.log('after build_version_select');
+
+    $('.version_switcher_placeholder').html(version_select);
+    $('.version_switcher_placeholder select').bind('change', on_version_switch);
+
+    //var language_select = build_language_select(current_language);
+
+    //$('.language_switcher_placeholder').html(language_select);
+    //$('.language_switcher_placeholder select').bind('change', on_language_switch);
+  });
+})();
+</script>
