@@ -707,12 +707,18 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         """
         x_id = func(x)
         y_id = func(y)
-        # Cast to bool_ to ensure than an all() method is available, even for
-        # subclasses that define equality to return Python booleans. We are not
-        # committed to supporting such subclasses, but they used to work.
-        # We don't use np.all() because it's more likely that that method is
-        # not supported on subclasses which implement `__array_function__`.
-        if bool_(x_id == y_id).all():
+        # We include work-arounds here to handle three types of slightly
+        # pathological ndarray subclasses:
+        # (1) all() on `masked` array scalars can return masked arrays, so we
+        #     use != True
+        # (2) __eq__ on some ndarray subclasses returns Python booleans
+        #     instead of element-wise comparisons, so we cast to bool_() and
+        #     use isinstance(..., bool) checks
+        # (3) subclasses with bare-bones __array_function__ implemenations may
+        #     not implement np.all(), so favor using the .all() method
+        # We are not committed to supporting such subclasses, but it's nice to
+        # support them if possible.
+        if bool_(x_id == y_id).all() != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
@@ -720,10 +726,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
-        # Cast to bool_ to avoid returning `masked` arrays.
-        if x_id.ndim == 0:
+        if isinstance(x_id, bool) or x_id.ndim == 0:
             return bool_(x_id)
-        elif y_id.ndim == 0:
+        elif isinstance(x_id, bool) or y_id.ndim == 0:
             return bool_(y_id)
         else:
             return y_id
