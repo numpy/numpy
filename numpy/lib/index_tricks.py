@@ -200,9 +200,6 @@ class nd_grid(object):
             else:
                 return _nx.arange(start, stop, step)
 
-    def __len__(self):
-        return 0
-
 
 class MGridClass(nd_grid):
     """
