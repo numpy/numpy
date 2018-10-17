@@ -2410,3 +2410,8 @@ class TestRegression(object):
             v = str(data[['f1']])
             if HAS_REFCOUNT:
                 assert_(base <= sys.getrefcount(s))
+
+    def test_object_casting_errors(self):
+        # gh-11993
+        arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
+        assert_raises(TypeError, arr.astype, 'c8')
