@@ -19,7 +19,7 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     float32, empty, arange, array_repr, ndarray, isnat, array)
+     bool_, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -705,20 +705,14 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         at the same locations.
 
         """
-        # Both the != True comparison here and the cast to bool_ at the end are
-        # done to deal with `masked`, which cannot be compared usefully, and
-        # for which np.all yields masked. We use the all() method instead of
-        # np.all() so it still works if __array_function__ is defined but
-        # doesn't implement np.all, but use np.all() on non-numpy arrays (e.g.,
-        # booleans) that may not define an all() method. We are not committed
-        # to supporting such subclasses, but some used to work.
         x_id = func(x)
         y_id = func(y)
-        result = x_id == y_id
-        all_equal = (result.all()
-                     if isinstance(result, ndarray)
-                     else npall(result))
-        if all_equal != True:
+        # Cast to bool_ to ensure than an all() method is available, even for
+        # subclasses that define equality to return Python booleans. We are not
+        # committed to supporting such subclasses, but they used to work.
+        # We don't use np.all() because it's more likely that that method is
+        # not supported on subclasses which implement `__array_function__`.
+        if bool_(x_id == y_id).all():
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
@@ -726,6 +720,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
+        # Cast to bool_ to avoid returning `masked` arrays.
         if x_id.ndim == 0:
             return bool_(x_id)
         elif y_id.ndim == 0:
