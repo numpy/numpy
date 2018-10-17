@@ -92,6 +92,12 @@ nd_grid __len__ removal
 ``len(np.mgrid)`` and ``len(np.ogrid)`` are now considered nonsensical
 and raise a ``TypeError``.
 
+``np.unravel_index`` now accepts ``shape`` keyword argument
+-----------------------------------------------------------
+Previously, only the ``dims`` keyword argument was accepted
+for specification of the shape of the array to be used
+for unraveling. ``dims`` remains supported, but is now deprecated.
+
 
 C API changes
 =============
@@ -192,6 +198,12 @@ Users of very old Linux kernels (~3.x and older) should make sure that
 `/sys/kernel/mm/transparent_hugepage/defrag` is not set to `always` to avoid
 performance problems due concurrency issues in the memory defragmentation.
 
+Alpine Linux (and other musl c library distros) support
+-------------------------------------------------------
+We now default to use `fenv.h` for floating point status error reporting.
+Previously we had a broken default that sometimes would not report underflow,
+overflow, and invalid floating point operations. Now we can support non-glibc
+distrubutions like Alpine Linux as long as they ship `fenv.h`.
 
 Changes
 =======

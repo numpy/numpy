@@ -199,11 +199,6 @@ def _assertRankAtLeast2(*arrays):
             raise LinAlgError('%d-dimensional array given. Array must be '
                     'at least two-dimensional' % a.ndim)
 
-def _assertSquareness(*arrays):
-    for a in arrays:
-        if max(a.shape) != min(a.shape):
-            raise LinAlgError('Array must be square')
-
 def _assertNdSquareness(*arrays):
     for a in arrays:
         m, n = a.shape[-2:]
