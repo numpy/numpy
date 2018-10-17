@@ -314,22 +314,6 @@ typedef struct _loop1d_info {
                                 &(arg)->first))) \
                 goto fail;} while (0)
 
-
-/* keep in sync with ieee754.c.src */
-#if defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || \
-      (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || \
-      defined(__NetBSD__) || \
-      defined(__GLIBC__) || defined(__APPLE__) || \
-      defined(__CYGWIN__) || defined(__MINGW32__) || \
-      (defined(__FreeBSD__) && (__FreeBSD_version >= 502114)) || \
-      defined(_AIX) || \
-      defined(_MSC_VER) || \
-      defined(__osf__) && defined(__alpha)
-#else
-#define NO_FLOATING_POINT_SUPPORT
-#endif
-
-
 /*
  * THESE MACROS ARE DEPRECATED.
  * Use npy_set_floatstatus_* in the npymath library.
