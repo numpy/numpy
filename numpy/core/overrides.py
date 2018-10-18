@@ -149,6 +149,11 @@ def array_function_dispatch(dispatcher, verify=True):
             relevant_args = dispatcher(*args, **kwargs)
             return array_function_implementation_or_override(
                 implementation, public_api, relevant_args, args, kwargs)
+
+        # TODO: remove this when we drop Python 2 support (functools.wraps
+        # adds __wrapped__ automatically in later versions)
+        public_api.__wrapped__ = implementation
+
         return public_api
 
     return decorator
