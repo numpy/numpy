@@ -4730,6 +4730,12 @@ class TestResize(object):
         x_view.resize((0, 10))
         x_view.resize((0, 100))
 
+    def test_check_weakref(self):
+        x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        xref = weakref.ref(x)
+        assert_raises(ValueError, x.resize, (5, 1))
+        del xref  # avoid pyflakes unused variable warning.
+
 
 class TestRecord(object):
     def test_field_rename(self):
