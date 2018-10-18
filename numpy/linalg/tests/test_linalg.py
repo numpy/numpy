@@ -19,7 +19,8 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, suppress_warnings
+    assert_almost_equal, assert_allclose, suppress_warnings,
+    assert_raises_regex,
     )
 
 
@@ -861,14 +862,12 @@ class TestDet(DetCases):
 class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
 
     def do(self, a, b, tags):
-        if 'size-0' in tags:
-            assert_raises(LinAlgError, linalg.lstsq, a, b)
-            return
-
         arr = np.asarray(a)
         m, n = arr.shape
         u, s, vt = linalg.svd(a, 0)
         x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
+        if m == 0:
+            assert_((x == 0).all())
         if m <= n:
             assert_almost_equal(b, dot(a, x))
             assert_equal(rank, m)
@@ -908,6 +907,38 @@ class TestLstsq(LstsqCases):
             assert_(rank == 3)
             # Warning should be raised exactly once (first command)
             assert_(len(w) == 1)
+
+    @pytest.mark.parametrize(["m", "n", "n_rhs"], [
+        (4, 2, 2),
+        (0, 4, 1),
+        (0, 4, 2),
+        (4, 0, 1),
+        (4, 0, 2),
+        (4, 2, 0),
+        (0, 0, 0)
+    ])
+    def test_empty_a_b(self, m, n, n_rhs):
+        a = np.arange(m * n).reshape(m, n)
+        b = np.ones((m, n_rhs))
+        x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
+        if m == 0:
+            assert_((x == 0).all())
+        assert_equal(x.shape, (n, n_rhs))
+        assert_equal(residuals.shape, ((n_rhs,) if m > n else (0,)))
+        if m > n and n_rhs > 0:
+            # residuals are exactly the squared norms of b's columns
+            r = b - np.dot(a, x)
+            assert_almost_equal(residuals, (r * r).sum(axis=-2))
+        assert_equal(rank, min(m, n))
+        assert_equal(s.shape, (min(m, n),))
+
+    def test_incompatible_dims(self):
+        # use modified version of docstring example
+        x = np.array([0, 1, 2, 3])
+        y = np.array([-1, 0.2, 0.9, 2.1, 3.3])
+        A = np.vstack([x, np.ones(len(x))]).T
+        with assert_raises_regex(LinAlgError, "Incompatible dimensions"):
+            linalg.lstsq(A, y, rcond=None)
 
 
 @pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
@@ -1893,44 +1924,3 @@ class TestMultiDot(object):
     def test_too_few_input_arrays(self):
         assert_raises(ValueError, multi_dot, [])
         assert_raises(ValueError, multi_dot, [np.random.random((3, 3))])
-
-
-class TestTensorinv(object):
-
-    @pytest.mark.parametrize("arr, ind", [
-        (np.ones((4, 6, 8, 2)), 2),
-        (np.ones((3, 3, 2)), 1),
-        ])
-    def test_non_square_handling(self, arr, ind):
-        with assert_raises(LinAlgError):
-            linalg.tensorinv(arr, ind=ind)
-
-    @pytest.mark.parametrize("shape, ind", [
-        # examples from docstring
-        ((4, 6, 8, 3), 2),
-        ((24, 8, 3), 1),
-        ])
-    def test_tensorinv_shape(self, shape, ind):
-        a = np.eye(24)
-        a.shape = shape
-        ainv = linalg.tensorinv(a=a, ind=ind)
-        expected = a.shape[ind:] + a.shape[:ind]
-        actual = ainv.shape
-        assert_equal(actual, expected)
-
-    @pytest.mark.parametrize("ind", [
-        0, -2,
-        ])
-    def test_tensorinv_ind_limit(self, ind):
-        a = np.eye(24)
-        a.shape = (4, 6, 8, 3)
-        with assert_raises(ValueError):
-            linalg.tensorinv(a=a, ind=ind)
-
-    def test_tensorinv_result(self):
-        # mimic a docstring example
-        a = np.eye(24)
-        a.shape = (24, 8, 3)
-        ainv = linalg.tensorinv(a, ind=1)
-        b = np.ones(24)
-        assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
