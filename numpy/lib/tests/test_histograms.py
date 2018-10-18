@@ -265,6 +265,13 @@ class TestHistogram(object):
         hist, edges = np.histogram(arr, bins=30, range=(-0.5, 5))
         assert_equal(hist[-1], 1)
 
+    def test_bin_array_dims(self):
+        # gracefully handle bins object > 1 dimension
+        vals = np.linspace(0.0, 1.0, num=100)
+        bins = np.array([[0, 0.5], [0.6, 1.0]])
+        with assert_raises_regex(ValueError, "must be 1d"):
+            np.histogram(vals, bins=bins)
+
     def test_unsigned_monotonicity_check(self):
         # Ensures ValueError is raised if bins not increasing monotonically
         # when bins contain unsigned values (see #9222)
