@@ -1071,10 +1071,10 @@ def argmax(a, axis=None, out=None):
 
     Examples
     --------
-    >>> a = np.arange(6).reshape(2,3)
+    >>> a = np.arange(6).reshape(2,3) + 10
     >>> a
-    array([[0, 1, 2],
-           [3, 4, 5]])
+    array([[10, 11, 12],
+           [13, 14, 15]])
     >>> np.argmax(a)
     5
     >>> np.argmax(a, axis=0)
@@ -1088,7 +1088,7 @@ def argmax(a, axis=None, out=None):
     >>> ind
     (1, 2)
     >>> a[ind]
-    5
+    15
 
     >>> b = np.arange(6)
     >>> b[1] = 5
