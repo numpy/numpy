@@ -13,7 +13,6 @@ import multiprocessing
 
 import distutils
 from distutils.errors import DistutilsError
-from distutils.msvccompiler import get_build_architecture
 try:
     from threading import local as tlocal
 except ImportError:
@@ -2336,3 +2335,9 @@ def msvc_version(compiler):
         raise ValueError("Compiler instance is not msvc (%s)"\
                          % compiler.compiler_type)
     return compiler._MSVCCompiler__version
+
+def get_build_architecture():
+    # Importing distutils.msvccompiler triggers a warning on non-Windows
+    # systems, so delay the import to here.
+    from distutils.msvccompiler import get_build_architecture
+    return get_build_architecture()
