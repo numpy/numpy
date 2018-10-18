@@ -16,8 +16,8 @@ def _get_overloaded_args(relevant_args):
     return args
 
 
-def _return_not_implemented(self, *args, **kwargs):
-    return NotImplemented
+def _return_self(self, *args, **kwargs):
+    return self
 
 
 class TestGetOverloadedTypesAndArgs(object):
@@ -45,7 +45,7 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_ndarray_subclasses(self):
 
         class OverrideSub(np.ndarray):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         class NoOverrideSub(np.ndarray):
             pass
@@ -70,7 +70,7 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_ndarray_and_duck_array(self):
 
         class Other(object):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         array = np.array(1)
         other = Other()
@@ -86,10 +86,10 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_ndarray_subclass_and_duck_array(self):
 
         class OverrideSub(np.ndarray):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         class Other(object):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         array = np.array(1)
         subarray = np.array(1).view(OverrideSub)
@@ -103,16 +103,16 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_many_duck_arrays(self):
 
         class A(object):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         class B(A):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         class C(A):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         class D(object):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         a = A()
         b = B()
@@ -135,7 +135,7 @@ class TestNDArrayArrayFunction(object):
     def test_method(self):
 
         class SubOverride(np.ndarray):
-            __array_function__ = _return_not_implemented
+            __array_function__ = _return_self
 
         class NoOverrideSub(np.ndarray):
             pass
@@ -189,8 +189,7 @@ class TestArrayFunctionDispatch(object):
         assert_(obj is original)
         assert_(func is dispatched_one_arg)
         assert_equal(set(types), {MyArray})
-        # assert_equal uses the overloaded np.iscomplexobj() internally
-        assert_(args == (original,))
+        assert_equal(args, (original,))
         assert_equal(kwargs, {})
 
     def test_not_implemented(self):
@@ -296,31 +295,27 @@ class TestArrayFunctionImplementation(object):
     def test_not_implemented(self):
         MyArray, implements = _new_duck_type_and_implements()
 
-        @array_function_dispatch(lambda array: (array,), module='my')
+        @array_function_dispatch(lambda array: (array,))
         def func(array):
             return array
 
         array = np.array(1)
         assert_(func(array) is array)
 
-        with assert_raises_regex(
-                TypeError, "no implementation found for 'my.func'"):
+        with assert_raises_regex(TypeError, 'no implementation found'):
             func(MyArray())
 
 
-class TestNumPyFunctions(object):
+class TestNDArrayMethods(object):
 
-    def test_module(self):
-        assert_equal(np.sum.__module__, 'numpy')
-        assert_equal(np.char.equal.__module__, 'numpy.char')
-        assert_equal(np.fft.fft.__module__, 'numpy.fft')
-        assert_equal(np.linalg.solve.__module__, 'numpy.linalg')
+    def test_repr(self):
+        # gh-12162: should still be defined even if __array_function__ doesn't
+        # implement np.array_repr()
 
-    def test_override_sum(self):
-        MyArray, implements = _new_duck_type_and_implements()
+        class MyArray(np.ndarray):
+            def __array_function__(*args, **kwargs):
+                return NotImplemented
 
-        @implements(np.sum)
-        def _(array):
-            return 'yes'
-
-        assert_equal(np.sum(MyArray()), 'yes')
+        array = np.array(1).view(MyArray)
+        assert_equal(repr(array), 'MyArray(1)')
+        assert_equal(str(array), '1')
