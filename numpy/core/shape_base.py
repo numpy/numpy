@@ -500,6 +500,9 @@ def _block(arrays, max_depth, result_ndim, depth=0):
 
 
 def _block_dispatcher(arrays):
+    # Use type(...) is list to match the behavior of np.block(), which special
+    # cases list specifically rather than allowing for generic iterables or
+    # tuple. Also, we know that list.__array_function__ will never exist.
     if type(arrays) is list:
         for subarrays in arrays:
             for subarray in _block_dispatcher(subarrays):
