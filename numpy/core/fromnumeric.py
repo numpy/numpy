@@ -1071,10 +1071,10 @@ def argmax(a, axis=None, out=None):
 
     Examples
     --------
-    >>> a = np.arange(6).reshape(2,3)
+    >>> a = np.arange(6).reshape(2,3) + 10
     >>> a
-    array([[0, 1, 2],
-           [3, 4, 5]])
+    array([[10, 11, 12],
+           [13, 14, 15]])
     >>> np.argmax(a)
     5
     >>> np.argmax(a, axis=0)
@@ -1088,7 +1088,7 @@ def argmax(a, axis=None, out=None):
     >>> ind
     (1, 2)
     >>> a[ind]
-    5
+    15
 
     >>> b = np.arange(6)
     >>> b[1] = 5
@@ -1140,10 +1140,10 @@ def argmin(a, axis=None, out=None):
 
     Examples
     --------
-    >>> a = np.arange(6).reshape(2,3)
+    >>> a = np.arange(6).reshape(2,3) + 10
     >>> a
-    array([[0, 1, 2],
-           [3, 4, 5]])
+    array([[10, 11, 12],
+           [13, 14, 15]])
     >>> np.argmin(a)
     0
     >>> np.argmin(a, axis=0)
@@ -1157,12 +1157,12 @@ def argmin(a, axis=None, out=None):
     >>> ind
     (0, 0)
     >>> a[ind]
-    0
+    10
 
-    >>> b = np.arange(6)
-    >>> b[4] = 0
+    >>> b = np.arange(6) + 10
+    >>> b[4] = 10
     >>> b
-    array([0, 1, 2, 3, 0, 5])
+    array([10, 11, 12, 13, 10, 15])
     >>> np.argmin(b)  # Only the first occurrence is returned.
     0
 
