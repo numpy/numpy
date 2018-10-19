@@ -88,10 +88,18 @@ class Block2D(Benchmark):
 
 
 class Block3D(Benchmark):
-    params = [1, 10, 100]
-    param_names = ['size']
+    """This benchmark concatenates an array of size ``(5n)^3``"""
+    # Having copy as a `mode` of the block3D
+    # allows us to directly compare the benchmark of block
+    # to that of a direct memory copy into new buffers with
+    # the ASV framework.
+    # block and copy will be plotted on the same graph
+    # as opposed to being displayed as separate benchmarks
+    params = [[1, 10, 100],
+              ['block', 'copy']]
+    param_names = ['n', 'mode']
 
-    def setup(self, n):
+    def setup(self, n, mode):
         # Slow setup method: hence separated from the others above
         self.a000 = np.ones((2 * n, 2 * n, 2 * n), int) * 1
 
@@ -105,8 +113,7 @@ class Block3D(Benchmark):
 
         self.a111 = np.ones((3 * n, 3 * n, 3 * n), int) * 8
 
-    def time_3d(self, n):
-        np.block([
+        self.block = [
             [
                 [self.a000, self.a001],
                 [self.a010, self.a011],
@@ -115,7 +122,17 @@ class Block3D(Benchmark):
                 [self.a100, self.a101],
                 [self.a110, self.a111],
             ]
-        ])
+        ]
+        self.arr_list = [a
+                         for two_d in self.block
+                         for one_d in two_d
+                         for a in one_d]
+
+    def time_3d(self, n, mode):
+        if mode == 'block':
+            np.block(self.block)
+        else:  # mode == 'copy'
+            [arr.copy() for arr in self.arr_list]
 
     # Retain old benchmark name for backward compat
     time_3d.benchmark_name = "bench_shape_base.Block.time_3d"
