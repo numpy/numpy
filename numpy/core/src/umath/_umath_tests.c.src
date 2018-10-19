@@ -128,6 +128,8 @@ static void
 /**end repeat**/
 
 char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
+/* for use with matrix_multiply code, but different signature */
+char *matmul_signature = "(m?,n),(n,p?)->(m?,p?)";
 
 /**begin repeat
 
@@ -190,6 +192,45 @@ static void
             ip1 += is1_m;
             op  +=  os_m;
         }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *cross1d_signature = "(3),(3)->(3)";
+
+/**begin repeat
+
+   #TYPE=LONG,DOUBLE#
+   #typ=npy_long, npy_double#
+*/
+
+/*
+ *  This implements the cross product:
+ *        out[n, 0] = in1[n, 1]*in2[n, 2] - in1[n, 2]*in2[n, 1]
+ *        out[n, 1] = in1[n, 2]*in2[n, 0] - in1[n, 0]*in2[n, 2]
+ *        out[n, 2] = in1[n, 0]*in2[n, 1] - in1[n, 1]*in2[n, 0]
+ */
+static void
+@TYPE@_cross1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_3
+    npy_intp is1=steps[0], is2=steps[1], os = steps[2];
+    BEGIN_OUTER_LOOP_3
+        @typ@ i1_x = *(@typ@ *)(args[0] + 0*is1);
+        @typ@ i1_y = *(@typ@ *)(args[0] + 1*is1);
+        @typ@ i1_z = *(@typ@ *)(args[0] + 2*is1);
+
+        @typ@ i2_x = *(@typ@ *)(args[1] + 0*is2);
+        @typ@ i2_y = *(@typ@ *)(args[1] + 1*is2);
+        @typ@ i2_z = *(@typ@ *)(args[1] + 2*is2);
+        char *op = args[2];
+
+        *(@typ@ *)op = i1_y * i2_z - i1_z * i2_y;
+        op += os;
+        *(@typ@ *)op = i1_z * i2_x - i1_x * i2_z;
+        op += os;
+        *(@typ@ *)op = i1_x * i2_y - i1_y * i2_x;
     END_OUTER_LOOP
 }
 
@@ -285,17 +326,39 @@ static void
 
 /**end repeat**/
 
+/*  The following lines were generated using a slightly modified
+    version of code_generators/generate_umath.py and adding these
+    lines to defdict:
+
+defdict = {
+'inner1d' :
+    Ufunc(2, 1, None_,
+        r'''inner on the last dimension and broadcast on the rest \n"
+        "     \"(i),(i)->()\" \n''',
+        TD('ld'),
+        ),
+'innerwt' :
+    Ufunc(3, 1, None_,
+        r'''inner1d with a weight argument \n"
+        "     \"(i),(i),(i)->()\" \n''',
+        TD('ld'),
+        ),
+}
+
+*/
 
 static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
-static void * inner1d_data[] = { (void *)NULL, (void *)NULL };
+static void *inner1d_data[] = { (void *)NULL, (void *)NULL };
 static char inner1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction innerwt_functions[] = { LONG_innerwt, DOUBLE_innerwt };
-static void * innerwt_data[] = { (void *)NULL, (void *)NULL };
+static void *innerwt_data[] = { (void *)NULL, (void *)NULL };
 static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
 static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-
+static PyUFuncGenericFunction cross1d_functions[] = { LONG_cross1d, DOUBLE_cross1d };
+static void *cross1d_data[] = { (void *)NULL, (void *)NULL };
+static char cross1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction euclidean_pdist_functions[] =
                             { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
 static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
@@ -303,7 +366,7 @@ static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
                                              NPY_DOUBLE, NPY_DOUBLE };
 
 static PyUFuncGenericFunction cumsum_functions[] = { LONG_cumsum, DOUBLE_cumsum };
-static void * cumsum_data[] = { (void *)NULL, (void *)NULL };
+static void *cumsum_data[] = { (void *)NULL, (void *)NULL };
 static char cumsum_signatures[] = { NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE };
 
 
@@ -346,6 +409,17 @@ addUfuncs(PyObject *dictionary) {
     }
     PyDict_SetItemString(dictionary, "matrix_multiply", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
+                    matrix_multiply_data, matrix_multiply_signatures,
+                    3, 2, 1, PyUFunc_None, "matmul",
+                    "matmul on last two dimensions, with some being optional\n"
+                    "     \"(m?,n),(n,p?)->(m?,p?)\" \n",
+                    0, matmul_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "matmul", f);
+    Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(euclidean_pdist_functions,
                     eucldiean_pdist_data, euclidean_pdist_signatures,
                     2, 1, 1, PyUFunc_None, "euclidean_pdist",
@@ -376,6 +450,16 @@ addUfuncs(PyObject *dictionary) {
     }
     PyDict_SetItemString(dictionary, "inner1d_no_doc", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(cross1d_functions, cross1d_data,
+                    cross1d_signatures, 2, 2, 1, PyUFunc_None, "cross1d",
+                    "cross product on the last dimension and broadcast on the rest \n"\
+                    "     \"(3),(3)->(3)\" \n",
+                    0, cross1d_signature);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "cross1d", f);
+    Py_DECREF(f);
 
     return 0;
 }
@@ -385,9 +469,10 @@ static PyObject *
 UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int nin, nout, i;
-    PyObject *signature, *sig_str;
-    PyUFuncObject *f = NULL;
-    PyObject *core_num_dims = NULL, *core_dim_ixs = NULL;
+    PyObject *signature=NULL, *sig_str=NULL;
+    PyUFuncObject *f=NULL;
+    PyObject *core_num_dims=NULL, *core_dim_ixs=NULL;
+    PyObject *core_dim_flags=NULL, *core_dim_sizes=NULL;
     int core_enabled;
     int core_num_ixs = 0;
 
@@ -442,7 +527,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
             goto fail;
         }
         for (i = 0; i < core_num_ixs; i++) {
-            PyObject * val = PyLong_FromLong(f->core_dim_ixs[i]);
+            PyObject *val = PyLong_FromLong(f->core_dim_ixs[i]);
             PyTuple_SET_ITEM(core_dim_ixs, i, val);
         }
     }
@@ -450,13 +535,44 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         Py_INCREF(Py_None);
         core_dim_ixs = Py_None;
     }
+    if (f->core_dim_flags != NULL) {
+        core_dim_flags = PyTuple_New(f->core_num_dim_ix);
+        if (core_dim_flags == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < f->core_num_dim_ix; i++) {
+            PyObject *val = PyLong_FromLong(f->core_dim_flags[i]);
+            PyTuple_SET_ITEM(core_dim_flags, i, val);
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_dim_flags = Py_None;
+    }
+    if (f->core_dim_sizes != NULL) {
+        core_dim_sizes = PyTuple_New(f->core_num_dim_ix);
+        if (core_dim_sizes == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < f->core_num_dim_ix; i++) {
+            PyObject *val = PyLong_FromLong(f->core_dim_sizes[i]);
+            PyTuple_SET_ITEM(core_dim_sizes, i, val);
+        }
+    }
+    else {
+        Py_INCREF(Py_None);
+        core_dim_sizes = Py_None;
+    }
     Py_DECREF(f);
-    return Py_BuildValue("iOO", core_enabled, core_num_dims, core_dim_ixs);
+    return Py_BuildValue("iOOOO", core_enabled, core_num_dims,
+                         core_dim_ixs, core_dim_flags, core_dim_sizes);
 
 fail:
     Py_XDECREF(f);
     Py_XDECREF(core_num_dims);
     Py_XDECREF(core_dim_ixs);
+    Py_XDECREF(core_dim_flags);
+    Py_XDECREF(core_dim_sizes);
     return NULL;
 }
 
@@ -464,8 +580,8 @@ static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
      "Arguments: nin nout signature \n"
-     "If fails, it returns NULL. Otherwise it will returns 0 for scalar ufunc "
-     "and 1 for generalized ufunc. \n",
+     "If fails, it returns NULL. Otherwise it returns a tuple of ufunc "
+     "internals. \n",
      },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
@@ -504,6 +620,7 @@ PyMODINIT_FUNC init_umath_tests(void) {
     if (m == NULL) {
         return RETVAL(NULL);
     }
+
     import_array();
     import_ufunc();
 
