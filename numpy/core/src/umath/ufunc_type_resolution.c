@@ -22,6 +22,11 @@
 #include "ufunc_object.h"
 #include "common.h"
 
+#include "mem_overlap.h"
+#if defined(HAVE_CBLAS)
+#include "cblasfuncs.h"
+#endif
+
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
@@ -1297,6 +1302,88 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
 #endif
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
+}
+
+/*
+ * XXX This is too restrictive, we should only check the inner axis involved
+ * gh-12365
+ */
+#define NOT_CONTIGUOUS(a) (PyArray_NDIM(a) >=2 && !( \
+        PyArray_IS_C_CONTIGUOUS(a) || PyArray_IS_F_CONTIGUOUS(a)))
+
+/*
+ * This function applies special type resolution rules for the case
+ * where all the functions have the pattern XX->X, using
+ * PyArray_ResultType instead of a linear search to get the best
+ * loop, like PyUFunc_SimpleBinaryOperationTypeResolver, and adds
+ * memory overlap and contiguity considerations to the operands,
+ * possibly creating Writeback temporary data
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_MatmulTypeResolver(PyUFuncObject *ufunc,
+                           NPY_CASTING casting,
+                           PyArrayObject **operands,
+                           PyObject *type_tup,
+                           PyArray_Descr **out_dtypes)
+{
+
+    if (PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting, operands,
+            type_tup, out_dtypes) < 0) {
+        return -1;
+    }
+    if (PyArray_NDIM(operands[0]) >= 2 || PyArray_NDIM(operands[1]) >= 2) {
+#if defined(HAVE_CBLAS)
+        int typenum =  out_dtypes[2]->type_num;
+        if (  (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
+                NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
+            /*
+             * We are going to use BLAS
+             * make sure 2d and more arrays are contiguous
+             */
+            if (_bad_strides(operands[0]) || NOT_CONTIGUOUS(operands[0])) {
+                    PyObject *op = PyArray_NewCopy(operands[0], NPY_ANYORDER);
+
+                    if (op == NULL) {
+                       return -1;
+                    }
+                    Py_DECREF(operands[0]);
+                    operands[0] = (PyArrayObject *)op;
+            }
+            if (_bad_strides(operands[1]) || NOT_CONTIGUOUS(operands[1])) {
+                    PyObject *op = PyArray_NewCopy(operands[1], NPY_ANYORDER);
+
+                    if (op == NULL) {
+                        return -1;
+                    }
+                    Py_DECREF(operands[1]);
+                    operands[1] = (PyArrayObject *)op;
+            }
+        }
+#endif
+        if (operands[2] != NULL) {
+            npy_intp last_stride = PyArray_STRIDE(operands[2],
+                                                  PyArray_NDIM(operands[2]) - 1);
+            if (last_stride != PyArray_ITEMSIZE(operands[2])) {
+                PyErr_SetString(PyExc_ValueError,
+                    "output array is not acceptable (must be C-contiguous)");
+                return -1;
+            }
+            /*
+             * Use all the flags in PyUFunc_GeneralizedFunction
+             * except NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE and
+             * NPY_ITER_WRITEONLY. Without NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+             * nditer will properly check overlap between output and any input.
+             */
+            ufunc->op_flags[2] = NPY_ITER_WRITEONLY |
+                      NPY_ITER_UPDATEIFCOPY |
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_ALLOCATE |
+                      NPY_ITER_NO_BROADCAST;
+        }
+    }
+    return 0;
 }
 
 

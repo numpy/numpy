@@ -2595,7 +2595,8 @@ class TestMethods(object):
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
-    def test_dot(self):
+    @pytest.mark.parametrize('func', (np.dot, np.matmul))
+    def test_arr_mult(self, func):
         a = np.array([[1, 0], [0, 1]])
         b = np.array([[0, 1], [1, 0]])
         c = np.array([[9, 1], [1, -9]])
@@ -2619,49 +2620,49 @@ class TestMethods(object):
         # gemm vs syrk optimizations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             eaf = a.astype(et)
-            assert_equal(np.dot(eaf, eaf), eaf)
-            assert_equal(np.dot(eaf.T, eaf), eaf)
-            assert_equal(np.dot(eaf, eaf.T), eaf)
-            assert_equal(np.dot(eaf.T, eaf.T), eaf)
-            assert_equal(np.dot(eaf.T.copy(), eaf), eaf)
-            assert_equal(np.dot(eaf, eaf.T.copy()), eaf)
-            assert_equal(np.dot(eaf.T.copy(), eaf.T.copy()), eaf)
+            assert_equal(func(eaf, eaf), eaf)
+            assert_equal(func(eaf.T, eaf), eaf)
+            assert_equal(func(eaf, eaf.T), eaf)
+            assert_equal(func(eaf.T, eaf.T), eaf)
+            assert_equal(func(eaf.T.copy(), eaf), eaf)
+            assert_equal(func(eaf, eaf.T.copy()), eaf)
+            assert_equal(func(eaf.T.copy(), eaf.T.copy()), eaf)
 
         # syrk validations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             eaf = a.astype(et)
             ebf = b.astype(et)
-            assert_equal(np.dot(ebf, ebf), eaf)
-            assert_equal(np.dot(ebf.T, ebf), eaf)
-            assert_equal(np.dot(ebf, ebf.T), eaf)
-            assert_equal(np.dot(ebf.T, ebf.T), eaf)
+            assert_equal(func(ebf, ebf), eaf)
+            assert_equal(func(ebf.T, ebf), eaf)
+            assert_equal(func(ebf, ebf.T), eaf)
+            assert_equal(func(ebf.T, ebf.T), eaf)
 
         # syrk - different shape, stride, and view validations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             edf = d.astype(et)
             assert_equal(
-                np.dot(edf[::-1, :], edf.T),
-                np.dot(edf[::-1, :].copy(), edf.T.copy())
+                func(edf[::-1, :], edf.T),
+                func(edf[::-1, :].copy(), edf.T.copy())
             )
             assert_equal(
-                np.dot(edf[:, ::-1], edf.T),
-                np.dot(edf[:, ::-1].copy(), edf.T.copy())
+                func(edf[:, ::-1], edf.T),
+                func(edf[:, ::-1].copy(), edf.T.copy())
             )
             assert_equal(
-                np.dot(edf, edf[::-1, :].T),
-                np.dot(edf, edf[::-1, :].T.copy())
+                func(edf, edf[::-1, :].T),
+                func(edf, edf[::-1, :].T.copy())
             )
             assert_equal(
-                np.dot(edf, edf[:, ::-1].T),
-                np.dot(edf, edf[:, ::-1].T.copy())
+                func(edf, edf[:, ::-1].T),
+                func(edf, edf[:, ::-1].T.copy())
             )
             assert_equal(
-                np.dot(edf[:edf.shape[0] // 2, :], edf[::2, :].T),
-                np.dot(edf[:edf.shape[0] // 2, :].copy(), edf[::2, :].T.copy())
+                func(edf[:edf.shape[0] // 2, :], edf[::2, :].T),
+                func(edf[:edf.shape[0] // 2, :].copy(), edf[::2, :].T.copy())
             )
             assert_equal(
-                np.dot(edf[::2, :], edf[:edf.shape[0] // 2, :].T),
-                np.dot(edf[::2, :].copy(), edf[:edf.shape[0] // 2, :].T.copy())
+                func(edf[::2, :], edf[:edf.shape[0] // 2, :].T),
+                func(edf[::2, :].copy(), edf[:edf.shape[0] // 2, :].T.copy())
             )
 
         # syrk - different shape
@@ -2669,9 +2670,13 @@ class TestMethods(object):
             edf = d.astype(et)
             eddtf = ddt.astype(et)
             edtdf = dtd.astype(et)
-            assert_equal(np.dot(edf, edf.T), eddtf)
-            assert_equal(np.dot(edf.T, edf), edtdf)
+            assert_equal(func(edf, edf.T), eddtf)
+            assert_equal(func(edf.T, edf), edtdf)
 
+    def test_dot(self):
+        a = np.array([[1, 0], [0, 1]])
+        b = np.array([[0, 1], [1, 0]])
+        c = np.array([[9, 1], [1, -9]])
         # function versus methods
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
@@ -2737,6 +2742,18 @@ class TestMethods(object):
         assert_raises(NotImplementedError, np.dot, A(), A())
         assert_raises(NotImplementedError, np.matmul, A(), A())
         assert_raises(NotImplementedError, np.inner, A(), A())
+
+    def test_matmul_out(self):
+        # overlapping memory
+        a = np.arange(18).reshape(2, 3, 3)
+        b = np.matmul(a, a)
+        c = np.matmul(a, a, out=a)
+        assert_(c is a)
+        assert_equal(c, b)
+        a = np.arange(18).reshape(2, 3, 3)
+        c = np.matmul(a, a, out=a[::-1, ...])
+        assert_(c.base is a.base)
+        assert_equal(c, b)
 
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
@@ -3147,6 +3164,8 @@ class TestBinop(object):
             # 'eq':       (np.equal, False),
             # 'ne':       (np.not_equal, False),
         }
+        if sys.version_info >= (3, 5):
+            ops['matmul'] = (np.matmul, False, float)
 
         class Coerced(Exception):
             pass
@@ -3189,7 +3208,7 @@ class TestBinop(object):
             if issubclass(MyType, np.ndarray):
                 # Use this range to avoid special case weirdnesses around
                 # divide-by-0, pow(x, 2), overflow due to pow(big, big), etc.
-                return np.arange(3, 5).view(MyType)
+                return np.arange(3, 7).reshape(2, 2).view(MyType)
             else:
                 return MyType()
 
@@ -3198,7 +3217,7 @@ class TestBinop(object):
             for op, (ufunc, has_inplace, dtype) in ops.items():
                 err_msg = ('op: %s, ufunc: %s, has_inplace: %s, dtype: %s'
                            % (op, ufunc, has_inplace, dtype))
-                check_objs = [np.arange(3, 5, dtype=dtype)]
+                check_objs = [np.arange(3, 7, dtype=dtype).reshape(2, 2)]
                 if check_scalar:
                     check_objs.append(check_objs[0][0])
                 for arr in check_objs:
@@ -5697,13 +5716,36 @@ class MatmulCommon(object):
             res = self.matmul(v, v)
             assert_(type(res) is np.dtype(dt).type)
 
-    def test_vector_vector_values(self):
-        vec = np.array([1, 2])
-        tgt = 5
+    def test_0d_vector_values(self):
+        vec1 = np.array([2])
+        vec2 = np.array([3, 4]).reshape(1, -1)
+        tgt = np.array([6, 8])
         for dt in self.types[1:]:
-            v1 = vec.astype(dt)
-            res = self.matmul(v1, v1)
+            v1 = vec1.astype(dt)
+            v2 = vec2.astype(dt)
+            res = self.matmul(v1, v2)
             assert_equal(res, tgt)
+            res = self.matmul(v2.T, v1)
+            assert_equal(res, tgt)
+
+        # boolean type
+        vec = np.array([True, True], dtype='?').reshape(1, -1)
+        res = self.matmul(vec[:, 0], vec)
+        assert_equal(res, True)
+
+    def test_vector_vector_values(self):
+        vec1 = np.array([1, 2])
+        vec2 = np.array([3, 4]).reshape(-1, 1)
+        tgt1 = np.array([11])
+        tgt2 = np.array([[3, 6], [4, 8]])
+        for dt in self.types[1:]:
+            v1 = vec1.astype(dt)
+            v2 = vec2.astype(dt)
+            res = self.matmul(v1, v2)
+            assert_equal(res, tgt1)
+            # no broadcast, we must make v1 into a 2d ndarray
+            res = self.matmul(v2, v1.reshape(1, -1))
+            assert_equal(res, tgt2)
 
         # boolean type
         vec = np.array([True, True], dtype='?')
@@ -5851,27 +5893,52 @@ class TestMatmul(MatmulCommon):
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test out with not allowed type cast (safe casting)
-        # einsum and cblas raise different error types, so
-        # use Exception.
-        msg = "out argument with illegal cast"
+        msg = "Cannot cast ufunc matmul output"
         out = np.zeros((2, 2), dtype=np.int32)
-        assert_raises(Exception, self.matmul, a, b, out=out)
+        assert_raises_regex(TypeError, msg, self.matmul, a, b, out=out)
 
-        # skip following tests for now, cblas does not allow non-contiguous
+        # cblas does not allow non-contiguous
         # outputs and consistency with dot would require same type,
         # dimensions, subtype, and c_contiguous.
 
-        # test out with allowed type cast
-        # msg = "out argument with allowed cast"
-        # out = np.zeros((2, 2), dtype=np.complex128)
-        # self.matmul(a, b, out=out)
-        # assert_array_equal(out, tgt, err_msg=msg)
+        # test out with type upcast to complex
+        out = np.zeros((2, 2), dtype=np.complex128)
+        c = self.matmul(a, b, out=out)
+        assert_(c is out)
+        with suppress_warnings() as sup:
+            sup.filter(np.ComplexWarning, '')
+            c = c.astype(tgt.dtype)
+        assert_array_equal(c, tgt)
 
         # test out non-contiguous
-        # msg = "out argument with non-contiguous layout"
-        # c = np.zeros((2, 2, 2), dtype=float)
-        # self.matmul(a, b, out=c[..., 0])
-        # assert_array_equal(c, tgt, err_msg=msg)
+        out = np.ones((2, 2, 2), dtype=float)
+        assert_raises(ValueError, self.matmul, a, b, out=out[..., 0])
+
+    m1 = np.arange(15.).reshape(5, 3)
+    m2 = np.arange(21.).reshape(3, 7)
+    m3 = np.arange(30.).reshape(5, 6)[:, ::2]  # non-contiguous
+    vc = np.arange(10.)
+    vr = np.arange(6.)
+    @pytest.mark.parametrize('args', (
+            # matrix-matrix
+            (m1, m2), (m2.T, m1.T), (m2.T.copy(), m1.T), (m2.T, m1.T.copy()),
+            # matrix-matrix-transpose, contiguous and non
+            (m1, m1.T), (m1.T, m1), (m1, m3.T), (m3, m1.T),
+            (m3, m3.T), (m3.T, m3),
+            # matrix-matrix non-contiguous
+            (m3, m2), (m2.T, m3.T), (m2.T.copy(), m3.T),
+            # vector-matrix, matrix-vector, contiguous
+            (m1, vr[:3]), (vc[:5], m1), (m1.T, vc[:5]), (vr[:3], m1.T),
+            # vector-matrix, matrix-vector, vector non-contiguous
+            (m1, vr[::2]), (vc[::2], m1), (m1.T, vc[::2]), (vr[::2], m1.T),
+            # vector-matrix, matrix-vector, matrix non-contiguous
+            (m3, vr[:3]), (vc[:5], m3), (m3.T, vc[:5]), (vr[:3], m3.T),
+            # vector-matrix, matrix-vector, both non-contiguous
+            (m3, vr[::2]), (vc[::2], m3), (m3.T, vc[::2]), (vr[::2], m3.T)))
+    def test_dot_equivalent(self, args):
+        r1 = np.matmul(*args)
+        r2 = np.dot(*args)
+        assert_equal(r1, r2)
 
 
 if sys.version_info[:2] >= (3, 5):
@@ -5895,6 +5962,11 @@ if sys.version_info[:2] >= (3, 5):
             assert_equal(self.matmul(a, b), "A")
             assert_equal(self.matmul(b, a), "A")
 
+        def test_matmul_raises(self):
+            assert_raises(TypeError, self.matmul, np.int8(5), np.int8(5))
+            assert_raises(TypeError, self.matmul, np.void(b'abc'), np.void(b'abc'))
+            assert_raises(ValueError, self.matmul, np.arange(10), np.void(b'abc'))
+
     def test_matmul_inplace():
         # It would be nice to support in-place matmul eventually, but for now
         # we don't have a working implementation, so better just to error out
@@ -5908,6 +5980,17 @@ if sys.version_info[:2] >= (3, 5):
         # parser
         exec_ = getattr(builtins, "exec")
         assert_raises(TypeError, exec_, "a @= b", globals(), locals())
+
+    def test_matmul_axes():
+        a = np.arange(3*4*5).reshape(3, 4, 5)
+        c = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (1, 2)])
+        assert c.shape == (3, 4, 4)
+        d = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (0, 1)])
+        assert d.shape == (4, 4, 3)
+        e = np.swapaxes(d, 0, 2)
+        assert_array_equal(e, c)
+        f = np.matmul(a, np.arange(3), axes=[(1, 0), (0), (0)])
+        assert f.shape == (4, 5)
 
 
 class TestInner(object):

@@ -127,7 +127,7 @@ class Ufunc(object):
     type_descriptions : list of TypeDescription objects
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
-                 *type_descriptions):
+                 *type_descriptions, **kwargs):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -136,10 +136,13 @@ class Ufunc(object):
         self.docstring = docstring
         self.typereso = typereso
         self.type_descriptions = []
+        self.signature = kwargs.pop('signature', 'NULL')
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
+        if kwargs:
+            raise ValueError('unknown kwargs %r' % str(kwargs))
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -904,7 +907,14 @@ defdict = {
           "PyUFunc_SimpleBinaryOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
-          )
+          ),
+'matmul' :
+    Ufunc(2, 1, None,
+          docstrings.get('numpy.core.umath.matmul'),
+          "PyUFunc_MatmulTypeResolver",
+          TD(notimes_or_obj),
+          signature='"(n?,k),(k,m?)->(n?,m?)"',
+          ),
 }
 
 if sys.version_info[0] >= 3:
@@ -1058,7 +1068,7 @@ def make_ufuncs(funcdict):
             f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
                 {name}_functions, {name}_data, {name}_signatures, {nloops},
                 {nin}, {nout}, {identity}, "{name}",
-                "{doc}", 0, NULL, identity
+                "{doc}", 0, {signature}, identity
             );
             if ({has_identity}) {{
                 Py_DECREF(identity);
@@ -1073,7 +1083,8 @@ def make_ufuncs(funcdict):
             has_identity='0' if uf.identity is None_ else '1',
             identity='PyUFunc_IdentityValue',
             identity_expr=uf.identity,
-            doc=docstring
+            doc=docstring,
+            signature=uf.signature,
         )
 
         # Only PyUFunc_None means don't reorder - we pass this using the old
@@ -1106,6 +1117,8 @@ def make_code(funcdict, filename):
     #include "cpuid.h"
     #include "ufunc_object.h"
     #include "ufunc_type_resolution.h"
+    #include "loops.h"
+    #include "matmul.h"
     %s
 
     static int

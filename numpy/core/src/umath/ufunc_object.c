@@ -2845,13 +2845,15 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /* Fill in any allocated outputs */
-    for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = NpyIter_GetOperandArray(iter)[i];
-            Py_INCREF(op[i]);
+    {
+        PyArrayObject **operands = NpyIter_GetOperandArray(iter);
+        for (i = 0; i < nop; ++i) {
+            if (op[i] == NULL) {
+                op[i] = operands[i];
+                Py_INCREF(op[i]);
+            }
         }
     }
-
     /*
      * Set up the inner strides array. Because we're not doing
      * buffering, the strides are fixed throughout the looping.

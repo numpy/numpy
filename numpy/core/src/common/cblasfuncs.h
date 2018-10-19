@@ -3,5 +3,7 @@
 
 NPY_NO_EXPORT PyObject *
 cblas_matrixproduct(int, PyArrayObject *, PyArrayObject *, PyArrayObject *);
+NPY_NO_EXPORT int
+_bad_strides(PyArrayObject *ap);
 
 #endif
