@@ -182,7 +182,7 @@ _select_matrix_shape(PyArrayObject *array)
  * This also makes sure that the data segment is aligned with
  * an itemsize address as well by returning one if not true.
  */
-static int
+NPY_NO_EXPORT int
 _bad_strides(PyArrayObject *ap)
 {
     int itemsize = PyArray_ITEMSIZE(ap);

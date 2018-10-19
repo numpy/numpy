@@ -1564,7 +1564,6 @@ static PyObject*
 }
 /**end repeat**/
 
-
 /**begin repeat
  *  #name = byte, ubyte, short, ushort, int, uint,
  *          long, ulong, longlong, ulonglong,
@@ -1575,8 +1574,7 @@ static PyNumberMethods @name@_as_number = {
     (binaryfunc)@name@_add,                     /*nb_add*/
     (binaryfunc)@name@_subtract,                /*nb_subtract*/
     (binaryfunc)@name@_multiply,                /*nb_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (binaryfunc)@name@_divide,                  /*nb_divide*/
 #endif
     (binaryfunc)@name@_remainder,               /*nb_remainder*/
@@ -1596,8 +1594,7 @@ static PyNumberMethods @name@_as_number = {
     (binaryfunc)@name@_and,                     /*nb_and*/
     (binaryfunc)@name@_xor,                     /*nb_xor*/
     (binaryfunc)@name@_or,                      /*nb_or*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     0,                                          /*nb_coerce*/
 #endif
     (unaryfunc)@name@_int,                      /*nb_int*/
@@ -1607,16 +1604,14 @@ static PyNumberMethods @name@_as_number = {
     (unaryfunc)@name@_long,                     /*nb_long*/
 #endif
     (unaryfunc)@name@_float,                    /*nb_float*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (unaryfunc)@name@_oct,                      /*nb_oct*/
     (unaryfunc)@name@_hex,                      /*nb_hex*/
 #endif
     0,                                          /*inplace_add*/
     0,                                          /*inplace_subtract*/
     0,                                          /*inplace_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     0,                                          /*inplace_divide*/
 #endif
     0,                                          /*inplace_remainder*/
@@ -1631,6 +1626,10 @@ static PyNumberMethods @name@_as_number = {
     0,                                          /*nb_inplace_floor_divide*/
     0,                                          /*nb_inplace_true_divide*/
     (unaryfunc)NULL,                            /*nb_index*/
+#if PY_VERSION_HEX >= 0x03050000
+    0,                                          /*nb_matrix_multiply*/
+    0,                                          /*nb_inplace_matrix_multiply*/
+#endif
 };
 /**end repeat**/
 
