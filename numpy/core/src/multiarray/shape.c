@@ -89,11 +89,19 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             return NULL;
         }
 
+        if (PyArray_BASE(self) != NULL
+              || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot resize an array that "
+                    "references or is referenced\n"
+                    "by another array in this way. Use the np.resize function.");
+            return NULL;
+        }
         if (refcheck) {
 #ifdef PYPY_VERSION
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize an array with refcheck=True on PyPy.\n"
-                    "Use the resize function or refcheck=False");
+                    "Use the np.resize function or refcheck=False");
             return NULL;
 #else
             refcnt = PyArray_REFCOUNT(self);
@@ -102,13 +110,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         else {
             refcnt = 1;
         }
-        if ((refcnt > 2)
-                || (PyArray_BASE(self) != NULL)
-                || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
+        if (refcnt > 2) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize an array that "
                     "references or is referenced\n"
-                    "by another array in this way.  Use the resize function");
+                    "by another array in this way.\n"
+                    "Use the np.resize function or refcheck=False");
             return NULL;
         }
 
