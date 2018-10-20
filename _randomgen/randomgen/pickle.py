@@ -17,8 +17,10 @@ PRNGS = {'MT19937': MT19937,
          'ThreeFry': ThreeFry,
          'ThreeFry32': ThreeFry32,
          'Xorshift1024': Xorshift1024,
-         'Xoroshiro128': Xoroshiro128}
-
+         'Xoroshiro128': Xoroshiro128,
+         'Xoshiro256StarStar': Xoshiro256StarStar,
+         'Xoshiro512StarStar': Xoshiro512StarStar,
+         }
 
 def __generator_ctor(brng_name='mt19937'):
     """

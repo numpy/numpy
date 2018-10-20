@@ -10,7 +10,8 @@ from numpy.testing import assert_almost_equal, assert_equal, assert_, \
 
 from randomgen._testing import suppress_warnings
 from randomgen import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
-    PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024
+    PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024, Xoshiro256StarStar, \
+    Xoshiro512StarStar
 from randomgen import entropy
 
 
@@ -101,6 +102,17 @@ def warmup(rg, n=None):
 
 class RNG(object):
     @classmethod
+    def setup_class(cls):
+        # Overridden in test classes. Place holder to silence IDE noise
+        cls.brng = Xoshiro256StarStar
+        cls.advance = None
+        cls.seed = [12345]
+        cls.rg = RandomGenerator(cls.brng(*cls.seed))
+        cls.initial_state = cls.rg.state
+        cls.seed_vector_bits = 64
+        cls._extra_setup()
+
+    @classmethod
     def _extra_setup(cls):
         cls.vec_1d = np.arange(2.0, 102.0)
         cls.vec_2d = np.arange(2.0, 102.0)[None, :]
@@ -121,25 +133,27 @@ class RNG(object):
 
     def test_advance(self):
         state = self.rg.state
-        if hasattr(self.rg, 'advance'):
-            self.rg.advance(self.advance)
+        if hasattr(self.rg._basicrng, 'advance'):
+            self.rg._basicrng.advance(self.advance)
             assert_(not comp_state(state, self.rg.state))
         else:
-            pytest.skip()
+            brng_name = self.rg._basicrng.__class__.__name__
+            pytest.skip('Advance is not supported by {0}'.format(brng_name))
 
     def test_jump(self):
         state = self.rg.state
-        if hasattr(self.rg, 'jump'):
-            self.rg.jump()
+        if hasattr(self.rg._basicrng, 'jump'):
+            self.rg._basicrng.jump()
             jumped_state = self.rg.state
             assert_(not comp_state(state, jumped_state))
             self.rg.random_sample(2 * 3 * 5 * 7 * 11 * 13 * 17)
             self.rg.state = state
-            self.rg.jump()
+            self.rg._basicrng.jump()
             rejumped_state = self.rg.state
             assert_(comp_state(jumped_state, rejumped_state))
         else:
-            pytest.skip()
+            brng_name = self.rg._basicrng.__class__.__name__
+            pytest.skip('Jump is not supported by {0}'.format(brng_name))
 
     def test_random_uintegers(self):
         assert_(len(self.rg.random_uintegers(10)) == 10)
@@ -546,7 +560,9 @@ class RNG(object):
 
     def test_seed_array(self):
         if self.seed_vector_bits is None:
-            pytest.skip()
+            brng_name = self.brng.__name__
+            pytest.skip('Vector seeding is not supported by '
+                        '{0}'.format(brng_name))
 
         if self.seed_vector_bits == 32:
             dtype = np.uint32
@@ -896,7 +912,7 @@ class TestPhilox(RNG):
     @classmethod
     def setup_class(cls):
         cls.brng = Philox
-        cls.advance = None
+        cls.advance = 2**63 + 2**31 + 2**15 + 1
         cls.seed = [12345]
         cls.rg = RandomGenerator(cls.brng(*cls.seed))
         cls.initial_state = cls.rg.state
@@ -908,7 +924,7 @@ class TestThreeFry(RNG):
     @classmethod
     def setup_class(cls):
         cls.brng = ThreeFry
-        cls.advance = None
+        cls.advance = 2 ** 63 + 2 ** 31 + 2 ** 15 + 1
         cls.seed = [12345]
         cls.rg = RandomGenerator(cls.brng(*cls.seed))
         cls.initial_state = cls.rg.state
@@ -920,6 +936,30 @@ class TestXoroshiro128(RNG):
     @classmethod
     def setup_class(cls):
         cls.brng = Xoroshiro128
+        cls.advance = None
+        cls.seed = [12345]
+        cls.rg = RandomGenerator(cls.brng(*cls.seed))
+        cls.initial_state = cls.rg.state
+        cls.seed_vector_bits = 64
+        cls._extra_setup()
+
+
+class TestXoshiro256StarStar(RNG):
+    @classmethod
+    def setup_class(cls):
+        cls.brng = Xoshiro256StarStar
+        cls.advance = None
+        cls.seed = [12345]
+        cls.rg = RandomGenerator(cls.brng(*cls.seed))
+        cls.initial_state = cls.rg.state
+        cls.seed_vector_bits = 64
+        cls._extra_setup()
+
+
+class TestXoshiro512StarStar(RNG):
+    @classmethod
+    def setup_class(cls):
+        cls.brng = Xoshiro512StarStar
         cls.advance = None
         cls.seed = [12345]
         cls.rg = RandomGenerator(cls.brng(*cls.seed))
@@ -956,7 +996,7 @@ class TestThreeFry32(RNG):
     @classmethod
     def setup_class(cls):
         cls.brng = ThreeFry32
-        cls.advance = [2 ** 96 + 2 ** 16 + 2 ** 5 + 1]
+        cls.advance = 2**63 + 2**31 + 2**15 + 1
         cls.seed = [2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
         cls.rg = RandomGenerator(cls.brng(*cls.seed))
         cls.initial_state = cls.rg.state

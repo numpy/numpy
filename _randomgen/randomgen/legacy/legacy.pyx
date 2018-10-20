@@ -1,5 +1,5 @@
 #!python
-#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 from __future__ import absolute_import
 
 import warnings

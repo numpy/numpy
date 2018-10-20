@@ -327,7 +327,7 @@ cdef class Philox:
         self.rng_state.uinteger = value['uinteger']
         self.rng_state.buffer_pos = value['buffer_pos']
 
-    def jump(self, np.npy_intp iter):
+    def jump(self, np.npy_intp iter=1):
         """
         jump(iter=1)
 

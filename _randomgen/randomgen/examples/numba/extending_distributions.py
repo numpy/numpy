@@ -14,7 +14,7 @@ On Windows
 rem PYTHON_HOME is setup dependent, this is an example
 set PYTHON_HOME=c:\Anaconda
 cl.exe /LD .\distributions.c -DDLL_EXPORT \
-    -I%PYTHON_HOME%\lib\site-packages\numpy\core\include \ 
+    -I%PYTHON_HOME%\lib\site-packages\numpy\core\include \
     -I%PYTHON_HOME%\include %PYTHON_HOME%\libs\python36.lib
 move distributions.dll ../../examples/numba/
 """

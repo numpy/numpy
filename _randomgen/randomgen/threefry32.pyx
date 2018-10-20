@@ -314,7 +314,7 @@ cdef class ThreeFry32:
             self.rng_state.buffer[i] = <uint32_t> value['buffer'][i]
         self.rng_state.buffer_pos = value['buffer_pos']
 
-    def jump(self, np.npy_intp iter):
+    def jump(self, np.npy_intp iter=1):
         """
         jump(iter=1)
 

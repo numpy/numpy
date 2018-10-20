@@ -8,7 +8,8 @@ from numpy.testing import assert_equal, assert_allclose, assert_array_equal, \
 import pytest
 
 from randomgen import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
-    PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024
+    PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024, Xoshiro256StarStar, \
+    Xoshiro512StarStar
 
 if (sys.version_info > (3, 0)):
     long = int
@@ -224,6 +225,32 @@ class TestXoroshiro128(Base):
             join(pwd, './data/xoroshiro128-testset-1.csv'))
         cls.data2 = cls._read_csv(
             join(pwd, './data/xoroshiro128-testset-2.csv'))
+        cls.seed_error_type = TypeError
+
+
+class TestXoshiro256StarStar(Base):
+    @classmethod
+    def setup_class(cls):
+        cls.brng = Xoshiro256StarStar
+        cls.bits = 64
+        cls.dtype = np.uint64
+        cls.data1 = cls._read_csv(
+            join(pwd, './data/xoshiro256starstar-testset-1.csv'))
+        cls.data2 = cls._read_csv(
+            join(pwd, './data/xoshiro256starstar-testset-2.csv'))
+        cls.seed_error_type = TypeError
+
+
+class TestXoshiro512StarStar(Base):
+    @classmethod
+    def setup_class(cls):
+        cls.brng = Xoshiro512StarStar
+        cls.bits = 64
+        cls.dtype = np.uint64
+        cls.data1 = cls._read_csv(
+            join(pwd, './data/xoshiro512starstar-testset-1.csv'))
+        cls.data2 = cls._read_csv(
+            join(pwd, './data/xoshiro512starstar-testset-2.csv'))
         cls.seed_error_type = TypeError
 
 

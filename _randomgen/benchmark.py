@@ -27,7 +27,8 @@ else:
     scale_64 = 2
 
 PRNGS = ['DSFMT', 'PCG64', 'PCG32', 'MT19937', 'Xoroshiro128', 'Xorshift1024',
-         'Philox', 'ThreeFry', 'ThreeFry32', 'numpy']
+         'Xoshiro256StarStar', 'Xoshiro512StarStar', 'Philox', 'ThreeFry',
+         'ThreeFry32', 'numpy']
 
 
 def timer(code, setup):
