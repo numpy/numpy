@@ -3094,6 +3094,19 @@ class TestMedian(object):
         assert_equal(np.median(d, axis=(0, 1, 3), keepdims=True).shape,
                      (1, 1, 7, 1))
 
+    def test_keepdims_with_out(self):
+        a = np.arange(12).reshape(2,3,2)
+        o = np.ones((1,1,1))
+        np.median(a, keepdims=True, out=o)
+        assert_equal(o, np.array([[[5.5]]]))
+        o = np.ones((1,3,2))
+        np.median(a, keepdims=True, out=o, axis=0)
+        assert_equal(o, np.array([[[3, 4],
+                                   [5, 6],
+                                   [7, 8]]]))
+        o = np.ones((1,1,2))
+        np.median(a, keepdims=True, out=o, axis=(0, 1))
+        assert_equal(o, np.array([[[5, 6]]]))
 
 class TestAdd_newdoc_ufunc(object):
 
