@@ -3493,13 +3493,13 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     """
     r, k = _ureduce(a, func=_median, axis=axis, out=out,
-                    overwrite_input=overwrite_input)
+                    overwrite_input=overwrite_input, keepdims=keepdims)
     if keepdims:
         return r.reshape(k)
     else:
         return r
 
-def _median(a, axis=None, out=None, overwrite_input=False):
+def _median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     # can't be reasonably be implemented in terms of percentile as we have to
     # call mean to not break astropy
     a = np.asanyarray(a)
@@ -3532,7 +3532,14 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # make 0-D arrays work
         return part.item()
     if axis is None:
+        keepdim = (1,) * a.ndim
         axis = 0
+    else:
+        keepdim = list(a.shape)
+        for ax in _nx.normalize_axis_tuple(axis, a.ndim):
+            keepdim[ax] = 1
+    
+    keepdim = tuple(keepdim)
 
     indexer = [slice(None)] * part.ndim
     index = part.shape[axis] // 2
@@ -3542,17 +3549,19 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     else:
         indexer[axis] = slice(index-1, index+1)
     indexer = tuple(indexer)
-
+    
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
         # warn and return nans like mean would
-        rout = mean(part[indexer], axis=axis, out=out)
+        rout = mean(part[indexer].reshape(keepdim), axis=axis, out=out,
+                keepdims=keepdims)
         return np.lib.utils._median_nancheck(part, rout, axis, out)
     else:
         # if there are no nans
         # Use mean in odd and even case to coerce data type
         # and check, use out array.
-        return mean(part[indexer], axis=axis, out=out)
+        return mean(part[indexer].reshape(keepdim), axis=axis, out=out,
+                keepdims=keepdims)
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
