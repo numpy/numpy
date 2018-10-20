@@ -3401,6 +3401,13 @@ def _ureduce(a, func, **kwargs):
     else:
         keepdim = (1,) * a.ndim
 
+    keepdims = kwargs.get('keepdims', False)
+    out = kwargs.get('out', None)
+
+    if out is not None and keepdims and out.shape != keepdim:
+        raise ValueError('Shape of out is incorrect, expected {}'
+            .format(keepdim))
+
     r = func(a, **kwargs)
     return r, keepdim
 
@@ -3495,6 +3502,8 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     r, k = _ureduce(a, func=_median, axis=axis, out=out,
                     overwrite_input=overwrite_input, keepdims=keepdims)
     if keepdims:
+        if out is not None:
+            out.shape = k
         return r.reshape(k)
     else:
         return r
@@ -3532,13 +3541,14 @@ def _median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         # make 0-D arrays work
         return part.item()
     if axis is None:
-        keepdim = (1,) * a.ndim
+        keepdim = [1] * a.ndim
         axis = 0
     else:
         keepdim = list(a.shape)
-        for ax in _nx.normalize_axis_tuple(axis, a.ndim):
-            keepdim[ax] = 1
-    
+        keepdim[axis] = 1
+    outdim = tuple(keepdim)
+    if sz % 2 ==0:
+        keepdim[axis] = 2
     keepdim = tuple(keepdim)
 
     indexer = [slice(None)] * part.ndim
@@ -3550,6 +3560,8 @@ def _median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         indexer[axis] = slice(index-1, index+1)
     indexer = tuple(indexer)
     
+    out.shape = outdim
+
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
         # warn and return nans like mean would
