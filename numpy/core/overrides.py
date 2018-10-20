@@ -71,8 +71,8 @@ def array_function_implementation_or_override(
         Function that implements the operation on NumPy array without
         overrides when called like ``implementation(*args, **kwargs)``.
     public_api : function
-        Function exposed by NumPy's public API riginally called like
-        ``public_api(*args, **kwargs`` on which arguments are now being
+        Function exposed by NumPy's public API originally called like
+        ``public_api(*args, **kwargs)`` on which arguments are now being
         checked.
     relevant_args : iterable
         Iterable of arguments to check for __array_function__ methods.
