@@ -43,3 +43,5 @@
 # PyArray_SetWritebackIfCopyBase and deprecated PyArray_SetUpdateIfCopyBase.
 0x0000000c = a1bc756c5782853ec2e3616cf66869d8
 
+# Version 13 (Numpy 1.16) Added fields core_dim_flags and core_dim_sizes to PyUFuncObject
+0x0000000d = a1bc756c5782853ec2e3616cf66869d8

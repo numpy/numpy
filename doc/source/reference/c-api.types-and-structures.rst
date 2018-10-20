@@ -182,8 +182,18 @@ PyArrayDescr_Type
 
 .. c:type:: PyArray_Descr
 
-   The format of the :c:type:`PyArray_Descr` structure that lies at the
-   heart of the :c:data:`PyArrayDescr_Type` is
+   The :c:type:`PyArray_Descr` structure lies at the heart of the
+   :c:data:`PyArrayDescr_Type`. While it is described here for
+   completeness, it should be considered internal to NumPy and manipulated via
+   ``PyArrayDescr_*`` or ``PyDataType*`` functions and macros. The size of this
+   structure is subject to change across versions of NumPy. To ensure
+   compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmatic
+   - Never use ``sizof(PyArray_Descr)``
+
+   It has the following structure:
 
    .. code-block:: c
 
@@ -685,7 +695,14 @@ PyUFunc_Type
    the information needed to call the underlying C-code loops that
    perform the actual work. While it is described here for completeness, it
    should be considered internal to NumPy and manipulated via ``PyUFunc_*``
-   functions. It has the following structure:
+   functions. The size of this structure is subject to change across versions
+   of NumPy. To ensure compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmetic
+   - Never use ``sizeof(PyUFuncObject)``
+
+   It has the following structure:
 
    .. code-block:: c
 
@@ -713,10 +730,13 @@ PyUFunc_Type
           char *core_signature;
           PyUFunc_TypeResolutionFunc *type_resolver;
           PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
-          void *reserved2;
           PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
+          /* new in API version 0x0000000D */
+          npy_intp *core_dim_sizes;
+          npy_intp *core_dim_flags;
+
       } PyUFuncObject;
 
    .. c:macro: PyUFuncObject.PyObject_HEAD
@@ -775,6 +795,10 @@ PyUFunc_Type
        The number of supported data types for the ufunc. This number
        specifies how many different 1-d loops (of the builtin data
        types) are available.
+
+   .. c:member:: int PyUFuncObject.reserved1
+
+       Unused.
 
    .. c:member:: char *PyUFuncObject.name
 
@@ -869,6 +893,21 @@ PyUFunc_Type
    .. c:member:: npy_uint32 PyUFuncObject.iter_flags
 
        Override the default nditer flags for the ufunc.
+
+   Added in API version 0x0000000D
+
+   .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
+
+       For each distinct core dimension, the possible
+       :ref:`frozen <frozen>` size if :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` is 0
+
+   .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
+
+       For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
+
+       - :c:data:`UFUNC_CORE_DIM_CAN_IGNORE` if the dim name ends in ``?``
+       - :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` if the dim size will be
+         determined from the operands and not from a :ref:`frozen <frozen>` signature
 
 PyArrayIter_Type
 ----------------

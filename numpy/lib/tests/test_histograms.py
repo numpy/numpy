@@ -249,6 +249,12 @@ class TestHistogram(object):
         assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
         assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
 
+    def test_invalid_range(self):
+        # start of range must be < end of range
+        vals = np.linspace(0.0, 1.0, num=100)
+        with assert_raises_regex(ValueError, "max must be larger than"):
+            np.histogram(vals, range=[0.1, 0.01])
+
     def test_bin_edge_cases(self):
         # Ensure that floating-point computations correctly place edge cases.
         arr = np.array([337, 404, 739, 806, 1007, 1811, 2012])
@@ -264,6 +270,13 @@ class TestHistogram(object):
         arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
         hist, edges = np.histogram(arr, bins=30, range=(-0.5, 5))
         assert_equal(hist[-1], 1)
+
+    def test_bin_array_dims(self):
+        # gracefully handle bins object > 1 dimension
+        vals = np.linspace(0.0, 1.0, num=100)
+        bins = np.array([[0, 0.5], [0.6, 1.0]])
+        with assert_raises_regex(ValueError, "must be 1d"):
+            np.histogram(vals, bins=bins)
 
     def test_unsigned_monotonicity_check(self):
         # Ensures ValueError is raised if bins not increasing monotonically
