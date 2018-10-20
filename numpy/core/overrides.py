@@ -3,7 +3,8 @@
 TODO: rewrite this in C for performance.
 """
 import collections
-import functools
+
+from decorator import decorate
 
 from numpy.core._multiarray_umath import ndarray
 from numpy.compat._inspect import getargspec
@@ -144,11 +145,10 @@ def array_function_dispatch(dispatcher, verify=True):
         if verify:
             verify_matching_signatures(implementation, dispatcher)
 
-        @functools.wraps(implementation)
-        def public_api(*args, **kwargs):
+        def public_api(implementation, *args, **kwargs):
             relevant_args = dispatcher(*args, **kwargs)
             return array_function_implementation_or_override(
                 implementation, public_api, relevant_args, args, kwargs)
-        return public_api
+        return decorate(implementation, public_api)
 
     return decorator
