@@ -61,7 +61,6 @@
     console.log('selected_version: ' + selected_version);
     var url = window.location.href;
     console.log('current url: ' + url);
-    //var current_language = language_segment_from_url(url);
     var current_version = version_segment_in_url(url);
     console.log('current_version: ' + current_version);
     if (selected_version != 'dev/') {
@@ -91,43 +90,10 @@
   console.log('on_version_switch checkpoint E');
   }
 
-  function on_language_switch() {
-    var selected_language = $(this).children('option:selected').attr('value') + '/';
-    var url = window.location.href;
-    var current_language = language_segment_from_url(url);
-    var current_version = version_segment_in_url(url);
-    if (selected_language == 'en/') // Special 'default' case for english.
-      selected_language = '';
-    var new_url = url.replace('.org/' + current_language + current_version,
-                              '.org/' + selected_language + current_version);
-    if (new_url != url) {
-      navigate_to_first_existing([
-        new_url,
-        'https://docs.python.org/'
-      ]);
-    }
-  }
-
-  // Returns the path segment of the language as a string, like 'fr/'
-  // or '' if not found.
-  function language_segment_from_url(url) {
-    var language_regexp = '\.org/([a-z]{2}(?:-[a-z]{2})?/)';
-    var match = url.match(language_regexp);
-    if (match !== null)
-        return match[1];
-    return '';
-  }
-
   // Returns the path segment of the version as a string, like '3.6/'
   // or '' if not found.
   function version_segment_in_url(url) {
     console.log('version_segment_in_url checkpoint A');
-    //var language_segment = '(?:[a-z]{2}(?:-[a-z]{2})?/)';
-    //var version_segment = '(?:(?:' + version_regexs.join('|') + ')/)';
-    //console.log('version_segment: ' + version_segment);
-    //var version_regexp = '\\numpy-' + '?(' + version_segment + ')';
-    //var match = url.match(version_regexp);
-    //console.log('match: ', match);
     url = 'https://docs.scipy.org/doc/numpy-1.15.0/index.html'
     file:///Users/treddy/github_projects/numpy_linked_worktree/doc/build/html/index.html
     if (url.includes('file:///')) {
