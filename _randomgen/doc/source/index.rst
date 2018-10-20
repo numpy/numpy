@@ -150,13 +150,19 @@ generators, 'in addition' to the standard PRNG in NumPy.  The included PRNGs are
   to produce multiple streams in parallel applications. See
   :meth:`~randomgen.xoroshiro128.Xoroshiro128.jump` for details.
   More information about this PRNG is available at the
-  `xorshift and xoroshiro authors' page`_.
-* XorShift1024*φ - Vast fast generator based on the XSadd
+  `xorshift, xoroshiro and xoshiro authors' page`_.
+* XorShift1024*φ - Fast fast generator based on the XSadd
   generator. Supports ``jump`` and so can be used in
   parallel applications. See the documentation for
   :meth:`~randomgen.xorshift1024.Xorshift1024.jump` for details. More information
   about these PRNGs is available at the
-  `xorshift and xoroshiro authors' page`_.
+  `xorshift, xoroshiro and xoshiro authors' page`_.
+* Xorshiro256** and Xorshiro512** - The most recently introduced XOR,
+  shift, and rotate generator. Supports ``jump`` and so can be used in
+  parallel applications. See the documentation for
+  :meth:`~randomgen.xoshiro256starstar.Xoshirt256StarStar.jump` for details. More
+  information about these PRNGs is available at the
+  `xorshift, xoroshiro and xoshiro authors' page`_.
 * PCG-64 - Fast generator that support many parallel streams and
   can be advanced by an arbitrary amount. See the documentation for
   :meth:`~randomgen.pcg64.PCG64.advance`. PCG-64 has a period of
@@ -168,7 +174,7 @@ generators, 'in addition' to the standard PRNG in NumPy.  The included PRNGs are
 
 .. _`NumPy's documentation`: https://docs.scipy.org/doc/numpy/reference/routines.random.html
 .. _`dSFMT authors' page`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/
-.. _`xorshift and xoroshiro authors' page`:  http://xoroshiro.di.unimi.it/
+.. _`xorshift, xoroshiro and xoshiro authors' page`:  http://xoroshiro.di.unimi.it/
 .. _`PCG author's page`: http://www.pcg-random.org/
 .. _`Random123`: https://www.deshawresearch.com/resources_random123.html
 

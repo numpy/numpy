@@ -599,7 +599,8 @@ class TestRandomDist(object):
         assert_equal(mt19937.randint(10, 10, size=0).shape, (0,))
         assert_equal(mt19937.choice(0, size=0).shape, (0,))
         assert_equal(mt19937.choice([], size=(0,)).shape, (0,))
-        assert_equal(mt19937.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_equal(mt19937.choice(['a', 'b'], size=(3, 0, 4)).shape,
+                     (3, 0, 4))
         assert_raises(ValueError, mt19937.choice, [], 10)
 
     def test_bytes(self):
