@@ -3010,11 +3010,13 @@ class MaskedArray(ndarray):
             except (TypeError, AttributeError):
                 # When _mask.shape is not writable (because it's a void)
                 pass
-        # Finalize the fill_value for structured arrays
-        if self.dtype.names:
-            if self._fill_value is None:
-                self._fill_value = _check_fill_value(None, self.dtype)
-        return
+
+        # Finalize the fill_value
+        if self._fill_value is not None:
+            self._fill_value = _check_fill_value(self._fill_value, self.dtype)
+        elif self.dtype.names is not None:
+            # Finalize the default fill_value for structured arrays
+            self._fill_value = _check_fill_value(None, self.dtype)
 
     def __array_wrap__(self, obj, context=None):
         """
