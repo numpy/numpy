@@ -9,7 +9,7 @@ import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+    assert_array_equal)
 
 
 def trim(x):
@@ -146,6 +146,19 @@ class TestEvaluation(object):
             assert_equal(poly.polyval(x, [1]).shape, dims)
             assert_equal(poly.polyval(x, [1, 0]).shape, dims)
             assert_equal(poly.polyval(x, [1, 0, 0]).shape, dims)
+
+        #check masked arrays are processed correctly
+        mask = [False, True, False]
+        mx = np.ma.array([1, 2, 3], mask=mask)
+        res = np.polyval([7, 5, 3], mx)
+        assert_array_equal(res.mask, mask)
+
+        #check subtypes of ndarray are preserved
+        class C(np.ndarray):
+            pass
+
+        cx = np.array([1, 2, 3]).view(C)
+        assert_equal(type(np.polyval([2, 3, 4], cx)), C)
 
     def test_polyvalfromroots(self):
         # check exception for broadcasting x values over root array with

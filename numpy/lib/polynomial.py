@@ -651,6 +651,8 @@ def polyval(p, x):
     for polynomials of high degree the values may be inaccurate due to
     rounding errors. Use carefully.
 
+    If `x` is a subtype of `ndarray` the return value will be of the same type.
+
     References
     ----------
     .. [1] I. N. Bronshtein, K. A. Semendyayev, and K. A. Hirsch (Eng.
@@ -673,7 +675,7 @@ def polyval(p, x):
     if isinstance(x, poly1d):
         y = 0
     else:
-        x = NX.asarray(x)
+        x = NX.asanyarray(x)
         y = NX.zeros_like(x)
     for i in range(len(p)):
         y = y * x + p[i]
