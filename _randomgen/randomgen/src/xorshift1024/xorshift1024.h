@@ -1,3 +1,6 @@
+#ifndef _RANDOMDGEN__XORSHIFT1024_H_
+#define _RANDOMDGEN__XORSHIFT1024_H_
+
 #ifdef _WIN32
 #if _MSC_VER == 1500
 #include "../common/inttypes.h"
@@ -43,3 +46,5 @@ static INLINE uint32_t xorshift1024_next32(xorshift1024_state *state) {
 }
 
 void xorshift1024_jump(xorshift1024_state *state);
+
+#endif

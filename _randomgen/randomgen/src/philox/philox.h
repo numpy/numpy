@@ -1,3 +1,6 @@
+#ifndef _RANDOMDGEN__PHILOX_H_
+#define _RANDOMDGEN__PHILOX_H_
+
 #include <inttypes.h>
 
 #ifdef _WIN32
@@ -246,3 +249,5 @@ static INLINE uint32_t philox_next32(philox_state *state) {
 extern void philox_jump(philox_state *state);
 
 extern void philox_advance(uint64_t *step, philox_state *state);
+
+#endif

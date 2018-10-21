@@ -1,3 +1,6 @@
+#ifndef _RANDOMDGEN__XOROSHIRO128_H_
+#define _RANDOMDGEN__XOROSHIRO128_H_
+
 #ifdef _WIN32
 #if _MSC_VER == 1500
 #include "../common/inttypes.h"
@@ -50,3 +53,5 @@ static INLINE uint32_t xoroshiro128_next32(xoroshiro128_state *state) {
 }
 
 void xoroshiro128_jump(xoroshiro128_state *state);
+
+#endif
