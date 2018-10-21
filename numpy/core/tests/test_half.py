@@ -301,21 +301,19 @@ class TestHalf(object):
         assert_equal(np.copysign(b, a), [2, 5, 1, 4, 3])
 
         assert_equal(np.maximum(a, b), [0, 5, 2, 4, 3])
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
-            x = np.maximum(b, c)
-            assert_(np.isnan(x[3]))
-        assert_equal(len(sup.log), 1)
+
+        x = np.maximum(b, c)
+        assert_(np.isnan(x[3]))
         x[3] = 0
         assert_equal(x, [0, 5, 1, 0, 6])
+
         assert_equal(np.minimum(a, b), [-2, 1, 1, 4, 2])
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
-            x = np.minimum(b, c)
-            assert_(np.isnan(x[3]))
-        assert_equal(len(sup.log), 1)
+
+        x = np.minimum(b, c)
+        assert_(np.isnan(x[3]))
         x[3] = 0
         assert_equal(x, [-2, -1, -np.inf, 0, 3])
+
         assert_equal(np.fmax(a, b), [0, 5, 2, 4, 3])
         assert_equal(np.fmax(b, c), [0, 5, 1, 4, 6])
         assert_equal(np.fmin(a, b), [-2, 1, 1, 4, 2])

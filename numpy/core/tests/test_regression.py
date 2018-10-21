@@ -1557,10 +1557,7 @@ class TestRegression(object):
 
     def test_complex_nan_maximum(self):
         cnan = complex(0, np.nan)
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
-            assert_equal(np.maximum(1, cnan), cnan)
-        assert_equal(len(sup.log), 1)
+        assert_equal(np.maximum(1, cnan), cnan)
 
     def test_subclass_int_tuple_assignment(self):
         # ticket #1563
