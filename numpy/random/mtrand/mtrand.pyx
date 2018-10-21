@@ -948,8 +948,7 @@ cdef class RandomState:
         --------
         random.random_integers : similar to `randint`, only for the closed
             interval [`low`, `high`], and 1 is the lowest value if `high` is
-            omitted. In particular, this other one is the one to use to generate
-            uniformly distributed discrete non-integers.
+            omitted.
 
         Examples
         --------
