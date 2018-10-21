@@ -1,3 +1,5 @@
+#ifndef _RANDOMDGEN__ENTROPY_H_
+#define _RANDOMDGEN__ENTROPY_H_
 /*
  * PCG Random Number Generation for C.
  *
@@ -20,6 +22,7 @@
  *
  *     http://www.pcg-random.org
  */
+
 #include <stddef.h>
 #ifdef _WIN32
 #if _MSC_VER == 1500
@@ -41,3 +44,5 @@ extern void entropy_fill(void *dest, size_t size);
 extern bool entropy_getbytes(void *dest, size_t size);
 
 extern bool entropy_fallback_getbytes(void *dest, size_t size);
+
+#endif

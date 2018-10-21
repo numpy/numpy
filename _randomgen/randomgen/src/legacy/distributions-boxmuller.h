@@ -1,3 +1,7 @@
+#ifndef _RANDOMDGEN__DISTRIBUTIONS_LEGACY_H_
+#define _RANDOMDGEN__DISTRIBUTIONS_LEGACY_H_
+
+
 #include "../distributions/distributions.h"
 
 typedef struct aug_brng {
@@ -32,3 +36,5 @@ extern double legacy_f(aug_brng_t *aug_state, double dfnum, double dfden);
 extern double legacy_normal(aug_brng_t *aug_state, double loc, double scale);
 extern double legacy_standard_gamma(aug_brng_t *aug_state, double shape);
 extern double legacy_exponential(aug_brng_t *aug_state, double scale);
+
+#endif

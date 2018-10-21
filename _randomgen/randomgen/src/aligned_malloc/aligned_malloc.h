@@ -1,3 +1,6 @@
+#ifndef _RANDOMDGEN__ALIGNED_MALLOC_H_
+#define _RANDOMDGEN__ALIGNED_MALLOC_H_
+
 #include "Python.h"
 #include "numpy/npy_common.h"
 
@@ -47,3 +50,5 @@ static NPY_INLINE void PyArray_free_aligned(void *p)
     void *base = *(((void **)p) - 1);
     PyMem_Free(base);
 }
+
+#endif

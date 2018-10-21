@@ -1,6 +1,8 @@
 /*
 Adapted from random123's threefry.h
 */
+#ifndef _RANDOMDGEN__THREEFRY32_H_
+#define _RANDOMDGEN__THREEFRY32_H_
 
 #ifdef _WIN32
 #if _MSC_VER == 1500
@@ -836,3 +838,5 @@ static INLINE double threefry32_next_double(threefry32_state *state) {
 extern void threefry32_jump(threefry32_state *state);
 
 extern void threefry32_advance(uint32_t *step, threefry32_state *state);
+
+#endif

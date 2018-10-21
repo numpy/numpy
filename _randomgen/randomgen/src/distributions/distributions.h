@@ -1,3 +1,6 @@
+#ifndef _RANDOMDGEN__DISTRIBUTIONS_H_
+#define _RANDOMDGEN__DISTRIBUTIONS_H_
+
 #pragma once
 #include <stddef.h>
 #ifdef _WIN32
@@ -213,3 +216,5 @@ DECLDIR void random_bounded_uint8_fill(brng_t *brng_state, npy_bool off,
 DECLDIR void random_bounded_bool_fill(brng_t *brng_state, npy_bool off,
                                       npy_bool rng, npy_intp cnt,
                                       bool use_masked, npy_bool *out);
+
+#endif
