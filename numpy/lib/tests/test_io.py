@@ -123,12 +123,12 @@ class RoundtripTest(object):
     def check_roundtrips(self, a):
         self.roundtrip(a)
         self.roundtrip(a, file_on_disk=True)
-        self.roundtrip(np.asfortranarray(a))
-        self.roundtrip(np.asfortranarray(a), file_on_disk=True)
+        self.roundtrip(np.asarray(a, order='F'))
+        self.roundtrip(np.asarray(a, order='F'), file_on_disk=True)
         if a.shape[0] > 1:
             # neither C nor Fortran contiguous for 2D arrays or more
-            self.roundtrip(np.asfortranarray(a)[1:])
-            self.roundtrip(np.asfortranarray(a)[1:], file_on_disk=True)
+            self.roundtrip(np.asarray(a, order='F')[1:])
+            self.roundtrip(np.asarray(a, order='F')[1:], file_on_disk=True)
 
     def test_array(self):
         a = np.array([], float)
@@ -162,7 +162,7 @@ class RoundtripTest(object):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
 
-        a = np.asfortranarray([[1, 2.5], [4, 7.3]])
+        a = np.asarray([[1, 2.5], [4, 7.3]], order='F')
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
 
     def test_record(self):

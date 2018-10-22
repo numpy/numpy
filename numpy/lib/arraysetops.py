@@ -270,7 +270,7 @@ def unique(ar, return_index=False, return_inverse=False,
     # Must reshape to a contiguous 2D array for this to work...
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], -1)
-    ar = np.ascontiguousarray(ar)
+    ar = np.asarray(ar, order='C')
     dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
     try:

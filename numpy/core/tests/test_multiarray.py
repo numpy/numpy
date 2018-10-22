@@ -347,13 +347,15 @@ class TestArrayConstruction(object):
 
     def test_array_cont(self):
         d = np.ones(10)[::2]
-        assert_(np.ascontiguousarray(d).flags.c_contiguous)
-        assert_(np.ascontiguousarray(d).flags.f_contiguous)
-        assert_(np.asfortranarray(d).flags.c_contiguous)
-        assert_(np.asfortranarray(d).flags.f_contiguous)
+        with assert_warns(DeprecationWarning):
+            assert_(np.ascontiguousarray(d).flags.c_contiguous)
+            assert_(np.ascontiguousarray(d).flags.f_contiguous)
+            assert_(np.asfortranarray(d).flags.c_contiguous)
+            assert_(np.asfortranarray(d).flags.f_contiguous)
         d = np.ones((10, 10))[::2,::2]
-        assert_(np.ascontiguousarray(d).flags.c_contiguous)
-        assert_(np.asfortranarray(d).flags.f_contiguous)
+        with assert_warns(DeprecationWarning):
+            assert_(np.ascontiguousarray(d).flags.c_contiguous)
+            assert_(np.asfortranarray(d).flags.f_contiguous)
 
 
 class TestAssignment(object):
@@ -5469,7 +5471,7 @@ class TestDot(object):
                 return self*other
 
         U_non_cont = np.transpose([[1., 1.], [1., 2.]])
-        U_cont = np.ascontiguousarray(U_non_cont)
+        U_cont = np.asarray(U_non_cont, order='C')
         x = np.array([Vec([1., 0.]), Vec([0., 1.])])
         zeros = np.array([Vec([0., 0.]), Vec([0., 0.])])
         zeros_test = np.dot(U_cont, x) - np.dot(U_non_cont, x)

@@ -483,10 +483,7 @@ def asarray(a, dtype=None, order=None):
     See Also
     --------
     asanyarray : Similar function which passes through subclasses.
-    ascontiguousarray : Convert input to a contiguous array.
     asfarray : Convert input to a floating point ndarray.
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and Infs.
     fromiter : Create an array from an iterator.
     fromfunction : Construct an array by executing a function on grid
@@ -552,10 +549,7 @@ def asanyarray(a, dtype=None, order=None):
     See Also
     --------
     asarray : Similar function which always returns ndarrays.
-    ascontiguousarray : Convert input to a contiguous array.
     asfarray : Convert input to a floating point ndarray.
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and
                         Infs.
     fromiter : Create an array from an iterator.
@@ -583,6 +577,9 @@ def asanyarray(a, dtype=None, order=None):
 def ascontiguousarray(a, dtype=None):
     """
     Return a contiguous array in memory (C order).
+    
+    .. warning:: np.ascontiguousarray is depreciated since numpy 1.16, 
+                 use np.asarray with order='C' instead
 
     Parameters
     ----------
@@ -595,12 +592,12 @@ def ascontiguousarray(a, dtype=None):
     -------
     out : ndarray
         Contiguous array of same shape and content as `a`, with type `dtype`
-        if specified.
+        if specified. If `a` is scalar, 1d array with single element 
+        is returned.
 
     See Also
     --------
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
+    asarray: Convert the input to an array.
     require : Return an ndarray that satisfies requirements.
     ndarray.flags : Information about the memory layout of the array.
 
@@ -614,12 +611,20 @@ def ascontiguousarray(a, dtype=None):
     True
 
     """
+    # NumPy 1.16.0, 2018-10-21
+    warnings.warn(
+        "np.ascontiguousarray is deprecated, use np.asarray with order='C'"
+        " instead",
+        DeprecationWarning, stacklevel=2)
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 
 def asfortranarray(a, dtype=None):
     """
     Return an array laid out in Fortran order in memory.
+
+    .. warning:: np.asfortranarray is depreciated since numpy 1.16, 
+                 use np.asarray with order='F' instead
 
     Parameters
     ----------
@@ -632,10 +637,11 @@ def asfortranarray(a, dtype=None):
     -------
     out : ndarray
         The input `a` in Fortran, or column-major, order.
+        If `a` is scalar, 1d array with single element is returned.
 
     See Also
     --------
-    ascontiguousarray : Convert input to a contiguous (C order) array.
+    asarray: Convert the input to an array.
     asanyarray : Convert input to an ndarray with either row or
         column-major memory order.
     require : Return an ndarray that satisfies requirements.
@@ -651,6 +657,11 @@ def asfortranarray(a, dtype=None):
     True
 
     """
+    # NumPy 1.16.0, 2018-10-21
+    warnings.warn(
+        "np.asfortranarray is deprecated, use np.asarray with order='F'"
+        " instead",
+        DeprecationWarning, stacklevel=2)
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
 
@@ -683,9 +694,6 @@ def require(a, dtype=None, requirements=None):
     --------
     asarray : Convert input to an ndarray.
     asanyarray : Convert to an ndarray, but pass through ndarray subclasses.
-    ascontiguousarray : Convert input to a contiguous array.
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
     ndarray.flags : Information about the memory layout of the array.
 
     Notes
