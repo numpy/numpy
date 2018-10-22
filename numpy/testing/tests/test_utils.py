@@ -469,7 +469,8 @@ class TestAlmostEqual(_GenericTest):
         self._test_not_equal(x, z)
 
     def test_error_message(self):
-        """Check the message is formatted correctly for the decimal value"""
+        """Check the message is formatted correctly for the decimal value.
+           Also check the message when input includes inf or nan (gh12200)"""
         x = np.array([1.00000000001, 2.00000000002, 3.00003])
         y = np.array([1.00000000002, 2.00000000003, 3.00004])
 
@@ -492,6 +493,19 @@ class TestAlmostEqual(_GenericTest):
         except AssertionError as e:
             # remove anything that's not the array string
             assert_equal(str(e).split('%)\n ')[1], b)
+
+        # Check the error message when input includes inf or nan
+        x = np.array([np.inf, 0])
+        y = np.array([np.inf, 1])
+        try:
+            self._assert_func(x, y)
+        except AssertionError as e:
+            msgs = str(e).split('\n')
+            # assert error percentage is 50%
+            assert_equal(msgs[3], '(mismatch 50.0%)')
+            # assert output array contains inf
+            assert_equal(msgs[4], ' x: array([inf,  0.])')
+            assert_equal(msgs[5], ' y: array([inf,  1.])')
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
@@ -1077,7 +1091,7 @@ class TestStringEqual(object):
 
         assert_raises(AssertionError,
                       lambda: assert_string_equal("foo", "hello"))
-        
+
     def test_regex(self):
         assert_string_equal("a+*b", "a+*b")
 

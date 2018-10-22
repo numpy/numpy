@@ -692,6 +692,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
+    # original array for output formating
+    ox, oy = x, y
+
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
@@ -780,10 +783,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
-            match = 100-100.0*reduced.count(1)/len(reduced)
-            msg = build_err_msg([x, y],
+            mismatch = 100.0 * reduced.count(0) / ox.size
+            msg = build_err_msg([ox, oy],
                                 err_msg
-                                + '\n(mismatch %s%%)' % (match,),
+                                + '\n(mismatch %s%%)' % (mismatch,),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
