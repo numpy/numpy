@@ -46,7 +46,7 @@ repository::
     $ git checkout maintenance/1.14.x
     $ git pull upstream maintenance/1.14.x
     $ git submodule update
-    $ git clean -xdf
+    $ git clean -xdf > /dev/null
 
 Edit pavement.py and setup.py as detailed in HOWTO_RELEASE::
 
@@ -94,7 +94,7 @@ Edit the ``.travis.yml`` and ``.appveyor.yml`` files to make sure they have the
 correct version, and put in the commit hash for the ``REL`` commit created
 above for ``BUILD_COMMIT``, see the _example from `v1.14.3`::
 
-    $ gvim .travis.yml appveyor.yml
+    $ gvim .travis.yml .appveyor.yml
     $ git commit -a
     $ git push origin HEAD
 
@@ -137,6 +137,7 @@ Generate the README files
 This needs to be done after all installers are present, but before the pavement
 file is updated for continued development.
 
+    $ cd ../numpy
     $ paver write_release_and_log
 
 
