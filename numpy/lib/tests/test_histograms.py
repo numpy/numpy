@@ -794,3 +794,20 @@ class TestHistogramdd(object):
         hist_dd, edges_dd = histogramdd((v,), (bins,), density=True)
         assert_equal(hist, hist_dd)
         assert_equal(edges, edges_dd[0])
+
+    def test_density_via_normed(self):
+        # normed should simply alias to density argument
+        v = np.arange(10)
+        bins = np.array([0, 1, 3, 6, 10])
+        hist, edges = histogram(v, bins, density=True)
+        hist_dd, edges_dd = histogramdd((v,), (bins,), normed=True)
+        assert_equal(hist, hist_dd)
+        assert_equal(edges, edges_dd[0])
+
+    def test_density_normed_redundancy(self):
+        v = np.arange(10)
+        bins = np.array([0, 1, 3, 6, 10])
+        with assert_raises_regex(TypeError, "Cannot specify both"):
+            hist_dd, edges_dd = histogramdd((v,), (bins,),
+                                            density=True,
+                                            normed=True)
