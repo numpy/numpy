@@ -1,0 +1,32 @@
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Charles Harris
+* Jeroen Demeyer
+* Kevin Sheppard
+* Matthew Bowden +
+* Matti Picus
+* Tyler Reddy
+
+Pull requests merged
+====================
+
+A total of 12 pull requests were merged for this release.
+
+* `#12080 <https://github.com/numpy/numpy/pull/12080>`__: MAINT: Blacklist some MSVC complex functions.
+* `#12083 <https://github.com/numpy/numpy/pull/12083>`__: TST: Add azure CI testing to 1.15.x branch.
+* `#12084 <https://github.com/numpy/numpy/pull/12084>`__: BUG: test_path() now uses Path.resolve()
+* `#12085 <https://github.com/numpy/numpy/pull/12085>`__: TST, MAINT: Fix some failing tests on azure-pipelines mac and...
+* `#12187 <https://github.com/numpy/numpy/pull/12187>`__: BUG: Fix memory leak in mapping.c
+* `#12188 <https://github.com/numpy/numpy/pull/12188>`__: BUG: Allow boolean subtract in histogram
+* `#12189 <https://github.com/numpy/numpy/pull/12189>`__: BUG: Fix in-place permutation
+* `#12190 <https://github.com/numpy/numpy/pull/12190>`__: BUG: limit default for get_num_build_jobs() to 8
+* `#12191 <https://github.com/numpy/numpy/pull/12191>`__: BUG: OBJECT_to_* should check for errors
+* `#12192 <https://github.com/numpy/numpy/pull/12192>`__: DOC: Prepare for NumPy 1.15.3 release.
+* `#12237 <https://github.com/numpy/numpy/pull/12237>`__: BUG: Fix MaskedArray fill_value type conversion.
+* `#12238 <https://github.com/numpy/numpy/pull/12238>`__: TST: Backport azure-pipeline testing fixes for Mac
