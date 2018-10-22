@@ -620,6 +620,25 @@ class TestString(object):
         # Pull request #4722
         np.array(["", ""]).astype(object)
 
+    def test_void_subclass_unsized(self):
+        dt = np.dtype(np.record)
+        assert_equal(repr(dt), "dtype('V')")
+        assert_equal(str(dt), '|V0')
+        assert_equal(dt.name, 'record')
+
+    def test_void_subclass_sized(self):
+        dt = np.dtype((np.record, 2))
+        assert_equal(repr(dt), "dtype('V2')")
+        assert_equal(str(dt), '|V2')
+        assert_equal(dt.name, 'record16')
+
+    def test_void_subclass_fields(self):
+        dt = np.dtype((np.record, [('a', '<u2')]))
+        assert_equal(repr(dt), "dtype((numpy.record, [('a', '<u2')]))")
+        assert_equal(str(dt), "(numpy.record, [('a', '<u2')])")
+        assert_equal(dt.name, 'record16')
+
+
 class TestDtypeAttributeDeletion(object):
 
     def test_dtype_non_writable_attributes_deletion(self):
