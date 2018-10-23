@@ -296,12 +296,13 @@ class TestArrayFunctionImplementation(object):
     def test_not_implemented(self):
         MyArray, implements = _new_duck_type_and_implements()
 
-        @array_function_dispatch(lambda array: (array,))
+        @array_function_dispatch(lambda array: (array,), module='my')
         def func(array):
             return array
 
         array = np.array(1)
         assert_(func(array) is array)
 
-        with assert_raises_regex(TypeError, 'no implementation found'):
+        with assert_raises_regex(
+                TypeError, "no implementation found for 'my.func'"):
             func(MyArray())
