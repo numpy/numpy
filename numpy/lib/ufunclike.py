@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
+from numpy.core.overrides import array_function_dispatch
 import warnings
 import functools
 
@@ -37,7 +38,30 @@ def _deprecate_out_named_y(f):
     return func
 
 
+def _fix_out_named_y(f):
+    """
+    Allow the out argument to be passed as the name `y` (deprecated)
+
+    This decorator should only be used if _deprecate_out_named_y is used on
+    a corresponding dispatcher fucntion.
+    """
+    @functools.wraps(f)
+    def func(x, out=None, **kwargs):
+        if 'y' in kwargs:
+            # we already did error checking in _deprecate_out_named_y
+            out = kwargs.pop('y')
+        return f(x, out=out, **kwargs)
+
+    return func
+
+
 @_deprecate_out_named_y
+def _dispatcher(x, out=None):
+    return (x, out)
+
+
+@array_function_dispatch(_dispatcher, verify=False)
+@_fix_out_named_y
 def fix(x, out=None):
     """
     Round to nearest integer towards zero.
@@ -83,7 +107,8 @@ def fix(x, out=None):
     return res
 
 
-@_deprecate_out_named_y
+@array_function_dispatch(_dispatcher, verify=False)
+@_fix_out_named_y
 def isposinf(x, out=None):
     """
     Test element-wise for positive infinity, return result as bool array.
@@ -151,7 +176,8 @@ def isposinf(x, out=None):
         return nx.logical_and(is_inf, signbit, out)
 
 
-@_deprecate_out_named_y
+@array_function_dispatch(_dispatcher, verify=False)
+@_fix_out_named_y
 def isneginf(x, out=None):
     """
     Test element-wise for negative infinity, return result as bool array.

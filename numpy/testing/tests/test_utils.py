@@ -158,6 +158,44 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, b)
         self._test_equal(b, a)
 
+    def test_subclass_that_overrides_eq(self):
+        # While we cannot guarantee testing functions will always work for
+        # subclasses, the tests should ideally rely only on subclasses having
+        # comparison operators, not on them being able to store booleans
+        # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
+        class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return bool(np.equal(self, other).all())
+
+            def __ne__(self, other):
+                return not self == other
+
+        a = np.array([1., 2.]).view(MyArray)
+        b = np.array([2., 3.]).view(MyArray)
+        assert_(type(a == a), bool)
+        assert_(a == a)
+        assert_(a != b)
+        self._test_equal(a, a)
+        self._test_not_equal(a, b)
+        self._test_not_equal(b, a)
+
+    def test_subclass_that_does_not_implement_npall(self):
+        # While we cannot guarantee testing functions will always work for
+        # subclasses, the tests should ideally rely only on subclasses having
+        # comparison operators, not on them being able to store booleans
+        # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
+        class MyArray(np.ndarray):
+            def __array_function__(self, *args, **kwargs):
+                return NotImplemented
+
+        a = np.array([1., 2.]).view(MyArray)
+        b = np.array([2., 3.]).view(MyArray)
+        with assert_raises(TypeError):
+            np.all(a)
+        self._test_equal(a, a)
+        self._test_not_equal(a, b)
+        self._test_not_equal(b, a)
+
 
 class TestBuildErrorMessage(object):
 
