@@ -16,6 +16,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError', 'multi_dot']
 
+import functools
 import operator
 import warnings
 
@@ -28,9 +29,14 @@ from numpy.core import (
     swapaxes, divide, count_nonzero, isnan
 )
 from numpy.core.multiarray import normalize_axis_index
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import lapack_lite, _umath_linalg
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy.linalg')
+
 
 # For Python2/3 compatibility
 _N = b'N'

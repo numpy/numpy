@@ -13,9 +13,14 @@ otherwise stated.
 from __future__ import division, absolute_import, print_function
 
 from decimal import Decimal
+import functools
 
 import numpy as np
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate',

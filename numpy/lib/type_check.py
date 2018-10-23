@@ -2,6 +2,7 @@
 
 """
 from __future__ import division, absolute_import, print_function
+import functools
 import warnings
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
@@ -11,10 +12,16 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, array, isnan, zeros
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from .ufunclike import isneginf, isposinf
 
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
+
+
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
+
 
 def mintypecode(typechars,typeset='GDFgdf',default='d'):
     """
