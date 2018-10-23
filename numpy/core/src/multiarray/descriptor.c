@@ -19,6 +19,7 @@
 #include "descriptor.h"
 #include "alloc.h"
 #include "assert.h"
+#include "buffer.h"
 
 /*
  * offset:    A starting offset.
@@ -1770,6 +1771,7 @@ arraydescr_dealloc(PyArray_Descr *self)
         Py_INCREF(self);
         return;
     }
+    _array_dealloc_buffer_info((PyObject*)self);
     Py_XDECREF(self->typeobj);
     Py_XDECREF(self->names);
     Py_XDECREF(self->fields);
