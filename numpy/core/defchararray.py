@@ -17,12 +17,13 @@ The preferred alias for `defchararray` is `numpy.char`.
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
 import sys
 from .numerictypes import string_, unicode_, integer, object_, bool_, character
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from numpy.compat import asbytes, long
 import numpy
 
@@ -47,6 +48,10 @@ else:
     _unicode = unicode
     _bytes = str
 _len = len
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy.char')
+
 
 def _use_unicode(*args):
     """

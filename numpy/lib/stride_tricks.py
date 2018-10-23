@@ -140,7 +140,7 @@ def _broadcast_to_dispatcher(array, shape, subok=None):
     return (array,)
 
 
-@array_function_dispatch(_broadcast_to_dispatcher)
+@array_function_dispatch(_broadcast_to_dispatcher, module='numpy')
 def broadcast_to(array, shape, subok=False):
     """Broadcast an array to a new shape.
 
@@ -205,7 +205,7 @@ def _broadcast_arrays_dispatcher(*args, **kwargs):
     return args
 
 
-@array_function_dispatch(_broadcast_arrays_dispatcher)
+@array_function_dispatch(_broadcast_arrays_dispatcher, module='numpy')
 def broadcast_arrays(*args, **kwargs):
     """
     Broadcast any number of arrays against each other.

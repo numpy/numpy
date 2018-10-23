@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import functools
 import warnings
 
 import numpy.core.numeric as _nx
@@ -8,7 +9,7 @@ from numpy.core.numeric import (
     )
 from numpy.core.fromnumeric import product, reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
 from numpy.lib.index_tricks import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
@@ -20,6 +21,10 @@ __all__ = [
     'apply_along_axis', 'kron', 'tile', 'get_array_wrap', 'take_along_axis',
     'put_along_axis'
     ]
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 def _make_along_axis_idx(arr_shape, indices, axis):

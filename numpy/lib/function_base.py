@@ -6,6 +6,7 @@ try:
     import collections.abc as collections_abc
 except ImportError:
     import collections as collections_abc
+import functools
 import re
 import sys
 import warnings
@@ -26,7 +27,7 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
@@ -43,6 +44,11 @@ if sys.version_info[0] < 3:
     import __builtin__ as builtins
 else:
     import builtins
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
+
 
 # needed in this module for compatibility
 from numpy.lib.histograms import histogram, histogramdd

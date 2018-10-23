@@ -995,7 +995,7 @@ def _pad_dispatcher(array, pad_width, mode, **kwargs):
     return (array,)
 
 
-@array_function_dispatch(_pad_dispatcher)
+@array_function_dispatch(_pad_dispatcher, module='numpy')
 def pad(array, pad_width, mode, **kwargs):
     """
     Pads an array.

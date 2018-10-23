@@ -60,7 +60,7 @@ def _dispatcher(x, out=None):
     return (x, out)
 
 
-@array_function_dispatch(_dispatcher, verify=False)
+@array_function_dispatch(_dispatcher, verify=False, module='numpy')
 @_fix_out_named_y
 def fix(x, out=None):
     """
@@ -107,7 +107,7 @@ def fix(x, out=None):
     return res
 
 
-@array_function_dispatch(_dispatcher, verify=False)
+@array_function_dispatch(_dispatcher, verify=False, module='numpy')
 @_fix_out_named_y
 def isposinf(x, out=None):
     """
@@ -176,7 +176,7 @@ def isposinf(x, out=None):
         return nx.logical_and(is_inf, signbit, out)
 
 
-@array_function_dispatch(_dispatcher, verify=False)
+@array_function_dispatch(_dispatcher, verify=False, module='numpy')
 @_fix_out_named_y
 def isneginf(x, out=None):
     """

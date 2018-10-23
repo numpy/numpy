@@ -8,17 +8,22 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit', 'RankWarning']
 
+import functools
 import re
 import warnings
 import numpy.core.numeric as NX
 
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 class RankWarning(UserWarning):

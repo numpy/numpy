@@ -22,10 +22,15 @@ Functions
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
 import warnings
 import numpy as np
 from numpy.lib import function_base
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [

@@ -3,16 +3,17 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
 import types
 import warnings
 
 import numpy as np
 from .. import VisibleDeprecationWarning
 from . import multiarray as mu
+from . import overrides
 from . import umath as um
 from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
-from .overrides import array_function_dispatch
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -31,6 +32,9 @@ __all__ = [
 _gentype = types.GeneratorType
 # save away Python sum
 _sum_ = sum
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 # functions that are now methods

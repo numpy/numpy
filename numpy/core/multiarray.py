@@ -6,8 +6,10 @@ by importing from the extension module.
 
 """
 
+import functools
+
+from . import overrides
 from . import _multiarray_umath
-from .overrides import array_function_dispatch
 import numpy as np
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (
@@ -36,6 +38,9 @@ __all__ = [
     'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 def _empty_like_dispatcher(prototype, dtype=None, order=None, subok=None):

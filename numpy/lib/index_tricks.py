@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import functools
 import sys
 import math
 
@@ -13,8 +14,12 @@ from . import function_base
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from numpy.lib.stride_tricks import as_strided
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [

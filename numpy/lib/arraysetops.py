@@ -27,8 +27,14 @@ To do: Optionally return indices analogously to unique for all functions.
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
+
 import numpy as np
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [
