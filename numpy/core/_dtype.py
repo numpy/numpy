@@ -138,7 +138,9 @@ def _scalar_str(dtype, short):
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
-    elif dtype.type == np.void:
+    # unlike the other types, subclasses of void are preserved - but
+    # historically the repr does not actually reveal the subclass
+    elif issubclass(dtype.type, np.void):
         if _isunsized(dtype):
             return "'V'"
         else:
