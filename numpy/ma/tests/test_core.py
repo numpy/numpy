@@ -60,6 +60,11 @@ suppress_copy_mask_on_assignment.filter(
     "setting an item on a masked array which has a shared mask will not copy")
 
 
+# For parametrized numeric testing
+num_dts = [np.dtype(dt_) for dt_ in '?bhilqBHILQefdgFD']
+num_ids = [dt_.char for dt_ in num_dts]
+
+
 class TestMaskedArray(object):
     # Base test class for MaskedArrays.
 
@@ -1413,23 +1418,34 @@ class TestMaskedArrayArithmetic(object):
         # Test the equality of structured arrays
         ndtype = [('A', int), ('B', int)]
         a = array([(1, 1), (2, 2)], mask=[(0, 1), (0, 0)], dtype=ndtype)
+
         test = (a == a)
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         test = (a == a[0])
         assert_equal(test.data, [True, False])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
         test = (a == b)
         assert_equal(test.data, [False, True])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (a[0] == b)
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
         test = (a == b)
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         # complicated dtype, 2-dimensional array.
         ndtype = [('A', int), ('B', [('BA', int), ('BB', int)])]
         a = array([[(1, (1, 1)), (2, (2, 2))],
@@ -1439,28 +1455,40 @@ class TestMaskedArrayArithmetic(object):
         test = (a[0, 0] == a)
         assert_equal(test.data, [[True, False], [False, False]])
         assert_equal(test.mask, [[False, False], [False, True]])
+        assert_(test.fill_value == True)
 
     def test_ne_on_structured(self):
         # Test the equality of structured arrays
         ndtype = [('A', int), ('B', int)]
         a = array([(1, 1), (2, 2)], mask=[(0, 1), (0, 0)], dtype=ndtype)
+
         test = (a != a)
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         test = (a != a[0])
         assert_equal(test.data, [False, True])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
         test = (a != b)
         assert_equal(test.data, [True, False])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (a[0] != b)
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
         test = (a != b)
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         # complicated dtype, 2-dimensional array.
         ndtype = [('A', int), ('B', [('BA', int), ('BB', int)])]
         a = array([[(1, (1, 1)), (2, (2, 2))],
@@ -1470,6 +1498,7 @@ class TestMaskedArrayArithmetic(object):
         test = (a[0, 0] != a)
         assert_equal(test.data, [[False, True], [True, True]])
         assert_equal(test.mask, [[False, False], [False, True]])
+        assert_(test.fill_value == True)
 
     def test_eq_ne_structured_extra(self):
         # ensure simple examples are symmetric and make sense.
@@ -1504,6 +1533,120 @@ class TestMaskedArrayArithmetic(object):
                 assert_equal(ma1 != ma2, ne_expected)
                 el_by_el = [m1[name] != m2[name] for name in dt.names]
                 assert_equal(array(el_by_el, dtype=bool).any(), ne_expected)
+
+    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('fill', [None, 'A'])
+    def test_eq_for_strings(self, dt, fill):
+        # Test the equality of structured arrays
+        a = array(['a', 'b'], dtype=dt, mask=[0, 1], fill_value=fill)
+
+        test = (a == a)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a == a[0])
+        assert_equal(test.data, [True, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array(['a', 'b'], dtype=dt, mask=[1, 0], fill_value=fill)
+        test = (a == b)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] == b)  # doesn't work in Python2
+        test = (b == a[0])
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('fill', [None, 'A'])
+    def test_ne_for_strings(self, dt, fill):
+        # Test the equality of structured arrays
+        a = array(['a', 'b'], dtype=dt, mask=[0, 1], fill_value=fill)
+
+        test = (a != a)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a != a[0])
+        assert_equal(test.data, [False, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array(['a', 'b'], dtype=dt, mask=[1, 0], fill_value=fill)
+        test = (a != b)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] != b)  # doesn't work in Python2
+        test = (b != a[0])
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('fill', [None, 1])
+    def test_eq_for_numeric(self, dt1, dt2, fill):
+        # Test the equality of structured arrays
+        a = array([0, 1], dtype=dt1, mask=[0, 1], fill_value=fill)
+
+        test = (a == a)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a == a[0])
+        assert_equal(test.data, [True, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array([0, 1], dtype=dt2, mask=[1, 0], fill_value=fill)
+        test = (a == b)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] == b)  # doesn't work in Python2
+        test = (b == a[0])
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('fill', [None, 1])
+    def test_ne_for_numeric(self, dt1, dt2, fill):
+        # Test the equality of structured arrays
+        a = array([0, 1], dtype=dt1, mask=[0, 1], fill_value=fill)
+
+        test = (a != a)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a != a[0])
+        assert_equal(test.data, [False, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array([0, 1], dtype=dt2, mask=[1, 0], fill_value=fill)
+        test = (a != b)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] != b)  # doesn't work in Python2
+        test = (b != a[0])
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
 
     def test_eq_with_None(self):
         # Really, comparisons with None should not be done, but check them
@@ -5019,11 +5162,8 @@ def test_astype_mask_ordering():
     assert_(x_f2.mask.flags.f_contiguous)
 
 
-dts = [np.dtype(dt_) for dt_ in '?bhilqBHILQefdgFD']
-ids = [dt_.char for dt_ in dts]
-
-@pytest.mark.parametrize('dt1', dts, ids=ids)
-@pytest.mark.parametrize('dt2', dts, ids=ids)
+@pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+@pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
 @pytest.mark.filterwarnings('ignore::numpy.ComplexWarning')
 def test_astype_basic(dt1, dt2):
     # See gh-12070
