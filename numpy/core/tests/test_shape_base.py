@@ -6,6 +6,9 @@ from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
     newaxis, concatenate, stack
     )
+
+from numpy.core.shape_base import (_block_setup,
+                                   _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
     assert_raises_regex, assert_almost_equal
@@ -372,14 +375,63 @@ def test_stack():
                         stack, [np.arange(2), np.arange(3)])
 
 
+# See for more information on how to parametrize a whole class
+# https://docs.pytest.org/en/latest/example/parametrize.html#parametrizing-test-methods-through-per-class-configuration
+def pytest_generate_tests(metafunc):
+    # called once per each test function
+    if hasattr(metafunc.cls, 'params'):
+        arglist = metafunc.cls.params
+        argnames = sorted(arglist[0])
+        metafunc.parametrize(argnames,
+                             [[funcargs[name] for name in argnames]
+                              for funcargs in arglist])
+
+
+# blocking small arrays and large arrays go through different paths.
+# the algorithm is triggered depending on the number of element
+# copies required.
+# We define a test fixture that forces most tests to go through
+# both code paths.
+# Ultimately, this should be removed if a single algorithm is found
+# to be faster for both small and large arrays.s
+def _block_force_concatenate(arrays):
+    arrays, list_ndim, result_ndim, _ = _block_setup(arrays)
+    return _block_concatenate(arrays, list_ndim, result_ndim)
+
+
+def _block_force_slicing(arrays):
+    arrays, list_ndim, result_ndim, _ = _block_setup(arrays)
+    return _block_slicing(arrays, list_ndim, result_ndim)
+
+
 class TestBlock(object):
-    def test_returns_copy(self):
+    params = [dict(block=block),
+              dict(block=_block_force_concatenate),
+              dict(block=_block_force_slicing)]
+
+    def test_returns_copy(self, block):
         a = np.eye(3)
-        b = np.block(a)
+        b = block(a)
         b[0, 0] = 2
         assert b[0, 0] != a[0, 0]
 
-    def test_block_simple_row_wise(self):
+    def test_block_total_size_estimate(self, block):
+        _, _, _, total_size = _block_setup([1])
+        assert total_size == 1
+
+        _, _, _, total_size = _block_setup([[1]])
+        assert total_size == 1
+
+        _, _, _, total_size = _block_setup([[1, 1]])
+        assert total_size == 2
+
+        _, _, _, total_size = _block_setup([[1], [1]])
+        assert total_size == 2
+
+        _, _, _, total_size = _block_setup([[1, 2], [3, 4]])
+        assert total_size == 4
+
+    def test_block_simple_row_wise(self, block):
         a_2d = np.ones((2, 2))
         b_2d = 2 * a_2d
         desired = np.array([[1, 1, 2, 2],
@@ -387,7 +439,7 @@ class TestBlock(object):
         result = block([a_2d, b_2d])
         assert_equal(desired, result)
 
-    def test_block_simple_column_wise(self):
+    def test_block_simple_column_wise(self, block):
         a_2d = np.ones((2, 2))
         b_2d = 2 * a_2d
         expected = np.array([[1, 1],
@@ -397,7 +449,7 @@ class TestBlock(object):
         result = block([[a_2d], [b_2d]])
         assert_equal(expected, result)
 
-    def test_block_with_1d_arrays_row_wise(self):
+    def test_block_with_1d_arrays_row_wise(self, block):
         # # # 1-D vectors are treated as row arrays
         a = np.array([1, 2, 3])
         b = np.array([2, 3, 4])
@@ -405,7 +457,7 @@ class TestBlock(object):
         result = block([a, b])
         assert_equal(expected, result)
 
-    def test_block_with_1d_arrays_multiple_rows(self):
+    def test_block_with_1d_arrays_multiple_rows(self, block):
         a = np.array([1, 2, 3])
         b = np.array([2, 3, 4])
         expected = np.array([[1, 2, 3, 2, 3, 4],
@@ -413,7 +465,7 @@ class TestBlock(object):
         result = block([[a, b], [a, b]])
         assert_equal(expected, result)
 
-    def test_block_with_1d_arrays_column_wise(self):
+    def test_block_with_1d_arrays_column_wise(self, block):
         # # # 1-D vectors are treated as row arrays
         a_1d = np.array([1, 2, 3])
         b_1d = np.array([2, 3, 4])
@@ -422,7 +474,7 @@ class TestBlock(object):
         result = block([[a_1d], [b_1d]])
         assert_equal(expected, result)
 
-    def test_block_mixed_1d_and_2d(self):
+    def test_block_mixed_1d_and_2d(self, block):
         a_2d = np.ones((2, 2))
         b_1d = np.array([2, 2])
         result = block([[a_2d], [b_1d]])
@@ -431,7 +483,7 @@ class TestBlock(object):
                              [2, 2]])
         assert_equal(expected, result)
 
-    def test_block_complicated(self):
+    def test_block_complicated(self, block):
         # a bit more complicated
         one_2d = np.array([[1, 1, 1]])
         two_2d = np.array([[2, 2, 2]])
@@ -455,7 +507,7 @@ class TestBlock(object):
                         [zero_2d]])
         assert_equal(result, expected)
 
-    def test_nested(self):
+    def test_nested(self, block):
         one = np.array([1, 1, 1])
         two = np.array([[2, 2, 2], [2, 2, 2], [2, 2, 2]])
         three = np.array([3, 3, 3])
@@ -464,9 +516,9 @@ class TestBlock(object):
         six = np.array([6, 6, 6, 6, 6])
         zero = np.zeros((2, 6))
 
-        result = np.block([
+        result = block([
             [
-                np.block([
+                block([
                    [one],
                    [three],
                    [four]
@@ -485,7 +537,7 @@ class TestBlock(object):
 
         assert_equal(result, expected)
 
-    def test_3d(self):
+    def test_3d(self, block):
         a000 = np.ones((2, 2, 2), int) * 1
 
         a100 = np.ones((3, 2, 2), int) * 2
@@ -498,7 +550,7 @@ class TestBlock(object):
 
         a111 = np.ones((3, 3, 3), int) * 8
 
-        result = np.block([
+        result = block([
             [
                 [a000, a001],
                 [a010, a011],
@@ -540,55 +592,88 @@ class TestBlock(object):
 
         assert_array_equal(result, expected)
 
-    def test_block_with_mismatched_shape(self):
+    def test_block_with_mismatched_shape(self, block):
         a = np.array([0, 0])
         b = np.eye(2)
-        assert_raises(ValueError, np.block, [a, b])
-        assert_raises(ValueError, np.block, [b, a])
+        assert_raises(ValueError, block, [a, b])
+        assert_raises(ValueError, block, [b, a])
 
-    def test_no_lists(self):
-        assert_equal(np.block(1),         np.array(1))
-        assert_equal(np.block(np.eye(3)), np.eye(3))
+        to_block = [[np.ones((2,3)), np.ones((2,2))],
+                    [np.ones((2,2)), np.ones((2,2))]]
+        assert_raises(ValueError, block, to_block)
+    def test_no_lists(self, block):
+        assert_equal(block(1),         np.array(1))
+        assert_equal(block(np.eye(3)), np.eye(3))
 
-    def test_invalid_nesting(self):
+    def test_invalid_nesting(self, block):
         msg = 'depths are mismatched'
-        assert_raises_regex(ValueError, msg, np.block, [1, [2]])
-        assert_raises_regex(ValueError, msg, np.block, [1, []])
-        assert_raises_regex(ValueError, msg, np.block, [[1], 2])
-        assert_raises_regex(ValueError, msg, np.block, [[], 2])
-        assert_raises_regex(ValueError, msg, np.block, [
+        assert_raises_regex(ValueError, msg, block, [1, [2]])
+        assert_raises_regex(ValueError, msg, block, [1, []])
+        assert_raises_regex(ValueError, msg, block, [[1], 2])
+        assert_raises_regex(ValueError, msg, block, [[], 2])
+        assert_raises_regex(ValueError, msg, block, [
             [[1], [2]],
             [[3, 4]],
             [5]  # missing brackets
         ])
 
-    def test_empty_lists(self):
-        assert_raises_regex(ValueError, 'empty', np.block, [])
-        assert_raises_regex(ValueError, 'empty', np.block, [[]])
-        assert_raises_regex(ValueError, 'empty', np.block, [[1], []])
+    def test_empty_lists(self, block):
+        assert_raises_regex(ValueError, 'empty', block, [])
+        assert_raises_regex(ValueError, 'empty', block, [[]])
+        assert_raises_regex(ValueError, 'empty', block, [[1], []])
 
-    def test_tuple(self):
-        assert_raises_regex(TypeError, 'tuple', np.block, ([1, 2], [3, 4]))
-        assert_raises_regex(TypeError, 'tuple', np.block, [(1, 2), (3, 4)])
+    def test_tuple(self, block):
+        assert_raises_regex(TypeError, 'tuple', block, ([1, 2], [3, 4]))
+        assert_raises_regex(TypeError, 'tuple', block, [(1, 2), (3, 4)])
 
-    def test_different_ndims(self):
+    def test_different_ndims(self, block):
         a = 1.
         b = 2 * np.ones((1, 2))
         c = 3 * np.ones((1, 1, 3))
 
-        result = np.block([a, b, c])
+        result = block([a, b, c])
         expected = np.array([[[1., 2., 2., 3., 3., 3.]]])
 
         assert_equal(result, expected)
 
-    def test_different_ndims_depths(self):
+    def test_different_ndims_depths(self, block):
         a = 1.
         b = 2 * np.ones((1, 2))
         c = 3 * np.ones((1, 2, 3))
 
-        result = np.block([[a, b], [c]])
+        result = block([[a, b], [c]])
         expected = np.array([[[1., 2., 2.],
                               [3., 3., 3.],
                               [3., 3., 3.]]])
 
         assert_equal(result, expected)
+
+    def test_block_memory_order(self, block):
+        # 3D
+        arr_c = np.zeros((3,)*3, order='C')
+        arr_f = np.zeros((3,)*3, order='F')
+
+        b_c = [[[arr_c, arr_c],
+                [arr_c, arr_c]],
+               [[arr_c, arr_c],
+                [arr_c, arr_c]]]
+
+        b_f = [[[arr_f, arr_f],
+                [arr_f, arr_f]],
+               [[arr_f, arr_f],
+                [arr_f, arr_f]]]
+
+        assert block(b_c).flags['C_CONTIGUOUS']
+        assert block(b_f).flags['F_CONTIGUOUS']
+
+        arr_c = np.zeros((3, 3), order='C')
+        arr_f = np.zeros((3, 3), order='F')
+        # 2D
+        b_c = [[arr_c, arr_c],
+               [arr_c, arr_c]]
+
+        b_f = [[arr_f, arr_f],
+               [arr_f, arr_f]]
+
+        assert block(b_c).flags['C_CONTIGUOUS']
+        assert block(b_f).flags['F_CONTIGUOUS']
