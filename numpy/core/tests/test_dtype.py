@@ -794,6 +794,36 @@ class TestFromCTypes(object):
         ], align=True)
         self.check(PaddedStruct, expected)
 
+    def test_bit_fields(self):
+        class BitfieldStruct(ctypes.Structure):
+            _fields_ = [
+                ('a', ctypes.c_uint8, 7),
+                ('b', ctypes.c_uint8, 1)
+            ]
+        assert_raises(TypeError, np.dtype, BitfieldStruct)
+        assert_raises(TypeError, np.dtype, BitfieldStruct())
+
+    def test_pointer(self):
+        p_uint8 = ctypes.POINTER(ctypes.c_uint8)
+        assert_raises(TypeError, np.dtype, p_uint8)
+
+    @pytest.mark.xfail(
+        reason="Unions are not implemented",
+        raises=NotImplementedError)
+    def test_union(self):
+        class Union(ctypes.Union):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16),
+            ]
+        expected = np.dtype(dict(
+            names=['a', 'b'],
+            formats=[np.uint8, np.uint16],
+            offsets=[0, 0],
+            itemsize=2
+        ))
+        self.check(Union, expected)
+
     @pytest.mark.xfail(reason="_pack_ is ignored - see gh-11651")
     def test_packed_structure(self):
         class PackedStructure(ctypes.Structure):
