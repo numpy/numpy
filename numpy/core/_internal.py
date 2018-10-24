@@ -796,13 +796,13 @@ def _ufunc_doc_signature_formatter(ufunc):
     )
 
 
-def _is_from_ctypes(obj):
-    # determine if an object comes from ctypes, in order to work around
+def npy_ctypes_check(cls):
+    # determine if a class comes from ctypes, in order to work around
     # a bug in the buffer protocol for those objects, bpo-10746
     try:
         # ctypes class are new-style, so have an __mro__. This probably fails
         # for ctypes classes with multiple inheritance.
-        ctype_base = type(obj).__mro__[-2]
+        ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
         return 'ctypes' in ctype_base.__module__
     except Exception:
