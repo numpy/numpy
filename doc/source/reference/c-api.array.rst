@@ -416,10 +416,6 @@ From other objects
     the array is constructed that way. Almost always this
     parameter is ``NULL``.
 
-    In versions 1.6 and earlier of NumPy, the following flags
-    did not have the ``_ARRAY_`` macro namespace in them. That form
-    of the constant names is deprecated in 1.7.
-
     .. c:var:: NPY_ARRAY_C_CONTIGUOUS
 
         Make sure the returned array is C-style contiguous
