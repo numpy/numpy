@@ -105,9 +105,10 @@ def array_function_implementation_or_override(
         if result is not NotImplemented:
             return result
 
-    raise TypeError('no implementation found for {} on types that implement '
+    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
+    raise TypeError("no implementation found for '{}' on types that implement "
                     '__array_function__: {}'
-                    .format(public_api, list(map(type, overloaded_args))))
+                    .format(func_name, list(map(type, overloaded_args))))
 
 
 ArgSpec = collections.namedtuple('ArgSpec', 'args varargs keywords defaults')
@@ -135,7 +136,7 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
-def array_function_dispatch(dispatcher, verify=True):
+def array_function_dispatch(dispatcher, module=None, verify=True):
     """Decorator for adding dispatch with the __array_function__ protocol."""
     def decorator(implementation):
         # TODO: only do this check when the appropriate flag is enabled or for
@@ -149,6 +150,10 @@ def array_function_dispatch(dispatcher, verify=True):
             relevant_args = dispatcher(*args, **kwargs)
             return array_function_implementation_or_override(
                 implementation, public_api, relevant_args, args, kwargs)
+
+        if module is not None:
+            public_api.__module__ = module
+
         return public_api
 
     return decorator

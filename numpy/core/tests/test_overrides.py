@@ -296,12 +296,31 @@ class TestArrayFunctionImplementation(object):
     def test_not_implemented(self):
         MyArray, implements = _new_duck_type_and_implements()
 
-        @array_function_dispatch(lambda array: (array,))
+        @array_function_dispatch(lambda array: (array,), module='my')
         def func(array):
             return array
 
         array = np.array(1)
         assert_(func(array) is array)
 
-        with assert_raises_regex(TypeError, 'no implementation found'):
+        with assert_raises_regex(
+                TypeError, "no implementation found for 'my.func'"):
             func(MyArray())
+
+
+class TestNumPyFunctions(object):
+
+    def test_module(self):
+        assert_equal(np.sum.__module__, 'numpy')
+        assert_equal(np.char.equal.__module__, 'numpy.char')
+        assert_equal(np.fft.fft.__module__, 'numpy.fft')
+        assert_equal(np.linalg.solve.__module__, 'numpy.linalg')
+
+    def test_override_sum(self):
+        MyArray, implements = _new_duck_type_and_implements()
+
+        @implements(np.sum)
+        def _(array):
+            return 'yes'
+
+        assert_equal(np.sum(MyArray()), 'yes')

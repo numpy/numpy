@@ -35,15 +35,21 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
+import functools
+
 from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
                         take, sqrt)
 from numpy.core.multiarray import normalize_axis_index
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from . import fftpack_lite as fftpack
 from .helper import _FFTCache
 
 _fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 _real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy.fft')
 
 
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,

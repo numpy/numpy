@@ -6,6 +6,7 @@ try:
     import collections.abc as collections_abc
 except ImportError:
     import collections as collections_abc
+import functools
 import itertools
 import operator
 import sys
@@ -27,8 +28,8 @@ from .multiarray import (
 if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
 
+from . import overrides
 from . import umath
-from .overrides import array_function_dispatch
 from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
                     ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
                     ERR_LOG, ERR_DEFAULT, PINF, NAN)
@@ -53,6 +54,10 @@ if sys.version_info[0] >= 3:
 else:
     import cPickle as pickle
     import __builtin__ as builtins
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 def loads(*args, **kwargs):

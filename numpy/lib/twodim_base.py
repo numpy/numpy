@@ -3,12 +3,14 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
+
 from numpy.core.numeric import (
     absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 from numpy.core import iinfo, transpose
 
 
@@ -16,6 +18,10 @@ __all__ = [
     'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
     'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
     'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 i1 = iinfo(int8)
