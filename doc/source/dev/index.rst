@@ -8,6 +8,7 @@ Contributing to NumPy
    conduct/code_of_conduct
    gitwash/index
    development_environment
+   style_guide
    releasing
    governance/index
 
