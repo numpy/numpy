@@ -25,6 +25,8 @@ select the precision desired.
 Enumerated Types
 ----------------
 
+.. c:var:: NPY_TYPES
+
 There is a list of enumerated types defined providing the basic 24
 data types plus some useful generic names. Whenever the code requires
 a type number, one of these enumerated types is requested. The types
