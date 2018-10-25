@@ -6,6 +6,7 @@ from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
     newaxis, concatenate, stack
     )
+from numpy.core.shape_base import _block_dispatcher
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
     assert_raises_regex, assert_almost_equal
@@ -592,3 +593,16 @@ class TestBlock(object):
                               [3., 3., 3.]]])
 
         assert_equal(result, expected)
+
+    def test_block_dispatcher(self):
+        class MyArray(object):
+            __array_function__ = None
+        a = MyArray()
+        b = MyArray()
+        c = MyArray()
+        assert_equal(list(_block_dispatcher(a)), [a])
+        assert_equal(list(_block_dispatcher([a])), [a])
+        assert_equal(list(_block_dispatcher([a, b])), [a, b])
+        assert_equal(list(_block_dispatcher([[a], [b, [c]]])), [a, b, c])
+        # don't recurse into non-lists
+        assert_equal(list(_block_dispatcher((a, b))), [(a, b)])
