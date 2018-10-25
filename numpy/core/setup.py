@@ -733,6 +733,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_ctypes.h'),
             join('src', 'common', 'npy_extint128.h'),
+            join('src', 'common', 'npy_import.h'),
             join('src', 'common', 'npy_longdouble.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
