@@ -209,9 +209,32 @@ typedef struct _tagPyUFuncObject {
          * set by nditer object.
          */
         npy_uint32 iter_flags;
+
+        /* New in NPY_API_VERSION 0x0000000D and above */
+
+        /*
+         * for each core_num_dim_ix distinct dimension names,
+         * the possible "frozen" size (-1 if not frozen).
+         */
+        npy_intp *core_dim_sizes;
+
+        /*
+         * for each distinct core dimension, a set of UFUNC_CORE_DIM* flags
+         */
+        npy_uint32 *core_dim_flags;
+
+
+
 } PyUFuncObject;
 
 #include "arrayobject.h"
+/* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
+/* the core dimension's size will be determined by the operands. */
+#define UFUNC_CORE_DIM_SIZE_INFERRED 0x0002
+/* the core dimension may be absent */
+#define UFUNC_CORE_DIM_CAN_IGNORE 0x0004
+/* flags inferred during execution */
+#define UFUNC_CORE_DIM_MISSING 0x00040000
 
 #define UFUNC_ERR_IGNORE 0
 #define UFUNC_ERR_WARN   1
@@ -313,22 +336,6 @@ typedef struct _loop1d_info {
                                 (arg)->errobj, \
                                 &(arg)->first))) \
                 goto fail;} while (0)
-
-
-/* keep in sync with ieee754.c.src */
-#if defined(sun) || defined(__BSD__) || defined(__OpenBSD__) || \
-      (defined(__FreeBSD__) && (__FreeBSD_version < 502114)) || \
-      defined(__NetBSD__) || \
-      defined(__GLIBC__) || defined(__APPLE__) || \
-      defined(__CYGWIN__) || defined(__MINGW32__) || \
-      (defined(__FreeBSD__) && (__FreeBSD_version >= 502114)) || \
-      defined(_AIX) || \
-      defined(_MSC_VER) || \
-      defined(__osf__) && defined(__alpha)
-#else
-#define NO_FLOATING_POINT_SUPPORT
-#endif
-
 
 /*
  * THESE MACROS ARE DEPRECATED.

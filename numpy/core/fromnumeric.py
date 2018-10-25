@@ -3,16 +3,17 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
 import types
 import warnings
 
 import numpy as np
 from .. import VisibleDeprecationWarning
 from . import multiarray as mu
+from . import overrides
 from . import umath as um
 from . import numerictypes as nt
 from .numeric import asarray, array, asanyarray, concatenate
-from .overrides import array_function_dispatch
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -31,6 +32,9 @@ __all__ = [
 _gentype = types.GeneratorType
 # save away Python sum
 _sum_ = sum
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 # functions that are now methods
@@ -1071,10 +1075,10 @@ def argmax(a, axis=None, out=None):
 
     Examples
     --------
-    >>> a = np.arange(6).reshape(2,3)
+    >>> a = np.arange(6).reshape(2,3) + 10
     >>> a
-    array([[0, 1, 2],
-           [3, 4, 5]])
+    array([[10, 11, 12],
+           [13, 14, 15]])
     >>> np.argmax(a)
     5
     >>> np.argmax(a, axis=0)
@@ -1088,7 +1092,7 @@ def argmax(a, axis=None, out=None):
     >>> ind
     (1, 2)
     >>> a[ind]
-    5
+    15
 
     >>> b = np.arange(6)
     >>> b[1] = 5
@@ -1140,10 +1144,10 @@ def argmin(a, axis=None, out=None):
 
     Examples
     --------
-    >>> a = np.arange(6).reshape(2,3)
+    >>> a = np.arange(6).reshape(2,3) + 10
     >>> a
-    array([[0, 1, 2],
-           [3, 4, 5]])
+    array([[10, 11, 12],
+           [13, 14, 15]])
     >>> np.argmin(a)
     0
     >>> np.argmin(a, axis=0)
@@ -1157,12 +1161,12 @@ def argmin(a, axis=None, out=None):
     >>> ind
     (0, 0)
     >>> a[ind]
-    0
+    10
 
-    >>> b = np.arange(6)
-    >>> b[4] = 0
+    >>> b = np.arange(6) + 10
+    >>> b[4] = 10
     >>> b
-    array([0, 1, 2, 3, 0, 5])
+    array([10, 11, 12, 13, 10, 15])
     >>> np.argmin(b)  # Only the first occurrence is returned.
     0
 
@@ -2061,7 +2065,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._No
         # 2018-02-25, 1.15.0
         warnings.warn(
             "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
-            "Use np.sum(np.from_iter(generator)) or the python sum builtin instead.",
+            "Use np.sum(np.fromiter(generator)) or the python sum builtin instead.",
             DeprecationWarning, stacklevel=2)
 
         res = _sum_(a)

@@ -3114,3 +3114,29 @@ class TestAdd_newdoc(object):
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
+
+class TestSortComplex(object):
+
+    @pytest.mark.parametrize("type_in, type_out", [
+        ('l', 'D'),
+        ('h', 'F'),
+        ('H', 'F'),
+        ('b', 'F'),
+        ('B', 'F'),
+        ('g', 'G'),
+        ])
+    def test_sort_real(self, type_in, type_out):
+        # sort_complex() type casting for real input types
+        a = np.array([5, 3, 6, 2, 1], dtype=type_in)
+        actual = np.sort_complex(a)
+        expected = np.sort(a).astype(type_out)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+    def test_sort_complex(self):
+        # sort_complex() handling of complex input
+        a = np.array([2 + 3j, 1 - 2j, 1 - 3j, 2 + 1j], dtype='D')
+        expected = np.array([1 - 3j, 1 - 2j, 2 + 1j, 2 + 3j], dtype='D')
+        actual = np.sort_complex(a)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)

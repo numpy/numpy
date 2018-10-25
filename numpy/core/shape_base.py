@@ -3,6 +3,8 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
            'stack', 'vstack']
 
+import functools
+import operator
 
 from . import numeric as _nx
 from .numeric import array, asanyarray, newaxis
@@ -432,6 +434,10 @@ def _block_check_depths_match(arrays, parent_index=[]):
         refer to it, and the last index along the empty axis will be `None`.
     max_arr_ndim : int
         The maximum of the ndims of the arrays nested in `arrays`.
+    final_size: int
+        The number of elements in the final array. This is used the motivate
+        the choice of algorithm used using benchmarking wisdom.
+
     """
     if type(arrays) is tuple:
         # not strictly necessary, but saves us from:
@@ -450,8 +456,9 @@ def _block_check_depths_match(arrays, parent_index=[]):
         idxs_ndims = (_block_check_depths_match(arr, parent_index + [i])
                       for i, arr in enumerate(arrays))
 
-        first_index, max_arr_ndim = next(idxs_ndims)
-        for index, ndim in idxs_ndims:
+        first_index, max_arr_ndim, final_size = next(idxs_ndims)
+        for index, ndim, size in idxs_ndims:
+            final_size += size
             if ndim > max_arr_ndim:
                 max_arr_ndim = ndim
             if len(index) != len(first_index):
@@ -466,13 +473,15 @@ def _block_check_depths_match(arrays, parent_index=[]):
             # propagate our flag that indicates an empty list at the bottom
             if index[-1] is None:
                 first_index = index
-        return first_index, max_arr_ndim
+
+        return first_index, max_arr_ndim, final_size
     elif type(arrays) is list and len(arrays) == 0:
         # We've 'bottomed out' on an empty list
-        return parent_index + [None], 0
+        return parent_index + [None], 0, 0
     else:
         # We've 'bottomed out' - arrays is either a scalar or an array
-        return parent_index, _nx.ndim(arrays)
+        size = _nx.size(arrays)
+        return parent_index, _nx.ndim(arrays), size
 
 
 def _atleast_nd(a, ndim):
@@ -481,9 +490,132 @@ def _atleast_nd(a, ndim):
     return array(a, ndmin=ndim, copy=False, subok=True)
 
 
+def _accumulate(values):
+    # Helper function because Python 2.7 doesn't have
+    # itertools.accumulate
+    value = 0
+    accumulated = []
+    for v in values:
+        value += v
+        accumulated.append(value)
+    return accumulated
+
+
+def _concatenate_shapes(shapes, axis):
+    """Given array shapes, return the resulting shape and slices prefixes.
+
+    These help in nested concatation.
+    Returns
+    -------
+    shape: tuple of int
+        This tuple satisfies:
+        ```
+        shape, _ = _concatenate_shapes([arr.shape for shape in arrs], axis)
+        shape == concatenate(arrs, axis).shape
+        ```
+
+    slice_prefixes: tuple of (slice(start, end), )
+        For a list of arrays being concatenated, this returns the slice
+        in the larger array at axis that needs to be sliced into.
+
+        For example, the following holds:
+        ```
+        ret = concatenate([a, b, c], axis)
+        _, (sl_a, sl_b, sl_c) = concatenate_slices([a, b, c], axis)
+
+        ret[(slice(None),) * axis + sl_a] == a
+        ret[(slice(None),) * axis + sl_b] == b
+        ret[(slice(None),) * axis + sl_c] == c
+        ```
+
+        Thses are called slice prefixes since they are used in the recursive
+        blocking algorithm to compute the left-most slices during the
+        recursion. Therefore, they must be prepended to rest of the slice
+        that was computed deeper in the recusion.
+
+        These are returned as tuples to ensure that they can quickly be added
+        to existing slice tuple without creating a new tuple everytime.
+
+    """
+    # Cache a result that will be reused.
+    shape_at_axis = [shape[axis] for shape in shapes]
+
+    # Take a shape, any shape
+    first_shape = shapes[0]
+    first_shape_pre = first_shape[:axis]
+    first_shape_post = first_shape[axis+1:]
+
+    if any(shape[:axis] != first_shape_pre or
+           shape[axis+1:] != first_shape_post for shape in shapes):
+        raise ValueError(
+            'Mismatched array shapes in block along axis {}.'.format(axis))
+
+    shape = (first_shape_pre + (sum(shape_at_axis),) + first_shape[axis+1:])
+
+    offsets_at_axis = _accumulate(shape_at_axis)
+    slice_prefixes = [(slice(start, end),)
+                      for start, end in zip([0] + offsets_at_axis,
+                                            offsets_at_axis)]
+    return shape, slice_prefixes
+
+
+def _block_info_recursion(arrays, max_depth, result_ndim, depth=0):
+    """
+    Returns the shape of the final array, along with a list
+    of slices and a list of arrays that can be used for assignment inside the
+    new array
+
+    Parameters
+    ----------
+    arrays : nested list of arrays
+        The arrays to check
+    max_depth : list of int
+        The number of nested lists
+    result_ndim: int
+        The number of dimensions in thefinal array.
+
+    Returns
+    -------
+    shape : tuple of int
+        The shape that the final array will take on.
+    slices: list of tuple of slices
+        The slices into the full array required for assignment. These are
+        required to be prepended with ``(Ellipsis, )`` to obtain to correct
+        final index.
+    arrays: list of ndarray
+        The data to assign to each slice of the full array
+
+    """
+    if depth < max_depth:
+        shapes, slices, arrays = zip(
+            *[_block_info_recursion(arr, max_depth, result_ndim, depth+1)
+              for arr in arrays])
+
+        axis = result_ndim - max_depth + depth
+        shape, slice_prefixes = _concatenate_shapes(shapes, axis)
+
+        # Prepend the slice prefix and flatten the slices
+        slices = [slice_prefix + the_slice
+                  for slice_prefix, inner_slices in zip(slice_prefixes, slices)
+                  for the_slice in inner_slices]
+
+        # Flatten the array list
+        arrays = functools.reduce(operator.add, arrays)
+
+        return shape, slices, arrays
+    else:
+        # We've 'bottomed out' - arrays is either a scalar or an array
+        # type(arrays) is not list
+        # Return the slice and the array inside a list to be consistent with
+        # the recursive case.
+        arr = _atleast_nd(arrays, result_ndim)
+        return arr.shape, [()], [arr]
+
+
 def _block(arrays, max_depth, result_ndim, depth=0):
     """
-    Internal implementation of block. `arrays` is the argument passed to
+    Internal implementation of block based on repeated concatenation.
+    `arrays` is the argument passed to
     block. `max_depth` is the depth of nested lists within `arrays` and
     `result_ndim` is the greatest of the dimensions of the arrays in
     `arrays` and the depth of the lists in `arrays` (see block docstring
@@ -660,7 +792,38 @@ def block(arrays):
 
 
     """
-    bottom_index, arr_ndim = _block_check_depths_match(arrays)
+    arrays, list_ndim, result_ndim, final_size = _block_setup(arrays)
+
+    # It was found through benchmarking that making an array of final size
+    # around 256x256 was faster by straight concatenation on a
+    # i7-7700HQ processor and dual channel ram 2400MHz.
+    # It didn't seem to matter heavily on the dtype used.
+    #
+    # A 2D array using repeated concatenation requires 2 copies of the array.
+    #
+    # The fastest algorithm will depend on the ratio of CPU power to memory
+    # speed.
+    # One can monitor the results of the benchmark
+    # https://pv.github.io/numpy-bench/#bench_shape_base.Block2D.time_block2d
+    # to tune this parameter until a C version of the `_block_info_recursion`
+    # algorithm is implemented which would likely be faster than the python
+    # version.
+    if list_ndim * final_size > (2 * 512 * 512):
+        return _block_slicing(arrays, list_ndim, result_ndim)
+    else:
+        return _block_concatenate(arrays, list_ndim, result_ndim)
+
+
+# Theses helper functions are mostly used for testing.
+# They allow us to write tests that directly call `_block_slicing`
+# or `_block_concatenate` wtihout blocking large arrays to forse the wisdom
+# to trigger the desired path.
+def _block_setup(arrays):
+    """
+    Returns
+    (`arrays`, list_ndim, result_ndim, final_size)
+    """
+    bottom_index, arr_ndim, final_size = _block_check_depths_match(arrays)
     list_ndim = len(bottom_index)
     if bottom_index and bottom_index[-1] is None:
         raise ValueError(
@@ -668,7 +831,31 @@ def block(arrays):
                 _block_format_index(bottom_index)
             )
         )
-    result = _block(arrays, list_ndim, max(arr_ndim, list_ndim))
+    result_ndim = max(arr_ndim, list_ndim)
+    return arrays, list_ndim, result_ndim, final_size
+
+
+def _block_slicing(arrays, list_ndim, result_ndim):
+    shape, slices, arrays = _block_info_recursion(
+        arrays, list_ndim, result_ndim)
+    dtype = _nx.result_type(*[arr.dtype for arr in arrays])
+
+    # Test preferring F only in the case that all input arrays are F
+    F_order = all(arr.flags['F_CONTIGUOUS'] for arr in arrays)
+    C_order =  all(arr.flags['C_CONTIGUOUS'] for arr in arrays)
+    order = 'F' if F_order and not C_order else 'C'
+    result = _nx.empty(shape=shape, dtype=dtype, order=order)
+    # Note: In a c implementation, the function
+    # PyArray_CreateMultiSortedStridePerm could be used for more advanced
+    # guessing of the desired order.
+
+    for the_slice, arr in zip(slices, arrays):
+        result[(Ellipsis,) + the_slice] = arr
+    return result
+
+
+def _block_concatenate(arrays, list_ndim, result_ndim):
+    result = _block(arrays, list_ndim, result_ndim)
     if list_ndim == 0:
         # Catch an edge case where _block returns a view because
         # `arrays` is a single numpy array and not a list of numpy arrays.

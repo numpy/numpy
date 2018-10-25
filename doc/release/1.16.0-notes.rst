@@ -87,10 +87,23 @@ More in detail, the complex64 type now has the same alignment as a C-struct
 ``struct {float r, i;}``, according to the compiler used to compile numpy, and
 similarly for the complex128 and complex256 types.
 
+nd_grid __len__ removal
+-----------------------
+``len(np.mgrid)`` and ``len(np.ogrid)`` are now considered nonsensical
+and raise a ``TypeError``.
+
+``np.unravel_index`` now accepts ``shape`` keyword argument
+-----------------------------------------------------------
+Previously, only the ``dims`` keyword argument was accepted
+for specification of the shape of the array to be used
+for unraveling. ``dims`` remains supported, but is now deprecated.
+
 
 C API changes
 =============
 
+The :c:data:`NPY_API_VERSION` was incremented to 0x0000D since
+``core_dim_flags`` and ``core_dim_sizes`` were added to :c:type:`PyUFuncObject`.
 
 New Features
 ============
@@ -161,6 +174,45 @@ behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,
 `F90FLAGS`, `FREEFLAGS`, `FOPT`, `FDEBUG`, and `FFLAGS`.  See gh-11525 for more
 details.
 
+Generalized ufunc signatures now allow fixed-size dimensions
+------------------------------------------------------------
+By using a numerical value in the signature of a generalized ufunc, one can
+indicate that the given function requires input or output to have dimensions
+with the given size. E.g., the signature of a function that converts a polar
+angle to a two-dimensional cartesian unit vector would be ``()->(2)``; that
+for one that converts two spherical angles to a three-dimensional unit vector
+would be ``(),()->(3)``; and that for the cross product of two
+three-dimensional vectors would be ``(3),(3)->(3)``.
+
+Note that to the elementary function these dimensions are not treated any
+differently from variable ones indicated with a name starting with a letter;
+the loop still is passed the corresponding size, but it can now count on that
+size being equal to the fixed one given in the signature.
+
+Generalized ufunc signatures now allow flexible dimensions
+----------------------------------------------------------
+
+Some functions, in particular numpy's implementation of ``@`` as ``matmul``,
+are very similar to generalized ufuncs in that they operate over core
+dimensions, but one could not present them as such because they were able to
+deal with inputs in which a dimension is missing. To support this, it is now
+allowed to postfix a dimension name with a question mark to indicate that the
+dimension does not necessarily have to be present.
+
+With this addition, the signature for ``matmul`` can be expressed as
+``(m?,n),(n,p?)->(m?,p?)``.  This indicates that if, e.g., the second operand
+has only one dimension, for the purposes of the elementary function it will be
+treated as if that input has core shape ``(n, 1)``, and the output has the
+corresponding core shape of ``(m, 1)``. The actual output array, however, has
+the flexible dimension removed, i.e., it will have shape ``(..., m)``.
+Similarly, if both arguments have only a single dimension, the inputs will be
+presented as having shapes ``(1, n)`` and ``(n, 1)`` to the elementary
+function, and the output as ``(1, 1)``, while the actual output array returned
+will have shape ``()``. In this way, the signature allows one to use a
+single elementary function for four related but different signatures,
+``(m,n),(n,p)->(m,p)``, ``(n),(n,p)->(p)``, ``(m,n),(n)->(m)`` and
+``(n),(n)->()``.
+
 ``np.clip`` and the ``clip`` method check for memory overlap
 ------------------------------------------------------------
 The ``out`` argument to these functions is now always tested for memory overlap
@@ -171,6 +223,15 @@ Detailed docstrings for scalar numeric types
 The ``help`` function, when applied to numeric types such as `np.intc`,
 `np.int_`, and `np.longlong`, now lists all of the aliased names for that type,
 distinguishing between platform -dependent and -independent aliases.
+
+``__module__`` attribute now points to public modules
+-----------------------------------------------------
+The ``__module__`` attribute on most NumPy functions has been updated to refer
+to the preferred public module from which to access a function, rather than
+the module in which the function happens to be defined. This produces more
+informative displays for functions in tools such as IPython, e.g., instead of
+``<function 'numpy.core.fromnumeric.sum'>`` you now see
+``<function 'numpy.sum'>``.
 
 Large allocations marked as suitable for transparent hugepages
 --------------------------------------------------------------
@@ -186,6 +247,20 @@ the kernel will automatically use huge pages where appropriate.
 Users of very old Linux kernels (~3.x and older) should make sure that
 `/sys/kernel/mm/transparent_hugepage/defrag` is not set to `always` to avoid
 performance problems due concurrency issues in the memory defragmentation.
+
+Alpine Linux (and other musl c library distros) support
+-------------------------------------------------------
+We now default to use `fenv.h` for floating point status error reporting.
+Previously we had a broken default that sometimes would not report underflow,
+overflow, and invalid floating point operations. Now we can support non-glibc
+distrubutions like Alpine Linux as long as they ship `fenv.h`.
+
+Speedup ``np.block`` for large arrays
+-------------------------------------
+Large arrays (greater than ``512 * 512``) now use a blocking algorithm based on
+copying the data directly into the appropriate slice of the resulting array.
+This results in significant speedups for these large arrays, particularly for
+arrays being blocked along more than 2 dimensions.
 
 
 Changes
@@ -227,4 +302,14 @@ c-extension module.
 `numpy.ndarray.getfield` now checks the dtype and offset arguments to prevent
 accessing invalid memory locations.
 
+NumPy functions now support overrides with ``__array_function__``
+-----------------------------------------------------------------
+It is now possible to override the implementation of almost all NumPy functions
+on non-NumPy arrays by defining a ``__array_function__`` method, as described
+in `NEP 18`_. The sole exception are functions for explicitly casting to NumPy
+arrays such as ``np.array``. As noted in the NEP, this feature remains
+experimental and the details of how to implement such overrides may change in
+the future.
+
 .. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html
+.. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html

@@ -461,6 +461,26 @@ class TestColumnStack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, column_stack, 1)
 
+    def test_1D_arrays(self):
+        # example from docstring
+        a = np.array((1, 2, 3))
+        b = np.array((2, 3, 4))
+        expected = np.array([[1, 2],
+                             [2, 3],
+                             [3, 4]])
+        actual = np.column_stack((a, b))
+        assert_equal(actual, expected)
+
+    def test_2D_arrays(self):
+        # same as hstack 2D docstring example
+        a = np.array([[1], [2], [3]])
+        b = np.array([[2], [3], [4]])
+        expected = np.array([[1, 2],
+                             [2, 3],
+                             [3, 4]])
+        actual = np.column_stack((a, b))
+        assert_equal(actual, expected)
+
 
 class TestDstack(object):
     def test_non_iterable(self):
