@@ -6,8 +6,7 @@ from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
     newaxis, concatenate, stack
     )
-
-from numpy.core.shape_base import (_block_setup,
+from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
@@ -677,3 +676,17 @@ class TestBlock(object):
 
         assert block(b_c).flags['C_CONTIGUOUS']
         assert block(b_f).flags['F_CONTIGUOUS']
+
+
+def test_block_dispatcher():
+    class ArrayLike(object):
+        pass
+    a = ArrayLike()
+    b = ArrayLike()
+    c = ArrayLike()
+    assert_equal(list(_block_dispatcher(a)), [a])
+    assert_equal(list(_block_dispatcher([a])), [a])
+    assert_equal(list(_block_dispatcher([a, b])), [a, b])
+    assert_equal(list(_block_dispatcher([[a], [b, [c]]])), [a, b, c])
+    # don't recurse into non-lists
+    assert_equal(list(_block_dispatcher((a, b))), [(a, b)])
