@@ -2102,6 +2102,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     static char *kwlist[] = {"iterable", "dtype", "count", NULL};
     PyArray_Descr *descr = NULL;
     PyObject *str_key_obj = NULL;
+    char *new_key  = "iterable";
 
     /* Get the keyword arguments */
     if (keywds != NULL) {
@@ -2126,9 +2127,9 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
                               "Use 'iterable' instead.") < 0) {
                     return NULL;
                 }
-                char *new_key  = "iterable";
                 PyDict_SetItemString(keywds, new_key, value);
                 PyDict_DelItemString(keywds, str);
+                Py_XDECREF(str_key_obj);
                 break;
             }
         }
