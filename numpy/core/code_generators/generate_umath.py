@@ -420,36 +420,42 @@ defdict = {
           docstrings.get('numpy.core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'greater_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'less_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'not_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?', simd=[('avx2', ints)]),
+          [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'logical_and':
     Ufunc(2, 1, One,
@@ -902,8 +908,8 @@ if sys.version_info[0] >= 3:
     del defdict['divide']
 
 def indent(st, spaces):
-    indention = ' '*spaces
-    indented = indention + st.replace('\n', '\n'+indention)
+    indentation = ' '*spaces
+    indented = indentation + st.replace('\n', '\n'+indentation)
     # trim off any trailing spaces
     indented = re.sub(r' +$', r'', indented)
     return indented
@@ -966,7 +972,7 @@ def make_arrays(funcdict):
                     for vt in t.simd:
                         code2list.append(textwrap.dedent("""\
                         #ifdef HAVE_ATTRIBUTE_TARGET_{ISA}
-                        if (NPY_CPU_SUPPORTS_{ISA}) {{
+                        if (npy_cpu_supports("{isa}")) {{
                             {fname}_functions[{idx}] = {type}_{fname}_{isa};
                         }}
                         #endif
@@ -1040,14 +1046,19 @@ def make_ufuncs(funcdict):
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n
         docstring = '\\n\"\"'.join(docstring.split(r"\n"))
-        mlist.append(textwrap.dedent("""\
-        f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
-                                    %d, %d, %s, "%s",
-                                    "%s", 0);""") % (name, name, name,
-                                                len(uf.type_descriptions),
-                                                uf.nin, uf.nout,
-                                                uf.identity,
-                                                name, docstring))
+        fmt = textwrap.dedent("""\
+            f = PyUFunc_FromFuncAndData(
+                {name}_functions, {name}_data, {name}_signatures, {nloops},
+                {nin}, {nout}, {identity}, "{name}",
+                "{doc}", 0
+            );
+            if (f == NULL) {{
+                return -1;
+            }}""")
+        mlist.append(fmt.format(
+            name=name, nloops=len(uf.type_descriptions),
+            nin=uf.nin, nout=uf.nout, identity=uf.identity, doc=docstring
+        ))
         if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
@@ -1068,15 +1079,19 @@ def make_code(funcdict, filename):
 
         Please make changes to the code generator program (%s)
     **/
-
+    #include "cpuid.h"
+    #include "ufunc_object.h"
+    #include "ufunc_type_resolution.h"
     %s
 
-    static void
+    static int
     InitOperators(PyObject *dictionary) {
         PyObject *f;
 
     %s
     %s
+
+        return 0;
     }
     """) % (filename, code1, code2, code3)
     return code

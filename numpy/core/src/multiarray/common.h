@@ -1,5 +1,6 @@
 #ifndef _NPY_PRIVATE_COMMON_H_
 #define _NPY_PRIVATE_COMMON_H_
+#include "structmember.h"
 #include <numpy/npy_common.h>
 #include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
@@ -55,9 +56,6 @@ index2ptr(PyArrayObject *mp, npy_intp i);
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
-
-NPY_NO_EXPORT int
-_IsAligned(PyArrayObject *ap);
 
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
@@ -182,6 +180,15 @@ check_and_adjust_axis(int *axis, int ndim)
     return check_and_adjust_axis_msg(axis, ndim, Py_None);
 }
 
+/* used for some alignment checks */
+#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+/*
+ * Disable harmless compiler warning "4116: unnamed type definition in
+ * parentheses" which is caused by the _ALIGN macro.
+ */
+#if defined(_MSC_VER)
+#pragma warning(disable:4116)
+#endif
 
 /*
  * return true if pointer is aligned to 'alignment'
@@ -190,15 +197,44 @@ static NPY_INLINE int
 npy_is_aligned(const void * p, const npy_uintp alignment)
 {
     /*
-     * alignment is usually a power of two
-     * the test is faster than a direct modulo
+     * Assumes alignment is a power of two, as required by the C standard.
+     * Assumes cast from pointer to uintp gives a sensible representation we
+     * can use bitwise & on (not required by C standard, but used by glibc).
+     * This test is faster than a direct modulo.
      */
-    if (NPY_LIKELY((alignment & (alignment - 1)) == 0)) {
-        return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+    return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+}
+
+/* Get equivalent "uint" alignment given an itemsize, for use in copy code */
+static NPY_INLINE int
+npy_uint_alignment(int itemsize)
+{
+    npy_uintp alignment = 0; /* return value of 0 means unaligned */
+
+    switch(itemsize){
+        case 1:
+            return 1;
+        case 2:
+            alignment = _ALIGN(npy_uint16);
+            break;
+        case 4:
+            alignment = _ALIGN(npy_uint32);
+            break;
+        case 8:
+            alignment = _ALIGN(npy_uint64);
+            break;
+        case 16:
+            /*
+             * 16 byte types are copied using 2 uint64 assignments.
+             * See the strided copy function in lowlevel_strided_loops.c.
+             */
+            alignment = _ALIGN(npy_uint64);
+            break;
+        default:
+            break;
     }
-    else {
-        return ((npy_uintp)(p) % alignment) == 0;
-    }
+    
+    return alignment;
 }
 
 /*
@@ -282,5 +318,18 @@ blas_stride(npy_intp stride, unsigned itemsize)
 #endif
 
 #include "ucsnarrow.h"
+
+/*
+ * Make a new empty array, of the passed size, of a type that takes the
+ * priority of ap1 and ap2 into account.
+ *
+ * If `out` is non-NULL, memory overlap is checked with ap1 and ap2, and an
+ * updateifcopy temporary array may be returned. If `result` is non-NULL, the
+ * output array to be returned (`out` if non-NULL and the newly allocated array
+ * otherwise) is incref'd and put to *result.
+ */
+NPY_NO_EXPORT PyArrayObject *
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
+                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
 
 #endif

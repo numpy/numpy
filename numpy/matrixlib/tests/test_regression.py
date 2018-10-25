@@ -1,9 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises
-    )
+from numpy.testing import assert_, assert_equal, assert_raises
 
 
 class TestRegression(object):
@@ -33,6 +33,3 @@ class TestRegression(object):
         x = np.asmatrix(np.random.uniform(0, 1, (3, 3)))
         assert_equal(x.std().shape, ())
         assert_equal(x.argmax().shape, ())
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -10,11 +10,11 @@ __author__ = "Pierre GF Gerard-Marchant"
 
 import sys
 import warnings
-import pickle
 import operator
 import itertools
-import sys
 import textwrap
+import pytest
+
 from functools import reduce
 
 
@@ -23,7 +23,7 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, suppress_warnings, dec
+    assert_raises, assert_warns, suppress_warnings
     )
 from numpy import ndarray
 from numpy.compat import asbytes, asbytes_nested
@@ -49,7 +49,7 @@ from numpy.ma.core import (
     ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
-from numpy.testing import dec
+from numpy.core.numeric import pickle
 
 pi = np.pi
 
@@ -335,49 +335,6 @@ class TestMaskedArray(object):
         assert_equal(s1, s2)
         assert_(x1[1:1].shape == (0,))
 
-    def test_matrix_indexing(self):
-        # Tests conversions and indexing
-        x1 = np.matrix([[1, 2, 3], [4, 3, 2]])
-        x2 = array(x1, mask=[[1, 0, 0], [0, 1, 0]])
-        x3 = array(x1, mask=[[0, 1, 0], [1, 0, 0]])
-        x4 = array(x1)
-        # test conversion to strings
-        str(x2)  # raises?
-        repr(x2)  # raises?
-        # tests of indexing
-        assert_(type(x2[1, 0]) is type(x1[1, 0]))
-        assert_(x1[1, 0] == x2[1, 0])
-        assert_(x2[1, 1] is masked)
-        assert_equal(x1[0, 2], x2[0, 2])
-        assert_equal(x1[0, 1:], x2[0, 1:])
-        assert_equal(x1[:, 2], x2[:, 2])
-        assert_equal(x1[:], x2[:])
-        assert_equal(x1[1:], x3[1:])
-        x1[0, 2] = 9
-        x2[0, 2] = 9
-        assert_equal(x1, x2)
-        x1[0, 1:] = 99
-        x2[0, 1:] = 99
-        assert_equal(x1, x2)
-        x2[0, 1] = masked
-        assert_equal(x1, x2)
-        x2[0, 1:] = masked
-        assert_equal(x1, x2)
-        x2[0, :] = x1[0, :]
-        x2[0, 1] = masked
-        assert_(allequal(getmask(x2), np.array([[0, 1, 0], [0, 1, 0]])))
-        x3[1, :] = masked_array([1, 2, 3], [1, 1, 0])
-        assert_(allequal(getmask(x3)[1], array([1, 1, 0])))
-        assert_(allequal(getmask(x3[1]), array([1, 1, 0])))
-        x4[1, :] = masked_array([1, 2, 3], [1, 1, 0])
-        assert_(allequal(getmask(x4[1]), array([1, 1, 0])))
-        assert_(allequal(x4[1], array([1, 2, 3])))
-        x1 = np.matrix(np.arange(5) * 1.0)
-        x2 = masked_values(x1, 3.0)
-        assert_equal(x1, x2)
-        assert_(allequal(array([0, 0, 0, 1, 0], MaskType), x2.mask))
-        assert_equal(3.0, x2.fill_value)
-
     @suppress_copy_mask_on_assignment
     def test_copy(self):
         # Tests of some subtle points of copying and sizing.
@@ -395,9 +352,11 @@ class TestMaskedArray(object):
         assert_equal(y1._mask.__array_interface__, m.__array_interface__)
 
         y1a = array(y1)
+        # Default for masked array is not to copy; see gh-10318.
         assert_(y1a._data.__array_interface__ ==
                         y1._data.__array_interface__)
-        assert_(y1a.mask is y1.mask)
+        assert_(y1a._mask.__array_interface__ ==
+                        y1._mask.__array_interface__)
 
         y2 = array(x1, mask=m3)
         assert_(y2._data.__array_interface__ == x1.__array_interface__)
@@ -555,8 +514,6 @@ class TestMaskedArray(object):
               fill_value=999999)''')
         )
 
-
-
     def test_str_repr_legacy(self):
         oldopts = np.get_printoptions()
         np.set_printoptions(legacy='1.13')
@@ -598,48 +555,55 @@ class TestMaskedArray(object):
                      True,                            # Fully masked
                      False)                           # Fully unmasked
 
-            for mask in masks:
-                a.mask = mask
-                a_pickled = pickle.loads(a.dumps())
-                assert_equal(a_pickled._mask, a._mask)
-                assert_equal(a_pickled._data, a._data)
-                if dtype in (object, int):
-                    assert_equal(a_pickled.fill_value, 999)
-                else:
-                    assert_equal(a_pickled.fill_value, dtype(999))
-                assert_array_equal(a_pickled.mask, mask)
+            for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+                for mask in masks:
+                    a.mask = mask
+                    a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+                    assert_equal(a_pickled._mask, a._mask)
+                    assert_equal(a_pickled._data, a._data)
+                    if dtype in (object, int):
+                        assert_equal(a_pickled.fill_value, 999)
+                    else:
+                        assert_equal(a_pickled.fill_value, dtype(999))
+                    assert_array_equal(a_pickled.mask, mask)
 
     def test_pickling_subbaseclass(self):
         # Test pickling w/ a subclass of ndarray
-        a = array(np.matrix(list(range(10))), mask=[1, 0, 1, 0, 0] * 2)
-        a_pickled = pickle.loads(a.dumps())
-        assert_equal(a_pickled._mask, a._mask)
-        assert_equal(a_pickled, a)
-        assert_(isinstance(a_pickled._data, np.matrix))
+        x = np.array([(1.0, 2), (3.0, 4)],
+                     dtype=[('x', float), ('y', int)]).view(np.recarray)
+        a = masked_array(x, mask=[(True, False), (False, True)])
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+            assert_equal(a_pickled._mask, a._mask)
+            assert_equal(a_pickled, a)
+            assert_(isinstance(a_pickled._data, np.recarray))
 
     def test_pickling_maskedconstant(self):
         # Test pickling MaskedConstant
         mc = np.ma.masked
-        mc_pickled = pickle.loads(mc.dumps())
-        assert_equal(mc_pickled._baseclass, mc._baseclass)
-        assert_equal(mc_pickled._mask, mc._mask)
-        assert_equal(mc_pickled._data, mc._data)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            mc_pickled = pickle.loads(pickle.dumps(mc, protocol=proto))
+            assert_equal(mc_pickled._baseclass, mc._baseclass)
+            assert_equal(mc_pickled._mask, mc._mask)
+            assert_equal(mc_pickled._data, mc._data)
 
     def test_pickling_wstructured(self):
         # Tests pickling w/ structured array
         a = array([(1, 1.), (2, 2.)], mask=[(0, 0), (0, 1)],
                   dtype=[('a', int), ('b', float)])
-        a_pickled = pickle.loads(a.dumps())
-        assert_equal(a_pickled._mask, a._mask)
-        assert_equal(a_pickled, a)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+            assert_equal(a_pickled._mask, a._mask)
+            assert_equal(a_pickled, a)
 
     def test_pickling_keepalignment(self):
         # Tests pickling w/ F_CONTIGUOUS arrays
         a = arange(10)
         a.shape = (-1, 2)
         b = a.T
-        test = pickle.loads(pickle.dumps(b))
-        assert_equal(test, b)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            test = pickle.loads(pickle.dumps(b, protocol=proto))
+            assert_equal(test, b)
 
     def test_single_element_subscript(self):
         # Tests single element subscripts of Maskedarrays.
@@ -826,7 +790,6 @@ class TestMaskedArray(object):
                              dtype = "int, (2,3)float, float")
         control = "(0, [[--, 0.0, --], [0.0, 0.0, --]], 0.0)"
         assert_equal(str(t_2d0), control)
-
 
     def test_flatten_structured_array(self):
         # Test flatten_structured_array on arrays
@@ -1448,16 +1411,6 @@ class TestMaskedArrayArithmetic(object):
             assert_(result is output)
             assert_(output[0] is masked)
 
-    def test_count_mean_with_matrix(self):
-        m = np.ma.array(np.matrix([[1,2],[3,4]]), mask=np.zeros((2,2)))
-
-        assert_equal(m.count(axis=0).shape, (1,2))
-        assert_equal(m.count(axis=1).shape, (2,1))
-
-        #make sure broadcasting inside mean and var work
-        assert_equal(m.mean(axis=0), [[2., 3.]])
-        assert_equal(m.mean(axis=1), [[1.5], [3.5]])
-
     def test_eq_on_structured(self):
         # Test the equality of structured arrays
         ndtype = [('A', int), ('B', int)]
@@ -1740,23 +1693,6 @@ class TestMaskedArrayAttributes(object):
 
     def test_flat(self):
         # Test that flat can return all types of items [#4585, #4615]
-        # test simple access
-        test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
-        assert_equal(test.flat[1], 2)
-        assert_equal(test.flat[2], masked)
-        assert_(np.all(test.flat[0:2] == test[0, 0:2]))
-        # Test flat on masked_matrices
-        test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
-        test.flat = masked_array([3, 2, 1], mask=[1, 0, 0])
-        control = masked_array(np.matrix([[3, 2, 1]]), mask=[1, 0, 0])
-        assert_equal(test, control)
-        # Test setting
-        test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
-        testflat = test.flat
-        testflat[:] = testflat[[2, 1, 0]]
-        assert_equal(test, control)
-        testflat[0] = 9
-        assert_equal(test[0, 0], 9)
         # test 2-D record array
         # ... on structured array w/ masked records
         x = array([[(1, 1.1, 'one'), (2, 2.2, 'two'), (3, 3.3, 'thr')],
@@ -1784,12 +1720,6 @@ class TestMaskedArrayAttributes(object):
             if i >= x.shape[-1]:
                 i = 0
                 j += 1
-        # test that matrices keep the correct shape (#4615)
-        a = masked_array(np.matrix(np.eye(2)), mask=0)
-        b = a.flat
-        b01 = b[:2]
-        assert_equal(b01.data, array([[1., 0.]]))
-        assert_equal(b01.mask, array([[False, False]]))
 
     def test_assign_dtype(self):
         # check that the mask's dtype is updated when dtype is changed
@@ -2893,32 +2823,6 @@ class TestMaskedArrayMethods(object):
         assert_equal(mxsmall.any(0), [True, True, False])
         assert_equal(mxsmall.any(1), [True, True, False])
 
-    def test_allany_onmatrices(self):
-        x = np.array([[0.13, 0.26, 0.90],
-                      [0.28, 0.33, 0.63],
-                      [0.31, 0.87, 0.70]])
-        X = np.matrix(x)
-        m = np.array([[True, False, False],
-                      [False, False, False],
-                      [True, True, False]], dtype=np.bool_)
-        mX = masked_array(X, mask=m)
-        mXbig = (mX > 0.5)
-        mXsmall = (mX < 0.5)
-
-        assert_(not mXbig.all())
-        assert_(mXbig.any())
-        assert_equal(mXbig.all(0), np.matrix([False, False, True]))
-        assert_equal(mXbig.all(1), np.matrix([False, False, True]).T)
-        assert_equal(mXbig.any(0), np.matrix([False, False, True]))
-        assert_equal(mXbig.any(1), np.matrix([True, True, True]).T)
-
-        assert_(not mXsmall.all())
-        assert_(mXsmall.any())
-        assert_equal(mXsmall.all(0), np.matrix([True, True, False]))
-        assert_equal(mXsmall.all(1), np.matrix([False, False, False]).T)
-        assert_equal(mXsmall.any(0), np.matrix([True, True, False]))
-        assert_equal(mXsmall.any(1), np.matrix([True, True, False]).T)
-
     def test_allany_oddities(self):
         # Some fun with all and any
         store = empty((), dtype=bool)
@@ -3016,14 +2920,6 @@ class TestMaskedArrayMethods(object):
         a[0] = masked
         b = a.compressed()
         assert_equal(b, [2, 3, 4])
-
-        a = array(np.matrix([1, 2, 3, 4]), mask=[0, 0, 0, 0])
-        b = a.compressed()
-        assert_equal(b, a)
-        assert_(isinstance(b, np.matrix))
-        a[0, 0] = masked
-        b = a.compressed()
-        assert_equal(b, [[2, 3, 4]])
 
     def test_empty(self):
         # Tests empty/like
@@ -3139,10 +3035,6 @@ class TestMaskedArrayMethods(object):
         a = array([0, 0], mask=[1, 1])
         aravel = a.ravel()
         assert_equal(aravel._mask.shape, a.shape)
-        a = array(np.matrix([1, 2, 3, 4, 5]), mask=[[0, 1, 0, 0, 0]])
-        aravel = a.ravel()
-        assert_equal(aravel.shape, (1, 5))
-        assert_equal(aravel._mask.shape, a.shape)
         # Checks that small_mask is preserved
         a = array([1, 2, 3, 4], mask=[0, 0, 0, 0], shrink=False)
         assert_equal(a.ravel()._mask, [0, 0, 0, 0])
@@ -3199,6 +3091,12 @@ class TestMaskedArrayMethods(object):
         sortedx = sort(x, endwith=False)
         assert_equal(sortedx._data, [1, 2, -2, -1, 0])
         assert_equal(sortedx._mask, [1, 1, 0, 0, 0])
+
+    def test_stable_sort(self):
+        x = array([1, 2, 3, 1, 2, 3], dtype=np.uint8)
+        expected = array([0, 3, 1, 4, 2, 5])
+        computed = argsort(x, kind='stable')
+        assert_equal(computed, expected)
 
     def test_argsort_matches_sort(self):
         x = array([1, 4, 2, 3], mask=[0, 1, 0, 0], dtype=np.uint8)
@@ -3278,18 +3176,13 @@ class TestMaskedArrayMethods(object):
         assert_equal(test.mask, mask_first.mask)
 
         # Test sort on dtype with subarray (gh-8069)
+        # Just check that the sort does not error, structured array subarrays
+        # are treated as byte strings and that leads to differing behavior
+        # depending on endianess and `endwith`.
         dt = np.dtype([('v', int, 2)])
         a = a.view(dt)
-        mask_last = mask_last.view(dt)
-        mask_first = mask_first.view(dt)
-
         test = sort(a)
-        assert_equal(test, mask_last)
-        assert_equal(test.mask, mask_last.mask)
-
         test = sort(a, endwith=False)
-        assert_equal(test, mask_first)
-        assert_equal(test.mask, mask_first.mask)
 
     def test_argsort(self):
         # Test argsort
@@ -3722,8 +3615,8 @@ class TestMaskedArrayMathMethods(object):
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
-    @dec.knownfailureif(sys.platform=='win32' and sys.version_info < (3, 6),
-                        msg='Fails on Python < 3.6 (Issue #9671)')
+    @pytest.mark.skipif(sys.platform=='win32' and sys.version_info < (3, 6),
+                        reason='Fails on Python < 3.6 on Windows, gh-9671')
     @suppress_copy_mask_on_assignment
     def test_varstd_specialcases(self):
         # Test a special case for var
@@ -3918,12 +3811,8 @@ class TestMaskedArrayFunctions(object):
 
     def test_masked_where_shape_constraint(self):
         a = arange(10)
-        try:
-            test = masked_equal(1, a)
-        except IndexError:
-            pass
-        else:
-            raise AssertionError("Should have failed...")
+        with assert_raises(IndexError):
+            masked_equal(1, a)
         test = masked_equal(a, 1)
         assert_equal(test.mask, [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
@@ -4601,10 +4490,6 @@ class TestMaskedFields(object):
         assert_equal(test, data)
         assert_equal(test.mask, controlmask.reshape(-1, 2))
 
-        test = a.view((float, 2), np.matrix)
-        assert_equal(test, data)
-        assert_(isinstance(test, np.matrix))
-
     def test_getitem(self):
         ndtype = [('a', float), ('b', float)]
         a = array(list(zip(np.random.rand(10), np.arange(10))), dtype=ndtype)
@@ -4788,10 +4673,11 @@ class TestMaskedView(object):
     def test_view_to_dtype_and_type(self):
         (data, a, controlmask) = self.data
 
-        test = a.view((float, 2), np.matrix)
+        test = a.view((float, 2), np.recarray)
         assert_equal(test, data)
-        assert_(isinstance(test, np.matrix))
+        assert_(isinstance(test, np.recarray))
         assert_(not isinstance(test, MaskedArray))
+
 
 class TestOptionalArgs(object):
     def test_ndarrayfuncs(self):
@@ -4920,13 +4806,13 @@ class TestMaskedConstant(object):
 
     def test_pickle(self):
         from io import BytesIO
-        import pickle
 
-        with BytesIO() as f:
-            pickle.dump(np.ma.masked, f)
-            f.seek(0)
-            res = pickle.load(f)
-        assert_(res is np.ma.masked)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            with BytesIO() as f:
+                pickle.dump(np.ma.masked, f, protocol=proto)
+                f.seek(0)
+                res = pickle.load(f)
+            assert_(res is np.ma.masked)
 
     def test_copy(self):
         # gh-9328
@@ -4934,6 +4820,16 @@ class TestMaskedConstant(object):
         assert_equal(
             np.ma.masked.copy() is np.ma.masked,
             np.True_.copy() is np.True_)
+
+    def test__copy(self):
+        import copy
+        assert_(
+            copy.copy(np.ma.masked) is np.ma.masked)
+
+    def test_deepcopy(self):
+        import copy
+        assert_(
+            copy.deepcopy(np.ma.masked) is np.ma.masked)
 
     def test_immutable(self):
         orig = np.ma.masked
@@ -4951,7 +4847,8 @@ class TestMaskedConstant(object):
         assert_raises(MaskError, operator.setitem, a_i, (), np.ma.masked)
         assert_raises(MaskError, int, np.ma.masked)
 
-    @dec.skipif(sys.version_info.major == 3, "long doesn't exist in Python 3")
+    @pytest.mark.skipif(sys.version_info.major == 3,
+                        reason="long doesn't exist in Python 3")
     def test_coercion_long(self):
         assert_raises(MaskError, long, np.ma.masked)
 
@@ -4960,13 +4857,13 @@ class TestMaskedConstant(object):
         assert_warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)
         assert_(np.isnan(a_f[()]))
 
-    @dec.knownfailureif(True, "See gh-9750")
+    @pytest.mark.xfail(reason="See gh-9750")
     def test_coercion_unicode(self):
         a_u = np.zeros((), 'U10')
         a_u[()] = np.ma.masked
         assert_equal(a_u[()], u'--')
 
-    @dec.knownfailureif(True, "See gh-9750")
+    @pytest.mark.xfail(reason="See gh-9750")
     def test_coercion_bytes(self):
         a_b = np.zeros((), 'S10')
         a_b[()] = np.ma.masked
@@ -4999,6 +4896,12 @@ class TestMaskedWhereAliases(object):
 
         res = np.ma.masked_values(np.inf, -np.inf)
         assert_equal(res.mask, False)
+
+        res = np.ma.masked_values([1, 2, 3, 4], 5, shrink=True)
+        assert_(res.mask is np.ma.nomask)
+
+        res = np.ma.masked_values([1, 2, 3, 4], 5, shrink=False)
+        assert_equal(res.mask, [False] * 4)
 
 
 def test_masked_array():
@@ -5082,7 +4985,7 @@ def test_ufunc_with_out_varied():
     assert_equal(res_pos.data, expected.data)
 
 
-def test_astype():
+def test_astype_mask_ordering():
     descr = [('v', int, 3), ('x', [('y', float)])]
     x = array([
         [([1, 2, 3], (1.0,)),  ([1, 2, 3], (2.0,))],
@@ -5114,6 +5017,38 @@ def test_astype():
     assert_(x_f2.mask.flags.f_contiguous)
 
 
-###############################################################################
-if __name__ == "__main__":
-    run_module_suite()
+dts = [np.dtype(dt_) for dt_ in '?bhilqBHILQefdgFD']
+ids = [dt_.char for dt_ in dts]
+
+@pytest.mark.parametrize('dt1', dts, ids=ids)
+@pytest.mark.parametrize('dt2', dts, ids=ids)
+@pytest.mark.filterwarnings('ignore::numpy.ComplexWarning')
+def test_astype_basic(dt1, dt2):
+    # See gh-12070
+    src = np.ma.array(ones(3, dt1), fill_value=1)
+    dst = src.astype(dt2)
+
+    assert_(src.fill_value == 1)
+    assert_(src.dtype == dt1)
+    assert_(src.fill_value.dtype == dt1)
+
+    assert_(dst.fill_value == 1)
+    assert_(dst.dtype == dt2)
+    assert_(dst.fill_value.dtype == dt2)
+
+    assert_equal(src, dst)
+
+
+def test_fieldless_void():
+    dt = np.dtype([])  # a void dtype with no fields
+    x = np.empty(4, dt)
+
+    # these arrays contain no values, so there's little to test - but this
+    # shouldn't crash
+    mx = np.ma.array(x)
+    assert_equal(mx.dtype, x.dtype)
+    assert_equal(mx.shape, x.shape)
+
+    mx = np.ma.array(x, mask=x)
+    assert_equal(mx.dtype, x.dtype)
+    assert_equal(mx.shape, x.shape)

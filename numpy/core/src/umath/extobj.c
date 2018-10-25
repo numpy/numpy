@@ -1,12 +1,10 @@
 #define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include <Python.h>
 
 #include "npy_config.h"
-
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
-#define NO_IMPORT_ARRAY
 
 #include "npy_pycompat.h"
 
@@ -284,7 +282,7 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     if (!errmask) {
         return 0;
     }
-    fperr = PyUFunc_getfperr();
+    fperr = npy_get_floatstatus_barrier((char*)extobj);
     if (!fperr) {
         return 0;
     }

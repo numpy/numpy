@@ -12,6 +12,7 @@
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
+#include "array_assign.h"
 
 #include "common.h"
 
@@ -64,7 +65,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
         _UpdateContiguousFlags(ret);
     }
     if (flagmask & NPY_ARRAY_ALIGNED) {
-        if (_IsAligned(ret)) {
+        if (IsAligned(ret)) {
             PyArray_ENABLEFLAGS(ret, NPY_ARRAY_ALIGNED);
         }
         else {
@@ -575,7 +576,7 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
             return arrayflags_fortran_get(self);
         }
         break;
-    case 14:
+    case 15:
         if (strncmp(key, "WRITEBACKIFCOPY", n) == 0) {
             return arrayflags_writebackifcopy_get(self);
         }

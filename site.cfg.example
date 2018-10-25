@@ -10,7 +10,7 @@
 # The format of the file is that of the standard library's ConfigParser module.
 # No interpolation is allowed, RawConfigParser class being used to load it.
 #
-#   http://docs.python.org/3/library/configparser.html
+#   https://docs.python.org/library/configparser.html
 #
 # Each section defines settings that apply to one particular dependency. Some of
 # the settings are general and apply to nearly any section and are defined here.
@@ -122,7 +122,7 @@
 # multiprocessing.
 # (This problem does not exist with multithreaded ATLAS.)
 #
-# http://docs.python.org/3.4/library/multiprocessing.html#contexts-and-start-methods
+# https://docs.python.org/library/multiprocessing.html#contexts-and-start-methods
 # https://github.com/xianyi/OpenBLAS/issues/294
 #
 # [openblas]
@@ -180,6 +180,14 @@
 # mkl_libs = mkl_rt 
 # lapack_libs =
 
+# ACCELERATE
+# ----------
+# Accelerate/vecLib is an OSX framework providing a BLAS and LAPACK implementations.
+#
+# [accelerate]
+# libraries = Accelerate, vecLib
+# #libraries = None
+
 # UMFPACK
 # -------
 # The UMFPACK library is used in scikits.umfpack to factor large sparse matrices. 
@@ -189,9 +197,9 @@
 #
 # UMFPACK is not used by numpy.
 #
-#   http://www.cise.ufl.edu/research/sparse/umfpack/
-#   http://www.cise.ufl.edu/research/sparse/amd/
-#   http://scikits.appspot.com/umfpack
+#   https://www.cise.ufl.edu/research/sparse/umfpack/
+#   https://www.cise.ufl.edu/research/sparse/amd/
+#   https://scikit-umfpack.github.io/scikit-umfpack/
 #
 #[amd]
 #amd_libs = amd
@@ -205,7 +213,7 @@
 # Note that these libraries are not used by for numpy or scipy.
 #
 #   http://fftw.org/
-#   http://cr.yp.to/djbfft.html
+#   https://cr.yp.to/djbfft.html
 #
 # Given only this section, numpy.distutils will try to figure out which version
 # of FFTW you are using.

@@ -16,20 +16,27 @@ Functions
 - `nanvar` -- variance of non-NaN values
 - `nanstd` -- standard deviation of non-NaN values
 - `nanmedian` -- median of non-NaN values
+- `nanquantile` -- qth quantile of non-NaN values
 - `nanpercentile` -- qth percentile of non-NaN values
 
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
 import warnings
 import numpy as np
 from numpy.lib import function_base
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [
     'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
     'nanmedian', 'nanpercentile', 'nanvar', 'nanstd', 'nanprod',
-    'nancumsum', 'nancumprod'
+    'nancumsum', 'nancumprod', 'nanquantile'
     ]
 
 
@@ -187,6 +194,11 @@ def _divide_by_count(a, b, out=None):
                 return np.divide(a, b, out=out, casting='unsafe')
 
 
+def _nanmin_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmin_dispatcher)
 def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Return minimum of an array or minimum along an axis, ignoring any NaNs.
@@ -198,8 +210,8 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose minimum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the minimum is computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the minimum is computed. The default is to compute
         the minimum of the flattened array.
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
@@ -295,6 +307,11 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     return res
 
 
+def _nanmax_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmax_dispatcher)
 def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis, ignoring any
@@ -306,8 +323,8 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose maximum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the maximum is computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the maximum is computed. The default is to compute
         the maximum of the flattened array.
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
@@ -403,6 +420,11 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     return res
 
 
+def _nanargmin_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_nanargmin_dispatcher)
 def nanargmin(a, axis=None):
     """
     Return the indices of the minimum values in the specified axis ignoring
@@ -447,6 +469,11 @@ def nanargmin(a, axis=None):
     return res
 
 
+def _nanargmax_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_nanargmax_dispatcher)
 def nanargmax(a, axis=None):
     """
     Return the indices of the maximum values in the specified axis ignoring
@@ -492,6 +519,11 @@ def nanargmax(a, axis=None):
     return res
 
 
+def _nansum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nansum_dispatcher)
 def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Return the sum of array elements over a given axis treating Not a
@@ -505,8 +537,8 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose sum is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the sum is computed. The default is to compute the
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the sum is computed. The default is to compute the
         sum of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
@@ -582,6 +614,11 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     return np.sum(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
 
 
+def _nanprod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanprod_dispatcher)
 def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Return the product of array elements over a given axis treating Not a
@@ -596,8 +633,8 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose product is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the product is computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the product is computed. The default is to compute
         the product of the flattened array.
     dtype : data-type, optional
         The type of the returned array and of the accumulator in which the
@@ -647,6 +684,11 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     return np.prod(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
 
 
+def _nancumsum_dispatcher(a, axis=None, dtype=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nancumsum_dispatcher)
 def nancumsum(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative sum of array elements over a given axis treating Not a
@@ -712,6 +754,11 @@ def nancumsum(a, axis=None, dtype=None, out=None):
     return np.cumsum(a, axis=axis, dtype=dtype, out=out)
 
 
+def _nancumprod_dispatcher(a, axis=None, dtype=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nancumprod_dispatcher)
 def nancumprod(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative product of array elements over a given axis treating Not a
@@ -774,6 +821,11 @@ def nancumprod(a, axis=None, dtype=None, out=None):
     return np.cumprod(a, axis=axis, dtype=dtype, out=out)
 
 
+def _nanmean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmean_dispatcher)
 def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Compute the arithmetic mean along the specified axis, ignoring NaNs.
@@ -791,8 +843,8 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose mean is desired. If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the means are computed. The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the means are computed. The default is to compute
         the mean of the flattened array.
     dtype : data-type, optional
         Type to use in computing the mean.  For integer inputs, the default
@@ -927,6 +979,12 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     return m.filled(np.nan)
 
 
+def _nanmedian_dispatcher(
+        a, axis=None, out=None, overwrite_input=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmedian_dispatcher)
 def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValue):
     """
     Compute the median along the specified axis, while ignoring NaNs.
@@ -1025,6 +1083,12 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
         return r
 
 
+def _nanpercentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
+                              interpolation=None, keepdims=None):
+    return (a, q, out)
+
+
+@array_function_dispatch(_nanpercentile_dispatcher)
 def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
                   interpolation='linear', keepdims=np._NoValue):
     """
@@ -1057,15 +1121,16 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
         `a` after this function completes is undefined.
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
         This optional parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
+        use when the desired percentile lies between two data points
         ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+
+        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * 'lower': ``i``.
+        * 'higher': ``j``.
+        * 'nearest': ``i`` or ``j``, whichever is nearest.
+        * 'midpoint': ``(i + j) / 2``.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1094,6 +1159,7 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     nanmean
     nanmedian : equivalent to ``nanpercentile(..., 50)``
     percentile, median, mean
+    nanquantile : equivalent to nanpercentile, but with q in the range [0, 1].
 
     Notes
     -----
@@ -1139,6 +1205,118 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     q = np.true_divide(q, 100.0)  # handles the asarray for us too
     if not function_base._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+    return _nanquantile_unchecked(
+        a, q, axis, out, overwrite_input, interpolation, keepdims)
+
+
+def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
+                            interpolation=None, keepdims=None):
+    return (a, q, out)
+
+
+@array_function_dispatch(_nanquantile_dispatcher)
+def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
+                interpolation='linear', keepdims=np._NoValue):
+    """
+    Compute the qth quantile of the data along the specified axis,
+    while ignoring nan values.
+    Returns the qth quantile(s) of the array elements.
+    .. versionadded:: 1.15.0
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array, containing
+        nan values to be ignored
+    q : array_like of float
+        Quantile or sequence of quantiles to compute, which must be between
+        0 and 1 inclusive.
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the quantiles are computed. The
+        default is to compute the quantile(s) along a flattened
+        version of the array.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+        If True, then allow the input array `a` to be modified by intermediate
+        calculations, to save memory. In this case, the contents of the input
+        `a` after this function completes is undefined.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to
+        use when the desired quantile lies between two data points
+        ``i < j``:
+
+        * linear: ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * lower: ``i``.
+        * higher: ``j``.
+        * nearest: ``i`` or ``j``, whichever is nearest.
+        * midpoint: ``(i + j) / 2``.
+
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
+
+        If this is anything but the default value it will be passed
+        through (in the special case of an empty array) to the
+        `mean` function of the underlying array.  If the array is
+        a sub-class and `mean` does not have the kwarg `keepdims` this
+        will raise a RuntimeError.
+
+    Returns
+    -------
+    quantile : scalar or ndarray
+        If `q` is a single percentile and `axis=None`, then the result
+        is a scalar. If multiple quantiles are given, first axis of
+        the result corresponds to the quantiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    See Also
+    --------
+    quantile
+    nanmean, nanmedian
+    nanmedian : equivalent to ``nanquantile(..., 0.5)``
+    nanpercentile : same as nanquantile, but with q in the range [0, 100].
+
+    Examples
+    --------
+    >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
+    >>> a[0][1] = np.nan
+    >>> a
+    array([[ 10.,  nan,   4.],
+          [  3.,   2.,   1.]])
+    >>> np.quantile(a, 0.5)
+    nan
+    >>> np.nanquantile(a, 0.5)
+    3.5
+    >>> np.nanquantile(a, 0.5, axis=0)
+    array([ 6.5,  2.,   2.5])
+    >>> np.nanquantile(a, 0.5, axis=1, keepdims=True)
+    array([[ 7.],
+           [ 2.]])
+    >>> m = np.nanquantile(a, 0.5, axis=0)
+    >>> out = np.zeros_like(m)
+    >>> np.nanquantile(a, 0.5, axis=0, out=out)
+    array([ 6.5,  2.,   2.5])
+    >>> m
+    array([ 6.5,  2. ,  2.5])
+    >>> b = a.copy()
+    >>> np.nanquantile(b, 0.5, axis=1, overwrite_input=True)
+    array([  7.,  2.])
+    >>> assert not np.all(a==b)
+    """
+    a = np.asanyarray(a)
+    q = np.asanyarray(q)
+    if not function_base._quantile_is_valid(q):
+        raise ValueError("Quantiles must be in the range [0, 1]")
     return _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, interpolation, keepdims)
 
@@ -1199,6 +1377,12 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation='linear'):
         arr1d, q, overwrite_input=overwrite_input, interpolation=interpolation)
 
 
+def _nanvar_dispatcher(
+        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanvar_dispatcher)
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the variance along the specified axis, while ignoring NaNs.
@@ -1217,8 +1401,8 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     a : array_like
         Array containing numbers whose variance is desired.  If `a` is not an
         array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the variance is computed.  The default is to compute
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the variance is computed.  The default is to compute
         the variance of the flattened array.
     dtype : data-type, optional
         Type to use in computing the variance.  For arrays of integer type
@@ -1340,6 +1524,12 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     return var
 
 
+def _nanstd_dispatcher(
+        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanstd_dispatcher)
 def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the standard deviation along the specified axis, while
@@ -1359,8 +1549,8 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     ----------
     a : array_like
         Calculate the standard deviation of the non-NaN values.
-    axis : int, optional
-        Axis along which the standard deviation is computed. The default is
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the standard deviation is computed. The default is
         to compute the standard deviation of the flattened array.
     dtype : dtype, optional
         Type to use in computing the standard deviation. For arrays of

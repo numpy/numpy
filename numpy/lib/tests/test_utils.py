@@ -1,10 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import pytest
+
 from numpy.core import arange
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises_regex, dec
-    )
+from numpy.testing import assert_, assert_equal, assert_raises_regex
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
 
@@ -14,7 +14,7 @@ else:
     from StringIO import StringIO
 
 
-@dec.skipif(sys.flags.optimize == 2)
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
 def test_lookfor():
     out = StringIO()
     utils.lookfor('eigenvalue', module='numpy', output=out,
@@ -56,16 +56,36 @@ def test_safe_eval_nameconstant():
     utils.safe_eval('None')
 
 
-def test_byte_bounds():
-    a = arange(12).reshape(3, 4)
-    low, high = utils.byte_bounds(a)
-    assert_equal(high - low, a.size * a.itemsize)
+class TestByteBounds(object):
+
+    def test_byte_bounds(self):
+        # pointer difference matches size * itemsize
+        # due to contiguity
+        a = arange(12).reshape(3, 4)
+        low, high = utils.byte_bounds(a)
+        assert_equal(high - low, a.size * a.itemsize)
+
+    def test_unusual_order_positive_stride(self):
+        a = arange(12).reshape(3, 4)
+        b = a.T
+        low, high = utils.byte_bounds(b)
+        assert_equal(high - low, b.size * b.itemsize)
+
+    def test_unusual_order_negative_stride(self):
+        a = arange(12).reshape(3, 4)
+        b = a.T[::-1]
+        low, high = utils.byte_bounds(b)
+        assert_equal(high - low, b.size * b.itemsize)
+
+    def test_strided(self):
+        a = arange(12)
+        b = a[::2]
+        low, high = utils.byte_bounds(b)
+        # the largest pointer address is lost (even numbers only in the
+        # stride), and compensate addresses for striding by 2
+        assert_equal(high - low, b.size * 2 * b.itemsize - b.itemsize)
 
 
 def test_assert_raises_regex_context_manager():
     with assert_raises_regex(ValueError, 'no deprecation warning'):
         raise ValueError('no deprecation warning')
-
-
-if __name__ == "__main__":
-    run_module_suite()

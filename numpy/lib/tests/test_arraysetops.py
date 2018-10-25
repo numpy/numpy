@@ -4,12 +4,15 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import (
-    run_module_suite, assert_array_equal, assert_equal, assert_raises,
-    )
+import sys
+
+from numpy.testing import (assert_array_equal, assert_equal,
+                           assert_raises, assert_raises_regex)
 from numpy.lib.arraysetops import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
     )
+import pytest
+
 
 
 class TestSetOps(object):
@@ -30,8 +33,58 @@ class TestSetOps(object):
         ed = np.array([1, 2, 5])
         c = intersect1d(a, b)
         assert_array_equal(c, ed)
-
         assert_array_equal([], intersect1d([], []))
+
+    def test_intersect1d_array_like(self):
+        # See gh-11772
+        class Test(object):
+            def __array__(self):
+                return np.arange(3)
+
+        a = Test()
+        res = intersect1d(a, a)
+        assert_array_equal(res, a)
+        res = intersect1d([1, 2, 3], [1, 2, 3])
+        assert_array_equal(res, [1, 2, 3])
+
+    def test_intersect1d_indices(self):
+        # unique inputs
+        a = np.array([1, 2, 3, 4])
+        b = np.array([2, 1, 4, 6])
+        c, i1, i2 = intersect1d(a, b, assume_unique=True, return_indices=True)
+        ee = np.array([1, 2, 4])
+        assert_array_equal(c, ee)
+        assert_array_equal(a[i1], ee)
+        assert_array_equal(b[i2], ee)
+
+        # non-unique inputs
+        a = np.array([1, 2, 2, 3, 4, 3, 2])
+        b = np.array([1, 8, 4, 2, 2, 3, 2, 3])
+        c, i1, i2 = intersect1d(a, b, return_indices=True)
+        ef = np.array([1, 2, 3, 4])
+        assert_array_equal(c, ef)
+        assert_array_equal(a[i1], ef)
+        assert_array_equal(b[i2], ef)
+
+        # non1d, unique inputs
+        a = np.array([[2, 4, 5, 6], [7, 8, 1, 15]])
+        b = np.array([[3, 2, 7, 6], [10, 12, 8, 9]])
+        c, i1, i2 = intersect1d(a, b, assume_unique=True, return_indices=True)
+        ui1 = np.unravel_index(i1, a.shape)
+        ui2 = np.unravel_index(i2, b.shape)
+        ea = np.array([2, 6, 7, 8])
+        assert_array_equal(ea, a[ui1])
+        assert_array_equal(ea, b[ui2])
+
+        # non1d, not assumed to be uniqueinputs
+        a = np.array([[2, 4, 5, 6, 6], [4, 7, 8, 7, 2]])
+        b = np.array([[3, 2, 7, 7], [10, 12, 8, 7]])
+        c, i1, i2 = intersect1d(a, b, return_indices=True)
+        ui1 = np.unravel_index(i1, a.shape)
+        ui2 = np.unravel_index(i2, b.shape)
+        ea = np.array([2, 7, 8])
+        assert_array_equal(ea, a[ui1])
+        assert_array_equal(ea, b[ui2])
 
     def test_setxor1d(self):
         a = np.array([5, 7, 1, 2])
@@ -74,8 +127,68 @@ class TestSetOps(object):
         assert_array_equal([1,7,8], ediff1d(two_elem, to_end=[7,8]))
         assert_array_equal([7,1], ediff1d(two_elem, to_begin=7))
         assert_array_equal([5,6,1], ediff1d(two_elem, to_begin=[5,6]))
-        assert(isinstance(ediff1d(np.matrix(1)), np.matrix))
-        assert(isinstance(ediff1d(np.matrix(1), to_begin=1), np.matrix))
+
+    @pytest.mark.parametrize("ary, prepend, append", [
+        # should fail because trying to cast
+        # np.nan standard floating point value
+        # into an integer array:
+        (np.array([1, 2, 3], dtype=np.int64),
+         None,
+         np.nan),
+        # should fail because attempting
+        # to downcast to smaller int type:
+        (np.array([1, 2, 3], dtype=np.int32),
+         np.array([5, 7, 2], dtype=np.int64),
+         None),
+        # should fail because attempting to cast
+        # two special floating point values
+        # to integers (on both sides of ary):
+        (np.array([1., 3., 9.], dtype=np.int8),
+         np.nan,
+         np.nan),
+         ])
+    def test_ediff1d_forbidden_type_casts(self, ary, prepend, append):
+        # verify resolution of gh-11490
+
+        # specifically, raise an appropriate
+        # Exception when attempting to append or
+        # prepend with an incompatible type
+        msg = 'must be compatible'
+        with assert_raises_regex(TypeError, msg):
+            ediff1d(ary=ary,
+                    to_end=append,
+                    to_begin=prepend)
+
+    @pytest.mark.parametrize("ary,"
+                             "prepend,"
+                             "append,"
+                             "expected", [
+        (np.array([1, 2, 3], dtype=np.int16),
+         0,
+         None,
+         np.array([0, 1, 1], dtype=np.int16)),
+        (np.array([1, 2, 3], dtype=np.int32),
+         0,
+         0,
+         np.array([0, 1, 1, 0], dtype=np.int32)),
+        (np.array([1, 2, 3], dtype=np.int64),
+         3,
+         -9,
+         np.array([3, 1, 1, -9], dtype=np.int64)),
+         ])
+    def test_ediff1d_scalar_handling(self,
+                                     ary,
+                                     prepend,
+                                     append,
+                                     expected):
+        # maintain backwards-compatibility
+        # of scalar prepend / append behavior
+        # in ediff1d following fix for gh-11490
+        actual = np.ediff1d(ary=ary,
+                            to_end=append,
+                            to_begin=prepend)
+        assert_equal(actual, expected)
+
 
     def test_isin(self):
         # the tests for in1d cover most of isin's behavior
@@ -275,6 +388,13 @@ class TestSetOps(object):
         a = np.array((), np.uint32)
         assert_equal(setdiff1d(a, []).dtype, np.uint32)
 
+    def test_setdiff1d_unique(self):
+        a = np.array([3, 2, 1])
+        b = np.array([7, 5, 2])
+        expected = np.array([3, 1])
+        actual = setdiff1d(a, b, assume_unique=True)
+        assert_equal(actual, expected)
+
     def test_setdiff1d_char_array(self):
         a = np.array(['a', 'b', 'c'])
         b = np.array(['a', 'b', 's'])
@@ -409,8 +529,8 @@ class TestUnique(object):
         assert_raises(TypeError, self._run_axis_tests,
                       [('a', int), ('b', object)])
 
-        assert_raises(ValueError, unique, np.arange(10), axis=2)
-        assert_raises(ValueError, unique, np.arange(10), axis=-2)
+        assert_raises(np.AxisError, unique, np.arange(10), axis=2)
+        assert_raises(np.AxisError, unique, np.arange(10), axis=-2)
 
     def test_unique_axis_list(self):
         msg = "Unique failed on list of lists"
@@ -453,6 +573,15 @@ class TestUnique(object):
         assert_array_equal(v.data, v2.data, msg)
         assert_array_equal(v.mask, v2.mask, msg)
 
+    def test_unique_sort_order_with_axis(self):
+        # These tests fail if sorting along axis is done by treating subarrays
+        # as unsigned byte strings.  See gh-10495.
+        fmt = "sort order incorrect for integer type '%s'"
+        for dt in 'bhilq':
+            a = np.array([[-1],[0]], dt)
+            b = np.unique(a, axis=0)
+            assert_array_equal(a, b, fmt % dt)
+
     def _run_axis_tests(self, dtype):
         data = np.array([[0, 1, 0, 0],
                          [1, 0, 0, 0],
@@ -493,7 +622,3 @@ class TestUnique(object):
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
-
-
-if __name__ == "__main__":
-    run_module_suite()

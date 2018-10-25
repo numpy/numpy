@@ -5,14 +5,14 @@ import warnings
 import itertools
 import operator
 import platform
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite,
-    assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal,
-    IS_PYPY, suppress_warnings, dec, _gen_alignment_data, assert_warns
-)
+    assert_, assert_equal, assert_raises, assert_almost_equal, assert_allclose,
+    assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
+    assert_warns
+    )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -136,7 +136,7 @@ class TestPower(object):
         # 1 ** -1 possible special case
         base = [np.array(1, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -146,7 +146,7 @@ class TestPower(object):
         # -1 ** -1 possible special case
         base = [np.array(-1, dt)[()] for dt in 'bhilq']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -156,7 +156,7 @@ class TestPower(object):
         # 2 ** -1 perhaps generic
         base = [np.array(2, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -410,8 +410,7 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY,
-        "__int__ is not the same as int in cpython (gh-9972)")
+    @pytest.mark.skipif(not IS_PYPY, reason="Test is PyPy only (gh-9972)")
     def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
@@ -421,8 +420,10 @@ class TestConversion(object):
             assert_raises(OverflowError, x.__int__)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(platform.machine().startswith("ppc64"))
-    @dec.skipif(np.finfo(np.double) == np.finfo(np.longdouble))
+    @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+                        reason="long double is same as double")
+    @pytest.mark.skipif(platform.machine().startswith("ppc64"),
+                        reason="IBM double double")
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
         # use exponent that avoids bug in Darwin pow function.
@@ -518,7 +519,7 @@ class TestRepr(object):
         storage_bytes = np.dtype(t).itemsize*8
         # could add some more types to the list below
         for which in ['small denorm', 'small norm']:
-            # Values from http://en.wikipedia.org/wiki/IEEE_754
+            # Values from https://en.wikipedia.org/wiki/IEEE_754
             constr = np.array([0x00]*storage_bytes, dtype=np.uint8)
             if which == 'small denorm':
                 byte = last_fraction_bit_idx // 8
@@ -663,7 +664,3 @@ class TestAbs(object):
 
     def test_numpy_abs(self):
         self._test_abs_func(np.abs)
-
-
-if __name__ == "__main__":
-    run_module_suite()

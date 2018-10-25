@@ -209,7 +209,7 @@ Only a survey of the choices. Little detail on how each works.
 Interfacing to Fortran:
 -----------------------
 The clear choice to wrap Fortran code is
-`f2py <http://docs.scipy.org/doc/numpy-dev/f2py/>`_.
+`f2py <https://docs.scipy.org/doc/numpy/f2py/>`_.
 
 Pyfort is an older alternative, but not supported any longer.
 Fwrap is a newer project that looked promising but isn't being developed any

@@ -10,7 +10,6 @@
 
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
-#include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -19,16 +18,7 @@
 #include <numpy/halffloat.h>
 
 #include "lowlevel_strided_loops.h"
-
-/* used for some alignment checks */
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
-/*
- * Disable harmless compiler warning "4116: unnamed type definition in
- * parentheses" which is caused by the _ALIGN macro.
- */
-#if defined(_MSC_VER)
-#pragma warning(disable:4116)
-#endif
+#include "array_assign.h"
 
 
 /*
@@ -1371,9 +1361,9 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
  */
 
 /*
- * Advanded indexing iteration of arrays when there is a single indexing
+ * Advanced indexing iteration of arrays when there is a single indexing
  * array which has the same memory order as the value array and both
- * can be trivally iterated (single stride, aligned, no casting necessary).
+ * can be trivially iterated (single stride, aligned, no casting necessary).
  */
 NPY_NO_EXPORT int
 mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
@@ -1385,7 +1375,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 
     npy_intp itersize;
 
-    int is_aligned = PyArray_ISALIGNED(self) && PyArray_ISALIGNED(result);
+    int is_aligned = IsUintAligned(self) && IsUintAligned(result);
     int needs_api = PyDataType_REFCHK(PyArray_DESCR(self));
 
     PyArray_CopySwapFunc *copyswap = PyArray_DESCR(self)->f->copyswap;
@@ -1405,7 +1395,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
     /* Check the indices beforehand */
     while (itersize--) {
         npy_intp indval = *((npy_intp*)ind_ptr);
-        if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
+        if (check_and_adjust_index(&indval, fancy_dim, 0, _save) < 0 ) {
             return -1;
         }
         ind_ptr += ind_stride;
@@ -1437,7 +1427,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
             npy_intp indval = *((npy_intp*)ind_ptr);
             assert(npy_is_aligned(ind_ptr, _ALIGN(npy_intp)));
 #if @isget@
-            if (check_and_adjust_index(&indval, fancy_dim, 1, _save) < 0 ) {
+            if (check_and_adjust_index(&indval, fancy_dim, 0, _save) < 0 ) {
                 return -1;
             }
 #else
@@ -1518,7 +1508,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
      * could also check extra_op is buffered, but it should rarely matter.
      */
 
-    is_aligned = PyArray_ISALIGNED(array) && PyArray_ISALIGNED(mit->extra_op);
+    is_aligned = IsUintAligned(array) && IsUintAligned(mit->extra_op);
 
     if (mit->size == 0) {
        return 0;
@@ -1747,7 +1737,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                 }
                 else {
                     /*
-                     * faster resetting if the subspace iteration is trival.
+                     * faster resetting if the subspace iteration is trivial.
                      * reset_offsets are zero for positive strides,
                      * for negative strides this shifts the pointer to the last
                      * item.

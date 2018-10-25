@@ -14,6 +14,7 @@ import numpy.ma as ma
 from numpy import ndarray, recarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
+from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
 from numpy.compat import basestring
 
@@ -31,6 +32,11 @@ __all__ = [
     ]
 
 
+def _recursive_fill_fields_dispatcher(input, output):
+    return (input, output)
+
+
+@array_function_dispatch(_recursive_fill_fields_dispatcher)
 def recursive_fill_fields(input, output):
     """
     Fills fields from output with fields from input,
@@ -189,6 +195,11 @@ def flatten_descr(ndtype):
         return tuple(descr)
 
 
+def _zip_dtype_dispatcher(seqarrays, flatten=None):
+    return seqarrays
+
+
+@array_function_dispatch(_zip_dtype_dispatcher)
 def zip_dtype(seqarrays, flatten=False):
     newdtype = []
     if flatten:
@@ -205,6 +216,7 @@ def zip_dtype(seqarrays, flatten=False):
     return np.dtype(newdtype)
 
 
+@array_function_dispatch(_zip_dtype_dispatcher)
 def zip_descr(seqarrays, flatten=False):
     """
     Combine the dtype description of a series of arrays.
@@ -297,6 +309,11 @@ def _izip_fields(iterable):
             yield element
 
 
+def _izip_records_dispatcher(seqarrays, fill_value=None, flatten=None):
+    return seqarrays
+
+
+@array_function_dispatch(_izip_records_dispatcher)
 def izip_records(seqarrays, fill_value=None, flatten=True):
     """
     Returns an iterator of concatenated items from a sequence of arrays.
@@ -357,6 +374,12 @@ def _fix_defaults(output, defaults=None):
     return output
 
 
+def _merge_arrays_dispatcher(seqarrays, fill_value=None, flatten=None,
+                             usemask=None, asrecarray=None):
+    return seqarrays
+
+
+@array_function_dispatch(_merge_arrays_dispatcher)
 def merge_arrays(seqarrays, fill_value=-1, flatten=False,
                  usemask=False, asrecarray=False):
     """
@@ -397,12 +420,13 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     Notes
     -----
     * Without a mask, the missing value will be filled with something,
-    * depending on what its corresponding type:
-            -1      for integers
-            -1.0    for floating point numbers
-            '-'     for characters
-            '-1'    for strings
-            True    for boolean values
+      depending on what its corresponding type:
+
+      * ``-1``      for integers
+      * ``-1.0``    for floating point numbers
+      * ``'-'``     for characters
+      * ``'-1'``    for strings
+      * ``True``    for boolean values
     * XXX: I just obtained these values empirically
     """
     # Only one item in the input sequence ?
@@ -493,6 +517,11 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     return output
 
 
+def _drop_fields_dispatcher(base, drop_names, usemask=None, asrecarray=None):
+    return (base,)
+
+
+@array_function_dispatch(_drop_fields_dispatcher)
 def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     """
     Return a new array with fields in `drop_names` dropped.
@@ -582,6 +611,11 @@ def _keep_fields(base, keep_names, usemask=True, asrecarray=False):
     return _fix_output(output, usemask=usemask, asrecarray=asrecarray)
 
 
+def _rec_drop_fields_dispatcher(base, drop_names):
+    return (base,)
+
+
+@array_function_dispatch(_rec_drop_fields_dispatcher)
 def rec_drop_fields(base, drop_names):
     """
     Returns a new numpy.recarray with fields in `drop_names` dropped.
@@ -589,6 +623,11 @@ def rec_drop_fields(base, drop_names):
     return drop_fields(base, drop_names, usemask=False, asrecarray=True)
 
 
+def _rename_fields_dispatcher(base, namemapper):
+    return (base,)
+
+
+@array_function_dispatch(_rename_fields_dispatcher)
 def rename_fields(base, namemapper):
     """
     Rename the fields from a flexible-datatype ndarray or recarray.
@@ -628,6 +667,14 @@ def rename_fields(base, namemapper):
     return base.view(newdtype)
 
 
+def _append_fields_dispatcher(base, names, data, dtypes=None,
+                              fill_value=None, usemask=None, asrecarray=None):
+    yield base
+    for d in data:
+        yield d
+
+
+@array_function_dispatch(_append_fields_dispatcher)
 def append_fields(base, names, data, dtypes=None,
                   fill_value=-1, usemask=True, asrecarray=False):
     """
@@ -698,6 +745,13 @@ def append_fields(base, names, data, dtypes=None,
     return _fix_output(output, usemask=usemask, asrecarray=asrecarray)
 
 
+def _rec_append_fields_dispatcher(base, names, data, dtypes=None):
+    yield base
+    for d in data:
+        yield d
+
+
+@array_function_dispatch(_rec_append_fields_dispatcher)
 def rec_append_fields(base, names, data, dtypes=None):
     """
     Add new fields to an existing array.
@@ -732,6 +786,97 @@ def rec_append_fields(base, names, data, dtypes=None):
                          asrecarray=True, usemask=False)
 
 
+def _repack_fields_dispatcher(a, align=None, recurse=None):
+    return (a,)
+
+
+@array_function_dispatch(_repack_fields_dispatcher)
+def repack_fields(a, align=False, recurse=False):
+    """
+    Re-pack the fields of a structured array or dtype in memory.
+
+    The memory layout of structured datatypes allows fields at arbitrary
+    byte offsets. This means the fields can be separated by padding bytes,
+    their offsets can be non-monotonically increasing, and they can overlap.
+
+    This method removes any overlaps and reorders the fields in memory so they
+    have increasing byte offsets, and adds or removes padding bytes depending
+    on the `align` option, which behaves like the `align` option to `np.dtype`.
+
+    If `align=False`, this method produces a "packed" memory layout in which
+    each field starts at the byte the previous field ended, and any padding
+    bytes are removed.
+
+    If `align=True`, this methods produces an "aligned" memory layout in which
+    each field's offset is a multiple of its alignment, and the total itemsize
+    is a multiple of the largest alignment, by adding padding bytes as needed.
+
+    Parameters
+    ----------
+    a : ndarray or dtype
+       array or dtype for which to repack the fields.
+    align : boolean
+       If true, use an "aligned" memory layout, otherwise use a "packed" layout.
+    recurse : boolean
+       If True, also repack nested structures.
+
+    Returns
+    -------
+    repacked : ndarray or dtype
+       Copy of `a` with fields repacked, or `a` itself if no repacking was
+       needed.
+
+    Examples
+    --------
+
+    >>> def print_offsets(d):
+    ...     print("offsets:", [d.fields[name][1] for name in d.names])
+    ...     print("itemsize:", d.itemsize)
+    ...
+    >>> dt = np.dtype('u1,i4,f4', align=True)
+    >>> dt
+    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i4','<f8'], 'offsets':[0,4,8], 'itemsize':16}, align=True)
+    >>> print_offsets(dt)
+    offsets: [0, 4, 8]
+    itemsize: 16
+    >>> packed_dt = repack_fields(dt)
+    >>> packed_dt
+    dtype([('f0', 'u1'), ('f1', '<i4'), ('f2', '<f8')])
+    >>> print_offsets(packed_dt)
+    offsets: [0, 1, 5]
+    itemsize: 13
+
+    """
+    if not isinstance(a, np.dtype):
+        dt = repack_fields(a.dtype, align=align, recurse=recurse)
+        return a.astype(dt, copy=False)
+
+    if a.names is None:
+        return a
+
+    fieldinfo = []
+    for name in a.names:
+        tup = a.fields[name]
+        if recurse:
+            fmt = repack_fields(tup[0], align=align, recurse=True)
+        else:
+            fmt = tup[0]
+
+        if len(tup) == 3:
+            name = (tup[2], name)
+
+        fieldinfo.append((name, fmt))
+
+    dt = np.dtype(fieldinfo, align=align)
+    return np.dtype((a.type, dt))
+
+
+def _stack_arrays_dispatcher(arrays, defaults=None, usemask=None,
+                             asrecarray=None, autoconvert=None):
+    return arrays
+
+
+@array_function_dispatch(_stack_arrays_dispatcher)
 def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                  autoconvert=False):
     """
@@ -818,6 +963,12 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                        usemask=usemask, asrecarray=asrecarray)
 
 
+def _find_duplicates_dispatcher(
+        a, key=None, ignoremask=None, return_index=None):
+    return (a,)
+
+
+@array_function_dispatch(_find_duplicates_dispatcher)
 def find_duplicates(a, key=None, ignoremask=True, return_index=False):
     """
     Find the duplicates in a structured array along a given key
@@ -872,8 +1023,15 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
         return duplicates
 
 
+def _join_by_dispatcher(
+        key, r1, r2, jointype=None, r1postfix=None, r2postfix=None,
+        defaults=None, usemask=None, asrecarray=None):
+    return (r1, r2)
+
+
+@array_function_dispatch(_join_by_dispatcher)
 def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
-                defaults=None, usemask=True, asrecarray=False):
+            defaults=None, usemask=True, asrecarray=False):
     """
     Join arrays `r1` and `r2` on key `key`.
 
@@ -1051,6 +1209,13 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     return _fix_output(_fix_defaults(output, defaults), **kwargs)
 
 
+def _rec_join_dispatcher(
+        key, r1, r2, jointype=None, r1postfix=None, r2postfix=None,
+        defaults=None):
+    return (r1, r2)
+
+
+@array_function_dispatch(_rec_join_dispatcher)
 def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
              defaults=None):
     """

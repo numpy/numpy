@@ -14,11 +14,11 @@ Prerequisites
 
 Before reading this tutorial you should know a bit of Python. If you
 would like to refresh your memory, take a look at the `Python
-tutorial <http://docs.python.org/tut/>`__.
+tutorial <https://docs.python.org/tutorial/>`__.
 
 If you wish to work the examples in this tutorial, you must also have
 some software installed on your computer. Please see
-http://scipy.org/install.html for instructions.
+https://scipy.org/install.html for instructions.
 
 The Basics
 ==========
@@ -297,19 +297,19 @@ created and filled with the result.
 
 Unlike in many matrix languages, the product operator ``*`` operates
 elementwise in NumPy arrays. The matrix product can be performed using
-the ``dot`` function or method::
+the ``@`` operator (in python >=3.5) or the ``dot`` function or method::
 
     >>> A = np.array( [[1,1],
     ...             [0,1]] )
     >>> B = np.array( [[2,0],
     ...             [3,4]] )
-    >>> A*B                         # elementwise product
+    >>> A * B                       # elementwise product
     array([[2, 0],
            [0, 4]])
-    >>> A.dot(B)                    # matrix product
+    >>> A @ B                       # matrix product
     array([[5, 4],
            [3, 4]])
-    >>> np.dot(A, B)                # another matrix product
+    >>> A.dot(B)                    # another matrix product
     array([[5, 4],
            [3, 4]])
 
@@ -569,7 +569,7 @@ first axis::
 
 However, if one wants to perform an operation on each element in the
 array, one can use the ``flat`` attribute which is an
-`iterator <https://docs.python.org/2/tutorial/classes.html#iterators>`__
+`iterator <https://docs.python.org/tutorial/classes.html#iterators>`__
 over all the elements of the array::
 
     >>> for element in b.flat:
@@ -800,7 +800,7 @@ Copies and Views
 
 When operating and manipulating arrays, their data is sometimes copied
 into a new array and sometimes not. This is often a source of confusion
-for beginners. There are three cases::
+for beginners. There are three cases:
 
 No Copy at All
 --------------
@@ -1191,7 +1191,7 @@ This property can be very useful in assignments::
 You can look at the following
 example to see
 how to use boolean indexing to generate an image of the `Mandelbrot
-set <http://en.wikipedia.org/wiki/Mandelbrot_set>`__:
+set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
 
 .. plot::
 
@@ -1357,7 +1357,7 @@ See linalg.py in numpy folder for more.
            [ 0.,  1.]])
     >>> j = np.array([[0.0, -1.0], [1.0, 0.0]])
 
-    >>> np.dot (j, j) # matrix product
+    >>> j @ j        # matrix product
     array([[-1.,  0.],
            [ 0., -1.]])
 
@@ -1451,10 +1451,10 @@ that ``pylab.hist`` plots the histogram automatically, while
     >>> mu, sigma = 2, 0.5
     >>> v = np.random.normal(mu,sigma,10000)
     >>> # Plot a normalized histogram with 50 bins
-    >>> plt.hist(v, bins=50, normed=1)       # matplotlib version (plot)
+    >>> plt.hist(v, bins=50, density=1)       # matplotlib version (plot)
     >>> plt.show()
     >>> # Compute the histogram with numpy and then plot it
-    >>> (n, bins) = np.histogram(v, bins=50, normed=True)  # NumPy version (no plot)
+    >>> (n, bins) = np.histogram(v, bins=50, density=True)  # NumPy version (no plot)
     >>> plt.plot(.5*(bins[1:]+bins[:-1]), n)
     >>> plt.show()
 
@@ -1462,8 +1462,8 @@ that ``pylab.hist`` plots the histogram automatically, while
 Further reading
 ===============
 
--  The `Python tutorial <http://docs.python.org/tutorial/>`__
+-  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
--  `SciPy Lecture Notes <http://www.scipy-lectures.org>`__
+-  `SciPy Lecture Notes <https://www.scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__

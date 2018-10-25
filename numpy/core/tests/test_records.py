@@ -1,17 +1,23 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import collections
-import pickle
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import warnings
 import textwrap
 from os import path
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
+    assert_raises, assert_warns
     )
+from numpy.core.numeric import pickle
 
 
 class TestFromrecords(object):
@@ -252,7 +258,7 @@ class TestFromrecords(object):
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(isinstance(ra.field, collections.Callable))
+        assert_(isinstance(ra.field, collections_abc.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
@@ -355,6 +361,7 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
+    @pytest.mark.xfail(reason="See gh-10411, becomes real error in 1.16")
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
         x = self.data[['col1', 'col2']]
@@ -371,22 +378,27 @@ class TestRecord(object):
     def test_pickle_1(self):
         # Issue #1529
         a = np.array([(1, [])], dtype=[('a', np.int32), ('b', np.int32, 0)])
-        assert_equal(a, pickle.loads(pickle.dumps(a)))
-        assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            assert_equal(a, pickle.loads(pickle.dumps(a, protocol=proto)))
+            assert_equal(a[0], pickle.loads(pickle.dumps(a[0],
+                                                         protocol=proto)))
 
     def test_pickle_2(self):
         a = self.data
-        assert_equal(a, pickle.loads(pickle.dumps(a)))
-        assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            assert_equal(a, pickle.loads(pickle.dumps(a, protocol=proto)))
+            assert_equal(a[0], pickle.loads(pickle.dumps(a[0],
+                                                         protocol=proto)))
 
     def test_pickle_3(self):
         # Issue #7140
         a = self.data
-        pa = pickle.loads(pickle.dumps(a[0]))
-        assert_(pa.flags.c_contiguous)
-        assert_(pa.flags.f_contiguous)
-        assert_(pa.flags.writeable)
-        assert_(pa.flags.aligned)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            pa = pickle.loads(pickle.dumps(a[0], protocol=proto))
+            assert_(pa.flags.c_contiguous)
+            assert_(pa.flags.f_contiguous)
+            assert_(pa.flags.writeable)
+            assert_(pa.flags.aligned)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
@@ -409,6 +421,7 @@ class TestRecord(object):
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
         assert_raises(ValueError, lambda: arr[['nofield']])
 
+
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
     assert_(np.rec.find_duplicate(l1) == [])
@@ -421,6 +434,3 @@ def test_find_duplicate():
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
     assert_(np.rec.find_duplicate(l3) == [2, 1])
-
-if __name__ == "__main__":
-    run_module_suite()

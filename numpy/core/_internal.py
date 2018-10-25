@@ -1,5 +1,5 @@
 """
-A place for code to be called from core C-code.
+A place for internal code
 
 Some things are more easily handled Python.
 
@@ -9,13 +9,12 @@ from __future__ import division, absolute_import, print_function
 import re
 import sys
 
-from numpy.compat import basestring
+from numpy.compat import unicode
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
 except ImportError:
     ctypes = None
-from .numerictypes import object_
 
 if (sys.byteorder == 'little'):
     _nbo = b'<'
@@ -257,33 +256,72 @@ class _ctypes(object):
             self._zerod = False
 
     def data_as(self, obj):
+        """
+        Return the data pointer cast to a particular c-types object.
+        For example, calling ``self._as_parameter_`` is equivalent to
+        ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use the data as a
+        pointer to a ctypes array of floating-point data:
+        ``self.data_as(ctypes.POINTER(ctypes.c_double))``.
+        """
         return self._ctypes.cast(self._data, obj)
 
     def shape_as(self, obj):
+        """
+        Return the shape tuple as an array of some other c-types
+        type. For example: ``self.shape_as(ctypes.c_short)``.
+        """
         if self._zerod:
             return None
         return (obj*self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
+        """
+        Return the strides tuple as an array of some other
+        c-types type. For example: ``self.strides_as(ctypes.c_longlong)``.
+        """
         if self._zerod:
             return None
         return (obj*self._arr.ndim)(*self._arr.strides)
 
     def get_data(self):
+        """
+        A pointer to the memory area of the array as a Python integer.
+        This memory area may contain data that is not aligned, or not in correct
+        byte-order. The memory area may not even be writeable. The array
+        flags and data-type of this array should be respected when passing this
+        attribute to arbitrary C-code to avoid trouble that can include Python
+        crashing. User Beware! The value of this attribute is exactly the same
+        as ``self._array_interface_['data'][0]``.
+        """
         return self._data
 
     def get_shape(self):
+        """
+        (c_intp*self.ndim): A ctypes array of length self.ndim where
+        the basetype is the C-integer corresponding to ``dtype('p')`` on this
+        platform. This base-type could be `ctypes.c_int`, `ctypes.c_long`, or
+        `ctypes.c_longlong` depending on the platform.
+        The c_intp type is defined accordingly in `numpy.ctypeslib`.
+        The ctypes array contains the shape of the underlying array.
+        """
         return self.shape_as(_getintp_ctype())
 
     def get_strides(self):
+        """
+        (c_intp*self.ndim): A ctypes array of length self.ndim where
+        the basetype is the same as for the shape attribute. This ctypes array
+        contains the strides information from the underlying array. This strides
+        information is important for showing how many bytes must be jumped to
+        get to the next element in the array.
+        """
         return self.strides_as(_getintp_ctype())
 
     def get_as_parameter(self):
         return self._ctypes.c_void_p(self._data)
 
-    data = property(get_data, None, doc="c-types data")
-    shape = property(get_shape, None, doc="c-types shape")
-    strides = property(get_strides, None, doc="c-types strides")
+    data = property(get_data)
+    shape = property(get_shape)
+    strides = property(get_strides)
     _as_parameter_ = property(get_as_parameter, None, doc="_as parameter_")
 
 
@@ -294,7 +332,7 @@ def _newnames(datatype, order):
     """
     oldnames = datatype.names
     nameslist = list(oldnames)
-    if isinstance(order, str):
+    if isinstance(order, (str, unicode)):
         order = [order]
     seen = set()
     if isinstance(order, (list, tuple)):
@@ -444,46 +482,46 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
-def _dtype_from_pep3118(spec):
 
-    class Stream(object):
-        def __init__(self, s):
-            self.s = s
-            self.byteorder = '@'
+class _Stream(object):
+    def __init__(self, s):
+        self.s = s
+        self.byteorder = '@'
 
-        def advance(self, n):
-            res = self.s[:n]
-            self.s = self.s[n:]
+    def advance(self, n):
+        res = self.s[:n]
+        self.s = self.s[n:]
+        return res
+
+    def consume(self, c):
+        if self.s[:len(c)] == c:
+            self.advance(len(c))
+            return True
+        return False
+
+    def consume_until(self, c):
+        if callable(c):
+            i = 0
+            while i < len(self.s) and not c(self.s[i]):
+                i = i + 1
+            return self.advance(i)
+        else:
+            i = self.s.index(c)
+            res = self.advance(i)
+            self.advance(len(c))
             return res
 
-        def consume(self, c):
-            if self.s[:len(c)] == c:
-                self.advance(len(c))
-                return True
-            return False
+    @property
+    def next(self):
+        return self.s[0]
 
-        def consume_until(self, c):
-            if callable(c):
-                i = 0
-                while i < len(self.s) and not c(self.s[i]):
-                    i = i + 1
-                return self.advance(i)
-            else:
-                i = self.s.index(c)
-                res = self.advance(i)
-                self.advance(len(c))
-                return res
+    def __bool__(self):
+        return bool(self.s)
+    __nonzero__ = __bool__
 
-        @property
-        def next(self):
-            return self.s[0]
 
-        def __bool__(self):
-            return bool(self.s)
-        __nonzero__ = __bool__
-
-    stream = Stream(spec)
-
+def _dtype_from_pep3118(spec):
+    stream = _Stream(spec)
     dtype, align = __dtype_from_pep3118(stream, is_subdtype=False)
     return dtype
 
@@ -756,3 +794,48 @@ def _ufunc_doc_signature_formatter(ufunc):
         out_args=out_args,
         kwargs=kwargs
     )
+
+
+def _is_from_ctypes(obj):
+    # determine if an object comes from ctypes, in order to work around
+    # a bug in the buffer protocol for those objects, bpo-10746
+    try:
+        # ctypes class are new-style, so have an __mro__. This probably fails
+        # for ctypes classes with multiple inheritance.
+        ctype_base = type(obj).__mro__[-2]
+        # right now, they're part of the _ctypes module
+        return 'ctypes' in ctype_base.__module__
+    except Exception:
+        return False
+
+
+class recursive(object):
+    '''
+    A decorator class for recursive nested functions.
+    Naive recursive nested functions hold a reference to themselves:
+
+    def outer(*args):
+        def stringify_leaky(arg0, *arg1):
+            if len(arg1) > 0:
+                return stringify_leaky(*arg1)  # <- HERE
+            return str(arg0)
+        stringify_leaky(*args)
+
+    This design pattern creates a reference cycle that is difficult for a
+    garbage collector to resolve. The decorator class prevents the
+    cycle by passing the nested function in as an argument `self`:
+
+    def outer(*args):
+        @recursive
+        def stringify(self, arg0, *arg1):
+            if len(arg1) > 0:
+                return self(*arg1)
+            return str(arg0)
+        stringify(*args)
+
+    '''
+    def __init__(self, func):
+        self.func = func
+    def __call__(self, *args, **kwargs):
+        return self.func(self, *args, **kwargs)
+

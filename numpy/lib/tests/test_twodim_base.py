@@ -4,14 +4,14 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import (
-    run_module_suite, assert_equal, assert_array_equal, assert_array_max_ulp,
+    assert_equal, assert_array_equal, assert_array_max_ulp,
     assert_array_almost_equal, assert_raises,
     )
 
 from numpy import (
-    arange, add, fliplr, flipud, zeros, ones, eye, array, diag,
-    histogram2d, tri, mask_indices, triu_indices, triu_indices_from,
-    tril_indices, tril_indices_from, vander,
+    arange, add, fliplr, flipud, zeros, ones, eye, array, diag, histogram2d,
+    tri, mask_indices, triu_indices, triu_indices_from, tril_indices,
+    tril_indices_from, vander,
     )
 
 import numpy as np
@@ -208,7 +208,7 @@ class TestHistogram2d(object):
         x = array([1, 1, 2, 3, 4, 4, 4, 5])
         y = array([1, 3, 2, 0, 1, 2, 3, 4])
         H, xed, yed = histogram2d(
-            x, y, (6, 5), range=[[0, 6], [0, 5]], normed=True)
+            x, y, (6, 5), range=[[0, 6], [0, 5]], density=True)
         answer = array(
             [[0., 0, 0, 0, 0],
              [0, 1, 0, 1, 0],
@@ -220,11 +220,11 @@ class TestHistogram2d(object):
         assert_array_equal(xed, np.linspace(0, 6, 7))
         assert_array_equal(yed, np.linspace(0, 5, 6))
 
-    def test_norm(self):
+    def test_density(self):
         x = array([1, 2, 3, 1, 2, 3, 1, 2, 3])
         y = array([1, 1, 1, 2, 2, 2, 3, 3, 3])
         H, xed, yed = histogram2d(
-            x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], normed=True)
+            x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], density=True)
         answer = array([[1, 1, .5],
                         [1, 1, .5],
                         [.5, .5, .25]])/9.
@@ -244,32 +244,32 @@ class TestHistogram2d(object):
 
     def test_binparameter_combination(self):
         x = array(
-            [0, 0.09207008,  0.64575234,  0.12875982,  0.47390599,
+            [0, 0.09207008, 0.64575234, 0.12875982, 0.47390599,
              0.59944483, 1])
         y = array(
-            [0, 0.14344267,  0.48988575,  0.30558665,  0.44700682,
+            [0, 0.14344267, 0.48988575, 0.30558665, 0.44700682,
              0.15886423, 1])
         edges = (0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
         H, xe, ye = histogram2d(x, y, (edges, 4))
         answer = array(
-            [[ 2.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.],
-             [ 1.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  1.]])
+            [[2., 0., 0., 0.],
+             [0., 1., 0., 0.],
+             [0., 0., 0., 0.],
+             [0., 0., 0., 0.],
+             [0., 1., 0., 0.],
+             [1., 0., 0., 0.],
+             [0., 1., 0., 0.],
+             [0., 0., 0., 0.],
+             [0., 0., 0., 0.],
+             [0., 0., 0., 1.]])
         assert_array_equal(H, answer)
         assert_array_equal(ye, array([0., 0.25, 0.5, 0.75, 1]))
         H, xe, ye = histogram2d(x, y, (4, edges))
         answer = array(
-            [[ 1.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
-             [ 0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  0.],
-             [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.]])
+            [[1., 1., 0., 1., 0., 0., 0., 0., 0., 0.],
+             [0., 0., 0., 0., 1., 0., 0., 0., 0., 0.],
+             [0., 1., 0., 0., 1., 0., 0., 0., 0., 0.],
+             [0., 0., 0., 0., 0., 0., 0., 0., 0., 1.]])
         assert_array_equal(H, answer)
         assert_array_equal(xe, array([0., 0.25, 0.5, 0.75, 1]))
 
@@ -288,11 +288,11 @@ def test_tril_triu_ndim2():
         a = np.ones((2, 2), dtype=dtype)
         b = np.tril(a)
         c = np.triu(a)
-        yield assert_array_equal, b, [[1, 0], [1, 1]]
-        yield assert_array_equal, c, b.T
+        assert_array_equal(b, [[1, 0], [1, 1]])
+        assert_array_equal(c, b.T)
         # should return the same dtype as the original array
-        yield assert_equal, b.dtype, a.dtype
-        yield assert_equal, c.dtype, a.dtype
+        assert_equal(b.dtype, a.dtype)
+        assert_equal(c.dtype, a.dtype)
 
 
 def test_tril_triu_ndim3():
@@ -314,10 +314,11 @@ def test_tril_triu_ndim3():
             ], dtype=dtype)
         a_triu_observed = np.triu(a)
         a_tril_observed = np.tril(a)
-        yield assert_array_equal, a_triu_observed, a_triu_desired
-        yield assert_array_equal, a_tril_observed, a_tril_desired
-        yield assert_equal, a_triu_observed.dtype, a.dtype
-        yield assert_equal, a_tril_observed.dtype, a.dtype
+        assert_array_equal(a_triu_observed, a_triu_desired)
+        assert_array_equal(a_tril_observed, a_tril_desired)
+        assert_equal(a_triu_observed.dtype, a.dtype)
+        assert_equal(a_tril_observed.dtype, a.dtype)
+
 
 def test_tril_triu_with_inf():
     # Issue 4859
@@ -484,12 +485,12 @@ class TestVander(object):
                            [16, -8, 4, -2, 1],
                            [81, 27, 9, 3, 1]])
         # Check default value of N:
-        yield (assert_array_equal, v, powers[:, 1:])
+        assert_array_equal(v, powers[:, 1:])
         # Check a range of N values, including 0 and 5 (greater than default)
         m = powers.shape[1]
         for n in range(6):
             v = vander(c, N=n)
-            yield (assert_array_equal, v, powers[:, m-n:m])
+            assert_array_equal(v, powers[:, m-n:m])
 
     def test_dtypes(self):
         c = array([11, -12, 13], dtype=np.int8)
@@ -497,7 +498,7 @@ class TestVander(object):
         expected = np.array([[121, 11, 1],
                              [144, -12, 1],
                              [169, 13, 1]])
-        yield (assert_array_equal, v, expected)
+        assert_array_equal(v, expected)
 
         c = array([1.0+1j, 1.0-1j])
         v = vander(c, N=3)
@@ -506,8 +507,4 @@ class TestVander(object):
         # The data is floating point, but the values are small integers,
         # so assert_array_equal *should* be safe here (rather than, say,
         # assert_array_almost_equal).
-        yield (assert_array_equal, v, expected)
-
-
-if __name__ == "__main__":
-    run_module_suite()
+        assert_array_equal(v, expected)

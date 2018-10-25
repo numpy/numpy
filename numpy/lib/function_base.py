@@ -1,36 +1,42 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstact classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
+import functools
 import re
 import sys
 import warnings
-import operator
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import linspace, atleast_1d, atleast_2d, transpose
+from numpy.core import atleast_1d, transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
     empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar, absolute, AxisError
+    integer, isscalar, absolute
     )
 from numpy.core.umath import (
-    pi, multiply, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, log10, not_equal, subtract
+    pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
+    mod, exp, not_equal, subtract
     )
 from numpy.core.fromnumeric import (
-    ravel, nonzero, sort, partition, mean, any, sum
+    ravel, nonzero, partition, mean, any, sum
     )
-from numpy.core.numerictypes import typecodes, number
+from numpy.core.numerictypes import typecodes
+from numpy.core import overrides
+from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from .utils import deprecate
 from numpy.core.multiarray import (
-    _insert, add_docstring, digitize, bincount, normalize_axis_index,
+    _insert, add_docstring, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
-from numpy.compat.py3k import basestring
 
 if sys.version_info[0] < 3:
     # Force range to be a generator, for np.delete's usage.
@@ -38,6 +44,11 @@ if sys.version_info[0] < 3:
     import __builtin__ as builtins
 else:
     import builtins
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
+
 
 # needed in this module for compatibility
 from numpy.lib.histograms import histogram, histogramdd
@@ -49,10 +60,16 @@ __all__ = [
     'bincount', 'digitize', 'cov', 'corrcoef',
     'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc'
+    'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+    'quantile'
     ]
 
 
+def _rot90_dispatcher(m, k=None, axes=None):
+    return (m,)
+
+
+@array_function_dispatch(_rot90_dispatcher)
 def rot90(m, k=1, axes=(0,1)):
     """
     Rotate an array by 90 degrees in the plane specified by axes.
@@ -103,9 +120,8 @@ def rot90(m, k=1, axes=(0,1)):
     >>> np.rot90(m, 1, (1,2))
     array([[[1, 3],
             [0, 2]],
-
-          [[5, 7],
-           [4, 6]]])
+           [[5, 7],
+            [4, 6]]])
 
     """
     axes = tuple(axes)
@@ -140,7 +156,12 @@ def rot90(m, k=1, axes=(0,1)):
         return flip(transpose(m, axes_list), axes[1])
 
 
-def flip(m, axis):
+def _flip_dispatcher(m, axis=None):
+    return (m,)
+
+
+@array_function_dispatch(_flip_dispatcher)
+def flip(m, axis=None):
     """
     Reverse the order of elements in an array along the given axis.
 
@@ -152,9 +173,16 @@ def flip(m, axis):
     ----------
     m : array_like
         Input array.
-    axis : integer
-        Axis in array, which entries are reversed.
+    axis : None or int or tuple of ints, optional
+         Axis or axes along which to flip over. The default,
+         axis=None, will flip over all of the axes of the input array.
+         If axis is negative it counts from the last to the first axis.
 
+         If axis is a tuple of ints, flipping is performed on all of the axes
+         specified in the tuple.
+
+         .. versionchanged:: 1.15.0
+            None and tuples of axes are supported
 
     Returns
     -------
@@ -170,8 +198,16 @@ def flip(m, axis):
     Notes
     -----
     flip(m, 0) is equivalent to flipud(m).
+
     flip(m, 1) is equivalent to fliplr(m).
+
     flip(m, n) corresponds to ``m[...,::-1,...]`` with ``::-1`` at position n.
+
+    flip(m) corresponds to ``m[::-1,::-1,...,::-1]`` with ``::-1`` at all
+    positions.
+
+    flip(m, (0, 1)) corresponds to ``m[::-1,::-1,...]`` with ``::-1`` at
+    position 0 and position 1.
 
     Examples
     --------
@@ -179,37 +215,43 @@ def flip(m, axis):
     >>> A
     array([[[0, 1],
             [2, 3]],
-
            [[4, 5],
             [6, 7]]])
-
     >>> flip(A, 0)
     array([[[4, 5],
             [6, 7]],
-
            [[0, 1],
             [2, 3]]])
-
     >>> flip(A, 1)
     array([[[2, 3],
             [0, 1]],
-
            [[6, 7],
             [4, 5]]])
-
+    >>> np.flip(A)
+    array([[[7, 6],
+            [5, 4]],
+           [[3, 2],
+            [1, 0]]])
+    >>> np.flip(A, (0, 2))
+    array([[[5, 4],
+            [7, 6]],
+           [[1, 0],
+            [3, 2]]])
     >>> A = np.random.randn(3,4,5)
     >>> np.all(flip(A,2) == A[:,:,::-1,...])
     True
     """
     if not hasattr(m, 'ndim'):
         m = asarray(m)
-    indexer = [slice(None)] * m.ndim
-    try:
-        indexer[axis] = slice(None, None, -1)
-    except IndexError:
-        raise ValueError("axis=%i is invalid for the %i-dimensional input array"
-                         % (axis, m.ndim))
-    return m[tuple(indexer)]
+    if axis is None:
+        indexer = (np.s_[::-1],) * m.ndim
+    else:
+        axis = _nx.normalize_axis_tuple(axis, m.ndim)
+        indexer = [np.s_[:]] * m.ndim
+        for ax in axis:
+            indexer[ax] = np.s_[::-1]
+        indexer = tuple(indexer)
+    return m[indexer]
 
 
 def iterable(y):
@@ -243,6 +285,11 @@ def iterable(y):
     return True
 
 
+def _average_dispatcher(a, axis=None, weights=None, returned=None):
+    return (a, weights)
+
+
+@array_function_dispatch(_average_dispatcher)
 def average(a, axis=None, weights=None, returned=False):
     """
     Compute the weighted average along the specified axis.
@@ -278,12 +325,17 @@ def average(a, axis=None, weights=None, returned=False):
 
     Returns
     -------
-    average, [sum_of_weights] : array_type or double
-        Return the average along the specified axis. When returned is `True`,
+    retval, [sum_of_weights] : array_type or double
+        Return the average along the specified axis. When `returned` is `True`,
         return a tuple with the average as the first element and the sum
-        of the weights as the second element. The return type is `Float`
-        if `a` is of integer type, otherwise it is of the same type as `a`.
-        `sum_of_weights` is of the same type as `average`.
+        of the weights as the second element. `sum_of_weights` is of the
+        same type as `retval`. The result dtype follows a genereal pattern.
+        If `weights` is None, the result dtype will be that of `a` , or ``float64``
+        if `a` is integral. Otherwise, if `weights` is not None and `a` is non-
+        integral, the result type will be the type of lowest precision capable of
+        representing values of both `a` and `weights`. If `a` happens to be
+        integral, the previous rules still applies but the result dtype will
+        at least be ``float64``.
 
     Raises
     ------
@@ -300,6 +352,8 @@ def average(a, axis=None, weights=None, returned=False):
 
     ma.average : average for masked arrays -- useful if your data contains
                  "missing" values
+    numpy.result_type : Returns the type that results from applying the
+                        numpy type promotion rules to the arguments.
 
     Examples
     --------
@@ -319,10 +373,16 @@ def average(a, axis=None, weights=None, returned=False):
     >>> np.average(data, axis=1, weights=[1./4, 3./4])
     array([ 0.75,  2.75,  4.75])
     >>> np.average(data, weights=[1./4, 3./4])
+    
     Traceback (most recent call last):
     ...
     TypeError: Axis must be specified when shapes of a and weights differ.
-
+    
+    >>> a = np.ones(5, dtype=np.float128)
+    >>> w = np.ones(5, dtype=np.complex64)
+    >>> avg = np.average(a, weights=w)
+    >>> print(avg.dtype)
+    complex256
     """
     a = np.asanyarray(a)
 
@@ -436,6 +496,15 @@ def asarray_chkfinite(a, dtype=None, order=None):
     return a
 
 
+def _piecewise_dispatcher(x, condlist, funclist, *args, **kw):
+    yield x
+    # support the undocumented behavior of allowing scalars
+    if np.iterable(condlist):
+        for c in condlist:
+            yield c
+
+
+@array_function_dispatch(_piecewise_dispatcher)
 def piecewise(x, condlist, funclist, *args, **kw):
     """
     Evaluate a piecewise-defined function.
@@ -547,7 +616,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     y = zeros(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
-        if not isinstance(item, collections.Callable):
+        if not isinstance(item, collections_abc.Callable):
             y[condlist[k]] = item
         else:
             vals = x[condlist[k]]
@@ -557,6 +626,14 @@ def piecewise(x, condlist, funclist, *args, **kw):
     return y
 
 
+def _select_dispatcher(condlist, choicelist, default=None):
+    for c in condlist:
+        yield c
+    for c in choicelist:
+        yield c
+
+
+@array_function_dispatch(_select_dispatcher)
 def select(condlist, choicelist, default=0):
     """
     Return an array drawn from elements in choicelist, depending on conditions.
@@ -632,7 +709,7 @@ def select(condlist, choicelist, default=0):
                 deprecated_ints = True
             else:
                 raise ValueError(
-                    'invalid entry in choicelist: should be boolean ndarray')
+                    'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
     if deprecated_ints:
         # 2014-02-24, 1.9
@@ -660,6 +737,11 @@ def select(condlist, choicelist, default=0):
     return result
 
 
+def _copy_dispatcher(a, order=None):
+    return (a,)
+
+
+@array_function_dispatch(_copy_dispatcher)
 def copy(a, order='K'):
     """
     Return an array copy of the given object.
@@ -709,6 +791,13 @@ def copy(a, order='K'):
 # Basic operations
 
 
+def _gradient_dispatcher(f, *varargs, **kwargs):
+    yield f
+    for v in varargs:
+        yield v
+
+
+@array_function_dispatch(_gradient_dispatcher)
 def gradient(f, *varargs, **kwargs):
     """
     Return the gradient of an N-dimensional array.
@@ -818,9 +907,9 @@ def gradient(f, *varargs, **kwargs):
     Notes
     -----
     Assuming that :math:`f\\in C^{3}` (i.e., :math:`f` has at least 3 continuous
-    derivatives) and let be :math:`h_{*}` a non homogeneous stepsize, the
-    spacing the finite difference coefficients are computed by minimising
-    the consistency error :math:`\\eta_{i}`:
+    derivatives) and let :math:`h_{*}` be a non-homogeneous stepsize, we
+    minimize the "consistency error" :math:`\\eta_{i}` between the true gradient
+    and its estimate from a linear combination of the neighboring grid-points:
 
     .. math::
 
@@ -839,7 +928,7 @@ def gradient(f, *varargs, **kwargs):
         \\left\\{
             \\begin{array}{r}
                 \\alpha+\\beta+\\gamma=0 \\\\
-                -\\beta h_{d}+\\gamma h_{s}=1 \\\\
+                \\beta h_{d}-\\gamma h_{s}=1 \\\\
                 \\beta h_{d}^{2}+\\gamma h_{s}^{2}=0
             \\end{array}
         \\right.
@@ -970,7 +1059,7 @@ def gradient(f, *varargs, **kwargs):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            out[slice1] = (f[slice4] - f[slice2]) / (2. * ax_dx)
+            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2. * ax_dx)
         else:
             dx1 = ax_dx[0:-1]
             dx2 = ax_dx[1:]
@@ -982,7 +1071,7 @@ def gradient(f, *varargs, **kwargs):
             shape[axis] = -1
             a.shape = b.shape = c.shape = shape
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
@@ -991,14 +1080,14 @@ def gradient(f, *varargs, **kwargs):
             slice3[axis] = 0
             dx_0 = ax_dx if uniform_spacing else ax_dx[0]
             # 1D equivalent -- out[0] = (f[1] - f[0]) / (x[1] - x[0])
-            out[slice1] = (f[slice2] - f[slice3]) / dx_0
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_0
 
             slice1[axis] = -1
             slice2[axis] = -1
             slice3[axis] = -2
             dx_n = ax_dx if uniform_spacing else ax_dx[-1]
             # 1D equivalent -- out[-1] = (f[-1] - f[-2]) / (x[-1] - x[-2])
-            out[slice1] = (f[slice2] - f[slice3]) / dx_n
+            out[tuple(slice1)] = (f[tuple(slice2)] - f[tuple(slice3)]) / dx_n
 
         # Numerical differentiation: 2nd order edges
         else:
@@ -1017,7 +1106,7 @@ def gradient(f, *varargs, **kwargs):
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1034,7 +1123,7 @@ def gradient(f, *varargs, **kwargs):
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[slice1] = a * f[slice2] + b * f[slice3] + c * f[slice4]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
 
         outvals.append(out)
 
@@ -1050,7 +1139,12 @@ def gradient(f, *varargs, **kwargs):
         return outvals
 
 
-def diff(a, n=1, axis=-1):
+def _diff_dispatcher(a, n=None, axis=None, prepend=None, append=None):
+    return (a, prepend, append)
+
+
+@array_function_dispatch(_diff_dispatcher)
+def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     """
     Calculate the n-th discrete difference along the given axis.
 
@@ -1068,6 +1162,12 @@ def diff(a, n=1, axis=-1):
     axis : int, optional
         The axis along which the difference is taken, default is the
         last axis.
+    prepend, append : array_like, optional
+        Values to prepend or append to "a" along axis prior to
+        performing the difference.  Scalar values are expanded to
+        arrays with length 1 in the direction of axis and the shape
+        of the input array in along all other axes.  Otherwise the
+        dimension and shape must match "a" except along axis.
 
     Returns
     -------
@@ -1136,6 +1236,28 @@ def diff(a, n=1, axis=-1):
     nd = a.ndim
     axis = normalize_axis_index(axis, nd)
 
+    combined = []
+    if prepend is not np._NoValue:
+        prepend = np.asanyarray(prepend)
+        if prepend.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            prepend = np.broadcast_to(prepend, tuple(shape))
+        combined.append(prepend)
+
+    combined.append(a)
+
+    if append is not np._NoValue:
+        append = np.asanyarray(append)
+        if append.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            append = np.broadcast_to(append, tuple(shape))
+        combined.append(append)
+
+    if len(combined) > 1:
+        a = np.concatenate(combined, axis)
+
     slice1 = [slice(None)] * nd
     slice2 = [slice(None)] * nd
     slice1[axis] = slice(1, None)
@@ -1150,17 +1272,22 @@ def diff(a, n=1, axis=-1):
     return a
 
 
+def _interp_dispatcher(x, xp, fp, left=None, right=None, period=None):
+    return (x, xp, fp)
+
+
+@array_function_dispatch(_interp_dispatcher)
 def interp(x, xp, fp, left=None, right=None, period=None):
     """
     One-dimensional linear interpolation.
 
     Returns the one-dimensional piecewise linear interpolant to a function
-    with given values at discrete data-points.
+    with given discrete data points (`xp`, `fp`), evaluated at `x`.
 
     Parameters
     ----------
     x : array_like
-        The x-coordinates of the interpolated values.
+        The x-coordinates at which to evaluate the interpolated values.
 
     xp : 1-D sequence of floats
         The x-coordinates of the data points, must be increasing if argument
@@ -1255,23 +1382,13 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         interp_func = compiled_interp
         input_dtype = np.float64
 
-    if period is None:
-        if isinstance(x, (float, int, number)):
-            return interp_func([x], xp, fp, left, right).item()
-        elif isinstance(x, np.ndarray) and x.ndim == 0:
-            return interp_func([x], xp, fp, left, right).item()
-        else:
-            return interp_func(x, xp, fp, left, right)
-    else:
+    if period is not None:
         if period == 0:
             raise ValueError("period must be a non-zero value")
         period = abs(period)
         left = None
         right = None
-        return_array = True
-        if isinstance(x, (float, int, number)):
-            return_array = False
-            x = [x]
+
         x = np.asarray(x, dtype=np.float64)
         xp = np.asarray(xp, dtype=np.float64)
         fp = np.asarray(fp, dtype=input_dtype)
@@ -1289,13 +1406,15 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         xp = np.concatenate((xp[-1:]-period, xp, xp[0:1]+period))
         fp = np.concatenate((fp[-1:], fp, fp[0:1]))
 
-        if return_array:
-            return interp_func(x, xp, fp, left, right)
-        else:
-            return interp_func(x, xp, fp, left, right).item()
+    return interp_func(x, xp, fp, left, right)
 
 
-def angle(z, deg=0):
+def _angle_dispatcher(z, deg=None):
+    return (z,)
+
+
+@array_function_dispatch(_angle_dispatcher)
+def angle(z, deg=False):
     """
     Return the angle of the complex argument.
 
@@ -1311,6 +1430,9 @@ def angle(z, deg=0):
     angle : ndarray or scalar
         The counterclockwise angle from the positive real axis on
         the complex plane, with dtype as numpy.float64.
+        
+        ..versionchanged:: 1.16.0
+            This function works on subclasses of ndarray like `ma.array`.
 
     See Also
     --------
@@ -1325,20 +1447,25 @@ def angle(z, deg=0):
     45.0
 
     """
-    if deg:
-        fact = 180/pi
-    else:
-        fact = 1.0
-    z = asarray(z)
-    if (issubclass(z.dtype.type, _nx.complexfloating)):
+    z = asanyarray(z)
+    if issubclass(z.dtype.type, _nx.complexfloating):
         zimag = z.imag
         zreal = z.real
     else:
         zimag = 0
         zreal = z
-    return arctan2(zimag, zreal) * fact
+
+    a = arctan2(zimag, zreal)
+    if deg:
+        a *= 180/pi
+    return a
 
 
+def _unwrap_dispatcher(p, discont=None, axis=None):
+    return (p,)
+
+
+@array_function_dispatch(_unwrap_dispatcher)
 def unwrap(p, discont=pi, axis=-1):
     """
     Unwrap by changing deltas between values to 2*pi complement.
@@ -1385,6 +1512,7 @@ def unwrap(p, discont=pi, axis=-1):
     dd = diff(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
+    slice1 = tuple(slice1)
     ddmod = mod(dd + pi, 2*pi) - pi
     _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
     ph_correct = ddmod - dd
@@ -1394,6 +1522,11 @@ def unwrap(p, discont=pi, axis=-1):
     return up
 
 
+def _sort_complex(a):
+    return (a,)
+
+
+@array_function_dispatch(_sort_complex)
 def sort_complex(a):
     """
     Sort a complex array using the real part first, then the imaginary part.
@@ -1430,6 +1563,11 @@ def sort_complex(a):
         return b
 
 
+def _trim_zeros(filt, trim=None):
+    return (filt,)
+
+
+@array_function_dispatch(_trim_zeros)
 def trim_zeros(filt, trim='fb'):
     """
     Trim the leading and/or trailing zeros from a 1-D array or sequence.
@@ -1499,6 +1637,11 @@ def unique(x):
         return asarray(items)
 
 
+def _extract_dispatcher(condition, arr):
+    return (condition, arr)
+
+
+@array_function_dispatch(_extract_dispatcher)
 def extract(condition, arr):
     """
     Return the elements of an array that satisfy some condition.
@@ -1550,6 +1693,11 @@ def extract(condition, arr):
     return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
 
 
+def _place_dispatcher(arr, mask, vals):
+    return (arr, mask, vals)
+
+
+@array_function_dispatch(_place_dispatcher)
 def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
@@ -1618,9 +1766,9 @@ def disp(mesg, device=None, linefeed=True):
     Besides ``sys.stdout``, a file-like object can also be used as it has
     both required methods:
 
-    >>> from StringIO import StringIO
+    >>> from io import StringIO
     >>> buf = StringIO()
-    >>> np.disp('"Display" in a file', device=buf)
+    >>> np.disp(u'"Display" in a file', device=buf)
     >>> buf.getvalue()
     '"Display" in a file\\n'
 
@@ -1635,7 +1783,7 @@ def disp(mesg, device=None, linefeed=True):
     return
 
 
-# See http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
+# See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
 _CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
 _ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
@@ -1751,8 +1899,8 @@ class vectorize(object):
     Generalized function class.
 
     Define a vectorized function which takes a nested sequence of objects or
-    numpy arrays as inputs and returns an single or tuple of numpy array as
-    output. The vectorized function evaluates `pyfunc` over successive tuples
+    numpy arrays as inputs and returns a single numpy array or a tuple of numpy
+    arrays. The vectorized function evaluates `pyfunc` over successive tuples
     of the input arrays like the python map function, except it uses the
     broadcasting rules of numpy.
 
@@ -1892,7 +2040,7 @@ class vectorize(object):
     References
     ----------
     .. [1] NumPy Reference, section `Generalized Universal Function API
-           <http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
+           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
 
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
@@ -2104,6 +2252,12 @@ class vectorize(object):
         return outputs[0] if nout == 1 else outputs
 
 
+def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
+                    fweights=None, aweights=None):
+    return (m, y, fweights, aweights)
+
+
+@array_function_dispatch(_cov_dispatcher)
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         aweights=None):
     """
@@ -2309,10 +2463,15 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     else:
         X_T = (X*w).T
     c = dot(X, X_T.conj())
-    c *= 1. / np.float64(fact)
+    c *= np.true_divide(1, fact)
     return c.squeeze()
 
 
+def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None):
+    return (x, y)
+
+
+@array_function_dispatch(_corrcoef_dispatcher)
 def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     """
     Return Pearson product-moment correlation coefficients.
@@ -2547,7 +2706,7 @@ def bartlett(M):
     .. [3] A.V. Oppenheim and R.W. Schafer, "Discrete-Time Signal
            Processing", Prentice-Hall, 1999, pp. 468-471.
     .. [4] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [5] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 429.
 
@@ -2647,7 +2806,7 @@ def hanning(M):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics",
            The University of Alberta Press, 1975, pp. 106-108.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 425.
 
@@ -2745,7 +2904,7 @@ def hamming(M):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
            University of Alberta Press, 1975, pp. 109-110.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
     .. [4] W.H. Press,  B.P. Flannery, S.A. Teukolsky, and W.T. Vetterling,
            "Numerical Recipes", Cambridge University Press, 1986, page 425.
 
@@ -2881,6 +3040,11 @@ def _i0_2(x):
     return exp(x) * _chbevl(32.0/x - 2.0, _i0B) / sqrt(x)
 
 
+def _i0_dispatcher(x):
+    return (x,)
+
+
+@array_function_dispatch(_i0_dispatcher)
 def i0(x):
     """
     Modified Bessel function of the first kind, order 0.
@@ -3022,7 +3186,7 @@ def kaiser(M, beta):
     .. [2] E.R. Kanasewich, "Time Sequence Analysis in Geophysics", The
            University of Alberta Press, 1975, pp. 177-178.
     .. [3] Wikipedia, "Window function",
-           http://en.wikipedia.org/wiki/Window_function
+           https://en.wikipedia.org/wiki/Window_function
 
     Examples
     --------
@@ -3075,6 +3239,11 @@ def kaiser(M, beta):
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
 
 
+def _sinc_dispatcher(x):
+    return (x,)
+
+
+@array_function_dispatch(_sinc_dispatcher)
 def sinc(x):
     """
     Return the sinc function.
@@ -3110,7 +3279,7 @@ def sinc(x):
     .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
            Resource. http://mathworld.wolfram.com/SincFunction.html
     .. [2] Wikipedia, "Sinc function",
-           http://en.wikipedia.org/wiki/Sinc_function
+           https://en.wikipedia.org/wiki/Sinc_function
 
     Examples
     --------
@@ -3154,6 +3323,11 @@ def sinc(x):
     return sin(y)/y
 
 
+def _msort_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_msort_dispatcher)
 def msort(a):
     """
     Return a copy of an array sorted along the first axis.
@@ -3237,6 +3411,12 @@ def _ureduce(a, func, **kwargs):
     return r, keepdim
 
 
+def _median_dispatcher(
+        a, axis=None, out=None, overwrite_input=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_median_dispatcher)
 def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     """
     Compute the median along the specified axis.
@@ -3367,6 +3547,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index, index+1)
     else:
         indexer[axis] = slice(index-1, index+1)
+    indexer = tuple(indexer)
 
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
@@ -3380,12 +3561,18 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         return mean(part[indexer], axis=axis, out=out)
 
 
+def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
+                           interpolation=None, keepdims=None):
+    return (a, q, out)
+
+
+@array_function_dispatch(_percentile_dispatcher)
 def percentile(a, q, axis=None, out=None,
                overwrite_input=False, interpolation='linear', keepdims=False):
     """
-    Compute the qth percentile of the data along the specified axis.
+    Compute the q-th percentile of the data along the specified axis.
 
-    Returns the qth percentile(s) of the array elements.
+    Returns the q-th percentile(s) of the array elements.
 
     Parameters
     ----------
@@ -3409,17 +3596,19 @@ def percentile(a, q, axis=None, out=None,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
+
     interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
         This optional parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
+        use when the desired percentile lies between two data points
         ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+
+        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * 'lower': ``i``.
+        * 'higher': ``j``.
+        * 'nearest': ``i`` or ``j``, whichever is nearest.
+        * 'midpoint': ``(i + j) / 2``.
 
         .. versionadded:: 1.9.0
     keepdims : bool, optional
@@ -3446,10 +3635,11 @@ def percentile(a, q, axis=None, out=None,
     mean
     median : equivalent to ``percentile(..., 50)``
     nanpercentile
+    quantile : equivalent to percentile, except with q in the range [0, 1].
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th percentile of
+    Given a vector ``V`` of length ``N``, the q-th percentile of
     ``V`` is the value ``q/100`` of the way from the minimum to the
     maximum in a sorted copy of ``V``. The values and distances of
     the two nearest neighbors as well as the `interpolation` parameter
@@ -3486,10 +3676,149 @@ def percentile(a, q, axis=None, out=None,
     array([ 7.,  2.])
     >>> assert not np.all(a == b)
 
+    The different types of interpolation can be visualized graphically:
+
+    .. plot::
+
+        import matplotlib.pyplot as plt
+
+        a = np.arange(4)
+        p = np.linspace(0, 100, 6001)
+        ax = plt.gca()
+        lines = [
+            ('linear', None),
+            ('higher', '--'),
+            ('lower', '--'),
+            ('nearest', '-.'),
+            ('midpoint', '-.'),
+        ]
+        for interpolation, style in lines:
+            ax.plot(
+                p, np.percentile(a, p, interpolation=interpolation),
+                label=interpolation, linestyle=style)
+        ax.set(
+            title='Interpolation methods for list: ' + str(a),
+            xlabel='Percentile',
+            ylabel='List item returned',
+            yticks=a)
+        ax.legend()
+        plt.show()
+
     """
     q = np.true_divide(q, 100.0)  # handles the asarray for us too
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+    return _quantile_unchecked(
+        a, q, axis, out, overwrite_input, interpolation, keepdims)
+
+
+def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
+                         interpolation=None, keepdims=None):
+    return (a, q, out)
+
+
+@array_function_dispatch(_quantile_dispatcher)
+def quantile(a, q, axis=None, out=None,
+             overwrite_input=False, interpolation='linear', keepdims=False):
+    """
+    Compute the q-th quantile of the data along the specified axis.
+    ..versionadded:: 1.15.0
+
+    Parameters
+    ----------
+    a : array_like
+        Input array or object that can be converted to an array.
+    q : array_like of float
+        Quantile or sequence of quantiles to compute, which must be between
+        0 and 1 inclusive.
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the quantiles are computed. The
+        default is to compute the quantile(s) along a flattened
+        version of the array.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must
+        have the same shape and buffer length as the expected output,
+        but the type (of the output) will be cast if necessary.
+    overwrite_input : bool, optional
+        If True, then allow the input array `a` to be modified by intermediate
+        calculations, to save memory. In this case, the contents of the input
+        `a` after this function completes is undefined.
+    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
+        This optional parameter specifies the interpolation method to
+        use when the desired quantile lies between two data points
+        ``i < j``:
+
+            * linear: ``i + (j - i) * fraction``, where ``fraction``
+              is the fractional part of the index surrounded by ``i``
+              and ``j``.
+            * lower: ``i``.
+            * higher: ``j``.
+            * nearest: ``i`` or ``j``, whichever is nearest.
+            * midpoint: ``(i + j) / 2``.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left in
+        the result as dimensions with size one. With this option, the
+        result will broadcast correctly against the original array `a`.
+
+    Returns
+    -------
+    quantile : scalar or ndarray
+        If `q` is a single quantile and `axis=None`, then the result
+        is a scalar. If multiple quantiles are given, first axis of
+        the result corresponds to the quantiles. The other axes are
+        the axes that remain after the reduction of `a`. If the input
+        contains integers or floats smaller than ``float64``, the output
+        data-type is ``float64``. Otherwise, the output data-type is the
+        same as that of the input. If `out` is specified, that array is
+        returned instead.
+
+    See Also
+    --------
+    mean
+    percentile : equivalent to quantile, but with q in the range [0, 100].
+    median : equivalent to ``quantile(..., 0.5)``
+    nanquantile
+
+    Notes
+    -----
+    Given a vector ``V`` of length ``N``, the q-th quantile of
+    ``V`` is the value ``q`` of the way from the minimum to the
+    maximum in a sorted copy of ``V``. The values and distances of
+    the two nearest neighbors as well as the `interpolation` parameter
+    will determine the quantile if the normalized ranking does not
+    match the location of ``q`` exactly. This function is the same as
+    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
+    same as the maximum if ``q=1.0``.
+
+    Examples
+    --------
+    >>> a = np.array([[10, 7, 4], [3, 2, 1]])
+    >>> a
+    array([[10,  7,  4],
+           [ 3,  2,  1]])
+    >>> np.quantile(a, 0.5)
+    3.5
+    >>> np.quantile(a, 0.5, axis=0)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> np.quantile(a, 0.5, axis=1)
+    array([ 7.,  2.])
+    >>> np.quantile(a, 0.5, axis=1, keepdims=True)
+    array([[ 7.],
+           [ 2.]])
+    >>> m = np.quantile(a, 0.5, axis=0)
+    >>> out = np.zeros_like(m)
+    >>> np.quantile(a, 0.5, axis=0, out=out)
+    array([[ 6.5,  4.5,  2.5]])
+    >>> m
+    array([[ 6.5,  4.5,  2.5]])
+    >>> b = a.copy()
+    >>> np.quantile(b, 0.5, axis=1, overwrite_input=True)
+    array([ 7.,  2.])
+    >>> assert not np.all(a == b)
+    """
+    q = np.asanyarray(q)
+    if not _quantile_is_valid(q):
+        raise ValueError("Quantiles must be in the range [0, 1]")
     return _quantile_unchecked(
         a, q, axis, out, overwrite_input, interpolation, keepdims)
 
@@ -3570,7 +3899,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices = concatenate((indices, [-1]))
 
         ap.partition(indices, axis=axis)
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         ap = np.moveaxis(ap, axis, 0)
         axis = 0
 
@@ -3603,7 +3932,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
         ap.partition(concatenate((indices_below, indices_above)), axis=axis)
 
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         ap = np.moveaxis(ap, axis, 0)
         weights_below = np.moveaxis(weights_below, axis, 0)
         weights_above = np.moveaxis(weights_above, axis, 0)
@@ -3617,7 +3946,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         x1 = take(ap, indices_below, axis=axis) * weights_below
         x2 = take(ap, indices_above, axis=axis) * weights_above
 
-        # ensure axis with qth is first
+        # ensure axis with q-th is first
         x1 = np.moveaxis(x1, axis, 0)
         x2 = np.moveaxis(x2, axis, 0)
 
@@ -3651,6 +3980,11 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     return r
 
 
+def _trapz_dispatcher(y, x=None, dx=None, axis=None):
+    return (y, x)
+
+
+@array_function_dispatch(_trapz_dispatcher)
 def trapz(y, x=None, dx=1.0, axis=-1):
     """
     Integrate along the given axis using the composite trapezoidal rule.
@@ -3690,10 +4024,10 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     References
     ----------
-    .. [1] Wikipedia page: http://en.wikipedia.org/wiki/Trapezoidal_rule
+    .. [1] Wikipedia page: https://en.wikipedia.org/wiki/Trapezoidal_rule
 
     .. [2] Illustration image:
-           http://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
+           https://en.wikipedia.org/wiki/File:Composite_trapezoidal_rule_illustration.png
 
     Examples
     --------
@@ -3732,51 +4066,21 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     slice1[axis] = slice(1, None)
     slice2[axis] = slice(None, -1)
     try:
-        ret = (d * (y[slice1] + y[slice2]) / 2.0).sum(axis)
+        ret = (d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0).sum(axis)
     except ValueError:
         # Operations didn't work, cast to ndarray
         d = np.asarray(d)
         y = np.asarray(y)
-        ret = add.reduce(d * (y[slice1]+y[slice2])/2.0, axis)
+        ret = add.reduce(d * (y[tuple(slice1)]+y[tuple(slice2)])/2.0, axis)
     return ret
 
 
-#always succeed
-def add_newdoc(place, obj, doc):
-    """
-    Adds documentation to obj which is in module place.
-
-    If doc is a string add it to obj as a docstring
-
-    If doc is a tuple, then the first element is interpreted as
-       an attribute of obj and the second as the docstring
-          (method, docstring)
-
-    If doc is a list, then each element of the list should be a
-       sequence of length two --> [(method1, docstring1),
-       (method2, docstring2), ...]
-
-    This routine never raises an error.
-
-    This routine cannot modify read-only docstrings, as appear
-    in new-style classes or built-in functions. Because this
-    routine never raises an error the caller must check manually
-    that the docstrings were changed.
-    """
-    try:
-        new = getattr(__import__(place, globals(), {}, [obj]), obj)
-        if isinstance(doc, str):
-            add_docstring(new, doc.strip())
-        elif isinstance(doc, tuple):
-            add_docstring(getattr(new, doc[0]), doc[1].strip())
-        elif isinstance(doc, list):
-            for val in doc:
-                add_docstring(getattr(new, val[0]), val[1].strip())
-    except Exception:
-        pass
+def _meshgrid_dispatcher(*xi, **kwargs):
+    return xi
 
 
 # Based on scitools meshgrid
+@array_function_dispatch(_meshgrid_dispatcher)
 def meshgrid(*xi, **kwargs):
     """
     Return coordinate matrices from coordinate vectors.
@@ -3872,11 +4176,13 @@ def meshgrid(*xi, **kwargs):
 
     `meshgrid` is very useful to evaluate functions on a grid.
 
+    >>> import matplotlib.pyplot as plt
     >>> x = np.arange(-5, 5, 0.1)
     >>> y = np.arange(-5, 5, 0.1)
     >>> xx, yy = np.meshgrid(x, y, sparse=True)
     >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
     >>> h = plt.contourf(x,y,z)
+    >>> plt.show()
 
     """
     ndim = len(xi)
@@ -3912,6 +4218,11 @@ def meshgrid(*xi, **kwargs):
     return output
 
 
+def _delete_dispatcher(arr, obj, axis=None):
+    return (arr, obj)
+
+
+@array_function_dispatch(_delete_dispatcher)
 def delete(arr, obj, axis=None):
     """
     Return a new array with sub-arrays along an axis deleted. For a one
@@ -4026,7 +4337,7 @@ def delete(arr, obj, axis=None):
             pass
         else:
             slobj[axis] = slice(None, start)
-            new[slobj] = arr[slobj]
+            new[tuple(slobj)] = arr[tuple(slobj)]
         # copy end chunck
         if stop == N:
             pass
@@ -4034,7 +4345,7 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(stop-numtodel, None)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(stop, None)
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         # copy middle pieces
         if step == 1:
             pass
@@ -4044,9 +4355,9 @@ def delete(arr, obj, axis=None):
             slobj[axis] = slice(start, stop-numtodel)
             slobj2 = [slice(None)]*ndim
             slobj2[axis] = slice(start, stop)
-            arr = arr[slobj2]
+            arr = arr[tuple(slobj2)]
             slobj2[axis] = keep
-            new[slobj] = arr[slobj2]
+            new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         else:
@@ -4073,11 +4384,11 @@ def delete(arr, obj, axis=None):
         newshape[axis] -= 1
         new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, obj)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(obj, None)
         slobj2 = [slice(None)]*ndim
         slobj2[axis] = slice(obj+1, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
     else:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
@@ -4109,7 +4420,7 @@ def delete(arr, obj, axis=None):
 
         keep[obj, ] = False
         slobj[axis] = keep
-        new = arr[slobj]
+        new = arr[tuple(slobj)]
 
     if wrap:
         return wrap(new)
@@ -4117,6 +4428,11 @@ def delete(arr, obj, axis=None):
         return new
 
 
+def _insert_dispatcher(arr, obj, values, axis=None):
+    return (arr, obj, values)
+
+
+@array_function_dispatch(_insert_dispatcher)
 def insert(arr, obj, values, axis=None):
     """
     Insert values along the given axis before the given indices.
@@ -4280,13 +4596,13 @@ def insert(arr, obj, values, axis=None):
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arrorder)
         slobj[axis] = slice(None, index)
-        new[slobj] = arr[slobj]
+        new[tuple(slobj)] = arr[tuple(slobj)]
         slobj[axis] = slice(index, index+numnew)
-        new[slobj] = values
+        new[tuple(slobj)] = values
         slobj[axis] = slice(index+numnew, None)
         slobj2 = [slice(None)] * ndim
         slobj2[axis] = slice(index, None)
-        new[slobj] = arr[slobj2]
+        new[tuple(slobj)] = arr[tuple(slobj2)]
         if wrap:
             return wrap(new)
         return new
@@ -4315,14 +4631,19 @@ def insert(arr, obj, values, axis=None):
     slobj2 = [slice(None)]*ndim
     slobj[axis] = indices
     slobj2[axis] = old_mask
-    new[slobj] = values
-    new[slobj2] = arr
+    new[tuple(slobj)] = values
+    new[tuple(slobj2)] = arr
 
     if wrap:
         return wrap(new)
     return new
 
 
+def _append_dispatcher(arr, values, axis=None):
+    return (arr, values)
+
+
+@array_function_dispatch(_append_dispatcher)
 def append(arr, values, axis=None):
     """
     Append values to the end of an array.
@@ -4376,3 +4697,118 @@ def append(arr, values, axis=None):
         values = ravel(values)
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
+
+
+def _digitize_dispatcher(x, bins, right=None):
+    return (x, bins)
+
+
+@array_function_dispatch(_digitize_dispatcher)
+def digitize(x, bins, right=False):
+    """
+    Return the indices of the bins to which each value in input array belongs.
+
+    =========  =============  ============================
+    `right`    order of bins  returned index `i` satisfies
+    =========  =============  ============================
+    ``False``  increasing     ``bins[i-1] <= x < bins[i]``
+    ``True``   increasing     ``bins[i-1] < x <= bins[i]``
+    ``False``  decreasing     ``bins[i-1] > x >= bins[i]``
+    ``True``   decreasing     ``bins[i-1] >= x > bins[i]``
+    =========  =============  ============================
+
+    If values in `x` are beyond the bounds of `bins`, 0 or ``len(bins)`` is
+    returned as appropriate.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array to be binned. Prior to NumPy 1.10.0, this array had to
+        be 1-dimensional, but can now have any shape.
+    bins : array_like
+        Array of bins. It has to be 1-dimensional and monotonic.
+    right : bool, optional
+        Indicating whether the intervals include the right or the left bin
+        edge. Default behavior is (right==False) indicating that the interval
+        does not include the right edge. The left bin end is open in this
+        case, i.e., bins[i-1] <= x < bins[i] is the default behavior for
+        monotonically increasing bins.
+
+    Returns
+    -------
+    indices : ndarray of ints
+        Output array of indices, of same shape as `x`.
+
+    Raises
+    ------
+    ValueError
+        If `bins` is not monotonic.
+    TypeError
+        If the type of the input is complex.
+
+    See Also
+    --------
+    bincount, histogram, unique, searchsorted
+
+    Notes
+    -----
+    If values in `x` are such that they fall outside the bin range,
+    attempting to index `bins` with the indices that `digitize` returns
+    will result in an IndexError.
+
+    .. versionadded:: 1.10.0
+
+    `np.digitize` is  implemented in terms of `np.searchsorted`. This means
+    that a binary search is used to bin the values, which scales much better
+    for larger number of bins than the previous linear search. It also removes
+    the requirement for the input array to be 1-dimensional.
+
+    For monotonically _increasing_ `bins`, the following are equivalent::
+
+        np.digitize(x, bins, right=True)
+        np.searchsorted(bins, x, side='left')
+
+    Note that as the order of the arguments are reversed, the side must be too.
+    The `searchsorted` call is marginally faster, as it does not do any
+    monotonicity checks. Perhaps more importantly, it supports all dtypes.
+
+    Examples
+    --------
+    >>> x = np.array([0.2, 6.4, 3.0, 1.6])
+    >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
+    >>> inds = np.digitize(x, bins)
+    >>> inds
+    array([1, 4, 3, 2])
+    >>> for n in range(x.size):
+    ...   print(bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]])
+    ...
+    0.0 <= 0.2 < 1.0
+    4.0 <= 6.4 < 10.0
+    2.5 <= 3.0 < 4.0
+    1.0 <= 1.6 < 2.5
+
+    >>> x = np.array([1.2, 10.0, 12.4, 15.5, 20.])
+    >>> bins = np.array([0, 5, 10, 15, 20])
+    >>> np.digitize(x,bins,right=True)
+    array([1, 2, 3, 4, 4])
+    >>> np.digitize(x,bins,right=False)
+    array([1, 3, 3, 4, 5])
+    """
+    x = _nx.asarray(x)
+    bins = _nx.asarray(bins)
+
+    # here for compatibility, searchsorted below is happy to take this
+    if np.issubdtype(x.dtype, _nx.complexfloating):
+        raise TypeError("x may not be complex")
+
+    mono = _monotonicity(bins)
+    if mono == 0:
+        raise ValueError("bins must be monotonically increasing or decreasing")
+
+    # this is backwards because the arguments below are swapped
+    side = 'left' if right else 'right'
+    if mono == -1:
+        # reverse the bins, and invert the results
+        return len(bins) - _nx.searchsorted(bins[::-1], x, side=side)
+    else:
+        return _nx.searchsorted(bins, x, side=side)

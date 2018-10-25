@@ -1,7 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
-from numpy.testing import assert_equal, run_module_suite
+from numpy.testing import assert_equal
 
 class TestDot(object):
     def test_matscalar(self):
@@ -17,7 +19,3 @@ def test_diagonal():
     assert_equal(b1.diagonal(), diag_b1)
     assert_equal(np.diagonal(b1), array_b1)
     assert_equal(np.diag(b1), array_b1)
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -38,10 +38,11 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import os
+import warnings
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long
+from numpy.compat import isfileobj, bytes, long, unicode
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
@@ -173,7 +174,7 @@ class format_parser(object):
         if (names):
             if (type(names) in [list, tuple]):
                 pass
-            elif isinstance(names, str):
+            elif isinstance(names, (str, unicode)):
                 names = names.split(',')
             else:
                 raise NameError("illegal input names %s" % repr(names))
@@ -677,7 +678,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
 
     try:
         retval = sb.array(recList, dtype=descr)
-    except TypeError:  # list of lists instead of list of tuples
+    except (TypeError, ValueError):
         if (shape is None or shape == 0):
             shape = len(recList)
         if isinstance(shape, (int, long)):
@@ -687,6 +688,12 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         _array = recarray(shape, descr)
         for k in range(_array.size):
             _array[k] = tuple(recList[k])
+        # list of lists instead of list of tuples ?
+        # 2018-02-07, 1.14.1
+        warnings.warn(
+            "fromrecords expected a list of tuples, may have received a list "
+            "of lists instead. In the future that will raise an error",
+            FutureWarning, stacklevel=2)
         return _array
     else:
         if shape is not None and retval.shape != shape:

@@ -1,0 +1,123 @@
+trigger:
+  # start a new build for every push
+  batch: False
+  branches:
+    include:
+      - master
+      - maintenance/*
+jobs:
+- job: macOS
+  pool:
+    # NOTE: at time of writing, there is a danger
+    # that using an invalid vmIMage string for macOS
+    # image silently redirects to a Windows build on Azure;
+    # for now, use the only image name officially present in
+    # the docs even though i.e., numba uses another in their
+    # azure config for mac os -- Microsoft has indicated
+    # they will patch this issue
+    vmIMage: macOS-10.13
+  steps:
+  # the @0 refers to the (major) version of the *task* on Microsoft's
+  # end, not the order in the build matrix nor anything to do
+  # with version of Python selected
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.6'
+      addToPath: true
+      architecture: 'x64'
+  # NOTE: do we have a compelling reason to use older / newer
+  # versions of Xcode toolchain for testing?
+  - script: /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
+    displayName: 'select Xcode version'
+  # NOTE: might be better if we could avoid installing
+  # two C compilers, but with homebrew looks like we're
+  # now stuck getting the full gcc toolchain instead of
+  # just pulling in gfortran
+  - script: brew install gcc
+    displayName: 'make gfortran available on mac os vm'
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - script: python -m pip install cython nose pytz pytest pickle5
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  # NOTE: init_dgelsd failed init issue with current ACCELERATE /
+  # LAPACK configuration on Azure macos image; at the time of writing
+  # this plagues homebrew / macports NumPy builds, but we will
+  # circumvent for now by aggressively disabling acceleration for
+  # macos NumPy builds / tests; ACCELERATE=None on its own is not
+  # sufficient
+  # also, might as well prefer usage of clang over gcc proper
+  # to match likely scenario on many user mac machines
+  - script: python setup.py build -j 4 install
+    displayName: 'Build NumPy'
+    env:
+      BLAS: None
+      LAPACK: None
+      ATLAS: None
+      ACCELERATE: None
+      CC: /usr/bin/clang
+  - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Run Full NumPy Test Suite'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for Python $(python.version)'
+- job: Windows
+  pool:
+    vmIMage: 'VS2017-Win2016'
+  strategy:
+    maxParallel: 6
+    matrix:
+        Python36-32bit-fast:
+          PYTHON_VERSION: '3.6'
+          PYTHON_ARCH: 'x86'
+          TEST_MODE: fast
+        Python37-32bit-fast:
+          PYTHON_VERSION: '3.7'
+          PYTHON_ARCH: 'x86'
+          TEST_MODE: fast
+        Python27-64bit-fast:
+          PYTHON_VERSION: '2.7'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: fast
+        Python35-64bit-full:
+          PYTHON_VERSION: '3.5'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+        Python36-64bit-full:
+          PYTHON_VERSION: '3.6'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+          INSTALL_PICKLE5: 1
+        Python37-64bit-full:
+          PYTHON_VERSION: '3.7'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+          INSTALL_PICKLE5: 1
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(PYTHON_VERSION)
+      addToPath: true
+      architecture: $(PYTHON_ARCH)
+   # as noted by numba project, currently need
+   # specific VC install for Python 2.7
+   # NOTE: had some issues splitting powershell
+   # command into bits and / or using condition
+   # directive, so squeezing operation to a single
+   # line for now
+  - powershell: if ($env:PYTHON_VERSION -eq 2.7) {$wc = New-Object net.webclient; $wc.Downloadfile("https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi", "VCForPython27.msi"); Start-Process "VCForPython27.msi" /qn -Wait}
+    displayName: 'Install VC 9.0'
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - script: python -m pip install cython nose pytz pytest
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  # NOTE: for Windows builds it seems much more tractable to use runtests.py
+  # vs. manual setup.py and then runtests.py for testing only
+  - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
+    displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
+  - script: python runtests.py --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Build NumPy & Run Full NumPy Test Suite'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for Python $(python.version)'

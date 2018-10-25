@@ -1,14 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.core.test_rational import rational
+from numpy.core._rational_tests import rational
 from numpy.testing import (
-    run_module_suite, assert_equal, assert_array_equal,
-    assert_raises, assert_
+    assert_equal, assert_array_equal, assert_raises, assert_,
+    assert_raises_regex
     )
 from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to
-)
+    )
 
 def assert_shapes_correct(input_shapes, expected_shape):
     # Broadcast a list of arrays with the given input shapes and check the
@@ -57,6 +57,17 @@ def test_same():
     bx, by = broadcast_arrays(x, y)
     assert_array_equal(x, bx)
     assert_array_equal(y, by)
+
+def test_broadcast_kwargs():
+    # ensure that a TypeError is appropriately raised when
+    # np.broadcast_arrays() is called with any keyword
+    # argument other than 'subok'
+    x = np.arange(10)
+    y = np.arange(10)
+
+    with assert_raises_regex(TypeError,
+                             r'broadcast_arrays\(\) got an unexpected keyword*'):
+        broadcast_arrays(x, y, dtype='float64')
 
 
 def test_one_off():
@@ -432,7 +443,3 @@ def test_reference_types():
 
     actual, _ = broadcast_arrays(input_array, np.ones(3))
     assert_array_equal(expected, actual)
-
-
-if __name__ == "__main__":
-    run_module_suite()

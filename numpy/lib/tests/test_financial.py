@@ -4,9 +4,8 @@ from decimal import Decimal
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_almost_equal, assert_allclose,
-    assert_equal, assert_raises
-)
+    assert_, assert_almost_equal, assert_allclose, assert_equal, assert_raises
+    )
 
 
 class TestFinancial(object):
@@ -339,7 +338,3 @@ class TestFinancial(object):
                                     Decimal('0'), [Decimal('0'), Decimal('0'), Decimal('1'), 'end', 'begin']),
                             [Decimal('-74.998201'), Decimal('-75.62318601'), Decimal('-75.62318601'),
                              Decimal('-76.88882405'), Decimal('-76.88882405')], 4)
-
-
-if __name__ == "__main__":
-    run_module_suite()

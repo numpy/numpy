@@ -1,14 +1,12 @@
 /* -*- c -*- */
 
 #define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 
 #include "npy_config.h"
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
-#define NO_IMPORT_ARRAY
-
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -29,6 +27,16 @@
  * effectively 16
  */
 #define PW_BLOCKSIZE    128
+
+
+/*
+ * largest simd vector size in bytes numpy supports
+ * it is currently a extremely large value as it is only used for memory
+ * overlap checks
+ */
+#ifndef NPY_MAX_SIMD_SIZE
+#define NPY_MAX_SIMD_SIZE 1024
+#endif
 
 /*
  * include vectorized functions and dispatchers
@@ -180,10 +188,12 @@
     do { \
     /* condition allows compiler to optimize the generic macro */ \
     if (IS_BINARY_CONT(tin, tout)) { \
-        if (args[2] == args[0]) { \
+        if (abs_ptrdiff(args[2], args[0]) == 0 && \
+                abs_ptrdiff(args[2], args[1]) >= NPY_MAX_SIMD_SIZE) { \
             BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
-        else if (args[2] == args[1]) { \
+        else if (abs_ptrdiff(args[2], args[1]) == 0 && \
+                     abs_ptrdiff(args[2], args[0]) >= NPY_MAX_SIMD_SIZE) { \
             BASE_BINARY_LOOP_INP(tin, tout, op) \
         } \
         else { \
@@ -191,7 +201,7 @@
         } \
     } \
     else if (IS_BINARY_CONT_S1(tin, tout)) { \
-        if (args[1] == args[2]) { \
+        if (abs_ptrdiff(args[2], args[1]) == 0) { \
             BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
         } \
         else { \
@@ -199,7 +209,7 @@
         } \
     } \
     else if (IS_BINARY_CONT_S2(tin, tout)) { \
-        if (args[0] == args[2]) { \
+        if (abs_ptrdiff(args[2], args[0]) == 0) { \
             BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
         } \
         else { \
@@ -1317,27 +1327,12 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    npy_bool give_future_warning = 0;
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        const npy_bool res = in1 @OP@ in2;
-        *((npy_bool *)op1) = res;
-
-        if ((in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) && res) {
-            give_future_warning = 1;
-        }
-    }
-    if (give_future_warning) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        /* 2016-01-18, 1.11 */
-        if (DEPRECATE_FUTUREWARNING(
-                "In the future, 'NAT @OP@ x' and 'x @OP@ NAT' "
-                "will always be False.") < 0) {
-            /* nothing to do, we return anyway */
-        }
-        NPY_DISABLE_C_API;
+        *((npy_bool *)op1) = (in1 @OP@ in2 &&
+                              in1 != NPY_DATETIME_NAT &&
+                              in2 != NPY_DATETIME_NAT);
     }
 }
 /**end repeat1**/
@@ -1345,26 +1340,12 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_not_equal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    npy_bool give_future_warning = 0;
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((npy_bool *)op1) = in1 != in2;
-
-        if (in1 == NPY_DATETIME_NAT && in2 == NPY_DATETIME_NAT) {
-            give_future_warning = 1;
-        }
-    }
-    if (give_future_warning) {
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        /* 2016-01-18, 1.11 */
-        if (DEPRECATE_FUTUREWARNING(
-                "In the future, NAT != NAT will be True "
-                "rather than False.") < 0) {
-            /* nothing to do, we return anyway */
-        }
-        NPY_DISABLE_C_API;
+        *((npy_bool *)op1) = (in1 != in2 ||
+                              in1 == NPY_DATETIME_NAT ||
+                              in2 == NPY_DATETIME_NAT);
     }
 }
 
@@ -1807,7 +1788,7 @@ NPY_NO_EXPORT void
             *((npy_bool *)op1) = @func@(in1) != 0;
         }
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -1854,14 +1835,21 @@ NPY_NO_EXPORT void
                 const @type@ in2 = *(@type@ *)ip2;
                 io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
             }
+            if (npy_isnan(io1)) {
+                npy_set_floatstatus_invalid();
+            }
             *((@type@ *)iop1) = io1;
         }
     }
     else {
         BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
+            @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
-            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+            in1 = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
+            if (npy_isnan(in1)) {
+                npy_set_floatstatus_invalid();
+            }
+            *((@type@ *)op1) = in1;
         }
     }
 }
@@ -1889,7 +1877,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
         }
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -1979,7 +1967,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = tmp + 0;
         }
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
@@ -2165,7 +2153,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_bool *)op1) = @func@(in1) != 0;
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 
@@ -2207,9 +2195,13 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 {
     /*  */
     BINARY_LOOP {
-        const npy_half in1 = *(npy_half *)ip1;
+        npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+        in1 = (@OP@(in1, in2) || npy_half_isnan(in1)) ? in1 : in2;
+        if (npy_half_isnan(in1)) {
+            npy_set_floatstatus_invalid();
+        } 
+        *((npy_half *)op1) = in1;
     }
 }
 /**end repeat**/
@@ -2227,7 +2219,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         const npy_half in2 = *(npy_half *)ip2;
         *((npy_half *)op1) = (@OP@(in1, in2) || npy_half_isnan(in2)) ? in1 : in2;
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 
@@ -2669,7 +2661,7 @@ NPY_NO_EXPORT void
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
         *((npy_bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
-    npy_clear_floatstatus();
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2765,20 +2757,20 @@ NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
-        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        @ftype@ in1r = ((@ftype@ *)ip1)[0];
+        @ftype@ in1i = ((@ftype@ *)ip1)[1];
         const @ftype@ in2r = ((@ftype@ *)ip2)[0];
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        if (@OP@(in1r, in1i, in2r, in2i) || npy_isnan(in1r) || npy_isnan(in1i)) {
-            ((@ftype@ *)op1)[0] = in1r;
-            ((@ftype@ *)op1)[1] = in1i;
+        if ( !(@OP@(in1r, in1i, in2r, in2i) || npy_isnan(in1r) || npy_isnan(in1i))) {
+            in1r = in2r;
+            in1i = in2i;
         }
-        else {
-            ((@ftype@ *)op1)[0] = in2r;
-            ((@ftype@ *)op1)[1] = in2i;
+        if (npy_isnan(in1r) || npy_isnan(in1i)) { 
+            npy_set_floatstatus_invalid();
         }
+        ((@ftype@ *)op1)[0] = in1r;
+        ((@ftype@ *)op1)[1] = in1i;
     }
-    npy_clear_floatstatus();
 }
 /**end repeat1**/
 
@@ -2828,10 +2820,14 @@ NPY_NO_EXPORT void
  * #OP = EQ, NE, GT, GE, LT, LE#
  * #identity = NPY_TRUE, NPY_FALSE, -1*4#
  */
+
+/**begin repeat1
+ * #suffix = , _OO_O#
+ * #as_bool = 1, 0#
+ */
 NPY_NO_EXPORT void
-OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
+OBJECT@suffix@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func)) {
     BINARY_LOOP {
-        int ret;
         PyObject *ret_obj;
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
@@ -2848,14 +2844,21 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         if (ret_obj == NULL) {
             return;
         }
-        ret = PyObject_IsTrue(ret_obj);
-        Py_DECREF(ret_obj);
-        if (ret == -1) {
-            return;
+#if @as_bool@
+        {
+            int ret = PyObject_IsTrue(ret_obj);
+            Py_DECREF(ret_obj);
+            if (ret == -1) {
+                return;
+            }
+            *((npy_bool *)op1) = (npy_bool)ret;
         }
-        *((npy_bool *)op1) = (npy_bool)ret;
+#else
+        *((PyObject **)op1) = ret_obj;
+#endif
     }
 }
+/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT void

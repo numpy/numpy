@@ -20,6 +20,7 @@
 #include "lowlevel_strided_loops.h"
 #include "item_selection.h"
 #include "mem_overlap.h"
+#include "array_assign.h"
 
 
 #define HAS_INTEGER 1
@@ -233,7 +234,8 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
             || index == Py_None
             || PySlice_Check(index)
             || PyArray_Check(index)
-            || !PySequence_Check(index)) {
+            || !PySequence_Check(index)
+            || PyBaseString_Check(index)) {
 
         return unpack_scalar(index, result, result_n);
     }
@@ -293,8 +295,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
         if (commit_to_unpack) {
             /* propagate errors */
             if (tmp_obj == NULL) {
-                multi_DECREF(result, i);
-                return -1;
+                goto fail;
             }
         }
         else {
@@ -313,6 +314,16 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
                     || PySlice_Check(tmp_obj)
                     || tmp_obj == Py_Ellipsis
                     || tmp_obj == Py_None) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "Using a non-tuple sequence for multidimensional "
+                        "indexing is deprecated; use `arr[tuple(seq)]` "
+                        "instead of `arr[seq]`. In the future this will be "
+                        "interpreted as an array index, `arr[np.array(seq)]`, "
+                        "which will result either in an error or a different "
+                        "result.") < 0) {
+                    i++;  /* since loop update doesn't run */
+                    goto fail;
+                }
                 commit_to_unpack = 1;
             }
         }
@@ -328,6 +339,10 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
         multi_DECREF(result, i);
         return unpack_scalar(index, result, result_n);
     }
+
+fail:
+    multi_DECREF(result, i);
+    return -1;
 }
 
 /**
@@ -967,20 +982,14 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
 
     /* Create the new view and set the base array */
     Py_INCREF(PyArray_DESCR(self));
-    *view = (PyArrayObject *)PyArray_NewFromDescr(
-                                ensure_array ? &PyArray_Type : Py_TYPE(self),
-                                PyArray_DESCR(self),
-                                new_dim, new_shape,
-                                new_strides, data_ptr,
-                                PyArray_FLAGS(self),
-                                ensure_array ? NULL : (PyObject *)self);
+    *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+            ensure_array ? &PyArray_Type : Py_TYPE(self),
+            PyArray_DESCR(self),
+            new_dim, new_shape, new_strides, data_ptr,
+            PyArray_FLAGS(self),
+            ensure_array ? NULL : (PyObject *)self,
+            (PyObject *)self);
     if (*view == NULL) {
-        return -1;
-    }
-
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(*view, (PyObject *)self) < 0) {
-        Py_DECREF(*view);
         return -1;
     }
 
@@ -1055,7 +1064,7 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-        if (PyArray_GetDTypeTransferFunction(PyArray_ISALIGNED(self),
+        if (PyArray_GetDTypeTransferFunction(IsUintAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
@@ -1114,17 +1123,13 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *tmp = ret;
 
         Py_INCREF(dtype);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1,
-                            &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                            PyArray_FLAGS(self), (PyObject *)self);
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                Py_TYPE(self), dtype,
+                1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
+                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)tmp);
 
+        Py_DECREF(tmp);
         if (ret == NULL) {
-            Py_DECREF(tmp);
-            return NULL;
-        }
-
-        if (PyArray_SetBaseObject(ret, (PyObject *)tmp) < 0) {
-            Py_DECREF(ret);
             return NULL;
         }
     }
@@ -1248,7 +1253,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         if (PyArray_GetDTypeTransferFunction(
-                        PyArray_ISALIGNED(self) && PyArray_ISALIGNED(v),
+                        IsUintAligned(self) && IsUintAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
@@ -1384,14 +1389,54 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 }
 
 /*
+ * Helper function for _get_field_view which turns a multifield
+ * view into a "packed" copy, as done in numpy 1.15 and before.
+ * In numpy 1.16 this function should be removed.
+ */
+NPY_NO_EXPORT int
+_multifield_view_to_copy(PyArrayObject **view) {
+    static PyObject *copyfunc = NULL;
+    PyObject *viewcopy;
+
+    /* return a repacked copy of the view */
+    npy_cache_import("numpy.lib.recfunctions", "repack_fields", &copyfunc);
+    if (copyfunc == NULL) {
+        goto view_fail;
+    }
+
+    PyArray_CLEARFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
+    viewcopy = PyObject_CallFunction(copyfunc, "O", *view);
+    if (viewcopy == NULL) {
+        goto view_fail;
+    }
+    Py_DECREF(*view);
+    *view = (PyArrayObject*)viewcopy;
+
+    /* warn when writing to the copy */
+    PyArray_ENABLEFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
+    return 0;
+
+view_fail:
+    Py_DECREF(*view);
+    *view = NULL;
+    return 0;
+}
+
+/*
  * Attempts to subscript an array using a field name or list of field names.
  *
  * If an error occurred, return 0 and set view to NULL. If the subscript is not
  * a string or list of strings, return -1 and set view to NULL. Otherwise
  * return 0 and set view to point to a new view into arr for the given fields.
+ *
+ * In numpy 1.15 and before, in the case of a list of field names the returned
+ * view will actually be a copy by default, with fields packed together.
+ * The `force_view` argument causes a view to be returned. This argument can be
+ * removed in 1.16 when we plan to return a view always.
  */
 NPY_NO_EXPORT int
-_get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
+_get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
+                int force_view)
 {
     *view = NULL;
 
@@ -1417,21 +1462,17 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         /* view the array at the new offset+dtype */
         Py_INCREF(fieldtype);
         *view = (PyArrayObject*)PyArray_NewFromDescr_int(
-                                    Py_TYPE(arr),
-                                    fieldtype,
-                                    PyArray_NDIM(arr),
-                                    PyArray_SHAPE(arr),
-                                    PyArray_STRIDES(arr),
-                                    PyArray_BYTES(arr) + offset,
-                                    PyArray_FLAGS(arr),
-                                    (PyObject *)arr, 0, 1);
+                Py_TYPE(arr),
+                fieldtype,
+                PyArray_NDIM(arr),
+                PyArray_SHAPE(arr),
+                PyArray_STRIDES(arr),
+                PyArray_BYTES(arr) + offset,
+                PyArray_FLAGS(arr),
+                (PyObject *)arr, (PyObject *)arr,
+                0, 1);
         if (*view == NULL) {
             return 0;
-        }
-        Py_INCREF(arr);
-        if (PyArray_SetBaseObject(*view, (PyObject *)arr) < 0) {
-            Py_DECREF(*view);
-            *view = NULL;
         }
         return 0;
     }
@@ -1490,25 +1531,23 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 Py_DECREF(names);
                 return 0;
             }
-            // disallow use of titles as index
+            /* disallow use of titles as index */
             if (PyTuple_Size(tup) == 3) {
                 PyObject *title = PyTuple_GET_ITEM(tup, 2);
                 int titlecmp = PyObject_RichCompareBool(title, name, Py_EQ);
                 if (titlecmp == 1) {
-                    // if title == name, we were given a title, not a field name
+                    /* if title == name, we got a title, not a field name */
                     PyErr_SetString(PyExc_KeyError,
                                 "cannot use field titles in multi-field index");
                 }
                 if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
-                    Py_DECREF(title);
                     Py_DECREF(name);
                     Py_DECREF(fields);
                     Py_DECREF(names);
                     return 0;
                 }
-                Py_DECREF(title);
             }
-            // disallow duplicate field indices
+            /* disallow duplicate field indices */
             if (PyDict_Contains(fields, name)) {
                 PyObject *errmsg = PyUString_FromString(
                                        "duplicate field of name ");
@@ -1544,25 +1583,25 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         view_dtype->flags = PyArray_DESCR(arr)->flags;
 
         *view = (PyArrayObject*)PyArray_NewFromDescr_int(
-                                    Py_TYPE(arr),
-                                    view_dtype,
-                                    PyArray_NDIM(arr),
-                                    PyArray_SHAPE(arr),
-                                    PyArray_STRIDES(arr),
-                                    PyArray_DATA(arr),
-                                    PyArray_FLAGS(arr),
-                                    (PyObject *)arr, 0, 1);
+                Py_TYPE(arr),
+                view_dtype,
+                PyArray_NDIM(arr),
+                PyArray_SHAPE(arr),
+                PyArray_STRIDES(arr),
+                PyArray_DATA(arr),
+                PyArray_FLAGS(arr),
+                (PyObject *)arr, (PyObject *)arr,
+                0, 1);
+
         if (*view == NULL) {
             return 0;
         }
-        Py_INCREF(arr);
-        if (PyArray_SetBaseObject(*view, (PyObject *)arr) < 0) {
-            Py_DECREF(*view);
-            *view = NULL;
+
+        /* the code below can be replaced by "return 0" in 1.16 */
+        if (force_view) {
             return 0;
         }
-
-        return 0;
+        return _multifield_view_to_copy(view);
     }
     return -1;
 }
@@ -1590,7 +1629,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     /* return fields if op is a string index */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
         PyArrayObject *view;
-        int ret = _get_field_view(self, op, &view);
+        int ret = _get_field_view(self, op, &view, 0);
         if (ret == 0){
             if (view == NULL) {
                 return NULL;
@@ -1685,7 +1724,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
                 PyArray_DESCR(ind)->kind == 'i' &&
-                PyArray_ISALIGNED(ind) &&
+                IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             Py_INCREF(PyArray_DESCR(self));
@@ -1759,24 +1798,17 @@ array_subscript(PyArrayObject *self, PyObject *op)
         PyArrayObject *tmp_arr = (PyArrayObject *)result;
 
         Py_INCREF(PyArray_DESCR(tmp_arr));
-        result = PyArray_NewFromDescr(Py_TYPE(self),
-                                      PyArray_DESCR(tmp_arr),
-                                      PyArray_NDIM(tmp_arr),
-                                      PyArray_SHAPE(tmp_arr),
-                                      PyArray_STRIDES(tmp_arr),
-                                      PyArray_BYTES(tmp_arr),
-                                      PyArray_FLAGS(self),
-                                      (PyObject *)self);
-
+        result = PyArray_NewFromDescrAndBase(
+                Py_TYPE(self),
+                PyArray_DESCR(tmp_arr),
+                PyArray_NDIM(tmp_arr),
+                PyArray_SHAPE(tmp_arr),
+                PyArray_STRIDES(tmp_arr),
+                PyArray_BYTES(tmp_arr),
+                PyArray_FLAGS(self),
+                (PyObject *)self, (PyObject *)tmp_arr);
+        Py_DECREF(tmp_arr);
         if (result == NULL) {
-            Py_DECREF(tmp_arr);
-            goto finish;
-        }
-
-        if (PyArray_SetBaseObject((PyArrayObject *)result,
-                                  (PyObject *)tmp_arr) < 0) {
-            Py_DECREF(result);
-            result = NULL;
             goto finish;
         }
     }
@@ -1879,7 +1911,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* field access */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))){
         PyArrayObject *view;
-        int ret = _get_field_view(self, ind, &view);
+        int ret = _get_field_view(self, ind, &view, 1);
         if (ret == 0){
             if (view == NULL) {
                 return -1;
@@ -2051,11 +2083,11 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ,
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ) ||
                  (PyArray_NDIM(tmp_arr) == 0 &&
-                        PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
+                        PyArray_TRIVIALLY_ITERABLE(ind))) &&
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
                 PyArray_DESCR(ind)->kind == 'i' &&
-                PyArray_ISALIGNED(ind) &&
+                IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             /* trivial_set checks the index for us */
@@ -2202,9 +2234,10 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 
     /* create count-sized index arrays for each dimension */
     for (j = 0; j < nd; j++) {
-        new = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
-                                           NPY_INTP, NULL, NULL,
-                                           0, 0, NULL);
+        new = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
+            1, &count, NULL, NULL,
+            0, NULL);
         if (new == NULL) {
             goto fail;
         }
@@ -2574,7 +2607,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(op) == sizeof(npy_intp) &&
                 PyArray_DESCR(op)->kind == 'i' &&
-                PyArray_ISALIGNED(op) &&
+                IsUintAligned(op) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(op))) {
             char *data;
             npy_intp stride;
@@ -2883,20 +2916,20 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         Py_INCREF(extra_op_dtype);
         mit->extra_op_dtype = extra_op_dtype;
 
-        /* Create an iterator, just to broadcast the arrays?! */
-        tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
-                                    NPY_ITER_ZEROSIZE_OK |
-                                    NPY_ITER_REFS_OK |
-                                    NPY_ITER_MULTI_INDEX |
-                                    NPY_ITER_DONT_NEGATE_STRIDES,
-                                    NPY_KEEPORDER,
-                                    NPY_UNSAFE_CASTING,
-                                    tmp_op_flags, NULL);
-        if (tmp_iter == NULL) {
-            goto fail;
-        }
-
         if (PyArray_SIZE(subspace) == 1) {
+            /* Create an iterator, just to broadcast the arrays?! */
+            tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
+                                        NPY_ITER_ZEROSIZE_OK |
+                                        NPY_ITER_REFS_OK |
+                                        NPY_ITER_MULTI_INDEX |
+                                        NPY_ITER_DONT_NEGATE_STRIDES,
+                                        NPY_KEEPORDER,
+                                        NPY_UNSAFE_CASTING,
+                                        tmp_op_flags, NULL);
+            if (tmp_iter == NULL) {
+                goto fail;
+            }
+
             /*
              * nditer allows itemsize with npy_intp type, so it works
              * here, but it would *not* work directly, since elsize
@@ -2909,6 +2942,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                         "internal error: failed to find output array strides");
                 goto fail;
             }
+            NpyIter_Deallocate(tmp_iter);
         }
         else {
             /* Just use C-order strides (TODO: allow also F-order) */
@@ -2918,7 +2952,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                 stride *= mit->dimensions[i];
             }
         }
-        NpyIter_Deallocate(tmp_iter);
 
         /* shape is set, and strides is set up to mit->nd, set rest */
         PyArray_CreateSortedStridePerm(PyArray_NDIM(subspace),
@@ -3374,6 +3407,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
+    PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
     Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);

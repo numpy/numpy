@@ -4,8 +4,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import sys
-import shutil
+import subprocess
 from glob import glob
 
 from distutils.dep_util import newer_group
@@ -15,7 +14,7 @@ from distutils.errors import DistutilsFileError, DistutilsSetupError,\
 from distutils.file_util import copy_file
 
 from numpy.distutils import log
-from numpy.distutils.exec_command import exec_command
+from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.system_info import combine_paths, system_info
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
     has_cxx_sources, get_ext_source_files, \
@@ -558,9 +557,12 @@ class build_ext (old_build_ext):
             # correct path when compiling in Cygwin but with normal Win
             # Python
             if dir.startswith('/usr/lib'):
-                s, o = exec_command(['cygpath', '-w', dir], use_tee=False)
-                if not s:
-                    dir = o
+                try:
+                    dir = subprocess.check_output(['cygpath', '-w', dir])
+                except (OSError, subprocess.CalledProcessError):
+                    pass
+                else:
+                    dir = filepath_from_subprocess_output(dir)
             f_lib_dirs.append(dir)
         c_library_dirs.extend(f_lib_dirs)
 

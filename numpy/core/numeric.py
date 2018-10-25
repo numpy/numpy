@@ -1,6 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
+import functools
 import itertools
 import operator
 import sys
@@ -13,7 +19,7 @@ from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, broadcast, can_cast, compare_chararrays,
-    concatenate, copyto, count_nonzero, dot, dtype, empty,
+    concatenate, copyto, dot, dtype, empty,
     empty_like, flatiter, frombuffer, fromfile, fromiter, fromstring,
     inner, int_asbuffer, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
@@ -22,6 +28,7 @@ from .multiarray import (
 if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
 
+from . import overrides
 from . import umath
 from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
                     ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
@@ -35,12 +42,22 @@ ufunc = type(sin)
 newaxis = None
 
 if sys.version_info[0] >= 3:
-    import pickle
+    if sys.version_info[1] in (6, 7):
+        try:
+            import pickle5 as pickle
+        except ImportError:
+            import pickle
+    else:
+        import pickle
     basestring = str
     import builtins
 else:
     import cPickle as pickle
     import __builtin__ as builtins
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 def loads(*args, **kwargs):
@@ -69,7 +86,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError' ]
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -86,6 +103,11 @@ class ComplexWarning(RuntimeWarning):
     pass
 
 
+def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None):
+    return (a,)
+
+
+@array_function_dispatch(_zeros_like_dispatcher)
 def zeros_like(a, dtype=None, order='K', subok=True):
     """
     Return an array of zeros with the same shape and type as a given array.
@@ -118,11 +140,10 @@ def zeros_like(a, dtype=None, order='K', subok=True):
 
     See Also
     --------
-    ones_like : Return an array of ones with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
     zeros : Return a new array setting values to zero.
-    ones : Return a new array setting values to one.
-    empty : Return a new uninitialized array.
 
     Examples
     --------
@@ -160,9 +181,10 @@ def ones(shape, dtype=None, order='C'):
     dtype : data-type, optional
         The desired data-type for the array, e.g., `numpy.int8`.  Default is
         `numpy.float64`.
-    order : {'C', 'F'}, optional
-        Whether to store multidimensional data in C- or Fortran-contiguous
-        (row- or column-wise) order in memory.
+    order : {'C', 'F'}, optional, default: C
+        Whether to store multi-dimensional data in row-major
+        (C-style) or column-major (Fortran-style) order in
+        memory.
 
     Returns
     -------
@@ -171,7 +193,11 @@ def ones(shape, dtype=None, order='C'):
 
     See Also
     --------
-    zeros, ones_like
+    ones_like : Return an array of ones with shape and type of input.
+    empty : Return a new uninitialized array.
+    zeros : Return a new array setting values to zero.
+    full : Return a new array of given shape filled with value.
+
 
     Examples
     --------
@@ -196,6 +222,11 @@ def ones(shape, dtype=None, order='C'):
     return a
 
 
+def _ones_like_dispatcher(a, dtype=None, order=None, subok=None):
+    return (a,)
+
+
+@array_function_dispatch(_ones_like_dispatcher)
 def ones_like(a, dtype=None, order='K', subok=True):
     """
     Return an array of ones with the same shape and type as a given array.
@@ -228,11 +259,10 @@ def ones_like(a, dtype=None, order='K', subok=True):
 
     See Also
     --------
-    zeros_like : Return an array of zeros with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
-    zeros : Return a new array setting values to zero.
+    zeros_like : Return an array of zeros with shape and type of input.
+    full_like : Return a new array with shape of input filled with value.
     ones : Return a new array setting values to one.
-    empty : Return a new uninitialized array.
 
     Examples
     --------
@@ -281,13 +311,10 @@ def full(shape, fill_value, dtype=None, order='C'):
 
     See Also
     --------
-    zeros_like : Return an array of zeros with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
-    empty_like : Return an empty array with shape and type of input.
-    full_like : Fill an array with shape and type of input.
-    zeros : Return a new array setting values to zero.
-    ones : Return a new array setting values to one.
+    full_like : Return a new array with shape of input filled with value.
     empty : Return a new uninitialized array.
+    ones : Return a new array setting values to one.
+    zeros : Return a new array setting values to zero.
 
     Examples
     --------
@@ -306,6 +333,11 @@ def full(shape, fill_value, dtype=None, order='C'):
     return a
 
 
+def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None):
+    return (a,)
+
+
+@array_function_dispatch(_full_like_dispatcher)
 def full_like(a, fill_value, dtype=None, order='K', subok=True):
     """
     Return a full array with the same shape and type as a given array.
@@ -336,13 +368,10 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
 
     See Also
     --------
-    zeros_like : Return an array of zeros with shape and type of input.
-    ones_like : Return an array of ones with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
-    zeros : Return a new array setting values to zero.
-    ones : Return a new array setting values to one.
-    empty : Return a new uninitialized array.
-    full : Fill a new array.
+    ones_like : Return an array of ones with shape and type of input.
+    zeros_like : Return an array of zeros with shape and type of input.
+    full : Return a new array of given shape filled with value.
 
     Examples
     --------
@@ -365,6 +394,12 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
     multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 
+
+def _count_nonzero_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_count_nonzero_dispatcher)
 def count_nonzero(a, axis=None):
     """
     Counts the number of non-zero values in the array ``a``.
@@ -486,9 +521,9 @@ def asarray(a, dtype=None, order=None):
 
     Contrary to `asanyarray`, ndarray subclasses are not passed through:
 
-    >>> issubclass(np.matrix, np.ndarray)
+    >>> issubclass(np.recarray, np.ndarray)
     True
-    >>> a = np.matrix([[1, 2]])
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asarray(a) is a
     False
     >>> np.asanyarray(a) is a
@@ -542,7 +577,7 @@ def asanyarray(a, dtype=None, order=None):
 
     Instances of `ndarray` subclasses are passed through as-is:
 
-    >>> a = np.matrix([1, 2])
+    >>> a = np.array([(1.0, 2), (3.0, 4)], dtype='f4,i4').view(np.recarray)
     >>> np.asanyarray(a) is a
     True
 
@@ -686,12 +721,12 @@ def require(a, dtype=None, requirements=None):
       UPDATEIFCOPY : False
 
     """
-    possible_flags = {'C':'C', 'C_CONTIGUOUS':'C', 'CONTIGUOUS':'C',
-                      'F':'F', 'F_CONTIGUOUS':'F', 'FORTRAN':'F',
-                      'A':'A', 'ALIGNED':'A',
-                      'W':'W', 'WRITEABLE':'W',
-                      'O':'O', 'OWNDATA':'O',
-                      'E':'E', 'ENSUREARRAY':'E'}
+    possible_flags = {'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
+                      'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
+                      'A': 'A', 'ALIGNED': 'A',
+                      'W': 'W', 'WRITEABLE': 'W',
+                      'O': 'O', 'OWNDATA': 'O',
+                      'E': 'E', 'ENSUREARRAY': 'E'}
     if not requirements:
         return asanyarray(a, dtype=dtype)
     else:
@@ -784,6 +819,11 @@ def isfortran(a):
     return a.flags.fnc
 
 
+def _argwhere_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_argwhere_dispatcher)
 def argwhere(a):
     """
     Find the indices of array elements that are non-zero, grouped by element.
@@ -825,16 +865,21 @@ def argwhere(a):
     return transpose(nonzero(a))
 
 
+def _flatnonzero_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_flatnonzero_dispatcher)
 def flatnonzero(a):
     """
     Return indices that are non-zero in the flattened version of a.
 
-    This is equivalent to a.ravel().nonzero()[0].
+    This is equivalent to np.nonzero(np.ravel(a))[0].
 
     Parameters
     ----------
-    a : ndarray
-        Input array.
+    a : array_like
+        Input data.
 
     Returns
     -------
@@ -862,7 +907,7 @@ def flatnonzero(a):
     array([-2, -1,  1,  2])
 
     """
-    return a.ravel().nonzero()[0]
+    return np.nonzero(np.ravel(a))[0]
 
 
 _mode_from_name_dict = {'v': 0,
@@ -876,6 +921,11 @@ def _mode_from_name(mode):
     return mode
 
 
+def _correlate_dispatcher(a, v, mode=None):
+    return (a, v)
+
+
+@array_function_dispatch(_correlate_dispatcher)
 def correlate(a, v, mode='valid'):
     """
     Cross-correlation of two 1-dimensional sequences.
@@ -944,6 +994,11 @@ def correlate(a, v, mode='valid'):
     return multiarray.correlate2(a, v, mode)
 
 
+def _convolve_dispatcher(a, v, mode=None):
+    return (a, v)
+
+
+@array_function_dispatch(_convolve_dispatcher)
 def convolve(a, v, mode='full'):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
@@ -1007,7 +1062,8 @@ def convolve(a, v, mode='full'):
 
     References
     ----------
-    .. [1] Wikipedia, "Convolution", http://en.wikipedia.org/wiki/Convolution.
+    .. [1] Wikipedia, "Convolution",
+        https://en.wikipedia.org/wiki/Convolution
 
     Examples
     --------
@@ -1042,6 +1098,11 @@ def convolve(a, v, mode='full'):
     return multiarray.correlate(a, v[::-1], mode)
 
 
+def _outer_dispatcher(a, b, out=None):
+    return (a, b, out)
+
+
+@array_function_dispatch(_outer_dispatcher)
 def outer(a, b, out=None):
     """
     Compute the outer product of two vectors.
@@ -1082,7 +1143,7 @@ def outer(a, b, out=None):
 
     References
     ----------
-    .. [1] : G. H. Golub and C. F. van Loan, *Matrix Computations*, 3rd
+    .. [1] : G. H. Golub and C. F. Van Loan, *Matrix Computations*, 3rd
              ed., Baltimore, MD, Johns Hopkins University Press, 1996,
              pg. 8.
 
@@ -1123,9 +1184,14 @@ def outer(a, b, out=None):
     """
     a = asarray(a)
     b = asarray(b)
-    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis,:], out)
+    return multiply(a.ravel()[:, newaxis], b.ravel()[newaxis, :], out)
 
 
+def _tensordot_dispatcher(a, b, axes=None):
+    return (a, b)
+
+
+@array_function_dispatch(_tensordot_dispatcher)
 def tensordot(a, b, axes=2):
     """
     Compute tensor dot product along specified axes for arrays >= 1-D.
@@ -1312,6 +1378,11 @@ def tensordot(a, b, axes=2):
     return res.reshape(olda + oldb)
 
 
+def _roll_dispatcher(a, shift, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_roll_dispatcher)
 def roll(a, shift, axis=None):
     """
     Roll array elements along a given axis.
@@ -1401,6 +1472,11 @@ def roll(a, shift, axis=None):
         return result
 
 
+def _rollaxis_dispatcher(a, axis, start=None):
+    return (a,)
+
+
+@array_function_dispatch(_rollaxis_dispatcher)
 def rollaxis(a, axis, start=0):
     """
     Roll the specified axis backwards, until it lies in a given position.
@@ -1505,11 +1581,14 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     --------
     normalize_axis_index : normalizing a single scalar axis
     """
-    try:
-        axis = [operator.index(axis)]
-    except TypeError:
-        axis = tuple(axis)
-    axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
+    # Optimization to speed-up the most common cases.
+    if type(axis) not in (tuple, list):
+        try:
+            axis = [operator.index(axis)]
+        except TypeError:
+            pass
+    # Going via an iterator directly is slower than via list comprehension.
+    axis = tuple([normalize_axis_index(ax, ndim, argname) for ax in axis])
     if not allow_duplicate and len(set(axis)) != len(axis):
         if argname:
             raise ValueError('repeated axis in `{}` argument'.format(argname))
@@ -1518,6 +1597,11 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     return axis
 
 
+def _moveaxis_dispatcher(a, source, destination):
+    return (a,)
+
+
+@array_function_dispatch(_moveaxis_dispatcher)
 def moveaxis(a, source, destination):
     """
     Move axes of an array to new positions.
@@ -1594,6 +1678,11 @@ def _move_axis_to_0(a, axis):
     return moveaxis(a, axis, 0)
 
 
+def _cross_dispatcher(a, b, axisa=None, axisb=None, axisc=None, axis=None):
+    return (a, b)
+
+
+@array_function_dispatch(_cross_dispatcher)
 def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     """
     Return the cross product of two (arrays of) vectors.
@@ -1790,6 +1879,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     return moveaxis(cp, -1, axisc)
 
+
 little_endian = (sys.byteorder == 'little')
 
 
@@ -1892,7 +1982,7 @@ def fromfunction(function, shape, **kwargs):
         The result of the call to `function` is passed back directly.
         Therefore the shape of `fromfunction` is completely determined by
         `function`.  If `function` returns a scalar value, the shape of
-        `fromfunction` would match the `shape` parameter.
+        `fromfunction` would not match the `shape` parameter.
 
     See Also
     --------
@@ -1920,6 +2010,10 @@ def fromfunction(function, shape, **kwargs):
     return function(*args, **kwargs)
 
 
+def _frombuffer(buf, dtype, shape, order):
+    return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
+
+
 def isscalar(num):
     """
     Returns True if the type of `num` is a scalar type.
@@ -1934,10 +2028,46 @@ def isscalar(num):
     val : bool
         True if `num` is a scalar type, False if it is not.
 
+    See Also
+    --------
+    ndim : Get the number of dimensions of an array
+
+    Notes
+    -----
+    In almost all cases ``np.ndim(x) == 0`` should be used instead of this
+    function, as that will also return true for 0d arrays. This is how
+    numpy overloads functions in the style of the ``dx`` arguments to `gradient`
+    and the ``bins`` argument to `histogram`. Some key differences:
+
+    +--------------------------------------+---------------+-------------------+
+    | x                                    |``isscalar(x)``|``np.ndim(x) == 0``|
+    +======================================+===============+===================+
+    | PEP 3141 numeric objects (including  | ``True``      | ``True``          |
+    | builtins)                            |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | builtin string and buffer objects    | ``True``      | ``True``          |
+    +--------------------------------------+---------------+-------------------+
+    | other builtin objects, like          | ``False``     | ``True``          |
+    | `pathlib.Path`, `Exception`,         |               |                   |
+    | the result of `re.compile`           |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | third-party objects like             | ``False``     | ``True``          |
+    | `matplotlib.figure.Figure`           |               |                   |
+    +--------------------------------------+---------------+-------------------+
+    | zero-dimensional numpy arrays        | ``False``     | ``True``          |
+    +--------------------------------------+---------------+-------------------+
+    | other numpy arrays                   | ``False``     | ``False``         |
+    +--------------------------------------+---------------+-------------------+
+    | `list`, `tuple`, and other sequence  | ``False``     | ``False``         |
+    | objects                              |               |                   |
+    +--------------------------------------+---------------+-------------------+
+
     Examples
     --------
     >>> np.isscalar(3.1)
     True
+    >>> np.isscalar(np.array(3.1))
+    False
     >>> np.isscalar([3.1])
     False
     >>> np.isscalar(False)
@@ -2011,7 +2141,7 @@ def binary_repr(num, width=None):
     References
     ----------
     .. [1] Wikipedia, "Two's complement",
-        http://en.wikipedia.org/wiki/Two's_complement
+        https://en.wikipedia.org/wiki/Two's_complement
 
     Examples
     --------
@@ -2031,7 +2161,7 @@ def binary_repr(num, width=None):
     '11101'
 
     """
-    def warn_if_insufficient(width, binwdith):
+    def warn_if_insufficient(width, binwidth):
         if width is not None and width < binwidth:
             warnings.warn(
                 "Insufficient bit width provided. This behavior "
@@ -2196,6 +2326,11 @@ def identity(n, dtype=None):
     return eye(n, dtype=dtype)
 
 
+def _allclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
+    return (a, b)
+
+
+@array_function_dispatch(_allclose_dispatcher)
 def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     Returns True if two arrays are element-wise equal within a tolerance.
@@ -2267,6 +2402,11 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     return bool(res)
 
 
+def _isclose_dispatcher(a, b, rtol=None, atol=None, equal_nan=None):
+    return (a, b)
+
+
+@array_function_dispatch(_isclose_dispatcher)
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
     Returns a boolean array where two arrays are element-wise equal within a
@@ -2276,7 +2416,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     relative difference (`rtol` * abs(`b`)) and the absolute difference
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
-    
+
     .. warning:: The default `atol` is not appropriate for comparing numbers
                  that are much smaller than one (see Notes).
 
@@ -2313,12 +2453,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
 
     Unlike the built-in `math.isclose`, the above equation is not symmetric
-    in `a` and `b` -- it assumes `b` is the reference value -- so that 
+    in `a` and `b` -- it assumes `b` is the reference value -- so that
     `isclose(a, b)` might be different from `isclose(b, a)`. Furthermore,
     the default value of atol is not zero, and is used to determine what
     small values should be considered close to zero. The default value is
     appropriate for expected values of order unity: if the expected values
-    are significantly smaller than one, it can result in false positives. 
+    are significantly smaller than one, it can result in false positives.
     `atol` should be carefully selected for the use case at hand. A zero value
     for `atol` will result in `False` if either `a` or `b` is zero.
 
@@ -2382,6 +2522,11 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         return cond[()]  # Flatten 0d arrays to scalars
 
 
+def _array_equal_dispatcher(a1, a2):
+    return (a1, a2)
+
+
+@array_function_dispatch(_array_equal_dispatcher)
 def array_equal(a1, a2):
     """
     True if two arrays have the same shape and elements, False otherwise.
@@ -2424,6 +2569,11 @@ def array_equal(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
+def _array_equiv_dispatcher(a1, a2):
+    return (a1, a2)
+
+
+@array_function_dispatch(_array_equiv_dispatcher)
 def array_equiv(a1, a2):
     """
     Returns True if input arrays are shape consistent and all elements equal.
@@ -2471,12 +2621,12 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-_errdict = {"ignore":ERR_IGNORE,
-            "warn":ERR_WARN,
-            "raise":ERR_RAISE,
-            "call":ERR_CALL,
-            "print":ERR_PRINT,
-            "log":ERR_LOG}
+_errdict = {"ignore": ERR_IGNORE,
+            "warn": ERR_WARN,
+            "raise": ERR_RAISE,
+            "call": ERR_CALL,
+            "print": ERR_PRINT,
+            "log": ERR_LOG}
 
 _errdict_rev = {}
 for key in _errdict.keys():
@@ -2525,7 +2675,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
 
     Notes
     -----
-    The floating-point exceptions are defined in the IEEE 754 standard [1]:
+    The floating-point exceptions are defined in the IEEE 754 standard [1]_:
 
     - Division by zero: infinite result obtained from finite numbers.
     - Overflow: result too large to be expressed.
@@ -2534,7 +2684,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     - Invalid operation: result is not an expressible number, typically
       indicates that a NaN was produced.
 
-    .. [1] http://en.wikipedia.org/wiki/IEEE_754
+    .. [1] https://en.wikipedia.org/wiki/IEEE_754
 
     Examples
     --------
@@ -2543,7 +2693,8 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     {'over': 'ignore', 'divide': 'ignore', 'invalid': 'ignore',
      'under': 'ignore'}
     >>> np.seterr(**old_settings)  # reset to default
-    {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore', 'under': 'ignore'}
+    {'over': 'raise', 'divide': 'ignore', 'invalid': 'ignore',
+     'under': 'ignore'}
 
     >>> np.int16(32000) * np.int16(3)
     30464
@@ -2690,11 +2841,11 @@ def seterrcall(func):
         Function to call upon floating-point errors ('call'-mode) or
         object whose 'write' method is used to log such message ('log'-mode).
 
-        The call function takes two arguments. The first is a string describing the
-        type of error (such as "divide by zero", "overflow", "underflow", or "invalid value"),
-        and the second is the status flag.  The flag is a byte, whose four
-        least-significant bits indicate the type of error, one of "divide", "over",
-        "under", "invalid"::
+        The call function takes two arguments. The first is a string describing
+        the type of error (such as "divide by zero", "overflow", "underflow",
+        or "invalid value"), and the second is the status flag.  The flag is a
+        byte, whose four least-significant bits indicate the type of error, one
+        of "divide", "over", "under", "invalid"::
 
           [0 0 0 0 divide over under invalid]
 
@@ -2754,8 +2905,8 @@ def seterrcall(func):
     {'over': 'log', 'divide': 'log', 'invalid': 'log', 'under': 'log'}
 
     """
-    if func is not None and not isinstance(func, collections.Callable):
-        if not hasattr(func, 'write') or not isinstance(func.write, collections.Callable):
+    if func is not None and not isinstance(func, collections_abc.Callable):
+        if not hasattr(func, 'write') or not isinstance(func.write, collections_abc.Callable):
             raise ValueError("Only callable can be used as callback")
     pyvals = umath.geterrobj()
     old = geterrcall()
@@ -2811,6 +2962,8 @@ def geterrcall():
 
 class _unspecified(object):
     pass
+
+
 _Unspecified = _unspecified()
 
 
@@ -2839,16 +2992,11 @@ class errstate(object):
 
     Notes
     -----
-    The ``with`` statement was introduced in Python 2.5, and can only be used
-    there by importing it: ``from __future__ import with_statement``. In
-    earlier Python versions the ``with`` statement is not available.
-
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
     Examples
     --------
-    >>> from __future__ import with_statement  # use 'with' in Python 2.5
     >>> olderr = np.seterr(all='ignore')  # Set error handling to known state.
 
     >>> np.arange(3) / 0.
@@ -2907,16 +3055,12 @@ True_ = bool_(True)
 
 
 def extend_all(module):
-    adict = {}
-    for a in __all__:
-        adict[a] = 1
-    try:
-        mall = getattr(module, '__all__')
-    except AttributeError:
-        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
+    existing = set(__all__)
+    mall = getattr(module, '__all__')
     for a in mall:
-        if a not in adict:
+        if a not in existing:
             __all__.append(a)
+
 
 from .umath import *
 from .numerictypes import *

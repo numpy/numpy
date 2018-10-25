@@ -183,13 +183,45 @@ Those can be useful for precise floating point comparison.
     * NPY_FPE_UNDERFLOW
     * NPY_FPE_INVALID
 
+    Note that :c:func:`npy_get_floatstatus_barrier` is preferable as it prevents
+    agressive compiler optimizations reordering the call relative to
+    the code setting the status, which could lead to incorrect results.
+
     .. versionadded:: 1.9.0
+
+.. c:function:: int npy_get_floatstatus_barrier(char*)
+
+    Get floating point status. A pointer to a local variable is passed in to
+    prevent aggresive compiler optimizations from reodering this function call
+    relative to the code setting the status, which could lead to incorrect
+    results.
+
+    Returns a bitmask with following possible flags:
+
+    * NPY_FPE_DIVIDEBYZERO
+    * NPY_FPE_OVERFLOW
+    * NPY_FPE_UNDERFLOW
+    * NPY_FPE_INVALID
+
+    .. versionadded:: 1.15.0
 
 .. c:function:: int npy_clear_floatstatus()
 
     Clears the floating point status. Returns the previous status mask.
 
+    Note that :c:func:`npy_clear_floatstatus_barrier` is preferable as it
+    prevents agressive compiler optimizations reordering the call relative to
+    the code setting the status, which could lead to incorrect results.
+
     .. versionadded:: 1.9.0
+
+.. c:function:: int npy_clear_floatstatus_barrier(char*)
+
+    Clears the floating point status. A pointer to a local variable is passed in to
+    prevent aggresive compiler optimizations from reodering this function call.
+    Returns the previous status mask.
+
+    .. versionadded:: 1.15.0
 
 Complex functions
 ~~~~~~~~~~~~~~~~~
@@ -265,10 +297,10 @@ External Links:
 * `OpenGL Half Float Pixel Support`__
 * `The OpenEXR image format`__.
 
-__ http://ieeexplore.ieee.org/servlet/opac?punumber=4610933
-__ http://en.wikipedia.org/wiki/Half_precision_floating-point_format
-__ http://www.opengl.org/registry/specs/ARB/half_float_pixel.txt
-__ http://www.openexr.com/about.html
+__ https://ieeexplore.ieee.org/document/4610935/
+__ https://en.wikipedia.org/wiki/Half-precision_floating-point_format
+__ https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_half_float_pixel.txt
+__ https://www.openexr.com/about.html
 
 .. c:var:: NPY_HALF_ZERO
 

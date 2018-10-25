@@ -1,5 +1,5 @@
 /*
- * This file implements the CPython wrapper of the new NumPy iterator.
+ * This file implements the CPython wrapper of NpyIter
  *
  * Copyright (c) 2010 by Mark Wiebe (mwwiebe@gmail.com)
  * The University of British Columbia
@@ -17,6 +17,11 @@
 #include "npy_pycompat.h"
 #include "alloc.h"
 #include "common.h"
+#include "ctors.h"
+
+/* Functions not part of the public NumPy C API */
+npy_bool npyiter_has_writeback(NpyIter *iter);
+
 
 typedef struct NewNpyArrayIterObject_tag NewNpyArrayIterObject;
 
@@ -704,7 +709,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                     PyErr_SetString(PyExc_TypeError,
                             "Iterator operand is flagged as writeable, "
                             "but is an object which cannot be written "
-                            "back to via UPDATEIFCOPY");
+                            "back to via WRITEBACKIFCOPY");
                 }
                 for (iop = 0; iop < nop; ++iop) {
                     Py_DECREF(op[iop]);
@@ -1169,10 +1174,29 @@ fail:
     return NULL;
 }
 
+
 static void
 npyiter_dealloc(NewNpyArrayIterObject *self)
 {
     if (self->iter) {
+        if (npyiter_has_writeback(self->iter)) {
+            if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                    "Temporary data has not been written back to one of the "
+                    "operands. Typically nditer is used as a context manager "
+                    "otherwise 'close' must be called before reading iteration "
+                    "results.", 1) < 0) {
+                PyObject *s;
+
+                s = PyUString_FromString("npyiter_dealloc");
+                if (s) {
+                    PyErr_WriteUnraisable(s);
+                    Py_DECREF(s);
+                }
+                else {
+                    PyErr_WriteUnraisable(Py_None);
+                }
+            }
+        }
         NpyIter_Deallocate(self->iter);
         self->iter = NULL;
         Py_XDECREF(self->nested_child);
@@ -1443,7 +1467,6 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
     nop = NpyIter_GetNOp(self->iter);
     operands = self->operands;
 
@@ -1472,7 +1495,6 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
@@ -1495,7 +1517,8 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 static PyObject *
 npyiter_next(NewNpyArrayIterObject *self)
 {
-    if (self->iter == NULL || self->iternext == NULL || self->finished) {
+    if (self->iter == NULL || self->iternext == NULL ||
+                self->finished) {
         return NULL;
     }
 
@@ -1889,7 +1912,6 @@ static PyObject *npyiter_dtypes_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
     nop = NpyIter_GetNOp(self->iter);
 
     ret = PyTuple_New(nop);
@@ -1964,8 +1986,6 @@ npyiter_seq_length(NewNpyArrayIterObject *self)
 NPY_NO_EXPORT PyObject *
 npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
-    PyArrayObject *ret;
-
     npy_intp ret_ndim;
     npy_intp nop, innerloopsize, innerstride;
     char *dataptr;
@@ -1985,7 +2005,6 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                 "and no reset has been done yet");
         return NULL;
     }
-
     nop = NpyIter_GetNOp(self->iter);
 
     /* Negative indexing */
@@ -2031,22 +2050,11 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     }
 
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                        ret_ndim, &innerloopsize,
-                        &innerstride, dataptr,
-                        self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_XDECREF(ret);
-        return NULL;
-    }
-
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
-    return (PyObject *)ret;
+    return PyArray_NewFromDescrAndBase(
+            &PyArray_Type, dtype,
+            ret_ndim, &innerloopsize, &innerstride, dataptr,
+            self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0,
+            NULL, (PyObject *)self);
 }
 
 NPY_NO_EXPORT PyObject *
@@ -2069,7 +2077,6 @@ npyiter_seq_slice(NewNpyArrayIterObject *self,
                 "and no reset has been done yet");
         return NULL;
     }
-
     nop = NpyIter_GetNOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -2129,7 +2136,6 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
                 "and no reset has been done yet");
         return -1;
     }
-
     nop = NpyIter_GetNOp(self->iter);
 
     /* Negative indexing */
@@ -2171,8 +2177,6 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         return -1;
     }
 
-    PyArray_UpdateFlags(tmp, NPY_ARRAY_UPDATE_ALL);
-
     ret = PyArray_CopyObject(tmp, v);
     Py_DECREF(tmp);
     return ret;
@@ -2203,7 +2207,6 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
                 "and no reset has been done yet");
         return -1;
     }
-
     nop = NpyIter_GetNOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
@@ -2331,6 +2334,40 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     return -1;
 }
 
+static PyObject *
+npyiter_enter(NewNpyArrayIterObject *self)
+{
+    if (self->iter == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "operation on non-initialized iterator");
+        return NULL;
+    }
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+static PyObject *
+npyiter_close(NewNpyArrayIterObject *self)
+{
+    NpyIter *iter = self->iter;
+    int ret;
+    if (self->iter == NULL) {
+        Py_RETURN_NONE;
+    }
+    ret = NpyIter_Deallocate(iter);
+    self->iter = NULL;
+    if (ret < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
+{
+    /* even if called via exception handling, writeback any data */
+    return npyiter_close(self);
+}
+
 static PyMethodDef npyiter_methods[] = {
     {"reset",
         (PyCFunction)npyiter_reset,
@@ -2356,6 +2393,12 @@ static PyMethodDef npyiter_methods[] = {
     {"debug_print",
         (PyCFunction)npyiter_debug_print,
         METH_NOARGS, NULL},
+    {"__enter__", (PyCFunction)npyiter_enter,
+         METH_NOARGS,  NULL},
+    {"__exit__",  (PyCFunction)npyiter_exit,
+         METH_VARARGS, NULL},
+    {"close",  (PyCFunction)npyiter_close,
+         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL},
 };
 

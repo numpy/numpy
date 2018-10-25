@@ -14,7 +14,7 @@ import itertools
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_warns, suppress_warnings, assert_raises,
+    assert_warns, suppress_warnings, assert_raises,
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -128,7 +128,10 @@ class TestGeneric(object):
         a = arange(10)
         # No mask
         test = flatnotmasked_contiguous(a)
-        assert_equal(test, slice(0, a.size))
+        assert_equal(test, [slice(0, a.size)])
+        # mask of all false
+        a.mask = np.zeros(10, dtype=bool)
+        assert_equal(test, [slice(0, a.size)])
         # Some mask
         a[(a < 3) | (a > 8) | (a == 5)] = masked
         test = flatnotmasked_contiguous(a)
@@ -136,7 +139,7 @@ class TestGeneric(object):
         #
         a[:] = masked
         test = flatnotmasked_contiguous(a)
-        assert_equal(test, None)
+        assert_equal(test, [])
 
 
 class TestAverage(object):
@@ -304,18 +307,6 @@ class TestConcatenator(object):
         assert_array_equal(d[5:,:], b_2)
         assert_array_equal(d.mask, np.r_[m_1, m_2])
 
-    def test_matrix_builder(self):
-        assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
-
-    def test_matrix(self):
-        actual = mr_['r', 1, 2, 3]
-        expected = np.ma.array(np.r_['r', 1, 2, 3])
-        assert_array_equal(actual, expected)
-
-        # outer type is masked array, inner type is matrix
-        assert_equal(type(actual), type(expected))
-        assert_equal(type(actual.data), type(expected.data))
-
     def test_masked_constant(self):
         actual = mr_[np.ma.masked, 1]
         assert_equal(actual.mask, [True, False])
@@ -368,23 +359,32 @@ class TestNotMasked(object):
         a = masked_array(np.arange(24).reshape(3, 8),
                          mask=[[0, 0, 0, 0, 1, 1, 1, 1],
                                [1, 1, 1, 1, 1, 1, 1, 1],
-                               [0, 0, 0, 0, 0, 0, 1, 0], ])
+                               [0, 0, 0, 0, 0, 0, 1, 0]])
         tmp = notmasked_contiguous(a, None)
-        assert_equal(tmp[-1], slice(23, 24, None))
-        assert_equal(tmp[-2], slice(16, 22, None))
-        assert_equal(tmp[-3], slice(0, 4, None))
-        #
+        assert_equal(tmp, [
+            slice(0, 4, None),
+            slice(16, 22, None),
+            slice(23, 24, None)
+        ])
+
         tmp = notmasked_contiguous(a, 0)
-        assert_(len(tmp[-1]) == 1)
-        assert_(tmp[-2] is None)
-        assert_equal(tmp[-3], tmp[-1])
-        assert_(len(tmp[0]) == 2)
+        assert_equal(tmp, [
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(2, 3, None)],
+            [slice(2, 3, None)],
+            [],
+            [slice(2, 3, None)]
+        ])
         #
         tmp = notmasked_contiguous(a, 1)
-        assert_equal(tmp[0][-1], slice(0, 4, None))
-        assert_(tmp[1] is None)
-        assert_equal(tmp[2][-1], slice(7, 8, None))
-        assert_equal(tmp[2][-2], slice(0, 6, None))
+        assert_equal(tmp, [
+            [slice(0, 4, None)],
+            [],
+            [slice(0, 6, None), slice(7, 8, None)]
+        ])
 
 
 class TestCompressFunctions(object):
@@ -1677,7 +1677,3 @@ class TestStack(object):
         assert_equal(c.shape, c_shp)
         assert_array_equal(a1.mask, c[..., 0].mask)
         assert_array_equal(a2.mask, c[..., 1].mask)
-
-
-if __name__ == "__main__":
-    run_module_suite()

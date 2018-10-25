@@ -122,9 +122,11 @@ sub-types).
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Get a Python object from the ndarray, *arr*, at the location
-    pointed to by itemptr. Return ``NULL`` on failure.
-
+    Get a Python object of a builtin type from the ndarray, *arr*, 
+    at the location pointed to by itemptr. Return ``NULL`` on failure.
+    
+    `numpy.ndarray.item` is identical to PyArray_GETITEM.
+    
 .. c:function:: int PyArray_SETITEM( \
         PyArrayObject* arr, void* itemptr, PyObject* obj)
 
@@ -1360,7 +1362,7 @@ Special functions for NPY_OBJECT
 .. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
 
     Precondition: ``arr`` is a copy of ``base`` (though possibly with different
-    strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag 
+    strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
     and ``arr->base``, and set ``base`` to READONLY. Call
     :c:func:`PyArray_ResolveWritebackIfCopy` before calling
     `Py_DECREF`` in order copy any changes back to ``base`` and
@@ -3260,12 +3262,14 @@ Memory management
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
     If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function copies ``obj->data`` to
-    `obj->base->data`, clears the flags, `DECREF` s `obj->base` and makes it
-    writeable, and sets ``obj->base`` to NULL. This is the opposite of 
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function clears the flags, `DECREF` s
+    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
+    copies ``obj->data`` to `obj->base->data`, and returns the error state of
+    the copy operation. This is the opposite of
     :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called once
     you are finished with ``obj``, just before ``Py_DECREF(obj)``. It may be called
-    multiple times, or with ``NULL`` input.
+    multiple times, or with ``NULL`` input. See also
+    :c:func:`PyArray_DiscardWritebackIfCopy`.
 
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
 
@@ -3487,12 +3491,14 @@ Miscellaneous Macros
 
 .. c:function:: PyArray_DiscardWritebackIfCopy(PyObject* obj)
 
-    Reset the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and deprecated
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag. Resets the
-    :c:data:`NPY_ARRAY_WRITEABLE` flag on the base object. It also
-    discards pending changes to the base object. This is
-    useful for recovering from an error condition when
-    writeback semantics are used.
+    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function clears the flags, `DECREF` s
+    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
+    contrast to :c:func:`PyArray_DiscardWritebackIfCopy` it makes no attempt
+    to copy the data from `obj->base` This undoes
+    :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
+    error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
+    It may be called multiple times, or with ``NULL`` input.
 
 .. c:function:: PyArray_XDECREF_ERR(PyObject* obj)
 

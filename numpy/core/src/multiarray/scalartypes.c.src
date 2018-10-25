@@ -28,6 +28,7 @@
 #include "npy_import.h"
 #include "dragon4.h"
 #include "npy_longdouble.h"
+#include "buffer.h"
 
 #include <stdlib.h>
 
@@ -422,6 +423,7 @@ gentype_format(PyObject *self, PyObject *args)
 
 /**begin repeat
  * #name = half, float, double, longdouble#
+ * #Name = Half, Float, Double, LongDouble#
  * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
  * #type = npy_half, npy_float, npy_double, npy_longdouble#
  * #suff = h, f, d, l#
@@ -433,12 +435,12 @@ format_@name@(@type@ val, npy_bool scientific,
               int pad_left, int pad_right, int exp_digits)
 {
     if (scientific) {
-        return Dragon4_Scientific_AnySize(&val, sizeof(@type@),
+        return Dragon4_Scientific_@Name@(&val,
                         DigitMode_Unique, precision,
                         sign, trim, pad_left, exp_digits);
     }
     else {
-        return Dragon4_Positional_AnySize(&val, sizeof(@type@),
+        return Dragon4_Positional_@Name@(&val,
                         DigitMode_Unique, CutoffMode_TotalLength, precision,
                         sign, trim, pad_left, pad_right);
     }
@@ -536,19 +538,22 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 }
 
 static PyObject *
+_void_scalar_repr(PyObject *obj) {
+    static PyObject *reprfunc = NULL;
+    npy_cache_import("numpy.core.arrayprint",
+                     "_void_scalar_repr", &reprfunc);
+    if (reprfunc == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(reprfunc, "O", obj);
+}
+
+static PyObject *
 voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        static PyObject *reprfunc = NULL;
-
-        npy_cache_import("numpy.core.arrayprint",
-                         "_void_scalar_repr", &reprfunc);
-        if (reprfunc == NULL) {
-            return NULL;
-        }
-
-        return PyObject_CallFunction(reprfunc, "O", self);
+        return _void_scalar_repr(self);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
 }
@@ -558,15 +563,7 @@ voidtype_str(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        static PyObject *reprfunc = NULL;
-
-        npy_cache_import("numpy.core.arrayprint",
-                         "_void_scalar_repr", &reprfunc);
-        if (reprfunc == NULL) {
-            return NULL;
-        }
-
-        return PyObject_CallFunction(reprfunc, "O", self);
+        return _void_scalar_repr(self);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "b'", "\\x", "'");
 }
@@ -1606,7 +1603,8 @@ static PyGetSetDef gentype_getsets[] = {
 
 /* 0-dim array from scalar object */
 
-static char doc_getarray[] = "sc.__array__(|type) return 0-dim array";
+static char doc_getarray[] = "sc.__array__(dtype) return 0-dim array from "
+                             "scalar with specified dtype";
 
 static PyObject *
 gentype_getarray(PyObject *scalar, PyObject *args)
@@ -1672,16 +1670,6 @@ gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
     return NULL;
 }
 
-static PyObject *
-gentype_squeeze(PyObject *self, PyObject *args)
-{
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
-    Py_INCREF(self);
-    return self;
-}
-
 static Py_ssize_t
 gentype_getreadbuf(PyObject *, Py_ssize_t, void **);
 
@@ -1735,7 +1723,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, ptp, any, all, astype, resize,
  *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
- *         flatten, ravel#
+ *         flatten, ravel, squeeze#
  */
 static PyObject *
 gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
@@ -1842,6 +1830,9 @@ static PyObject *
 gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     PyObject *ret = NULL, *obj = NULL, *mod = NULL;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#endif
     const char *buffer;
     Py_ssize_t buflen;
 
@@ -1850,19 +1841,36 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
+
 #if defined(NPY_PY3K)
     if (PyArray_IsScalar(self, Unicode)) {
         /* Unicode on Python 3 does not expose the buffer interface */
         buffer = PyUnicode_AS_DATA(self);
         buflen = PyUnicode_GET_DATA_SIZE(self);
     }
-    else
-#endif
+    else if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
+        buffer = view.buf;
+        buflen = view.len;
+        /*
+         * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+         * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+         * up to the object that supplies the buffer to guarantee that the buffer
+         * sticks around after the release.
+         */
+        PyBuffer_Release(&view);
+    }
+    else {
+        Py_DECREF(ret);
+        return NULL;
+    }
+#else
     if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
         Py_DECREF(ret);
         return NULL;
     }
-    mod = PyImport_ImportModule("numpy.core.multiarray");
+#endif
+
+    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
         return NULL;
     }
@@ -2098,7 +2106,7 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"squeeze",
         (PyCFunction)gentype_squeeze,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"view",
         (PyCFunction)gentype_view,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2505,22 +2513,6 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
     }
 }
 #endif /* !defined(NPY_PY3K) */
-
-
-static int
-gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
-{
-    Py_ssize_t len;
-    void *buf;
-
-    /* FIXME: XXX: the format is not implemented! -- this needs more work */
-
-    len = gentype_getreadbuf(self, 0, &buf);
-    return PyBuffer_FillInfo(view, self, buf, len, 1, flags);
-}
-
-/* releasebuffer is not needed */
-
 
 static PyBufferProcs gentype_as_buffer = {
 #if !defined(NPY_PY3K)
@@ -3756,29 +3748,20 @@ static PyMappingMethods gentype_as_mapping = {
  * #CNAME = FLOAT, DOUBLE, LONGDOUBLE#
  */
 #if NPY_BITSOF_@CNAME@ == 16
-#define _THIS_SIZE2 "16"
-#define _THIS_SIZE1 "32"
+#define _THIS_SIZE "32"
 #elif NPY_BITSOF_@CNAME@ == 32
-#define _THIS_SIZE2 "32"
-#define _THIS_SIZE1 "64"
+#define _THIS_SIZE "64"
 #elif NPY_BITSOF_@CNAME@ == 64
-#define _THIS_SIZE2 "64"
-#define _THIS_SIZE1 "128"
+#define _THIS_SIZE "128"
 #elif NPY_BITSOF_@CNAME@ == 80
-#define _THIS_SIZE2 "80"
-#define _THIS_SIZE1 "160"
+#define _THIS_SIZE "160"
 #elif NPY_BITSOF_@CNAME@ == 96
-#define _THIS_SIZE2 "96"
-#define _THIS_SIZE1 "192"
+#define _THIS_SIZE "192"
 #elif NPY_BITSOF_@CNAME@ == 128
-#define _THIS_SIZE2 "128"
-#define _THIS_SIZE1 "256"
+#define _THIS_SIZE "256"
 #elif NPY_BITSOF_@CNAME@ == 256
-#define _THIS_SIZE2 "256"
-#define _THIS_SIZE1 "512"
+#define _THIS_SIZE "512"
 #endif
-
-#define _THIS_DOC "Composed of two " _THIS_SIZE2 " bit floats"
 
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 #if defined(NPY_PY3K)
@@ -3787,7 +3770,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     PyObject_HEAD_INIT(0)
     0,                                          /* ob_size */
 #endif
-    "numpy.@name@" _THIS_SIZE1,                 /* tp_name*/
+    "numpy.@name@" _THIS_SIZE,                  /* tp_name*/
     sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
     0,                                          /* tp_itemsize*/
     0,                                          /* tp_dealloc*/
@@ -3810,7 +3793,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_setattro*/
     0,                                          /* tp_as_buffer*/
     Py_TPFLAGS_DEFAULT,                         /* tp_flags*/
-    _THIS_DOC,                                  /* tp_doc */
+    0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
@@ -3838,9 +3821,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_del */
     0,                                          /* tp_version_tag */
 };
-#undef _THIS_SIZE1
-#undef _THIS_SIZE2
-#undef _THIS_DOC
+#undef _THIS_SIZE
 
 /**end repeat**/
 
@@ -4169,6 +4150,37 @@ initialize_casting_tables(void)
     }
 }
 
+#ifndef NPY_PY3K
+/*
+ * In python2, the `float` and `complex` types still implement the obsolete
+ * "tp_print" method, which uses CPython's float-printing routines to print the
+ * float.  Numpy's float_/cfloat inherit from Python float/complex, but
+ * override its tp_repr and tp_str methods. In order to avoid an inconsistency
+ * with the inherited tp_print, we need to override it too.
+ *
+ * In python3 the tp_print method is reserved/unused.
+ */
+static int
+doubletype_print(PyObject *o, FILE *fp, int flags)
+{
+    int ret;
+    PyObject *to_print;
+    if (flags & Py_PRINT_RAW) {
+        to_print = PyObject_Str(o);
+    }
+    else {
+        to_print = PyObject_Repr(o);
+    }
+
+    if (to_print == NULL) {
+        return -1;
+    }
+
+    ret = PyObject_Print(to_print, fp, Py_PRINT_RAW);
+    Py_DECREF(to_print);
+    return ret;
+}
+#endif
 
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
@@ -4220,6 +4232,12 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
 
     /**end repeat**/
+
+#ifndef NPY_PY3K
+    PyDoubleArrType_Type.tp_print = &doubletype_print;
+    PyCDoubleArrType_Type.tp_print = &doubletype_print;
+#endif
+
 
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 

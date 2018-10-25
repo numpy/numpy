@@ -2152,7 +2152,7 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * to UTC time, otherwise it returns the struct with the local time.
  *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
- * if obj doesn't have the neeeded date or datetime attributes.
+ * if obj doesn't have the needed date or datetime attributes.
  */
 NPY_NO_EXPORT int
 convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
@@ -2808,9 +2808,12 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 us_meta.base = NPY_FR_m;
             }
             else if (td % (24*60*60*1000000LL) != 0) {
-                us_meta.base = NPY_FR_D;
+                us_meta.base = NPY_FR_h;
             }
             else if (td % (7*24*60*60*1000000LL) != 0) {
+                us_meta.base = NPY_FR_D;
+            }
+            else {
                 us_meta.base = NPY_FR_W;
             }
             us_meta.num = 1;
@@ -2840,6 +2843,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             meta->num = 1;
         }
         *out = NPY_DATETIME_NAT;
+        return 0;
+    }
+    else if (PyArray_IsScalar(obj, Integer)) {
+        /* Use the default unit if none was specified */
+        if (meta->base == NPY_FR_ERROR) {
+            meta->base = NPY_DATETIME_DEFAULTUNIT;
+            meta->num = 1;
+        }
+
+        *out = PyLong_AsLongLong(obj);
         return 0;
     }
     else {
@@ -3679,11 +3692,11 @@ recursive_find_object_datetime64_type(PyObject *obj,
 
         return 0;
     }
-    /* Python date object -> 'D' */
-    else if (PyDate_Check(obj)) {
+    /* Python datetime object -> 'us' */
+    else if (PyDateTime_Check(obj)) {
         PyArray_DatetimeMetaData tmp_meta;
 
-        tmp_meta.base = NPY_FR_D;
+        tmp_meta.base = NPY_FR_us;
         tmp_meta.num = 1;
 
         /* Combine it with 'meta' */
@@ -3694,11 +3707,11 @@ recursive_find_object_datetime64_type(PyObject *obj,
 
         return 0;
     }
-    /* Python datetime object -> 'us' */
-    else if (PyDateTime_Check(obj)) {
+    /* Python date object -> 'D' */
+    else if (PyDate_Check(obj)) {
         PyArray_DatetimeMetaData tmp_meta;
 
-        tmp_meta.base = NPY_FR_us;
+        tmp_meta.base = NPY_FR_D;
         tmp_meta.num = 1;
 
         /* Combine it with 'meta' */
@@ -3718,19 +3731,21 @@ recursive_find_object_datetime64_type(PyObject *obj,
         }
 
         for (i = 0; i < len; ++i) {
+            int ret;
             PyObject *f = PySequence_GetItem(obj, i);
             if (f == NULL) {
                 return -1;
             }
-            if (f == obj) {
-                Py_DECREF(f);
-                return 0;
-            }
-            if (recursive_find_object_datetime64_type(f, meta) < 0) {
+            if (Npy_EnterRecursiveCall(" in recursive_find_object_datetime64_type") != 0) {
                 Py_DECREF(f);
                 return -1;
             }
+            ret = recursive_find_object_datetime64_type(f, meta);
+            Py_LeaveRecursiveCall();
             Py_DECREF(f);
+            if (ret < 0) {
+                return ret;
+            }
         }
 
         return 0;
@@ -3739,6 +3754,27 @@ recursive_find_object_datetime64_type(PyObject *obj,
     else {
         return 0;
     }
+}
+
+/*
+ * handler function for PyDelta values
+ * which may also be in a 0 dimensional
+ * NumPy array
+ */
+static int
+delta_checker(PyArray_DatetimeMetaData *meta)
+{
+    PyArray_DatetimeMetaData tmp_meta;
+
+    tmp_meta.base = NPY_FR_us;
+    tmp_meta.num = 1;
+
+    /* Combine it with 'meta' */
+    if (compute_datetime_metadata_greatest_common_divisor(
+            meta, &tmp_meta, meta, 0, 0) < 0) {
+        return -1;
+    }
+    return 0;
 }
 
 /*
@@ -3778,6 +3814,28 @@ recursive_find_object_timedelta64_type(PyObject *obj,
         else if (arr_dtype->type_num != NPY_OBJECT) {
             return 0;
         }
+        else {
+            if (PyArray_NDIM(arr) == 0) {
+                /*
+                 * special handling of 0 dimensional NumPy object
+                 * arrays, which may be indexed to retrieve their
+                 * single object using [()], but not by using
+                 * __getitem__(integer) approaches
+                 */
+                PyObject *item, *meth, *args;
+
+                meth = PyObject_GetAttrString(obj, "__getitem__");
+                args = Py_BuildValue("(())");
+                item = PyObject_CallObject(meth, args);
+                /*
+                 * NOTE: may need other type checks here in the future
+                 * for expanded 0 D datetime array conversions?
+                 */
+                if (PyDelta_Check(item)) {
+                    return delta_checker(meta);
+                }
+            }
+        }
     }
     /* Datetime scalar -> use its metadata */
     else if (PyArray_IsScalar(obj, Timedelta)) {
@@ -3798,18 +3856,7 @@ recursive_find_object_timedelta64_type(PyObject *obj,
     }
     /* Python timedelta object -> 'us' */
     else if (PyDelta_Check(obj)) {
-        PyArray_DatetimeMetaData tmp_meta;
-
-        tmp_meta.base = NPY_FR_us;
-        tmp_meta.num = 1;
-
-        /* Combine it with 'meta' */
-        if (compute_datetime_metadata_greatest_common_divisor(meta,
-                        &tmp_meta, meta, 0, 0) < 0) {
-            return -1;
-        }
-
-        return 0;
+        return delta_checker(meta);
     }
 
     /* Now check if what we have left is a sequence for recursion */
@@ -3820,19 +3867,21 @@ recursive_find_object_timedelta64_type(PyObject *obj,
         }
 
         for (i = 0; i < len; ++i) {
+            int ret;
             PyObject *f = PySequence_GetItem(obj, i);
             if (f == NULL) {
                 return -1;
             }
-            if (f == obj) {
-                Py_DECREF(f);
-                return 0;
-            }
-            if (recursive_find_object_timedelta64_type(f, meta) < 0) {
+            if (Npy_EnterRecursiveCall(" in recursive_find_object_timedelta64_type") != 0) {
                 Py_DECREF(f);
                 return -1;
             }
+            ret = recursive_find_object_timedelta64_type(f, meta);
+            Py_LeaveRecursiveCall();
             Py_DECREF(f);
+            if (ret < 0) {
+                return ret;
+            }
         }
 
         return 0;

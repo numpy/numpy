@@ -21,9 +21,10 @@ Arithmetic
 ----------
 - `chebadd` -- add two Chebyshev series.
 - `chebsub` -- subtract one Chebyshev series from another.
+- `chebmulx` -- multiply a Chebyshev series in ``P_i(x)`` by ``x``.
 - `chebmul` -- multiply two Chebyshev series.
 - `chebdiv` -- divide one Chebyshev series by another.
-- `chebpow` -- raise a Chebyshev series to an positive integer power
+- `chebpow` -- raise a Chebyshev series to a positive integer power.
 - `chebval` -- evaluate a Chebyshev series at given points.
 - `chebval2d` -- evaluate a 2D Chebyshev series at given points.
 - `chebval3d` -- evaluate a 3D Chebyshev series at given points.
@@ -83,12 +84,11 @@ References
 ----------
 .. [1] A. T. Benjamin, et al., "Combinatorial Trigonometry with Chebyshev
   Polynomials," *Journal of Statistical Planning and Inference 14*, 2008
-  (preprint: http://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
+  (preprint: https://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
 """
 from __future__ import division, absolute_import, print_function
 
-import numbers
 import warnings
 import numpy as np
 import numpy.linalg as la
@@ -365,7 +365,7 @@ def poly2cheb(pol):
     >>> c = p.convert(kind=P.Chebyshev)
     >>> c
     Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
-    >>> P.poly2cheb(range(4))
+    >>> P.chebyshev.poly2cheb(range(4))
     array([ 1.  ,  3.25,  1.  ,  0.75])
 
     """
@@ -417,7 +417,7 @@ def cheb2poly(c):
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
     Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
-    >>> P.cheb2poly(range(4))
+    >>> P.chebyshev.cheb2poly(range(4))
     array([ -2.,  -8.,   4.,  12.])
 
     """
@@ -579,7 +579,7 @@ def chebadd(c1, c2):
 
     See Also
     --------
-    chebsub, chebmul, chebdiv, chebpow
+    chebsub, chebmulx, chebmul, chebdiv, chebpow
 
     Notes
     -----
@@ -629,7 +629,7 @@ def chebsub(c1, c2):
 
     See Also
     --------
-    chebadd, chebmul, chebdiv, chebpow
+    chebadd, chebmulx, chebmul, chebdiv, chebpow
 
     Notes
     -----
@@ -684,6 +684,12 @@ def chebmulx(c):
 
     .. versionadded:: 1.5.0
 
+    Examples
+    --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> C.chebmulx([1,2,3])
+    array([ 1.,  2.5,  3.,  1.5,  2.])
+
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -722,7 +728,7 @@ def chebmul(c1, c2):
 
     See Also
     --------
-    chebadd, chebsub, chebdiv, chebpow
+    chebadd, chebsub, chebmulx, chebdiv, chebpow
 
     Notes
     -----
@@ -773,7 +779,7 @@ def chebdiv(c1, c2):
 
     See Also
     --------
-    chebadd, chebsub, chebmul, chebpow
+    chebadd, chebsub, chemulx, chebmul, chebpow
 
     Notes
     -----
@@ -841,10 +847,13 @@ def chebpow(c, pow, maxpower=16):
 
     See Also
     --------
-    chebadd, chebsub, chebmul, chebdiv
+    chebadd, chebsub, chebmulx, chebmul, chebdiv
 
     Examples
     --------
+    >>> from numpy.polynomial import chebyshev as C
+    >>> C.chebpow([1, 2, 3, 4], 2)
+    array([15.5, 22. , 16. , 14. , 12.5, 12. ,  8. ])
 
     """
     # c is a trimmed copy
@@ -1708,7 +1717,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
 
     Examples
     --------
@@ -2188,3 +2197,4 @@ class Chebyshev(ABCPolyBase):
     nickname = 'cheb'
     domain = np.array(chebdomain)
     window = np.array(chebdomain)
+    basis_name = 'T'

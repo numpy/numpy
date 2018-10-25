@@ -21,6 +21,7 @@
 #include "conversion_utils.h"
 #include "shape.h"
 #include "strfuncs.h"
+#include "array_assign.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -355,6 +356,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     PyObject *ret = NULL;
     PyObject *safe;
     static PyObject *checkfunc = NULL;
+    int self_elsize, typed_elsize;
 
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
@@ -372,24 +374,30 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         }
         Py_DECREF(safe);
     }
+    self_elsize = PyArray_ITEMSIZE(self);
+    typed_elsize = typed->elsize;
 
-    ret = PyArray_NewFromDescr_int(Py_TYPE(self),
-                                   typed,
-                                   PyArray_NDIM(self), PyArray_DIMS(self),
-                                   PyArray_STRIDES(self),
-                                   PyArray_BYTES(self) + offset,
-                                   PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
-                                   (PyObject *)self, 0, 1);
-    if (ret == NULL) {
+    /* check that values are valid */
+    if (typed_elsize > self_elsize) {
+        PyErr_SetString(PyExc_ValueError, "new type is larger than original type");
         return NULL;
     }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(((PyArrayObject *)ret), (PyObject *)self) < 0) {
-        Py_DECREF(ret);
+    if (offset < 0) {
+        PyErr_SetString(PyExc_ValueError, "offset is negative");
+        return NULL;
+    }
+    if (offset > self_elsize - typed_elsize) {
+        PyErr_SetString(PyExc_ValueError, "new type plus offset is larger than original type");
         return NULL;
     }
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
+    ret = PyArray_NewFromDescr_int(
+            Py_TYPE(self), typed,
+            PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
+            PyArray_BYTES(self) + offset,
+            PyArray_FLAGS(self) & ~NPY_ARRAY_F_CONTIGUOUS,
+            (PyObject *)self, (PyObject *)self,
+            0, 1);
     return ret;
 }
 
@@ -860,7 +868,7 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
 {
-    PyArrayObject *arr, *ret;
+    PyArrayObject *arr;
     PyObject *obj;
 
     if (PyTuple_Size(args) < 1) {
@@ -879,24 +887,16 @@ array_wraparray(PyArrayObject *self, PyObject *args)
     }
     arr = (PyArrayObject *)obj;
 
-    if (Py_TYPE(self) != Py_TYPE(arr)){
+    if (Py_TYPE(self) != Py_TYPE(arr)) {
         PyArray_Descr *dtype = PyArray_DESCR(arr);
         Py_INCREF(dtype);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                                   dtype,
-                                   PyArray_NDIM(arr),
-                                   PyArray_DIMS(arr),
-                                   PyArray_STRIDES(arr), PyArray_DATA(arr),
-                                   PyArray_FLAGS(arr), (PyObject *)self);
-        if (ret == NULL) {
-            return NULL;
-        }
-        Py_INCREF(obj);
-        if (PyArray_SetBaseObject(ret, obj) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-        return (PyObject *)ret;
+        return PyArray_NewFromDescrAndBase(
+                Py_TYPE(self),
+                dtype,
+                PyArray_NDIM(arr),
+                PyArray_DIMS(arr),
+                PyArray_STRIDES(arr), PyArray_DATA(arr),
+                PyArray_FLAGS(arr), (PyObject *)self, obj);
     } else {
         /*The type was set in __array_prepare__*/
         Py_INCREF(arr);
@@ -909,7 +909,7 @@ static PyObject *
 array_preparearray(PyArrayObject *self, PyObject *args)
 {
     PyObject *obj;
-    PyArrayObject *arr, *ret;
+    PyArrayObject *arr;
     PyArray_Descr *dtype;
 
     if (PyTuple_Size(args) < 1) {
@@ -933,21 +933,11 @@ array_preparearray(PyArrayObject *self, PyObject *args)
 
     dtype = PyArray_DESCR(arr);
     Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                               dtype,
-                               PyArray_NDIM(arr),
-                               PyArray_DIMS(arr),
-                               PyArray_STRIDES(arr), PyArray_DATA(arr),
-                               PyArray_FLAGS(arr), (PyObject *)self);
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(arr);
-    if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-    return (PyObject *)ret;
+    return PyArray_NewFromDescrAndBase(
+            Py_TYPE(self), dtype,
+            PyArray_NDIM(arr), PyArray_DIMS(arr), PyArray_STRIDES(arr),
+            PyArray_DATA(arr),
+            PyArray_FLAGS(arr), (PyObject *)self, (PyObject *)arr);
 }
 
 
@@ -968,7 +958,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
         PyArrayObject *new;
 
         Py_INCREF(PyArray_DESCR(self));
-        new = (PyArrayObject *)PyArray_NewFromDescr(
+        new = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type,
                 PyArray_DESCR(self),
                 PyArray_NDIM(self),
@@ -976,13 +966,12 @@ array_getarray(PyArrayObject *self, PyObject *args)
                 PyArray_STRIDES(self),
                 PyArray_DATA(self),
                 PyArray_FLAGS(self),
-                NULL
+                NULL,
+                (PyObject *)self
         );
         if (new == NULL) {
             return NULL;
         }
-        Py_INCREF(self);
-        PyArray_SetBaseObject(new, (PyObject *)self);
         self = new;
     }
     else {
@@ -1005,9 +994,12 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
     PyObject *result = NULL;
-    int num_override_args;
+    int has_override;
 
-    if (PyTuple_Size(args) < 2) {
+    assert(PyTuple_CheckExact(args));
+    assert(kwds == NULL || PyDict_CheckExact(kwds));
+
+    if (PyTuple_GET_SIZE(args) < 2) {
         PyErr_SetString(PyExc_TypeError,
                         "__array_ufunc__ requires at least 2 arguments");
         return NULL;
@@ -1017,11 +1009,11 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    num_override_args = PyUFunc_WithOverride(normal_args, kwds, NULL, NULL);
-    if (num_override_args == -1) {
-        return NULL;
+    has_override = PyUFunc_HasOverride(normal_args, kwds);
+    if (has_override < 0) {
+        goto cleanup;
     }
-    if (num_override_args) {
+    else if (has_override) {
         result = Py_NotImplemented;
         Py_INCREF(Py_NotImplemented);
         goto cleanup;
@@ -1044,6 +1036,13 @@ cleanup:
     Py_DECREF(normal_args);
     /* no need to DECREF borrowed references ufunc and method_name */
     return result;
+}
+
+
+static PyObject *
+array_function(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    NPY_FORWARD_NDARRAY_METHOD("_array_function");
 }
 
 
@@ -1592,7 +1591,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
-    mod = PyImport_ImportModule("numpy.core.multiarray");
+    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
         Py_DECREF(ret);
         return NULL;
@@ -1620,6 +1619,8 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
        Notice because Python does not describe a mechanism to write
        raw data to the pickle, this performs a copy to a string first
+       This issue is now adressed in protocol 5, where a buffer is serialized
+       instead of a string,
     */
 
     state = PyTuple_New(5);
@@ -1650,6 +1651,132 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(state, 4, thestr);
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
+}
+
+static PyObject *
+array_reduce_ex(PyArrayObject *self, PyObject *args)
+{
+    int protocol;
+    PyObject *ret = NULL, *numeric_mod = NULL, *from_buffer_func = NULL;
+    PyObject *buffer_tuple = NULL, *pickle_module = NULL, *pickle_class = NULL;
+    PyObject *class_args = NULL, *class_args_tuple = NULL, *unused = NULL;
+    PyObject *subclass_array_reduce = NULL;
+    PyObject *buffer = NULL, *transposed_array = NULL;
+    PyArray_Descr *descr = NULL;
+    char order;
+
+    if (PyArg_ParseTuple(args, "i", &protocol)){
+        descr = PyArray_DESCR(self);
+        if ((protocol < 5) ||
+            (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*)self) &&
+             !PyArray_IS_F_CONTIGUOUS((PyArrayObject*)self)) ||
+            PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
+            (PyType_IsSubtype(((PyObject*)self)->ob_type, &PyArray_Type) &&
+             ((PyObject*)self)->ob_type != &PyArray_Type) ||
+            PyDataType_ISUNSIZED(descr)) {
+            /* The PickleBuffer class from version 5 of the pickle protocol
+             * can only be used for arrays backed by a contiguous data buffer.
+             * For all other cases we fallback to the generic array_reduce
+             * method that involves using a temporary bytes allocation. However
+             * we do not call array_reduce directly but instead lookup and call
+             * the __reduce__ method to make sure that it's possible customize
+             * pickling in sub-classes. */
+            subclass_array_reduce = PyObject_GetAttrString((PyObject *)self,
+                                                           "__reduce__");
+            return PyObject_CallObject(subclass_array_reduce, unused);
+        }
+        else if (protocol == 5){
+            ret = PyTuple_New(2);
+
+            if (ret == NULL) {
+                return NULL;
+            }
+
+            /* if the python version is below 3.8, the pickle module does not provide
+             * built-in support for protocol 5. We try importing the pickle5
+             * backport instead */
+#if PY_VERSION_HEX >= 0x03080000
+            pickle_module = PyImport_ImportModule("pickle");
+#elif PY_VERSION_HEX < 0x03080000 && PY_VERSION_HEX >= 0x03060000
+            pickle_module = PyImport_ImportModule("pickle5");
+            if (pickle_module == NULL){
+                /* for protocol 5, raise a clear ImportError if pickle5 is not found
+                 */
+                PyErr_SetString(PyExc_ImportError, "Using pickle protocol 5 "
+                        "requires the pickle5 module for python versions >=3.6 "
+                        "and <3.8");
+                return NULL;
+            }
+#else
+            PyErr_SetString(PyExc_ValueError, "pickle protocol 5 is not available "
+                                               "for python versions < 3.6");
+            return NULL;
+#endif
+            if (pickle_module == NULL){
+                return NULL;
+            }
+
+            pickle_class = PyObject_GetAttrString(pickle_module,
+                                                  "PickleBuffer");
+
+            class_args_tuple = PyTuple_New(1);
+            if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*)self) &&
+                PyArray_IS_F_CONTIGUOUS((PyArrayObject*)self)){
+
+                /* if the array if Fortran-contiguous and not C-contiguous,
+                 * the PickleBuffer instance will hold a view on the transpose
+                 * of the initial array, that is C-contiguous. */
+                order = 'F';
+                transposed_array = PyArray_Transpose((PyArrayObject*)self, NULL);
+                PyTuple_SET_ITEM(class_args_tuple, 0, transposed_array);
+            }
+            else {
+                order = 'C';
+                PyTuple_SET_ITEM(class_args_tuple, 0, (PyObject *)self);
+                Py_INCREF(self);
+            }
+
+            class_args = Py_BuildValue("O", class_args_tuple);
+
+            buffer = PyObject_CallObject(pickle_class, class_args);
+
+            numeric_mod = PyImport_ImportModule("numpy.core.numeric");
+            if (numeric_mod == NULL) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+            from_buffer_func = PyObject_GetAttrString(numeric_mod,
+                                                      "_frombuffer");
+            Py_DECREF(numeric_mod);
+
+            Py_INCREF(descr);
+
+            buffer_tuple = PyTuple_New(4);
+            PyTuple_SET_ITEM(buffer_tuple, 0, buffer);
+            PyTuple_SET_ITEM(buffer_tuple, 1, (PyObject *)descr);
+            PyTuple_SET_ITEM(buffer_tuple, 2,
+                             PyObject_GetAttrString((PyObject *)self,
+                                                    "shape"));
+            PyTuple_SET_ITEM(buffer_tuple, 3,
+                             PyUnicode_FromStringAndSize(&order,
+                                                         (Py_ssize_t)1));
+
+            PyTuple_SET_ITEM(ret, 0, from_buffer_func);
+            PyTuple_SET_ITEM(ret, 1, buffer_tuple);
+
+            return ret;
+        }
+        else {
+            PyErr_Format(PyExc_ValueError,
+                         "cannot call __reduce_ex__ with protocol >= %d",
+                         5);
+            return NULL;
+        }
+    }
+    else {
+        return NULL;
+    }
+
 }
 
 static PyObject *
@@ -1804,11 +1931,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
         fa->data = datastr;
 #ifndef NPY_PY3K
         /* Check that the string is not interned */
-        if (!_IsAligned(self) || swap || PyString_CHECK_INTERNED(rawdata)) {
+        if (!IsAligned(self) || swap || PyString_CHECK_INTERNED(rawdata)) {
 #else
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
-        if (!_IsAligned(self) || swap || (len <= 1000)) {
+        if (!IsAligned(self) || swap || (len <= 1000)) {
 #endif
             npy_intp num = PyArray_NBYTES(self);
             fa->data = PyDataMem_NEW(num);
@@ -2300,12 +2427,12 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (PyObject_Not(align_flag)) {
             PyArray_CLEARFLAGS(self, NPY_ARRAY_ALIGNED);
         }
-        else if (_IsAligned(self)) {
+        else if (IsAligned(self)) {
             PyArray_ENABLEFLAGS(self, NPY_ARRAY_ALIGNED);
         }
         else {
             PyErr_SetString(PyExc_ValueError,
-                            "cannot set aligned flag of mis-"\
+                            "cannot set aligned flag of mis-"
                             "aligned array to True");
             return NULL;
         }
@@ -2315,7 +2442,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (PyObject_IsTrue(uic)) {
             fa->flags = flagback;
             PyErr_SetString(PyExc_ValueError,
-                            "cannot set WRITEBACKIFCOPY "       \
+                            "cannot set WRITEBACKIFCOPY "
                             "flag to True");
             return NULL;
         }
@@ -2498,6 +2625,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__array_ufunc__",
         (PyCFunction)array_ufunc,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"__array_function__",
+        (PyCFunction)array_function,
+        METH_VARARGS | METH_KEYWORDS, NULL},
 
 #ifndef NPY_PY3K
     {"__unicode__",
@@ -2521,6 +2651,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for Pickling */
     {"__reduce__",
         (PyCFunction) array_reduce,
+        METH_VARARGS, NULL},
+    {"__reduce_ex__",
+        (PyCFunction) array_reduce_ex,
         METH_VARARGS, NULL},
     {"__setstate__",
         (PyCFunction) array_setstate,

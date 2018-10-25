@@ -5,9 +5,9 @@ import sys
 import numpy as np
 from numpy.core.multiarray import _vec_string
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal, assert_raises,
-    suppress_warnings,
-)
+    assert_, assert_equal, assert_array_equal, assert_raises,
+    assert_raises_regex, suppress_warnings,
+    )
 
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
@@ -626,12 +626,9 @@ class TestOperations(object):
             assert_array_equal(Ar, (self.A * r))
 
         for ob in [object(), 'qrs']:
-            try:
-                A * ob
-            except ValueError:
-                pass
-            else:
-                self.fail("chararray can only be multiplied by integers")
+            with assert_raises_regex(ValueError,
+                                     'Can only multiply by integers'):
+                A*ob
 
     def test_rmul(self):
         A = self.A
@@ -641,12 +638,9 @@ class TestOperations(object):
             assert_array_equal(Ar, (r * self.A))
 
         for ob in [object(), 'qrs']:
-            try:
+            with assert_raises_regex(ValueError,
+                                     'Can only multiply by integers'):
                 ob * A
-            except ValueError:
-                pass
-            else:
-                self.fail("chararray can only be multiplied by integers")
 
     def test_mod(self):
         """Ticket #856"""
@@ -668,13 +662,9 @@ class TestOperations(object):
         assert_(("%r" % self.A) == repr(self.A))
 
         for ob in [42, object()]:
-            try:
+            with assert_raises_regex(
+                    TypeError, "unsupported operand type.* and 'chararray'"):
                 ob % self.A
-            except TypeError:
-                pass
-            else:
-                self.fail("chararray __rmod__ should fail with "
-                          "non-string objects")
 
     def test_slice(self):
         """Regression test for https://github.com/numpy/numpy/issues/5982"""
@@ -700,7 +690,3 @@ def test_empty_indexing():
     # empty chararray instead of a chararray with a single empty string in it.
     s = np.chararray((4,))
     assert_(s[[]].size == 0)
-
-
-if __name__ == "__main__":
-    run_module_suite()

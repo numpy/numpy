@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 extensions = ['sphinx.ext.autodoc', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'sphinx.ext.graphviz',
+              'sphinx.ext.graphviz', 'sphinx.ext.ifconfig',
               'matplotlib.sphinxext.plot_directive']
 
 if sphinx.__version__ >= "1.4":
@@ -39,7 +39,7 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2017, The SciPy community'
+copyright = '2008-2018, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -82,6 +82,9 @@ add_function_parentheses = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+def setup(app):
+    # add a config value for `ifconfig` directives
+    app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -101,8 +104,8 @@ if 'scipyorg' in tags:
         "edit_link": True,
         "sidebar": "right",
         "scipy_org_logo": True,
-        "rootlinks": [("http://scipy.org/", "Scipy.org"),
-                      ("http://docs.scipy.org/", "Docs")]
+        "rootlinks": [("https://scipy.org/", "Scipy.org"),
+                      ("https://docs.scipy.org/", "Docs")]
     }
 else:
     # Default build
@@ -112,7 +115,7 @@ else:
         "scipy_org_logo": False,
         "rootlinks": []
     }
-    html_sidebars = {'index': 'indexsidebar.html'}
+    html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
 
 html_additional_pages = {
     'index': 'indexcontent.html',
@@ -212,7 +215,7 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('http://matplotlib.org', None)
+    'matplotlib': ('https://matplotlib.org', None)
 }
 
 
@@ -318,6 +321,15 @@ def linkcode_resolve(domain, info):
         except Exception:
             return None
 
+    # strip decorators, which would resolve to the source of the decorator
+    # possibly an upstream bug in getsourcefile, bpo-1764286
+    try:
+        unwrap = inspect.unwrap
+    except AttributeError:
+        pass
+    else:
+        obj = unwrap(obj)
+
     try:
         fn = inspect.getsourcefile(obj)
     except Exception:
@@ -338,8 +350,8 @@ def linkcode_resolve(domain, info):
     fn = relpath(fn, start=dirname(numpy.__file__))
 
     if 'dev' in numpy.__version__:
-        return "http://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
            fn, linespec)
     else:
-        return "http://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)

@@ -3,7 +3,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import assert_, run_module_suite, assert_raises
+from numpy.testing import assert_, assert_raises
 from numpy.lib import NumpyVersion
 
 
@@ -64,7 +64,3 @@ def test_dev0_a_b_rc_mixed():
 def test_raises():
     for ver in ['1.9', '1,9.0', '1.7.x']:
         assert_raises(ValueError, NumpyVersion, ver)
-
-
-if __name__ == "__main__":
-    run_module_suite()

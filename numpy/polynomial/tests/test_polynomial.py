@@ -3,11 +3,12 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 
@@ -102,6 +103,15 @@ class TestArithmetic(object):
                 quo, rem = poly.polydiv(tgt, ci)
                 res = poly.polyadd(poly.polymul(quo, ci), rem)
                 assert_equal(res, tgt, err_msg=msg)
+
+    def test_polypow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(poly.polymul, [c]*j, np.array([1]))
+                res = poly.polypow(c, j) 
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
 class TestEvaluation(object):
@@ -566,7 +576,3 @@ class TestMisc(object):
 
     def test_polyline(self):
         assert_equal(poly.polyline(3, 4), [3, 4])
-
-
-if __name__ == "__main__":
-    run_module_suite()

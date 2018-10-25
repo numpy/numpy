@@ -4,15 +4,16 @@ import operator
 import warnings
 import sys
 import decimal
+import pytest
 
 import numpy as np
 from numpy import ma
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_allclose, assert_array_max_ulp, assert_warns, assert_raises_regex,
-    dec, suppress_warnings, HAS_REFCOUNT,
-)
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    HAS_REFCOUNT,
+    )
 import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import (
@@ -21,7 +22,7 @@ from numpy.lib import (
     histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
     piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
     unwrap, unique, vectorize
-)
+    )
 
 from numpy.compat import long
 
@@ -103,9 +104,10 @@ class TestRot90(object):
 class TestFlip(object):
 
     def test_axes(self):
-        assert_raises(ValueError, np.flip, np.ones(4), axis=1)
-        assert_raises(ValueError, np.flip, np.ones((4, 4)), axis=2)
-        assert_raises(ValueError, np.flip, np.ones((4, 4)), axis=-3)
+        assert_raises(np.AxisError, np.flip, np.ones(4), axis=1)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=2)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=-3)
+        assert_raises(np.AxisError, np.flip, np.ones((4, 4)), axis=(0, 3))
 
     def test_basic_lr(self):
         a = get_mat(4)
@@ -171,6 +173,35 @@ class TestFlip(object):
         for i in range(a.ndim):
             assert_equal(np.flip(a, i),
                          np.flipud(a.swapaxes(0, i)).swapaxes(i, 0))
+
+    def test_default_axis(self):
+        a = np.array([[1, 2, 3],
+                      [4, 5, 6]])
+        b = np.array([[6, 5, 4],
+                      [3, 2, 1]])
+        assert_equal(np.flip(a), b)
+
+    def test_multiple_axes(self):
+        a = np.array([[[0, 1],
+                       [2, 3]],
+                      [[4, 5],
+                       [6, 7]]])
+
+        assert_equal(np.flip(a, axis=()), a)
+
+        b = np.array([[[5, 4],
+                       [7, 6]],
+                      [[1, 0],
+                       [3, 2]]])
+
+        assert_equal(np.flip(a, axis=(0, 2)), b)
+
+        c = np.array([[[3, 2],
+                       [1, 0]],
+                      [[7, 6],
+                       [5, 4]]])
+
+        assert_equal(np.flip(a, axis=(1, 2)), c)
 
 
 class TestAny(object):
@@ -256,9 +287,6 @@ class TestAverage(object):
         assert_almost_equal(y5.mean(0), average(y5, 0))
         assert_almost_equal(y5.mean(1), average(y5, 1))
 
-        y6 = np.matrix(rand(5, 5))
-        assert_array_equal(y6.mean(0), average(y6, 0))
-
     def test_weights(self):
         y = np.arange(10)
         w = np.arange(10)
@@ -325,14 +353,6 @@ class TestAverage(object):
 
         assert_equal(type(np.average(a)), subclass)
         assert_equal(type(np.average(a, weights=w)), subclass)
-
-        # also test matrices
-        a = np.matrix([[1,2],[3,4]])
-        w = np.matrix([[1,2],[3,4]])
-
-        r = np.average(a, axis=0, weights=w)
-        assert_equal(type(r), np.matrix)
-        assert_equal(r, [[2.5, 10.0/3]])
 
     def test_upcasting(self):
         types = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
@@ -714,6 +734,58 @@ class TestDiff(object):
         assert_array_equal(out3.mask, [[], [], [], [], []])
         assert_(type(out3) is type(x))
 
+    def test_prepend(self):
+        x = np.arange(5) + 1
+        assert_array_equal(diff(x, prepend=0), np.ones(5))
+        assert_array_equal(diff(x, prepend=[0]), np.ones(5))
+        assert_array_equal(np.cumsum(np.diff(x, prepend=0)), x)
+        assert_array_equal(diff(x, prepend=[-1, 0]), np.ones(6))
+
+        x = np.arange(4).reshape(2, 2)
+        result = np.diff(x, axis=1, prepend=0)
+        expected = [[0, 1], [2, 1]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=1, prepend=[[0], [0]])
+        assert_array_equal(result, expected)
+
+        result = np.diff(x, axis=0, prepend=0)
+        expected = [[0, 1], [2, 2]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=0, prepend=[[0, 0]])
+        assert_array_equal(result, expected)
+
+        assert_raises(ValueError, np.diff, x, prepend=np.zeros((3,3)))
+
+        assert_raises(np.AxisError, diff, x, prepend=0, axis=3)
+
+    def test_append(self):
+        x = np.arange(5)
+        result = diff(x, append=0)
+        expected = [1, 1, 1, 1, -4]
+        assert_array_equal(result, expected)
+        result = diff(x, append=[0])
+        assert_array_equal(result, expected)
+        result = diff(x, append=[0, 2])
+        expected = expected + [2]
+        assert_array_equal(result, expected)
+
+        x = np.arange(4).reshape(2, 2)
+        result = np.diff(x, axis=1, append=0)
+        expected = [[1, -1], [1, -3]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=1, append=[[0], [0]])
+        assert_array_equal(result, expected)
+
+        result = np.diff(x, axis=0, append=0)
+        expected = [[2, 2], [-2, -3]]
+        assert_array_equal(result, expected)
+        result = np.diff(x, axis=0, append=[[0, 0]])
+        assert_array_equal(result, expected)
+
+        assert_raises(ValueError, np.diff, x, append=np.zeros((3,3)))
+
+        assert_raises(np.AxisError, diff, x, append=0, axis=3)
+
 
 class TestDelete(object):
 
@@ -1022,6 +1094,16 @@ class TestAngle(object):
         zo = np.array(yo) * 180 / np.pi
         assert_array_almost_equal(y, yo, 11)
         assert_array_almost_equal(z, zo, 11)
+
+    def test_subclass(self):
+        x = np.ma.array([1 + 3j, 1, np.sqrt(2)/2 * (1 + 1j)])
+        x[1] = np.ma.masked
+        expected = np.ma.array([np.arctan(3.0 / 1.0), 0, np.arctan(1.0)])
+        expected[1] = np.ma.masked
+        actual = angle(x)
+        assert_equal(type(actual), type(expected))
+        assert_equal(actual.mask, expected.mask)
+        assert_equal(actual, expected)
 
 
 class TestTrimZeros(object):
@@ -1490,13 +1572,25 @@ class TestDigitize(object):
         assert_(not isinstance(digitize(b, a, False), A))
         assert_(not isinstance(digitize(b, a, True), A))
 
+    def test_large_integers_increasing(self):
+        # gh-11022
+        x = 2**54  # loses precision in a float
+        assert_equal(np.digitize(x, [x - 1, x + 1]), 1)
+
+    @pytest.mark.xfail(
+        reason="gh-11022: np.core.multiarray._monoticity loses precision")
+    def test_large_integers_decreasing(self):
+        # gh-11022
+        x = 2**54  # loses precision in a float
+        assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
+
 
 class TestUnwrap(object):
 
     def test_simple(self):
-        # check that unwrap removes jumps greather that 2*pi
+        # check that unwrap removes jumps greater that 2*pi
         assert_array_equal(unwrap([1, 1 + 2 * np.pi]), [1, 1])
-        # check that unwrap maintans continuity
+        # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
 
 
@@ -1591,16 +1685,6 @@ class TestTrapz(object):
 
         xm = np.ma.array(x, mask=mask)
         assert_almost_equal(trapz(y, xm), r)
-
-    def test_matrix(self):
-        # Test to make sure matrices give the same answer as ndarrays
-        x = np.linspace(0, 5)
-        y = x * x
-        r = trapz(y, x)
-        mx = np.matrix(x)
-        my = np.matrix(y)
-        mr = trapz(my, mx)
-        assert_almost_equal(mr, r)
 
 
 class TestSinc(object):
@@ -1752,7 +1836,9 @@ class TestCov(object):
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
-        assert_allclose(cov(x), np.array([[1., -1.j], [1.j, 1.]]))
+        res = np.array([[1., -1.j], [1.j, 1.]])
+        assert_allclose(cov(x), res)
+        assert_allclose(cov(x, aweights=np.ones(3)), res)
 
     def test_xy(self):
         x = np.array([[1, 2, 3]])
@@ -2141,7 +2227,7 @@ class TestBincount(object):
                             "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
 
-    @dec.skipif(not HAS_REFCOUNT, "python has no sys.getrefcount")
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_dtype_reference_leaks(self):
         # gh-6805
         intp_refcount = sys.getrefcount(np.dtype(np.intp))
@@ -2225,6 +2311,14 @@ class TestInterp(object):
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
 
+    def test_non_finite_behavior(self):
+        x = [1, 2, 2.5, 3, 4]
+        xp = [1, 2, 3, 4]
+        fp = [1, 2, np.inf, 4]
+        assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.inf, np.inf, 4])
+        fp = [1, 2, np.nan, 4]
+        assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
+
     def test_complex_interp(self):
         # test complex interpolation
         x = np.linspace(0, 1, 5)
@@ -2239,6 +2333,12 @@ class TestInterp(object):
         x0 = 2.0
         right = 2 + 3.0j
         assert_almost_equal(np.interp(x0, x, y, right=right), right)
+        # test complex non finite
+        x = [1, 2, 2.5, 3, 4]
+        xp = [1, 2, 3, 4]
+        fp = [1, 2+1j, np.inf, 4]
+        y = [1, 2+1j, np.inf+0.5j, np.inf, 4]
+        assert_almost_equal(np.interp(x, xp, fp), y)
         # test complex periodic
         x = [-180, -170, -185, 185, -10, -5, 0, 365]
         xp = [190, -190, 350, -350]
@@ -2252,8 +2352,17 @@ class TestInterp(object):
         y = np.linspace(0, 1, 5)
         x0 = np.array(.3)
         assert_almost_equal(np.interp(x0, x, y), x0)
-        x0 = np.array(.3, dtype=object)
-        assert_almost_equal(np.interp(x0, x, y), .3)
+
+        xp = np.array([0, 2, 4])
+        fp = np.array([1, -1, 1])
+
+        actual = np.interp(np.array(1), xp, fp)
+        assert_equal(actual, 0)
+        assert_(isinstance(actual, np.float64))
+
+        actual = np.interp(np.array(4.5), xp, fp, period=4)
+        assert_equal(actual, 0.5)
+        assert_(isinstance(actual, np.float64))
 
     def test_if_len_x_is_small(self):
         xp = np.arange(0, 10, 0.0001)
@@ -2707,6 +2816,28 @@ class TestPercentile(object):
                 a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
 
 
+class TestQuantile(object):
+    # most of this is already tested by TestPercentile
+
+    def test_basic(self):
+        x = np.arange(8) * 0.5
+        assert_equal(np.quantile(x, 0), 0.)
+        assert_equal(np.quantile(x, 1), 3.5)
+        assert_equal(np.quantile(x, 0.5), 1.75)
+
+    def test_no_p_overwrite(self):
+        # this is worth retesting, because quantile does not make a copy
+        p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
+        p = p0.copy()
+        np.quantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
+
+        p0 = p0.tolist()
+        p = p.tolist()
+        np.quantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
+
+
 class TestMedian(object):
 
     def test_basic(self):
@@ -2976,7 +3107,7 @@ class TestAdd_newdoc_ufunc(object):
 
 class TestAdd_newdoc(object):
 
-    @dec.skipif(sys.flags.optimize == 2)
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     def test_add_doc(self):
         # test np.add_newdoc
         tgt = "Current flat index into the array."
@@ -2984,6 +3115,28 @@ class TestAdd_newdoc(object):
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
 
+class TestSortComplex(object):
 
-if __name__ == "__main__":
-    run_module_suite()
+    @pytest.mark.parametrize("type_in, type_out", [
+        ('l', 'D'),
+        ('h', 'F'),
+        ('H', 'F'),
+        ('b', 'F'),
+        ('B', 'F'),
+        ('g', 'G'),
+        ])
+    def test_sort_real(self, type_in, type_out):
+        # sort_complex() type casting for real input types
+        a = np.array([5, 3, 6, 2, 1], dtype=type_in)
+        actual = np.sort_complex(a)
+        expected = np.sort(a).astype(type_out)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
+
+    def test_sort_complex(self):
+        # sort_complex() handling of complex input
+        a = np.array([2 + 3j, 1 - 2j, 1 - 3j, 2 + 1j], dtype='D')
+        expected = np.array([1 - 3j, 1 - 2j, 2 + 1j, 2 + 3j], dtype='D')
+        actual = np.sort_complex(a)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)

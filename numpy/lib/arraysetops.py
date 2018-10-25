@@ -27,7 +27,14 @@ To do: Optionally return indices analogously to unique for all functions.
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
+
 import numpy as np
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [
@@ -36,6 +43,11 @@ __all__ = [
     ]
 
 
+def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
+    return (ary, to_end, to_begin)
+
+
+@array_function_dispatch(_ediff1d_dispatcher)
 def ediff1d(ary, to_end=None, to_begin=None):
     """
     The differences between consecutive elements of an array.
@@ -82,6 +94,11 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # force a 1d array
     ary = np.asanyarray(ary).ravel()
 
+    # we have unit tests enforcing
+    # propagation of the dtype of input
+    # ary to returned result
+    dtype_req = ary.dtype
+
     # fast track default case
     if to_begin is None and to_end is None:
         return ary[1:] - ary[:-1]
@@ -89,13 +106,23 @@ def ediff1d(ary, to_end=None, to_begin=None):
     if to_begin is None:
         l_begin = 0
     else:
-        to_begin = np.asanyarray(to_begin).ravel()
+        to_begin = np.asanyarray(to_begin)
+        if not np.can_cast(to_begin, dtype_req):
+            raise TypeError("dtype of to_begin must be compatible "
+                            "with input ary")
+
+        to_begin = to_begin.ravel()
         l_begin = len(to_begin)
 
     if to_end is None:
         l_end = 0
     else:
-        to_end = np.asanyarray(to_end).ravel()
+        to_end = np.asanyarray(to_end)
+        if not np.can_cast(to_end, dtype_req):
+            raise TypeError("dtype of to_end must be compatible "
+                            "with input ary")
+
+        to_end = to_end.ravel()
         l_end = len(to_end)
 
     # do the calculation in place and copy to_begin and to_end
@@ -118,6 +145,12 @@ def _unpack_tuple(x):
         return x
 
 
+def _unique_dispatcher(ar, return_index=None, return_inverse=None,
+                       return_counts=None, axis=None):
+    return (ar,)
+
+
+@array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None):
     """
@@ -148,15 +181,14 @@ def unique(ar, return_index=False, return_inverse=False,
         .. versionadded:: 1.9.0
 
     axis : int or None, optional
-        The axis to operate on. If None, `ar` will be flattened beforehand.
-        Otherwise, duplicate items will be removed along the provided axis,
-        with all the other axes belonging to the each of the unique elements.
-        Object arrays or structured arrays that contain objects are not
-        supported if the `axis` kwarg is used.
+        The axis to operate on. If None, `ar` will be flattened. If an integer,
+        the subarrays indexed by the given axis will be flattened and treated
+        as the elements of a 1-D array with the dimension of the given axis,
+        see the notes for more details.  Object arrays or structured arrays
+        that contain objects are not supported if the `axis` kwarg is used. The
+        default is None.
 
         .. versionadded:: 1.13.0
-
-
 
     Returns
     -------
@@ -178,6 +210,17 @@ def unique(ar, return_index=False, return_inverse=False,
     --------
     numpy.lib.arraysetops : Module with a number of other functions for
                             performing set operations on arrays.
+
+    Notes
+    -----
+    When an axis is specified the subarrays indexed by the axis are sorted.
+    This is done by making the specified axis the first dimension of the array
+    and then flattening the subarrays in C order. The flattened subarrays are
+    then viewed as a structured type with each element given a label, with the
+    effect that we end up with a 1-D array of structured types that can be
+    treated in the same way as any other 1-D array. The result is that the
+    flattened subarrays are sorted in lexicographic order starting with the
+    first element.
 
     Examples
     --------
@@ -223,23 +266,18 @@ def unique(ar, return_index=False, return_inverse=False,
         ret = _unique1d(ar, return_index, return_inverse, return_counts)
         return _unpack_tuple(ret)
 
-    if not (-ar.ndim <= axis < ar.ndim):
-        raise ValueError('Invalid axis kwarg specified for unique')
+    # axis was specified and not None
+    try:
+        ar = np.swapaxes(ar, axis, 0)
+    except np.AxisError:
+        # this removes the "axis1" or "axis2" prefix from the error message
+        raise np.AxisError(axis, ar.ndim)
 
-    ar = np.swapaxes(ar, axis, 0)
-    orig_shape, orig_dtype = ar.shape, ar.dtype
     # Must reshape to a contiguous 2D array for this to work...
+    orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], -1)
     ar = np.ascontiguousarray(ar)
-
-    if ar.dtype.char in (np.typecodes['AllInteger'] +
-                         np.typecodes['Datetime'] + 'S'):
-        # Optimization: Creating a view of your data with a np.void data type of
-        # size the number of bytes in a full row. Handles any type where items
-        # have a unique binary representation, i.e. 0 is only 0, not +0 and -0.
-        dtype = np.dtype((np.void, ar.dtype.itemsize * ar.shape[1]))
-    else:
-        dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
 
     try:
         consolidated = ar.view(dtype)
@@ -293,7 +331,13 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     return ret
 
 
-def intersect1d(ar1, ar2, assume_unique=False):
+def _intersect1d_dispatcher(
+        ar1, ar2, assume_unique=None, return_indices=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_intersect1d_dispatcher)
+def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
     Find the intersection of two arrays.
 
@@ -302,15 +346,28 @@ def intersect1d(ar1, ar2, assume_unique=False):
     Parameters
     ----------
     ar1, ar2 : array_like
-        Input arrays.
+        Input arrays. Will be flattened if not already 1D.
     assume_unique : bool
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
+    return_indices : bool
+        If True, the indices which correspond to the intersection of the two
+        arrays are returned. The first instance of a value is used if there are
+        multiple. Default is False.
+
+        .. versionadded:: 1.15.0
 
     Returns
     -------
     intersect1d : ndarray
         Sorted 1D array of common and unique elements.
+    comm1 : ndarray
+        The indices of the first occurrences of the common values in `ar1`.
+        Only provided if `return_indices` is True.
+    comm2 : ndarray
+        The indices of the first occurrences of the common values in `ar2`.
+        Only provided if `return_indices` is True.
+
 
     See Also
     --------
@@ -327,15 +384,59 @@ def intersect1d(ar1, ar2, assume_unique=False):
     >>> from functools import reduce
     >>> reduce(np.intersect1d, ([1, 3, 4, 3], [3, 1, 2, 1], [6, 3, 4, 2]))
     array([3])
-    """
-    if not assume_unique:
-        # Might be faster than unique( intersect1d( ar1, ar2 ) )?
-        ar1 = unique(ar1)
-        ar2 = unique(ar2)
-    aux = np.concatenate((ar1, ar2))
-    aux.sort()
-    return aux[:-1][aux[1:] == aux[:-1]]
 
+    To return the indices of the values common to the input arrays
+    along with the intersected values:
+    >>> x = np.array([1, 1, 2, 3, 4])
+    >>> y = np.array([2, 1, 4, 6])
+    >>> xy, x_ind, y_ind = np.intersect1d(x, y, return_indices=True)
+    >>> x_ind, y_ind
+    (array([0, 2, 4]), array([1, 0, 2]))
+    >>> xy, x[x_ind], y[y_ind]
+    (array([1, 2, 4]), array([1, 2, 4]), array([1, 2, 4]))
+
+    """
+    ar1 = np.asanyarray(ar1)
+    ar2 = np.asanyarray(ar2)
+
+    if not assume_unique:
+        if return_indices:
+            ar1, ind1 = unique(ar1, return_index=True)
+            ar2, ind2 = unique(ar2, return_index=True)
+        else:
+            ar1 = unique(ar1)
+            ar2 = unique(ar2)
+    else:
+        ar1 = ar1.ravel()
+        ar2 = ar2.ravel()
+
+    aux = np.concatenate((ar1, ar2))
+    if return_indices:
+        aux_sort_indices = np.argsort(aux, kind='mergesort')
+        aux = aux[aux_sort_indices]
+    else:
+        aux.sort()
+
+    mask = aux[1:] == aux[:-1]
+    int1d = aux[:-1][mask]
+
+    if return_indices:
+        ar1_indices = aux_sort_indices[:-1][mask]
+        ar2_indices = aux_sort_indices[1:][mask] - ar1.size
+        if not assume_unique:
+            ar1_indices = ind1[ar1_indices]
+            ar2_indices = ind2[ar2_indices]
+
+        return int1d, ar1_indices, ar2_indices
+    else:
+        return int1d
+
+
+def _setxor1d_dispatcher(ar1, ar2, assume_unique=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_setxor1d_dispatcher)
 def setxor1d(ar1, ar2, assume_unique=False):
     """
     Find the set exclusive-or of two arrays.
@@ -490,6 +591,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
+def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None):
+    return (element, test_elements)
+
+
+@array_function_dispatch(_isin_dispatcher)
 def isin(element, test_elements, assume_unique=False, invert=False):
     """
     Calculates `element in test_elements`, broadcasting over `element` only.
@@ -554,6 +660,14 @@ def isin(element, test_elements, assume_unique=False, invert=False):
            [ True,  False]])
     >>> element[mask]
     array([2, 4])
+
+    The indices of the matched values can be obtained with `nonzero`:
+
+    >>> np.nonzero(mask)
+    (array([0, 1]), array([1, 0]))
+
+    The test can also be inverted:
+
     >>> mask = np.isin(element, test_elements, invert=True)
     >>> mask
     array([[ True, False],
@@ -580,6 +694,11 @@ def isin(element, test_elements, assume_unique=False, invert=False):
                 invert=invert).reshape(element.shape)
 
 
+def _union1d_dispatcher(ar1, ar2):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_union1d_dispatcher)
 def union1d(ar1, ar2):
     """
     Find the union of two arrays.
@@ -615,11 +734,17 @@ def union1d(ar1, ar2):
     """
     return unique(np.concatenate((ar1, ar2), axis=None))
 
+
+def _setdiff1d_dispatcher(ar1, ar2, assume_unique=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_setdiff1d_dispatcher)
 def setdiff1d(ar1, ar2, assume_unique=False):
     """
     Find the set difference of two arrays.
 
-    Return the sorted, unique values in `ar1` that are not in `ar2`.
+    Return the unique values in `ar1` that are not in `ar2`.
 
     Parameters
     ----------
@@ -634,7 +759,9 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     Returns
     -------
     setdiff1d : ndarray
-        Sorted 1D array of values in `ar1` that are not in `ar2`.
+        1D array of values in `ar1` that are not in `ar2`. The result
+        is sorted when `assume_unique=False`, but otherwise only sorted
+        if the input is sorted.
 
     See Also
     --------
@@ -655,3 +782,4 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+

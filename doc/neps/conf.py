@@ -30,8 +30,7 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.imgmath',
-              'sphinx.ext.graphviz']
+extensions = ['sphinx.ext.imgmath',]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['../source/_templates/']
@@ -47,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'NumPy Enhancement Proposals'
-copyright = u'2017, NumPy Developers'
+copyright = u'2017-2018, NumPy Developers'
 author = u'NumPy Developers'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -100,7 +99,7 @@ todo_include_todos = False
 ## to template names.
 ##
 ## This is required for the alabaster theme
-## refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
+## refs: https://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 #html_sidebars = {
 #    '**': [
 #        'relations.html',  # needs 'show_related': True theme option to display
@@ -127,8 +126,8 @@ if True:
         "edit_link": True,
         "sidebar": "right",
         "scipy_org_logo": True,
-        "rootlinks": [("http://scipy.org/", "Scipy.org"),
-                      ("http://docs.scipy.org/", "Docs")]
+        "rootlinks": [("https://scipy.org/", "Scipy.org"),
+                      ("https://docs.scipy.org/", "Docs")]
     }
 else:
     # Default build

@@ -29,7 +29,10 @@ normalize_signature_keyword(PyObject *normal_kwds)
                             "cannot specify both 'sig' and 'signature'");
             return -1;
         }
-        Py_INCREF(obj);
+        /*
+         * No INCREF or DECREF needed: got a borrowed reference above,
+         * and, unlike e.g. PyList_SetItem, PyDict_SetItem INCREF's it.
+         */
         PyDict_SetItemString(normal_kwds, "signature", obj);
         PyDict_DelItemString(normal_kwds, "sig");
     }
@@ -48,6 +51,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp nin = ufunc->nin;
     npy_intp nout = ufunc->nout;
     npy_intp nargs = PyTuple_GET_SIZE(args);
+    npy_intp nkwds = PyDict_Size(*normal_kwds);
     PyObject *obj;
 
     if (nargs < nin) {
@@ -71,7 +75,7 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
 
     /* If we have more args than nin, they must be the output variables.*/
     if (nargs > nin) {
-        if(PyDict_GetItemString(*normal_kwds, "out")) {
+        if(nkwds > 0 && PyDict_GetItemString(*normal_kwds, "out")) {
             PyErr_Format(PyExc_TypeError,
                          "argument given by name ('out') and position "
                          "(%"NPY_INTP_FMT")", nin);
@@ -109,8 +113,15 @@ normalize___call___args(PyUFuncObject *ufunc, PyObject *args,
             Py_DECREF(obj);
         }
     }
+    /* gufuncs accept either 'axes' or 'axis', but not both */
+    if (nkwds >= 2 && (PyDict_GetItemString(*normal_kwds, "axis") &&
+                       PyDict_GetItemString(*normal_kwds, "axes"))) {
+        PyErr_SetString(PyExc_TypeError,
+                        "cannot specify both 'axis' and 'axes'");
+        return -1;
+    }
     /* finally, ufuncs accept 'sig' or 'signature' normalize to 'signature' */
-    return normalize_signature_keyword(*normal_kwds);
+    return nkwds == 0 ? 0 : normalize_signature_keyword(*normal_kwds);
 }
 
 static int
@@ -123,11 +134,16 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp nargs = PyTuple_GET_SIZE(args);
     npy_intp i;
     PyObject *obj;
-    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims"};
+    static PyObject *NoValue = NULL;
+    static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims",
+        "initial"};
 
-    if (nargs < 1 || nargs > 5) {
+    npy_cache_import("numpy", "_NoValue", &NoValue);
+    if (NoValue == NULL) return -1;
+
+    if (nargs < 1 || nargs > 6) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc.reduce() takes from 1 to 5 positional "
+                     "ufunc.reduce() takes from 1 to 6 positional "
                      "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
@@ -150,6 +166,10 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
                 continue;
             }
             obj = PyTuple_GetSlice(args, 3, 4);
+        }
+        /* Remove initial=np._NoValue */
+        if (i == 5 && obj == NoValue) {
+            continue;
         }
         PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
         if (i == 3) {
@@ -210,7 +230,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
                     PyObject **normal_args, PyObject **normal_kwds)
 {
     /*
-     * ufunc.reduceat(a, indicies[, axis, dtype, out])
+     * ufunc.reduceat(a, indices[, axis, dtype, out])
      * the number of arguments has been checked in PyUFunc_GenericReduction.
      */
     npy_intp i;
@@ -224,7 +244,7 @@ normalize_reduceat_args(PyUFuncObject *ufunc, PyObject *args,
                      "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }
-    /* a and indicies */
+    /* a and indices */
     *normal_args = PyTuple_GetSlice(args, 0, 2);
     if (*normal_args == NULL) {
         return -1;
@@ -282,7 +302,6 @@ normalize_outer_args(PyUFuncObject *ufunc, PyObject *args,
     if (*normal_args == NULL) {
         return -1;
     }
-
     /* ufuncs accept 'sig' or 'signature' normalize to 'signature' */
     return normalize_signature_keyword(*normal_kwds);
 }
@@ -328,8 +347,6 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     PyObject *with_override[NPY_MAXARGS];
     PyObject *array_ufunc_methods[NPY_MAXARGS];
 
-    PyObject *obj;
-    PyObject *other_obj;
     PyObject *out;
 
     PyObject *method_name = NULL;
@@ -492,21 +509,18 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
 
         /* Choose an overriding argument */
         for (i = 0; i < num_override_args; i++) {
-            obj = with_override[i];
-            if (obj == NULL) {
+            override_obj = with_override[i];
+            if (override_obj == NULL) {
                 continue;
             }
 
-            /* Get the first instance of an overriding arg.*/
-            override_obj = obj;
-
             /* Check for sub-types to the right of obj. */
             for (j = i + 1; j < num_override_args; j++) {
-                other_obj = with_override[j];
+                PyObject *other_obj = with_override[j];
                 if (other_obj != NULL &&
-                    PyObject_Type(other_obj) != PyObject_Type(obj) &&
+                    Py_TYPE(other_obj) != Py_TYPE(override_obj) &&
                     PyObject_IsInstance(other_obj,
-                                        PyObject_Type(override_obj))) {
+                                        (PyObject *)Py_TYPE(override_obj))) {
                     override_obj = NULL;
                     break;
                 }
