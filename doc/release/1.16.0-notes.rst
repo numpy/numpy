@@ -224,6 +224,15 @@ The ``help`` function, when applied to numeric types such as `np.intc`,
 `np.int_`, and `np.longlong`, now lists all of the aliased names for that type,
 distinguishing between platform -dependent and -independent aliases.
 
+``__module__`` attribute now points to public modules
+-----------------------------------------------------
+The ``__module__`` attribute on most NumPy functions has been updated to refer
+to the preferred public module from which to access a function, rather than
+the module in which the function happens to be defined. This produces more
+informative displays for functions in tools such as IPython, e.g., instead of
+``<function 'numpy.core.fromnumeric.sum'>`` you now see
+``<function 'numpy.sum'>``.
+
 Large allocations marked as suitable for transparent hugepages
 --------------------------------------------------------------
 On systems that support transparent hugepages over the madvise system call
