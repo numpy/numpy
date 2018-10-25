@@ -104,9 +104,6 @@ Deprecations
 * The ``normed`` argument of ``np.histogram``, deprecated long ago in 1.6.0,
   now emits a ``DeprecationWarning``.
 
-* The ``iter`` keyword argument for ``np.fromiter`` is deprecated.
-  ``iterable`` should be used instead.
-
 
 Future Changes
 ==============

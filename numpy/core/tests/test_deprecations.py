@@ -503,6 +503,7 @@ class TestBincount(_DeprecationTestCase):
 class TestFromiter(_DeprecationTestCase):
     # Test that iter keyword for fromiter raises a DeprecationWarning.
     # See PR #10253.
+    # NumPy 1.16, 2018-10-25
     def test_fromiter_iter(self):
         self.assert_deprecated(lambda: np.fromiter(iter=[1, 2, 3], dtype=int))
 
