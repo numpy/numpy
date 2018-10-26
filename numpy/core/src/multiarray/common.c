@@ -312,7 +312,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             PyErr_Clear();
             dtype = _descriptor_from_pep3118_format(buffer_view.format);
             PyBuffer_Release(&buffer_view);
-            _array_dealloc_buffer_info(obj);
+            _dealloc_cached_buffer_info(obj);
             if (dtype) {
                 goto promote_types;
             }
@@ -324,7 +324,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             dtype = PyArray_DescrNewFromType(NPY_VOID);
             dtype->elsize = buffer_view.itemsize;
             PyBuffer_Release(&buffer_view);
-            _array_dealloc_buffer_info(obj);
+            _dealloc_cached_buffer_info(obj);
             goto promote_types;
         }
         else {
@@ -643,7 +643,7 @@ _IsWriteable(PyArrayObject *ap)
      * _buffer_info_t (from buffer.c, with format, ndim, strides and shape) in
      * a static dictionary, with id(base) as the key. Usually we release it
      * after the call to PyBuffer_Release, via a call to
-     * _array_dealloc_buffer_info, but in this case leave it in the cache to
+     * _dealloc_cached_buffer_info, but in this case leave it in the cache to
      * speed up future calls to _IsWriteable.
      */
 #else

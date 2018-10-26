@@ -144,7 +144,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
         offset = PyArray_BYTES(self) - (char *)view.buf;
         numbytes = view.len + offset;
         PyBuffer_Release(&view);
-        _array_dealloc_buffer_info((PyObject*)new);
+        _dealloc_cached_buffer_info((PyObject*)new);
     }
 #else
     if (PyArray_BASE(new) &&
@@ -378,7 +378,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
-    _array_dealloc_buffer_info(op);
+    _dealloc_cached_buffer_info(op);
 #else
     if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
         PyErr_Clear();

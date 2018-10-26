@@ -471,7 +471,7 @@ array_dealloc(PyArrayObject *self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
-    _array_dealloc_buffer_info((PyObject*)self);
+    _dealloc_cached_buffer_info((PyObject*)self);
 
     if (fa->weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *)self);

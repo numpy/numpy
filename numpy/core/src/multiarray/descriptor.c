@@ -1771,7 +1771,7 @@ arraydescr_dealloc(PyArray_Descr *self)
         Py_INCREF(self);
         return;
     }
-    _array_dealloc_buffer_info((PyObject*)self);
+    _dealloc_cached_buffer_info((PyObject*)self);
     Py_XDECREF(self->typeobj);
     Py_XDECREF(self->names);
     Py_XDECREF(self->fields);
