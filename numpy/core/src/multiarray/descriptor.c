@@ -10,7 +10,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
+#include "npy_ctypes.h"
 #include "npy_pycompat.h"
 
 #include "_datetime.h"
@@ -54,79 +54,46 @@ Borrowed_PyMapping_GetItemString(PyObject *o, char *key)
     return ret;
 }
 
-/*
- * Creates a dtype object from ctypes inputs.
- *
- * Returns a new reference to a dtype object, or NULL
- * if this is not possible. When it returns NULL, it does
- * not set a Python exception.
- */
 static PyArray_Descr *
-_arraydescr_fromctypes(PyObject *obj)
+_arraydescr_from_ctypes_type(PyTypeObject *type)
 {
-    PyObject *dtypedescr;
-    PyArray_Descr *newdescr;
-    int ret;
+    PyObject *_numpy_dtype_ctypes;
+    PyObject *res;
 
-    /* Understand basic ctypes */
-    dtypedescr = PyObject_GetAttrString(obj, "_type_");
-    PyErr_Clear();
-    if (dtypedescr) {
-        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            PyObject *length;
-            /* Check for ctypes arrays */
-            length = PyObject_GetAttrString(obj, "_length_");
-            PyErr_Clear();
-            if (length) {
-                /* derived type */
-                PyObject *newtup;
-                PyArray_Descr *derived;
-                newtup = Py_BuildValue("N(N)", newdescr, length);
-                ret = PyArray_DescrConverter(newtup, &derived);
-                Py_DECREF(newtup);
-                if (ret == NPY_SUCCEED) {
-                    return derived;
-                }
-                PyErr_Clear();
-                return NULL;
-            }
-            return newdescr;
-        }
-        PyErr_Clear();
+    /* Call the python function of the same name. */
+    _numpy_dtype_ctypes = PyImport_ImportModule("numpy.core._dtype_ctypes");
+    if (_numpy_dtype_ctypes == NULL) {
         return NULL;
     }
-    /* Understand ctypes structures --
-       bit-fields are not supported
-       automatically aligns */
-    dtypedescr = PyObject_GetAttrString(obj, "_fields_");
-    PyErr_Clear();
-    if (dtypedescr) {
-        ret = PyArray_DescrAlignConverter(dtypedescr, &newdescr);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            return newdescr;
-        }
-        PyErr_Clear();
+    res = PyObject_CallMethod(_numpy_dtype_ctypes, "dtype_from_ctypes_type", "O", (PyObject *)type);
+    Py_DECREF(_numpy_dtype_ctypes);
+    if (res == NULL) {
+        return NULL;
     }
 
-    return NULL;
+    /*
+     * sanity check that dtype_from_ctypes_type returned the right type,
+     * since getting it wrong would give segfaults.
+     */
+    if (!PyObject_TypeCheck(res, &PyArrayDescr_Type)) {
+        Py_DECREF(res);
+        PyErr_BadInternalCall();
+        return NULL;
+    }
+
+    return (PyArray_Descr *)res;
 }
 
 /*
- * This function creates a dtype object when:
- *  - The object has a "dtype" attribute, and it can be converted
- *    to a dtype object.
- *  - The object is a ctypes type object, including array
- *    and structure types.
+ * This function creates a dtype object when the object has a "dtype" attribute,
+ * and it can be converted to a dtype object.
  *
  * Returns a new reference to a dtype object, or NULL
  * if this is not possible. When it returns NULL, it does
  * not set a Python exception.
  */
 NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_fromobj(PyObject *obj)
+_arraydescr_from_dtype_attr(PyObject *obj)
 {
     PyObject *dtypedescr;
     PyArray_Descr *newdescr = NULL;
@@ -135,15 +102,18 @@ _arraydescr_fromobj(PyObject *obj)
     /* For arbitrary objects that have a "dtype" attribute */
     dtypedescr = PyObject_GetAttrString(obj, "dtype");
     PyErr_Clear();
-    if (dtypedescr != NULL) {
-        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            return newdescr;
-        }
-        PyErr_Clear();
+    if (dtypedescr == NULL) {
+        return NULL;
     }
-    return _arraydescr_fromctypes(obj);
+
+    ret = PyArray_DescrConverter(dtypedescr, &newdescr);
+    Py_DECREF(dtypedescr);
+    if (ret != NPY_SUCCEED) {
+        PyErr_Clear();
+        return NULL;
+    }
+
+    return newdescr;
 }
 
 /*
@@ -1423,9 +1393,19 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             check_num = NPY_VOID;
         }
         else {
-            *at = _arraydescr_fromobj(obj);
+            *at = _arraydescr_from_dtype_attr(obj);
             if (*at) {
                 return NPY_SUCCEED;
+            }
+
+            /*
+             * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+             * type might override the dtype if numpy does not otherwise
+             * support it.
+             */
+            if (npy_ctypes_check((PyTypeObject *)obj)) {
+                *at = _arraydescr_from_ctypes_type((PyTypeObject *)obj);
+                return *at ? NPY_SUCCEED : NPY_FAIL;
             }
         }
         goto finish;
@@ -1596,12 +1576,22 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         goto fail;
     }
     else {
-        *at = _arraydescr_fromobj(obj);
+        *at = _arraydescr_from_dtype_attr(obj);
         if (*at) {
             return NPY_SUCCEED;
         }
         if (PyErr_Occurred()) {
             return NPY_FAIL;
+        }
+
+        /*
+         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+         * type might override the dtype if numpy does not otherwise
+         * support it.
+         */
+        if (npy_ctypes_check(Py_TYPE(obj))) {
+            *at = _arraydescr_from_ctypes_type(Py_TYPE(obj));
+            return *at ? NPY_SUCCEED : NPY_FAIL;
         }
         goto fail;
     }

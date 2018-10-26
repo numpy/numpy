@@ -471,7 +471,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         new = PyArray_DescrNewFromType(NPY_VOID);
-        conv = _arraydescr_fromobj(type);
+        conv = _arraydescr_from_dtype_attr(type);
         if (conv) {
             new->fields = conv->fields;
             Py_INCREF(new->fields);
