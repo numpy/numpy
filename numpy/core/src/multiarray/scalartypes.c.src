@@ -139,6 +139,7 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 static void
 gentype_dealloc(PyObject *v)
 {
+    _array_dealloc_buffer_info(v);
     Py_TYPE(v)->tp_free(v);
 }
 
