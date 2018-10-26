@@ -5,7 +5,42 @@ String handling is much easier to do correctly in python.
 """
 from __future__ import division, absolute_import, print_function
 
+import sys
+
 import numpy as np
+
+
+_kind_to_stem = {
+    'u': 'uint',
+    'i': 'int',
+    'c': 'complex',
+    'f': 'float',
+    'b': 'bool',
+    'V': 'void',
+    'O': 'object',
+    'M': 'datetime',
+    'm': 'timedelta'
+}
+if sys.version_info[0] >= 3:
+    _kind_to_stem.update({
+        'S': 'bytes',
+        'U': 'str'
+    })
+else:
+    _kind_to_stem.update({
+        'S': 'string',
+        'U': 'unicode'
+    })
+
+
+def _kind_name(dtype):
+    try:
+        return _kind_to_stem[dtype.kind]
+    except KeyError:
+        raise RuntimeError(
+            "internal dtype error, unknown kind {!r}"
+            .format(dtype.kind)
+        )
 
 
 def __str__(dtype):
@@ -103,7 +138,9 @@ def _scalar_str(dtype, short):
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
-    elif dtype.type == np.void:
+    # unlike the other types, subclasses of void are preserved - but
+    # historically the repr does not actually reveal the subclass
+    elif issubclass(dtype.type, np.void):
         if _isunsized(dtype):
             return "'V'"
         else:
@@ -122,20 +159,7 @@ def _scalar_str(dtype, short):
 
         # Longer repr, like 'float64'
         else:
-            kindstrs = {
-                'u': "uint",
-                'i': "int",
-                'f': "float",
-                'c': "complex"
-            }
-            try:
-                kindstr = kindstrs[dtype.kind]
-            except KeyError:
-                raise RuntimeError(
-                    "internal dtype repr error, unknown kind {!r}"
-                    .format(dtype.kind)
-                )
-            return "'%s%d'" % (kindstr, 8*dtype.itemsize)
+            return "'%s%d'" % (_kind_name(dtype), 8*dtype.itemsize)
 
     elif dtype.isbuiltin == 2:
         return dtype.type.__name__

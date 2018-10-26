@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import functools
 import sys
 import math
 
@@ -9,12 +10,15 @@ from numpy.core.numeric import (
     )
 from numpy.core.numerictypes import find_common_type, issubdtype
 
-from . import function_base
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [
@@ -200,9 +204,6 @@ class nd_grid(object):
             else:
                 return _nx.arange(start, stop, step)
 
-    def __len__(self):
-        return 0
-
 
 class MGridClass(nd_grid):
     """
@@ -344,7 +345,7 @@ class AxisConcatenator(object):
                     step = 1
                 if isinstance(step, complex):
                     size = int(abs(step))
-                    newobj = function_base.linspace(start, stop, num=size)
+                    newobj = linspace(start, stop, num=size)
                 else:
                     newobj = _nx.arange(start, stop, step)
                 if ndmin > 1:

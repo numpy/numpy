@@ -24,7 +24,7 @@ def _fftshift_dispatcher(x, axes=None):
     return (x,)
 
 
-@array_function_dispatch(_fftshift_dispatcher)
+@array_function_dispatch(_fftshift_dispatcher, module='numpy.fft')
 def fftshift(x, axes=None):
     """
     Shift the zero-frequency component to the center of the spectrum.
@@ -81,7 +81,7 @@ def fftshift(x, axes=None):
     return roll(x, shift, axes)
 
 
-@array_function_dispatch(_fftshift_dispatcher)
+@array_function_dispatch(_fftshift_dispatcher, module='numpy.fft')
 def ifftshift(x, axes=None):
     """
     The inverse of `fftshift`. Although identical for even-length `x`, the

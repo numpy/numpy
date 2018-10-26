@@ -29,8 +29,19 @@ Meta-NEPs (NEPs about NEPs or Processes)
 
    nep-template
 
-Accepted NEPs, implementation in progress
------------------------------------------
+Provisional NEPs (provisionally accepted; interface may change)
+---------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Provisional' %}
+   {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}
+
+
+Accepted NEPs (implementation in progress)
+------------------------------------------
 
 .. toctree::
    :maxdepth: 1
@@ -52,7 +63,7 @@ Open NEPs (under consideration)
 
 
 
-Implemented NEPs
+Finished NEPs
 ----------------
 
 .. toctree::
@@ -62,22 +73,23 @@ Implemented NEPs
    {{ tags['Title'] }} <{{ tags['Filename'] }}>
 {% endfor %}
 
-Deferred NEPs
--------------
+Deferred and Superseded NEPs
+----------------------------
 
 .. toctree::
    :maxdepth: 1
 
-{% for nep, tags in neps.items() if tags['Status'] == 'Deferred' %}
+{% for nep, tags in neps.items() if tags['Status'] in ('Deferred', 'Superseded') %}
    {{ tags['Title'] }} <{{ tags['Filename'] }}>
 {% endfor %}
 
-Rejected NEPs
--------------
+Rejected and Withdrawn NEPs
+---------------------------
 
 .. toctree::
    :maxdepth: 1
 
-{% for nep, tags in neps.items() if tags['Status'] == 'Rejected' %}
+{% for nep, tags in neps.items() if tags['Status'] in ('Rejected', 'Withdrawn') %}
    {{ tags['Title'] }} <{{ tags['Filename'] }}>
 {% endfor %}
+

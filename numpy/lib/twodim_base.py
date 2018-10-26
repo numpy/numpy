@@ -3,11 +3,14 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
+
 from numpy.core.numeric import (
     absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
+from numpy.core import overrides
 from numpy.core import iinfo, transpose
 
 
@@ -15,6 +18,10 @@ __all__ = [
     'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
     'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
     'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 i1 = iinfo(int8)
@@ -33,6 +40,11 @@ def _min_int(low, high):
     return int64
 
 
+def _flip_dispatcher(m):
+    return (m,)
+
+
+@array_function_dispatch(_flip_dispatcher)
 def fliplr(m):
     """
     Flip array in the left/right direction.
@@ -83,6 +95,7 @@ def fliplr(m):
     return m[:, ::-1]
 
 
+@array_function_dispatch(_flip_dispatcher)
 def flipud(m):
     """
     Flip array in the up/down direction.
@@ -194,6 +207,11 @@ def eye(N, M=None, k=0, dtype=float, order='C'):
     return m
 
 
+def _diag_dispatcher(v, k=None):
+    return (v,)
+
+
+@array_function_dispatch(_diag_dispatcher)
 def diag(v, k=0):
     """
     Extract a diagonal or construct a diagonal array.
@@ -265,6 +283,7 @@ def diag(v, k=0):
         raise ValueError("Input must be 1- or 2-d.")
 
 
+@array_function_dispatch(_diag_dispatcher)
 def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
@@ -373,6 +392,11 @@ def tri(N, M=None, k=0, dtype=float):
     return m
 
 
+def _trilu_dispatcher(m, k=None):
+    return (m,)
+
+
+@array_function_dispatch(_trilu_dispatcher)
 def tril(m, k=0):
     """
     Lower triangle of an array.
@@ -411,6 +435,7 @@ def tril(m, k=0):
     return where(mask, m, zeros(1, m.dtype))
 
 
+@array_function_dispatch(_trilu_dispatcher)
 def triu(m, k=0):
     """
     Upper triangle of an array.
@@ -439,7 +464,12 @@ def triu(m, k=0):
     return where(mask, zeros(1, m.dtype), m)
 
 
+def _vander_dispatcher(x, N=None, increasing=None):
+    return (x,)
+
+
 # Originally borrowed from John Hunter and matplotlib
+@array_function_dispatch(_vander_dispatcher)
 def vander(x, N=None, increasing=False):
     """
     Generate a Vandermonde matrix.
@@ -530,6 +560,12 @@ def vander(x, N=None, increasing=False):
     return v
 
 
+def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
+                            weights=None, density=None):
+    return (x, y, bins, weights)
+
+
+@array_function_dispatch(_histogram2d_dispatcher)
 def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
                 density=None):
     """
@@ -812,6 +848,11 @@ def tril_indices(n, k=0, m=None):
     return nonzero(tri(n, m, k=k, dtype=bool))
 
 
+def _trilu_indices_form_dispatcher(arr, k=None):
+    return (arr,)
+
+
+@array_function_dispatch(_trilu_indices_form_dispatcher)
 def tril_indices_from(arr, k=0):
     """
     Return the indices for the lower-triangle of arr.
@@ -922,6 +963,7 @@ def triu_indices(n, k=0, m=None):
     return nonzero(~tri(n, m, k=k-1, dtype=bool))
 
 
+@array_function_dispatch(_trilu_indices_form_dispatcher)
 def triu_indices_from(arr, k=0):
     """
     Return the indices for the upper-triangle of arr.

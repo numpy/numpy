@@ -2845,6 +2845,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         *out = NPY_DATETIME_NAT;
         return 0;
     }
+    else if (PyArray_IsScalar(obj, Integer)) {
+        /* Use the default unit if none was specified */
+        if (meta->base == NPY_FR_ERROR) {
+            meta->base = NPY_DATETIME_DEFAULTUNIT;
+            meta->num = 1;
+        }
+
+        *out = PyLong_AsLongLong(obj);
+        return 0;
+    }
     else {
         PyErr_SetString(PyExc_ValueError,
                 "Could not convert object to NumPy timedelta");

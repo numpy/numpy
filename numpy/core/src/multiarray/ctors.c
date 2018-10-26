@@ -11,7 +11,7 @@
 
 #include "npy_config.h"
 
-#include "npy_import.h"
+#include "npy_ctypes.h"
 #include "npy_pycompat.h"
 #include "multiarraymodule.h"
 
@@ -1381,15 +1381,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * Note that even if the above are fixed in master, we have to drop the
          * early patch versions of python to actually make use of the fixes.
          */
-
-        int is_ctypes = _is_from_ctypes(view->obj);
-        if (is_ctypes < 0) {
-            /* This error is not useful */
-            PyErr_WriteUnraisable(view->obj);
-            is_ctypes = 0;
-        }
-
-        if (!is_ctypes) {
+        if (!npy_ctypes_check(Py_TYPE(view->obj))) {
             /* This object has no excuse for a broken PEP3118 buffer */
             PyErr_Format(
                     PyExc_RuntimeError,
