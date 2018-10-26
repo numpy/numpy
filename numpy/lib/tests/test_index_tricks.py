@@ -226,6 +226,11 @@ class TestConcatenator(object):
         g = r_[-10.1, np.array([1]), np.array([2, 3, 4]), 10.0]
         assert_(g.dtype == 'f8')
 
+    def test_complex_step(self):
+        # Regression test for #12262
+        g = r_[0:36:100j]
+        assert_(g.shape == (100,))
+
     def test_2d(self):
         b = np.random.rand(5, 5)
         c = np.random.rand(5, 5)
