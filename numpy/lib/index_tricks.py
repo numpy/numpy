@@ -10,11 +10,10 @@ from numpy.core.numeric import (
     )
 from numpy.core.numerictypes import find_common_type, issubdtype
 
-from . import function_base
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core import overrides
+from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 
 
@@ -346,7 +345,7 @@ class AxisConcatenator(object):
                     step = 1
                 if isinstance(step, complex):
                     size = int(abs(step))
-                    newobj = function_base.linspace(start, stop, num=size)
+                    newobj = linspace(start, stop, num=size)
                 else:
                     newobj = _nx.arange(start, stop, step)
                 if ndmin > 1:
