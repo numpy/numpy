@@ -700,7 +700,7 @@ def _einsum_path_dispatcher(*operands, **kwargs):
     return operands
 
 
-@array_function_dispatch(_einsum_path_dispatcher)
+@array_function_dispatch(_einsum_path_dispatcher, module='numpy')
 def einsum_path(*operands, **kwargs):
     """
     einsum_path(subscripts, *operands, optimize='greedy')
@@ -1001,7 +1001,7 @@ def _einsum_dispatcher(*operands, **kwargs):
 
 
 # Rewrite einsum to handle different cases
-@array_function_dispatch(_einsum_dispatcher)
+@array_function_dispatch(_einsum_dispatcher, module='numpy')
 def einsum(*operands, **kwargs):
     """
     einsum(subscripts, *operands, out=None, dtype=None, order='K',

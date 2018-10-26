@@ -7,9 +7,13 @@ import functools
 import operator
 
 from . import numeric as _nx
+from . import overrides
 from .numeric import array, asanyarray, newaxis
 from .multiarray import normalize_axis_index
-from .overrides import array_function_dispatch
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 def _atleast_1d_dispatcher(*arys):
