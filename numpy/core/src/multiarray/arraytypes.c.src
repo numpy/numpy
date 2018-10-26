@@ -2,7 +2,8 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "structmember.h"
-
+#include <limits.h>
+#include <assert.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -34,8 +35,7 @@
 
 #include "cblasfuncs.h"
 #include "npy_cblas.h"
-#include <limits.h>
-#include <assert.h>
+#include "buffer.h"
 
 /* check for sequences, but ignore the types numpy considers scalars */
 static NPY_INLINE npy_bool
@@ -921,6 +921,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             memset(ip + view.len, 0, itemsize - view.len);
         }
         PyBuffer_Release(&view);
+        _array_dealloc_buffer_info(op);
     }
 #else
     {

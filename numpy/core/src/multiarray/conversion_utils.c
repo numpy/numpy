@@ -16,6 +16,7 @@
 
 #include "conversion_utils.h"
 #include "alloc.h"
+#include "buffer.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -185,6 +186,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
+    _array_dealloc_buffer_info(obj);
 
     /* Point to the base of the buffer object if present */
     if (PyMemoryView_Check(obj)) {
