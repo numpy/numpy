@@ -51,6 +51,20 @@
 #endif
 /**********************************************/
 
+#if NPY_DT_DBG_TRACING
+/*
+ * Thin wrapper around print that ignores exceptions
+ */
+static void
+_safe_print(PyObject *obj)
+{
+    if (PyObject_Print(obj, stdout, 0) < 0) {
+        PyErr_Clear();
+        printf("<error during print>");
+    }
+}
+#endif
+
 /*
  * Returns a transfer function which DECREFs any references in src_type.
  *
@@ -1042,9 +1056,9 @@ get_nbo_cast_datetime_transfer_function(int aligned,
 
 #if NPY_DT_DBG_TRACING
     printf("Dtype transfer from ");
-    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    _safe_print((PyObject *)src_dtype);
     printf(" to ");
-    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    _safe_print((PyObject *)dst_dtype);
     printf("\n");
     printf("has conversion fraction %lld/%lld\n", num, denom);
 #endif
@@ -1089,9 +1103,9 @@ get_nbo_datetime_to_string_transfer_function(int aligned,
 
 #if NPY_DT_DBG_TRACING
     printf("Dtype transfer from ");
-    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    _safe_print((PyObject *)src_dtype);
     printf(" to ");
-    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    _safe_print((PyObject *)dst_dtype);
     printf("\n");
 #endif
 
@@ -1211,9 +1225,9 @@ get_nbo_string_to_datetime_transfer_function(int aligned,
 
 #if NPY_DT_DBG_TRACING
     printf("Dtype transfer from ");
-    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    _safe_print((PyObject *)src_dtype);
     printf(" to ");
-    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    _safe_print((PyObject *)dst_dtype);
     printf("\n");
 #endif
 
@@ -3421,9 +3435,13 @@ PyArray_GetDTypeTransferFunction(int aligned,
 
 #if NPY_DT_DBG_TRACING
     printf("Calculating dtype transfer from ");
-    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    if (PyObject_Print((PyObject *)src_dtype, stdout, 0) < 0) {
+        return NPY_FAIL;
+    }
     printf(" to ");
-    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    if (PyObject_Print((PyObject *)dst_dtype, stdout, 0) < 0) {
+        return NPY_FAIL;
+    }
     printf("\n");
 #endif
 
