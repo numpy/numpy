@@ -10,7 +10,7 @@ from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_almost_equal
+    assert_raises_regex, assert_warns, assert_almost_equal
     )
 
 from numpy.compat import long
@@ -155,6 +155,10 @@ class TestHstack(object):
         desired = array([[1, 1], [2, 2]])
         assert_array_equal(res, desired)
 
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            hstack((np.arange(3) for _ in range(2)))
+
 
 class TestVstack(object):
     def test_non_iterable(self):
@@ -190,6 +194,10 @@ class TestVstack(object):
         res = vstack([a, b])
         desired = array([[1, 2], [1, 2]])
         assert_array_equal(res, desired)
+
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            vstack((np.arange(3) for _ in range(2)))
 
 
 class TestConcatenate(object):
@@ -354,7 +362,7 @@ def test_stack():
     arrays = [np.random.randn(3, 4) for _ in range(10)]
     axes = [0, 1, 2, -1, -2, -3]
     expected_shapes = [(10, 3, 4), (3, 10, 4), (3, 4, 10),
-                        (3, 4, 10), (3, 10, 4), (10, 3, 4)]
+                       (3, 4, 10), (3, 10, 4), (10, 3, 4)]
     for axis, expected_shape in zip(axes, expected_shapes):
         assert_equal(np.stack(arrays, axis).shape, expected_shape)
     # empty arrays
@@ -372,6 +380,10 @@ def test_stack():
                         stack, [np.zeros((3, 3)), np.zeros(3)], axis=1)
     assert_raises_regex(ValueError, 'must have the same shape',
                         stack, [np.arange(2), np.arange(3)])
+    # generator is deprecated
+    with assert_warns(FutureWarning):
+        result = stack((x for x in range(3)))
+    assert_array_equal(result, np.array([0, 1, 2]))
 
 
 # See for more information on how to parametrize a whole class
