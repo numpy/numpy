@@ -3,9 +3,10 @@ NEP 27 — Zero Rank Arrays
 =========================
 
 :Author: Alexander Belopolsky (sasha), transcribed Matt Picus <matti.picus@gmail.com>
-:Status: Draft
+:Status: Final
 :Type: Informational
 :Created: 2006-06-10
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-October/078824.html
 
 Abstract
 --------
@@ -158,7 +159,7 @@ On the other hand there are several cases that make sense for rank-zero arrays.
 Ellipsis and empty tuple
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sasha started a `Jan 2006 discussion`_ on scipy-dev
+Alexander started a `Jan 2006 discussion`_ on scipy-dev
 with the following proposal:
 
     ... it may be reasonable to allow ``a[...]``.  This way
@@ -186,7 +187,7 @@ Francesc's proposal was::
 There is a consensus that for a zero-rank array ``x``, both ``x[...]`` and ``x[()]`` should be valid, but the question
 remains on what should be the type of the result - zero rank ndarray or ``x.dtype``?
 
-(Sasha)
+(Alexander)
     First, whatever choice is made for ``x[...]`` and ``x[()]`` they should be
     the same because ``...`` is just syntactic sugar for "as many `:` as
     necessary", which in the case of zero rank leads to ``... = (:,)*0 = ()``.
