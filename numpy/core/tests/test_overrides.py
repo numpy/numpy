@@ -308,6 +308,21 @@ class TestArrayFunctionImplementation(object):
             func(MyArray())
 
 
+class TestNDArrayMethods(object):
+
+    def test_repr(self):
+        # gh-12162: should still be defined even if __array_function__ doesn't
+        # implement np.array_repr()
+
+        class MyArray(np.ndarray):
+            def __array_function__(*args, **kwargs):
+                return NotImplemented
+
+        array = np.array(1).view(MyArray)
+        assert_equal(repr(array), 'MyArray(1)')
+        assert_equal(str(array), '1')
+
+        
 class TestNumPyFunctions(object):
 
     def test_module(self):

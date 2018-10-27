@@ -154,6 +154,10 @@ def array_function_dispatch(dispatcher, module=None, verify=True):
         if module is not None:
             public_api.__module__ = module
 
+        # TODO: remove this when we drop Python 2 support (functools.wraps
+        # adds __wrapped__ automatically in later versions)
+        public_api.__wrapped__ = implementation
+
         return public_api
 
     return decorator
