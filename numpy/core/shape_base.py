@@ -207,12 +207,12 @@ def atleast_3d(*arys):
 
 
 def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
-    if isinstance(arrays, types.GeneratorType):
-        warnings.warn('arrays to stack should be passed as a sequence, not a '
-                      'generator. Support for generators is deprecated as of '
+    if hasattr(arrays, '__iter__') and not hasattr(arrays, '__getitem__'):
+        warnings.warn('arrays to stack must be passed as a sequence. Support '
+                      'for non-sequence iterables is deprecated as of '
                       'NumPy 1.16 and will raise an error in the future. '
                       'Note also that dispatch with __array_function__ is not '
-                      'supported when passing arrays as a generator.',
+                      'supported when arrays are not provided as a sequence.',
                       FutureWarning, stacklevel=stacklevel)
         return ()
     return arrays
