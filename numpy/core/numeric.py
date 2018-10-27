@@ -587,7 +587,7 @@ def asanyarray(a, dtype=None, order=None):
 
 def ascontiguousarray(a, dtype=None):
     """
-    Return a contiguous array (ndim >= 1) in memory (C order).
+    Return a contiguous array in memory (C order).
 
     Parameters
     ----------
@@ -618,16 +618,13 @@ def ascontiguousarray(a, dtype=None):
     >>> x.flags['C_CONTIGUOUS']
     True
 
-    Note: This function returns an array with at least one-dimension (1-d) 
-          so it will not preserve 0-d arrays.  
-
     """
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 
 def asfortranarray(a, dtype=None):
     """
-    Return an array (ndim >= 1) laid out in Fortran order in memory.
+    Return an array laid out in Fortran order in memory.
 
     Parameters
     ----------
@@ -657,9 +654,6 @@ def asfortranarray(a, dtype=None):
     False
     >>> y.flags['F_CONTIGUOUS']
     True
-
-    Note: This function returns an array with at least one-dimension (1-d) 
-          so it will not preserve 0-d arrays.  
 
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
