@@ -11,6 +11,7 @@ from numpy.core.fromnumeric import product, reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
+from numpy.core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib.index_tricks import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
@@ -591,7 +592,7 @@ row_stack = vstack
 
 
 def _column_stack_dispatcher(tup):
-    return tup
+    return _arrays_for_stack_dispatcher(tup)
 
 
 @array_function_dispatch(_column_stack_dispatcher)
@@ -638,7 +639,7 @@ def column_stack(tup):
 
 
 def _dstack_dispatcher(tup):
-    return tup
+    return _arrays_for_stack_dispatcher(tup)
 
 
 @array_function_dispatch(_dstack_dispatcher)
