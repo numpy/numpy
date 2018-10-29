@@ -10,6 +10,7 @@ include *.txt
 include README.md
 include site.cfg.example
 recursive-include numpy/random *.pyx *.pxd *.pyx.in *.pxd.in
+include numpy/__init__.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
 # Note that sub-directories that don't have __init__ are apparently not
 # included by 'recursive-include', so list those separately

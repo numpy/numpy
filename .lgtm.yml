@@ -16,6 +16,9 @@ extraction:
     index:
       build_command:
         - python3 setup.py build
+    after_prepare:
+      - pip3 install --upgrade --user cython
+      - export PATH="$HOME/.local/bin:$PATH"
 
 queries:
   - include: py/file-not-closed
