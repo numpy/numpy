@@ -45,7 +45,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     indices = NULL;
     self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis,
-                                    NPY_ARRAY_CARRAY);
+                                    NPY_ARRAY_CARRAY_RO);
     if (self == NULL) {
         return NULL;
     }
