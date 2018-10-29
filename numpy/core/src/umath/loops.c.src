@@ -1846,6 +1846,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = in1;
         }
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -1871,6 +1872,7 @@ NPY_NO_EXPORT void
             *((@type@ *)op1) = (npy_isnan(in2) || in1 @OP@ in2) ? in1 : in2;
         }
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2758,6 +2760,7 @@ NPY_NO_EXPORT void
         ((@ftype@ *)op1)[0] = in1r;
         ((@ftype@ *)op1)[1] = in1i;
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2782,6 +2785,7 @@ NPY_NO_EXPORT void
             ((@ftype@ *)op1)[1] = in2i;
         }
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
