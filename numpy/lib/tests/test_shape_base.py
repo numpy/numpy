@@ -457,6 +457,7 @@ class TestSplit(object):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
 
+
 class TestColumnStack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, column_stack, 1)
@@ -480,6 +481,10 @@ class TestColumnStack(object):
                              [3, 4]])
         actual = np.column_stack((a, b))
         assert_equal(actual, expected)
+
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            column_stack((np.arange(3) for _ in range(2)))
 
 
 class TestDstack(object):
@@ -513,6 +518,10 @@ class TestDstack(object):
         res = dstack([a, b])
         desired = np.array([[[1, 1], [2, 2]]])
         assert_array_equal(res, desired)
+
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            dstack((np.arange(3) for _ in range(2)))
 
 
 # array_split has more comprehensive test of splitting.
