@@ -747,7 +747,7 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
         /* Translate None to NULL */
         return 0;
     }
-    if PyArray_Check(obj) {
+    if (PyArray_Check(obj)) {
         /* If it's an array, store it */
         if (PyArray_FailUnlessWriteable((PyArrayObject *)obj,
                                         "output array") < 0) {
