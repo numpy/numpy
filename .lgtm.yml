@@ -7,3 +7,8 @@ path_classifiers:
     # "undefined export" alerts
     - numpy/random/__init__.py
 
+extraction:
+  python:
+    python_setup:
+        requirements:
+          - cython>=0.29
