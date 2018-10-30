@@ -116,8 +116,6 @@ static PyMethodDef foo_module_methods[] = {
 void initfoo() {
     int i;
     PyObject *m, *d, *s;
-    PyTypeObject *t;
-    PyObject *f;
     import_array();
 
     m = Py_InitModule("foo", foo_module_methods);
