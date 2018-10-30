@@ -33,8 +33,8 @@ jobs:
   # two C compilers, but with homebrew looks like we're
   # now stuck getting the full gcc toolchain instead of
   # just pulling in gfortran
-  - script: brew install gcc
-    displayName: 'make gfortran available on mac os vm'
+  - script: brew install gcc cppcheck
+    displayName: 'Install gfortran and cppcheck'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
   - script: python -m pip install cython nose pytz pytest pickle5
@@ -55,6 +55,12 @@ jobs:
       ATLAS: None
       ACCELERATE: None
       CC: /usr/bin/clang
+  - script: cppcheck --suppressions-list=tools/cppcheck_suppressions.txt --enable=all --xml -inumpy/linalg/lapack_lite -itools/swig . >& cppcheck_results.txt
+    displayName: 'Run cppcheck static analysis on C files'
+  # the grep checks for cppcheck issues below parse out xml error id tags
+  # in the future, we may prefer to use an xml parser instead of grep
+  - script: /bin/bash -c "! grep 'syntaxError' cppcheck_results.txt"
+    displayName: 'Parse cppcheck results for syntax errors'
   - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
   - task: PublishTestResults@2

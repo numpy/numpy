@@ -1,0 +1,47 @@
+// suppress all warnings related to C template files
+*:*.src
+
+// ignore warnings about large numbers of #ifdef configs
+toomanyconfigs:*
+
+// ignore variable scope warnings -- CPython dev team
+// also ignored these when using cppcheck
+variableScope:*
+
+// ignore config style warnings (#define directives that
+// cppcheck doesn't like, but are probably fine)
+ConfigurationNotChecked:*
+
+// we have some pointer casts that could perhaps be typed
+// slightly more conservatively
+invalidPointerCast:*
+
+// false positives for variables that are never used
+unreadVariable:*
+
+// we probably don't want to start removing unused struct
+// members
+unusedStructMember:*
+
+// ignore all warnings for Cython generated random code
+*:numpy/random/mtrand/mtrand.c
+
+// unused function (dead code) detection is not reliable yet
+// ignore for all files -- probably related to having Python
+// interaction on top of regular C code
+unusedFunction:*
+
+// some redundant variable assignments do look ok
+// after manual inspection
+redundantAssignment:numpy/core/src/common/mem_overlap.c
+redundantAssignment:numpy/core/src/multiarray/calculation.c
+redundantAssignment:numpy/core/src/multiarray/common.c
+redundantAssignment:numpy/core/src/multiarray/convert_datatype.c
+redundantAssignment:numpy/core/src/multiarray/ctors.c
+redundantAssignment:numpy/core/src/multiarray/descriptor.c
+redundantAssignment:numpy/core/src/multiarray/item_selection.c
+redundantAssignment:numpy/core/src/multiarray/iterators.c
+redundantAssignment:numpy/core/src/multiarray/mapping.c
+redundantAssignment:numpy/core/src/multiarray/methods.c
+
+

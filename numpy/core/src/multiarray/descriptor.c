@@ -1968,7 +1968,7 @@ _arraydescr_isnative(PyArray_Descr *self)
         int offset;
         Py_ssize_t pos = 0;
         while (PyDict_Next(self->fields, &pos, &key, &value)) {
-            if NPY_TITLE_KEY(key, value) {
+            if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
@@ -2460,7 +2460,7 @@ _descr_find_object(PyArray_Descr *self)
         Py_ssize_t pos = 0;
 
         while (PyDict_Next(self->fields, &pos, &key, &value)) {
-            if NPY_TITLE_KEY(key, value) {
+            if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
@@ -2982,7 +2982,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
         newfields = PyDict_New();
         /* make new dictionary with replaced PyArray_Descr Objects */
         while (PyDict_Next(self->fields, &pos, &key, &value)) {
-            if NPY_TITLE_KEY(key, value) {
+            if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
             if (!PyUString_Check(key) || !PyTuple_Check(value) ||
