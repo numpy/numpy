@@ -233,6 +233,14 @@ class TestRecFunctions(object):
         assert_equal(apply_along_fields(np.mean, d[['x', 'z']]),
                      np.array([ 3. ,  5.5,  9. , 11. ]))
 
+        # check that for uniform field dtypes we get a view, not a copy:
+        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+                     dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
+        dd = structured_to_unstructured(d)
+        ddd = unstructured_to_structured(dd, d.dtype)
+        assert_(dd.base is d)
+        assert_(ddd.base is d)
+
     def test_field_assignment_by_name(self):
         a = np.ones(2, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
         newdt = [('b', 'f4'), ('c', 'u1')]

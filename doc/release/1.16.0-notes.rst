@@ -19,6 +19,11 @@ Highlights
 New functions
 =============
 
+ * New functions in the `numpy.lib.recfunctions` module to ease the structured
+   assignment changes: `assign_fields_by_name`, `structured_to_unstructured`, 
+   `unstructured_to_structured`, `apply_along_fields`, and `require_fields`.
+   See the user guide at <https://docs.scipy.org/doc/numpy/user/basics.rec.html>
+   for more info.
 
 Deprecations
 ============
