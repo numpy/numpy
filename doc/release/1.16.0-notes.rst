@@ -113,6 +113,12 @@ New Features
 New keyword ``max_rows`` in `numpy.loadtxt` sets the maximum rows of the
 content to be read after ``skiprows``, as in `numpy.genfromtxt`.
 
+modulus operator support added for ``np.timedelta64`` operands
+--------------------------------------------------------------
+The modulus (remainder) operator is now supported for two operands
+of type ``np.timedelta64``. The operands may have different units
+and the return value will match the type of the operands.
+
 
 Improvements
 ============
@@ -262,6 +268,11 @@ copying the data directly into the appropriate slice of the resulting array.
 This results in significant speedups for these large arrays, particularly for
 arrays being blocked along more than 2 dimensions.
 
+Speedup ``np.take`` for read-only arrays
+----------------------------------------
+The implementation of ``np.take`` no longer makes an unnecessary copy of the
+source array when its ``writeable`` flag is set to ``False``.
+
 
 Changes
 =======
@@ -283,12 +294,13 @@ if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
 subclasses that override the default ``__array_ufunc__`` implementation,
 the ``TypeError`` is passed on.
 
-``maximum`` and ``minimum`` set invalid float status for more dtypes
---------------------------------------------------------------------
-Previously only ``float32`` and ``float64`` set invalid float status (by
-default emitting a `RuntimeWarning`) when a Nan is encountered in
-`numpy.maximum` and `numpy.minimum`. Now ``float16``, ``complex64``,
-``complex128`` and ``complex256`` will do so as well.
+``maximum`` and ``minimum`` no longer emit warnings
+---------------------------------------------------
+As part of code introduced in 1.10,  ``float32`` and ``float64`` set invalid
+float status when a Nan is encountered in `numpy.maximum` and `numpy.minimum`,
+when using SSE2 semantics. This caused a `RuntimeWarning` to sometimes be
+emitted. In 1.15 we fixed the inconsistencies which caused the warnings to
+become more conspicuous. Now no warnings will be emitted.
 
 Umath and multiarray c-extension modules merged into a single module
 --------------------------------------------------------------------

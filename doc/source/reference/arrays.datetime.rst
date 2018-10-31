@@ -119,6 +119,9 @@ simple datetime calculations.
     >>> np.timedelta64(1,'W') / np.timedelta64(1,'D')
     7.0
 
+    >>> np.timedelta64(1,'W') % np.timedelta64(10,'D')
+    numpy.timedelta64(7,'D')
+
 There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
 on when they are used. While a timedelta day unit is equivalent to

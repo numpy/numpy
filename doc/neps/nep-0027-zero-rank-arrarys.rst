@@ -3,19 +3,21 @@ NEP 27 — Zero Rank Arrays
 =========================
 
 :Author: Alexander Belopolsky (sasha), transcribed Matt Picus <matti.picus@gmail.com>
-:Status: Draft
+:Status: Final
 :Type: Informational
 :Created: 2006-06-10
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-October/078824.html
 
-Abstract
---------
+.. note ::
 
-NumPy has both zero rank arrays and scalars. This design document, adapted from
-a `2006 wiki entry`_, describes what zero rank arrays are and why they exist.
-It was transcribed 2018-10-13 into a NEP and links were updated.
+    NumPy has both zero rank arrays and scalars. This design document, adapted
+    from a `2006 wiki entry`_, describes what zero rank arrays are and why they
+    exist. It was transcribed 2018-10-13 into a NEP and links were updated.
+    The pull request sparked `a lively discussion`_ about the continued need
+    for zero rank arrays and scalars in NumPy.
 
-Note that some of the information here is dated, for instance indexing of 0-D
-arrays now is now implemented and does not error.
+    Some of the information here is dated, for instance indexing of 0-D arrays
+    now is now implemented and does not error.
 
 Zero-Rank Arrays
 ----------------
@@ -158,7 +160,7 @@ On the other hand there are several cases that make sense for rank-zero arrays.
 Ellipsis and empty tuple
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sasha started a `Jan 2006 discussion`_ on scipy-dev
+Alexander started a `Jan 2006 discussion`_ on scipy-dev
 with the following proposal:
 
     ... it may be reasonable to allow ``a[...]``.  This way
@@ -186,7 +188,7 @@ Francesc's proposal was::
 There is a consensus that for a zero-rank array ``x``, both ``x[...]`` and ``x[()]`` should be valid, but the question
 remains on what should be the type of the result - zero rank ndarray or ``x.dtype``?
 
-(Sasha)
+(Alexander)
     First, whatever choice is made for ``x[...]`` and ``x[()]`` they should be
     the same because ``...`` is just syntactic sugar for "as many `:` as
     necessary", which in the case of zero rank leads to ``... = (:,)*0 = ()``.
@@ -249,3 +251,4 @@ The original document appeared on the scipy.org wiki, with no Copyright notice, 
 .. _`9024ff0`: https://github.com/numpy/numpy/commit/9024ff0dc052888b5922dde0f3e615607a9e99d7
 .. _`743d922`: https://github.com/numpy/numpy/commit/743d922bf5893acf00ac92e823fe12f460726f90
 .. _`b32744e`: https://github.com/numpy/numpy/commit/b32744e3fc5b40bdfbd626dcc1f72907d77c01c4
+.. _`a lively discussion`: https://github.com/numpy/numpy/pull/12166

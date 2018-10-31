@@ -5,6 +5,8 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 
 import functools
 import operator
+import types
+import warnings
 
 from . import numeric as _nx
 from . import overrides
@@ -204,11 +206,22 @@ def atleast_3d(*arys):
         return res
 
 
-def _vstack_dispatcher(tup):
-    return tup
+def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
+    if not hasattr(arrays, '__getitem__') and hasattr(arrays, '__iter__'):
+        warnings.warn('arrays to stack must be passed as a "sequence" type '
+                      'such as list or tuple. Support for non-sequence '
+                      'iterables such as generators is deprecated as of '
+                      'NumPy 1.16 and will raise an error in the future.',
+                      FutureWarning, stacklevel=stacklevel)
+        return ()
+    return arrays
 
 
-@array_function_dispatch(_vstack_dispatcher)
+def _vhstack_dispatcher(tup):
+    return _arrays_for_stack_dispatcher(tup)
+
+
+@array_function_dispatch(_vhstack_dispatcher)
 def vstack(tup):
     """
     Stack arrays in sequence vertically (row wise).
@@ -264,11 +277,7 @@ def vstack(tup):
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
 
-def _hstack_dispatcher(tup):
-    return tup
-
-
-@array_function_dispatch(_hstack_dispatcher)
+@array_function_dispatch(_vhstack_dispatcher)
 def hstack(tup):
     """
     Stack arrays in sequence horizontally (column wise).
@@ -325,6 +334,7 @@ def hstack(tup):
 
 
 def _stack_dispatcher(arrays, axis=None, out=None):
+    arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
     for a in arrays:
         yield a
     if out is not None:
