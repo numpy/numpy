@@ -311,7 +311,8 @@ class _ctypes(object):
             return None
         return (obj*self._arr.ndim)(*self._arr.strides)
 
-    def get_data(self):
+    @property
+    def data(self):
         """
         A pointer to the memory area of the array as a Python integer.
         This memory area may contain data that is not aligned, or not in correct
@@ -328,7 +329,8 @@ class _ctypes(object):
         """
         return self._data.value
 
-    def get_shape(self):
+    @property
+    def shape(self):
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
         the basetype is the C-integer corresponding to ``dtype('p')`` on this
@@ -339,7 +341,8 @@ class _ctypes(object):
         """
         return self.shape_as(_getintp_ctype())
 
-    def get_strides(self):
+    @property
+    def strides(self):
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
         the basetype is the same as for the shape attribute. This ctypes array
@@ -349,13 +352,20 @@ class _ctypes(object):
         """
         return self.strides_as(_getintp_ctype())
 
-    def get_as_parameter(self):
+    @property
+    def _as_parameter_(self):
+        """
+        Overrides the ctypes semi-magic method
+
+        Enables `c_func(some_array.ctypes)`
+        """
         return self._data
 
-    data = property(get_data)
-    shape = property(get_shape)
-    strides = property(get_strides)
-    _as_parameter_ = property(get_as_parameter, None, doc="_as parameter_")
+    # kept for compatibility
+    get_data = data.fget
+    get_shape = shape.fget
+    get_strides = strides.fget
+    get_as_parameter = _as_parameter_.fget
 
 
 def _newnames(datatype, order):
