@@ -744,12 +744,14 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                 d[i] = buffer_view.shape[i];
             }
             PyBuffer_Release(&buffer_view);
+            _dealloc_cached_buffer_info(obj);
             return 0;
         }
         else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
             d[0] = buffer_view.len;
             *maxndim = 1;
             PyBuffer_Release(&buffer_view);
+            _dealloc_cached_buffer_info(obj);
             return 0;
         }
         else {
@@ -2470,6 +2472,7 @@ PyArray_FromInterface(PyObject *origin)
          * sticks around after the release.
          */
         PyBuffer_Release(&view);
+        _dealloc_cached_buffer_info(base);
 #else
         res = PyObject_AsWriteBuffer(base, (void **)&data, &buffer_len);
         if (res < 0) {
@@ -3725,6 +3728,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
+    _dealloc_cached_buffer_info(buf);
 #else
     if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
         writeable = 0;
