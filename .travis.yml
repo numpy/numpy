@@ -41,7 +41,7 @@ matrix:
       sudo: true    # travis-ci/travis-ci#9069
       env: INSTALL_PICKLE5=1
     - python: 3.6
-      env: USE_CHROOT=1 ARCH=i386 DIST=bionic PYTHON=3.6
+      env: USE_CHROOT=1 ARCH=i386 DIST=bionic PYTHON=python3 PIP=pip3
       sudo: true
       addons:
         apt:

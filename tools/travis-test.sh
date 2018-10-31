@@ -101,8 +101,8 @@ setup_chroot()
 
   # install needed packages
   sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python-dev python-nose python-pip cython \
-    python-pytest"
+    libatlas-base-dev gfortran python-dev python3-dev python-pip python3-pip \
+    cython  python3-pytest python-pytest"
 }
 
 run_test()
@@ -112,7 +112,7 @@ run_test()
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
-    pip install pytest-cov
+    $PIP install pytest-cov
     COVERAGE_FLAG=--coverage
   fi
 
@@ -191,11 +191,11 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  pip install --pre --no-index --upgrade --find-links=. numpy
-  pip install nose pytest
+  $PIP install --pre --no-index --upgrade --find-links=. numpy
+  $PIP install nose pytest
 
   if [ -n "$INSTALL_PICKLE5" ]; then
-    pip install pickle5
+    $PIP install pickle5
   fi
 
   popd
@@ -215,10 +215,10 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  pip install numpy*
-  pip install nose pytest
+  $PIP install numpy*
+  $PIP install nose pytest
   if [ -n "$INSTALL_PICKLE5" ]; then
-    pip install pickle5
+    $PIP install pickle5
   fi
 
   popd
@@ -229,9 +229,9 @@ elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   # the chroot'ed environment will not have the current locale,
   # avoid any warnings which may disturb testing
   export LANG=C LC_ALL=C
-  # run again in chroot with this time testing
+  # run again in chroot with this time testing with python3
   sudo linux32 chroot $DIR bash -c \
-    "cd numpy && PYTHON=python PIP=pip IN_CHROOT=1 $0 test"
+    "cd numpy && PYTHON=$PYTHON PIP=$PIP IN_CHROOT=1 $0 test"
 else
   setup_base
   run_test
