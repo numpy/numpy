@@ -816,17 +816,17 @@ cdef class RandomState:
         return (np.random.__RandomState_ctor, (), self.get_state())
 
     # Basic distributions:
-    def random_sample(self, size=None):
+    def random(self, size=None):
         """
-        random_sample(size=None)
+        random(size=None)
 
         Return random floats in the half-open interval [0.0, 1.0).
 
         Results are from the "continuous uniform" distribution over the
         stated interval.  To sample :math:`Unif[a, b), b > a` multiply
-        the output of `random_sample` by `(b-a)` and add `a`::
+        the output of `random` by `(b-a)` and add `a`::
 
-          (b - a) * random_sample() + a
+          (b - a) * random() + a
 
         Parameters
         ----------
@@ -843,16 +843,16 @@ cdef class RandomState:
 
         Examples
         --------
-        >>> np.random.random_sample()
+        >>> np.random.random()
         0.47108547995356098
-        >>> type(np.random.random_sample())
+        >>> type(np.random.random())
         <type 'float'>
-        >>> np.random.random_sample((5,))
+        >>> np.random.random((5,))
         array([ 0.30220482,  0.86820401,  0.1654503 ,  0.11659149,  0.54323428])
 
         Three-by-two array of random numbers from [-5, 0):
 
-        >>> 5 * np.random.random_sample((3, 2)) - 5
+        >>> 5 * np.random.random((3, 2)) - 5
         array([[-3.99149989, -0.52338984],
                [-2.99091858, -0.79479508],
                [-1.23204345, -1.75224494]])
