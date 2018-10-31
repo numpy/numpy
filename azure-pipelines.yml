@@ -6,6 +6,25 @@ trigger:
       - master
       - maintenance/*
 jobs:
+- job: Linux_Python_36_32bit_full
+  pool:
+    vmIMage: 'ubuntu-16.04'
+  steps:
+  - script: |
+           docker pull i386/ubuntu:bionic
+           docker run -v $(pwd):/numpy i386/ubuntu:bionic /bin/bash -c "cd numpy && \
+           apt-get -y update && \
+           apt-get -y install python3.6-dev python3-pip locales && \
+           locale-gen fr_FR && update-locale && \
+           pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
+           apt-get -y install libopenblas-dev gfortran && \
+           NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
+           python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
+    displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for Python 3.6-32 bit'
 - job: macOS
   pool:
     # NOTE: at time of writing, there is a danger
