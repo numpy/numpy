@@ -619,7 +619,7 @@ def ascontiguousarray(a, dtype=None):
     True
 
     Note: This function returns an array with at least one-dimension (1-d) 
-          so it will not preserve 0-d arrays.  
+    so it will not preserve 0-d arrays.  
 
     """
     return array(a, dtype, copy=False, order='C', ndmin=1)
@@ -659,7 +659,7 @@ def asfortranarray(a, dtype=None):
     True
 
     Note: This function returns an array with at least one-dimension (1-d) 
-          so it will not preserve 0-d arrays.  
+    so it will not preserve 0-d arrays.  
 
     """
     return array(a, dtype, copy=False, order='F', ndmin=1)
