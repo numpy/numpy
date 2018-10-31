@@ -922,7 +922,7 @@ fail:
  */
 
 NPY_NO_EXPORT void
-_array_dealloc_buffer_info(PyArrayObject *self)
+_dealloc_cached_buffer_info(PyObject *self)
 {
     int reset_error_state = 0;
     PyObject *ptype, *pvalue, *ptraceback;
@@ -936,7 +936,7 @@ _array_dealloc_buffer_info(PyArrayObject *self)
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     }
 
-    _buffer_clear_info((PyObject*)self);
+    _buffer_clear_info(self);
 
     if (reset_error_state) {
         PyErr_Restore(ptype, pvalue, ptraceback);
