@@ -6,13 +6,13 @@
 Array Broadcasting in Numpy
 ===========================
 
-.. note::
+.. 
    Originally part of the scipy.org wiki, available `here
    <https://scipy.github.io/old-wiki/pages/EricsBroadcastingDoc>`_ or from the
    `github repo
    <https://github.com/scipy/old-wiki/blob/gh-pages/pages/EricsBroadcastingDoc.html>`_
 
-[Let's] ... explore a more advanced concept in numpy called broadcasting. The
+Let's explore a more advanced concept in numpy called broadcasting. The
 term broadcasting describes how numpy treats arrays with different shapes
 during arithmetic operations. Subject to certain constraints, the smaller array
 is "broadcast" across the larger array so that they have compatible shapes.
@@ -112,7 +112,7 @@ one that are expanded to a larger size in a broadcast operation.
 +-------+------------+-----+-----+-----+---+
 
 Below, are several code examples and graphical representations that help make
-the broadcast rule visually obvious. `example-3` adds a one-dimensional array
+the broadcast rule visually obvious. :ref:`example-3` adds a one-dimensional array
 to a two-dimensional array:
 
 .. code-block:: python
@@ -194,7 +194,7 @@ occurs in the vector quantization (VQ) algorithm used in information theory,
 classification, and other related areas. The basic operation in VQ [#f0] finds
 the closest point in a set of points, called codes in VQ jargon, to a given
 point, called the observation. In the very simple, two-dimensional case shown
-in `figure-5`, the values in observation describe the weight and height of an
+in :ref:`figure-5`, the values in observation describe the weight and height of an
 athlete to be classified. The codes represent different classes of
 athletes. [#f1]_ Finding the closest point requires calculating the distance
 between observation and each of the codes. The shortest distance provides the
