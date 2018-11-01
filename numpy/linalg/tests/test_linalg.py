@@ -19,7 +19,8 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, suppress_warnings
+    assert_almost_equal, assert_allclose, suppress_warnings,
+    assert_raises_regex,
     )
 
 
@@ -930,6 +931,14 @@ class TestLstsq(LstsqCases):
             assert_almost_equal(residuals, (r * r).sum(axis=-2))
         assert_equal(rank, min(m, n))
         assert_equal(s.shape, (min(m, n),))
+
+    def test_incompatible_dims(self):
+        # use modified version of docstring example
+        x = np.array([0, 1, 2, 3])
+        y = np.array([-1, 0.2, 0.9, 2.1, 3.3])
+        A = np.vstack([x, np.ones(len(x))]).T
+        with assert_raises_regex(LinAlgError, "Incompatible dimensions"):
+            linalg.lstsq(A, y, rcond=None)
 
 
 @pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
