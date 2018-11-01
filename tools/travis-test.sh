@@ -101,8 +101,8 @@ setup_chroot()
 
   # install needed packages
   sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python-dev python3-dev python-pip python3-pip \
-    cython  python3-pytest python-pytest"
+    libatlas-base-dev gfortran python3-dev python3-pip \
+    cython  python3-pytest"
 }
 
 run_test()
@@ -231,7 +231,7 @@ elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   export LANG=C LC_ALL=C
   # run again in chroot with this time testing with python3
   sudo linux32 chroot $DIR bash -c \
-    "cd numpy && PYTHON=$PYTHON PIP=$PIP IN_CHROOT=1 $0 test"
+    "cd numpy && PYTHON=python3 PIP=pip3 IN_CHROOT=1 $0 test"
 else
   setup_base
   run_test
