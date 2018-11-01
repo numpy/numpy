@@ -273,6 +273,13 @@ Speedup ``np.take`` for read-only arrays
 The implementation of ``np.take`` no longer makes an unnecessary copy of the
 source array when its ``writeable`` flag is set to ``False``.
 
+Support path-like objects for more functions
+--------------------------------------------
+The ``np.core.records.fromfile`` function now supports ``pathlib.Path``
+and other path-like objects in addition to a file object. Furthermore, the
+``np.load`` function now also supports path-like objects when
+using memory mapping (``mmap_mode`` keyword argument).
+
 
 Changes
 =======
