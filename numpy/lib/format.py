@@ -708,7 +708,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     Parameters
     ----------
-    filename : str or pathlib.Path instance
+    filename : str or path-like
         The name of the file on disk.  This may *not* be a file-like
         object.
     mode : str, optional
@@ -750,7 +750,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     """
     if isfileobj(filename):
-        raise ValueError("Filename must be a string or a pathlib.Path."
+        raise ValueError("Filename must be a string or a path-like object."
                          "  Memmap cannot use existing file handles.")
 
     if 'w' in mode:

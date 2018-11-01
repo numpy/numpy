@@ -737,7 +737,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
-    If file is a string or a pathlib.Path then that file is opened,
+    If file is a string or a path-like object then that file is opened,
     else it is assumed to be a file object. The file object must
     support random access (i.e. it must have tell and seek methods).
 
