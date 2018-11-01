@@ -162,7 +162,7 @@ import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    asbytes, asstr, isfileobj, long, basestring, is_pathlib_path
+    asbytes, asstr, isfileobj, long, os_fspath
     )
 from numpy.core.numeric import pickle
 
@@ -749,7 +749,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     memmap
 
     """
-    if not (isinstance(filename, basestring) or is_pathlib_path(filename)):
+    if isfileobj(filename):
         raise ValueError("Filename must be a string or a pathlib.Path."
                          "  Memmap cannot use existing file handles.")
 
@@ -769,10 +769,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        if is_pathlib_path(filename):
-            fp = filename.open(mode+'b')
-        else:
-            fp = open(filename, mode+'b')
+        fp = open(os_fspath(filename), mode+'b')
         try:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
@@ -784,10 +781,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             fp.close()
     else:
         # Read the header of the file first.
-        if is_pathlib_path(filename):
-            fp = filename.open('rb')
-        else:
-            fp = open(filename, 'rb')
+        fp = open(os_fspath(filename), 'rb')
         try:
             version = read_magic(fp)
             _check_version(version)

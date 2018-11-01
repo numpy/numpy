@@ -42,7 +42,7 @@ import warnings
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long, unicode, is_pathlib_path
+from numpy.compat import isfileobj, bytes, long, unicode, os_fspath
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
@@ -763,13 +763,14 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     elif isinstance(shape, (int, long)):
         shape = (shape,)
 
-    name = 0
-    if isinstance(fd, str):
+    if isfileobj(fd):
+        # file already opened
+        name = 0
+    else:
+        # open file
+        fd = open(os_fspath(fd), 'rb')
         name = 1
-        fd = open(fd, 'rb')
-    elif is_pathlib_path(fd):
-        name = 1
-        fd = fd.open('rb')
+
     if (offset > 0):
         fd.seek(offset, 1)
     size = get_remaining_size(fd)
