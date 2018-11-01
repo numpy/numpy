@@ -1704,7 +1704,7 @@ def _normed_hermite_n(x, n):
 
     """
     if n == 0:
-        return np.ones(x.shape)/np.sqrt(np.sqrt(np.pi))
+        return np.full(x.shape, 1/np.sqrt(np.sqrt(np.pi)))
 
     c0 = 0.
     c1 = 1./np.sqrt(np.sqrt(np.pi))
