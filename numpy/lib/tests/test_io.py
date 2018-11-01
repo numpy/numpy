@@ -2311,6 +2311,7 @@ class TestPathUsage(object):
             np.save(path, a)
             data = np.load(path, mmap_mode='r')
             assert_array_equal(data, a)
+            # close the mem-mapped file
             del data
 
     def test_save_load_memmap_readwrite(self):
