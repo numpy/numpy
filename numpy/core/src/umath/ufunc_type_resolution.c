@@ -1114,7 +1114,16 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             }
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
+
+            /*
+             * TODO: split function into truediv and floordiv resolvers
+             */
+            if (strcmp(ufunc->name, "floor_divide") == 0) {
+                out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+            }
+            else {
             out_dtypes[2] = PyArray_DescrFromType(NPY_DOUBLE);
+            }
             if (out_dtypes[2] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
