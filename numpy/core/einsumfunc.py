@@ -1028,7 +1028,7 @@ def einsum(*operands, **kwargs):
         Controls if intermediate optimization should occur. No optimization
         will occur if False and True will default to the 'greedy' algorithm.
         Also accepts an explicit contraction list from the ``np.einsum_path``
-        function. See ``np.einsum_path`` for more details. Default is True.
+        function. See ``np.einsum_path`` for more details. Defaults to False.
 
     Returns
     -------
