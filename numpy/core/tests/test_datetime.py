@@ -1238,8 +1238,6 @@ class TestDateTime(object):
             assert_equal(tda / tdd, 60.0)
             assert_equal(tdd / tda, 1.0 / 60.0)
 
-            # m8 // m8
-            assert_raises(TypeError, np.floor_divide, tda, tdb)
             # int / m8
             assert_raises(TypeError, np.divide, 2, tdb)
             # float / m8

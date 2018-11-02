@@ -1,0 +1,60 @@
+==========================
+NumPy 1.16.1 Release Notes
+==========================
+
+
+Highlights
+==========
+
+
+
+New functions
+=============
+
+
+
+New deprecations
+================
+
+
+Expired deprecations
+====================
+
+
+
+Future changes
+==============
+
+
+
+Compatibility notes
+===================
+
+
+
+C API changes
+=============
+
+
+
+New Features
+============
+
+
+floordiv and divmod operator support added for ``np.timedelta64`` operands
+--------------------------------------------------------------------------
+The floordiv and divmod operators are now supported for two operands
+of type ``np.timedelta64``.
+
+
+Improvements
+============
+
+
+Changes
+=======
+
+timedelta64 modulus by 0 returns NaT
+------------------------------------
+The modulus operation with two ``timedelta64`` operands now returns ``NaT``
+in the case of division by zero, rather than returning zero.
