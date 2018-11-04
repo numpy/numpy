@@ -1,0 +1,21 @@
+
+Contributors
+============
+
+A total of 4 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Sebastian Berg
+* bbbbbbbbba +
+
+Pull requests merged
+====================
+
+A total of 4 pull requests were merged for this release.
+
+* `#12296 <https://github.com/numpy/numpy/pull/12296>`__: BUG: Dealloc cached buffer info (#12249)
+* `#12297 <https://github.com/numpy/numpy/pull/12297>`__: BUG: Fix fill value in masked array '==' and '!=' ops.
+* `#12307 <https://github.com/numpy/numpy/pull/12307>`__: DOC: Correct the default value of `optimize` in `numpy.einsum`
+* `#12320 <https://github.com/numpy/numpy/pull/12320>`__: REL: Prepare for the NumPy 1.15.4 release

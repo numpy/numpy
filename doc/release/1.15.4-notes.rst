@@ -1,0 +1,38 @@
+==========================
+NumPy 1.15.4 Release Notes
+==========================
+
+This is a bugfix release for bugs and regressions reported following the 1.15.3
+release.  The Python versions supported by this release are 2.7, 3.4-3.7. The
+wheels are linked with OpenBLAS v0.3.0, which should fix some of the linalg
+problems reported for NumPy 1.14.
+
+Compatibility Note
+==================
+
+The NumPy 1.15.x OS X wheels released on PyPI no longer contain 32-bit
+binaries.  That will also be the case in future releases. See
+`#11625 <https://github.com/numpy/numpy/issues/11625>`__ for the related
+discussion.  Those needing 32-bit support should look elsewhere or build
+from source.
+
+Contributors
+============
+
+A total of 4 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Sebastian Berg
+* bbbbbbbbba +
+
+Pull requests merged
+====================
+
+A total of 4 pull requests were merged for this release.
+
+* `#12296 <https://github.com/numpy/numpy/pull/12296>`__: BUG: Dealloc cached buffer info
+* `#12297 <https://github.com/numpy/numpy/pull/12297>`__: BUG: Fix fill value in masked array '==' and '!=' ops.
+* `#12307 <https://github.com/numpy/numpy/pull/12307>`__: DOC: Correct the default value of `optimize` in `numpy.einsum`
+* `#12320 <https://github.com/numpy/numpy/pull/12320>`__: REL: Prepare for the NumPy 1.15.4 release
