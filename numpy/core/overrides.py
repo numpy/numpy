@@ -13,7 +13,7 @@ _NDARRAY_ARRAY_FUNCTION = ndarray.__array_function__
 _NDARRAY_ONLY = [ndarray]
 
 
-def get_overloaded_types_and_args(relevant_args):
+def get_types_and_overloaded_args(relevant_args):
     """Returns a list of arguments on which to call __array_function__.
 
     Parameters
@@ -24,43 +24,43 @@ def get_overloaded_types_and_args(relevant_args):
 
     Returns
     -------
-    overloaded_types : collection of types
-        Types of arguments from relevant_args with __array_function__ methods.
+    types : collection of types
+        Unique types of relevant_args.
     overloaded_args : list
         Arguments from relevant_args on which to call __array_function__
         methods, in the order in which they should be called.
     """
     # Runtime is O(num_arguments * num_unique_types)
-    overloaded_types = []
+    types = []
     overloaded_args = []
     for arg in relevant_args:
+        if arg is None:
+            continue
         arg_type = type(arg)
         # We only collect arguments if they have a unique type, which ensures
         # reasonable performance even with a long list of possibly overloaded
         # arguments.
-        if (arg_type not in overloaded_types and
-                hasattr(arg_type, '__array_function__')):
-
+        if arg_type not in types:
             # Create lists explicitly for the first type (usually the only one
             # done) to avoid setting up the iterator for overloaded_args.
-            if overloaded_types:
-                overloaded_types.append(arg_type)
+            types.append(arg_type)
+            if hasattr(arg_type, '__array_function__'):
                 # By default, insert argument at the end, but if it is
                 # subclass of another argument, insert it before that argument.
                 # This ensures "subclasses before superclasses".
-                index = len(overloaded_args)
-                for i, old_arg in enumerate(overloaded_args):
-                    if issubclass(arg_type, type(old_arg)):
-                        index = i
-                        break
-                overloaded_args.insert(index, arg)
-            else:
-                overloaded_types = [arg_type]
-                overloaded_args = [arg]
+                if overloaded_args:
+                    index = len(overloaded_args)
+                    for i, old_arg in enumerate(overloaded_args):
+                        if issubclass(arg_type, type(old_arg)):
+                            index = i
+                            break
+                    overloaded_args.insert(index, arg)
+                else:
+                    overloaded_args = [arg]
 
     # Short-cut for the common case of only ndarray.
-    if overloaded_types == _NDARRAY_ONLY:
-        return overloaded_types, []
+    if types == _NDARRAY_ONLY:
+        return types, []
 
     # Special handling for ndarray.__array_function__
     overloaded_args = [
@@ -68,7 +68,7 @@ def get_overloaded_types_and_args(relevant_args):
         if type(arg).__array_function__ is not _NDARRAY_ARRAY_FUNCTION
     ]
 
-    return overloaded_types, overloaded_args
+    return types, overloaded_args
 
 
 def array_function_implementation_or_override(
@@ -101,7 +101,7 @@ def array_function_implementation_or_override(
     TypeError : if no implementation is found.
     """
     # Check for __array_function__ methods.
-    types, overloaded_args = get_overloaded_types_and_args(relevant_args)
+    types, overloaded_args = get_types_and_overloaded_args(relevant_args)
     if not overloaded_args:
         return implementation(*args, **kwargs)
 

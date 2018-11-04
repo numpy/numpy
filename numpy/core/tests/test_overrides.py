@@ -6,13 +6,13 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
-    get_overloaded_types_and_args, array_function_dispatch,
+    get_types_and_overloaded_args, array_function_dispatch,
     verify_matching_signatures)
 from numpy.core.numeric import pickle
 
 
 def _get_overloaded_args(relevant_args):
-    types, args = get_overloaded_types_and_args(relevant_args)
+    types, args = get_types_and_overloaded_args(relevant_args)
     return args
 
 
@@ -25,21 +25,21 @@ class TestGetOverloadedTypesAndArgs(object):
     def test_ndarray(self):
         array = np.array(1)
 
-        types, args = get_overloaded_types_and_args([array])
+        types, args = get_types_and_overloaded_args([array])
         assert_equal(set(types), {np.ndarray})
         assert_equal(list(args), [])
 
-        types, args = get_overloaded_types_and_args([array, array])
+        types, args = get_types_and_overloaded_args([array, array])
         assert_equal(len(types), 1)
         assert_equal(set(types), {np.ndarray})
         assert_equal(list(args), [])
 
-        types, args = get_overloaded_types_and_args([array, 1])
-        assert_equal(set(types), {np.ndarray})
+        types, args = get_types_and_overloaded_args([array, 1])
+        assert_equal(set(types), {np.ndarray, int})
         assert_equal(list(args), [])
 
-        types, args = get_overloaded_types_and_args([1, array])
-        assert_equal(set(types), {np.ndarray})
+        types, args = get_types_and_overloaded_args([1, array])
+        assert_equal(set(types), {np.ndarray, int})
         assert_equal(list(args), [])
 
     def test_ndarray_subclasses(self):
@@ -54,15 +54,15 @@ class TestGetOverloadedTypesAndArgs(object):
         override_sub = np.array(1).view(OverrideSub)
         no_override_sub = np.array(1).view(NoOverrideSub)
 
-        types, args = get_overloaded_types_and_args([array, override_sub])
+        types, args = get_types_and_overloaded_args([array, override_sub])
         assert_equal(set(types), {np.ndarray, OverrideSub})
         assert_equal(list(args), [override_sub])
 
-        types, args = get_overloaded_types_and_args([array, no_override_sub])
+        types, args = get_types_and_overloaded_args([array, no_override_sub])
         assert_equal(set(types), {np.ndarray, NoOverrideSub})
         assert_equal(list(args), [])
 
-        types, args = get_overloaded_types_and_args(
+        types, args = get_types_and_overloaded_args(
             [override_sub, no_override_sub])
         assert_equal(set(types), {OverrideSub, NoOverrideSub})
         assert_equal(list(args), [override_sub])
@@ -75,11 +75,11 @@ class TestGetOverloadedTypesAndArgs(object):
         array = np.array(1)
         other = Other()
 
-        types, args = get_overloaded_types_and_args([other, array])
+        types, args = get_types_and_overloaded_args([other, array])
         assert_equal(set(types), {np.ndarray, Other})
         assert_equal(list(args), [other])
 
-        types, args = get_overloaded_types_and_args([array, other])
+        types, args = get_types_and_overloaded_args([array, other])
         assert_equal(set(types), {np.ndarray, Other})
         assert_equal(list(args), [other])
 
@@ -322,7 +322,7 @@ class TestNDArrayMethods(object):
         assert_equal(repr(array), 'MyArray(1)')
         assert_equal(str(array), '1')
 
-        
+
 class TestNumPyFunctions(object):
 
     def test_module(self):
