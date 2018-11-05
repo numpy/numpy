@@ -652,7 +652,7 @@ class ndrange(_nx.collections_abc.Sequence):
     When a single position parameter is provided, ndrange assumes it is 
     the ``stop`` parameter and the ndrange constructor behaves as though it has 
     the signature ``ndrange(stop)``. In all other cases, ``ndrange`` 
-    takes on the signature ``ndrange(start, stop[, step])``.
+    behaves as though the signalture is ``ndrange(start, stop[, step])``.
     
     See Also
     --------
