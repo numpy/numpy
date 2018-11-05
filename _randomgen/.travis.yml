@@ -20,15 +20,15 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      env: [PYTHON=2.7, NUMPY=1.10, CYTHON=0.26]
+      env: [PYTHON=2.7, NUMPY=1.13, CYTHON=0.26]
     - os: linux
-      env: [PYTHON=3.5, NUMPY=1.11]
+      env: [PYTHON=3.5, NUMPY=1.13]
     - os: linux
-      env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.27]
+      env: [PYTHON=3.6, NUMPY=1.14, CYTHON=0.27]
     - os: linux
-      env: [PYTHON=3.6, NUMPY=1.13, CYTHON=0.26]
+      env: [PYTHON=3.6, NUMPY=1.15, CYTHON=0.28]
     - os: linux
-      env: [PYTHON=3.6, DOCBUILD=true]
+      env: [PYTHON=3.7, DOCBUILD=true]
     - os: osx
       language: generic
       env: [PYTHON=3.6]

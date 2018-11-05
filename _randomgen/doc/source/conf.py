@@ -15,9 +15,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-from distutils.version import LooseVersion
 import guzzle_sphinx_theme
-# import sphinx_rtd_theme
 import randomgen
 
 # -- Project information -----------------------------------------------------

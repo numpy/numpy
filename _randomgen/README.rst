@@ -71,6 +71,9 @@ Features
    -  Normals (``standard_normal``)
    -  Standard Gammas (via ``standard_gamma``)
 
+-  Support for Lemire’s method of generating uniform integers on an
+   arbitrary interval by setting ``use_masked=True``.
+
 Included Pseudo Random Number Generators
 ----------------------------------------
 
@@ -111,6 +114,10 @@ New Features
 -  Core random number generators can fill existing arrays using the
    ``out`` keyword argument
 -  Standardizes integer-values random values as int64 for all platforms.
+-  ``randint`` supports generating using rejection sampling on masked
+   values (the default) or Lemire’s method. Lemire’s method can be much
+   faster when the required interval length is much smaller than the
+   closes power of 2.
 
 New Functions
 ~~~~~~~~~~~~~
@@ -166,8 +173,8 @@ Requirements
 
 Building requires:
 
--  Python (2.7, 3.4, 3.5, 3.6)
--  NumPy (1.11, 1.12, 1.13, 1.14, 1.15)
+-  Python (2.7, 3.5, 3.6, 3.7)
+-  NumPy (1.13, 1.14, 1.15)
 -  Cython (0.26+)
 -  tempita (0.5+), if not provided by Cython
 

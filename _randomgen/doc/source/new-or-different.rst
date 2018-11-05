@@ -87,3 +87,12 @@ What's New or Different
   print(existing)
 
 ..   * For changes since the previous release, see the :ref:`change-log`
+
+* Support for Lemire’s method of generating uniform integers on an
+  arbitrary interval by setting ``use_masked=True`` in
+  (:meth:`~randomgen.generator.RandomGenerator.randint`).
+
+.. ipython:: python
+
+  %timeit rg.randint(0, 1535, use_masked=False)
+  %timeit numpy.random.randint(0, 1535)

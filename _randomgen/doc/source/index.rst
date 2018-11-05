@@ -119,6 +119,10 @@ What's New or Different
   these basic RNGs to be used in numba.
 * The basic random number generators can be used in downstream projects via
   Cython.
+* Support for Lemire’s method [Lemire]_ of generating uniform integers on an
+  arbitrary interval by setting ``use_masked=True`` in
+  (:meth:`~randomgen.generator.RandomGenerator.randint`).
+
 
 See :ref:`new-or-different` for a complete list of improvements and
 differences.
@@ -205,6 +209,7 @@ New Features
    Comparing Performance <performance>
    extending
    Reading System Entropy <entropy>
+   references
 
 Changes
 ~~~~~~~
