@@ -473,9 +473,13 @@ def _array2string(a, options, separator=' ', prefix=""):
     # The formatter __init__s in _get_format_function cannot deal with
     # subclasses yet, and we also need to avoid recursion issues in
     # _formatArray with subclasses which return 0d arrays in place of scalars
-    data = asarray(a)
-    if a.shape == ():
-        a = data
+    if isinstance(a, ndarray):
+        data = asarray(a)
+        if a.shape == ():
+            a = data
+    else:
+        # ducktypes are passed through unchanged
+        data = a
 
     if a.size > options['threshold']:
         summary_insert = "..."
