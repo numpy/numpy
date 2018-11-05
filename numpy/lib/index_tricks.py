@@ -604,8 +604,9 @@ class ndrange(_nx.collections_abc.Sequence):
 
     An N-dimensional range-like object for indexing arrays.
 
-    The ndrange type represents an immutable sequence of numbers and can be
-    used for looping over specific multi-dimensional indicies in ``for`` loops.
+    The ndrange type represents an immutable sequence of tuples of numbers and 
+    can be used for looping over specific multi-dimensional indicies in 
+    ``for`` loops.
 
     When iterated, ndrange produces a sequence of tuples of integers
     `(i_0, i_1, ..., i_Nminus1)` as produced by nested for-loops over ranges.
