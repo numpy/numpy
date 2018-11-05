@@ -332,15 +332,14 @@ class TestPathUsage(object):
     def test_tofile_fromfile(self):
         with temppath(suffix='.bin') as path:
             path = Path(path)
-            a = np.empty(10, dtype='f8,i4,a5')
+            np.random.seed(123)
+            a = np.random.rand(10).astype('f8,i4,a5')
             a[5] = (0.5,10,'abcde')
-            a.newbyteorder('<')
             with path.open("wb") as fd:
                 a.tofile(fd)
             x = np.core.records.fromfile(path,
                                          formats='f8,i4,a5',
-                                         shape=10,
-                                         byteorder='<')
+                                         shape=10)
             assert_array_equal(x, a)
 
 
