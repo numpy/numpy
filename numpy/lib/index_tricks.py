@@ -599,14 +599,12 @@ class ndenumerate(object):
 
 class ndrange(_nx.collections_abc.Sequence):
     """
-    class ndrange(stop)
-    class ndrange(start, stop[, step])
-
     An N-dimensional range-like object for indexing arrays.
 
     The ndrange type represents an immutable sequence of tuples of numbers and 
     can be used for looping over specific multi-dimensional indicies in 
-    ``for`` loops.
+    ``for`` loops. Can be called as ``ndrange(stop)`` or 
+    ``ndrange(start, stop, [step])``, see parameters below.
 
     When iterated, ndrange produces a sequence of tuples of integers
     `(i_0, i_1, ..., i_Nminus1)` as produced by nested for-loops over ranges.
@@ -643,14 +641,19 @@ class ndrange(_nx.collections_abc.Sequence):
     ----------
     stop: tuple of ints, or a single int
         Specifies the stop parameter along each axis.
-    start: tuple of ints, or a single int
+    start: tuple of ints, or a single int, optional
         If provided, must be the same length as stop. Specifies the start
         parameter along each axis.
-    step: tuple of ints, or a single int
+    step: tuple of ints, or a single int, optional
         If provided, must be the same length as stop. Specifies the increment
         along each axis. If step is not provided, it defaults to a tuple of
         ones.
 
+    When a single position parameter is provided, ndrange assumes it is 
+    the ``stop`` parameter and the ndrange constructor behaves as though it has 
+    the signature ``ndrange(stop)``. In all other cases, ``ndrange`` 
+    takes on the signature ``ndrange(start, stop[, step])``.
+    
     See Also
     --------
     flatiter, ndenumerate, ndindex
