@@ -18,6 +18,7 @@ cdef enum ConstraintType:
     CONS_POSITIVE
     CONS_BOUNDED_0_1
     CONS_BOUNDED_0_1_NOTNAN
+    CONS_BOUNDED_GT_0_1
     CONS_GT_1
     CONS_GTE_1
     CONS_POISSON
