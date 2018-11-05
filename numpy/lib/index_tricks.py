@@ -887,6 +887,10 @@ class ndrange(_nx.collections_abc.Sequence):
     def shape(self):
         return tuple(len(r) for r in self._ranges)
 
+    @property
+    def ndim(self):
+        return len(self._ranges)
+
     def __iter__(self):
         return itertools.product(*(iter(r) for r in self._ranges))
 

@@ -472,6 +472,10 @@ def ndrange_tester_helper(expected, not_expected,
         kwargs['step'] = step
 
     r = ndrange(**kwargs)
+    if isinstance(stop, collections_abc.Iterable):
+        assert r.ndim == len(stop)
+    else:
+        assert r.ndim == 1
 
     if slices is not None:
         r = r[slices]
