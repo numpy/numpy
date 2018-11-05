@@ -1,12 +1,12 @@
 Change Log
 ----------
 
-After v1.15
-===========
-- Added Xoshiro256** and Xoshiro512**, the preferred generators of this class
-- Fixed bug in `jump` method of Random123 generators which did nto specify a default value
-
-
+v1.15.1
+=======
+- Added Xoshiro256** and Xoshiro512**, the preferred generators of this class.
+- Fixed bug in `jump` method of Random123 generators which did nto specify a default value.
+- Added support for generating bounded uniform integers using Lemire's method.
+- Synchronized with upstream changes, which requires moving the minimum supported NumPy to 1.13.
 
 v1.15
 =====

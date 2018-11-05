@@ -136,3 +136,25 @@ class TestRegression(object):
         # Force Garbage Collection - should not segfault.
         import gc
         gc.collect()
+
+    def test_permutation_subclass(self):
+        class N(np.ndarray):
+            pass
+
+        mt19937.seed(1)
+        orig = np.arange(3).view(N)
+        perm = mt19937.permutation(orig)
+        assert_array_equal(perm, np.array([0, 2, 1]))
+        assert_array_equal(orig, np.arange(3).view(N))
+
+        class M(object):
+            a = np.arange(5)
+
+            def __array__(self):
+                return self.a
+
+        mt19937.seed(1)
+        m = M()
+        perm = mt19937.permutation(m)
+        assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))
+        assert_array_equal(m.__array__(), np.arange(5))
