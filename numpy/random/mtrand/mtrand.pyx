@@ -1048,7 +1048,8 @@ cdef class RandomState:
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
         replace : boolean, optional
-            Whether the sample is with or without replacement
+            Whether the sample is with or without replacement, set to False in order
+            to sample unique indexes.
         p : 1-D array-like, optional
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
