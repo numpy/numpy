@@ -1072,6 +1072,47 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
 
     """)
 
+add_newdoc('numpy.core.multiarray', 'compare_chararrays',
+    """
+    compare_chararrays(a, b, cmp_op, rstrip)
+
+    Preforms element-wise comparison of two string-arrays using the specified comparison operator.
+
+    Parameters
+    ----------
+    a : array_like
+        First argument.
+    b : array_like
+        Second argument.
+    cmp_op : "<" or "<=" or "==" or ">=" or ">" or "!="
+            Third argument.
+    rstrip : Boolean
+             if True, the spaces at the end of Strings are removed before the comparison
+
+    Returns
+    -------
+    out : ndarray
+        The output array of type Boolean with the same shape as a and b.
+
+    Raises
+    ------
+    ValueError
+        If cmp_op is neither "<" nor "<=" nor "==" nor ">=" nor ">" nor "!="
+
+    TypeError
+        If at least one of the arrays a or b is a non-string array
+
+    Examples
+    --------
+    >>> a = np.array([["a"], ["b"], ["cde"]])
+    >>> b = np.array([["a"], ["a"], ["dec"]])
+    >>> np.compare_chararrays(a,b,">",True)
+    array([[False],[True],[False]])
+
+"""
+
+           )
+
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
     fromiter(iterable, dtype, count=-1)
