@@ -601,9 +601,9 @@ class ndrange(_nx.collections_abc.Sequence):
     """
     An N-dimensional range-like object for indexing arrays.
 
-    The ndrange type represents an immutable sequence of tuples of numbers and 
-    can be used for looping over specific multi-dimensional indicies in 
-    ``for`` loops. Can be called as ``ndrange(stop)`` or 
+    The ndrange type represents an immutable sequence of tuples of numbers and
+    can be used for looping over specific multi-dimensional indicies in
+    ``for`` loops. Can be called as ``ndrange(stop)`` or
     ``ndrange(start, stop, [step])``, see parameters below.
 
     When iterated, ndrange produces a sequence of tuples of integers
@@ -649,11 +649,11 @@ class ndrange(_nx.collections_abc.Sequence):
         along each axis. If step is not provided, it defaults to a tuple of
         ones.
 
-    When a single position parameter is provided, ndrange assumes it is 
-    the ``stop`` parameter and the ndrange constructor behaves as though it has 
-    the signature ``ndrange(stop)``. In all other cases, ``ndrange`` 
+    When a single position parameter is provided, ndrange assumes it is
+    the ``stop`` parameter and the ndrange constructor behaves as though it has
+    the signature ``ndrange(stop)``. In all other cases, ``ndrange``
     behaves as though the signalture is ``ndrange(start, stop[, step])``.
-    
+
     See Also
     --------
     flatiter, ndenumerate, ndindex
@@ -784,6 +784,11 @@ class ndrange(_nx.collections_abc.Sequence):
 
         if stop is None:
             raise ValueError('``stop`` must be provided.')
+
+        if step is not None and start is None:
+            raise ValueError(
+                '``step`` can only be provided if both ``start`` and '
+                '``stop`` are provided.')
 
         # Is there a function that deals with this input sanitization for me?
         if not isinstance(stop, _nx.collections_abc.Iterable):

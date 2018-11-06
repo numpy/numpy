@@ -605,6 +605,12 @@ def test_ndrange_failers():
     assert_raises(ValueError, ndrange)
     assert_raises(ValueError, ndrange, None)
 
+    # Step can only be provided with both start and stop
+    assert_raises(ValueError, ndrange, 2, step=1)
+    assert_raises(ValueError, ndrange, stop=2, step=1)
+    assert_raises(ValueError, ndrange, start=1, stop=None, step=1)
+    assert_raises(ValueError, ndrange, start=None, stop=1, step=1)
+
 
 def test_ndrange_properties():
     stop = (1, 2, 3)
