@@ -33,17 +33,28 @@ def _from_ctypes_array(t):
 
 
 def _from_ctypes_structure(t):
-    # TODO: gh-10533, gh-10532
-    fields = []
-    for item in t._fields_:
-        if len(item) > 2:
-            raise TypeError(
+    # TODO: gh-10533
+    if hasattr(t,"_pack_"):
+        fields = {}
+        for item in t._fields_:
+            if len(item) > 2:
+                raise TypeError(
                 "ctypes bitfields have no dtype equivalent")
-        fname, ftyp = item
-        fields.append((fname, dtype_from_ctypes_type(ftyp)))
+            fname, ftyp = item
+            fields[fname] = dtype_from_ctypes_type(ftyp), t._pack_
 
-    # by default, ctypes structs are aligned
-    return np.dtype(fields, align=True)
+        return np.dtype(fields, align=False)
+    else:
+        fields = []
+        for item in t._fields_:
+            if len(item) > 2:
+                raise TypeError(
+                "ctypes bitfields have no dtype equivalent")
+            fname, ftyp = item
+            fields.append((fname, dtype_from_ctypes_type(ftyp)))
+
+        # by default, ctypes structs are aligned
+        return np.dtype(fields, align=True)
 
 
 def dtype_from_ctypes_type(t):
