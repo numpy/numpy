@@ -2097,18 +2097,51 @@ fail:
 static PyObject *
 array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
-    PyObject *iter;
+    PyObject *iterable;
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"iter", "dtype", "count", NULL};
+    static char *kwlist[] = {"iterable", "dtype", "count", NULL};
     PyArray_Descr *descr = NULL;
+    PyObject *str_key_obj = NULL;
+    char *new_key  = "iterable";
+
+    /* Get the keyword arguments */
+    if (keywds != NULL) {
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(keywds, &pos, &key, &value)) {
+            char *str = NULL;
+
+#if defined(NPY_PY3K)
+            Py_XDECREF(str_key_obj);
+            str_key_obj = PyUnicode_AsASCIIString(key);
+            if (str_key_obj != NULL) {
+                key = str_key_obj;
+            }
+#endif
+
+            str = PyBytes_AsString(key);
+
+            if (strcmp(str,"iter") == 0) {
+                /* NumPy 1.16, 2018-10-25 */
+                if (DEPRECATE("The 'iter' keyword argument is deprecated. "
+                              "Use 'iterable' instead.") < 0) {
+                    return NULL;
+                }
+                PyDict_SetItemString(keywds, new_key, value);
+                PyDict_DelItemString(keywds, str);
+                Py_XDECREF(str_key_obj);
+                break;
+            }
+        }
+    }
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "OO&|" NPY_SSIZE_T_PYFMT ":fromiter", kwlist,
-                &iter, PyArray_DescrConverter, &descr, &nin)) {
+                &iterable, PyArray_DescrConverter, &descr, &nin)) {
         Py_XDECREF(descr);
         return NULL;
     }
-    return PyArray_FromIter(iter, descr, (npy_intp)nin);
+    return PyArray_FromIter(iterable, descr, (npy_intp)nin);
 }
 
 static PyObject *

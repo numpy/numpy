@@ -41,6 +41,11 @@ These were deprecated in 1.10, had no tests, and seem to no longer work in
 It is an alias to the more powerful `numpy.ndarray.item`, not tested, and fails
 for scalars.
 
+``iter`` keyword argument for ``numpy.fromiter`` has been deprecated
+--------------------------------------------------------------------
+``iterable`` should be used instead.
+
+
 Future Changes
 ==============
 
