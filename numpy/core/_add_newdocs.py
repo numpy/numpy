@@ -1104,10 +1104,10 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
 
     Examples
     --------
-    >>> a = np.array([["a"], ["b"], ["cde"]])
-    >>> b = np.array([["a"], ["a"], ["dec"]])
+    >>> a = np.array(["a", "b", "cde"])
+    >>> b = np.array(["a", "a", "dec"])
     >>> np.compare_chararrays(a,b,">",True)
-    array([[False],[True],[False]])
+    array([False,True,False])
 
 """
 
