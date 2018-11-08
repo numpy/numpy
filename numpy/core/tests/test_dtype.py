@@ -824,7 +824,6 @@ class TestFromCTypes(object):
         ))
         self.check(Union, expected)
 
-    @pytest.mark.xfail(reason="_pack_ is ignored - see gh-11651")
     def test_packed_structure(self):
         class PackedStructure(ctypes.Structure):
             _pack_ = 1
