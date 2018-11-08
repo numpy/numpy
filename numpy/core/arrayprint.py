@@ -26,6 +26,7 @@ __docformat__ = 'restructuredtext'
 
 import sys
 import functools
+import numbers
 if sys.version_info[0] >= 3:
     try:
         from _thread import get_ident
@@ -86,7 +87,11 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if legacy not in [None, False, '1.13']:
         warnings.warn("legacy printing option can currently only be '1.13' or "
                       "`False`", stacklevel=3)
-
+    if threshold is not None:
+        # forbid the bad threshold arg suggested by stack overflow, gh-12351
+        if not isinstance(threshold, numbers.Number) or np.isnan(threshold):
+            raise ValueError("threshold must be numeric and non-NAN, try "
+                             "sys.maxsize for untruncated representation")
     return options
 
 

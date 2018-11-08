@@ -842,6 +842,10 @@ class TestPrintOptions(object):
                     [[ 0.]]]])""")
         )
 
+    def test_bad_args(self):
+        assert_raises(ValueError, np.set_printoptions, threshold='nan')
+        assert_raises(ValueError, np.set_printoptions, threshold=u'1')
+        assert_raises(ValueError, np.set_printoptions, threshold=b'1')
 
 def test_unicode_object_array():
     import sys
