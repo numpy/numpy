@@ -4541,6 +4541,19 @@ class TestIO(object):
             f.close()
             assert_equal(pos, 10, err_msg=err_msg)
 
+    def test_load_object_array_fromfile(self):
+        # gh-12300
+        with open(self.filename, 'w') as f:
+            # Ensure we have a file with consistent contents
+            pass
+
+        with open(self.filename, 'rb') as f:
+            assert_raises_regex(ValueError, "Cannot read into object array",
+                                np.fromfile, f, dtype=object)
+
+        assert_raises_regex(ValueError, "Cannot read into object array",
+                            np.fromfile, self.filename, dtype=object)
+
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)
