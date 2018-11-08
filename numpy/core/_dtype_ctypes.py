@@ -34,27 +34,42 @@ def _from_ctypes_array(t):
 
 def _from_ctypes_structure(t):
     # TODO: gh-10533
-    if hasattr(t,"_pack_"):
-        fields = {}
-        for item in t._fields_:
-            if len(item) > 2:
-                raise TypeError(
+    for item in t._fields_:
+        if len(item) > 2:
+            raise TypeError(
                 "ctypes bitfields have no dtype equivalent")
-            fname, ftyp = item
-            fields[fname] = dtype_from_ctypes_type(ftyp), t._pack_
-
-        return np.dtype(fields, align=False)
     else:
-        fields = []
-        for item in t._fields_:
-            if len(item) > 2:
-                raise TypeError(
-                "ctypes bitfields have no dtype equivalent")
-            fname, ftyp = item
-            fields.append((fname, dtype_from_ctypes_type(ftyp)))
+        if hasattr(t,"_pack_"):
+            formats_array = []
+            offsets_array = []
+            names_array = []
+            current_offset = 0
+            current_itemsize = 0
+            for item in t._fields_:
+                fname, ftyp = item
+                names_array.append(fname)
+                formats_array.append(dtype_from_ctypes_type(ftyp))
+                # Each type has a default offset, this is platform dependent for some types.
+                effective_pack = min(t._pack_, ctypes.alignment(ftyp))
+                current_offset = ((current_offset + effective_pack - 1) // effective_pack) * effective_pack
+                offsets_array.append(current_offset)
+                current_offset += ctypes.sizeof(ftyp)
 
-        # by default, ctypes structs are aligned
-        return np.dtype(fields, align=True)
+
+            return np.dtype(dict(
+                formats = formats_array,
+                offsets = offsets_array,
+                names = names_array,
+                itemsize = ctypes.sizeof(t)
+            ))
+        else:
+            fields = []
+            for item in t._fields_:
+                fname, ftyp = item
+                fields.append((fname, dtype_from_ctypes_type(ftyp)))
+
+            # by default, ctypes structs are aligned
+            return np.dtype(fields, align=True)
 
 
 def dtype_from_ctypes_type(t):
