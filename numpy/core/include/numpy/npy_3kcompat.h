@@ -219,6 +219,7 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     if (handle == NULL) {
         PyErr_SetString(PyExc_IOError,
                         "Getting a FILE* from a Python file object failed");
+        return NULL;
     }
 
     /* Record the original raw file handle position */
