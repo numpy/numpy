@@ -38,38 +38,35 @@ def _from_ctypes_structure(t):
         if len(item) > 2:
             raise TypeError(
                 "ctypes bitfields have no dtype equivalent")
+
+    if hasattr(t, "_pack_"):
+        formats = []
+        offsets = []
+        names = []
+        current_offset = 0
+        for fname, ftyp in t._fields_:
+            names.append(fname)
+            formats.append(dtype_from_ctypes_type(ftyp))
+            # Each type has a default offset, this is platform dependent for some types.
+            effective_pack = min(t._pack_, ctypes.alignment(ftyp))
+            current_offset = ((current_offset + effective_pack - 1) // effective_pack) * effective_pack
+            offsets.append(current_offset)
+            current_offset += ctypes.sizeof(ftyp)
+
+
+        return np.dtype(dict(
+            formats=formats,
+            offsets=offsets,
+            names=names,
+            itemsize=ctypes.sizeof(t)
+        ))
     else:
-        if hasattr(t,"_pack_"):
-            formats_array = []
-            offsets_array = []
-            names_array = []
-            current_offset = 0
-            current_itemsize = 0
-            for item in t._fields_:
-                fname, ftyp = item
-                names_array.append(fname)
-                formats_array.append(dtype_from_ctypes_type(ftyp))
-                # Each type has a default offset, this is platform dependent for some types.
-                effective_pack = min(t._pack_, ctypes.alignment(ftyp))
-                current_offset = ((current_offset + effective_pack - 1) // effective_pack) * effective_pack
-                offsets_array.append(current_offset)
-                current_offset += ctypes.sizeof(ftyp)
+        fields = []
+        for fname, ftyp in t._fields_:
+            fields.append((fname, dtype_from_ctypes_type(ftyp)))
 
-
-            return np.dtype(dict(
-                formats = formats_array,
-                offsets = offsets_array,
-                names = names_array,
-                itemsize = ctypes.sizeof(t)
-            ))
-        else:
-            fields = []
-            for item in t._fields_:
-                fname, ftyp = item
-                fields.append((fname, dtype_from_ctypes_type(ftyp)))
-
-            # by default, ctypes structs are aligned
-            return np.dtype(fields, align=True)
+        # by default, ctypes structs are aligned
+        return np.dtype(fields, align=True)
 
 
 def dtype_from_ctypes_type(t):
