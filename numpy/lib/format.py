@@ -259,6 +259,33 @@ def dtype_to_descr(dtype):
     else:
         return dtype.str
 
+def descr_to_dtype(descr):
+    if isinstance(descr, str):
+        # descr was produced by dtype.str, so this always works
+        return numpy.dtype(descr)
+
+    fields = []
+    offset = 0
+    for field in descr:
+        if len(field) == 2:
+            name, descr_str = field
+            dt = descr_to_dtype(descr_str)
+        else:
+            name, descr_str, shape = field
+            dt = numpy.dtype((descr_to_dtype(descr_str), shape))
+
+        # ignore padding bytes, which will be void bytes with '' as name
+        # (once blank fieldnames are deprecated, only "if name == ''" needed)
+        is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
+        if not is_pad:
+            fields.append((name, dt, offset))
+
+        offset += dt.itemsize
+
+    names, formats, offsets = zip(*fields)
+    return numpy.dtype({'names': names, 'formats': formats,
+                        'offsets': offsets, 'itemsize': offset})
+
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
 
@@ -523,7 +550,8 @@ def _read_array_header(fp, version):
         msg = "fortran_order is not a valid bool: %r"
         raise ValueError(msg % (d['fortran_order'],))
     try:
-        dtype = numpy.dtype(d['descr'])
+        descr = descr_to_dtype(d['descr'])
+        dtype = numpy.dtype(descr)
     except TypeError as e:
         msg = "descr is not a valid dtype descriptor: %r"
         raise ValueError(msg % (d['descr'],))
