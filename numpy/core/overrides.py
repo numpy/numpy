@@ -153,7 +153,7 @@ def verify_matching_signatures(implementation, dispatcher):
 def array_function_dispatch(dispatcher, module=None, verify=True):
     """Decorator for adding dispatch with the __array_function__ protocol."""
     def decorator(implementation):
-        if ENABLE_ARRAY_FUNCTION:
+        if not ENABLE_ARRAY_FUNCTION:
             # __array_function__ requires an explicit opt-in for now
             public_api = implementation
         else:
