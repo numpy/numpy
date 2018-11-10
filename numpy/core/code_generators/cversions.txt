@@ -39,9 +39,11 @@
 0x0000000b = edb1ba83730c650fd9bc5772a919cda7
 
 # Version 12 (NumPy 1.14) Added PyArray_ResolveWritebackIfCopy,
-# Version 12 (NumPy 1.15) No change.
 # PyArray_SetWritebackIfCopyBase and deprecated PyArray_SetUpdateIfCopyBase.
+# Version 12 (NumPy 1.15) No change.
 0x0000000c = a1bc756c5782853ec2e3616cf66869d8
 
-# Version 13 (Numpy 1.16) Added fields core_dim_flags and core_dim_sizes to PyUFuncObject
+# Version 13 (NumPy 1.16) Deprecate PyArray_SetNumericOps and
+# PyArray_GetNumericOps, Added fields core_dim_flags and core_dim_sizes
+# to PyUFuncObject
 0x0000000d = a1bc756c5782853ec2e3616cf66869d8

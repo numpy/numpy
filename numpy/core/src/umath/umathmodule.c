@@ -29,6 +29,7 @@
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
+#include "number.h"
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
@@ -325,7 +326,7 @@ int initumath(PyObject *m)
     s2 = PyDict_GetItemString(d, "remainder");
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/
-    PyArray_SetNumericOps(d);
+    _PyArray_SetNumericOps(d);
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
