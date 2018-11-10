@@ -8,7 +8,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
-from numpy.core.overrides import array_function_dispatch
+from numpy.core.overrides import array_function_dispatch, ENABLE_ARRAY_FUNCTION
 import warnings
 import functools
 
@@ -53,6 +53,10 @@ def _fix_out_named_y(f):
         return f(x, out=out, **kwargs)
 
     return func
+
+
+if not ENABLE_ARRAY_FUNCTION:
+    _fix_out_named_y = _deprecate_out_named_y
 
 
 @_deprecate_out_named_y

@@ -80,6 +80,9 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
+    - python: 3.6
+      env:
+       - NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1
 
 before_install:
   - ./tools/travis-before-install.sh

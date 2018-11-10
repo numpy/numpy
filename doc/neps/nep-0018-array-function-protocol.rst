@@ -95,6 +95,15 @@ A prototype implementation can be found in
   of NumPy functions for non-NumPy arrays. See "Non-goals" below for more
   details.
 
+.. note::
+
+  Dispatch with the ``__array_function__`` protocol has been implemented on
+  NumPy's master branch but is not yet enabled by default. In NumPy 1.16,
+  you will need to set the environment variable
+  ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to test
+  NumPy function overrides. We anticipate the protocol will be enabled by
+  default in NumPy 1.17.
+
 The interface
 ~~~~~~~~~~~~~
 
