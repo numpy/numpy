@@ -7,8 +7,14 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
     get_overloaded_types_and_args, array_function_dispatch,
-    verify_matching_signatures)
+    verify_matching_signatures, ENABLE_ARRAY_FUNCTION)
 from numpy.core.numeric import pickle
+import pytest
+
+
+requires_array_function = pytest.mark.skipif(
+    not ENABLE_ARRAY_FUNCTION,
+    reason="__array_function__ dispatch not enabled.")
 
 
 def _get_overloaded_args(relevant_args):
@@ -165,6 +171,7 @@ def dispatched_one_arg(array):
     return 'original'
 
 
+@requires_array_function
 class TestArrayFunctionDispatch(object):
 
     def test_pickle(self):
@@ -204,6 +211,7 @@ class TestArrayFunctionDispatch(object):
             dispatched_one_arg(array)
 
 
+@requires_array_function
 class TestVerifyMatchingSignatures(object):
 
     def test_verify_matching_signatures(self):
@@ -256,6 +264,7 @@ def _new_duck_type_and_implements():
     return (MyArray, implements)
 
 
+@requires_array_function
 class TestArrayFunctionImplementation(object):
 
     def test_one_arg(self):
@@ -322,7 +331,7 @@ class TestNDArrayMethods(object):
         assert_equal(repr(array), 'MyArray(1)')
         assert_equal(str(array), '1')
 
-        
+
 class TestNumPyFunctions(object):
 
     def test_module(self):
@@ -331,6 +340,7 @@ class TestNumPyFunctions(object):
         assert_equal(np.fft.fft.__module__, 'numpy.fft')
         assert_equal(np.linalg.solve.__module__, 'numpy.linalg')
 
+    @requires_array_function
     def test_override_sum(self):
         MyArray, implements = _new_duck_type_and_implements()
 
