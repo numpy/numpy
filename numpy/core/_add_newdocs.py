@@ -1322,8 +1322,9 @@ add_newdoc('numpy.core.multiarray', 'set_numeric_ops',
 
     .. deprecated:: 1.16
 
-        Use :c:func:`PyUFunc_ReplaceLoopBySignature` or subclass ndarray and
-        use ``__array_ufunc__`` instead.
+        For the general case, use :c:func:`PyUFunc_ReplaceLoopBySignature`.
+        For ndarray subclasses, define the ``__array_ufunc__`` method and
+        override the relevant ufunc.
 
     Parameters
     ----------
