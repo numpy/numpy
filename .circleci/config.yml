@@ -48,9 +48,8 @@ jobs:
             cd doc/neps
             make html
 
-     # - store_artifacts:
-     #     path: doc/build/html/
-     #     destination: devdocs
+      - store_artifacts:
+          path: doc/build/html/
 
 
      #  - store_artifacts:
