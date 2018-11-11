@@ -1,0 +1,83 @@
+#ifndef __NPY_SORT_H__
+#define __NPY_SORT_H__
+
+/* Python include is for future object sorts */
+#include <Python.h>
+#include <numpy/npy_common.h>
+#include <numpy/ndarraytypes.h>
+
+#define NPY_ENOMEM 1
+#define NPY_ECOMP 2
+
+static NPY_INLINE int npy_get_msb(npy_uintp unum)
+{
+    int depth_limit = 0;
+    while (unum >>= 1)  {
+        depth_limit++;
+    }
+    return depth_limit;
+}
+
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble, datetime, timedelta#
+ */
+
+int quicksort_@suff@(void *vec, npy_intp cnt, void *null);
+int heapsort_@suff@(void *vec, npy_intp cnt, void *null);
+int mergesort_@suff@(void *vec, npy_intp cnt, void *null);
+int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+
+/**end repeat**/
+
+
+
+/*
+ *****************************************************************************
+ **                             STRING SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #suff = string, unicode#
+ */
+
+int quicksort_@suff@(void *vec, npy_intp cnt, void *arr);
+int heapsort_@suff@(void *vec, npy_intp cnt, void *arr);
+int mergesort_@suff@(void *vec, npy_intp cnt, void *arr);
+int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+int npy_quicksort(void *vec, npy_intp cnt, void *arr);
+int npy_heapsort(void *vec, npy_intp cnt, void *arr);
+int npy_mergesort(void *vec, npy_intp cnt, void *arr);
+int npy_aquicksort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+
+#endif
