@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import inspect
 import sys
 
 import numpy as np
@@ -339,6 +340,11 @@ class TestNumPyFunctions(object):
         assert_equal(np.char.equal.__module__, 'numpy.char')
         assert_equal(np.fft.fft.__module__, 'numpy.fft')
         assert_equal(np.linalg.solve.__module__, 'numpy.linalg')
+
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 3 only")
+    def test_inspect_sum(self):
+        signature = inspect.signature(np.sum)
+        assert_('axis' in signature.parameters)
 
     @requires_array_function
     def test_override_sum(self):

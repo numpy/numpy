@@ -1547,10 +1547,12 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
         a, max_line_width, precision, suppress_small)
 
 
+# needed if __array_function__ is disabled
+_array2string_impl = getattr(array2string, '__wrapped__', array2string)
 _default_array_str = functools.partial(_array_str_implementation,
-                                       array2string=array2string.__wrapped__)
+                                       array2string=_array2string_impl)
 _default_array_repr = functools.partial(_array_repr_implementation,
-                                        array2string=array2string.__wrapped__)
+                                        array2string=_array2string_impl)
 
 
 def set_string_function(f, repr=True):

@@ -217,6 +217,11 @@ def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
     return arrays
 
 
+def _warn_for_nonsequence(arrays):
+    if not overrides.ENABLE_ARRAY_FUNCTION:
+        _arrays_for_stack_dispatcher(arrays, stacklevel=4)
+
+
 def _vhstack_dispatcher(tup):
     return _arrays_for_stack_dispatcher(tup)
 
@@ -274,6 +279,7 @@ def vstack(tup):
            [4]])
 
     """
+    _warn_for_nonsequence(tup)
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
 
@@ -325,6 +331,7 @@ def hstack(tup):
            [3, 4]])
 
     """
+    _warn_for_nonsequence(tup)
     arrs = [atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
@@ -398,6 +405,7 @@ def stack(arrays, axis=0, out=None):
            [3, 4]])
 
     """
+    _warn_for_nonsequence(arrays)
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:
         raise ValueError('need at least one array to stack')
