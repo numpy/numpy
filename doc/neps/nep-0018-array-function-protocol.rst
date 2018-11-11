@@ -119,8 +119,9 @@ implementing the array API.
 
 As a convenience for ``__array_function__`` implementors, ``types`` provides all
 argument types with an ``'__array_function__'`` attribute. This
-allows downstream implementations to quickly determine if they are likely able
-to support the operation. The type of ``types`` is intentionally vague:
+allows implementors to quickly identify cases where they should defer to
+``__array_function__`` implementations on other arguments.
+The type of ``types`` is intentionally vague:
 ``frozenset`` would most closely match intended use, but we may use ``tuple``
 instead for performance reasons. In any case, ``__array_function__``
 implementations should not rely on the iteration order of ``types``, which
