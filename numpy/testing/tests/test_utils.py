@@ -180,18 +180,15 @@ class TestArrayEqual(_GenericTest):
         self._test_not_equal(b, a)
 
     def test_subclass_that_does_not_implement_npall(self):
-        # While we cannot guarantee testing functions will always work for
-        # subclasses, the tests should ideally rely only on subclasses having
-        # comparison operators, not on them being able to store booleans
-        # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
             def __array_function__(self, *args, **kwargs):
                 return NotImplemented
 
         a = np.array([1., 2.]).view(MyArray)
         b = np.array([2., 3.]).view(MyArray)
-        with assert_raises(TypeError):
-            np.all(a)
+        if np.core.overrides.ENABLE_ARRAY_FUNCTION:
+            with assert_raises(TypeError):
+                np.all(a)
         self._test_equal(a, a)
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)

@@ -6,7 +6,7 @@ import collections
 import functools
 import os
 
-from numpy.core.multiarray import ndarray
+from numpy.core._multiarray_umath import ndarray
 from numpy.compat._inspect import getargspec
 
 
@@ -85,8 +85,8 @@ def array_function_implementation_or_override(
         Function that implements the operation on NumPy array without
         overrides when called like ``implementation(*args, **kwargs)``.
     public_api : function
-        Function exposed by NumPy's public API riginally called like
-        ``public_api(*args, **kwargs`` on which arguments are now being
+        Function exposed by NumPy's public API originally called like
+        ``public_api(*args, **kwargs)`` on which arguments are now being
         checked.
     relevant_args : iterable
         Iterable of arguments to check for __array_function__ methods.
@@ -119,9 +119,10 @@ def array_function_implementation_or_override(
         if result is not NotImplemented:
             return result
 
-    raise TypeError('no implementation found for {} on types that implement '
+    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
+    raise TypeError("no implementation found for '{}' on types that implement "
                     '__array_function__: {}'
-                    .format(public_api, list(map(type, overloaded_args))))
+                    .format(func_name, list(map(type, overloaded_args))))
 
 
 ArgSpec = collections.namedtuple('ArgSpec', 'args varargs keywords defaults')
@@ -149,21 +150,34 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
-def array_function_dispatch(dispatcher, verify=True):
-    """Decorator for adding dispatch with the __array_function__ protocol."""
-    def decorator(implementation):
-        if not ENABLE_ARRAY_FUNCTION:
-            # __array_function__ requires an explicit opt-in for now
-            public_api = implementation
-        else:
-            if verify:
-                verify_matching_signatures(implementation, dispatcher)
+def override_module(module):
+    """Decorator for overriding __module__ on a function or class."""
+    def decorator(func):
+        if module is not None:
+            func.__module__ = module
+        return func
+    return decorator
 
-            @functools.wraps(implementation)
-            def public_api(*args, **kwargs):
-                relevant_args = dispatcher(*args, **kwargs)
-                return array_function_implementation_or_override(
-                    implementation, public_api, relevant_args, args, kwargs)
+
+def array_function_dispatch(dispatcher, module=None, verify=True):
+    """Decorator for adding dispatch with the __array_function__ protocol."""
+
+    if not ENABLE_ARRAY_FUNCTION:
+        # __array_function__ requires an explicit opt-in for now
+        return override_module(module)
+
+    def decorator(implementation):
+        if verify:
+            verify_matching_signatures(implementation, dispatcher)
+
+        @functools.wraps(implementation)
+        def public_api(*args, **kwargs):
+            relevant_args = dispatcher(*args, **kwargs)
+            return array_function_implementation_or_override(
+                implementation, public_api, relevant_args, args, kwargs)
+
+        if module is not None:
+            public_api.__module__ = module
 
         # TODO: remove this when we drop Python 2 support (functools.wraps
         # adds __wrapped__ automatically in later versions)
