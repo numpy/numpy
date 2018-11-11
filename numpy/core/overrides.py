@@ -160,7 +160,32 @@ def override_module(module):
 
 
 def array_function_dispatch(dispatcher, module=None, verify=True):
-    """Decorator for adding dispatch with the __array_function__ protocol."""
+    """Decorator for adding dispatch with the __array_function__ protocol.
+
+    See NEP-18 for example usage.
+
+    Parameters
+    ----------
+    dispatcher : callable
+        Function that when called like ``dispatcher(*args, **kwargs)`` with
+        arguments from the NumPy function call returns an iterable of
+        array-like arguments to check for ``__array_function__``.
+    module : str, optional
+        __module__ attribute to set on new function, e.g., ``module='numpy'``.
+        By default, module is copied from the decorated function.
+    verify : bool, optional
+        If True, verify the that the signature of the dispatcher and decorated
+        function signatures match exactly: all required and optional arguments
+        should appear in order with the same names, but the default values for
+        all optional arguments should be ``None``. Only disable verification
+        if the dispatcher's signature needs to deviate for some particular
+        reason, e.g., because the function has a signature like
+        ``func(*args, **kwargs)``.
+
+    Returns
+    -------
+    Function suitable for decorating the implementation of a NumPy function.
+    """
 
     if not ENABLE_ARRAY_FUNCTION:
         # __array_function__ requires an explicit opt-in for now
