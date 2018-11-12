@@ -402,6 +402,9 @@ ufunc_funcs_api = {
     # End 1.7 API
     'PyUFunc_RegisterLoopForDescr':             (41,),
     # End 1.8 API
+    'PyUFunc_FromFuncAndDataAndSignatureAndIdentity':
+                                                (42,),
+    # End 1.16 API
 }
 
 # List of all the dicts which define the C API

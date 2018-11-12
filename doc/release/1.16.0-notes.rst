@@ -109,8 +109,13 @@ for unraveling. ``dims`` remains supported, but is now deprecated.
 C API changes
 =============
 
-The :c:data:`NPY_API_VERSION` was incremented to 0x0000D since
-``core_dim_flags`` and ``core_dim_sizes`` were added to :c:type:`PyUFuncObject`.
+The :c:data:`NPY_API_VERSION` was incremented to 0x0000D, due to the addition
+of:
+
+* :c:member:`PyUFuncObject.core_dim_flags`
+* :c:member:`PyUFuncObject.core_dim_sizes`
+* :c:member:`PyUFuncObject.identity_value`
+* :c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`
 
 New Features
 ============
@@ -286,6 +291,25 @@ The ``np.core.records.fromfile`` function now supports ``pathlib.Path``
 and other path-like objects in addition to a file object. Furthermore, the
 ``np.load`` function now also supports path-like objects when
 using memory mapping (``mmap_mode`` keyword argument).
+
+Better behaviour of ufunc identities during reductions
+------------------------------------------------------
+Universal functions have an ``.identity`` which is used when ``.reduce`` is
+called on an empty axis.
+
+As of this release, the logical binary ufuncs, `logical_and`, `logical_or`,
+and `logical_xor`, now have ``identity``s of type `bool`, where previously they
+were of type `int`. This restores the 1.14 behavior of getting ``bool``s when
+reducing empty object arrays with these ufuncs, while also keeping the 1.15
+behavior of getting ``int``s when reducing empty object arrays with arithmetic
+ufuncs like ``add`` and ``multiply``.
+
+Additionally, `logaddexp` now has an identity of ``-inf``, allowing it to be
+called on empty sequences, where previously it could not be.
+
+This is possible thanks to the new
+:c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`, which allows
+arbitrary values to be used as identities now.
 
 
 Changes
