@@ -4,6 +4,7 @@ TODO: rewrite this in C for performance.
 """
 import collections
 import functools
+import os
 
 from numpy.core._multiarray_umath import ndarray
 from numpy.compat._inspect import getargspec
@@ -11,6 +12,9 @@ from numpy.compat._inspect import getargspec
 
 _NDARRAY_ARRAY_FUNCTION = ndarray.__array_function__
 _NDARRAY_ONLY = [ndarray]
+
+ENABLE_ARRAY_FUNCTION = bool(
+    int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 0)))
 
 
 def get_overloaded_types_and_args(relevant_args):
@@ -146,12 +150,57 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
+def override_module(module):
+    """Decorator for overriding __module__ on a function or class.
+
+    Example usage::
+
+        @override_module('numpy')
+        def example():
+            pass
+
+        assert example.__module__ == 'numpy'
+    """
+    def decorator(func):
+        if module is not None:
+            func.__module__ = module
+        return func
+    return decorator
+
+
 def array_function_dispatch(dispatcher, module=None, verify=True):
-    """Decorator for adding dispatch with the __array_function__ protocol."""
+    """Decorator for adding dispatch with the __array_function__ protocol.
+
+    See NEP-18 for example usage.
+
+    Parameters
+    ----------
+    dispatcher : callable
+        Function that when called like ``dispatcher(*args, **kwargs)`` with
+        arguments from the NumPy function call returns an iterable of
+        array-like arguments to check for ``__array_function__``.
+    module : str, optional
+        __module__ attribute to set on new function, e.g., ``module='numpy'``.
+        By default, module is copied from the decorated function.
+    verify : bool, optional
+        If True, verify the that the signature of the dispatcher and decorated
+        function signatures match exactly: all required and optional arguments
+        should appear in order with the same names, but the default values for
+        all optional arguments should be ``None``. Only disable verification
+        if the dispatcher's signature needs to deviate for some particular
+        reason, e.g., because the function has a signature like
+        ``func(*args, **kwargs)``.
+
+    Returns
+    -------
+    Function suitable for decorating the implementation of a NumPy function.
+    """
+
+    if not ENABLE_ARRAY_FUNCTION:
+        # __array_function__ requires an explicit opt-in for now
+        return override_module(module)
+
     def decorator(implementation):
-        # TODO: only do this check when the appropriate flag is enabled or for
-        # a dev install. We want this check for testing but don't want to
-        # slow down all numpy imports.
         if verify:
             verify_matching_signatures(implementation, dispatcher)
 
