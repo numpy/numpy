@@ -701,6 +701,7 @@ def configuration(parent_package='',top_path=None):
     npysort_sources = [join('src', 'common', 'npy_sort.h.src'),
                        join('src', 'npysort', 'quicksort.c.src'),
                        join('src', 'npysort', 'mergesort.c.src'),
+                       join('src', 'npysort', 'timsort.c.src'),
                        join('src', 'npysort', 'heapsort.c.src'),
                        join('src', 'common', 'npy_partition.h.src'),
                        join('src', 'npysort', 'selection.c.src'),

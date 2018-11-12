@@ -1,0 +1,890 @@
+/* -*- c -*- */
+
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ */
+
+/*
+ * Quick sort is usually the fastest, but the worst case scenario can
+ * be slower than the merge and heap sorts.  The merge sort requires
+ * extra memory and so for large arrays may not be useful.
+ *
+ * The merge sort is *stable*, meaning that equal components
+ * are unmoved from their entry versions, so it can be used to
+ * implement lexigraphic sorting on multiple keys.
+ *
+ * The heap sort is included for completeness.
+ */
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "npy_sort.h"
+#include "npysort_common.h"
+#include <stdlib.h>
+
+#define NOT_USED NPY_UNUSED(unused)
+#define PYA_QS_STACK 100
+#define SMALL_QUICKSORT 15
+#define SMALL_MERGESORT 20
+#define SMALL_STRING 16
+
+#define TIMSORT_STACK_SIZE 128
+
+
+npy_intp compute_min_run(npy_intp num)
+{
+    npy_intp r = 0;
+
+    while (64 < num) {
+        r |= num & 1;
+        num >>= 1;
+    }
+
+    return num + r;
+}
+
+typedef struct {
+    npy_intp s;
+    npy_intp l;
+} run;
+
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble, datetime, timedelta#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
+ *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
+ */
+
+
+typedef struct {
+    @type@ * pw;
+    npy_intp size;
+} buffer_@suff@;
+
+
+static NPY_INLINE int
+resize_buffer_@suff@(buffer_@suff@ *buffer, npy_intp new_size)
+{
+    if (new_size <= buffer->size) {
+        return 0;
+    }
+
+    if (NPY_UNLIKELY(buffer->pw == NULL)) {
+        buffer->pw = malloc(new_size * sizeof(@type@));
+    } else {
+        buffer->pw = realloc(buffer->pw, new_size * sizeof(@type@));
+    }
+
+    buffer->size = new_size;
+
+    if (NPY_UNLIKELY(buffer->pw == NULL)) {
+        return -NPY_ENOMEM;
+    } else {
+        return 0;
+    }
+}
+
+
+static npy_intp
+count_run_@suff@(@type@ *arr, npy_intp l, npy_intp num, npy_intp minrun)
+{
+    npy_intp sz;
+    @type@ vc, *pl, *pi, *pj, *pr;
+
+    if (NPY_UNLIKELY(num - l == 1)) {
+        return 1;
+    }
+
+    pl = arr + l;
+
+    // (not strictly) ascending sequence
+    if (!@TYPE@_LT(*(pl + 1), *pl)) {
+        for (pi = pl + 1; pi < pl + num - 1 && !@TYPE@_LT(*(pi + 1), *pi); ++pi) {
+        }
+
+        // (strictly) descending sequence
+    } else {
+        for (pi = pl + 1; pi < pl + num - 1 && @TYPE@_LT(*(pi + 1), *pi); ++pi) {
+        }
+
+        for (pj = pl, pr = pi; pj < pr; ++pj, --pr) {
+            @TYPE@_SWAP(*pj, *pr);
+        }
+    }
+
+    sz = pi - pl + 1;
+
+    if (sz < minrun) {
+        if (l + minrun < num) {
+            sz = minrun;
+        } else {
+            sz = num - l;
+        }
+
+        pr = pl + sz;
+
+        for (; pi < pr; ++pi) {
+            vc = *pi;
+            pj = pi;
+
+            while (pl < pj && @TYPE@_LT(vc, *(pj - 1))) {
+                *pj = *(pj - 1);
+                --pj;
+            }
+
+            *pj = vc;
+        }
+    }
+
+    return sz;
+}
+
+
+static void
+merge_left_@suff@(@type@ *p1, npy_intp l1, @type@ *p2, npy_intp l2,
+                  @type@ *p3)
+{
+    @type@ *end = p2 + l2;
+    memcpy(p3, p1, sizeof(@type@) * l1);
+    /* first element must be in p2 otherwise skipped in the caller */
+    *p1++ = *p2++;
+
+    while (p1 < p2 && p2 < end) {
+        if (@TYPE@_LT(*p2, *p3)) {
+            *p1++ = *p2++;
+        } else {
+            *p1++ = *p3++;
+        }
+    }
+
+    if (p1 != p2) {
+        memcpy(p1, p3, sizeof(@type@) * (p2 - p1));
+    }
+}
+
+
+static void
+merge_right_@suff@(@type@ *p1, npy_intp l1, @type@ *p2, npy_intp l2,
+                   @type@ *p3)
+{
+    npy_intp ofs;
+    @type@ *start = p1 - 1;
+    memcpy(p3, p2, sizeof(@type@) * l2);
+    p1 += l1 - 1;
+    p2 += l2 - 1;
+    p3 += l2 - 1;
+    /* first element must be in p1 otherwise skipped in the caller */
+    *p2-- = *p1--;
+
+    while (p1 < p2 && start < p1) {
+        if (@TYPE@_LT(*p3, *p1)) {
+            *p2-- = *p1--;
+        } else {
+            *p2-- = *p3--;
+        }
+    }
+
+    if (p1 != p2) {
+        ofs = p2 - start;
+        memcpy(start + 1, p3 - ofs + 1, sizeof(@type@) * ofs);
+    }
+}
+
+
+/* Note: the naming convention of gallop functions are different from that of
+ * CPython. For example, here gallop_right means gallop from left toward right,
+ * whereas in CPython gallop_right means gallop
+ * and find the right most element among equal elements
+ */
+static npy_intp
+gallop_right_@suff@(const @type@ *arr, const npy_intp size, const @type@ key)
+{
+    npy_intp last_ofs, ofs, m;
+
+    if (@TYPE@_LT(key, arr[0])) {
+        return 0;
+    }
+
+    last_ofs = 0;
+    ofs = 1;
+
+    for (;;) {
+        if (size <= ofs || ofs < 0) {
+            ofs = size; /* arr[ofs] is never accessed */
+            break;
+        }
+
+        if (@TYPE@_LT(key, arr[ofs])) {
+            break;
+        } else {
+            last_ofs = ofs;
+            ofs = (ofs << 1) + 1;
+        }
+    }
+
+    /* now that arr[last_ofs] <= key < arr[ofs] */
+    while (last_ofs + 1 < ofs) {
+        m = last_ofs + ((ofs - last_ofs) >> 1);
+
+        if (@TYPE@_LT(key, arr[m])) {
+            ofs = m;
+        } else {
+            last_ofs = m;
+        }
+    }
+
+    /* now that arr[ofs-1] <= key < arr[ofs] */
+    return ofs;
+}
+
+
+static npy_intp
+gallop_left_@suff@(const @type@ *arr, const npy_intp size, const @type@ key)
+{
+    npy_intp last_ofs, ofs, l, m, r;
+
+    if (@TYPE@_LT(arr[size - 1], key)) {
+        return size;
+    }
+
+    last_ofs = 0;
+    ofs = 1;
+
+    for (;;) {
+        if (size <= ofs || ofs < 0) {
+            ofs = size;
+            break;
+        }
+
+        if (@TYPE@_LT(arr[size - ofs - 1], key)) {
+            break;
+        } else {
+            last_ofs = ofs;
+            ofs = (ofs << 1) + 1;
+        }
+    }
+
+    /* now that arr[size-ofs-1] < key <= arr[size-last_ofs-1] */
+    l = size - ofs - 1;
+    r = size - last_ofs - 1;
+
+    while (l + 1 < r) {
+        m = l + ((r - l) >> 1);
+
+        if (@TYPE@_LT(arr[m], key)) {
+            l = m;
+        } else {
+            r = m;
+        }
+    }
+
+    /* now that arr[r-1] < key <= arr[r] */
+    return r;
+}
+
+
+static int
+merge_at_@suff@(@type@ *arr, const run *stack, const npy_intp at,
+                buffer_@suff@ *buffer)
+{
+    int ret;
+    npy_intp s1, l1, s2, l2, k;
+    @type@ *p1, *p2;
+    s1 = stack[at].s;
+    l1 = stack[at].l;
+    s2 = stack[at + 1].s;
+    l2 = stack[at + 1].l;
+    /* arr[s2] belongs to arr[s1+k] */
+    k = gallop_right_@suff@(arr + s1, l1, arr[s2]);
+
+    if (l1 == k) {
+        /* already sorted */
+        return 0;
+    }
+
+    p1 = arr + s1 + k;
+    l1 -= k;
+    p2 = arr + s2;
+    /* arr[s2-1] belongs to arr[s2+l2] */
+    l2 = gallop_left_@suff@(arr + s2, l2, arr[s2 - 1]);
+
+    if (l2 < l1) {
+        ret = resize_buffer_@suff@(buffer, l2);
+
+        if (NPY_UNLIKELY(ret < 0)) { return ret; }
+
+        merge_right_@suff@(p1, l1, p2, l2, buffer->pw);
+    } else {
+        ret = resize_buffer_@suff@(buffer, l1);
+
+        if (NPY_UNLIKELY(ret < 0)) { return ret; }
+
+        merge_left_@suff@(p1, l1, p2, l2, buffer->pw);
+    }
+
+    return 0;
+}
+
+
+static int
+try_collapse_@suff@(@type@ *arr, run *stack, npy_intp *stack_ptr,
+                    buffer_@suff@ *buffer)
+{
+    int ret;
+    npy_intp A, B, C, top;
+    top = *stack_ptr;
+
+    while (1 < top) {
+        B = stack[top - 2].l;
+        C = stack[top - 1].l;
+
+        if ((2 < top && stack[top - 3].l <= B + C) ||
+                (3 < top && stack[top - 4].l <= stack[top - 3].l + B)) {
+            A = stack[top - 3].l;
+
+            if (A <= C) {
+                ret = merge_at_@suff@(arr, stack, top - 3, buffer);
+
+                if (NPY_UNLIKELY(ret < 0)) { return ret; }
+
+                stack[top - 3].l += B;
+                stack[top - 2] = stack[top - 1];
+                --top;
+            } else {
+                ret = merge_at_@suff@(arr, stack, top - 2, buffer);
+
+                if (NPY_UNLIKELY(ret < 0)) { return ret; }
+
+                stack[top - 2].l += C;
+                --top;
+            }
+        } else if (1 < top && B <= C) {
+            ret = merge_at_@suff@(arr, stack, top - 2, buffer);
+
+            if (NPY_UNLIKELY(ret < 0)) { return ret; }
+
+            stack[top - 2].l += C;
+            --top;
+        } else {
+            break;
+        }
+    }
+
+    *stack_ptr = top;
+    return 0;
+}
+
+static int
+force_collapse_@suff@(@type@ *arr, run *stack, npy_intp *stack_ptr,
+                      buffer_@suff@ *buffer)
+{
+    int ret;
+    npy_intp top = *stack_ptr;
+
+    while (2 < top) {
+        if (stack[top - 3].l <= stack[top - 1].l) {
+            ret = merge_at_@suff@(arr, stack, top - 3, buffer);
+
+            if (NPY_UNLIKELY(ret < 0)) { return ret; }
+
+            stack[top - 3].l += stack[top - 2].l;
+            stack[top - 2] = stack[top - 1];
+            --top;
+        } else {
+            ret = merge_at_@suff@(arr, stack, top - 2, buffer);
+
+            if (NPY_UNLIKELY(ret < 0)) { return ret; }
+
+            stack[top - 2].l += stack[top - 1].l;
+            --top;
+        }
+    }
+
+    if (1 < top) {
+        ret = merge_at_@suff@(arr, stack, top - 2, buffer);
+
+        if (NPY_UNLIKELY(ret < 0)) { return ret; }
+    }
+
+    return 0;
+}
+
+
+int
+timsort_@suff@(void *start, npy_intp num, void *NOT_USED)
+{
+    int ret;
+    npy_intp l, n, stack_ptr, minrun;
+    buffer_@suff@ buffer;
+    @type@ *arr;
+    run stack[TIMSORT_STACK_SIZE];
+    buffer.pw = NULL;
+    buffer.size = 0;
+    stack_ptr = 0;
+    minrun = compute_min_run(num);
+    arr = start;
+
+    for (l = 0; l < num;) {
+        n = count_run_@suff@(arr, l, num, minrun);
+        stack[stack_ptr].s = l;
+        stack[stack_ptr].l = n;
+        ++stack_ptr;
+        ret = try_collapse_@suff@(arr, stack, &stack_ptr, &buffer);
+
+        if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
+
+        l += n;
+    }
+
+    ret = force_collapse_@suff@(arr, stack, &stack_ptr, &buffer);
+
+    if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
+
+    ret = 0;
+cleanup:
+
+    if (buffer.pw != NULL) {
+        free(buffer.pw);
+    }
+
+    return ret;
+}
+
+
+/* Below copied directly from mergesort */
+
+
+static void
+amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw)
+{
+    @type@ vp;
+    npy_intp vi, *pi, *pj, *pk, *pm;
+
+    if (pr - pl > SMALL_MERGESORT) {
+        /* merge sort */
+        pm = pl + ((pr - pl) >> 1);
+        amergesort0_@suff@(pl, pm, v, pw);
+        amergesort0_@suff@(pm, pr, v, pw);
+
+        for (pi = pw, pj = pl; pj < pm;) {
+            *pi++ = *pj++;
+        }
+
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+
+        while (pj < pi && pm < pr) {
+            if (@TYPE@_LT(v[*pm], v[*pj])) {
+                *pk++ = *pm++;
+            } else {
+                *pk++ = *pj++;
+            }
+        }
+
+        while (pj < pi) {
+            *pk++ = *pj++;
+        }
+    } else {
+        /* insertion sort */
+        for (pi = pl + 1; pi < pr; ++pi) {
+            vi = *pi;
+            vp = v[vi];
+            pj = pi;
+            pk = pi - 1;
+
+            while (pj > pl && @TYPE@_LT(vp, v[*pk])) {
+                *pj-- = *pk--;
+            }
+
+            *pj = vi;
+        }
+    }
+}
+
+
+int
+atimsort_@suff@(void *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
+{
+    npy_intp *pl, *pr, *pw;
+    pl = tosort;
+    pr = pl + num;
+    pw = malloc((num / 2) * sizeof(npy_intp));
+
+    if (pw == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    amergesort0_@suff@(pl, pr, v, pw);
+    free(pw);
+    return 0;
+}
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             STRING SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = STRING, UNICODE#
+ * #suff = string, unicode#
+ * #type = npy_char, npy_ucs4#
+ */
+
+static void
+mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
+{
+    @type@ *pi, *pj, *pk, *pm;
+
+    if ((size_t)(pr - pl) > SMALL_MERGESORT * len) {
+        /* merge sort */
+        pm = pl + (((pr - pl) / len) >> 1) * len;
+        mergesort0_@suff@(pl, pm, pw, vp, len);
+        mergesort0_@suff@(pm, pr, pw, vp, len);
+        @TYPE@_COPY(pw, pl, pm - pl);
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+
+        while (pj < pi && pm < pr) {
+            if (@TYPE@_LT(pm, pj, len)) {
+                @TYPE@_COPY(pk, pm, len);
+                pm += len;
+                pk += len;
+            } else {
+                @TYPE@_COPY(pk, pj, len);
+                pj += len;
+                pk += len;
+            }
+        }
+
+        @TYPE@_COPY(pk, pj, pi - pj);
+    } else {
+        /* insertion sort */
+        for (pi = pl + len; pi < pr; pi += len) {
+            @TYPE@_COPY(vp, pi, len);
+            pj = pi;
+            pk = pi - len;
+
+            while (pj > pl && @TYPE@_LT(vp, pk, len)) {
+                @TYPE@_COPY(pj, pk, len);
+                pj -= len;
+                pk -= len;
+            }
+
+            @TYPE@_COPY(pj, vp, len);
+        }
+    }
+}
+
+
+int
+timsort_@suff@(void *start, npy_intp num, void *varr)
+{
+    PyArrayObject *arr = varr;
+    size_t elsize = PyArray_ITEMSIZE(arr);
+    size_t len = elsize / sizeof(@type@);
+    @type@ *pl, *pr, *pw, *vp;
+    int err = 0;
+
+    /* Items that have zero size don't make sense to sort */
+    if (elsize == 0) {
+        return 0;
+    }
+
+    pl = start;
+    pr = pl + num * len;
+    pw = malloc((num / 2) * elsize);
+
+    if (pw == NULL) {
+        err = -NPY_ENOMEM;
+        goto fail_0;
+    }
+
+    vp = malloc(elsize);
+
+    if (vp == NULL) {
+        err = -NPY_ENOMEM;
+        goto fail_1;
+    }
+
+    mergesort0_@suff@(pl, pr, pw, vp, len);
+    free(vp);
+fail_1:
+    free(pw);
+fail_0:
+    return err;
+}
+
+
+static void
+amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw,
+                   size_t len)
+{
+    @type@ *vp;
+    npy_intp vi, *pi, *pj, *pk, *pm;
+
+    if (pr - pl > SMALL_MERGESORT) {
+        /* merge sort */
+        pm = pl + ((pr - pl) >> 1);
+        amergesort0_@suff@(pl, pm, v, pw, len);
+        amergesort0_@suff@(pm, pr, v, pw, len);
+
+        for (pi = pw, pj = pl; pj < pm;) {
+            *pi++ = *pj++;
+        }
+
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+
+        while (pj < pi && pm < pr) {
+            if (@TYPE@_LT(v + (*pm)*len, v + (*pj)*len, len)) {
+                *pk++ = *pm++;
+            } else {
+                *pk++ = *pj++;
+            }
+        }
+
+        while (pj < pi) {
+            *pk++ = *pj++;
+        }
+    } else {
+        /* insertion sort */
+        for (pi = pl + 1; pi < pr; ++pi) {
+            vi = *pi;
+            vp = v + vi * len;
+            pj = pi;
+            pk = pi - 1;
+
+            while (pj > pl && @TYPE@_LT(vp, v + (*pk)*len, len)) {
+                *pj-- = *pk--;
+            }
+
+            *pj = vi;
+        }
+    }
+}
+
+
+int
+atimsort_@suff@(void *v, npy_intp *tosort, npy_intp num, void *varr)
+{
+    PyArrayObject *arr = varr;
+    size_t elsize = PyArray_ITEMSIZE(arr);
+    size_t len = elsize / sizeof(@type@);
+    npy_intp *pl, *pr, *pw;
+
+    /* Items that have zero size don't make sense to sort */
+    if (elsize == 0) {
+        return 0;
+    }
+
+    pl = tosort;
+    pr = pl + num;
+    pw = malloc((num / 2) * sizeof(npy_intp));
+
+    if (pw == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    amergesort0_@suff@(pl, pr, v, pw, len);
+    free(pw);
+    return 0;
+}
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+static void
+npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
+               PyArray_CompareFunc *cmp, PyArrayObject *arr)
+{
+    char *pi, *pj, *pk, *pm;
+
+    if (pr - pl > SMALL_MERGESORT * elsize) {
+        /* merge sort */
+        pm = pl + (((pr - pl) / elsize) >> 1) * elsize;
+        npy_mergesort0(pl, pm, pw, vp, elsize, cmp, arr);
+        npy_mergesort0(pm, pr, pw, vp, elsize, cmp, arr);
+        GENERIC_COPY(pw, pl, pm - pl);
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+
+        while (pj < pi && pm < pr) {
+            if (cmp(pm, pj, arr) < 0) {
+                GENERIC_COPY(pk, pm, elsize);
+                pm += elsize;
+                pk += elsize;
+            } else {
+                GENERIC_COPY(pk, pj, elsize);
+                pj += elsize;
+                pk += elsize;
+            }
+        }
+
+        GENERIC_COPY(pk, pj, pi - pj);
+    } else {
+        /* insertion sort */
+        for (pi = pl + elsize; pi < pr; pi += elsize) {
+            GENERIC_COPY(vp, pi, elsize);
+            pj = pi;
+            pk = pi - elsize;
+
+            while (pj > pl && cmp(vp, pk, arr) < 0) {
+                GENERIC_COPY(pj, pk, elsize);
+                pj -= elsize;
+                pk -= elsize;
+            }
+
+            GENERIC_COPY(pj, vp, elsize);
+        }
+    }
+}
+
+
+int
+npy_timsort(void *start, npy_intp num, void *varr)
+{
+    PyArrayObject *arr = varr;
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    char *pl = start;
+    char *pr = pl + num * elsize;
+    char *pw;
+    char *vp;
+    int err = -NPY_ENOMEM;
+
+    /* Items that have zero size don't make sense to sort */
+    if (elsize == 0) {
+        return 0;
+    }
+
+    pw = malloc((num >> 1) * elsize);
+    vp = malloc(elsize);
+
+    if (pw != NULL && vp != NULL) {
+        npy_mergesort0(pl, pr, pw, vp, elsize, cmp, arr);
+        err = 0;
+    }
+
+    free(vp);
+    free(pw);
+    return err;
+}
+
+
+static void
+npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
+                npy_intp elsize, PyArray_CompareFunc *cmp, PyArrayObject *arr)
+{
+    char *vp;
+    npy_intp vi, *pi, *pj, *pk, *pm;
+
+    if (pr - pl > SMALL_MERGESORT) {
+        /* merge sort */
+        pm = pl + ((pr - pl) >> 1);
+        npy_amergesort0(pl, pm, v, pw, elsize, cmp, arr);
+        npy_amergesort0(pm, pr, v, pw, elsize, cmp, arr);
+
+        for (pi = pw, pj = pl; pj < pm;) {
+            *pi++ = *pj++;
+        }
+
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+
+        while (pj < pi && pm < pr) {
+            if (cmp(v + (*pm)*elsize, v + (*pj)*elsize, arr) < 0) {
+                *pk++ = *pm++;
+            } else {
+                *pk++ = *pj++;
+            }
+        }
+
+        while (pj < pi) {
+            *pk++ = *pj++;
+        }
+    } else {
+        /* insertion sort */
+        for (pi = pl + 1; pi < pr; ++pi) {
+            vi = *pi;
+            vp = v + vi * elsize;
+            pj = pi;
+            pk = pi - 1;
+
+            while (pj > pl && cmp(vp, v + (*pk)*elsize, arr) < 0) {
+                *pj-- = *pk--;
+            }
+
+            *pj = vi;
+        }
+    }
+}
+
+
+int
+npy_atimsort(void *v, npy_intp *tosort, npy_intp num, void *varr)
+{
+    PyArrayObject *arr = varr;
+    npy_intp elsize = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
+    npy_intp *pl, *pr, *pw;
+
+    /* Items that have zero size don't make sense to sort */
+    if (elsize == 0) {
+        return 0;
+    }
+
+    pl = tosort;
+    pr = pl + num;
+    pw = malloc((num >> 1) * sizeof(npy_intp));
+
+    if (pw == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    npy_amergesort0(pl, pr, v, pw, elsize, cmp, arr);
+    free(pw);
+    return 0;
+}

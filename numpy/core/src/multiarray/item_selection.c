@@ -1135,6 +1135,9 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 case NPY_MERGESORT:
                     sort = npy_mergesort;
                     break;
+                case NPY_TIMSORT:
+                    sort = npy_timsort;
+                    break;
             }
         }
         else {
