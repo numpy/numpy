@@ -48,6 +48,13 @@ As part of `NEP 15`, they have been deprecated along with the C-API functions
 the inner loop functions in built-in ufuncs should use
 :c:func:`PyUFunc_ReplaceLoopBySignature`.
 
+Empty names in dtypes have been deprecated
+------------------------------------------
+It has been possible to create a record array with an empty field name, i.e.
+``np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})``. This conflicts
+with internal usage of empty field names for padding, and unnamed fields cannot
+be accessed by name. Such use has been deprecated.
+
 Future Changes
 ==============
 

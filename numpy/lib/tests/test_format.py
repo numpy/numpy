@@ -287,7 +287,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    raises
+    raises, suppress_warnings
     )
 from numpy.lib import format
 
@@ -525,27 +525,28 @@ def test_compressed_roundtrip():
 
 
 # aligned
-dt1 = np.dtype('i1, i4, i1', align=True)
+dt1 = {'names': ['a', 'b', 'c'], 'formats': ['i1', 'i4', 'i1'], 'align': True}
 # non-aligned, explicit offsets
-dt2 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
-                'offsets': [1, 6]})
+dt2 = {'names': ['a', 'b'], 'formats': ['i4', 'i4'], 'offsets': [1, 6]}
 # nested struct-in-struct
-dt3 = np.dtype({'names': ['c', 'd'], 'formats': ['i4', dt2]})
+dt3 = {'names': ['c', 'd'], 'formats': ['i4', dt2]}
 # field with '' name
-dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
+dt4 = {'names': ['a', '', 'b'], 'formats': ['i4']*3}
 # titles
-dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
-                'offsets': [1, 6], 'titles': ['aa', 'bb']})
+dt5 = {'names': ['a', 'b'], 'formats': ['i4', 'i4'],
+       'offsets': [1, 6], 'titles': ['aa', 'bb']}
 
 @pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5])
 def test_load_padded_dtype(dt):
-    arr = np.zeros(3, dt)
-    for i in range(3):
-        arr[i] = i + 5
-    npz_file = os.path.join(tempdir, 'aligned.npz')
-    np.savez(npz_file, arr=arr)
-    arr1 = np.load(npz_file)['arr']
-    assert_array_equal(arr, arr1)
+    with suppress_warnings('always') as sup:
+        sup.filter(DeprecationWarning)
+        arr = np.zeros(3, dtype=dt)
+        for i in range(3):
+            arr[i] = i + 5
+        npz_file = os.path.join(tempdir, 'aligned.npz')
+        np.savez(npz_file, arr=arr)
+        arr1 = np.load(npz_file)['arr']
+        assert_array_equal(arr, arr1)
 
 
 def test_python2_python3_interoperability():

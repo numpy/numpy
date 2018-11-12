@@ -1059,7 +1059,7 @@ _convert_from_dict(PyObject *obj, int align)
     totalsize = 0;
     for (i = 0; i < n; i++) {
         PyObject *tup, *descr, *ind, *title, *name, *off;
-        int len, ret, _align = 1;
+        int len, ret, tmp, _align = 1;
         PyArray_Descr *newdescr;
 
         /* Build item to insert (descr, offset, [title])*/
@@ -1169,7 +1169,19 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(tup);
             goto fail;
         }
-
+        tmp = PyObject_IsTrue(name);
+        if (tmp < 0) {
+            Py_DECREF(tup);
+            goto fail;
+        }
+        else if (tmp == 0) {
+            /* 2018-11-12 1.16 */
+            if (DEPRECATE("Blank field names are deprecated and will result in "
+                          "an error in the future.") < 0) {
+                Py_DECREF(tup);
+                goto fail;
+            }
+        }
         /* Insert into dictionary */
         if (PyDict_GetItem(fields, name) != NULL) {
             PyErr_SetString(PyExc_ValueError,

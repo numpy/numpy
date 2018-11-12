@@ -519,10 +519,12 @@ class TestPositiveOnNonNumerical(_DeprecationTestCase):
     def test_positive_on_non_number(self):
         self.assert_deprecated(operator.pos, args=(np.array('foo'),))
 
+
 class TestFromstring(_DeprecationTestCase):
     # 2017-10-19, 1.14
     def test_fromstring(self):
         self.assert_deprecated(np.fromstring, args=('\x00'*80,))
+
 
 class Test_GetSet_NumericOps(_DeprecationTestCase):
     # 2018-09-20, 1.16.0
@@ -534,3 +536,11 @@ class Test_GetSet_NumericOps(_DeprecationTestCase):
         # other tests.
         self.assert_deprecated(np.set_numeric_ops, kwargs={})
         assert_raises(ValueError, np.set_numeric_ops, add='abc')
+
+
+class TestDtypeEmptyFieldName(_DeprecationTestCase):
+    # 2018-11-12, 1.16
+    def test_empty_fieldname(self):
+        d = {'names': ['a', '', 'b'], 'formats': ['i4']*3}
+        self.assert_deprecated(np.dtype, args=(d,))
+

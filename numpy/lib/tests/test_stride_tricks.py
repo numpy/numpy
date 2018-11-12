@@ -4,7 +4,7 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_raises, assert_,
-    assert_raises_regex
+    assert_raises_regex, suppress_warnings
     )
 from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to
@@ -324,7 +324,9 @@ def test_as_strided():
     assert_equal(a.dtype, a_view.dtype)
 
     # Make sure that the only type that could fail is properly handled
-    dt = np.dtype({'names': [''], 'formats': ['V4']})
+    with suppress_warnings() as sup:
+        sup.filter(DeprecationWarning, '')
+        dt = np.dtype({'names': [''], 'formats': ['V4']})
     a = np.empty((4,), dtype=dt)
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     assert_equal(a.dtype, a_view.dtype)
