@@ -159,9 +159,10 @@ enum NPY_TYPECHAR {
 typedef enum {
         NPY_QUICKSORT=0,
         NPY_HEAPSORT=1,
-        NPY_MERGESORT=2
+        NPY_MERGESORT=2,
+        NPY_TIMSORT=3,
 } NPY_SORTKIND;
-#define NPY_NSORTS (NPY_MERGESORT + 1)
+#define NPY_NSORTS (NPY_TIMSORT + 1)
 
 
 typedef enum {

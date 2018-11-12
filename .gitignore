@@ -143,7 +143,12 @@ numpy/core/src/npysort/heapsort.c
 numpy/core/src/npysort/mergesort.c
 numpy/core/src/npysort/quicksort.c
 numpy/core/src/npysort/selection.c
+numpy/core/src/npysort/timsort.c
 numpy/core/src/npysort/sort.c
+numpy/core/src/common/npy_binsearch.h
+numpy/core/src/common/npy_partition.h
+numpy/core/src/common/npy_sort.h
+numpy/core/src/common/templ_common.h
 numpy/core/src/private/npy_binsearch.h
 numpy/core/src/private/npy_partition.h
 numpy/core/src/private/templ_common.h
