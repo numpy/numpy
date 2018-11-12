@@ -37,8 +37,10 @@ jobs:
     displayName: 'make gfortran available on mac os vm'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest pickle5
+  - script: python -m pip install cython nose pytz pytest pickle5 vulture
     displayName: 'Install dependencies; some are optional to avoid test skips'
+  - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
+    displayName: 'Check for unreachable code paths in Python modules'
   # NOTE: init_dgelsd failed init issue with current ACCELERATE /
   # LAPACK configuration on Azure macos image; at the time of writing
   # this plagues homebrew / macports NumPy builds, but we will
