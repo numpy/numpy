@@ -650,6 +650,9 @@ double rk_pareto(rk_state *state, double a)
 
 double rk_weibull(rk_state *state, double a)
 {
+    if (a == 0.0) {
+        return 0.0;
+    }
     return pow(rk_standard_exponential(state), 1./a);
 }
 
