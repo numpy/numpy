@@ -6788,7 +6788,7 @@ class TestNewBufferProtocol(object):
             ValueError, "format string",
             np.array, m)
 
-    def test_error_message(self):
+    def test_error_message_unsupported(self):
         # wchar has no corresponding numpy type - if this changes in future, we
         # need a better way to construct an invalid memoryview format.
         t = ctypes.c_wchar * 4
@@ -6797,7 +6797,10 @@ class TestNewBufferProtocol(object):
 
         exc = cm.exception
         if sys.version_info.major > 2:
-            with assert_raises_regex(ValueError, "Unknown .* specifier 'u'"):
+            with assert_raises_regex(
+                NotImplementedError,
+                r"Unrepresentable .* 'u' \(UCS-2 strings\)"
+            ):
                 raise exc.__cause__
 
     def test_ctypes_integer_via_memoryview(self):
