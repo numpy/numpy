@@ -1076,18 +1076,17 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     """
     compare_chararrays(a, b, cmp_op, rstrip)
 
-    Preforms element-wise comparison of two string-arrays using the specified comparison operator.
+    Performs element-wise comparison of two string arrays using the
+    comparison operator specified by `cmp_op`.
 
     Parameters
     ----------
-    a : array_like
-        First argument.
-    b : array_like
-        Second argument.
-    cmp_op : "<" or "<=" or "==" or ">=" or ">" or "!="
-            Third argument.
+    a, b : array_like
+        Arrays to be compared.
+    cmp_op : {"<", "<=", "==", ">=", ">", "!="}
+        Type of comparison.
     rstrip : Boolean
-             if True, the spaces at the end of Strings are removed before the comparison
+        If True, the spaces at the end of Strings are removed before the comparison.
 
     Returns
     -------
@@ -1097,17 +1096,16 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     Raises
     ------
     ValueError
-        If cmp_op is neither "<" nor "<=" nor "==" nor ">=" nor ">" nor "!="
-
+        If `cmp_op` is not valid.
     TypeError
-        If at least one of the arrays a or b is a non-string array
+        If at least one of `a` or `b` is a non-string array
 
     Examples
     --------
     >>> a = np.array(["a", "b", "cde"])
     >>> b = np.array(["a", "a", "dec"])
-    >>> np.compare_chararrays(a,b,">",True)
-    array([False,True,False])
+    >>> np.compare_chararrays(a, b, ">", True)
+    array([False,  True, False])
 
     """)
 
