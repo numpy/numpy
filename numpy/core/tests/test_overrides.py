@@ -312,6 +312,7 @@ class TestArrayFunctionImplementation(object):
 
         array = np.array(1)
         assert_(func(array) is array)
+        assert_equal(func.__module__, 'my')
 
         with assert_raises_regex(
                 TypeError, "no implementation found for 'my.func'"):
@@ -335,7 +336,7 @@ class TestNDArrayMethods(object):
 
 class TestNumPyFunctions(object):
 
-    def test_module(self):
+    def test_set_module(self):
         assert_equal(np.sum.__module__, 'numpy')
         assert_equal(np.char.equal.__module__, 'numpy.char')
         assert_equal(np.fft.fft.__module__, 'numpy.fft')

@@ -7,6 +7,7 @@ from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
                       TooHardError,asanyarray)
 from numpy.core.multiarray import add_docstring
+from numpy.core.overrides import set_module
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -23,6 +24,7 @@ def _index_deprecate(i, stacklevel=2):
     return i
 
 
+@set_module('numpy')
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     """
     Return evenly spaced numbers over a specified interval.
@@ -154,6 +156,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
         return y.astype(dtype, copy=False)
 
 
+@set_module('numpy')
 def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     """
     Return numbers spaced evenly on a log scale.
@@ -238,6 +241,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     return _nx.power(base, y).astype(dtype)
 
 
+@set_module('numpy')
 def geomspace(start, stop, num=50, endpoint=True, dtype=None):
     """
     Return numbers spaced evenly on a log scale (a geometric progression).

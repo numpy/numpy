@@ -5,6 +5,7 @@ from .numeric import uint8, ndarray, dtype
 from numpy.compat import (
     long, basestring, os_fspath, contextlib_nullcontext, is_pathlib_path
 )
+from numpy.core.overrides import set_module
 
 __all__ = ['memmap']
 
@@ -19,6 +20,8 @@ mode_equivalents = {
     "write":"w+"
     }
 
+
+@set_module('numpy')
 class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
 

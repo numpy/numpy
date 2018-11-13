@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import os
 import re
+import functools
 import itertools
 import warnings
 import weakref
@@ -11,8 +12,9 @@ from operator import itemgetter, index as opindex
 import numpy as np
 from . import format
 from ._datasource import DataSource
+from numpy.core import overrides
 from numpy.core.multiarray import packbits, unpackbits
-from numpy.core.overrides import array_function_dispatch
+from numpy.core.overrides import set_module
 from numpy.core._internal import recursive
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
@@ -33,6 +35,7 @@ else:
     from collections import Mapping
 
 
+@set_module('numpy')
 def loads(*args, **kwargs):
     # NumPy 1.15.0, 2017-12-10
     warnings.warn(
@@ -46,6 +49,10 @@ __all__ = [
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
     'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource'
     ]
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 class BagObj(object):
@@ -277,6 +284,7 @@ class NpzFile(Mapping):
             return self.keys()
 
 
+@set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
          encoding='ASCII'):
     """
@@ -784,6 +792,8 @@ def _getconv(dtype):
 # amount of lines loadtxt reads in one chunk, can be overridden for testing
 _loadtxt_chunksize = 50000
 
+
+@set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
             ndmin=0, encoding='bytes', max_rows=None):
@@ -1424,6 +1434,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             fh.close()
 
 
+@set_module('numpy')
 def fromregex(file, regexp, dtype, encoding=None):
     """
     Construct an array from a text file, using regular expression parsing.
@@ -1522,6 +1533,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
+@set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
                missing_values=None, filling_values=None, usecols=None,

@@ -16,6 +16,7 @@ import numpy.core.numeric as NX
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.core import overrides
+from numpy.core.overrides import set_module
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
@@ -26,6 +27,7 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
+@set_module('numpy')
 class RankWarning(UserWarning):
     """
     Issued by `polyfit` when the Vandermonde matrix is rank deficient.
@@ -992,6 +994,7 @@ def _raise_power(astr, wrap=70):
     return output + astr[n:]
 
 
+@set_module('numpy')
 class poly1d(object):
     """
     A one-dimensional polynomial class.

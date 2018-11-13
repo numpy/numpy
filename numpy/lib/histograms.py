@@ -3,14 +3,18 @@ Histogram-related functions
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
 import operator
 import warnings
 
 import numpy as np
 from numpy.compat.py3k import basestring
-from numpy.core.overrides import array_function_dispatch
+from numpy.core import overrides
 
 __all__ = ['histogram', 'histogramdd', 'histogram_bin_edges']
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 # range is a keyword argument to many functions, so save the builtin so they can
 # use it.

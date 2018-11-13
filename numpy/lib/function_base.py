@@ -27,6 +27,7 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes
+from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
@@ -254,6 +255,7 @@ def flip(m, axis=None):
     return m[indexer]
 
 
+@set_module('numpy')
 def iterable(y):
     """
     Check whether or not an object can be iterated over.
@@ -429,6 +431,7 @@ def average(a, axis=None, weights=None, returned=False):
         return avg
 
 
+@set_module('numpy')
 def asarray_chkfinite(a, dtype=None, order=None):
     """Convert the input to an array, checking for NaNs or Infs.
 
@@ -1891,6 +1894,7 @@ def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes):
     return arrays
 
 
+@set_module('numpy')
 class vectorize(object):
     """
     vectorize(pyfunc, otypes=None, doc=None, excluded=None, cache=False,
@@ -2555,6 +2559,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     return c
 
 
+@set_module('numpy')
 def blackman(M):
     """
     Return the Blackman window.
@@ -2653,6 +2658,7 @@ def blackman(M):
     return 0.42 - 0.5*cos(2.0*pi*n/(M-1)) + 0.08*cos(4.0*pi*n/(M-1))
 
 
+@set_module('numpy')
 def bartlett(M):
     """
     Return the Bartlett window.
@@ -2759,6 +2765,7 @@ def bartlett(M):
     return where(less_equal(n, (M-1)/2.0), 2.0*n/(M-1), 2.0 - 2.0*n/(M-1))
 
 
+@set_module('numpy')
 def hanning(M):
     """
     Return the Hanning window.
@@ -2859,6 +2866,7 @@ def hanning(M):
     return 0.5 - 0.5*cos(2.0*pi*n/(M-1))
 
 
+@set_module('numpy')
 def hamming(M):
     """
     Return the Hamming window.
@@ -3112,6 +3120,7 @@ def i0(x):
 ## End of cephes code for i0
 
 
+@set_module('numpy')
 def kaiser(M, beta):
     """
     Return the Kaiser window.

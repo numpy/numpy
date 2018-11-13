@@ -11,7 +11,8 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'common_type']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, asanyarray, array, isnan, zeros
+from numpy.core.numeric import asarray, asanyarray, isnan, zeros
+from numpy.core.overrides import set_module
 from numpy.core import overrides
 from .ufunclike import isneginf, isposinf
 
@@ -23,7 +24,8 @@ array_function_dispatch = functools.partial(
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
 
-def mintypecode(typechars,typeset='GDFgdf',default='d'):
+@set_module('numpy')
+def mintypecode(typechars, typeset='GDFgdf', default='d'):
     """
     Return the character for the minimum-size type to which given types can
     be safely cast.
@@ -80,6 +82,12 @@ def mintypecode(typechars,typeset='GDFgdf',default='d'):
     l.sort()
     return l[0][1]
 
+
+def _asfarray_dispatcher(a, dtype=None):
+    return (a,)
+
+
+@array_function_dispatch(_asfarray_dispatcher)
 def asfarray(a, dtype=_nx.float_):
     """
     Return an array converted to a float type.
@@ -567,6 +575,7 @@ _namefromtype = {'S1': 'character',
                  'O': 'object'
                  }
 
+@set_module('numpy')
 def typename(char):
     """
     Return a description for the given data type code.

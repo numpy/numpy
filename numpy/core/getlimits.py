@@ -8,6 +8,7 @@ __all__ = ['finfo', 'iinfo']
 import warnings
 
 from .machar import MachAr
+from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf
@@ -289,6 +290,7 @@ def _discovered_machar(ftype):
                   params['title'])
 
 
+@set_module('numpy')
 class finfo(object):
     """
     finfo(dtype)
@@ -439,6 +441,7 @@ class finfo(object):
                  " max=%(_str_max)s, dtype=%(dtype)s)") % d)
 
 
+@set_module('numpy')
 class iinfo(object):
     """
     iinfo(type)

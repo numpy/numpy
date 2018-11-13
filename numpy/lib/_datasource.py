@@ -41,7 +41,11 @@ import warnings
 import shutil
 import io
 
+from numpy.core.overrides import set_module
+
+
 _open = open
+
 
 def _check_mode(mode, encoding, newline):
     """Check mode and that encoding and newline are compatible.
@@ -262,7 +266,8 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-class DataSource (object):
+@set_module('numpy')
+class DataSource(object):
     """
     DataSource(destpath='.')
 
