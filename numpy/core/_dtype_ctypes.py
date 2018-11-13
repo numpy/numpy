@@ -33,7 +33,6 @@ def _from_ctypes_array(t):
 
 
 def _from_ctypes_structure(t):
-    # TODO: gh-10533
     for item in t._fields_:
         if len(item) > 2:
             raise TypeError(
