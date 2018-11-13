@@ -328,7 +328,7 @@ class DataSource(object):
 
     def __del__(self):
         # Remove temp directories
-        if self._istmpdest:
+        if hasattr(self, '_istmpdest') and self._istmpdest:
             shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
