@@ -53,13 +53,11 @@ def _from_ctypes_structure(t):
             offsets.append(current_offset)
             current_offset += ctypes.sizeof(ftyp)
 
-
         return np.dtype(dict(
             formats=formats,
             offsets=offsets,
             names=names,
-            itemsize=ctypes.sizeof(t)
-        ))
+            itemsize=ctypes.sizeof(t)))
     else:
         fields = []
         for fname, ftyp in t._fields_:
