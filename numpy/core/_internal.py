@@ -482,6 +482,12 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
+_pep3118_unsupported_map = {
+    'u': 'UCS-2 strings',
+    '&': 'pointers',
+    't': 'bitfields',
+    'X': 'function pointers',
+}
 
 class _Stream(object):
     def __init__(self, s):
@@ -593,6 +599,11 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 stream.byteorder, stream.byteorder)
             value = dtype(numpy_byteorder + dtypechar)
             align = value.alignment
+        elif stream.next in _pep3118_unsupported_map:
+            desc = _pep3118_unsupported_map[stream.next]
+            raise NotImplementedError(
+                "Unrepresentable PEP 3118 data type {!r} ({})"
+                .format(stream.next, desc))
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
 
