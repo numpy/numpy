@@ -92,6 +92,7 @@ from numpy.core.multiarray import (
         datetime_as_string, busday_offset, busday_count, is_busday,
         busdaycalendar
         )
+from numpy.core.overrides import set_module
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
@@ -187,6 +188,8 @@ def maximum_sctype(t):
     else:
         return t
 
+
+@set_module('numpy')
 def issctype(rep):
     """
     Determines whether the given object represents a scalar data-type.
@@ -231,6 +234,8 @@ def issctype(rep):
     except Exception:
         return False
 
+
+@set_module('numpy')
 def obj2sctype(rep, default=None):
     """
     Return the scalar dtype or NumPy equivalent of Python type of an object.
@@ -285,6 +290,7 @@ def obj2sctype(rep, default=None):
         return res.type
 
 
+@set_module('numpy')
 def issubclass_(arg1, arg2):
     """
     Determine if a class is a subclass of a second class.
@@ -323,6 +329,8 @@ def issubclass_(arg1, arg2):
     except TypeError:
         return False
 
+
+@set_module('numpy')
 def issubsctype(arg1, arg2):
     """
     Determine if the first argument is a subclass of the second argument.
@@ -353,6 +361,8 @@ def issubsctype(arg1, arg2):
     """
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
+
+@set_module('numpy')
 def issubdtype(arg1, arg2):
     """
     Returns True if first argument is a typecode lower/equal in type hierarchy.
@@ -446,6 +456,8 @@ def _construct_lookups():
 
 _construct_lookups()
 
+
+@set_module('numpy')
 def sctype2char(sctype):
     """
     Return the string representation of a scalar dtype.
@@ -586,6 +598,8 @@ def _register_types():
 
 _register_types()
 
+
+@set_module('numpy')
 def find_common_type(array_types, scalar_types):
     """
     Determine common type following standard coercion rules.

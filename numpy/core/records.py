@@ -43,6 +43,7 @@ import warnings
 from . import numeric as sb
 from . import numerictypes as nt
 from numpy.compat import isfileobj, bytes, long, unicode, os_fspath
+from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
@@ -82,6 +83,8 @@ def find_duplicate(list):
                 dup.append(list[i])
     return dup
 
+
+@set_module('numpy')
 class format_parser(object):
     """
     Class to convert formats, names, titles description to a dtype.

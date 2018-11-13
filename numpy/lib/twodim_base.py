@@ -10,6 +10,7 @@ from numpy.core.numeric import (
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
+from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.core import iinfo, transpose
 
@@ -150,6 +151,7 @@ def flipud(m):
     return m[::-1, ...]
 
 
+@set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C'):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
@@ -343,6 +345,7 @@ def diagflat(v, k=0):
     return wrap(res)
 
 
+@set_module('numpy')
 def tri(N, M=None, k=0, dtype=float):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
@@ -698,6 +701,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     return hist, edges[0], edges[1]
 
 
+@set_module('numpy')
 def mask_indices(n, mask_func, k=0):
     """
     Return the indices to access (n, n) arrays, given a masking function.
@@ -768,6 +772,7 @@ def mask_indices(n, mask_func, k=0):
     return nonzero(a != 0)
 
 
+@set_module('numpy')
 def tril_indices(n, k=0, m=None):
     """
     Return the indices for the lower-triangle of an (n, m) array.
@@ -881,6 +886,7 @@ def tril_indices_from(arr, k=0):
     return tril_indices(arr.shape[-2], k=k, m=arr.shape[-1])
 
 
+@set_module('numpy')
 def triu_indices(n, k=0, m=None):
     """
     Return the indices for the upper-triangle of an (n, m) array.

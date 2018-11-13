@@ -13,6 +13,7 @@ from numpy.core.numerictypes import find_common_type, issubdtype
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
+from numpy.core.overrides import set_module
 from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 
@@ -544,8 +545,11 @@ class CClass(AxisConcatenator):
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
 
+
 c_ = CClass()
 
+
+@set_module('numpy')
 class ndenumerate(object):
     """
     Multidimensional index iterator.
@@ -596,6 +600,7 @@ class ndenumerate(object):
     next = __next__
 
 
+@set_module('numpy')
 class ndindex(object):
     """
     An N-dimensional iterator object to index arrays.
@@ -856,6 +861,7 @@ def fill_diagonal(a, val, wrap=False):
     a.flat[:end:step] = val
 
 
+@set_module('numpy')
 def diag_indices(n, ndim=2):
     """
     Return the indices to access the main diagonal of an array.

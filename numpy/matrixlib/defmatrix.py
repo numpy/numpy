@@ -7,6 +7,7 @@ import warnings
 import ast
 import numpy.core.numeric as N
 from numpy.core.numeric import concatenate, isscalar
+from numpy.core.overrides import set_module
 # While not in __all__, matrix_power used to be defined here, so we import
 # it for backward compatibility.
 from numpy.linalg import matrix_power
@@ -33,6 +34,8 @@ def _convert_from_string(data):
         newdata.append(newrow)
     return newdata
 
+
+@set_module('numpy')
 def asmatrix(data, dtype=None):
     """
     Interpret the input as a matrix.
@@ -67,6 +70,8 @@ def asmatrix(data, dtype=None):
     """
     return matrix(data, dtype=dtype, copy=False)
 
+
+@set_module('numpy')
 class matrix(N.ndarray):
     """
     matrix(data, dtype=None, copy=True)
@@ -1023,6 +1028,7 @@ def _from_string(str, gdict, ldict):
     return concatenate(rowtup, axis=0)
 
 
+@set_module('numpy')
 def bmat(obj, ldict=None, gdict=None):
     """
     Build a matrix object from a string, nested sequence, or array.

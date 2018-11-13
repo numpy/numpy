@@ -23,6 +23,7 @@ from .numerictypes import string_, unicode_, integer, object_, bool_, character
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
+from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.compat import asbytes, long
 import numpy
@@ -1820,6 +1821,7 @@ def isdecimal(a):
     return _vec_string(a, bool_, 'isdecimal')
 
 
+@set_module('numpy')
 class chararray(ndarray):
     """
     chararray(shape, itemsize=1, unicode=False, buffer=None, offset=0,

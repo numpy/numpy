@@ -48,7 +48,7 @@ from .fromnumeric import ravel, any
 from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
-from .overrides import array_function_dispatch
+from .overrides import array_function_dispatch, set_module
 import warnings
 import contextlib
 
@@ -89,6 +89,8 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 
     return options
 
+
+@set_module('numpy')
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
                      formatter=None, sign=None, floatmode=None, **kwarg):
@@ -250,6 +252,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         set_legacy_print_mode(0)
 
 
+@set_module('numpy')
 def get_printoptions():
     """
     Return the current print options.
@@ -279,6 +282,7 @@ def get_printoptions():
     return _format_options.copy()
 
 
+@set_module('numpy')
 @contextlib.contextmanager
 def printoptions(*args, **kwargs):
     """Context manager for setting print options.
@@ -976,6 +980,8 @@ class LongFloatFormat(FloatingFormat):
                       DeprecationWarning, stacklevel=2)
         super(LongFloatFormat, self).__init__(*args, **kwargs)
 
+
+@set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
                             sign=False, pad_left=None, exp_digits=None):
     """
@@ -1043,6 +1049,8 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
                               trim=trim, sign=sign, pad_left=pad_left,
                               exp_digits=exp_digits)
 
+
+@set_module('numpy')
 def format_float_positional(x, precision=None, unique=True,
                             fractional=True, trim='k', sign=False,
                             pad_left=None, pad_right=None):

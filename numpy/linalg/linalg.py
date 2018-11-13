@@ -29,6 +29,7 @@ from numpy.core import (
     swapaxes, divide, count_nonzero, isnan
 )
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import lapack_lite, _umath_linalg
@@ -47,7 +48,8 @@ _L = b'L'
 
 fortran_int = intc
 
-# Error object
+
+@set_module('numpy.linalg')
 class LinAlgError(Exception):
     """
     Generic Python-exception-derived object raised by linalg functions.
@@ -75,7 +77,6 @@ class LinAlgError(Exception):
     numpy.linalg.LinAlgError: Singular matrix
 
     """
-    pass
 
 
 def _determine_error_states():

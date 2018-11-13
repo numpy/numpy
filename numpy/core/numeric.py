@@ -30,6 +30,7 @@ if sys.version_info[0] < 3:
 
 from . import overrides
 from . import umath
+from .overrides import set_module
 from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
                     ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
                     ERR_LOG, ERR_DEFAULT, PINF, NAN)
@@ -92,6 +93,7 @@ if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
 
 
+@set_module('numpy')
 class ComplexWarning(RuntimeWarning):
     """
     The warning raised when casting a complex dtype to a real dtype.
@@ -170,6 +172,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     return res
 
 
+@set_module('numpy')
 def ones(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with ones.
@@ -287,6 +290,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     return res
 
 
+@set_module('numpy')
 def full(shape, fill_value, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with `fill_value`.
@@ -462,6 +466,7 @@ def count_nonzero(a, axis=None):
     return a_bool.sum(axis=axis, dtype=np.intp)
 
 
+@set_module('numpy')
 def asarray(a, dtype=None, order=None):
     """Convert the input to an array.
 
@@ -533,6 +538,7 @@ def asarray(a, dtype=None, order=None):
     return array(a, dtype, copy=False, order=order)
 
 
+@set_module('numpy')
 def asanyarray(a, dtype=None, order=None):
     """Convert the input to an ndarray, but pass ndarray subclasses through.
 
@@ -585,6 +591,7 @@ def asanyarray(a, dtype=None, order=None):
     return array(a, dtype, copy=False, order=order, subok=True)
 
 
+@set_module('numpy')
 def ascontiguousarray(a, dtype=None):
     """
     Return a contiguous array (ndim >= 1) in memory (C order).
@@ -625,6 +632,7 @@ def ascontiguousarray(a, dtype=None):
     return array(a, dtype, copy=False, order='C', ndmin=1)
 
 
+@set_module('numpy')
 def asfortranarray(a, dtype=None):
     """
     Return an array (ndim >= 1) laid out in Fortran order in memory.
@@ -665,6 +673,7 @@ def asfortranarray(a, dtype=None):
     return array(a, dtype, copy=False, order='F', ndmin=1)
 
 
+@set_module('numpy')
 def require(a, dtype=None, requirements=None):
     """
     Return an ndarray of the provided type that satisfies requirements.
@@ -763,6 +772,7 @@ def require(a, dtype=None, requirements=None):
     return arr
 
 
+@set_module('numpy')
 def isfortran(a):
     """
     Returns True if the array is Fortran contiguous but *not* C contiguous.
@@ -1889,6 +1899,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 little_endian = (sys.byteorder == 'little')
 
 
+@set_module('numpy')
 def indices(dimensions, dtype=int):
     """
     Return an array representing the indices of a grid.
@@ -1960,6 +1971,7 @@ def indices(dimensions, dtype=int):
     return res
 
 
+@set_module('numpy')
 def fromfunction(function, shape, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
@@ -2020,6 +2032,7 @@ def _frombuffer(buf, dtype, shape, order):
     return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
 
 
+@set_module('numpy')
 def isscalar(num):
     """
     Returns True if the type of `num` is a scalar type.
@@ -2096,6 +2109,7 @@ def isscalar(num):
             or isinstance(num, numbers.Number))
 
 
+@set_module('numpy')
 def binary_repr(num, width=None):
     """
     Return the binary representation of the input number as a string.
@@ -2206,6 +2220,7 @@ def binary_repr(num, width=None):
             return '1' * (outwidth - binwidth) + binary
 
 
+@set_module('numpy')
 def base_repr(number, base=2, padding=0):
     """
     Return a string representation of a number in the given base system.
@@ -2300,6 +2315,7 @@ def _maketup(descr, val):
         return tuple(res)
 
 
+@set_module('numpy')
 def identity(n, dtype=None):
     """
     Return the identity array.
@@ -2640,6 +2656,7 @@ for key in _errdict.keys():
 del key
 
 
+@set_module('numpy')
 def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     """
     Set how floating-point errors are handled.
@@ -2741,6 +2758,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     return old
 
 
+@set_module('numpy')
 def geterr():
     """
     Get the current way of handling floating-point errors.
@@ -2792,6 +2810,7 @@ def geterr():
     return res
 
 
+@set_module('numpy')
 def setbufsize(size):
     """
     Set the size of the buffer used in ufuncs.
@@ -2816,6 +2835,7 @@ def setbufsize(size):
     return old
 
 
+@set_module('numpy')
 def getbufsize():
     """
     Return the size of the buffer used in ufuncs.
@@ -2829,6 +2849,7 @@ def getbufsize():
     return umath.geterrobj()[0]
 
 
+@set_module('numpy')
 def seterrcall(func):
     """
     Set the floating-point error callback function or log object.
@@ -2921,6 +2942,7 @@ def seterrcall(func):
     return old
 
 
+@set_module('numpy')
 def geterrcall():
     """
     Return the current callback function used on floating-point errors.
@@ -2973,6 +2995,7 @@ class _unspecified(object):
 _Unspecified = _unspecified()
 
 
+@set_module('numpy')
 class errstate(object):
     """
     errstate(**kwargs)
