@@ -988,8 +988,49 @@ array_getarray(PyArrayObject *self, PyObject *args)
     }
 }
 
+/*
+ * Check whether any of a set of input and output args have a non-default
+ * __array_ufunc__ method. Return 1 if so, 0 if not, and -1 on error.
+ *
+ * This function primarily exists to help ndarray.__array_ufunc__ determine
+ * whether it can support a ufunc (which is the case only if none of the
+ * operands have an override).  Thus, unlike in umath/override.c, the
+ * actual overrides are not needed and one can stop looking once one is found.
+ */
+static int
+any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
+{
+    int i;
+    int nin, nout;
+    PyObject *out_kwd_obj;
+    PyObject **in_objs, **out_objs;
 
-static PyObject *
+    /* check inputs */
+    nin = PyTuple_Size(args);
+    if (nin < 0) {
+        return -1;
+    }
+    in_objs = PySequence_Fast_ITEMS(args);
+    for (i = 0; i < nin; ++i) {
+        if (PyUFunc_HasOverride(in_objs[i])) {
+            return 1;
+        }
+    }
+    /* check outputs, if any */
+    nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
+    if (nout < 0) {
+        return -1;
+    }
+    for (i = 0; i < nout; i++) {
+        if (PyUFunc_HasOverride(out_objs[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT PyObject *
 array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
@@ -1009,7 +1050,7 @@ array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* ndarray cannot handle overrides itself */
-    has_override = PyUFunc_HasOverride(normal_args, kwds);
+    has_override = any_array_ufunc_overrides(normal_args, kwds);
     if (has_override < 0) {
         goto cleanup;
     }

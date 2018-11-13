@@ -599,7 +599,7 @@ array_positive(PyArrayObject *m1)
          */
         PyObject *exc, *val, *tb;
         PyErr_Fetch(&exc, &val, &tb);
-        if (has_non_default_array_ufunc((PyObject *)m1)) {
+        if (PyUFunc_HasOverride((PyObject *)m1)) {
             PyErr_Restore(exc, val, tb);
             return NULL;
         }
