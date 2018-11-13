@@ -70,9 +70,9 @@ def dtype_from_ctypes_scalar(t):
     """
     Return the dtype type with endianness included if it's the case
     """
-    if t.__name__.endswith('_be'):
+    if t.__ctype_be__ is t:
         return '>' + t._type_
-    elif t.__name__.endswith('_le'):
+    elif t.__ctype_le__ is t:
         return '<' + t._type_
     else:
         return t._type_
