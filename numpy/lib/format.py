@@ -260,8 +260,15 @@ def dtype_to_descr(dtype):
         return dtype.str
 
 def descr_to_dtype(descr):
-    if isinstance(descr, str):
-        # descr was produced by dtype.str, so this always works
+    '''
+    descr may be stored as dtype.descr, which is a list of
+    (name, format, [shape]) tuples. Offsets are not explicitly saved, rather
+    empty fields with name,format == '', '|Vn' are added as padding.
+
+    This function reverses the process, eliminating the empty padding fields.
+    '''
+    if isinstance(descr, (str, dict)):
+        # No padding removal needed
         return numpy.dtype(descr)
 
     fields = []
@@ -274,8 +281,8 @@ def descr_to_dtype(descr):
             name, descr_str, shape = field
             dt = numpy.dtype((descr_to_dtype(descr_str), shape))
 
-        # ignore padding bytes, which will be void bytes with '' as name
-        # (once blank fieldnames are deprecated, only "if name == ''" needed)
+        # Ignore padding bytes, which will be void bytes with '' as name
+        # Once support for blank names is removed, only "if name == ''" needed)
         is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
         if not is_pad:
             fields.append((name, dt, offset))
@@ -283,7 +290,14 @@ def descr_to_dtype(descr):
         offset += dt.itemsize
 
     names, formats, offsets = zip(*fields)
-    return numpy.dtype({'names': names, 'formats': formats,
+    # names may be (title, names) tuples
+    names = list(names)
+    titles = [None] * len(names)
+    for i, n in enumerate(names):
+        if isinstance(n, tuple):
+            titles[i] = n[0]
+            names[i] = n[1]
+    return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
                         'offsets': offsets, 'itemsize': offset})
 
 def header_data_from_array_1_0(array):
@@ -550,8 +564,7 @@ def _read_array_header(fp, version):
         msg = "fortran_order is not a valid bool: %r"
         raise ValueError(msg % (d['fortran_order'],))
     try:
-        descr = descr_to_dtype(d['descr'])
-        dtype = numpy.dtype(descr)
+        dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
         msg = "descr is not a valid dtype descriptor: %r"
         raise ValueError(msg % (d['descr'],))
