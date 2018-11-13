@@ -1109,9 +1109,7 @@ add_newdoc('numpy.core.multiarray', 'compare_chararrays',
     >>> np.compare_chararrays(a,b,">",True)
     array([False,True,False])
 
-"""
-
-           )
+    """)
 
 add_newdoc('numpy.core.multiarray', 'fromiter',
     """
