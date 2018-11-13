@@ -2448,11 +2448,6 @@ class TestRationalFunctions(object):
         assert_equal(np.gcd(2**100, 3**100), 1)
 
 
-def is_longdouble_finfo_bogus():
-    info = np.finfo(np.longcomplex)
-    return not np.isfinite(np.log10(info.tiny/info.eps))
-
-
 class TestComplexFunctions(object):
     funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
              np.arctanh, np.sin,     np.cos,    np.tan,     np.exp,
@@ -2548,7 +2543,8 @@ class TestComplexFunctions(object):
                 b = cfunc(p)
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
-    def check_loss_of_precision(self, dtype):
+    @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
+    def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
 
         # Check against known-good functions
@@ -2590,10 +2586,11 @@ class TestComplexFunctions(object):
             # It's not guaranteed that the system-provided arc functions
             # are accurate down to a few epsilons. (Eg. on Linux 64-bit)
             # So, give more leeway for long complex tests here:
-            check(x_series, 50*eps)
+            # Can use 2.1 for > Ubuntu LTS Trusty (2014), glibc = 2.19.
+            check(x_series, 50.0*eps)
         else:
             check(x_series, 2.1*eps)
-        check(x_basic, 2*eps/1e-3)
+        check(x_basic, 2.0*eps/1e-3)
 
         # Check a few points
 
@@ -2632,15 +2629,6 @@ class TestComplexFunctions(object):
             check(func, pts, 1)
             check(func, pts, 1j)
             check(func, pts, 1+1j)
-
-    def test_loss_of_precision(self):
-        for dtype in [np.complex64, np.complex_]:
-            self.check_loss_of_precision(dtype)
-
-    @pytest.mark.skipif(is_longdouble_finfo_bogus(),
-                        reason="Bogus long double finfo")
-    def test_loss_of_precision_longcomplex(self):
-        self.check_loss_of_precision(np.longcomplex)
 
 
 class TestAttributes(object):
