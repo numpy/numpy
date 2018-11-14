@@ -7,6 +7,7 @@ by importing from the extension module.
 """
 
 import functools
+import warnings
 
 from . import overrides
 from . import _multiarray_umath
@@ -994,12 +995,21 @@ def ravel_multi_index(multi_index, dims, mode='raise', order='C'):
         multi_index, dims, mode=mode, order=order)
 
 
-def _unravel_index_dispatcher(indices, shape, order=None):
+def _deprecate_dims(shape, dims):
+    if dims is not None:
+        warnings.warn("'shape' argument should be used instead of 'dims'",
+                      DeprecationWarning, stacklevel=3)
+        shape = dims
+    return shape
+
+
+def _unravel_index_dispatcher(indices, shape=None, order=None, dims=None):
+    shape = _deprecate_dims(shape, dims)
     return (indices,)
 
 
 @array_function_dispatch(_unravel_index_dispatcher)
-def unravel_index(indices, shape, order='C'):
+def unravel_index(indices, shape=None, order='C', dims=None):
     """
     Converts a flat index or array of flat indices into a tuple
     of coordinate arrays.
@@ -1043,6 +1053,7 @@ def unravel_index(indices, shape, order='C'):
     (3, 1, 4, 1)
 
     """
+    shape = _deprecate_dims(shape, dims)
     return _multiarray_umath.unravel_index(indices, shape, order=order)
 
 
