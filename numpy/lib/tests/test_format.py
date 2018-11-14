@@ -524,6 +524,30 @@ def test_compressed_roundtrip():
     assert_array_equal(arr, arr1)
 
 
+# aligned
+dt1 = np.dtype('i1, i4, i1', align=True)
+# non-aligned, explicit offsets
+dt2 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
+                'offsets': [1, 6]})
+# nested struct-in-struct
+dt3 = np.dtype({'names': ['c', 'd'], 'formats': ['i4', dt2]})
+# field with '' name
+dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
+# titles
+dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
+                'offsets': [1, 6], 'titles': ['aa', 'bb']})
+
+@pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5])
+def test_load_padded_dtype(dt):
+    arr = np.zeros(3, dt)
+    for i in range(3):
+        arr[i] = i + 5
+    npz_file = os.path.join(tempdir, 'aligned.npz')
+    np.savez(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
+
+
 def test_python2_python3_interoperability():
     if sys.version_info[0] >= 3:
         fname = 'win64python2.npy'
@@ -532,7 +556,6 @@ def test_python2_python3_interoperability():
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
     data = np.load(path)
     assert_array_equal(data, np.ones(2))
-
 
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on

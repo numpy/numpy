@@ -259,6 +259,43 @@ def dtype_to_descr(dtype):
     else:
         return dtype.str
 
+def descr_to_dtype(descr):
+    '''
+    descr may be stored as dtype.descr, which is a list of
+    (name, format, [shape]) tuples. Offsets are not explicitly saved, rather
+    empty fields with name,format == '', '|Vn' are added as padding.
+
+    This function reverses the process, eliminating the empty padding fields.
+    '''
+    if isinstance(descr, (str, dict)):
+        # No padding removal needed
+        return numpy.dtype(descr)
+
+    fields = []
+    offset = 0
+    for field in descr:
+        if len(field) == 2:
+            name, descr_str = field
+            dt = descr_to_dtype(descr_str)
+        else:
+            name, descr_str, shape = field
+            dt = numpy.dtype((descr_to_dtype(descr_str), shape))
+
+        # Ignore padding bytes, which will be void bytes with '' as name
+        # Once support for blank names is removed, only "if name == ''" needed)
+        is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
+        if not is_pad:
+            fields.append((name, dt, offset))
+
+        offset += dt.itemsize
+
+    names, formats, offsets = zip(*fields)
+    # names may be (title, names) tuples
+    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
+    titles, names = zip(*nametups)
+    return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
+                        'offsets': offsets, 'itemsize': offset})
+
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
 
@@ -523,7 +560,7 @@ def _read_array_header(fp, version):
         msg = "fortran_order is not a valid bool: %r"
         raise ValueError(msg % (d['fortran_order'],))
     try:
-        dtype = numpy.dtype(d['descr'])
+        dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
         msg = "descr is not a valid dtype descriptor: %r"
         raise ValueError(msg % (d['descr'],))
