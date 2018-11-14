@@ -7,10 +7,9 @@ Most commonly, ndarrays contain elements of a single type, e.g. floats,
 integers, bools etc.  However, it is possible for elements to be combinations
 of these using structured types, such as::
 
-  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', int), ('y', float)])
+  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', np.int64), ('y', np.float64)])
   >>> a
-  array([(1, 2.0), (1, 2.0)],
-        dtype=[('x', '<i4'), ('y', '<f8')])
+  array([(1, 2.), (1, 2.)], dtype=[('x', '<i8'), ('y', '<f8')])
 
 Here, each element consists of two fields: x (and int), and y (a float).
 This is known as a structured array.  The different fields are analogous
@@ -21,7 +20,7 @@ one would a dictionary::
   array([1, 1])
 
   >>> a['y']
-  array([ 2.,  2.])
+  array([2., 2.])
 
 Record arrays allow us to access fields as properties::
 
@@ -31,7 +30,7 @@ Record arrays allow us to access fields as properties::
   array([1, 1])
 
   >>> ar.y
-  array([ 2.,  2.])
+  array([2., 2.])
 
 """
 from __future__ import division, absolute_import, print_function
@@ -130,8 +129,7 @@ class format_parser(object):
     --------
     >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
     ...                  ['T1', 'T2', 'T3']).dtype
-    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'),
-           (('T3', 'col3'), '|S5')])
+    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names
@@ -139,9 +137,9 @@ class format_parser(object):
 
     >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
     ...                  []).dtype
-    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '|S5')])
+    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', 'S5')])
     >>> np.format_parser(['f8', 'i4', 'a5'], [], []).dtype
-    dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', '|S5')])
+    dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
 
@@ -380,20 +378,19 @@ class recarray(ndarray):
     --------
     Create an array with two fields, ``x`` and ``y``:
 
-    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', float), ('y', int)])
+    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', np.float64), ('y', np.int64)])
     >>> x
-    array([(1.0, 2), (3.0, 4)],
-          dtype=[('x', '<f8'), ('y', '<i4')])
+    array([(1., 2), (3., 4)], dtype=[('x', '<f8'), ('y', '<i8')])
 
     >>> x['x']
-    array([ 1.,  3.])
+    array([1., 3.])
 
     View the array as a record array:
 
     >>> x = x.view(np.recarray)
 
     >>> x.x
-    array([ 1.,  3.])
+    array([1., 3.])
 
     >>> x.y
     array([2, 4])
@@ -580,7 +577,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x3=np.array([1.1,2,3,4])
     >>> r = np.core.records.fromarrays([x1,x2,x3],names='a,b,c')
     >>> print(r[1])
-    (2, 'dd', 2.0)
+    (2, 'dd', 2.0) # may vary
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
@@ -659,11 +656,11 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    array(['dbe', 'de'],
-          dtype='|S3')
+    array(['dbe', 'de'], dtype='<U3')
     >>> import pickle
-    >>> print(pickle.loads(pickle.dumps(r)))
-    [(456, 'dbe', 1.2) (2, 'de', 1.3)]
+    >>> pickle.loads(pickle.dumps(r))
+    rec.array([(456, 'dbe', 1.2), (  2, 'de', 1.3)],
+              dtype=[('col1', '<i8'), ('col2', '<U3'), ('col3', '<f8')])
     """
 
     if formats is None and dtype is None:  # slower
@@ -750,7 +747,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a = a.newbyteorder('<')
     >>> a.tofile(fd)
     >>>
-    >>> fd.seek(0)
+    >>> _ = fd.seek(0)
     >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
     >>> print(r[5])

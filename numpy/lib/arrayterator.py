@@ -80,9 +80,8 @@ class Arrayterator(object):
 
     >>> for subarr in a_itor:
     ...     if not subarr.all():
-    ...         print(subarr, subarr.shape)
-    ...
-    [[[[0 1]]]] (1, 1, 1, 2)
+    ...         print(subarr, subarr.shape) # doctest: +SKIP
+    >>> # [[[[0 1]]]] (1, 1, 1, 2)
 
     """
 
@@ -160,7 +159,7 @@ class Arrayterator(object):
         ...     if not subarr:
         ...         print(subarr, type(subarr))
         ...
-        0 <type 'numpy.int32'>
+        0 <class 'numpy.int64'>
 
         """
         for block in self:

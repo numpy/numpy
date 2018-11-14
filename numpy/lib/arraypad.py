@@ -1100,10 +1100,10 @@ def pad(array, pad_width, mode, **kwargs):
     --------
     >>> a = [1, 2, 3, 4, 5]
     >>> np.pad(a, (2,3), 'constant', constant_values=(4, 6))
-    array([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
+    array([4, 4, 1, ..., 6, 6, 6])
 
     >>> np.pad(a, (2, 3), 'edge')
-    array([1, 1, 1, 2, 3, 4, 5, 5, 5, 5])
+    array([1, 1, 1, ..., 5, 5, 5])
 
     >>> np.pad(a, (2, 3), 'linear_ramp', end_values=(5, -4))
     array([ 5,  3,  1,  2,  3,  4,  5,  2, -1, -4])

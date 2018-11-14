@@ -82,7 +82,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     array([ 1,  2,  3, -7])
 
     >>> np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
-    array([-99,   1,   2,   3,  -7,  88,  99])
+    array([-99,   1,   2, ...,  -7,  88,  99])
 
     The returned array is always 1D.
 
@@ -241,13 +241,11 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> a = np.array(['a', 'b', 'b', 'c', 'a'])
     >>> u, indices = np.unique(a, return_index=True)
     >>> u
-    array(['a', 'b', 'c'],
-           dtype='|S1')
+    array(['a', 'b', 'c'], dtype='<U1')
     >>> indices
     array([0, 1, 3])
     >>> a[indices]
-    array(['a', 'b', 'c'],
-           dtype='|S1')
+    array(['a', 'b', 'c'], dtype='<U1')
 
     Reconstruct the input array from the unique values:
 
@@ -256,9 +254,9 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> u
     array([1, 2, 3, 4, 6])
     >>> indices
-    array([0, 1, 4, 3, 1, 2, 1])
+    array([0, 1, 4, ..., 1, 2, 1])
     >>> u[indices]
-    array([1, 2, 6, 4, 2, 3, 2])
+    array([1, 2, 6, ..., 2, 3, 2])
 
     """
     ar = np.asanyarray(ar)
@@ -661,8 +659,8 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> test_elements = [1, 2, 4, 8]
     >>> mask = np.isin(element, test_elements)
     >>> mask
-    array([[ False,  True],
-           [ True,  False]])
+    array([[False,  True],
+           [ True, False]])
     >>> element[mask]
     array([2, 4])
 
@@ -676,7 +674,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> mask = np.isin(element, test_elements, invert=True)
     >>> mask
     array([[ True, False],
-           [ False, True]])
+           [False,  True]])
     >>> element[mask]
     array([0, 6])
 
@@ -685,14 +683,14 @@ def isin(element, test_elements, assume_unique=False, invert=False):
 
     >>> test_set = {1, 2, 4, 8}
     >>> np.isin(element, test_set)
-    array([[ False, False],
-           [ False, False]])
+    array([[False, False],
+           [False, False]])
 
     Casting the set to a list gives the expected result:
 
     >>> np.isin(element, list(test_set))
-    array([[ False,  True],
-           [ True,  False]])
+    array([[False,  True],
+           [ True, False]])
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,

@@ -185,7 +185,7 @@ def polyfromroots(roots):
     array([ 0., -1.,  0.,  1.])
     >>> j = complex(0,1)
     >>> P.polyfromroots((-j,j)) # complex returned, though values are real
-    array([ 1.+0.j,  0.+0.j,  1.+0.j])
+    array([1.+0.j,  0.+0.j,  1.+0.j])
 
     """
     if len(roots) == 0:
@@ -233,7 +233,7 @@ def polyadd(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> sum = P.polyadd(c1,c2); sum
-    array([ 4.,  4.,  4.])
+    array([4.,  4.,  4.])
     >>> P.polyval(2, sum) # 4 + 4(2) + 4(2**2)
     28.0
 
@@ -401,9 +401,9 @@ def polydiv(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> P.polydiv(c1,c2)
-    (array([ 3.]), array([-8., -4.]))
+    (array([3.]), array([-8., -4.]))
     >>> P.polydiv(c2,c1)
-    (array([ 0.33333333]), array([ 2.66666667,  1.33333333]))
+    (array([ 0.33333333]), array([ 2.66666667,  1.33333333])) # may vary
 
     """
     # c1, c2 are trimmed copies
@@ -529,7 +529,7 @@ def polyder(c, m=1, scl=1, axis=0):
     >>> P.polyder(c) # (d/dx)(c) = 2 + 6x + 12x**2
     array([  2.,   6.,  12.])
     >>> P.polyder(c,3) # (d**3/dx**3)(c) = 24
-    array([ 24.])
+    array([24.])
     >>> P.polyder(c,scl=-1) # (d/d(-x))(c) = -2 - 6x - 12x**2
     array([ -2.,  -6., -12.])
     >>> P.polyder(c,2,-1) # (d**2/d(-x)**2)(c) = 6 + 24x
@@ -636,14 +636,14 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     >>> from numpy.polynomial import polynomial as P
     >>> c = (1,2,3)
     >>> P.polyint(c) # should return array([0, 1, 1, 1])
-    array([ 0.,  1.,  1.,  1.])
+    array([0.,  1.,  1.,  1.])
     >>> P.polyint(c,3) # should return array([0, 0, 0, 1/6, 1/12, 1/20])
-    array([ 0.        ,  0.        ,  0.        ,  0.16666667,  0.08333333,
-            0.05      ])
+     array([ 0.        ,  0.        ,  0.        ,  0.16666667,  0.08333333, # may vary
+             0.05      ])
     >>> P.polyint(c,k=3) # should return array([3, 1, 1, 1])
-    array([ 3.,  1.,  1.,  1.])
+    array([3.,  1.,  1.,  1.])
     >>> P.polyint(c,lbnd=-2) # should return array([6, 1, 1, 1])
-    array([ 6.,  1.,  1.,  1.])
+    array([6.,  1.,  1.,  1.])
     >>> P.polyint(c,scl=-2) # should return array([0, -2, -2, -2])
     array([ 0., -2., -2., -2.])
 
@@ -761,17 +761,17 @@ def polyval(x, c, tensor=True):
     array([[0, 1],
            [2, 3]])
     >>> polyval(a, [1,2,3])
-    array([[  1.,   6.],
-           [ 17.,  34.]])
+    array([[ 1.,   6.],
+           [17.,  34.]])
     >>> coef = np.arange(4).reshape(2,2) # multidimensional coefficients
     >>> coef
     array([[0, 1],
            [2, 3]])
     >>> polyval([1,2], coef, tensor=True)
-    array([[ 2.,  4.],
-           [ 4.,  7.]])
+    array([[2.,  4.],
+           [4.,  7.]])
     >>> polyval([1,2], coef, tensor=False)
-    array([ 2.,  7.])
+    array([2.,  7.])
 
     """
     c = np.array(c, ndmin=1, copy=0)
@@ -851,8 +851,8 @@ def polyvalfromroots(x, r, tensor=True):
     array([[0, 1],
            [2, 3]])
     >>> polyvalfromroots(a, [-1, 0, 1])
-    array([[ -0.,   0.],
-           [  6.,  24.]])
+    array([[-0.,   0.],
+           [ 6.,  24.]])
     >>> r = np.arange(-2, 2).reshape(2,2) # multidimensional coefficients
     >>> r # each column of r defines one polynomial
     array([[-2, -1],
@@ -1363,7 +1363,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         be turned off by:
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -1410,26 +1410,27 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> np.random.seed(123)
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
     >>> y = x**3 - x + np.random.randn(len(x)) # x^3 - x + N(0,1) "noise"
     >>> c, stats = P.polyfit(x,y,3,full=True)
+    >>> np.random.seed(123)
     >>> c # c[0], c[2] should be approx. 0, c[1] approx. -1, c[3] approx. 1
-    array([ 0.01909725, -1.30598256, -0.00577963,  1.02644286])
+    array([ 0.01909725, -1.30598256, -0.00577963,  1.02644286]) # may vary
     >>> stats # note the large SSR, explaining the rather poor results
-    [array([ 38.06116253]), 4, array([ 1.38446749,  1.32119158,  0.50443316,
-    0.28853036]), 1.1324274851176597e-014]
+     [array([ 38.06116253]), 4, array([ 1.38446749,  1.32119158,  0.50443316, # may vary
+              0.28853036]), 1.1324274851176597e-014]
 
     Same thing without the added noise
 
     >>> y = x**3 - x
     >>> c, stats = P.polyfit(x,y,3,full=True)
     >>> c # c[0], c[2] should be "very close to 0", c[1] ~= -1, c[3] ~= 1
-    array([ -1.73362882e-17,  -1.00000000e+00,  -2.67471909e-16,
-             1.00000000e+00])
+    array([-6.36925336e-18, -1.00000000e+00, -4.08053781e-16,  1.00000000e+00])
     >>> stats # note the minuscule SSR
-    [array([  7.46346754e-31]), 4, array([ 1.38446749,  1.32119158,
-    0.50443316,  0.28853036]), 1.1324274851176597e-014]
+    [array([  7.46346754e-31]), 4, array([ 1.38446749,  1.32119158, # may vary
+               0.50443316,  0.28853036]), 1.1324274851176597e-014]
 
     """
     x = np.asarray(x) + 0.0
@@ -1591,7 +1592,7 @@ def polyroots(c):
     dtype('float64')
     >>> j = complex(0,1)
     >>> poly.polyroots(poly.polyfromroots((-j,0,j)))
-    array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j])
+    array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j]) # may vary
 
     """
     # c is a trimmed copy

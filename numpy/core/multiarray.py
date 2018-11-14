@@ -117,11 +117,11 @@ def empty_like(prototype, dtype=None, order=None, subok=None):
     --------
     >>> a = ([1,2,3], [4,5,6])                         # a is array-like
     >>> np.empty_like(a)
-    array([[-1073741821, -1073741821,           3],    #random
+    array([[-1073741821, -1073741821,           3],    # random
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000],#random
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # random
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
@@ -286,8 +286,8 @@ def inner(a, b):
     An example where `b` is a scalar:
 
     >>> np.inner(np.eye(2), 7)
-    array([[ 7.,  0.],
-           [ 0.,  7.]])
+    array([[7., 0.],
+           [0., 7.]])
 
     """
     return (a, b)
@@ -421,8 +421,8 @@ def lexsort(keys, axis=None):
     >>> a = [1,5,1,4,3,4,4] # First column
     >>> b = [9,4,0,4,0,2,1] # Second column
     >>> ind = np.lexsort((b,a)) # Sort by a, then by b
-    >>> print(ind)
-    [2 0 4 6 5 3 1]
+    >>> ind
+    array([2, 0, 4, 6, 5, 3, 1])
 
     >>> [(a[i],b[i]) for i in ind]
     [(1, 0), (1, 9), (3, 0), (4, 1), (4, 2), (4, 4), (5, 4)]
@@ -1139,7 +1139,10 @@ def packbits(myarray, axis=None):
     ...                [0,0,1]]])
     >>> b = np.packbits(a, axis=-1)
     >>> b
-    array([[[160],[64]],[[192],[32]]], dtype=uint8)
+    array([[[160],
+            [ 64]],
+           [[192],
+            [ 32]]], dtype=uint8)
 
     Note that in binary 160 = 1010 0000, 64 = 0100 0000, 192 = 1100 0000,
     and 32 = 0010 0000.
@@ -1329,7 +1332,7 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
     >>> # The weekdays are Friday, Saturday, and Monday
     ... np.is_busday(['2011-07-01', '2011-07-02', '2011-07-18'],
     ...                 holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
-    array([False, False,  True], dtype='bool')
+    array([False, False,  True])
     """
     return (dates, weekmask, holidays, out)
 
@@ -1403,27 +1406,27 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
     --------
     >>> # First business day in October 2011 (not accounting for holidays)
     ... np.busday_offset('2011-10', 0, roll='forward')
-    numpy.datetime64('2011-10-03','D')
+    numpy.datetime64('2011-10-03')
     >>> # Last business day in February 2012 (not accounting for holidays)
     ... np.busday_offset('2012-03', -1, roll='forward')
-    numpy.datetime64('2012-02-29','D')
+    numpy.datetime64('2012-02-29')
     >>> # Third Wednesday in January 2011
     ... np.busday_offset('2011-01', 2, roll='forward', weekmask='Wed')
-    numpy.datetime64('2011-01-19','D')
+    numpy.datetime64('2011-01-19')
     >>> # 2012 Mother's Day in Canada and the U.S.
     ... np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
-    numpy.datetime64('2012-05-13','D')
+    numpy.datetime64('2012-05-13')
 
     >>> # First business day on or after a date
     ... np.busday_offset('2011-03-20', 0, roll='forward')
-    numpy.datetime64('2011-03-21','D')
+    numpy.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 0, roll='forward')
-    numpy.datetime64('2011-03-22','D')
+    numpy.datetime64('2011-03-22')
     >>> # First business day after a date
     ... np.busday_offset('2011-03-20', 1, roll='backward')
-    numpy.datetime64('2011-03-21','D')
+    numpy.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 1, roll='backward')
-    numpy.datetime64('2011-03-23','D')
+    numpy.datetime64('2011-03-23')
     """
     return (dates, offsets, weekmask, holidays, out)
 
@@ -1487,7 +1490,7 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
     ... np.busday_count('2011-01', '2011-02')
     21
     >>> # Number of weekdays in 2011
-    ...  np.busday_count('2011', '2012')
+    >>> np.busday_count('2011', '2012')
     260
     >>> # Number of Saturdays in 2011
     ... np.busday_count('2011', '2012', weekmask='Sat')
@@ -1525,6 +1528,7 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
 
     Examples
     --------
+    >>> import pytz
     >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='M8[m]')
     >>> d
     array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
@@ -1555,6 +1559,8 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     'casting' can be used to specify whether precision can be changed
 
     >>> np.datetime_as_string(d, unit='h', casting='safe')
+    Traceback (most recent call last):
+        ...
     TypeError: Cannot create a datetime string as units 'h' from a NumPy
     datetime with units 'm' according to the rule 'safe'
     """

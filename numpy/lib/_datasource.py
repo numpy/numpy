@@ -20,17 +20,18 @@ gzip, bz2 and xz are supported.
 Example::
 
     >>> # Create a DataSource, use os.curdir (default) for local storage.
+    >>> import numpy.lib._datasource as datasource
     >>> ds = datasource.DataSource()
     >>>
     >>> # Open a remote file.
     >>> # DataSource downloads the file, stores it locally in:
     >>> #     './www.google.com/index.html'
     >>> # opens the file and returns a file object.
-    >>> fp = ds.open('http://www.google.com/index.html')
+    >>> fp = ds.open('http://www.google.com/') # doctest: +SKIP
     >>>
     >>> # Use the file as you normally would
-    >>> fp.read()
-    >>> fp.close()
+    >>> fp.read() # doctest: +SKIP
+    >>> fp.close() # doctest: +SKIP
 
 """
 from __future__ import division, absolute_import, print_function
@@ -156,6 +157,7 @@ class _FileOpeners(object):
 
     Examples
     --------
+    >>> import gzip
     >>> np.lib._datasource._file_openers.keys()
     [None, '.bz2', '.gz', '.xz', '.lzma']
     >>> np.lib._datasource._file_openers['.gz'] is gzip.open
@@ -290,7 +292,7 @@ class DataSource(object):
     URLs require a scheme string (``http://``) to be used, without it they
     will fail::
 
-        >>> repos = DataSource()
+        >>> repos = np.DataSource()
         >>> repos.exists('www.google.com/index.html')
         False
         >>> repos.exists('http://www.google.com/index.html')
@@ -302,17 +304,17 @@ class DataSource(object):
     --------
     ::
 
-        >>> ds = DataSource('/home/guido')
-        >>> urlname = 'http://www.google.com/index.html'
-        >>> gfile = ds.open('http://www.google.com/index.html')  # remote file
+        >>> ds = np.DataSource('/home/guido')
+        >>> urlname = 'http://www.google.com/'
+        >>> gfile = ds.open('http://www.google.com/')
         >>> ds.abspath(urlname)
-        '/home/guido/www.google.com/site/index.html'
+        '/home/guido/www.google.com/index.html'
 
-        >>> ds = DataSource(None)  # use with temporary file
+        >>> ds = np.DataSource(None)  # use with temporary file
         >>> ds.open('/home/guido/foobar.txt')
         <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
         >>> ds.abspath('/home/guido/foobar.txt')
-        '/tmp/tmpy4pgsP/home/guido/foobar.txt'
+        '/tmp/.../home/guido/foobar.txt'
 
     """
 

@@ -49,7 +49,7 @@ add_newdoc('numpy.core', 'flatiter',
     >>> x = np.arange(6).reshape(2, 3)
     >>> fl = x.flat
     >>> type(fl)
-    <type 'numpy.flatiter'>
+    <class 'numpy.flatiter'>
     >>> for item in fl:
     ...     print(item)
     ...
@@ -317,74 +317,71 @@ add_newdoc('numpy.core', 'nditer',
 
     Examples
     --------
-    Here is how we might write an ``iter_add`` function, using the
-    Python iterator protocol::
+    >>> #Here is how we might write an ``iter_add`` function, using the
+    >>> #Python iterator protocol::
 
-        def iter_add_py(x, y, out=None):
-            addop = np.add
-            it = np.nditer([x, y, out], [],
-                        [['readonly'], ['readonly'], ['writeonly','allocate']])
-            with it:
-                for (a, b, c) in it:
-                    addop(a, b, out=c)
-            return it.operands[2]
+    >>> def iter_add_py(x, y, out=None):
+    ...     addop = np.add
+    ...     it = np.nditer([x, y, out], [],
+    ...                 [['readonly'], ['readonly'], ['writeonly','allocate']])
+    ...     with it:
+    ...         for (a, b, c) in it:
+    ...             addop(a, b, out=c)
+    ...     return it.operands[2]
 
-    Here is the same function, but following the C-style pattern::
+    >>> # Here is the same function, but following the C-style pattern::
 
-        def iter_add(x, y, out=None):
-            addop = np.add
+    >>> def iter_add(x, y, out=None):
+    ...    addop = np.add
+    ...    it = np.nditer([x, y, out], [],
+    ...                [['readonly'], ['readonly'], ['writeonly','allocate']])
+    ...    with it:
+    ...        while not it.finished:
+    ...            addop(it[0], it[1], out=it[2])
+    ...            it.iternext()
+    ...        return it.operands[2]
 
-            it = np.nditer([x, y, out], [],
-                        [['readonly'], ['readonly'], ['writeonly','allocate']])
-            with it:
-                while not it.finished:
-                    addop(it[0], it[1], out=it[2])
-                    it.iternext()
+    >>> # Here is an example outer product function::
 
-                return it.operands[2]
+    >>> def outer_it(x, y, out=None):
+    ...     mulop = np.multiply
+    ...     it = np.nditer([x, y, out], ['external_loop'],
+    ...             [['readonly'], ['readonly'], ['writeonly', 'allocate']],
+    ...             op_axes=[list(range(x.ndim)) + [-1] * y.ndim,
+    ...                      [-1] * x.ndim + list(range(y.ndim)),
+    ...                      None])
+    ...     with it:
+    ...         for (a, b, c) in it:
+    ...             mulop(a, b, out=c)
+    ...         return it.operands[2]
 
-    Here is an example outer product function::
+    >>> a = np.arange(2)+1
+    >>> b = np.arange(3)+1
+    >>> outer_it(a,b)
+    array([[1, 2, 3],
+           [2, 4, 6]])
 
-        def outer_it(x, y, out=None):
-            mulop = np.multiply
+    >>> # Here is an example function which operates like a "lambda" ufunc::
 
-            it = np.nditer([x, y, out], ['external_loop'],
-                    [['readonly'], ['readonly'], ['writeonly', 'allocate']],
-                    op_axes=[list(range(x.ndim)) + [-1] * y.ndim,
-                             [-1] * x.ndim + list(range(y.ndim)),
-                             None])
-            with it:
-                for (a, b, c) in it:
-                    mulop(a, b, out=c)
-                return it.operands[2]
+    >>> def luf(lamdaexpr, *args, **kwargs):
+    ...    '''luf(lambdaexpr, op1, ..., opn, out=None, order='K', casting='safe', buffersize=0)'''
+    ...    nargs = len(args)
+    ...    op = (kwargs.get('out',None),) + args
+    ...    it = np.nditer(op, ['buffered','external_loop'],
+    ...            [['writeonly','allocate','no_broadcast']] +
+    ...                            [['readonly','nbo','aligned']]*nargs,
+    ...            order=kwargs.get('order','K'),
+    ...            casting=kwargs.get('casting','safe'),
+    ...            buffersize=kwargs.get('buffersize',0))
+    ...    while not it.finished:
+    ...        it[0] = lamdaexpr(*it[1:])
+    ...        it.iternext()
+    ...        return it.operands[0]
 
-        >>> a = np.arange(2)+1
-        >>> b = np.arange(3)+1
-        >>> outer_it(a,b)
-        array([[1, 2, 3],
-               [2, 4, 6]])
-
-    Here is an example function which operates like a "lambda" ufunc::
-
-        def luf(lamdaexpr, *args, **kwargs):
-            "luf(lambdaexpr, op1, ..., opn, out=None, order='K', casting='safe', buffersize=0)"
-            nargs = len(args)
-            op = (kwargs.get('out',None),) + args
-            it = np.nditer(op, ['buffered','external_loop'],
-                    [['writeonly','allocate','no_broadcast']] +
-                                    [['readonly','nbo','aligned']]*nargs,
-                    order=kwargs.get('order','K'),
-                    casting=kwargs.get('casting','safe'),
-                    buffersize=kwargs.get('buffersize',0))
-            while not it.finished:
-                it[0] = lamdaexpr(*it[1:])
-                it.iternext()
-                return it.operands[0]
-
-        >>> a = np.arange(5)
-        >>> b = np.ones(5)
-        >>> luf(lambda i,j:i*i + j/2, a, b)
-        array([  0.5,   1.5,   4.5,   9.5,  16.5])
+    >>> a = np.arange(5)
+    >>> b = np.ones(5)
+    >>> luf(lambda i,j:i*i + j/2, a, b)
+    array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
     If operand flags `"writeonly"` or `"readwrite"` are used the operands may
     be views into the original data with the `WRITEBACKIFCOPY` flag. In this case
@@ -393,16 +390,16 @@ add_newdoc('numpy.core', 'nditer',
     data will be written back to the original data when the `__exit__`
     function is called but not before:
 
-        >>> a = np.arange(6, dtype='i4')[::-2]
-        >>> with nditer(a, [],
-        ...        [['writeonly', 'updateifcopy']],
-        ...        casting='unsafe',
-        ...        op_dtypes=[np.dtype('f4')]) as i:
-        ...    x = i.operands[0]
-        ...    x[:] = [-1, -2, -3]
-        ...    # a still unchanged here
-        >>> a, x
-        array([-1, -2, -3]), array([-1, -2, -3])
+    >>> a = np.arange(6, dtype='i4')[::-2]
+    >>> with np.nditer(a, [],
+    ...        [['writeonly', 'updateifcopy']],
+    ...        casting='unsafe',
+    ...        op_dtypes=[np.dtype('f4')]) as i:
+    ...    x = i.operands[0]
+    ...    x[:] = [-1, -2, -3]
+    ...    # a still unchanged here
+    >>> a, x
+    (array([-1, -2, -3], dtype=int32), array([-1., -2., -3.], dtype=float32))
 
     It is important to note that once the iterator is exited, dangling
     references (like `x` in the example) may or may not share data with
@@ -428,10 +425,10 @@ add_newdoc('numpy.core', 'nditer', ('copy',
     >>> x = np.arange(10)
     >>> y = x + 1
     >>> it = np.nditer([x, y])
-    >>> it.next()
+    >>> next(it)
     (array(0), array(1))
     >>> it2 = it.copy()
-    >>> it2.next()
+    >>> next(it2)
     (array(1), array(2))
 
     """))
@@ -544,7 +541,6 @@ add_newdoc('numpy.core', 'nested_iters',
     ...      print(i.multi_index)
     ...      for y in j:
     ...          print('', j.multi_index, y)
-
     (0,)
      (0, 0) 0
      (0, 1) 1
@@ -617,9 +613,9 @@ add_newdoc('numpy.core', 'broadcast',
     >>> out = np.empty(b.shape)
     >>> out.flat = [u+v for (u,v) in b]
     >>> out
-    array([[ 5.,  6.,  7.],
-           [ 6.,  7.,  8.],
-           [ 7.,  8.,  9.]])
+    array([[5.,  6.,  7.],
+           [6.,  7.,  8.],
+           [7.,  8.,  9.]])
 
     Compare against built-in broadcasting:
 
@@ -643,7 +639,7 @@ add_newdoc('numpy.core', 'broadcast', ('index',
     >>> b = np.broadcast(x, y)
     >>> b.index
     0
-    >>> b.next(), b.next(), b.next()
+    >>> next(b), next(b), next(b)
     ((1, 4), (1, 5), (1, 6))
     >>> b.index
     3
@@ -762,11 +758,11 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
     Examples
     --------
     >>> x = np.array([1, 2, 3])
-    >>> y = np.array([[4], [5], [6]]
+    >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
     >>> b.index
     0
-    >>> b.next(), b.next(), b.next()
+    >>> next(b), next(b), next(b)
     ((1, 4), (2, 4), (3, 4))
     >>> b.index
     3
@@ -1189,32 +1185,32 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
     --------
     Construct an ndarray:
 
-    >>> dt = np.dtype([('time', [('min', int), ('sec', int)]),
+    >>> dt = np.dtype([('time', [('min', np.int64), ('sec', np.int64)]),
     ...                ('temp', float)])
     >>> x = np.zeros((1,), dtype=dt)
     >>> x['time']['min'] = 10; x['temp'] = 98.25
     >>> x
     array([((10, 0), 98.25)],
-          dtype=[('time', [('min', '<i4'), ('sec', '<i4')]), ('temp', '<f8')])
+          dtype=[('time', [('min', '<i8'), ('sec', '<i8')]), ('temp', '<f8')])
 
     Save the raw data to disk:
 
-    >>> import os
-    >>> fname = os.tmpnam()
+    >>> import tempfile
+    >>> fname = tempfile.mkstemp()[1]
     >>> x.tofile(fname)
 
     Read the raw data from disk:
 
     >>> np.fromfile(fname, dtype=dt)
     array([((10, 0), 98.25)],
-          dtype=[('time', [('min', '<i4'), ('sec', '<i4')]), ('temp', '<f8')])
+          dtype=[('time', [('min', '<i8'), ('sec', '<i8')]), ('temp', '<f8')])
 
     The recommended way to store and load data:
 
     >>> np.save(fname, x)
     >>> np.load(fname + '.npy')
     array([((10, 0), 98.25)],
-          dtype=[('time', [('min', '<i4'), ('sec', '<i4')]), ('temp', '<f8')])
+          dtype=[('time', [('min', '<i8'), ('sec', '<i8')]), ('temp', '<f8')])
 
     """)
 
@@ -1242,17 +1238,16 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
 
       >>> dt = np.dtype(int)
       >>> dt = dt.newbyteorder('>')
-      >>> np.frombuffer(buf, dtype=dt)
+      >>> np.frombuffer(buf, dtype=dt) # doctest: +SKIP
 
     The data of the resulting array will not be byteswapped, but will be
     interpreted correctly.
 
     Examples
     --------
-    >>> s = 'hello world'
+    >>> s = b'hello world'
     >>> np.frombuffer(s, dtype='S1', count=5, offset=6)
-    array(['w', 'o', 'r', 'l', 'd'],
-          dtype='|S1')
+    array([b'w', b'o', b'r', b'l', b'd'], dtype='|S1')
 
     >>> np.frombuffer(b'\\x01\\x02', dtype=np.uint8)
     array([1, 2], dtype=uint8)
@@ -1941,8 +1936,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray',
     First mode, `buffer` is None:
 
     >>> np.ndarray(shape=(2,2), dtype=float, order='F')
-    array([[ -1.13698227e+002,   4.25087011e-303],
-           [  2.88528414e-306,   3.27025015e-309]])         #random
+    array([[0.0e+000, 0.0e+000], # random
+           [     nan, 2.5e-323]])
 
     Second mode:
 
@@ -2256,7 +2251,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flat',
     >>> x.T.flat[3]
     5
     >>> type(x.flat)
-    <type 'numpy.flatiter'>
+    <class 'numpy.flatiter'>
 
     An assignment example:
 
@@ -2706,7 +2701,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
     --------
     >>> x = np.array([1, 2, 2.5])
     >>> x
-    array([ 1. ,  2. ,  2.5])
+    array([1. ,  2. ,  2.5])
 
     >>> x.astype(int)
     array([1, 2, 2])
@@ -2737,19 +2732,20 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     Examples
     --------
     >>> A = np.array([1, 256, 8755], dtype=np.int16)
-    >>> map(hex, A)
+    >>> list(map(hex, A))
     ['0x1', '0x100', '0x2233']
     >>> A.byteswap(inplace=True)
     array([  256,     1, 13090], dtype=int16)
-    >>> map(hex, A)
+    >>> list(map(hex, A))
     ['0x100', '0x1', '0x3322']
 
     Arrays of strings are not swapped
 
     >>> A = np.array(['ceg', 'fac'])
     >>> A.byteswap()
-    array(['ceg', 'fac'],
-          dtype='|S3')
+    Traceback (most recent call last):
+        ...
+    UnicodeDecodeError: ...
 
     """))
 
@@ -2937,14 +2933,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dot',
     >>> a = np.eye(2)
     >>> b = np.ones((2, 2)) * 2
     >>> a.dot(b)
-    array([[ 2.,  2.],
-           [ 2.,  2.]])
+    array([[2.,  2.],
+           [2.,  2.]])
 
     This array method can be conveniently chained:
 
     >>> a.dot(b).dot(b)
-    array([[ 8.,  8.],
-           [ 8.,  8.]])
+    array([[8.,  8.],
+           [8.,  8.]])
 
     """))
 
@@ -2997,7 +2993,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
     >>> a = np.empty(2)
     >>> a.fill(1)
     >>> a
-    array([ 1.,  1.])
+    array([1.,  1.])
 
     """))
 
@@ -3066,18 +3062,18 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('getfield',
     >>> x = np.diag([1.+1.j]*2)
     >>> x[1, 1] = 2 + 4.j
     >>> x
-    array([[ 1.+1.j,  0.+0.j],
-           [ 0.+0.j,  2.+4.j]])
+    array([[1.+1.j,  0.+0.j],
+           [0.+0.j,  2.+4.j]])
     >>> x.getfield(np.float64)
-    array([[ 1.,  0.],
-           [ 0.,  2.]])
+    array([[1.,  0.],
+           [0.,  2.]])
 
     By choosing an offset of 8 bytes we can select the complex part of the
     array for our view:
 
     >>> x.getfield(np.float64, offset=8)
-    array([[ 1.,  0.],
-       [ 0.,  4.]])
+    array([[1.,  0.],
+       [0.,  4.]])
 
     """))
 
@@ -3123,19 +3119,20 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('item',
 
     Examples
     --------
+    >>> np.random.seed(123)
     >>> x = np.random.randint(9, size=(3, 3))
     >>> x
-    array([[3, 1, 7],
-           [2, 8, 3],
-           [8, 5, 3]])
+    array([[2, 2, 6],
+           [1, 3, 6],
+           [1, 0, 1]])
     >>> x.item(3)
-    2
-    >>> x.item(7)
-    5
-    >>> x.item((0, 1))
     1
+    >>> x.item(7)
+    0
+    >>> x.item((0, 1))
+    2
     >>> x.item((2, 2))
-    3
+    1
 
     """))
 
@@ -3171,17 +3168,18 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
     Examples
     --------
+    >>> np.random.seed(123)
     >>> x = np.random.randint(9, size=(3, 3))
     >>> x
-    array([[3, 1, 7],
-           [2, 8, 3],
-           [8, 5, 3]])
+    array([[2, 2, 6],
+           [1, 3, 6],
+           [1, 0, 1]])
     >>> x.itemset(4, 0)
     >>> x.itemset((2, 2), 9)
     >>> x
-    array([[3, 1, 7],
-           [2, 0, 3],
-           [8, 5, 9]])
+    array([[2, 2, 6],
+           [1, 0, 6],
+           [1, 0, 9]])
 
     """))
 
@@ -3622,7 +3620,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('resize',
     >>> a.resize((1, 1))
     Traceback (most recent call last):
     ...
-    ValueError: cannot resize an array that has been referenced ...
+    ValueError: cannot resize an array that references or is referenced ...
 
     Unless `refcheck` is False:
 
@@ -3695,23 +3693,23 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setfield',
     --------
     >>> x = np.eye(3)
     >>> x.getfield(np.float64)
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([[1.,  0.,  0.],
+           [0.,  1.,  0.],
+           [0.,  0.,  1.]])
     >>> x.setfield(3, np.int32)
     >>> x.getfield(np.int32)
     array([[3, 3, 3],
            [3, 3, 3],
-           [3, 3, 3]])
+           [3, 3, 3]], dtype=int32)
     >>> x
-    array([[  1.00000000e+000,   1.48219694e-323,   1.48219694e-323],
-           [  1.48219694e-323,   1.00000000e+000,   1.48219694e-323],
-           [  1.48219694e-323,   1.48219694e-323,   1.00000000e+000]])
+    array([[1.0e+000, 1.5e-323, 1.5e-323],
+           [1.5e-323, 1.0e+000, 1.5e-323],
+           [1.5e-323, 1.5e-323, 1.0e+000]])
     >>> x.setfield(np.eye(3), np.int32)
     >>> x
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([[1.,  0.,  0.],
+           [0.,  1.,  0.],
+           [0.,  0.,  1.]])
 
     """))
 
@@ -3764,6 +3762,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
 
     Examples
     --------
+    >>> y = np.array([[3, 1, 7],
+    ...               [2, 0, 0],
+    ...               [8, 5, 9]])
     >>> y
     array([[3, 1, 7],
            [2, 0, 0],
@@ -3843,8 +3844,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     >>> a = np.array([('a', 2), ('c', 1)], dtype=[('x', 'S1'), ('y', int)])
     >>> a.sort(order='y')
     >>> a
-    array([('c', 1), ('a', 2)],
-          dtype=[('x', '|S1'), ('y', '<i4')])
+    array([(b'c', 1), (b'a', 2)],
+          dtype=[('x', 'S1'), ('y', '<i8')])
 
     """))
 
@@ -3900,6 +3901,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
     array([2, 1, 3, 4])
 
     >>> a.partition((1, 3))
+    >>> a
     array([1, 2, 3, 4])
     """))
 
@@ -4081,13 +4083,13 @@ tobytesdoc = """
 
     Examples
     --------
-    >>> x = np.array([[0, 1], [2, 3]])
+    >>> x = np.array([[0, 1], [2, 3]], dtype='<u2')
     >>> x.tobytes()
-    b'\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
+    b'\\x00\\x00\\x01\\x00\\x02\\x00\\x03\\x00'
     >>> x.tobytes('C') == x.tobytes()
     True
     >>> x.tobytes('F')
-    b'\\x00\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00'
+    b'\\x00\\x00\\x02\\x00\\x01\\x00\\x03\\x00'
 
     """
 
@@ -4237,7 +4239,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     >>> y
     matrix([[513]], dtype=int16)
     >>> print(type(y))
-    <class 'numpy.matrixlib.defmatrix.matrix'>
+    <class 'numpy.matrix'>
 
     Creating a view on a structured array so it can be used in calculations
 
@@ -4247,19 +4249,19 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     array([[1, 2],
            [3, 4]], dtype=int8)
     >>> xv.mean(0)
-    array([ 2.,  3.])
+    array([2.,  3.])
 
     Making changes to the view changes the underlying array
 
     >>> xv[0,1] = 20
-    >>> print(x)
-    [(1, 20) (3, 4)]
+    >>> x
+    array([(1, 20), (3,  4)], dtype=[('a', 'i1'), ('b', 'i1')])
 
     Using a view to convert an array to a recarray:
 
     >>> z = x.view(np.recarray)
     >>> z.a
-    array([1], dtype=int8)
+    array([1, 3], dtype=int8)
 
     Views share data:
 
@@ -4277,8 +4279,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
            [4, 5]], dtype=int16)
     >>> y.view(dtype=[('width', np.int16), ('length', np.int16)])
     Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: new type not compatible with array.
+        ...
+    ValueError: To change to a dtype of a different size, the array must be C-contiguous
     >>> z = y.copy()
     >>> z.view(dtype=[('width', np.int16), ('length', np.int16)])
     array([[(1, 2)],
@@ -4329,10 +4331,9 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
 
     >>> oct_array = np.frompyfunc(oct, 1, 1)
     >>> oct_array(np.array((10, 30, 100)))
-    array([012, 036, 0144], dtype=object)
+    array(['0o12', '0o36', '0o144'], dtype=object)
     >>> np.array((oct(10), oct(30), oct(100))) # for comparison
-    array(['012', '036', '0144'],
-          dtype='|S4')
+    array(['0o12', '0o36', '0o144'], dtype='<U5')
 
     """)
 
@@ -4394,7 +4395,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     >>> np.base_repr(np.geterrobj()[1], 8)
     '0'
     >>> old_err = np.seterr(divide='warn', over='log', under='call',
-                            invalid='print')
+    ...                     invalid='print')
     >>> np.base_repr(np.geterrobj()[1], 8)
     '4351'
 
@@ -4540,7 +4541,10 @@ add_newdoc('numpy.core.multiarray', 'packbits',
     ...                [0,0,1]]])
     >>> b = np.packbits(a, axis=-1)
     >>> b
-    array([[[160],[64]],[[192],[32]]], dtype=uint8)
+    array([[[160],
+            [ 64]],
+           [[192],
+            [ 32]]], dtype=uint8)
 
     Note that in binary 160 = 1010 0000, 64 = 0100 0000, 192 = 1100 0000,
     and 32 = 0010 0000.
@@ -4981,7 +4985,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
     >>> np.add.reduce([10], initial=5)
     15
-    >>> np.add.reduce(np.ones((2, 2, 2)), axis=(0, 2), initializer=10)
+    >>> np.add.reduce(np.ones((2, 2, 2)), axis=(0, 2), initial=10)
     array([14., 14.])
 
     Allows reductions of empty arrays where they would normally fail, i.e.
@@ -5054,23 +5058,23 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
 
     >>> I = np.eye(2)
     >>> I
-    array([[ 1.,  0.],
-           [ 0.,  1.]])
+    array([[1.,  0.],
+           [0.,  1.]])
 
     Accumulate along axis 0 (rows), down columns:
 
     >>> np.add.accumulate(I, 0)
-    array([[ 1.,  0.],
-           [ 1.,  1.]])
+    array([[1.,  0.],
+           [1.,  1.]])
     >>> np.add.accumulate(I) # no axis specified = axis zero
-    array([[ 1.,  0.],
-           [ 1.,  1.]])
+    array([[1.,  0.],
+           [1.,  1.]])
 
     Accumulate along axis 1 (columns), through rows:
 
     >>> np.add.accumulate(I, 1)
-    array([[ 1.,  1.],
-           [ 0.,  1.]])
+    array([[1.,  1.],
+           [0.,  1.]])
 
     """))
 
@@ -5150,7 +5154,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     array([[  0.,   1.,   2.,   3.],
            [  4.,   5.,   6.,   7.],
            [  8.,   9.,  10.,  11.],
-           [ 12.,  13.,  14.,  15.]])
+           [12.,  13.,  14.,  15.]])
 
     ::
 
@@ -5162,11 +5166,11 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
      # [row1 + row2 + row3 + row4]
 
     >>> np.add.reduceat(x, [0, 3, 1, 2, 0])
-    array([[ 12.,  15.,  18.,  21.],
-           [ 12.,  13.,  14.,  15.],
+    array([[12.,  15.,  18.,  21.],
+           [12.,  13.,  14.,  15.],
            [  4.,   5.,   6.,   7.],
            [  8.,   9.,  10.,  11.],
-           [ 24.,  28.,  32.,  36.]])
+           [24.,  28.,  32.,  36.]])
 
     ::
 
@@ -5175,9 +5179,9 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
 
     >>> np.multiply.reduceat(x, [0, 3], 1)
     array([[    0.,     3.],
-           [  120.,     7.],
-           [  720.,    11.],
-           [ 2184.,    15.]])
+           [ 120.,     7.],
+           [ 720.,    11.],
+           [2184.,    15.]])
 
     """))
 
@@ -5276,14 +5280,14 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     >>> a = np.array([1, 2, 3, 4])
     >>> np.negative.at(a, [0, 1])
-    >>> print(a)
-    array([-1, -2, 3, 4])
+    >>> a
+    array([-1, -2,  3,  4])
 
     Increment items 0 and 1, and increment item 2 twice:
 
     >>> a = np.array([1, 2, 3, 4])
     >>> np.add.at(a, [0, 1, 2, 2], 1)
-    >>> print(a)
+    >>> a
     array([2, 3, 5, 4])
 
     Add items 0 and 1 in first array to second array,
@@ -5292,7 +5296,7 @@ add_newdoc('numpy.core', 'ufunc', ('at',
     >>> a = np.array([1, 2, 3, 4])
     >>> b = np.array([1, 2])
     >>> np.add.at(a, [0, 1], b)
-    >>> print(a)
+    >>> a
     array([2, 4, 3, 4])
 
     """))
@@ -5357,13 +5361,13 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     Structured type, two fields: the first field contains an unsigned int, the
     second an int32:
 
-    >>> np.dtype([('f1', np.uint), ('f2', np.int32)])
-    dtype([('f1', '<u4'), ('f2', '<i4')])
+    >>> np.dtype([('f1', np.uint64), ('f2', np.int32)])
+    dtype([('f1', '<u8'), ('f2', '<i4')])
 
     Using array-protocol type strings:
 
     >>> np.dtype([('a','f8'),('b','S10')])
-    dtype([('a', '<f8'), ('b', '|S10')])
+    dtype([('a', '<f8'), ('b', 'S10')])
 
     Using comma-separated field formats.  The shape is (2,3):
 
@@ -5373,24 +5377,24 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     Using tuples.  ``int`` is a fixed type, 3 the field's shape.  ``void``
     is a flexible type, here of size 10:
 
-    >>> np.dtype([('hello',(int,3)),('world',np.void,10)])
-    dtype([('hello', '<i4', 3), ('world', '|V10')])
+    >>> np.dtype([('hello',(np.int64,3)),('world',np.void,10)])
+    dtype([('hello', '<i8', (3,)), ('world', 'V10')])
 
     Subdivide ``int16`` into 2 ``int8``'s, called x and y.  0 and 1 are
     the offsets in bytes:
 
     >>> np.dtype((np.int16, {'x':(np.int8,0), 'y':(np.int8,1)}))
-    dtype(('<i2', [('x', '|i1'), ('y', '|i1')]))
+    dtype((numpy.int16, [('x', 'i1'), ('y', 'i1')]))
 
     Using dictionaries.  Two fields named 'gender' and 'age':
 
     >>> np.dtype({'names':['gender','age'], 'formats':['S1',np.uint8]})
-    dtype([('gender', '|S1'), ('age', '|u1')])
+    dtype([('gender', 'S1'), ('age', 'u1')])
 
     Offsets in bytes, here 0 and 25:
 
     >>> np.dtype({'surname':('S25',0),'age':(np.uint8,25)})
-    dtype([('surname', '|S25'), ('age', '|u1')])
+    dtype([('surname', 'S25'), ('age', 'u1')])
 
     """)
 
@@ -5794,7 +5798,7 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
     ...             holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
     >>> # Default is Monday to Friday weekdays
     ... bdd.weekmask
-    array([ True,  True,  True,  True,  True, False, False], dtype='bool')
+    array([ True,  True,  True,  True,  True, False, False])
     >>> # Any holidays already on the weekend are removed
     ... bdd.holidays
     array(['2011-07-01', '2011-07-04'], dtype='datetime64[D]')
@@ -5891,7 +5895,7 @@ add_newdoc('numpy.core.multiarray', 'datetime_data',
     as a timedelta
 
     >>> np.datetime64('2010', np.datetime_data(dt_25s))
-    numpy.datetime64('2010-01-01T00:00:00', '25s')
+    numpy.datetime64('2010-01-01T00:00:00','25s')
     """)
 
 

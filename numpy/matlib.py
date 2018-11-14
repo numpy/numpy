@@ -39,11 +39,11 @@ def empty(shape, dtype=None, order='C'):
     --------
     >>> import numpy.matlib
     >>> np.matlib.empty((2, 2))    # filled with random data
-    matrix([[  6.76425276e-320,   9.79033856e-307],
-            [  7.39337286e-309,   3.22135945e-309]])        #random
+    matrix([[  6.76425276e-320,   9.79033856e-307], # random
+            [  7.39337286e-309,   3.22135945e-309]])
     >>> np.matlib.empty((2, 2), dtype=int)
-    matrix([[ 6600475,        0],
-            [ 6586976, 22740995]])                          #random
+    matrix([[ 6600475,        0], # random
+            [ 6586976, 22740995]])
 
     """
     return ndarray.__new__(matrix, shape, dtype, order=order)
@@ -82,11 +82,11 @@ def ones(shape, dtype=None, order='C'):
     Examples
     --------
     >>> np.matlib.ones((2,3))
-    matrix([[ 1.,  1.,  1.],
-            [ 1.,  1.,  1.]])
+    matrix([[1.,  1.,  1.],
+            [1.,  1.,  1.]])
 
     >>> np.matlib.ones(2)
-    matrix([[ 1.,  1.]])
+    matrix([[1.,  1.]])
 
     """
     a = ndarray.__new__(matrix, shape, dtype, order=order)
@@ -126,11 +126,11 @@ def zeros(shape, dtype=None, order='C'):
     --------
     >>> import numpy.matlib
     >>> np.matlib.zeros((2, 3))
-    matrix([[ 0.,  0.,  0.],
-            [ 0.,  0.,  0.]])
+    matrix([[0.,  0.,  0.],
+            [0.,  0.,  0.]])
 
     >>> np.matlib.zeros(2)
-    matrix([[ 0.,  0.]])
+    matrix([[0.,  0.]])
 
     """
     a = ndarray.__new__(matrix, shape, dtype, order=order)
@@ -210,9 +210,9 @@ def eye(n,M=None, k=0, dtype=float, order='C'):
     --------
     >>> import numpy.matlib
     >>> np.matlib.eye(3, k=1, dtype=float)
-    matrix([[ 0.,  1.,  0.],
-            [ 0.,  0.,  1.],
-            [ 0.,  0.,  0.]])
+    matrix([[0.,  1.,  0.],
+            [0.,  0.,  1.],
+            [0.,  0.,  0.]])
 
     """
     return asmatrix(np.eye(n, M=M, k=k, dtype=dtype, order=order))
@@ -243,19 +243,20 @@ def rand(*args):
 
     Examples
     --------
+    >>> np.random.seed(123)
     >>> import numpy.matlib
     >>> np.matlib.rand(2, 3)
-    matrix([[ 0.68340382,  0.67926887,  0.83271405],
-            [ 0.00793551,  0.20468222,  0.95253525]])       #random
+    matrix([[0.69646919, 0.28613933, 0.22685145],
+            [0.55131477, 0.71946897, 0.42310646]])
     >>> np.matlib.rand((2, 3))
-    matrix([[ 0.84682055,  0.73626594,  0.11308016],
-            [ 0.85429008,  0.3294825 ,  0.89139555]])       #random
+    matrix([[0.9807642 , 0.68482974, 0.4809319 ],
+            [0.39211752, 0.34317802, 0.72904971]])
 
     If the first argument is a tuple, other arguments are ignored:
 
     >>> np.matlib.rand((2, 3), 4)
-    matrix([[ 0.46898646,  0.15163588,  0.95188261],
-            [ 0.59208621,  0.09561818,  0.00583606]])       #random
+    matrix([[0.43857224, 0.0596779 , 0.39804426],
+            [0.73799541, 0.18249173, 0.17545176]])
 
     """
     if isinstance(args[0], tuple):
@@ -294,18 +295,19 @@ def randn(*args):
 
     Examples
     --------
+    >>> np.random.seed(123)
     >>> import numpy.matlib
     >>> np.matlib.randn(1)
-    matrix([[-0.09542833]])                                 #random
+    matrix([[-1.0856306]])
     >>> np.matlib.randn(1, 2, 3)
-    matrix([[ 0.16198284,  0.0194571 ,  0.18312985],
-            [-0.7509172 ,  1.61055   ,  0.45298599]])       #random
+    matrix([[ 0.99734545,  0.2829785 , -1.50629471],
+            [-0.57860025,  1.65143654, -2.42667924]])
 
     Two-by-four matrix of samples from :math:`N(3, 6.25)`:
 
     >>> 2.5 * np.matlib.randn((2, 4)) + 3
-    matrix([[ 4.74085004,  8.89381862,  4.09042411,  4.83721922],
-            [ 7.52373709,  5.07933944, -2.64043543,  0.45610557]])  #random
+    matrix([[1.92771843, 6.16484065, 0.83314899, 1.30278462],
+            [2.76322758, 6.72847407, 1.40274501, 1.8900451 ]])
 
     """
     if isinstance(args[0], tuple):

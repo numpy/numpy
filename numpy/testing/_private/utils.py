@@ -521,7 +521,6 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     ...
     <type 'exceptions.AssertionError'>:
     Arrays are not almost equal
-    <BLANKLINE>
     (mismatch 50.0%)
      x: array([ 1.        ,  2.33333333])
      y: array([ 1.        ,  2.33333334])
@@ -854,7 +853,6 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     <type 'exceptions.ValueError'>:
     AssertionError:
     Arrays are not equal
-    <BLANKLINE>
     (mismatch 50.0%)
      x: array([ 1.        ,  3.14159265,         NaN])
      y: array([ 1.        ,  3.14159265,         NaN])
@@ -930,7 +928,6 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     <type 'exceptions.AssertionError'>:
     AssertionError:
     Arrays are not almost equal
-    <BLANKLINE>
     (mismatch 50.0%)
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33339,      NaN])

@@ -135,9 +135,9 @@ class memmap(ndarray):
 
     >>> fp = np.memmap(filename, dtype='float32', mode='w+', shape=(3,4))
     >>> fp
-    memmap([[ 0.,  0.,  0.,  0.],
-            [ 0.,  0.,  0.,  0.],
-            [ 0.,  0.,  0.,  0.]], dtype=float32)
+    memmap([[0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.]], dtype=float32)
 
     Write data to memmap array:
 

@@ -648,8 +648,8 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     array([  6,   5, 255])
     >>> np.array([2, 5, 255]) | np.array([4, 4, 4])
     array([  6,   5, 255])
-    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647L], dtype=np.int32),
-    ...               np.array([4, 4, 4, 2147483647L], dtype=np.int32))
+    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647], dtype=np.int32),
+    ...               np.array([4, 4, 4, 2147483647], dtype=np.int32))
     array([         6,          5,        255, 2147483647])
     >>> np.bitwise_or([True, True], [False, True])
     array([ True,  True])
@@ -837,6 +837,7 @@ add_newdoc('numpy.core.umath', 'cos',
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
     >>> # Example of providing the optional output parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -912,7 +913,7 @@ add_newdoc('numpy.core.umath', 'degrees',
             270.,  300.,  330.])
 
     >>> out = np.zeros((rad.shape))
-    >>> r = degrees(rad, out)
+    >>> r = np.degrees(rad, out)
     >>> np.all(r == out)
     True
 
@@ -1559,33 +1560,31 @@ add_newdoc('numpy.core.umath', 'invert',
     We've seen that 13 is represented by ``00001101``.
     The invert or bit-wise NOT of 13 is then:
 
-    >>> np.invert(np.array([13], dtype=uint8))
-    array([242], dtype=uint8)
+    >>> x = np.invert(np.array(13, dtype=np.uint8))
+    >>> x
+    242
     >>> np.binary_repr(x, width=8)
-    '00001101'
-    >>> np.binary_repr(242, width=8)
     '11110010'
 
     The result depends on the bit-width:
 
-    >>> np.invert(np.array([13], dtype=uint16))
-    array([65522], dtype=uint16)
+    >>> x = np.invert(np.array(13, dtype=np.uint16))
+    >>> x
+    65522
     >>> np.binary_repr(x, width=16)
-    '0000000000001101'
-    >>> np.binary_repr(65522, width=16)
     '1111111111110010'
 
     When using signed integer types the result is the two's complement of
     the result for the unsigned type:
 
-    >>> np.invert(np.array([13], dtype=int8))
+    >>> np.invert(np.array([13], dtype=np.int8))
     array([-14], dtype=int8)
     >>> np.binary_repr(-14, width=8)
     '11110010'
 
     Booleans are accepted as well:
 
-    >>> np.invert(array([True, False]))
+    >>> np.invert(np.array([True, False]))
     array([False,  True])
 
     """)
@@ -1969,7 +1968,7 @@ add_newdoc('numpy.core.umath', 'log10',
     Examples
     --------
     >>> np.log10([1e-15, -3.])
-    array([-15.,  NaN])
+    array([-15.,  nan])
 
     """)
 
@@ -2361,7 +2360,7 @@ add_newdoc('numpy.core.umath', 'maximum',
            [ 0.5,  2. ]])
 
     >>> np.maximum([np.nan, 0, np.nan], [0, np.nan, np.nan])
-    array([ NaN,  NaN,  NaN])
+    array([nan, nan, nan])
     >>> np.maximum(np.Inf, 1)
     inf
 
@@ -2420,7 +2419,7 @@ add_newdoc('numpy.core.umath', 'minimum',
            [ 0. ,  1. ]])
 
     >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([ NaN,  NaN,  NaN])
+    array([nan, nan, nan])
     >>> np.minimum(-np.Inf, 1)
     -inf
 
@@ -2480,7 +2479,7 @@ add_newdoc('numpy.core.umath', 'fmax',
            [ 0.5,  2. ]])
 
     >>> np.fmax([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([  0.,   0.,  NaN])
+    array([ 0.,  0., nan])
 
     """)
 
@@ -2538,7 +2537,7 @@ add_newdoc('numpy.core.umath', 'fmin',
            [ 0. ,  1. ]])
 
     >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([  0.,   0.,  NaN])
+    array([ 0.,  0., nan])
 
     """)
 
@@ -3475,6 +3474,7 @@ add_newdoc('numpy.core.umath', 'sinh',
     >>> # Discrepancy due to vagaries of floating point arithmetic.
 
     >>> # Example of providing the optional output parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.sinh([0.1], out1)
     >>> out2 is out1
     True
@@ -3528,8 +3528,8 @@ add_newdoc('numpy.core.umath', 'sqrt',
     >>> np.sqrt([4, -1, -3+4J])
     array([ 2.+0.j,  0.+1.j,  1.+2.j])
 
-    >>> np.sqrt([4, -1, numpy.inf])
-    array([  2.,  NaN,  Inf])
+    >>> np.sqrt([4, -1, np.inf])
+    array([ 2., nan, inf])
 
     """)
 
@@ -3660,6 +3660,7 @@ add_newdoc('numpy.core.umath', 'tan',
     >>>
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -3711,6 +3712,7 @@ add_newdoc('numpy.core.umath', 'tanh',
 
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.tanh([0.1], out1)
     >>> out2 is out1
     True
@@ -3761,8 +3763,6 @@ add_newdoc('numpy.core.umath', 'true_divide',
     >>> np.true_divide(x, 4)
     array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
 
-    >>> x/4
-    array([0, 0, 0, 0, 1])
     >>> x//4
     array([0, 0, 0, 0, 1])
 
@@ -3858,7 +3858,7 @@ add_newdoc('numpy.core.umath', 'ldexp',
     Examples
     --------
     >>> np.ldexp(5, np.arange(4))
-    array([  5.,  10.,  20.,  40.], dtype=float32)
+    array([ 5., 10., 20., 40.], dtype=float16)
 
     >>> x = np.arange(6)
     >>> np.ldexp(*np.frexp(x))

@@ -645,7 +645,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     >>> hist_0, bins_0 = np.histogram(arr[group_id == 0], bins='auto')
     >>> hist_1, bins_1 = np.histogram(arr[group_id == 1], bins='auto')
-    >>> hist_0; hist1
+    >>> hist_0; hist_1
     array([1, 1, 1])
     array([2, 1, 1, 2])
     >>> bins_0; bins_1
@@ -748,14 +748,14 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
     >>> np.histogram([1, 2, 1], bins=[0, 1, 2, 3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
     >>> np.histogram(np.arange(4), bins=np.arange(5), density=True)
-    (array([ 0.25,  0.25,  0.25,  0.25]), array([0, 1, 2, 3, 4]))
+    (array([0.25, 0.25, 0.25, 0.25]), array([0, 1, 2, 3, 4]))
     >>> np.histogram([[1, 2, 1], [1, 0, 1]], bins=[0,1,2,3])
     (array([1, 4, 1]), array([0, 1, 2, 3]))
 
     >>> a = np.arange(5)
     >>> hist, bin_edges = np.histogram(a, density=True)
     >>> hist
-    array([ 0.5,  0. ,  0.5,  0. ,  0. ,  0.5,  0. ,  0.5,  0. ,  0.5])
+    array([0.5, 0. , 0.5, 0. , 0. , 0.5, 0. , 0.5, 0. , 0.5])
     >>> hist.sum()
     2.4999999999999996
     >>> np.sum(hist * np.diff(bin_edges))
@@ -770,8 +770,9 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
     >>> rng = np.random.RandomState(10)  # deterministic random data
     >>> a = np.hstack((rng.normal(size=1000),
     ...                rng.normal(loc=5, scale=2, size=1000)))
-    >>> plt.hist(a, bins='auto')  # arguments are passed to np.histogram
+    >>> _ = plt.hist(a, bins='auto')  # arguments are passed to np.histogram
     >>> plt.title("Histogram with 'auto' bins")
+    Text(0.5, 1.0, "Histogram with 'auto' bins")
     >>> plt.show()
 
     """

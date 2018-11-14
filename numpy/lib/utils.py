@@ -151,9 +151,6 @@ def deprecate(*args, **kwargs):
 
     >>> olduint = np.deprecate(np.uint)
     >>> olduint(6)
-    /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
-    DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -202,7 +199,7 @@ def byte_bounds(a):
     >>> high - low == I.size*I.itemsize
     True
     >>> I = np.eye(2, dtype='G'); I.dtype
-    dtype('complex192')
+    dtype('complex256')
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
@@ -263,17 +260,17 @@ def who(vardict=None):
     >>> np.who()
     Name            Shape            Bytes            Type
     ===========================================================
-    a               10               40               int32
+    a               10               80               int64
     b               20               160              float64
-    Upper bound on total bytes  =       200
+    Upper bound on total bytes  =       240
 
     >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
     ... 'idx':5}
     >>> np.who(d)
     Name            Shape            Bytes            Type
     ===========================================================
-    y               3                24               float64
     x               2                16               float64
+    y               3                24               float64
     Upper bound on total bytes  =       40
 
     """
@@ -733,7 +730,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
 
     Examples
     --------
-    >>> np.lookfor('binary representation')
+    >>> np.lookfor('binary representation') # doctest: +SKIP
     Search results for 'binary representation'
     ------------------------------------------
     numpy.binary_repr
@@ -1104,7 +1101,7 @@ def safe_eval(source):
     >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
-    SyntaxError: Unsupported source construct: compiler.ast.CallFunc
+    ValueError: malformed node or string: <_ast.Call object at 0x...>
 
     """
     # Local import to speed up numpy's import time.
