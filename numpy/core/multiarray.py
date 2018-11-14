@@ -1233,7 +1233,7 @@ def unpackbits(myarray, axis=None):
            [0, 0, 0, 1, 0, 1, 1, 1]], dtype=uint8)
 
     """
-    return _multiarray_umath.unpackfdbits(myarray, axis)
+    return _multiarray_umath.unpackbits(myarray, axis)
 
 
 def _shares_memory_dispatcher(a, b, max_work=None):
