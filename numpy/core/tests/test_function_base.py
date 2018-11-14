@@ -285,9 +285,7 @@ class TestLinspace(object):
 
             @property
             def __array_interface__(self):
-                # Ideally should be `'shape': ()` but the current interface
-                # does not allow that
-                return {'shape': (1,), 'typestr': '<i4', 'data': self._data,
+                return {'shape': (), 'typestr': '<i4', 'data': self._data,
                         'version': 3}
 
             def __mul__(self, other):
