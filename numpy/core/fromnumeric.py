@@ -240,12 +240,16 @@ def reshape(a, newshape, order='C'):
     you should assign the new shape to the shape attribute of the array::
 
      >>> a = np.zeros((10, 2))
+
      # A transpose makes the array non-contiguous
      >>> b = a.T
+     
      # Taking a view makes it possible to modify the shape without modifying
      # the initial object.
      >>> c = b.view()
      >>> c.shape = (20)
+     Traceback (most recent call last):
+        ...
      AttributeError: incompatible shape for a non-contiguous array
 
     The `order` keyword gives the index ordering both for *fetching* the values
@@ -1641,27 +1645,27 @@ def ravel(a, order='C'):
 
     Examples
     --------
-    It is equivalent to ``reshape(-1, order=order)``.
+    >>> # It is equivalent to ``reshape(-1, order=order)``.
 
     >>> x = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> print(np.ravel(x))
-    [1 2 3 4 5 6]
+    >>> np.ravel(x)
+    array([1, 2, 3, 4, 5, 6])
 
-    >>> print(x.reshape(-1))
-    [1 2 3 4 5 6]
+    >>> x.reshape(-1)
+    array([1, 2, 3, 4, 5, 6])
 
-    >>> print(np.ravel(x, order='F'))
-    [1 4 2 5 3 6]
+    >>> np.ravel(x, order='F')
+    array([1, 4, 2, 5, 3, 6])
 
-    When ``order`` is 'A', it will preserve the array's 'C' or 'F' ordering:
+    >>> # When ``order`` is 'A', it will preserve the array's 'C' or 'F' ordering:
 
-    >>> print(np.ravel(x.T))
-    [1 4 2 5 3 6]
-    >>> print(np.ravel(x.T, order='A'))
-    [1 2 3 4 5 6]
+    >>> np.ravel(x.T)
+    array([1, 4, 2, 5, 3, 6])
+    >>> np.ravel(x.T, order='A')
+    array([1, 2, 3, 4, 5, 6])
 
-    When ``order`` is 'K', it will preserve orderings that are neither 'C'
-    nor 'F', but won't reverse axes:
+    >>> # When ``order`` is 'K', it will preserve orderings that are neither 'C'
+    >>> # nor 'F', but won't reverse axes:
 
     >>> a = np.arange(3)[::-1]; a
     array([2, 1, 0])
@@ -1747,7 +1751,7 @@ def nonzero(a):
     array([[0, 0],
            [1, 1],
            [2, 0],
-           [2, 1])
+           [2, 1]])
 
     A common use for ``nonzero`` is to find the indices of an array, where
     a condition is True.  Given an array `a`, the condition `a` > 3 is a
@@ -2150,10 +2154,10 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.any(np.nan)
     True
 
-    >>> o=np.array([False])
+    >>> o=np.array(False)
     >>> z=np.any([-1, 4, 5], out=o)
     >>> z, o
-    (array([ True]), array([ True]))
+    (array(True), array(True))
     >>> # Check now that z is a reference to o
     >>> z is o
     True
@@ -2238,6 +2242,9 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
 
     >>> o=np.array([False])
     >>> z=np.all([-1, 4, 5], out=o)
+    Traceback (most recent call last):
+        ...
+    ValueError: output parameter for reduction operation logical_and has too many dimensions
     >>> id(z), id(o), z                             # doctest: +SKIP
     (28293632, 28293632, array([ True]))
 
@@ -2724,8 +2731,8 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._N
     raised on overflow.  That means that, on a 32-bit platform:
 
     >>> x = np.array([536870910, 536870910, 536870910, 536870910])
-    >>> np.prod(x)  # random
-    16
+    >>> np.prod(x)
+    6917529010461212688 # may vary
 
     The product of an empty array is the neutral element 1:
 
@@ -2993,11 +3000,11 @@ def around(a, decimals=0, out=None):
     Examples
     --------
     >>> np.around([0.37, 1.64])
-    array([ 0.,  2.])
+    array([0.,  2.])
     >>> np.around([0.37, 1.64], decimals=1)
-    array([ 0.4,  1.6])
+    array([0.4,  1.6])
     >>> np.around([.5, 1.5, 2.5, 3.5, 4.5]) # rounds to nearest even value
-    array([ 0.,  2.,  2.,  4.,  4.])
+    array([0.,  2.,  2.,  4.,  4.])
     >>> np.around([1,2,3,11], decimals=1) # ndarray of ints is returned
     array([ 1,  2,  3, 11])
     >>> np.around([1,2,3,11], decimals=-1)
@@ -3085,9 +3092,9 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.mean(a)
     2.5
     >>> np.mean(a, axis=0)
-    array([ 2.,  3.])
+    array([2., 3.])
     >>> np.mean(a, axis=1)
-    array([ 1.5,  3.5])
+    array([1.5, 3.5])
 
     In single precision, `mean` can be inaccurate:
 
@@ -3100,7 +3107,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     Computing the mean in float64 is more accurate:
 
     >>> np.mean(a, dtype=np.float64)
-    0.55000000074505806
+    0.55000000074505806 # may vary
 
     """
     kwargs = {}
@@ -3206,11 +3213,11 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     --------
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.std(a)
-    1.1180339887498949
+    1.1180339887498949 # may vary
     >>> np.std(a, axis=0)
-    array([ 1.,  1.])
+    array([1.,  1.])
     >>> np.std(a, axis=1)
-    array([ 0.5,  0.5])
+    array([0.5,  0.5])
 
     In single precision, std() can be inaccurate:
 
@@ -3223,7 +3230,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Computing the standard deviation in float64 is more accurate:
 
     >>> np.std(a, dtype=np.float64)
-    0.44999999925494177
+    0.44999999925494177 # may vary
 
     """
     kwargs = {}
@@ -3330,9 +3337,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     >>> np.var(a)
     1.25
     >>> np.var(a, axis=0)
-    array([ 1.,  1.])
+    array([1.,  1.])
     >>> np.var(a, axis=1)
-    array([ 0.25,  0.25])
+    array([0.25,  0.25])
 
     In single precision, var() can be inaccurate:
 
@@ -3345,7 +3352,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Computing the variance in float64 is more accurate:
 
     >>> np.var(a, dtype=np.float64)
-    0.20249999932944759
+    0.20249999932944759 # may vary
     >>> ((1-0.55)**2 + (0.1-0.55)**2)/2
     0.2025
 
