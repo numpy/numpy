@@ -71,11 +71,11 @@ def dtype_from_ctypes_scalar(t):
     Return the dtype type with endianness included if it's the case
     """
     if t.__ctype_be__ is t:
-        return '>' + t._type_
+        return np.dtype('>' + t._type_)
     elif t.__ctype_le__ is t:
-        return '<' + t._type_
+        return np.dtype('<' + t._type_)
     else:
-        return t._type_
+        return np.dtype(t._type_)
 
 
 def dtype_from_ctypes_type(t):
@@ -93,10 +93,8 @@ def dtype_from_ctypes_type(t):
         raise NotImplementedError(
             "conversion from ctypes.Union types like {} to dtype"
             .format(t.__name__))
-    elif isinstance(t, type(ctypes.c_int)): # Could be any simple type instead of c_int, all return the same type
-        return np.dtype(dtype_from_ctypes_scalar(t))
     elif isinstance(t._type_, str):
-        return np.dtype(t._type_)
+        return dtype_from_ctypes_scalar(t)
     else:
         raise NotImplementedError(
             "Unknown ctypes type {}".format(t.__name__))

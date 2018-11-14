@@ -858,15 +858,9 @@ class TestFromCTypes(object):
 
     def test_complex_big_endian_structure_packed(self):
         class BigEndStruct(ctypes.BigEndianStructure):
-            _fields_ = [('one', ctypes.c_uint8.__ctype_be__),('two', ctypes.c_uint32.__ctype_be__)]
+            _fields_ = [('one', ctypes.c_uint8),('two', ctypes.c_uint32)]
             _pack_ = 1
         expected = np.dtype([('one', 'u1'), ('two', '>u4')])
-        self.check(BigEndStruct, expected)
-
-    def test_complex_big_endian_structure(self):
-        class BigEndStruct(ctypes.BigEndianStructure):
-            _fields_ = [('one', ctypes.c_uint16.__ctype_be__),('two', ctypes.c_uint32.__ctype_be__)]
-        expected = np.dtype({'names':['one','two'], 'formats':['>u2','>u4'], 'offsets':[0,4], 'itemsize':8}, align=True)
         self.check(BigEndStruct, expected)
 
     def test_little_endian_structure(self):
@@ -880,7 +874,6 @@ class TestFromCTypes(object):
             ('b', '<H')
         ], align=True)
         self.check(PaddedStruct, expected)
-
 
     def test_big_endian_structure(self):
         class PaddedStruct(ctypes.BigEndianStructure):
@@ -897,25 +890,13 @@ class TestFromCTypes(object):
     def test_big_endian_simple_type(self):
         byte_order = np.dtype(ctypes.c_uint16.__ctype_be__).byteorder
         if sys.byteorder == 'little':
-           expected = '>'
+            expected = '>'
         else:
             expected = '='
         assert byte_order == expected
 
-    def test_little_endian_simple_type(self):
-        byte_order = np.dtype(ctypes.c_uint16.__ctype_le__).byteorder
-        if sys.byteorder != 'little':
-           expected = '<'
-        else:
-            expected = '='
-        assert byte_order == expected
-
-    def test_little_endian_uint8(self):
-        byte_order = np.dtype(ctypes.c_uint8.__ctype_le__).byteorder
-        expected = '|'
-        assert byte_order == expected
-
-    def test_big_endian_uint8(self):
-        byte_order = np.dtype(ctypes.c_uint8.__ctype_be__).byteorder
-        expected = '|'
-        assert byte_order == expected
+    def test_simple_endian_types(self):
+        assert_equal(np.dtype(ctypes.c_uint16.__ctype_le__), np.dtype('<u2'))
+        assert_equal(np.dtype(ctypes.c_uint16.__ctype_be__), np.dtype('>u2'))
+        assert_equal(np.dtype(ctypes.c_uint8.__ctype_le__), np.dtype('u1'))
+        assert_equal(np.dtype(ctypes.c_uint8.__ctype_be__), np.dtype('u1'))
