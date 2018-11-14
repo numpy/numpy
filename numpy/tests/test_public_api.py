@@ -52,6 +52,8 @@ def test_numpy_namespace():
         'who': 'numpy.lib.utils.who',
     }
     bad_results = check_dir(np)
+    # pytest gives better error messages with the builtin assert than with
+    # assert_equal
     assert bad_results == whitelist
 
 
