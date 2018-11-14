@@ -291,12 +291,8 @@ def descr_to_dtype(descr):
 
     names, formats, offsets = zip(*fields)
     # names may be (title, names) tuples
-    names = list(names)
-    titles = [None] * len(names)
-    for i, n in enumerate(names):
-        if isinstance(n, tuple):
-            titles[i] = n[0]
-            names[i] = n[1]
+    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
+    titles, names = zip(*nametups)
     return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
                         'offsets': offsets, 'itemsize': offset})
 
