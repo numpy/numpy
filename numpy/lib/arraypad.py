@@ -886,105 +886,71 @@ def _pad_wrap(arr, pad_amt, axis=-1):
     return np.concatenate((wrap_chunk1, arr, wrap_chunk2), axis=axis)
 
 
-def _normalize_shape(ndarray, shape, cast_to_int=True):
+def _as_pairs(x, ndim, as_index=False):
     """
-    Private function which does some checks and normalizes the possibly
-    much simpler representations of 'pad_width', 'stat_length',
-    'constant_values', 'end_values'.
+    Broadcast `x` to an array with the shape (`ndim`, 2).
+
+    A helper function for `pad` that prepares and validates arguments like
+    `pad_width` for iteration in pairs.
 
     Parameters
     ----------
-    narray : ndarray
-        Input ndarray
-    shape : {sequence, array_like, float, int}, optional
-        The width of padding (pad_width), the number of elements on the
-        edge of the narray used for statistics (stat_length), the constant
-        value(s) to use when filling padded regions (constant_values), or the
-        endpoint target(s) for linear ramps (end_values).
-        ((before_1, after_1), ... (before_N, after_N)) unique number of
-        elements for each axis where `N` is rank of `narray`.
-        ((before, after),) yields same before and after constants for each
-        axis.
-        (constant,) or val is a shortcut for before = after = constant for
-        all axes.
-    cast_to_int : bool, optional
-        Controls if values in ``shape`` will be rounded and cast to int
-        before being returned.
+    x : {None, scalar, array-like}
+        The object to broadcast to the shape (`ndim`, 2).
+    ndim : int
+        Number of pairs the broadcasted `x` will have.
+    as_index : bool, optional
+        If `x` is not None, try to round each element of `x` to an integer
+        (dtype `np.intp`) and ensure every element is positive.
 
     Returns
     -------
-    normalized_shape : tuple of tuples
-        val                               => ((val, val), (val, val), ...)
-        [[val1, val2], [val3, val4], ...] => ((val1, val2), (val3, val4), ...)
-        ((val1, val2), (val3, val4), ...) => no change
-        [[val1, val2], ]                  => ((val1, val2), (val1, val2), ...)
-        ((val1, val2), )                  => ((val1, val2), (val1, val2), ...)
-        [[val ,     ], ]                  => ((val, val), (val, val), ...)
-        ((val ,     ), )                  => ((val, val), (val, val), ...)
+    pairs : nested iterables, shape (`ndim`, 2)
+        The broadcasted version of `x`.
 
+    Raises
+    ------
+    ValueError
+        If `as_index` is True and `x` contains negative elements.
+        Or if `x` is not broadcastable to the shape (`ndim`, 2).
     """
-    ndims = ndarray.ndim
+    if x is None:
+        # Pass through None as a special case, otherwise np.round(x) fails
+        # with an AttributeError
+        return ((None, None),) * ndim
 
-    # Shortcut shape=None
-    if shape is None:
-        return ((None, None), ) * ndims
+    x = np.array(x)
+    if as_index:
+        x = np.round(x).astype(np.intp, copy=False)
 
-    # Convert any input `info` to a NumPy array
-    shape_arr = np.asarray(shape)
+    if x.ndim < 3:
+        # Optimization: Possibly use faster paths for cases where `x` has
+        # only 1 or 2 elements. `np.broadcast_to` could handle these as well
+        # but is currently slower
 
-    try:
-        shape_arr = np.broadcast_to(shape_arr, (ndims, 2))
-    except ValueError:
-        fmt = "Unable to create correctly shaped tuple from %s"
-        raise ValueError(fmt % (shape,))
+        if x.size == 1:
+            # x was supplied as a single value
+            x = x.ravel()  # Ensure x[0] works for x.ndim == 0, 1, 2
+            if as_index and x < 0:
+                raise ValueError("index can't contain negative values")
+            return ((x[0], x[0]),) * ndim
 
-    # Cast if necessary
-    if cast_to_int is True:
-        shape_arr = np.round(shape_arr).astype(int)
+        if x.size == 2 and x.shape != (2, 1):
+            # x was supplied with a single value for each side
+            # but except case when each dimension has a single value
+            # which should be broadcasted to a pair,
+            # e.g. [[1], [2]] -> [[1, 1], [2, 2]] not [[1, 2], [1, 2]]
+            x = x.ravel()  # Ensure x[0], x[1] works
+            if as_index and (x[0] < 0 or x[1] < 0):
+                raise ValueError("index can't contain negative values")
+            return ((x[0], x[1]),) * ndim
 
-    # Convert list of lists to tuple of tuples
-    return tuple(tuple(axis) for axis in shape_arr.tolist())
+    if as_index and x.min() < 0:
+        raise ValueError("index can't contain negative values")
 
-
-def _validate_lengths(narray, number_elements):
-    """
-    Private function which does some checks and reformats pad_width and
-    stat_length using _normalize_shape.
-
-    Parameters
-    ----------
-    narray : ndarray
-        Input ndarray
-    number_elements : {sequence, int}, optional
-        The width of padding (pad_width) or the number of elements on the edge
-        of the narray used for statistics (stat_length).
-        ((before_1, after_1), ... (before_N, after_N)) unique number of
-        elements for each axis.
-        ((before, after),) yields same before and after constants for each
-        axis.
-        (constant,) or int is a shortcut for before = after = constant for all
-        axes.
-
-    Returns
-    -------
-    _validate_lengths : tuple of tuples
-        int                               => ((int, int), (int, int), ...)
-        [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
-        ((int1, int2), (int3, int4), ...) => no change
-        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...)
-        ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
-        [[int ,     ], ]                  => ((int, int), (int, int), ...)
-        ((int ,     ), )                  => ((int, int), (int, int), ...)
-
-    """
-    normshp = _normalize_shape(narray, number_elements)
-    for i in normshp:
-        chk = [1 if x is None else x for x in i]
-        chk = [1 if x >= 0 else -1 for x in chk]
-        if (chk[0] < 0) or (chk[1] < 0):
-            fmt = "%s cannot contain negative values."
-            raise ValueError(fmt % (number_elements,))
-    return normshp
+    # Converting the array with `tolist` seems to improve performance
+    # when iterating and indexing the result (see usage in `pad`)
+    return np.broadcast_to(x, (ndim, 2)).tolist()
 
 
 ###############################################################################
@@ -1203,7 +1169,7 @@ def pad(array, pad_width, mode, **kwargs):
         raise TypeError('`pad_width` must be of integral type.')
 
     narray = np.array(array)
-    pad_width = _validate_lengths(narray, pad_width)
+    pad_width = _as_pairs(pad_width, narray.ndim, as_index=True)
 
     allowedkwargs = {
         'constant': ['constant_values'],
@@ -1239,10 +1205,9 @@ def pad(array, pad_width, mode, **kwargs):
         # Need to only normalize particular keywords.
         for i in kwargs:
             if i == 'stat_length':
-                kwargs[i] = _validate_lengths(narray, kwargs[i])
+                kwargs[i] = _as_pairs(kwargs[i], narray.ndim, as_index=True)
             if i in ['end_values', 'constant_values']:
-                kwargs[i] = _normalize_shape(narray, kwargs[i],
-                                             cast_to_int=False)
+                kwargs[i] = _as_pairs(kwargs[i], narray.ndim)
     else:
         # Drop back to old, slower np.apply_along_axis mode for user-supplied
         # vector function
