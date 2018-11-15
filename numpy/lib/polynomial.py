@@ -272,7 +272,7 @@ def polyint(p, m=1, k=None):
     Parameters
     ----------
     p : array_like or poly1d
-        Polynomial to differentiate.
+        Polynomial to integrate.
         A sequence is interpreted as polynomial coefficients, see `poly1d`.
     m : int, optional
         Order of the antiderivative. (Default: 1)
