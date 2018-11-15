@@ -479,6 +479,11 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
+def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_in1d_dispatcher)
 def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of a 1-D array is also present in a second array.

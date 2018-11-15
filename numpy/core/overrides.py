@@ -150,12 +150,12 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
-def override_module(module):
+def set_module(module):
     """Decorator for overriding __module__ on a function or class.
 
     Example usage::
 
-        @override_module('numpy')
+        @set_module('numpy')
         def example():
             pass
 
@@ -198,7 +198,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True):
 
     if not ENABLE_ARRAY_FUNCTION:
         # __array_function__ requires an explicit opt-in for now
-        return override_module(module)
+        return set_module(module)
 
     def decorator(implementation):
         if verify:

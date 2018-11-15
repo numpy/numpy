@@ -7,6 +7,7 @@ by importing from the extension module.
 """
 
 import functools
+import warnings
 
 from . import overrides
 from . import _multiarray_umath
@@ -38,6 +39,26 @@ __all__ = [
     'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
+
+
+arange.__module__ = 'numpy'
+array.__module__ = 'numpy'
+datetime_data.__module__ = 'numpy'
+empty.__module__ = 'numpy'
+frombuffer.__module__ = 'numpy'
+fromfile.__module__ = 'numpy'
+fromiter.__module__ = 'numpy'
+frompyfunc.__module__ = 'numpy'
+fromstring.__module__ = 'numpy'
+geterrobj.__module__ = 'numpy'
+matmul.__module__ = 'numpy'
+may_share_memory.__module__ = 'numpy'
+nested_iters.__module__ = 'numpy'
+promote_types.__module__ = 'numpy'
+set_numeric_ops.__module__ = 'numpy'
+seterrobj.__module__ = 'numpy'
+zeros.__module__ = 'numpy'
+
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -832,6 +853,474 @@ def vdot(a, b):
     return _multiarray_umath.vdot(a, b)
 
 
+def _bincount_dispatcher(x, weights=None, minlength=None):
+    return (x, weights)
+
+
+@array_function_dispatch(_bincount_dispatcher)
+def bincount(x, weights=None, minlength=0):
+    """
+    Count number of occurrences of each value in array of non-negative ints.
+
+    The number of bins (of size 1) is one larger than the largest value in
+    `x`. If `minlength` is specified, there will be at least this number
+    of bins in the output array (though it will be longer if necessary,
+    depending on the contents of `x`).
+    Each bin gives the number of occurrences of its index value in `x`.
+    If `weights` is specified the input array is weighted by it, i.e. if a
+    value ``n`` is found at position ``i``, ``out[n] += weight[i]`` instead
+    of ``out[n] += 1``.
+
+    Parameters
+    ----------
+    x : array_like, 1 dimension, nonnegative ints
+        Input array.
+    weights : array_like, optional
+        Weights, array of the same shape as `x`.
+    minlength : int, optional
+        A minimum number of bins for the output array.
+
+        .. versionadded:: 1.6.0
+
+    Returns
+    -------
+    out : ndarray of ints
+        The result of binning the input array.
+        The length of `out` is equal to ``np.amax(x)+1``.
+
+    Raises
+    ------
+    ValueError
+        If the input is not 1-dimensional, or contains elements with negative
+        values, or if `minlength` is negative.
+    TypeError
+        If the type of the input is float or complex.
+
+    See Also
+    --------
+    histogram, digitize, unique
+
+    Examples
+    --------
+    >>> np.bincount(np.arange(5))
+    array([1, 1, 1, 1, 1])
+    >>> np.bincount(np.array([0, 1, 1, 3, 2, 1, 7]))
+    array([1, 3, 1, 1, 0, 0, 0, 1])
+
+    >>> x = np.array([0, 1, 1, 3, 2, 1, 7, 23])
+    >>> np.bincount(x).size == np.amax(x)+1
+    True
+
+    The input array needs to be of integer dtype, otherwise a
+    TypeError is raised:
+
+    >>> np.bincount(np.arange(5, dtype=float))
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: array cannot be safely cast to required type
+
+    A possible use of ``bincount`` is to perform sums over
+    variable-size chunks of an array, using the ``weights`` keyword.
+
+    >>> w = np.array([0.3, 0.5, 0.2, 0.7, 1., -0.6]) # weights
+    >>> x = np.array([0, 1, 1, 2, 2, 2])
+    >>> np.bincount(x,  weights=w)
+    array([ 0.3,  0.7,  1.1])
+
+    """
+    return _multiarray_umath.bincount(x, weights=weights, minlength=minlength)
+
+
+def _ravel_multi_index_dispatcher(multi_index, dims, mode=None, order=None):
+    return multi_index
+
+
+@array_function_dispatch(_ravel_multi_index_dispatcher)
+def ravel_multi_index(multi_index, dims, mode='raise', order='C'):
+    """
+    Converts a tuple of index arrays into an array of flat
+    indices, applying boundary modes to the multi-index.
+
+    Parameters
+    ----------
+    multi_index : tuple of array_like
+        A tuple of integer arrays, one array for each dimension.
+    dims : tuple of ints
+        The shape of array into which the indices from ``multi_index`` apply.
+    mode : {'raise', 'wrap', 'clip'}, optional
+        Specifies how out-of-bounds indices are handled.  Can specify
+        either one mode or a tuple of modes, one mode per index.
+
+        * 'raise' -- raise an error (default)
+        * 'wrap' -- wrap around
+        * 'clip' -- clip to the range
+
+        In 'clip' mode, a negative index which would normally
+        wrap will clip to 0 instead.
+    order : {'C', 'F'}, optional
+        Determines whether the multi-index should be viewed as
+        indexing in row-major (C-style) or column-major
+        (Fortran-style) order.
+
+    Returns
+    -------
+    raveled_indices : ndarray
+        An array of indices into the flattened version of an array
+        of dimensions ``dims``.
+
+    See Also
+    --------
+    unravel_index
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    Examples
+    --------
+    >>> arr = np.array([[3,6,6],[4,5,1]])
+    >>> np.ravel_multi_index(arr, (7,6))
+    array([22, 41, 37])
+    >>> np.ravel_multi_index(arr, (7,6), order='F')
+    array([31, 41, 13])
+    >>> np.ravel_multi_index(arr, (4,6), mode='clip')
+    array([22, 23, 19])
+    >>> np.ravel_multi_index(arr, (4,4), mode=('clip','wrap'))
+    array([12, 13, 13])
+
+    >>> np.ravel_multi_index((3,1,4,1), (6,7,8,9))
+    1621
+    """
+    return _multiarray_umath.ravel_multi_index(
+        multi_index, dims, mode=mode, order=order)
+
+
+def _deprecate_dims(shape, dims):
+    if dims is not None:
+        warnings.warn("'shape' argument should be used instead of 'dims'",
+                      DeprecationWarning, stacklevel=3)
+        shape = dims
+    return shape
+
+
+def _unravel_index_dispatcher(indices, shape=None, order=None, dims=None):
+    shape = _deprecate_dims(shape, dims)
+    return (indices,)
+
+
+@array_function_dispatch(_unravel_index_dispatcher)
+def unravel_index(indices, shape=None, order='C', dims=None):
+    """
+    Converts a flat index or array of flat indices into a tuple
+    of coordinate arrays.
+
+    Parameters
+    ----------
+    indices : array_like
+        An integer array whose elements are indices into the flattened
+        version of an array of dimensions ``shape``. Before version 1.6.0,
+        this function accepted just one index value.
+    shape : tuple of ints
+        The shape of the array to use for unraveling ``indices``.
+
+        .. versionchanged:: 1.16.0
+            Renamed from ``dims`` to ``shape``.
+
+    order : {'C', 'F'}, optional
+        Determines whether the indices should be viewed as indexing in
+        row-major (C-style) or column-major (Fortran-style) order.
+
+        .. versionadded:: 1.6.0
+
+    Returns
+    -------
+    unraveled_coords : tuple of ndarray
+        Each array in the tuple has the same shape as the ``indices``
+        array.
+
+    See Also
+    --------
+    ravel_multi_index
+
+    Examples
+    --------
+    >>> np.unravel_index([22, 41, 37], (7,6))
+    (array([3, 6, 6]), array([4, 5, 1]))
+    >>> np.unravel_index([31, 41, 13], (7,6), order='F')
+    (array([3, 6, 6]), array([4, 5, 1]))
+
+    >>> np.unravel_index(1621, (6,7,8,9))
+    (3, 1, 4, 1)
+
+    """
+    shape = _deprecate_dims(shape, dims)
+    return _multiarray_umath.unravel_index(indices, shape, order=order)
+
+
+def _copyto_dispatcher(dst, src, casting=None, where=None):
+    return (dst, src, where)
+
+
+@array_function_dispatch(_copyto_dispatcher)
+def copyto(dst, src, casting='same_kind', where=True):
+    """
+    Copies values from one array to another, broadcasting as necessary.
+
+    Raises a TypeError if the `casting` rule is violated, and if
+    `where` is provided, it selects which elements to copy.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    dst : ndarray
+        The array into which values are copied.
+    src : array_like
+        The array from which values are copied.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur when copying.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+    where : array_like of bool, optional
+        A boolean array which is broadcasted to match the dimensions
+        of `dst`, and selects elements to copy from `src` to `dst`
+        wherever it contains the value True.
+    """
+    return _multiarray_umath.copyto(dst, src, casting=casting, where=where)
+
+
+def _putmask_dispatcher(a, mask, values):
+    return (a, mask, values)
+
+
+@array_function_dispatch(_putmask_dispatcher)
+def putmask(a, mask, values):
+    """
+    Changes elements of an array based on conditional and input values.
+
+    Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
+
+    If `values` is not the same size as `a` and `mask` then it will repeat.
+    This gives behavior different from ``a[mask] = values``.
+
+    Parameters
+    ----------
+    a : array_like
+        Target array.
+    mask : array_like
+        Boolean mask array. It has to be the same shape as `a`.
+    values : array_like
+        Values to put into `a` where `mask` is True. If `values` is smaller
+        than `a` it will be repeated.
+
+    See Also
+    --------
+    place, put, take, copyto
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> np.putmask(x, x>2, x**2)
+    >>> x
+    array([[ 0,  1,  2],
+           [ 9, 16, 25]])
+
+    If `values` is smaller than `a` it is repeated:
+
+    >>> x = np.arange(5)
+    >>> np.putmask(x, x>1, [-33, -44])
+    >>> x
+    array([  0,   1, -33, -44, -33])
+
+    """
+    return _multiarray_umath.putmask(a, mask, values)
+
+
+def _packbits_and_unpackbits_dispatcher(myarray, axis=None):
+    return (myarray,)
+
+
+@array_function_dispatch(_packbits_and_unpackbits_dispatcher)
+def packbits(myarray, axis=None):
+    """
+    Packs the elements of a binary-valued array into bits in a uint8 array.
+
+    The result is padded to full bytes by inserting zero bits at the end.
+
+    Parameters
+    ----------
+    myarray : array_like
+        An array of integers or booleans whose elements should be packed to
+        bits.
+    axis : int, optional
+        The dimension over which bit-packing is done.
+        ``None`` implies packing the flattened array.
+
+    Returns
+    -------
+    packed : ndarray
+        Array of type uint8 whose elements represent bits corresponding to the
+        logical (0 or nonzero) value of the input elements. The shape of
+        `packed` has the same number of dimensions as the input (unless `axis`
+        is None, in which case the output is 1-D).
+
+    See Also
+    --------
+    unpackbits: Unpacks elements of a uint8 array into a binary-valued output
+                array.
+
+    Examples
+    --------
+    >>> a = np.array([[[1,0,1],
+    ...                [0,1,0]],
+    ...               [[1,1,0],
+    ...                [0,0,1]]])
+    >>> b = np.packbits(a, axis=-1)
+    >>> b
+    array([[[160],[64]],[[192],[32]]], dtype=uint8)
+
+    Note that in binary 160 = 1010 0000, 64 = 0100 0000, 192 = 1100 0000,
+    and 32 = 0010 0000.
+
+    """
+    return _multiarray_umath.packbits(myarray, axis)
+
+
+@array_function_dispatch(_packbits_and_unpackbits_dispatcher)
+def unpackbits(myarray, axis=None):
+    """
+    Unpacks elements of a uint8 array into a binary-valued output array.
+
+    Each element of `myarray` represents a bit-field that should be unpacked
+    into a binary-valued output array. The shape of the output array is either
+    1-D (if `axis` is None) or the same shape as the input array with unpacking
+    done along the axis specified.
+
+    Parameters
+    ----------
+    myarray : ndarray, uint8 type
+       Input array.
+    axis : int, optional
+        The dimension over which bit-unpacking is done.
+        ``None`` implies unpacking the flattened array.
+
+    Returns
+    -------
+    unpacked : ndarray, uint8 type
+       The elements are binary-valued (0 or 1).
+
+    See Also
+    --------
+    packbits : Packs the elements of a binary-valued array into bits in a uint8
+               array.
+
+    Examples
+    --------
+    >>> a = np.array([[2], [7], [23]], dtype=np.uint8)
+    >>> a
+    array([[ 2],
+           [ 7],
+           [23]], dtype=uint8)
+    >>> b = np.unpackbits(a, axis=1)
+    >>> b
+    array([[0, 0, 0, 0, 0, 0, 1, 0],
+           [0, 0, 0, 0, 0, 1, 1, 1],
+           [0, 0, 0, 1, 0, 1, 1, 1]], dtype=uint8)
+
+    """
+    return _multiarray_umath.unpackbits(myarray, axis)
+
+
+def _shares_memory_dispatcher(a, b, max_work=None):
+    return (a, b)
+
+
+@array_function_dispatch(_shares_memory_dispatcher)
+def shares_memory(a, b, max_work=None):
+    """
+    Determine if two arrays share memory
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem (maximum number
+        of candidate solutions to consider). The following special
+        values are recognized:
+
+        max_work=MAY_SHARE_EXACT  (default)
+            The problem is solved exactly. In this case, the function returns
+            True only if there is an element shared between the arrays.
+        max_work=MAY_SHARE_BOUNDS
+            Only the memory bounds of a and b are checked.
+
+    Raises
+    ------
+    numpy.TooHardError
+        Exceeded max_work.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    may_share_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+
+    """
+    return _multiarray_umath.shares_memory(a, b, max_work=max_work)
+
+
+@array_function_dispatch(_shares_memory_dispatcher)
+def may_share_memory(a, b, max_work=None):
+    """
+    Determine if two arrays might share memory
+
+    A return of True does not necessarily mean that the two arrays
+    share any element.  It just means that they *might*.
+
+    Only the memory bounds of a and b are checked by default.
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem.  See
+        `shares_memory` for details.  Default for ``may_share_memory``
+        is to do a bounds check.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    shares_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+    >>> x = np.zeros([3, 4])
+    >>> np.may_share_memory(x[:,0], x[:,1])
+    True
+
+    """
+    return _multiarray_umath.may_share_memory(a, b, max_work=max_work)
+
+
 def _is_busday_dispatcher(
         dates, weekmask=None, holidays=None, busdaycal=None, out=None):
     return (dates, weekmask, holidays, out)
@@ -1156,3 +1645,4 @@ def datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind'):
     datetime with units 'm' according to the rule 'safe'
     """
     return _multiarray_umath.datetime_as_string(arr, unit, timezone, casting)
+

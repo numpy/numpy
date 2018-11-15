@@ -10,6 +10,7 @@ import re
 import sys
 
 from numpy.compat import unicode
+from numpy.core.overrides import set_module
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
@@ -729,9 +730,11 @@ def _lcm(a, b):
     return a // _gcd(a, b) * b
 
 # Exception used in shares_memory()
+@set_module('numpy')
 class TooHardError(RuntimeError):
     pass
 
+@set_module('numpy')
 class AxisError(ValueError, IndexError):
     """ Axis supplied was invalid. """
     def __init__(self, axis, ndim=None, msg_prefix=None):
