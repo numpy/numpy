@@ -59,6 +59,9 @@ Expired deprecations
 * NaT comparisons now return ``False`` without a warning, finishing a
   deprecation cycle begun in NumPy 1.11.
 
+* ``np.lib.function_base.unique`` was removed, finishing a deprecation cycle
+  begun in NumPy 1.4. Use `numpy.unique` instead.
+
 Compatibility notes
 ===================
 
