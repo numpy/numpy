@@ -311,6 +311,21 @@ This is possible thanks to the new
 :c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`, which allows
 arbitrary values to be used as identities now.
 
+Improved conversion from ctypes objects
+---------------------------------------
+Numpy has always supported taking a value or type from ``ctypes`` and
+converting it into an array or dtype, but only behaved correctly for simpler
+types. As of this release, this caveat is lifted - now:
+
+* The ``_pack_`` attribute of ``ctypes.Structure``, used to emulate C's
+  ``__attribute__((packed))``, is respected.
+* Endianness of all ctypes objects is preserved
+* ``ctypes.Union`` is supported
+* Unrepresentable constructs raise exceptions, rather than producing
+  dangerously incorrect results:
+  * Bitfields are no longer interpreted as sub-arrays
+  * Pointers are no longer replaced with the type that they point to
+
 
 Changes
 =======
