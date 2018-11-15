@@ -165,13 +165,6 @@ def deprecate(*args, **kwargs):
         fn = args[0]
         args = args[1:]
 
-        # backward compatibility -- can be removed
-        # after next release
-        if 'newname' in kwargs:
-            kwargs['new_name'] = kwargs.pop('newname')
-        if 'oldname' in kwargs:
-            kwargs['old_name'] = kwargs.pop('oldname')
-
         return _Deprecate(*args, **kwargs)(fn)
     else:
         return _Deprecate(*args, **kwargs)
