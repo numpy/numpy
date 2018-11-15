@@ -33,7 +33,6 @@ def _from_ctypes_array(t):
 
 
 def _from_ctypes_structure(t):
-    # TODO: gh-10533
     for item in t._fields_:
         if len(item) > 2:
             raise TypeError(
@@ -67,6 +66,18 @@ def _from_ctypes_structure(t):
         return np.dtype(fields, align=True)
 
 
+def dtype_from_ctypes_scalar(t):
+    """
+    Return the dtype type with endianness included if it's the case
+    """
+    if t.__ctype_be__ is t:
+        return np.dtype('>' + t._type_)
+    elif t.__ctype_le__ is t:
+        return np.dtype('<' + t._type_)
+    else:
+        return np.dtype(t._type_)
+
+
 def dtype_from_ctypes_type(t):
     """
     Construct a dtype object from a ctypes type
@@ -83,7 +94,7 @@ def dtype_from_ctypes_type(t):
             "conversion from ctypes.Union types like {} to dtype"
             .format(t.__name__))
     elif isinstance(t._type_, str):
-        return np.dtype(t._type_)
+        return dtype_from_ctypes_scalar(t)
     else:
         raise NotImplementedError(
             "Unknown ctypes type {}".format(t.__name__))
