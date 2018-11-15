@@ -738,7 +738,7 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
     }
 
     ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) && 
+    if ((new->alignment > 1) &&
                 ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
@@ -826,7 +826,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             if (names_size != PyTuple_Size(op)) {
                 errmsg = PyUString_FromFormat(
                         "could not assign tuple of length %zd to structure "
-                        "with %" NPY_INTP_FMT " fields.", 
+                        "with %" NPY_INTP_FMT " fields.",
                         PyTuple_Size(op), names_size);
                 PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
@@ -2825,7 +2825,7 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
 
     ret = PyObject_RichCompareBool(*ip1, *ip2, Py_LT);
     if (ret < 0) {
-        /* error occurred, avoid the next call to PyObject_RichCompareBool */ 
+        /* error occurred, avoid the next call to PyObject_RichCompareBool */
         return 0;
     }
     if (ret == 1) {
@@ -4236,7 +4236,9 @@ _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
  * #NAME = Void, String, Unicode#
  * #endian = |, |, =#
  * #flags = 0, 0, NPY_NEEDS_INIT#
+ * #name = void, bytes, unicode#
  */
+
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
         @from@_to_BOOL,
@@ -4302,9 +4304,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ArgFunc*)@from@_argmin
 };
 
-/*
- * FIXME: check for PY3K
- */
+#ifdef USE_DTYPE_AS_PYOBJECT
+
 static PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     /* typeobj */
@@ -4339,6 +4340,105 @@ static PyArray_Descr @from@_Descr = {
     -1,
 };
 
+#else
+
+static int
+Py@NAME@Descr_init(PyArray_Descr *self, PyObject *args, PyObject *kwds)
+{
+    /* XXX parse args? */
+    self->typeobj  = &Py@NAME@ArrType_Type;
+    self->kind  = NPY_@from@LTR;
+    self->type  = NPY_@from@LTR;
+    self->byteorder  = '@endian@';
+    /* unicode needs init as py3.3 does not like printing garbage  */
+    self->flags  = @flags@;
+    self->type_num  = NPY_@from@;
+    self->elsize  = 0;
+    self->alignment  = _ALIGN(@align@);
+    self->subarray  = NULL;
+    self->fields  = Py_None;
+    self->names  = NULL;
+    self->f  = &_Py@NAME@_ArrFuncs;
+    self->metadata  = NULL;
+    self->c_metadata  = NULL;
+    self->hash  = -1;
+    return 0;
+};
+
+NPY_NO_EXPORT PyObject *
+arraydescr_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds);
+
+/*
+ *****************************************************************************
+ **                       SETUP TYPE OBJECTS                                **
+ *****************************************************************************
+ */
+
+NPY_NO_EXPORT PyTypeObject Py@NAME@DescrType_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,                                          /* ob_size */
+#endif
+    "numpy.@name@_type",                        /* tp_name*/
+    sizeof(PyArray_Descr),                      /* tp_basicsize*/
+    0,                                          /* tp_itemsize */
+    0,                                          /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    (Py_TPFLAGS_DEFAULT
+#if !defined(NPY_PY3K)
+     | Py_TPFLAGS_CHECKTYPES
+#endif
+     | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    0,                                          /* tp_getset */
+    &PyArrayDescr_Type,                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)Py@NAME@Descr_init,               /* tp_init */
+    0,                                          /* tp_alloc */
+    arraydescr_new,                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+    0                                          /* tp_version_tag */
+};
+
+#endif
+
 /**end repeat**/
 
 /**begin repeat
@@ -4368,6 +4468,12 @@ static PyArray_Descr @from@_Descr = {
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble,
  *         Object, Datetime, Timedelta#
+ * #name = bool,
+ *         byte, ubyte, short, ushort, int, uint,
+ *         long, ulong, longlong, ulonglong,
+ *         half, float, double, longdouble,
+ *         cFloat, cdouble, clongdouble,
+ *         object, datetime, timedelta#
  * #kind = GENBOOL,
  *         SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED,
  *         SIGNED, UNSIGNED, SIGNED, UNSIGNED,
@@ -4443,9 +4549,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ArgFunc*)@from@_argmin
 };
 
-/*
- * FIXME: check for PY3K
- */
+#ifdef USE_DTYPE_AS_PYOBJECT
+
 NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     /* typeobj */
@@ -4480,12 +4585,115 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     -1,
 };
 
+#else
+
+static int
+Py@NAME@Descr_init(PyArray_Descr *self, PyObject *args, PyObject *kwds)
+{
+    /* XXX parse args? */
+    self->typeobj = &Py@NAME@ArrType_Type;
+    self->kind = NPY_@kind@LTR;
+    self->type  = NPY_@from@LTR;
+    self->byteorder  = '@endian@';
+    self->flags  = @isobject@;
+    self->type_num  = NPY_@from@;
+    self->elsize  = sizeof(@fromtype@);
+    self->alignment  = _ALIGN(@fromtype@);
+    self->subarray  = NULL;
+    self->fields  = Py_None;
+    self->names  = NULL;
+    self->f  = &_Py@NAME@_ArrFuncs;
+    self->metadata  = NULL;
+    self->c_metadata  = NULL;
+    self->hash  = -1;
+    if (self->type_num == NPY_DATETIME || self->type_num == NPY_TIMEDELTA) {
+        self->c_metadata = _create_datetime_metadata(NPY_DATETIME_DEFAULTUNIT, 1);
+        if (self->c_metadata == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+};
+
+
+/*****************************************************************************
+ **                       SETUP TYPE OBJECTS                                **
+ *****************************************************************************
+ */
+
+NPY_NO_EXPORT PyTypeObject Py@NAME@DescrType_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,                                          /* ob_size */
+#endif
+    "numpy.@name@_type",                        /* tp_name*/
+    sizeof(PyArray_Descr),                      /* tp_basicsize*/
+    0,                                          /* tp_itemsize */
+    0,                                          /* tp_dealloc */
+    0,                                          /* tp_print */
+    0,                                          /* tp_getattr */
+    0,                                          /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
+    0,                                          /* tp_repr */
+    0,                                          /* tp_as_number */
+    0,                                          /* tp_as_sequence */
+    0,                                          /* tp_as_mapping */
+    0,                                          /* tp_hash */
+    0,                                          /* tp_call */
+    0,                                          /* tp_str */
+    0,                                          /* tp_getattro */
+    0,                                          /* tp_setattro */
+    0,                                          /* tp_as_buffer */
+    (Py_TPFLAGS_DEFAULT
+#if !defined(NPY_PY3K)
+     | Py_TPFLAGS_CHECKTYPES
+#endif
+     | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
+    0,                                          /* tp_doc */
+    0,                                          /* tp_traverse */
+    0,                                          /* tp_clear */
+    0,                                          /* tp_richcompare */
+    0,                                          /* tp_weaklistoffset */
+    0,                                          /* tp_iter */
+    0,                                          /* tp_iternext */
+    0,                                          /* tp_methods */
+    0,                                          /* tp_members */
+    0,                                          /* tp_getset */
+    &PyArrayDescr_Type,                          /* tp_base */
+    0,                                          /* tp_dict */
+    0,                                          /* tp_descr_get */
+    0,                                          /* tp_descr_set */
+    0,                                          /* tp_dictoffset */
+    (initproc)Py@NAME@Descr_init,               /* tp_init */
+    0,                                          /* tp_alloc */
+    PyType_GenericNew,                          /* tp_new */
+    0,                                          /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+    0,                                          /* tp_version_tag */
+};
+
+#endif
+
 /**end repeat**/
 
 #define _MAX_LETTER 128
 static char _letter_to_num[_MAX_LETTER];
 
-static PyArray_Descr *_builtin_descrs[] = {
+static PyArray_Descr *_builtin_descrs[24];
+/* = {
+    &BOOL_Descr,
     &BOOL_Descr,
     &BYTE_Descr,
     &UBYTE_Descr,
@@ -4510,7 +4718,7 @@ static PyArray_Descr *_builtin_descrs[] = {
     &DATETIME_Descr,
     &TIMEDELTA_Descr,
     &HALF_Descr
-};
+}; */
 
 /*NUMPY_API
  * Get the PyArray_Descr structure for a type.
@@ -4586,7 +4794,7 @@ PyArray_DescrFromType(int type)
 
 /*
  * This function is called during numpy module initialization,
- * and is used to initialize internal dtype tables.
+ * It is used to initialize internal dtype tables and _builtin_descrs.
  */
 NPY_NO_EXPORT int
 set_typeinfo(PyObject *dict)
@@ -4596,13 +4804,23 @@ set_typeinfo(PyObject *dict)
 
     PyArray_Descr *dtype;
     PyObject *cobj, *key;
+    PyObject * typedict = PyDict_New();
+    if (typedict == NULL) {
+        return -1;
+    }
 
-    /*
-     * Add cast functions for the new types
-     */
+    /* Set up _builtin_descrs */
 
     /**begin repeat
      *
+     * #NAME = Bool,
+     *         Byte, UByte, Short, UShort, Int, UInt,
+     *         Long, ULong, LongLong, ULongLong,
+     *         Half, Float, Double, LongDouble,
+     *         CFloat, CDouble, CLongDouble,
+     *         Object, String, Unicode, Void,
+     *         Datetime, Timedelta#
+
      * #name1 = BOOL,
      *          BYTE, UBYTE, SHORT, USHORT, INT, UINT,
      *          LONG, ULONG, LONGLONG, ULONGLONG,
@@ -4612,18 +4830,41 @@ set_typeinfo(PyObject *dict)
      *          DATETIME,TIMEDELTA#
      */
 
-    /**begin repeat1
-     *
-     * #name2 = HALF, DATETIME, TIMEDELTA#
-     */
-
+#ifdef USE_DTYPE_AS_PYOBJECT
+    _builtin_descrs[NPY_@name1@] = @name1@_Descr;
     dtype = _builtin_descrs[NPY_@name1@];
+
+    @name1@_Descr.fields = Py_None;
+
+#else
+    if (PyType_Ready(&Py@NAME@DescrType_Type) < 0) {
+        return -1;
+    }
+    if (PyDict_SetItemString(typedict, "@NAME@Type", (PyObject*)&Py@NAME@DescrType_Type) < 0) {
+        return -1;
+    }
+    dtype = (PyArray_Descr*)PyObject_CallObject((PyObject*)&Py@NAME@DescrType_Type, NULL);
+    if (dtype == NULL) {
+        return -1;
+    }
+    _builtin_descrs[NPY_@name1@] = dtype;
+#endif
     if (dtype->f->castdict == NULL) {
         dtype->f->castdict = PyDict_New();
         if (dtype->f->castdict == NULL) {
             return -1;
         }
     }
+
+    /*
+     * Add cast functions for the new types
+     */
+
+    /**begin repeat1
+     *
+     * #name2 = HALF, DATETIME, TIMEDELTA#
+     */
+
     key = PyInt_FromLong(NPY_@name2@);
     if (key == NULL) {
         return -1;
@@ -4645,17 +4886,25 @@ set_typeinfo(PyObject *dict)
 
     /**end repeat**/
 
+    _builtin_descrs[NPY_TIMEDELTA]->c_metadata = _create_datetime_metadata(
+                NPY_DATETIME_DEFAULTUNIT, 1);
+    if (PyDict_SetItemString(dict,  "descrtypes", typedict) < 0) {
+        return -1;
+    }
+
+#ifdef USE_DTYPE_AS_PYOBJECT
     _builtin_descrs[NPY_DATETIME]->c_metadata = _create_datetime_metadata(
                 NPY_DATETIME_DEFAULTUNIT, 1);
     if (_builtin_descrs[NPY_DATETIME]->c_metadata == NULL) {
         return -1;
     }
+
     _builtin_descrs[NPY_TIMEDELTA]->c_metadata = _create_datetime_metadata(
                 NPY_DATETIME_DEFAULTUNIT, 1);
-    if (_builtin_descrs[NPY_DATETIME]->c_metadata == NULL) {
+    if (_builtin_descrs[NPY_TIMEDELTA]->c_metadata == NULL) {
         return -1;
     }
-
+#endif
     for (i = 0; i < _MAX_LETTER; i++) {
         _letter_to_num[i] = NPY_NTYPES;
     }
@@ -4678,21 +4927,7 @@ set_typeinfo(PyObject *dict)
 
     _letter_to_num[NPY_STRINGLTR2] = NPY_STRING;
 
-    /**begin repeat
-      * #name = BOOL,
-      *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
-      *         LONG, ULONG, LONGLONG, ULONGLONG,
-      *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
-      *         CFLOAT, CDOUBLE, CLONGDOUBLE,
-      *         OBJECT, STRING, UNICODE, VOID,
-      *         DATETIME, TIMEDELTA#
-      */
-
-    @name@_Descr.fields = Py_None;
-
-    /**end repeat**/
-
-
+#ifdef USE_DTYPE_AS_PYOBJECT
     /**begin repeat
       * #name = STRING, UNICODE, VOID#
       */
@@ -4700,6 +4935,7 @@ set_typeinfo(PyObject *dict)
     PyDataType_MAKEUNSIZED(&@name@_Descr);
 
     /**end repeat**/
+#endif
 
     /* Set a dictionary with type information */
     infodict = PyDict_New();

@@ -1707,7 +1707,6 @@ PyArray_DescrNew(PyArray_Descr *base)
     memcpy((char *)newdescr + sizeof(PyObject),
            (char *)base + sizeof(PyObject),
            sizeof(PyArray_Descr) - sizeof(PyObject));
-
     /*
      * The c_metadata has a by-value ownership model, need to clone it
      * (basically a deep copy, but the auxdata clone function has some
@@ -1746,14 +1745,15 @@ PyArray_DescrNew(PyArray_Descr *base)
     return newdescr;
 }
 
-/*
- * should never be called for builtin-types unless
- * there is a reference-count problem
- */
 static void
 arraydescr_dealloc(PyArray_Descr *self)
 {
+#ifdef USE_DTYPE_AS_PYOBJECT
     if (self->fields == Py_None) {
+        /*
+         * should never be called for builtin-types unless
+         * there is a reference-count problem
+         */
         fprintf(stderr, "*** Reference count error detected: \n" \
                 "an attempt was made to deallocate %d (%c) ***\n",
                 self->type_num, self->type);
@@ -1761,6 +1761,7 @@ arraydescr_dealloc(PyArray_Descr *self)
         Py_INCREF(self);
         return;
     }
+#endif
     _dealloc_cached_buffer_info((PyObject*)self);
     Py_XDECREF(self->typeobj);
     Py_XDECREF(self->names);
@@ -2191,11 +2192,11 @@ static PyGetSetDef arraydescr_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL},
 };
 
-static PyObject *
-arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
+NPY_NO_EXPORT PyObject *
+arraydescr_new(PyTypeObject *subtype,
                 PyObject *args, PyObject *kwds)
 {
-    PyObject *odescr, *metadata=NULL;
+    PyObject *odescr=NULL, *metadata=NULL;
     PyArray_Descr *descr, *conv;
     npy_bool align = NPY_FALSE;
     npy_bool copy = NPY_FALSE;
@@ -2203,12 +2204,16 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!:dtype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&O!:dtype", kwlist,
                 &odescr,
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
                 &PyDict_Type, &metadata)) {
         return NULL;
+    }
+    if (odescr == NULL)
+    {
+       return PyType_GenericNew(subtype, args, kwds);
     }
 
     if (align) {
