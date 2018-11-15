@@ -29,20 +29,27 @@ class TestAsPairs(object):
 
     def test_two_values(self):
         """Test proper casting for two different values."""
+        # Broadcasting in the first dimension with numbers
         expected = np.array([[3, 4]] * 10)
         for x in ([3, 4], [[3, 4]]):
             result = _as_pairs(x, 10)
             assert_equal(result, expected)
-        # Special case: two values should be broadcasted into last dimension
-        assert_equal(
-            _as_pairs([[3], [4]], 2),
-            np.array([[3, 3], [4, 4]])
-        )
-        # With dtype=object
+        # and with dtype=object
         obj = object()
         assert_equal(
             _as_pairs(["a", obj], 10),
             np.array([["a", obj]] * 10)
+        )
+
+        # Broadcasting in the second / last dimension with numbers
+        assert_equal(
+            _as_pairs([[3], [4]], 2),
+            np.array([[3, 3], [4, 4]])
+        )
+        # and with dtype=object
+        assert_equal(
+            _as_pairs([["a"], [obj]], 2),
+            np.array([["a", "a"], [obj, obj]])
         )
 
     def test_with_none(self):

@@ -899,8 +899,8 @@ def _as_pairs(x, ndim, as_index=False):
     ndim : int
         Number of pairs the broadcasted `x` will have.
     as_index : bool, optional
-        If `x` is not None, try to round each element of `x` to an integer and
-        ensure every element is positive.
+        If `x` is not None, try to round each element of `x` to an integer
+        (dtype `np.intp`) and ensure every element is positive.
 
     Returns
     -------
@@ -936,7 +936,7 @@ def _as_pairs(x, ndim, as_index=False):
 
         if x.size == 2 and x.shape != (2, 1):
             # x was supplied with a single value for each side
-            # Except special case when each dimension has a single value
+            # but except case when each dimension has a single value
             # which should be broadcasted to a pair,
             # e.g. [[1], [2]] -> [[1, 1], [2, 2]] not [[1, 2], [1, 2]]
             x = x.ravel()  # Ensure x[0], x[1] works
