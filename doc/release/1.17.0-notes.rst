@@ -25,6 +25,13 @@ Compatibility notes
 C API changes
 =============
 
+Removed unused compatibility header ``noprefix.h``
+--------------------------------------------------
+The ``numpy/noprefix.h`` header allowed use of non-Numpy specific
+named varaibles, for instance `uint` instead of `npy_uint`. It was useful
+during a transition period long ago but should no longer be used since it
+could cause name conflicts.
+
 New Features
 ============
 
