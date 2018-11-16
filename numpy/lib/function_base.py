@@ -314,8 +314,9 @@ def average(a, axis=None, weights=None, returned=False):
     weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the average according to its associated weight.
-        The weights array can either be 1-D (in which case its length must be
-        the size of `a` along the given axis) or of the same shape as `a`.
+        The weights array can either be x-D (in which case its ndim x must
+        equal the length of `axis`. The length of each dimension must be the
+        size of `a` along the corresponding axis) or of the same shape as `a`.
         If `weights=None`, then all data in `a` are assumed to have a
         weight equal to one.
     returned : bool, optional
@@ -345,8 +346,11 @@ def average(a, axis=None, weights=None, returned=False):
         When all weights along axis are zero. See `numpy.ma.average` for a
         version robust to this type of error.
     TypeError
-        When the length of 1D `weights` is not the same as the shape of `a`
-        along axis.
+        When the ndim of `weights` is not the same as the length of `axis`.
+        When `axis` is None and the shapes of `weights` and `a` differ.
+    ValueError
+        When the length of `weights` is not the same as the shape of `a`
+        along correponding axis.
 
     See Also
     --------
@@ -380,11 +384,24 @@ def average(a, axis=None, weights=None, returned=False):
     ...
     TypeError: Axis must be specified when shapes of a and weights differ.
     
+    >>> data = np.arange(6).reshape((1, 3, 2))
+    >>> np.average(data, weights=[[0, 1]], axis=(0, 2))
+    array([1., 3., 5.])
+    >>> np.average(data, weights=[0, 1], axis=(0, 2))
+    Traceback (most recent call last):
+    ...
+    TypeError: ndim of weights should equal len of axis.
+    >>> np.average(data, weights=[[0, 1]], axis=(2, 0))
+    Traceback (most recent call last):
+    ...
+    ValueError: Length of weights not compatible with specified axis.
+
     >>> a = np.ones(5, dtype=np.float128)
     >>> w = np.ones(5, dtype=np.complex64)
     >>> avg = np.average(a, weights=w)
     >>> print(avg.dtype)
     complex256
+
     """
     a = np.asanyarray(a)
 
@@ -399,22 +416,29 @@ def average(a, axis=None, weights=None, returned=False):
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
 
+        # normalize axis
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim)
+
         # Sanity checks
         if a.shape != wgt.shape:
             if axis is None:
                 raise TypeError(
                     "Axis must be specified when shapes of a and weights "
                     "differ.")
-            if wgt.ndim != 1:
+            if len(axis) != wgt.ndim:
                 raise TypeError(
-                    "1D weights expected when shapes of a and weights differ.")
-            if wgt.shape[0] != a.shape[axis]:
-                raise ValueError(
-                    "Length of weights not compatible with specified axis.")
+                    "ndim of weights should equal len of axis.")
+            for i, ax in enumerate(axis):
+                if wgt.shape[i] != a.shape[ax]:
+                    raise ValueError(
+                        "Length of weights not compatible with specified axis.")
 
             # setup wgt to broadcast along axis
-            wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
-            wgt = wgt.swapaxes(-1, axis)
+            weights_shape = [1,] * a.ndim
+            for i, ax in enumerate(axis):
+                weights_shape[ax] = wgt.shape[i]
+            wgt = wgt.reshape(weights_shape)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
         if np.any(scl == 0.0):
