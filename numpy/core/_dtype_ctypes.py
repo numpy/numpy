@@ -78,6 +78,22 @@ def dtype_from_ctypes_scalar(t):
         return np.dtype(t._type_)
 
 
+def dtype_from_ctypes_union(t):
+    formats = []
+    offsets = []
+    names = []
+    for fname, ftyp in t._fields_:
+        names.append(fname)
+        formats.append(dtype_from_ctypes_type(ftyp))
+        offsets.append(0)  # Union fields are offset to 0
+
+    return np.dtype(dict(
+        formats=formats,
+        offsets=offsets,
+        names=names,
+        itemsize=ctypes.sizeof(t)))
+
+
 def dtype_from_ctypes_type(t):
     """
     Construct a dtype object from a ctypes type
@@ -89,10 +105,7 @@ def dtype_from_ctypes_type(t):
     elif issubclass(t, _ctypes.Structure):
         return _from_ctypes_structure(t)
     elif issubclass(t, _ctypes.Union):
-        # TODO
-        raise NotImplementedError(
-            "conversion from ctypes.Union types like {} to dtype"
-            .format(t.__name__))
+        return dtype_from_ctypes_union(t)
     elif isinstance(t._type_, str):
         return dtype_from_ctypes_scalar(t)
     else:
