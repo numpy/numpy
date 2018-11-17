@@ -837,7 +837,31 @@ class TestFromCTypes(object):
             ]
         expected = np.dtype(dict(
             names=['a', 'b', 'c', 'd'],
-            formats=['u1','<u2','<u4',[('one', 'u1'), ('two', '<u4')]],
+            formats=['u1', '<u2', '<u4', [('one', 'u1'), ('two', '<u4')]],
+            offsets=[0, 0, 0, 0],
+            itemsize=ctypes.sizeof(Union)
+        ))
+        self.check(Union, expected)
+
+
+    def test_union_packed(self):
+        class Struct(ctypes.Structure):
+            _fields_ = [
+                ('one', ctypes.c_uint8),
+                ('two', ctypes.c_uint32.__ctype_le__)
+            ]
+            _pack_ = 1
+        class Union(ctypes.Union):
+            _pack_ = 1
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16),
+                ('c', ctypes.c_uint32),
+                ('d', Struct),
+            ]
+        expected = np.dtype(dict(
+            names=['a', 'b', 'c', 'd'],
+            formats=['u1', '<u2', '<u4', [('one', 'u1'), ('two', '<u4')]],
             offsets=[0, 0, 0, 0],
             itemsize=ctypes.sizeof(Union)
         ))
