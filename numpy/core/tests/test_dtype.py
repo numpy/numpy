@@ -821,13 +821,14 @@ class TestFromCTypes(object):
         ))
         self.check(Union, expected)
 
-    def test_union_with_struct_endian_packed(self):
+    def test_union_with_struct_packed(self):
         class Struct(ctypes.Structure):
+            _pack_ = 1
             _fields_ = [
                 ('one', ctypes.c_uint8),
-                ('two', ctypes.c_uint32.__ctype_le__)
+                ('two', ctypes.c_uint32)
             ]
-            _pack_ = 1
+
         class Union(ctypes.Union):
             _fields_ = [
                 ('a', ctypes.c_uint8),
@@ -837,18 +838,17 @@ class TestFromCTypes(object):
             ]
         expected = np.dtype(dict(
             names=['a', 'b', 'c', 'd'],
-            formats=['u1', '<u2', '<u4', [('one', 'u1'), ('two', '<u4')]],
+            formats=['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
             offsets=[0, 0, 0, 0],
             itemsize=ctypes.sizeof(Union)
         ))
         self.check(Union, expected)
-
 
     def test_union_packed(self):
         class Struct(ctypes.Structure):
             _fields_ = [
                 ('one', ctypes.c_uint8),
-                ('two', ctypes.c_uint32.__ctype_le__)
+                ('two', ctypes.c_uint32)
             ]
             _pack_ = 1
         class Union(ctypes.Union):
@@ -861,12 +861,11 @@ class TestFromCTypes(object):
             ]
         expected = np.dtype(dict(
             names=['a', 'b', 'c', 'd'],
-            formats=['u1', '<u2', '<u4', [('one', 'u1'), ('two', '<u4')]],
+            formats=['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
             offsets=[0, 0, 0, 0],
             itemsize=ctypes.sizeof(Union)
         ))
         self.check(Union, expected)
-
 
     def test_packed_structure(self):
         class PackedStructure(ctypes.Structure):
