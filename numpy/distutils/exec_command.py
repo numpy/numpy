@@ -67,8 +67,10 @@ def filepath_from_subprocess_output(output):
 
     Inherited from `exec_command`, and possibly incorrect.
     """
-    output = output.decode(locale.getpreferredencoding(False),
-                           errors='replace')
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    output = output.decode(mylocale, errors='replace')
     output = output.replace('\r\n', '\n')
     # Another historical oddity
     if output[-1:] == '\n':
@@ -278,9 +280,10 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         return 127, ''
 
     text, err = proc.communicate()
-    text = text.decode(locale.getpreferredencoding(False),
-                       errors='replace')
-
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    text = text.decode(mylocale, errors='replace')
     text = text.replace('\r\n', '\n')
     # Another historical oddity
     if text[-1:] == '\n':
