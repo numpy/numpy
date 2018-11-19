@@ -505,7 +505,8 @@ typedef struct {
         PyArray_NonzeroFunc *nonzero;
 
         /*
-         * Used for arange.
+         * Used for arange. Should return 0 on success
+         * and -1 on failure.
          * Can be NULL.
          */
         PyArray_FillFunc *fill;
