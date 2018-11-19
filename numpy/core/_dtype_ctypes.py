@@ -66,19 +66,19 @@ def _from_ctypes_structure(t):
         return np.dtype(fields, align=True)
 
 
-def dtype_from_ctypes_scalar(t):
+def _from_ctypes_scalar(t):
     """
     Return the dtype type with endianness included if it's the case
     """
-    if t.__ctype_be__ is t:
+    if getattr(t, '__ctype_be__', None) is t:
         return np.dtype('>' + t._type_)
-    elif t.__ctype_le__ is t:
+    elif getattr(t, '__ctype_le__', None) is t:
         return np.dtype('<' + t._type_)
     else:
         return np.dtype(t._type_)
 
 
-def dtype_from_ctypes_union(t):
+def _from_ctypes_union(t):
     formats = []
     offsets = []
     names = []
@@ -105,9 +105,9 @@ def dtype_from_ctypes_type(t):
     elif issubclass(t, _ctypes.Structure):
         return _from_ctypes_structure(t)
     elif issubclass(t, _ctypes.Union):
-        return dtype_from_ctypes_union(t)
-    elif isinstance(t._type_, str):
-        return dtype_from_ctypes_scalar(t)
+        return _from_ctypes_union(t)
+    elif isinstance(getattr(t, '_type_', None), str):
+        return _from_ctypes_scalar(t)
     else:
         raise NotImplementedError(
             "Unknown ctypes type {}".format(t.__name__))
