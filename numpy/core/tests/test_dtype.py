@@ -807,9 +807,6 @@ class TestFromCTypes(object):
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
         assert_raises(TypeError, np.dtype, p_uint8)
 
-    @pytest.mark.xfail(
-        reason="Unions are not implemented",
-        raises=NotImplementedError)
     def test_union(self):
         class Union(ctypes.Union):
             _fields_ = [
@@ -821,6 +818,52 @@ class TestFromCTypes(object):
             formats=[np.uint8, np.uint16],
             offsets=[0, 0],
             itemsize=2
+        ))
+        self.check(Union, expected)
+
+    def test_union_with_struct_packed(self):
+        class Struct(ctypes.Structure):
+            _pack_ = 1
+            _fields_ = [
+                ('one', ctypes.c_uint8),
+                ('two', ctypes.c_uint32)
+            ]
+
+        class Union(ctypes.Union):
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16),
+                ('c', ctypes.c_uint32),
+                ('d', Struct),
+            ]
+        expected = np.dtype(dict(
+            names=['a', 'b', 'c', 'd'],
+            formats=['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            offsets=[0, 0, 0, 0],
+            itemsize=ctypes.sizeof(Union)
+        ))
+        self.check(Union, expected)
+
+    def test_union_packed(self):
+        class Struct(ctypes.Structure):
+            _fields_ = [
+                ('one', ctypes.c_uint8),
+                ('two', ctypes.c_uint32)
+            ]
+            _pack_ = 1
+        class Union(ctypes.Union):
+            _pack_ = 1
+            _fields_ = [
+                ('a', ctypes.c_uint8),
+                ('b', ctypes.c_uint16),
+                ('c', ctypes.c_uint32),
+                ('d', Struct),
+            ]
+        expected = np.dtype(dict(
+            names=['a', 'b', 'c', 'd'],
+            formats=['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            offsets=[0, 0, 0, 0],
+            itemsize=ctypes.sizeof(Union)
         ))
         self.check(Union, expected)
 
