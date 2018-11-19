@@ -807,6 +807,9 @@ class TestFromCTypes(object):
         p_uint8 = ctypes.POINTER(ctypes.c_uint8)
         assert_raises(TypeError, np.dtype, p_uint8)
 
+    def test_void_pointer(self):
+        self.check(ctypes.c_void_p, np.uintp)
+
     def test_union(self):
         class Union(ctypes.Union):
             _fields_ = [
