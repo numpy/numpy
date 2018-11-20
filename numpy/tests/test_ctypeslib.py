@@ -108,9 +108,14 @@ class TestNdpointer(object):
         assert_raises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
     def test_cache(self):
-        a1 = ndpointer(dtype=np.float64)
-        a2 = ndpointer(dtype=np.float64)
-        assert_(a1 == a2)
+        assert_(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
+
+        # shapes are normalized
+        assert_(ndpointer(shape=2) is ndpointer(shape=(2,)))
+
+        # 1.12 <= v < 1.16 had a bug that made these fail
+        assert_(ndpointer(shape=2) is not ndpointer(ndim=2))
+        assert_(ndpointer(ndim=2) is not ndpointer(shape=2))
 
 
 @pytest.mark.skipif(not _HAS_CTYPE,
