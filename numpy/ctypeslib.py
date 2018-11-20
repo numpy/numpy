@@ -269,8 +269,11 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     """
 
+    # normalize dtype to an Optional[dtype]
     if dtype is not None:
         dtype = _dtype(dtype)
+
+    # normalize flags to an Optional[int]
     num = None
     if flags is not None:
         if isinstance(flags, str):
@@ -287,10 +290,23 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             except Exception:
                 raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
+
+    # normalize shape to an Optional[tuple]
+    if shape is not None:
+        try:
+            shape = tuple(shape)
+        except TypeError:
+            # single integer -> 1-tuple
+            shape = (shape,)
+
+    cache_key = (dtype, ndim, shape, num)
+
     try:
-        return _pointer_type_cache[(dtype, ndim, shape, num)]
+        return _pointer_type_cache[cache_key]
     except KeyError:
         pass
+
+    # produce a name for the new type
     if dtype is None:
         name = 'any'
     elif dtype.names:
@@ -300,23 +316,16 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     if ndim is not None:
         name += "_%dd" % ndim
     if shape is not None:
-        try:
-            strshape = [str(x) for x in shape]
-        except TypeError:
-            strshape = [str(shape)]
-            shape = (shape,)
-        shape = tuple(shape)
-        name += "_"+"x".join(strshape)
+        name += "_"+"x".join(str(x) for x in shape)
     if flags is not None:
         name += "_"+"_".join(flags)
-    else:
-        flags = []
+
     klass = type("ndpointer_%s"%name, (_ndptr,),
                  {"_dtype_": dtype,
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[(dtype, shape, ndim, num)] = klass
+    _pointer_type_cache[cache_key] = klass
     return klass
 
 
