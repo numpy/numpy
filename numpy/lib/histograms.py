@@ -497,8 +497,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
             variability and data size.
 
         'stone'
-            Estimator based on minimizing the estimated integrated
-            squared error (ISE) and can be regarded as a generalization
+            Estimator based on leave-one-out cross-validation estimate of
+            the integrated squared error. Can be regarded as a generalization
             of Scott's rule.
 
         'rice'
