@@ -544,8 +544,8 @@ class TestHistogramOptimBinNums(object):
             a, b = np.histogram(outlier_dataset, estimator)
             assert_equal(len(a), numbins)
 
-    def test_scott_vs_ise(self):
-        """Verify that Scott's rule and the ISE based method converges for normally distributed data"""
+    def test_scott_vs_stone(self):
+        """Verify that Scott's rule and Stone's rule converges for normally distributed data"""
 
         def nbins_ratio(seed, size):
             rng = np.random.RandomState(seed)
