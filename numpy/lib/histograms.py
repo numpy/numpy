@@ -111,13 +111,16 @@ def _hist_bin_scott(x, range):
     return (24.0 * np.pi**0.5 / x.size)**(1.0 / 3.0) * np.std(x)
 
 
-def _hist_bin_ise(x, range):
+def _hist_bin_stone(x, range):
     """
     Histogram bin estimator based on minimizing the estimated integrated squared error (ISE).
 
     The number of bins is chosen by minimizing the estimated ISE against the unknown true distribution.
     The ISE is estimated using cross-validation and can be regarded as a generalization of Scott's rule.
     https://en.wikipedia.org/wiki/Histogram#Scott.27s_normal_reference_rule
+
+    This paper by Stone appears to be the origination of this rule.
+    http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/34.pdf
 
     Parameters
     ----------
@@ -258,7 +261,7 @@ def _hist_bin_auto(x, range):
         return sturges_bw
 
 # Private dict initialized at module load time
-_hist_bin_selectors = {'stone': _hist_bin_ise,
+_hist_bin_selectors = {'stone': _hist_bin_stone,
                        'auto': _hist_bin_auto,
                        'doane': _hist_bin_doane,
                        'fd': _hist_bin_fd,
