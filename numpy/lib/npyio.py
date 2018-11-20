@@ -441,8 +441,8 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         else:
             # Try a pickle
             if not allow_pickle:
-                raise ValueError("allow_pickle=False, but file does not contain "
-                                 "non-pickled data")
+                raise ValueError("Cannot load file containing pickled data "
+                                 "when allow_pickle=False")
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except Exception:
