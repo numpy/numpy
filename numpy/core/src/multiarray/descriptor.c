@@ -257,6 +257,9 @@ _convert_from_tuple(PyObject *obj, int align)
             return NULL;
         }
         PyArray_DESCR_REPLACE(type);
+        if (type == NULL) {
+            return NULL;
+        }
         if (type->type_num == NPY_UNICODE) {
             type->elsize = itemsize << 2;
         }
@@ -1651,6 +1654,9 @@ finish:
 
     if (PyDataType_ISUNSIZED(*at) && (*at)->elsize != elsize) {
         PyArray_DESCR_REPLACE(*at);
+        if (*at == NULL) {
+            goto fail;
+        }
         (*at)->elsize = elsize;
     }
     if (endian != '=' && PyArray_ISNBO(endian)) {
@@ -1659,6 +1665,9 @@ finish:
     if (endian != '=' && (*at)->byteorder != '|'
         && (*at)->byteorder != endian) {
         PyArray_DESCR_REPLACE(*at);
+        if (*at == NULL) {
+            goto fail;
+        }
         (*at)->byteorder = endian;
     }
     return NPY_SUCCEED;
@@ -1698,10 +1707,22 @@ error:
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
-    PyArray_Descr *newdescr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+    PyObject *tuple = PyTuple_Pack(3,
+                                  /* dtype */ base,
+                                  /* align */ Py_False,
+                                  /* copy  */ Py_True);
+    PyObject *ret = PyObject_CallObject((PyObject*)Py_TYPE(base), tuple);
+    assert(ret != (PyObject*)base);
+    Py_DECREF(tuple);
+    return (PyArray_Descr*)ret;
+}
 
+/* Initialize the PyArray_Descr fields */
+static int
+_initialize_descr(PyArray_Descr *newdescr, PyArray_Descr *base)
+{
     if (newdescr == NULL) {
-        return NULL;
+        return -1;
     }
     /* Don't copy PyObject_HEAD part */
     memcpy((char *)newdescr + sizeof(PyObject),
@@ -1720,7 +1741,7 @@ PyArray_DescrNew(PyArray_Descr *base)
         if (newdescr->c_metadata == NULL) {
             PyErr_NoMemory();
             Py_DECREF(newdescr);
-            return NULL;
+            return -1;
         }
     }
 
@@ -1733,7 +1754,7 @@ PyArray_DescrNew(PyArray_Descr *base)
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
             Py_DECREF(newdescr);
-            return (PyArray_Descr *)PyErr_NoMemory();
+            return -1;
         }
         memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
         Py_INCREF(newdescr->subarray->shape);
@@ -1743,7 +1764,7 @@ PyArray_DescrNew(PyArray_Descr *base)
     Py_XINCREF(newdescr->metadata);
     newdescr->hash = -1;
 
-    return newdescr;
+    return 0;
 }
 
 /*
@@ -2192,7 +2213,7 @@ static PyGetSetDef arraydescr_getsets[] = {
 };
 
 static PyObject *
-arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
+arraydescr_new(PyTypeObject *subtype,
                 PyObject *args, PyObject *kwds)
 {
     PyObject *odescr, *metadata=NULL;
@@ -2220,9 +2241,12 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
         return NULL;
     }
 
-    /* Get a new copy of it unless it's already a copy */
-    if (copy && conv->fields == Py_None) {
-        descr = PyArray_DescrNew(conv);
+    if (copy) {
+
+        descr = PyObject_New(PyArray_Descr, subtype);
+        if (_initialize_descr(descr, conv) < 0) {
+            return NULL;
+        }
         Py_DECREF(conv);
         conv = descr;
         copied = NPY_TRUE;
@@ -2235,7 +2259,10 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
          */
         if (!copied) {
             copied = NPY_TRUE;
-            descr = PyArray_DescrNew(conv);
+            descr = PyObject_New(PyArray_Descr, subtype);
+            if (_initialize_descr(descr, conv) < 0) {
+                return NULL;
+            }
             Py_DECREF(conv);
             conv = descr;
         }
@@ -2954,6 +2981,9 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
     char endian;
 
     new = PyArray_DescrNew(self);
+    if (new == NULL) {
+        return NULL;
+    }
     endian = new->byteorder;
     if (endian != NPY_IGNORE) {
         if (newendian == NPY_SWAP) {
