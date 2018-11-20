@@ -336,6 +336,8 @@ of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
 was available for testing with NumPy 1.16 if appropriate environment variables
 are set, but is now always enabled.
 
+.. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+
 `numpy.lib.recfunctions.structured_to_unstructured` does not squeeze single-field views
 ---------------------------------------------------------------------------------------
 Previously ``structured_to_unstructured(arr[['a']])`` would produce a squeezed
@@ -373,4 +375,11 @@ Additionally, there are some corner cases with behavior changes:
 ------------------------------------------------------
 The interface may use an ``offset`` value that was mistakenly ignored.
 
-.. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+Pickle protocol in ``np.savez`` set to 3 for ``force zip64`` flag
+-----------------------------------------------------------------
+
+``np.savez`` was not using the ``force_zip64`` flag, which limited the size of
+the archive to 2GB. But using the flag requires us to use pickle protocol 3 to
+write ``object`` arrays. The protocol used was bumped to 3, meaning the archive
+will be unreadable by Python2.
+
