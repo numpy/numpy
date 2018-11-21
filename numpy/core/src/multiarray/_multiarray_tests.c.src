@@ -11,6 +11,13 @@
 #include "npy_extint128.h"
 #include "common.h"
 
+
+#if defined(MS_WIN32) || defined(__CYGWIN__)
+#define EXPORT(x) __declspec(dllexport) x
+#else
+#define EXPORT(x) x
+#endif
+
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
@@ -30,6 +37,12 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
 }
 
 #include "npy_pycompat.h"
+
+/** Function to test calling via ctypes */
+EXPORT(void*) forward_pointer(void *x)
+{
+    return x;
+}
 
 /*
  * TODO:
