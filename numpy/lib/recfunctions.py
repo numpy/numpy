@@ -888,6 +888,12 @@ def _get_fields_and_offsets(dt, offset=0):
             fields.extend(_get_fields_and_offsets(field[0], field[1] + offset))
     return fields
 
+
+def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
+                                           casting=None):
+    return (arr,)
+
+@array_function_dispatch(_structured_to_unstructured_dispatcher)
 def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     """
     Converts and n-D structured array into an (n+1)-D unstructured array.
@@ -968,6 +974,11 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     # finally is it safe to view the packed fields as the unstructured type
     return arr.view((out_dtype, sum(counts)))
 
+def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
+                                           align=None, copy=None, casting=None):
+    return (arr,)
+
+@array_function_dispatch(_unstructured_to_structured_dispatcher)
 def unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
@@ -1061,6 +1072,10 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     # finally view as the final nested dtype and remove the last axis
     return arr.view(out_dtype)[..., 0]
 
+def _apply_along_fields_dispatcher(func, arr):
+    return (arr,)
+
+@array_function_dispatch(_apply_along_fields_dispatcher)
 def apply_along_fields(func, arr):
     """
     Apply function 'func' as a reduction across fields of a structured array.
@@ -1100,6 +1115,10 @@ def apply_along_fields(func, arr):
     # works and avoids axis requirement, but very, very slow:
     #return np.apply_along_axis(func, -1, uarr)
 
+def _assign_fields_by_name_dispatcher(dst, src, zero_unassigned=None):
+    return dst, src
+
+@array_function_dispatch(_assign_fields_by_name_dispatcher)
 def assign_fields_by_name(dst, src, zero_unassigned=True):
     """
     Assigns values from one structured array to another by field name.
@@ -1137,6 +1156,10 @@ def assign_fields_by_name(dst, src, zero_unassigned=True):
             assign_fields_by_name(dst[name], src[name],
                                   zero_unassigned)
 
+def _require_fields_dispatcher(array, required_dtype):
+    return (array,)
+
+@array_function_dispatch(_require_fields_dispatcher)
 def require_fields(array, required_dtype):
     """
     Casts a structured array to a new dtype using assignment by field-name.
