@@ -21,7 +21,7 @@ array_function_dispatch = functools.partial(
 _range = range
 
 
-def _hist_bin_sqrt(x):
+def _hist_bin_sqrt(x, range):
     """
     Square root histogram bin estimator.
 
@@ -38,10 +38,11 @@ def _hist_bin_sqrt(x):
     -------
     h : An estimate of the optimal bin width for the given data.
     """
+    del range  # unused
     return x.ptp() / np.sqrt(x.size)
 
 
-def _hist_bin_sturges(x):
+def _hist_bin_sturges(x, range):
     """
     Sturges histogram bin estimator.
 
@@ -60,10 +61,11 @@ def _hist_bin_sturges(x):
     -------
     h : An estimate of the optimal bin width for the given data.
     """
+    del range  # unused
     return x.ptp() / (np.log2(x.size) + 1.0)
 
 
-def _hist_bin_rice(x):
+def _hist_bin_rice(x, range):
     """
     Rice histogram bin estimator.
 
@@ -83,10 +85,11 @@ def _hist_bin_rice(x):
     -------
     h : An estimate of the optimal bin width for the given data.
     """
+    del range  # unused
     return x.ptp() / (2.0 * x.size ** (1.0 / 3))
 
 
-def _hist_bin_scott(x):
+def _hist_bin_scott(x, range):
     """
     Scott histogram bin estimator.
 
@@ -104,10 +107,52 @@ def _hist_bin_scott(x):
     -------
     h : An estimate of the optimal bin width for the given data.
     """
+    del range  # unused
     return (24.0 * np.pi**0.5 / x.size)**(1.0 / 3.0) * np.std(x)
 
 
-def _hist_bin_doane(x):
+def _hist_bin_stone(x, range):
+    """
+    Histogram bin estimator based on minimizing the estimated integrated squared error (ISE).
+
+    The number of bins is chosen by minimizing the estimated ISE against the unknown true distribution.
+    The ISE is estimated using cross-validation and can be regarded as a generalization of Scott's rule.
+    https://en.wikipedia.org/wiki/Histogram#Scott.27s_normal_reference_rule
+
+    This paper by Stone appears to be the origination of this rule.
+    http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/34.pdf
+
+    Parameters
+    ----------
+    x : array_like
+        Input data that is to be histogrammed, trimmed to range. May not
+        be empty.
+    range : (float, float)
+        The lower and upper range of the bins.
+
+    Returns
+    -------
+    h : An estimate of the optimal bin width for the given data.
+    """
+
+    n = x.size
+    ptp_x = np.ptp(x)
+    if n <= 1 or ptp_x == 0:
+        return 0
+
+    def jhat(nbins):
+        hh = ptp_x / nbins
+        p_k = np.histogram(x, bins=nbins, range=range)[0] / n
+        return (2 - (n + 1) * p_k.dot(p_k)) / hh
+
+    nbins_upper_bound = max(100, int(np.sqrt(n)))
+    nbins = min(_range(1, nbins_upper_bound + 1), key=jhat)
+    if nbins == nbins_upper_bound:
+        warnings.warn("The number of bins estimated may be suboptimal.", RuntimeWarning, stacklevel=2)
+    return ptp_x / nbins
+
+
+def _hist_bin_doane(x, range):
     """
     Doane's histogram bin estimator.
 
@@ -125,6 +170,7 @@ def _hist_bin_doane(x):
     -------
     h : An estimate of the optimal bin width for the given data.
     """
+    del range  # unused
     if x.size > 2:
         sg1 = np.sqrt(6.0 * (x.size - 2) / ((x.size + 1.0) * (x.size + 3)))
         sigma = np.std(x)
@@ -141,7 +187,7 @@ def _hist_bin_doane(x):
     return 0.0
 
 
-def _hist_bin_fd(x):
+def _hist_bin_fd(x, range):
     """
     The Freedman-Diaconis histogram bin estimator.
 
@@ -166,11 +212,12 @@ def _hist_bin_fd(x):
     -------
     h : An estimate of the optimal bin width for the given data.
     """
+    del range  # unused
     iqr = np.subtract(*np.percentile(x, [75, 25]))
     return 2.0 * iqr * x.size ** (-1.0 / 3.0)
 
 
-def _hist_bin_auto(x):
+def _hist_bin_auto(x, range):
     """
     Histogram bin estimator that uses the minimum width of the
     Freedman-Diaconis and Sturges estimators if the FD bandwidth is non zero
@@ -204,8 +251,9 @@ def _hist_bin_auto(x):
     --------
     _hist_bin_fd, _hist_bin_sturges
     """
-    fd_bw = _hist_bin_fd(x)
-    sturges_bw = _hist_bin_sturges(x)
+    fd_bw = _hist_bin_fd(x, range)
+    sturges_bw = _hist_bin_sturges(x, range)
+    del range  # unused
     if fd_bw:
         return min(fd_bw, sturges_bw)
     else:
@@ -213,7 +261,8 @@ def _hist_bin_auto(x):
         return sturges_bw
 
 # Private dict initialized at module load time
-_hist_bin_selectors = {'auto': _hist_bin_auto,
+_hist_bin_selectors = {'stone': _hist_bin_stone,
+                       'auto': _hist_bin_auto,
                        'doane': _hist_bin_doane,
                        'fd': _hist_bin_fd,
                        'rice': _hist_bin_rice,
@@ -348,7 +397,7 @@ def _get_bin_edges(a, bins, range, weights):
             n_equal_bins = 1
         else:
             # Do not call selectors on empty arrays
-            width = _hist_bin_selectors[bin_name](a)
+            width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
             if width:
                 n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
             else:
@@ -449,6 +498,11 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         'scott'
             Less robust estimator that that takes into account data
             variability and data size.
+
+        'stone'
+            Estimator based on leave-one-out cross-validation estimate of
+            the integrated squared error. Can be regarded as a generalization
+            of Scott's rule.
 
         'rice'
             Estimator does not take variability into account, only data

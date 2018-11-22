@@ -123,6 +123,13 @@ of:
 New Features
 ============
 
+Integrated squared error (ISE) estimator added to ``histogram``
+---------------------------------------------------------------
+This method (``bins='stone'``) for optimizing the bin number is a generalization of the
+Scott's rule. The Scott's rule assumes the distribution is approximately
+Normal, while the ISE is a nonparametric method based on cross-validation.
+https://en.wikipedia.org/wiki/Histogram#Minimizing_cross-validation_estimated_squared_error
+
 ``max_rows`` keyword added for ``np.loadtxt``
 ---------------------------------------------
 New keyword ``max_rows`` in `numpy.loadtxt` sets the maximum rows of the
