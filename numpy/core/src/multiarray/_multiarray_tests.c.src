@@ -2066,3 +2066,9 @@ init_multiarray_tests(void)
     }
     return RETVAL;
 }
+
+NPY_NO_EXPORT int
+test_not_exported(void)
+{
+    return 1;
+}
