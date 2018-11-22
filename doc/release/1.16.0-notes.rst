@@ -329,6 +329,16 @@ types. As of this release, this caveat is lifted - now:
   * Bitfields are no longer interpreted as sub-arrays
   * Pointers are no longer replaced with the type that they point to
 
+A new ``ndpointer.contents`` member
+-----------------------------------
+This matches the ``.contents`` member of normal ctypes arrays, and can be used
+to construct an ``np.array`` around the pointers contents.
+
+This replaces ``np.array(some_nd_pointer)``, which stopped working in 1.15.
+
+As a side effect of this change, ``ndpointer`` now supports dtypes with
+overlapping fields and padding.
+
 
 Changes
 =======
