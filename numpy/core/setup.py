@@ -379,8 +379,9 @@ def check_mathlib(config_cmd):
 def visibility_define(config):
     """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
     string)."""
-    if config.check_compiler_gcc4():
-        return '__attribute__((visibility("hidden")))'
+    hide = '__attribute__((visibility("hidden")))'
+    if config.check_gcc_function_attribute(hide, 'hideme'):
+        return hide
     else:
         return ''
 
