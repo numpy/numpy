@@ -1,8 +1,8 @@
 """
-Functions to pad values onto the edges of an n-dimensional array.
+The arraypad module contains a group of functions to pad values onto the edges
+of an n-dimensional array.
+
 """
-
-
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
@@ -10,6 +10,10 @@ from numpy.core.overrides import array_function_dispatch
 
 
 __all__ = ['pad']
+
+
+###############################################################################
+# Private utility functions.
 
 
 def _linear_ramp(ndim, axis, start, stop, size, reverse=False, dtype=None):
@@ -628,6 +632,10 @@ def _as_pairs(x, ndim, as_index=False):
 
 def _pad_dispatcher(array, pad_width, mode, **kwargs):
     return (array,)
+
+
+###############################################################################
+# Public functions
 
 
 @array_function_dispatch(_pad_dispatcher, module='numpy')
