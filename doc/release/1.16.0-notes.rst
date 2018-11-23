@@ -67,6 +67,10 @@ Expired deprecations
 * ``np.lib.function_base.unique`` was removed, finishing a deprecation cycle
   begun in NumPy 1.4. Use `numpy.unique` instead.
 
+* multi-field indexing now returns views instead of copies, finishing a
+  deprecation cycle begun in NumPy 1.7. The change was previously attempted in
+  NumPy 1.14 but reverted until now.
+
 Compatibility notes
 ===================
 
@@ -112,6 +116,23 @@ and raise a ``TypeError``.
 Previously, only the ``dims`` keyword argument was accepted
 for specification of the shape of the array to be used
 for unraveling. ``dims`` remains supported, but is now deprecated.
+
+multi-field views return a view instead of a copy
+-------------------------------------------------
+Indexing a structured array with multiple fields, e.g.,
+``arr[['f1', 'f3']]``, returns a view into the original array instead of a
+copy. The returned view will often have extra padding bytes corresponding to
+intervening fields in the original array, unlike before, which will
+affect code such as ``arr[['f1', 'f3']].view('float64')``. This change has
+been planned since numpy 1.7 and such operations have emitted
+``FutureWarnings`` since then and more since 1.12.
+
+To help users update their code to account for these changes, a number of
+functions have been added to the ``numpy.lib.recfunctions`` module which
+safely allow such operations. For instance, the code above can be replaced
+with ``structured_to_unstructured(arr[['f1', 'f3']], dtype='float64')``.
+See the "accessing multiple fields" section of the
+`user guide <https://docs.scipy.org/doc/numpy/user/basics.rec.html>`__.
 
 
 C API changes
