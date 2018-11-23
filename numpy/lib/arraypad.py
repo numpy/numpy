@@ -157,7 +157,7 @@ def _pad_simple(array, pad_width, fill_value=None):
     Returns
     -------
     padded : ndarray
-        The padded array..
+        The padded array with the same dtype and order as `array`.
     old_area : tuple
         A tuple of slices pointing to the area of the original array.
     """
@@ -166,7 +166,8 @@ def _pad_simple(array, pad_width, fill_value=None):
         left + size + right
         for size, (left, right) in zip(array.shape, pad_width)
     )
-    padded = np.empty(new_shape, dtype=array.dtype)
+    order = 'C' if array.flags['C_CONTIGUOUS'] else 'F'
+    padded = np.empty(new_shape, dtype=array.dtype, order=order)
 
     if fill_value is not None:
         padded.fill(fill_value)
