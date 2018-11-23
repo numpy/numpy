@@ -19,6 +19,7 @@
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -54,7 +55,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "array_assign.h"
 #include "common.h"
-#include "ufunc_override.h"
 #include "multiarraymodule.h"
 #include "cblasfuncs.h"
 #include "vdot.h"
@@ -65,6 +65,17 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "typeinfo.h"
 
 #include "get_attr_string.h"
+
+/*
+ *****************************************************************************
+ **                    INCLUDE GENERATED CODE                               **
+ *****************************************************************************
+ */
+#include "funcs.inc"
+#include "loops.h"
+#include "umathmodule.h"
+
+NPY_NO_EXPORT int initscalarmath(PyObject *);
 
 /*
  * global variable to determine if legacy printing is enabled, accessible from
@@ -800,102 +811,6 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     return 0;
 }
 
-/*
- * Make a new empty array, of the passed size, of a type that takes the
- * priority of ap1 and ap2 into account.
- *
- * If `out` is non-NULL, memory overlap is checked with ap1 and ap2, and an
- * updateifcopy temporary array may be returned. If `result` is non-NULL, the
- * output array to be returned (`out` if non-NULL and the newly allocated array
- * otherwise) is incref'd and put to *result.
- */
-static PyArrayObject *
-new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
-{
-    PyArrayObject *out_buf;
-
-    if (out) {
-        int d;
-
-        /* verify that out is usable */
-        if (PyArray_NDIM(out) != nd ||
-            PyArray_TYPE(out) != typenum ||
-            !PyArray_ISCARRAY(out)) {
-            PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable (must have the right datatype, "
-                "number of dimensions, and be a C-Array)");
-            return 0;
-        }
-        for (d = 0; d < nd; ++d) {
-            if (dimensions[d] != PyArray_DIM(out, d)) {
-                PyErr_SetString(PyExc_ValueError,
-                    "output array has wrong dimensions");
-                return 0;
-            }
-        }
-
-        /* check for memory overlap */
-        if (!(solve_may_share_memory(out, ap1, 1) == 0 &&
-              solve_may_share_memory(out, ap2, 1) == 0)) {
-            /* allocate temporary output array */
-            out_buf = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
-                                                            NULL, 0);
-            if (out_buf == NULL) {
-                return NULL;
-            }
-
-            /* set copy-back */
-            Py_INCREF(out);
-            if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
-                Py_DECREF(out);
-                Py_DECREF(out_buf);
-                return NULL;
-            }
-        }
-        else {
-            Py_INCREF(out);
-            out_buf = out;
-        }
-
-        if (result) {
-            Py_INCREF(out);
-            *result = out;
-        }
-
-        return out_buf;
-    }
-    else {
-        PyTypeObject *subtype;
-        double prior1, prior2;
-        /*
-         * Need to choose an output array that can hold a sum
-         * -- use priority to determine which subtype.
-         */
-        if (Py_TYPE(ap2) != Py_TYPE(ap1)) {
-            prior2 = PyArray_GetPriority((PyObject *)ap2, 0.0);
-            prior1 = PyArray_GetPriority((PyObject *)ap1, 0.0);
-            subtype = (prior2 > prior1 ? Py_TYPE(ap2) : Py_TYPE(ap1));
-        }
-        else {
-            prior1 = prior2 = 0.0;
-            subtype = Py_TYPE(ap1);
-        }
-
-        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                               typenum, NULL, NULL, 0, 0,
-                                               (PyObject *)
-                                               (prior2 > prior1 ? ap2 : ap1));
-
-        if (out_buf != NULL && result) {
-            Py_INCREF(out_buf);
-            *result = out_buf;
-        }
-
-        return out_buf;
-    }
-}
-
 /* Could perhaps be redone to not make contiguous arrays */
 
 /*NUMPY_API
@@ -1101,7 +1016,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (it1->index < it1->size) {
         while (it2->index < it2->size) {
-            dot(it1->dataptr, is1, it2->dataptr, is2, op, l, out_buf);
+            dot(it1->dataptr, is1, it2->dataptr, is2, op, l, NULL);
             op += os;
             PyArray_ITER_NEXT(it2);
         }
@@ -2116,7 +2031,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         if (DEPRECATE(
                 "The binary mode of fromstring is deprecated, as it behaves "
                 "surprisingly on unicode inputs. Use frombuffer instead") < 0) {
-            Py_DECREF(descr);
+            Py_XDECREF(descr);
             return NULL;
         }
     }
@@ -2129,6 +2044,7 @@ static PyObject *
 array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *file = NULL, *ret;
+    PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
@@ -2164,18 +2080,26 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
 
+    /* If an exception is thrown in the call to PyArray_FromFile
+     * we need to clear it, and restore it later to ensure that
+     * we can cleanup the duplicated file descriptor properly.
+     */
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
     if (npy_PyFile_DupClose2(file, fp, orig_pos) < 0) {
+        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
         goto fail;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {
+        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
         goto fail;
     }
+    PyErr_Restore(err_type, err_value, err_traceback);
     Py_DECREF(file);
     return ret;
 
 fail:
     Py_DECREF(file);
-    Py_DECREF(ret);
+    Py_XDECREF(ret);
     return NULL;
 }
 
@@ -3075,7 +2999,7 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
 {
     PyObject *oldops = NULL;
 
-    if ((oldops = PyArray_GetNumericOps()) == NULL) {
+    if ((oldops = _PyArray_GetNumericOps()) == NULL) {
         return NULL;
     }
     /*
@@ -3085,8 +3009,10 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
      */
     if (kwds && PyArray_SetNumericOps(kwds) == -1) {
         Py_DECREF(oldops);
-        PyErr_SetString(PyExc_ValueError,
+        if (PyErr_Occurred() == NULL) {
+            PyErr_SetString(PyExc_ValueError,
                 "one or more objects not callable");
+        }
         return NULL;
     }
     return oldops;
@@ -4441,7 +4367,7 @@ static struct PyMethodDef array_module_methods[] = {
         "indicated by mask."},
     {"bincount", (PyCFunction)arr_bincount,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"digitize", (PyCFunction)arr_digitize,
+    {"_monotonicity", (PyCFunction)arr__monotonicity,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4461,6 +4387,18 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
         METH_VARARGS, NULL},
+    /* from umath */
+    {"frompyfunc",
+        (PyCFunction) ufunc_frompyfunc,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"seterrobj",
+        (PyCFunction) ufunc_seterr,
+        METH_VARARGS, NULL},
+    {"geterrobj",
+        (PyCFunction) ufunc_geterr,
+        METH_VARARGS, NULL},
+    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4478,9 +4416,6 @@ static struct PyMethodDef array_module_methods[] = {
 static int
 setup_scalartypes(PyObject *NPY_UNUSED(dict))
 {
-    initialize_casting_tables();
-    initialize_numeric_types();
-
     if (PyType_Ready(&PyBool_Type) < 0) {
         return -1;
     }
@@ -4720,7 +4655,7 @@ intern_strings(void)
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        "multiarray",
+        "_multiarray_umath",
         NULL,
         -1,
         array_module_methods,
@@ -4734,10 +4669,10 @@ static struct PyModuleDef moduledef = {
 /* Initialization function for the module */
 #if defined(NPY_PY3K)
 #define RETVAL(x) x
-PyMODINIT_FUNC PyInit_multiarray(void) {
+PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 #else
 #define RETVAL(x)
-PyMODINIT_FUNC initmultiarray(void) {
+PyMODINIT_FUNC init_multiarray_umath(void) {
 #endif
     PyObject *m, *d, *s;
     PyObject *c_api;
@@ -4746,7 +4681,7 @@ PyMODINIT_FUNC initmultiarray(void) {
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule("multiarray", array_module_methods);
+    m = Py_InitModule("_multiarray_umath", array_module_methods);
 #endif
     if (!m) {
         goto err;
@@ -4780,6 +4715,17 @@ PyMODINIT_FUNC initmultiarray(void) {
      * static structure slots with functions from the Python C_API.
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
+
+    /* Load the ufunc operators into the array module's namespace */
+    if (InitOperators(d) < 0) {
+        goto err;
+    }
+
+    initialize_casting_tables();
+    initialize_numeric_types();
+    if(initscalarmath(m) < 0)
+        goto err;
+
     if (PyType_Ready(&PyArray_Type) < 0) {
         goto err;
     }
@@ -4825,6 +4771,16 @@ PyMODINIT_FUNC initmultiarray(void) {
     }
     PyDict_SetItemString(d, "_ARRAY_API", c_api);
     Py_DECREF(c_api);
+
+    c_api = NpyCapsule_FromVoidPtr((void *)PyUFunc_API, NULL);
+    if (c_api == NULL) {
+        goto err;
+    }
+    PyDict_SetItemString(d, "_UFUNC_API", c_api);
+    Py_DECREF(c_api);
+    if (PyErr_Occurred()) {
+        goto err;
+    }
 
     /*
      * PyExc_Exception should catch all the standard errors that are
@@ -4902,7 +4858,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-
+    if (initumath(m) != 0) {
+        goto err;
+    }
     return RETVAL(m);
 
  err:

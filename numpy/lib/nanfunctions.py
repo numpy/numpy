@@ -22,9 +22,15 @@ Functions
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
 import warnings
 import numpy as np
 from numpy.lib import function_base
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [
@@ -188,6 +194,11 @@ def _divide_by_count(a, b, out=None):
                 return np.divide(a, b, out=out, casting='unsafe')
 
 
+def _nanmin_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmin_dispatcher)
 def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Return minimum of an array or minimum along an axis, ignoring any NaNs.
@@ -296,6 +307,11 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     return res
 
 
+def _nanmax_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmax_dispatcher)
 def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     """
     Return the maximum of an array or maximum along an axis, ignoring any
@@ -404,6 +420,11 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     return res
 
 
+def _nanargmin_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_nanargmin_dispatcher)
 def nanargmin(a, axis=None):
     """
     Return the indices of the minimum values in the specified axis ignoring
@@ -448,6 +469,11 @@ def nanargmin(a, axis=None):
     return res
 
 
+def _nanargmax_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_nanargmax_dispatcher)
 def nanargmax(a, axis=None):
     """
     Return the indices of the maximum values in the specified axis ignoring
@@ -493,6 +519,11 @@ def nanargmax(a, axis=None):
     return res
 
 
+def _nansum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nansum_dispatcher)
 def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Return the sum of array elements over a given axis treating Not a
@@ -583,6 +614,11 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     return np.sum(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
 
 
+def _nanprod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanprod_dispatcher)
 def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Return the product of array elements over a given axis treating Not a
@@ -648,6 +684,11 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     return np.prod(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
 
 
+def _nancumsum_dispatcher(a, axis=None, dtype=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nancumsum_dispatcher)
 def nancumsum(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative sum of array elements over a given axis treating Not a
@@ -713,6 +754,11 @@ def nancumsum(a, axis=None, dtype=None, out=None):
     return np.cumsum(a, axis=axis, dtype=dtype, out=out)
 
 
+def _nancumprod_dispatcher(a, axis=None, dtype=None, out=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nancumprod_dispatcher)
 def nancumprod(a, axis=None, dtype=None, out=None):
     """
     Return the cumulative product of array elements over a given axis treating Not a
@@ -775,6 +821,11 @@ def nancumprod(a, axis=None, dtype=None, out=None):
     return np.cumprod(a, axis=axis, dtype=dtype, out=out)
 
 
+def _nanmean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmean_dispatcher)
 def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     """
     Compute the arithmetic mean along the specified axis, ignoring NaNs.
@@ -928,6 +979,12 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     return m.filled(np.nan)
 
 
+def _nanmedian_dispatcher(
+        a, axis=None, out=None, overwrite_input=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanmedian_dispatcher)
 def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValue):
     """
     Compute the median along the specified axis, while ignoring NaNs.
@@ -1026,6 +1083,12 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
         return r
 
 
+def _nanpercentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
+                              interpolation=None, keepdims=None):
+    return (a, q, out)
+
+
+@array_function_dispatch(_nanpercentile_dispatcher)
 def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
                   interpolation='linear', keepdims=np._NoValue):
     """
@@ -1146,6 +1209,12 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
         a, q, axis, out, overwrite_input, interpolation, keepdims)
 
 
+def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
+                            interpolation=None, keepdims=None):
+    return (a, q, out)
+
+
+@array_function_dispatch(_nanquantile_dispatcher)
 def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
                 interpolation='linear', keepdims=np._NoValue):
     """
@@ -1178,13 +1247,15 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
         This optional parameter specifies the interpolation method to
         use when the desired quantile lies between two data points
         ``i < j``:
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+
+        * linear: ``i + (j - i) * fraction``, where ``fraction``
+          is the fractional part of the index surrounded by ``i``
+          and ``j``.
+        * lower: ``i``.
+        * higher: ``j``.
+        * nearest: ``i`` or ``j``, whichever is nearest.
+        * midpoint: ``(i + j) / 2``.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1306,6 +1377,12 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation='linear'):
         arr1d, q, overwrite_input=overwrite_input, interpolation=interpolation)
 
 
+def _nanvar_dispatcher(
+        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanvar_dispatcher)
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the variance along the specified axis, while ignoring NaNs.
@@ -1447,6 +1524,12 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     return var
 
 
+def _nanstd_dispatcher(
+        a, axis=None, dtype=None, out=None, ddof=None, keepdims=None):
+    return (a, out)
+
+
+@array_function_dispatch(_nanstd_dispatcher)
 def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     """
     Compute the standard deviation along the specified axis, while

@@ -36,7 +36,7 @@ into Python as if it were a standard python file. It will contain
 objects and methods that have been defined and compiled in C code. The
 basic steps for doing this in Python are well-documented and you can
 find more information in the documentation for Python itself available
-online at `www.python.org <http://www.python.org>`_ .
+online at `www.python.org <https://www.python.org>`_ .
 
 In addition to the Python C-API, there is a full and rich C-API for
 NumPy allowing sophisticated manipulations on a C-level. However, for

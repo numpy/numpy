@@ -61,6 +61,26 @@ import locale
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
 
+def filepath_from_subprocess_output(output):
+    """
+    Convert `bytes` in the encoding used by a subprocess into a filesystem-appropriate `str`.
+
+    Inherited from `exec_command`, and possibly incorrect.
+    """
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    output = output.decode(mylocale, errors='replace')
+    output = output.replace('\r\n', '\n')
+    # Another historical oddity
+    if output[-1:] == '\n':
+        output = output[:-1]
+    # stdio uses bytes in python 2, so to avoid issues, we simply
+    # remove all non-ascii characters
+    if sys.version_info < (3, 0):
+        output = output.encode('ascii', errors='replace')
+    return output
+
 def temp_file_name():
     fo, name = make_temp_file()
     fo.close()
@@ -260,9 +280,10 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         return 127, ''
 
     text, err = proc.communicate()
-    text = text.decode(locale.getpreferredencoding(False),
-                       errors='replace')
-
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    text = text.decode(mylocale, errors='replace')
     text = text.replace('\r\n', '\n')
     # Another historical oddity
     if text[-1:] == '\n':

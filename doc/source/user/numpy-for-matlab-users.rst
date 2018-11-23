@@ -618,9 +618,9 @@ initial element of a sequence has index 0. Confusion and flamewars arise
 because each has advantages and disadvantages. One based indexing is
 consistent with common human language usage, where the "first" element
 of a sequence has index 1. Zero based indexing `simplifies
-indexing <http://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q=g:thl3498076713d&hl=en>`__.
+indexing <https://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q=g:thl3498076713d&hl=en>`__.
 See also `a text by prof.dr. Edsger W.
-Dijkstra <http://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
+Dijkstra <https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
 
 \ **RANGES**: In MATLAB®, ``0:5`` can be used as both a range literal
 and a 'slice' index (inside parentheses); however, in Python, constructs
@@ -715,6 +715,6 @@ See http://mathesaurus.sf.net/ for another MATLAB®/NumPy
 cross-reference.
 
 An extensive list of tools for scientific work with python can be
-found in the `topical software page <http://scipy.org/topical-software.html>`__.
+found in the `topical software page <https://scipy.org/topical-software.html>`__.
 
 MATLAB® and SimuLink® are registered trademarks of The MathWorks.

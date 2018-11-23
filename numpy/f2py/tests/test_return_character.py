@@ -82,9 +82,9 @@ cf2py    intent(out) ts
     """
 
     @pytest.mark.slow
-    def test_all(self):
-        for name in "t0,t1,t5,s0,s1,s5,ss".split(","):
-            self.check_function(getattr(self.module, name))
+    @pytest.mark.parametrize('name', 't0,t1,t5,s0,s1,s5,ss'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module, name))
 
 
 class TestF90ReturnCharacter(TestReturnCharacter):
@@ -141,6 +141,6 @@ end module f90_return_char
     """
 
     @pytest.mark.slow
-    def test_all(self):
-        for name in "t0,t1,t5,ts,s0,s1,s5,ss".split(","):
-            self.check_function(getattr(self.module.f90_return_char, name))
+    @pytest.mark.parametrize('name', 't0,t1,t5,ts,s0,s1,s5,ss'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module.f90_return_char, name))

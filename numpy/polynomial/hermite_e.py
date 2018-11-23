@@ -16,11 +16,12 @@ Constants
 
 Arithmetic
 ----------
-- `hermemulx` -- multiply a Hermite_e series in ``P_i(x)`` by ``x``.
 - `hermeadd` -- add two Hermite_e series.
 - `hermesub` -- subtract one Hermite_e series from another.
+- `hermemulx` -- multiply a Hermite_e series in ``P_i(x)`` by ``x``.
 - `hermemul` -- multiply two Hermite_e series.
 - `hermediv` -- divide one Hermite_e series by another.
+- `hermepow` -- raise a Hermite_e series to a positive integer power.
 - `hermeval` -- evaluate a Hermite_e series at given points.
 - `hermeval2d` -- evaluate a 2D Hermite_e series at given points.
 - `hermeval3d` -- evaluate a 3D Hermite_e series at given points.
@@ -324,7 +325,7 @@ def hermeadd(c1, c2):
 
     See Also
     --------
-    hermesub, hermemul, hermediv, hermepow
+    hermesub, hermemulx, hermemul, hermediv, hermepow
 
     Notes
     -----
@@ -372,7 +373,7 @@ def hermesub(c1, c2):
 
     See Also
     --------
-    hermeadd, hermemul, hermediv, hermepow
+    hermeadd, hermemulx, hermemul, hermediv, hermepow
 
     Notes
     -----
@@ -470,7 +471,7 @@ def hermemul(c1, c2):
 
     See Also
     --------
-    hermeadd, hermesub, hermediv, hermepow
+    hermeadd, hermesub, hermemulx, hermediv, hermepow
 
     Notes
     -----
@@ -538,7 +539,7 @@ def hermediv(c1, c2):
 
     See Also
     --------
-    hermeadd, hermesub, hermemul, hermepow
+    hermeadd, hermesub, hermemulx, hermemul, hermepow
 
     Notes
     -----
@@ -605,7 +606,7 @@ def hermepow(c, pow, maxpower=16):
 
     See Also
     --------
-    hermeadd, hermesub, hermemul, hermediv
+    hermeadd, hermesub, hermemulx, hermemul, hermediv
 
     Examples
     --------
@@ -1473,7 +1474,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
 
     Examples
     --------
@@ -1697,7 +1698,7 @@ def _normed_hermite_e_n(x, n):
 
     """
     if n == 0:
-        return np.ones(x.shape)/np.sqrt(np.sqrt(2*np.pi))
+        return np.full(x.shape, 1/np.sqrt(np.sqrt(2*np.pi)))
 
     c0 = 0.
     c1 = 1./np.sqrt(np.sqrt(2*np.pi))
@@ -1848,3 +1849,4 @@ class HermiteE(ABCPolyBase):
     nickname = 'herme'
     domain = np.array(hermedomain)
     window = np.array(hermedomain)
+    basis_name = 'He'

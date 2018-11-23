@@ -2735,19 +2735,18 @@ static NPY_INLINE void
                            (fortran_int)dimensions[0],
                            (fortran_int)dimensions[1])) {
         LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
+        fortran_int min_m_n = params.M < params.N ? params.M : params.N;
 
         init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
         if ('N' == params.JOBZ) {
             /* only the singular values are wanted */
-            fortran_int min_m_n = params.M < params.N? params.M : params.N;
             init_linearize_data(&s_out, 1, min_m_n, 0, steps[2]);
         } else {
             fortran_int u_columns, v_rows;
-            fortran_int min_m_n = params.M < params.N? params.M : params.N;
             if ('S' == params.JOBZ) {
                 u_columns = min_m_n;
                 v_rows = min_m_n;
-            } else {
+            } else { /* JOBZ == 'A' */
                 u_columns = params.M;
                 v_rows = params.N;
             }
@@ -2771,6 +2770,15 @@ static NPY_INLINE void
                 if ('N' == params.JOBZ) {
                     delinearize_@REALTYPE@_matrix(args[1], params.S, &s_out);
                 } else {
+                    if ('A' == params.JOBZ && min_m_n == 0) {
+                        /* Lapack has betrayed us and left these uninitialized,
+                         * so produce an identity matrix for whichever of u
+                         * and v is not empty.
+                         */
+                        identity_@TYPE@_matrix(params.U, params.M);
+                        identity_@TYPE@_matrix(params.VT, params.N);
+                    }
+
                     delinearize_@TYPE@_matrix(args[1], params.U, &u_out);
                     delinearize_@REALTYPE@_matrix(args[2], params.S, &s_out);
                     delinearize_@TYPE@_matrix(args[3], params.VT, &v_out);

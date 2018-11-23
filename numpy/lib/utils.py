@@ -7,6 +7,7 @@ import re
 import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
+from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
 
@@ -80,7 +81,6 @@ class _Deprecate(object):
         new_name = self.new_name
         message = self.message
 
-        import warnings
         if old_name is None:
             try:
                 old_name = func.__name__
@@ -164,13 +164,6 @@ def deprecate(*args, **kwargs):
     if args:
         fn = args[0]
         args = args[1:]
-
-        # backward compatibility -- can be removed
-        # after next release
-        if 'newname' in kwargs:
-            kwargs['new_name'] = kwargs.pop('newname')
-        if 'oldname' in kwargs:
-            kwargs['old_name'] = kwargs.pop('oldname')
 
         return _Deprecate(*args, **kwargs)(fn)
     else:
@@ -440,6 +433,7 @@ def _info(obj, output=sys.stdout):
     print("type: %s" % obj.dtype, file=output)
 
 
+@set_module('numpy')
 def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     """
     Get help information for a function, class, or module.
@@ -645,6 +639,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         print(inspect.getdoc(object), file=output)
 
 
+@set_module('numpy')
 def source(object, output=sys.stdout):
     """
     Print or write to a file the source code for a NumPy object.
@@ -702,6 +697,8 @@ _lookfor_caches = {}
 # signature
 _function_signature_re = re.compile(r"[a-z0-9_]+\(.*[,=].*\)", re.I)
 
+
+@set_module('numpy')
 def lookfor(what, module=None, import_modules=True, regenerate=False,
             output=None):
     """
@@ -982,12 +979,12 @@ def _getmembers(item):
 #-----------------------------------------------------------------------------
 
 # The following SafeEval class and company are adapted from Michael Spencer's
-# ASPN Python Cookbook recipe:
-#   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/364469
+# ASPN Python Cookbook recipe: https://code.activestate.com/recipes/364469/
+#
 # Accordingly it is mostly Copyright 2006 by Michael Spencer.
 # The recipe, like most of the other ASPN Python Cookbook recipes was made
 # available under the Python license.
-#   http://www.python.org/license
+#   https://en.wikipedia.org/wiki/Python_License
 
 # It has been modified to:
 #   * handle unary -/+

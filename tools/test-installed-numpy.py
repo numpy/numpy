@@ -46,6 +46,10 @@ elif numpy.ones((10, 1), order='C').flags.f_contiguous:
     print('NPY_RELAXED_STRIDES_CHECKING not set, but active.')
     sys.exit(1)
 
+if options.coverage:
+    # Produce code coverage XML report for codecov.io
+    args += ["--cov-report=xml"]
+
 result = numpy.test(options.mode,
                     verbose=options.verbose,
                     extra_argv=args,

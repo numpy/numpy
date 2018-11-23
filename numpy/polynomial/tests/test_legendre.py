@@ -3,6 +3,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.legendre as leg
 from numpy.polynomial.polynomial import polyval
@@ -98,6 +100,15 @@ class TestArithmetic(object):
                 tgt = leg.legadd(ci, cj)
                 quo, rem = leg.legdiv(tgt, ci)
                 res = leg.legadd(leg.legmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_legpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(leg.legmul, [c]*j, np.array([1]))
+                res = leg.legpow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 

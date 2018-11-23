@@ -222,7 +222,7 @@ Those can be useful for precise floating point comparison.
     Returns the previous status mask.
 
     .. versionadded:: 1.15.0
-n
+
 Complex functions
 ~~~~~~~~~~~~~~~~~
 
@@ -297,10 +297,10 @@ External Links:
 * `OpenGL Half Float Pixel Support`__
 * `The OpenEXR image format`__.
 
-__ http://ieeexplore.ieee.org/servlet/opac?punumber=4610933
-__ http://en.wikipedia.org/wiki/Half_precision_floating-point_format
-__ http://www.opengl.org/registry/specs/ARB/half_float_pixel.txt
-__ http://www.openexr.com/about.html
+__ https://ieeexplore.ieee.org/document/4610935/
+__ https://en.wikipedia.org/wiki/Half-precision_floating-point_format
+__ https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_half_float_pixel.txt
+__ https://www.openexr.com/about.html
 
 .. c:var:: NPY_HALF_ZERO
 

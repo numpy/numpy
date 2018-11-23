@@ -27,12 +27,12 @@ Arithmetic
 .. autosummary::
    :toctree: generated/
 
-   legmulx              multiply a Legendre series in P_i(x) by x.
    legadd               add two Legendre series.
    legsub               subtract one Legendre series from another.
+   legmulx              multiply a Legendre series in ``P_i(x)`` by ``x``.
    legmul               multiply two Legendre series.
    legdiv               divide one Legendre series by another.
-   legpow               raise a Legendre series to an positive integer power
+   legpow               raise a Legendre series to a positive integer power.
    legval               evaluate a Legendre series at given points.
    legval2d             evaluate a 2D Legendre series at given points.
    legval3d             evaluate a 3D Legendre series at given points.
@@ -351,7 +351,7 @@ def legadd(c1, c2):
 
     See Also
     --------
-    legsub, legmul, legdiv, legpow
+    legsub, legmulx, legmul, legdiv, legpow
 
     Notes
     -----
@@ -401,7 +401,7 @@ def legsub(c1, c2):
 
     See Also
     --------
-    legadd, legmul, legdiv, legpow
+    legadd, legmulx, legmul, legdiv, legpow
 
     Notes
     -----
@@ -451,6 +451,10 @@ def legmulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
+    See Also
+    --------
+    legadd, legmul, legmul, legdiv, legpow
+
     Notes
     -----
     The multiplication uses the recursion relationship for Legendre
@@ -459,6 +463,12 @@ def legmulx(c):
     .. math::
 
       xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+
+    Examples
+    --------
+    >>> from numpy.polynomial import legendre as L
+    >>> L.legmulx([1,2,3])
+    array([ 0.66666667, 2.2, 1.33333333, 1.8])
 
     """
     # c is a trimmed copy
@@ -500,7 +510,7 @@ def legmul(c1, c2):
 
     See Also
     --------
-    legadd, legsub, legdiv, legpow
+    legadd, legsub, legmulx, legdiv, legpow
 
     Notes
     -----
@@ -570,7 +580,7 @@ def legdiv(c1, c2):
 
     See Also
     --------
-    legadd, legsub, legmul, legpow
+    legadd, legsub, legmulx, legmul, legpow
 
     Notes
     -----
@@ -640,7 +650,7 @@ def legpow(c, pow, maxpower=16):
 
     See Also
     --------
-    legadd, legsub, legmul, legdiv
+    legadd, legsub, legmulx, legmul, legdiv
 
     Examples
     --------
@@ -1509,7 +1519,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
 
     Examples
     --------
@@ -1831,3 +1841,4 @@ class Legendre(ABCPolyBase):
     nickname = 'leg'
     domain = np.array(legdomain)
     window = np.array(legdomain)
+    basis_name = 'P'

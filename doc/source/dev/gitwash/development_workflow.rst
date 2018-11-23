@@ -374,7 +374,7 @@ Deleting a branch on github_
    git push origin :my-unwanted-branch
 
 (Note the colon ``:`` before ``test-branch``.  See also:
-http://github.com/guides/remove-a-remote-branch
+https://github.com/guides/remove-a-remote-branch
 
 
 Several people sharing a single repository
@@ -387,7 +387,7 @@ share it via github_.
 First fork NumPy into your account, as from :ref:`forking`.
 
 Then, go to your forked repository github page, say
-``http://github.com/your-user-name/numpy``
+``https://github.com/your-user-name/numpy``
 
 Click on the 'Admin' button, and add anyone else to the repo as a
 collaborator:

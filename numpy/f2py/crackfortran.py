@@ -33,7 +33,7 @@ Note: f2py directive: <commentchar>f2py<line> is read as <line>
 Note: pythonmodule is introduced to represent Python module
 
 Usage:
-  `postlist=crackfortran(files,funcs)`
+  `postlist=crackfortran(files)`
   `postlist` contains declaration information read from the list of files `files`.
   `crack2fortran(postlist)` returns a fortran code to be saved to pyf-file
 
@@ -2403,7 +2403,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith('power') or machine.startswith('ppc64'):
+    if machine.startswith(('aarch64', 'power', 'ppc64', 's390x')):
         if p <= 20:
             return 16
     else:
@@ -3341,7 +3341,7 @@ if __name__ == "__main__":
   and also be sure that the files do not contain programs without program statement).
 """, 0)
 
-    postlist = crackfortran(files, funcs)
+    postlist = crackfortran(files)
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)

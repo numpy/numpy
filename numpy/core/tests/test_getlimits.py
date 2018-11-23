@@ -7,10 +7,7 @@ import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
 from numpy.testing import assert_equal, assert_, assert_raises
-from numpy.core.getlimits import (
-    _discovered_machar, _float16_ma, _float32_ma, _float64_ma, _float128_ma,
-    _float80_ma
-    )
+from numpy.core.getlimits import _discovered_machar, _float_ma
 
 ##################################################
 
@@ -101,9 +98,9 @@ def assert_ma_equal(discovered, ma_like):
 
 def test_known_types():
     # Test we are correctly compiling parameters for known types
-    for ftype, ma_like in ((np.float16, _float16_ma),
-                           (np.float32, _float32_ma),
-                           (np.float64, _float64_ma)):
+    for ftype, ma_like in ((np.float16, _float_ma[16]),
+                           (np.float32, _float_ma[32]),
+                           (np.float64, _float_ma[64])):
         assert_ma_equal(_discovered_machar(ftype), ma_like)
     # Suppress warning for broken discovery of double double on PPC
     with np.errstate(all='ignore'):
@@ -111,10 +108,10 @@ def test_known_types():
     bytes = np.dtype(np.longdouble).itemsize
     if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
         # 80-bit extended precision
-        assert_ma_equal(ld_ma, _float80_ma)
+        assert_ma_equal(ld_ma, _float_ma[80])
     elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
         # IEE 754 128-bit
-        assert_ma_equal(ld_ma, _float128_ma)
+        assert_ma_equal(ld_ma, _float_ma[128])
 
 
 def test_plausible_finfo():

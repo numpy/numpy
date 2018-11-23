@@ -19,7 +19,7 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     float32, empty, arange, array_repr, ndarray, isnat, array)
+     bool_, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -69,7 +69,7 @@ def import_nose():
 
     if not nose_is_good:
         msg = ('Need nose >= %d.%d.%d for tests - see '
-               'http://nose.readthedocs.io' %
+               'https://nose.readthedocs.io' %
                minimum_nose_version)
         raise ImportError(msg)
 
@@ -177,7 +177,7 @@ if os.name == 'nt':
         # thread's CPU usage is either 0 or 100).  To read counters like this,
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
-        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp (dead link)
         # My older explanation for this was that the "AddCounter" process forced
         # the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -352,7 +352,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     # XXX: catch ValueError for subclasses of ndarray where iscomplex fail
     try:
         usecomplex = iscomplexobj(actual) or iscomplexobj(desired)
-    except ValueError:
+    except (ValueError, TypeError):
         usecomplex = False
 
     if usecomplex:
@@ -687,8 +687,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, isnan, inf, bool_
+    from numpy.core.fromnumeric import all as npall
+
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
+
+    # original array for output formating
+    ox, oy = x, y
 
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
@@ -697,14 +702,26 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         return x.dtype.char in "Mm"
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
-        """Handling nan/inf: combine results of running func on x and y,
-        checking that they are True at the same locations."""
-        # Both the != True comparison here and the cast to bool_ at
-        # the end are done to deal with `masked`, which cannot be
-        # compared usefully, and for which .all() yields masked.
+        """Handling nan/inf.
+
+        Combine results of running func on x and y, checking that they are True
+        at the same locations.
+
+        """
         x_id = func(x)
         y_id = func(y)
-        if (x_id == y_id).all() != True:
+        # We include work-arounds here to handle three types of slightly
+        # pathological ndarray subclasses:
+        # (1) all() on `masked` array scalars can return masked arrays, so we
+        #     use != True
+        # (2) __eq__ on some ndarray subclasses returns Python booleans
+        #     instead of element-wise comparisons, so we cast to bool_() and
+        #     use isinstance(..., bool) checks
+        # (3) subclasses with bare-bones __array_function__ implemenations may
+        #     not implement np.all(), so favor using the .all() method
+        # We are not committed to supporting such subclasses, but it's nice to
+        # support them if possible.
+        if bool_(x_id == y_id).all() != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
@@ -712,9 +729,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
-        if x_id.ndim == 0:
+        if isinstance(x_id, bool) or x_id.ndim == 0:
             return bool_(x_id)
-        elif y_id.ndim == 0:
+        elif isinstance(x_id, bool) or y_id.ndim == 0:
             return bool_(y_id)
         else:
             return y_id
@@ -771,10 +788,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
-            match = 100-100.0*reduced.count(1)/len(reduced)
-            msg = build_err_msg([x, y],
+            mismatch = 100.0 * reduced.count(0) / ox.size
+            msg = build_err_msg([ox, oy],
                                 err_msg
-                                + '\n(mismatch %s%%)' % (match,),
+                                + '\n(mismatch %s%%)' % (mismatch,),
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
@@ -1075,7 +1092,7 @@ def assert_string_equal(actual, desired):
         raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
         raise AssertionError(repr(type(desired)))
-    if re.match(r'\A'+desired+r'\Z', actual, re.M):
+    if desired == actual:
         return
 
     diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
@@ -1099,7 +1116,7 @@ def assert_string_equal(actual, desired):
                     l.append(d3)
                 else:
                     diff.insert(0, d3)
-            if re.match(r'\A'+d2[2:]+r'\Z', d1[2:]):
+            if d2[2:] == d1[2:]:
                 continue
             diff_list.extend(l)
             continue
@@ -1609,7 +1626,7 @@ def _integer_repr(x, vdt, comp):
     # Reinterpret binary representation of the float as sign-magnitude:
     # take into account two-complement representation
     # See also
-    # http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm
+    # https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
     rx = x.view(vdt)
     if not (rx.size == 1):
         rx[rx < 0] = comp - rx[rx < 0]
@@ -1917,7 +1934,7 @@ class suppress_warnings(object):
     ``warnings.catch_warnings``.
 
     However, it also provides a filter mechanism to work around
-    http://bugs.python.org/issue4180.
+    https://bugs.python.org/issue4180.
 
     This bug causes Python before 3.4 to not reliably show warnings again
     after they have been ignored once (even within catch_warnings). It

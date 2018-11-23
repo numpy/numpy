@@ -42,7 +42,8 @@ import warnings
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long
+from numpy.compat import isfileobj, bytes, long, unicode, os_fspath
+from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
@@ -82,6 +83,8 @@ def find_duplicate(list):
                 dup.append(list[i])
     return dup
 
+
+@set_module('numpy')
 class format_parser(object):
     """
     Class to convert formats, names, titles description to a dtype.
@@ -174,7 +177,7 @@ class format_parser(object):
         if (names):
             if (type(names) in [list, tuple]):
                 pass
-            elif isinstance(names, str):
+            elif isinstance(names, (str, unicode)):
                 names = names.split(',')
             else:
                 raise NameError("illegal input names %s" % repr(names))
@@ -737,9 +740,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
-    If file is a string then that file is opened, else it is assumed
-    to be a file object. The file object must support random access
-    (i.e. it must have tell and seek methods).
+    If file is a string or a path-like object then that file is opened,
+    else it is assumed to be a file object. The file object must
+    support random access (i.e. it must have tell and seek methods).
 
     >>> from tempfile import TemporaryFile
     >>> a = np.empty(10,dtype='f8,i4,a5')
@@ -763,10 +766,14 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     elif isinstance(shape, (int, long)):
         shape = (shape,)
 
-    name = 0
-    if isinstance(fd, str):
+    if isfileobj(fd):
+        # file already opened
+        name = 0
+    else:
+        # open file
+        fd = open(os_fspath(fd), 'rb')
         name = 1
-        fd = open(fd, 'rb')
+
     if (offset > 0):
         fd.seek(offset, 1)
     size = get_remaining_size(fd)

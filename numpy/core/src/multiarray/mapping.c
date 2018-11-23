@@ -20,6 +20,7 @@
 #include "lowlevel_strided_loops.h"
 #include "item_selection.h"
 #include "mem_overlap.h"
+#include "array_assign.h"
 
 
 #define HAS_INTEGER 1
@@ -233,7 +234,8 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
             || index == Py_None
             || PySlice_Check(index)
             || PyArray_Check(index)
-            || !PySequence_Check(index)) {
+            || !PySequence_Check(index)
+            || PyBaseString_Check(index)) {
 
         return unpack_scalar(index, result, result_n);
     }
@@ -1062,7 +1064,7 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-        if (PyArray_GetDTypeTransferFunction(PyArray_ISALIGNED(self),
+        if (PyArray_GetDTypeTransferFunction(IsUintAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
@@ -1124,10 +1126,10 @@ array_boolean_subscript(PyArrayObject *self,
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 Py_TYPE(self), dtype,
                 1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
+                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)tmp);
 
+        Py_DECREF(tmp);
         if (ret == NULL) {
-            Py_DECREF(tmp);
             return NULL;
         }
     }
@@ -1251,7 +1253,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         if (PyArray_GetDTypeTransferFunction(
-                        PyArray_ISALIGNED(self) && PyArray_ISALIGNED(v),
+                        IsUintAligned(self) && IsUintAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
@@ -1539,13 +1541,11 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
                                 "cannot use field titles in multi-field index");
                 }
                 if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
-                    Py_DECREF(title);
                     Py_DECREF(name);
                     Py_DECREF(fields);
                     Py_DECREF(names);
                     return 0;
                 }
-                Py_DECREF(title);
             }
             /* disallow duplicate field indices */
             if (PyDict_Contains(fields, name)) {
@@ -1724,7 +1724,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
                 PyArray_DESCR(ind)->kind == 'i' &&
-                PyArray_ISALIGNED(ind) &&
+                IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             Py_INCREF(PyArray_DESCR(self));
@@ -2083,11 +2083,11 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ,
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ) ||
                  (PyArray_NDIM(tmp_arr) == 0 &&
-                        PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
+                        PyArray_TRIVIALLY_ITERABLE(ind))) &&
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
                 PyArray_DESCR(ind)->kind == 'i' &&
-                PyArray_ISALIGNED(ind) &&
+                IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             /* trivial_set checks the index for us */
@@ -2607,7 +2607,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(op) == sizeof(npy_intp) &&
                 PyArray_DESCR(op)->kind == 'i' &&
-                PyArray_ISALIGNED(op) &&
+                IsUintAligned(op) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(op))) {
             char *data;
             npy_intp stride;
@@ -2916,20 +2916,20 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         Py_INCREF(extra_op_dtype);
         mit->extra_op_dtype = extra_op_dtype;
 
-        /* Create an iterator, just to broadcast the arrays?! */
-        tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
-                                    NPY_ITER_ZEROSIZE_OK |
-                                    NPY_ITER_REFS_OK |
-                                    NPY_ITER_MULTI_INDEX |
-                                    NPY_ITER_DONT_NEGATE_STRIDES,
-                                    NPY_KEEPORDER,
-                                    NPY_UNSAFE_CASTING,
-                                    tmp_op_flags, NULL);
-        if (tmp_iter == NULL) {
-            goto fail;
-        }
-
         if (PyArray_SIZE(subspace) == 1) {
+            /* Create an iterator, just to broadcast the arrays?! */
+            tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
+                                        NPY_ITER_ZEROSIZE_OK |
+                                        NPY_ITER_REFS_OK |
+                                        NPY_ITER_MULTI_INDEX |
+                                        NPY_ITER_DONT_NEGATE_STRIDES,
+                                        NPY_KEEPORDER,
+                                        NPY_UNSAFE_CASTING,
+                                        tmp_op_flags, NULL);
+            if (tmp_iter == NULL) {
+                goto fail;
+            }
+
             /*
              * nditer allows itemsize with npy_intp type, so it works
              * here, but it would *not* work directly, since elsize
@@ -2942,6 +2942,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                         "internal error: failed to find output array strides");
                 goto fail;
             }
+            NpyIter_Deallocate(tmp_iter);
         }
         else {
             /* Just use C-order strides (TODO: allow also F-order) */
@@ -2951,7 +2952,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                 stride *= mit->dimensions[i];
             }
         }
-        NpyIter_Deallocate(tmp_iter);
 
         /* shape is set, and strides is set up to mit->nd, set rest */
         PyArray_CreateSortedStridePerm(PyArray_NDIM(subspace),

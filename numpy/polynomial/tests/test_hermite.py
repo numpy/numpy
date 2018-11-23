@@ -3,6 +3,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.hermite as herm
 from numpy.polynomial.polynomial import polyval
@@ -97,6 +99,15 @@ class TestArithmetic(object):
                 tgt = herm.hermadd(ci, cj)
                 quo, rem = herm.hermdiv(tgt, ci)
                 res = herm.hermadd(herm.hermmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_hermpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(herm.hermmul, [c]*j, np.array([1]))
+                res = herm.hermpow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 

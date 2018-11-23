@@ -2358,7 +2358,6 @@ class TestIterNested(object):
         j.close()
         assert_equal(a, [[1, 2, 3], [4, 5, 6]])
 
-
     def test_dtype_buffered(self):
         # Test nested iteration with buffering to change dtype
 
@@ -2830,10 +2829,6 @@ def test_writebacks():
     x[:] = 123 # x.data still valid
     assert_equal(au, 6) # but not connected to au
 
-    do_close = 1
-    # test like above, only in C, and with an option to skip the NpyIter_Close
-    _multiarray_tests.test_nditer_writeback(3, do_close, au, op_dtypes=[np.dtype('f4')])
-    assert_equal(au, 3)
     it = nditer(au, [],
                  [['readwrite', 'updateifcopy']],
                  casting='equiv', op_dtypes=[np.dtype('f4')])
@@ -2862,7 +2857,7 @@ def test_writebacks():
             x[...] = 123
     # make sure we cannot reenter the closed iterator
     enter = it.__enter__
-    assert_raises(ValueError, enter)
+    assert_raises(RuntimeError, enter)
 
 def test_close_equivalent():
     ''' using a context amanger and using nditer.close are equivalent
@@ -2897,12 +2892,13 @@ def test_close_raises():
     assert_raises(StopIteration, next, it)
     assert_raises(ValueError, getattr, it, 'operands')
 
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_warn_noclose():
     a = np.arange(6, dtype='f4')
     au = a.byteswap().newbyteorder()
-    do_close = 0
     with suppress_warnings() as sup:
         sup.record(RuntimeWarning)
-        # test like above, only in C, and with an option to skip the NpyIter_Close
-        _multiarray_tests.test_nditer_writeback(3, do_close, au, op_dtypes=[np.dtype('f4')])
+        it = np.nditer(au, [], [['readwrite', 'updateifcopy']],
+                        casting='equiv', op_dtypes=[np.dtype('f4')])
+        del it
         assert len(sup.log) == 1

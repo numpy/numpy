@@ -17,8 +17,7 @@
 
 #include "arrayobject.h"
 #include "templ_common.h"
-#include "mem_overlap.h"
-
+#include "array_assign.h"
 
 /* Internal helper functions private to this file */
 static int
@@ -403,7 +402,6 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      */
     if (!npyiter_allocate_arrays(iter, flags, op_dtype, subtype, op_flags,
                             op_itflags, op_axes)) {
-        NpyIter_Close(iter);
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -465,14 +463,12 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     /* If buffering is set without delayed allocation */
     if (itflags & NPY_ITFLAG_BUFFER) {
         if (!npyiter_allocate_transfer_functions(iter)) {
-            NpyIter_Close(iter);
             NpyIter_Deallocate(iter);
             return NULL;
         }
         if (!(itflags & NPY_ITFLAG_DELAYBUF)) {
             /* Allocate the buffers */
             if (!npyiter_allocate_buffers(iter, NULL)) {
-                NpyIter_Close(iter);
                 NpyIter_Deallocate(iter);
                 return NULL;
             }
@@ -654,6 +650,8 @@ NpyIter_Deallocate(NpyIter *iter)
     int iop, nop;
     PyArray_Descr **dtype;
     PyArrayObject **object;
+    npyiter_opitflags *op_itflags;
+    npy_bool resolve = 1;
 
     if (iter == NULL) {
         return NPY_SUCCEED;
@@ -663,6 +661,7 @@ NpyIter_Deallocate(NpyIter *iter)
     nop = NIT_NOP(iter);
     dtype = NIT_DTYPES(iter);
     object = NIT_OPERANDS(iter);
+    op_itflags = NIT_OPITFLAGS(iter);
 
     /* Deallocate any buffers and buffering data */
     if (itflags & NPY_ITFLAG_BUFFER) {
@@ -691,15 +690,28 @@ NpyIter_Deallocate(NpyIter *iter)
         }
     }
 
-    /* Deallocate all the dtypes and objects that were iterated */
+    /*
+     * Deallocate all the dtypes and objects that were iterated and resolve
+     * any writeback buffers created by the iterator
+     */
     for(iop = 0; iop < nop; ++iop, ++dtype, ++object) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
+            if (resolve && PyArray_ResolveWritebackIfCopy(*object) < 0) {
+                resolve = 0;
+            }
+            else {
+                PyArray_DiscardWritebackIfCopy(*object);
+            }
+        }
         Py_XDECREF(*dtype);
         Py_XDECREF(*object);
     }
 
     /* Deallocate the iterator memory */
     PyObject_Free(iter);
-
+    if (resolve == 0) {
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -1120,7 +1132,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* Check if the operand is aligned */
         if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
-            if (!PyArray_ISALIGNED(*op)) {
+            if (!IsUintAligned(*op)) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
@@ -2962,7 +2974,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * If the operand is aligned, any buffering can use aligned
              * optimizations.
              */
-            if (PyArray_ISALIGNED(op[iop])) {
+            if (IsUintAligned(op[iop])) {
                 op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
             }
         }

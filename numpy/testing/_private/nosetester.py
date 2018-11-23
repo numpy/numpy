@@ -338,12 +338,14 @@ class NoseTester(object):
             Identifies the tests to run. This can be a string to pass to
             the nosetests executable with the '-A' option, or one of several
             special values.  Special values are:
+
             * 'fast' - the default - which corresponds to the ``nosetests -A``
               option of 'not slow'.
             * 'full' - fast (as above) and slow tests as in the
               'no -A' option to nosetests - this is the same as ''.
             * None or '' - run all tests.
-            attribute_identifier - string passed directly to nosetests as '-A'.
+            * attribute_identifier - string passed directly to nosetests as '-A'.
+
         verbose : int, optional
             Verbosity value for test outputs, in the range 1-10. Default is 1.
         extra_argv : list, optional
@@ -352,16 +354,14 @@ class NoseTester(object):
             If True, run doctests in module. Default is False.
         coverage : bool, optional
             If True, report coverage of NumPy code. Default is False.
-            (This requires the `coverage module:
-             <http://nedbatchelder.com/code/modules/coverage.html>`_).
+            (This requires the
+            `coverage module <https://nedbatchelder.com/code/modules/coveragehtml>`_).
         raise_warnings : None, str or sequence of warnings, optional
             This specifies which warnings to configure as 'raise' instead
-            of being shown once during the test execution.  Valid strings are:
+            of being shown once during the test execution. Valid strings are:
 
-              - "develop" : equals ``(Warning,)``
-              - "release" : equals ``()``, don't raise on any warnings.
-
-            The default is to use the class initialization value.
+            * "develop" : equals ``(Warning,)``
+            * "release" : equals ``()``, do not raise on any warnings.
         timer : bool or int, optional
             Timing of individual tests with ``nose-timer`` (which needs to be
             installed).  If True, time tests and report on all of them.
@@ -489,12 +489,14 @@ class NoseTester(object):
             Identifies the benchmarks to run. This can be a string to pass to
             the nosetests executable with the '-A' option, or one of several
             special values.  Special values are:
+
             * 'fast' - the default - which corresponds to the ``nosetests -A``
               option of 'not slow'.
             * 'full' - fast (as above) and slow benchmarks as in the
               'no -A' option to nosetests - this is the same as ''.
             * None or '' - run all tests.
-            attribute_identifier - string passed directly to nosetests as '-A'.
+            * attribute_identifier - string passed directly to nosetests as '-A'.
+
         verbose : int, optional
             Verbosity value for benchmark outputs, in the range 1-10. Default is 1.
         extra_argv : list, optional

@@ -2,7 +2,6 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import os
 
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
 from sys import platform
@@ -62,8 +61,6 @@ class PGroupFCompiler(FCompiler):
 
 
 if sys.version_info >= (3, 5):
-    import subprocess
-    import shlex
     import functools
 
     class PGroupFlangCompiler(FCompiler):

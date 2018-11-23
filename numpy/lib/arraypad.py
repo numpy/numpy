@@ -6,6 +6,7 @@ Functions to pad values onto the edges of an n-dimensional array.
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+from numpy.core.overrides import array_function_dispatch
 
 
 __all__ = ['pad']
@@ -191,10 +192,10 @@ def _set_pad_area(padded, axis, index_pair, value_pair):
     axis : int
         Dimension with the pad area to set.
     index_pair : (int, int)
-        Pair of indices that mark the end (or start) of the pad area on both 
+        Pair of indices that mark the end (or start) of the pad area on both
         sides in the given dimension.
     value_pair : tuple of scalars or ndarrays
-        Values inserted into the pad area on each side. It must match or be 
+        Values inserted into the pad area on each side. It must match or be
         broadcastable to the shape of `arr`.
     """
     if index_pair[0] > 0:
@@ -213,7 +214,7 @@ def _set_pad_area(padded, axis, index_pair, value_pair):
 def _get_edges(padded, axis, index_pair):
     """
     Retrieve edge values from empty-padded array in given dimension.
-    
+
     Parameters
     ----------
     padded : ndarray
@@ -557,83 +558,78 @@ def _set_wrap_both(padded, axis, index_pair):
     return new_left_pad, new_right_pad
 
 
-def _as_pairs(x, ndim, as_index=False, assert_number=False):
+def _as_pairs(x, ndim, as_index=False):
     """
     Broadcast `x` to an array with the shape (`ndim`, 2).
 
     A helper function for `pad` that prepares and validates arguments like
-    `pad_width` to be iterated in pairs.
+    `pad_width` for iteration in pairs.
 
     Parameters
     ----------
     x : {None, scalar, array-like}
-        The object to broadcast to the shape (`ndim`, 2). None is only allowed
-        as a special case if `as_index` is True.
+        The object to broadcast to the shape (`ndim`, 2).
     ndim : int
         Number of pairs the broadcasted `x` will have.
     as_index : bool, optional
-        If `x` is not None, try to round each element of `x` to a non-negative
-        integer.
-    assert_number : bool, optional
-        Raise a TypeError if the dtype of `x` is not a subdtype of `np.number`.
+        If `x` is not None, try to round each element of `x` to an integer
+        (dtype `np.intp`) and ensure every element is positive.
 
     Returns
     -------
-    pairs : nested structure with shape (`ndim`, 2)
+    pairs : nested iterables, shape (`ndim`, 2)
         The broadcasted version of `x`.
 
     Raises
     ------
-    TypeError
-        If `as_index` is True and `x` is not None and can't be rounded to an
-        array of integer type.
-        Or if `assert_number` is True and the dtype of `x` is not a subdtype
-        of `np.number`.
     ValueError
         If `as_index` is True and `x` contains negative elements.
         Or if `x` is not broadcastable to the shape (`ndim`, 2).
     """
-    if as_index and x is None:
-        # Pass through None as a special case for indices
+    if x is None:
+        # Pass through None as a special case, otherwise np.round(x) fails
+        # with an AttributeError
         return ((None, None),) * ndim
 
-    x = np.asarray(x)
-
-    if x.ndim > 2:
-        # Fail explicitly when `x` already has more dimensions than
-        # desired shape (ndim, 2) accounts for
-        raise ValueError("keyword argument must not have more than 2 "
-                         "dimensions, got {}".format(x.ndim))
-    if assert_number and not np.issubdtype(x.dtype, np.number):
-        raise TypeError("keyword argument must be subdtype of np.number")
-
+    x = np.array(x)
     if as_index:
-        try:
-            x = x.round().astype(np.intp, copy=False)
-        except AttributeError:
-            raise TypeError("can't cast `x` to int")
+        x = np.round(x).astype(np.intp, copy=False)
 
-    if x.size == 1:
-        # Single value case
-        x = x.ravel()  # Reduce superfluous dimensions
-        if as_index and x < 0:
-            raise ValueError("index can't contain negative values")
-        return ((x[0], x[0]),) * ndim
+    if x.ndim < 3:
+        # Optimization: Possibly use faster paths for cases where `x` has
+        # only 1 or 2 elements. `np.broadcast_to` could handle these as well
+        # but is currently slower
 
-    if x.size == 2 and x.shape != (2, 1):
-        # Pair value case, but except special case when each dimension has a
-        # single value which should be broadcasted to a pair, e.g.
-        # [[1], [2]] -> [[1, 1], [2, 2]]
-        x = x.ravel()
-        if as_index and x[0] < 0 and x[1] < 0:
-            raise ValueError("index can't contain negative values")
-        return ((x[0], x[1]),) * ndim
+        if x.size == 1:
+            # x was supplied as a single value
+            x = x.ravel()  # Ensure x[0] works for x.ndim == 0, 1, 2
+            if as_index and x < 0:
+                raise ValueError("index can't contain negative values")
+            return ((x[0], x[0]),) * ndim
+
+        if x.size == 2 and x.shape != (2, 1):
+            # x was supplied with a single value for each side
+            # but except case when each dimension has a single value
+            # which should be broadcasted to a pair,
+            # e.g. [[1], [2]] -> [[1, 1], [2, 2]] not [[1, 2], [1, 2]]
+            x = x.ravel()  # Ensure x[0], x[1] works
+            if as_index and (x[0] < 0 or x[1] < 0):
+                raise ValueError("index can't contain negative values")
+            return ((x[0], x[1]),) * ndim
 
     if as_index and x.min() < 0:
         raise ValueError("index can't contain negative values")
+
+    # Converting the array with `tolist` seems to improve performance
+    # when iterating and indexing the result (see usage in `pad`)
     return np.broadcast_to(x, (ndim, 2)).tolist()
 
 
+def _pad_dispatcher(array, pad_width, mode, **kwargs):
+    return (array,)
+
+
+@array_function_dispatch(_pad_dispatcher, module='numpy')
 def pad(array, pad_width, mode, **kwargs):
     """
     Pad an array.

@@ -8,17 +8,26 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit', 'RankWarning']
 
+import functools
 import re
 import warnings
 import numpy.core.numeric as NX
 
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
+from numpy.core import overrides
+from numpy.core.overrides import set_module
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
 
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
+
+
+@set_module('numpy')
 class RankWarning(UserWarning):
     """
     Issued by `polyfit` when the Vandermonde matrix is rank deficient.
@@ -29,6 +38,12 @@ class RankWarning(UserWarning):
     """
     pass
 
+
+def _poly_dispatcher(seq_of_zeros):
+    return seq_of_zeros
+
+
+@array_function_dispatch(_poly_dispatcher)
 def poly(seq_of_zeros):
     """
     Find the coefficients of a polynomial with the given sequence of roots.
@@ -145,6 +160,12 @@ def poly(seq_of_zeros):
 
     return a
 
+
+def _roots_dispatcher(p):
+    return p
+
+
+@array_function_dispatch(_roots_dispatcher)
 def roots(p):
     """
     Return the roots of a polynomial with coefficients given in p.
@@ -229,6 +250,12 @@ def roots(p):
     roots = hstack((roots, NX.zeros(trailing_zeros, roots.dtype)))
     return roots
 
+
+def _polyint_dispatcher(p, m=None, k=None):
+    return (p,)
+
+
+@array_function_dispatch(_polyint_dispatcher)
 def polyint(p, m=1, k=None):
     """
     Return an antiderivative (indefinite integral) of a polynomial.
@@ -245,7 +272,7 @@ def polyint(p, m=1, k=None):
     Parameters
     ----------
     p : array_like or poly1d
-        Polynomial to differentiate.
+        Polynomial to integrate.
         A sequence is interpreted as polynomial coefficients, see `poly1d`.
     m : int, optional
         Order of the antiderivative. (Default: 1)
@@ -322,6 +349,12 @@ def polyint(p, m=1, k=None):
             return poly1d(val)
         return val
 
+
+def _polyder_dispatcher(p, m=None):
+    return (p,)
+
+
+@array_function_dispatch(_polyder_dispatcher)
 def polyder(p, m=1):
     """
     Return the derivative of the specified order of a polynomial.
@@ -390,13 +423,23 @@ def polyder(p, m=1):
         val = poly1d(val)
     return val
 
+
+def _polyfit_dispatcher(x, y, deg, rcond=None, full=None, w=None, cov=None):
+    return (x, y, w)
+
+
+@array_function_dispatch(_polyfit_dispatcher)
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Least squares polynomial fit.
 
     Fit a polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
-    the squared error.
+    the squared error in the order `deg`, `deg-1`, ... `0`.
+
+    The `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>` class
+    method is recommended for new code as it is more stable numerically. See
+    the documentation of the method for more information.
 
     Parameters
     ----------
@@ -494,9 +537,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
     .. [2] Wikipedia, "Polynomial interpolation",
-           http://en.wikipedia.org/wiki/Polynomial_interpolation
+           https://en.wikipedia.org/wiki/Polynomial_interpolation
 
     Examples
     --------
@@ -606,6 +649,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return c
 
 
+def _polyval_dispatcher(p, x):
+    return (p, x)
+
+
+@array_function_dispatch(_polyval_dispatcher)
 def polyval(p, x):
     """
     Evaluate a polynomial at specific values.
@@ -675,6 +723,12 @@ def polyval(p, x):
         y = y * x + p[i]
     return y
 
+
+def _binary_op_dispatcher(a1, a2):
+    return (a1, a2)
+
+
+@array_function_dispatch(_binary_op_dispatcher)
 def polyadd(a1, a2):
     """
     Find the sum of two polynomials.
@@ -735,6 +789,8 @@ def polyadd(a1, a2):
         val = poly1d(val)
     return val
 
+
+@array_function_dispatch(_binary_op_dispatcher)
 def polysub(a1, a2):
     """
     Difference (subtraction) of two polynomials.
@@ -782,6 +838,7 @@ def polysub(a1, a2):
     return val
 
 
+@array_function_dispatch(_binary_op_dispatcher)
 def polymul(a1, a2):
     """
     Find the product of two polynomials.
@@ -838,6 +895,12 @@ def polymul(a1, a2):
         val = poly1d(val)
     return val
 
+
+def _polydiv_dispatcher(u, v):
+    return (u, v)
+
+
+@array_function_dispatch(_polydiv_dispatcher)
 def polydiv(u, v):
     """
     Returns the quotient and remainder of polynomial division.
@@ -931,6 +994,7 @@ def _raise_power(astr, wrap=70):
     return output + astr[n:]
 
 
+@set_module('numpy')
 class poly1d(object):
     """
     A one-dimensional polynomial class.

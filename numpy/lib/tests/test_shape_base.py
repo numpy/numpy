@@ -3,6 +3,8 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 import warnings
 import functools
+import sys
+import pytest
 
 from numpy.lib.shape_base import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
@@ -12,6 +14,9 @@ from numpy.lib.shape_base import (
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
+
+
+IS_64BIT = sys.maxsize > 2**32
 
 
 def _add_keepdims(func):
@@ -293,6 +298,15 @@ class TestExpandDims(object):
             assert_warns(DeprecationWarning, expand_dims, a, -6)
             assert_warns(DeprecationWarning, expand_dims, a, 5)
 
+    def test_subclasses(self):
+        a = np.arange(10).reshape((2, 5))
+        a = np.ma.array(a, mask=a%3 == 0)
+
+        expanded = np.expand_dims(a, axis=1)
+        assert_(isinstance(expanded, np.ma.MaskedArray))
+        assert_equal(expanded.shape, (2, 1, 5))
+        assert_equal(expanded.mask.shape, (2, 1, 5))
+
 
 class TestArraySplit(object):
     def test_integer_0_split(self):
@@ -394,6 +408,15 @@ class TestArraySplit(object):
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
 
+    @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
+    def test_integer_split_2D_rows_greater_max_int32(self):
+        a = np.broadcast_to([0], (1 << 32, 2))
+        res = array_split(a, 4)
+        chunk = np.broadcast_to([0], (1 << 30, 2))
+        tgt = [chunk] * 4
+        for i in range(len(tgt)):
+            assert_equal(res[i].shape, tgt[i].shape)
+
     def test_index_split_simple(self):
         a = np.arange(10)
         indices = [1, 5, 7]
@@ -434,9 +457,34 @@ class TestSplit(object):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
 
+
 class TestColumnStack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, column_stack, 1)
+
+    def test_1D_arrays(self):
+        # example from docstring
+        a = np.array((1, 2, 3))
+        b = np.array((2, 3, 4))
+        expected = np.array([[1, 2],
+                             [2, 3],
+                             [3, 4]])
+        actual = np.column_stack((a, b))
+        assert_equal(actual, expected)
+
+    def test_2D_arrays(self):
+        # same as hstack 2D docstring example
+        a = np.array([[1], [2], [3]])
+        b = np.array([[2], [3], [4]])
+        expected = np.array([[1, 2],
+                             [2, 3],
+                             [3, 4]])
+        actual = np.column_stack((a, b))
+        assert_equal(actual, expected)
+
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            column_stack((np.arange(3) for _ in range(2)))
 
 
 class TestDstack(object):
@@ -470,6 +518,10 @@ class TestDstack(object):
         res = dstack([a, b])
         desired = np.array([[[1, 1], [2, 2]]])
         assert_array_equal(res, desired)
+
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            dstack((np.arange(3) for _ in range(2)))
 
 
 # array_split has more comprehensive test of splitting.

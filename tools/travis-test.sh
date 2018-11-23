@@ -28,12 +28,16 @@ fi
 werrors="-Werror=declaration-after-statement -Werror=vla "
 werrors+="-Werror=nonnull -Werror=pointer-arith"
 
+# build with c99 by default
+
 setup_base()
 {
   # use default python flags but remoge sign-compare
   sysflags="$($PYTHON -c "from distutils import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
+  # use c99
+  export CFLAGS=$CFLAGS" -std=c99"
   # We used to use 'setup.py install' here, but that has the terrible
   # behaviour that if a copy of the package is already installed in the
   # install location, then the new copy just gets dropped on top of it.
@@ -46,6 +50,8 @@ setup_base()
   if [ -z "$USE_DEBUG" ]; then
     $PIP install -v . 2>&1 | tee log
   else
+    # Python3.5-dbg on travis seems to need this
+    export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
     $PYTHON setup.py build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
@@ -95,14 +101,19 @@ setup_chroot()
 
   # install needed packages
   sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python-dev python-nose python-pip cython \
-    python-pytest"
+    libatlas-base-dev gfortran python3-dev python3-pip \
+    cython  python3-pytest"
 }
 
 run_test()
 {
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
+  fi
+
+  if [ -n "$RUN_COVERAGE" ]; then
+    $PIP install pytest-cov
+    COVERAGE_FLAG=--coverage
   fi
 
   # We change directories to make sure that python won't find the copy
@@ -113,10 +124,33 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full
+    export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
+    $PYTHON ../tools/test-installed-numpy.py -v --mode=full $COVERAGE_FLAG
   else
     $PYTHON ../tools/test-installed-numpy.py -v
   fi
+
+  if [ -n "$RUN_COVERAGE" ]; then
+    # move back up to the source dir because we want to execute
+    # gcov on the source files after the tests have gone through
+    # the code paths
+    cd ..
+
+    # execute gcov on source files
+    find . -name '*.gcno' -type f -exec gcov -pb {} +
+
+    # move the C line coverage report files to the same path
+    # as the Python report data
+    mv *.gcov empty
+
+    # move back to the previous path for good measure
+    # as the Python coverage data is there
+    cd empty
+
+    # Upload coverage files to codecov
+    bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy
+  fi
+
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
     $PYTHON `which asv` machine --machine travis
@@ -141,14 +175,29 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   $PIP install -U virtualenv
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  # use c99
+  export CFLAGS=$CFLAGS" -std=c99"
+  # adjust gcc flags if C coverage requested
+  if [ -n "$RUN_COVERAGE" ]; then
+     export NPY_DISTUTILS_APPEND_FLAGS=1
+     export CC='gcc --coverage'
+     export F77='gfortran --coverage'
+     export F90='gfortran --coverage'
+     export LDFLAGS='--coverage'
+  fi
   $PYTHON setup.py bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  pip install --pre --no-index --upgrade --find-links=. numpy
-  pip install nose pytest
+  $PIP install --pre --no-index --upgrade --find-links=. numpy
+  $PIP install nose pytest
+
+  if [ -n "$INSTALL_PICKLE5" ]; then
+    $PIP install pickle5
+  fi
+
   popd
   run_test
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
@@ -158,14 +207,20 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
+  # use c99
+  export CFLAGS=$CFLAGS" -std=c99"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  pip install numpy*
-  pip install nose pytest
+  $PIP install numpy*
+  $PIP install nose pytest
+  if [ -n "$INSTALL_PICKLE5" ]; then
+    $PIP install pickle5
+  fi
+
   popd
   run_test
 elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
@@ -174,11 +229,10 @@ elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
   # the chroot'ed environment will not have the current locale,
   # avoid any warnings which may disturb testing
   export LANG=C LC_ALL=C
-  # run again in chroot with this time testing
+  # run again in chroot with this time testing with python3
   sudo linux32 chroot $DIR bash -c \
-    "cd numpy && PYTHON=python PIP=pip IN_CHROOT=1 $0 test"
+    "cd numpy && PYTHON=python3 PIP=pip3 IN_CHROOT=1 $0 test"
 else
   setup_base
   run_test
 fi
-

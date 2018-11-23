@@ -541,12 +541,8 @@ class TestStackArrays(object):
         test = stack_arrays((a, b), autoconvert=True)
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
-        try:
-            test = stack_arrays((a, b), autoconvert=False)
-        except TypeError:
-            pass
-        else:
-            raise AssertionError
+        with assert_raises(TypeError):
+            stack_arrays((a, b), autoconvert=False)
 
     def test_checktitles(self):
         # Test using titles in the field names
