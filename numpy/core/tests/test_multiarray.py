@@ -2693,6 +2693,15 @@ class TestMethods(object):
         assert_raises(TypeError, np.dot, c, A)
         assert_raises(TypeError, np.dot, A, c)
 
+    def test_dot_casting_fails(self):
+
+        class A(object):
+            def __array__(self, *args, **kwargs):
+                raise NotImplementedError
+
+        # Don't override the error from calling __array__()
+        assert_raises(NotImplementedError, np.dot, A(), A())
+
     def test_dot_out_mem_overlap(self):
         np.random.seed(1)
 
