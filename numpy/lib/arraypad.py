@@ -893,9 +893,20 @@ def pad(array, pad_width, mode, **kwargs):
     # (zipping may be more readable than using enumerate)
     axes = range(padded.ndim)
 
-    if array.size == 0 and mode not in {"constant", "empty"}:
-        # Deal with special case: only modes "constant" and "empty" can extend
-        # empty axes, all other modes depend on `array` not being empty.
+    if mode == "constant":
+        values = kwargs.get("constant_values", 0)
+        values = _as_pairs(values, padded.ndim)
+        for axis, index_pair, value_pair in zip(axes, pad_width, values):
+            roi = _view_roi(padded, old_region_sl, axis)
+            _set_pad_area(roi, axis, index_pair, value_pair)
+
+    elif mode == "empty":
+        pass  # Do nothing as padded is already prepared
+
+    elif array.size == 0:
+        # Only modes "constant" and "empty" can extend empty axes, all other
+        # modes depend on `array` not being empty
+        # -> ensure every empty axis is only "padded with 0"
         for axis, index_pair in zip(axes, pad_width):
             if (
                 array.shape[axis] == 0
@@ -905,16 +916,7 @@ def pad(array, pad_width, mode, **kwargs):
                     "can't extend empty axis {} using modes other than "
                     "'constant' or 'empty'".format(axis)
                 )
-        # If pad values in empty axis were zero as well, then _pad_simple
-        # already returned the correct result
-        return padded
-
-    if mode == "constant":
-        values = kwargs.get("constant_values", 0)
-        values = _as_pairs(values, padded.ndim)
-        for axis, index_pair, value_pair in zip(axes, pad_width, values):
-            roi = _view_roi(padded, old_region_sl, axis)
-            _set_pad_area(roi, axis, index_pair, value_pair)
+        # _pad_simple already returned the correct result
 
     elif mode == "edge":
         for axis, index_pair in zip(axes, pad_width):
@@ -969,11 +971,5 @@ def pad(array, pad_width, mode, **kwargs):
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_wrap_both(
                     roi, axis, (left_index, right_index))
-
-    elif mode == "empty":
-        pass  # Do nothing as padded is already prepared
-
-    else:
-        raise ValueError("mode '{}' is not supported".format(mode))
 
     return padded
