@@ -1262,6 +1262,16 @@ class TestTypeError1(object):
                       **kwargs)
 
 
+def test_unsupported_mode():
+    """Test error message for unsupported pad modes."""
+    with pytest.raises(ValueError, message="mode '.*' is not supported"):
+        pad([1, 2, 3], 1, mode="unknown")
+    with pytest.raises(ValueError, message="mode '.*' is not supported"):
+        pad([1, 2, 3], 1, mode=3)
+    with pytest.raises(ValueError, message="mode '.*' is not supported"):
+        pad([1, 2, 3], 1, mode=None)
+
+
 def test_order():
     """Test if C and F order is preserved for all pad modes."""
     modes = [

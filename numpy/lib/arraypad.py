@@ -850,7 +850,7 @@ def pad(array, pad_width, mode, **kwargs):
     # Broadcast to shape (array.ndim, 2)
     pad_width = _as_pairs(pad_width, array.ndim, as_index=True)
 
-    if not isinstance(mode, np.compat.basestring):
+    if callable(mode):
         # Old behavior: Use user-supplied function with np.apply_along_axis
         function = mode
         # Create a new zero padded array
@@ -873,7 +873,10 @@ def pad(array, pad_width, mode, **kwargs):
         'reflect': ['reflect_type'],
         'symmetric': ['reflect_type'],
     }
-    unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
+    try:
+        unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
+    except KeyError:
+        raise ValueError("mode '{}' is not supported".format(mode))
     if unsupported_kwargs:
         raise ValueError("unsupported keyword arguments for mode '{}': {}"
                          .format(mode, unsupported_kwargs))
