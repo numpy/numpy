@@ -2126,10 +2126,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
         if names is None:
             # If the dtype is uniform (before sizing strings)
-            base = set([
+            base = {
                 c_type
                 for c, c_type in zip(converters, column_types)
-                if c._checked])
+                if c._checked}
             if len(base) == 1:
                 uniform_type, = base
                 (ddtype, mdtype) = (uniform_type, bool)

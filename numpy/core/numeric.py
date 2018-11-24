@@ -745,7 +745,7 @@ def require(a, dtype=None, requirements=None):
     if not requirements:
         return asanyarray(a, dtype=dtype)
     else:
-        requirements = set(possible_flags[x.upper()] for x in requirements)
+        requirements = {possible_flags[x.upper()] for x in requirements}
 
     if 'E' in requirements:
         requirements.remove('E')
@@ -754,7 +754,7 @@ def require(a, dtype=None, requirements=None):
         subok = True
 
     order = 'A'
-    if requirements >= set(['C', 'F']):
+    if requirements >= {'C', 'F'}:
         raise ValueError('Cannot specify both "C" and "F" order')
     elif 'F' in requirements:
         order = 'F'

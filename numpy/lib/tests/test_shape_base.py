@@ -260,8 +260,8 @@ class TestApplyAlongAxis(object):
     def test_with_iterable_object(self):
         # from issue 5248
         d = np.array([
-            [set([1, 11]), set([2, 22]), set([3, 33])],
-            [set([4, 44]), set([5, 55]), set([6, 66])]
+            [{1, 11}, {2, 22}, {3, 33}],
+            [{4, 44}, {5, 55}, {6, 66}]
         ])
         actual = np.apply_along_axis(lambda a: set.union(*a), 0, d)
         expected = np.array([{1, 11, 4, 44}, {2, 22, 5, 55}, {3, 33, 6, 66}])

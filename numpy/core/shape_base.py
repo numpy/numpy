@@ -410,7 +410,7 @@ def stack(arrays, axis=0, out=None):
     if not arrays:
         raise ValueError('need at least one array to stack')
 
-    shapes = set(arr.shape for arr in arrays)
+    shapes = {arr.shape for arr in arrays}
     if len(shapes) != 1:
         raise ValueError('all input arrays must have the same shape')
 
