@@ -888,9 +888,8 @@ def einsum_path(*operands, **kwargs):
     broadcast_indices = [set(x) for x in broadcast_indices]
 
     # Compute size of each input array plus the output array
-    size_list = []
-    for term in input_list + [output_subscript]:
-        size_list.append(_compute_size_by_dict(term, dimension_dict))
+    size_list = [_compute_size_by_dict(term, dimension_dict)
+                 for term in input_list + [output_subscript]]
     max_size = max(size_list)
 
     if memory_limit is None:

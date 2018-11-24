@@ -2196,9 +2196,7 @@ class TestIterNested(object):
         a = arange(12).reshape(2, 3, 2)
 
         i, j = np.nested_iters(a, [[0], [1, 2]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [[y for y in j] for x in i]
         assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
 
         i, j = np.nested_iters(a, [[0, 1], [2]])

@@ -400,9 +400,7 @@ class FunctionApi(object):
         return "        (void *) %s" % self.name
 
     def internal_define(self):
-        annstr = []
-        for a in self.annotations:
-            annstr.append(str(a))
+        annstr = [str(a) for a in self.annotations]
         annstr = ' '.join(annstr)
         astr = """\
 NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
