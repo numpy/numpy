@@ -241,6 +241,14 @@ class TestRecFunctions(object):
         assert_(dd.base is d)
         assert_(ddd.base is d)
 
+        # test that nested fields with identical names don't break anything
+        point = np.dtype([('x', int), ('y', int)])
+        triangle = np.dtype([('a', point), ('b', point), ('c', point)])
+        arr = np.zeros(10, triangle)
+        res = structured_to_unstructured(arr, dtype=int)
+        assert_equal(res, np.zeros((10, 6), dtype=int))
+
+
     def test_field_assignment_by_name(self):
         a = np.ones(2, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
         newdt = [('b', 'f4'), ('c', 'u1')]
@@ -262,6 +270,11 @@ class TestRecFunctions(object):
         assert_equal(a, np.array([((1,2),), ((1,3),)], dtype=a.dtype))
         assign_fields_by_name(a, b)
         assert_equal(a, np.array([((0,2),), ((0,3),)], dtype=a.dtype))
+
+        # test unstructured code path for 0d arrays
+        a, b = np.array(3), np.array(0)
+        assign_fields_by_name(b, a)
+        assert_equal(b[()], 3)
 
 
 class TestRecursiveFillFields(object):
