@@ -116,7 +116,8 @@ def _slice_at_axis(shape, sl, axis):
 
 
 def _view_roi(array, old_region_slice, axis):
-    """Get a view of the current region of interest during iterative padding.
+    """
+    Get a view of the current region of interest during iterative padding.
 
     When padding multiple dimensions iteratively corner values are
     unnecessarily overwritten multiple times. This function reduces the
@@ -143,7 +144,8 @@ def _view_roi(array, old_region_slice, axis):
 
 
 def _pad_simple(array, pad_width, fill_value=None):
-    """Pad array on all sides with either a single value or undefined values.
+    """
+    Pad array on all sides with either a single value or undefined values.
 
     Parameters
     ----------
@@ -775,7 +777,7 @@ def pad(array, pad_width, mode, **kwargs):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad(a, (2,3), 'constant', constant_values=(4, 6))
+    >>> np.pad(a, (2, 3), 'constant', constant_values=(4, 6))
     array([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
 
     >>> np.pad(a, (2, 3), 'edge')
