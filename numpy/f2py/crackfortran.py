@@ -2349,7 +2349,7 @@ def get_sorted_names(vars):
     """
     depend_dict = _calc_depend_dict(vars)
     names = []
-    for name in depend_dict:
+    for name in list(depend_dict.keys()):
         if not depend_dict[name]:
             names.append(name)
             del depend_dict[name]
