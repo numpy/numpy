@@ -77,10 +77,7 @@ class TypeDescription(object):
 _fdata_map = dict(e='npy_%sf', f='npy_%sf', d='npy_%s', g='npy_%sl',
                   F='nc_%sf', D='nc_%s', G='nc_%sl')
 def build_func_data(types, f):
-    func_data = []
-    for t in types:
-        d = _fdata_map.get(t, '%s') % (f,)
-        func_data.append(d)
+    func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
 def TD(types, f=None, astype=None, in_=None, out=None, simd=None):

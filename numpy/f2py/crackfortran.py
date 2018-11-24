@@ -1849,10 +1849,8 @@ def postcrack2(block, tab='', param_map=None):
     if not f90modulevars:
         return block
     if isinstance(block, list):
-        ret = []
-        for g in block:
-            g = postcrack2(g, tab=tab + '\t', param_map=param_map)
-            ret.append(g)
+        ret = [postcrack2(g, tab=tab + '\t', param_map=param_map)
+               for g in block]
         return ret
     setmesstext(block)
     outmess('%sBlock: %s\n' % (tab, block['name']), 0)
@@ -1870,10 +1868,8 @@ def postcrack2(block, tab='', param_map=None):
                     val = kind['kind']
                     if val in param_map:
                         kind['kind'] = param_map[val]
-    new_body = []
-    for b in block['body']:
-        b = postcrack2(b, tab=tab + '\t', param_map=param_map)
-        new_body.append(b)
+    new_body = [postcrack2(b, tab=tab + '\t', param_map=param_map)
+                for b in block['body']]
     block['body'] = new_body
 
     return block
@@ -2353,12 +2349,12 @@ def get_sorted_names(vars):
     """
     depend_dict = _calc_depend_dict(vars)
     names = []
-    for name in list(depend_dict.keys()):
+    for name in depend_dict:
         if not depend_dict[name]:
             names.append(name)
             del depend_dict[name]
     while depend_dict:
-        for name, lst in list(depend_dict.items()):
+        for name, lst in depend_dict.items():
             new_lst = [n for n in lst if n in depend_dict]
             if not new_lst:
                 names.append(name)
@@ -2918,10 +2914,7 @@ def analyzeargs(block):
     implicitrules, attrrules = buildimplicitrules(block)
     if 'args' not in block:
         block['args'] = []
-    args = []
-    for a in block['args']:
-        a = expr2name(a, block, args)
-        args.append(a)
+    args = [expr2name(a, block, args) for a in block['args']]
     block['args'] = args
     if 'entry' in block:
         for k, args1 in list(block['entry'].items()):
@@ -3211,10 +3204,8 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 vardef = '%s(kind=%s)' % (vardef, selector['kind'])
         c = ' '
         if 'attrspec' in vars[a]:
-            attr = []
-            for l in vars[a]['attrspec']:
-                if l not in ['external']:
-                    attr.append(l)
+            attr = [l for l in vars[a]['attrspec']
+                    if l not in ['external']]
             if attr:
                 vardef = '%s, %s' % (vardef, ','.join(attr))
                 c = ','

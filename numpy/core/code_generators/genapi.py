@@ -461,10 +461,7 @@ def get_api_functions(tagname, api_dict):
     functions = []
     for f in API_FILES:
         functions.extend(find_functions(f, tagname))
-    dfunctions = []
-    for func in functions:
-        o = api_dict[func.name][0]
-        dfunctions.append( (o, func) )
+    dfunctions = [(api_dict[func.name][0], func) for func in functions]
     dfunctions.sort()
     return [a[1] for a in dfunctions]
 

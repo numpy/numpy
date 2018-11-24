@@ -424,10 +424,8 @@ def _compiler_to_string(compiler):
             v = getattr(compiler, key)
             mx = max(mx, len(key))
             props.append((key, repr(v)))
-    lines = []
-    format = '%-' + repr(mx+1) + 's = %s'
-    for prop in props:
-        lines.append(format % prop)
+    fmt = '%-' + repr(mx+1) + 's = %s'
+    lines = [fmt % prop for prop in props]
     return '\n'.join(lines)
 
 def CCompiler_show_customization(self):

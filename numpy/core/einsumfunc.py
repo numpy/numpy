@@ -1374,9 +1374,7 @@ def einsum(*operands, **kwargs):
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
         inds, idx_rm, einsum_str, remaining, blas = contraction
-        tmp_operands = []
-        for x in inds:
-            tmp_operands.append(operands.pop(x))
+        tmp_operands = [operands.pop(x) for x in inds]
 
         # Do we need to deal with the output?
         handle_out = specified_out and ((num + 1) == len(contraction_list))
