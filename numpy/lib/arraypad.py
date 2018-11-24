@@ -137,12 +137,9 @@ def _view_roi(array, old_region_slice, axis):
     roi : ndarray
         The region of interest of the original `array`.
     """
-    if axis == array.ndim:
-        return array
-    else:
-        axis += 1
-        sl = (slice(None),) * axis + old_region_slice[axis:]
-        return array[sl]
+    axis += 1
+    sl = (slice(None),) * axis + old_region_slice[axis:]
+    return array[sl]
 
 
 def _pad_simple(array, pad_width, fill_value=None):
