@@ -443,6 +443,15 @@ behavior since Numpy 1.7.
     >>> repack_fields(a[['a','c']]).view('i8')  # supported 1.15 and 1.16
     array([0, 0, 0])
 
+    The :module:`numpy.lib.recfunctions` module has other new methods
+    introduced in numpy 1.16 to help users account for this change. These are
+    :func:`numpy.lib.recfunctions.structured_to_unstructured`,
+    :func:`numpy.lib.recfunctions.unstructured_to_structured`, 
+    :func:`numpy.lib.recfunctions.apply_along_fields`, 
+    :func:`numpy.lib.recfunctions.assign_fields_by_name`,  and
+    :func:`numpy.lib.recfunctions.require_fields`.
+
+
 Assigning to an array with a multi-field index will behave the same in Numpy
 1.15 and Numpy 1.16. In both versions the assignment will modify the original
 array::
