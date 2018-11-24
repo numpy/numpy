@@ -4,7 +4,10 @@ import sys
 
 import numpy as np
 import pytest
-
+try:
+    import ctypes
+except ImportError:
+    ctypes = None
 
 def check_dir(module, module_name=None):
     """Returns a mapping of all objects with the wrong __module__ attribute."""
@@ -75,3 +78,12 @@ def test_numpy_linalg():
 def test_numpy_fft():
     bad_results = check_dir(np.fft)
     assert bad_results == {}
+
+@pytest.mark.skipif(ctypes is None,
+                    reason="ctypes not available in this python")
+def test_NPY_NO_EXPORT():
+    cdll = ctypes.CDLL(np.core._multiarray_tests.__file__)
+    # Make sure an arbitrary NPY_NO_EXPORT function is actually hidden
+    f = getattr(cdll, 'test_not_exported', None)
+    assert f is None, ("'test_not_exported' is mistakenly exported, "
+                      "NPY_NO_EXPORT does not work")
