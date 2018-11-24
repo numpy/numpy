@@ -156,9 +156,9 @@ class TestRecord(object):
         the dtype constructor.
         """
         assert_raises(TypeError, np.dtype,
-                      dict(names=set(['A', 'B']), formats=['f8', 'i4']))
+                      dict(names={'A', 'B'}, formats=['f8', 'i4']))
         assert_raises(TypeError, np.dtype,
-                      dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
+                      dict(names=['A', 'B'], formats={'f8', 'i4'}))
 
     def test_aligned_size(self):
         # Check that structured dtypes get padded to an aligned size

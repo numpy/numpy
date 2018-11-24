@@ -265,10 +265,10 @@ class build_ext (old_build_ext):
         # we blindly assume that both packages need all of the libraries,
         # resulting in a larger wheel than is required. This should be fixed,
         # but it's so rare that I won't bother to handle it.
-        pkg_roots = set(
+        pkg_roots = {
             self.get_ext_fullname(ext.name).split('.')[0]
             for ext in self.extensions
-        )
+        }
         for pkg_root in pkg_roots:
             shared_lib_dir = os.path.join(pkg_root, '.libs')
             if not self.inplace:

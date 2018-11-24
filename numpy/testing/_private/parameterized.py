@@ -190,7 +190,7 @@ def parameterized_argument_value_pairs(func, p):
         in zip(named_args, argspec.defaults or [])
     ])
 
-    seen_arg_names = set([ n for (n, _) in result ])
+    seen_arg_names = {n for (n, _) in result}
     keywords = QuietOrderedDict(sorted([
         (name, p.kwargs[name])
         for name in p.kwargs

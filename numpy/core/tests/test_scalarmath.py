@@ -565,10 +565,10 @@ class TestMultiply(object):
         # Some of this behaviour may be controversial and could be open for
         # change.
         accepted_types = set(np.typecodes["AllInteger"])
-        deprecated_types = set('?')
+        deprecated_types = {'?'}
         forbidden_types = (
             set(np.typecodes["All"]) - accepted_types - deprecated_types)
-        forbidden_types -= set('V')  # can't default-construct void scalars
+        forbidden_types -= {'V'}  # can't default-construct void scalars
 
         for seq_type in (list, tuple):
             seq = seq_type([1, 2, 3])

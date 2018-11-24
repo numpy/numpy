@@ -60,7 +60,7 @@ for k, v in typeinfo.items():
     else:
         _concrete_typeinfo[k] = v
 
-_concrete_types = set(v.type for k, v in _concrete_typeinfo.items())
+_concrete_types = {v.type for k, v in _concrete_typeinfo.items()}
 
 
 def _bits_of(obj):

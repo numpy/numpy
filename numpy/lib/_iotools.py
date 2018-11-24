@@ -693,7 +693,7 @@ class StringConverter(object):
                     self.func = lambda x: int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
-            self.missing_values = set([''])
+            self.missing_values = {''}
         else:
             if isinstance(missing_values, basestring):
                 missing_values = missing_values.split(",")
