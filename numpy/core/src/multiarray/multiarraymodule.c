@@ -75,6 +75,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "umathmodule.h"
 
 NPY_NO_EXPORT int initscalarmath(PyObject *);
+NPY_NO_EXPORT int set_matmul_flags(PyObject *d); /* in ufunc_object.c */
 
 /*
  * global variable to determine if legacy printing is enabled, accessible from
@@ -4505,7 +4506,6 @@ intern_strings(void)
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }
 
-
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
@@ -4575,6 +4575,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
         goto err;
     }
 
+    if (set_matmul_flags(d) < 0) {
+        goto err;
+    }
     initialize_casting_tables();
     initialize_numeric_types();
     if(initscalarmath(m) < 0)

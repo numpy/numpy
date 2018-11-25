@@ -133,7 +133,7 @@ class Ufunc(object):
         self.docstring = docstring
         self.typereso = typereso
         self.type_descriptions = []
-        self.signature = kwargs.pop('signature', 'NULL')
+        self.signature = kwargs.pop('signature', None)
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
@@ -908,9 +908,9 @@ defdict = {
 'matmul' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.matmul'),
-          "PyUFunc_MatmulTypeResolver",
+          "PyUFunc_SimpleBinaryOperationTypeResolver",
           TD(notimes_or_obj),
-          signature='"(n?,k),(k,m?)->(n?,m?)"',
+          signature='(n?,k),(k,m?)->(n?,m?)',
           ),
 }
 
@@ -1057,6 +1057,10 @@ def make_ufuncs(funcdict):
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n
         docstring = '\\n\"\"'.join(docstring.split(r"\n"))
+        if uf.signature is None:
+            sig = "NULL"
+        else:
+            sig = '"{}"'.format(uf.signature)
         fmt = textwrap.dedent("""\
             identity = {identity_expr};
             if ({has_identity} && identity == NULL) {{
@@ -1065,7 +1069,7 @@ def make_ufuncs(funcdict):
             f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
                 {name}_functions, {name}_data, {name}_signatures, {nloops},
                 {nin}, {nout}, {identity}, "{name}",
-                "{doc}", 0, {signature}, identity
+                "{doc}", 0, {sig}, identity
             );
             if ({has_identity}) {{
                 Py_DECREF(identity);
@@ -1081,7 +1085,7 @@ def make_ufuncs(funcdict):
             identity='PyUFunc_IdentityValue',
             identity_expr=uf.identity,
             doc=docstring,
-            signature=uf.signature,
+            sig=sig,
         )
 
         # Only PyUFunc_None means don't reorder - we pass this using the old

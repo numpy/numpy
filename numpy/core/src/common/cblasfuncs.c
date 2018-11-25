@@ -201,7 +201,6 @@ _bad_strides(PyArrayObject *ap)
     return 0;
 }
 
-
 /*
  * dot(a,b)
  * Returns the dot product of a and b for arrays of floating point types.

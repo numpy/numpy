@@ -145,11 +145,4 @@ PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
                                       NpyAuxData **out_innerloopdata,
                                       int *out_needs_api);
 
-NPY_NO_EXPORT int
-PyUFunc_MatmulTypeResolver(PyUFuncObject *ufunc,
-                              NPY_CASTING casting,
-                              PyArrayObject **operands,
-                              PyObject *type_tup,
-                              PyArray_Descr **out_dtypes);
-
 #endif

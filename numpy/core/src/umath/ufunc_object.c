@@ -319,6 +319,23 @@ _find_array_prepare(ufunc_full_args args,
     NPY_ITER_NO_BROADCAST | \
     NPY_ITER_NO_SUBTYPE | \
     NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+
+/* Called at module initialization to set the matmul ufunc output flags */
+NPY_NO_EXPORT int
+set_matmul_flags(PyObject *d)
+{
+    PyObject *matmul = PyDict_GetItemString(d, "matmul");
+    if (matmul == NULL) {
+        return -1;
+    }
+    ((PyUFuncObject *)matmul)->op_flags[2] = (NPY_ITER_WRITEONLY |
+                                         NPY_ITER_UPDATEIFCOPY |
+                                         NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
+                                         ~NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+    return 0;
+}
+
+
 /*
  * Set per-operand flags according to desired input or output flags.
  * op_flags[i] for i in input (as determined by ufunc->nin) will be

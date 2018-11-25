@@ -2558,7 +2558,7 @@ add_newdoc('numpy.core.umath', 'matmul',
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.
 
-        ..versionchanged:: 1.16
+        ..versionadded:: 1.16
           Now handles ufunc kwargs
 
     Returns
@@ -2598,11 +2598,11 @@ add_newdoc('numpy.core.umath', 'matmul',
       appending a 1 to its dimensions. After matrix multiplication
       the appended 1 is removed.
 
-    ``matmul`` differs from ``dot`` in two important ways.
+    ``matmul`` differs from ``dot`` in two important ways:
 
     - Multiplication by scalars is not allowed, use ``*`` instead.
     - Stacks of matrices are broadcast together as if the matrices
-      were elements, respecting the signature `(n,k),(k,m)->(n,m)`:
+      were elements, respecting the signature ``(n,k),(k,m)->(n,m)``:
 
       >>> a = a = np.full([9,5,7,3], True, dtype=bool)
       >>> c = np.full([9, 5, 4,3], True, dtype=bool)
@@ -2639,13 +2639,13 @@ add_newdoc('numpy.core.umath', 'matmul',
 
     Broadcasting is conventional for stacks of arrays
 
-    >>> a = np.arange(2*2*4).reshape((2,2,4))
-    >>> b = np.arange(2*2*4).reshape((2,4,2))
+    >>> a = np.arange(2 * 2 * 4).reshape((2, 2, 4))
+    >>> b = np.arange(2 * 2 * 4).reshape((2, 4, 2))
     >>> np.matmul(a,b).shape
     (2, 2, 2)
-    >>> np.matmul(a,b)[0,1,1]
+    >>> np.matmul(a, b)[0, 1, 1]
     98
-    >>> sum(a[0,1,:] * b[0,:,1])
+    >>> sum(a[0, 1, :] * b[0 , :, 1])
     98
 
     Vector, vector returns the scalar inner product, but neither argument
@@ -2659,7 +2659,7 @@ add_newdoc('numpy.core.umath', 'matmul',
     >>> np.matmul([1,2], 3)
     Traceback (most recent call last):
     ...
-    ValueError: Scalar operands are not allowed, use '*' instead
+    ValueError: matmul: Input operand 1 does not have enough dimensions ...
 
     .. versionadded:: 1.10.0
     """)
