@@ -148,9 +148,7 @@ def find_executable(exe, path=None, _cache={}):
 
 def _preserve_environment( names ):
     log.debug('_preserve_environment(%r)' % (names))
-    env = {}
-    for name in names:
-        env[name] = os.environ.get(name)
+    env = {name: os.environ.get(name) for name in names}
     return env
 
 def _update_environment( **env ):

@@ -32,9 +32,7 @@ def findcommonblocks(block, top=1):
     ret = []
     if hascommon(block):
         for n in block['common'].keys():
-            vars = {}
-            for v in block['common'][n]:
-                vars[v] = block['vars'][v]
+            vars = {v: block['vars'][v] for v in block['common'][n]}
             ret.append((n, block['common'][n], vars))
     elif hasbody(block):
         for b in block['body']:
