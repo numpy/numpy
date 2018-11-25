@@ -87,8 +87,8 @@ def normalize_descr(descr):
             else:
                 nitem = (item[0], dtype)
             out.append(nitem)
-        elif isinstance(item[1], list):
-            l = normalize_descr(item[1])
+        elif isinstance(dtype, list):
+            l = normalize_descr(dtype)
             out.append((item[0], l))
         else:
             raise ValueError("Expected a str or list and got %s" %

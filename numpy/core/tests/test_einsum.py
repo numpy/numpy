@@ -11,7 +11,7 @@ from numpy.testing import (
 # Setup for optimize einsum
 chars = 'abcdefghij'
 sizes = np.array([2, 3, 4, 5, 4, 3, 2, 6, 5, 4, 3])
-global_size_dict = {char: size for size, char in zip(sizes, chars)}
+global_size_dict = {char: size for char, size in zip(chars, sizes)}
 
 
 class TestEinsum(object):
