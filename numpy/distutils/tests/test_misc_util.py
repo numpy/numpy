@@ -78,4 +78,4 @@ class TestSharedExtension(object):
 def test_installed_npymath_ini():
     # Regression test for gh-7707.  If npymath.ini wasn't installed, then this
     # will give an error.
-    info = get_info('npymath')
+    get_info('npymath')

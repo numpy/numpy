@@ -95,7 +95,7 @@ Original exception was: %s, and the Compiler class was %s
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError, CompileError):
-            msg = str(get_exception())
+            str(get_exception())
             self.compiler = save_compiler
             raise CompileError
         self.compiler = save_compiler

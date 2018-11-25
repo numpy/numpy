@@ -4,7 +4,6 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-import sys
 
 from numpy.testing import (assert_array_equal, assert_equal,
                            assert_raises, assert_raises_regex)

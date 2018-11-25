@@ -7,7 +7,7 @@ from __future__ import division, print_function, absolute_import
 import sys
 import os
 import pytest
-from os.path import join as pathjoin, isfile, dirname, basename
+from os.path import join as pathjoin, isfile, dirname
 from subprocess import Popen, PIPE
 
 import numpy as np

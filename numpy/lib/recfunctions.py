@@ -949,7 +949,6 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
 
     fields = _get_fields_and_offsets(arr.dtype)
     names, dts, counts, offsets = zip(*fields)
-    n_fields = len(names)
 
     if dtype is None:
         out_dtype = np.result_type(*[dt.base for dt in dts])

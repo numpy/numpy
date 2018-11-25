@@ -849,7 +849,6 @@ def einsum_path(*operands, **kwargs):
 
     # Python side parsing
     input_subscripts, output_subscript, operands = _parse_einsum_input(operands)
-    subscripts = input_subscripts + '->' + output_subscript
 
     # Build a few useful list and sets
     input_list = input_subscripts.split(',')

@@ -1096,7 +1096,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             if n > 1:
                 tmp[2] = c[1]/4
             for j in range(2, n):
-                t = c[j]/(2*j + 1)
+                t = c[j]/(2*j + 1)  # FIXME: t never used
                 tmp[j + 1] = c[j]/(2*(j + 1))
                 tmp[j - 1] -= c[j]/(2*(j - 1))
             tmp[0] += k[i] - chebval(lbnd, tmp)

@@ -3593,7 +3593,6 @@ class TestPickling(object):
                                 'protocol 5 although it is not available'))
     def test_correct_protocol5_error_message(self):
         array = np.arange(10)
-        f = io.BytesIO()
 
         if sys.version_info[:2] in ((3, 6), (3, 7)):
             # For the specific case of python3.6 and 3.7, raise a clear import
@@ -4868,7 +4867,7 @@ class TestRecord(object):
 
     def test_multiple_field_name_occurrence(self):
         def test_assign():
-            dtype = np.dtype([("A", "f8"), ("B", "f8"), ("A", "f8")])
+            np.dtype([("A", "f8"), ("B", "f8"), ("A", "f8")])
 
         # Error raised when multiple fields have the same name
         assert_raises(ValueError, test_assign)
@@ -4892,9 +4891,7 @@ class TestRecord(object):
     @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
     def test_multiple_field_name_unicode(self):
         def test_assign_unicode():
-            dt = np.dtype([("\u20B9", "f8"),
-                           ("B", "f8"),
-                           ("\u20B9", "f8")])
+            np.dtype([("\u20B9", "f8"), ("B", "f8"), ("\u20B9", "f8")])
 
         # Error raised when multiple fields have the same name(unicode included)
         assert_raises(ValueError, test_assign_unicode)
@@ -6818,7 +6815,7 @@ class TestNewBufferProtocol(object):
         # gh-11150, due to bpo-10746
         for c_integer in {ctypes.c_int, ctypes.c_long, ctypes.c_longlong}:
             value = c_integer(42)
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True):
                 warnings.filterwarnings('always', r'.*\bctypes\b', RuntimeWarning)
                 np.asarray(value)
 
@@ -6828,7 +6825,7 @@ class TestNewBufferProtocol(object):
             _fields_ = [('a', ctypes.c_uint8), ('b', ctypes.c_uint32)]
         f = foo(a=1, b=2)
 
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.filterwarnings('always', r'.*\bctypes\b', RuntimeWarning)
             arr = np.asarray(f)
 
@@ -7517,7 +7514,7 @@ class TestWritebackIfCopy(object):
     def test_clip_with_out(self):
         mat = np.eye(5)
         out = np.eye(5, dtype='i2')
-        res = np.clip(mat, a_min=-10, a_max=0, out=out)
+        np.clip(mat, a_min=-10, a_max=0, out=out)
         assert_equal(np.sum(out), 0)
 
     def test_insert_noncontiguous(self):
