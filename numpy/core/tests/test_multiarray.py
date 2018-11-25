@@ -4866,11 +4866,11 @@ class TestRecord(object):
         assert_equal(dt.names, ['p', 'q'])
 
     def test_multiple_field_name_occurrence(self):
-        def test_assign():
+        def test_dtype_init():
             np.dtype([("A", "f8"), ("B", "f8"), ("A", "f8")])
 
         # Error raised when multiple fields have the same name
-        assert_raises(ValueError, test_assign)
+        assert_raises(ValueError, test_dtype_init)
 
     @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
     def test_bytes_fields(self):
@@ -7514,7 +7514,8 @@ class TestWritebackIfCopy(object):
     def test_clip_with_out(self):
         mat = np.eye(5)
         out = np.eye(5, dtype='i2')
-        np.clip(mat, a_min=-10, a_max=0, out=out)
+        res = np.clip(mat, a_min=-10, a_max=0, out=out)
+        assert_(res is out)
         assert_equal(np.sum(out), 0)
 
     def test_insert_noncontiguous(self):

@@ -1124,6 +1124,8 @@ class atlas_info(system_info):
         lapack = None
         atlas_1 = None
         for d in lib_dirs:
+            # FIXME: lapack_atlas is unused
+            lapack_atlas = self.check_libs2(d, ['lapack_atlas'], [])
             atlas = self.check_libs2(d, atlas_libs, [])
             if atlas is not None:
                 lib_dirs2 = [d] + self.combine_paths(d, ['atlas*', 'ATLAS*'])

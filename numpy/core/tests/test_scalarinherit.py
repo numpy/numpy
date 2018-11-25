@@ -67,7 +67,9 @@ class TestCharacter(object):
 
     def test_char_repeat(self):
         np_s = np.string_('abc')
+        np_u = np.unicode_('abc')
         np_i = np.int(5)
-        res_np = np_s * np_i
         res_s = b'abc' * 5
-        assert_(res_np == res_s)
+        res_u = 'abc' * 5
+        assert_(np_s * np_i == res_s)
+        assert_(np_u * np_i == res_u)

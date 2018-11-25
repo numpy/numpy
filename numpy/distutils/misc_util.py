@@ -2224,6 +2224,8 @@ def is_bootstrapping():
         return True
     except AttributeError:
         return False
+        # FIXME: below code is never reached
+        __NUMPY_SETUP__ = False
 
 
 #########################
