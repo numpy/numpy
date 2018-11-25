@@ -2354,7 +2354,7 @@ def get_sorted_names(vars):
             names.append(name)
             del depend_dict[name]
     while depend_dict:
-        for name, lst in depend_dict.items():
+        for name, lst in list(depend_dict.items()):
             new_lst = [n for n in lst if n in depend_dict]
             if not new_lst:
                 names.append(name)
@@ -2914,7 +2914,10 @@ def analyzeargs(block):
     implicitrules, attrrules = buildimplicitrules(block)
     if 'args' not in block:
         block['args'] = []
-    args = [expr2name(a, block, args) for a in block['args']]
+    args = []
+    for a in block['args']:
+        a = expr2name(a, block, args)
+        args.append(a)
     block['args'] = args
     if 'entry' in block:
         for k, args1 in list(block['entry'].items()):
