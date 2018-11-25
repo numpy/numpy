@@ -1707,25 +1707,23 @@ error:
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
-    PyObject *tuple = PyTuple_Pack(3,
-                                  /* dtype */ base,
-                                  /* align */ Py_False,
-                                  /* copy  */ Py_True);
-    PyObject *ret = PyObject_CallObject((PyObject*)Py_TYPE(base), tuple);
-    assert(ret != (PyObject*)base);
-    Py_DECREF(tuple);
+    PyObject *ret = PyObject_CallFunctionObjArgs((PyObject *)Py_TYPE(base),
+                                                  /* dtype */ base, 
+                                                  /* align */ Py_False,
+                                                  /* copy */  Py_True, NULL);
     return (PyArray_Descr*)ret;
 }
 
 /* Initialize the PyArray_Descr fields */
-static int
-_initialize_descr(PyArray_Descr *newdescr, PyArray_Descr *base)
+static PyArray_Descr *
+_descr_from_descr(PyTypeObject *cls, PyArray_Descr *base)
 {
-    if (newdescr == NULL) {
-        return -1;
+    PyArray_Descr *descr = (PyArray_Descr*)PyObject_New(PyArray_Descr, cls);
+    if (descr == NULL) {
+        return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)newdescr + sizeof(PyObject),
+    memcpy((char *)descr + sizeof(PyObject),
            (char *)base + sizeof(PyObject),
            sizeof(PyArray_Descr) - sizeof(PyObject));
 
@@ -1733,38 +1731,39 @@ _initialize_descr(PyArray_Descr *newdescr, PyArray_Descr *base)
      * The c_metadata has a by-value ownership model, need to clone it
      * (basically a deep copy, but the auxdata clone function has some
      * flexibility still) so the new PyArray_Descr object owns
-     * a copy of the data. Having both 'base' and 'newdescr' point to
+     * a copy of the data. Having both 'base' and 'descr' point to
      * the same auxdata pointer would cause a double-free of memory.
      */
     if (base->c_metadata != NULL) {
-        newdescr->c_metadata = NPY_AUXDATA_CLONE(base->c_metadata);
-        if (newdescr->c_metadata == NULL) {
+        descr->c_metadata = NPY_AUXDATA_CLONE(base->c_metadata);
+        if (descr->c_metadata == NULL) {
             PyErr_NoMemory();
-            Py_DECREF(newdescr);
-            return -1;
+            Py_DECREF(descr);
+            return NULL;
         }
     }
 
-    if (newdescr->fields == Py_None) {
-        newdescr->fields = NULL;
+    if (descr->fields == Py_None) {
+        descr->fields = NULL;
     }
-    Py_XINCREF(newdescr->fields);
-    Py_XINCREF(newdescr->names);
-    if (newdescr->subarray) {
-        newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
-        if (newdescr->subarray == NULL) {
-            Py_DECREF(newdescr);
-            return -1;
+    Py_XINCREF(descr->fields);
+    Py_XINCREF(descr->names);
+    if (descr->subarray) {
+        descr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        if (descr->subarray == NULL) {
+            Py_DECREF(descr);
+            PyErr_NoMemory();
+            return NULL;
         }
-        memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
-        Py_INCREF(newdescr->subarray->shape);
-        Py_INCREF(newdescr->subarray->base);
+        memcpy(descr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
+        Py_INCREF(descr->subarray->shape);
+        Py_INCREF(descr->subarray->base);
     }
-    Py_XINCREF(newdescr->typeobj);
-    Py_XINCREF(newdescr->metadata);
-    newdescr->hash = -1;
+    Py_XINCREF(descr->typeobj);
+    Py_XINCREF(descr->metadata);
+    descr->hash = -1;
 
-    return 0;
+    return descr;
 }
 
 /*
@@ -2243,8 +2242,8 @@ arraydescr_new(PyTypeObject *subtype,
 
     if (copy) {
 
-        descr = PyObject_New(PyArray_Descr, subtype);
-        if (_initialize_descr(descr, conv) < 0) {
+        descr = _descr_from_descr(subtype, conv);
+        if (descr == NULL) {
             return NULL;
         }
         Py_DECREF(conv);
@@ -2259,8 +2258,8 @@ arraydescr_new(PyTypeObject *subtype,
          */
         if (!copied) {
             copied = NPY_TRUE;
-            descr = PyObject_New(PyArray_Descr, subtype);
-            if (_initialize_descr(descr, conv) < 0) {
+            descr = _descr_from_descr(subtype, conv);
+            if (descr == NULL) {
                 return NULL;
             }
             Py_DECREF(conv);
