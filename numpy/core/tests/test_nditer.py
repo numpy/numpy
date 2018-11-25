@@ -2516,7 +2516,6 @@ def test_iter_buffering_reduction_reuse_reduce_loops():
                     op_flags=[['readonly'], ['readwrite']],
                     buffersize=5)
 
-    bufsizes = []
     with it:
         bufsizes = [x.shape[0] for x, y in it]
     assert_equal(bufsizes, [5, 2, 5, 2])

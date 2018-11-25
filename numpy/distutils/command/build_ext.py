@@ -152,8 +152,9 @@ class build_ext (old_build_ext):
                     binfo = clibs[libname]
                     c_libs += binfo.get('libraries', [])
                     c_lib_dirs += binfo.get('library_dirs', [])
-                    macros += [m for m in binfo.get('macros', [])
-                               if m not in macros]
+                    for m in binfo.get('macros', []):
+                        if m not in macros:
+                            macros.append(m)
 
                 for l in clibs.get(libname, {}).get('source_languages', []):
                     ext_languages.add(l)
