@@ -5716,7 +5716,7 @@ class MatmulCommon(object):
             res = self.matmul(v, v)
             assert_(type(res) is np.dtype(dt).type)
 
-    def test_0d_vector_values(self):
+    def test_scalar_output(self):
         vec1 = np.array([2])
         vec2 = np.array([3, 4]).reshape(1, -1)
         tgt = np.array([6, 8])
@@ -5876,33 +5876,29 @@ class TestMatmul(MatmulCommon):
     matmul = np.matmul
 
     def test_out_arg(self):
-        a = np.ones((2, 2), dtype=float)
-        b = np.ones((2, 2), dtype=float)
-        tgt = np.full((2,2), 2, dtype=float)
+        a = np.ones((5, 2), dtype=float)
+        b = np.array([[1, 3], [5, 7]], dtype=float)
+        tgt = np.dot(a, b)
 
         # test as positional argument
         msg = "out positional argument"
-        out = np.zeros((2, 2), dtype=float)
+        out = np.zeros((5, 2), dtype=float)
         self.matmul(a, b, out)
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test as keyword argument
         msg = "out keyword argument"
-        out = np.zeros((2, 2), dtype=float)
+        out = np.zeros((5, 2), dtype=float)
         self.matmul(a, b, out=out)
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test out with not allowed type cast (safe casting)
         msg = "Cannot cast ufunc matmul output"
-        out = np.zeros((2, 2), dtype=np.int32)
+        out = np.zeros((5, 2), dtype=np.int32)
         assert_raises_regex(TypeError, msg, self.matmul, a, b, out=out)
 
-        # cblas does not allow non-contiguous
-        # outputs and consistency with dot would require same type,
-        # dimensions, subtype, and c_contiguous.
-
         # test out with type upcast to complex
-        out = np.zeros((2, 2), dtype=np.complex128)
+        out = np.zeros((5, 2), dtype=np.complex128)
         c = self.matmul(a, b, out=out)
         assert_(c is out)
         with suppress_warnings() as sup:
@@ -5910,15 +5906,39 @@ class TestMatmul(MatmulCommon):
             c = c.astype(tgt.dtype)
         assert_array_equal(c, tgt)
 
+    def test_out_contiguous(self):
+        a = np.ones((5, 2), dtype=float)
+        b = np.array([[1, 3], [5, 7]], dtype=float)
+        v = np.array([1, 3], dtype=float)
+        tgt = np.dot(a, b)
+        tgt_mv = np.dot(a, v)
+
         # test out non-contiguous
-        out = np.ones((2, 2, 2), dtype=float)
-        assert_raises(ValueError, self.matmul, a, b, out=out[..., 0])
+        out = np.ones((5, 2, 2), dtype=float)
+        c = self.matmul(a, b, out=out[..., 0])
+        assert c.base is out
+        assert_array_equal(c, tgt)
+        c = self.matmul(a, v, out=out[:, 0, 0])
+        assert_array_equal(c, tgt_mv)
+        c = self.matmul(v, a.T, out=out[:, 0, 0])
+        assert_array_equal(c, tgt_mv)
+
+        # test out contiguous in only last dim
+        out = np.ones((10, 2), dtype=float)
+        c = self.matmul(a, b, out=out[::2, :])
+        assert_array_equal(c, tgt)
+
+        # test transposes of out, args
+        out = np.ones((5, 2), dtype=float)
+        c = self.matmul(b.T, a.T, out=out.T)
+        assert_array_equal(out, tgt)
 
     m1 = np.arange(15.).reshape(5, 3)
     m2 = np.arange(21.).reshape(3, 7)
     m3 = np.arange(30.).reshape(5, 6)[:, ::2]  # non-contiguous
     vc = np.arange(10.)
     vr = np.arange(6.)
+    m0 = np.zeros((3, 0))
     @pytest.mark.parametrize('args', (
             # matrix-matrix
             (m1, m2), (m2.T, m1.T), (m2.T.copy(), m1.T), (m2.T, m1.T.copy()),
@@ -5934,11 +5954,18 @@ class TestMatmul(MatmulCommon):
             # vector-matrix, matrix-vector, matrix non-contiguous
             (m3, vr[:3]), (vc[:5], m3), (m3.T, vc[:5]), (vr[:3], m3.T),
             # vector-matrix, matrix-vector, both non-contiguous
-            (m3, vr[::2]), (vc[::2], m3), (m3.T, vc[::2]), (vr[::2], m3.T)))
+            (m3, vr[::2]), (vc[::2], m3), (m3.T, vc[::2]), (vr[::2], m3.T),
+            # size == 0
+            (m0, m0.T), (m0.T, m0), (m1, m0), (m0.T, m1.T),
+        ))
     def test_dot_equivalent(self, args):
         r1 = np.matmul(*args)
         r2 = np.dot(*args)
         assert_equal(r1, r2)
+
+        r3 = np.matmul(args[0].copy(), args[1].copy())
+        assert_equal(r1, r3)
+        
 
 
 if sys.version_info[:2] >= (3, 5):
