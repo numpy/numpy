@@ -201,8 +201,11 @@ def _datetime_metadata_str(dtype):
 def _struct_dict_str(dtype, includealignedflag):
     # unpack the fields dictionary into ls
     names = dtype.names
-    fld_dtypes, offsets, titles = zip(
+    if len(names):
+        fld_dtypes, offsets, titles = zip(
             *[_unpack_field(*dtype.fields[name]) for name in names])
+    else:
+        fld_dtypes, offsets, titles = (), (), ()
 
     # Build up a string to make the dictionary
 
