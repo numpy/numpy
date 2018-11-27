@@ -19,6 +19,9 @@ def get(name):
 
 # common parameter text to all ufuncs
 subst = {
+    'BROADCASTABLE': textwrap.dedent("""
+        If ``x1.shape != x2.shape``, they must be broadcastable to a common
+        shape (which may be the shape of one or the other)."""),
     'PARAMS': textwrap.dedent("""
         out : ndarray, None, or tuple of ndarray and None, optional
             A location into which the result is stored. If provided, it must have
@@ -103,9 +106,7 @@ add_newdoc('numpy.core.umath', 'add',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays to be added.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        The arrays to be added. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -431,8 +432,7 @@ add_newdoc('numpy.core.umath', 'arctan2',
     x1 : array_like, real-valued
         `y`-coordinates.
     x2 : array_like, real-valued
-        `x`-coordinates. `x2` must be broadcastable to match the shape of
-        `x1` or vice versa.
+        `x`-coordinates. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -555,7 +555,7 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     Parameters
     ----------
     x1, x2 : array_like
-        Only integer and boolean types are handled.
+        Only integer and boolean types are handled. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -608,7 +608,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     Parameters
     ----------
     x1, x2 : array_like
-        Only integer and boolean types are handled.
+        Only integer and boolean types are handled. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -666,7 +666,7 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     Parameters
     ----------
     x1, x2 : array_like
-        Only integer and boolean types are handled.
+        Only integer and boolean types are handled. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -968,7 +968,7 @@ add_newdoc('numpy.core.umath', 'heaviside',
     x1 : array_like
         Input values.
     x2 : array_like
-        The value of the function when x1 is 0.
+        The value of the function when x1 is 0. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1003,7 +1003,7 @@ add_newdoc('numpy.core.umath', 'divide',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array.
+        Divisor array. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1072,7 +1072,7 @@ add_newdoc('numpy.core.umath', 'equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays of the same shape.
+        Input arrays. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1319,7 +1319,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     x1 : array_like
         Numerator.
     x2 : array_like
-        Denominator.
+        Denominator. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1359,7 +1359,7 @@ add_newdoc('numpy.core.umath', 'fmod',
     x1 : array_like
         Dividend.
     x2 : array_like
-        Divisor.
+        Divisor. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1409,9 +1409,7 @@ add_newdoc('numpy.core.umath', 'greater',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1447,9 +1445,7 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1482,7 +1478,7 @@ add_newdoc('numpy.core.umath', 'hypot',
     Parameters
     ----------
     x1, x2 : array_like
-        Leg of the triangle(s).
+        Leg of the triangle(s). $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1783,6 +1779,7 @@ add_newdoc('numpy.core.umath', 'left_shift',
         Input values.
     x2 : array_like of integer type
         Number of zeros to append to `x1`. Has to be non-negative.
+        $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1818,9 +1815,7 @@ add_newdoc('numpy.core.umath', 'less',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -1848,9 +1843,7 @@ add_newdoc('numpy.core.umath', 'less_equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  If ``x1.shape != x2.shape``, they must be
-        broadcastable to a common shape (which may be the shape of one or
-        the other).
+        Input arrays. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2034,7 +2027,7 @@ add_newdoc('numpy.core.umath', 'logaddexp',
     Parameters
     ----------
     x1, x2 : array_like
-        Input values.
+        Input values. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2076,7 +2069,7 @@ add_newdoc('numpy.core.umath', 'logaddexp2',
     Parameters
     ----------
     x1, x2 : array_like
-        Input values.
+        Input values. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2167,14 +2160,15 @@ add_newdoc('numpy.core.umath', 'logical_and',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. `x1` and `x2` must be of the same shape.
+        Input arrays. $BROADCASTABLE
     $PARAMS
 
     Returns
     -------
     y : ndarray or bool
-        Boolean result with the same shape as `x1` and `x2` of the logical
-        AND operation on corresponding elements of `x1` and `x2`.
+        Boolean result of the logical OR operation applied to the elements
+        of `x1` and `x2`; the shape is determined by whether or not
+        broadcasting of one or both arrays was required.
         $OUT_SCALAR_2
 
     See Also
@@ -2236,15 +2230,15 @@ add_newdoc('numpy.core.umath', 'logical_or',
     Parameters
     ----------
     x1, x2 : array_like
-        Logical OR is applied to the elements of `x1` and `x2`.
-        They have to be of the same shape.
+        Logical OR is applied to the elements of `x1` and `x2`. $BROADCASTABLE
     $PARAMS
 
     Returns
     -------
     y : ndarray or bool
-        Boolean result with the same shape as `x1` and `x2` of the logical
-        OR operation on elements of `x1` and `x2`.
+        Boolean result of the logical OR operation applied to the elements
+        of `x1` and `x2`; the shape is determined by whether or not
+        broadcasting of one or both arrays was required.
         $OUT_SCALAR_2
 
     See Also
@@ -2272,8 +2266,7 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     Parameters
     ----------
     x1, x2 : array_like
-        Logical XOR is applied to the elements of `x1` and `x2`.  They must
-        be broadcastable to the same shape.
+        Logical XOR is applied to the elements of `x1` and `x2`. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2321,8 +2314,7 @@ add_newdoc('numpy.core.umath', 'maximum',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape, or shapes that can be broadcast to a single shape.
+        The arrays holding the elements to be compared. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2380,8 +2372,7 @@ add_newdoc('numpy.core.umath', 'minimum',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape, or shapes that can be broadcast to a single shape.
+        The arrays holding the elements to be compared. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2439,8 +2430,7 @@ add_newdoc('numpy.core.umath', 'fmax',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape.
+        The arrays holding the elements to be compared. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2497,8 +2487,7 @@ add_newdoc('numpy.core.umath', 'fmin',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. They must have
-        the same shape.
+        The arrays holding the elements to be compared. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2588,7 +2577,7 @@ add_newdoc('numpy.core.umath', 'multiply',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays to be multiplied.
+        Input arrays to be multiplied. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2669,7 +2658,7 @@ add_newdoc('numpy.core.umath', 'not_equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.
+        Input arrays.  $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2718,7 +2707,7 @@ add_newdoc('numpy.core.umath', 'power',
     x1 : array_like
         The bases.
     x2 : array_like
-        The exponents.
+        The exponents. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2777,7 +2766,7 @@ add_newdoc('numpy.core.umath', 'float_power',
     x1 : array_like
         The bases.
     x2 : array_like
-        The exponents.
+        The exponents. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2949,7 +2938,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array.
+        Divisor array. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -2994,7 +2983,7 @@ add_newdoc('numpy.core.umath', 'divmod',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array.
+        Divisor array. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -3033,7 +3022,7 @@ add_newdoc('numpy.core.umath', 'right_shift',
     x1 : array_like, int
         Input values.
     x2 : array_like, int
-        Number of bits to remove at the right of `x1`.
+        Number of bits to remove at the right of `x1`. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -3160,16 +3149,14 @@ add_newdoc('numpy.core.umath', 'copysign',
     """
     Change the sign of x1 to that of x2, element-wise.
 
-    If both arguments are arrays or sequences, they have to be of the same
-    length. If `x2` is a scalar, its sign will be copied to all elements of
-    `x1`.
+    If `x2` is a scalar, its sign will be copied to all elements of `x1`.
 
     Parameters
     ----------
     x1 : array_like
         Values to change the sign of.
     x2 : array_like
-        The sign of `x2` is copied to `x1`.
+        The sign of `x2` is copied to `x1`. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -3204,6 +3191,7 @@ add_newdoc('numpy.core.umath', 'nextafter',
         Values to find the next representable value of.
     x2 : array_like
         The direction where to look for the next representable value of `x1`.
+        $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -3474,7 +3462,7 @@ add_newdoc('numpy.core.umath', 'subtract',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays to be subtracted from each other.
+        The arrays to be subtracted from each other. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -3613,7 +3601,7 @@ add_newdoc('numpy.core.umath', 'true_divide',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array.
+        Divisor array. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -3712,7 +3700,7 @@ add_newdoc('numpy.core.umath', 'ldexp',
     x1 : array_like
         Array of multipliers.
     x2 : array_like, int
-        Array of twos exponents.
+        Array of twos exponents. $BROADCASTABLE
     $PARAMS
 
     Returns
@@ -3750,7 +3738,7 @@ add_newdoc('numpy.core.umath', 'gcd',
     Parameters
     ----------
     x1, x2 : array_like, int
-        Arrays of values
+        Arrays of values. $BROADCASTABLE
 
     Returns
     -------
@@ -3780,7 +3768,7 @@ add_newdoc('numpy.core.umath', 'lcm',
     Parameters
     ----------
     x1, x2 : array_like, int
-        Arrays of values
+        Arrays of values. $BROADCASTABLE
 
     Returns
     -------
