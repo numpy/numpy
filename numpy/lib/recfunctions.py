@@ -17,6 +17,7 @@ from numpy.ma.mrecords import MaskedRecords
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
 from numpy.compat import basestring
+from numpy.testing import suppress_warnings
 
 if sys.version_info[0] < 3:
     from future_builtins import zip
@@ -872,7 +873,7 @@ def repack_fields(a, align=False, recurse=False):
 
 def _get_fields_and_offsets(dt, offset=0):
     """
-    Returns a flat list of (name, dtype, count, offset) tuples of all the
+    Returns a flat list of (dtype, count, offset) tuples of all the
     scalar fields in the dtype "dt", including nested fields, in left
     to right order.
     """
@@ -883,7 +884,7 @@ def _get_fields_and_offsets(dt, offset=0):
             count = 1
             for size in field[0].shape:
                 count *= size
-            fields.append((name, field[0], count, field[1] + offset))
+            fields.append((field[0], count, field[1] + offset))
         else:
             fields.extend(_get_fields_and_offsets(field[0], field[1] + offset))
     return fields
@@ -911,7 +912,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     arr : ndarray
        Structured array or dtype to convert. Cannot contain object datatype.
     dtype : dtype, optional
-       The dtype of the output unstructured array
+       The dtype of the output unstructured array.
     copy : bool, optional
         See copy argument to `ndarray.astype`. If true, always return a copy.
         If false, and `dtype` requirements are satisfied, a view is returned.
@@ -948,8 +949,9 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
         raise ValueError('arr must be a structured array')
 
     fields = _get_fields_and_offsets(arr.dtype)
-    names, dts, counts, offsets = zip(*fields)
-    n_fields = len(names)
+    n_fields = len(fields)
+    dts, counts, offsets = zip(*fields)
+    names = ['f{}'.format(n) for n in range(n_fields)]
 
     if dtype is None:
         out_dtype = np.result_type(*[dt.base for dt in dts])
@@ -964,7 +966,9 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
                                  'formats': dts,
                                  'offsets': offsets,
                                  'itemsize': arr.dtype.itemsize})
-    arr = arr.view(flattened_fields)
+    with suppress_warnings() as sup:  # until 1.16 (gh-12447)
+        sup.filter(FutureWarning, "Numpy has detected")
+        arr = arr.view(flattened_fields)
 
     # next cast to a packed format with all fields converted to new dtype
     packed_fields = np.dtype({'names': names,
@@ -1041,19 +1045,21 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
             names = ['f{}'.format(n) for n in range(n_elem)]
         out_dtype = np.dtype([(n, arr.dtype) for n in names], align=align)
         fields = _get_fields_and_offsets(out_dtype)
-        names, dts, counts, offsets = zip(*fields)
+        dts, counts, offsets = zip(*fields)
     else:
         if names is not None:
             raise ValueError("don't supply both dtype and names")
         # sanity check of the input dtype
         fields = _get_fields_and_offsets(dtype)
-        names, dts, counts, offsets = zip(*fields)
+        dts, counts, offsets = zip(*fields)
         if n_elem != sum(counts):
             raise ValueError('The length of the last dimension of arr must '
                              'be equal to the number of fields in dtype')
         out_dtype = dtype
         if align and not out_dtype.isalignedstruct:
             raise ValueError("align was True but dtype is not aligned")
+
+    names = ['f{}'.format(n) for n in range(len(fields))]
 
     # Use a series of views and casts to convert to a structured array:
 
@@ -1081,7 +1087,9 @@ def apply_along_fields(func, arr):
     Apply function 'func' as a reduction across fields of a structured array.
 
     This is similar to `apply_along_axis`, but treats the fields of a
-    structured array as an extra axis.
+    structured array as an extra axis. The fields are all first cast to a
+    common type following the type-promotion rules from `numpy.result_type`
+    applied to the field's dtypes.
 
     Parameters
     ----------
@@ -1145,7 +1153,7 @@ def assign_fields_by_name(dst, src, zero_unassigned=True):
     """
 
     if dst.dtype.names is None:
-        dst[:] = src
+        dst[...] = src
         return
 
     for name in dst.dtype.names:
@@ -1164,12 +1172,13 @@ def require_fields(array, required_dtype):
     """
     Casts a structured array to a new dtype using assignment by field-name.
 
-    This function assigns to from the old to the new array by name, so the
+    This function assigns from the old to the new array by name, so the
     value of a field in the output array is the value of the field with the
-    same name in the source array.
+    same name in the source array. This has the effect of creating a new
+    ndarray containing only the fields "required" by the required_dtype.
 
     If a field name in the required_dtype does not exist in the
-    input array, that field is set to 0 in the output array.
+    input array, that field is created and set to 0 in the output array.
 
     Parameters
     ----------
@@ -1189,6 +1198,12 @@ def require_fields(array, required_dtype):
 
     >>> a = np.ones(4, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
     >>> require_fields(a, [('b', 'f4'), ('c', 'u1')])
+    array([(1., 1), (1., 1), (1., 1), (1., 1)],
+      dtype=[('b', '<f4'), ('c', 'u1')])
+    >>> require_fields(a, [('b', 'f4'), ('newf', 'u1')])
+    array([(1., 0), (1., 0), (1., 0), (1., 0)],
+      dtype=[('b', '<f4'), ('newf', 'u1')])
+ 
     """
     out = np.empty(array.shape, dtype=required_dtype)
     assign_fields_by_name(out, array)
