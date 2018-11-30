@@ -946,7 +946,8 @@ sse2_sqrt_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
     LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES) {
         op[i] = @scalarf@(ip[i]);
     }
-    assert(n < (VECTOR_SIZE_BYTES / sizeof(@type@)) || npy_is_aligned(&op[i], VECTOR_SIZE_BYTES));
+    assert(n < (VECTOR_SIZE_BYTES / sizeof(@type@)) ||
+	    npy_is_aligned(&op[i], VECTOR_SIZE_BYTES));
     if (npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES)) {
         LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
             @vtype512@ d = @vpre512@_load_@vsuf@(&ip[i]);
@@ -964,7 +965,8 @@ sse2_sqrt_@TYPE@(@type@ * op, @type@ * ip, const npy_intp n)
     LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES) {
         op[i] = @scalarf@(ip[i]);
     }
-    assert(n < (VECTOR_SIZE_BYTES / sizeof(@type@)) || npy_is_aligned(&op[i], VECTOR_SIZE_BYTES));
+    assert(n < (VECTOR_SIZE_BYTES / sizeof(@type@)) ||
+	    npy_is_aligned(&op[i], VECTOR_SIZE_BYTES));
     if (npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES)) {
         LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
             @vtype256@ d = @vpre256@_load_@vsuf@(&ip[i]);
