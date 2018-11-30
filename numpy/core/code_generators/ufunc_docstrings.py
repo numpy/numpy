@@ -19,9 +19,6 @@ def get(name):
 
 # common parameter text to all ufuncs
 subst = {
-    'BROADCASTABLE': textwrap.dedent("""
-        If ``x1.shape != x2.shape``, they must be broadcastable to a common
-        shape (which may be the shape of one or the other)."""),
     'PARAMS': textwrap.dedent("""
         out : ndarray, None, or tuple of ndarray and None, optional
             A location into which the result is stored. If provided, it must have
@@ -35,6 +32,9 @@ subst = {
             For other keyword-only arguments, see the
             :ref:`ufunc docs <ufuncs.kwargs>`.
     """).strip(),
+    'BROADCASTABLE': ("If ``x1.shape != x2.shape``, they must be broadcastable"
+                      " to a common shape (which may be the shape of one or "
+                      "the other)."),
     'OUT_SCALAR_1': "This is a scalar if `x` is a scalar.",
     'OUT_SCALAR_2': "This is a scalar if both `x1` and `x2` are scalars.",
 }
