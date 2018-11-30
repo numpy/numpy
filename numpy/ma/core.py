@@ -780,7 +780,7 @@ def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
 
 def is_string_or_list_of_strings(val):
     return (isinstance(val, basestring) or
-            (isinstance(val, list) and
+            (isinstance(val, list) and val and
              builtins.all(isinstance(s, basestring) for s in val)))
 
 ###############################################################################
@@ -6340,7 +6340,7 @@ class MaskedConstant(MaskedArray):
 
     def __copy__(self):
         return self
-		
+
     def __deepcopy__(self, memo):
         return self
 
@@ -7089,7 +7089,7 @@ def where(condition, x=_NoValue, y=_NoValue):
     Parameters
     ----------
     condition : array_like, bool
-        Where True, yield `x`, otherwise yield `y`. 
+        Where True, yield `x`, otherwise yield `y`.
     x, y : array_like, optional
         Values from which to choose. `x`, `y` and `condition` need to be
         broadcastable to some shape.
