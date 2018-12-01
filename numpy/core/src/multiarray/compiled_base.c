@@ -1158,8 +1158,10 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     char *kwlist[] = {"indices", "shape", "order", NULL};
 
-    /* TODO: remove this in favor of warning raised in the dispatcher when
-     * __array_function__ is enabled by default. */
+    /*
+     * TODO: remove this in favor of warning raised in the dispatcher when
+     * __array_function__ is enabled by default.
+     */
 
     /* Continue to support the older "dims" argument in place
      * of the "shape" argument. Issue an appropriate warning
