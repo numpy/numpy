@@ -2196,21 +2196,15 @@ class TestIterNested(object):
         a = arange(12).reshape(2, 3, 2)
 
         i, j = np.nested_iters(a, [[0], [1, 2]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
 
         i, j = np.nested_iters(a, [[0, 1], [2]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
 
         i, j = np.nested_iters(a, [[0, 2], [1]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
     def test_reorder(self):
@@ -2219,40 +2213,28 @@ class TestIterNested(object):
 
         # In 'K' order (default), it gets reordered
         i, j = np.nested_iters(a, [[0], [2, 1]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
 
         i, j = np.nested_iters(a, [[1, 0], [2]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
 
         i, j = np.nested_iters(a, [[2, 0], [1]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
         # In 'C' order, it doesn't
         i, j = np.nested_iters(a, [[0], [2, 1]], order='C')
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 2, 4, 1, 3, 5], [6, 8, 10, 7, 9, 11]])
 
         i, j = np.nested_iters(a, [[1, 0], [2]], order='C')
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]])
 
         i, j = np.nested_iters(a, [[2, 0], [1]], order='C')
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 2, 4], [6, 8, 10], [1, 3, 5], [7, 9, 11]])
 
     def test_flip_axes(self):
@@ -2261,40 +2243,28 @@ class TestIterNested(object):
 
         # In 'K' order (default), the axes all get flipped
         i, j = np.nested_iters(a, [[0], [1, 2]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
 
         i, j = np.nested_iters(a, [[0, 1], [2]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11]])
 
         i, j = np.nested_iters(a, [[0, 2], [1]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
         # In 'C' order, flipping axes is disabled
         i, j = np.nested_iters(a, [[0], [1, 2]], order='C')
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[11, 10, 9, 8, 7, 6], [5, 4, 3, 2, 1, 0]])
 
         i, j = np.nested_iters(a, [[0, 1], [2]], order='C')
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[11, 10], [9, 8], [7, 6], [5, 4], [3, 2], [1, 0]])
 
         i, j = np.nested_iters(a, [[0, 2], [1]], order='C')
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[11, 9, 7], [10, 8, 6], [5, 3, 1], [4, 2, 0]])
 
     def test_broadcast(self):
@@ -2303,15 +2273,11 @@ class TestIterNested(object):
         b = arange(3).reshape(1, 3)
 
         i, j = np.nested_iters([a, b], [[0], [1]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[[0, 0], [0, 1], [0, 2]], [[1, 0], [1, 1], [1, 2]]])
 
         i, j = np.nested_iters([a, b], [[1], [0]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[[0, 0], [1, 0]], [[0, 1], [1, 1]], [[0, 2], [1, 2]]])
 
     def test_dtype_copy(self):
@@ -2323,9 +2289,7 @@ class TestIterNested(object):
                             op_flags=['readonly', 'copy'],
                             op_dtypes='f8')
         assert_equal(j[0].dtype, np.dtype('f8'))
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1, 2], [3, 4, 5]])
         vals = None
 
@@ -2376,15 +2340,11 @@ class TestIterNested(object):
     def test_0d(self):
         a = np.arange(12).reshape(2, 3, 2)
         i, j = np.nested_iters(a, [[], [1, 0, 2]])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]])
 
         i, j = np.nested_iters(a, [[1, 0, 2], []])
-        vals = []
-        for x in i:
-            vals.append([y for y in j])
+        vals = [list(j) for _ in i]
         assert_equal(vals, [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11]])
 
         i, j, k = np.nested_iters(a, [[2, 0], [], [1]])
@@ -2556,10 +2516,8 @@ def test_iter_buffering_reduction_reuse_reduce_loops():
                     op_flags=[['readonly'], ['readwrite']],
                     buffersize=5)
 
-    bufsizes = []
     with it:
-        for x, y in it:
-            bufsizes.append(x.shape[0])
+        bufsizes = [x.shape[0] for x, y in it]
     assert_equal(bufsizes, [5, 2, 5, 2])
     assert_equal(sum(bufsizes), a.size)
 
