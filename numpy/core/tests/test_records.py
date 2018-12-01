@@ -379,7 +379,6 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
-    @pytest.mark.xfail(reason="See gh-10411, becomes real error in 1.16")
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
         x = self.data[['col1', 'col2']]
