@@ -191,6 +191,10 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if the dispatcher's signature needs to deviate for some particular
         reason, e.g., because the function has a signature like
         ``func(*args, **kwargs)``.
+    docs_from_dispatcher : bool, optional
+        If True, copy docs from the dispatcher function onto the dispatched
+        function, rather than from the implementation. This is useful for
+        functions defined in C, which otherwise don't have docstrings.
 
     Returns
     -------
@@ -233,11 +237,11 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
 
 
 def array_function_from_dispatcher(
-        implementation, module=None, verify=True, copy_docs=True):
+        implementation, module=None, verify=True, docs_from_dispatcher=True):
     """Like array_function_dispatcher, but with function arguments flipped."""
 
     def decorator(dispatcher):
         return array_function_dispatch(
             dispatcher, module, verify=verify,
-            docs_from_dispatcher=copy_docs)(implementation)
+            docs_from_dispatcher=docs_from_dispatcher)(implementation)
     return decorator

@@ -64,7 +64,7 @@ zeros.__module__ = 'numpy'
 # support introspection.
 array_function_from_c_func_and_dispatcher = functools.partial(
     overrides.array_function_from_dispatcher,
-    module='numpy', copy_docs=True, verify=False)
+    module='numpy', docs_from_dispatcher=True, verify=False)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
