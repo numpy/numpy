@@ -2,6 +2,8 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+/* In python 2, this is not exported from Python.h */
+#include <structseq.h>
 #include "structmember.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -41,6 +43,62 @@ static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
+
+PyTypeObject PyArray_structured_fieldType;
+PyTypeObject PyArray_structured_field_titledType;
+
+
+static PyStructSequence_Field structured_field_fields[] = {
+    {"dtype",     "The dtype of this field"},
+    {"offset",    "The offset of this field from the start of the dtype"},
+    {"title",     "An alternate name for the field"},
+    {NULL, NULL,}
+};
+
+/* We need two types here to maintain compatibility with users of len().
+ * The title is always None in the shorter type.
+ */
+static PyStructSequence_Desc structured_field_desc = {
+    "numpy.core.multiarray.structured_field",               /* name          */
+    "Information about a field within a structured dtype",  /* doc           */
+    structured_field_fields,                                /* fields        */
+    2,                                                      /* n_in_sequence */
+};
+static PyStructSequence_Desc structured_field_titled_desc = {
+    "numpy.core.multiarray.structured_field_titled",        /* name          */
+    "Information about a field within a structured dtype, with a title",
+                                                            /* doc           */
+    structured_field_fields,                                /* fields        */
+    3,                                                      /* n_in_sequence */
+};
+
+NPY_NO_EXPORT int
+arraydescr_init_structsequences(PyObject *multiarray_dict)
+{
+    if (PyStructSequence_InitType2(
+            &PyArray_structured_fieldType,
+            &structured_field_desc) < 0) {
+        return -1;
+    }
+    if (PyStructSequence_InitType2(
+            &PyArray_structured_field_titledType,
+            &structured_field_titled_desc) < 0) {
+        return -1;
+    }
+    if (PyDict_SetItemString(multiarray_dict,
+            "structured_field",
+            (PyObject *)&PyArray_structured_fieldType) < 0) {
+        return -1;
+    }
+    if (PyDict_SetItemString(multiarray_dict,
+            "structured_field_titled",
+            (PyObject *)&PyArray_structured_field_titledType) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+
 
 static PyArray_Descr *
 _arraydescr_from_ctypes_type(PyTypeObject *type)
@@ -407,7 +465,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         name = PyTuple_GET_ITEM(item, 0);
         if (PyBaseString_Check(name)) {
-            title = NULL;
+            title = Py_None;
         }
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
@@ -515,31 +573,30 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
-        tup = PyTuple_New((title == NULL ? 2 : 3));
-        PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
-        PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
+        tup = PyStructSequence_New(title == Py_None ? &PyArray_structured_fieldType : &PyArray_structured_field_titledType);
+        if (tup == NULL){
+            goto fail;
+        }
+        PyStructSequence_SET_ITEM(tup, 0, (PyObject *)conv);
+        PyStructSequence_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 
         /*
          * Title can be "meta-data".  Only insert it
          * into the fields dictionary if it is a string
          * and if it is not the same as the name.
          */
-        if (title != NULL) {
-            Py_INCREF(title);
-            PyTuple_SET_ITEM(tup, 2, title);
-            PyDict_SetItem(fields, name, tup);
-            if (PyBaseString_Check(title)) {
-                if (PyDict_GetItem(fields, title) != NULL) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "title already used as a name or title.");
-                    Py_DECREF(tup);
-                    goto fail;
-                }
-                PyDict_SetItem(fields, title, tup);
+        Py_INCREF(title);
+        PyStructSequence_SET_ITEM(tup, 2, title);
+        PyDict_SetItem(fields, name, tup);
+
+        if (PyBaseString_Check(title)) {
+            if (PyDict_GetItem(fields, title) != NULL) {
+                PyErr_SetString(PyExc_ValueError,
+                        "title already used as a name or title.");
+                Py_DECREF(tup);
+                goto fail;
             }
-        }
-        else {
-            PyDict_SetItem(fields, name, tup);
+            PyDict_SetItem(fields, title, tup);
         }
 
         totalsize += conv->elsize;

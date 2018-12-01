@@ -61,17 +61,6 @@ def __repr__(dtype):
     return "dtype({})".format(arg_str)
 
 
-def _unpack_field(dtype, offset, title=None):
-    """
-    Helper function to normalize the items in dtype.fields.
-
-    Call as:
-
-    dtype, offset, title = _unpack_field(*dtype.fields[name])
-    """
-    return dtype, offset, title
-
-
 def _isunsized(dtype):
     # PyDataType_ISUNSIZED
     return dtype.itemsize == 0
@@ -205,10 +194,10 @@ def _struct_dict_str(dtype, includealignedflag):
     offsets = []
     titles = []
     for name in names:
-        fld_dtype, offset, title = _unpack_field(*dtype.fields[name])
-        fld_dtypes.append(fld_dtype)
-        offsets.append(offset)
-        titles.append(title)
+        field = dtype.fields[name]
+        fld_dtypes.append(field.dtype)
+        offsets.append(field.offset)
+        titles.append(field.title)
 
     # Build up a string to make the dictionary
 
@@ -256,10 +245,10 @@ def _is_packed(dtype):
     """
     total_offset = 0
     for name in dtype.names:
-        fld_dtype, fld_offset, title = _unpack_field(*dtype.fields[name])
-        if fld_offset != total_offset:
+        field = dtype.fields[name]
+        if field.offset != total_offset:
             return False
-        total_offset += fld_dtype.itemsize
+        total_offset += field.dtype.itemsize
     if total_offset != dtype.itemsize:
         return False
     return True
@@ -268,22 +257,22 @@ def _is_packed(dtype):
 def _struct_list_str(dtype):
     items = []
     for name in dtype.names:
-        fld_dtype, fld_offset, title = _unpack_field(*dtype.fields[name])
+        field = dtype.fields[name]
 
         item = "("
-        if title is not None:
-            item += "({!r}, {!r}), ".format(title, name)
+        if field.title is not None:
+            item += "({!r}, {!r}), ".format(field.title, name)
         else:
             item += "{!r}, ".format(name)
         # Special case subarray handling here
-        if fld_dtype.subdtype is not None:
-            base, shape = fld_dtype.subdtype
+        if field.dtype.subdtype is not None:
+            base, shape = field.dtype.subdtype
             item += "{}, {}".format(
                 _construction_repr(base, short=True),
                 shape
             )
         else:
-            item += _construction_repr(fld_dtype, short=True)
+            item += _construction_repr(field.dtype, short=True)
 
         item += ")"
         items.append(item)

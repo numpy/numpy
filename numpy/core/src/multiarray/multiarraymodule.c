@@ -4729,6 +4729,11 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
         goto err;
     }
 
+    /* Create the struct_field types */
+    if (arraydescr_init_structsequences(d) < 0) {
+        return RETVAL(NULL);
+    }
+
     if (!intern_strings()) {
         goto err;
     }

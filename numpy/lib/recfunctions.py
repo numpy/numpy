@@ -861,14 +861,14 @@ def repack_fields(a, align=False, recurse=False):
 
     fieldinfo = []
     for name in a.names:
-        tup = a.fields[name]
+        field = a.fields[name]
         if recurse:
-            fmt = repack_fields(tup[0], align=align, recurse=True)
+            fmt = repack_fields(field.dtype, align=align, recurse=True)
         else:
-            fmt = tup[0]
+            fmt = field.dtype
 
-        if len(tup) == 3:
-            name = (tup[2], name)
+        if field.title is not None:
+            name = (field.title, name)
 
         fieldinfo.append((name, fmt))
 

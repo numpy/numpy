@@ -292,6 +292,25 @@ class TestRecord(object):
         for n in d.names:
             assert_equal(d.fields[n][0], np.dtype('?'))
 
+    def test_field_attributes(self):
+        """
+        Test that the items in dtype.fields are namedtuple-like
+        """
+        d = np.dtype([('x', np.int16), (('y', 'the y title'), np.int16)])
+
+        x_info = d.fields['x']
+        x_offset, x_dtype = x_info
+        assert_equal(x_info.offset, x_offset)
+        assert_equal(x_info.dtype, x_dtype)
+        assert_equal(x_info.title, None)
+
+        y_info = d.fields['y']
+        y_offset, y_dtype, y_title = y_info
+        assert_equal(y_info.offset, y_info)
+        assert_equal(y_info.dtype, y_dtype)
+        assert_equal(y_info.title, y_title)
+
+
     def test_nonint_offsets(self):
         # gh-8059
         def make_dtype(off):

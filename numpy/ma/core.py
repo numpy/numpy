@@ -1284,10 +1284,10 @@ def _replace_dtype_fields_recursive(dtype, primitive_dtype):
         descr = []
         for name in dtype.names:
             field = dtype.fields[name]
-            if len(field) == 3:
+            if field.title is not None:
                 # Prepend the title to the name
-                name = (field[-1], name)
-            descr.append((name, _recurse(field[0], primitive_dtype)))
+                name = (field.title, name)
+            descr.append((name, _recurse(field.dtype, primitive_dtype)))
         new_dtype = np.dtype(descr)
 
     # Is this some kind of composite a la (float,2)
