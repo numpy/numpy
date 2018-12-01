@@ -67,10 +67,8 @@ def _wrapfunc(obj, method, *args, **kwds):
 
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
-    passkwargs = {}
-    for k, v in kwargs.items():
-        if v is not np._NoValue:
-            passkwargs[k] = v
+    passkwargs = {k: v for k, v in kwargs.items()
+                  if v is not np._NoValue}
 
     if type(obj) is not mu.ndarray:
         try:

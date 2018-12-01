@@ -222,9 +222,7 @@ def parse_meta(config):
     if not config.has_section('meta'):
         raise FormatError("No meta section found !")
 
-    d = {}
-    for name, value in config.items('meta'):
-        d[name] = value
+    d = dict(config.items('meta'))
 
     for k in ['name', 'description', 'version']:
         if not k in d:

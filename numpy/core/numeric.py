@@ -2650,10 +2650,7 @@ _errdict = {"ignore": ERR_IGNORE,
             "print": ERR_PRINT,
             "log": ERR_LOG}
 
-_errdict_rev = {}
-for key in _errdict.keys():
-    _errdict_rev[_errdict[key]] = key
-del key
+_errdict_rev = {value: key for key, value in _errdict.items()}
 
 
 @set_module('numpy')
