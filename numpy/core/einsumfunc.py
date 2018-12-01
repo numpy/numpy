@@ -169,7 +169,7 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
     Examples
     --------
     >>> isets = [set('abd'), set('ac'), set('bdc')]
-    >>> oset = set('')
+    >>> oset = set()
     >>> idx_sizes = {'a': 1, 'b':2, 'c':3, 'd':4}
     >>> _path__optimal_path(isets, oset, idx_sizes, 5000)
     [(0, 2), (0, 1)]
@@ -340,7 +340,7 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
     Examples
     --------
     >>> isets = [set('abd'), set('ac'), set('bdc')]
-    >>> oset = set('')
+    >>> oset = set()
     >>> idx_sizes = {'a': 1, 'b':2, 'c':3, 'd':4}
     >>> _path__greedy_path(isets, oset, idx_sizes, 5000)
     [(0, 2), (0, 1)]
