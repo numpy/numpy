@@ -1158,6 +1158,31 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     char *kwlist[] = {"indices", "shape", "order", NULL};
 
+    /*
+     * TODO: remove this in favor of warning raised in the dispatcher when
+     * __array_function__ is enabled by default.
+     */
+
+    /*
+     * Continue to support the older "dims" argument in place
+     * of the "shape" argument. Issue an appropriate warning
+     * if "dims" is detected in keywords, then replace it with
+     * the new "shape" argument and continue processing as usual.
+     */
+     if (kwds) {
+        PyObject *dims_item, *shape_item;
+        dims_item = PyDict_GetItemString(kwds, "dims");
+        shape_item = PyDict_GetItemString(kwds, "shape");
+        if (dims_item != NULL && shape_item == NULL) {
+            if (DEPRECATE("'shape' argument should be"
+                          " used instead of 'dims'") < 0) {
+                return NULL;
+            }
+            PyDict_SetItemString(kwds, "shape", dims_item);
+            PyDict_DelItemString(kwds, "dims");
+        }
+    }
+
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:unravel_index",
                     kwlist,
                     &indices0,
