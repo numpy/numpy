@@ -58,6 +58,8 @@ Future Changes
 
 * NumPy 1.17 will drop support for Python 2.7.
 
+* NumPy 1.17 will drop the ``noprefix.h`` header file
+
 Expired deprecations
 ====================
 
