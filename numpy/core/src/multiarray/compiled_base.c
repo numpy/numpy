@@ -1163,10 +1163,12 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
      * __array_function__ is enabled by default.
      */
 
-    /* Continue to support the older "dims" argument in place
+    /*
+     * Continue to support the older "dims" argument in place
      * of the "shape" argument. Issue an appropriate warning
      * if "dims" is detected in keywords, then replace it with
-     * the new "shape" argument and continue processing as usual */
+     * the new "shape" argument and continue processing as usual.
+     */
      if (kwds) {
         PyObject *dims_item, *shape_item;
         dims_item = PyDict_GetItemString(kwds, "dims");
