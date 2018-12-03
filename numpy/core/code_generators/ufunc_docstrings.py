@@ -33,8 +33,7 @@ subst = {
             :ref:`ufunc docs <ufuncs.kwargs>`.
     """).strip(),
     'BROADCASTABLE': ("If ``x1.shape != x2.shape``, they must be broadcastable"
-                      " to a common shape (which may be the shape of one or "
-                      "the other)."),
+                      " to a common shape."),
     'OUT_SCALAR_1': "This is a scalar if `x` is a scalar.",
     'OUT_SCALAR_2': "This is a scalar if both `x1` and `x2` are scalars.",
 }
