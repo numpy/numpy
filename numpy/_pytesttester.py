@@ -105,24 +105,18 @@ class PytestTester(object):
 
         Notes
         -----
-        Each NumPy module exposes `test` in its namespace to run all tests for it.
-        For example, to run all tests for numpy.lib:
+        Each NumPy module exposes `test` in its namespace to run all tests for
+        it. For example, to run all tests for numpy.lib:
 
         >>> np.lib.test() #doctest: +SKIP
 
         Examples
         --------
         >>> result = np.lib.test() #doctest: +SKIP
-        Running unit tests for numpy.lib
         ...
-        Ran 976 tests in 3.933s
-
-        OK
-
-        >>> result.errors #doctest: +SKIP
-        []
-        >>> result.knownfail #doctest: +SKIP
-        []
+        1023 passed, 2 skipped, 6 deselected, 1 xfailed in 10.39 seconds
+        >>> result
+        True
 
         """
         import pytest
