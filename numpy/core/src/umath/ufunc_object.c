@@ -328,6 +328,18 @@ set_matmul_flags(PyObject *d)
     if (matmul == NULL) {
         return -1;
     }
+    /*
+     * The default output flag NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE allows
+     * perfectly overlapping input and output (in-place operations). While
+     * correct for the common mathematical operations, this assumption is
+     * incorrect in the general case and specifically in the case of matmul.
+     *
+     * NPY_ITER_UPDATEIFCOPY is added by default in
+     * PyUFunc_GeneralizedFunction, which is the variant called for gufuncs
+     * with a signature
+     *
+     * Enabling NPY_ITER_WRITEONLY can prevent a copy in some cases.
+     */
     ((PyUFuncObject *)matmul)->op_flags[2] = (NPY_ITER_WRITEONLY |
                                          NPY_ITER_UPDATEIFCOPY |
                                          NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
