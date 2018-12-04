@@ -70,6 +70,6 @@ class TestCharacter(object):
         np_u = np.unicode_('abc')
         np_i = np.int(5)
         res_s = b'abc' * 5
-        res_u = 'abc' * 5
+        res_u = u'abc' * 5
         assert_(np_s * np_i == res_s)
         assert_(np_u * np_i == res_u)

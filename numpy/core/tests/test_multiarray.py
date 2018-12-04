@@ -4930,11 +4930,11 @@ class TestRecord(object):
 
     @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
     def test_multiple_field_name_unicode(self):
-        def test_assign_unicode():
+        def test_dtype_unicode():
             np.dtype([("\u20B9", "f8"), ("B", "f8"), ("\u20B9", "f8")])
 
         # Error raised when multiple fields have the same name(unicode included)
-        assert_raises(ValueError, test_assign_unicode)
+        assert_raises(ValueError, test_dtype_unicode)
 
     @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
     def test_unicode_field_titles(self):
