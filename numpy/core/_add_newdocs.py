@@ -3073,7 +3073,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('getfield',
 
     >>> x.getfield(np.float64, offset=8)
     array([[1.,  0.],
-       [0.,  4.]])
+           [0.,  4.]])
 
     """))
 
@@ -5151,9 +5151,9 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
 
     >>> x = np.linspace(0, 15, 16).reshape(4,4)
     >>> x
-    array([[  0.,   1.,   2.,   3.],
-           [  4.,   5.,   6.,   7.],
-           [  8.,   9.,  10.,  11.],
+    array([[ 0.,   1.,   2.,   3.],
+           [ 4.,   5.,   6.,   7.],
+           [ 8.,   9.,  10.,  11.],
            [12.,  13.,  14.,  15.]])
 
     ::
@@ -5168,8 +5168,8 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     >>> np.add.reduceat(x, [0, 3, 1, 2, 0])
     array([[12.,  15.,  18.,  21.],
            [12.,  13.,  14.,  15.],
-           [  4.,   5.,   6.,   7.],
-           [  8.,   9.,  10.,  11.],
+           [ 4.,   5.,   6.,   7.],
+           [ 8.,   9.,  10.,  11.],
            [24.,  28.,  32.,  36.]])
 
     ::
@@ -5178,7 +5178,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
      # [col1 * col2 * col3, col4]
 
     >>> np.multiply.reduceat(x, [0, 3], 1)
-    array([[    0.,     3.],
+    array([[   0.,     3.],
            [ 120.,     7.],
            [ 720.,    11.],
            [2184.,    15.]])

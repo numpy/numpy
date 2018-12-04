@@ -1090,7 +1090,7 @@ def lstrip(a, chars=None):
     >>> np.char.lstrip(c, 'A') # leaves c unchanged
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
-    ... # XXX: is this a regression? this line now returns False
+    ... # This used to return True
     ... # np.char.lstrip(c,'') does not modify c at all.
     False
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, None)).all()
