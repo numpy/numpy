@@ -198,8 +198,8 @@ def byte_bounds(a):
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
-    >>> I = np.eye(2, dtype='G'); I.dtype
-    dtype('complex256')
+    >>> I = np.eye(2); I.dtype
+    dtype('complex256') # may vary
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True

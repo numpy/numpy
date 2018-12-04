@@ -1468,8 +1468,8 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Examples
     --------
     >>> a = np.array([[1, np.nan], [3, 4]])
-    >>> np.var(a)
-    nan
+    >>> np.nanvar(a)
+    1.5555555555555554
     >>> np.nanvar(a, axis=0)
     array([1.,  0.])
     >>> np.nanvar(a, axis=1)

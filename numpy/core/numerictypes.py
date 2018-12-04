@@ -167,7 +167,7 @@ def maximum_sctype(t):
     >>> np.maximum_sctype(np.uint8)
     <class 'numpy.uint64'>
     >>> np.maximum_sctype(complex)
-    <class 'numpy.complex256'>
+    <class 'numpy.complex256'> # may vary
 
     >>> np.maximum_sctype(str)
     <class 'numpy.str_'>
@@ -175,7 +175,7 @@ def maximum_sctype(t):
     >>> np.maximum_sctype('i2')
     <class 'numpy.int64'>
     >>> np.maximum_sctype('f4')
-    <class 'numpy.float128'>
+    <class 'numpy.float128'> # may vary
 
     """
     g = obj2sctype(t)
@@ -318,7 +318,7 @@ def issubclass_(arg1, arg2):
     Examples
     --------
     >>> np.issubclass_(np.int32, int)
-    False
+    False # True on Python 2.7
     >>> np.issubclass_(np.int32, float)
     False
 
@@ -484,9 +484,9 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.double, complex, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, np.double, np.complex, np.string_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
-    i
+    l # may vary
     d
     D
     S

@@ -20,8 +20,8 @@ gzip, bz2 and xz are supported.
 Example::
 
     >>> # Create a DataSource, use os.curdir (default) for local storage.
-    >>> import numpy.lib._datasource as datasource
-    >>> ds = datasource.DataSource()
+    >>> from numpy import DataSource
+    >>> ds = DataSource()
     >>>
     >>> # Open a remote file.
     >>> # DataSource downloads the file, stores it locally in:

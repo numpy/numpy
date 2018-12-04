@@ -127,7 +127,7 @@ class format_parser(object):
 
     Examples
     --------
-    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    >>> np.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
     ...                  ['T1', 'T2', 'T3']).dtype
     dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
 
@@ -137,8 +137,8 @@ class format_parser(object):
 
     >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
     ...                  []).dtype
-    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', 'S5')])
-    >>> np.format_parser(['f8', 'i4', 'a5'], [], []).dtype
+    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '<S5')])
+    >>> np.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
     dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
@@ -378,7 +378,7 @@ class recarray(ndarray):
     --------
     Create an array with two fields, ``x`` and ``y``:
 
-    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', np.float64), ('y', np.int64)])
+    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', '<f8'), ('y', '<i8')])
     >>> x
     array([(1., 2), (3., 4)], dtype=[('x', '<f8'), ('y', '<i8')])
 

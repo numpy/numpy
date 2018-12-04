@@ -276,7 +276,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.ifft([0, 4, 0, 0])
-    array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j])
+    array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j]) # may vary
 
     Create and plot a band-limited signal with random phases:
 
@@ -374,9 +374,9 @@ def rfft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.fft([0, 1, 0, 0])
-    array([ 1.+0.j,  0.-1.j, -1.+0.j,  0.+1.j])
+    array([ 1.+0.j,  0.-1.j, -1.+0.j,  0.+1.j]) # may vary
     >>> np.fft.rfft([0, 1, 0, 0])
-    array([ 1.+0.j,  0.-1.j, -1.+0.j])
+    array([ 1.+0.j,  0.-1.j, -1.+0.j]) # may vary
 
     Notice how the final element of the `fft` output is the complex conjugate
     of the second element, for real input. For `rfft`, this symmetry is
@@ -465,7 +465,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.ifft([1, -1j, -1, 1j])
-    array([0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j])
+    array([0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]) # may vary
     >>> np.fft.irfft([1, -1j, -1])
     array([0.,  1.,  0.,  0.])
 
@@ -543,7 +543,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     --------
     >>> signal = np.array([1, 2, 3, 4, 3, 2])
     >>> np.fft.fft(signal)
-    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.+0.j,   0.+0.j,  -4.+0.j])
+    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may vary
     >>> np.fft.hfft(signal[:4]) # Input first half of signal
     array([15.,  -4.,   0.,  -1.,   0.,  -4.])
     >>> np.fft.hfft(signal, 6)  # Input entire signal and truncate
@@ -552,7 +552,7 @@ def hfft(a, n=None, axis=-1, norm=None):
 
     >>> signal = np.array([[1, 1.j], [-1.j, 2]])
     >>> np.conj(signal.T) - signal   # check Hermitian symmetry
-    array([[ 0.-0.j,  -0.+0.j],
+    array([[ 0.-0.j,  -0.+0.j], # may vary
            [ 0.+0.j,  0.-0.j]])
     >>> freq_spectrum = np.fft.hfft(signal)
     >>> freq_spectrum
@@ -616,7 +616,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
     --------
     >>> spectrum = np.array([ 15, -4, 0, -1, 0, -4])
     >>> np.fft.ifft(spectrum)
-    array([1.+0.j,  2.+0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.+0.j])
+    array([1.+0.j,  2.+0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.+0.j]) # may vary
     >>> np.fft.ihfft(spectrum)
     array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j]) # may vary
 
@@ -732,7 +732,7 @@ def fftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.mgrid[:3, :3, :3][0]
     >>> np.fft.fftn(a, axes=(1, 2))
-    array([[[ 0.+0.j,   0.+0.j,   0.+0.j],
+    array([[[ 0.+0.j,   0.+0.j,   0.+0.j], # may vary
             [ 0.+0.j,   0.+0.j,   0.+0.j],
             [ 0.+0.j,   0.+0.j,   0.+0.j]],
            [[ 9.+0.j,   0.+0.j,   0.+0.j],
@@ -742,7 +742,7 @@ def fftn(a, s=None, axes=None, norm=None):
             [ 0.+0.j,   0.+0.j,   0.+0.j],
             [ 0.+0.j,   0.+0.j,   0.+0.j]]])
     >>> np.fft.fftn(a, (2, 2), axes=(0, 1))
-    array([[[ 2.+0.j,  2.+0.j,  2.+0.j],
+    array([[[ 2.+0.j,  2.+0.j,  2.+0.j], # may vary
             [ 0.+0.j,  0.+0.j,  0.+0.j]],
            [[-2.+0.j, -2.+0.j, -2.+0.j],
             [ 0.+0.j,  0.+0.j,  0.+0.j]]])
@@ -838,7 +838,7 @@ def ifftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.eye(4)
     >>> np.fft.ifftn(np.fft.fftn(a, axes=(0,)), axes=(1,))
-    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
+    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
            [0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
            [0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j]])
@@ -934,7 +934,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = np.mgrid[:5, :5][0]
     >>> np.fft.fft2(a)
-    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        ,
+    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may vary
               0.  +0.j        ,   0.  +0.j        ],
            [-12.5+17.20477401j,   0.  +0.j        ,   0.  +0.j        ,
               0.  +0.j        ,   0.  +0.j        ],
@@ -1028,7 +1028,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = 4 * np.eye(4)
     >>> np.fft.ifft2(a)
-    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
+    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
            [0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
            [0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
            [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
@@ -1110,13 +1110,13 @@ def rfftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.ones((2, 2, 2))
     >>> np.fft.rfftn(a)
-    array([[[8.+0.j,  0.+0.j],
+    array([[[8.+0.j,  0.+0.j], # may vary
             [0.+0.j,  0.+0.j]],
            [[0.+0.j,  0.+0.j],
             [0.+0.j,  0.+0.j]]])
 
     >>> np.fft.rfftn(a, axes=(2, 0))
-    array([[[4.+0.j,  0.+0.j],
+    array([[[4.+0.j,  0.+0.j], # may vary
             [4.+0.j,  0.+0.j]],
            [[0.+0.j,  0.+0.j],
             [0.+0.j,  0.+0.j]]])

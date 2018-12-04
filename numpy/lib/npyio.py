@@ -173,7 +173,7 @@ class NpzFile(Mapping):
     >>> npz = np.load(outfile)
     >>> isinstance(npz, np.lib.io.NpzFile)
     True
-    >>> npz.files
+    >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -610,7 +610,7 @@ def savez(file, *args, **kwds):
     >>> np.savez(outfile, x=x, y=y)
     >>> _ = outfile.seek(0)
     >>> npzfile = np.load(outfile)
-    >>> npzfile.files
+    >>> sorted(npzfile.files)
     ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])

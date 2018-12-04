@@ -148,7 +148,15 @@ def flatten_dtype(ndtype, flatten_base=False):
     >>> np.lib._iotools.flatten_dtype(dt)
     [dtype('S4'), dtype('float64'), dtype('float64'), dtype('int64')]
     >>> np.lib._iotools.flatten_dtype(dt, flatten_base=True)
-    [dtype('S4'), dtype('float64'), dtype('float64'), dtype('int64'), dtype('int64'), dtype('int64'), dtype('int64'), dtype('int64'), dtype('int64')]
+    [dtype('S4'),
+     dtype('float64'),
+     dtype('float64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64')]
 
     """
     names = ndtype.names

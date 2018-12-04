@@ -2240,13 +2240,10 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.all([1.0, np.nan])
     True
 
-    >>> o=np.array([False])
+    >>> o=np.array(False)
     >>> z=np.all([-1, 4, 5], out=o)
-    Traceback (most recent call last):
-        ...
-    ValueError: output parameter for reduction operation logical_and has too many dimensions
-    >>> id(z), id(o), z                             # doctest: +SKIP
-    (28293632, 28293632, array([ True]))
+    >>> id(z), id(o), z
+    (28293632, 28293632, array([ True])) # may vary
 
     """
     return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
@@ -2732,7 +2729,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._N
 
     >>> x = np.array([536870910, 536870910, 536870910, 536870910])
     >>> np.prod(x)
-    6917529010461212688 # may vary
+    16 # may vary
 
     The product of an empty array is the neutral element 1:
 
