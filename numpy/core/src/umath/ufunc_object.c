@@ -319,6 +319,35 @@ _find_array_prepare(ufunc_full_args args,
     NPY_ITER_NO_BROADCAST | \
     NPY_ITER_NO_SUBTYPE | \
     NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE
+
+/* Called at module initialization to set the matmul ufunc output flags */
+NPY_NO_EXPORT int
+set_matmul_flags(PyObject *d)
+{
+    PyObject *matmul = PyDict_GetItemString(d, "matmul");
+    if (matmul == NULL) {
+        return -1;
+    }
+    /*
+     * The default output flag NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE allows
+     * perfectly overlapping input and output (in-place operations). While
+     * correct for the common mathematical operations, this assumption is
+     * incorrect in the general case and specifically in the case of matmul.
+     *
+     * NPY_ITER_UPDATEIFCOPY is added by default in
+     * PyUFunc_GeneralizedFunction, which is the variant called for gufuncs
+     * with a signature
+     *
+     * Enabling NPY_ITER_WRITEONLY can prevent a copy in some cases.
+     */
+    ((PyUFuncObject *)matmul)->op_flags[2] = (NPY_ITER_WRITEONLY |
+                                         NPY_ITER_UPDATEIFCOPY |
+                                         NPY_UFUNC_DEFAULT_OUTPUT_FLAGS) &
+                                         ~NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE;
+    return 0;
+}
+
+
 /*
  * Set per-operand flags according to desired input or output flags.
  * op_flags[i] for i in input (as determined by ufunc->nin) will be
@@ -2845,13 +2874,15 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     }
 
     /* Fill in any allocated outputs */
-    for (i = nin; i < nop; ++i) {
-        if (op[i] == NULL) {
-            op[i] = NpyIter_GetOperandArray(iter)[i];
-            Py_INCREF(op[i]);
+    {
+        PyArrayObject **operands = NpyIter_GetOperandArray(iter);
+        for (i = 0; i < nop; ++i) {
+            if (op[i] == NULL) {
+                op[i] = operands[i];
+                Py_INCREF(op[i]);
+            }
         }
     }
-
     /*
      * Set up the inner strides array. Because we're not doing
      * buffering, the strides are fixed throughout the looping.

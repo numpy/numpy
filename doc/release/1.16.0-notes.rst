@@ -382,6 +382,12 @@ This replaces ``np.array(some_nd_pointer)``, which stopped working in 1.15.
 As a side effect of this change, ``ndpointer`` now supports dtypes with
 overlapping fields and padding.
 
+``matmul`` is now a ``ufunc``
+-----------------------------
+`numpy.matmul` is now a ufunc which means that both the function and the
+``__matmul__`` operator can now be overridden by ``__array_ufunc__``. Its
+implementation has also changed, ensuring it uses the same BLAS routines as
+`numpy.dot`, ensuring its performance is similar for large matrices.
 
 Changes
 =======

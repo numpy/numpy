@@ -112,6 +112,7 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(minimum);
     SET(rint);
     SET(conjugate);
+    SET(matmul);
     return 0;
 }
 
@@ -177,6 +178,7 @@ _PyArray_GetNumericOps(void)
     GET(minimum);
     GET(rint);
     GET(conjugate);
+    GET(matmul);
     return dict;
 
  fail:
@@ -382,14 +384,8 @@ array_divmod(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 {
-    static PyObject *matmul = NULL;
-
-    npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
-    if (matmul == NULL) {
-        return NULL;
-    }
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_matrix_multiply, array_matrix_multiply);
-    return PyArray_GenericBinaryFunction(m1, m2, matmul);
+    return PyArray_GenericBinaryFunction(m1, m2, n_ops.matmul);
 }
 
 static PyObject *
