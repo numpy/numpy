@@ -113,6 +113,7 @@ run_test()
 
   if [ -n "$RUN_COVERAGE" ]; then
     $PIP install pytest-cov
+    NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1
     COVERAGE_FLAG=--coverage
   fi
 
