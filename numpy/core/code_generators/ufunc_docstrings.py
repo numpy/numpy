@@ -2605,9 +2605,9 @@ add_newdoc('numpy.core.umath', 'matmul',
 
       >>> a = a = np.full([9,5,7,3], True, dtype=bool)
       >>> c = np.full([9, 5, 4,3], True, dtype=bool)
-      >>> np.dot(a, c).shape
+      >>> np.dot(a, c).shape # doctest: +SKIP
       (9, 5, 7, 9, 5, 4)
-      >>> np.matmul(a, c).shape # n is 5, k is 3, m is 4
+      >>> np.matmul(a, c).shape # doctest: +SKIP
       (9, 5, 7, 4)
 
     The matmul function implements the semantics of the `@` operator introduced
@@ -2620,7 +2620,7 @@ add_newdoc('numpy.core.umath', 'matmul',
     >>> a = np.array([[1, 0],
     ...               [0, 1]])
     >>> b = np.array([[4, 1], 
-    ...               [2, 2]]
+    ...               [2, 2]])
     >>> np.matmul(a, b)
     array([[4, 1],
            [2, 2]])
@@ -2628,7 +2628,7 @@ add_newdoc('numpy.core.umath', 'matmul',
     For 2-D mixed with 1-D, the result is the usual.
 
     >>> a = np.array([[1, 0],
-    ...               [0, 1]]
+    ...               [0, 1]])
     >>> b = np.array([1, 2])
     >>> np.matmul(a, b)
     array([1, 2])
