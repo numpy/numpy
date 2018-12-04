@@ -845,7 +845,7 @@ cdef class RandomState:
 
         Examples
         --------
-        >>> np.random.random_sample() 
+        >>> np.random.random_sample()
         0.47108547995356098 # random
         >>> type(np.random.random_sample())
         <class 'float'>
@@ -854,7 +854,7 @@ cdef class RandomState:
 
         Three-by-two array of random numbers from [-5, 0):
 
-        >>> 5 * np.random.random_sample((3, 2)) - 5 
+        >>> 5 * np.random.random_sample((3, 2)) - 5
         array([[-3.99149989, -0.52338984], # random
                [-2.99091858, -0.79479508],
                [-1.23204345, -1.75224494]])
@@ -1874,12 +1874,12 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> import scipy.special as sps 
+        >>> import scipy.special as sps
         >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/ \\
         ...                       (sps.gamma(shape) * scale**shape))
-        >>> plt.plot(bins, y, linewidth=2, color='r') 
-        >>> plt.show() 
+        >>> plt.plot(bins, y, linewidth=2, color='r')
+        >>> plt.show()
 
         """
         cdef ndarray oshape
@@ -1964,12 +1964,12 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> import scipy.special as sps 
+        >>> import scipy.special as sps
         >>> count, bins, ignored = plt.hist(s, 50, density=True)
-        >>> y = bins**(shape-1)*(np.exp(-bins/scale) / 
-        ...                      (sps.gamma(shape)*scale**shape)) 
-        >>> plt.plot(bins, y, linewidth=2, color='r') 
-        >>> plt.show() 
+        >>> y = bins**(shape-1)*(np.exp(-bins/scale) /
+        ...                      (sps.gamma(shape)*scale**shape))
+        >>> plt.plot(bins, y, linewidth=2, color='r')
+        >>> plt.show()
 
         """
         cdef ndarray oshape, oscale
@@ -2634,12 +2634,12 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> from scipy.special import i0 
+        >>> from scipy.special import i0
         >>> plt.hist(s, 50, density=True)
         >>> x = np.linspace(-np.pi, np.pi, num=51)
-        >>> y = np.exp(kappa*np.cos(x-mu))/(2*np.pi*i0(kappa)) 
-        >>> plt.plot(x, y, linewidth=2, color='r') 
-        >>> plt.show() 
+        >>> y = np.exp(kappa*np.cos(x-mu))/(2*np.pi*i0(kappa))
+        >>> plt.plot(x, y, linewidth=2, color='r')
+        >>> plt.show()
 
         """
         cdef ndarray omu, okappa
@@ -2955,25 +2955,25 @@ cdef class RandomState:
 
         Compare the power function distribution to the inverse of the Pareto.
 
-        >>> from scipy import stats 
+        >>> from scipy import stats
         >>> rvs = np.random.power(5, 1000000)
         >>> rvsp = np.random.pareto(5, 1000000)
         >>> xx = np.linspace(0,1,100)
-        >>> powpdf = stats.powerlaw.pdf(xx,5) 
+        >>> powpdf = stats.powerlaw.pdf(xx,5)
 
         >>> plt.figure()
         >>> plt.hist(rvs, bins=50, density=True)
-        >>> plt.plot(xx,powpdf,'r-') 
-        >>> plt.title('np.random.power(5)') 
+        >>> plt.plot(xx,powpdf,'r-')
+        >>> plt.title('np.random.power(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
-        >>> plt.plot(xx,powpdf,'r-') 
-        >>> plt.title('inverse of 1 + np.random.pareto(5)') 
+        >>> plt.plot(xx,powpdf,'r-')
+        >>> plt.title('inverse of 1 + np.random.pareto(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
-        >>> plt.plot(xx,powpdf,'r-') 
+        >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('inverse of stats.pareto(5)')
 
         """
@@ -4069,15 +4069,15 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import special 
+        >>> from scipy import special
 
         Truncate s values at 50 so plot is interesting:
 
         >>> count, bins, ignored = plt.hist(s[s<50], 50, density=True)
         >>> x = np.arange(1., 50.)
-        >>> y = x**(-a) / special.zetac(a) 
-        >>> plt.plot(x, y/max(y), linewidth=2, color='r') 
-        >>> plt.show() 
+        >>> y = x**(-a) / special.zetac(a)
+        >>> plt.plot(x, y/max(y), linewidth=2, color='r')
+        >>> plt.show()
 
         """
         cdef ndarray oa
