@@ -6,7 +6,6 @@ import sys
 
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
-import pytest
 
 
 PY2 = sys.version_info.major < 3
