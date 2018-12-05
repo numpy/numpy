@@ -2243,7 +2243,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     >>> o=np.array(False)
     >>> z=np.all([-1, 4, 5], out=o)
     >>> id(z), id(o), z
-    (28293632, 28293632, array([ True])) # may vary
+    (28293632, 28293632, array(True)) # may vary
 
     """
     return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)

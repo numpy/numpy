@@ -2609,6 +2609,7 @@ add_newdoc('numpy.core.umath', 'matmul',
       (9, 5, 7, 9, 5, 4)
       >>> np.matmul(a, c).shape # doctest: +SKIP
       (9, 5, 7, 4)
+      >>> # n is 5, k is 3, m is 4
 
     The matmul function implements the semantics of the `@` operator introduced
     in Python 3.5 following PEP465.
