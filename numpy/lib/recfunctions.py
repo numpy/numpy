@@ -421,7 +421,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     >>> rfn.merge_arrays((np.array([1, 2]).view([('a', np.int64)]),
     ...               np.array([10., 20., 30.])),
     ...              usemask=False, asrecarray=True)
-    rec.array([(1, 10.0), (2, 20.0), (-1, 30.0)],
+    rec.array([( 1, 10.), ( 2, 20.), (-1, 30.)],
               dtype=[('a', '<i8'), ('f1', '<f8')])
 
     Notes

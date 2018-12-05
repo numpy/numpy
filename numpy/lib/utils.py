@@ -150,6 +150,7 @@ def deprecate(*args, **kwargs):
     Warning:
 
     >>> olduint = np.deprecate(np.uint)
+    DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
     6
 
