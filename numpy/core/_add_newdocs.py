@@ -317,8 +317,8 @@ add_newdoc('numpy.core', 'nditer',
 
     Examples
     --------
-    >>> #Here is how we might write an ``iter_add`` function, using the
-    >>> #Python iterator protocol::
+    Here is how we might write an ``iter_add`` function, using the
+    Python iterator protocol::
 
     >>> def iter_add_py(x, y, out=None):
     ...     addop = np.add
@@ -329,7 +329,7 @@ add_newdoc('numpy.core', 'nditer',
     ...             addop(a, b, out=c)
     ...     return it.operands[2]
 
-    >>> # Here is the same function, but following the C-style pattern::
+    Here is the same function, but following the C-style pattern::
 
     >>> def iter_add(x, y, out=None):
     ...    addop = np.add
@@ -341,7 +341,7 @@ add_newdoc('numpy.core', 'nditer',
     ...            it.iternext()
     ...        return it.operands[2]
 
-    >>> # Here is an example outer product function::
+    Here is an example outer product function::
 
     >>> def outer_it(x, y, out=None):
     ...     mulop = np.multiply
@@ -361,7 +361,7 @@ add_newdoc('numpy.core', 'nditer',
     array([[1, 2, 3],
            [2, 4, 6]])
 
-    >>> # Here is an example function which operates like a "lambda" ufunc::
+    Here is an example function which operates like a "lambda" ufunc::
 
     >>> def luf(lamdaexpr, *args, **kwargs):
     ...    '''luf(lambdaexpr, op1, ..., opn, out=None, order='K', casting='safe', buffersize=0)'''

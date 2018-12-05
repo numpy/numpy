@@ -1324,16 +1324,24 @@ def einsum(*operands, **kwargs):
     particularly significant with larger arrays:
 
     >>> a = np.ones(64).reshape(2,4,8)
-    >>> # Basic `einsum`: ~1520ms  (benchmarked on 3.1GHz Intel i5.)
+
+    Basic `einsum`: ~1520ms  (benchmarked on 3.1GHz Intel i5.)
+
     >>> for iteration in range(500):
     ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a)
-    >>> # Sub-optimal `einsum` (due to repeated path calculation time): ~330ms
+
+    Sub-optimal `einsum` (due to repeated path calculation time): ~330ms
+
     >>> for iteration in range(500):
     ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')
-    >>> # Greedy `einsum` (faster optimal path approximation): ~160ms
+
+    Greedy `einsum` (faster optimal path approximation): ~160ms
+
     >>> for iteration in range(500):
     ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='greedy')
-    >>> # Optimal `einsum` (best usage pattern in some use cases): ~110ms
+
+    Optimal `einsum` (best usage pattern in some use cases): ~110ms
+
     >>> path = np.einsum_path('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize='optimal')[0]
     >>> for iteration in range(500):
     ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize=path)
