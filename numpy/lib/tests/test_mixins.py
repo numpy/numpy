@@ -199,6 +199,17 @@ class TestNDArrayOperatorsMixin(object):
             err_msg = 'failed for operator {}'.format(op)
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
+    def test_matmul(self):
+        array = np.array([1, 2], dtype=np.float64)
+        array_like = ArrayLike(array)
+        expected = ArrayLike(np.float64(5))
+        _assert_equal_type_and_value(expected, np.matmul(array_like, array))
+        if not PY2:
+            _assert_equal_type_and_value(
+                expected, operator.matmul(array_like, array))
+            _assert_equal_type_and_value(
+                expected, operator.matmul(array, array_like))
+
     def test_ufunc_at(self):
         array = ArrayLike(np.array([1, 2, 3, 4]))
         assert_(np.negative.at(array, np.array([0, 1])) is None)
