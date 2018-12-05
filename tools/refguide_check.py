@@ -70,6 +70,7 @@ PUBLIC_SUBMODULES = [
     'f2py',
     'linalg',
     'lib',
+    'lib.recfunctions',
     'fft',
     'ma',
     'polynomial',
