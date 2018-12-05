@@ -409,6 +409,13 @@ if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
 subclasses that override the default ``__array_ufunc__`` implementation,
 the ``TypeError`` is passed on.
 
+``NDArrayOperatorsMixin`` now implements matrix multiplication
+--------------------------------------------------------------
+Previously, ``np.lib.mixins.NDArrayOperatorsMixin`` did not implement the
+special methods for Python's matrix multiplication operator (``@``). This has
+changed now that ``matmul`` is a ufunc and can be overriden using
+``__array_ufunc__``.
+
 The scaling of the covariance matrix in ``np.polyfit`` is different
 -------------------------------------------------------------------
 So far, ``np.polyfit`` used a non-standard factor in the scaling of the the
