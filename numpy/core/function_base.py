@@ -29,13 +29,14 @@ def _index_deprecate(i, stacklevel=2):
     return i
 
 
-def _linspace_dispatcher(
-        start, stop, num=None, endpoint=None, retstep=None, dtype=None):
+def _linspace_dispatcher(start, stop, num=None, endpoint=None, retstep=None,
+                         dtype=None, axis=None):
     return (start, stop)
 
 
 @array_function_dispatch(_linspace_dispatcher)
-def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
+def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
+             axis=0):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -67,14 +68,19 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
 
         .. versionadded:: 1.9.0
 
+    axis : int, optional
+        The axis in the result to store the samples.  Relevant only if start
+        or stop are array-like.  By default (0), the samples will be along a
+        new axis inserted at the beginning. Use -1 to get an axis at the end.
+
+        .. versionadded:: 1.16.0
+
     Returns
     -------
     samples : ndarray
         There are `num` equally spaced samples in the closed interval
         ``[start, stop]`` or the half-open interval ``[start, stop)``
-        (depending on whether `endpoint` is True or False).  If start
-        or stop are array-like, then the samples will be along a new
-        axis inserted at the beginning.
+        (depending on whether `endpoint` is True or False).
     step : float, optional
         Only returned if `retstep` is True
 
@@ -161,19 +167,23 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None):
     if endpoint and num > 1:
         y[-1] = stop
 
+    if axis != 0:
+        y = _nx.moveaxis(y, 0, axis)
+
     if retstep:
         return y.astype(dtype, copy=False), step
     else:
         return y.astype(dtype, copy=False)
 
 
-def _logspace_dispatcher(
-        start, stop, num=None, endpoint=None, base=None, dtype=None):
+def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,
+                         dtype=None, axis=None):
     return (start, stop)
 
 
 @array_function_dispatch(_logspace_dispatcher)
-def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
+def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
+             axis=0):
     """
     Return numbers spaced evenly on a log scale.
 
@@ -202,13 +212,18 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
+    axis : int, optional
+        The axis in the result to store the samples.  Relevant only if start
+        or stop are array-like.  By default (0), the samples will be along a
+        new axis inserted at the beginning. Use -1 to get an axis at the end.
+
+        .. versionadded:: 1.16.0
+
 
     Returns
     -------
     samples : ndarray
-        `num` samples, equally spaced on a log scale.  If start or stop are
-        array-like, then the samples will be along a new axis inserted at
-        the beginning.
+        `num` samples, equally spaced on a log scale.
 
     See Also
     --------
@@ -253,18 +268,19 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None):
     >>> plt.show()
 
     """
-    y = linspace(start, stop, num=num, endpoint=endpoint)
+    y = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)
     if dtype is None:
         return _nx.power(base, y)
-    return _nx.power(base, y).astype(dtype)
+    return _nx.power(base, y).astype(dtype, copy=False)
 
 
-def _geomspace_dispatcher(start, stop, num=None, endpoint=None, dtype=None):
+def _geomspace_dispatcher(start, stop, num=None, endpoint=None, dtype=None,
+                          axis=None):
     return (start, stop)
 
 
 @array_function_dispatch(_geomspace_dispatcher)
-def geomspace(start, stop, num=50, endpoint=True, dtype=None):
+def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     """
     Return numbers spaced evenly on a log scale (a geometric progression).
 
@@ -288,13 +304,17 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
+    axis : int, optional
+        The axis in the result to store the samples.  Relevant only if start
+        or stop are array-like.  By default (0), the samples will be along a
+        new axis inserted at the beginning. Use -1 to get an axis at the end.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------
     samples : ndarray
-        `num` samples, equally spaced on a log scale.  If start or stop are
-        array-like, then the samples will be along a new axis inserted at
-        the beginning.
+        `num` samples, equally spaced on a log scale.
 
     See Also
     --------
@@ -392,6 +412,8 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None):
     log_stop = _nx.log10(stop)
     result = out_sign * logspace(log_start, log_stop, num=num,
                                  endpoint=endpoint, base=10.0, dtype=dtype)
+    if axis != 0:
+        result = _nx.moveaxis(result, 0, axis)
 
     return result.astype(dtype, copy=False)
 

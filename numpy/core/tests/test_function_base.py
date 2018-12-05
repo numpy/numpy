@@ -65,6 +65,8 @@ class TestLogspace(object):
         t4 = stack([logspace(_start, stop[0], 6)
                     for _start in start], axis=1)
         assert_equal(t3, t4)
+        t5 = logspace(start, stop, 6, axis=-1)
+        assert_equal(t5, t2.T)
 
     def test_dtype(self):
         y = logspace(0, 6, dtype='float32')
@@ -196,6 +198,8 @@ class TestGeomspace(object):
         t4 = stack([geomspace(_start, stop[0], 5)
                     for _start in start], axis=1)
         assert_equal(t3, t4)
+        t5 = geomspace(start, stop, 5, axis=-1)
+        assert_equal(t5, t2.T)
 
     def test_physical_quantities(self):
         a = PhysicalQuantity(1.0)
@@ -277,6 +281,8 @@ class TestLinspace(object):
         t4 = stack([linspace(_start, stop[0], 5)
                     for _start in start], axis=1)
         assert_equal(t3, t4)
+        t5 = linspace(start, stop, 5, axis=-1)
+        assert_equal(t5, t2.T)
 
     def test_complex(self):
         lim1 = linspace(1 + 2j, 3 + 4j, 5)
