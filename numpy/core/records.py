@@ -783,13 +783,13 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     itemsize = descr.itemsize
 
-    shapeprod = sb.array(shape).prod()
+    shapeprod = sb.array(shape).prod(dtype=nt.intp)
     shapesize = shapeprod * itemsize
     if shapesize < 0:
         shape = list(shape)
         shape[shape.index(-1)] = size / -shapesize
         shape = tuple(shape)
-        shapeprod = sb.array(shape).prod()
+        shapeprod = sb.array(shape).prod(dtype=nt.intp)
 
     nbytes = shapeprod * itemsize
 
