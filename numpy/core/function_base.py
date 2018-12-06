@@ -45,11 +45,14 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     The endpoint of the interval can optionally be excluded.
 
+    .. versionchanged:: 1.16.0
+        Non-scalar `start` and `stop` are now supported.
+
     Parameters
     ----------
-    start : scalar or array_like
+    start : array_like
         The starting value of the sequence.
-    stop : scalar or array_like
+    stop : array_like
         The end value of the sequence, unless `endpoint` is set to False.
         In that case, the sequence consists of all but the last of ``num + 1``
         evenly spaced samples, so that `stop` is excluded.  Note that the step
@@ -191,11 +194,14 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     (`base` to the power of `start`) and ends with ``base ** stop``
     (see `endpoint` below).
 
+    .. versionchanged:: 1.16.0
+        Non-scalar `start` and `stop` are now supported.
+
     Parameters
     ----------
-    start : float or array_like
+    start : array_like
         ``base ** start`` is the starting value of the sequence.
-    stop : float or array_like
+    stop : array_like
         ``base ** stop`` is the final value of the sequence, unless `endpoint`
         is False.  In that case, ``num + 1`` values are spaced over the
         interval in log-space, of which all but the last (a sequence of
@@ -287,11 +293,14 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     This is similar to `logspace`, but with endpoints specified directly.
     Each output sample is a constant multiple of the previous.
 
+    .. versionchanged:: 1.16.0
+        Non-scalar `start` and `stop` are now supported.
+
     Parameters
     ----------
-    start : scalar or array_like
+    start : array_like
         The starting value of the sequence.
-    stop : scalar or array_like
+    stop : array_like
         The final value of the sequence, unless `endpoint` is False.
         In that case, ``num + 1`` values are spaced over the
         interval in log-space, of which all but the last (a sequence of
