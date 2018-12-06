@@ -1124,8 +1124,9 @@ class atlas_info(system_info):
         lapack = None
         atlas_1 = None
         for d in lib_dirs:
-            atlas = self.check_libs2(d, atlas_libs, [])
+            # FIXME: lapack_atlas is unused
             lapack_atlas = self.check_libs2(d, ['lapack_atlas'], [])
+            atlas = self.check_libs2(d, atlas_libs, [])
             if atlas is not None:
                 lib_dirs2 = [d] + self.combine_paths(d, ['atlas*', 'ATLAS*'])
                 lapack = self.check_libs2(lib_dirs2, lapack_libs, [])
@@ -2107,17 +2108,17 @@ class numerix_info(system_info):
         if which[0] is None:
             which = "numpy", "defaulted"
             try:
-                import numpy
+                import numpy  # noqa: F401
                 which = "numpy", "defaulted"
             except ImportError:
                 msg1 = str(get_exception())
                 try:
-                    import Numeric
+                    import Numeric  # noqa: F401
                     which = "numeric", "defaulted"
                 except ImportError:
                     msg2 = str(get_exception())
                     try:
-                        import numarray
+                        import numarray  # noqa: F401
                         which = "numarray", "defaulted"
                     except ImportError:
                         msg3 = str(get_exception())
@@ -2437,7 +2438,6 @@ class umfpack_info(system_info):
                         define_macros=[('SCIPY_UMFPACK_H', None)],
                         swig_opts=['-I' + inc_dir])
 
-        amd = get_info('amd')
         dict_append(info, **get_info('amd'))
 
         self.set_info(**info)
@@ -2533,6 +2533,7 @@ def show_all(argv=None):
             del show_only[show_only.index(name)]
         conf = c()
         conf.verbosity = 2
+        # FIXME: r not used
         r = conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))

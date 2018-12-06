@@ -13,7 +13,7 @@ from numpy.testing import (
 
 
 try:
-    import nose
+    import nose  # noqa: F401
 except ImportError:
     HAVE_NOSE = False
 else:

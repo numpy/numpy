@@ -1,14 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import warnings
 import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
+    assert_, assert_equal, assert_array_equal, assert_raises,
     HAS_REFCOUNT, suppress_warnings
     )
 
