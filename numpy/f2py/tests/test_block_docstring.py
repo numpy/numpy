@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import textwrap
 import sys
 import pytest
 from . import util

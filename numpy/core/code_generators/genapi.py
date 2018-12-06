@@ -163,9 +163,7 @@ def skip_brackets(s, lbrac, rbrac):
 
 def split_arguments(argstr):
     arguments = []
-    bracket_counts = {'(': 0, '[': 0}
     current_argument = []
-    state = 0
     i = 0
     def finish_arg():
         if current_argument:

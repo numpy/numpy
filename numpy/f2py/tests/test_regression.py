@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import math
 import pytest
 
 import numpy as np

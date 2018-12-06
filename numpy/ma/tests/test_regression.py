@@ -1,7 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import warnings
-
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_allclose, suppress_warnings

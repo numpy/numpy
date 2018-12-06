@@ -287,7 +287,6 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    raises
     )
 from numpy.lib import format
 

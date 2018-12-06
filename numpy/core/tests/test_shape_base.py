@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import pytest
-import warnings
 import sys
 import numpy as np
 from numpy.core import (
@@ -12,7 +11,7 @@ from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns, assert_almost_equal
+    assert_raises_regex, assert_warns
     )
 
 from numpy.compat import long

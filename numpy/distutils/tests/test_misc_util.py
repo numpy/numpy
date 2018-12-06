@@ -79,3 +79,6 @@ def test_installed_npymath_ini():
     # Regression test for gh-7707.  If npymath.ini wasn't installed, then this
     # will give an error.
     info = get_info('npymath')
+
+    assert isinstance(info, dict)
+    assert "define_macros" in info

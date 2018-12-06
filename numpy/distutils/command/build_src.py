@@ -204,7 +204,6 @@ class build_src(build_ext.build_ext):
 
 
     def _build_npy_pkg_config(self, info, gd):
-        import shutil
         template, install_dir, subst_dict = info
         template_dir = os.path.dirname(template)
         for k, v in gd.items():
@@ -239,7 +238,6 @@ class build_src(build_ext.build_ext):
         if not install_cmd.finalized == 1:
             install_cmd.finalize_options()
         build_npkg = False
-        gd = {}
         if self.inplace == 1:
             top_prefix = '.'
             build_npkg = True

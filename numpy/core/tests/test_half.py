@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, suppress_warnings
+from numpy.testing import assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):

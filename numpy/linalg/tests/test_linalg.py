@@ -13,7 +13,7 @@ import pytest
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
-from numpy import multiply, atleast_2d, inf, asarray, matrix
+from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
@@ -955,7 +955,6 @@ class TestMatrixPower(object):
     dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
     def test_large_power(self, dt):
-        power = matrix_power
         rshft = self.rshft_1.astype(dt)
         assert_equal(
             matrix_power(rshft, 2**100 + 2**10 + 2**5 + 0), self.rshft_0)
@@ -1619,8 +1618,6 @@ class TestQR(object):
     def test_qr_empty(self, m, n):
         k = min(m, n)
         a = np.empty((m, n))
-        a_type = type(a)
-        a_dtype = a.dtype
 
         self.check_qr(a)
 

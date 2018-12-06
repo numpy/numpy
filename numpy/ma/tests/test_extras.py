@@ -14,7 +14,7 @@ import itertools
 
 import numpy as np
 from numpy.testing import (
-    assert_warns, suppress_warnings, assert_raises,
+    assert_warns, suppress_warnings
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -29,9 +29,8 @@ from numpy.ma.extras import (
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
     notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, stack, vstack, hstack
+    diagflat, stack, vstack
     )
-import numpy.ma.extras as mae
 
 
 class TestGeneric(object):

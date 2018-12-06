@@ -13,8 +13,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_raises, assert_warns, assert_no_warnings, assert_array_equal,
-    assert_
+    assert_raises, assert_warns, assert_
     )
 
 try:

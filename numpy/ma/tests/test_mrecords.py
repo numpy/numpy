@@ -7,8 +7,6 @@
 """
 from __future__ import division, absolute_import, print_function
 
-import warnings
-
 import numpy as np
 import numpy.ma as ma
 from numpy import recarray

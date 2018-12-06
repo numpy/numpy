@@ -6,7 +6,7 @@ from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
 
 

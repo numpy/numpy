@@ -1432,7 +1432,7 @@ def test_tempdir():
 
 def test_temppath():
     with temppath() as fpath:
-        with open(fpath, 'w') as f:
+        with open(fpath, 'w'):
             pass
     assert_(not os.path.isfile(fpath))
 
