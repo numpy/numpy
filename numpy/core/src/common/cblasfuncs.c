@@ -188,12 +188,16 @@ _bad_strides(PyArrayObject *ap)
     int itemsize = PyArray_ITEMSIZE(ap);
     int i, N=PyArray_NDIM(ap);
     npy_intp *strides = PyArray_STRIDES(ap);
+    npy_intp *dims = PyArray_DIMS(ap);
 
     if (((npy_intp)(PyArray_DATA(ap)) % itemsize) != 0) {
         return 1;
     }
     for (i = 0; i < N; i++) {
         if ((strides[i] < 0) || (strides[i] % itemsize) != 0) {
+            return 1;
+        }
+        if ((strides[i] == 0 && dims[i] >1)) {
             return 1;
         }
     }
