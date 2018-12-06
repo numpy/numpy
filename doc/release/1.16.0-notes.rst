@@ -20,7 +20,7 @@ New functions
 =============
 
  * New functions in the `numpy.lib.recfunctions` module to ease the structured
-   assignment changes: `assign_fields_by_name`, `structured_to_unstructured`, 
+   assignment changes: `assign_fields_by_name`, `structured_to_unstructured`,
    `unstructured_to_structured`, `apply_along_fields`, and `require_fields`.
    See the user guide at <https://docs.scipy.org/doc/numpy/user/basics.rec.html>
    for more info.
@@ -388,6 +388,13 @@ overlapping fields and padding.
 ``__matmul__`` operator can now be overridden by ``__array_ufunc__``. Its
 implementation has also changed, ensuring it uses the same BLAS routines as
 `numpy.dot`, ensuring its performance is similar for large matrices.
+
+Start and stop arrays for ``linspace``, ``logspace`` and ``geomspace``
+----------------------------------------------------------------------
+These functions used to be limited to scalar stop and start values, but can
+now take arrays, which will be properly broadcast and result in an output
+which has one axis prepended.  This can be used, e.g., to obtain linearly
+interpolated points between sets of points.
 
 Changes
 =======
