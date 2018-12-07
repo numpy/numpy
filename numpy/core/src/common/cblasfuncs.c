@@ -197,7 +197,7 @@ _bad_strides(PyArrayObject *ap)
         if ((strides[i] < 0) || (strides[i] % itemsize) != 0) {
             return 1;
         }
-        if ((strides[i] == 0 && dims[i] >1)) {
+        if ((strides[i] == 0 && dims[i] > 1)) {
             return 1;
         }
     }
