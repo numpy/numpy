@@ -31,7 +31,6 @@ env:
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
 
 python:
-  - 2.7
   - 3.5
   - 3.6
 matrix:
@@ -63,8 +62,6 @@ matrix:
             - python3-setuptools
     - python: 3.6
       env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
-    - python: 2.7
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 PYTHON_OPTS="-3 -OO"
     - python: 3.6
       env: USE_SDIST=1
     - python: 3.6

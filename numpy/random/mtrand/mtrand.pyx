@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 # mtrand.pyx -- A Pyrex wrapper of Jean-Sebastien Roy's RandomKit
 #
 # Copyright 2005 Robert Kern (robert.kern@gmail.com)

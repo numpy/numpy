@@ -6,12 +6,11 @@ language: python
 
 python:
     # use versions available for job image
-    # aarch64_u16pytall:v6.7.4 
+    # aarch64_u16pytall:v6.7.4
     # (what we currently have access to by default)
     # this is a bit restrictive in terms
     # of version availability / control,
     # but it is convenient
-    - 2.7
     - 3.7
 
 runtime:
