@@ -2713,6 +2713,36 @@ class TestMethods(object):
             assert_equal(func(edf, edf.T), eddtf)
             assert_equal(func(edf.T, edf), edtdf)
 
+    @pytest.mark.parametrize('func', (np.dot, np.matmul))
+    @pytest.mark.parametrize('dtype', 'ifdFD')
+    def test_no_dgemv(self, func, dtype):
+        # check vector arg for contiguous before gemv
+        # gh-12156
+        a = np.arange(8.0, dtype=dtype).reshape(2, 4)
+        b = np.broadcast_to(1., (4, 1))
+        ret1 = func(a, b)
+        ret2 = func(a, b.copy())
+        assert_equal(ret1, ret2)
+
+        ret1 = func(b.T, a.T)
+        ret2 = func(b.T.copy(), a.T)
+        assert_equal(ret1, ret2)
+
+        # check for unaligned data
+        dt = np.dtype(dtype)
+        a = np.zeros(8 * dt.itemsize // 2 + 1, dtype='int16')[1:].view(dtype)
+        a = a.reshape(2, 4)
+        b = a[0]
+        # make sure it is not aligned
+        assert_(a.__array_interface__['data'][0] % dt.itemsize != 0)
+        ret1 = func(a, b)
+        ret2 = func(a.copy(), b.copy())
+        assert_equal(ret1, ret2)
+
+        ret1 = func(b.T, a.T)
+        ret2 = func(b.T.copy(), a.T.copy())
+        assert_equal(ret1, ret2)
+
     def test_dot(self):
         a = np.array([[1, 0], [0, 1]])
         b = np.array([[0, 1], [1, 0]])

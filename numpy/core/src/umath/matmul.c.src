@@ -312,8 +312,10 @@ NPY_NO_EXPORT void
     npy_bool i2blasable = i2_c_blasable || i2_f_blasable;
     npy_bool o_c_blasable = is_blasable2d(os_m, os_p, dm, dp, sz);
     npy_bool o_f_blasable = is_blasable2d(os_p, os_m, dp, dm, sz);
-    npy_bool vector_matrix = ((dm == 1) && i2blasable);
-    npy_bool matrix_vector = ((dp == 1)  && i1blasable);
+    npy_bool vector_matrix = ((dm == 1) && i2blasable &&
+                              is_blasable2d(is1_n, sz, dn, 1, sz));
+    npy_bool matrix_vector = ((dp == 1)  && i1blasable &&
+                              is_blasable2d(is2_n, sz, dn, 1, sz));
 #endif
 
     for (iOuter = 0; iOuter < dOuter; iOuter++,
