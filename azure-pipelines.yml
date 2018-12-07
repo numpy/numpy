@@ -105,12 +105,6 @@ jobs:
           TEST_MODE: fast
           OPENBLAS: $(OPENBLAS_32)
           BITS: 32
-        Python27-64bit-fast:
-          PYTHON_VERSION: '2.7'
-          PYTHON_ARCH: 'x64'
-          TEST_MODE: fast
-          OPENBLAS: $(OPENBLAS_64)
-          BITS: 64
         Python35-64bit-full:
           PYTHON_VERSION: '3.5'
           PYTHON_ARCH: 'x64'
