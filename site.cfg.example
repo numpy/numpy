@@ -210,7 +210,7 @@
 # FFT libraries
 # -------------
 # There are two FFT libraries that we can configure here: FFTW (2 and 3) and djbfft.
-# Note that these libraries are not used by for numpy or scipy.
+# Note that these libraries are not used by numpy or scipy.
 #
 #   http://fftw.org/
 #   https://cr.yp.to/djbfft.html
