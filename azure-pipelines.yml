@@ -9,6 +9,9 @@ jobs:
 - job: Linux_Python_36_32bit_full
   pool:
     vmIMage: 'ubuntu-16.04'
+  variables:
+      # None for OpenBLAS < 0.3.4
+      OPENBLAS_VERSION: None
   steps:
   - script: |
            docker pull i386/ubuntu:bionic
@@ -19,7 +22,10 @@ jobs:
            pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
            apt-get -y install libopenblas-dev gfortran && \
            NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
-           python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
+           python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+           cd .. && \
+           export PYTHONPATH=/numpy/build/testenv/lib/python3.6/site-packages && \
+           python3 -c \"import numpy; from numpy.distutils.system_info import get_info; assert(get_info('openblas')['version'] == $(OPENBLAS_VERSION))\""
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
     inputs:
@@ -90,6 +96,7 @@ jobs:
       # appveyor / Windows config
       OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win32-gcc_7_1_0.zip"
       OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip"
+      OPENBLAS_VERSION: "0.3.5.dev"
   strategy:
     maxParallel: 6
     matrix:
@@ -170,6 +177,10 @@ jobs:
     displayName: 'Build NumPy'
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
+  - script: |
+      cd D:/a
+      python -c "import numpy; from numpy.distutils.system_info import get_info; assert get_info('openblas')['version'].decode() == '$(OPENBLAS_VERSION)', 'received versions: ' + get_info('openblas')['version'].decode() + ' and $(OPENBLAS_VERSION)'"
+    displayName: 'Post-mortem OpenBLAS version confirmation'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'

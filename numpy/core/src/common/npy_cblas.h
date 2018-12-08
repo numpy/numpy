@@ -26,6 +26,12 @@ enum CBLAS_DIAG {CblasNonUnit=131, CblasUnit=132};
 enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 
 /*
+ * Access openblas build information, including version number
+ * for openblas >= 0.3.4
+ */
+char *openblas_get_config(void);
+
+/*
  * ===========================================================================
  * Prototypes for level 1 BLAS functions (complex are recast as routines)
  * ===========================================================================

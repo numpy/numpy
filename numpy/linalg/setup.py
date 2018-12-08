@@ -53,6 +53,16 @@ def configuration(parent_package='', top_path=None):
         extra_info=lapack_info,
         libraries=['npymath'],
     )
+
+    if len(get_info('openblas')) > 2:
+        # if openblas is being used to compile NumPy
+        # build an extension to gather more information
+        # about the openblas version used
+        config.add_extension('openblas_config',
+                             sources=['openblas_config.c'],
+                             extra_info=lapack_info,
+                             libraries=['openblas'],
+                             )
     return config
 
 if __name__ == '__main__':
