@@ -81,6 +81,29 @@ def filepath_from_subprocess_output(output):
         output = output.encode('ascii', errors='replace')
     return output
 
+
+def forward_bytes_to_stdout(val):
+    """
+    Forward bytes from a subprocess call to the console, without attempting to
+    decode them.
+
+    The assumption is that the subprocess call already returned bytes in
+    a suitable encoding.
+    """
+    if sys.version_info.major < 3:
+        # python 2 has binary output anyway
+        sys.stdout.write(val)
+    elif hasattr(sys.stdout, 'buffer'):
+        # use the underlying binary output if there is one
+        sys.stdout.buffer.write(val)
+    elif hasattr(sys.stdout, 'encoding'):
+        # round-trip the encoding if necessary
+        sys.stdout.write(val.decode(sys.stdout.encoding))
+    else:
+        # make a best-guess at the encoding
+        sys.stdout.write(val.decode('utf8', errors='replace'))
+
+
 def temp_file_name():
     fo, name = make_temp_file()
     fo.close()
