@@ -1003,6 +1003,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int i;
     int nin, nout;
     PyObject *out_kwd_obj;
+    PyObject *fast;
     PyObject **in_objs, **out_objs;
 
     /* check inputs */
@@ -1010,12 +1011,18 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     if (nin < 0) {
         return -1;
     }
-    in_objs = PySequence_Fast_ITEMS(args);
+    fast = PySequence_Fast(args, "could not convert args for fast access");
+    if (fast == NULL) {
+        return -1;
+    }
+    in_objs = PySequence_Fast_ITEMS(fast);
     for (i = 0; i < nin; ++i) {
         if (PyUFunc_HasOverride(in_objs[i])) {
+            Py_DECREF(fast);
             return 1;
         }
     }
+    Py_DECREF(fast);
     /* check outputs, if any */
     nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
     if (nout < 0) {
