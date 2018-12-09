@@ -13,7 +13,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    HAS_REFCOUNT
+    assert_warns, HAS_REFCOUNT
     )
 
 
@@ -1483,7 +1483,9 @@ class TestClip(object):
         M = np.float64(2)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1505,7 +1507,9 @@ class TestClip(object):
         M = np.float64(1)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1516,7 +1520,9 @@ class TestClip(object):
         M = 2.0
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1692,7 +1698,9 @@ class TestClip(object):
         M = np.float64(2)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1714,7 +1722,9 @@ class TestClip(object):
         M = np.float64(1)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1725,7 +1735,9 @@ class TestClip(object):
         M = 2.0
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1778,11 +1790,16 @@ class TestClip(object):
 
     def test_clip_nan(self):
         d = np.arange(7.)
-        assert_equal(d.clip(min=np.nan), d)
-        assert_equal(d.clip(max=np.nan), d)
-        assert_equal(d.clip(min=np.nan, max=np.nan), d)
-        assert_equal(d.clip(min=-2, max=np.nan), d)
-        assert_equal(d.clip(min=np.nan, max=10), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(max=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=np.nan, max=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=-2, max=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=np.nan, max=10), d)
 
 
 class TestAllclose(object):

@@ -58,6 +58,14 @@
     npy_intp i;\
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
 
+/** (ip1, ip2, ip3) -> (op1) */
+#define TERNARY_LOOP\
+    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op1 = args[3];\
+    npy_intp is1 = steps[0], is2 = steps[1], is3 = steps[2], os1 = steps[3];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, ip3 += is3, op1 += os1)
+
 /** @} */
 
 /* unary loop input and output contiguous */

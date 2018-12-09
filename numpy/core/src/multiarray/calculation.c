@@ -918,6 +918,27 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     }
 
     func = PyArray_DESCR(self)->f->fastclip;
+    if (func == NULL) {
+        if (min == NULL) {
+            return PyObject_CallFunctionObjArgs(n_ops.minimum, self, max, out, NULL);
+        }
+        else if (max == NULL) {
+            return PyObject_CallFunctionObjArgs(n_ops.maximum, self, min, out, NULL);
+        }
+        else {
+            return PyObject_CallFunctionObjArgs(n_ops.clip, self, min, max, out, NULL);
+        }
+    }
+
+    /* NumPy 1.17.0, 2019-02-24 */
+    if (DEPRECATE(
+            "->f->fastclip is deprecated. Use PyUFunc_RegisterLoopForDescr to "
+            "attach a custom loop to np.core.umath.clip, np.minimum, and "
+            "np.maximum") < 0) {
+        return NULL;
+    }
+    /* everything below can be removed once this deprecation completes */
+
     if (func == NULL
         || (min != NULL && !PyArray_CheckAnyScalar(min))
         || (max != NULL && !PyArray_CheckAnyScalar(max))

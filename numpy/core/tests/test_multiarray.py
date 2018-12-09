@@ -4287,7 +4287,11 @@ class TestClip(object):
 
                 x = (np.random.random(1000) * array_max).astype(dtype)
                 if inplace:
-                    x.clip(clip_min, clip_max, x)
+                    # The tests that call us pass clip_min and clip_max that
+                    # might not fit in the destination dtype. They were written
+                    # assuming the previous unsafe casting, which now must be
+                    # passed explicitly to avoid a warning.
+                    x.clip(clip_min, clip_max, x, casting='unsafe')
                 else:
                     x = x.clip(clip_min, clip_max)
                     byteorder = '='
@@ -4306,7 +4310,7 @@ class TestClip(object):
                 'float', 1024, 0, 0, inplace=inplace)
 
             self._clip_type(
-                'int', 1024, -120, 100.5, inplace=inplace)
+                'int', 1024, -120, 100, inplace=inplace)
             self._clip_type(
                 'int', 1024, 0, 0, inplace=inplace)
 
@@ -7792,13 +7796,6 @@ class TestWritebackIfCopy(object):
         out = np.empty(5, dtype='i2')
         res = np.argmin(mat, 0, out=out)
         assert_equal(res, range(5))
-
-    def test_clip_with_out(self):
-        mat = np.eye(5)
-        out = np.eye(5, dtype='i2')
-        res = np.clip(mat, a_min=-10, a_max=0, out=out)
-        assert_(res is out)
-        assert_equal(np.sum(out), 0)
 
     def test_insert_noncontiguous(self):
         a = np.arange(6).reshape(2,3).T # force non-c-contiguous

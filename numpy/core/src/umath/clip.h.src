@@ -1,0 +1,18 @@
+#ifndef _NPY_UMATH_CLIP_H_
+#define _NPY_UMATH_CLIP_H_
+
+
+/**begin repeat
+ *
+ * #name = BOOL,
+ *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         DATETIME, TIMEDELTA#
+ */
+NPY_NO_EXPORT void
+@name@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+#endif

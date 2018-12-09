@@ -4,6 +4,9 @@
 #include <npy_config.h>
 #include "mem_overlap.h"
 
+/* For PyArray_ macros used below */
+#include "numpy/ndarrayobject.h"
+
 /*
  * NOTE: This API should remain private for the time being, to allow
  *       for further refinement.  I think the 'aligned' mechanism
