@@ -182,3 +182,47 @@ jobs:
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'
+- job: MSVC_2015_Python_35
+  pool:
+    vmIMage: 'vs2015-win2012r2'
+  steps:
+  - powershell: |
+      $wc = New-Object Net.Webclient
+      $wc.DownloadString("https://chocolatey.org/install.ps1")
+      iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+      choco upgrade chocolatey
+      choco install -y python --version 3.5.4
+      choco install -y mingw --version 5.3.0
+      ls C:\tools\mingw64\bin
+      refreshenv
+      # executable: "C:\Python35\python.exe"
+    displayName: 'Install Choco, Python, MinGW'
+  - powershell: C:\Python35\python.exe -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - powershell: |
+      $wc = New-Object net.webclient
+      $wc.Downloadfile( "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip", "openblas.zip")
+      $tmpdir = New-TemporaryFile | %{ rm $_; mkdir $_ }
+      Expand-Archive "openblas.zip" $tmpdir
+      $target = "C:\\Python35\\Lib\\openblas.a"
+      Write-Host "target path: $target"
+      cp $tmpdir\64\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
+    displayName: 'Download / Install OpenBLAS'
+  - powershell: C:\Python35\python.exe -m pip install cython nose pytz pytest
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  - powershell: |
+      $env:PATH = "C:\\ProgramData\\chocolatey\\bin;C:\\tools\\mingw64\\bin;C:\\Python35\\Scripts;" + $env:PATH
+      echo "PATH:"
+      echo $env:PATH
+      refreshenv
+      C:\Python35\python.exe -m pip wheel -v -v -v --wheel-dir=dist .
+      ls dist -r | Foreach-Object {
+          C:\Python35\python.exe -m pip install $_.FullName
+      }
+    displayName: 'Build NumPy'
+  - powershell: C:\Python35\python.exe runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Run NumPy Test Suite'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for Python 3.5 64-bit MSVC 2015'
