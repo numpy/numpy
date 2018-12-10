@@ -268,10 +268,6 @@ int initumath(PyObject *m)
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
 
-    /* Initialize the types */
-    if (PyType_Ready(&PyUFunc_Type) < 0)
-        return -1;
-
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 

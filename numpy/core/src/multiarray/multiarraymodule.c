@@ -4570,6 +4570,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
 
+    if (PyType_Ready(&PyUFunc_Type) < 0)
+        goto err;
+
     /* Load the ufunc operators into the array module's namespace */
     if (InitOperators(d) < 0) {
         goto err;
