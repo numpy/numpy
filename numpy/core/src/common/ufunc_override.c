@@ -93,15 +93,18 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         return 0;
     }
     if (PyTuple_CheckExact(*out_kwd_obj)) {
+        /*
+         * The C-API recommends calling PySequence_Fast before any of the other
+         * PySequence_Fast* functions. This is required for PyPy
+         */
         PyObject *seq = PySequence_Fast(*out_kwd_obj, "cannot convert");
         int ret;
         if (seq == NULL) {
             return -1;
         }
-        Py_DECREF(*out_kwd_obj);
         *out_objs = PySequence_Fast_ITEMS(seq);
         ret = PySequence_Fast_GET_SIZE(seq);
-        *out_kwd_obj = seq;
+        Py_SETREF(*out_kwd_obj, seq);
         return ret;
     }
     else {
