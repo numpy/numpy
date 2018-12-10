@@ -1029,7 +1029,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 {
     const npy_intp stride = VECTOR_SIZE_BYTES / (npy_intp)sizeof(@type@);
     LOOP_BLOCK_ALIGN_VAR(ip, @type@, VECTOR_SIZE_BYTES) {
-        *op = (npy_isnan(*op) || *op @OP@ ip[i]) ? *op : ip[i];
+        *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
     assert(n < (stride) || npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES));
     if (i + 3 * stride <= n) {
@@ -1053,11 +1053,11 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         }
         else {
             @type@ tmp = sse2_horizontal_@VOP@_@vtype@(c1);
-            *op  = (npy_isnan(*op) || *op @OP@ tmp) ? *op : tmp;
+            *op  = (*op @OP@ tmp || npy_isnan(*op)) ? *op : tmp;
         }
     }
     LOOP_BLOCKED_END {
-        *op  = (npy_isnan(*op) || *op @OP@ ip[i]) ? *op : ip[i];
+        *op  = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
     npy_clear_floatstatus_barrier((char*)op);
 }
