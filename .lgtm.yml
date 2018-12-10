@@ -12,3 +12,7 @@ extraction:
     python_setup:
         requirements:
           - cython>=0.29
+  cpp:
+    index:
+      build_command:
+        - python3 setup.py build
