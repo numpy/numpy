@@ -7923,6 +7923,44 @@ def test_uintalignment_and_alignment():
     dst = np.zeros((2,2), dtype='c8')
     dst[:,1] = src[:,1]  # assert in lowlevel_strided_loops fails?
 
+class TestAlignment(object):
+    # adapted from scipy._lib.tests.test__util.test__aligned_zeros
+    # Checks that unusual memory alignments don't trip up numpy.
+    # In particular, check RELAXED_STRIDES don't trip alignment assertions in
+    # NDEBUG mode for size-0 arrays (gh-12503)
+
+    def check(self, shape, dtype, order, align):
+        err_msg = repr((shape, dtype, order, align))
+        x = _aligned_zeros(shape, dtype, order, align=align)
+        if align is None:
+            align = np.dtype(dtype).alignment
+        assert_equal(x.__array_interface__['data'][0] % align, 0)
+        if hasattr(shape, '__len__'):
+            assert_equal(x.shape, shape, err_msg)
+        else:
+            assert_equal(x.shape, (shape,), err_msg)
+        assert_equal(x.dtype, dtype)
+        if order == "C":
+            assert_(x.flags.c_contiguous, err_msg)
+        elif order == "F":
+            if x.size > 0:
+                assert_(x.flags.f_contiguous, err_msg)
+        elif order is None:
+            assert_(x.flags.c_contiguous, err_msg)
+        else:
+            raise ValueError()
+
+    def test_various_alignments(self):
+        for align in [1, 2, 3, 4, 8, 16, 32, 64, None]:
+            for n in [0, 1, 3, 11]:
+                for order in ["C", "F", None]:
+                    for dtype in np.typecodes["All"]:
+                        if dtype == 'O':
+                            # object dtype can't be misaligned
+                            continue
+                        for shape in [n, (1, 2, 3, n)]:
+                            self.check(shape, np.dtype(dtype), order, align)
+
 def test_getfield():
     a = np.arange(32, dtype='uint16')
     if sys.byteorder == 'little':
