@@ -176,9 +176,10 @@ jobs:
           pip install $_.FullName
       }
     displayName: 'Build NumPy'
-  - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+  - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=$(System.DefaultWorkingDirectory)/junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
+      searchFolder: '$(System.DefaultWorkingDirectory)/junit/'
       testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'
