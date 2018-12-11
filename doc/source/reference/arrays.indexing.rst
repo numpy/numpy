@@ -111,9 +111,10 @@ concepts to remember include:
               [5],
               [6]]])
 
-- :const:`Ellipsis` expand to the number of ``:`` objects needed to
-  make a selection tuple of the same length as ``x.ndim``. There may
-  only be a single ellipsis present.
+- :const:`Ellipsis` expands to the number of ``:`` objects needed for the
+  selection tuple to index all dimensions. In most cases, this means that
+  length of the expanded selection tuple is ``x.ndim``. There may only be a
+  single ellipsis present.
 
   .. admonition:: Example
 
