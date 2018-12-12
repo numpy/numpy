@@ -4570,8 +4570,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
 
-    if (PyType_Ready(&PyUFunc_Type) < 0)
+    if (PyType_Ready(&PyUFunc_Type) < 0) {
         goto err;
+    }
 
     /* Load the ufunc operators into the array module's namespace */
     if (InitOperators(d) < 0) {
@@ -4583,8 +4584,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     }
     initialize_casting_tables();
     initialize_numeric_types();
-    if(initscalarmath(m) < 0)
+    if(initscalarmath(m) < 0) {
         goto err;
+    }
 
     if (PyType_Ready(&PyArray_Type) < 0) {
         goto err;
