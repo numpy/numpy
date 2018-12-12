@@ -131,14 +131,6 @@ jobs:
       versionSpec: $(PYTHON_VERSION)
       addToPath: true
       architecture: $(PYTHON_ARCH)
-   # as noted by numba project, currently need
-   # specific VC install for Python 2.7
-  - powershell: |
-      $wc = New-Object net.webclient
-      $wc.Downloadfile("https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi", "VCForPython27.msi")
-      Start-Process "VCForPython27.msi" /qn -Wait
-    displayName: 'Install VC 9.0'
-    condition: eq(variables['PYTHON_VERSION'], '2.7')
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
   - powershell: |
