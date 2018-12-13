@@ -39,15 +39,6 @@ matrix:
       dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
       env: INSTALL_PICKLE5=1
-    - python: 3.6
-      env: USE_CHROOT=1 ARCH=i386 DIST=bionic
-      sudo: true
-      addons:
-        apt:
-          update: true
-          packages:
-            - dpkg
-            - debootstrap
     - python: 3.5
       dist: xenial  # Required for python3.5-dbg
       sudo: true    # travis-ci/travis-ci#9069
