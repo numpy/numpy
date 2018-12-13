@@ -97,7 +97,7 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
          * The C-API recommends calling PySequence_Fast before any of the other
          * PySequence_Fast* functions. This is required for PyPy
          */
-        PyObject *seq = PySequence_Fast(*out_kwd_obj, "cannot convert");
+        PyObject *seq = PySequence_Fast(*out_kwd_obj, "Could not convert object to sequence");
         int ret;
         if (seq == NULL) {
             return -1;

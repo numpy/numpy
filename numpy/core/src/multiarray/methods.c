@@ -1011,7 +1011,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     if (nin < 0) {
         return -1;
     }
-    fast = PySequence_Fast(args, "could not convert args for fast access");
+    fast = PySequence_Fast(args, "Could not convert object to sequence");
     if (fast == NULL) {
         return -1;
     }
