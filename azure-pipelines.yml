@@ -17,9 +17,16 @@ jobs:
            apt-get -y install python3.6-dev python3-pip locales && \
            locale-gen fr_FR && update-locale && \
            pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
-           apt-get -y install libopenblas-dev gfortran && \
+           apt-get -y install gfortran-5 wget && \
+           cd .. && \
+           mkdir openblas && cd openblas && \
+           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.4-manylinux1_i686.tar.gz && \
+           tar zxvf openblas-v0.3.4-manylinux1_i686.tar.gz && \
+           cp -r ./usr/local/lib/* /usr/lib && \
+           cp ./usr/local/include/* /usr/include && \
+           cd ../numpy && \
            NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
-           python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
+           F77=gfortran-5 F90=gfortran-5 python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
     inputs:
