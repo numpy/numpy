@@ -63,48 +63,6 @@ setup_base()
   fi
 }
 
-setup_chroot()
-{
-  # this can all be replaced with:
-  # apt-get install libpython2.7-dev:i386
-  # CC="gcc -m32" LDSHARED="gcc -m32 -shared" LDFLAGS="-m32 -shared" \
-  #   linux32 python setup.py build
-  # when travis updates to ubuntu 14.04
-  #
-  # NumPy may not distinguish between 64 and 32 bit ATLAS in the
-  # configuration stage.
-  DIR=$1
-  set -u
-  sudo debootstrap --variant=buildd --include=fakeroot,build-essential \
-    --arch=$ARCH --foreign $DIST $DIR
-  sudo chroot $DIR ./debootstrap/debootstrap --second-stage
-
-  # put the numpy repo in the chroot directory
-  sudo rsync -a $TRAVIS_BUILD_DIR $DIR/
-
-  # set up repos in the chroot directory for installing packages
-  echo deb http://archive.ubuntu.com/ubuntu/ \
-    $DIST main restricted universe multiverse \
-    | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://archive.ubuntu.com/ubuntu/ \
-    $DIST-updates main restricted universe multiverse \
-    | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://security.ubuntu.com/ubuntu \
-    $DIST-security  main restricted universe multiverse \
-    | sudo tee -a $DIR/etc/apt/sources.list
-
-  sudo chroot $DIR bash -c "apt-get update"
-  # faster operation with preloaded eatmydata
-  sudo chroot $DIR bash -c "apt-get install -qq -y eatmydata"
-  echo '/usr/$LIB/libeatmydata.so' | \
-    sudo tee -a $DIR/etc/ld.so.preload
-
-  # install needed packages
-  sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python3-dev python3-pip \
-    cython  python3-pytest"
-}
-
 run_test()
 {
   if [ -n "$USE_DEBUG" ]; then
@@ -224,15 +182,6 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
 
   popd
   run_test
-elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
-  DIR=/chroot
-  setup_chroot $DIR
-  # the chroot'ed environment will not have the current locale,
-  # avoid any warnings which may disturb testing
-  export LANG=C LC_ALL=C
-  # run again in chroot with this time testing with python3
-  sudo linux32 chroot $DIR bash -c \
-    "cd numpy && PYTHON=python3 PIP=pip3 IN_CHROOT=1 $0 test"
 else
   setup_base
   run_test
