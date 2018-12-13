@@ -982,7 +982,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     for (i = 0; i < PyArray_NDIM(ap2) - 2; i++) {
         dimensions[j++] = PyArray_DIMS(ap2)[i];
     }
-    if(PyArray_NDIM(ap2) > 1) {
+    if (PyArray_NDIM(ap2) > 1) {
         dimensions[j++] = PyArray_DIMS(ap2)[PyArray_NDIM(ap2)-1];
     }
 
@@ -1318,7 +1318,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
      */
     if (inverted) {
         st = _pyarray_revert(ret);
-        if(st) {
+        if (st) {
             goto clean_ret;
         }
     }
@@ -1365,7 +1365,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     }
 
     ret = _pyarray_correlate(ap1, ap2, typenum, mode, &unused);
-    if(ret == NULL) {
+    if (ret == NULL) {
         goto fail;
     }
     Py_DECREF(ap1);
@@ -1654,7 +1654,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
 full_path:
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
@@ -2489,7 +2489,7 @@ einsum_sub_op_from_lists(PyObject *args,
                         "operand and a subscripts list to einsum");
         return -1;
     }
-    else if(nop >= NPY_MAXARGS) {
+    else if (nop >= NPY_MAXARGS) {
         PyErr_SetString(PyExc_ValueError, "too many operands");
         return -1;
     }
@@ -2724,7 +2724,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
     PyArray_Descr *typecode = NULL;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
                 &o_start,
                 &o_stop,
                 &o_step,
@@ -2762,7 +2762,7 @@ array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObje
 {
     static char *kwlist[] = {NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) {
         return NULL;
     }
     return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
@@ -2835,7 +2835,7 @@ array_set_string_function(PyObject *NPY_UNUSED(self), PyObject *args,
     int repr = 1;
     static char *kwlist[] = {"f", "repr", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi:set_string_function", kwlist, &op, &repr)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi:set_string_function", kwlist, &op, &repr)) {
         return NULL;
     }
     /* reset the array_repr function to built-in */
@@ -3145,7 +3145,7 @@ array_promote_types(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_Descr *d1 = NULL;
     PyArray_Descr *d2 = NULL;
     PyObject *ret = NULL;
-    if(!PyArg_ParseTuple(args, "O&O&:promote_types",
+    if (!PyArg_ParseTuple(args, "O&O&:promote_types",
                 PyArray_DescrConverter2, &d1, PyArray_DescrConverter2, &d2)) {
         goto finish;
     }
@@ -3171,7 +3171,7 @@ array_min_scalar_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArrayObject *array;
     PyObject *ret = NULL;
 
-    if(!PyArg_ParseTuple(args, "O:min_scalar_type", &array_in)) {
+    if (!PyArg_ParseTuple(args, "O:min_scalar_type", &array_in)) {
         return NULL;
     }
 
@@ -3248,7 +3248,7 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_Descr *dtype;
     PyArray_DatetimeMetaData *meta;
 
-    if(!PyArg_ParseTuple(args, "O&:datetime_data",
+    if (!PyArg_ParseTuple(args, "O&:datetime_data",
                 PyArray_DescrConverter, &dtype)) {
         return NULL;
     }
@@ -3267,7 +3267,7 @@ new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int size;
 
-    if(!PyArg_ParseTuple(args, "i:buffer", &size)) {
+    if (!PyArg_ParseTuple(args, "i:buffer", &size)) {
         return NULL;
     }
     return PyBuffer_New(size);
@@ -4584,7 +4584,7 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     }
     initialize_casting_tables();
     initialize_numeric_types();
-    if(initscalarmath(m) < 0) {
+    if (initscalarmath(m) < 0) {
         goto err;
     }
 
