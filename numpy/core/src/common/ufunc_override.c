@@ -100,17 +100,14 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
          * PySequence_Fast* functions. This is required for PyPy
          */
         PyObject *seq;
-        int ret;
-        Py_INCREF(*out_kwd_obj);
         seq = PySequence_Fast(*out_kwd_obj,
                               "Could not convert object to sequence");
         if (seq == NULL) {
             return -1;
         }
         *out_objs = PySequence_Fast_ITEMS(seq);
-        ret = PySequence_Fast_GET_SIZE(seq);
-        Py_SETREF(*out_kwd_obj, seq);
-        return ret;
+        *out_kwd_obj = seq;
+        return PySequence_Fast_GET_SIZE(seq);
     }
     else {
         Py_INCREF(*out_kwd_obj);

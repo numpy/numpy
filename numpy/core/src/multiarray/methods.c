@@ -1026,12 +1026,11 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     /* check outputs, if any */
     nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
     if (nout < 0) {
-        Py_XDECREF(out_kwd_obj);
         return -1;
     }
     for (i = 0; i < nout; i++) {
         if (PyUFunc_HasOverride(out_objs[i])) {
-            Py_XDECREF(out_kwd_obj);
+            Py_DECREF(out_kwd_obj);
             return 1;
         }
     }

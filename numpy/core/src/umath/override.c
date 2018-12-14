@@ -39,7 +39,6 @@ get_array_ufunc_overrides(PyObject *args, PyObject *kwds,
 
     nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
     if (nout < 0) {
-        Py_XDECREF(out_kwd_obj);
         return -1;
     }
 
