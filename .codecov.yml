@@ -1,29 +1,15 @@
 codecov:
   ci:
-    # we don't require appveyor or
-    # circleCI to pass to report
-    # coverage, which currently only
-    # comes from a single Python 3.6 job
-    # in Travis
     - !appveyor
-    - !circle
   notify:
-    # don't require all travis builds to pass;
-    # as long as the coverage job succeeds it
-    # can report the % coverage, even if another
-    # job needs a restart for whatever reason
-    - require_ci_to_pass: no
-    # we should only require a single build before
-    # reporting the % coverage because there's only
-    # one coverage job in Travis
-    - after_n_builds: 1
+    require_ci_to_pass: no
+    after_n_builds: 1
 coverage:
   status:
     project:
       default:
         # Require 1% coverage, i.e., always succeed
         target: 1
+    patch: false
+    changes: false
 comment: off
-
-ignore:
-  - "**/setup.py"
