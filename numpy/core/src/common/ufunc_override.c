@@ -79,7 +79,8 @@ NPY_NO_EXPORT int
 PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject ***out_objs)
 {
     if (kwds == NULL) {
-        *out_kwd_obj = NULL;
+        Py_INCREF(Py_None);
+        *out_kwd_obj = Py_None;
         return 0;
     }
     if (!PyDict_CheckExact(kwds)) {
@@ -92,6 +93,8 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
     /* borrowed reference */
     *out_kwd_obj = PyDict_GetItemString(kwds, "out");
     if (*out_kwd_obj == NULL) {
+        Py_INCREF(Py_None);
+        *out_kwd_obj = Py_None;
         return 0;
     }
     if (PyTuple_CheckExact(*out_kwd_obj)) {
