@@ -4653,7 +4653,7 @@ cdef class RandomState:
 
     def dirichlet(self, object alpha, size=None):
         """
-        dirichlet (alpha, size=None)
+        dirichlet(alpha, size=None)
 
         Draw samples from the Dirichlet distribution.
 
