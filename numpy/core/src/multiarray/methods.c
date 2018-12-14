@@ -1034,7 +1034,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
             return 1;
         }
     }
-    Py_XDECREF(out_kwd_obj);
+    Py_DECREF(out_kwd_obj);
     return 0;
 }
 
