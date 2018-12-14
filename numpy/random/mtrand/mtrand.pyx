@@ -1141,9 +1141,12 @@ cdef class RandomState:
                 raise ValueError("'p' must be 1-dimensional")
             if p.size != pop_size:
                 raise ValueError("'a' and 'p' must have same size")
+            p_sum = kahan_sum(pix, d)
+            if np.isnan(p_sum):
+                raise ValueError("probabilities contain NaN")
             if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
-            if abs(kahan_sum(pix, d) - 1.) > atol:
+            if abs(p_sum - 1.) > atol:
                 raise ValueError("probabilities do not sum to 1")
 
         shape = size
