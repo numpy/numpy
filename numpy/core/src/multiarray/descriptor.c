@@ -257,6 +257,9 @@ _convert_from_tuple(PyObject *obj, int align)
             return NULL;
         }
         PyArray_DESCR_REPLACE(type);
+        if (type == NULL) {
+            return NULL;
+        }
         if (type->type_num == NPY_UNICODE) {
             type->elsize = itemsize << 2;
         }
@@ -1651,6 +1654,9 @@ finish:
 
     if (PyDataType_ISUNSIZED(*at) && (*at)->elsize != elsize) {
         PyArray_DESCR_REPLACE(*at);
+        if (*at == NULL) {
+            goto error;
+        }
         (*at)->elsize = elsize;
     }
     if (endian != '=' && PyArray_ISNBO(endian)) {
@@ -1659,6 +1665,9 @@ finish:
     if (endian != '=' && (*at)->byteorder != '|'
         && (*at)->byteorder != endian) {
         PyArray_DESCR_REPLACE(*at);
+        if (*at == NULL) {
+            goto error;
+        }
         (*at)->byteorder = endian;
     }
     return NPY_SUCCEED;
