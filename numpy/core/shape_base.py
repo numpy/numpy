@@ -48,13 +48,13 @@ def atleast_1d(*arys):
     Examples
     --------
     >>> np.atleast_1d(1.0)
-    array([ 1.])
+    array([1.])
 
     >>> x = np.arange(9.0).reshape(3,3)
     >>> np.atleast_1d(x)
-    array([[ 0.,  1.,  2.],
-           [ 3.,  4.,  5.],
-           [ 6.,  7.,  8.]])
+    array([[0., 1., 2.],
+           [3., 4., 5.],
+           [6., 7., 8.]])
     >>> np.atleast_1d(x) is x
     True
 
@@ -106,11 +106,11 @@ def atleast_2d(*arys):
     Examples
     --------
     >>> np.atleast_2d(3.0)
-    array([[ 3.]])
+    array([[3.]])
 
     >>> x = np.arange(3.0)
     >>> np.atleast_2d(x)
-    array([[ 0.,  1.,  2.]])
+    array([[0., 1., 2.]])
     >>> np.atleast_2d(x).base is x
     True
 
@@ -166,7 +166,7 @@ def atleast_3d(*arys):
     Examples
     --------
     >>> np.atleast_3d(3.0)
-    array([[[ 3.]]])
+    array([[[3.]]])
 
     >>> x = np.arange(3.0)
     >>> np.atleast_3d(x).shape
@@ -179,7 +179,7 @@ def atleast_3d(*arys):
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):
-    ...     print(arr, arr.shape)
+    ...     print(arr, arr.shape) # doctest: +SKIP
     ...
     [[[1]
       [2]]] (1, 2, 1)
@@ -760,11 +760,11 @@ def block(arrays):
     ...     [A,               np.zeros((2, 3))],
     ...     [np.ones((3, 2)), B               ]
     ... ])
-    array([[ 2.,  0.,  0.,  0.,  0.],
-           [ 0.,  2.,  0.,  0.,  0.],
-           [ 1.,  1.,  3.,  0.,  0.],
-           [ 1.,  1.,  0.,  3.,  0.],
-           [ 1.,  1.,  0.,  0.,  3.]])
+    array([[2., 0., 0., 0., 0.],
+           [0., 2., 0., 0., 0.],
+           [1., 1., 3., 0., 0.],
+           [1., 1., 0., 3., 0.],
+           [1., 1., 0., 0., 3.]])
 
     With a list of depth 1, `block` can be used as `hstack`
 
@@ -774,7 +774,7 @@ def block(arrays):
     >>> a = np.array([1, 2, 3])
     >>> b = np.array([2, 3, 4])
     >>> np.block([a, b, 10])             # hstack([a, b, 10])
-    array([1, 2, 3, 2, 3, 4, 10])
+    array([ 1,  2,  3,  2,  3,  4, 10])
 
     >>> A = np.ones((2, 2), int)
     >>> B = 2 * A

@@ -168,13 +168,13 @@ class NpzFile(Mapping):
     >>> x = np.arange(10)
     >>> y = np.sin(x)
     >>> np.savez(outfile, x=x, y=y)
-    >>> outfile.seek(0)
+    >>> _ = outfile.seek(0)
 
     >>> npz = np.load(outfile)
     >>> isinstance(npz, np.lib.io.NpzFile)
     True
-    >>> npz.files
-    ['y', 'x']
+    >>> sorted(npz.files)
+    ['x', 'y']
     >>> npz['x']  # getitem access
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     >>> npz.f.x  # attribute lookup
@@ -502,7 +502,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     >>> x = np.arange(10)
     >>> np.save(outfile, x)
 
-    >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
+    >>> _ = outfile.seek(0) # Only needed here to simulate closing & reopening file
     >>> np.load(outfile)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -597,10 +597,10 @@ def savez(file, *args, **kwds):
     Using `savez` with \\*args, the arrays are saved with default names.
 
     >>> np.savez(outfile, x, y)
-    >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
+    >>> _ = outfile.seek(0) # Only needed here to simulate closing & reopening file
     >>> npzfile = np.load(outfile)
     >>> npzfile.files
-    ['arr_1', 'arr_0']
+    ['arr_0', 'arr_1']
     >>> npzfile['arr_0']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -608,10 +608,10 @@ def savez(file, *args, **kwds):
 
     >>> outfile = TemporaryFile()
     >>> np.savez(outfile, x=x, y=y)
-    >>> outfile.seek(0)
+    >>> _ = outfile.seek(0)
     >>> npzfile = np.load(outfile)
-    >>> npzfile.files
-    ['y', 'x']
+    >>> sorted(npzfile.files)
+    ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -891,21 +891,21 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> from io import StringIO   # StringIO behaves like a file object
     >>> c = StringIO(u"0 1\\n2 3")
     >>> np.loadtxt(c)
-    array([[ 0.,  1.],
-           [ 2.,  3.]])
+    array([[0., 1.],
+           [2., 3.]])
 
     >>> d = StringIO(u"M 21 72\\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
-    array([('M', 21, 72.0), ('F', 35, 58.0)],
-          dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
+    array([(b'M', 21, 72.), (b'F', 35, 58.)],
+          dtype=[('gender', 'S1'), ('age', '<i4'), ('weight', '<f4')])
 
     >>> c = StringIO(u"1,0,2\\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
-    array([ 1.,  3.])
+    array([1., 3.])
     >>> y
-    array([ 2.,  4.])
+    array([2., 4.])
 
     """
     # Type conversions for Py3 convenience
@@ -1481,17 +1481,17 @@ def fromregex(file, regexp, dtype, encoding=None):
     Examples
     --------
     >>> f = open('test.dat', 'w')
-    >>> f.write("1312 foo\\n1534  bar\\n444   qux")
+    >>> _ = f.write("1312 foo\\n1534  bar\\n444   qux")
     >>> f.close()
 
     >>> regexp = r"(\\d+)\\s+(...)"  # match [digits, whitespace, anything]
     >>> output = np.fromregex('test.dat', regexp,
     ...                       [('num', np.int64), ('key', 'S3')])
     >>> output
-    array([(1312L, 'foo'), (1534L, 'bar'), (444L, 'qux')],
-          dtype=[('num', '<i8'), ('key', '|S3')])
+    array([(1312, b'foo'), (1534, b'bar'), ( 444, b'qux')],
+          dtype=[('num', '<i8'), ('key', 'S3')])
     >>> output['num']
-    array([1312, 1534,  444], dtype=int64)
+    array([1312, 1534,  444])
 
     """
     own_fh = False
@@ -1674,26 +1674,26 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
 
     Using dtype = None
 
-    >>> s.seek(0) # needed for StringIO example only
+    >>> _ = s.seek(0) # needed for StringIO example only
     >>> data = np.genfromtxt(s, dtype=None,
     ... names = ['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
 
     Specifying dtype and names
 
-    >>> s.seek(0)
+    >>> _ = s.seek(0)
     >>> data = np.genfromtxt(s, dtype="i8,f8,S5",
     ... names=['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
 
     An example with fixed-width columns
 
@@ -1701,8 +1701,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
 
     """
     if max_rows is not None:

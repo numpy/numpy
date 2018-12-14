@@ -270,13 +270,11 @@ Glossary
          masked_array(data = [-- 2.0 --],
                       mask = [ True False  True],
                 fill_value = 1e+20)
-         <BLANKLINE>
 
          >>> x + [1, 2, 3]
          masked_array(data = [-- 4.0 --],
                       mask = [ True False  True],
                 fill_value = 1e+20)
-         <BLANKLINE>
 
 
        Masked arrays are often used when operating on arrays containing

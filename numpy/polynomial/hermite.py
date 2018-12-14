@@ -114,7 +114,7 @@ def poly2herm(pol):
     --------
     >>> from numpy.polynomial.hermite import poly2herm
     >>> poly2herm(np.arange(4))
-    array([ 1.   ,  2.75 ,  0.5  ,  0.375])
+    array([1.   ,  2.75 ,  0.5  ,  0.375])
 
     """
     [pol] = pu.as_series([pol])
@@ -160,7 +160,7 @@ def herm2poly(c):
     --------
     >>> from numpy.polynomial.hermite import herm2poly
     >>> herm2poly([ 1.   ,  2.75 ,  0.5  ,  0.375])
-    array([ 0.,  1.,  2.,  3.])
+    array([0., 1., 2., 3.])
 
     """
     from .polynomial import polyadd, polysub, polymulx
@@ -280,10 +280,10 @@ def hermfromroots(roots):
     >>> from numpy.polynomial.hermite import hermfromroots, hermval
     >>> coef = hermfromroots((-1, 0, 1))
     >>> hermval((-1, 0, 1), coef)
-    array([ 0.,  0.,  0.])
+    array([0.,  0.,  0.])
     >>> coef = hermfromroots((-1j, 1j))
     >>> hermval((-1j, 1j), coef)
-    array([ 0.+0.j,  0.+0.j])
+    array([0.+0.j, 0.+0.j])
 
     """
     if len(roots) == 0:
@@ -337,7 +337,7 @@ def hermadd(c1, c2):
     --------
     >>> from numpy.polynomial.hermite import hermadd
     >>> hermadd([1, 2, 3], [1, 2, 3, 4])
-    array([ 2.,  4.,  6.,  4.])
+    array([2., 4., 6., 4.])
 
     """
     # c1, c2 are trimmed copies
@@ -385,7 +385,7 @@ def hermsub(c1, c2):
     --------
     >>> from numpy.polynomial.hermite import hermsub
     >>> hermsub([1, 2, 3, 4], [1, 2, 3])
-    array([ 0.,  0.,  0.,  4.])
+    array([0.,  0.,  0.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -435,7 +435,7 @@ def hermmulx(c):
     --------
     >>> from numpy.polynomial.hermite import hermmulx
     >>> hermmulx([1, 2, 3])
-    array([ 2. ,  6.5,  1. ,  1.5])
+    array([2. , 6.5, 1. , 1.5])
 
     """
     # c is a trimmed copy
@@ -488,7 +488,7 @@ def hermmul(c1, c2):
     --------
     >>> from numpy.polynomial.hermite import hermmul
     >>> hermmul([1, 2, 3], [0, 1, 2])
-    array([ 52.,  29.,  52.,   7.,   6.])
+    array([52.,  29.,  52.,   7.,   6.])
 
     """
     # s1, s2 are trimmed copies
@@ -557,11 +557,11 @@ def hermdiv(c1, c2):
     --------
     >>> from numpy.polynomial.hermite import hermdiv
     >>> hermdiv([ 52.,  29.,  52.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 0.]))
+    (array([1., 2., 3.]), array([0.]))
     >>> hermdiv([ 54.,  31.,  52.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 2.,  2.]))
+    (array([1., 2., 3.]), array([2., 2.]))
     >>> hermdiv([ 53.,  30.,  52.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
+    (array([1., 2., 3.]), array([1., 1.]))
 
     """
     # c1, c2 are trimmed copies
@@ -617,7 +617,7 @@ def hermpow(c, pow, maxpower=16):
     --------
     >>> from numpy.polynomial.hermite import hermpow
     >>> hermpow([1, 2, 3], 2)
-    array([ 81.,  52.,  82.,  12.,   9.])
+    array([81.,  52.,  82.,  12.,   9.])
 
     """
     # c is a trimmed copy
@@ -690,9 +690,9 @@ def hermder(c, m=1, scl=1, axis=0):
     --------
     >>> from numpy.polynomial.hermite import hermder
     >>> hermder([ 1. ,  0.5,  0.5,  0.5])
-    array([ 1.,  2.,  3.])
+    array([1., 2., 3.])
     >>> hermder([-0.5,  1./2.,  1./8.,  1./12.,  1./16.], m=2)
-    array([ 1.,  2.,  3.])
+    array([1., 2., 3.])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -799,15 +799,15 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     --------
     >>> from numpy.polynomial.hermite import hermint
     >>> hermint([1,2,3]) # integrate once, value 0 at 0.
-    array([ 1. ,  0.5,  0.5,  0.5])
+    array([1. , 0.5, 0.5, 0.5])
     >>> hermint([1,2,3], m=2) # integrate twice, value & deriv 0 at 0
-    array([-0.5       ,  0.5       ,  0.125     ,  0.08333333,  0.0625    ])
+    array([-0.5       ,  0.5       ,  0.125     ,  0.08333333,  0.0625    ]) # may vary
     >>> hermint([1,2,3], k=1) # integrate once, value 1 at 0.
-    array([ 2. ,  0.5,  0.5,  0.5])
+    array([2. , 0.5, 0.5, 0.5])
     >>> hermint([1,2,3], lbnd=-1) # integrate once, value 0 at -1
     array([-2. ,  0.5,  0.5,  0.5])
     >>> hermint([1,2,3], m=2, k=[1,2], lbnd=-1)
-    array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ])
+    array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ]) # may vary
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -918,8 +918,8 @@ def hermval(x, c, tensor=True):
     >>> hermval(1, coef)
     11.0
     >>> hermval([[1,2],[3,4]], coef)
-    array([[  11.,   51.],
-           [ 115.,  203.]])
+    array([[ 11.,   51.],
+           [115.,  203.]])
 
     """
     c = np.array(c, ndmin=1, copy=0)
@@ -1437,7 +1437,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -1490,7 +1490,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     >>> err = np.random.randn(len(x))/10
     >>> y = hermval(x, [1, 2, 3]) + err
     >>> hermfit(x, y, 2)
-    array([ 0.97902637,  1.99849131,  3.00006   ])
+    array([1.0218, 1.9986, 2.9999]) # may vary
 
     """
     x = np.asarray(x) + 0.0
@@ -1656,9 +1656,9 @@ def hermroots(c):
     >>> from numpy.polynomial.hermite import hermroots, hermfromroots
     >>> coef = hermfromroots([-1, 0, 1])
     >>> coef
-    array([ 0.   ,  0.25 ,  0.   ,  0.125])
+    array([0.   ,  0.25 ,  0.   ,  0.125])
     >>> hermroots(coef)
-    array([ -1.00000000e+00,  -1.38777878e-17,   1.00000000e+00])
+    array([-1.00000000e+00, -1.38777878e-17,  1.00000000e+00])
 
     """
     # c is a trimmed copy

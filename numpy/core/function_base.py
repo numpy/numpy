@@ -102,14 +102,17 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     Examples
     --------
     >>> np.linspace(2.0, 3.0, num=5)
-    array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
+    array([2.  , 2.25, 2.5 , 2.75, 3.  ])
     >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
-    array([ 2. ,  2.2,  2.4,  2.6,  2.8])
+    array([2. ,  2.2,  2.4,  2.6,  2.8])
     >>> np.linspace(2.0, 3.0, num=5, retstep=True)
-    (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+    (array([2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
 
     Graphical illustration:
 
+    >>> import matplotlib
+    >>> import matplotlib.pyplot
+    >>> matplotlib.pyplot.switch_backend('agg')
     >>> import matplotlib.pyplot as plt
     >>> N = 8
     >>> y = np.zeros(N)
@@ -252,14 +255,17 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     Examples
     --------
     >>> np.logspace(2.0, 3.0, num=4)
-    array([  100.        ,   215.443469  ,   464.15888336,  1000.        ])
+    array([ 100.        ,  215.443469  ,  464.15888336, 1000.        ])
     >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
-    array([ 100.        ,  177.827941  ,  316.22776602,  562.34132519])
+    array([100.        ,  177.827941  ,  316.22776602,  562.34132519])
     >>> np.logspace(2.0, 3.0, num=4, base=2.0)
-    array([ 4.        ,  5.0396842 ,  6.34960421,  8.        ])
+    array([4.        ,  5.0396842 ,  6.34960421,  8.        ])
 
     Graphical illustration:
 
+    >>> import matplotlib
+    >>> import matplotlib.pyplot
+    >>> matplotlib.pyplot.switch_backend('agg')
     >>> import matplotlib.pyplot as plt
     >>> N = 10
     >>> x1 = np.logspace(0.1, 1, N, endpoint=True)
@@ -361,24 +367,29 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     Negative, decreasing, and complex inputs are allowed:
 
     >>> np.geomspace(1000, 1, num=4)
-    array([ 1000.,   100.,    10.,     1.])
+    array([1000.,  100.,   10.,    1.])
     >>> np.geomspace(-1000, -1, num=4)
     array([-1000.,  -100.,   -10.,    -1.])
     >>> np.geomspace(1j, 1000j, num=4)  # Straight line
-    array([ 0.   +1.j,  0.  +10.j,  0. +100.j,  0.+1000.j])
+    array([0.   +1.j, 0.  +10.j, 0. +100.j, 0.+1000.j])
     >>> np.geomspace(-1+0j, 1+0j, num=5)  # Circle
-    array([-1.00000000+0.j        , -0.70710678+0.70710678j,
-            0.00000000+1.j        ,  0.70710678+0.70710678j,
-            1.00000000+0.j        ])
+    array([-1.00000000e+00+1.22464680e-16j, -7.07106781e-01+7.07106781e-01j,
+            6.12323400e-17+1.00000000e+00j,  7.07106781e-01+7.07106781e-01j,
+            1.00000000e+00+0.00000000e+00j])
 
     Graphical illustration of ``endpoint`` parameter:
 
+    >>> import matplotlib
+    >>> matplotlib.use('agg')
     >>> import matplotlib.pyplot as plt
     >>> N = 10
     >>> y = np.zeros(N)
     >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=True), y + 1, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=False), y + 2, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.axis([0.5, 2000, 0, 3])
+    [0.5, 2000, 0, 3]
     >>> plt.grid(True, color='0.7', linestyle='-', which='both', axis='both')
     >>> plt.show()
 
