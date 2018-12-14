@@ -440,12 +440,18 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /* Recursive case, first check the sequence contains only one type */
+    /*
+     * The C-API recommends calling PySequence_Fast before any of the other
+     * PySequence_Fast* functions. This is required for PyPy
+     */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
+
+    /* Recursive case, first check the sequence contains only one type */
     size = PySequence_Fast_GET_SIZE(seq);
+    /* objects is borrowed, do not release seq */
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
