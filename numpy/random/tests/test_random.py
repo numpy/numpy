@@ -448,6 +448,11 @@ class TestRandomDist(object):
         assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
         assert_raises(ValueError, np.random.choice, [], 10)
 
+    def test_choice_nan_probabilities(self):
+        a = np.array([42, 1, 2])
+        p = [None, None, None]
+        assert_raises(ValueError, np.random.choice, a, p=p)
+
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
