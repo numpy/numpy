@@ -721,6 +721,12 @@ class TestRandomDist(object):
         assert_raises(ValueError, np.random.multivariate_normal, mean, cov,
                       check_valid='raise')
 
+        cov = np.array([[1, 0.1],[0.1, 1]], dtype=np.float32)
+        with suppress_warnings() as sup:
+            np.random.multivariate_normal(mean, cov)
+            w = sup.record(RuntimeWarning)
+            assert len(w) == 0
+
     def test_negative_binomial(self):
         np.random.seed(self.seed)
         actual = np.random.negative_binomial(n=100, p=.12345, size=(3, 2))
