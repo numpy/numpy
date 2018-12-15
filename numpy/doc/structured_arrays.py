@@ -397,6 +397,15 @@ typically a non-structured array, except in the case of nested structures.
  >>> y.dtype, y.shape, y.strides
  (dtype('float32'), (2,), (12,))
 
+If the accessed field is a subarray, the dimensions of the subarray
+are appended to the shape of the result::
+
+   >>> x = np.zeros((2,2), dtype=[('a', np.int32), ('b', np.float64, (3,3))])
+   >>> x['a'].shape
+   (2, 2)
+   >>> x['b'].shape
+   (2, 2, 3, 3)
+
 Accessing Multiple Fields
 ```````````````````````````
 
