@@ -350,7 +350,7 @@ def _get_typecodes():
     """ Return a dictionary mapping __array_interface__ formats to ctypes types """
     ct = ctypes
     simple_types = [
-        ct.c_bool, ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong,
+        ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong,
         ct.c_ubyte, ct.c_ushort, ct.c_uint, ct.c_ulong, ct.c_ulonglong,
         ct.c_float, ct.c_double,
     ]
