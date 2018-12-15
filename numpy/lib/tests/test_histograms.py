@@ -6,7 +6,7 @@ from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
 
 
@@ -289,13 +289,13 @@ class TestHistogram(object):
     def test_object_array_of_0d(self):
         # gh-7864
         assert_raises(ValueError,
-            histogram, [np.array([0.4]) for i in range(10)] + [-np.inf])
+            histogram, [np.array(0.4) for i in range(10)] + [-np.inf])
         assert_raises(ValueError,
-            histogram, [np.array([0.4]) for i in range(10)] + [np.inf])
+            histogram, [np.array(0.4) for i in range(10)] + [np.inf])
 
         # these should not crash
-        np.histogram([np.array([0.5]) for i in range(10)] + [.500000000000001])
-        np.histogram([np.array([0.5]) for i in range(10)] + [.5])
+        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array(0.5) for i in range(10)] + [.5])
 
     def test_some_nan_values(self):
         # gh-7503

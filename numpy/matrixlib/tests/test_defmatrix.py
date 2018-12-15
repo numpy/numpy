@@ -1,7 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import pytest
-
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3

@@ -187,7 +187,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (n <= 1) {
-        if (PyTuple_GET_ITEM(args, 0) == Py_None) {
+        if (n != 0 && PyTuple_GET_ITEM(args, 0) == Py_None) {
             return PyArray_View(self, NULL, NULL);
         }
         if (!PyArg_ParseTuple(args, "O&:reshape", PyArray_IntpConverter,
@@ -1003,6 +1003,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int i;
     int nin, nout;
     PyObject *out_kwd_obj;
+    PyObject *fast;
     PyObject **in_objs, **out_objs;
 
     /* check inputs */
@@ -1010,12 +1011,18 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     if (nin < 0) {
         return -1;
     }
-    in_objs = PySequence_Fast_ITEMS(args);
+    fast = PySequence_Fast(args, "Could not convert object to sequence");
+    if (fast == NULL) {
+        return -1;
+    }
+    in_objs = PySequence_Fast_ITEMS(fast);
     for (i = 0; i < nin; ++i) {
         if (PyUFunc_HasOverride(in_objs[i])) {
+            Py_DECREF(fast);
             return 1;
         }
     }
+    Py_DECREF(fast);
     /* check outputs, if any */
     nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
     if (nout < 0) {

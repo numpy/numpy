@@ -379,8 +379,9 @@ def check_mathlib(config_cmd):
 def visibility_define(config):
     """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
     string)."""
-    if config.check_compiler_gcc4():
-        return '__attribute__((visibility("hidden")))'
+    hide = '__attribute__((visibility("hidden")))'
+    if config.check_gcc_function_attribute(hide, 'hideme'):
+        return hide
     else:
         return ''
 
@@ -731,6 +732,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'cblasfuncs.h'),
             join('src', 'common', 'lowlevel_strided_loops.h'),
             join('src', 'common', 'mem_overlap.h'),
+            join('src', 'common', 'npy_cblas.h'),
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_ctypes.h'),
             join('src', 'common', 'npy_extint128.h'),
@@ -891,6 +893,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops.c.src'),
+            join('src', 'umath', 'matmul.h.src'),
+            join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'cpuid.c'),

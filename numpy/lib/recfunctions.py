@@ -17,6 +17,7 @@ from numpy.ma.mrecords import MaskedRecords
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
 from numpy.compat import basestring
+from numpy.testing import suppress_warnings
 
 if sys.version_info[0] < 3:
     from future_builtins import zip
@@ -56,11 +57,10 @@ def recursive_fill_fields(input, output):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> a = np.array([(1, 10.), (2, 20.)], dtype=[('A', int), ('B', float)])
+    >>> a = np.array([(1, 10.), (2, 20.)], dtype=[('A', np.int64), ('B', np.float64)])
     >>> b = np.zeros((3,), dtype=a.dtype)
     >>> rfn.recursive_fill_fields(a, b)
-    array([(1, 10.0), (2, 20.0), (0, 0.0)],
-          dtype=[('A', '<i4'), ('B', '<f8')])
+    array([(1, 10.), (2, 20.), (0,  0.)], dtype=[('A', '<i8'), ('B', '<f8')])
 
     """
     newdtype = output.dtype
@@ -88,11 +88,11 @@ def get_fieldspec(dtype):
 
     Examples
     --------
-    >>> dt = np.dtype([(('a', 'A'), int), ('b', float, 3)])
+    >>> dt = np.dtype([(('a', 'A'), np.int64), ('b', np.double, 3)])
     >>> dt.descr
-    [(('a', 'A'), '<i4'), ('b', '<f8', (3,))]
+    [(('a', 'A'), '<i8'), ('b', '<f8', (3,))]
     >>> get_fieldspec(dt)
-    [(('a', 'A'), dtype('int32')), ('b', dtype(('<f8', (3,))))]
+    [(('a', 'A'), dtype('int64')), ('b', dtype(('<f8', (3,))))]
 
     """
     if dtype.names is None:
@@ -102,7 +102,7 @@ def get_fieldspec(dtype):
         fields = ((name, dtype.fields[name]) for name in dtype.names)
         # keep any titles, if present
         return [
-            (name if len(f) == 2 else (f[2], name), f[0]) 
+            (name if len(f) == 2 else (f[2], name), f[0])
             for name, f in fields
         ]
 
@@ -119,10 +119,15 @@ def get_names(adtype):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names(np.empty((1,), dtype=int)) is None
-    True
+    >>> rfn.get_names(np.empty((1,), dtype=int))
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+
     >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    ('A', 'B')
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names(adtype)
     ('a', ('b', ('ba', 'bb')))
@@ -152,9 +157,13 @@ def get_names_flat(adtype):
     --------
     >>> from numpy.lib import recfunctions as rfn
     >>> rfn.get_names_flat(np.empty((1,), dtype=int)) is None
-    True
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
     >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    ('A', 'B')
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names_flat(adtype)
     ('a', 'b', 'ba', 'bb')
@@ -402,20 +411,18 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     --------
     >>> from numpy.lib import recfunctions as rfn
     >>> rfn.merge_arrays((np.array([1, 2]), np.array([10., 20., 30.])))
-    masked_array(data = [(1, 10.0) (2, 20.0) (--, 30.0)],
-                 mask = [(False, False) (False, False) (True, False)],
-           fill_value = (999999, 1e+20),
-                dtype = [('f0', '<i4'), ('f1', '<f8')])
+    array([( 1, 10.), ( 2, 20.), (-1, 30.)],
+          dtype=[('f0', '<i8'), ('f1', '<f8')])
 
-    >>> rfn.merge_arrays((np.array([1, 2]), np.array([10., 20., 30.])),
-    ...              usemask=False)
-    array([(1, 10.0), (2, 20.0), (-1, 30.0)],
-          dtype=[('f0', '<i4'), ('f1', '<f8')])
-    >>> rfn.merge_arrays((np.array([1, 2]).view([('a', int)]),
+    >>> rfn.merge_arrays((np.array([1, 2], dtype=np.int64),
+    ...         np.array([10., 20., 30.])), usemask=False)
+     array([(1, 10.0), (2, 20.0), (-1, 30.0)],
+             dtype=[('f0', '<i8'), ('f1', '<f8')])
+    >>> rfn.merge_arrays((np.array([1, 2]).view([('a', np.int64)]),
     ...               np.array([10., 20., 30.])),
     ...              usemask=False, asrecarray=True)
-    rec.array([(1, 10.0), (2, 20.0), (-1, 30.0)],
-              dtype=[('a', '<i4'), ('f1', '<f8')])
+    rec.array([( 1, 10.), ( 2, 20.), (-1, 30.)],
+              dtype=[('a', '<i8'), ('f1', '<f8')])
 
     Notes
     -----
@@ -546,16 +553,14 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     --------
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
-    ...   dtype=[('a', int), ('b', [('ba', float), ('bb', int)])])
+    ...   dtype=[('a', np.int64), ('b', [('ba', np.double), ('bb', np.int64)])])
     >>> rfn.drop_fields(a, 'a')
-    array([((2.0, 3),), ((5.0, 6),)],
-          dtype=[('b', [('ba', '<f8'), ('bb', '<i4')])])
+    array([((2., 3),), ((5., 6),)],
+          dtype=[('b', [('ba', '<f8'), ('bb', '<i8')])])
     >>> rfn.drop_fields(a, 'ba')
-    array([(1, (3,)), (4, (6,))],
-          dtype=[('a', '<i4'), ('b', [('bb', '<i4')])])
+    array([(1, (3,)), (4, (6,))], dtype=[('a', '<i8'), ('b', [('bb', '<i8')])])
     >>> rfn.drop_fields(a, ['ba', 'bb'])
-    array([(1,), (4,)],
-          dtype=[('a', '<i4')])
+    array([(1,), (4,)], dtype=[('a', '<i8')])
     """
     if _is_string_like(drop_names):
         drop_names = [drop_names]
@@ -647,8 +652,8 @@ def rename_fields(base, namemapper):
     >>> a = np.array([(1, (2, [3.0, 30.])), (4, (5, [6.0, 60.]))],
     ...   dtype=[('a', int),('b', [('ba', float), ('bb', (float, 2))])])
     >>> rfn.rename_fields(a, {'a':'A', 'bb':'BB'})
-    array([(1, (2.0, [3.0, 30.0])), (4, (5.0, [6.0, 60.0]))],
-          dtype=[('A', '<i4'), ('b', [('ba', '<f8'), ('BB', '<f8', 2)])])
+    array([(1, (2., [ 3., 30.])), (4, (5., [ 6., 60.]))],
+          dtype=[('A', '<i8'), ('b', [('ba', '<f8'), ('BB', '<f8', (2,))])])
 
     """
     def _recursive_rename_fields(ndtype, namemapper):
@@ -833,18 +838,18 @@ def repack_fields(a, align=False, recurse=False):
     ...     print("offsets:", [d.fields[name][1] for name in d.names])
     ...     print("itemsize:", d.itemsize)
     ...
-    >>> dt = np.dtype('u1,i4,f4', align=True)
+    >>> dt = np.dtype('u1,<i4,<f4', align=True)
     >>> dt
-    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i4','<f8'], 'offsets':[0,4,8], 'itemsize':16}, align=True)
+    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i8','<f8'], 'offsets':[0,8,16], 'itemsize':24}, align=True)
     >>> print_offsets(dt)
-    offsets: [0, 4, 8]
-    itemsize: 16
+    offsets: [0, 8, 16]
+    itemsize: 24
     >>> packed_dt = repack_fields(dt)
     >>> packed_dt
-    dtype([('f0', 'u1'), ('f1', '<i4'), ('f2', '<f8')])
+    dtype([('f0', 'u1'), ('f1', '<i8'), ('f2', '<f8')])
     >>> print_offsets(packed_dt)
-    offsets: [0, 1, 5]
-    itemsize: 13
+    offsets: [0, 1, 9]
+    itemsize: 17
 
     """
     if not isinstance(a, np.dtype):
@@ -869,6 +874,344 @@ def repack_fields(a, align=False, recurse=False):
 
     dt = np.dtype(fieldinfo, align=align)
     return np.dtype((a.type, dt))
+
+def _get_fields_and_offsets(dt, offset=0):
+    """
+    Returns a flat list of (dtype, count, offset) tuples of all the
+    scalar fields in the dtype "dt", including nested fields, in left
+    to right order.
+    """
+    fields = []
+    for name in dt.names:
+        field = dt.fields[name]
+        if field[0].names is None:
+            count = 1
+            for size in field[0].shape:
+                count *= size
+            fields.append((field[0], count, field[1] + offset))
+        else:
+            fields.extend(_get_fields_and_offsets(field[0], field[1] + offset))
+    return fields
+
+
+def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
+                                           casting=None):
+    return (arr,)
+
+@array_function_dispatch(_structured_to_unstructured_dispatcher)
+def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
+    """
+    Converts and n-D structured array into an (n+1)-D unstructured array.
+
+    The new array will have a new last dimension equal in size to the
+    number of field-elements of the input array. If not supplied, the output
+    datatype is determined from the numpy type promotion rules applied to all
+    the field datatypes.
+
+    Nested fields, as well as each element of any subarray fields, all count
+    as a single field-elements.
+
+    Parameters
+    ----------
+    arr : ndarray
+       Structured array or dtype to convert. Cannot contain object datatype.
+    dtype : dtype, optional
+       The dtype of the output unstructured array.
+    copy : bool, optional
+        See copy argument to `ndarray.astype`. If true, always return a copy.
+        If false, and `dtype` requirements are satisfied, a view is returned.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        See casting argument of `ndarray.astype`. Controls what kind of data
+        casting may occur.
+
+    Returns
+    -------
+    unstructured : ndarray
+       Unstructured array with one more dimension.
+
+    Examples
+    --------
+
+    >>> a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
+    >>> a
+    array([(0, (0., 0), [0., 0.]), (0, (0., 0), [0., 0.]),
+           (0, (0., 0), [0., 0.]), (0, (0., 0), [0., 0.])],
+          dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
+    >>> structured_to_unstructured(arr)
+    array([[0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0.],
+           [0., 0., 0., 0., 0.]])
+
+    >>> b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+    ...              dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
+    >>> np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
+    array([ 3. ,  5.5,  9. , 11. ])
+
+    """
+    if arr.dtype.names is None:
+        raise ValueError('arr must be a structured array')
+
+    fields = _get_fields_and_offsets(arr.dtype)
+    n_fields = len(fields)
+    dts, counts, offsets = zip(*fields)
+    names = ['f{}'.format(n) for n in range(n_fields)]
+
+    if dtype is None:
+        out_dtype = np.result_type(*[dt.base for dt in dts])
+    else:
+        out_dtype = dtype
+
+    # Use a series of views and casts to convert to an unstructured array:
+
+    # first view using flattened fields (doesn't work for object arrays)
+    # Note: dts may include a shape for subarrays
+    flattened_fields = np.dtype({'names': names,
+                                 'formats': dts,
+                                 'offsets': offsets,
+                                 'itemsize': arr.dtype.itemsize})
+    with suppress_warnings() as sup:  # until 1.16 (gh-12447)
+        sup.filter(FutureWarning, "Numpy has detected")
+        arr = arr.view(flattened_fields)
+
+    # next cast to a packed format with all fields converted to new dtype
+    packed_fields = np.dtype({'names': names,
+                              'formats': [(out_dtype, c) for c in counts]})
+    arr = arr.astype(packed_fields, copy=copy, casting=casting)
+
+    # finally is it safe to view the packed fields as the unstructured type
+    return arr.view((out_dtype, sum(counts)))
+
+def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
+                                           align=None, copy=None, casting=None):
+    return (arr,)
+
+@array_function_dispatch(_unstructured_to_structured_dispatcher)
+def unstructured_to_structured(arr, dtype=None, names=None, align=False,
+                               copy=False, casting='unsafe'):
+    """
+    Converts and n-D unstructured array into an (n-1)-D structured array.
+
+    The last dimension of the input array is converted into a structure, with
+    number of field-elements equal to the size of the last dimension of the
+    input array. By default all output fields have the input array's dtype, but
+    an output structured dtype with an equal number of fields-elements can be
+    supplied instead.
+
+    Nested fields, as well as each element of any subarray fields, all count
+    towards the number of field-elements.
+
+    Parameters
+    ----------
+    arr : ndarray
+       Unstructured array or dtype to convert.
+    dtype : dtype, optional
+       The structured dtype of the output array
+    names : list of strings, optional
+       If dtype is not supplied, this specifies the field names for the output
+       dtype, in order. The field dtypes will be the same as the input array.
+    align : boolean, optional
+       Whether to create an aligned memory layout.
+    copy : bool, optional
+        See copy argument to `ndarray.astype`. If true, always return a copy.
+        If false, and `dtype` requirements are satisfied, a view is returned.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        See casting argument of `ndarray.astype`. Controls what kind of data
+        casting may occur.
+
+    Returns
+    -------
+    structured : ndarray
+       Structured array with fewer dimensions.
+
+    Examples
+    --------
+
+    >>> dt = np.dtype([('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
+    >>> a = np.arange(20).reshape((4,5))
+    >>> a
+    array([[ 0,  1,  2,  3,  4],
+           [ 5,  6,  7,  8,  9],
+           [10, 11, 12, 13, 14],
+           [15, 16, 17, 18, 19]])
+    >>> unstructured_to_structured(a, dt)
+    array([( 0, ( 1.,  2), [ 3.,  4.]), ( 5, ( 6.,  7), [ 8.,  9.]),
+           (10, (11., 12), [13., 14.]), (15, (16., 17), [18., 19.])],
+          dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
+
+    """
+    if arr.shape == ():
+        raise ValueError('arr must have at least one dimension')
+    n_elem = arr.shape[-1]
+
+    if dtype is None:
+        if names is None:
+            names = ['f{}'.format(n) for n in range(n_elem)]
+        out_dtype = np.dtype([(n, arr.dtype) for n in names], align=align)
+        fields = _get_fields_and_offsets(out_dtype)
+        dts, counts, offsets = zip(*fields)
+    else:
+        if names is not None:
+            raise ValueError("don't supply both dtype and names")
+        # sanity check of the input dtype
+        fields = _get_fields_and_offsets(dtype)
+        dts, counts, offsets = zip(*fields)
+        if n_elem != sum(counts):
+            raise ValueError('The length of the last dimension of arr must '
+                             'be equal to the number of fields in dtype')
+        out_dtype = dtype
+        if align and not out_dtype.isalignedstruct:
+            raise ValueError("align was True but dtype is not aligned")
+
+    names = ['f{}'.format(n) for n in range(len(fields))]
+
+    # Use a series of views and casts to convert to a structured array:
+
+    # first view as a packed structured array of one dtype
+    packed_fields = np.dtype({'names': names,
+                              'formats': [(arr.dtype, c) for c in counts]})
+    arr = np.ascontiguousarray(arr).view(packed_fields)
+
+    # next cast to an unpacked but flattened format with varied dtypes
+    flattened_fields = np.dtype({'names': names,
+                                 'formats': dts,
+                                 'offsets': offsets,
+                                 'itemsize': out_dtype.itemsize})
+    arr = arr.astype(flattened_fields, copy=copy, casting=casting)
+
+    # finally view as the final nested dtype and remove the last axis
+    return arr.view(out_dtype)[..., 0]
+
+def _apply_along_fields_dispatcher(func, arr):
+    return (arr,)
+
+@array_function_dispatch(_apply_along_fields_dispatcher)
+def apply_along_fields(func, arr):
+    """
+    Apply function 'func' as a reduction across fields of a structured array.
+
+    This is similar to `apply_along_axis`, but treats the fields of a
+    structured array as an extra axis. The fields are all first cast to a
+    common type following the type-promotion rules from `numpy.result_type`
+    applied to the field's dtypes.
+
+    Parameters
+    ----------
+    func : function
+       Function to apply on the "field" dimension. This function must
+       support an `axis` argument, like np.mean, np.sum, etc.
+    arr : ndarray
+       Structured array for which to apply func.
+
+    Returns
+    -------
+    out : ndarray
+       Result of the recution operation
+
+    Examples
+    --------
+
+    >>> b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+    ...              dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
+    >>> apply_along_fields(np.mean, b)
+    array([ 2.66666667,  5.33333333,  8.66666667, 11.        ])
+    >>> apply_along_fields(np.mean, b[['x', 'z']])
+    array([ 3. ,  5.5,  9. , 11. ])
+
+    """
+    if arr.dtype.names is None:
+        raise ValueError('arr must be a structured array')
+
+    uarr = structured_to_unstructured(arr)
+    return func(uarr, axis=-1)
+    # works and avoids axis requirement, but very, very slow:
+    #return np.apply_along_axis(func, -1, uarr)
+
+def _assign_fields_by_name_dispatcher(dst, src, zero_unassigned=None):
+    return dst, src
+
+@array_function_dispatch(_assign_fields_by_name_dispatcher)
+def assign_fields_by_name(dst, src, zero_unassigned=True):
+    """
+    Assigns values from one structured array to another by field name.
+
+    Normally in numpy >= 1.14, assignment of one structured array to another
+    copies fields "by position", meaning that the first field from the src is
+    copied to the first field of the dst, and so on, regardless of field name.
+
+    This function instead copies "by field name", such that fields in the dst
+    are assigned from the identically named field in the src. This applies
+    recursively for nested structures. This is how structure assignment worked
+    in numpy >= 1.6 to <= 1.13.
+
+    Parameters
+    ----------
+    dst : ndarray
+    src : ndarray
+        The source and destination arrays during assignment.
+    zero_unassigned : bool, optional
+        If True, fields in the dst for which there was no matching
+        field in the src are filled with the value 0 (zero). This
+        was the behavior of numpy <= 1.13. If False, those fields
+        are not modified.
+    """
+
+    if dst.dtype.names is None:
+        dst[...] = src
+        return
+
+    for name in dst.dtype.names:
+        if name not in src.dtype.names:
+            if zero_unassigned:
+                dst[name] = 0
+        else:
+            assign_fields_by_name(dst[name], src[name],
+                                  zero_unassigned)
+
+def _require_fields_dispatcher(array, required_dtype):
+    return (array,)
+
+@array_function_dispatch(_require_fields_dispatcher)
+def require_fields(array, required_dtype):
+    """
+    Casts a structured array to a new dtype using assignment by field-name.
+
+    This function assigns from the old to the new array by name, so the
+    value of a field in the output array is the value of the field with the
+    same name in the source array. This has the effect of creating a new
+    ndarray containing only the fields "required" by the required_dtype.
+
+    If a field name in the required_dtype does not exist in the
+    input array, that field is created and set to 0 in the output array.
+
+    Parameters
+    ----------
+    a : ndarray
+       array to cast
+    required_dtype : dtype
+       datatype for output array
+
+    Returns
+    -------
+    out : ndarray
+        array with the new dtype, with field values copied from the fields in
+        the input array with the same name
+
+    Examples
+    --------
+
+    >>> a = np.ones(4, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
+    >>> require_fields(a, [('b', 'f4'), ('c', 'u1')])
+    array([(1., 1), (1., 1), (1., 1), (1., 1)],
+      dtype=[('b', '<f4'), ('c', 'u1')])
+    >>> require_fields(a, [('b', 'f4'), ('newf', 'u1')])
+    array([(1., 0), (1., 0), (1., 0), (1., 0)],
+      dtype=[('b', '<f4'), ('newf', 'u1')])
+ 
+    """
+    out = np.empty(array.shape, dtype=required_dtype)
+    assign_fields_by_name(out, array)
+    return out
 
 
 def _stack_arrays_dispatcher(arrays, defaults=None, usemask=None,
@@ -905,15 +1248,16 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
     True
     >>> z = np.array([('A', 1), ('B', 2)], dtype=[('A', '|S3'), ('B', float)])
     >>> zz = np.array([('a', 10., 100.), ('b', 20., 200.), ('c', 30., 300.)],
-    ...   dtype=[('A', '|S3'), ('B', float), ('C', float)])
+    ...   dtype=[('A', '|S3'), ('B', np.double), ('C', np.double)])
     >>> test = rfn.stack_arrays((z,zz))
     >>> test
-    masked_array(data = [('A', 1.0, --) ('B', 2.0, --) ('a', 10.0, 100.0) ('b', 20.0, 200.0)
-     ('c', 30.0, 300.0)],
-                 mask = [(False, False, True) (False, False, True) (False, False, False)
-     (False, False, False) (False, False, False)],
-           fill_value = ('N/A', 1e+20, 1e+20),
-                dtype = [('A', '|S3'), ('B', '<f8'), ('C', '<f8')])
+    masked_array(data=[(b'A', 1.0, --), (b'B', 2.0, --), (b'a', 10.0, 100.0),
+                       (b'b', 20.0, 200.0), (b'c', 30.0, 300.0)],
+                 mask=[(False, False,  True), (False, False,  True),
+                       (False, False, False), (False, False, False),
+                       (False, False, False)],
+           fill_value=(b'N/A', 1.e+20, 1.e+20),
+                dtype=[('A', 'S3'), ('B', '<f8'), ('C', '<f8')])
 
     """
     if isinstance(arrays, ndarray):
@@ -992,7 +1336,10 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
     >>> a = np.ma.array([1, 1, 1, 2, 2, 3, 3],
     ...         mask=[0, 0, 1, 0, 0, 0, 1]).view(ndtype)
     >>> rfn.find_duplicates(a, ignoremask=True, return_index=True)
-    ... # XXX: judging by the output, the ignoremask flag has no effect
+    (masked_array(data=[(1,), (1,), (2,), (2,)],
+                 mask=[(False,), (False,), (False,), (False,)],
+           fill_value=(999999,),
+                dtype=[('a', '<i8')]), array([0, 1, 3, 4]))
     """
     a = np.asanyarray(a).ravel()
     # Get a dictionary of fields

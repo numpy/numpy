@@ -154,11 +154,11 @@ def isposinf(x, out=None):
     Examples
     --------
     >>> np.isposinf(np.PINF)
-    array(True, dtype=bool)
+    True
     >>> np.isposinf(np.inf)
-    array(True, dtype=bool)
+    True
     >>> np.isposinf(np.NINF)
-    array(False, dtype=bool)
+    False
     >>> np.isposinf([-np.inf, 0., np.inf])
     array([False, False,  True])
 
@@ -224,11 +224,11 @@ def isneginf(x, out=None):
     Examples
     --------
     >>> np.isneginf(np.NINF)
-    array(True, dtype=bool)
+    True
     >>> np.isneginf(np.inf)
-    array(False, dtype=bool)
+    False
     >>> np.isneginf(np.PINF)
-    array(False, dtype=bool)
+    False
     >>> np.isneginf([-np.inf, 0., np.inf])
     array([ True, False, False])
 

@@ -26,7 +26,7 @@ from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings
     )
 from numpy import ndarray
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal,
     assert_equal_records, fail_if_equal, assert_not_equal,
@@ -233,7 +233,7 @@ class TestMaskedArray(object):
         x = np.array([('A', 0)], dtype={'names':['f0','f1'],
                                         'formats':['S4','i8'],
                                         'offsets':[0,8]})
-        data = array(x) # used to fail due to 'V' padding field in x.dtype.descr
+        array(x)  # used to fail due to 'V' padding field in x.dtype.descr
 
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
@@ -2028,6 +2028,17 @@ class TestFillingValues(object):
         assert_equal(np.asarray(x.fill_value).dtype, float)
         assert_equal(x.fill_value, 999.)
         assert_equal(x._fill_value, np.array(999.))
+
+    def test_subarray_fillvalue(self):
+        # gh-10483   test multi-field index fill value
+        fields = array([(1, 1, 1)],
+                      dtype=[('i', int), ('s', '|S8'), ('f', float)])
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning, "Numpy has detected")
+            subfields = fields[['i', 'f']]
+            assert_equal(tuple(subfields.fill_value), (999999, 1.e+20))
+            # test comparison does not raise:
+            subfields[1:] == subfields[:-1]
 
     def test_fillvalue_exotic_dtype(self):
         # Tests yet more exotic flexible dtypes

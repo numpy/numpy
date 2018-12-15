@@ -6,7 +6,7 @@ import collections
 import functools
 import os
 
-from numpy.core._multiarray_umath import ndarray
+from numpy.core._multiarray_umath import add_docstring, ndarray
 from numpy.compat._inspect import getargspec
 
 
@@ -62,16 +62,6 @@ def get_overloaded_types_and_args(relevant_args):
                 overloaded_types = [arg_type]
                 overloaded_args = [arg]
 
-    # Short-cut for the common case of only ndarray.
-    if overloaded_types == _NDARRAY_ONLY:
-        return overloaded_types, []
-
-    # Special handling for ndarray.__array_function__
-    overloaded_args = [
-        arg for arg in overloaded_args
-        if type(arg).__array_function__ is not _NDARRAY_ARRAY_FUNCTION
-    ]
-
     return overloaded_types, overloaded_args
 
 
@@ -106,7 +96,11 @@ def array_function_implementation_or_override(
     """
     # Check for __array_function__ methods.
     types, overloaded_args = get_overloaded_types_and_args(relevant_args)
-    if not overloaded_args:
+    # Short-cut for common cases: no overload or only ndarray overload
+    # (directly or with subclasses that do not override __array_function__).
+    if (not overloaded_args or types == _NDARRAY_ONLY or
+            all(type(arg).__array_function__ is _NDARRAY_ARRAY_FUNCTION
+                for arg in overloaded_args)):
         return implementation(*args, **kwargs)
 
     # Call overrides
@@ -168,7 +162,8 @@ def set_module(module):
     return decorator
 
 
-def array_function_dispatch(dispatcher, module=None, verify=True):
+def array_function_dispatch(dispatcher, module=None, verify=True,
+                            docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
 
     See NEP-18 for example usage.
@@ -190,6 +185,10 @@ def array_function_dispatch(dispatcher, module=None, verify=True):
         if the dispatcher's signature needs to deviate for some particular
         reason, e.g., because the function has a signature like
         ``func(*args, **kwargs)``.
+    docs_from_dispatcher : bool, optional
+        If True, copy docs from the dispatcher function onto the dispatched
+        function, rather than from the implementation. This is useful for
+        functions defined in C, which otherwise don't have docstrings.
 
     Returns
     -------
@@ -198,11 +197,20 @@ def array_function_dispatch(dispatcher, module=None, verify=True):
 
     if not ENABLE_ARRAY_FUNCTION:
         # __array_function__ requires an explicit opt-in for now
-        return set_module(module)
+        def decorator(implementation):
+            if module is not None:
+                implementation.__module__ = module
+            if docs_from_dispatcher:
+                add_docstring(implementation, dispatcher.__doc__)
+            return implementation
+        return decorator
 
     def decorator(implementation):
         if verify:
             verify_matching_signatures(implementation, dispatcher)
+
+        if docs_from_dispatcher:
+            add_docstring(implementation, dispatcher.__doc__)
 
         @functools.wraps(implementation)
         def public_api(*args, **kwargs):
@@ -219,4 +227,15 @@ def array_function_dispatch(dispatcher, module=None, verify=True):
 
         return public_api
 
+    return decorator
+
+
+def array_function_from_dispatcher(
+        implementation, module=None, verify=True, docs_from_dispatcher=True):
+    """Like array_function_dispatcher, but with function arguments flipped."""
+
+    def decorator(dispatcher):
+        return array_function_dispatch(
+            dispatcher, module, verify=verify,
+            docs_from_dispatcher=docs_from_dispatcher)(implementation)
     return decorator

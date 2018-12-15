@@ -7,7 +7,6 @@ try:
     import collections.abc as collections_abc
 except ImportError:
     import collections as collections_abc
-import warnings
 import textwrap
 from os import path
 import pytest
@@ -16,7 +15,7 @@ import numpy as np
 from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, assert_warns, temppath
+    assert_raises, temppath
     )
 from numpy.core.numeric import pickle
 
@@ -379,7 +378,6 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
-    @pytest.mark.xfail(reason="See gh-10411, becomes real error in 1.16")
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
         x = self.data[['col1', 'col2']]

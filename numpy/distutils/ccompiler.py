@@ -17,7 +17,9 @@ from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.compat import get_exception
-from numpy.distutils.exec_command import filepath_from_subprocess_output
+from numpy.distutils.exec_command import (
+    filepath_from_subprocess_output, forward_bytes_to_stdout
+)
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       get_num_build_jobs, \
                                       _commandline_dep_string
@@ -159,11 +161,9 @@ def CCompiler_spawn(self, cmd, display=None):
 
     if is_sequence(cmd):
         cmd = ' '.join(list(cmd))
-    try:
-        print(o)
-    except UnicodeError:
-        # When installing through pip, `o` can contain non-ascii chars
-        pass
+
+    forward_bytes_to_stdout(o)
+
     if re.search(b'Too many open files', o):
         msg = '\nTry rerunning setup command until build succeeds.'
     else:
@@ -424,10 +424,8 @@ def _compiler_to_string(compiler):
             v = getattr(compiler, key)
             mx = max(mx, len(key))
             props.append((key, repr(v)))
-    lines = []
-    format = '%-' + repr(mx+1) + 's = %s'
-    for prop in props:
-        lines.append(format % prop)
+    fmt = '%-' + repr(mx+1) + 's = %s'
+    lines = [fmt % prop for prop in props]
     return '\n'.join(lines)
 
 def CCompiler_show_customization(self):

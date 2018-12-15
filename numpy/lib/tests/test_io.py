@@ -6,7 +6,6 @@ import os
 import threading
 import time
 import warnings
-import gc
 import io
 import re
 import pytest
@@ -18,7 +17,7 @@ import locale
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, unicode, Path
+from numpy.compat import asbytes, bytes, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -354,6 +353,16 @@ class TestSaveTxt(object):
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+
+    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+    def test_multifield_view(self):
+        a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
+        v = a[['x', 'z']]
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            np.save(path, v)
+            data = np.load(path)
+            assert_array_equal(data, v)
 
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -2049,7 +2058,6 @@ M   33  21.99
 
     def test_utf8_file(self):
         utf8 = b"\xcf\x96"
-        latin1 = b"\xf6\xfc\xf6"
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write((b"test1,testNonethe" + utf8 + b",test3\n") * 2)

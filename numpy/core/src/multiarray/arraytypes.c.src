@@ -3594,9 +3594,10 @@ OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp 
 #define BOOL_fill NULL
 
 /* this requires buffer to be filled with objects or NULL */
-static void
+static int
 OBJECT_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
+    int retval = 0;
     npy_intp i;
     PyObject *start = buffer[0];
     PyObject *delta = buffer[1];
@@ -3604,27 +3605,31 @@ OBJECT_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
 
     delta = PyNumber_Subtract(delta, start);
     if (!delta) {
-        return;
+        return -1;
     }
     second = start = PyNumber_Add(start, delta);
     if (!start) {
-        goto finish;
+        goto error;
     }
     buffer += 2;
 
     for (i = 2; i < length; i++, buffer++) {
         start = PyNumber_Add(start, delta);
         if (!start) {
-            goto finish;
+            goto error;
         }
         Py_XDECREF(*buffer);
         *buffer = start;
     }
+    goto finish;
+
+error:
+    retval = -1;
 
 finish:
     Py_XDECREF(second);
     Py_DECREF(delta);
-    return;
+    return retval;
 }
 
 /**begin repeat
@@ -3638,7 +3643,7 @@ finish:
  *         npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
 */
-static void
+static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
     npy_intp i;
@@ -3649,10 +3654,11 @@ static void
     for (i = 2; i < length; ++i) {
         buffer[i] = start + i*delta;
     }
+    return 0;
 }
 /**end repeat**/
 
-static void
+static int
 HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
     npy_intp i;
@@ -3663,6 +3669,7 @@ HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
     for (i = 2; i < length; ++i) {
         buffer[i] = npy_float_to_half(start + i*delta);
     }
+    return 0;
 }
 
 /**begin repeat
@@ -3670,7 +3677,7 @@ HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
  * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
 */
-static void
+static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignore))
 {
     npy_intp i;
@@ -3688,6 +3695,7 @@ static void
         buffer->real = start.real + i*delta.real;
         buffer->imag = start.imag + i*delta.imag;
     }
+    return 0;
 }
 /**end repeat**/
 
@@ -4167,6 +4175,53 @@ small_correlate(const char * d_, npy_intp dstride,
 }
 
 /*
+*/
+
+/* A clone function for the datetime dtype c_metadata */
+static NpyAuxData *
+_datetime_dtype_metadata_clone(NpyAuxData *data)
+{
+    PyArray_DatetimeDTypeMetaData *newdata =
+        (PyArray_DatetimeDTypeMetaData *)PyArray_malloc(
+                        sizeof(*newdata));
+    if (newdata == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    memcpy(newdata, data, sizeof(*newdata));
+
+    return (NpyAuxData *)newdata;
+}
+
+/*
+ * Allcoate and initialize a PyArray_DatetimeDTypeMetaData object
+ */
+static NpyAuxData*
+_create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
+{
+    PyArray_DatetimeDTypeMetaData *data;
+
+    /* Allocate memory for the metadata */
+    data = PyArray_malloc(sizeof(*data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    /* Initialize the base aux data */
+    memset(data, 0, sizeof(PyArray_DatetimeDTypeMetaData));
+    data->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
+    data->base.clone = _datetime_dtype_metadata_clone;
+
+    data->meta.base = base;
+    data->meta.num = num;
+
+    return (NpyAuxData*)data;
+}
+
+
+/*
  *****************************************************************************
  **                       SETUP FUNCTION POINTERS                           **
  *****************************************************************************
@@ -4522,66 +4577,6 @@ PyArray_DescrFromType(int type)
     return ret;
 }
 
-/* A clone function for the datetime dtype metadata */
-static NpyAuxData *
-datetime_dtype_metadata_clone(NpyAuxData *data)
-{
-    PyArray_DatetimeDTypeMetaData *newdata =
-        (PyArray_DatetimeDTypeMetaData *)PyArray_malloc(
-                        sizeof(PyArray_DatetimeDTypeMetaData));
-    if (newdata == NULL) {
-        return NULL;
-    }
-
-    memcpy(newdata, data, sizeof(PyArray_DatetimeDTypeMetaData));
-
-    return (NpyAuxData *)newdata;
-}
-
-/*
- * Initializes the c_metadata field for the _builtin_descrs DATETIME
- * and TIMEDELTA.
- *
- * must not be static, gcc 4.1.2 on redhat 5 then miscompiles this function
- * see gh-5163
- *
- */
-NPY_NO_EXPORT int
-initialize_builtin_datetime_metadata(void)
-{
-    PyArray_DatetimeDTypeMetaData *data1, *data2;
-
-    /* Allocate memory for the metadata */
-    data1 = PyArray_malloc(sizeof(PyArray_DatetimeDTypeMetaData));
-    if (data1 == NULL) {
-        return -1;
-    }
-    data2 = PyArray_malloc(sizeof(PyArray_DatetimeDTypeMetaData));
-    if (data2 == NULL) {
-        PyArray_free(data1);
-        return -1;
-    }
-
-    /* Initialize the base aux data */
-    memset(data1, 0, sizeof(PyArray_DatetimeDTypeMetaData));
-    memset(data2, 0, sizeof(PyArray_DatetimeDTypeMetaData));
-    data1->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
-    data2->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
-    data1->base.clone = datetime_dtype_metadata_clone;
-    data2->base.clone = datetime_dtype_metadata_clone;
-
-    /* Set to the default metadata */
-    data1->meta.base = NPY_DATETIME_DEFAULTUNIT;
-    data1->meta.num = 1;
-    data2->meta.base = NPY_DATETIME_DEFAULTUNIT;
-    data2->meta.num = 1;
-
-    _builtin_descrs[NPY_DATETIME]->c_metadata = (NpyAuxData *)data1;
-    _builtin_descrs[NPY_TIMEDELTA]->c_metadata = (NpyAuxData *)data2;
-
-    return 0;
-}
-
 /*
  *****************************************************************************
  **                             SETUP TYPE INFO                             **
@@ -4650,7 +4645,14 @@ set_typeinfo(PyObject *dict)
 
     /**end repeat**/
 
-    if (initialize_builtin_datetime_metadata() < 0) {
+    _builtin_descrs[NPY_DATETIME]->c_metadata = _create_datetime_metadata(
+                NPY_DATETIME_DEFAULTUNIT, 1);
+    if (_builtin_descrs[NPY_DATETIME]->c_metadata == NULL) {
+        return -1;
+    }
+    _builtin_descrs[NPY_TIMEDELTA]->c_metadata = _create_datetime_metadata(
+                NPY_DATETIME_DEFAULTUNIT, 1);
+    if (_builtin_descrs[NPY_DATETIME]->c_metadata == NULL) {
         return -1;
     }
 

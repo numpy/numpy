@@ -440,12 +440,18 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /* Recursive case, first check the sequence contains only one type */
+    /*
+     * The C-API recommends calling PySequence_Fast before any of the other
+     * PySequence_Fast* functions. This is required for PyPy
+     */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
+
+    /* Recursive case, first check the sequence contains only one type */
     size = PySequence_Fast_GET_SIZE(seq);
+    /* objects is borrowed, do not release seq */
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
@@ -609,12 +615,6 @@ _IsWriteable(PyArrayObject *ap)
      * If it is a writeable array, then return TRUE
      * If we can find an array object
      * or a writeable buffer object as the final base object
-     * or a string object (for pickling support memory savings).
-     * - this last could be removed if a proper pickleable
-     * buffer was added to Python.
-     *
-     * MW: I think it would better to disallow switching from READONLY
-     *     to WRITEABLE like this...
      */
 
     while(PyArray_Check(base)) {
@@ -622,15 +622,6 @@ _IsWriteable(PyArrayObject *ap)
             return (npy_bool) (PyArray_ISWRITEABLE((PyArrayObject *)base));
         }
         base = PyArray_BASE((PyArrayObject *)base);
-    }
-
-    /*
-     * here so pickle support works seamlessly
-     * and unpickled array can be set and reset writeable
-     * -- could be abused --
-     */
-    if (PyString_Check(base)) {
-        return NPY_TRUE;
     }
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {

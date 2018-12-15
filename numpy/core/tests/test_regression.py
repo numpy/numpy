@@ -2,9 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import copy
 import sys
-import platform
 import gc
-import warnings
 import tempfile
 import pytest
 from os import path
@@ -2409,7 +2407,7 @@ class TestRegression(object):
         t = np.dtype([((s, 'f1'), np.float64)])
         data = np.zeros(10, t)
         for i in range(10):
-            v = str(data[['f1']])
+            str(data[['f1']])
             if HAS_REFCOUNT:
                 assert_(base <= sys.getrefcount(s))
 

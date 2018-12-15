@@ -75,10 +75,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
         return default
     if 'F' in intersection and 'd' in intersection:
         return 'D'
-    l = []
-    for t in intersection:
-        i = _typecodes_by_elsize.index(t)
-        l.append((i, t))
+    l = [(_typecodes_by_elsize.index(t), t) for t in intersection]
     l.sort()
     return l[0][1]
 
@@ -108,11 +105,11 @@ def asfarray(a, dtype=_nx.float_):
     Examples
     --------
     >>> np.asfarray([2, 3])
-    array([ 2.,  3.])
+    array([2.,  3.])
     >>> np.asfarray([2, 3], dtype='float')
-    array([ 2.,  3.])
+    array([2.,  3.])
     >>> np.asfarray([2, 3], dtype='int8')
-    array([ 2.,  3.])
+    array([2.,  3.])
 
     """
     if not _nx.issubdtype(dtype, _nx.inexact):
@@ -149,13 +146,13 @@ def real(val):
     --------
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.real
-    array([ 1.,  3.,  5.])
+    array([1.,  3.,  5.])
     >>> a.real = 9
     >>> a
-    array([ 9.+2.j,  9.+4.j,  9.+6.j])
+    array([9.+2.j,  9.+4.j,  9.+6.j])
     >>> a.real = np.array([9, 8, 7])
     >>> a
-    array([ 9.+2.j,  8.+4.j,  7.+6.j])
+    array([9.+2.j,  8.+4.j,  7.+6.j])
     >>> np.real(1 + 1j)
     1.0
 
@@ -195,10 +192,10 @@ def imag(val):
     --------
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.imag
-    array([ 2.,  4.,  6.])
+    array([2.,  4.,  6.])
     >>> a.imag = np.array([8, 10, 12])
     >>> a
-    array([ 1. +8.j,  3.+10.j,  5.+12.j])
+    array([1. +8.j,  3.+10.j,  5.+12.j])
     >>> np.imag(1 + 1j)
     1.0
 
@@ -425,11 +422,13 @@ def nan_to_num(x, copy=True):
     0.0
     >>> x = np.array([np.inf, -np.inf, np.nan, -128, 128])
     >>> np.nan_to_num(x)
-    array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000,
-            -1.28000000e+002,   1.28000000e+002])
+    array([ 1.79769313e+308, -1.79769313e+308,  0.00000000e+000, # may vary
+           -1.28000000e+002,  1.28000000e+002])
     >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
+    array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000, # may vary
+         -1.28000000e+002,   1.28000000e+002])
     >>> np.nan_to_num(y)
-    array([  1.79769313e+308 +0.00000000e+000j,
+    array([  1.79769313e+308 +0.00000000e+000j, # may vary
              0.00000000e+000 +0.00000000e+000j,
              0.00000000e+000 +1.79769313e+308j])
     """
@@ -493,12 +492,12 @@ def real_if_close(a, tol=100):
     Examples
     --------
     >>> np.finfo(float).eps
-    2.2204460492503131e-16
+    2.2204460492503131e-16 # may vary
 
     >>> np.real_if_close([2.1 + 4e-14j], tol=1000)
-    array([ 2.1])
+    array([2.1])
     >>> np.real_if_close([2.1 + 4e-13j], tol=1000)
-    array([ 2.1 +4.00000000e-13j])
+    array([2.1+4.e-13j])
 
     """
     a = asanyarray(a)
@@ -541,7 +540,6 @@ def asscalar(a):
     --------
     >>> np.asscalar(np.array([24]))
     24
-
     """
 
     # 2018-10-10, 1.16
@@ -675,11 +673,11 @@ def common_type(*arrays):
     Examples
     --------
     >>> np.common_type(np.arange(2, dtype=np.float32))
-    <type 'numpy.float32'>
+    <class 'numpy.float32'>
     >>> np.common_type(np.arange(2, dtype=np.float32), np.arange(2))
-    <type 'numpy.float64'>
+    <class 'numpy.float64'>
     >>> np.common_type(np.arange(4), np.array([45, 6.j]), np.array([45.0]))
-    <type 'numpy.complex128'>
+    <class 'numpy.complex128'>
 
     """
     is_complex = False

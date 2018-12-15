@@ -52,7 +52,7 @@ def fftshift(x, axes=None):
     --------
     >>> freqs = np.fft.fftfreq(10, 0.1)
     >>> freqs
-    array([ 0.,  1.,  2.,  3.,  4., -5., -4., -3., -2., -1.])
+    array([ 0.,  1.,  2., ..., -3., -2., -1.])
     >>> np.fft.fftshift(freqs)
     array([-5., -4., -3., -2., -1.,  0.,  1.,  2.,  3.,  4.])
 
@@ -162,7 +162,7 @@ def fftfreq(n, d=1.0):
     >>> timestep = 0.1
     >>> freq = np.fft.fftfreq(n, d=timestep)
     >>> freq
-    array([ 0.  ,  1.25,  2.5 ,  3.75, -5.  , -3.75, -2.5 , -1.25])
+    array([ 0.  ,  1.25,  2.5 , ..., -3.75, -2.5 , -1.25])
 
     """
     if not isinstance(n, integer_types):
@@ -215,7 +215,7 @@ def rfftfreq(n, d=1.0):
     >>> sample_rate = 100
     >>> freq = np.fft.fftfreq(n, d=1./sample_rate)
     >>> freq
-    array([  0.,  10.,  20.,  30.,  40., -50., -40., -30., -20., -10.])
+    array([  0.,  10.,  20., ..., -30., -20., -10.])
     >>> freq = np.fft.rfftfreq(n, d=1./sample_rate)
     >>> freq
     array([  0.,  10.,  20.,  30.,  40.,  50.])
