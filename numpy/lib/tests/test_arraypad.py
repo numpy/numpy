@@ -1260,3 +1260,38 @@ class TestTypeError1(object):
         kwargs = dict(mode='mean', stat_length=(3, ))
         assert_raises(TypeError, pad, arr, ((2, 3, 4), (3, 2)),
                       **kwargs)
+
+
+@pytest.mark.xfail(reason="not yet implemented, see gh-11358")
+def test_unsupported_mode():
+    """Test error message for unsupported pad modes."""
+    with pytest.raises(ValueError, message="mode '.*' is not supported"):
+        pad([1, 2, 3], 1, mode="unknown")
+    with pytest.raises(ValueError, message="mode '.*' is not supported"):
+        pad([1, 2, 3], 1, mode=3)
+    with pytest.raises(ValueError, message="mode '.*' is not supported"):
+        pad([1, 2, 3], 1, mode=None)
+
+
+@pytest.mark.xfail(reason="not yet implemented, see gh-11358")
+def test_order():
+    """Test if C and F order is preserved for all pad modes."""
+    modes = [
+        'constant',
+        'edge',
+        'linear_ramp',
+        'maximum',
+        'mean',
+        'median',
+        'minimum',
+        'reflect',
+        'symmetric',
+        'wrap',
+        'empty',
+    ]
+    for mode in modes:
+        x = np.ones((5, 10), order='C')
+        assert np.pad(x, 5, mode).flags["C_CONTIGUOUS"]
+
+        x = np.ones((5, 10), order='F')
+        assert np.pad(x, 5, mode).flags["F_CONTIGUOUS"]
