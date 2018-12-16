@@ -114,7 +114,7 @@ def _slice_at_axis(shape, sl, axis):
     return slice_tup * axis + (sl,) + slice_tup * (len(shape) - axis - 1)
 
 
-def _view_roi(array, old_region_slice, axis):
+def _view_roi(array, original_area_slice, axis):
     """
     Get a view of the current region of interest during iterative padding.
 
@@ -126,7 +126,7 @@ def _view_roi(array, old_region_slice, axis):
     ----------
     array : ndarray
         The array with the region of interest.
-    old_region_slice : tuple of slices
+    original_area_slice : tuple of slices
         Denotes the area with original values of the unpadded array.
     axis : int
         The currently padded dimension assuming that `axis` is padded before
@@ -138,7 +138,7 @@ def _view_roi(array, old_region_slice, axis):
         The region of interest of the original `array`.
     """
     axis += 1
-    sl = (slice(None),) * axis + old_region_slice[axis:]
+    sl = (slice(None),) * axis + original_area_slice[axis:]
     return array[sl]
 
 
@@ -161,7 +161,7 @@ def _pad_simple(array, pad_width, fill_value=None):
     padded : ndarray
         The padded array with the same dtype as`array`. Its order will default
         to C-style if `array` is not F-contiguous.
-    old_area : tuple
+    original_area_slice : tuple
         A tuple of slices pointing to the area of the original array.
     """
     # Allocate grown array
@@ -176,13 +176,13 @@ def _pad_simple(array, pad_width, fill_value=None):
         padded.fill(fill_value)
 
     # Copy old array into correct space
-    old_area = tuple(
+    original_area_slice = tuple(
         slice(left, left + size)
         for size, (left, right) in zip(array.shape, pad_width)
     )
-    padded[old_area] = array
+    padded[original_area_slice] = array
 
-    return padded, old_area
+    return padded, original_area_slice
 
 
 def _set_pad_area(padded, axis, index_pair, value_pair):
@@ -891,7 +891,7 @@ def pad(array, pad_width, mode, **kwargs):
 
     # Create array with final shape and original values
     # (padded area is undefined)
-    padded, old_region_sl = _pad_simple(array, pad_width)
+    padded, original_area_slice = _pad_simple(array, pad_width)
     # And prepare iteration over all dimensions
     # (zipping may be more readable than using enumerate)
     axes = range(padded.ndim)
@@ -900,7 +900,7 @@ def pad(array, pad_width, mode, **kwargs):
         values = kwargs.get("constant_values", 0)
         values = _as_pairs(values, padded.ndim)
         for axis, index_pair, value_pair in zip(axes, pad_width, values):
-            roi = _view_roi(padded, old_region_sl, axis)
+            roi = _view_roi(padded, original_area_slice, axis)
             _set_pad_area(roi, axis, index_pair, value_pair)
 
     elif mode == "empty":
@@ -923,7 +923,7 @@ def pad(array, pad_width, mode, **kwargs):
 
     elif mode == "edge":
         for axis, index_pair in zip(axes, pad_width):
-            roi = _view_roi(padded, old_region_sl, axis)
+            roi = _view_roi(padded, original_area_slice, axis)
             edge_pair = _get_edges(roi, axis, index_pair)
             _set_pad_area(roi, axis, index_pair, edge_pair)
 
@@ -931,7 +931,7 @@ def pad(array, pad_width, mode, **kwargs):
         end_values = kwargs.get("end_values", 0)
         end_values = _as_pairs(end_values, padded.ndim)
         for axis, index_pair, value_pair in zip(axes, pad_width, end_values):
-            roi = _view_roi(padded, old_region_sl, axis)
+            roi = _view_roi(padded, original_area_slice, axis)
             ramp_pair = _get_linear_ramps(roi, axis, index_pair, value_pair)
             _set_pad_area(roi, axis, index_pair, ramp_pair)
 
@@ -940,7 +940,7 @@ def pad(array, pad_width, mode, **kwargs):
         length = kwargs.get("stat_length", None)
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, index_pair, length_pair in zip(axes, pad_width, length):
-            roi = _view_roi(padded, old_region_sl, axis)
+            roi = _view_roi(padded, original_area_slice, axis)
             stat_pair = _get_stats(roi, axis, index_pair, length_pair, func)
             _set_pad_area(roi, axis, index_pair, stat_pair)
 
@@ -955,7 +955,7 @@ def pad(array, pad_width, mode, **kwargs):
                 _set_pad_area(padded, axis, (left_index, right_index), edge_pair)
                 continue
 
-            roi = _view_roi(padded, old_region_sl, axis)
+            roi = _view_roi(padded, original_area_slice, axis)
             while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with reflected
                 # values. This is necessary if the pad area is larger than
@@ -967,7 +967,7 @@ def pad(array, pad_width, mode, **kwargs):
 
     elif mode == "wrap":
         for axis, (left_index, right_index) in zip(axes, pad_width):
-            roi = _view_roi(padded, old_region_sl, axis)
+            roi = _view_roi(padded, original_area_slice, axis)
             while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with wrapped
                 # values. This is necessary if the pad area is larger than
