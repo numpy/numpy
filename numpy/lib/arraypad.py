@@ -16,7 +16,7 @@ __all__ = ['pad']
 # Private utility functions.
 
 
-def _linear_ramp(ndim, axis, start, stop, size, reverse=False, dtype=None):
+def _linear_ramp(ndim, axis, start, stop, size, reverse=False):
     """
     Create a linear ramp of `size` in `axis` with `ndim`.
 
@@ -45,7 +45,8 @@ def _linear_ramp(ndim, axis, start, stop, size, reverse=False, dtype=None):
     Returns
     -------
     ramp : ndarray
-        Output array that in- or decrements along the given `axis`.
+        Output array of dtype np.float64 that in- or decrements along the given
+        `axis`.
 
     Examples
     --------
@@ -54,7 +55,7 @@ def _linear_ramp(ndim, axis, start, stop, size, reverse=False, dtype=None):
            [5. , 5.5, 6. ]])
     """
     # Create initial ramp
-    ramp = np.arange(size)
+    ramp = np.arange(size, dtype=np.float64)
     if reverse:
         ramp = ramp[::-1]
 
@@ -67,8 +68,6 @@ def _linear_ramp(ndim, axis, start, stop, size, reverse=False, dtype=None):
     ramp = ramp * gain
     ramp += start
 
-    if dtype:
-        _round_if_needed(ramp, dtype)
     return ramp
 
 
@@ -277,19 +276,19 @@ def _get_linear_ramps(padded, axis, index_pair, end_value_pair):
 
     if index_pair[0] > 0:
         left_ramp = _linear_ramp(
-            padded.ndim, axis,
-            start=end_value_pair[0], stop=edge_pair[0], size=index_pair[0],
-            dtype=padded.dtype, reverse=False
+            padded.ndim, axis, start=end_value_pair[0], stop=edge_pair[0],
+            size=index_pair[0], reverse=False
         )
+        _round_if_needed(left_ramp, padded.dtype)
     else:
         left_ramp = np.array([], dtype=padded.dtype)
 
     if index_pair[1] > 0:
         right_ramp = _linear_ramp(
-            padded.ndim, axis,
-            start=end_value_pair[1], stop=edge_pair[1], size=index_pair[1],
-            dtype=padded.dtype, reverse=True
+            padded.ndim, axis, start=end_value_pair[1], stop=edge_pair[1],
+            size=index_pair[1], reverse=True
         )
+        _round_if_needed(right_ramp, padded.dtype)
     else:
         right_ramp = np.array([], dtype=padded.dtype)
 
