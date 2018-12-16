@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import pytest
+import weakref
 
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library, as_array
@@ -260,3 +261,15 @@ class TestAsArray(object):
             b = np.ctypeslib.as_array(newpnt, (N,))
             # now delete both, which should cleanup both objects
             del newpnt, b
+
+    def test_segmentation_fault(self):
+        arr = np.zeros((224, 224, 3))
+        c_arr = np.ctypeslib.as_ctypes(arr)
+        arr_ref = weakref.ref(arr)
+        del arr
+
+        # check the reference wasn't cleaned up
+        assert_(arr_ref() is not None)
+
+        # check we avoid the segfault
+        c_arr[0][0][0]
