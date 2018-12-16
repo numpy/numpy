@@ -159,7 +159,8 @@ def _pad_simple(array, pad_width, fill_value=None):
     Returns
     -------
     padded : ndarray
-        The padded array with the same dtype and order as `array`.
+        The padded array with the same dtype as`array`. Its order will default
+        to C-style if `array` is not F-contiguous.
     old_area : tuple
         A tuple of slices pointing to the area of the original array.
     """
@@ -168,7 +169,7 @@ def _pad_simple(array, pad_width, fill_value=None):
         left + size + right
         for size, (left, right) in zip(array.shape, pad_width)
     )
-    order = 'C' if array.flags['C_CONTIGUOUS'] else 'F'
+    order = 'F' if array.flags.fnc else 'C'  # Fortran and not also C-order
     padded = np.empty(new_shape, dtype=array.dtype, order=order)
 
     if fill_value is not None:
