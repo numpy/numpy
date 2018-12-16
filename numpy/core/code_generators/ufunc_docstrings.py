@@ -846,7 +846,7 @@ add_newdoc('numpy.core.umath', 'cos',
     >>> np.cos(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
@@ -2603,13 +2603,13 @@ add_newdoc('numpy.core.umath', 'matmul',
     - Stacks of matrices are broadcast together as if the matrices
       were elements, respecting the signature ``(n,k),(k,m)->(n,m)``:
 
-      >>> a = a = np.full([9,5,7,3], True, dtype=bool)
-      >>> c = np.full([9, 5, 4,3], True, dtype=bool)
-      >>> np.dot(a, c).shape # doctest: +SKIP
-      (9, 5, 7, 9, 5, 4)
-      >>> np.matmul(a, c).shape # doctest: +SKIP
-      (9, 5, 7, 4)
-      >>> # n is 5, k is 3, m is 4
+      >>> a = np.ones([9, 5, 7, 4])
+      >>> c = np.ones([9, 5, 4, 3])
+      >>> np.dot(a, c).shape
+      (9, 5, 7, 9, 5, 3)
+      >>> np.matmul(a, c).shape
+      (9, 5, 7, 3)
+      >>> # n is 7, k is 4, m is 3
 
     The matmul function implements the semantics of the `@` operator introduced
     in Python 3.5 following PEP465.
@@ -3484,7 +3484,7 @@ add_newdoc('numpy.core.umath', 'sinh',
     >>> np.sinh(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
@@ -3670,7 +3670,7 @@ add_newdoc('numpy.core.umath', 'tan',
     >>> np.cos(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
@@ -3722,7 +3722,7 @@ add_newdoc('numpy.core.umath', 'tanh',
     >>> np.tanh(np.zeros((3,3)),np.zeros((2,2)))
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: invalid return array shape
+    ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
 
     """)
 
