@@ -687,6 +687,9 @@ def pad(array, pad_width, mode, **kwargs):
             end values are used to pad the beginning.
         'empty'
             Pads with undefined values.
+
+            .. versionadded:: 1.16
+
         <function>
             Padding function, see Notes.
     stat_length : sequence or int, optional
