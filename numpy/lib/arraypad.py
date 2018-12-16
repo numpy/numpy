@@ -332,7 +332,7 @@ def _get_stats(padded, axis, index_pair, length_pair, stat_func):
         left_slice = _slice_at_axis(
             padded.shape,
             slice(index_pair[0], index_pair[0] + left_length),
-            axis,
+            axis
         )
         left_chunk = padded[left_slice]
         left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
@@ -348,7 +348,7 @@ def _get_stats(padded, axis, index_pair, length_pair, stat_func):
         right_slice = _slice_at_axis(
             padded.shape,
             slice(-index_pair[1] - right_length, -index_pair[1]),
-            axis,
+            axis
         )
         right_chunk = padded[right_slice]
         right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
@@ -408,27 +408,24 @@ def _set_reflect_both(padded, axis, index_pair, method, include_edge=False):
         left_slice = _slice_at_axis(
             padded.shape,
             slice(left_index + min(period, left_pad), left_index, -1),
-            axis,
+            axis
         )
         left_chunk = padded[left_slice]
 
         if method == "odd":
             edge_slice = _slice_at_axis(
-                padded.shape, slice(left_pad, left_pad + 1), axis
-            )
+                padded.shape, slice(left_pad, left_pad + 1), axis)
             left_chunk = 2 * padded[edge_slice] - left_chunk
 
         if left_pad > period:
             # Chunk is smaller than pad area
             left_pad -= period
             pad_area = _slice_at_axis(
-                padded.shape, slice(left_pad, left_pad + period), axis
-            )
+                padded.shape, slice(left_pad, left_pad + period), axis)
         else:
             # Chunk matches pad area
             pad_area = _slice_at_axis(
-                padded.shape, slice(None, left_pad), axis
-            )
+                padded.shape, slice(None, left_pad), axis)
             left_pad = 0
         padded[pad_area] = left_chunk
 
@@ -441,28 +438,25 @@ def _set_reflect_both(padded, axis, index_pair, method, include_edge=False):
         right_slice = _slice_at_axis(
             padded.shape,
             slice(right_index, right_index - min(period, right_pad), -1),
-            axis,
+            axis
         )
         right_chunk = padded[right_slice]
 
         if method == "odd":
             edge_slice = _slice_at_axis(
-                padded.shape, slice(-right_pad - 1, -right_pad), axis
-            )
+                padded.shape, slice(-right_pad - 1, -right_pad), axis)
             right_chunk = 2 * padded[edge_slice] - right_chunk
 
         if right_pad > period:
             # Chunk is smaller than pad area
             right_pad -= period
             pad_area = _slice_at_axis(
-                padded.shape, slice(-right_pad - period, -right_pad), axis
-            )
+                padded.shape, slice(-right_pad - period, -right_pad), axis)
 
         else:
             # Chunk matches pad area
             pad_area = _slice_at_axis(
-                padded.shape, slice(-right_pad, None), axis
-            )
+                padded.shape, slice(-right_pad, None), axis)
             right_pad = 0
         padded[pad_area] = right_chunk
 
@@ -517,21 +511,19 @@ def _set_wrap_both(padded, axis, index_pair):
             padded.shape,
             slice(-right_pad - min(period, left_pad),
                   -right_pad if right_pad != 0 else None),
-            axis,
+            axis
         )
         right_chunk = padded[right_slice]
 
         if left_pad > period:
             # Chunk is smaller than pad area
             pad_area = _slice_at_axis(
-                padded.shape, slice(left_pad - period, left_pad), axis
-            )
+                padded.shape, slice(left_pad - period, left_pad), axis)
             new_left_pad = left_pad - period
         else:
             # Chunk matches pad area
             pad_area = _slice_at_axis(
-                padded.shape, slice(None, left_pad), axis
-            )
+                padded.shape, slice(None, left_pad), axis)
         padded[pad_area] = right_chunk
 
     if right_pad > 0:
@@ -542,21 +534,19 @@ def _set_wrap_both(padded, axis, index_pair):
         left_slice = _slice_at_axis(
             padded.shape,
             slice(left_pad, left_pad + min(period, right_pad),),
-            axis,
+            axis
         )
         left_chunk = padded[left_slice]
 
         if right_pad > period:
             # Chunk is smaller than pad area
             pad_area = _slice_at_axis(
-                padded.shape, slice(-right_pad, -right_pad + period), axis
-            )
+                padded.shape, slice(-right_pad, -right_pad + period), axis)
             new_right_pad = right_pad - period
         else:
             # Chunk matches pad area
             pad_area = _slice_at_axis(
-                padded.shape, slice(-right_pad, None), axis
-            )
+                padded.shape, slice(-right_pad, None), axis)
         padded[pad_area] = left_chunk
 
     return new_left_pad, new_right_pad
@@ -862,8 +852,8 @@ def pad(array, pad_width, mode, **kwargs):
         padded, _ = _pad_simple(array, pad_width, fill_value=0)
         # And apply along each axis
         for axis in range(padded.ndim):
-            np.apply_along_axis(function, axis, padded, pad_width[axis],
-                                axis, kwargs)
+            np.apply_along_axis(
+                function, axis, padded, pad_width[axis], axis, kwargs)
         return padded
 
     # Make sure that no unsupported keywords were passed for the current mode
@@ -911,10 +901,7 @@ def pad(array, pad_width, mode, **kwargs):
         # modes depend on `array` not being empty
         # -> ensure every empty axis is only "padded with 0"
         for axis, index_pair in zip(axes, pad_width):
-            if (
-                array.shape[axis] == 0
-                and (index_pair[0] > 0 or index_pair[1] > 0)
-            ):
+            if array.shape[axis] == 0 and any(index_pair):
                 raise ValueError(
                     "can't extend empty axis {} using modes other than "
                     "'constant' or 'empty'".format(axis)
