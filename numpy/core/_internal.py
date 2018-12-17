@@ -244,21 +244,44 @@ class _missing_ctypes(object):
             self.value = ptr
 
 
+class _unsafe_first_element_pointer(object):
+    """
+    Helper to allow viewing an array as a ctypes pointer to the first element
+
+    This avoids:
+      * dealing with strides
+      * `.view` rejecting object-containing arrays
+      * `memoryview` not supporting overlapping fields
+    """
+    def __init__(self, arr):
+        self.base = arr
+
+    @property
+    def __array_interface__(self):
+        i = dict(
+            shape=(),
+            typestr='|V0',
+            data=(self.base.__array_interface__['data'][0], False),
+            strides=(),
+            version=3,
+        )
+        return i
+
 
 def _get_void_ptr(arr):
     """
     Get a `ctypes.c_void_p` to arr.data, that keeps a reference to the array
     """
     import numpy as np
-    # don't let subclasses interfere
-    arr = arr.view(ndarray)
-    # collapse the array to point to at most 1 element, so it become contiguous
-    arr = arr[np.s_[:1,] * arr.ndim + np.s_[...,]]
-    # then convert to ctypes now that we've reduced it to a simple, empty, array
-    arr.flags.writeable = True
-    arr = (ctypes.c_char * 0).from_buffer(arr)
+    # convert to a 0d array that has a data pointer referrign to the start
+    # of arr. This holds a reference to arr.
+    simple_arr = np.asarray(_unsafe_first_element_pointer(arr))
+
+    # create a `char[0]` using the same memory.
+    c_arr = (ctypes.c_char * 0).from_buffer(simple_arr)
+
     # finally cast to void*
-    return ctypes.cast(ctypes.pointer(arr), ctypes.c_void_p)
+    return ctypes.cast(ctypes.pointer(c_arr), ctypes.c_void_p)
 
 
 class _ctypes(object):

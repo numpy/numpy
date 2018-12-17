@@ -7480,6 +7480,14 @@ class TestCTypes(object):
         np.array([1, 2, 3]),
         np.array([['one', 'two'], ['three', 'four']]),
         np.array((1, 2), dtype='i4,i4'),
+        np.zeros((2,), dtype=
+            np.dtype(dict(
+                formats=['<i4', '<i4'],
+                names=['a', 'b'],
+                offsets=[0, 2],
+                itemsize=6
+            ))
+        ),
         np.array([None], dtype=object),
         np.array([]),
         np.empty((0, 0)),
@@ -7488,6 +7496,7 @@ class TestCTypes(object):
         '1d',
         '2d',
         'structured',
+        'overlapping',
         'object',
         'empty',
         'empty-2d',
