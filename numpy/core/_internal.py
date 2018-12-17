@@ -237,7 +237,7 @@ _getintp_ctype.cache = None
 
 class _missing_ctypes(object):
     def cast(self, num, obj):
-        return obj.value
+        return num.value
 
     class c_void_p(object):
         def __init__(self, ptr):
