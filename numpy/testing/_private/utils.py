@@ -19,7 +19,7 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     bool_, float32, empty, arange, array_repr, ndarray, isnat, array)
+     float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -521,7 +521,6 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     ...
     <type 'exceptions.AssertionError'>:
     Arrays are not almost equal
-    <BLANKLINE>
     (mismatch 50.0%)
      x: array([ 1.        ,  2.33333333])
      y: array([ 1.        ,  2.33333334])
@@ -687,7 +686,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, isnan, inf, bool_
-    from numpy.core.fromnumeric import all as npall
 
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
@@ -855,7 +853,6 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     <type 'exceptions.ValueError'>:
     AssertionError:
     Arrays are not equal
-    <BLANKLINE>
     (mismatch 50.0%)
      x: array([ 1.        ,  3.14159265,         NaN])
      y: array([ 1.        ,  3.14159265,         NaN])
@@ -931,7 +928,6 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     <type 'exceptions.AssertionError'>:
     AssertionError:
     Arrays are not almost equal
-    <BLANKLINE>
     (mismatch 50.0%)
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33339,      NaN])
@@ -946,7 +942,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import around, number, float_, result_type, array
+    from numpy.core import number, float_, result_type, array
     from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
 

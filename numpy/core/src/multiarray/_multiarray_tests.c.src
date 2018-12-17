@@ -11,6 +11,13 @@
 #include "npy_extint128.h"
 #include "common.h"
 
+
+#if defined(MS_WIN32) || defined(__CYGWIN__)
+#define EXPORT(x) __declspec(dllexport) x
+#else
+#define EXPORT(x) x
+#endif
+
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
@@ -30,6 +37,12 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
 }
 
 #include "npy_pycompat.h"
+
+/** Function to test calling via ctypes */
+EXPORT(void*) forward_pointer(void *x)
+{
+    return x;
+}
 
 /*
  * TODO:
@@ -1855,6 +1868,16 @@ printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     return PrintFloat_Printf_g(obj, precision);
 }
 
+static PyObject *
+getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    PyObject * ops = PyArray_GetNumericOps();
+    if (ops == NULL) {
+        return NULL;
+    }
+    return PyLong_FromLong(PyArray_SetNumericOps(ops));
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -1963,6 +1986,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_fpu_mode",
         get_fpu_mode,
         METH_VARARGS, get_fpu_mode_doc},
+    {"getset_numericops",
+        getset_numericops,
+        METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
@@ -2039,4 +2065,10 @@ init_multiarray_tests(void)
                         "cannot load _multiarray_tests module.");
     }
     return RETVAL;
+}
+
+NPY_NO_EXPORT int
+test_not_exported(void)
+{
+    return 1;
 }

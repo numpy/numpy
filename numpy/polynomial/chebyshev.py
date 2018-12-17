@@ -361,12 +361,12 @@ def poly2cheb(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(range(4))
     >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
+    Polynomial([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1])
     >>> c = p.convert(kind=P.Chebyshev)
     >>> c
-    Chebyshev([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
+    Chebyshev([1.  , 3.25, 1.  , 0.75], domain=[-1.,  1.], window=[-1.,  1.])
     >>> P.chebyshev.poly2cheb(range(4))
-    array([ 1.  ,  3.25,  1.  ,  0.75])
+    array([1.  , 3.25, 1.  , 0.75])
 
     """
     [pol] = pu.as_series([pol])
@@ -413,12 +413,12 @@ def cheb2poly(c):
     >>> from numpy import polynomial as P
     >>> c = P.Chebyshev(range(4))
     >>> c
-    Chebyshev([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    Chebyshev([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1])
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
-    Polynomial([ -2.,  -8.,   4.,  12.], [-1.,  1.])
+    Polynomial([-2., -8.,  4., 12.], domain=[-1.,  1.], window=[-1.,  1.])
     >>> P.chebyshev.cheb2poly(range(4))
-    array([ -2.,  -8.,   4.,  12.])
+    array([-2.,  -8.,   4.,  12.])
 
     """
     from .polynomial import polyadd, polysub, polymulx
@@ -538,7 +538,7 @@ def chebfromroots(roots):
     array([ 0.  , -0.25,  0.  ,  0.25])
     >>> j = complex(0,1)
     >>> C.chebfromroots((-j,j)) # x^2 + 1 relative to the standard basis
-    array([ 1.5+0.j,  0.0+0.j,  0.5+0.j])
+    array([1.5+0.j, 0. +0.j, 0.5+0.j])
 
     """
     if len(roots) == 0:
@@ -594,7 +594,7 @@ def chebadd(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> C.chebadd(c1,c2)
-    array([ 4.,  4.,  4.])
+    array([4., 4., 4.])
 
     """
     # c1, c2 are trimmed copies
@@ -688,7 +688,7 @@ def chebmulx(c):
     --------
     >>> from numpy.polynomial import chebyshev as C
     >>> C.chebmulx([1,2,3])
-    array([ 1.,  2.5,  3.,  1.5,  2.])
+    array([1. , 2.5, 1. , 1.5])
 
     """
     # c is a trimmed copy
@@ -796,10 +796,10 @@ def chebdiv(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> C.chebdiv(c1,c2) # quotient "intuitive," remainder not
-    (array([ 3.]), array([-8., -4.]))
+    (array([3.]), array([-8., -4.]))
     >>> c2 = (0,1,2,3)
     >>> C.chebdiv(c2,c1) # neither "intuitive"
-    (array([ 0.,  2.]), array([-2., -4.]))
+    (array([0., 2.]), array([-2., -4.]))
 
     """
     # c1, c2 are trimmed copies
@@ -853,7 +853,7 @@ def chebpow(c, pow, maxpower=16):
     --------
     >>> from numpy.polynomial import chebyshev as C
     >>> C.chebpow([1, 2, 3, 4], 2)
-    array([15.5, 22. , 16. , 14. , 12.5, 12. ,  8. ])
+    array([15.5, 22. , 16. , ..., 12.5, 12. ,  8. ])
 
     """
     # c is a trimmed copy
@@ -928,13 +928,13 @@ def chebder(c, m=1, scl=1, axis=0):
     >>> from numpy.polynomial import chebyshev as C
     >>> c = (1,2,3,4)
     >>> C.chebder(c)
-    array([ 14.,  12.,  24.])
+    array([14., 12., 24.])
     >>> C.chebder(c,3)
-    array([ 96.])
+    array([96.])
     >>> C.chebder(c,scl=-1)
     array([-14., -12., -24.])
     >>> C.chebder(c,2,-1)
-    array([ 12.,  96.])
+    array([12.,  96.])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -1048,8 +1048,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     >>> C.chebint(c)
     array([ 0.5, -0.5,  0.5,  0.5])
     >>> C.chebint(c,3)
-    array([ 0.03125   , -0.1875    ,  0.04166667, -0.05208333,  0.01041667,
-            0.00625   ])
+    array([ 0.03125   , -0.1875    ,  0.04166667, -0.05208333,  0.01041667, # may vary
+        0.00625   ])
     >>> C.chebint(c, k=3)
     array([ 3.5, -0.5,  0.5,  0.5])
     >>> C.chebint(c,lbnd=-2)
@@ -1096,7 +1096,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             if n > 1:
                 tmp[2] = c[1]/4
             for j in range(2, n):
-                t = c[j]/(2*j + 1)
+                t = c[j]/(2*j + 1)  # FIXME: t never used
                 tmp[j + 1] = c[j]/(2*(j + 1))
                 tmp[j - 1] -= c[j]/(2*(j - 1))
             tmp[0] += k[i] - chebval(lbnd, tmp)
@@ -1674,7 +1674,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -1885,7 +1885,7 @@ def chebroots(c):
     --------
     >>> import numpy.polynomial.chebyshev as cheb
     >>> cheb.chebroots((-1, 1,-1, 1)) # T3 - T2 + T1 - T0 has real roots
-    array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00])
+    array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00]) # may vary
 
     """
     # c is a trimmed copy

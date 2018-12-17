@@ -145,5 +145,4 @@ PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
                                       NpyAuxData **out_innerloopdata,
                                       int *out_needs_api);
 
-
 #endif

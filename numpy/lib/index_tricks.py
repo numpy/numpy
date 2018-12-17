@@ -13,6 +13,7 @@ from numpy.core.numerictypes import find_common_type, issubdtype
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
+from numpy.core.overrides import set_module
 from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 
@@ -477,7 +478,7 @@ class RClass(AxisConcatenator):
     Examples
     --------
     >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
-    array([1, 2, 3, 0, 0, 4, 5, 6])
+    array([1, 2, 3, ..., 4, 5, 6])
     >>> np.r_[-1:1:6j, [0]*3, 5, 6]
     array([-1. , -0.6, -0.2,  0.2,  0.6,  1. ,  0. ,  0. ,  0. ,  5. ,  6. ])
 
@@ -537,15 +538,18 @@ class CClass(AxisConcatenator):
            [2, 5],
            [3, 6]])
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
-    array([[1, 2, 3, 0, 0, 4, 5, 6]])
+    array([[1, 2, 3, ..., 4, 5, 6]])
 
     """
 
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
 
+
 c_ = CClass()
 
+
+@set_module('numpy')
 class ndenumerate(object):
     """
     Multidimensional index iterator.
@@ -596,6 +600,7 @@ class ndenumerate(object):
     next = __next__
 
 
+@set_module('numpy')
 class ndindex(object):
     """
     An N-dimensional iterator object to index arrays.
@@ -808,7 +813,7 @@ def fill_diagonal(a, val, wrap=False):
 
     >>> # tall matrices no wrap
     >>> a = np.zeros((5, 3),int)
-    >>> fill_diagonal(a, 4)
+    >>> np.fill_diagonal(a, 4)
     >>> a
     array([[4, 0, 0],
            [0, 4, 0],
@@ -818,7 +823,7 @@ def fill_diagonal(a, val, wrap=False):
 
     >>> # tall matrices wrap
     >>> a = np.zeros((5, 3),int)
-    >>> fill_diagonal(a, 4, wrap=True)
+    >>> np.fill_diagonal(a, 4, wrap=True)
     >>> a
     array([[4, 0, 0],
            [0, 4, 0],
@@ -828,7 +833,7 @@ def fill_diagonal(a, val, wrap=False):
 
     >>> # wide matrices
     >>> a = np.zeros((3, 5),int)
-    >>> fill_diagonal(a, 4, wrap=True)
+    >>> np.fill_diagonal(a, 4, wrap=True)
     >>> a
     array([[4, 0, 0, 0, 0],
            [0, 4, 0, 0, 0],
@@ -856,6 +861,7 @@ def fill_diagonal(a, val, wrap=False):
     a.flat[:end:step] = val
 
 
+@set_module('numpy')
 def diag_indices(n, ndim=2):
     """
     Return the indices to access the main diagonal of an array.

@@ -71,12 +71,8 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
         n_ops.op = temp; \
     }
 
-
-/*NUMPY_API
- *Set internal structure with number functions that all arrays will use
- */
 NPY_NO_EXPORT int
-PyArray_SetNumericOps(PyObject *dict)
+_PyArray_SetNumericOps(PyObject *dict)
 {
     PyObject *temp = NULL;
     SET(add);
@@ -116,7 +112,23 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(minimum);
     SET(rint);
     SET(conjugate);
+    SET(matmul);
     return 0;
+}
+
+/*NUMPY_API
+ *Set internal structure with number functions that all arrays will use
+ */
+NPY_NO_EXPORT int
+PyArray_SetNumericOps(PyObject *dict)
+{
+    /* 2018-09-09, 1.16 */
+    if (DEPRECATE("PyArray_SetNumericOps is deprecated. Use "
+        "PyUFunc_ReplaceLoopBySignature to replace ufunc inner loop functions "
+        "instead.") < 0) {
+        return -1;
+    }
+    return _PyArray_SetNumericOps(dict);
 }
 
 /* Note - macro contains goto */
@@ -124,11 +136,8 @@ PyArray_SetNumericOps(PyObject *dict)
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
         goto fail;
 
-/*NUMPY_API
-  Get dictionary showing number functions that all arrays will use
-*/
 NPY_NO_EXPORT PyObject *
-PyArray_GetNumericOps(void)
+_PyArray_GetNumericOps(void)
 {
     PyObject *dict;
     if ((dict = PyDict_New())==NULL)
@@ -169,11 +178,25 @@ PyArray_GetNumericOps(void)
     GET(minimum);
     GET(rint);
     GET(conjugate);
+    GET(matmul);
     return dict;
 
  fail:
     Py_DECREF(dict);
     return NULL;
+}
+
+/*NUMPY_API
+  Get dictionary showing number functions that all arrays will use
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_GetNumericOps(void)
+{
+    /* 2018-09-09, 1.16 */
+    if (DEPRECATE("PyArray_GetNumericOps is deprecated.") < 0) {
+        return NULL;
+    }
+    return _PyArray_GetNumericOps();
 }
 
 static PyObject *
@@ -361,14 +384,8 @@ array_divmod(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 {
-    static PyObject *matmul = NULL;
-
-    npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
-    if (matmul == NULL) {
-        return NULL;
-    }
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_matrix_multiply, array_matrix_multiply);
-    return PyArray_GenericBinaryFunction(m1, m2, matmul);
+    return PyArray_GenericBinaryFunction(m1, m2, n_ops.matmul);
 }
 
 static PyObject *
@@ -578,7 +595,7 @@ array_positive(PyArrayObject *m1)
          */
         PyObject *exc, *val, *tb;
         PyErr_Fetch(&exc, &val, &tb);
-        if (has_non_default_array_ufunc((PyObject *)m1)) {
+        if (PyUFunc_HasOverride((PyObject *)m1)) {
             PyErr_Restore(exc, val, tb);
             return NULL;
         }

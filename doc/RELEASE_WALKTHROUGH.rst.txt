@@ -138,7 +138,7 @@ This needs to be done after all installers are present, but before the pavement
 file is updated for continued development.
 
     $ cd ../numpy
-    $ paver write_release_and_log
+    $ paver write_release
 
 
 Tag the release

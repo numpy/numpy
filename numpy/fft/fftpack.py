@@ -177,19 +177,17 @@ def fft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.fft(np.exp(2j * np.pi * np.arange(8) / 8))
-    array([ -3.44505240e-16 +1.14383329e-17j,
-             8.00000000e+00 -5.71092652e-15j,
-             2.33482938e-16 +1.22460635e-16j,
-             1.64863782e-15 +1.77635684e-15j,
-             9.95839695e-17 +2.33482938e-16j,
-             0.00000000e+00 +1.66837030e-15j,
-             1.14383329e-17 +1.22460635e-16j,
-             -1.64863782e-15 +1.77635684e-15j])
+    array([-2.33486982e-16+1.14423775e-17j,  8.00000000e+00-1.25557246e-15j,
+            2.33486982e-16+2.33486982e-16j,  0.00000000e+00+1.22464680e-16j,
+           -1.14423775e-17+2.33486982e-16j,  0.00000000e+00+5.20784380e-16j,
+            1.14423775e-17+1.14423775e-17j,  0.00000000e+00+1.22464680e-16j])
 
     In this example, real input has an FFT which is Hermitian, i.e., symmetric
     in the real part and anti-symmetric in the imaginary part, as described in
     the `numpy.fft` documentation:
 
+    >>> import matplotlib
+    >>> matplotlib.use('Agg')
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(256)
     >>> sp = np.fft.fft(np.sin(t))
@@ -278,19 +276,21 @@ def ifft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.ifft([0, 4, 0, 0])
-    array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j])
+    array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j]) # may vary
 
     Create and plot a band-limited signal with random phases:
 
+    >>> import matplotlib
+    >>> matplotlib.use('agg')
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(400)
     >>> n = np.zeros((400,), dtype=complex)
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
     >>> plt.plot(t, s.real, 'b-', t, s.imag, 'r--')
-    ...
+    [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object at ...>]
     >>> plt.legend(('real', 'imaginary'))
-    ...
+    <matplotlib.legend.Legend object at ...>
     >>> plt.show()
 
     """
@@ -374,9 +374,9 @@ def rfft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.fft([0, 1, 0, 0])
-    array([ 1.+0.j,  0.-1.j, -1.+0.j,  0.+1.j])
+    array([ 1.+0.j,  0.-1.j, -1.+0.j,  0.+1.j]) # may vary
     >>> np.fft.rfft([0, 1, 0, 0])
-    array([ 1.+0.j,  0.-1.j, -1.+0.j])
+    array([ 1.+0.j,  0.-1.j, -1.+0.j]) # may vary
 
     Notice how the final element of the `fft` output is the complex conjugate
     of the second element, for real input. For `rfft`, this symmetry is
@@ -465,9 +465,9 @@ def irfft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.ifft([1, -1j, -1, 1j])
-    array([ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j])
+    array([0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]) # may vary
     >>> np.fft.irfft([1, -1j, -1])
-    array([ 0.,  1.,  0.,  0.])
+    array([0.,  1.,  0.,  0.])
 
     Notice how the last term in the input to the ordinary `ifft` is the
     complex conjugate of the second term, and the output has zero imaginary
@@ -543,16 +543,16 @@ def hfft(a, n=None, axis=-1, norm=None):
     --------
     >>> signal = np.array([1, 2, 3, 4, 3, 2])
     >>> np.fft.fft(signal)
-    array([ 15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j])
+    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may vary
     >>> np.fft.hfft(signal[:4]) # Input first half of signal
-    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+    array([15.,  -4.,   0.,  -1.,   0.,  -4.])
     >>> np.fft.hfft(signal, 6)  # Input entire signal and truncate
-    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+    array([15.,  -4.,   0.,  -1.,   0.,  -4.])
 
 
     >>> signal = np.array([[1, 1.j], [-1.j, 2]])
     >>> np.conj(signal.T) - signal   # check Hermitian symmetry
-    array([[ 0.-0.j,  0.+0.j],
+    array([[ 0.-0.j,  -0.+0.j], # may vary
            [ 0.+0.j,  0.-0.j]])
     >>> freq_spectrum = np.fft.hfft(signal)
     >>> freq_spectrum
@@ -616,9 +616,9 @@ def ihfft(a, n=None, axis=-1, norm=None):
     --------
     >>> spectrum = np.array([ 15, -4, 0, -1, 0, -4])
     >>> np.fft.ifft(spectrum)
-    array([ 1.+0.j,  2.-0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.-0.j])
+    array([1.+0.j,  2.+0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.+0.j]) # may vary
     >>> np.fft.ihfft(spectrum)
-    array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j])
+    array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j]) # may vary
 
     """
     # The copy may be required for multithreading.
@@ -732,17 +732,17 @@ def fftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.mgrid[:3, :3, :3][0]
     >>> np.fft.fftn(a, axes=(1, 2))
-    array([[[  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j]],
-           [[  9.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j]],
-           [[ 18.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j]]])
+    array([[[ 0.+0.j,   0.+0.j,   0.+0.j], # may vary
+            [ 0.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j]],
+           [[ 9.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j]],
+           [[18.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j]]])
     >>> np.fft.fftn(a, (2, 2), axes=(0, 1))
-    array([[[ 2.+0.j,  2.+0.j,  2.+0.j],
+    array([[[ 2.+0.j,  2.+0.j,  2.+0.j], # may vary
             [ 0.+0.j,  0.+0.j,  0.+0.j]],
            [[-2.+0.j, -2.+0.j, -2.+0.j],
             [ 0.+0.j,  0.+0.j,  0.+0.j]]])
@@ -838,10 +838,10 @@ def ifftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.eye(4)
     >>> np.fft.ifftn(np.fft.fftn(a, axes=(0,)), axes=(1,))
-    array([[ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
-           [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
-           [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
-           [ 0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j]])
+    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
+           [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
+           [0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
+           [0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j]])
 
 
     Create and plot an image with band-limited frequency content:
@@ -934,16 +934,16 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = np.mgrid[:5, :5][0]
     >>> np.fft.fft2(a)
-    array([[ 50.0 +0.j        ,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5+17.20477401j,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5 +4.0614962j ,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5 -4.0614962j ,   0.0 +0.j        ,   0.0 +0.j        ,
-                0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5-17.20477401j,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ]])
+    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may vary
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5+17.20477401j,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5 +4.0614962j ,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5 -4.0614962j ,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5-17.20477401j,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ]])
 
     """
 
@@ -1028,10 +1028,10 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = 4 * np.eye(4)
     >>> np.fft.ifft2(a)
-    array([[ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
-           [ 0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
-           [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
-           [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
+    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
+           [0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
+           [0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
+           [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
 
@@ -1110,16 +1110,16 @@ def rfftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.ones((2, 2, 2))
     >>> np.fft.rfftn(a)
-    array([[[ 8.+0.j,  0.+0.j],
-            [ 0.+0.j,  0.+0.j]],
-           [[ 0.+0.j,  0.+0.j],
-            [ 0.+0.j,  0.+0.j]]])
+    array([[[8.+0.j,  0.+0.j], # may vary
+            [0.+0.j,  0.+0.j]],
+           [[0.+0.j,  0.+0.j],
+            [0.+0.j,  0.+0.j]]])
 
     >>> np.fft.rfftn(a, axes=(2, 0))
-    array([[[ 4.+0.j,  0.+0.j],
-            [ 4.+0.j,  0.+0.j]],
-           [[ 0.+0.j,  0.+0.j],
-            [ 0.+0.j,  0.+0.j]]])
+    array([[[4.+0.j,  0.+0.j], # may vary
+            [4.+0.j,  0.+0.j]],
+           [[0.+0.j,  0.+0.j],
+            [0.+0.j,  0.+0.j]]])
 
     """
     # The copy may be required for multithreading.
@@ -1247,12 +1247,12 @@ def irfftn(a, s=None, axes=None, norm=None):
     >>> a = np.zeros((3, 2, 2))
     >>> a[0, 0, 0] = 3 * 2 * 2
     >>> np.fft.irfftn(a)
-    array([[[ 1.,  1.],
-            [ 1.,  1.]],
-           [[ 1.,  1.],
-            [ 1.,  1.]],
-           [[ 1.,  1.],
-            [ 1.,  1.]]])
+    array([[[1.,  1.],
+            [1.,  1.]],
+           [[1.,  1.],
+            [1.,  1.]],
+           [[1.,  1.],
+            [1.,  1.]]])
 
     """
     # The copy may be required for multithreading.

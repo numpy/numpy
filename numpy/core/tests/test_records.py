@@ -7,15 +7,15 @@ try:
     import collections.abc as collections_abc
 except ImportError:
     import collections as collections_abc
-import warnings
 import textwrap
 from os import path
 import pytest
 
 import numpy as np
+from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, assert_warns
+    assert_raises, temppath
     )
 from numpy.core.numeric import pickle
 
@@ -325,6 +325,23 @@ class TestFromrecords(object):
         assert_equal(rec['f1'], [b'', b'', b''])
 
 
+@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+class TestPathUsage(object):
+    # Test that pathlib.Path can be used
+    def test_tofile_fromfile(self):
+        with temppath(suffix='.bin') as path:
+            path = Path(path)
+            np.random.seed(123)
+            a = np.random.rand(10).astype('f8,i4,a5')
+            a[5] = (0.5,10,'abcde')
+            with path.open("wb") as fd:
+                a.tofile(fd)
+            x = np.core.records.fromfile(path,
+                                         formats='f8,i4,a5',
+                                         shape=10)
+            assert_array_equal(x, a)
+
+
 class TestRecord(object):
     def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
@@ -361,7 +378,6 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
-    @pytest.mark.xfail(reason="See gh-10411, becomes real error in 1.16")
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
         x = self.data[['col1', 'col2']]

@@ -127,7 +127,7 @@ def fv(rate, nper, pmt, pv, when='end'):
 
     >>> a = np.array((0.05, 0.06, 0.07))/12
     >>> np.fv(a, 10*12, -100, -100)
-    array([ 15692.92889434,  16569.87435405,  17509.44688102])
+    array([ 15692.92889434,  16569.87435405,  17509.44688102]) # may vary
 
     """
     when = _convert_when(when)
@@ -275,7 +275,7 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     If you only had $150/month to pay towards the loan, how long would it take
     to pay-off a loan of $8,000 at 7% annual interest?
 
-    >>> print(round(np.nper(0.07/12, -150, 8000), 5))
+    >>> print(np.round(np.nper(0.07/12, -150, 8000), 5))
     64.07335
 
     So, over 64 months would be required to pay off the loan.
@@ -286,10 +286,10 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     >>> np.nper(*(np.ogrid[0.07/12: 0.08/12: 0.01/12,
     ...                    -150   : -99     : 50    ,
     ...                    8000   : 9001    : 1000]))
-    array([[[  64.07334877,   74.06368256],
-            [ 108.07548412,  127.99022654]],
-           [[  66.12443902,   76.87897353],
-            [ 114.70165583,  137.90124779]]])
+    array([[[ 64.07334877,  74.06368256],
+            [108.07548412, 127.99022654]],
+           [[ 66.12443902,  76.87897353],
+            [114.70165583, 137.90124779]]])
 
     """
     when = _convert_when(when)
@@ -539,7 +539,7 @@ def pv(rate, nper, pmt, fv=0, when='end'):
 
     >>> a = np.array((0.05, 0.04, 0.03))/12
     >>> np.pv(a, 10*12, -100, 15692.93)
-    array([ -100.00067132,  -649.26771385, -1273.78633713])
+    array([ -100.00067132,  -649.26771385, -1273.78633713]) # may vary
 
     So, to end up with the same $15692.93 under the same $100 per month
     "savings plan," for annual interest rates of 4% and 3%, one would
@@ -704,15 +704,15 @@ def irr(values):
 
     Examples
     --------
-    >>> round(irr([-100, 39, 59, 55, 20]), 5)
+    >>> round(np.irr([-100, 39, 59, 55, 20]), 5)
     0.28095
-    >>> round(irr([-100, 0, 0, 74]), 5)
+    >>> round(np.irr([-100, 0, 0, 74]), 5)
     -0.0955
-    >>> round(irr([-100, 100, 0, -7]), 5)
+    >>> round(np.irr([-100, 100, 0, -7]), 5)
     -0.0833
-    >>> round(irr([-100, 100, 0, 7]), 5)
+    >>> round(np.irr([-100, 100, 0, 7]), 5)
     0.06206
-    >>> round(irr([-5, 10.5, 1, -8, 1]), 5)
+    >>> round(np.irr([-5, 10.5, 1, -8, 1]), 5)
     0.0886
 
     (Compare with the Example given for numpy.lib.financial.npv)
@@ -777,7 +777,7 @@ def npv(rate, values):
     Examples
     --------
     >>> np.npv(0.281,[-100, 39, 59, 55, 20])
-    -0.0084785916384548798
+    -0.0084785916384548798 # may vary
 
     (Compare with the Example given for numpy.lib.financial.irr)
 

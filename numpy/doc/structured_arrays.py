@@ -35,25 +35,23 @@ with the field name::
  array([('Rex', 5, 81.0), ('Fido', 5, 27.0)],
        dtype=[('name', 'S10'), ('age', '<i4'), ('weight', '<f4')])
 
-Structured arrays are designed for low-level manipulation of structured data,
-for example, for interpreting binary blobs. Structured datatypes are
-designed to mimic 'structs' in the C language, making them also useful for
-interfacing with C code. For these purposes, numpy supports specialized
-features such as subarrays and nested datatypes, and allows manual control over
-the memory layout of the structure.
+Structured datatypes are designed to be able to mimic 'structs' in the C
+language, and share a similar memory layout. They are meant for interfacing with
+C code and for low-level manipulation of structured buffers, for example for
+interpreting binary blobs. For these purposes they support specialized features
+such as subarrays, nested datatypes, and unions, and allow control over the
+memory layout of the structure.
 
-For simple manipulation of tabular data other pydata projects, such as pandas,
-xarray, or DataArray, provide higher-level interfaces that may be more
-suitable. These projects may also give better performance for tabular data
-analysis because the C-struct-like memory layout of structured arrays can lead
-to poor cache behavior.
+Users looking to manipulate tabular data, such as stored in csv files, may find
+other pydata projects more suitable, such as xarray, pandas, or DataArray.
+These provide a high-level interface for tabular data analysis and are better
+optimized for that use. For instance, the C-struct-like memory layout of
+structured arrays in numpy can lead to poor cache behavior in comparison.
 
 .. _defining-structured-types:
 
 Structured Datatypes
 ====================
-
-To use structured arrays one first needs to define a structured datatype.
 
 A structured datatype can be thought of as a sequence of bytes of a certain
 length (the structure's :term:`itemsize`) which is interpreted as a collection
@@ -180,7 +178,9 @@ values are tuples containing the dtype and byte offset of each field. ::
  mappingproxy({'x': (dtype('int64'), 0), 'y': (dtype('float32'), 8)})
 
 Both the ``names`` and ``fields`` attributes will equal ``None`` for
-unstructured arrays.
+unstructured arrays. The recommended way to test if a dtype is structured is
+with `if dt.names is not None` rather than `if dt.names`, to account for dtypes
+with 0 fields.
 
 The string representation of a structured datatype is shown in the "list of
 tuples" form if possible, otherwise numpy falls back to using the more general
@@ -397,6 +397,15 @@ typically a non-structured array, except in the case of nested structures.
  >>> y.dtype, y.shape, y.strides
  (dtype('float32'), (2,), (12,))
 
+If the accessed field is a subarray, the dimensions of the subarray
+are appended to the shape of the result::
+
+   >>> x = np.zeros((2,2), dtype=[('a', np.int32), ('b', np.float64, (3,3))])
+   >>> x['a'].shape
+   (2, 2)
+   >>> x['b'].shape
+   (2, 2, 3, 3)
+
 Accessing Multiple Fields
 ```````````````````````````
 
@@ -404,11 +413,10 @@ One can index and assign to a structured array with a multi-field index, where
 the index is a list of field names.
 
 .. warning::
-    The behavior of multi-field indexes will change from Numpy 1.15 to Numpy
-    1.16.
+    The behavior of multi-field indexes changed from Numpy 1.15 to Numpy 1.16.
 
-In Numpy 1.16, the result of indexing with a multi-field index will be a view
-into the original array, as follows::
+The result of indexing with a multi-field index is a view into the original
+array, as follows::
 
  >>> a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'i4'), ('c', 'f4')])
  >>> a[['a', 'c']]
@@ -420,32 +428,58 @@ in the order they were indexed. Note that unlike for single-field indexing, the
 view's dtype has the same itemsize as the original array, and has fields at the
 same offsets as in the original array, and unindexed fields are merely missing.
 
-In Numpy 1.15, indexing an array with a multi-field index returns a copy of
-the result above for 1.16, but with fields packed together in memory as if
-passed through :func:`numpy.lib.recfunctions.repack_fields`. This is the
-behavior since Numpy 1.7.
-
 .. warning::
-   The new behavior in Numpy 1.16 leads to extra "padding" bytes at the
-   location of unindexed fields. You will need to update any code which depends
-   on the data having a "packed" layout. For instance code such as::
+    In Numpy 1.15, indexing an array with a multi-field index returned a copy of
+    the result above, but with fields packed together in memory as if
+    passed through :func:`numpy.lib.recfunctions.repack_fields`.
 
-    >>> a[['a','c']].view('i8')  # will fail in Numpy 1.16
-    ValueError: When changing to a smaller dtype, its size must be a divisor of the size of original dtype
+    The new behavior as of Numpy 1.16 leads to extra "padding" bytes at the
+    location of unindexed fields compared to 1.15. You will need to update any
+    code which depends on the data having a "packed" layout. For instance code
+    such as::
 
-   will need to be changed. This code has raised a ``FutureWarning`` since
-   Numpy 1.12.
+     >>> a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'i4'), ('c', 'f4')])
+     >>> a[['a','c']].view('i8')  # Fails in Numpy 1.16
+     ValueError: When changing to a smaller dtype, its size must be a divisor of the size of original dtype
 
-   The following is a recommended fix, which will behave identically in Numpy
-   1.15 and Numpy 1.16::
+    will need to be changed. This code has raised a ``FutureWarning`` since
+    Numpy 1.12, and similar code has raised ``FutureWarning`` since 1.7.
 
-    >>> from numpy.lib.recfunctions import repack_fields
-    >>> repack_fields(a[['a','c']]).view('i8')  # supported 1.15 and 1.16
-    array([0, 0, 0])
+    In 1.16 a number of functions have been introduced in the
+    :module:`numpy.lib.recfunctions` module to help users account for this
+    change. These are
+    :func:`numpy.lib.recfunctions.repack_fields`.
+    :func:`numpy.lib.recfunctions.structured_to_unstructured`,
+    :func:`numpy.lib.recfunctions.unstructured_to_structured`,
+    :func:`numpy.lib.recfunctions.apply_along_fields`,
+    :func:`numpy.lib.recfunctions.assign_fields_by_name`,  and
+    :func:`numpy.lib.recfunctions.require_fields`.
 
-Assigning to an array with a multi-field index will behave the same in Numpy
-1.15 and Numpy 1.16. In both versions the assignment will modify the original
-array::
+    The function :func:`numpy.lib.recfunctions.repack_fields` can always be
+    used to reproduce the old behavior, as it will return a packed copy of the
+    structured array. The code above, for example, can be replaced with:
+
+     >>> repack_fields(a[['a','c']]).view('i8')  # supported in 1.16
+     array([0, 0, 0])
+
+    Furthermore, numpy now provides a new function
+    :func:`numpy.lib.recfunctions.structured_to_unstructured` which is a safer
+    and more efficient alternative for users who wish to convert structured
+    arrays to unstructured arrays, as the view above is often indeded to do.
+    This function allows safe conversion to an unstructured type taking into
+    account padding, often avoids a copy, and also casts the datatypes
+    as needed, unlike the view. Code such as:
+
+     >>> a = np.zeros(3, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+     >>> a[['x', 'z']].view('f4')
+
+    can be made safer by replacing with:
+
+     >>> structured_to_unstructured(a[['x', 'z']])
+     array([0, 0, 0])
+
+
+Assignment to an array with a multi-field index modifies the original array::
 
  >>> a[['a', 'c']] = (2, 3)
  >>> a

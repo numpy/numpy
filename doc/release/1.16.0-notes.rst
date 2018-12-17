@@ -4,7 +4,7 @@ NumPy 1.16.0 Release Notes
 
 This NumPy release is the last one to support Python 2.7. It will be maintained
 as a long term release with bug fixes only through 2020. To that end, the
-planned code reorganization detailed in NEP-0015 has been made in order to
+planned code reorganization detailed in `NEP 15`_ has been made in order to
 facilitate backporting fixes from future releases, which will now have the
 same code organization.
 
@@ -19,6 +19,11 @@ Highlights
 New functions
 =============
 
+ * New functions in the `numpy.lib.recfunctions` module to ease the structured
+   assignment changes: `assign_fields_by_name`, `structured_to_unstructured`,
+   `unstructured_to_structured`, `apply_along_fields`, and `require_fields`.
+   See the user guide at <https://docs.scipy.org/doc/numpy/user/basics.rec.html>
+   for more info.
 
 Deprecations
 ============
@@ -41,6 +46,13 @@ These were deprecated in 1.10, had no tests, and seem to no longer work in
 It is an alias to the more powerful `numpy.ndarray.item`, not tested, and fails
 for scalars.
 
+`np.set_array_ops` and `np.get_array_ops` have been deprecated
+--------------------------------------------------------------
+As part of `NEP 15`, they have been deprecated along with the C-API functions
+:c:func:`PyArray_SetNumericOps` and :c:func:`PyArray_GetNumericOps`. Users who wish to override
+the inner loop functions in built-in ufuncs should use
+:c:func:`PyUFunc_ReplaceLoopBySignature`.
+
 Future Changes
 ==============
 
@@ -51,6 +63,13 @@ Expired deprecations
 
 * NaT comparisons now return ``False`` without a warning, finishing a
   deprecation cycle begun in NumPy 1.11.
+
+* ``np.lib.function_base.unique`` was removed, finishing a deprecation cycle
+  begun in NumPy 1.4. Use `numpy.unique` instead.
+
+* multi-field indexing now returns views instead of copies, finishing a
+  deprecation cycle begun in NumPy 1.7. The change was previously attempted in
+  NumPy 1.14 but reverted until now.
 
 Compatibility notes
 ===================
@@ -98,15 +117,44 @@ Previously, only the ``dims`` keyword argument was accepted
 for specification of the shape of the array to be used
 for unraveling. ``dims`` remains supported, but is now deprecated.
 
+multi-field views return a view instead of a copy
+-------------------------------------------------
+Indexing a structured array with multiple fields, e.g.,
+``arr[['f1', 'f3']]``, returns a view into the original array instead of a
+copy. The returned view will often have extra padding bytes corresponding to
+intervening fields in the original array, unlike before, which will
+affect code such as ``arr[['f1', 'f3']].view('float64')``. This change has
+been planned since numpy 1.7 and such operations have emitted
+``FutureWarnings`` since then and more since 1.12.
+
+To help users update their code to account for these changes, a number of
+functions have been added to the ``numpy.lib.recfunctions`` module which
+safely allow such operations. For instance, the code above can be replaced
+with ``structured_to_unstructured(arr[['f1', 'f3']], dtype='float64')``.
+See the "accessing multiple fields" section of the
+`user guide <https://docs.scipy.org/doc/numpy/user/basics.rec.html>`__.
+
 
 C API changes
 =============
 
-The :c:data:`NPY_API_VERSION` was incremented to 0x0000D since
-``core_dim_flags`` and ``core_dim_sizes`` were added to :c:type:`PyUFuncObject`.
+The :c:data:`NPY_API_VERSION` was incremented to 0x0000D, due to the addition
+of:
+
+* :c:member:`PyUFuncObject.core_dim_flags`
+* :c:member:`PyUFuncObject.core_dim_sizes`
+* :c:member:`PyUFuncObject.identity_value`
+* :c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`
 
 New Features
 ============
+
+Integrated squared error (ISE) estimator added to ``histogram``
+---------------------------------------------------------------
+This method (``bins='stone'``) for optimizing the bin number is a generalization of the
+Scott's rule. The Scott's rule assumes the distribution is approximately
+Normal, while the ISE is a nonparametric method based on cross-validation.
+https://en.wikipedia.org/wiki/Histogram#Minimizing_cross-validation_estimated_squared_error
 
 ``max_rows`` keyword added for ``np.loadtxt``
 ---------------------------------------------
@@ -224,6 +272,16 @@ single elementary function for four related but different signatures,
 The ``out`` argument to these functions is now always tested for memory overlap
 to avoid corrupted results when memory overlap occurs.
 
+New value ``unscaled`` for option ``cov`` in ``np.polyfit''
+-----------------------------------------------------------
+A further possible value has been added to the ``cov`` parameter of the
+``np.polyfit`` function. With ``cov='unscaled'`` the scaling of the covariance
+matrix is disabled completely (similar to setting ``absolute_sigma=True'' in
+``scipy.optimize.curve_fit``). This would be useful in occasions, where the
+weights are given by 1/sigma with sigma being the (known) standard errors of
+(Gaussian distributed) data points, in which case the unscaled matrix is
+already a correct estimate for the covariance matrix.
+
 Detailed docstrings for scalar numeric types
 --------------------------------------------
 The ``help`` function, when applied to numeric types such as `np.intc`,
@@ -278,6 +336,70 @@ Speedup ``np.take`` for read-only arrays
 The implementation of ``np.take`` no longer makes an unnecessary copy of the
 source array when its ``writeable`` flag is set to ``False``.
 
+Support path-like objects for more functions
+--------------------------------------------
+The ``np.core.records.fromfile`` function now supports ``pathlib.Path``
+and other path-like objects in addition to a file object. Furthermore, the
+``np.load`` function now also supports path-like objects when
+using memory mapping (``mmap_mode`` keyword argument).
+
+Better behaviour of ufunc identities during reductions
+------------------------------------------------------
+Universal functions have an ``.identity`` which is used when ``.reduce`` is
+called on an empty axis.
+
+As of this release, the logical binary ufuncs, `logical_and`, `logical_or`,
+and `logical_xor`, now have ``identity``s of type `bool`, where previously they
+were of type `int`. This restores the 1.14 behavior of getting ``bool``s when
+reducing empty object arrays with these ufuncs, while also keeping the 1.15
+behavior of getting ``int``s when reducing empty object arrays with arithmetic
+ufuncs like ``add`` and ``multiply``.
+
+Additionally, `logaddexp` now has an identity of ``-inf``, allowing it to be
+called on empty sequences, where previously it could not be.
+
+This is possible thanks to the new
+:c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`, which allows
+arbitrary values to be used as identities now.
+
+Improved conversion from ctypes objects
+---------------------------------------
+Numpy has always supported taking a value or type from ``ctypes`` and
+converting it into an array or dtype, but only behaved correctly for simpler
+types. As of this release, this caveat is lifted - now:
+
+* The ``_pack_`` attribute of ``ctypes.Structure``, used to emulate C's
+  ``__attribute__((packed))``, is respected.
+* Endianness of all ctypes objects is preserved
+* ``ctypes.Union`` is supported
+* Unrepresentable constructs raise exceptions, rather than producing
+  dangerously incorrect results:
+  * Bitfields are no longer interpreted as sub-arrays
+  * Pointers are no longer replaced with the type that they point to
+
+A new ``ndpointer.contents`` member
+-----------------------------------
+This matches the ``.contents`` member of normal ctypes arrays, and can be used
+to construct an ``np.array`` around the pointers contents.
+
+This replaces ``np.array(some_nd_pointer)``, which stopped working in 1.15.
+
+As a side effect of this change, ``ndpointer`` now supports dtypes with
+overlapping fields and padding.
+
+``matmul`` is now a ``ufunc``
+-----------------------------
+`numpy.matmul` is now a ufunc which means that both the function and the
+``__matmul__`` operator can now be overridden by ``__array_ufunc__``. Its
+implementation has also changed, ensuring it uses the same BLAS routines as
+`numpy.dot`, ensuring its performance is similar for large matrices.
+
+Start and stop arrays for ``linspace``, ``logspace`` and ``geomspace``
+----------------------------------------------------------------------
+These functions used to be limited to scalar stop and start values, but can
+now take arrays, which will be properly broadcast and result in an output
+which has one axis prepended.  This can be used, e.g., to obtain linearly
+interpolated points between sets of points.
 
 Changes
 =======
@@ -299,6 +421,21 @@ if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
 subclasses that override the default ``__array_ufunc__`` implementation,
 the ``TypeError`` is passed on.
 
+``NDArrayOperatorsMixin`` now implements matrix multiplication
+--------------------------------------------------------------
+Previously, ``np.lib.mixins.NDArrayOperatorsMixin`` did not implement the
+special methods for Python's matrix multiplication operator (``@``). This has
+changed now that ``matmul`` is a ufunc and can be overriden using
+``__array_ufunc__``.
+
+The scaling of the covariance matrix in ``np.polyfit`` is different
+-------------------------------------------------------------------
+So far, ``np.polyfit`` used a non-standard factor in the scaling of the the
+covariance matrix. Namely, rather than using the standard chisq/(M-N), it
+scales it with chisq/(M-N-2) where M is the number of data points and N is the
+number of parameters.  This scaling is inconsistent with other fitting programs
+such as e.g. ``scipy.optimize.curve_fit`` and was changed to chisq/(M-N).
+
 ``maximum`` and ``minimum`` no longer emit warnings
 ---------------------------------------------------
 As part of code introduced in 1.10,  ``float32`` and ``float64`` set invalid
@@ -313,6 +450,8 @@ The two modules were merged, according to the first step in `NEP 15`_.
 Previously `np.core.umath` and `np.core.multiarray` were the c-extension
 modules, they are now python wrappers to the single `np.core/_multiarray_math`
 c-extension module.
+
+.. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html
 
 ``getfield`` validity checks extended
 ----------------------------------------
@@ -330,3 +469,7 @@ the future.
 
 .. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html
 .. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+Arrays based off readonly buffers cannot be set ``writeable``
+-------------------------------------------------------------
+We now disallow setting the ``writeable`` flag True on arrays created
+from ``fromstring(readonly-buffer)``.

@@ -13,13 +13,14 @@ import pytest
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
-from numpy import multiply, atleast_2d, inf, asarray, matrix
+from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, suppress_warnings
+    assert_almost_equal, assert_allclose, suppress_warnings,
+    assert_raises_regex,
     )
 
 
@@ -931,6 +932,14 @@ class TestLstsq(LstsqCases):
         assert_equal(rank, min(m, n))
         assert_equal(s.shape, (min(m, n),))
 
+    def test_incompatible_dims(self):
+        # use modified version of docstring example
+        x = np.array([0, 1, 2, 3])
+        y = np.array([-1, 0.2, 0.9, 2.1, 3.3])
+        A = np.vstack([x, np.ones(len(x))]).T
+        with assert_raises_regex(LinAlgError, "Incompatible dimensions"):
+            linalg.lstsq(A, y, rcond=None)
+
 
 @pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
 class TestMatrixPower(object):
@@ -946,7 +955,6 @@ class TestMatrixPower(object):
     dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
     def test_large_power(self, dt):
-        power = matrix_power
         rshft = self.rshft_1.astype(dt)
         assert_equal(
             matrix_power(rshft, 2**100 + 2**10 + 2**5 + 0), self.rshft_0)
@@ -1610,8 +1618,6 @@ class TestQR(object):
     def test_qr_empty(self, m, n):
         k = min(m, n)
         a = np.empty((m, n))
-        a_type = type(a)
-        a_dtype = a.dtype
 
         self.check_qr(a)
 

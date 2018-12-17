@@ -3,8 +3,9 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import (
-    long, basestring, is_pathlib_path, contextlib_nullcontext
+    long, basestring, os_fspath, contextlib_nullcontext, is_pathlib_path
 )
+from numpy.core.overrides import set_module
 
 __all__ = ['memmap']
 
@@ -19,6 +20,8 @@ mode_equivalents = {
     "write":"w+"
     }
 
+
+@set_module('numpy')
 class memmap(ndarray):
     """Create a memory-map to an array stored in a *binary* file on disk.
 
@@ -132,9 +135,9 @@ class memmap(ndarray):
 
     >>> fp = np.memmap(filename, dtype='float32', mode='w+', shape=(3,4))
     >>> fp
-    memmap([[ 0.,  0.,  0.,  0.],
-            [ 0.,  0.,  0.,  0.],
-            [ 0.,  0.,  0.,  0.]], dtype=float32)
+    memmap([[0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.]], dtype=float32)
 
     Write data to memmap array:
 
@@ -218,10 +221,8 @@ class memmap(ndarray):
 
         if hasattr(filename, 'read'):
             f_ctx = contextlib_nullcontext(filename)
-        elif is_pathlib_path(filename):
-            f_ctx = filename.open(('r' if mode == 'c' else mode)+'b')
         else:
-            f_ctx = open(filename, ('r' if mode == 'c' else mode)+'b')
+            f_ctx = open(os_fspath(filename), ('r' if mode == 'c' else mode)+'b')
 
         with f_ctx as fid:
             fid.seek(0, 2)
@@ -268,14 +269,13 @@ class memmap(ndarray):
             self.offset = offset
             self.mode = mode
 
-            if isinstance(filename, basestring):
-                self.filename = os.path.abspath(filename)
-            elif is_pathlib_path(filename):
+            if is_pathlib_path(filename):
+                # special case - if we were constructed with a pathlib.path,
+                # then filename is a path object, not a string
                 self.filename = filename.resolve()
-            # py3 returns int for TemporaryFile().name
-            elif (hasattr(filename, "name") and
-                  isinstance(filename.name, basestring)):
-                self.filename = os.path.abspath(filename.name)
+            elif hasattr(fid, "name") and isinstance(fid.name, basestring):
+                # py3 returns int for TemporaryFile().name
+                self.filename = os.path.abspath(fid.name)
             # same as memmap copies (e.g. memmap + 1)
             else:
                 self.filename = None

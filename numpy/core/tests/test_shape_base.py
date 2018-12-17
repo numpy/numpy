@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-import warnings
+import pytest
 import sys
 import numpy as np
 from numpy.core import (
@@ -11,7 +11,7 @@ from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns, assert_almost_equal
+    assert_raises_regex, assert_warns
     )
 
 from numpy.compat import long
@@ -391,39 +391,32 @@ def test_stack():
     assert_array_equal(result, np.array([0, 1, 2]))
 
 
-# See for more information on how to parametrize a whole class
-# https://docs.pytest.org/en/latest/example/parametrize.html#parametrizing-test-methods-through-per-class-configuration
-def pytest_generate_tests(metafunc):
-    # called once per each test function
-    if hasattr(metafunc.cls, 'params'):
-        arglist = metafunc.cls.params
-        argnames = sorted(arglist[0])
-        metafunc.parametrize(argnames,
-                             [[funcargs[name] for name in argnames]
-                              for funcargs in arglist])
-
-
-# blocking small arrays and large arrays go through different paths.
-# the algorithm is triggered depending on the number of element
-# copies required.
-# We define a test fixture that forces most tests to go through
-# both code paths.
-# Ultimately, this should be removed if a single algorithm is found
-# to be faster for both small and large arrays.s
-def _block_force_concatenate(arrays):
-    arrays, list_ndim, result_ndim, _ = _block_setup(arrays)
-    return _block_concatenate(arrays, list_ndim, result_ndim)
-
-
-def _block_force_slicing(arrays):
-    arrays, list_ndim, result_ndim, _ = _block_setup(arrays)
-    return _block_slicing(arrays, list_ndim, result_ndim)
-
-
 class TestBlock(object):
-    params = [dict(block=block),
-              dict(block=_block_force_concatenate),
-              dict(block=_block_force_slicing)]
+    @pytest.fixture(params=['block', 'force_concatenate', 'force_slicing'])
+    def block(self, request):
+        # blocking small arrays and large arrays go through different paths.
+        # the algorithm is triggered depending on the number of element
+        # copies required.
+        # We define a test fixture that forces most tests to go through
+        # both code paths.
+        # Ultimately, this should be removed if a single algorithm is found
+        # to be faster for both small and large arrays.
+        def _block_force_concatenate(arrays):
+            arrays, list_ndim, result_ndim, _ = _block_setup(arrays)
+            return _block_concatenate(arrays, list_ndim, result_ndim)
+
+        def _block_force_slicing(arrays):
+            arrays, list_ndim, result_ndim, _ = _block_setup(arrays)
+            return _block_slicing(arrays, list_ndim, result_ndim)
+
+        if request.param == 'force_concatenate':
+            return _block_force_concatenate
+        elif request.param == 'force_slicing':
+            return _block_force_slicing
+        elif request.param == 'block':
+            return block
+        else:
+            raise ValueError('Unknown blocking request. There is a typo in the tests.')
 
     def test_returns_copy(self, block):
         a = np.eye(3)

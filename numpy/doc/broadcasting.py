@@ -3,6 +3,12 @@
 Broadcasting over arrays
 ========================
 
+.. note::
+    See `this article
+    <https://numpy.org/devdocs/user/theory.broadcasting.html>`_
+    for illustrations of broadcasting concepts.
+
+
 The term broadcasting describes how numpy treats arrays with different
 shapes during arithmetic operations. Subject to certain constraints,
 the smaller array is "broadcast" across the larger array so that they
@@ -171,9 +177,6 @@ outer addition operation of two 1-d arrays::
 Here the ``newaxis`` index operator inserts a new axis into ``a``,
 making it a two-dimensional ``4x1`` array.  Combining the ``4x1`` array
 with ``b``, which has shape ``(3,)``, yields a ``4x3`` array.
-
-See `this article <https://scipy.github.io/old-wiki/pages/EricsBroadcastingDoc>`_
-for illustrations of broadcasting concepts.
 
 """
 from __future__ import division, absolute_import, print_function

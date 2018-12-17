@@ -219,6 +219,7 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     if (handle == NULL) {
         PyErr_SetString(PyExc_IOError,
                         "Getting a FILE* from a Python file object failed");
+        return NULL;
     }
 
     /* Record the original raw file handle position */
@@ -380,6 +381,36 @@ npy_PyFile_CloseFile(PyObject *file)
     }
     Py_DECREF(ret);
     return 0;
+}
+
+
+/* This is a copy of _PyErr_ChainExceptions
+ */
+static NPY_INLINE void
+npy_PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
+{
+    if (exc == NULL)
+        return;
+
+    if (PyErr_Occurred()) {
+        /* only py3 supports this anyway */
+        #ifdef NPY_PY3K
+            PyObject *exc2, *val2, *tb2;
+            PyErr_Fetch(&exc2, &val2, &tb2);
+            PyErr_NormalizeException(&exc, &val, &tb);
+            if (tb != NULL) {
+                PyException_SetTraceback(val, tb);
+                Py_DECREF(tb);
+            }
+            Py_DECREF(exc);
+            PyErr_NormalizeException(&exc2, &val2, &tb2);
+            PyException_SetContext(val2, val);
+            PyErr_Restore(exc2, val2, tb2);
+        #endif
+    }
+    else {
+        PyErr_Restore(exc, val, tb);
+    }
 }
 
 

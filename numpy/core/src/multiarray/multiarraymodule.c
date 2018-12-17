@@ -72,10 +72,10 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
  *****************************************************************************
  */
 #include "funcs.inc"
-#include "loops.h"
 #include "umathmodule.h"
 
 NPY_NO_EXPORT int initscalarmath(PyObject *);
+NPY_NO_EXPORT int set_matmul_flags(PyObject *d); /* in ufunc_object.c */
 
 /*
  * global variable to determine if legacy printing is enabled, accessible from
@@ -833,7 +833,10 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
-        PyErr_SetString(PyExc_TypeError, "Cannot find a common data type.");
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot find a common data type.");
+        }
         goto fail;
     }
 
@@ -919,7 +922,10 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
-        PyErr_SetString(PyExc_TypeError, "Cannot find a common data type.");
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot find a common data type.");
+        }
         return NULL;
     }
 
@@ -976,7 +982,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     for (i = 0; i < PyArray_NDIM(ap2) - 2; i++) {
         dimensions[j++] = PyArray_DIMS(ap2)[i];
     }
-    if(PyArray_NDIM(ap2) > 1) {
+    if (PyArray_NDIM(ap2) > 1) {
         dimensions[j++] = PyArray_DIMS(ap2)[PyArray_NDIM(ap2)-1];
     }
 
@@ -1312,7 +1318,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
      */
     if (inverted) {
         st = _pyarray_revert(ret);
-        if(st) {
+        if (st) {
             goto clean_ret;
         }
     }
@@ -1359,7 +1365,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     }
 
     ret = _pyarray_correlate(ap1, ap2, typenum, mode, &unused);
-    if(ret == NULL) {
+    if (ret == NULL) {
         goto fail;
     }
     Py_DECREF(ap1);
@@ -1648,7 +1654,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
 full_path:
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
@@ -2044,6 +2050,7 @@ static PyObject *
 array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *file = NULL, *ret;
+    PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
@@ -2079,18 +2086,26 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
 
+    /* If an exception is thrown in the call to PyArray_FromFile
+     * we need to clear it, and restore it later to ensure that
+     * we can cleanup the duplicated file descriptor properly.
+     */
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
     if (npy_PyFile_DupClose2(file, fp, orig_pos) < 0) {
+        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
         goto fail;
     }
     if (own && npy_PyFile_CloseFile(file) < 0) {
+        npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
         goto fail;
     }
+    PyErr_Restore(err_type, err_value, err_traceback);
     Py_DECREF(file);
     return ret;
 
 fail:
     Py_DECREF(file);
-    Py_DECREF(ret);
+    Py_XDECREF(ret);
     return NULL;
 }
 
@@ -2303,154 +2318,6 @@ fail:
     return NULL;
 }
 
-
-
-/*
- * matmul
- *
- * Implements the protocol used by the '@' operator defined in PEP 364.
- * Not in the NUMPY API at this time, maybe later.
- *
- *
- * in1:        Left hand side operand
- * in2:        Right hand side operand
- * out:        Either NULL, or an array into which the output should be placed.
- *
- * Returns NULL on error.
- */
-static PyObject *
-array_matmul(PyObject *NPY_UNUSED(m), PyObject *args, PyObject* kwds)
-{
-    PyObject *in1, *in2, *out = NULL;
-    char* kwlist[] = {"a", "b", "out", NULL };
-    PyArrayObject *ap1, *ap2, *ret = NULL;
-    NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_SAFE_CASTING;
-    PyArray_Descr *dtype;
-    int nd1, nd2, typenum;
-    char *subscripts;
-    PyArrayObject *ops[2];
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matmul", kwlist,
-                                     &in1, &in2, &out)) {
-        return NULL;
-    }
-
-    if (out != NULL) {
-        if (out == Py_None) {
-            out = NULL;
-        }
-        else if (!PyArray_Check(out)) {
-            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
-            return NULL;
-        }
-    }
-
-    dtype = PyArray_DescrFromObject(in1, NULL);
-    dtype = PyArray_DescrFromObject(in2, dtype);
-    if (dtype == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
-        return NULL;
-    }
-    typenum = dtype->type_num;
-
-    if (typenum == NPY_OBJECT) {
-        /* matmul is not currently implemented for object arrays */
-        PyErr_SetString(PyExc_TypeError,
-                        "Object arrays are not currently supported");
-        Py_DECREF(dtype);
-        return NULL;
-    }
-
-    ap1 = (PyArrayObject *)PyArray_FromAny(in1, dtype, 0, 0,
-                                           NPY_ARRAY_ALIGNED, NULL);
-    if (ap1 == NULL) {
-        return NULL;
-    }
-
-    Py_INCREF(dtype);
-    ap2 = (PyArrayObject *)PyArray_FromAny(in2, dtype, 0, 0,
-                                           NPY_ARRAY_ALIGNED, NULL);
-    if (ap2 == NULL) {
-        Py_DECREF(ap1);
-        return NULL;
-    }
-
-    if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
-        /* Scalars are rejected */
-        PyErr_SetString(PyExc_ValueError,
-                        "Scalar operands are not allowed, use '*' instead");
-        return NULL;
-    }
-
-    nd1 = PyArray_NDIM(ap1);
-    nd2 = PyArray_NDIM(ap2);
-
-#if defined(HAVE_CBLAS)
-    if (nd1 <= 2 && nd2 <= 2 &&
-            (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
-             NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
-        return cblas_matrixproduct(typenum, ap1, ap2, (PyArrayObject *)out);
-    }
-#endif
-
-    /*
-     * Use einsum for the stacked cases. This is a quick implementation
-     * to avoid setting up the proper iterators. Einsum broadcasts, so
-     * we need to check dimensions before the call.
-     */
-    if (nd1 == 1 && nd2 == 1) {
-        /* vector vector */
-        if (PyArray_DIM(ap1, 0) != PyArray_DIM(ap2, 0)) {
-            dot_alignment_error(ap1, 0, ap2, 0);
-            goto fail;
-        }
-        subscripts = "i, i";
-    }
-    else if (nd1 == 1) {
-        /* vector  matrix */
-        if (PyArray_DIM(ap1, 0) != PyArray_DIM(ap2, nd2 - 2)) {
-            dot_alignment_error(ap1, 0, ap2, nd2 - 2);
-            goto fail;
-        }
-        subscripts = "i, ...ij";
-    }
-    else if (nd2 == 1) {
-        /* matrix  vector */
-        if (PyArray_DIM(ap1, nd1 - 1) != PyArray_DIM(ap2, 0)) {
-            dot_alignment_error(ap1, nd1 - 1, ap2, 0);
-            goto fail;
-        }
-        subscripts = "...i, i";
-    }
-    else {
-        /* matrix * matrix */
-        if (PyArray_DIM(ap1, nd1 - 1) != PyArray_DIM(ap2, nd2 - 2)) {
-            dot_alignment_error(ap1, nd1 - 1, ap2, nd2 - 2);
-            goto fail;
-        }
-        subscripts = "...ij, ...jk";
-    }
-    ops[0] = ap1;
-    ops[1] = ap2;
-    ret = PyArray_EinsteinSum(subscripts, 2, ops, NULL, order, casting,
-            (PyArrayObject *)out);
-    Py_DECREF(ap1);
-    Py_DECREF(ap2);
-
-    /* If no output was supplied, possibly convert to a scalar */
-    if (ret != NULL && out == NULL) {
-        return PyArray_Return((PyArrayObject *)ret);
-    }
-    return (PyObject *)ret;
-
-fail:
-    Py_XDECREF(ap1);
-    Py_XDECREF(ap2);
-    return NULL;
-}
-
-
 static int
 einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
                        PyArrayObject **op)
@@ -2622,7 +2489,7 @@ einsum_sub_op_from_lists(PyObject *args,
                         "operand and a subscripts list to einsum");
         return -1;
     }
-    else if(nop >= NPY_MAXARGS) {
+    else if (nop >= NPY_MAXARGS) {
         PyErr_SetString(PyExc_ValueError, "too many operands");
         return -1;
     }
@@ -2857,7 +2724,7 @@ array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
     PyArray_Descr *typecode = NULL;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
                 &o_start,
                 &o_stop,
                 &o_step,
@@ -2895,7 +2762,7 @@ array__get_ndarray_c_version(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObje
 {
     static char *kwlist[] = {NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist )) {
         return NULL;
     }
     return PyInt_FromLong( (long) PyArray_GetNDArrayCVersion() );
@@ -2968,7 +2835,7 @@ array_set_string_function(PyObject *NPY_UNUSED(self), PyObject *args,
     int repr = 1;
     static char *kwlist[] = {"f", "repr", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi:set_string_function", kwlist, &op, &repr)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|Oi:set_string_function", kwlist, &op, &repr)) {
         return NULL;
     }
     /* reset the array_repr function to built-in */
@@ -2990,7 +2857,7 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
 {
     PyObject *oldops = NULL;
 
-    if ((oldops = PyArray_GetNumericOps()) == NULL) {
+    if ((oldops = _PyArray_GetNumericOps()) == NULL) {
         return NULL;
     }
     /*
@@ -3000,8 +2867,10 @@ array_set_ops_function(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
      */
     if (kwds && PyArray_SetNumericOps(kwds) == -1) {
         Py_DECREF(oldops);
-        PyErr_SetString(PyExc_ValueError,
+        if (PyErr_Occurred() == NULL) {
+            PyErr_SetString(PyExc_ValueError,
                 "one or more objects not callable");
+        }
         return NULL;
     }
     return oldops;
@@ -3276,7 +3145,7 @@ array_promote_types(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_Descr *d1 = NULL;
     PyArray_Descr *d2 = NULL;
     PyObject *ret = NULL;
-    if(!PyArg_ParseTuple(args, "O&O&:promote_types",
+    if (!PyArg_ParseTuple(args, "O&O&:promote_types",
                 PyArray_DescrConverter2, &d1, PyArray_DescrConverter2, &d2)) {
         goto finish;
     }
@@ -3302,7 +3171,7 @@ array_min_scalar_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArrayObject *array;
     PyObject *ret = NULL;
 
-    if(!PyArg_ParseTuple(args, "O:min_scalar_type", &array_in)) {
+    if (!PyArg_ParseTuple(args, "O:min_scalar_type", &array_in)) {
         return NULL;
     }
 
@@ -3379,7 +3248,7 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_Descr *dtype;
     PyArray_DatetimeMetaData *meta;
 
-    if(!PyArg_ParseTuple(args, "O&:datetime_data",
+    if (!PyArg_ParseTuple(args, "O&:datetime_data",
                 PyArray_DescrConverter, &dtype)) {
         return NULL;
     }
@@ -3398,7 +3267,7 @@ new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     int size;
 
-    if(!PyArg_ParseTuple(args, "i:buffer", &size)) {
+    if (!PyArg_ParseTuple(args, "i:buffer", &size)) {
         return NULL;
     }
     return PyBuffer_New(size);
@@ -4265,9 +4134,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"vdot",
         (PyCFunction)array_vdot,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"matmul",
-        (PyCFunction)array_matmul,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -4640,7 +4506,6 @@ intern_strings(void)
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }
 
-
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
@@ -4705,15 +4570,23 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
      */
     PyArray_Type.tp_hash = PyObject_HashNotImplemented;
 
+    if (PyType_Ready(&PyUFunc_Type) < 0) {
+        goto err;
+    }
+
     /* Load the ufunc operators into the array module's namespace */
     if (InitOperators(d) < 0) {
         goto err;
     }
 
+    if (set_matmul_flags(d) < 0) {
+        goto err;
+    }
     initialize_casting_tables();
     initialize_numeric_types();
-    if(initscalarmath(m) < 0)
+    if (initscalarmath(m) < 0) {
         goto err;
+    }
 
     if (PyType_Ready(&PyArray_Type) < 0) {
         goto err;

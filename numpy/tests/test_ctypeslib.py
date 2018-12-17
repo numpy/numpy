@@ -9,20 +9,30 @@ from numpy.distutils.misc_util import get_shared_lib_extension
 from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
 
 try:
+    import ctypes
+except ImportError:
+    ctypes = None
+else:
     cdll = None
+    test_cdll = None
     if hasattr(sys, 'gettotalrefcount'):
         try:
             cdll = load_library('_multiarray_umath_d', np.core._multiarray_umath.__file__)
         except OSError:
             pass
+        try:
+            test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+        except OSError:
+            pass
     if cdll is None:
         cdll = load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
-    _HAS_CTYPE = True
-except ImportError:
-    _HAS_CTYPE = False
+    if test_cdll is None:
+        test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+
+    c_forward_pointer = test_cdll.forward_pointer
 
 
-@pytest.mark.skipif(not _HAS_CTYPE,
+@pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available in this python")
 @pytest.mark.skipif(sys.platform == 'cygwin',
                     reason="Known to fail on cygwin")
@@ -108,12 +118,72 @@ class TestNdpointer(object):
         assert_raises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
     def test_cache(self):
-        a1 = ndpointer(dtype=np.float64)
-        a2 = ndpointer(dtype=np.float64)
-        assert_(a1 == a2)
+        assert_(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
+
+        # shapes are normalized
+        assert_(ndpointer(shape=2) is ndpointer(shape=(2,)))
+
+        # 1.12 <= v < 1.16 had a bug that made these fail
+        assert_(ndpointer(shape=2) is not ndpointer(ndim=2))
+        assert_(ndpointer(ndim=2) is not ndpointer(shape=2))
+
+@pytest.mark.skipif(ctypes is None,
+                    reason="ctypes not available on this python installation")
+class TestNdpointerCFunc(object):
+    def test_arguments(self):
+        """ Test that arguments are coerced from arrays """
+        c_forward_pointer.restype = ctypes.c_void_p
+        c_forward_pointer.argtypes = (ndpointer(ndim=2),)
+
+        c_forward_pointer(np.zeros((2, 3)))
+        # too many dimensions
+        assert_raises(
+            ctypes.ArgumentError, c_forward_pointer, np.zeros((2, 3, 4)))
+
+    @pytest.mark.parametrize(
+        'dt', [
+            float,
+            np.dtype(dict(
+                formats=['<i4', '<i4'],
+                names=['a', 'b'],
+                offsets=[0, 2],
+                itemsize=6
+            ))
+        ], ids=[
+            'float',
+            'overlapping-fields'
+        ]
+    )
+    def test_return(self, dt):
+        """ Test that return values are coerced to arrays """
+        arr = np.zeros((2, 3), dt)
+        ptr_type = ndpointer(shape=arr.shape, dtype=arr.dtype)
+
+        c_forward_pointer.restype = ptr_type
+        c_forward_pointer.argtypes = (ptr_type,)
+
+        # check that the arrays are equivalent views on the same data
+        arr2 = c_forward_pointer(arr)
+        assert_equal(arr2.dtype, arr.dtype)
+        assert_equal(arr2.shape, arr.shape)
+        assert_equal(
+            arr2.__array_interface__['data'],
+            arr.__array_interface__['data']
+        )
+
+    def test_vague_return_value(self):
+        """ Test that vague ndpointer return values do not promote to arrays """
+        arr = np.zeros((2, 3))
+        ptr_type = ndpointer(dtype=arr.dtype)
+
+        c_forward_pointer.restype = ptr_type
+        c_forward_pointer.argtypes = (ptr_type,)
+
+        ret = c_forward_pointer(arr)
+        assert_(isinstance(ret, ptr_type))
 
 
-@pytest.mark.skipif(not _HAS_CTYPE,
+@pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available on this python installation")
 class TestAsArray(object):
     def test_array(self):

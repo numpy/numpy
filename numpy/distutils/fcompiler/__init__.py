@@ -22,6 +22,7 @@ import os
 import sys
 import re
 import types
+import shlex
 
 from numpy.compat import open_latin1
 
@@ -465,8 +466,10 @@ class FCompiler(CCompiler):
         noarch = self.distutils_vars.get('noarch', noopt)
         debug = self.distutils_vars.get('debug', False)
 
-        f77 = self.command_vars.compiler_f77
-        f90 = self.command_vars.compiler_f90
+        f77 = shlex.split(self.command_vars.compiler_f77,
+                          posix=(os.name == 'posix'))
+        f90 = shlex.split(self.command_vars.compiler_f90,
+                          posix=(os.name == 'posix'))
 
         f77flags = []
         f90flags = []
@@ -480,6 +483,14 @@ class FCompiler(CCompiler):
             freeflags = self.flag_vars.free
         # XXX Assuming that free format is default for f90 compiler.
         fix = self.command_vars.compiler_fix
+        # NOTE: this and similar examples are probably just
+        # exluding --coverage flag when F90 = gfortran --coverage
+        # instead of putting that flag somewhere more appropriate
+        # this and similar examples where a Fortran compiler
+        # environment variable has been customized by CI or a user
+        # should perhaps eventually be more throughly tested and more
+        # robustly handled
+        fix = shlex.split(fix, posix=(os.name == 'posix'))
         if fix:
             fixflags = self.flag_vars.fix + f90flags
 
@@ -506,11 +517,11 @@ class FCompiler(CCompiler):
         fflags = self.flag_vars.flags + dflags + oflags + aflags
 
         if f77:
-            self.set_commands(compiler_f77=[f77]+f77flags+fflags)
+            self.set_commands(compiler_f77=f77+f77flags+fflags)
         if f90:
-            self.set_commands(compiler_f90=[f90]+freeflags+f90flags+fflags)
+            self.set_commands(compiler_f90=f90+freeflags+f90flags+fflags)
         if fix:
-            self.set_commands(compiler_fix=[fix]+fixflags+fflags)
+            self.set_commands(compiler_fix=fix+fixflags+fflags)
 
 
         #XXX: Do we need LDSHARED->SOSHARED, LDFLAGS->SOFLAGS

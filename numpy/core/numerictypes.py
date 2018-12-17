@@ -92,6 +92,7 @@ from numpy.core.multiarray import (
         datetime_as_string, busday_offset, busday_count, is_busday,
         busdaycalendar
         )
+from numpy.core.overrides import set_module
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
@@ -162,19 +163,19 @@ def maximum_sctype(t):
     Examples
     --------
     >>> np.maximum_sctype(int)
-    <type 'numpy.int64'>
+    <class 'numpy.int64'>
     >>> np.maximum_sctype(np.uint8)
-    <type 'numpy.uint64'>
+    <class 'numpy.uint64'>
     >>> np.maximum_sctype(complex)
-    <type 'numpy.complex192'>
+    <class 'numpy.complex256'> # may vary
 
     >>> np.maximum_sctype(str)
-    <type 'numpy.string_'>
+    <class 'numpy.str_'>
 
     >>> np.maximum_sctype('i2')
-    <type 'numpy.int64'>
+    <class 'numpy.int64'>
     >>> np.maximum_sctype('f4')
-    <type 'numpy.float96'>
+    <class 'numpy.float128'> # may vary
 
     """
     g = obj2sctype(t)
@@ -187,6 +188,8 @@ def maximum_sctype(t):
     else:
         return t
 
+
+@set_module('numpy')
 def issctype(rep):
     """
     Determines whether the given object represents a scalar data-type.
@@ -231,6 +234,8 @@ def issctype(rep):
     except Exception:
         return False
 
+
+@set_module('numpy')
 def obj2sctype(rep, default=None):
     """
     Return the scalar dtype or NumPy equivalent of Python type of an object.
@@ -255,19 +260,18 @@ def obj2sctype(rep, default=None):
     Examples
     --------
     >>> np.obj2sctype(np.int32)
-    <type 'numpy.int32'>
+    <class 'numpy.int32'>
     >>> np.obj2sctype(np.array([1., 2.]))
-    <type 'numpy.float64'>
+    <class 'numpy.float64'>
     >>> np.obj2sctype(np.array([1.j]))
-    <type 'numpy.complex128'>
+    <class 'numpy.complex128'>
 
     >>> np.obj2sctype(dict)
-    <type 'numpy.object_'>
+    <class 'numpy.object_'>
     >>> np.obj2sctype('string')
-    <type 'numpy.string_'>
 
     >>> np.obj2sctype(1, default=list)
-    <type 'list'>
+    <class 'list'>
 
     """
     # prevent abtract classes being upcast
@@ -285,6 +289,7 @@ def obj2sctype(rep, default=None):
         return res.type
 
 
+@set_module('numpy')
 def issubclass_(arg1, arg2):
     """
     Determine if a class is a subclass of a second class.
@@ -313,7 +318,7 @@ def issubclass_(arg1, arg2):
     Examples
     --------
     >>> np.issubclass_(np.int32, int)
-    True
+    False # True on Python 2.7
     >>> np.issubclass_(np.int32, float)
     False
 
@@ -323,6 +328,8 @@ def issubclass_(arg1, arg2):
     except TypeError:
         return False
 
+
+@set_module('numpy')
 def issubsctype(arg1, arg2):
     """
     Determine if the first argument is a subclass of the second argument.
@@ -344,7 +351,7 @@ def issubsctype(arg1, arg2):
     Examples
     --------
     >>> np.issubsctype('S8', str)
-    True
+    False
     >>> np.issubsctype(np.array([1]), int)
     True
     >>> np.issubsctype(np.array([1]), float)
@@ -353,6 +360,8 @@ def issubsctype(arg1, arg2):
     """
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
+
+@set_module('numpy')
 def issubdtype(arg1, arg2):
     """
     Returns True if first argument is a typecode lower/equal in type hierarchy.
@@ -446,6 +455,8 @@ def _construct_lookups():
 
 _construct_lookups()
 
+
+@set_module('numpy')
 def sctype2char(sctype):
     """
     Return the string representation of a scalar dtype.
@@ -473,9 +484,9 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, float, complex, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, np.double, np.complex, np.string_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
-    l
+    l # may vary
     d
     D
     S
@@ -586,6 +597,8 @@ def _register_types():
 
 _register_types()
 
+
+@set_module('numpy')
 def find_common_type(array_types, scalar_types):
     """
     Determine common type following standard coercion rules.

@@ -265,6 +265,10 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
+        if sys.platform[:3] == 'aix' or sys.platform == 'win32':
+            # Linux/Solaris/Unix support RPATH, Windows and AIX do not
+            raise NotImplementedError
+
         sep = ',' if sys.platform == 'darwin' else '='
         return '-Wl,-rpath%s"%s"' % (sep, dir)
 
@@ -310,6 +314,12 @@ class Gnu95FCompiler(GnuFCompiler):
 
     module_dir_switch = '-J'
     module_include_switch = '-I'
+
+    if sys.platform[:3] == 'aix':
+        executables['linker_so'].append('-lpthread')
+        if platform.architecture()[0][:2] == '64':
+            for key in ['compiler_f77', 'compiler_f90','compiler_fix','linker_so', 'linker_exe']:
+                executables[key].append('-maix64')
 
     g2c = 'gfortran'
 

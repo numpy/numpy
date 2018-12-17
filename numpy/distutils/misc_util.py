@@ -1691,7 +1691,6 @@ class Configuration(object):
         """
         if subst_dict is None:
             subst_dict = {}
-        basename = os.path.splitext(template)[0]
         template = os.path.join(self.package_path, template)
 
         if self.name in self.installed_pkg_config:
@@ -2225,7 +2224,6 @@ def is_bootstrapping():
         return True
     except AttributeError:
         return False
-        __NUMPY_SETUP__ = False
 
 
 #########################

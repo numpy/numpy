@@ -1,8 +1,10 @@
 .. _alignment:
 
+Memory Alignment
+================
 
 Numpy Alignment Goals
-=====================
+---------------------
 
 There are three use-cases related to memory alignment in numpy (as of 1.14):
 
@@ -33,7 +35,7 @@ alignment of 4 and "uint" alignment of 8 (equal to the true alignment of
 ``uint64``).
 
 Variables in Numpy which control and describe alignment
-=======================================================
+-------------------------------------------------------
 
 There are 4 relevant uses of the word ``align`` used in numpy:
 
@@ -60,7 +62,7 @@ There are 4 relevant uses of the word ``align`` used in numpy:
    an analagous way to how ``IsAligned`` checks for true-alignment.
 
 Consequences of alignment
-=========================
+-------------------------
 
 Here is how the variables above are used:
 

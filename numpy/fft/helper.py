@@ -11,7 +11,7 @@ except ImportError:
     import dummy_threading as threading
 from numpy.compat import integer_types
 from numpy.core import integer, empty, arange, asarray, roll
-from numpy.core.overrides import array_function_dispatch
+from numpy.core.overrides import array_function_dispatch, set_module
 
 # Created by Pearu Peterson, September 2002
 
@@ -52,7 +52,7 @@ def fftshift(x, axes=None):
     --------
     >>> freqs = np.fft.fftfreq(10, 0.1)
     >>> freqs
-    array([ 0.,  1.,  2.,  3.,  4., -5., -4., -3., -2., -1.])
+    array([ 0.,  1.,  2., ..., -3., -2., -1.])
     >>> np.fft.fftshift(freqs)
     array([-5., -4., -3., -2., -1.,  0.,  1.,  2.,  3.,  4.])
 
@@ -128,6 +128,7 @@ def ifftshift(x, axes=None):
     return roll(x, shift, axes)
 
 
+@set_module('numpy.fft')
 def fftfreq(n, d=1.0):
     """
     Return the Discrete Fourier Transform sample frequencies.
@@ -161,7 +162,7 @@ def fftfreq(n, d=1.0):
     >>> timestep = 0.1
     >>> freq = np.fft.fftfreq(n, d=timestep)
     >>> freq
-    array([ 0.  ,  1.25,  2.5 ,  3.75, -5.  , -3.75, -2.5 , -1.25])
+    array([ 0.  ,  1.25,  2.5 , ..., -3.75, -2.5 , -1.25])
 
     """
     if not isinstance(n, integer_types):
@@ -174,9 +175,9 @@ def fftfreq(n, d=1.0):
     p2 = arange(-(n//2), 0, dtype=int)
     results[N:] = p2
     return results * val
-    #return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
 
 
+@set_module('numpy.fft')
 def rfftfreq(n, d=1.0):
     """
     Return the Discrete Fourier Transform sample frequencies
@@ -214,7 +215,7 @@ def rfftfreq(n, d=1.0):
     >>> sample_rate = 100
     >>> freq = np.fft.fftfreq(n, d=1./sample_rate)
     >>> freq
-    array([  0.,  10.,  20.,  30.,  40., -50., -40., -30., -20., -10.])
+    array([  0.,  10.,  20., ..., -30., -20., -10.])
     >>> freq = np.fft.rfftfreq(n, d=1./sample_rate)
     >>> freq
     array([  0.,  10.,  20.,  30.,  40.,  50.])

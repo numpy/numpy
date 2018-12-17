@@ -16,6 +16,7 @@ import numpy.core.numeric as NX
 from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
                         ones)
 from numpy.core import overrides
+from numpy.core.overrides import set_module
 from numpy.lib.twodim_base import diag, vander
 from numpy.lib.function_base import trim_zeros
 from numpy.lib.type_check import iscomplex, real, imag, mintypecode
@@ -26,6 +27,7 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
+@set_module('numpy')
 class RankWarning(UserWarning):
     """
     Issued by `polyfit` when the Vandermonde matrix is rank deficient.
@@ -108,7 +110,7 @@ def poly(seq_of_zeros):
     Given a sequence of a polynomial's zeros:
 
     >>> np.poly((0, 0, 0)) # Multiple root example
-    array([1, 0, 0, 0])
+    array([1., 0., 0., 0.])
 
     The line above represents z**3 + 0*z**2 + 0*z + 0.
 
@@ -117,14 +119,14 @@ def poly(seq_of_zeros):
 
     The line above represents z**3 - z/4
 
-    >>> np.poly((np.random.random(1.)[0], 0, np.random.random(1.)[0]))
-    array([ 1.        , -0.77086955,  0.08618131,  0.        ]) #random
+    >>> np.poly((np.random.random(1)[0], 0, np.random.random(1)[0]))
+    array([ 1.        , -0.77086955,  0.08618131,  0.        ]) # random
 
     Given a square array object:
 
     >>> P = np.array([[0, 1./3], [-1./2, 0]])
     >>> np.poly(P)
-    array([ 1.        ,  0.        ,  0.16666667])
+    array([1.        , 0.        , 0.16666667])
 
     Note how in all cases the leading coefficient is always 1.
 
@@ -270,7 +272,7 @@ def polyint(p, m=1, k=None):
     Parameters
     ----------
     p : array_like or poly1d
-        Polynomial to differentiate.
+        Polynomial to integrate.
         A sequence is interpreted as polynomial coefficients, see `poly1d`.
     m : int, optional
         Order of the antiderivative. (Default: 1)
@@ -293,7 +295,7 @@ def polyint(p, m=1, k=None):
     >>> p = np.poly1d([1,1,1])
     >>> P = np.polyint(p)
     >>> P
-    poly1d([ 0.33333333,  0.5       ,  1.        ,  0.        ])
+     poly1d([ 0.33333333,  0.5       ,  1.        ,  0.        ]) # may vary
     >>> np.polyder(P) == p
     True
 
@@ -308,7 +310,7 @@ def polyint(p, m=1, k=None):
     0.0
     >>> P = np.polyint(p, 3, k=[6,5,3])
     >>> P
-    poly1d([ 0.01666667,  0.04166667,  0.16666667,  3. ,  5. ,  3. ])
+    poly1d([ 0.01666667,  0.04166667,  0.16666667,  3. ,  5. ,  3. ]) # may vary
 
     Note that 3 = 6 / 2!, and that the constants are given in the order of
     integrations. Constant of the highest-order polynomial term comes first:
@@ -402,7 +404,7 @@ def polyder(p, m=1):
     >>> np.polyder(p, 3)
     poly1d([6])
     >>> np.polyder(p, 4)
-    poly1d([ 0.])
+    poly1d([0.])
 
     """
     m = int(m)
@@ -461,9 +463,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     w : array_like, shape (M,), optional
         Weights to apply to the y-coordinates of the sample points. For
         gaussian uncertainties, use 1/sigma (not 1/sigma**2).
-    cov : bool, optional
-        Return the estimate and the covariance matrix of the estimate
-        If full is True, then cov is not returned.
+    cov : bool or str, optional
+        If given and not `False`, return not just the estimate but also its
+        covariance matrix. By default, the covariance are scaled by
+        chi2/sqrt(N-dof), i.e., the weights are presumed to be unreliable
+        except in a relative sense and everything is scaled such that the
+        reduced chi2 is unity. This scaling is omitted if ``cov='unscaled'``,
+        as is relevant for the case that the weights are 1/sigma**2, with
+        sigma known to be a reliable estimate of the uncertainty.
 
     Returns
     -------
@@ -545,28 +552,29 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     >>> y = np.array([0.0, 0.8, 0.9, 0.1, -0.8, -1.0])
     >>> z = np.polyfit(x, y, 3)
     >>> z
-    array([ 0.08703704, -0.81349206,  1.69312169, -0.03968254])
+    array([ 0.08703704, -0.81349206,  1.69312169, -0.03968254]) # may vary
 
     It is convenient to use `poly1d` objects for dealing with polynomials:
 
     >>> p = np.poly1d(z)
     >>> p(0.5)
-    0.6143849206349179
+    0.6143849206349179 # may vary
     >>> p(3.5)
-    -0.34732142857143039
+    -0.34732142857143039 # may vary
     >>> p(10)
-    22.579365079365115
+    22.579365079365115 # may vary
 
     High-order polynomials may oscillate wildly:
 
     >>> p30 = np.poly1d(np.polyfit(x, y, 30))
-    /... RankWarning: Polyfit may be poorly conditioned...
+    ... 
+    >>> # RankWarning: Polyfit may be poorly conditioned...
     >>> p30(4)
-    -0.80000000000000204
+    -0.80000000000000204 # may vary
     >>> p30(5)
-    -0.99999999999999445
+    -0.99999999999999445 # may vary
     >>> p30(4.5)
-    -0.10547061179440398
+    -0.10547061179440398 # may vary
 
     Illustration:
 
@@ -631,14 +639,17 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     elif cov:
         Vbase = inv(dot(lhs.T, lhs))
         Vbase /= NX.outer(scale, scale)
-        # Some literature ignores the extra -2.0 factor in the denominator, but
-        #  it is included here because the covariance of Multivariate Student-T
-        #  (which is implied by a Bayesian uncertainty analysis) includes it.
-        #  Plus, it gives a slightly more conservative estimate of uncertainty.
-        if len(x) <= order + 2:
-            raise ValueError("the number of data points must exceed order + 2 "
-                             "for Bayesian estimate the covariance matrix")
-        fac = resids / (len(x) - order - 2.0)
+        if cov == "unscaled":
+            fac = 1
+        else:
+            if len(x) <= order:
+                raise ValueError("the number of data points must exceed order "
+                                 "to scale the covariance matrix")
+            # note, this used to be: fac = resids / (len(x) - order - 2.0)
+            # it was deciced that the "- 2" (originally justified by "Bayesian
+            # uncertainty analysis") is not was the user expects
+            # (see gh-11196 and gh-11197)
+            fac = resids / (len(x) - order)
         if y.ndim == 1:
             return c, Vbase * fac
         else:
@@ -704,11 +715,11 @@ def polyval(p, x):
     >>> np.polyval([3,0,1], 5)  # 3 * 5**2 + 0 * 5**1 + 1
     76
     >>> np.polyval([3,0,1], np.poly1d(5))
-    poly1d([ 76.])
+    poly1d([76.])
     >>> np.polyval(np.poly1d([3,0,1]), 5)
     76
     >>> np.polyval(np.poly1d([3,0,1]), np.poly1d(5))
-    poly1d([ 76.])
+    poly1d([76.])
 
     """
     p = NX.asarray(p)
@@ -941,7 +952,7 @@ def polydiv(u, v):
     >>> x = np.array([3.0, 5.0, 2.0])
     >>> y = np.array([2.0, 1.0])
     >>> np.polydiv(x, y)
-    (array([ 1.5 ,  1.75]), array([ 0.25]))
+    (array([1.5 , 1.75]), array([0.25]))
 
     """
     truepoly = (isinstance(u, poly1d) or isinstance(u, poly1d))
@@ -992,6 +1003,7 @@ def _raise_power(astr, wrap=70):
     return output + astr[n:]
 
 
+@set_module('numpy')
 class poly1d(object):
     """
     A one-dimensional polynomial class.
@@ -1035,7 +1047,7 @@ class poly1d(object):
     >>> p.r
     array([-1.+1.41421356j, -1.-1.41421356j])
     >>> p(p.r)
-    array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j])
+    array([ -4.44089210e-16+0.j,  -4.44089210e-16+0.j]) # may vary
 
     These numbers in the previous line represent (0, 0) to machine precision
 
@@ -1062,7 +1074,7 @@ class poly1d(object):
     poly1d([ 1,  4, 10, 12,  9])
 
     >>> (p**3 + 4) / p
-    (poly1d([  1.,   4.,  10.,  12.,   9.]), poly1d([ 4.]))
+    (poly1d([ 1.,  4., 10., 12.,  9.]), poly1d([4.]))
 
     ``asarray(p)`` gives the coefficient array, so polynomials can be
     used in all functions that accept arrays:
@@ -1084,7 +1096,7 @@ class poly1d(object):
     Construct a polynomial from its roots:
 
     >>> np.poly1d([1, 2], True)
-    poly1d([ 1, -3,  2])
+    poly1d([ 1., -3.,  2.])
 
     This is the same polynomial as obtained by:
 

@@ -379,8 +379,9 @@ def check_mathlib(config_cmd):
 def visibility_define(config):
     """Return the define value to use for NPY_VISIBILITY_HIDDEN (may be empty
     string)."""
-    if config.check_compiler_gcc4():
-        return '__attribute__((visibility("hidden")))'
+    hide = '__attribute__((visibility("hidden")))'
+    if config.check_gcc_function_attribute(hide, 'hideme'):
+        return hide
     else:
         return ''
 
@@ -677,7 +678,7 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
-    
+
     # Must be true for CRT compilers but not MinGW/cygwin. See gh-9977.
     is_msvc = platform.system() == 'Windows'
     config.add_installed_library('npymath',
@@ -697,7 +698,8 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     # This library is created for the build but it is not installed
-    npysort_sources = [join('src', 'npysort', 'quicksort.c.src'),
+    npysort_sources = [join('src', 'common', 'npy_sort.h.src'),
+                       join('src', 'npysort', 'quicksort.c.src'),
                        join('src', 'npysort', 'mergesort.c.src'),
                        join('src', 'npysort', 'heapsort.c.src'),
                        join('src', 'common', 'npy_partition.h.src'),
@@ -730,6 +732,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'cblasfuncs.h'),
             join('src', 'common', 'lowlevel_strided_loops.h'),
             join('src', 'common', 'mem_overlap.h'),
+            join('src', 'common', 'npy_cblas.h'),
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_ctypes.h'),
             join('src', 'common', 'npy_extint128.h'),
@@ -890,6 +893,8 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.h.src'),
             join('src', 'umath', 'loops.c.src'),
+            join('src', 'umath', 'matmul.h.src'),
+            join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'cpuid.c'),
@@ -903,14 +908,15 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'npy_math.h'),
             join('include', 'numpy', 'halffloat.h'),
             join('src', 'multiarray', 'common.h'),
+            join('src', 'multiarray', 'number.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
-            ] 
+            ]
 
     config.add_extension('_multiarray_umath',
-                         sources=multiarray_src + umath_src + 
+                         sources=multiarray_src + umath_src +
                                  npymath_sources + common_src +
                                  [generate_config_h,
                                   generate_numpyconfig_h,
@@ -920,7 +926,7 @@ def configuration(parent_package='',top_path=None):
                                   generate_umath_c,
                                   generate_ufunc_api,
                                  ],
-                         depends=deps + multiarray_deps + umath_deps + 
+                         depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
                          libraries=['npymath', 'npysort'],
                          extra_info=extra_info)

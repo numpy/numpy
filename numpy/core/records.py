@@ -7,10 +7,9 @@ Most commonly, ndarrays contain elements of a single type, e.g. floats,
 integers, bools etc.  However, it is possible for elements to be combinations
 of these using structured types, such as::
 
-  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', int), ('y', float)])
+  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', np.int64), ('y', np.float64)])
   >>> a
-  array([(1, 2.0), (1, 2.0)],
-        dtype=[('x', '<i4'), ('y', '<f8')])
+  array([(1, 2.), (1, 2.)], dtype=[('x', '<i8'), ('y', '<f8')])
 
 Here, each element consists of two fields: x (and int), and y (a float).
 This is known as a structured array.  The different fields are analogous
@@ -21,7 +20,7 @@ one would a dictionary::
   array([1, 1])
 
   >>> a['y']
-  array([ 2.,  2.])
+  array([2., 2.])
 
 Record arrays allow us to access fields as properties::
 
@@ -31,7 +30,7 @@ Record arrays allow us to access fields as properties::
   array([1, 1])
 
   >>> ar.y
-  array([ 2.,  2.])
+  array([2., 2.])
 
 """
 from __future__ import division, absolute_import, print_function
@@ -42,7 +41,8 @@ import warnings
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long, unicode
+from numpy.compat import isfileobj, bytes, long, unicode, os_fspath
+from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
 # All of the functions allow formats to be a dtype
@@ -82,6 +82,8 @@ def find_duplicate(list):
                 dup.append(list[i])
     return dup
 
+
+@set_module('numpy')
 class format_parser(object):
     """
     Class to convert formats, names, titles description to a dtype.
@@ -125,10 +127,9 @@ class format_parser(object):
 
     Examples
     --------
-    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    >>> np.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
     ...                  ['T1', 'T2', 'T3']).dtype
-    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'),
-           (('T3', 'col3'), '|S5')])
+    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names
@@ -136,9 +137,9 @@ class format_parser(object):
 
     >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
     ...                  []).dtype
-    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '|S5')])
-    >>> np.format_parser(['f8', 'i4', 'a5'], [], []).dtype
-    dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', '|S5')])
+    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '<S5')])
+    >>> np.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
+    dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
 
@@ -287,10 +288,8 @@ class record(nt.void):
         # pretty-print all fields
         names = self.dtype.names
         maxlen = max(len(name) for name in names)
-        rows = []
         fmt = '%% %ds: %%s' % maxlen
-        for name in names:
-            rows.append(fmt % (name, getattr(self, name)))
+        rows = [fmt % (name, getattr(self, name)) for name in names]
         return "\n".join(rows)
 
 # The recarray is almost identical to a standard array (which supports
@@ -379,20 +378,19 @@ class recarray(ndarray):
     --------
     Create an array with two fields, ``x`` and ``y``:
 
-    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', float), ('y', int)])
+    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', '<f8'), ('y', '<i8')])
     >>> x
-    array([(1.0, 2), (3.0, 4)],
-          dtype=[('x', '<f8'), ('y', '<i4')])
+    array([(1., 2), (3., 4)], dtype=[('x', '<f8'), ('y', '<i8')])
 
     >>> x['x']
-    array([ 1.,  3.])
+    array([1., 3.])
 
     View the array as a record array:
 
     >>> x = x.view(np.recarray)
 
     >>> x.x
-    array([ 1.,  3.])
+    array([1., 3.])
 
     >>> x.y
     array([2, 4])
@@ -579,7 +577,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x3=np.array([1.1,2,3,4])
     >>> r = np.core.records.fromarrays([x1,x2,x3],names='a,b,c')
     >>> print(r[1])
-    (2, 'dd', 2.0)
+    (2, 'dd', 2.0) # may vary
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
@@ -658,11 +656,11 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    array(['dbe', 'de'],
-          dtype='|S3')
+    array(['dbe', 'de'], dtype='<U3')
     >>> import pickle
-    >>> print(pickle.loads(pickle.dumps(r)))
-    [(456, 'dbe', 1.2) (2, 'de', 1.3)]
+    >>> pickle.loads(pickle.dumps(r))
+    rec.array([(456, 'dbe', 1.2), (  2, 'de', 1.3)],
+              dtype=[('col1', '<i8'), ('col2', '<U3'), ('col3', '<f8')])
     """
 
     if formats is None and dtype is None:  # slower
@@ -737,9 +735,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
              names=None, titles=None, aligned=False, byteorder=None):
     """Create an array from binary file data
 
-    If file is a string then that file is opened, else it is assumed
-    to be a file object. The file object must support random access
-    (i.e. it must have tell and seek methods).
+    If file is a string or a path-like object then that file is opened,
+    else it is assumed to be a file object. The file object must
+    support random access (i.e. it must have tell and seek methods).
 
     >>> from tempfile import TemporaryFile
     >>> a = np.empty(10,dtype='f8,i4,a5')
@@ -749,7 +747,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a = a.newbyteorder('<')
     >>> a.tofile(fd)
     >>>
-    >>> fd.seek(0)
+    >>> _ = fd.seek(0)
     >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
     >>> print(r[5])
@@ -763,10 +761,14 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     elif isinstance(shape, (int, long)):
         shape = (shape,)
 
-    name = 0
-    if isinstance(fd, str):
+    if isfileobj(fd):
+        # file already opened
+        name = 0
+    else:
+        # open file
+        fd = open(os_fspath(fd), 'rb')
         name = 1
-        fd = open(fd, 'rb')
+
     if (offset > 0):
         fd.seek(offset, 1)
     size = get_remaining_size(fd)
@@ -778,13 +780,13 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     itemsize = descr.itemsize
 
-    shapeprod = sb.array(shape).prod()
+    shapeprod = sb.array(shape).prod(dtype=nt.intp)
     shapesize = shapeprod * itemsize
     if shapesize < 0:
         shape = list(shape)
-        shape[shape.index(-1)] = size / -shapesize
+        shape[shape.index(-1)] = size // -shapesize
         shape = tuple(shape)
-        shapeprod = sb.array(shape).prod()
+        shapeprod = sb.array(shape).prod(dtype=nt.intp)
 
     nbytes = shapeprod * itemsize
 

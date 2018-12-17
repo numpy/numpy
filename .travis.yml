@@ -31,7 +31,6 @@ env:
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
 
 python:
-  - 2.7
   - 3.5
   - 3.6
 matrix:
@@ -40,15 +39,6 @@ matrix:
       dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
       env: INSTALL_PICKLE5=1
-    - python: 3.6
-      env: USE_CHROOT=1 ARCH=i386 DIST=bionic PYTHON=3.6
-      sudo: true
-      addons:
-        apt:
-          update: true
-          packages:
-            - dpkg
-            - debootstrap
     - python: 3.5
       dist: xenial  # Required for python3.5-dbg
       sudo: true    # travis-ci/travis-ci#9069
@@ -63,8 +53,6 @@ matrix:
             - python3-setuptools
     - python: 3.6
       env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
-    - python: 2.7
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 PYTHON_OPTS="-3 -OO"
     - python: 3.6
       env: USE_SDIST=1
     - python: 3.6
@@ -80,6 +68,9 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
+    - python: 3.6
+      env:
+       - NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1
 
 before_install:
   - ./tools/travis-before-install.sh

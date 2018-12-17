@@ -10,6 +10,7 @@ import re
 import sys
 
 from numpy.compat import unicode
+from numpy.core.overrides import set_module
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
@@ -548,6 +549,12 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
+_pep3118_unsupported_map = {
+    'u': 'UCS-2 strings',
+    '&': 'pointers',
+    't': 'bitfields',
+    'X': 'function pointers',
+}
 
 class _Stream(object):
     def __init__(self, s):
@@ -659,6 +666,11 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 stream.byteorder, stream.byteorder)
             value = dtype(numpy_byteorder + dtypechar)
             align = value.alignment
+        elif stream.next in _pep3118_unsupported_map:
+            desc = _pep3118_unsupported_map[stream.next]
+            raise NotImplementedError(
+                "Unrepresentable PEP 3118 data type {!r} ({})"
+                .format(stream.next, desc))
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
 
@@ -784,9 +796,11 @@ def _lcm(a, b):
     return a // _gcd(a, b) * b
 
 # Exception used in shares_memory()
+@set_module('numpy')
 class TooHardError(RuntimeError):
     pass
 
+@set_module('numpy')
 class AxisError(ValueError, IndexError):
     """ Axis supplied was invalid. """
     def __init__(self, axis, ndim=None, msg_prefix=None):

@@ -67,8 +67,10 @@ def filepath_from_subprocess_output(output):
 
     Inherited from `exec_command`, and possibly incorrect.
     """
-    output = output.decode(locale.getpreferredencoding(False),
-                           errors='replace')
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    output = output.decode(mylocale, errors='replace')
     output = output.replace('\r\n', '\n')
     # Another historical oddity
     if output[-1:] == '\n':
@@ -78,6 +80,29 @@ def filepath_from_subprocess_output(output):
     if sys.version_info < (3, 0):
         output = output.encode('ascii', errors='replace')
     return output
+
+
+def forward_bytes_to_stdout(val):
+    """
+    Forward bytes from a subprocess call to the console, without attempting to
+    decode them.
+
+    The assumption is that the subprocess call already returned bytes in
+    a suitable encoding.
+    """
+    if sys.version_info.major < 3:
+        # python 2 has binary output anyway
+        sys.stdout.write(val)
+    elif hasattr(sys.stdout, 'buffer'):
+        # use the underlying binary output if there is one
+        sys.stdout.buffer.write(val)
+    elif hasattr(sys.stdout, 'encoding'):
+        # round-trip the encoding if necessary
+        sys.stdout.write(val.decode(sys.stdout.encoding))
+    else:
+        # make a best-guess at the encoding
+        sys.stdout.write(val.decode('utf8', errors='replace'))
+
 
 def temp_file_name():
     fo, name = make_temp_file()
@@ -146,9 +171,7 @@ def find_executable(exe, path=None, _cache={}):
 
 def _preserve_environment( names ):
     log.debug('_preserve_environment(%r)' % (names))
-    env = {}
-    for name in names:
-        env[name] = os.environ.get(name)
+    env = {name: os.environ.get(name) for name in names}
     return env
 
 def _update_environment( **env ):
@@ -278,9 +301,10 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
         return 127, ''
 
     text, err = proc.communicate()
-    text = text.decode(locale.getpreferredencoding(False),
-                       errors='replace')
-
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    text = text.decode(mylocale, errors='replace')
     text = text.replace('\r\n', '\n')
     # Another historical oddity
     if text[-1:] == '\n':

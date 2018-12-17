@@ -5,6 +5,8 @@
 #error "Should never include npy_*_*_deprecated_api directly."
 #endif
 
+/* Emit a warning if the user did not specifically request the old API */
+#ifndef NPY_NO_DEPRECATED_API
 #if defined(_WIN32)
 #define _WARN___STR2__(x) #x
 #define _WARN___STR1__(x) _WARN___STR2__(x)
@@ -16,6 +18,7 @@
          "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
 #endif
 /* TODO: How to do this warning message for other compilers? */
+#endif
 
 /*
  * This header exists to collect all dangerous/deprecated NumPy API

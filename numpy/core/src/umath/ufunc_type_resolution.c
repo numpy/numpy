@@ -22,6 +22,11 @@
 #include "ufunc_object.h"
 #include "common.h"
 
+#include "mem_overlap.h"
+#if defined(HAVE_CBLAS)
+#include "cblasfuncs.h"
+#endif
+
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
@@ -1298,7 +1303,6 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
 }
-
 
 static int
 find_userloop(PyUFuncObject *ufunc,

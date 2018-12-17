@@ -39,7 +39,8 @@ subst = {
 def add_newdoc(place, name, doc):
     doc = textwrap.dedent(doc).strip()
 
-    if name[0] != '_':
+    if name[0] != '_' and name != 'matmul':
+        # matmul is special, it does not use the OUT_SCALAR replacement strings
         if '\nx :' in doc:
             assert '$OUT_SCALAR_1' in doc, "in {}".format(name)
         elif '\nx2 :' in doc or '\nx1, x2 :' in doc:
@@ -647,8 +648,8 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     array([  6,   5, 255])
     >>> np.array([2, 5, 255]) | np.array([4, 4, 4])
     array([  6,   5, 255])
-    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647L], dtype=np.int32),
-    ...               np.array([4, 4, 4, 2147483647L], dtype=np.int32))
+    >>> np.bitwise_or(np.array([2, 5, 255, 2147483647], dtype=np.int32),
+    ...               np.array([4, 4, 4, 2147483647], dtype=np.int32))
     array([         6,          5,        255, 2147483647])
     >>> np.bitwise_or([True, True], [False, True])
     array([ True,  True])
@@ -836,6 +837,7 @@ add_newdoc('numpy.core.umath', 'cos',
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
     >>> # Example of providing the optional output parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -911,7 +913,7 @@ add_newdoc('numpy.core.umath', 'degrees',
             270.,  300.,  330.])
 
     >>> out = np.zeros((rad.shape))
-    >>> r = degrees(rad, out)
+    >>> r = np.degrees(rad, out)
     >>> np.all(r == out)
     True
 
@@ -1558,33 +1560,31 @@ add_newdoc('numpy.core.umath', 'invert',
     We've seen that 13 is represented by ``00001101``.
     The invert or bit-wise NOT of 13 is then:
 
-    >>> np.invert(np.array([13], dtype=uint8))
-    array([242], dtype=uint8)
+    >>> x = np.invert(np.array(13, dtype=np.uint8))
+    >>> x
+    242
     >>> np.binary_repr(x, width=8)
-    '00001101'
-    >>> np.binary_repr(242, width=8)
     '11110010'
 
     The result depends on the bit-width:
 
-    >>> np.invert(np.array([13], dtype=uint16))
-    array([65522], dtype=uint16)
+    >>> x = np.invert(np.array(13, dtype=np.uint16))
+    >>> x
+    65522
     >>> np.binary_repr(x, width=16)
-    '0000000000001101'
-    >>> np.binary_repr(65522, width=16)
     '1111111111110010'
 
     When using signed integer types the result is the two's complement of
     the result for the unsigned type:
 
-    >>> np.invert(np.array([13], dtype=int8))
+    >>> np.invert(np.array([13], dtype=np.int8))
     array([-14], dtype=int8)
     >>> np.binary_repr(-14, width=8)
     '11110010'
 
     Booleans are accepted as well:
 
-    >>> np.invert(array([True, False]))
+    >>> np.invert(np.array([True, False]))
     array([False,  True])
 
     """)
@@ -1968,7 +1968,7 @@ add_newdoc('numpy.core.umath', 'log10',
     Examples
     --------
     >>> np.log10([1e-15, -3.])
-    array([-15.,  NaN])
+    array([-15.,  nan])
 
     """)
 
@@ -2360,7 +2360,7 @@ add_newdoc('numpy.core.umath', 'maximum',
            [ 0.5,  2. ]])
 
     >>> np.maximum([np.nan, 0, np.nan], [0, np.nan, np.nan])
-    array([ NaN,  NaN,  NaN])
+    array([nan, nan, nan])
     >>> np.maximum(np.Inf, 1)
     inf
 
@@ -2419,7 +2419,7 @@ add_newdoc('numpy.core.umath', 'minimum',
            [ 0. ,  1. ]])
 
     >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([ NaN,  NaN,  NaN])
+    array([nan, nan, nan])
     >>> np.minimum(-np.Inf, 1)
     -inf
 
@@ -2479,7 +2479,7 @@ add_newdoc('numpy.core.umath', 'fmax',
            [ 0.5,  2. ]])
 
     >>> np.fmax([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([  0.,   0.,  NaN])
+    array([ 0.,  0., nan])
 
     """)
 
@@ -2537,8 +2537,131 @@ add_newdoc('numpy.core.umath', 'fmin',
            [ 0. ,  1. ]])
 
     >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
-    array([  0.,   0.,  NaN])
+    array([ 0.,  0., nan])
 
+    """)
+
+add_newdoc('numpy.core.umath', 'matmul',
+    """
+    Matrix product of two arrays.
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        a shape that matches the signature `(n,k),(k,m)->(n,m)`. If not
+        provided or `None`, a freshly-allocated array is returned.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+        ..versionadded:: 1.16
+          Now handles ufunc kwargs
+
+    Returns
+    -------
+    y : ndarray
+        The matrix product of the inputs.
+        This is a scalar only when both x1, x2 are 1-d vectors.
+
+    Raises
+    ------
+    ValueError
+        If the last dimension of `a` is not the same size as
+        the second-to-last dimension of `b`.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vdot : Complex-conjugating dot product.
+    tensordot : Sum products over arbitrary axes.
+    einsum : Einstein summation convention.
+    dot : alternative matrix product with different broadcasting rules.
+
+    Notes
+    -----
+
+    The behavior depends on the arguments in the following way.
+
+    - If both arguments are 2-D they are multiplied like conventional
+      matrices.
+    - If either argument is N-D, N > 2, it is treated as a stack of
+      matrices residing in the last two indexes and broadcast accordingly.
+    - If the first argument is 1-D, it is promoted to a matrix by
+      prepending a 1 to its dimensions. After matrix multiplication
+      the prepended 1 is removed.
+    - If the second argument is 1-D, it is promoted to a matrix by
+      appending a 1 to its dimensions. After matrix multiplication
+      the appended 1 is removed.
+
+    ``matmul`` differs from ``dot`` in two important ways:
+
+    - Multiplication by scalars is not allowed, use ``*`` instead.
+    - Stacks of matrices are broadcast together as if the matrices
+      were elements, respecting the signature ``(n,k),(k,m)->(n,m)``:
+
+      >>> a = a = np.full([9,5,7,3], True, dtype=bool)
+      >>> c = np.full([9, 5, 4,3], True, dtype=bool)
+      >>> np.dot(a, c).shape # doctest: +SKIP
+      (9, 5, 7, 9, 5, 4)
+      >>> np.matmul(a, c).shape # doctest: +SKIP
+      (9, 5, 7, 4)
+      >>> # n is 5, k is 3, m is 4
+
+    The matmul function implements the semantics of the `@` operator introduced
+    in Python 3.5 following PEP465.
+
+    Examples
+    --------
+    For 2-D arrays it is the matrix product:
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([[4, 1], 
+    ...               [2, 2]])
+    >>> np.matmul(a, b)
+    array([[4, 1],
+           [2, 2]])
+
+    For 2-D mixed with 1-D, the result is the usual.
+
+    >>> a = np.array([[1, 0],
+    ...               [0, 1]])
+    >>> b = np.array([1, 2])
+    >>> np.matmul(a, b)
+    array([1, 2])
+    >>> np.matmul(b, a)
+    array([1, 2])
+
+
+    Broadcasting is conventional for stacks of arrays
+
+    >>> a = np.arange(2 * 2 * 4).reshape((2, 2, 4))
+    >>> b = np.arange(2 * 2 * 4).reshape((2, 4, 2))
+    >>> np.matmul(a,b).shape
+    (2, 2, 2)
+    >>> np.matmul(a, b)[0, 1, 1]
+    98
+    >>> sum(a[0, 1, :] * b[0 , :, 1])
+    98
+
+    Vector, vector returns the scalar inner product, but neither argument
+    is complex-conjugated:
+
+    >>> np.matmul([2j, 3j], [2j, 3j])
+    (-13+0j)
+
+    Scalar multiplication raises an error.
+
+    >>> np.matmul([1,2], 3)
+    Traceback (most recent call last):
+    ...
+    ValueError: matmul: Input operand 1 does not have enough dimensions ...
+
+    .. versionadded:: 1.10.0
     """)
 
 add_newdoc('numpy.core.umath', 'modf',
@@ -3352,6 +3475,7 @@ add_newdoc('numpy.core.umath', 'sinh',
     >>> # Discrepancy due to vagaries of floating point arithmetic.
 
     >>> # Example of providing the optional output parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.sinh([0.1], out1)
     >>> out2 is out1
     True
@@ -3405,8 +3529,8 @@ add_newdoc('numpy.core.umath', 'sqrt',
     >>> np.sqrt([4, -1, -3+4J])
     array([ 2.+0.j,  0.+1.j,  1.+2.j])
 
-    >>> np.sqrt([4, -1, numpy.inf])
-    array([  2.,  NaN,  Inf])
+    >>> np.sqrt([4, -1, np.inf])
+    array([ 2., nan, inf])
 
     """)
 
@@ -3537,6 +3661,7 @@ add_newdoc('numpy.core.umath', 'tan',
     >>>
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -3588,6 +3713,7 @@ add_newdoc('numpy.core.umath', 'tanh',
 
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
+    >>> out1 = np.array([0], dtype='d')
     >>> out2 = np.tanh([0.1], out1)
     >>> out2 is out1
     True
@@ -3638,8 +3764,6 @@ add_newdoc('numpy.core.umath', 'true_divide',
     >>> np.true_divide(x, 4)
     array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
 
-    >>> x/4
-    array([0, 0, 0, 0, 1])
     >>> x//4
     array([0, 0, 0, 0, 1])
 
@@ -3735,7 +3859,7 @@ add_newdoc('numpy.core.umath', 'ldexp',
     Examples
     --------
     >>> np.ldexp(5, np.arange(4))
-    array([  5.,  10.,  20.,  40.], dtype=float32)
+    array([ 5., 10., 20., 40.], dtype=float16)
 
     >>> x = np.arange(6)
     >>> np.ldexp(*np.frexp(x))

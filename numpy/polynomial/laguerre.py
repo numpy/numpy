@@ -160,7 +160,7 @@ def lag2poly(c):
     --------
     >>> from numpy.polynomial.laguerre import lag2poly
     >>> lag2poly([ 23., -63.,  58., -18.])
-    array([ 0.,  1.,  2.,  3.])
+    array([0., 1., 2., 3.])
 
     """
     from .polynomial import polyadd, polysub, polymulx
@@ -277,10 +277,10 @@ def lagfromroots(roots):
     >>> from numpy.polynomial.laguerre import lagfromroots, lagval
     >>> coef = lagfromroots((-1, 0, 1))
     >>> lagval((-1, 0, 1), coef)
-    array([ 0.,  0.,  0.])
+    array([0.,  0.,  0.])
     >>> coef = lagfromroots((-1j, 1j))
     >>> lagval((-1j, 1j), coef)
-    array([ 0.+0.j,  0.+0.j])
+    array([0.+0.j, 0.+0.j])
 
     """
     if len(roots) == 0:
@@ -334,7 +334,7 @@ def lagadd(c1, c2):
     --------
     >>> from numpy.polynomial.laguerre import lagadd
     >>> lagadd([1, 2, 3], [1, 2, 3, 4])
-    array([ 2.,  4.,  6.,  4.])
+    array([2.,  4.,  6.,  4.])
 
 
     """
@@ -383,7 +383,7 @@ def lagsub(c1, c2):
     --------
     >>> from numpy.polynomial.laguerre import lagsub
     >>> lagsub([1, 2, 3, 4], [1, 2, 3])
-    array([ 0.,  0.,  0.,  4.])
+    array([0.,  0.,  0.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -433,7 +433,7 @@ def lagmulx(c):
     --------
     >>> from numpy.polynomial.laguerre import lagmulx
     >>> lagmulx([1, 2, 3])
-    array([ -1.,  -1.,  11.,  -9.])
+    array([-1.,  -1.,  11.,  -9.])
 
     """
     # c is a trimmed copy
@@ -556,9 +556,9 @@ def lagdiv(c1, c2):
     --------
     >>> from numpy.polynomial.laguerre import lagdiv
     >>> lagdiv([  8., -13.,  38., -51.,  36.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 0.]))
+    (array([1., 2., 3.]), array([0.]))
     >>> lagdiv([  9., -12.,  38., -51.,  36.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
+    (array([1., 2., 3.]), array([1., 1.]))
 
     """
     # c1, c2 are trimmed copies
@@ -687,9 +687,9 @@ def lagder(c, m=1, scl=1, axis=0):
     --------
     >>> from numpy.polynomial.laguerre import lagder
     >>> lagder([ 1.,  1.,  1., -3.])
-    array([ 1.,  2.,  3.])
+    array([1.,  2.,  3.])
     >>> lagder([ 1.,  0.,  0., -4.,  3.], m=2)
-    array([ 1.,  2.,  3.])
+    array([1.,  2.,  3.])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -805,9 +805,9 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     >>> lagint([1,2,3], k=1)
     array([ 2.,  1.,  1., -3.])
     >>> lagint([1,2,3], lbnd=-1)
-    array([ 11.5,   1. ,   1. ,  -3. ])
+    array([11.5,  1. ,  1. , -3. ])
     >>> lagint([1,2], m=2, k=[1,2], lbnd=-1)
-    array([ 11.16666667,  -5.        ,  -3.        ,   2.        ])
+    array([ 11.16666667,  -5.        ,  -3.        ,   2.        ]) # may vary
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -1436,7 +1436,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -1489,7 +1489,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     >>> err = np.random.randn(len(x))/10
     >>> y = lagval(x, [1, 2, 3]) + err
     >>> lagfit(x, y, 2)
-    array([ 0.96971004,  2.00193749,  3.00288744])
+    array([ 0.96971004,  2.00193749,  3.00288744]) # may vary
 
     """
     x = np.asarray(x) + 0.0
@@ -1656,7 +1656,7 @@ def lagroots(c):
     >>> coef
     array([  2.,  -8.,  12.,  -6.])
     >>> lagroots(coef)
-    array([ -4.44089210e-16,   1.00000000e+00,   2.00000000e+00])
+    array([-4.4408921e-16,  1.0000000e+00,  2.0000000e+00])
 
     """
     # c is a trimmed copy

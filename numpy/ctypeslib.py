@@ -55,7 +55,9 @@ __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
            'c_intp', 'as_ctypes', 'as_array']
 
 import os
-from numpy import integer, ndarray, dtype as _dtype, deprecate, array
+from numpy import (
+    integer, ndarray, dtype as _dtype, deprecate, array, frombuffer
+)
 from numpy.core.multiarray import _flagdict, flagsobj
 
 try:
@@ -91,7 +93,7 @@ else:
     def load_library(libname, loader_path):
         """
         It is possible to load a library using 
-        >>> lib = ctypes.cdll[<full_path_name>]
+        >>> lib = ctypes.cdll[<full_path_name>] # doctest: +SKIP
 
         But there are cross-platform considerations, such as library file extensions,
         plus the fact Windows will just load the first library it finds with that name.  
@@ -175,24 +177,6 @@ def _flags_fromnum(num):
 
 
 class _ndptr(_ndptr_base):
-
-    def _check_retval_(self):
-        """This method is called when this class is used as the .restype
-        attribute for a shared-library function.   It constructs a numpy
-        array from a void pointer."""
-        return array(self)
-
-    @property
-    def __array_interface__(self):
-        return {'descr': self._dtype_.descr,
-                '__ref': self,
-                'strides': None,
-                'shape': self._shape_,
-                'version': 3,
-                'typestr': self._dtype_.descr[0][1],
-                'data': (self.value, False),
-                }
-
     @classmethod
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
@@ -211,6 +195,34 @@ class _ndptr(_ndptr_base):
             raise TypeError("array must have flags %s" %
                     _flags_fromnum(cls._flags_))
         return obj.ctypes
+
+
+class _concrete_ndptr(_ndptr):
+    """
+    Like _ndptr, but with `_shape_` and `_dtype_` specified.
+
+    Notably, this means the pointer has enough information to reconstruct
+    the array, which is not generally true.
+    """
+    def _check_retval_(self):
+        """
+        This method is called when this class is used as the .restype
+        attribute for a shared-library function, to automatically wrap the
+        pointer into an array.
+        """
+        return self.contents
+
+    @property
+    def contents(self):
+        """
+        Get an ndarray viewing the data pointed to by this pointer.
+
+        This mirrors the `contents` attribute of a normal ctypes pointer
+        """
+        full_dtype = _dtype((self._dtype_, self._shape_))
+        full_ctype = ctypes.c_char * full_dtype.itemsize
+        buffer = ctypes.cast(self, ctypes.POINTER(full_ctype)).contents
+        return frombuffer(buffer, dtype=full_dtype).squeeze(axis=0)
 
 
 # Factory for an array-checking class with from_param defined for
@@ -269,8 +281,11 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     """
 
+    # normalize dtype to an Optional[dtype]
     if dtype is not None:
         dtype = _dtype(dtype)
+
+    # normalize flags to an Optional[int]
     num = None
     if flags is not None:
         if isinstance(flags, str):
@@ -287,10 +302,23 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             except Exception:
                 raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
+
+    # normalize shape to an Optional[tuple]
+    if shape is not None:
+        try:
+            shape = tuple(shape)
+        except TypeError:
+            # single integer -> 1-tuple
+            shape = (shape,)
+
+    cache_key = (dtype, ndim, shape, num)
+
     try:
-        return _pointer_type_cache[(dtype, ndim, shape, num)]
+        return _pointer_type_cache[cache_key]
     except KeyError:
         pass
+
+    # produce a name for the new type
     if dtype is None:
         name = 'any'
     elif dtype.names:
@@ -300,23 +328,21 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     if ndim is not None:
         name += "_%dd" % ndim
     if shape is not None:
-        try:
-            strshape = [str(x) for x in shape]
-        except TypeError:
-            strshape = [str(shape)]
-            shape = (shape,)
-        shape = tuple(shape)
-        name += "_"+"x".join(strshape)
+        name += "_"+"x".join(str(x) for x in shape)
     if flags is not None:
         name += "_"+"_".join(flags)
+
+    if dtype is not None and shape is not None:
+        base = _concrete_ndptr
     else:
-        flags = []
-    klass = type("ndpointer_%s"%name, (_ndptr,),
+        base = _ndptr
+
+    klass = type("ndpointer_%s"%name, (base,),
                  {"_dtype_": dtype,
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[(dtype, shape, ndim, num)] = klass
+    _pointer_type_cache[cache_key] = klass
     return klass
 
 

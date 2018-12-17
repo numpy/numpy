@@ -10,11 +10,14 @@ sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
 sys.path.pop(0)
 
-Zero = "PyUFunc_Zero"
-One = "PyUFunc_One"
-None_ = "PyUFunc_None"
-AllOnes = "PyUFunc_MinusOne"
-ReorderableNone = "PyUFunc_ReorderableNone"
+Zero = "PyInt_FromLong(0)"
+One = "PyInt_FromLong(1)"
+True_ = "(Py_INCREF(Py_True), Py_True)"
+False_ = "(Py_INCREF(Py_False), Py_False)"
+None_ = object()
+AllOnes = "PyInt_FromLong(-1)"
+MinusInfinity = 'PyFloat_FromDouble(-NPY_INFINITY)'
+ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
 # Sentinel value to specify using the full type description in the
 # function name
@@ -74,10 +77,7 @@ class TypeDescription(object):
 _fdata_map = dict(e='npy_%sf', f='npy_%sf', d='npy_%s', g='npy_%sl',
                   F='nc_%sf', D='nc_%s', G='nc_%sl')
 def build_func_data(types, f):
-    func_data = []
-    for t in types:
-        d = _fdata_map.get(t, '%s') % (f,)
-        func_data.append(d)
+    func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
 
 def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
@@ -124,7 +124,7 @@ class Ufunc(object):
     type_descriptions : list of TypeDescription objects
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
-                 *type_descriptions):
+                 *type_descriptions, **kwargs):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -133,10 +133,13 @@ class Ufunc(object):
         self.docstring = docstring
         self.typereso = typereso
         self.type_descriptions = []
+        self.signature = kwargs.pop('signature', None)
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
+        if kwargs:
+            raise ValueError('unknown kwargs %r' % str(kwargs))
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -458,7 +461,7 @@ defdict = {
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           ),
 'logical_and':
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, True_,
           docstrings.get('numpy.core.umath.logical_and'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
@@ -472,14 +475,14 @@ defdict = {
           TD(O, f='npy_ObjectLogicalNot'),
           ),
 'logical_or':
-    Ufunc(2, 1, Zero,
+    Ufunc(2, 1, False_,
           docstrings.get('numpy.core.umath.logical_or'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalOr'),
           ),
 'logical_xor':
-    Ufunc(2, 1, Zero,
+    Ufunc(2, 1, False_,
           docstrings.get('numpy.core.umath.logical_xor'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?'),
@@ -514,7 +517,7 @@ defdict = {
           TD(O, f='npy_ObjectMin')
           ),
 'logaddexp':
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, MinusInfinity,
           docstrings.get('numpy.core.umath.logaddexp'),
           None,
           TD(flts, f="logaddexp", astype={'e':'f'})
@@ -901,7 +904,14 @@ defdict = {
           "PyUFunc_SimpleBinaryOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
-          )
+          ),
+'matmul' :
+    Ufunc(2, 1, None,
+          docstrings.get('numpy.core.umath.matmul'),
+          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          TD(notimes_or_obj),
+          signature='(n?,k),(k,m?)->(n?,m?)',
+          ),
 }
 
 if sys.version_info[0] >= 3:
@@ -1047,19 +1057,44 @@ def make_ufuncs(funcdict):
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n
         docstring = '\\n\"\"'.join(docstring.split(r"\n"))
+        if uf.signature is None:
+            sig = "NULL"
+        else:
+            sig = '"{}"'.format(uf.signature)
         fmt = textwrap.dedent("""\
-            f = PyUFunc_FromFuncAndData(
+            identity = {identity_expr};
+            if ({has_identity} && identity == NULL) {{
+                return -1;
+            }}
+            f = PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
                 {name}_functions, {name}_data, {name}_signatures, {nloops},
                 {nin}, {nout}, {identity}, "{name}",
-                "{doc}", 0
+                "{doc}", 0, {sig}, identity
             );
+            if ({has_identity}) {{
+                Py_DECREF(identity);
+            }}
             if (f == NULL) {{
                 return -1;
-            }}""")
-        mlist.append(fmt.format(
+            }}
+        """)
+        args = dict(
             name=name, nloops=len(uf.type_descriptions),
-            nin=uf.nin, nout=uf.nout, identity=uf.identity, doc=docstring
-        ))
+            nin=uf.nin, nout=uf.nout,
+            has_identity='0' if uf.identity is None_ else '1',
+            identity='PyUFunc_IdentityValue',
+            identity_expr=uf.identity,
+            doc=docstring,
+            sig=sig,
+        )
+
+        # Only PyUFunc_None means don't reorder - we pass this using the old
+        # argument
+        if uf.identity is None_:
+            args['identity'] = 'PyUFunc_None'
+            args['identity_expr'] = 'NULL'
+
+        mlist.append(fmt.format(**args))
         if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
@@ -1083,11 +1118,13 @@ def make_code(funcdict, filename):
     #include "cpuid.h"
     #include "ufunc_object.h"
     #include "ufunc_type_resolution.h"
+    #include "loops.h"
+    #include "matmul.h"
     %s
 
     static int
     InitOperators(PyObject *dictionary) {
-        PyObject *f;
+        PyObject *f, *identity;
 
     %s
     %s

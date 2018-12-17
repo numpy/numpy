@@ -7,6 +7,7 @@ import re
 import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
+from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
 
@@ -149,10 +150,8 @@ def deprecate(*args, **kwargs):
     Warning:
 
     >>> olduint = np.deprecate(np.uint)
+    DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
-    /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
-    DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -163,13 +162,6 @@ def deprecate(*args, **kwargs):
     if args:
         fn = args[0]
         args = args[1:]
-
-        # backward compatibility -- can be removed
-        # after next release
-        if 'newname' in kwargs:
-            kwargs['new_name'] = kwargs.pop('newname')
-        if 'oldname' in kwargs:
-            kwargs['old_name'] = kwargs.pop('oldname')
 
         return _Deprecate(*args, **kwargs)(fn)
     else:
@@ -207,8 +199,8 @@ def byte_bounds(a):
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
-    >>> I = np.eye(2, dtype='G'); I.dtype
-    dtype('complex192')
+    >>> I = np.eye(2); I.dtype
+    dtype('float64')
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
@@ -269,17 +261,17 @@ def who(vardict=None):
     >>> np.who()
     Name            Shape            Bytes            Type
     ===========================================================
-    a               10               40               int32
+    a               10               80               int64
     b               20               160              float64
-    Upper bound on total bytes  =       200
+    Upper bound on total bytes  =       240
 
     >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
     ... 'idx':5}
     >>> np.who(d)
     Name            Shape            Bytes            Type
     ===========================================================
-    y               3                24               float64
     x               2                16               float64
+    y               3                24               float64
     Upper bound on total bytes  =       40
 
     """
@@ -439,6 +431,7 @@ def _info(obj, output=sys.stdout):
     print("type: %s" % obj.dtype, file=output)
 
 
+@set_module('numpy')
 def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     """
     Get help information for a function, class, or module.
@@ -644,6 +637,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         print(inspect.getdoc(object), file=output)
 
 
+@set_module('numpy')
 def source(object, output=sys.stdout):
     """
     Print or write to a file the source code for a NumPy object.
@@ -701,6 +695,8 @@ _lookfor_caches = {}
 # signature
 _function_signature_re = re.compile(r"[a-z0-9_]+\(.*[,=].*\)", re.I)
 
+
+@set_module('numpy')
 def lookfor(what, module=None, import_modules=True, regenerate=False,
             output=None):
     """
@@ -735,7 +731,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
 
     Examples
     --------
-    >>> np.lookfor('binary representation')
+    >>> np.lookfor('binary representation') # doctest: +SKIP
     Search results for 'binary representation'
     ------------------------------------------
     numpy.binary_repr
@@ -1106,7 +1102,7 @@ def safe_eval(source):
     >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
-    SyntaxError: Unsupported source construct: compiler.ast.CallFunc
+    ValueError: malformed node or string: <_ast.Call object at 0x...>
 
     """
     # Local import to speed up numpy's import time.

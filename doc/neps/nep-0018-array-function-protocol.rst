@@ -95,6 +95,15 @@ A prototype implementation can be found in
   of NumPy functions for non-NumPy arrays. See "Non-goals" below for more
   details.
 
+.. note::
+
+  Dispatch with the ``__array_function__`` protocol has been implemented on
+  NumPy's master branch but is not yet enabled by default. In NumPy 1.16,
+  you will need to set the environment variable
+  ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to test
+  NumPy function overrides. We anticipate the protocol will be enabled by
+  default in NumPy 1.17.
+
 The interface
 ~~~~~~~~~~~~~
 
@@ -119,8 +128,9 @@ implementing the array API.
 
 As a convenience for ``__array_function__`` implementors, ``types`` provides all
 argument types with an ``'__array_function__'`` attribute. This
-allows downstream implementations to quickly determine if they are likely able
-to support the operation. The type of ``types`` is intentionally vague:
+allows implementors to quickly identify cases where they should defer to
+``__array_function__`` implementations on other arguments.
+The type of ``types`` is intentionally vague:
 ``frozenset`` would most closely match intended use, but we may use ``tuple``
 instead for performance reasons. In any case, ``__array_function__``
 implementations should not rely on the iteration order of ``types``, which

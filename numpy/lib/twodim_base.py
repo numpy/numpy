@@ -10,6 +10,7 @@ from numpy.core.numeric import (
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
+from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.core import iinfo, transpose
 
@@ -76,13 +77,13 @@ def fliplr(m):
     --------
     >>> A = np.diag([1.,2.,3.])
     >>> A
-    array([[ 1.,  0.,  0.],
-           [ 0.,  2.,  0.],
-           [ 0.,  0.,  3.]])
+    array([[1.,  0.,  0.],
+           [0.,  2.,  0.],
+           [0.,  0.,  3.]])
     >>> np.fliplr(A)
-    array([[ 0.,  0.,  1.],
-           [ 0.,  2.,  0.],
-           [ 3.,  0.,  0.]])
+    array([[0.,  0.,  1.],
+           [0.,  2.,  0.],
+           [3.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
     >>> np.all(np.fliplr(A) == A[:,::-1,...])
@@ -128,13 +129,13 @@ def flipud(m):
     --------
     >>> A = np.diag([1.0, 2, 3])
     >>> A
-    array([[ 1.,  0.,  0.],
-           [ 0.,  2.,  0.],
-           [ 0.,  0.,  3.]])
+    array([[1.,  0.,  0.],
+           [0.,  2.,  0.],
+           [0.,  0.,  3.]])
     >>> np.flipud(A)
-    array([[ 0.,  0.,  3.],
-           [ 0.,  2.,  0.],
-           [ 1.,  0.,  0.]])
+    array([[0.,  0.,  3.],
+           [0.,  2.,  0.],
+           [1.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
     >>> np.all(np.flipud(A) == A[::-1,...])
@@ -150,6 +151,7 @@ def flipud(m):
     return m[::-1, ...]
 
 
+@set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C'):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
@@ -189,9 +191,9 @@ def eye(N, M=None, k=0, dtype=float, order='C'):
     array([[1, 0],
            [0, 1]])
     >>> np.eye(3, k=1)
-    array([[ 0.,  1.,  0.],
-           [ 0.,  0.,  1.],
-           [ 0.,  0.,  0.]])
+    array([[0.,  1.,  0.],
+           [0.,  0.,  1.],
+           [0.,  0.,  0.]])
 
     """
     if M is None:
@@ -343,6 +345,7 @@ def diagflat(v, k=0):
     return wrap(res)
 
 
+@set_module('numpy')
 def tri(N, M=None, k=0, dtype=float):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
@@ -375,9 +378,9 @@ def tri(N, M=None, k=0, dtype=float):
            [1, 1, 1, 1, 1]])
 
     >>> np.tri(3, 5, -1)
-    array([[ 0.,  0.,  0.,  0.,  0.],
-           [ 1.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  0.,  0.,  0.]])
+    array([[0.,  0.,  0.,  0.,  0.],
+           [1.,  0.,  0.,  0.,  0.],
+           [1.,  1.,  0.,  0.,  0.]])
 
     """
     if M is None:
@@ -537,7 +540,7 @@ def vander(x, N=None, increasing=False):
     of the differences between the values of the input vector:
 
     >>> np.linalg.det(np.vander(x))
-    48.000000000000043
+    48.000000000000043 # may vary
     >>> (5-3)*(5-2)*(5-1)*(3-2)*(3-1)*(2-1)
     48
 
@@ -641,6 +644,9 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
 
     Examples
     --------
+    >>> import matplotlib
+    >>> import matplotlib.pyplot
+    >>> matplotlib.pyplot.switch_backend('agg')
     >>> import matplotlib as mpl
     >>> import matplotlib.pyplot as plt
 
@@ -663,6 +669,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> ax = fig.add_subplot(131, title='imshow: square bins')
     >>> plt.imshow(H, interpolation='nearest', origin='low',
     ...         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+    <matplotlib.image.AxesImage object at 0x...>
 
     :func:`pcolormesh <matplotlib.pyplot.pcolormesh>` can display actual edges:
 
@@ -670,6 +677,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     ...         aspect='equal')
     >>> X, Y = np.meshgrid(xedges, yedges)
     >>> ax.pcolormesh(X, Y, H)
+    <matplotlib.collections.QuadMesh object at 0x...>
 
     :class:`NonUniformImage <matplotlib.image.NonUniformImage>` can be used to
     display actual bin edges with interpolation:
@@ -698,6 +706,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     return hist, edges[0], edges[1]
 
 
+@set_module('numpy')
 def mask_indices(n, mask_func, k=0):
     """
     Return the indices to access (n, n) arrays, given a masking function.
@@ -768,6 +777,7 @@ def mask_indices(n, mask_func, k=0):
     return nonzero(a != 0)
 
 
+@set_module('numpy')
 def tril_indices(n, k=0, m=None):
     """
     Return the indices for the lower-triangle of an (n, m) array.
@@ -824,7 +834,7 @@ def tril_indices(n, k=0, m=None):
     Both for indexing:
 
     >>> a[il1]
-    array([ 0,  4,  5,  8,  9, 10, 12, 13, 14, 15])
+    array([ 0,  4,  5, ..., 13, 14, 15])
 
     And for assigning values:
 
@@ -881,6 +891,7 @@ def tril_indices_from(arr, k=0):
     return tril_indices(arr.shape[-2], k=k, m=arr.shape[-1])
 
 
+@set_module('numpy')
 def triu_indices(n, k=0, m=None):
     """
     Return the indices for the upper-triangle of an (n, m) array.
@@ -938,7 +949,7 @@ def triu_indices(n, k=0, m=None):
     Both for indexing:
 
     >>> a[iu1]
-    array([ 0,  1,  2,  3,  5,  6,  7, 10, 11, 15])
+    array([ 0,  1,  2, ..., 10, 11, 15])
 
     And for assigning values:
 
