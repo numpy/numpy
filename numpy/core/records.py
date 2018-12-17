@@ -38,6 +38,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import os
 import warnings
+from collections import OrderedDict
 
 from . import numeric as sb
 from . import numerictypes as nt
@@ -75,12 +76,14 @@ numfmt = nt.typeDict
 
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
-    dup = []
-    for i in range(len(list)):
-        if (list[i] in list[i + 1:]):
-            if (list[i] not in dup):
-                dup.append(list[i])
-    return dup
+    counter = OrderedDict()
+    for item in list:
+        if item in counter:
+            counter[item] += 1
+        else:
+            counter[item] = 1
+
+    return [item for item, counts in counter.items() if counts > 1]
 
 
 @set_module('numpy')
