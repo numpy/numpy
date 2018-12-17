@@ -401,5 +401,5 @@ if ctypes is not None:
             raise TypeError("readonly arrays unsupported")
         tp = _ctype_ndarray(_typecodes[ai["typestr"]], ai["shape"])
         result = tp.from_address(addr)
-        result.__keep = ai
+        result.__keep = obj
         return result
