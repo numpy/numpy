@@ -221,3 +221,19 @@ jobs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for PyPy3'
       failTaskOnFailedTests: true
+- job: Linux_Python_36_USE_DTYPE_AS_PYOBJECT_0
+  pool:
+    vmIMage: 'ubuntu-16.04'
+  steps:
+  - script: |
+      python3 -m pip install --upgrade pip setuptools
+      python3 -m pip install --user cython pytest pytz
+    displayName: 'Install prerequisites'
+  - script: |
+      export USE_DTYPE_AS_PYOBJECT=0
+      python3 runtests.py -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Run USE_DTYPE_AS_PYOBJECT=0 Build / Tests'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for USE_DTYPE_AS_PYOBJECT Linux'

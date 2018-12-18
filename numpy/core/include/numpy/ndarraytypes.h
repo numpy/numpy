@@ -598,7 +598,11 @@ typedef struct {
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
 typedef struct _PyArray_Descr {
+#ifdef USE_DTYPE_AS_PYOBJECT
         PyObject_HEAD
+#else
+        PyTypeObject descrtype;
+#endif
         /*
          * the type object representing an
          * instance of this type -- should not
