@@ -1505,11 +1505,11 @@ class TestLeaks(object):
         iters = 20
 
         def bound(self, *args):
-            return np.int(0)
+            return 0
 
         @staticmethod
         def unbound(*args):
-            return np.int(0)
+            return 0
 
         def npy_bound(self, a):
             return types.MethodType(np.frompyfunc(self.bound, 1, 1), a)
@@ -1527,8 +1527,8 @@ class TestLeaks(object):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
         # class.attribute = np.frompyfunc(<method>) creates a
-        # reference cycle that requires a gc collection cycle to break
-        # (on CPython 3)
+        # reference cycle if <method> is a bound class method that requires a
+        # gc collection cycle to break (on CPython 3)
         import gc
 
         gc.disable()

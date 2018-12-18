@@ -5296,6 +5296,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 static void
 ufunc_dealloc(PyUFuncObject *ufunc)
 {
+    PyObject_GC_UnTrack((PyObject *)ufunc);
     PyArray_free(ufunc->core_num_dims);
     PyArray_free(ufunc->core_dim_ixs);
     PyArray_free(ufunc->core_offsets);
@@ -5307,7 +5308,6 @@ ufunc_dealloc(PyUFuncObject *ufunc)
         Py_DECREF(ufunc->identity_value);
     }
     if (ufunc->obj != NULL) {
-        PyObject_GC_UnTrack((PyObject *)ufunc);
         Py_DECREF(ufunc->obj);
     }
     PyObject_GC_Del(ufunc);
@@ -5320,12 +5320,11 @@ ufunc_repr(PyUFuncObject *ufunc)
 }
 
 static int
-ufunc_traverse(PyObject *self, visitproc visit, void *arg)
+ufunc_traverse(PyUFuncObject *self, visitproc visit, void *arg)
 {
-    PyUFuncObject *ufunc = (PyUFuncObject*)self;
-    Py_VISIT(ufunc->obj);
-    if (ufunc->identity == PyUFunc_IdentityValue) {
-        Py_VISIT(ufunc->identity_value);
+    Py_VISIT(self->obj);
+    if (self->identity == PyUFunc_IdentityValue) {
+        Py_VISIT(self->identity_value);
     }
     return 0;
 }
