@@ -97,3 +97,8 @@ def test_f2py():
         success = try_f2py_commands(f2py_cmds)
         msg = "Warning: not all of %s, %s, and %s are found in path" % f2py_cmds
         assert_(success == 3, msg)
+
+def test_pep338():
+    f2py_cmd = [sys.executable, '-mnumpy.f2py', '-v']
+    code, stdout, stderr = run_command(f2py_cmd)
+    assert_equal(stdout.strip(), b'2')
