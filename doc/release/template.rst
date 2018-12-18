@@ -11,16 +11,16 @@ New functions
 =============
 
 
-Deprecations
-============
-
-
-Future Changes
-==============
+New deprecations
+================
 
 
 Expired deprecations
 ====================
+
+
+Future changes
+==============
 
 
 Compatibility notes
