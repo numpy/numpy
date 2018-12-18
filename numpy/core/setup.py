@@ -28,6 +28,11 @@ NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
 
+# Put USE_DTYPE_AS_PYOBJECT=0 in the environment if you want to use
+# new dtype code.
+# TODO: flip the default to 0 once new dtypes are ready
+USE_DTYPE_AS_PYOBJECT = (os.environ.get('USE_DTYPE_AS_PYOBJECT', "1") != "0")
+
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
 # config.h generation inside an Extension class, and as such sharing
@@ -459,6 +464,10 @@ def configuration(parent_package='',top_path=None):
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
 
+            # Use old-style, non-subclassable dtypes
+            if USE_DTYPE_AS_PYOBJECT:
+                moredefs.append(('USE_DTYPE_AS_PYOBJECT', 1))
+
             # Get long double representation
             rep = check_long_double_representation(config_cmd)
             moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
@@ -552,6 +561,10 @@ def configuration(parent_package='',top_path=None):
 
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
+
+            # Use old-style, non-subclassable dtypes
+            if USE_DTYPE_AS_PYOBJECT:
+                moredefs.append(('USE_DTYPE_AS_PYOBJECT', 1))
 
             # Check whether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers=['inttypes.h']):

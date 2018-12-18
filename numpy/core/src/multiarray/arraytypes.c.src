@@ -4115,10 +4115,7 @@ _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
  * #from = VOID, STRING, UNICODE#
  * #suff = void, string, unicode#
  * #sort = 0, 1, 1#
- * #align = char, char, npy_ucs4#
  * #NAME = Void, String, Unicode#
- * #endian = |, |, =#
- * #flags = 0, 0, NPY_NEEDS_INIT#
  */
 static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
@@ -4185,44 +4182,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ArgFunc*)@from@_argmin
 };
 
-/*
- * FIXME: check for PY3K
- */
-static PyArray_Descr @from@_Descr = {
-    PyObject_HEAD_INIT(&PyArrayDescr_Type)
-    /* typeobj */
-    &Py@NAME@ArrType_Type,
-    /* kind */
-    NPY_@from@LTR,
-    /* type */
-    NPY_@from@LTR,
-    /* byteorder */
-    '@endian@',
-    /* flags, unicode needs init as py3.3 does not like printing garbage  */
-    @flags@,
-    /* type_num */
-    NPY_@from@,
-    /* elsize */
-    0,
-    /* alignment */
-    _ALIGN(@align@),
-    /* subarray */
-    NULL,
-    /* fields */
-    NULL,
-    /* names */
-    NULL,
-    /* f */
-    &_Py@NAME@_ArrFuncs,
-    /* metadata */
-    NULL,
-    /* c_metadata */
-    NULL,
-    /* hash */
-    -1,
-};
-
 /**end repeat**/
+
 
 /**begin repeat
  *
@@ -4335,74 +4296,12 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ArgFunc*)@from@_argmin
 };
 
-/*
- * FIXME: check for PY3K
- */
-NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
-    PyObject_HEAD_INIT(&PyArrayDescr_Type)
-    /* typeobj */
-    &Py@NAME@ArrType_Type,
-    /* kind */
-    NPY_@kind@LTR,
-    /* type */
-    NPY_@from@LTR,
-    /* byteorder */
-    '@endian@',
-    /* flags */
-    @isobject@,
-    /* type_num */
-    NPY_@from@,
-    /* elsize */
-    sizeof(@fromtype@),
-    /* alignment */
-    _ALIGN(@fromtype@),
-    /* subarray */
-    NULL,
-    /* fields */
-    NULL,
-    /* names */
-    NULL,
-    /* f */
-    &_Py@NAME@_ArrFuncs,
-    /* metadata */
-    NULL,
-    /* c_metadata */
-    NULL,
-    /* hash */
-    -1,
-};
-
 /**end repeat**/
 
 #define _MAX_LETTER 128
 static char _letter_to_num[_MAX_LETTER];
 
-static PyArray_Descr *_builtin_descrs[] = {
-    &BOOL_Descr,
-    &BYTE_Descr,
-    &UBYTE_Descr,
-    &SHORT_Descr,
-    &USHORT_Descr,
-    &INT_Descr,
-    &UINT_Descr,
-    &LONG_Descr,
-    &ULONG_Descr,
-    &LONGLONG_Descr,
-    &ULONGLONG_Descr,
-    &FLOAT_Descr,
-    &DOUBLE_Descr,
-    &LONGDOUBLE_Descr,
-    &CFLOAT_Descr,
-    &CDOUBLE_Descr,
-    &CLONGDOUBLE_Descr,
-    &OBJECT_Descr,
-    &STRING_Descr,
-    &UNICODE_Descr,
-    &VOID_Descr,
-    &DATETIME_Descr,
-    &TIMEDELTA_Descr,
-    &HALF_Descr
-};
+static PyArray_Descr *_builtin_descrs[24];
 
 /*NUMPY_API
  * Get the PyArray_Descr structure for a type.
@@ -4512,20 +4411,75 @@ set_typeinfo(PyObject *dict)
      *          CFLOAT, CDOUBLE, CLONGDOUBLE,
      *          OBJECT, STRING, UNICODE, VOID,
      *          DATETIME,TIMEDELTA#
+     * #NAME = Bool,
+     *         Byte, UByte, Short, UShort, Int, UInt,
+     *         Long, ULong, LongLong, ULongLong,
+     *         Half, Float, Double, LongDouble,
+     *         CFloat, CDouble, CLongDouble,
+     *         Object, String, Unicode, Void,
+     *         Datetime, Timedelta#
+     * #kind = GENBOOL,
+     *         SIGNED, UNSIGNED, SIGNED, UNSIGNED, SIGNED, UNSIGNED,
+     *         SIGNED, UNSIGNED, SIGNED, UNSIGNED,
+     *         FLOATING, FLOATING, FLOATING, FLOATING,
+     *         COMPLEX, COMPLEX, COMPLEX,
+     *         OBJECT, STRING, UNICODE, VOID,
+     *         DATETIME, TIMEDELTA#
+     * #endian = |*3, =*15, |, |, =, |, =*2#
+     * #flags= 0*18, NPY_OBJECT_DTYPE_FLAGS,0, NPY_NEEDS_INIT, 0*3#
+     * #fromtype = npy_bool,
+     *             npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+     *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+     *             npy_half, npy_float, npy_double, npy_longdouble,
+     *             npy_cfloat, npy_cdouble, npy_clongdouble,
+     *             PyObject *, char, npy_ucs4, char,
+     *             npy_datetime, npy_timedelta#
+     * #DO_ELSIZE = 1*19, 0*3, 1*2#
      */
 
-    /**begin repeat1
-     *
-     * #name2 = HALF, DATETIME, TIMEDELTA#
-     */
+#if USE_DTYPE_AS_PYOBJECT
+    dtype = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+#else
+    dtype = PyObject_GC_New(PyArray_Descr, &PyArrayDescr_Type);
+#endif
+    /* Don't copy PyObject_HEAD part */
+    memcpy((char *)dtype + sizeof(PyObject),
+           (char *)&PyArrayDescr_Type + sizeof(PyObject),
+           sizeof(PyArray_Descr) - sizeof(PyObject));
+    dtype->typeobj  = &Py@NAME@ArrType_Type;
+    dtype->kind  = NPY_@kind@LTR;
+    dtype->type  = NPY_@name1@LTR;
+    dtype->byteorder  = '@endian@';
+    /* unicode needs init as py3.3 does not like printing garbage  */
+    dtype->flags  = @flags@;
+    dtype->type_num  = NPY_@name1@;
+#if @DO_ELSIZE@
+    dtype->elsize  = sizeof(@fromtype@);
+#else
+    dtype->elsize = 0;
+#endif
+    dtype->alignment  = _ALIGN(@fromtype@);
+    dtype->subarray  = NULL;
+    dtype->fields  = Py_None;
+    dtype->names  = NULL;
+    dtype->f  = &_Py@NAME@_ArrFuncs;
+    dtype->metadata  = NULL;
+    dtype->c_metadata  = NULL;
+    dtype->hash  = -1;
+    _builtin_descrs[NPY_@name1@] = dtype;
 
-    dtype = _builtin_descrs[NPY_@name1@];
     if (dtype->f->castdict == NULL) {
         dtype->f->castdict = PyDict_New();
         if (dtype->f->castdict == NULL) {
             return -1;
         }
     }
+
+    /**begin repeat1
+     *
+     * #name2 = HALF, DATETIME, TIMEDELTA#
+     */
+
     key = PyInt_FromLong(NPY_@name2@);
     if (key == NULL) {
         return -1;
@@ -4579,29 +4533,6 @@ set_typeinfo(PyObject *dict)
     /**end repeat**/
 
     _letter_to_num[NPY_STRINGLTR2] = NPY_STRING;
-
-    /**begin repeat
-      * #name = BOOL,
-      *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
-      *         LONG, ULONG, LONGLONG, ULONGLONG,
-      *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
-      *         CFLOAT, CDOUBLE, CLONGDOUBLE,
-      *         OBJECT, STRING, UNICODE, VOID,
-      *         DATETIME, TIMEDELTA#
-      */
-
-    @name@_Descr.fields = Py_None;
-
-    /**end repeat**/
-
-
-    /**begin repeat
-      * #name = STRING, UNICODE, VOID#
-      */
-
-    PyDataType_MAKEUNSIZED(&@name@_Descr);
-
-    /**end repeat**/
 
     /* Set a dictionary with type information */
     infodict = PyDict_New();

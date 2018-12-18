@@ -4739,10 +4739,10 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
         goto err;
     }
 
-    if (set_typeinfo(d) != 0) {
+    if (initumath(m) != 0) {
         goto err;
     }
-    if (initumath(m) != 0) {
+    if (set_typeinfo(d) != 0) {
         goto err;
     }
     return RETVAL(m);
