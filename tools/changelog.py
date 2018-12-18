@@ -42,8 +42,10 @@ import codecs
 from git import Repo
 from github import Github
 
-UTF8Writer = codecs.getwriter('utf8')
-sys.stdout = UTF8Writer(sys.stdout)
+if sys.version_info.major < 3:
+    UTF8Writer = codecs.getwriter('utf8')
+    sys.stdout = UTF8Writer(sys.stdout)
+
 this_repo = Repo(os.path.join(os.path.dirname(__file__), ".."))
 
 author_msg =\
