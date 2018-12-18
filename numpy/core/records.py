@@ -38,7 +38,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import os
 import warnings
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 
 from . import numeric as sb
 from . import numerictypes as nt
@@ -74,16 +74,24 @@ _byteorderconv = {'b':'>',
 
 numfmt = nt.typeDict
 
+# taken from OrderedDict recipes in the Python documentation
+# https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes
+class OrderedCounter(Counter, OrderedDict):
+    """Counter that remembers the order elements are first encountered"""
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
+
+    def __reduce__(self):
+        return self.__class__, (OrderedDict(self),)
+
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
-    counter = OrderedDict()
-    for item in list:
-        if item in counter:
-            counter[item] += 1
-        else:
-            counter[item] = 1
-
-    return [item for item, counts in counter.items() if counts > 1]
+    return [
+        item
+        for item, counts in OrderedCounter(list).items()
+        if counts > 1
+    ]
 
 
 @set_module('numpy')
