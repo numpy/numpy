@@ -829,7 +829,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         `genfromtxt`): ``converters = {3: lambda s: float(s.strip() or 0)}``.
         Default: None.
     skiprows : int, optional
-        Skip the first `skiprows` lines; default: 0.
+        Skip the first `skiprows` lines, including comments; default: 0.
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
