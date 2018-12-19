@@ -135,6 +135,17 @@ class TestGetImplementingArgs(object):
         assert_equal(_get_implementing_args([a, b, c]), [b, c, a])
         assert_equal(_get_implementing_args([a, c, b]), [c, b, a])
 
+    def test_too_many_duck_arrays(self):
+        namespace = dict(__array_function__=_return_not_implemented)
+        types = [type('A' + str(i), (object,), namespace) for i in range(33)]
+        relevant_args = [t() for t in types]
+
+        actual = _get_implementing_args(relevant_args[:32])
+        assert_equal(actual, relevant_args[:32])
+
+        with assert_raises_regex(TypeError, 'distinct argument types'):
+            _get_implementing_args(relevant_args)
+
 
 @requires_array_function
 class TestNDArrayArrayFunction(object):

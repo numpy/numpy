@@ -34,6 +34,7 @@
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 /* Internal APIs */
+#include "arrayfunction_override.h"
 #include "arraytypes.h"
 #include "arrayobject.h"
 #include "hashdescr.h"
@@ -4062,6 +4063,9 @@ normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 }
 
 static struct PyMethodDef array_module_methods[] = {
+    {"_get_implementing_args",
+        (PyCFunction)array__get_implementing_args,
+        METH_VARARGS, NULL},
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -4224,6 +4228,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_monotonicity", (PyCFunction)arr__monotonicity,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"implement_array_function",
+        (PyCFunction)array_implement_array_function,
+        METH_VARARGS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp_complex", (PyCFunction)arr_interp_complex,
@@ -4476,6 +4483,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_buffer = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_wrapped = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
@@ -4492,6 +4500,7 @@ intern_strings(void)
     npy_ma_str_array_finalize = PyUString_InternFromString("__array_finalize__");
     npy_ma_str_buffer = PyUString_InternFromString("__buffer__");
     npy_ma_str_ufunc = PyUString_InternFromString("__array_ufunc__");
+    npy_ma_str_wrapped = PyUString_InternFromString("__wrapped__");
     npy_ma_str_order = PyUString_InternFromString("order");
     npy_ma_str_copy = PyUString_InternFromString("copy");
     npy_ma_str_dtype = PyUString_InternFromString("dtype");
@@ -4501,7 +4510,7 @@ intern_strings(void)
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
-           npy_ma_str_buffer && npy_ma_str_ufunc &&
+           npy_ma_str_buffer && npy_ma_str_ufunc && npy_ma_str_wrapped &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }

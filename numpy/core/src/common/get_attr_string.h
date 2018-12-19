@@ -103,7 +103,6 @@ PyArray_LookupSpecial(PyObject *obj, char *name)
     if (_is_basic_python_type(tp)) {
         return NULL;
     }
-
     return maybe_get_attr((PyObject *)tp, name);
 }
 
