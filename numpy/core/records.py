@@ -76,7 +76,7 @@ numfmt = nt.typeDict
 
 # taken from OrderedDict recipes in the Python documentation
 # https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes
-class OrderedCounter(Counter, OrderedDict):
+class _OrderedCounter(Counter, OrderedDict):
     """Counter that remembers the order elements are first encountered"""
 
     def __repr__(self):
@@ -85,11 +85,12 @@ class OrderedCounter(Counter, OrderedDict):
     def __reduce__(self):
         return self.__class__, (OrderedDict(self),)
 
+
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     return [
         item
-        for item, counts in OrderedCounter(list).items()
+        for item, counts in _OrderedCounter(list).items()
         if counts > 1
     ]
 
