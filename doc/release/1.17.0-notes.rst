@@ -38,6 +38,10 @@ New Features
 Improvements
 ============
 
+Error messages from array comparison tests such as
+`np.testing.assert_allclose` now include the maximum difference between
+array values in the error message.
+
 
 Changes
 =======

@@ -511,23 +511,23 @@ class TestAlmostEqual(_GenericTest):
 
         # test with a different amount of decimal digits
         # note that we only check for the formatting of the arrays themselves
-        b = ('x: array([1.00000000001, 2.00000000002, 3.00003     '
-             ' ])\n y: array([1.00000000002, 2.00000000003, 3.00004      ])')
+        b = ('x: array([1.00000000001, 2.00000000002, 3.00003      ])\n'
+             ' y: array([1.00000000002, 2.00000000003, 3.00004      ])')
         try:
             self._assert_func(x, y, decimal=12)
         except AssertionError as e:
             # remove anything that's not the array string
-            assert_equal(str(e).split('%)\n ')[1], b)
+            assert_equal(str(e).split(')\n ', 1)[1], b)
 
         # with the default value of decimal digits, only the 3rd element differs
         # note that we only check for the formatting of the arrays themselves
-        b = ('x: array([1.     , 2.     , 3.00003])\n y: array([1.     , '
-             '2.     , 3.00004])')
+        b = ('x: array([1.     , 2.     , 3.00003])\n'
+             ' y: array([1.     , 2.     , 3.00004])')
         try:
             self._assert_func(x, y)
         except AssertionError as e:
             # remove anything that's not the array string
-            assert_equal(str(e).split('%)\n ')[1], b)
+            assert_equal(str(e).split(')\n ', 1)[1], b)
 
         # Check the error message when input includes inf or nan
         x = np.array([np.inf, 0])
@@ -537,7 +537,7 @@ class TestAlmostEqual(_GenericTest):
         except AssertionError as e:
             msgs = str(e).split('\n')
             # assert error percentage is 50%
-            assert_equal(msgs[3], '(mismatch 50.0%)')
+            assert_equal(msgs[3], '(mismatch 50.0%, maximum difference 1.0)')
             # assert output array contains inf
             assert_equal(msgs[4], ' x: array([inf,  0.])')
             assert_equal(msgs[5], ' y: array([inf,  1.])')
@@ -834,7 +834,7 @@ class TestAssertAllclose(object):
             msg = ''
         except AssertionError as exc:
             msg = exc.args[0]
-        assert_("mismatch 25.0%" in msg)
+        assert_("mismatch 25.0%, maximum difference 1" in msg)
 
     def test_equal_nan(self):
         a = np.array([np.nan])

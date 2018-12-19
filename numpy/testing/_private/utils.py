@@ -625,11 +625,10 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     --------
     >>> np.testing.assert_approx_equal(0.12345677777777e-20, 0.1234567e-20)
     >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345671e-20,
-                                       significant=8)
+    ...                                significant=8)
     >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345672e-20,
-                                       significant=8)
-    ...
-    <type 'exceptions.AssertionError'>:
+    ...                                significant=8)
+    AssertionError:
     Items are not equal to 8 significant digits:
      ACTUAL: 1.234567e-021
      DESIRED: 1.2345672000000001e-021
@@ -659,10 +658,10 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
         sc_actual = actual/scale
     except ZeroDivisionError:
         sc_actual = 0.0
-    msg = build_err_msg([actual, desired], err_msg,
-                header='Items are not equal to %d significant digits:' %
-                                 significant,
-                verbose=verbose)
+    msg = build_err_msg(
+        [actual, desired], err_msg,
+        header='Items are not equal to %d significant digits:' % significant,
+        verbose=verbose)
     try:
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
@@ -685,7 +684,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, isnan, inf, bool_
+    from numpy.core import array, isnan, inf, bool_, errstate
 
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
@@ -781,15 +780,23 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             reduced = val.ravel()
             cond = reduced.all()
             reduced = reduced.tolist()
+
         # The below comparison is a hack to ensure that fully masked
         # results, for which val.ravel().all() returns np.ma.masked,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
             mismatch = 100.0 * reduced.count(0) / ox.size
-            msg = build_err_msg([ox, oy],
-                                err_msg
-                                + '\n(mismatch %s%%)' % (mismatch,),
+            remarks = ['mismatch %s%%' % (mismatch,)]
+
+            with errstate(invalid='ignore'):
+                try:
+                    max_error = abs(x - y).max()
+                    remarks.append('maximum difference %s' % max_error)
+                except TypeError:
+                    pass
+            err_msg += '\n(' + ', '.join(remarks) + ')'
+            msg = build_err_msg([ox, oy], err_msg,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
@@ -849,13 +856,11 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
 
     >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
     ...                               [1, np.sqrt(np.pi)**2, np.nan])
-    ...
-    <type 'exceptions.ValueError'>:
     AssertionError:
     Arrays are not equal
-    (mismatch 50.0%)
-     x: array([ 1.        ,  3.14159265,         NaN])
-     y: array([ 1.        ,  3.14159265,         NaN])
+    (mismatch 33.333333333333336%, maximum difference 4.440892098500626e-16)
+     x: array([1.      , 3.141593,      nan])
+     y: array([1.      , 3.141593,      nan])
 
     Use `assert_allclose` or one of the nulp (number of floating point values)
     functions for these cases instead:
@@ -920,25 +925,24 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     the first assert does not raise an exception
 
     >>> np.testing.assert_array_almost_equal([1.0,2.333,np.nan],
-                                             [1.0,2.333,np.nan])
+    ...                                      [1.0,2.333,np.nan])
 
     >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
     ...                                      [1.0,2.33339,np.nan], decimal=5)
     ...
-    <type 'exceptions.AssertionError'>:
     AssertionError:
-    Arrays are not almost equal
-    (mismatch 50.0%)
+    Arrays are not almost equal to 5 decimals
+    (mismatch 33.333333333333336%, maximum difference 5.999999999994898e-05)
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33339,      NaN])
 
     >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
     ...                                      [1.0,2.33333, 5], decimal=5)
-    <type 'exceptions.ValueError'>:
-    ValueError:
-    Arrays are not almost equal
-     x: array([ 1.     ,  2.33333,      NaN])
-     y: array([ 1.     ,  2.33333,  5.     ])
+    AssertionError:
+    Arrays are not almost equal to 5 decimals
+    x and y nan location mismatch:
+     x: array([1.     , 2.33333,     nan])
+     y: array([1.     , 2.33339, 5.     ])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1019,24 +1023,20 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     --------
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1.1, 2.0, np.nan])
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1, 2.0, np.nan])
-    ...
-    <type 'exceptions.ValueError'>:
+    AssertionError:
     Arrays are not less-ordered
-    (mismatch 50.0%)
-     x: array([  1.,   1.,  NaN])
-     y: array([  1.,   2.,  NaN])
+    (mismatch 33.333333333333336%, maximum difference 1.0)
+     x: array([ 1.,  1., nan])
+     y: array([ 1.,  2., nan])
 
     >>> np.testing.assert_array_less([1.0, 4.0], 3)
-    ...
-    <type 'exceptions.ValueError'>:
     Arrays are not less-ordered
-    (mismatch 50.0%)
-     x: array([ 1.,  4.])
+    (mismatch 50.0%, maximum difference 2.0)
+     x: array([1., 4.])
      y: array(3)
 
     >>> np.testing.assert_array_less([1.0, 2.0, 3.0], [4])
-    ...
-    <type 'exceptions.ValueError'>:
+    AssertionError:
     Arrays are not less-ordered
     (shapes (3,), (1,) mismatch)
      x: array([ 1.,  2.,  3.])
