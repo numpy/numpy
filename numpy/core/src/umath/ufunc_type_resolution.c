@@ -16,6 +16,7 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
@@ -26,6 +27,26 @@
 #if defined(HAVE_CBLAS)
 #include "cblasfuncs.h"
 #endif
+
+static PyObject *
+npy_casting_to_py_object(NPY_CASTING casting)
+{
+    switch (casting) {
+        case NPY_NO_CASTING:
+            return PyUString_FromString("no");
+        case NPY_EQUIV_CASTING:
+            return PyUString_FromString("equiv");
+        case NPY_SAFE_CASTING:
+            return PyUString_FromString("safe");
+        case NPY_SAME_KIND_CASTING:
+            return PyUString_FromString("same_kind");
+        case NPY_UNSAFE_CASTING:
+            return PyUString_FromString("unsafe");
+        default:
+            return PyInt_FromLong(casting);
+    }
+}
+
 
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
@@ -63,6 +84,120 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
     return -1;
 }
 
+/** Helper function to raise UFuncNoLoopError */
+static int
+raise_no_loop_found_error(
+        PyUFuncObject *ufunc, PyArray_Descr **dtypes, npy_intp n_dtypes)
+{
+    static PyObject *exc_type = NULL;
+    PyObject *exc_value;
+    PyObject *dtypes_tup;
+    npy_intp i;
+
+    npy_cache_import(
+        "numpy.core._exceptions", "_UFuncNoLoopError",
+        &exc_type);
+    if (exc_type == NULL) {
+        return -1;
+    }
+
+    /* convert dtypes to a tuple */
+    dtypes_tup = PyTuple_New(n_dtypes);
+    if (dtypes_tup == NULL) {
+        return -1;
+    }
+    for (i = 0; i < n_dtypes; ++i) {
+        Py_INCREF(dtypes[i]);
+        PyTuple_SET_ITEM(dtypes_tup, i, (PyObject *)dtypes[i]);
+    }
+
+    /* produce an error object */
+    exc_value = PyTuple_Pack(2, ufunc, dtypes_tup);
+    Py_DECREF(dtypes_tup);
+    if (exc_value == NULL){
+        return -1;
+    }
+    PyErr_SetObject(exc_type, exc_value);
+    Py_DECREF(exc_value);
+
+    return -1;
+}
+
+static int
+raise_casting_error(
+        PyObject *exc_type,
+        PyUFuncObject *ufunc,
+        NPY_CASTING casting,
+        PyArray_Descr *from,
+        PyArray_Descr *to,
+        npy_intp i)
+{
+    PyObject *exc_value;
+    PyObject *casting_value;
+
+    casting_value = npy_casting_to_py_object(casting);
+    if (casting_value == NULL) {
+        return -1;
+    }
+
+    exc_value = Py_BuildValue(
+        "ONOOi",
+        ufunc,
+        casting_value,
+        (PyObject *)from,
+        (PyObject *)to,
+        i
+    );
+    if (exc_value == NULL){
+        return -1;
+    }
+    PyErr_SetObject(exc_type, exc_value);
+    Py_DECREF(exc_value);
+
+    return -1;
+}
+
+/** Helper function to raise UFuncInputCastingError */
+static int
+raise_input_casting_error(
+        PyUFuncObject *ufunc,
+        NPY_CASTING casting,
+        PyArray_Descr *from,
+        PyArray_Descr *to,
+        npy_intp i)
+{
+    static PyObject *exc_type = NULL;
+    npy_cache_import(
+        "numpy.core._exceptions", "_UFuncInputCastingError",
+        &exc_type);
+    if (exc_type == NULL) {
+        return -1;
+    }
+
+    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+}
+
+
+/** Helper function to raise UFuncOutputCastingError */
+static int
+raise_output_casting_error(
+        PyUFuncObject *ufunc,
+        NPY_CASTING casting,
+        PyArray_Descr *from,
+        PyArray_Descr *to,
+        npy_intp i)
+{
+    static PyObject *exc_type = NULL;
+    npy_cache_import(
+        "numpy.core._exceptions", "_UFuncOutputCastingError",
+        &exc_type);
+    if (exc_type == NULL) {
+        return -1;
+    }
+
+    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+}
+
 
 /*UFUNC_API
  *
@@ -79,45 +214,18 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                             PyArray_Descr **dtypes)
 {
     int i, nin = ufunc->nin, nop = nin + ufunc->nout;
-    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     for (i = 0; i < nop; ++i) {
         if (i < nin) {
             if (!PyArray_CanCastArrayTo(operands[i], dtypes[i], casting)) {
-                PyObject *errmsg;
-                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
-                                "input from ", ufunc_name);
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromString(" to "));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)dtypes[i]));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromFormat(" with casting rule %s",
-                                        npy_casting_to_string(casting)));
-                PyErr_SetObject(PyExc_TypeError, errmsg);
-                Py_DECREF(errmsg);
-                return -1;
+                return raise_input_casting_error(
+                    ufunc, casting, PyArray_DESCR(operands[i]), dtypes[i], i);
             }
         } else if (operands[i] != NULL) {
             if (!PyArray_CanCastTypeTo(dtypes[i],
                                     PyArray_DESCR(operands[i]), casting)) {
-                PyObject *errmsg;
-                errmsg = PyUString_FromFormat("Cannot cast ufunc %s "
-                                "output from ", ufunc_name);
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)dtypes[i]));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromString(" to "));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyObject_Repr((PyObject *)PyArray_DESCR(operands[i])));
-                PyUString_ConcatAndDel(&errmsg,
-                        PyUString_FromFormat(" with casting rule %s",
-                                        npy_casting_to_string(casting)));
-                PyErr_SetObject(PyExc_TypeError, errmsg);
-                Py_DECREF(errmsg);
-                return -1;
+                return raise_output_casting_error(
+                    ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
             }
         }
     }
@@ -1373,11 +1481,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
 {
     int nargs = ufunc->nargs;
     char *types;
-    const char *ufunc_name;
-    PyObject *errmsg;
     int i, j;
-
-    ufunc_name = ufunc_get_name_cstr(ufunc);
 
     /*
      * If there are user-loops search them first.
@@ -1413,19 +1517,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    errmsg = PyUString_FromFormat("ufunc '%s' did not contain a loop "
-                    "with signature matching types ", ufunc_name);
-    for (i = 0; i < nargs; ++i) {
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)dtypes[i]));
-        if (i < nargs - 1) {
-            PyUString_ConcatAndDel(&errmsg, PyUString_FromString(" "));
-        }
-    }
-    PyErr_SetObject(PyExc_TypeError, errmsg);
-    Py_DECREF(errmsg);
-
-    return -1;
+    return raise_no_loop_found_error(ufunc, dtypes, nargs);
 }
 
 typedef struct {
@@ -2242,7 +2334,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     /* If no function was found, throw an error */
     PyErr_Format(PyExc_TypeError,
-            "No loop matching the specified signature and casting\n"
+            "No loop matching the specified signature and casting "
             "was found for ufunc %s", ufunc_name);
 
     return -1;
