@@ -176,3 +176,5 @@ benchmarks/numpy
 cythonize.dat
 numpy/random/mtrand/mtrand.c
 numpy/random/mtrand/randint_helpers.pxi
+# CI run of PyPy
+pypy3.5-latest
