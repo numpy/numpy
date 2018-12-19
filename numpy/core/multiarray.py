@@ -211,9 +211,11 @@ def concatenate(arrays, axis=None, out=None):
            fill_value=999999)
 
     """
-    for array in arrays:
-        yield array
-    yield out
+    if out is not None:
+        # optimize for the typical case where only arrays is provided
+        arrays = list(arrays)
+        arrays.append(out)
+    return arrays
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)

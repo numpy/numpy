@@ -342,10 +342,11 @@ def hstack(tup):
 
 def _stack_dispatcher(arrays, axis=None, out=None):
     arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
-    for a in arrays:
-        yield a
     if out is not None:
-        yield out
+        # optimize for the typical case where only arrays is provided
+        arrays = list(arrays)
+        arrays.append(out)
+    return arrays
 
 
 @array_function_dispatch(_stack_dispatcher)
