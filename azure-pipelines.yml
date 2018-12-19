@@ -210,3 +210,14 @@ jobs:
       testResultsFiles: '**/test-*.xml'
       failTaskOnFailedTests: true
       testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'
+
+- job: Linux_PyPy3_latest_nightly
+  pool:
+    vmIMage: 'ubuntu-16.04'
+  steps:
+  - script: source tools/azure-pypy-test.sh
+    displayName: 'Run PyPy3.5 Build / Tests'
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for PyPy3.5'

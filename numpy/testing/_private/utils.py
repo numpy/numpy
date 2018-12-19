@@ -2245,6 +2245,7 @@ def _assert_no_gc_cycles_context(name=None):
 
     # not meaningful to test if there is no refcounting
     if not HAS_REFCOUNT:
+        yield
         return
 
     assert_(gc.isenabled())
