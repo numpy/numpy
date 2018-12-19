@@ -161,7 +161,7 @@ def _array_function(self, func, types, args, kwargs):
     # TODO: rewrite this in C
     # Cannot handle items that have __array_function__ other than our own.
     for t in types:
-        if not issubclass(t, mu.ndarray) and hasattr(t, '__array_function__'):
+        if not issubclass(t, mu.ndarray):
             return NotImplemented
 
     # The regular implementation can handle this, so we call it directly.
