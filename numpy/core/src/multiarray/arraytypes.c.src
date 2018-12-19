@@ -4441,11 +4441,13 @@ set_typeinfo(PyObject *dict)
     dtype = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
 #else
     dtype = PyObject_GC_New(PyArray_Descr, &PyArrayDescr_Type);
-#endif
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)dtype + sizeof(PyObject),
-           (char *)&PyArrayDescr_Type + sizeof(PyObject),
+    memset((char *)dtype + sizeof(PyObject),
+           0,
            sizeof(PyArray_Descr) - sizeof(PyObject));
+    dtype->descrtype.tp_name = "numpy.@NAME@Descr";
+    dtype->descrtype.tp_flags = Py_TPFLAGS_DEFAULT;
+#endif
     dtype->typeobj  = &Py@NAME@ArrType_Type;
     dtype->kind  = NPY_@kind@LTR;
     dtype->type  = NPY_@name1@LTR;

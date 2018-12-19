@@ -2338,6 +2338,15 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
     return (PyObject *)conv;
 }
 
+#ifndef USE_DTYPE_AS_PYOBJECT
+static int
+arraydescr_init(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    /* This is all handled in arraydescr_new */
+    return 0;
+}
+#endif
+
 /*
  * Return a tuple of
  * (cleaned metadata dictionary, tuple with (str, num))
@@ -3572,14 +3581,15 @@ static PyMappingMethods descr_as_mapping = {
 #define BASETYPE 0
 #else
 #pragma message "USE_DTYPE_AS_PYOBJECT not defined, using new dtypes"
+/* may need to be PyHeapTypeObject to allow overriding tp_as_* functions? */
 #define BASETYPE &PyType_Type
 #endif
 
 NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
 #if defined(NPY_PY3K)
-    PyVarObject_HEAD_INIT(BASETYPE, 0)
+    PyVarObject_HEAD_INIT(NULL, 0)
 #else
-    PyObject_HEAD_INIT(BASETYPE)
+    PyObject_HEAD_INIT(NULL)
     0,                                          /* ob_size */
 #endif
     "numpy.dtype",                              /* tp_name */
@@ -3602,10 +3612,15 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     0,                                          /* tp_hash */
     0,                                          /* tp_call */
     (reprfunc)arraydescr_str,                   /* tp_str */
-    0,                                          /* tp_getattro */
+    PyObject_GenericGetAttr,                    /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
+#ifdef USE_DTYPE_AS_PYOBJECT
     Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+#else
+    Py_TPFLAGS_DEFAULT | 
+        Py_TPFLAGS_TYPE_SUBCLASS,               /* tp_flags */
+#endif
     0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
@@ -3621,7 +3636,11 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     0,                                          /* tp_descr_get */
     0,                                          /* tp_descr_set */
     0,                                          /* tp_dictoffset */
+#ifdef USE_DTYPE_AS_PYOBJECT
     0,                                          /* tp_init */
+#else
+    arraydescr_init,                            /* tp_init */
+#endif
     0,                                          /* tp_alloc */
     arraydescr_new,                             /* tp_new */
     0,                                          /* tp_free */
