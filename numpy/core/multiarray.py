@@ -66,6 +66,10 @@ set_numeric_ops.__module__ = 'numpy'
 seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
 
+if isinstance(dtype(int), type):
+    # new dtypes, register the pickle protocol
+    import copyreg
+    copyreg.pickle(dtype, dtype.__reduce__)
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
 # support introspection.
