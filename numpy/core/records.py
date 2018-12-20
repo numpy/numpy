@@ -613,6 +613,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
             if not isinstance(obj, ndarray):
                 raise ValueError("item in the array list must be an ndarray.")
             shape_ = obj.shape[1:] or ''
+            # keep the 1.15.4 behaviour for now
+            shape_ = ''
             formats.append('{}{}'.format(shape_, obj.dtype.str))
 
     if dtype is not None:
