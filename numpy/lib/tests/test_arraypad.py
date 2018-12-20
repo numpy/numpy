@@ -679,6 +679,14 @@ class TestLinearRamp(object):
         ])
         assert_equal(actual, expected)
 
+    def test_end_values(self):
+        """Ensure that end values are exact."""
+        a = np.pad(np.ones(10).reshape(2, 5), (223, 123), mode="linear_ramp")
+        assert_equal(a[:, 0], 0.)
+        assert_equal(a[:, -1], 0.)
+        assert_equal(a[0, :], 0.)
+        assert_equal(a[-1, :], 0.)
+
 
 class TestReflect(object):
     def test_check_simple(self):
