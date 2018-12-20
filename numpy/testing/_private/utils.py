@@ -684,7 +684,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, isnan, inf, bool_, errstate
+    from numpy.core import array, array2string, isnan, inf, bool_, errstate
 
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
@@ -787,14 +787,20 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # np.ma.masked, which is falsy).
         if cond != True:
             mismatch = 100.0 * reduced.count(0) / ox.size
-            remarks = ['mismatch %s%%' % (mismatch,)]
+            remarks = ['mismatch {:.3g}%'.format(mismatch)]
 
-            with errstate(invalid='ignore'):
-                try:
-                    max_error = abs(x - y).max()
-                    remarks.append('maximum difference %s' % max_error)
-                except TypeError:
-                    pass
+            with errstate(invalid='ignore', divide='ignore'):
+                # ignore errors for non-numeric types
+                with contextlib.suppress(TypeError):
+                    error = abs(x - y)
+                    max_abs_error = error.max()
+                    remarks.append('abs error ' + array2string(max_abs_error))
+
+                    # note: this definition of relative error matches that one
+                    # used by assert_allclose (found in np.isclose)
+                    max_rel_error = (error / abs(y)).max()
+                    remarks.append('rel error ' + array2string(max_rel_error))
+
             err_msg += '\n(' + ', '.join(remarks) + ')'
             msg = build_err_msg([ox, oy], err_msg,
                                 verbose=verbose, header=header,
@@ -858,7 +864,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     ...                               [1, np.sqrt(np.pi)**2, np.nan])
     AssertionError:
     Arrays are not equal
-    (mismatch 33.333333333333336%, maximum difference 4.440892098500626e-16)
+    (mismatch 33.3%, abs error 4.4408921e-16, rel error 1.41357986e-16)
      x: array([1.      , 3.141593,      nan])
      y: array([1.      , 3.141593,      nan])
 
@@ -932,7 +938,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     ...
     AssertionError:
     Arrays are not almost equal to 5 decimals
-    (mismatch 33.333333333333336%, maximum difference 5.999999999994898e-05)
+    (mismatch 33.3%, abs error 6.e-05, rel error 2.57136612e-05)
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33339,      NaN])
 
@@ -1025,13 +1031,13 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1, 2.0, np.nan])
     AssertionError:
     Arrays are not less-ordered
-    (mismatch 33.333333333333336%, maximum difference 1.0)
+    (mismatch 33.3%, abs error 1., rel error 0.5)
      x: array([ 1.,  1., nan])
      y: array([ 1.,  2., nan])
 
     >>> np.testing.assert_array_less([1.0, 4.0], 3)
     Arrays are not less-ordered
-    (mismatch 50.0%, maximum difference 2.0)
+    (mismatch 50%, abs error 2., rel error 0.66666667)
      x: array([1., 4.])
      y: array(3)
 
