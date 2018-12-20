@@ -4184,7 +4184,6 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 
 /**end repeat**/
 
-
 /**begin repeat
  *
  * #from = BOOL,

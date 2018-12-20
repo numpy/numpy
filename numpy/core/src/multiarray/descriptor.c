@@ -3601,7 +3601,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     0,                                          /* tp_call */
     (reprfunc)arraydescr_str,                   /* tp_str */
     PyObject_GenericGetAttr,                    /* tp_getattro */
-    0,                                          /* tp_setattro */
+    PyObject_GenericSetAttr,                    /* tp_setattro */
     0,                                          /* tp_as_buffer */
 #ifdef USE_DTYPE_AS_PYOBJECT
     Py_TPFLAGS_DEFAULT,                         /* tp_flags */
