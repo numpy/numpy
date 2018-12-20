@@ -167,11 +167,8 @@ class format_parser(object):
         if formats is None:
             raise ValueError("Need formats argument")
         if isinstance(formats, list):
-            if len(formats) < 2:
-                formats.append('')
             dtype = sb.dtype(
-                {'formats': formats,
-                 'names': ['f{}'.format(i) for i in range(len(formats))]},
+                [('f{}'.format(i), format_) for i, format_ in enumerate(formats)],
                 aligned,
             )
         else:
