@@ -612,8 +612,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         for obj in arrayList:
             if not isinstance(obj, ndarray):
                 raise ValueError("item in the array list must be an ndarray.")
-            shape = obj.shape[1:] or ''
-            formats.append('{}{}'.format(shape, obj.dtype.str))
+            shape_ = obj.shape[1:] or ''
+            formats.append('{}{}'.format(shape_, obj.dtype.str))
 
     if dtype is not None:
         descr = sb.dtype(dtype)
