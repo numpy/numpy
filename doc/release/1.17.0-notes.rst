@@ -39,8 +39,7 @@ Improvements
 ============
 
 Error messages from array comparison tests such as
-`np.testing.assert_allclose` now include the maximum difference between
-array values in the error message.
+`np.testing.assert_allclose` now includes maximum absolute and relative error.
 
 
 Changes

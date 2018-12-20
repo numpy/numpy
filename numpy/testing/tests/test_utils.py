@@ -531,7 +531,8 @@ class TestAlmostEqual(_GenericTest):
             assert_equal(str(e).split(')\n ', 1)[1], b)
             assert_equal(
                 re.search(r'\(mismatch .*\)', str(e)).group(),
-                '(mismatch 33.3%, abs error 1.e-05, rel error 3.33328889e-06)')
+                '(mismatch 33.3%, max abs error 1.e-05, '
+                'max rel error 3.33328889e-06)')
 
         # Check the error message when input includes inf
         x = np.array([np.inf, 0])
@@ -542,7 +543,7 @@ class TestAlmostEqual(_GenericTest):
             msgs = str(e).split('\n')
             # assert error percentage is 50%
             assert_equal(msgs[3],
-                         '(mismatch 50%, abs error 1., rel error 1.)')
+                         '(mismatch 50%, max abs error 1., max rel error 1.)')
             # assert output array contains inf
             assert_equal(msgs[4], ' x: array([inf,  0.])')
             assert_equal(msgs[5], ' y: array([inf,  1.])')
@@ -555,7 +556,7 @@ class TestAlmostEqual(_GenericTest):
         except AssertionError as e:
             msgs = str(e).split('\n')
             assert_equal(msgs[3],
-                         '(mismatch 100%, abs error 2, rel error inf)')
+                         '(mismatch 100%, max abs error 2, max rel error inf)')
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
