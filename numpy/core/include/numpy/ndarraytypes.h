@@ -601,6 +601,7 @@ typedef struct _PyArray_Descr {
 #ifdef USE_DTYPE_AS_PYOBJECT
         PyObject_HEAD
 #else
+        /* may need to be PyHeapTypeObject for new tp_as_* functions? */
         PyTypeObject descrtype;
 #endif
         /*

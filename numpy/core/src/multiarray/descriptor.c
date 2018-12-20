@@ -1762,11 +1762,7 @@ error:
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
-#if USE_DTYPE_AS_PYOBJECT
     PyArray_Descr *newdescr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
-#else
-    PyArray_Descr *newdescr = PyObject_GC_New(PyArray_Descr, &PyArrayDescr_Type);
-#endif
 
     if (newdescr == NULL) {
         return NULL;
@@ -3576,14 +3572,6 @@ static PyMappingMethods descr_as_mapping = {
 };
 
 /****************** End of Mapping Protocol ******************************/
-#ifdef USE_DTYPE_AS_PYOBJECT
-#pragma message "USE_DTYPE_AS_PYOBJECT defined, using old dtypes"
-#define BASETYPE 0
-#else
-#pragma message "USE_DTYPE_AS_PYOBJECT not defined, using new dtypes"
-/* may need to be PyHeapTypeObject to allow overriding tp_as_* functions? */
-#define BASETYPE &PyType_Type
-#endif
 
 NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
 #if defined(NPY_PY3K)
@@ -3631,7 +3619,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     arraydescr_methods,                         /* tp_methods */
     arraydescr_members,                         /* tp_members */
     arraydescr_getsets,                         /* tp_getset */
-    BASETYPE,                                   /* tp_base */
+    0,                                          /* tp_base */
     0,                                          /* tp_dict */
     0,                                          /* tp_descr_get */
     0,                                          /* tp_descr_set */
@@ -3653,3 +3641,4 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     0,                                          /* tp_del */
     0,                                          /* tp_version_tag */
 };
+

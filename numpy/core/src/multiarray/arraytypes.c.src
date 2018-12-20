@@ -4437,10 +4437,8 @@ set_typeinfo(PyObject *dict)
      * #DO_ELSIZE = 1*19, 0*3, 1*2#
      */
 
-#if USE_DTYPE_AS_PYOBJECT
     dtype = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
-#else
-    dtype = PyObject_GC_New(PyArray_Descr, &PyArrayDescr_Type);
+#ifndef USE_DTYPE_AS_PYOBJECT
     /* Don't copy PyObject_HEAD part */
     memset((char *)dtype + sizeof(PyObject),
            0,
@@ -4539,7 +4537,6 @@ set_typeinfo(PyObject *dict)
     /* Set a dictionary with type information */
     infodict = PyDict_New();
     if (infodict == NULL) return -1;
-
 
     /**begin repeat
      *

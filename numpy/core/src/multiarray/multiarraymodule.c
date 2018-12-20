@@ -4639,6 +4639,13 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
         goto err;
     }
 
+#ifdef USE_DTYPE_AS_PYOBJECT
+#pragma message "USE_DTYPE_AS_PYOBJECT defined, using old dtypes"
+#else
+#pragma message "USE_DTYPE_AS_PYOBJECT not defined, using new dtypes"
+    PyArrayDescr_Type.tp_base = &PyType_Type;
+    PyArrayDescr_Type.tp_free = PyObject_Free;
+#endif
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
         goto err;
