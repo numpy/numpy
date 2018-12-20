@@ -830,6 +830,13 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
             .format(ufunc, method, args_string, types_string))
 
 
+def array_function_errmsg_formatter(public_api, types):
+    """ Format the error message for when __array_ufunc__ gives up. """
+    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
+    return ("no implementation found for '{}' on types that implement "
+            '__array_function__: {}'.format(func_name, list(types)))
+
+
 def _ufunc_doc_signature_formatter(ufunc):
     """
     Builds a signature string which resembles PEP 457

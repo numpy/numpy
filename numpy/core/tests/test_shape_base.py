@@ -373,6 +373,10 @@ def test_stack():
     # empty arrays
     assert_(stack([[], [], []]).shape == (3, 0))
     assert_(stack([[], [], []], axis=1).shape == (0, 3))
+    # out
+    out = np.zeros_like(r1)
+    np.stack((a, b), out=out)
+    assert_array_equal(out, r1)
     # edge cases
     assert_raises_regex(ValueError, 'need at least one array', stack, [])
     assert_raises_regex(ValueError, 'must have the same shape',
