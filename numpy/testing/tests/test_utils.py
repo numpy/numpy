@@ -850,7 +850,7 @@ class TestAssertAllclose(object):
             msg = ''
         except AssertionError as exc:
             msg = exc.args[0]
-        assert_("mismatch 25%, abs error 1, rel error 0.5" in msg)
+        assert_("mismatch 25%, max abs error 1, max rel error 0.5" in msg)
 
     def test_equal_nan(self):
         a = np.array([np.nan])
