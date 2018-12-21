@@ -178,13 +178,13 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *keywords[] = {"order", "copy", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
-    PyObject *copyflag_obj = NULL;
     int copyflag;
     NPY_ORDER order = NPY_CORDER;
     Py_ssize_t n = PyTuple_Size(args);
 
-    if (!NpyArg_ParseKeywords(kwds, "|O&O", keywords,
-                PyArray_OrderConverter, &order, &copyflag_obj)) {
+    if (!NpyArg_ParseKeywords(kwds, "|O&O&", keywords,
+                PyArray_OrderConverter, &order,
+                PyArray_CopyConverter, &copyflag)) {
         return NULL;
     }
 
@@ -203,15 +203,6 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 PyErr_SetString(PyExc_TypeError,
                                 "invalid shape");
             }
-            goto fail;
-        }
-    }
-    if (copyflag_obj == NULL || copyflag_obj == Py_None) {
-        copyflag = -1;
-    }
-    else {
-        copyflag = PyObject_IsTrue(copyflag_obj);
-        if (copyflag < 0) {
             goto fail;
         }
     }

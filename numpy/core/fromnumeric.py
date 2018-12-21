@@ -38,12 +38,12 @@ array_function_dispatch = functools.partial(
 
 
 # functions that are now methods
-def _wrapit(obj, method, *args, **kwds):
+def _wrapit(obj, method, copy, *args, **kwds):
     try:
         wrap = obj.__array_wrap__
     except AttributeError:
         wrap = None
-    result = getattr(asarray(obj), method)(*args, **kwds)
+    result = getattr(array(obj, copy=copy), method)(*args, **kwds)
     if wrap:
         if not isinstance(result, mu.ndarray):
             result = asarray(result)
@@ -63,7 +63,15 @@ def _wrapfunc(obj, method, *args, **kwds):
     # of NumPy's. This situation has occurred in the case of
     # a downstream library like 'pandas'.
     except (AttributeError, TypeError):
-        return _wrapit(obj, method, *args, **kwds)
+        return _wrapit(obj, method, False, *args, **kwds)
+
+
+def _wrapfunc_copy(obj, method, copy, *args, **kwds):
+    # Same as _wrapfunc, but allows to pass copy argument to `np.array`.
+    try:
+        return getattr(obj, method)(*args, **kwds)
+    except (AttributeError, TypeError):
+        return _wrapit(obj, method, copy, *args, **kwds)
 
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
@@ -226,6 +234,8 @@ def reshape(a, newshape, order='C', copy=False):
         Whether or not a copy is forced. If ``False`` is given, a copy
         will be made when necessary. ``np.never_copy`` will cause an
         error to be raised if `a` cannot be reshaped without a copy.
+        If the input is not an array and copy is not ``np.never_copy``
+        an additional copy may be made to convert to an array.
 
         .. versionadded:: 1.16.0
 
@@ -302,7 +312,11 @@ def reshape(a, newshape, order='C', copy=False):
            [3, 4],
            [5, 6]])
     """
-    return _wrapfunc(a, 'reshape', newshape, order=order)
+    # Since it is hard to tell if `np.array` had to copy, the copy is only
+    # forced during reshape (but no-copy forced also for `np.array`).
+    return _wrapfunc_copy(
+            a, 'reshape', copy if copy is np.never_copy else False,
+            newshape, order=order, copy=copy)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):

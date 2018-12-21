@@ -233,7 +233,7 @@ PyArray_Newshape_int(PyArrayObject *self, PyArray_Dims *newdims,
      * data in the order it is in.
      * NPY_RELAXED_STRIDES_CHECKING: size check is unnecessary when set.
      */
-    if (copyflag == 1) {
+    if (copyflag == NPY_ARRAY_ENSURECOPY) {
         /* force the copy no matter what */
         do_nocopy_reshape = 0;
     }
@@ -254,7 +254,7 @@ PyArray_Newshape_int(PyArrayObject *self, PyArray_Dims *newdims,
     Py_INCREF(self);
     if (!do_nocopy_reshape) {
         PyObject *newcopy;
-        if (copyflag == 0) {
+        if (copyflag == NPY_ARRAY_ENSURENOCOPY) {
             PyErr_SetString(PyExc_ValueError,
                             "a no-copy reshape was requested but is not "
                             "possible for the given array and new shape.");
