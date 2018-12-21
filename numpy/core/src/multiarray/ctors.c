@@ -1580,6 +1580,14 @@ PyArray_GetArrayParamsFromObject_int(
                                 "cannot write to scalar");
             return -1;
         }
+
+        if (no_copy_allowed) {
+            PyErr_SetString(PyExc_ValueError,
+                    "no copy was allowed during array creation, but it "
+                    "cannot be guaranteed.");
+            return -1;
+        }
+
         *out_dtype = PyArray_DescrFromScalar(op);
         if (*out_dtype == NULL) {
             return -1;
@@ -1652,7 +1660,7 @@ PyArray_GetArrayParamsFromObject_int(
         PyErr_SetString(PyExc_ValueError,
                 "no copy was allowed during array creation, but it "
                 "cannot be guaranteed.");
-        return 0;
+        return -1;
     }
 
     /*
