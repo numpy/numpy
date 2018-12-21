@@ -179,18 +179,13 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 }
 
 /*
- * Returns a new array
- * with the new shape from the data
- * in the old array --- order-perspective depends on order argument.
- * copy-only-if-necessary
- */
-
-/*NUMPY_API
- * New shape for an array
+ * Internal function handling Array reshaping. Adds a copy flag to indicate
+ * whether, copy=1 a copy is forced, copy=0 a copy is forbidden or copy=-1
+ * either is allowed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER order)
+PyArray_Newshape_int(PyArrayObject *self, PyArray_Dims *newdims,
+                     NPY_ORDER order, int copyflag)
 {
     npy_intp i;
     npy_intp *dimensions = newdims->ptr;
@@ -200,6 +195,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     npy_intp *strides = NULL;
     npy_intp newstrides[NPY_MAXDIMS];
     int flags;
+    int do_nocopy_reshape;
 
     if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(self);
@@ -237,30 +233,47 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
      * data in the order it is in.
      * NPY_RELAXED_STRIDES_CHECKING: size check is unnecessary when set.
      */
-    Py_INCREF(self);
-    if ((PyArray_SIZE(self) > 1) &&
-        ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
-         (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self)))) {
-        int success = 0;
-        success = _attempt_nocopy_reshape(self, ndim, dimensions,
-                                          newstrides, order);
-        if (success) {
-            /* no need to copy the array after all */
+    if (copyflag == 1) {
+        /* force the copy no matter what */
+        do_nocopy_reshape = 0;
+    }
+    else if ((PyArray_SIZE(self) == 1) ||
+             ((order == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(self)) ||
+              (order == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(self)))) {
+            /* the array can be trivially reshaped */
+            do_nocopy_reshape = 1;
+    }
+    else {
+        do_nocopy_reshape = _attempt_nocopy_reshape(self, ndim, dimensions,
+                                                    newstrides, order);
+        if (do_nocopy_reshape) {
+            /* no need to copy the array */
             strides = newstrides;
         }
-        else {
-            PyObject *newcopy;
-            newcopy = PyArray_NewCopy(self, order);
-            Py_DECREF(self);
-            if (newcopy == NULL) {
-                return NULL;
-            }
-            self = (PyArrayObject *)newcopy;
-        }
     }
-    /* We always have to interpret the contiguous buffer correctly */
+    Py_INCREF(self);
+    if (!do_nocopy_reshape) {
+        PyObject *newcopy;
+        if (copyflag == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "a no-copy reshape was requested but is not "
+                            "possible for the given array and new shape.");
+            Py_DECREF(self);
+            return NULL;
+        }
+        newcopy = PyArray_NewCopy(self, order);
+        Py_DECREF(self);
+        if (newcopy == NULL) {
+            return NULL;
+        }
+        self = (PyArrayObject *)newcopy;
+    }
 
-    /* Make sure the flags argument is set. */
+    /*
+     * We have to interpret the contiguous buffer correctly (or use the
+     * strides from _attempt_nocopy_reshape).
+     * So, make sure the flags argument is set:
+     */
     flags = PyArray_FLAGS(self);
     if (ndim > 1) {
         if (order == NPY_FORTRANORDER) {
@@ -283,6 +296,23 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     return (PyObject *)ret;
 }
 
+
+/*
+ * Returns a new array
+ * with the new shape from the data
+ * in the old array --- order-perspective depends on order argument.
+ * copy-only-if-necessary
+ */
+
+/*NUMPY_API
+ * New shape for an array
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
+                 NPY_ORDER order)
+{
+    return PyArray_Newshape_int(self, newdims, order, -1);
+}
 
 
 /* For backward compatibility -- Not recommended */

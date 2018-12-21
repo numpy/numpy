@@ -1572,6 +1572,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyObject *op;
     PyArrayObject *oparr = NULL, *ret = NULL;
     npy_bool subok = NPY_FALSE;
+    int copyflag = NPY_ARRAY_ENSURECOPY;
     npy_bool copy = NPY_TRUE;
     int ndmin = 0, nd;
     PyArray_Descr *type = NULL;
@@ -1657,12 +1658,13 @@ full_path:
     if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
-                PyArray_BoolConverter, &copy,
+                PyArray_CopyConverter, &copyflag,
                 PyArray_OrderConverter, &order,
                 PyArray_BoolConverter, &subok,
                 &ndmin)) {
         goto clean_type;
     }
+    copy = copyflag & NPY_ARRAY_ENSURECOPY;
 
     if (ndmin > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
@@ -1706,9 +1708,8 @@ full_path:
         }
     }
 
-    if (copy) {
-        flags = NPY_ARRAY_ENSURECOPY;
-    }
+    flags = copyflag;
+
     if (order == NPY_CORDER) {
         flags |= NPY_ARRAY_C_CONTIGUOUS;
     }

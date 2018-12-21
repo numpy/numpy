@@ -18,7 +18,8 @@ motivated this module.
 from __future__ import division, absolute_import, print_function
 
 __ALL__ = [
-    'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue'
+    'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue',
+    'never_copy'
     ]
 
 
@@ -79,3 +80,35 @@ class _NoValueType(object):
 
 
 _NoValue = _NoValueType()
+
+
+class _NeverCopyType(object):
+    """Special `copy` keyword value.
+
+    The instance of this class may be used for many `copy` arguments to
+    functions to indicate that a copy must not be made and an error will
+    be raised when this cannot be guaranteed.
+
+    In the future the string "never" may replace this variable.
+    """
+    __instance = None
+    def __new__(cls):
+        # ensure that only one instance exists
+        if not cls.__instance:
+            cls.__instance = super(_NeverCopyType, cls).__new__(cls)
+        return cls.__instance
+
+    # needed for python 2 to preserve identity through a pickle
+    def __reduce__(self):
+        return (self.__class__, ())
+
+    def __repr__(self):
+        return "<never copy>"
+
+    def __bool__(self):
+        raise ValueError("`np.never_copy` cannot be converted to True/False "
+                         "to avoid the unintended meaning to a function "
+                         "interpreting it as a boolean.")
+
+
+never_copy = _NeverCopyType()

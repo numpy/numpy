@@ -828,6 +828,12 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_ENSURECOPY      0x0020
 
 /*
+ * Make sure that no copy will be made. May be requested in constructor
+ * functions.
+ */
+#define NPY_ARRAY_ENSURENOCOPY    0x0800
+
+/*
  * Make sure the returned array is a base-class ndarray
  *
  * This flag may be requested in constructor functions.
@@ -867,6 +873,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_WRITEABLE       0x0400
+
+/*      NPY_ARRAY_ENSURENOCOPY    0x0800 */
+
 
 /*
  * If this flag is set, then base contains a pointer to an array of

@@ -10,6 +10,7 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+#include "npy_import.h"
 
 #include "common.h"
 #include "arraytypes.h"
@@ -317,17 +318,61 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
-    if (PyObject_IsTrue(object)) {
-        *val = NPY_TRUE;
+    int obj_as_bool;
+    Py_ssize_t obj_as_int;
+
+    /* Quickly check the most common cases: */
+    if (object == Py_False) {
+        *val = 0;
+        return NPY_SUCCEED;
+    }
+    if (object == Py_True) {
+        *val = 1;
+        return NPY_SUCCEED;
+    }
+    /* Not Py_None as default, because bool(None) is False */
+
+    /*
+     * Allow for anything that can be safely cast to an integer. This
+     * is a bit more strict then most python code which will simply
+     * convert to an integer.
+     * Use PyExc_OverflowError so that it is much like what
+     * PyArg_ParseTuple with "n" would give.
+     */
+    obj_as_int = PyNumber_AsSsize_t(object, PyExc_OverflowError);
+    if (obj_as_int == -1 && PyErr_Occurred()) {
+        if (DEPRECATE_silence_error(
+                "invalid value to boolean argument. In the future boolean "
+                "arguments are expected to be True, False or integers.") < 0) {
+            return NPY_FAIL;        
+       }
     }
     else {
-        *val = NPY_FALSE;
+        if (obj_as_int) {
+            *val = 1;
+        }
+        else {
+            *val = 0;
+        }
+        return NPY_SUCCEED;
     }
-    if (PyErr_Occurred()) {
+
+    /*
+     * Fall back to truthyness of object.
+     */
+    obj_as_bool = PyObject_IsTrue(object);
+    if (obj_as_bool == -1) {
         return NPY_FAIL;
+    }
+    else if (obj_as_bool) {
+        *val = 1;
+    }
+    else {
+        *val = 0;
     }
     return NPY_SUCCEED;
 }
+
 
 /*NUMPY_API
  * Convert object to endian
@@ -763,6 +808,86 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
             "'same_kind', or 'unsafe'");
     return 0;
 }
+
+
+/*
+ * Convert an object to a `copy` keyword argument accepting a boolean or
+ * or the `np.never_copy` singleton.
+ *
+ * The function does not support NULL which is handled by PyArg_Parse*.
+ */
+NPY_NO_EXPORT int
+PyArray_CopyConverter(PyObject *object, int *copyflag)
+{
+    npy_bool obj_as_bool;
+    Py_ssize_t obj_as_int;
+    static PyObject *never_copy_singleton = NULL;
+
+    /* Quickly check the most common cases: */
+    if (object == Py_False) {
+        *copyflag = 0;
+        return NPY_SUCCEED;
+    }
+    if (object == Py_True) {
+        *copyflag = NPY_ARRAY_ENSURECOPY;
+        return NPY_SUCCEED;
+    }
+    /* Not Py_None as default, because bool(None) is False */
+
+    /*
+     * Check for `np.never_copy` singleton.
+     * at some point we could allow "never", but it requires long enough
+     * deprecation in places where strings were accepted.
+     */
+    npy_cache_import("numpy", "never_copy", &never_copy_singleton);
+    if (never_copy_singleton == NULL) {
+        return NPY_FAIL;
+    }
+    if (object == never_copy_singleton) {
+        *copyflag = NPY_ARRAY_ENSURENOCOPY;
+        return NPY_SUCCEED;
+    }
+
+    /*
+     * Use same code as PyArray_BoolConverter, but with a better error
+     * message.
+     */
+    obj_as_int = PyNumber_AsSsize_t(object, PyExc_OverflowError);
+    if (obj_as_int == -1 && PyErr_Occurred()) {
+        if (DEPRECATE_silence_error(
+                "invalid value to `copy` argument. In the future the copy "
+                "argument is expected to be True, False, `np.never_copy`, "
+                "or an integer for compatibility.") < 0) {
+            return NPY_FAIL;        
+       }
+    }
+    else {
+        if (obj_as_int) {
+            *copyflag = NPY_ARRAY_ENSURECOPY;
+        }
+        else {
+            *copyflag = 0;
+        }
+        return NPY_SUCCEED;
+    }
+
+    /*
+     * Fall back to truthyness of object.
+     */
+    obj_as_bool = PyObject_IsTrue(object);
+    if (obj_as_bool == -1) {
+        return NPY_FAIL;
+    }
+    else if (obj_as_bool) {
+        *copyflag = NPY_ARRAY_ENSURECOPY;
+    }
+    else {
+        *copyflag = 0;
+    }
+    return NPY_SUCCEED;    
+}
+
+
 
 /*****************************
 * Other conversion functions

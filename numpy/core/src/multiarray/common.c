@@ -558,6 +558,27 @@ _array_typedescr_fromstr(char *c_str)
 }
 
 
+/*
+ * Silence the current error and emit a deprecation warning instead.
+ *
+ * If warnings are raised as errors, this sets the warning __cause__ to the
+ * silenced error.
+ */
+NPY_NO_EXPORT int
+DEPRECATE_silence_error(const char *msg) {
+    PyObject *exc, *val, *tb;
+    PyErr_Fetch(&exc, &val, &tb);
+    if (DEPRECATE(msg) < 0) {
+        npy_PyErr_ChainExceptionsCause(exc, val, tb);
+        return -1;
+    }
+    Py_XDECREF(exc);
+    Py_XDECREF(val);
+    Py_XDECREF(tb);
+    return 0;
+}
+
+
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
 {

@@ -49,6 +49,49 @@ class TestResize(object):
         assert_equal(A.dtype, Ar.dtype)
 
 
+class TestReshape(object):
+    def test_copyflag_order_match(self):
+        # Allow a copy, but try different array and reshape orders.
+        for order in ['C', 'F', 'A', None]:
+            if order is not None:
+                order = {'order': order}
+            else:
+                order = dict()
+            arr = np.zeros((5, 9)).copy(**order)
+            # Test the most basic variants:
+            res = arr.reshape(3, 5, 3, **order)
+            assert_(res.base is arr)
+            res = arr.reshape(3, 5, 3, copy=None, **order)
+            assert_(res.base is arr)
+            res = arr.reshape(3, 5, 3, copy=False, **order)
+            assert_(res.base is arr)
+            res = arr.reshape(3, 5, 3, copy=True, **order)
+            assert_(not np.may_share_memory(res.base, arr))
+
+            # And the alternative path:
+            res = arr.reshape((3, 5, 3), copy=True, **order)
+            assert_(not np.may_share_memory(res.base, arr))
+
+    def test_copyflag_order_mismatch(self):
+        # Make sure that a copy has to be made due to order mismatch.
+        for creation_order, order in zip(['F', 'C'], ['C', 'F']):
+            arr = np.zeros((5, 9), order=creation_order)
+
+            res = arr.reshape(3, 5, 3, order=order)
+            assert_(not np.may_share_memory(res.base, arr))
+            res = arr.reshape(3, 5, 3, copy=True, order=order)
+            assert_(not np.may_share_memory(res.base, arr))
+            assert_raises(ValueError,
+                          arr.reshape, 3, 5, 3, copy=False, order=order)
+            res = arr.reshape(3, 5, 3, copy=True)
+            assert_(not np.may_share_memory(res.base, arr))
+
+    def test_copyflag_error(self):
+        # Test the error parse when parsing the copy kwarg:
+        arr = np.zeros(5)
+        assert_raises(ValueError, arr.reshape, 5, copy=np.arange(10))
+
+
 class TestNonarrayArgs(object):
     # check that non-array arguments to functions wrap them in arrays
     def test_choose(self):

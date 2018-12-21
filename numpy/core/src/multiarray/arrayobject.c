@@ -278,8 +278,9 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      * Get either an array object we can copy from, or its parameters
      * if there isn't a convenient array available.
      */
-    if (PyArray_GetArrayParamsFromObject(src_object, PyArray_DESCR(dest),
-                0, &dtype, &ndim, dims, &src, NULL) < 0) {
+    if (PyArray_GetArrayParamsFromObject_int(
+                src_object, PyArray_DESCR(dest),
+                0, 0, &dtype, &ndim, dims, &src, NULL) < 0) {
         Py_DECREF(src_object);
         return -1;
     }
@@ -1216,25 +1217,6 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
     }
 }
 
-/*
- * Silence the current error and emit a deprecation warning instead.
- *
- * If warnings are raised as errors, this sets the warning __cause__ to the
- * silenced error.
- */
-NPY_NO_EXPORT int
-DEPRECATE_silence_error(const char *msg) {
-    PyObject *exc, *val, *tb;
-    PyErr_Fetch(&exc, &val, &tb);
-    if (DEPRECATE(msg) < 0) {
-        npy_PyErr_ChainExceptionsCause(exc, val, tb);
-        return -1;
-    }
-    Py_XDECREF(exc);
-    Py_XDECREF(val);
-    Py_XDECREF(tb);
-    return 0;
-}
 
 /*
  * Comparisons can fail, but we do not always want to pass on the exception

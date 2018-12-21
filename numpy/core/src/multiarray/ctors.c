@@ -1544,6 +1544,22 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                         int *out_ndim, npy_intp *out_dims,
                         PyArrayObject **out_arr, PyObject *context)
 {
+    return PyArray_GetArrayParamsFromObject_int(
+        op, requested_dtype, writeable, 0,
+        out_dtype, out_ndim, out_dims, out_arr, context);
+}
+
+/* Same as PyArray_GetArrayParamsFromObject but accepts no_copy_allowed flag */
+NPY_NO_EXPORT int
+PyArray_GetArrayParamsFromObject_int(
+                        PyObject *op,
+                        PyArray_Descr *requested_dtype,
+                        npy_bool writeable,
+                        npy_bool no_copy_allowed,
+                        PyArray_Descr **out_dtype,
+                        int *out_ndim, npy_intp *out_dims,
+                        PyArrayObject **out_arr, PyObject *context)
+{
     PyObject *tmp;
 
     /* If op is an array */
@@ -1630,6 +1646,13 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         }
         *out_arr = (PyArrayObject *)tmp;
         return (*out_arr) == NULL ? -1 : 0;
+    }
+
+    if (no_copy_allowed) {
+        PyErr_SetString(PyExc_ValueError,
+                "no copy was allowed during array creation, but it "
+                "cannot be guaranteed.");
+        return 0;
     }
 
     /*
@@ -1802,8 +1825,9 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     npy_intp dims[NPY_MAXDIMS];
 
     /* Get either the array or its parameters if it isn't an array */
-    if (PyArray_GetArrayParamsFromObject(op, newtype,
-                        0, &dtype,
+    if (PyArray_GetArrayParamsFromObject_int(
+                        op, newtype,
+                        0, flags & NPY_ARRAY_ENSURENOCOPY, &dtype,
                         &ndim, dims, &arr, context) < 0) {
         Py_XDECREF(newtype);
         return NULL;
@@ -1818,6 +1842,9 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
+        assert((flags & NPY_ARRAY_ENSURENOCOPY == 0,
+                "GetArrayParamsFromObject should not allow this to happen"));
+
         if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
             Py_XDECREF(newtype);
@@ -1989,7 +2016,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         return NULL;
     }
     if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
-        !PyArray_ElementStrides(obj)) {
+                    !PyArray_ElementStrides(obj)) {
         PyObject *ret;
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
         Py_DECREF(obj);
@@ -2098,6 +2125,13 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     if (copy) {
         NPY_ORDER order = NPY_KEEPORDER;
         int subok = 1;
+
+        if (flags & NPY_ARRAY_ENSURENOCOPY) {
+            PyErr_SetString(PyExc_ValueError,
+                    "no copy was allowed during array creation, but it "
+                    "cannot be guaranteed.");
+            return NULL;
+        }
 
         /* Set the order for the copy being made based on the flags */
         if (flags & NPY_ARRAY_F_CONTIGUOUS) {
