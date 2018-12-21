@@ -61,9 +61,9 @@ class TestReshape(object):
             # Test the most basic variants:
             res = arr.reshape(3, 5, 3, **order)
             assert_(res.base is arr)
-            res = arr.reshape(3, 5, 3, copy=None, **order)
-            assert_(res.base is arr)
             res = arr.reshape(3, 5, 3, copy=False, **order)
+            assert_(res.base is arr)
+            res = arr.reshape(3, 5, 3, copy=np.never_copy, **order)
             assert_(res.base is arr)
             res = arr.reshape(3, 5, 3, copy=True, **order)
             assert_(not np.may_share_memory(res.base, arr))
@@ -82,7 +82,7 @@ class TestReshape(object):
             res = arr.reshape(3, 5, 3, copy=True, order=order)
             assert_(not np.may_share_memory(res.base, arr))
             assert_raises(ValueError,
-                          arr.reshape, 3, 5, 3, copy=False, order=order)
+                          arr.reshape, 3, 5, 3, copy=np.never_copy, order=order)
             res = arr.reshape(3, 5, 3, copy=True)
             assert_(not np.may_share_memory(res.base, arr))
 
