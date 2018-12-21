@@ -1586,8 +1586,8 @@ PyArray_GetArrayParamsFromObject_int(
         }
         if (no_copy_allowed) {
             PyErr_SetString(PyExc_ValueError,
-                    "no copy was allowed during array creation, but it "
-                    "cannot be guaranteed.");
+                "never-copy was requested during array creation, but "
+                "scalar cannot be viewed as arrays.");
             return -1;
         }
 
@@ -1610,9 +1610,10 @@ PyArray_GetArrayParamsFromObject_int(
             return -1;
         }
         if (no_copy_allowed) {
+            Py_DECREF(*out_dtype);
             PyErr_SetString(PyExc_ValueError,
-                    "no copy was allowed during array creation, but it "
-                    "cannot be guaranteed.");
+                    "never-copy was requested during array creation, but "
+                    "scalar cannot be viewed as arrays.");
             return -1;
         }
         *out_ndim = 0;
@@ -1666,9 +1667,10 @@ PyArray_GetArrayParamsFromObject_int(
     }
 
     if (no_copy_allowed) {
+        /* None of the following possibilities can provide no-copy sementics  */
         PyErr_SetString(PyExc_ValueError,
-                "no copy was allowed during array creation, but it "
-                "cannot be guaranteed.");
+                "never-copy was requested during array creation, but object "
+                "cannot be directly interpreted as array.");
         return -1;
     }
 
@@ -1860,7 +1862,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
         assert((flags & NPY_ARRAY_ENSURENOCOPY == 0,
-                "GetArrayParamsFromObject should not allow this to happen"));
+                "ENSURENOCOPY in no-array path must not happen."));
 
         if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
@@ -2037,7 +2039,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         PyObject *ret;
         if (requires & NPY_ARRAY_ENSURENOCOPY) {
             PyErr_SetString(PyExc_ValueError,
-                "array creation was requested with no-copy, but other "
+                "array creation was requested with never-copy, but other "
                 "requirements cannot be fullfilled without a copy.");
             return NULL;
         }

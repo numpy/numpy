@@ -38,12 +38,12 @@ array_function_dispatch = functools.partial(
 
 
 # functions that are now methods
-def _wrapit(obj, method, copy, *args, **kwds):
+def _wrapit(obj, method, _internal_copy, *args, **kwds):
     try:
         wrap = obj.__array_wrap__
     except AttributeError:
         wrap = None
-    result = getattr(array(obj, copy=copy), method)(*args, **kwds)
+    result = getattr(array(obj, copy=_internal_copy), method)(*args, **kwds)
     if wrap:
         if not isinstance(result, mu.ndarray):
             result = asarray(result)
@@ -66,12 +66,12 @@ def _wrapfunc(obj, method, *args, **kwds):
         return _wrapit(obj, method, False, *args, **kwds)
 
 
-def _wrapfunc_copy(obj, method, copy, *args, **kwds):
+def _wrapfunc_copy(obj, method, _internal_copy, *args, **kwds):
     # Same as _wrapfunc, but allows to pass copy argument to `np.array`.
     try:
         return getattr(obj, method)(*args, **kwds)
     except (AttributeError, TypeError):
-        return _wrapit(obj, method, copy, *args, **kwds)
+        return _wrapit(obj, method, _internal_copy, *args, **kwds)
 
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
@@ -237,7 +237,7 @@ def reshape(a, newshape, order='C', copy=False):
         If the input is not an array and copy is not ``np.never_copy``
         an additional copy may be made to convert to an array.
 
-        .. versionadded:: 1.16.0
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1408,7 +1408,7 @@ def squeeze(a, axis=None):
     try:
         squeeze = a.squeeze
     except AttributeError:
-        return _wrapit(a, 'squeeze')
+        return _wrapit(a, 'squeeze', False)
     if axis is None:
         return squeeze()
     else:

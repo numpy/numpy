@@ -334,7 +334,7 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
 
     /*
      * Allow for anything that can be safely cast to an integer. This
-     * is a bit more strict then most python code which will simply
+     * is a bit more strict than most python code which will simply
      * convert to an integer.
      * Use PyExc_OverflowError so that it is much like what
      * PyArg_ParseTuple with "n" would give.
@@ -345,10 +345,15 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
                 "invalid value to boolean argument. In the future boolean "
                 "arguments are expected to be True, False or integers.") < 0) {
             return NPY_FAIL;        
-       }
-    }
-    else {
-        if (obj_as_int) {
+        }
+        /*
+         * Fall back to truthyness of object.
+         */
+        obj_as_bool = PyObject_IsTrue(object);
+        if (obj_as_bool == -1) {
+            return NPY_FAIL;
+        }
+        else if (obj_as_bool) {
             *val = 1;
         }
         else {
@@ -357,14 +362,7 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
         return NPY_SUCCEED;
     }
 
-    /*
-     * Fall back to truthyness of object.
-     */
-    obj_as_bool = PyObject_IsTrue(object);
-    if (obj_as_bool == -1) {
-        return NPY_FAIL;
-    }
-    else if (obj_as_bool) {
+    if (obj_as_int) {
         *val = 1;
     }
     else {
@@ -849,8 +847,8 @@ PyArray_CopyConverter(PyObject *object, int *copyflag)
     }
 
     /*
-     * Use same code as PyArray_BoolConverter, but with a better error
-     * message.
+     * Use same code as PyArray_BoolConverter, but with a more exact
+     * error message.
      */
     obj_as_int = PyNumber_AsSsize_t(object, PyExc_OverflowError);
     if (obj_as_int == -1 && PyErr_Occurred()) {
@@ -859,32 +857,30 @@ PyArray_CopyConverter(PyObject *object, int *copyflag)
                 "argument is expected to be True, False, `np.never_copy`, "
                 "or an integer for compatibility.") < 0) {
             return NPY_FAIL;        
-       }
-    }
-    else {
-        if (obj_as_int) {
+        }
+        /*
+         * Fall back to truthyness of object.
+         */
+        obj_as_bool = PyObject_IsTrue(object);
+        if (obj_as_bool == -1) {
+            return NPY_FAIL;
+        }
+        else if (obj_as_bool) {
             *copyflag = NPY_ARRAY_ENSURECOPY;
         }
         else {
             *copyflag = 0;
         }
-        return NPY_SUCCEED;
+        return NPY_SUCCEED; 
     }
 
-    /*
-     * Fall back to truthyness of object.
-     */
-    obj_as_bool = PyObject_IsTrue(object);
-    if (obj_as_bool == -1) {
-        return NPY_FAIL;
-    }
-    else if (obj_as_bool) {
+    if (obj_as_int) {
         *copyflag = NPY_ARRAY_ENSURECOPY;
     }
     else {
         *copyflag = 0;
     }
-    return NPY_SUCCEED;    
+    return NPY_SUCCEED;
 }
 
 

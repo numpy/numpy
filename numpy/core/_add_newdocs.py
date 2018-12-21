@@ -2323,6 +2323,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     the array and the remaining dimensions. Reshaping an array in-place will
     fail if a copy is required.
 
+    Assigning to the shape is discouraged. This is because it modifies the
+    properties of the array as opposed to only the data. `ndarray.reshape`
+    should be preferred.
+
     Examples
     --------
     >>> x = np.array([1, 2, 3, 4])
@@ -2331,7 +2335,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     >>> y = np.zeros((2, 3, 4))
     >>> y.shape
     (2, 3, 4)
-    >>> y.shape = (3, 8)
+    >>> y.shape = (3, 8)  # discouarged, reshape should be preferred.
     >>> y
     array([[ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
@@ -3513,11 +3517,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('repeat',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
     """
-    a.reshape(shape, order='C')
+    a.reshape(shape, order='C', copy=False)
 
     Returns an array containing the same data with a new shape.
 
     Refer to `numpy.reshape` for full documentation.
+
+    ..versionadded:: 1.17.0
+    
+    The ``copy`` argument was added in version 1.17.0.
 
     See Also
     --------

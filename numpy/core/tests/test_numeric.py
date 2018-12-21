@@ -88,8 +88,13 @@ class TestReshape(object):
 
     def test_copyflag_error(self):
         # Test the error parse when parsing the copy kwarg:
+        # This used to error, but is currently deprecated to simplify C-code
+        # and behave the same as `np.array`.
         arr = np.zeros(5)
-        assert_raises(ValueError, arr.reshape, 5, copy=np.arange(10))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            assert_raises(DeprecationWarning,
+                          arr.reshape, 5, copy=np.arange(10))
 
 
 class TestNonarrayArgs(object):

@@ -874,9 +874,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_WRITEABLE       0x0400
 
-/*      NPY_ARRAY_ENSURENOCOPY    0x0800 */
-
-
 /*
  * If this flag is set, then base contains a pointer to an array of
  * the same size that should be updated with the current contents of
@@ -887,6 +884,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_UPDATEIFCOPY    0x1000 /* Deprecated in 1.14 */
 #define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
+
+/*      NPY_ARRAY_ENSURENOCOPY    0x4000  defined above so next is 0x10000 */
 
 /*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,

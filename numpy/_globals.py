@@ -67,7 +67,7 @@ class _NoValueType(object):
     __instance = None
     def __new__(cls):
         # ensure that only one instance exists
-        if not cls.__instance:
+        if cls.__instance is None:
             cls.__instance = super(_NoValueType, cls).__new__(cls)
         return cls.__instance
 
@@ -94,13 +94,9 @@ class _NeverCopyType(object):
     __instance = None
     def __new__(cls):
         # ensure that only one instance exists
-        if not cls.__instance:
+        if cls.__instance is None:
             cls.__instance = super(_NeverCopyType, cls).__new__(cls)
         return cls.__instance
-
-    # needed for python 2 to preserve identity through a pickle
-    def __reduce__(self):
-        return (self.__class__, ())
 
     def __repr__(self):
         return "<never copy>"
