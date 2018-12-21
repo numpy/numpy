@@ -12,6 +12,20 @@ from numpy.lib import pad
 from numpy.lib.arraypad import _as_pairs
 
 
+_all_modes = {
+    'constant': ['constant_values'],
+    'edge': [],
+    'linear_ramp': ['end_values'],
+    'maximum': ['stat_length'],
+    'mean': ['stat_length'],
+    'median': ['stat_length'],
+    'minimum': ['stat_length'],
+    'reflect': ['reflect_type'],
+    'symmetric': ['reflect_type'],
+    'wrap': [],
+}
+
+
 class TestAsPairs(object):
 
     def test_single_value(self):
@@ -1176,35 +1190,55 @@ class TestObjectInput(object):
             assert_array_equal(pad(a, pad_amt, mode=mode), b)
 
 
-class TestValueError1(object):
-    def test_check_simple(self):
-        arr = np.arange(30)
-        arr = np.reshape(arr, (6, 5))
-        kwargs = dict(mode='mean', stat_length=(3, ))
-        assert_raises(ValueError, pad, arr, ((2, 3), (3, 2), (4, 5)),
-                      **kwargs)
+class TestPadWidth(object):
 
-    def test_check_negative_pad_width(self):
-        arr = np.arange(30)
-        arr = np.reshape(arr, (6, 5))
-        kwargs = dict(mode='mean', stat_length=(3, ))
-        assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
-                      **kwargs)
+    @pytest.mark.parametrize("pad_width", [
+        (4, 5, 6, 7),
+        ((1,), (2,), (3,)),
+        ((1, 2), (3, 4), (5, 6)),
+        ((3, 4, 5), (0, 1, 2)),
+    ])
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_misshaped_pad_width(self, pad_width, mode):
+        arr = np.arange(30).reshape((6, 5))
+        match = "operands could not be broadcast together"
+        with pytest.raises(ValueError, match=match):
+            np.pad(arr, pad_width, mode)
+
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_misshaped_pad_width_2(self, mode):
+        arr = np.arange(30).reshape((6, 5))
+        match = ("input operand has more dimensions than allowed by the axis "
+                 "remapping")
+        with pytest.raises(ValueError, match=match):
+            np.pad(arr, (((3,), (4,), (5,)), ((0,), (1,), (2,))), mode)
+
+    @pytest.mark.parametrize(
+        "pad_width", [-2, (-2,), (3, -1), ((5, 2), (-2, 3)), ((-4,), (2,))])
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_negative_pad_width(self, pad_width, mode):
+        arr = np.arange(30).reshape((6, 5))
+        match = "index can't contain negative values"
+        with pytest.raises(ValueError, match=match):
+            np.pad(arr, pad_width, mode)
+
+    @pytest.mark.parametrize(
+        "pad_width", ["3", "word", None, object(), 3.4, ((2, 3, 4), (3, 2))])
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_bad_pad_with_type(self, pad_width, mode):
+        arr = np.arange(30).reshape((6, 5))
+        match = "`pad_width` must be of integral type."
+        with pytest.raises(TypeError, match=match):
+            np.pad(arr, pad_width, mode)
+
+
+class TestValueError1(object):
 
     def test_check_empty_array(self):
         assert_raises(ValueError, pad, [], 4, mode='reflect')
         assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')
         assert_raises(ValueError, pad, np.zeros((0, 3)), ((1,), (0,)),
                       mode='reflect')
-
-
-class TestValueError2(object):
-    def test_check_negative_pad_amount(self):
-        arr = np.arange(30)
-        arr = np.reshape(arr, (6, 5))
-        kwargs = dict(mode='mean', stat_length=(3, ))
-        assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
-                      **kwargs)
 
 
 class TestValueError3(object):
@@ -1216,23 +1250,6 @@ class TestValueError3(object):
     def test_mode_not_set(self):
         arr = np.arange(30).reshape(5, 6)
         assert_raises(TypeError, pad, arr, 4)
-
-    def test_malformed_pad_amount(self):
-        arr = np.arange(30).reshape(5, 6)
-        assert_raises(ValueError, pad, arr, (4, 5, 6, 7), mode='constant')
-
-    def test_malformed_pad_amount2(self):
-        arr = np.arange(30).reshape(5, 6)
-        assert_raises(ValueError, pad, arr, ((3, 4, 5), (0, 1, 2)),
-                      mode='constant')
-
-    def test_pad_too_many_axes(self):
-        arr = np.arange(30).reshape(5, 6)
-
-        # Attempt to pad using a 3D array equivalent
-        bad_shape = (((3,), (4,), (5,)), ((0,), (1,), (2,)))
-        assert_raises(ValueError, pad, arr, bad_shape,
-                      mode='constant')
 
 
 class TestTypeError1(object):
@@ -1256,10 +1273,3 @@ class TestTypeError1(object):
         arr = np.arange(30)
         assert_raises(TypeError, pad, arr, complex(1, -1))
         assert_raises(TypeError, pad, arr, np.array(complex(1, -1)))
-
-    def test_check_wrong_pad_amount(self):
-        arr = np.arange(30)
-        arr = np.reshape(arr, (6, 5))
-        kwargs = dict(mode='mean', stat_length=(3, ))
-        assert_raises(TypeError, pad, arr, ((2, 3, 4), (3, 2)),
-                      **kwargs)
