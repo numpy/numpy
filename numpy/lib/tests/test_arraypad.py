@@ -13,16 +13,16 @@ from numpy.lib.arraypad import _as_pairs
 
 
 _all_modes = {
-    'constant': ['constant_values'],
-    'edge': [],
-    'linear_ramp': ['end_values'],
-    'maximum': ['stat_length'],
-    'mean': ['stat_length'],
-    'median': ['stat_length'],
-    'minimum': ['stat_length'],
-    'reflect': ['reflect_type'],
-    'symmetric': ['reflect_type'],
-    'wrap': [],
+    'constant': {'constant_values': 0},
+    'edge': {},
+    'linear_ramp': {'end_values': 0},
+    'maximum': {'stat_length': None},
+    'mean': {'stat_length': None},
+    'median': {'stat_length': None},
+    'minimum': {'stat_length': None},
+    'reflect': {'reflect_type': 'even'},
+    'symmetric': {'reflect_type': 'even'},
+    'wrap': {},
 }
 
 
@@ -1241,11 +1241,24 @@ class TestValueError1(object):
                       mode='reflect')
 
 
+@pytest.mark.parametrize("mode", _all_modes.keys())
+def test_kwargs(mode):
+    """Test behavior of pad's kwargs for the given mode."""
+    allowed = _all_modes[mode]
+    not_allowed = {}
+    for kwargs in _all_modes.values():
+        if kwargs != allowed:
+            not_allowed.update(kwargs)
+    # Test if allowed keyword arguments pass
+    np.pad([1, 2, 3], 1, mode, **allowed)
+    # Test if prohibited keyword arguments of other modes raise an error
+    for key, value in not_allowed.items():
+        match = 'keyword not in allowed keywords'
+        with pytest.raises(ValueError, match=match):
+            np.pad([1, 2, 3], 1, mode, **{key: value})
+
+
 class TestValueError3(object):
-    def test_check_kwarg_not_allowed(self):
-        arr = np.arange(30).reshape(5, 6)
-        assert_raises(ValueError, pad, arr, 4, mode='mean',
-                      reflect_type='odd')
 
     def test_mode_not_set(self):
         arr = np.arange(30).reshape(5, 6)
