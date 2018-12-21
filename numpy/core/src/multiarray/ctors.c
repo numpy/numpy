@@ -1549,7 +1549,11 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         out_dtype, out_ndim, out_dims, out_arr, context);
 }
 
-/* Same as PyArray_GetArrayParamsFromObject but accepts no_copy_allowed flag */
+/*
+ * Same as PyArray_GetArrayParamsFromObject but accepts no_copy_allowed flag,
+ * note that the actual usage of `writeable` also ensures this part (but
+ * additional tests that the output array is actually `writeable`.
+ */
 NPY_NO_EXPORT int
 PyArray_GetArrayParamsFromObject_int(
                         PyObject *op,
@@ -1580,7 +1584,6 @@ PyArray_GetArrayParamsFromObject_int(
                                 "cannot write to scalar");
             return -1;
         }
-
         if (no_copy_allowed) {
             PyErr_SetString(PyExc_ValueError,
                     "no copy was allowed during array creation, but it "
@@ -1604,6 +1607,12 @@ PyArray_GetArrayParamsFromObject_int(
             PyErr_SetString(PyExc_RuntimeError,
                                 "cannot write to scalar");
             Py_DECREF(*out_dtype);
+            return -1;
+        }
+        if (no_copy_allowed) {
+            PyErr_SetString(PyExc_ValueError,
+                    "no copy was allowed during array creation, but it "
+                    "cannot be guaranteed.");
             return -1;
         }
         *out_ndim = 0;
@@ -1835,8 +1844,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     /* Get either the array or its parameters if it isn't an array */
     if (PyArray_GetArrayParamsFromObject_int(
                         op, newtype,
-                        0, flags & NPY_ARRAY_ENSURENOCOPY, &dtype,
-                        &ndim, dims, &arr, context) < 0) {
+                        0, (flags & NPY_ARRAY_ENSURENOCOPY) ? 1 : 0,
+                        &dtype, &ndim, dims, &arr, context) < 0) {
         Py_XDECREF(newtype);
         return NULL;
     }
@@ -2026,6 +2035,12 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
                     !PyArray_ElementStrides(obj)) {
         PyObject *ret;
+        if (requires & NPY_ARRAY_ENSURENOCOPY) {
+            PyErr_SetString(PyExc_ValueError,
+                "array creation was requested with no-copy, but other "
+                "requirements cannot be fullfilled without a copy.");
+            return NULL;
+        }
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
         Py_DECREF(obj);
         obj = ret;
