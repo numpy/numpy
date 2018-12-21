@@ -584,7 +584,9 @@ class recarray(ndarray):
 
 def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                names=None, titles=None, aligned=False, byteorder=None):
-    """ create a record array from a (flat) list of arrays
+    """ create a record array from a (flat) list of arrays. 
+    If both `dtype` and `formats` are `None` then the input arrays must have 
+    the same shape.
 
     >>> x1=np.array([1,2,3,4])
     >>> x2=np.array(['a','dd','xyz','12'])
@@ -612,10 +614,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         for obj in arrayList:
             if not isinstance(obj, ndarray):
                 raise ValueError("item in the array list must be an ndarray.")
-            shape_ = obj.shape[1:] or ''
-            # keep the 1.15.4 behaviour for now
-            shape_ = ''
-            formats.append('{}{}'.format(shape_, obj.dtype.str))
+            formats.append(obj.dtype.str)
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -770,7 +769,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     (0.5, 10, 'abcde')
     >>> r.shape
     (10,)
-    """
+    """  
+    if dtype is None and formats is None:
+        raise ValueError("Must have dtype= or formats=")
 
     if (shape is None or shape == 0):
         shape = (-1,)
