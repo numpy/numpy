@@ -6,6 +6,11 @@ replace 1.14.5 by the correct version.
 Release  Walkthrough
 ====================
 
+Note that in the code snippets below, ``upstream`` refers to the root repository on
+github and ``origin`` to a fork in your personal account. You may need to make adjustments
+if you have not forked the repository but simply cloned it locally. You can
+also edit ``.git/config`` and add ``upstream`` if it isn't already present.
+
 
 Backport Pull Requests
 ----------------------
@@ -55,7 +60,7 @@ Edit pavement.py and setup.py as detailed in HOWTO_RELEASE::
 
 Sanity check::
 
-    $ python runtests.py -m "full"
+    $ python runtests.py -m "full"  # NumPy < 1.17 only
     $ python3 runtests.py -m "full"
 
 Push this release directly onto the end of the maintenance branch. This
@@ -86,7 +91,7 @@ commit. This can take a while. The numpy-wheels repository is cloned from
 may have been accessed and changed by someone else and a push will fail::
 
     $ cd ../numpy-wheels
-    $ git pull origin master
+    $ git pull upstream master
     $ git branch <new version>  # only when starting new numpy version
     $ git checkout v1.14.x  # v1.14.x already existed for the 1.14.4 release
 
@@ -96,7 +101,7 @@ above for ``BUILD_COMMIT``, see the _example from `v1.14.3`::
 
     $ gvim .travis.yml .appveyor.yml
     $ git commit -a
-    $ git push origin HEAD
+    $ git push upstream HEAD
 
 Now wait. If you get nervous at the amount of time taken -- the builds can take
 several hours-- you can check the build progress by following the links
@@ -121,7 +126,7 @@ download all the wheels to the ``../numpy/release/installers`` directory and
 upload later using ``twine``::
 
     $ cd ../terryfy
-    $ git pull origin master
+    $ git pull upstream master
     $ CDN_URL=https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com
     $ NPY_WHLS=../numpy/release/installers
     $ ./wheel-uploader -u $CDN_URL -n -v -w $NPY_WHLS -t win numpy 1.14.5
@@ -135,7 +140,7 @@ Generate the README files
 -------------------------
 
 This needs to be done after all installers are present, but before the pavement
-file is updated for continued development.
+file is updated for continued development::
 
     $ cd ../numpy
     $ paver write_release
@@ -158,15 +163,15 @@ push the tag upstream::
 
     $ git push upstream v1.14.5
 
-We wait until this point to push the tag because it is very difficult to change
-the tag after it has been pushed.
+We wait until this point to push the tag because it is public and should not
+be changed after it has been pushed.
 
 
 Reset the maintenance branch into a development state
 -----------------------------------------------------
 
 Add another ``REL`` commit to the numpy maintenance branch, which resets the
-``ISREALEASED`` flag to ``False`` and increments the version counter::
+``ISREALEASED`` flag to ``False`` and increments the version counter.::
 
     $ gvim pavement.py setup.py
     $ git commit -a -m"REL: prepare 1.14.x for further development"
@@ -177,7 +182,7 @@ Upload to PyPI
 --------------
 
 Upload to PyPI using ``twine``. A recent version of ``twine`` of is needed
-after recent PyPI changes, version ``1.11.0`` was used here. ::
+after recent PyPI changes, version ``1.11.0`` was used here.::
 
     $ cd ../numpy
     $ twine upload release/installers/*.whl
@@ -251,8 +256,9 @@ Announce to mailing lists
 
 The release should be announced on the numpy-discussion, scipy-devel,
 scipy-user, and python-announce-list mailing lists. Look at previous
-announcements for the basic template. The contributor and PR lists
-are the same as generated for the release notes above.
+announcements for the basic template. The contributor and PR lists are the same
+as generated for the release notes above. If you crosspost, make sure that
+python-announce-list is BCC so that replies will not be sent to that list.
 
 
 Post-Release Tasks
