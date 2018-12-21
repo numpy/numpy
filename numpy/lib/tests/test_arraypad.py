@@ -446,6 +446,16 @@ class TestStatistic(object):
         a = np.pad(a, (1, 1), mode)
         assert_equal(a[0], a[-1])
 
+    @pytest.mark.parametrize("mode", ["mean", "median", "minimum", "maximum"])
+    @pytest.mark.parametrize(
+        "stat_length", [-2, (-2,), (3, -1), ((5, 2), (-2, 3)), ((-4,), (2,))]
+    )
+    def test_check_negative_stat_length(self, mode, stat_length):
+        arr = np.arange(30).reshape((6, 5))
+        match = "index can't contain negative values"
+        with pytest.raises(ValueError, match=match):
+            np.pad(arr, 2, mode, stat_length=stat_length)
+
 
 class TestConstant(object):
     def test_check_constant(self):
@@ -1172,13 +1182,6 @@ class TestValueError1(object):
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(mode='mean', stat_length=(3, ))
         assert_raises(ValueError, pad, arr, ((2, 3), (3, 2), (4, 5)),
-                      **kwargs)
-
-    def test_check_negative_stat_length(self):
-        arr = np.arange(30)
-        arr = np.reshape(arr, (6, 5))
-        kwargs = dict(mode='mean', stat_length=(-3, ))
-        assert_raises(ValueError, pad, arr, ((2, 3), (3, 2)),
                       **kwargs)
 
     def test_check_negative_pad_width(self):
