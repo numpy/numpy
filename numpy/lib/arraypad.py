@@ -866,7 +866,7 @@ def pad(array, pad_width, mode, **kwargs):
             _set_pad_area(roi, axis, index_pair, value_pair)
 
     elif mode == "empty":
-        pass  # Do nothing as padded is already prepared
+        pass  # Do nothing as _pad_simple already returned the correct result
 
     elif array.size == 0:
         # Only modes "constant" and "empty" can extend empty axes, all other
@@ -878,7 +878,8 @@ def pad(array, pad_width, mode, **kwargs):
                     "can't extend empty axis {} using modes other than "
                     "'constant' or 'empty'".format(axis)
                 )
-        # _pad_simple already returned the correct result
+        # passed, don't need to do anything more as _pad_simple already
+        # returned the correct result
 
     elif mode == "edge":
         for axis, index_pair in zip(axes, pad_width):
@@ -911,7 +912,8 @@ def pad(array, pad_width, mode, **kwargs):
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
                 edge_pair = _get_edges(padded, axis, (left_index, right_index))
-                _set_pad_area(padded, axis, (left_index, right_index), edge_pair)
+                _set_pad_area(
+                    padded, axis, (left_index, right_index), edge_pair)
                 continue
 
             roi = _view_roi(padded, original_area_slice, axis)
