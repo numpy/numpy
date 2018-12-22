@@ -178,7 +178,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *keywords[] = {"order", "copy", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
-    int copyflag;
+    int copyflag = 0;
     NPY_ORDER order = NPY_CORDER;
     Py_ssize_t n = PyTuple_Size(args);
 

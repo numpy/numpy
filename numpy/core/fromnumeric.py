@@ -198,7 +198,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
 
 
-def _reshape_dispatcher(a, newshape, order=None, copy=False):
+def _reshape_dispatcher(a, newshape, order=None, copy=None):
     return (a,)
 
 

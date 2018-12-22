@@ -237,7 +237,7 @@ PyArray_Newshape_int(PyArrayObject *self, PyArray_Dims *newdims,
         /* force the copy no matter what */
         do_nocopy_reshape = 0;
     }
-    else if ((PyArray_SIZE(self) == 1) ||
+    else if ((PyArray_SIZE(self) <= 1) ||
              ((order == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(self)) ||
               (order == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(self)))) {
         /* the array can be trivially reshaped */
@@ -256,7 +256,7 @@ PyArray_Newshape_int(PyArrayObject *self, PyArray_Dims *newdims,
         PyObject *newcopy;
         if (copyflag == NPY_ARRAY_ENSURENOCOPY) {
             PyErr_SetString(PyExc_ValueError,
-                            "a never copy reshape was requested but is not "
+                            "a never-copy reshape was requested but is not "
                             "possible for the given array and new shape.");
             Py_DECREF(self);
             return NULL;
@@ -311,7 +311,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                  NPY_ORDER order)
 {
-    return PyArray_Newshape_int(self, newdims, order, -1);
+    return PyArray_Newshape_int(self, newdims, order, 0);
 }
 
 
