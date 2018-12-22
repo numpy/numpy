@@ -198,13 +198,13 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
 
 
-def _reshape_dispatcher(a, newshape, order=None):
+def _reshape_dispatcher(a, newshape, order=None, copy=False):
     return (a,)
 
 
 # not deprecated --- copy if necessary, view otherwise
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, newshape, order='C', copy=False):
+def reshape(a, newshape, order='C', copy=np._NoValue):
     """
     Gives a new shape to an array without changing its data.
 
@@ -314,9 +314,14 @@ def reshape(a, newshape, order='C', copy=False):
     """
     # Since it is hard to tell if `np.array` had to copy, the copy is only
     # forced during reshape (but no-copy forced also for `np.array`).
-    return _wrapfunc_copy(
-            a, 'reshape', copy if copy is np.never_copy else False,
-            newshape, order=order, copy=copy)
+    if copy is np._NoValue:
+        return _wrapfunc_copy(
+                    a, 'reshape', copy if copy is np.never_copy else False,
+                    newshape, order=order)
+    else:
+        return _wrapfunc_copy(
+                    a, 'reshape', copy if copy is np.never_copy else False,
+                    newshape, order=order, copy=copy)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
