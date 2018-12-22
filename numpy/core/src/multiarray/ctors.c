@@ -1861,8 +1861,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
-        assert((flags & NPY_ARRAY_ENSURENOCOPY == 0,
-                "ENSURENOCOPY in no-array path must not happen."));
+        assert(flags & NPY_ARRAY_ENSURENOCOPY) == 0);
 
         if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
