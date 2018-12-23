@@ -1904,7 +1904,7 @@ Item selection and manipulation
         all values are clipped to the region [0, len(*op*) ).
 
 
-.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis)
+.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND)
 
     Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*). Return an array with
     the items of *self* sorted along *axis*.
