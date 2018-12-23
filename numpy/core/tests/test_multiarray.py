@@ -6965,7 +6965,7 @@ class TestNewBufferProtocol(object):
         assert_equal(arr['a'], 3)
 
 
-class TestArrayCopyAttribute(object):
+class TestArrayCreationCopyArgument(object):
     def test_scalars(self):
         # Test both numpy and python scalars
         for dtype in np.typecodes["All"]:
@@ -7014,7 +7014,7 @@ class TestArrayCopyAttribute(object):
                                   arr, copy=np.never_copy, dtype=int2)
 
     def test_buffer_interface(self):
-        # Buffer interface does not require a copy:
+        # Buffer interface gives direct memory access (no copy)
         arr = np.arange(10)
         view = memoryview(arr)
 
@@ -7028,6 +7028,7 @@ class TestArrayCopyAttribute(object):
         assert np.may_share_memory(arr, res)
 
     def test_array_interfaces(self):
+        # Array interface gives direct memory access (much like a memoryview)
         base_arr = np.arange(10)
 
         class ArrayLike:
@@ -7065,6 +7066,48 @@ class TestArrayCopyAttribute(object):
         assert res is base_arr  # numpy trusts the ArrayLike
 
         assert_raises(ValueError, np.array, arr, copy=np.never_copy)
+
+    @pytest.mark.parametrize(
+            "arr", [np.ones(()), np.arange(81).reshape((9, 9))])
+    @pytest.mark.parametrize("order1", ["C", "F", None])
+    @pytest.mark.parametrize("order2", ["C", "F", "A", "K"])
+    def test_order_mismatch(self, arr, order1, order2):
+        # The order is the main (python side) reason that can cause
+        # a never-copy to fail. Test for all orders as well as non-contiguous
+        # when order is None
+        arr = arr.copy(order1)
+        if order1 == "C":
+            assert arr.flags.c_contiguous
+        elif order1 == "F":
+            assert arr.flags.f_contiguous
+        elif arr.ndim != 0:
+            # Make array non-contiguous
+            arr = arr[::2, ::2]
+            assert not arr.flags.forc
+
+        if order2 == "C":
+            no_copy_necessary = arr.flags.c_contiguous
+        elif order2 == "F":
+            no_copy_necessary = arr.flags.f_contiguous
+        else:
+            # Keeporder and Anyorder are OK with non-contiguous output
+            no_copy_necessary = True
+
+        res = np.array(arr, copy=True, order=order2)
+        assert res is not arr and res.flags.owndata
+        assert_array_equal(arr, res)
+
+        if no_copy_necessary:
+            res = np.array(arr, copy=False, order=order2)
+            assert res is arr
+
+            res = np.array(arr, copy=np.never_copy, order=order2)
+            assert res is arr
+        else:
+            res = np.array(arr, copy=False, order=order2)
+            assert_array_equal(arr, res)
+            assert_raises(ValueError, np.array,
+                          arr, copy=np.never_copy, order=order2)
 
 
 class TestArrayAttributeDeletion(object):
