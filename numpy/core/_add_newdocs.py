@@ -3524,7 +3524,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('reshape',
     Refer to `numpy.reshape` for full documentation.
 
     ..versionadded:: 1.17.0
-    
+
     The ``copy`` argument was added in version 1.17.0.
 
     See Also

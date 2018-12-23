@@ -231,13 +231,13 @@ PyArray_Newshape_int(PyArrayObject *self, PyArray_Dims *newdims,
      * in order to get the right orientation and
      * because we can't just re-use the buffer with the
      * data in the order it is in.
-     * NPY_RELAXED_STRIDES_CHECKING: size check is unnecessary when set.
      */
     if (copyflag == NPY_ARRAY_ENSURECOPY) {
         /* force the copy no matter what */
         do_nocopy_reshape = 0;
     }
     else if ((PyArray_SIZE(self) <= 1) ||
+             /* NPY_RELAXED_STRIDES_CHECKING makes size check unnecessary */
              ((order == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(self)) ||
               (order == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(self)))) {
         /* the array can be trivially reshaped */
