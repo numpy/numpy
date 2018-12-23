@@ -38,8 +38,14 @@ New Features
 Improvements
 ============
 
+Array comparison assertions include maximum differneces
+-------------------------------------------------------
+
 Error messages from array comparison tests such as
-`np.testing.assert_allclose` now includes maximum absolute and relative error.
+`np.testing.assert_allclose` now include "max absolute difference" and
+"max relative difference," in addition to the previous "mismatch" percentage.
+This information makes it easier to update absolute and relative error
+tolerances.
 
 
 Changes

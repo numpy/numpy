@@ -510,18 +510,18 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     >>> import numpy.testing as npt
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334)
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
-    ...
-    <type 'exceptions.AssertionError'>:
-    Items are not equal:
+    AssertionError:
+    Arrays are not almost equal to 10 decimals
      ACTUAL: 2.3333333333333002
      DESIRED: 2.3333333399999998
 
     >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
     ...                         np.array([1.0,2.33333334]), decimal=9)
-    ...
-    <type 'exceptions.AssertionError'>:
-    Arrays are not almost equal
-    (mismatch 50.0%)
+    AssertionError:
+    Arrays are not almost equal to 9 decimals
+    Mismatch: 50%
+    Max absolute difference: 6.66669964e-09
+    Max relative difference: 2.85715698e-09
      x: array([ 1.        ,  2.33333333])
      y: array([ 1.        ,  2.33333334])
 
@@ -787,23 +787,23 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # np.ma.masked, which is falsy).
         if cond != True:
             mismatch = 100.0 * reduced.count(0) / ox.size
-            remarks = ['mismatch {:.3g}%'.format(mismatch)]
+            remarks = ['Mismatch: {:.3g}%'.format(mismatch)]
 
             with errstate(invalid='ignore', divide='ignore'):
                 # ignore errors for non-numeric types
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
                     max_abs_error = error.max()
-                    remarks.append(
-                        'max abs error ' + array2string(max_abs_error))
+                    remarks.append('Max absolute difference: '
+                                   + array2string(max_abs_error))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     max_rel_error = (error / abs(y)).max()
-                    remarks.append(
-                        'max rel error ' + array2string(max_rel_error))
+                    remarks.append('Max relative difference: '
+                                   + array2string(max_rel_error))
 
-            err_msg += '\n(' + ', '.join(remarks) + ')'
+            err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
@@ -866,7 +866,9 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     ...                               [1, np.sqrt(np.pi)**2, np.nan])
     AssertionError:
     Arrays are not equal
-    (mismatch 33.3%, max abs error 4.4408921e-16, max rel error 1.41357986e-16)
+    Mismatch: 33.3%
+    Max absolute difference: 4.4408921e-16
+    Max relative difference: 1.41357986e-16
      x: array([1.      , 3.141593,      nan])
      y: array([1.      , 3.141593,      nan])
 
@@ -940,7 +942,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     ...
     AssertionError:
     Arrays are not almost equal to 5 decimals
-    (mismatch 33.3%, max abs error 6.e-05, max rel error 2.57136612e-05)
+    Mismatch: 33.3%
+    Max absolute difference: 6.e-05
+    Max relative difference: 2.57136612e-05
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33339,      NaN])
 
@@ -1033,13 +1037,17 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1, 2.0, np.nan])
     AssertionError:
     Arrays are not less-ordered
-    (mismatch 33.3%, max abs error 1., max rel error 0.5)
+    Mismatch: 33.3%
+    Max absolute difference: 1.
+    Max relative difference: 0.5
      x: array([ 1.,  1., nan])
      y: array([ 1.,  2., nan])
 
     >>> np.testing.assert_array_less([1.0, 4.0], 3)
     Arrays are not less-ordered
-    (mismatch 50%, max abs error 2., max rel error 0.66666667)
+    Mismatch: 50%
+    Max absolute difference: 2.
+    Max relative difference: 0.66666667
      x: array([1., 4.])
      y: array(3)
 
