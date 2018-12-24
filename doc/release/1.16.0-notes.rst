@@ -321,11 +321,11 @@ single elementary function for four related but different signatures,
 The ``out`` argument to these functions is now always tested for memory overlap
 to avoid corrupted results when memory overlap occurs.
 
-New value ``unscaled`` for option ``cov`` in ``np.polyfit''
+New value ``unscaled`` for option ``cov`` in ``np.polyfit``
 -----------------------------------------------------------
 A further possible value has been added to the ``cov`` parameter of the
 ``np.polyfit`` function. With ``cov='unscaled'`` the scaling of the covariance
-matrix is disabled completely (similar to setting ``absolute_sigma=True'' in
+matrix is disabled completely (similar to setting ``absolute_sigma=True`` in
 ``scipy.optimize.curve_fit``). This would be useful in occasions, where the
 weights are given by 1/sigma with sigma being the (known) standard errors of
 (Gaussian distributed) data points, in which case the unscaled matrix is
