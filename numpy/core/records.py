@@ -720,7 +720,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     a string"""
 
     if dtype is None and formats is None:
-        raise ValueError("Must have dtype= or formats=")
+        raise TypeError("fromstring() needs a 'dtype' or 'formats' argument")
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -769,7 +769,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     """
     
     if dtype is None and formats is None:
-        raise ValueError("Must have dtype= or formats=")
+        raise TypeError("fromfile() needs a 'dtype' or 'formats' argument")
 
     if (shape is None or shape == 0):
         shape = (-1,)
