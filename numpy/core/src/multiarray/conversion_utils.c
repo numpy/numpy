@@ -817,7 +817,7 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 NPY_NO_EXPORT int
 PyArray_CopyConverter(PyObject *object, int *copyflag)
 {
-    npy_bool obj_as_bool;
+    int obj_as_bool;
     Py_ssize_t obj_as_int;
     static PyObject *never_copy_singleton = NULL;
 
