@@ -790,7 +790,8 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    int forcecopy = NPY_ARRAY_ENSURECOPY, subok = 1;
+    int forcecopy = NPY_ARRAY_ENSURECOPY;
+    int subok = 1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:astype", kwlist,
                             PyArray_DescrConverter, &dtype,
@@ -829,7 +830,7 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (forcecopy & NPY_ARRAY_ENSURENOCOPY) {
                 PyErr_SetString(PyExc_ValueError,
                     "cannot cast array without creating a copy, but "
-                    "never copy was requested.");
+                    "never-copy was requested.");
                 return NULL;
         }
 
