@@ -655,13 +655,11 @@ NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj)
 {
     const char *msg =
-        "Numpy has detected that you (may be) writing to an array returned\n"
-        "by numpy.diagonal. This code will likely break in a future numpy\n"
-        "release -- see numpy.diagonal docs for details. The quick fix is\n"
-        "to make an explicit copy (e.g., do arr.diagonal().copy()).";
+        "Numpy has detected that you (may be) writing to an array with\n"
+        "overlapping memory from np.broadcast_arrays. If this is intentional\n"
+        "set the WRITEABLE flag True or make a copy before writing.";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
-        /* 2012-07-17, 1.7 */
-        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
+        if (DEPRECATE(msg) < 0) {
             return -1;
         }
         /* Only warn once per array */

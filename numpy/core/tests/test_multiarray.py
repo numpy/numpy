@@ -224,6 +224,16 @@ class TestFlags(object):
             with assert_warns(DeprecationWarning):
                 arr.flags.writeable = True
 
+    def test_warnonwrite(self):
+        a = np.arange(10)
+        a.flags._warn_on_write = True
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always')
+            a[1] = 10
+            a[2] = 10
+            # only warn once
+            assert_(len(w) == 1)
+
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
@@ -2994,8 +3004,6 @@ class TestMethods(object):
         assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
 
     def test_diagonal_view_notwriteable(self):
-        # this test is only for 1.9, the diagonal view will be
-        # writeable in 1.10.
         a = np.eye(3).diagonal()
         assert_(not a.flags.writeable)
         assert_(not a.flags.owndata)

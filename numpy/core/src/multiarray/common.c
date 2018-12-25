@@ -643,7 +643,7 @@ _IsWriteable(PyArrayObject *ap)
 
         if (base == NULL || PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA)) {
             /* there is no further base to test the writeable flag for */
-            return (npy_bool) PyArray_ISWRITEABLE(ap);
+            return NPY_FALSE;
         }
         assert(!PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA));
     }
