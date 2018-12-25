@@ -26,9 +26,6 @@ n = n-dimensional transform
 (Note: 2D routines are just nD routines with different default
 behavior.)
 
-The underlying code for these functions is an f2c-translated and modified
-version of the FFTPACK routines.
-
 """
 from __future__ import division, absolute_import, print_function
 
@@ -37,41 +34,24 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 
 import functools
 
-from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
-                        take, sqrt)
+from numpy.core import asarray, zeros, swapaxes, conjugate, take, sqrt
+from . import pocketfft_internal as pfi
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
-from . import fftpack_lite as fftpack
-from .helper import _FFTCache
-
-_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
-_real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
 
 
-def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
-             work_function=fftpack.cfftf, fft_cache=_fft_cache):
-    a = asarray(a)
+def _raw_fft(a, n, axis, is_real, is_forward, fct):
     axis = normalize_axis_index(axis, a.ndim)
-
     if n is None:
         n = a.shape[axis]
 
     if n < 1:
         raise ValueError("Invalid number of FFT data points (%d) specified."
                          % n)
-
-    # We have to ensure that only a single thread can access a wsave array
-    # at any given time. Thus we remove it from the cache and insert it
-    # again after it has been used. Multiple threads might create multiple
-    # copies of the wsave array. This is intentional and a limitation of
-    # the current C code.
-    wsave = fft_cache.pop_twiddle_factors(n)
-    if wsave is None:
-        wsave = init_function(n)
 
     if a.shape[axis] != n:
         s = list(a.shape)
@@ -87,25 +67,22 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
             z[tuple(index)] = a
             a = z
 
-    if axis != a.ndim - 1:
+    if axis == a.ndim-1:
+        r = pfi.execute(a, is_real, is_forward, fct)
+    else:
         a = swapaxes(a, axis, -1)
-    r = work_function(a, wsave)
-    if axis != a.ndim - 1:
+        r = pfi.execute(a, is_real, is_forward, fct)
         r = swapaxes(r, axis, -1)
-
-    # As soon as we put wsave back into the cache, another thread could pick it
-    # up and start using it, so we must not do this until after we're
-    # completely done using it ourselves.
-    fft_cache.put_twiddle_factors(n, wsave)
-
     return r
 
 
 def _unitary(norm):
-    if norm not in (None, "ortho"):
-        raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
-                         % norm)
-    return norm is not None
+    if norm is None:
+        return False
+    if norm=="ortho":
+        return True
+    raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
+                     % norm)
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -198,12 +175,13 @@ def fft(a, n=None, axis=-1, norm=None):
 
     """
 
-    a = asarray(a).astype(complex, copy=False)
+    a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    output = _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftf, _fft_cache)
-    if _unitary(norm):
-        output *= 1 / sqrt(n)
+    fct = 1
+    if norm is not None and _unitary(norm):
+        fct = 1 / sqrt(n)
+    output = _raw_fft(a, n, axis, False, True, fct)
     return output
 
 
@@ -294,13 +272,14 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> plt.show()
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    unitary = _unitary(norm)
-    output = _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache)
-    return output * (1 / (sqrt(n) if unitary else n))
+    fct = 1/n
+    if norm is not None and _unitary(norm):
+        fct = 1/sqrt(n)
+    output = _raw_fft(a, n, axis, False, False, fct)
+    return output
 
 
 
@@ -383,14 +362,13 @@ def rfft(a, n=None, axis=-1, norm=None):
     exploited to compute only the non-negative frequency terms.
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=float)
-    output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf,
-                      _real_fft_cache)
-    if _unitary(norm):
+    a = asarray(a)
+    fct = 1
+    if norm is not None and _unitary(norm):
         if n is None:
             n = a.shape[axis]
-        output *= 1 / sqrt(n)
+        fct = 1/sqrt(n)
+    output = _raw_fft(a, n, axis, True, True, fct)
     return output
 
 
@@ -475,14 +453,14 @@ def irfft(a, n=None, axis=-1, norm=None):
     specified, and the output array is purely real.
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    unitary = _unitary(norm)
-    output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
-                      _real_fft_cache)
-    return output * (1 / (sqrt(n) if unitary else n))
+    fct = 1/n
+    if norm is not None and _unitary(norm):
+        fct = 1/sqrt(n)
+    output = _raw_fft(a, n, axis, True, False, fct)
+    return output
 
 
 @array_function_dispatch(_fft_dispatcher)
@@ -560,8 +538,7 @@ def hfft(a, n=None, axis=-1, norm=None):
            [ 2., -2.]])
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
     unitary = _unitary(norm)
@@ -621,8 +598,7 @@ def ihfft(a, n=None, axis=-1, norm=None):
     array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j]) # may vary
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=float)
+    a = asarray(a)
     if n is None:
         n = a.shape[axis]
     unitary = _unitary(norm)
@@ -1122,8 +1098,7 @@ def rfftn(a, s=None, axes=None, norm=None):
             [0.+0.j,  0.+0.j]]])
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=float)
+    a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1], norm)
     for ii in range(len(axes)-1):
@@ -1255,8 +1230,7 @@ def irfftn(a, s=None, axes=None, norm=None):
             [1.,  1.]]])
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
         a = ifft(a, s[ii], axes[ii], norm)
