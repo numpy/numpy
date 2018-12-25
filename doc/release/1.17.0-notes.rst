@@ -6,6 +6,7 @@ NumPy 1.17.0 Release Notes
 Highlights
 ==========
 
+* NumPy's FFT implementation has switched to pocketfft
 
 New functions
 =============
@@ -38,6 +39,15 @@ New Features
 Improvements
 ============
 
+replacement of the `fftpack`-based FFT module by the `pocketfft` library
+------------------------------------------------------------------------
+Both implementations have the same ancestor (Fortran77 `FFTPACK` by Paul N.
+Swarztrauber), but `pocketfft` contains additional modifications which
+improve both accuracy and performance in some circumstances. For FFT lengths
+containing large prime factors, `pocketfft` uses Bluestein's algorithm, which
+maintains `O(N log N)` run time complexity instead of deteriorating towards
+`O(N*N)` for prime lengths. Also, accuracy for real-valued FFTs with near-prime
+lengths has improved and is on par with complex-valued FFTs.
 
 Changes
 =======
