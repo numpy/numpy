@@ -25,8 +25,7 @@ if [ -n "$PYTHON_OPTS" ]; then
 fi
 
 # make some warnings fatal, mostly to match windows compilers
-werrors="-Werror=declaration-after-statement -Werror=vla "
-werrors+="-Werror=nonnull -Werror=pointer-arith"
+werrors="-Werror=vla -Werror=nonnull -Werror=pointer-arith"
 
 # build with c99 by default
 
