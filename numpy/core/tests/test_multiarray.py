@@ -7073,8 +7073,8 @@ class TestArrayCreationCopyArgument(object):
     @pytest.mark.parametrize("order2", ["C", "F", "A", "K"])
     def test_order_mismatch(self, arr, order1, order2):
         # The order is the main (python side) reason that can cause
-        # a never-copy to fail. Test for all orders as well as non-contiguous
-        # when order is None
+        # a never-copy to fail.
+        # Prepare C-order, F-order and non-contiguous arrays:
         arr = arr.copy(order1)
         if order1 == "C":
             assert arr.flags.c_contiguous
@@ -7085,29 +7085,36 @@ class TestArrayCreationCopyArgument(object):
             arr = arr[::2, ::2]
             assert not arr.flags.forc
 
+        # Whether a copy is necessary depends on the order of arr:
         if order2 == "C":
             no_copy_necessary = arr.flags.c_contiguous
         elif order2 == "F":
             no_copy_necessary = arr.flags.f_contiguous
         else:
-            # Keeporder and Anyorder are OK with non-contiguous output
+            # Keeporder and Anyorder are OK with non-contiguous output.
+            # This is not consistent with the `astype` behaviour which
+            # enforces contiguity for "A". It is probably historic from when
+            # "K" did not exist.
             no_copy_necessary = True
 
-        res = np.array(arr, copy=True, order=order2)
-        assert res is not arr and res.flags.owndata
-        assert_array_equal(arr, res)
-
-        if no_copy_necessary:
-            res = np.array(arr, copy=False, order=order2)
-            assert res is arr
-
-            res = np.array(arr, copy=np.never_copy, order=order2)
-            assert res is arr
-        else:
-            res = np.array(arr, copy=False, order=order2)
+        # Test it for both the array and a memoryview
+        for view in [arr, memoryview(arr)]:
+            res = np.array(view, copy=True, order=order2)
+            assert res is not arr and res.flags.owndata
             assert_array_equal(arr, res)
-            assert_raises(ValueError, np.array,
-                          arr, copy=np.never_copy, order=order2)
+
+            if no_copy_necessary:
+                res = np.array(view, copy=False, order=order2)
+                # res.base.obj refers to the memoryview
+                assert res is arr or res.base.obj is arr
+
+                res = np.array(view, copy=np.never_copy, order=order2)
+                assert res is arr or res.base.obj is arr
+            else:
+                res = np.array(arr, copy=False, order=order2)
+                assert_array_equal(arr, res)
+                assert_raises(ValueError, np.array,
+                              view, copy=np.never_copy, order=order2)
 
 
 class TestArrayAttributeDeletion(object):

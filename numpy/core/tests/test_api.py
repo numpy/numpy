@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
-    HAS_REFCOUNT,
+    suppress_warnings, HAS_REFCOUNT,
     )
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
@@ -298,22 +298,31 @@ def test_astype_copyflag():
     res = arr.astype(np.intp, copy=True)
     assert not np.may_share_memory(arr, res)
     res = arr.astype(np.intp, copy=False)
-    # res is arr currently, but lets check `may_share_memory`.
+    # `res is arr` currently, but check `may_share_memory`.
     assert np.may_share_memory(arr, res)
     res = arr.astype(np.intp, copy=np.never_copy)
+    assert np.may_share_memory(arr, res)
+
+    # Simple tests for when a copy is necessary:
+    res = arr.astype(np.float64, copy=False)
+    assert_array_equal(res, arr)
+    assert_raises(ValueError, arr.astype, np.float64, copy=np.never_copy)
 
 def test_astype_invalid_copyflag():
     arr = np.arange(10)
     # Deprecation if not an integer:
     # DEPRECATED: 2018-12-24, version 1.17.
-    with warnings.catch_warnings():
+    with suppress_warnings() as sup:
+        rec = sup.record(DeprecationWarning)
         warnings.simplefilter("always", DeprecationWarning)
-        # Throws a warning, but later raises (not ideal, but a corner case)
+        # Gives the warning, but later raises (not ideal, but a corner case)
         assert_raises(ValueError, arr.astype, np.intp, copy=np.arange(5))
         # Only gives the warning:
-        assert_warns(DeprecationWarning, arr.astype, np.intp, copy=1.)
-        warnings.simplefilter("error", DeprecationWarning)
-        assert_raises(DeprecationWarning, arr.astype, np.intp, copy=1.)
+        arr.astype(np.intp, copy=1.)
+        assert len(rec) == 2
+
+    warnings.simplefilter("error", DeprecationWarning)
+    assert_raises(DeprecationWarning, arr.astype, np.intp, copy=1.)
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
