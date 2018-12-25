@@ -6,7 +6,7 @@ trigger:
       - master
       - maintenance/*
 jobs:
-- job: Linux_Python_36_32bit_full
+- job: Linux_Python_36_32bit_full_with_asserts
   pool:
     vmIMage: 'ubuntu-16.04'
   steps:
@@ -26,7 +26,8 @@ jobs:
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
            NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
-           F77=gfortran-5 F90=gfortran-5 python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
+           F77=gfortran-5 F90=gfortran-5 \
+           CFLAGS=-UNDEBUG python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
     inputs:
