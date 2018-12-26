@@ -11,6 +11,7 @@ class Core(Benchmark):
         self.l50 = range(50)
         self.l = [np.arange(1000), np.arange(1000)]
         self.l10x10 = np.ones((10, 10))
+        self.arr = np.arange(10 ** 6)
 
     def time_array_1(self):
         np.array(1)
@@ -74,6 +75,15 @@ class Core(Benchmark):
 
     def time_tril_l10x10(self):
         np.tril(self.l10x10)
+
+    def time_sort(self):
+        np.sort(self.arr)
+
+    def time_quicksort(self):
+        np.sort(self.arr, kind='q')
+
+    def time_radixsort(self):
+        np.sort(self.arr, kind='r')
 
 
 class Temporaries(Benchmark):
