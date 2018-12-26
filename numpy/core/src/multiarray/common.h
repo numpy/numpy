@@ -223,9 +223,6 @@ npy_uint_alignment(int itemsize)
         case 8:
             alignment = _ALIGN(npy_uint64);
             break;
-        case 12:
-            alignment = _ALIGN(npy_longdouble);
-            break;
         case 16:
             /*
              * 16 byte types are copied using 2 uint64 assignments.
