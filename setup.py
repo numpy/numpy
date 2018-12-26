@@ -26,6 +26,10 @@ import sys
 import subprocess
 import textwrap
 
+
+if sys.version_info[:2] < (3, 5):
+    raise RuntimeError("Python version >= 3.5 required.")
+
 import builtins
 
 
