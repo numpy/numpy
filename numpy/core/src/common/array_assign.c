@@ -129,7 +129,7 @@ raw_array_is_aligned(int ndim, npy_intp *shape,
         return 1;
     }
     else {
-        /* always return false for alignment == 0, which means unaligned */
+        /* always return false for alignment == 0, which means cannot-be-aligned */
         return 0;
     }
 }
