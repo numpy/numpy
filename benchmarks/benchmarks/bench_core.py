@@ -11,7 +11,7 @@ class Core(Benchmark):
         self.l50 = range(50)
         self.l = [np.arange(1000), np.arange(1000)]
         self.l10x10 = np.ones((10, 10))
-        self.arr = np.arange(10 ** 6)
+        self.arr = np.arange(10 ** 6)[::-1]
 
     def time_array_1(self):
         np.array(1)
