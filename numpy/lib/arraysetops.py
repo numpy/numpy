@@ -606,17 +606,24 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     if integer_arrays:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
-        ar2_range = ar2_max - ar2_min
         ar2_size = ar2.size
 
-        # Optimal performance is for approximately
-        # log10(size) > (log10(range) - 2.27) / 0.927, see discussion on
-        # https://github.com/numpy/numpy/pull/12065
-        optimal_parameters = (
-                np.log10(ar2_size + 1) >
-                ((np.log10(ar2_range + 1) - 2.27) / 0.927)
-            )
+        # Check for integer overflow
+        with np.errstate(over='raise'):
+            try:
+                ar2_range = ar2_max - ar2_min
 
+                # Optimal performance is for approximately
+                # log10(size) > (log10(range) - 2.27) / 0.927, see discussion on
+                # https://github.com/numpy/numpy/pull/12065
+                optimal_parameters = (
+                        np.log10(ar2_size) >
+                        ((np.log10(ar2_range + 1.0) - 2.27) / 0.927)
+                    )
+            except FloatingPointError:
+                optimal_parameters = False
+
+        # Use the fast integer algorithm
         if optimal_parameters:
 
             if invert:
