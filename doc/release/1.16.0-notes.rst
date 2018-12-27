@@ -16,6 +16,7 @@ code organization, and better cross platform compatibility. Not all of these
 improvements will be visible to users, but they should help make maintenance
 easier going forward.
 
+testing
 
 Highlights
 ==========
