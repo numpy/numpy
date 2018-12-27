@@ -8000,10 +8000,10 @@ class TestAlignment(object):
             raise ValueError()
 
     def test_various_alignments(self):
-        for align in [1, 2, 3, 4, 8, 16, 32, 64, None]:
+        for align in [1, 2, 3, 4, 8, 12, 16, 32, 64, None]:
             for n in [0, 1, 3, 11]:
                 for order in ["C", "F", None]:
-                    for dtype in np.typecodes["All"]:
+                    for dtype in list(np.typecodes["All"]) + ['i4,i4,i4']:
                         if dtype == 'O':
                             # object dtype can't be misaligned
                             continue
