@@ -516,12 +516,13 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
-def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None):
+def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None,
+                     _slow_integer=None):
     return (ar1, ar2)
 
 
 @array_function_dispatch(_in1d_dispatcher)
-def in1d(ar1, ar2, assume_unique=False, invert=False):
+def in1d(ar1, ar2, assume_unique=False, invert=False, _slow_integer=None):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -544,6 +545,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
+    _slow_integer : bool/None, optional
+        If True, defaults to the old algorithm for integers. This is
+        used for debugging and testing purposes. The default, None,
+        selects the best based on estimated performance.
 
         .. versionadded:: 1.8.0
 
@@ -603,7 +608,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
                       np.issubdtype(ar2.dtype, np.integer))
 
-    if integer_arrays:
+    if integer_arrays and _slow_integer in [None, False]:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
         ar2_size = ar2.size
@@ -624,7 +629,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
                 optimal_parameters = False
 
         # Use the fast integer algorithm
-        if optimal_parameters:
+        if optimal_parameters or _slow_integer == False:
 
             if invert:
                 outgoing_array = np.ones_like(ar1, dtype=np.bool_)
@@ -690,12 +695,14 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
-def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None):
+def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
+                     _slow_integer=None):
     return (element, test_elements)
 
 
 @array_function_dispatch(_isin_dispatcher)
-def isin(element, test_elements, assume_unique=False, invert=False):
+def isin(element, test_elements, assume_unique=False, invert=False,
+         _slow_integer=None):
     """
     Calculates ``element in test_elements``, broadcasting over `element` only.
     Returns a boolean array of the same shape as `element` that is True
@@ -717,6 +724,10 @@ def isin(element, test_elements, assume_unique=False, invert=False):
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
+    _slow_integer : bool/None, optional
+        If True, defaults to the old algorithm for integers. This is
+        used for debugging and testing purposes. The default, None,
+        selects the best based on measured performance.
 
     Returns
     -------
@@ -790,7 +801,8 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert).reshape(element.shape)
+                invert=invert, _slow_integer=_slow_integer
+                ).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):
