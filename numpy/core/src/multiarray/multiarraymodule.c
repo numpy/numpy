@@ -3255,6 +3255,7 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     meta = get_datetime_metadata_from_dtype(dtype);
+    Py_DECREF(dtype);    
     if (meta == NULL) {
         return NULL;
     }
