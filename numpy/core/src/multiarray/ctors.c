@@ -2827,7 +2827,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
      * contiguous strides, etc.
      */
     if (PyArray_GetDTypeTransferFunction(
-                    IsUintAligned(src) && IsUintAligned(dst),
+                    IsUintAligned(src) && IsAligned(src) &&
+                    IsUintAligned(dst) && IsAligned(dst),
                     src_stride, dst_stride,
                     PyArray_DESCR(src), PyArray_DESCR(dst),
                     0,
