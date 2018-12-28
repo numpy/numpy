@@ -2167,8 +2167,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
     -------
     y : ndarray or bool
         Boolean result of the logical OR operation applied to the elements
-        of `x1` and `x2`; the shape is determined by whether or not
-        broadcasting of one or both arrays was required.
+        of `x1` and `x2`; the shape is determined by broadcasting.
         $OUT_SCALAR_2
 
     See Also
@@ -2238,8 +2237,7 @@ add_newdoc('numpy.core.umath', 'logical_or',
     -------
     y : ndarray or bool
         Boolean result of the logical OR operation applied to the elements
-        of `x1` and `x2`; the shape is determined by whether or not
-        broadcasting of one or both arrays was required.
+        of `x1` and `x2`; the shape is determined by broadcasting.
         $OUT_SCALAR_2
 
     See Also
@@ -2274,8 +2272,7 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     -------
     y : bool or ndarray of bool
         Boolean result of the logical XOR operation applied to the elements
-        of `x1` and `x2`; the shape is determined by whether or not
-        broadcasting of one or both arrays was required.
+        of `x1` and `x2`; the shape is determined by broadcasting.
         $OUT_SCALAR_2
 
     See Also
