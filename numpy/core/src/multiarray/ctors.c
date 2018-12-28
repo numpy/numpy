@@ -2163,14 +2163,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
         Py_DECREF(newtype);
         if (needview) {
-            PyArray_Descr *dtype = PyArray_DESCR(arr);
             PyTypeObject *subtype = NULL;
 
             if (flags & NPY_ARRAY_ENSUREARRAY) {
                 subtype = &PyArray_Type;
             }
 
-            Py_INCREF(dtype);
             ret = (PyArrayObject *)PyArray_View(arr, NULL, subtype);
             if (ret == NULL) {
                 return NULL;
