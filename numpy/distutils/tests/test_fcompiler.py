@@ -52,8 +52,10 @@ def test_fcompiler_flags_append_warning(monkeypatch):
     # non-empty flags to start with (otherwise the "if var and append" check
     # will always be false).
     try:
-        fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
-        fc.customize()
+        with suppress_warnings() as sup:
+            sup.record()
+            fc = numpy.distutils.fcompiler.new_fcompiler(compiler='gnu95')
+            fc.customize()
     except numpy.distutils.fcompiler.CompilerNotFound:
         pytest.skip("gfortran not found, so can't execute this test")
 
@@ -62,7 +64,10 @@ def test_fcompiler_flags_append_warning(monkeypatch):
 
     for opt, envvar in customizable_flags:
         new_flag = '-dummy-{}-flag'.format(opt)
-        prev_flags = getattr(fc.flag_vars, opt)
+        with suppress_warnings() as sup:
+            sup.record()
+            prev_flags = getattr(fc.flag_vars, opt)
+
         monkeypatch.setenv(envvar, new_flag)
         with suppress_warnings() as sup:
             sup.record()
