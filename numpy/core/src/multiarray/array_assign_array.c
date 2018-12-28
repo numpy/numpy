@@ -48,11 +48,15 @@ raw_array_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
+    /* Check both uint and true alignment */
     aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                    npy_uint_alignment(dst_dtype->elsize)) &&
+              raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
+                                   dst_dtype->alignment) &&
               raw_array_is_aligned(ndim, shape, src_data, src_strides,
                                    npy_uint_alignment(src_dtype->elsize));
+              raw_array_is_aligned(ndim, shape, src_data, src_strides,
+                                   src_dtype->alignment);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareTwoRawArrayIter(
@@ -133,11 +137,15 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
+    /* Check both uint and true alignment */
     aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                    npy_uint_alignment(dst_dtype->elsize)) &&
+              raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
+                                   dst_dtype->alignment) &&
               raw_array_is_aligned(ndim, shape, src_data, src_strides,
                                    npy_uint_alignment(src_dtype->elsize));
+              raw_array_is_aligned(ndim, shape, src_data, src_strides,
+                                   src_dtype->alignment);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareThreeRawArrayIter(

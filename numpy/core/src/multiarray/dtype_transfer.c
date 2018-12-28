@@ -26,6 +26,7 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "descriptor.h"
+#include "array_assign.h"
 
 #include "shape.h"
 #include "lowlevel_strided_loops.h"
@@ -3765,11 +3766,15 @@ PyArray_CastRawArrays(npy_intp count,
         return NPY_SUCCEED;
     }
 
-    /* Check data alignment */
-    aligned = (((npy_intp)src | src_stride) &
-                                (src_dtype->alignment - 1)) == 0 &&
-              (((npy_intp)dst | dst_stride) &
-                                (dst_dtype->alignment - 1)) == 0;
+    /* Check data alignment, both uint and true */
+    aligned = raw_array_is_aligned(1, &count, dst, &dst_stride,
+                                   npy_uint_alignment(dst_dtype->elsize)) &&
+              raw_array_is_aligned(1, &count, dst, &dst_stride,
+                                   dst_dtype->alignment) &&
+              raw_array_is_aligned(1, &count, src, &src_stride,
+                                   npy_uint_alignment(src_dtype->elsize)) &&
+              raw_array_is_aligned(1, &count, src, &src_stride,
+                                   src_dtype->alignment);
 
     /* Get the function to do the casting */
     if (PyArray_GetDTypeTransferFunction(aligned,

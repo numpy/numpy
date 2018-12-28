@@ -182,6 +182,7 @@ check_and_adjust_axis(int *axis, int ndim)
 
 /* used for some alignment checks */
 #define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+#define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.
@@ -201,6 +202,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
      * Assumes cast from pointer to uintp gives a sensible representation we
      * can use bitwise & on (not required by C standard, but used by glibc).
      * This test is faster than a direct modulo.
+     * Note alignment value of 0 is allowed and returns False.
      */
     return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
 }

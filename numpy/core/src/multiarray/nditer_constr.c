@@ -1132,7 +1132,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* Check if the operand is aligned */
         if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
-            if (!IsUintAligned(*op)) {
+            if (!(IsUintAligned(*op) && IsAligned(*op))) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
@@ -2851,8 +2851,14 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
                     PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
 
-            /* New arrays are aligned and need no cast */
-            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            /*
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * needs uint-alignment in addition.
+             */
+            if (IsUintAligned(out)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /* New arrays need no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
         /*
@@ -2888,11 +2894,17 @@ npyiter_allocate_arrays(NpyIter *iter,
                     PyArray_DATA(op[iop]), NULL);
 
             /*
-             * New arrays are aligned need no cast, and in the case
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * needs uint-alignment in addition.
+             */
+            if (IsUintAligned(temp)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /*
+             * New arrays need no cast, and in the case
              * of scalars, always have stride 0 so never need buffering
              */
-            op_itflags[iop] |= (NPY_OP_ITFLAG_ALIGNED |
-                                  NPY_OP_ITFLAG_BUFNEVER);
+            op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
             if (itflags & NPY_ITFLAG_BUFFER) {
                 NBF_STRIDES(bufferdata)[iop] = 0;
@@ -2953,8 +2965,14 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
                     PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
 
-            /* The temporary copy is aligned and needs no cast */
-            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            /*
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * additionally needs uint-alignment in addition.
+             */
+            if (IsUintAligned(temp)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /* The temporary copy needs no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
         else {
