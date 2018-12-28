@@ -170,7 +170,7 @@ PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyUFuncObject *ufunc;
-    PyObject *str;
+    PyObject *str, *tmp;
     char *docstr, *newdocstr;
 
 #if defined(NPY_PY3K)
@@ -178,7 +178,11 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
                                         &PyUnicode_Type, &str)) {
         return NULL;
     }
-    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
+    tmp = PyUnicode_AsUTF8String(str);
+    if (tmp == NULL) {
+        return NULL;
+    }
+    docstr = PyBytes_AS_STRING(tmp);
 #else
     if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                          &PyString_Type, &str)) {
@@ -190,6 +194,9 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (NULL != ufunc->doc) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot change docstring of ufunc with non-NULL docstring");
+#if defined(NPY_PY3K)
+        Py_DECREF(tmp);
+#endif
         return NULL;
     }
 
@@ -203,6 +210,9 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     strcpy(newdocstr, docstr);
     ufunc->doc = newdocstr;
 
+#if defined(NPY_PY3K)
+    Py_DECREF(tmp);
+#endif
     Py_RETURN_NONE;
 }
 
