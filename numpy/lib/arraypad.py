@@ -204,15 +204,12 @@ def _set_pad_area(padded, axis, width_pair, value_pair):
         Values inserted into the pad area on each side. It must match or be
         broadcastable to the shape of `arr`.
     """
-    if width_pair[0] > 0:
-        # Set pad values on the left
-        left_slice = _slice_at_axis(slice(None, width_pair[0]), axis)
-        padded[left_slice] = value_pair[0]
+    left_slice = _slice_at_axis(slice(None, width_pair[0]), axis)
+    padded[left_slice] = value_pair[0]
 
-    if width_pair[1] > 0:
-        # Set pad values on the right
-        right_slice = _slice_at_axis(slice(-width_pair[1], None), axis)
-        padded[right_slice] = value_pair[1]
+    right_slice = _slice_at_axis(
+        slice(padded.shape[axis] - width_pair[1], None), axis)
+    padded[right_slice] = value_pair[1]
 
 
 def _get_edges(padded, axis, width_pair):
@@ -236,19 +233,13 @@ def _get_edges(padded, axis, width_pair):
         shape will always match `padded` except for the dimension given by
         `axis` which will have a length of 1.
     """
-    if width_pair[0] > 0:
-        left_slice = _slice_at_axis(
-            slice(width_pair[0], width_pair[0] + 1), axis)
-        left_edge = padded[left_slice]
-    else:
-        left_edge = np.array([], dtype=padded.dtype)
+    left_index = width_pair[0]
+    left_slice = _slice_at_axis(slice(left_index, left_index + 1), axis)
+    left_edge = padded[left_slice]
 
-    if width_pair[1] > 0:
-        right_slice = _slice_at_axis(
-            slice(-width_pair[1] - 1, -width_pair[1]), axis)
-        right_edge = padded[right_slice]
-    else:
-        right_edge = np.array([], dtype=padded.dtype)
+    right_index = padded.shape[axis] - width_pair[1]
+    right_slice = _slice_at_axis(slice(right_index - 1, right_index), axis)
+    right_edge = padded[right_slice]
 
     return left_edge, right_edge
 
@@ -277,23 +268,17 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     """
     edge_pair = _get_edges(padded, axis, width_pair)
 
-    if width_pair[0] > 0:
-        left_ramp = _linear_ramp(
-            padded.ndim, axis, start=end_value_pair[0], stop=edge_pair[0],
-            size=width_pair[0], reverse=False
-        )
-        _round_if_needed(left_ramp, padded.dtype)
-    else:
-        left_ramp = np.array([], dtype=padded.dtype)
+    left_ramp = _linear_ramp(
+        padded.ndim, axis, start=end_value_pair[0], stop=edge_pair[0],
+        size=width_pair[0], reverse=False
+    )
+    _round_if_needed(left_ramp, padded.dtype)
 
-    if width_pair[1] > 0:
-        right_ramp = _linear_ramp(
-            padded.ndim, axis, start=end_value_pair[1], stop=edge_pair[1],
-            size=width_pair[1], reverse=True
-        )
-        _round_if_needed(right_ramp, padded.dtype)
-    else:
-        right_ramp = np.array([], dtype=padded.dtype)
+    right_ramp = _linear_ramp(
+        padded.ndim, axis, start=end_value_pair[1], stop=edge_pair[1],
+        size=width_pair[1], reverse=True
+    )
+    _round_if_needed(right_ramp, padded.dtype)
 
     return left_ramp, right_ramp
 
@@ -324,33 +309,31 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     left_stat, right_stat : ndarray
         Calculated statistic for both sides of `padded`.
     """
-    max_length = padded.shape[axis] - width_pair[0] - width_pair[1]
+    # Calculate indices of the edges of the area with original values
+    left_index = width_pair[0]
+    right_index = padded.shape[axis] - width_pair[1]
+    # as well as its length
+    max_length = right_index - left_index
 
-    if width_pair[0] > 0:
-        if length_pair[0] is not None and length_pair[0] < max_length:
-            left_length = length_pair[0]
-        else:
-            left_length = max_length
-        left_slice = _slice_at_axis(
-            slice(width_pair[0], width_pair[0] + left_length), axis)
-        left_chunk = padded[left_slice]
-        left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
-        _round_if_needed(left_stat, padded.dtype)
+    if length_pair[0] is not None and length_pair[0] < max_length:
+        left_length = length_pair[0]
     else:
-        left_stat = np.array([], dtype=padded.dtype)
+        left_length = max_length
+    left_slice = _slice_at_axis(
+        slice(left_index, left_index + left_length), axis)
+    left_chunk = padded[left_slice]
+    left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
+    _round_if_needed(left_stat, padded.dtype)
 
-    if width_pair[1] > 0:
-        if length_pair[1] is not None and length_pair[1] < max_length:
-            right_length = length_pair[1]
-        else:
-            right_length = max_length
-        right_slice = _slice_at_axis(
-            slice(-width_pair[1] - right_length, -width_pair[1]), axis)
-        right_chunk = padded[right_slice]
-        right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
-        _round_if_needed(right_stat, padded.dtype)
+    if length_pair[1] is not None and length_pair[1] < max_length:
+        right_length = length_pair[1]
     else:
-        right_stat = np.array([], dtype=padded.dtype)
+        right_length = max_length
+    right_slice = _slice_at_axis(
+        slice(right_index - right_length, right_index), axis)
+    right_chunk = padded[right_slice]
+    right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
+    _round_if_needed(right_stat, padded.dtype)
 
     return left_stat, right_stat
 
