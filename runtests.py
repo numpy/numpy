@@ -343,7 +343,6 @@ def build_project(args):
             # add flags used as werrors
             warnings_as_errors = ' '.join([
                 # from tools/travis-test.sh
-                '-Werror=declaration-after-statement',
                 '-Werror=vla',
                 '-Werror=nonnull',
                 '-Werror=pointer-arith',
@@ -352,6 +351,8 @@ def build_project(args):
                 '-Werror=unused-function',
             ])
             env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
+            # NumPy > 1.16 should be C99 compatible.
+            env['CFLAGS'] = '-std=c99' + ' ' + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'

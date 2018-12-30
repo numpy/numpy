@@ -4241,7 +4241,7 @@ def delete(arr, obj, axis=None):
     arr : array_like
       Input array.
     obj : slice, int or array of ints
-      Indicate which sub-arrays to remove.
+      Indicate indices of sub-arrays to remove along the specified axis.
     axis : int, optional
       The axis along which to delete the subarray defined by `obj`.
       If `axis` is None, `obj` is applied to the flattened array.

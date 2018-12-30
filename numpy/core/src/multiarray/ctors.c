@@ -2024,7 +2024,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         newtype = oldtype;
         Py_INCREF(oldtype);
     }
-    if (PyDataType_ISUNSIZED(newtype)) {
+    else if (PyDataType_ISUNSIZED(newtype)) {
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return NULL;

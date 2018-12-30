@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "arrayfunction_override.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
@@ -1030,9 +1031,11 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     }
     for (i = 0; i < nout; i++) {
         if (PyUFunc_HasOverride(out_objs[i])) {
+            Py_DECREF(out_kwd_obj);
             return 1;
         }
     }
+    Py_DECREF(out_kwd_obj);
     return 0;
 }
 
@@ -1086,13 +1089,29 @@ cleanup:
     return result;
 }
 
-
 static PyObject *
-array_function(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_function(PyArrayObject *self, PyObject *c_args, PyObject *c_kwds)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_array_function");
-}
+    PyObject *func, *types, *args, *kwargs, *result;
+    static char *kwlist[] = {"func", "types", "args", "kwargs", NULL};
 
+    if (!PyArg_ParseTupleAndKeywords(
+            c_args, c_kwds, "OOOO:__array_function__", kwlist,
+            &func, &types, &args, &kwargs)) {
+        return NULL;
+    }
+
+    types = PySequence_Fast(
+        types,
+        "types argument to ndarray.__array_function__ must be iterable");
+    if (types == NULL) {
+        return NULL;
+    }
+
+    result = array_function_method_impl(func, types, args, kwargs);
+    Py_DECREF(types);
+    return result;
+}
 
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)

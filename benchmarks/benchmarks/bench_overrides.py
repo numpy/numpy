@@ -16,10 +16,10 @@ def mock_broadcast_to(array, shape, subok=False):
 
 
 def _concatenate_dispatcher(arrays, axis=None, out=None):
-    for array in arrays:
-        yield array
     if out is not None:
-        yield out
+        arrays = list(arrays)
+        arrays.append(out)
+    return arrays
 
 
 @array_function_dispatch(_concatenate_dispatcher)
