@@ -38,7 +38,9 @@ def _linear_ramp(ndim, axis, start, stop, size, reverse=False):
         The stop value(s) (not included!) of the linear ramp. If given as an
         array, its size must match `size`.
     size : int
-        The number of elements in the linear ramp.
+        The number of elements in the linear ramp. If this argument is 0 the
+        dimensions of `ramp` will all be of length 1 except for the one given
+        by `axis` which will be 0.
     reverse : bool
         If False, increment in a positive fashion, otherwise decrement.
 
@@ -53,6 +55,8 @@ def _linear_ramp(ndim, axis, start, stop, size, reverse=False):
     >>> _linear_ramp(ndim=2, axis=0, start=np.arange(3), stop=10, size=2)
     array([[0. , 1. , 2. ],
            [5. , 5.5, 6. ]])
+    >>> _linear_ramp(ndim=3, axis=0, start=2, stop=0, size=0)
+    array([], shape=(0, 1, 1), dtype=float64)
     """
     # Create initial ramp
     ramp = np.arange(size, dtype=np.float64)
@@ -63,10 +67,11 @@ def _linear_ramp(ndim, axis, start, stop, size, reverse=False):
     init_shape = (1,) * axis + (size,) + (1,) * (ndim - axis - 1)
     ramp = ramp.reshape(init_shape)
 
-    # And scale to given start and stop values
-    gain = (stop - start) / float(size)
-    ramp = ramp * gain
-    ramp += start
+    if size != 0:
+        # And scale to given start and stop values
+        gain = (stop - start) / float(size)
+        ramp = ramp * gain
+        ramp += start
 
     return ramp
 
