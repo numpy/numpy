@@ -4,7 +4,6 @@ import warnings
 import sys
 import os
 import itertools
-import re
 import textwrap
 import pytest
 import weakref
