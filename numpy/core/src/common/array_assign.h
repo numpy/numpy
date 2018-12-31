@@ -87,8 +87,10 @@ broadcast_strides(int ndim, npy_intp *shape,
 
 /*
  * Checks whether a data pointer + set of strides refers to a raw
- * array whose elements are all aligned to a given alignment.
- * alignment should be a power of two.
+ * array whose elements are all aligned to a given alignment. Returns
+ * 1 if data is aligned to alignment or 0 if not.
+ * alignment should be a power of two, or may be the sentinel value 0 to mean
+ * cannot-be-aligned, in which case 0 (false) is always returned.
  */
 NPY_NO_EXPORT int
 raw_array_is_aligned(int ndim, npy_intp *shape,
