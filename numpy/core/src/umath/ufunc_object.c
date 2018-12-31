@@ -3457,21 +3457,38 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     return 0;
 }
 
+static void
+clear_masked_items(char *dataptr, npy_intp s_data,
+                   char *maskptr, npy_intp s_mask, char *identityptr,
+                   npy_intp count)
+{
+    int n;
+    char *data = dataptr, *mask = maskptr;
+    for (n = 0; n < count; n++, data += s_data, mask += s_mask) {
+        if (!(*mask)) {
+            memcpy(data, identityptr, s_data);
+        }
+    }
+}
+
 static int
 reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
             npy_intp *countptr, NpyIter_IterNextFunc *iternext,
             int needs_api, npy_intp skip_first_count, void *data)
 {
-    PyArray_Descr *dtypes[3], **iter_dtypes;
+    PyArray_Descr *dtypes[4], **iter_dtypes;
     PyUFuncObject *ufunc = (PyUFuncObject *)data;
-    char *dataptrs_copy[3];
-    npy_intp strides_copy[3];
+    char *dataptrs_copy[4];
+    npy_intp strides_copy[4];
+    npy_bool where_mask;
 
     /* The normal selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
     NPY_BEGIN_THREADS_DEF;
+    /* Get the number of operands, to determine whether "where" is used */
+    where_mask = (NpyIter_GetNOp(iter) == 4);
 
     /* Get the inner loop */
     iter_dtypes = NpyIter_GetDescrArray(iter);
@@ -3524,6 +3541,13 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
         } while (iternext(iter));
     }
     do {
+        if (where_mask) {
+            printf("strides=%ld,%ld,%ld\n", strides[0], strides[1],
+                   strides[2]);
+            clear_masked_items(dataptrs[1], strides[1],
+                               dataptrs[2], strides[2],
+                               dataptrs[3], *countptr);
+        }
         /* Turn the two items into three for the inner loop */
         dataptrs_copy[0] = dataptrs[0];
         dataptrs_copy[1] = dataptrs[1];

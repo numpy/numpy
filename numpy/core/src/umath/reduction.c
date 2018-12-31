@@ -444,9 +444,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
     /* Iterator parameters */
     NpyIter *iter = NULL;
-    PyArrayObject *op[3];
-    PyArray_Descr *op_dtypes[3];
-    npy_uint32 flags, op_flags[3];
+    PyArrayObject *op[4];
+    PyArray_Descr *op_dtypes[4];
+    npy_uint32 flags, op_flags[4];
 
     /* More than one axis means multiple orders are possible */
     if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
@@ -484,6 +484,13 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         Py_INCREF(op_view);
     }
     else {
+        /* Cannot use where when we initialize from the operand */
+        if (wheremask != NULL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Reduce operations with no idenity do not yet support "
+                            "a where mask");
+            return NULL;
+        }
         op_view = PyArray_InitializeReduceResult(
             result, operand, axis_flags, &skip_first_count, funcname);
         if (op_view == NULL) {
@@ -517,13 +524,21 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                   NPY_ITER_ALIGNED |
                   NPY_ITER_NO_BROADCAST;
     if (wheremask != NULL) {
+        op_flags[1] |= NPY_ITER_UPDATEIFCOPY;
         op[2] = wheremask;
-        op_dtypes[2] = NULL;
-        op_flags[2] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
-        op_flags[0] |= NPY_ITER_WRITEMASKED;
+        op_dtypes[2] = PyArray_DescrFromType(NPY_BOOL);
+        if (op_dtypes[2] == NULL) {
+            goto fail;
+        }
+        op_flags[2] = NPY_ITER_READONLY |
+                      NPY_ITER_ALIGNED;
+        op[3] = (PyArrayObject *)PyArray_FromScalar(identity, operand_dtype);
+        op_dtypes[3] = operand_dtype;
+        op_flags[3] = NPY_ITER_READONLY |
+                      NPY_ITER_ALIGNED;
     }
 
-    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, flags,
+    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 4, op, flags,
                                NPY_KEEPORDER, casting,
                                op_flags,
                                op_dtypes,
