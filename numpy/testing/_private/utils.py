@@ -318,8 +318,9 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     Examples
     --------
     >>> np.testing.assert_equal([4,5], [4,6])
-    ...
-    <type 'exceptions.AssertionError'>:
+    Traceback (most recent call last):
+        ...
+    AssertionError:
     Items are not equal:
     item=1
      ACTUAL: 5
@@ -510,20 +511,24 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     >>> import numpy.testing as npt
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334)
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not almost equal to 10 decimals
-     ACTUAL: 2.3333333333333002
-     DESIRED: 2.3333333399999998
+     ACTUAL: 2.3333333333333
+     DESIRED: 2.2.33333334
 
     >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
     ...                         np.array([1.0,2.33333334]), decimal=9)
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not almost equal to 9 decimals
     Mismatch: 50%
     Max absolute difference: 6.66669964e-09
     Max relative difference: 2.85715698e-09
-     x: array([ 1.        ,  2.33333333])
-     y: array([ 1.        ,  2.33333334])
+     x: array([1.         , 2.333333333])
+     y: array([1.        , 2.33333334])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -628,10 +633,12 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     ...                                significant=8)
     >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345672e-20,
     ...                                significant=8)
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Items are not equal to 8 significant digits:
-     ACTUAL: 1.234567e-021
-     DESIRED: 1.2345672000000001e-021
+     ACTUAL: 1.234567e-21
+     DESIRED: 1.2345672e-21
 
     the evaluated condition that raises the exception is
 
@@ -864,6 +871,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
 
     >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
     ...                               [1, np.sqrt(np.pi)**2, np.nan])
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not equal
     Mismatch: 33.3%
@@ -939,22 +948,25 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
     ...                                      [1.0,2.33339,np.nan], decimal=5)
-    ...
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not almost equal to 5 decimals
     Mismatch: 33.3%
     Max absolute difference: 6.e-05
     Max relative difference: 2.57136612e-05
-     x: array([ 1.     ,  2.33333,      NaN])
-     y: array([ 1.     ,  2.33339,      NaN])
+     x: array([1.     , 2.33333,     nan])
+     y: array([1.     , 2.33339,     nan])
 
     >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
     ...                                      [1.0,2.33333, 5], decimal=5)
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not almost equal to 5 decimals
     x and y nan location mismatch:
      x: array([1.     , 2.33333,     nan])
-     y: array([1.     , 2.33339, 5.     ])
+     y: array([1.     , 2.33333, 5.     ])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1035,6 +1047,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     --------
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1.1, 2.0, np.nan])
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1, 2.0, np.nan])
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not less-ordered
     Mismatch: 33.3%
@@ -1044,6 +1058,9 @@ def assert_array_less(x, y, err_msg='', verbose=True):
      y: array([ 1.,  2., nan])
 
     >>> np.testing.assert_array_less([1.0, 4.0], 3)
+    Traceback (most recent call last):
+        ...
+    AssertionError:
     Arrays are not less-ordered
     Mismatch: 50%
     Max absolute difference: 2.
@@ -1052,6 +1069,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
      y: array(3)
 
     >>> np.testing.assert_array_less([1.0, 2.0, 3.0], [4])
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not less-ordered
     (shapes (3,), (1,) mismatch)
@@ -1160,7 +1179,7 @@ def rundocs(filename=None, raise_on_error=True):
     argument to the ``test()`` call. For example, to run all tests (including
     doctests) for `numpy.lib`:
 
-    >>> np.lib.test(doctests=True) #doctest: +SKIP
+    >>> np.lib.test(doctests=True)  # doctest: +SKIP
     """
     from numpy.compat import npy_load_module
     import doctest
@@ -1342,7 +1361,7 @@ def decorate_methods(cls, decorator, testmatch=None):
     return
 
 
-def measure(code_str,times=1,label=None):
+def measure(code_str, times=1, label=None):
     """
     Return elapsed time for executing code in the namespace of the caller.
 
@@ -1369,9 +1388,9 @@ def measure(code_str,times=1,label=None):
 
     Examples
     --------
-    >>> etime = np.testing.measure('for i in range(1000): np.sqrt(i**2)',
-    ...                            times=times)
-    >>> print("Time for a single execution : ", etime / times, "s")
+    >>> times = 10
+    >>> etime = np.testing.measure('for i in range(1000): np.sqrt(i**2)', times=times)
+    >>> print("Time for a single execution : ", etime / times, "s")  # doctest: +SKIP
     Time for a single execution :  0.005 s
 
     """
@@ -1456,7 +1475,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     --------
     >>> x = [1e-5, 1e-3, 1e-1]
     >>> y = np.arccos(np.cos(x))
-    >>> assert_allclose(x, y, rtol=1e-5, atol=0)
+    >>> np.testing.assert_allclose(x, y, rtol=1e-5, atol=0)
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1910,7 +1929,8 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     Examples
     --------
     >>> import warnings
-    >>> with clear_and_catch_warnings(modules=[np.core.fromnumeric]):
+    >>> with np.testing.clear_and_catch_warnings(
+    ...         modules=[np.core.fromnumeric]):
     ...     warnings.simplefilter('always')
     ...     warnings.filterwarnings('ignore', module='np.core.fromnumeric')
     ...     # do something that raises a warning but ignore those in
@@ -1991,25 +2011,28 @@ class suppress_warnings(object):
 
     Examples
     --------
-    >>> with suppress_warnings() as sup:
-    ...     sup.filter(DeprecationWarning, "Some text")
-    ...     sup.filter(module=np.ma.core)
-    ...     log = sup.record(FutureWarning, "Does this occur?")
-    ...     command_giving_warnings()
-    ...     # The FutureWarning was given once, the filtered warnings were
-    ...     # ignored. All other warnings abide outside settings (may be
-    ...     # printed/error)
-    ...     assert_(len(log) == 1)
-    ...     assert_(len(sup.log) == 1)  # also stored in log attribute
 
-    Or as a decorator:
+    With a context manager::
 
-    >>> sup = suppress_warnings()
-    >>> sup.filter(module=np.ma.core)  # module must match exact
-    >>> @sup
-    >>> def some_function():
-    ...     # do something which causes a warning in np.ma.core
-    ...     pass
+        with np.testing.suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, "Some text")
+            sup.filter(module=np.ma.core)
+            log = sup.record(FutureWarning, "Does this occur?")
+            command_giving_warnings()
+            # The FutureWarning was given once, the filtered warnings were
+            # ignored. All other warnings abide outside settings (may be
+            # printed/error)
+            assert_(len(log) == 1)
+            assert_(len(sup.log) == 1)  # also stored in log attribute
+
+    Or as a decorator::
+
+        sup = np.testing.suppress_warnings()
+        sup.filter(module=np.ma.core)  # module must match exactly
+        @sup
+        def some_function():
+            # do something which causes a warning in np.ma.core
+            pass
     """
     def __init__(self, forwarding_rule="always"):
         self._entered = False
