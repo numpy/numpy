@@ -908,6 +908,9 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, npyiter_opitflags *op_itflags)
         }
 
         *op_itflags = NPY_OP_ITFLAG_READ;
+        if (op_flags & NPY_ITER_UPDATEIFCOPY) {
+            *op_itflags |= NPY_OP_ITFLAG_CAST;
+        }
     }
     else if (op_flags & NPY_ITER_READWRITE) {
         /* The read/write flags are mutually exclusive */
