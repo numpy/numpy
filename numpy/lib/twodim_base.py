@@ -644,6 +644,8 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
 
     Examples
     --------
+    >>> import matplotlib
+    >>> import matplotlib.pyplot
     >>> import matplotlib as mpl
     >>> import matplotlib.pyplot as plt
 
