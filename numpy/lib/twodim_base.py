@@ -646,7 +646,6 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     --------
     >>> import matplotlib
     >>> import matplotlib.pyplot
-    >>> matplotlib.pyplot.switch_backend('agg')
     >>> import matplotlib as mpl
     >>> import matplotlib.pyplot as plt
 
