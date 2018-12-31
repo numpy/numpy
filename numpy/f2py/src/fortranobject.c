@@ -39,19 +39,33 @@ PyFortranObject_New(FortranDataDef* defs, f2py_void_func init) {
     int i;
     PyFortranObject *fp = NULL;
     PyObject *v = NULL;
-    if (init!=NULL)                           /* Initialize F90 module objects */
+    if (init!=NULL) {                        /* Initialize F90 module objects */
         (*(init))();
-    if ((fp = PyObject_New(PyFortranObject, &PyFortran_Type))==NULL) return NULL;
-    if ((fp->dict = PyDict_New())==NULL) return NULL;
+    }
+    fp = PyObject_New(PyFortranObject, &PyFortran_Type);
+    if (fp == NULL) {
+        return NULL;
+    }
+    if ((fp->dict = PyDict_New()) == NULL) {
+        Py_DECREF(fp);
+        return NULL;
+    }
     fp->len = 0;
-    while (defs[fp->len].name != NULL) fp->len++;
-    if (fp->len == 0) goto fail;
+    while (defs[fp->len].name != NULL) {
+        fp->len++;
+    }
+    if (fp->len == 0) {
+        goto fail;
+    }
     fp->defs = defs;
-    for (i=0;i<fp->len;i++)
+    for (i=0;i<fp->len;i++) {
         if (fp->defs[i].rank == -1) {                      /* Is Fortran routine */
             v = PyFortranObject_NewAsAttr(&(fp->defs[i]));
-            if (v==NULL) return NULL;
+            if (v==NULL) {
+                goto fail;
+            }
             PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
+            Py_XDECREF(v);
         } else
             if ((fp->defs[i].data)!=NULL) { /* Is Fortran variable or array (not allocatable) */
                 if (fp->defs[i].type == NPY_STRING) {
@@ -65,13 +79,16 @@ PyFortranObject_New(FortranDataDef* defs, f2py_void_func init) {
                                     fp->defs[i].type, NULL, fp->defs[i].data, 0, NPY_ARRAY_FARRAY,
                                     NULL);
                 }
-                if (v==NULL) return NULL;
+                if (v==NULL) {
+                    goto fail;
+                }
                 PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
+                Py_XDECREF(v);
             }
-    Py_XDECREF(v);
+    }
     return (PyObject *)fp;
  fail:
-    Py_XDECREF(v);
+    Py_XDECREF(fp);
     return NULL;
 }
 
