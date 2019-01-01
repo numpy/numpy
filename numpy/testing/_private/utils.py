@@ -318,7 +318,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     Examples
     --------
     >>> from numpy.testing import assert_equal
-    >>> assert_equal([4,5], [4,6])
+    >>> assert_equal([4, 5], [4, 6])
     Traceback (most recent call last):
     ...
     AssertionError:
@@ -513,17 +513,19 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     >>> import numpy.testing as npt
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334)
     >>> npt.assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.AssertionError'>:
-    Items are not equal:
+    AssertionError:
+    Arrays are not almost equal to 10 decimals
      ACTUAL: 2.3333333333333002
      DESIRED: 2.3333333399999998
 
     >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
     ...                         np.array([1.0,2.33333334]), decimal=9)
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.AssertionError'>:
-    Arrays are not almost equal
+    AssertionError:
+    Arrays are not almost equal to 9 decimals
     (mismatch 50.0%)
      x: array([ 1.        ,  2.33333333])
      y: array([ 1.        ,  2.33333334])
@@ -631,9 +633,11 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     ...                                significant=8)
     >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345672e-20,
     ...                                significant=8)
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.AssertionError'>:
+    AssertionError:
     Items are not equal to 8 significant digits:
+
      ACTUAL: 1.234567e-021
      DESIRED: 1.2345672000000001e-021
 
@@ -846,17 +850,18 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     The first assert does not raise an exception:
 
     >>> from numpy.testing import assert_array_equal
-    >>> assert_array_equal([1.0,2.33333,np.nan],
-    ...                    [np.exp(0),2.33333, np.nan])
+    >>> assert_array_equal([1.0, 2.33333, np.nan],
+    ...                    [np.exp(0), 2.33333, np.nan])
 
     Assert fails with numerical inprecision with floats:
 
-    >>> assert_array_equal([1.0,np.pi,np.nan],
+    >>> assert_array_equal([1.0, np.pi, np.nan],
     ...                    [1, np.sqrt(np.pi)**2, np.nan])
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.ValueError'>:
     AssertionError:
     Arrays are not equal
+
     (mismatch 50.0%)
      x: array([ 1.        ,  3.14159265,         NaN])
      y: array([ 1.        ,  3.14159265,         NaN])
@@ -865,7 +870,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     functions for these cases instead:
 
     >>> from numpy.testing import assert_allclose
-    >>> assert_allclose([1.0,np.pi,np.nan],
+    >>> assert_allclose([1.0, np.pi, np.nan],
     ...                 [1, np.sqrt(np.pi)**2, np.nan],
     ...                 rtol=1e-10, atol=0)
 
@@ -925,24 +930,28 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     the first assert does not raise an exception
 
     >>> from numpy.testing import assert_array_almost_equal
-    >>> assert_array_almost_equal([1.0,2.333,np.nan],
-    ...                           [1.0,2.333,np.nan])
+    >>> assert_array_almost_equal([1.0, 2.333, np.nan],
+    ...                           [1.0, 2.333, np.nan])
 
-    >>> assert_array_almost_equal([1.0,2.33333,np.nan],
-    ...                           [1.0,2.33339,np.nan], decimal=5)
+    >>> assert_array_almost_equal([1.0, 2.33333, np.nan],
+    ...                           [1.0, 2.33339, np.nan], decimal=5)
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.AssertionError'>:
     AssertionError:
-    Arrays are not almost equal
+    Arrays are not almost equal to 5 decimals
+
     (mismatch 50.0%)
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33339,      NaN])
 
-    >>> assert_array_almost_equal([1.0,2.33333,np.nan],
-    ...                           [1.0,2.33333, 5], decimal=5)
-    <type 'exceptions.ValueError'>:
-    ValueError:
-    Arrays are not almost equal
+    >>> assert_array_almost_equal([1.0, 2.33333, np.nan],
+    ...                           [1.0, 2.33333, 5], decimal=5)
+    Traceback (most recent call last):
+    ...
+    AssertionError:
+    Arrays are not almost equal to 5 decimals
+
+    x and y nan location mismatch:
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33333,  5.     ])
 
@@ -1025,25 +1034,31 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     --------
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1.1, 2.0, np.nan])
     >>> np.testing.assert_array_less([1.0, 1.0, np.nan], [1, 2.0, np.nan])
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.ValueError'>:
+    AssertionError:
     Arrays are not less-ordered
+
     (mismatch 50.0%)
      x: array([  1.,   1.,  NaN])
      y: array([  1.,   2.,  NaN])
 
     >>> np.testing.assert_array_less([1.0, 4.0], 3)
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.ValueError'>:
+    AssertionError:
     Arrays are not less-ordered
+
     (mismatch 50.0%)
      x: array([ 1.,  4.])
      y: array(3)
 
     >>> np.testing.assert_array_less([1.0, 2.0, 3.0], [4])
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.ValueError'>:
+    AssertionError:
     Arrays are not less-ordered
+
     (shapes (3,), (1,) mismatch)
      x: array([ 1.,  2.,  3.])
      y: array([4])
