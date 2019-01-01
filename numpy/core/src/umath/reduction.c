@@ -444,9 +444,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
     /* Iterator parameters */
     NpyIter *iter = NULL;
-    PyArrayObject *op[4];
-    PyArray_Descr *op_dtypes[4];
-    npy_uint32 flags, op_flags[4];
+    PyArrayObject *op[3];
+    PyArray_Descr *op_dtypes[3];
+    npy_uint32 flags, op_flags[3];
 
     /* More than one axis means multiple orders are possible */
     if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
@@ -532,13 +532,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         }
         op_flags[2] = NPY_ITER_READONLY |
                       NPY_ITER_ALIGNED;
-        op[3] = (PyArrayObject *)PyArray_FromScalar(identity, operand_dtype);
-        op_dtypes[3] = operand_dtype;
-        op_flags[3] = NPY_ITER_READONLY |
-                      NPY_ITER_ALIGNED;
     }
 
-    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 4, op, flags,
+    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, flags,
                                NPY_KEEPORDER, casting,
                                op_flags,
                                op_dtypes,

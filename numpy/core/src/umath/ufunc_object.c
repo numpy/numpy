@@ -3457,18 +3457,19 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     return 0;
 }
 
-static void
-clear_masked_items(char *dataptr, npy_intp s_data,
-                   char *maskptr, npy_intp s_mask, char *identityptr,
-                   npy_intp count)
+static int
+remove_masked_items(char *dataptr, npy_intp s_data,
+                    char *maskptr, npy_intp s_mask, npy_intp count)
 {
     int n;
-    char *data = dataptr, *mask = maskptr;
+    char *data = dataptr, *okdata = dataptr, *mask = maskptr;
     for (n = 0; n < count; n++, data += s_data, mask += s_mask) {
-        if (!(*mask)) {
-            memcpy(data, identityptr, s_data);
+        if (*mask) {
+            memcpy(okdata, data, s_data);
+            okdata += s_data;
         }
     }
+    return (okdata - dataptr) / s_data;
 }
 
 static int
@@ -3478,8 +3479,8 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
 {
     PyArray_Descr *dtypes[4], **iter_dtypes;
     PyUFuncObject *ufunc = (PyUFuncObject *)data;
-    char *dataptrs_copy[4];
-    npy_intp strides_copy[4];
+    char *dataptrs_copy[3];
+    npy_intp strides_copy[3];
     npy_bool where_mask;
 
     /* The normal selected inner loop */
@@ -3488,7 +3489,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
 
     NPY_BEGIN_THREADS_DEF;
     /* Get the number of operands, to determine whether "where" is used */
-    where_mask = (NpyIter_GetNOp(iter) == 4);
+    where_mask = (NpyIter_GetNOp(iter) == 3);
 
     /* Get the inner loop */
     iter_dtypes = NpyIter_GetDescrArray(iter);
@@ -3541,12 +3542,11 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
         } while (iternext(iter));
     }
     do {
+        npy_intp count = *countptr;
+
         if (where_mask) {
-            printf("strides=%ld,%ld,%ld\n", strides[0], strides[1],
-                   strides[2]);
-            clear_masked_items(dataptrs[1], strides[1],
-                               dataptrs[2], strides[2],
-                               dataptrs[3], *countptr);
+            count = remove_masked_items(dataptrs[1], strides[1],
+                                        dataptrs[2], strides[2], count);
         }
         /* Turn the two items into three for the inner loop */
         dataptrs_copy[0] = dataptrs[0];
@@ -3555,7 +3555,7 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
         strides_copy[0] = strides[0];
         strides_copy[1] = strides[1];
         strides_copy[2] = strides[0];
-        innerloop(dataptrs_copy, countptr,
+        innerloop(dataptrs_copy, &count,
                     strides_copy, innerloopdata);
     } while (iternext(iter));
 
