@@ -317,11 +317,14 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
 
     Examples
     --------
-    >>> np.testing.assert_equal([4,5], [4,6])
+    >>> from numpy.testing import assert_equal
+    >>> assert_equal([4,5], [4,6])
+    Traceback (most recent call last):
     ...
-    <type 'exceptions.AssertionError'>:
+    AssertionError:
     Items are not equal:
     item=1
+
      ACTUAL: 5
      DESIRED: 6
 
@@ -625,9 +628,9 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     --------
     >>> np.testing.assert_approx_equal(0.12345677777777e-20, 0.1234567e-20)
     >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345671e-20,
-                                       significant=8)
+    ...                                significant=8)
     >>> np.testing.assert_approx_equal(0.12345670e-20, 0.12345672e-20,
-                                       significant=8)
+    ...                                significant=8)
     ...
     <type 'exceptions.AssertionError'>:
     Items are not equal to 8 significant digits:
@@ -842,13 +845,14 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     --------
     The first assert does not raise an exception:
 
-    >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
-    ...                               [np.exp(0),2.33333, np.nan])
+    >>> from numpy.testing import assert_array_equal
+    >>> assert_array_equal([1.0,2.33333,np.nan],
+    ...                    [np.exp(0),2.33333, np.nan])
 
     Assert fails with numerical inprecision with floats:
 
-    >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
-    ...                               [1, np.sqrt(np.pi)**2, np.nan])
+    >>> assert_array_equal([1.0,np.pi,np.nan],
+    ...                    [1, np.sqrt(np.pi)**2, np.nan])
     ...
     <type 'exceptions.ValueError'>:
     AssertionError:
@@ -860,9 +864,10 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     Use `assert_allclose` or one of the nulp (number of floating point values)
     functions for these cases instead:
 
-    >>> np.testing.assert_allclose([1.0,np.pi,np.nan],
-    ...                            [1, np.sqrt(np.pi)**2, np.nan],
-    ...                            rtol=1e-10, atol=0)
+    >>> from numpy.testing import assert_allclose
+    >>> assert_allclose([1.0,np.pi,np.nan],
+    ...                 [1, np.sqrt(np.pi)**2, np.nan],
+    ...                 rtol=1e-10, atol=0)
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -919,11 +924,12 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     --------
     the first assert does not raise an exception
 
-    >>> np.testing.assert_array_almost_equal([1.0,2.333,np.nan],
-                                             [1.0,2.333,np.nan])
+    >>> from numpy.testing import assert_array_almost_equal
+    >>> assert_array_almost_equal([1.0,2.333,np.nan],
+    ...                           [1.0,2.333,np.nan])
 
-    >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
-    ...                                      [1.0,2.33339,np.nan], decimal=5)
+    >>> assert_array_almost_equal([1.0,2.33333,np.nan],
+    ...                           [1.0,2.33339,np.nan], decimal=5)
     ...
     <type 'exceptions.AssertionError'>:
     AssertionError:
@@ -932,8 +938,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
      x: array([ 1.     ,  2.33333,      NaN])
      y: array([ 1.     ,  2.33339,      NaN])
 
-    >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
-    ...                                      [1.0,2.33333, 5], decimal=5)
+    >>> assert_array_almost_equal([1.0,2.33333,np.nan],
+    ...                           [1.0,2.33333, 5], decimal=5)
     <type 'exceptions.ValueError'>:
     ValueError:
     Arrays are not almost equal
@@ -1438,6 +1444,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
 
     Examples
     --------
+    >>> from numpy.testing import assert_allclose
     >>> x = [1e-5, 1e-3, 1e-1]
     >>> y = np.arccos(np.cos(x))
     >>> assert_allclose(x, y, rtol=1e-5, atol=0)
@@ -1894,6 +1901,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     Examples
     --------
     >>> import warnings
+    >>> from numpy.testing import clear_and_catch_warnings
     >>> with clear_and_catch_warnings(modules=[np.core.fromnumeric]):
     ...     warnings.simplefilter('always')
     ...     warnings.filterwarnings('ignore', module='np.core.fromnumeric')
@@ -1991,7 +1999,7 @@ class suppress_warnings(object):
     >>> sup = suppress_warnings()
     >>> sup.filter(module=np.ma.core)  # module must match exact
     >>> @sup
-    >>> def some_function():
+    ... def some_function():
     ...     # do something which causes a warning in np.ma.core
     ...     pass
     """

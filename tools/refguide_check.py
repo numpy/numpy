@@ -76,6 +76,7 @@ PUBLIC_SUBMODULES = [
     'polynomial',
     'matrixlib',
     'random',
+    'testing',
 ]
 
 # Docs for these modules are included in the parent module
@@ -98,6 +99,11 @@ DOCTEST_SKIPLIST = set([
     # remote / local file IO with DataSource is problematic in doctest:
     'numpy.lib.DataSource',
     'numpy.lib.Repository',
+    # pseudocode
+    'numpy.testing.suppress_warnings',
+    # semi-obsolete stuff
+    'numpy.testing.run_module_suite',
+    'numpy.testing.measure',
 ])
 
 # these names are not required to be present in ALL despite being in
