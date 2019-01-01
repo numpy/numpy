@@ -2273,6 +2273,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
 
     npy_intp ax_i0, ax_i1, ax_ipos;
     npy_int8 ax_j0, ax_j1;
@@ -2304,8 +2305,15 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
 
             strides1 = NAD_STRIDES(NIT_INDEX_AXISDATA(axisdata, ax_j1));
 
+            /*
+             * Order strides, but excluding broadcasted ones, except
+             * if they are from an output that is being reduced and
+             * an external loop is enabled, since then the external
+             * loop can deal with masking.
+             */
             for (iop = 0; iop < nop; ++iop) {
-                if (strides0[iop] != 0 && strides1[iop] != 0) {
+                if (strides0[iop] != 0 && strides1[iop] != 0)
+                {
                     if (intp_abs(strides1[iop]) <=
                                             intp_abs(strides0[iop])) {
                         /*
@@ -2327,6 +2335,14 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
                      * no longer ambiguous
                      */
                     ambig = 0;
+                }
+                else if ((itflags & NPY_ITFLAG_REDUCE) &&
+                         (itflags & NPY_ITFLAG_EXLOOP) &&
+                         (op_itflags[iop] & NPY_OP_ITFLAG_REDUCE) &&
+                         (strides0[iop] != 0 || strides1[iop] != 0)) {
+                    shouldswap = (strides0[iop] == 0);
+                    ambig = 0;
+                    break;
                 }
             }
             /*
