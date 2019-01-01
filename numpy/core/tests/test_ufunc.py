@@ -3,6 +3,8 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import itertools
 
+import pytest
+
 import numpy as np
 import numpy.core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
@@ -1395,6 +1397,24 @@ class TestUfunc(object):
         a = np.array([10], dtype=object)
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
+
+    @pytest.mark.parametrize('axis', (0, 1, (0, 1)))
+    @pytest.mark.parametrize('where', (np.array([True, False, True]),
+                                       np.array([[True], [False], [True]]),
+                                       np.array([[True, False, True],
+                                                 [False, True, False],
+                                                 [False, False, True]])))
+    def test_reduction_with_where(self, axis, where):
+        a = np.arange(9.).reshape(3, 3)
+        a_copy = a.copy()
+        a_check = np.zeros_like(a)
+        np.positive(a, out=a_check, where=where)
+
+        res = np.add.reduce(a, axis=axis, where=where)
+        check = a_check.sum(axis)
+        assert_equal(res, check)
+        # Check we do not overwrite elements of a internally.
+        assert_array_equal(a, a_copy)
 
     def test_identityless_reduction_nonreorderable(self):
         a = np.array([[8.0, 2.0, 2.0], [1.0, 0.5, 0.25]])
