@@ -307,10 +307,10 @@ From scratch
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
         int nd, npy_intp* dims, PyArray_Descr* descr)
 
-    This function steals a reference to *descr* if it is not NULL.
+    This function steals a reference to *descr*.
 
-    Create a new array with the provided data-type descriptor, *descr*
-    , of the shape determined by *nd* and *dims*.
+    Create a new array with the provided data-type descriptor, *descr*,
+    of the shape determined by *nd* and *dims*.
 
 .. c:function:: PyArray_FILLWBYTE(PyObject* obj, int val)
 
