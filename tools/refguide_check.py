@@ -781,7 +781,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
     tuple(bool, list)
         Tuple of (success, output)
     """
-    flags = NORMALIZE_WHITESPACE | ELLIPSIS | IGNORE_EXCEPTION_DETAIL
+    flags = NORMALIZE_WHITESPACE | ELLIPSIS
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
                       verbose=verbose)
 
