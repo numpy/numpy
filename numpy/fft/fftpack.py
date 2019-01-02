@@ -282,7 +282,6 @@ def ifft(a, n=None, axis=-1, norm=None):
 
     Create and plot a band-limited signal with random phases:
 
-    >>> import matplotlib
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(400)
     >>> n = np.zeros((400,), dtype=complex)
