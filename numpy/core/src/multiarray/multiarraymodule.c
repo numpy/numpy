@@ -3620,7 +3620,7 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     if (nargs == -1 || nargs > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
                 "len(args) must be < %d", NPY_MAXARGS - 1);
-        Py_XDECREF(type);
+        Py_DECREF(type);
         goto err;
     }
 
@@ -3628,7 +3628,7 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     for (i = 1; i < nargs; i++) {
         PyObject* item = PySequence_GetItem(args, i-1);
         if (item == NULL) {
-            Py_XDECREF(type);
+            Py_DECREF(type);
             goto err;
         }
         broadcast_args[i] = item;
@@ -3637,7 +3637,7 @@ _vec_string_with_args(PyArrayObject* char_array, PyArray_Descr* type,
     in_iter = (PyArrayMultiIterObject*)PyArray_MultiIterFromObjects
         (broadcast_args, nargs, 0);
     if (in_iter == NULL) {
-        Py_XDECREF(type);
+        Py_DECREF(type);
         goto err;
     }
     n = in_iter->numiter;
@@ -3718,7 +3718,7 @@ _vec_string_no_args(PyArrayObject* char_array,
 
     in_iter = (PyArrayIterObject*)PyArray_IterNew((PyObject*)char_array);
     if (in_iter == NULL) {
-        Py_XDECREF(type);
+        Py_DECREF(type);
         goto err;
     }
 
@@ -3775,7 +3775,7 @@ static PyObject *
 _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyArrayObject* char_array = NULL;
-    PyArray_Descr *type = NULL;
+    PyArray_Descr *type;
     PyObject* method_name;
     PyObject* args_seq = NULL;
 
@@ -3812,7 +3812,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         result = _vec_string_with_args(char_array, type, method, args_seq);
     }
     else {
-        Py_XDECREF(type);
+        Py_DECREF(type);
         PyErr_SetString(PyExc_TypeError,
                 "'args' must be a sequence of arguments");
         goto err;
