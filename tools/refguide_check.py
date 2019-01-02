@@ -613,7 +613,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
     Returns: list of [(success_flag, output), ...]
     """
-    flags = NORMALIZE_WHITESPACE | ELLIPSIS | IGNORE_EXCEPTION_DETAIL
+    flags = NORMALIZE_WHITESPACE | ELLIPSIS
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
                       verbose=verbose)
 

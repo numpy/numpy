@@ -893,8 +893,9 @@ def bincount(x, weights=None, minlength=None):
 
     >>> np.bincount(np.arange(5, dtype=float))
     Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: array cannot be safely cast to required type
+      ...
+    TypeError: Cannot cast array data from dtype('float64') to dtype('int64')
+    according to the rule 'safe'
 
     A possible use of ``bincount`` is to perform sums over
     variable-size chunks of an array, using the ``weights`` keyword.
