@@ -516,7 +516,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     AssertionError:
     Arrays are not almost equal to 10 decimals
      ACTUAL: 2.3333333333333
-     DESIRED: 2.2.33333334
+     DESIRED: 2.33333334
 
     >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
     ...                         np.array([1.0,2.33333334]), decimal=9)
@@ -1074,7 +1074,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     AssertionError:
     Arrays are not less-ordered
     (shapes (3,), (1,) mismatch)
-     x: array([ 1.,  2.,  3.])
+     x: array([1., 2., 3.])
      y: array([4])
 
     """
