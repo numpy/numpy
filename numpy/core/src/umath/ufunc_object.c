@@ -3063,6 +3063,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(axis);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
+    PyArray_free(remap_axis_memory);
+    PyArray_free(remap_axis);
 
     NPY_UF_DBG_PRINT1("Returning code %d\n", reval);
 
