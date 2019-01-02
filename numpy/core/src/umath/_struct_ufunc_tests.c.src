@@ -114,6 +114,7 @@ PyMODINIT_FUNC init_struct_ufunc_tests(void)
                                 dtypes,
                                 NULL);
 
+    Py_DECREF(dtype);
     d = PyModule_GetDict(m);
 
     PyDict_SetItemString(d, "add_triplet", add_triplet);
