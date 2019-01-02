@@ -39,8 +39,9 @@ New Features
 Improvements
 ============
 
-replacement of the `fftpack`-based FFT module by the `pocketfft` library
+Replacement of the `fftpack`-based FFT module by the `pocketfft` library
 ------------------------------------------------------------------------
+
 Both implementations have the same ancestor (Fortran77 `FFTPACK` by Paul N.
 Swarztrauber), but `pocketfft` contains additional modifications which
 improve both accuracy and performance in some circumstances. For FFT lengths
