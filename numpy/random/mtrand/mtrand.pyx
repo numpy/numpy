@@ -2168,7 +2168,6 @@ cdef class RandomState:
         >>> NF = np.histogram(nc_vals, bins=50, density=True)
         >>> c_vals = np.random.f(dfnum, dfden, 1000000)
         >>> F = np.histogram(c_vals, bins=50, density=True)
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> plt.plot(F[1][1:], F[0])
         >>> plt.plot(NF[1][1:], NF[0])
@@ -2447,7 +2446,6 @@ cdef class RandomState:
         --------
         Draw samples and plot the distribution:
 
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> s = np.random.standard_cauchy(1000000)
         >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
@@ -3285,7 +3283,6 @@ cdef class RandomState:
 
         >>> loc, scale = 10, 1
         >>> s = np.random.logistic(loc, scale, 10000)
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, bins=50)
 
@@ -3487,7 +3484,6 @@ cdef class RandomState:
         --------
         Draw values from the distribution and plot the histogram
 
-        >>> import matplotlib
         >>> from matplotlib.pyplot import hist
         >>> values = hist(np.random.rayleigh(3, 100000), bins=200, density=True)
 
@@ -4243,7 +4239,6 @@ cdef class RandomState:
         >>> ngood, nbad, nsamp = 100, 2, 10
         # number of good, number of bad, and number of samples
         >>> s = np.random.hypergeometric(ngood, nbad, nsamp, 1000)
-        >>> import matplotlib
         >>> from matplotlib.pyplot import hist
         >>> hist(s)
         #   note that it is very unlikely to grab both bad items
@@ -4354,7 +4349,6 @@ cdef class RandomState:
 
         >>> a = .6
         >>> s = np.random.logseries(a, 10000)
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s)
 
@@ -4736,7 +4730,6 @@ cdef class RandomState:
 
         >>> s = np.random.dirichlet((10, 5, 3), 20).transpose()
 
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
         >>> plt.barh(range(20), s[1], left=s[0], color='g')
