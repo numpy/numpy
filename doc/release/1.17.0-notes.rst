@@ -39,6 +39,14 @@ New Features
 Improvements
 ============
 
+Array comparison assertions include maximum differences
+-------------------------------------------------------
+Error messages from array comparison tests such as
+`np.testing.assert_allclose` now include "max absolute difference" and
+"max relative difference," in addition to the previous "mismatch" percentage.
+This information makes it easier to update absolute and relative error
+tolerances.
+
 Replacement of the `fftpack`-based FFT module by the `pocketfft` library
 ------------------------------------------------------------------------
 

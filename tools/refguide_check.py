@@ -76,6 +76,7 @@ PUBLIC_SUBMODULES = [
     'polynomial',
     'matrixlib',
     'random',
+    'testing',
 ]
 
 # Docs for these modules are included in the parent module
