@@ -110,8 +110,6 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     Graphical illustration:
 
-    >>> import matplotlib
-    >>> import matplotlib.pyplot
     >>> import matplotlib.pyplot as plt
     >>> N = 8
     >>> y = np.zeros(N)
@@ -262,8 +260,6 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
 
     Graphical illustration:
 
-    >>> import matplotlib
-    >>> import matplotlib.pyplot
     >>> import matplotlib.pyplot as plt
     >>> N = 10
     >>> x1 = np.logspace(0.1, 1, N, endpoint=True)
@@ -377,7 +373,6 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     Graphical illustration of ``endpoint`` parameter:
 
-    >>> import matplotlib
     >>> import matplotlib.pyplot as plt
     >>> N = 10
     >>> y = np.zeros(N)
