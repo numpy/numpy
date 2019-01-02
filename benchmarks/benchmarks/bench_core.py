@@ -11,7 +11,9 @@ class Core(Benchmark):
         self.l50 = range(50)
         self.l = [np.arange(1000), np.arange(1000)]
         self.l10x10 = np.ones((10, 10))
-        self.arr = np.arange(10 ** 6)[::-1]
+        random = np.random.RandomState(123)
+        self.arr = np.arange(10 ** 4)
+        random.shuffle(self.arr)
 
     def time_array_1(self):
         np.array(1)
@@ -76,14 +78,16 @@ class Core(Benchmark):
     def time_tril_l10x10(self):
         np.tril(self.l10x10)
 
-    def time_sort(self):
-        np.sort(self.arr)
-
     def time_quicksort(self):
-        np.sort(self.arr, kind='q')
+        np.sort(self.arr, kind='quick')
 
-    def time_radixsort(self):
-        np.sort(self.arr, kind='r')
+    def time_sorts(self, kind):
+        try:
+            np.sort(self.arr, kind=kind)
+        except TypeError:
+            raise NotImplementedError('Sort kind not implemented or invalid dtype')
+
+    time_sorts.params = ['quick', 'merge', 'heap', 'radix']
 
 
 class Temporaries(Benchmark):
