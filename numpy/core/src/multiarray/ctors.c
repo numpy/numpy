@@ -2128,12 +2128,15 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
              */
 
             /* 2017-Nov-10 1.14 */
-            if (DEPRECATE("NPY_ARRAY_UPDATEIFCOPY, NPY_ARRAY_INOUT_ARRAY, and "
-                "NPY_ARRAY_INOUT_FARRAY are deprecated, use NPY_WRITEBACKIFCOPY, "
-                "NPY_ARRAY_INOUT_ARRAY2, or NPY_ARRAY_INOUT_FARRAY2 respectively "
-                "instead, and call PyArray_ResolveWritebackIfCopy before the "
-                "array is deallocated, i.e. before the last call to Py_DECREF.") < 0)
+            if (DEPRECATE(
+                    "NPY_ARRAY_UPDATEIFCOPY, NPY_ARRAY_INOUT_ARRAY, and "
+                    "NPY_ARRAY_INOUT_FARRAY are deprecated, use NPY_WRITEBACKIFCOPY, "
+                    "NPY_ARRAY_INOUT_ARRAY2, or NPY_ARRAY_INOUT_FARRAY2 respectively "
+                    "instead, and call PyArray_ResolveWritebackIfCopy before the "
+                    "array is deallocated, i.e. before the last call to Py_DECREF.") < 0) {
+                Py_DECREF(ret);
                 return NULL;
+            }
             Py_INCREF(arr);
             if (PyArray_SetWritebackIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
@@ -2160,14 +2163,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
         Py_DECREF(newtype);
         if (needview) {
-            PyArray_Descr *dtype = PyArray_DESCR(arr);
             PyTypeObject *subtype = NULL;
 
             if (flags & NPY_ARRAY_ENSUREARRAY) {
                 subtype = &PyArray_Type;
             }
 
-            Py_INCREF(dtype);
             ret = (PyArrayObject *)PyArray_View(arr, NULL, subtype);
             if (ret == NULL) {
                 return NULL;

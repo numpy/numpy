@@ -1248,9 +1248,9 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
     return 1;
 
   fail_nop:
-    iop = nop;
+    iop = nop - 1;
   fail_iop:
-    for (i = 0; i < iop; ++i) {
+    for (i = 0; i < iop+1; ++i) {
         Py_XDECREF(op[i]);
         Py_XDECREF(op_dtype[i]);
     }
@@ -3157,6 +3157,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         &stransfer,
                                         &transferdata,
                                         &needs_api) != NPY_SUCCEED) {
+                    iop -= 1;  /* This one cannot be cleaned up yet. */
                     goto fail;
                 }
                 readtransferfn[iop] = stransfer;
@@ -3250,7 +3251,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     return 1;
 
 fail:
-    for (i = 0; i < iop; ++i) {
+    for (i = 0; i < iop+1; ++i) {
         if (readtransferdata[iop] != NULL) {
             NPY_AUXDATA_FREE(readtransferdata[iop]);
             readtransferdata[iop] = NULL;

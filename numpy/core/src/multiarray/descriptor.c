@@ -515,6 +515,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 #if defined(NPY_PY3K)
             Py_DECREF(name);
 #endif
+            Py_DECREF(conv);
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
@@ -837,9 +838,11 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
     else if (new->elsize != conv->elsize) {
         PyErr_SetString(PyExc_ValueError,
                 "mismatch in size of old and new data-descriptor");
+        Py_DECREF(new);
         goto fail;
     }
     else if (invalid_union_object_dtype(new, conv)) {
+        Py_DECREF(new);
         goto fail;
     }
 
@@ -1728,6 +1731,7 @@ PyArray_DescrNew(PyArray_Descr *base)
         newdescr->c_metadata = NPY_AUXDATA_CLONE(base->c_metadata);
         if (newdescr->c_metadata == NULL) {
             PyErr_NoMemory();
+            /* TODO: This seems wrong, as the old fields get decref'd? */
             Py_DECREF(newdescr);
             return NULL;
         }
@@ -3336,12 +3340,15 @@ static PyObject *
 _subscript_by_index(PyArray_Descr *self, Py_ssize_t i)
 {
     PyObject *name = PySequence_GetItem(self->names, i);
+    PyObject *ret;
     if (name == NULL) {
         PyErr_Format(PyExc_IndexError,
                      "Field index %zd out of range.", i);
         return NULL;
     }
-    return _subscript_by_name(self, name);
+    ret = _subscript_by_name(self, name);
+    Py_DECREF(name);
+    return ret;
 }
 
 static PyObject *

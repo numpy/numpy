@@ -164,7 +164,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -182,7 +182,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -216,7 +216,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -234,7 +234,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -511,7 +511,7 @@ promote_types:
         PyArray_Descr *res_dtype = PyArray_PromoteTypes(dtype, *out_dtype);
         Py_DECREF(dtype);
         if (res_dtype == NULL) {
-            return -1;
+            goto fail;
         }
         if (!string_type &&
                 res_dtype->type_num == NPY_UNICODE &&

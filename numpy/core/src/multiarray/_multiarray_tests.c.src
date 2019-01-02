@@ -1871,11 +1871,14 @@ printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 static PyObject *
 getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 {
-    PyObject * ops = PyArray_GetNumericOps();
+    PyObject *ret;
+    PyObject *ops = PyArray_GetNumericOps();
     if (ops == NULL) {
         return NULL;
     }
-    return PyLong_FromLong(PyArray_SetNumericOps(ops));
+    ret = PyLong_FromLong(PyArray_SetNumericOps(ops));
+    Py_DECREF(ops);
+    return ret;
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {

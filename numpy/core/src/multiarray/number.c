@@ -599,15 +599,16 @@ array_positive(PyArrayObject *m1)
             PyErr_Restore(exc, val, tb);
             return NULL;
         }
+        Py_XDECREF(exc);
+        Py_XDECREF(val);
+        Py_XDECREF(tb);
+
         /* 2018-06-28, 1.16.0 */
         if (DEPRECATE("Applying '+' to a non-numerical array is "
                       "ill-defined. Returning a copy, but in the future "
                       "this will error.") < 0) {
             return NULL;
         }
-        Py_XDECREF(exc);
-        Py_XDECREF(val);
-        Py_XDECREF(tb);
         value = PyArray_Return((PyArrayObject *)PyArray_Copy(m1));
     }
     return value;
