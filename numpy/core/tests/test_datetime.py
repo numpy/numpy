@@ -136,6 +136,38 @@ class TestDateTime(object):
         assert_(np.datetime64('NaT') != np.datetime64('NaT', 'us'))
         assert_(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
 
+
+
+    @pytest.mark.parametrize("size", [
+        3, 21, 217, 1000])
+    def test_nat_argsort_stability(self, size):
+        # NaT < NaT should be False internally for
+        # sort stability
+        expected = np.arange(size)
+        arr = np.tile(np.datetime64('NaT'), size)
+        assert_equal(np.argsort(arr, kind='mergesort'), expected)
+
+    @pytest.mark.parametrize("arr, expected", [
+        # the example provided in gh-12629
+        (np.array(['NaT', 1, 2, 3], dtype='M8[ns]'),
+         np.array([1, 2, 3, 'NaT'], dtype='M8[ns]')),
+        # multiple NaTs
+        (np.array(['NaT', 9, 'NaT', -707], dtype='M8[s]'),
+         np.array([-707, 9, 'NaT', 'NaT'], dtype='M8[s]')),
+        # this sort explores another code path for NaT
+        (np.array([1, -2, 3, 'NaT'], dtype='M8[ns]'),
+         np.array([-2, 1, 3, 'NaT'], dtype='M8[ns]')),
+        # 2-D array
+        (np.array([[51, -220, 'NaT'],
+                   [-17, 'NaT', -90]], dtype='M8[us]'),
+         np.array([[-220, 51, 'NaT'],
+                   [-90, -17, 'NaT']], dtype='M8[us]')),
+        ])
+    def test_sort_nat(self, arr, expected):
+        # fix for gh-12629; NaT sorting to end of array
+        arr.sort()
+        assert_equal(arr, expected)
+
     def test_datetime_scalar_construction(self):
         # Construct with different units
         assert_equal(np.datetime64('1950-03-12', 'D'),
