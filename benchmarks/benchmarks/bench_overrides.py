@@ -2,7 +2,15 @@ from __future__ import absolute_import, division, print_function
 
 from .common import Benchmark
 
-from numpy.core.overrides import array_function_dispatch
+try:
+    from numpy.core.overrides import array_function_dispatch
+except ImportError:
+    # Don't fail at import time with old Numpy versions
+    def array_function_dispatch(*args, **kwargs):
+        def wrap(*args, **kwargs):
+            return None
+        return wrap
+
 import numpy as np
 
 
