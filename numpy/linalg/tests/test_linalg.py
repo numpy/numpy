@@ -797,6 +797,21 @@ class TestPinv(PinvCases):
     pass
 
 
+class PinvhCases(HermitianTestCase,
+                 HermitianGeneralizedTestCase):
+
+    def do(self, a, b, tags):
+        a_ginv = linalg.pinvh(a)
+        # `a @ a_ginv == I` does not hold if a is singular
+        dot = matmul
+        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        assert_(consistent_subclass(a_ginv, a))
+
+
+class TestPinvh(PinvhCases):
+    pass
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
