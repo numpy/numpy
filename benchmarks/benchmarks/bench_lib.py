@@ -54,3 +54,64 @@ class Pad(Benchmark):
 
     def time_pad(self, shape, pad_width, mode):
         np.pad(self.array, pad_width, mode)
+
+class Nan(Benchmark):
+    """Benchmarks for nan functions"""
+
+    param_names = ["array_size", "percent_nans"]
+    params = [
+            # sizes of the 1D arrays
+            [200, int(2e5)],
+            # percent of np.nan in arrays
+            [0, 0.1, 2., 50., 90.],
+            ]
+
+    def setup(self, array_size, percent_nans):
+        np.random.seed(123)
+        # produce a randomly shuffled array with the
+        # approximate desired percentage np.nan content
+        base_array = np.random.uniform(size=array_size)
+        base_array[base_array < percent_nans / 100.] = np.nan
+        self.arr = base_array
+
+    def time_nanmin(self, array_size, percent_nans):
+        np.nanmin(self.arr)
+
+    def time_nanmax(self, array_size, percent_nans):
+        np.nanmax(self.arr)
+
+    def time_nanargmin(self, array_size, percent_nans):
+        np.nanargmin(self.arr)
+
+    def time_nanargmax(self, array_size, percent_nans):
+        np.nanargmax(self.arr)
+
+    def time_nansum(self, array_size, percent_nans):
+        np.nansum(self.arr)
+
+    def time_nanprod(self, array_size, percent_nans):
+        np.nanprod(self.arr)
+
+    def time_nancumsum(self, array_size, percent_nans):
+        np.nancumsum(self.arr)
+
+    def time_nancumprod(self, array_size, percent_nans):
+        np.nancumprod(self.arr)
+
+    def time_nanmean(self, array_size, percent_nans):
+        np.nanmean(self.arr)
+
+    def time_nanvar(self, array_size, percent_nans):
+        np.nanvar(self.arr)
+
+    def time_nanstd(self, array_size, percent_nans):
+        np.nanstd(self.arr)
+
+    def time_nanmedian(self, array_size, percent_nans):
+        np.nanmedian(self.arr)
+
+    def time_nanquantile(self, array_size, percent_nans):
+        np.nanquantile(self.arr, q=0.2)
+
+    def time_nanpercentile(self, array_size, percent_nans):
+        np.nanpercentile(self.arr, q=50)
