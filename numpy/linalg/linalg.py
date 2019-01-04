@@ -1947,6 +1947,82 @@ def pinv(a, rcond=1e-15):
     return wrap(res)
 
 
+@array_function_dispatch(_pinv_dispatcher)
+def pinvh(a, rcond=1e-15):
+    """
+    Compute the (Moore-Penrose) pseudo-inverse of a Hermitian matrix.
+    Calculate the generalized inverse of a matrix using its
+    eigenvalue decomposition and including all
+    *large* singular values.
+
+    Parameters
+    ----------
+    a : (..., N, N) array_like
+        Matrix or stack of Hermitian matrices to be pseudo-inverted.
+    rcond : (...) array_like of float
+        Cutoff for small singular values.
+        Singular values smaller (in modulus) than
+        `rcond` * largest_singular_value (again, in modulus)
+        are set to zero. Broadcasts against the stack of matrices.
+    Returns
+    -------
+    B : (..., N, N) ndarray
+        The pseudo-inverse of `a`. If `a` is a `matrix` instance, then so
+        is `B`.
+    Raises
+    ------
+    LinAlgError
+        If the eigenvalue computation does not converge.
+    Notes
+    -----
+    The pseudo-inverse of a matrix A, denoted :math:`A^+`, is
+    defined as: "the matrix that 'solves' [the least-squares problem]
+    :math:`Ax = b`," i.e., if :math:`\\bar{x}` is said solution, then
+    :math:`A^+` is that matrix such that :math:`\\bar{x} = A^+b`.
+    It can be shown that if :math:`Q_1 \\Sigma Q_2^T = A` is the singular
+    value decomposition of A, then
+    :math:`A^+ = Q_2 \\Sigma^+ Q_1^T`, where :math:`Q_{1,2}` are
+    orthogonal matrices, :math:`\\Sigma` is a diagonal matrix consisting
+    of A's so-called singular values, (followed, typically, by
+    zeros), and then :math:`\\Sigma^+` is simply the diagonal matrix
+    consisting of the reciprocals of A's singular values
+    (again, followed by zeros). [1]_
+    References
+    ----------
+    .. [1] G. Strang, *Linear Algebra and Its Applications*, 2nd Ed., Orlando,
+           FL, Academic Press, Inc., 1980, pp. 139-142.
+    Examples
+    --------
+    The following example checks that ``a * a+ * a == a`` and
+    ``a+ * a * a+ == a+``:
+    >>> a = np.random.randn(6, 6)
+    >>> a = a @ a.T  # To symmetrize it
+    >>> B = np.linalg.pinvh(a)
+    >>> np.allclose(a, np.matmul(a, np.matmul(B, a)))
+    True
+    >>> np.allclose(B, np.matmul(B, np.matmul(a, B)))
+    True
+    """
+    a, wrap = _makearray(a)
+    rcond = asarray(rcond)
+    if _isEmpty2d(a):
+        m, n = a.shape[-2:]
+        if m != n:
+            raise LinAlgError('Last 2 dimensions of the array must be square')
+        res = empty(a.shape[:-2] + (n, m), dtype=a.dtype)
+        return wrap(res)
+    s, u = eigh(a, UPLO='L')
+
+    # discard small singular values
+    cutoff = rcond[..., newaxis] * amax(s, axis=-1, keepdims=True)
+    large = s > cutoff
+    s = divide(1, s, where=large, out=s)
+    s[~large] = 0
+
+    res = matmul(u, multiply(s[..., newaxis], transpose(np.conjugate(u))))
+    return wrap(res)
+
+
 # Determinant
 
 
