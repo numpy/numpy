@@ -23,11 +23,11 @@ in a descriptor, which is a python object of type ``dtype``.
 
 The ``dtype`` obect instance ``a`` has attributes, among them ``a.type``, which
 is a class object. Instantiating that class object ``a.type(3)`` produces a
-Num`py `scalar <http://www.numpy.org/devdocs/reference/arrays.scalars.html>`_.
+Numpy `scalar <http://www.numpy.org/devdocs/reference/arrays.scalars.html>`_.
 
-This NEP proposes a class heirarchy for dtypes. The ``np.dtype`` class will
-become an abstrace base class, and a number of new classes will be created with
-a heirarchy like scalars. They will support subclassing. A future NEP may
+This NEP proposes a class hierarchy for dtypes. The ``np.dtype`` class will
+become an abstract base class, and a number of new classes will be created with
+a hierarchy like scalars. They will support subclassing. A future NEP may
 propose unifying the scalar and dtype type systems, but that is not a goal of
 this NEP.  The changed dtype will:
 
@@ -46,10 +46,18 @@ this NEP.  The changed dtype will:
 Overall Design
 --------------
 
-The ``Dtype`` class (and any subclass without ``itemsize``) is by definition an
-abstract base class. A metaclass ``DtypeMeta`` is used to add slots for
-converting memory chunks into objects and back, to provide datatype-specific
-functionality, and to provide the casting functions to convert data.
+The ``Dtype`` class (and any subclass without ``itemsize``) is effectively an
+abstract base class, as it cannot be used to create instances. A class
+hierarchy is used to add datatype-specific functionality such as ``names`` and
+``fields`` for structured dtypes. The current behaviours are preserved:
+
+- ``np.dtype(obj, align=False, copy=False)`` calls ``arraydescr_new`` with
+  various types of ``obj``:
+  - ``int``, ``np.genenric`` scalar classes, list or dict are parsed into
+    appropriate dtypes
+- singletons are returned where appropriate
+
+Additionally, dtype subclasses are passed through to the subclass ``__new__``
 
 A prototype without error checking, without options handling, and describing
 only ``np.dtype(np.uint8)`` together with an overridable ``get_format_function``
@@ -57,41 +65,29 @@ for ``arrayprint`` looks like::
 
     import numpy as np
 
-    class DtypeMeta(type):
-        # Add slot methods to the base Dtype to handle low-level memory
-        # conversion to/from char[itemsize] to int/float/utf8/whatever
-        # In cython this would look something like
-        #cdef int (*unbox_method)(PyObject* self, PyObject* source, char* dest)
-        #cdef PyObject* (*box_method)(PyObject* self, char* source)
-
-        def __call__(cls, *args, **kwargs):
-            # This is reached for Dtype(np.uint8, ...).
-            # Does not yet handle align, copy positional arguments
-            if len(args) > 0: 
-                obj = args[0]
-                if isinstance(obj, int):
-                    return dtype_int_dict[obj]
-                elif isinstance(obj, type) and issubclass(obj, np.generic):
-                    return dtype_scalar_dict[obj]
-                else:
-                    # Dtype('int8') or Dtype('S10') or record descr
-                    return create_new_descr(cls, *args, **kwargs)
-            else:
-                # At import, when creating Dtype and subclasses
-                return type.__call__(cls, *args, **kwargs)
-
     class Dtype():
         def __new__(cls, *args, **kwargs):
-            # Do not allow creating instances of abstract base classes
-            if not hasattr(cls, 'itemsize'):
-                raise ValueError("cannot create instances of "
-                                 f"abstract class {cls!r}")
-            return super().__new__(cls, *args, **kwargs)
+            if len(args) == 0: 
+                # Do not allow creating instances of abstract base classes
+                if not hasattr(cls, 'itemsize'):
+                    raise ValueError("cannot create instances of "
+                                     f"abstract class {cls!r}")
+                return super().__new__(cls, *args, **kwargs)
+            # This is reached for Dtype(np.uint8, ...).
+            # Does not yet handle align, copy positional arguments
+            obj = args[0]
+            if isinstance(obj, int):
+                return dtype_int_dict[obj]
+            elif isinstance(obj, type) and issubclass(obj, np.generic):
+                return dtype_scalar_dict[obj]
+            else:
+                # Dtype('int8') or Dtype('S10') or record descr
+                return create_new_descr(cls, *args, **kwargs)
 
-    class GenericDescr(Dtype, metaclass=DtypeMeta):
+    class GenericDtype(Dtype):
         pass
 
-    class IntDescr(GenericDescr):
+    class IntDtype(GenericDtype):
         def __repr__(self):
             # subclass of IntDescr
             return f"dtype('{_kind_to_stem[self.kind]}{self.itemsize:d}')"
@@ -99,10 +95,10 @@ for ``arrayprint`` looks like::
         def get_format_function(self, data, **options):
             # replaces switch on dtype found in _get_format_function
             # (in arrayprint), **options details missing
-            from  np.core.arrayprint import IntegerFormat
+            from  numpy.core.arrayprint import IntegerFormat
             return IntegerFormat(data)
 
-    class UInt8Descr(IntDescr):
+    class UInt8Dtype(IntDtype):
         kind = 'u'
         itemsize = 8
         type = np.uint8
@@ -111,34 +107,24 @@ for ``arrayprint`` looks like::
         #ArrFuncs = int8_arrayfuncs
         
 
-    dtype_int_dict = {1: UInt8Descr()}
-    dtype_scalar_dict = {np.uint8: UInt8Descr()}
+    dtype_int_dict = {1: UInt8Dtype()}
+    dtype_scalar_dict = {np.uint8: dtype_int_dict[1]} 
     _kind_to_stem = {
         'u': 'uint',
         'i': 'int',
-        'c': 'complex',
-        'f': 'float',
-        'b': 'bool',
-        'V': 'void',
-        'O': 'object',
-        'M': 'datetime',
-        'm': 'timedelta',
-        'S': 'bytes',
-        'U': 'str',
     }
+
 
 At NumPy startup, as we do today, we would generate the builtin set of
 descriptor instances, and fill in ``dtype_int_dict`` and ``dtype_scalar_type``
-so that the built-in descriptors would continue to be singletons. ``Void``,
-``Byte`` and ``Unicode`` descriptors would be constructed on demand, as is done
-today. The magic that returns a singleton or a new descriptor happens in
-``DtypeMeta.__call__``. 
+so that the built-in descriptors would continue to be singletons. Some
+descriptors would be constructed on demand, as is done today.
 
 All descriptors would inherit from ``Dtype``::
 
     >>> a = np.dtype(np.uint8)
     >>> type(a).mro()
-    [<class 'UInt8Descr'>, <class 'IntDescr'>, <class 'GenericDescr'>,
+    [<class 'UInt8Dtype'>, <class 'IntDtype'>, <class 'GenericDtype'>,
      <class 'Dtype'>, <class 'object'>]
 
     >>> isinstance(a, np.dtype):
@@ -150,30 +136,57 @@ Note that the ``repr`` of ``a`` is compatibility with NumPy::
     "dtype('uint8')"
 
 Each class will have its own set of ArrFuncs (``clip``, ``fill``,
-``cast``). 
+``cast``) and attributes appropriate to that class.
 
 Downstream users of NumPy can subclass these type classes. Creating a categorical
 dtype would look like this (without error checking for out-of-bounds values)::
 
-    class Colors(Dtype):
+    class Plant(Dtype):
         itemsize = 8
-        colors = ['red', 'green', 'blue']
+        names = ['tree', 'flower', 'grass']
         def get_format_function(self, data, **options):
             class Format():
                 def __init__(self, data):
                     pass
                 def __call__(self, x):
-                return self.colors[x]
+                    return Plant.names[x]
             return Format(data)
 
-    c = np.array([0, 1, 1, 0, 2], dtype=Colors)    
+    c = np.array([0, 1, 1, 0, 2], dtype=Plant)    
 
 Additional code would be needed to neutralize the slot functions.
 
-There is a level of indirection between ``Dtype`` and ``IntDescr`` so that
-downstream users could create their own duck-descriptors that do not use 
-``DtypeMeta.__call__`` at all, but could still answer ``True`` to 
-``isintance(mydtype, Dtype)``.
+The overall hierarchy is meant to map to the scalar hierarchy.
+
+Now ``arrayprint`` would look something like this (very much simplified, the
+actual format details are not the point):
+
+    def arrayformat(data, dtype):
+            formatter = dtype.get_format_function(data)
+            result = []
+            for v in data:
+                result.append(formatter(v))
+            return 'array[' + ', '.join(result) + ']'
+
+    def arrayprint(data):
+        print(arrayformat(data, data.dtype))
+
+    a = np.array([0, 1, 2, 0, 1, 2], dtype='uint8')
+
+    # Create a dtype instance, returns a singleton from dtype_scalar_dict
+    uint8 = Dtype(np.uint8)
+    
+    # Create a user-defined dtype
+    garden = Plant()
+
+    # We cannot use ``arrayprint`` just yet, but ``arrayformat`` works
+    print(arrayformat(a, uint8))
+
+    array[0, 1, 2, 0, 1, 2]
+
+    print(arrayformat(a, garden))
+
+    array[tree, flower, grass, tree, flower, grass]
 
 Advantages
 ==========
@@ -181,7 +194,7 @@ Advantages
 It is very difficult today to override dtype behaviour. Internally
 descriptor objects are all instances of a generic dtype class and internally
 behave as containers more than classes with method overrides. Giving them a
-class heirarchy with overrideable methods will reduce explicit branching in
+class hierarchy with overrideable methods will reduce explicit branching in
 code (at the expense of a dictionary lookup) and allow downstream users to
 more easily define new dtypes. We could re-examine interoperability with
 pandas_ typesystem.
@@ -195,6 +208,10 @@ should continue with `PR 12284`_ to vendor our own numpy.pxd in order to make th
 transition less painful. We should not break working dtype-subclasses like
 `quaterions`_.
 
+Code that depends on all dtypes having similar attributes might break. For
+instance there is no reason ``int`` dtypes need the ``names`` and ``field``
+empty attributes.
+
 Future Extensions
 =================
 
@@ -204,7 +221,7 @@ This would make the descriptor more like the ``int`` or ``float`` type. However
 allowing instantiating scalars from descriptors is not a goal of this NEP.
 
 A further extension would be to refactor ``numpy.datetime64`` to use the new
-heirarchy.
+hierarchy.
 
 Appendix
 ========
