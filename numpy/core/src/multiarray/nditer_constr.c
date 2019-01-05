@@ -1132,7 +1132,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* Check if the operand is aligned */
         if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
-            if (!(IsUintAligned(*op) && IsAligned(*op))) {
+            if (!IsAligned(*op)) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;

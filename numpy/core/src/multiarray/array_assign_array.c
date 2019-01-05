@@ -24,6 +24,38 @@
 
 #include "array_assign.h"
 
+/* Check both uint and true alignment */
+NPY_NO_EXPORT int
+copycast_isaligned(int ndim, npy_intp *shape,
+        PyArray_Descr *dtype, char *data, npy_intp *strides)
+{
+    int aligned;
+    int big_aln, small_aln;
+
+    int uint_aln = npy_uint_alignment(dtype->elsize);
+    int true_aln = dtype->alignment;
+
+    /* uint alignment can be 0, meaning not uint alignable */
+    if (uint_aln == 0) {
+        return 0;
+    }
+
+    if (true_aln >= uint_aln) {
+        big_aln = true_aln;
+        small_aln = uint_aln;
+    }
+    else {
+        big_aln = uint_aln;
+        small_aln = true_aln;
+    }
+
+    aligned = raw_array_is_aligned(ndim, shape, data, strides, big_aln);
+    if (aligned && big_aln % small_aln != 0) {
+        aligned = raw_array_is_aligned(ndim, shape, data, strides, small_aln);
+    }
+    return aligned;
+}
+
 /*
  * Assigns the array from 'src' to 'dst'. The strides must already have
  * been broadcast.
@@ -48,15 +80,9 @@ raw_array_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check both uint and true alignment */
-    aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
-                                   npy_uint_alignment(dst_dtype->elsize)) &&
-              raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
-                                   dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim, shape, src_data, src_strides,
-                                   npy_uint_alignment(src_dtype->elsize));
-              raw_array_is_aligned(ndim, shape, src_data, src_strides,
-                                   src_dtype->alignment);
+    aligned =
+        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
+        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareTwoRawArrayIter(
@@ -137,15 +163,9 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check both uint and true alignment */
-    aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
-                                   npy_uint_alignment(dst_dtype->elsize)) &&
-              raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
-                                   dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim, shape, src_data, src_strides,
-                                   npy_uint_alignment(src_dtype->elsize));
-              raw_array_is_aligned(ndim, shape, src_data, src_strides,
-                                   src_dtype->alignment);
+    aligned =
+        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
+        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareThreeRawArrayIter(
