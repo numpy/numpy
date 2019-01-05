@@ -3066,7 +3066,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     PyArray_free(remap_axis_memory);
     PyArray_free(remap_axis);
 
-    NPY_UF_DBG_PRINT1("Returning code %d\n", reval);
+    NPY_UF_DBG_PRINT1("Returning code %d\n", retval);
 
     return retval;
 
