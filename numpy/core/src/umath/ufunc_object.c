@@ -3064,7 +3064,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 
-    NPY_UF_DBG_PRINT1("Returning code %d\n", reval);
+    NPY_UF_DBG_PRINT1("Returning code %d\n", retval);
 
     return retval;
 
