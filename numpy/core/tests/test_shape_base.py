@@ -224,13 +224,27 @@ class TestConcatenate(object):
         assert_raises(ValueError, concatenate, (0,))
         assert_raises(ValueError, concatenate, (np.array(0),))
 
+        # dimensionality must match
+        assert_raises_regex(
+            ValueError,
+            r"all the input arrays must have same number of dimensions, but "
+            r"the array at index 0 has 1 dimension\(s\) and the array at "
+            r"index 1 has 2 dimension\(s\)",
+            np.concatenate, (np.zeros(1), np.zeros((1, 1))))
+
         # test shapes must match except for concatenation axis
         a = np.ones((1, 2, 3))
         b = np.ones((2, 2, 3))
         axis = list(range(3))
         for i in range(3):
             np.concatenate((a, b), axis=axis[0])  # OK
-            assert_raises(ValueError, np.concatenate, (a, b), axis=axis[1])
+            assert_raises_regex(
+                ValueError,
+                "all the input array dimensions for the concatenation axis "
+                "must match exactly, but along dimension {}, the array at "
+                "index 0 has size 1 and the array at index 1 has size 2"
+                .format(i),
+                np.concatenate, (a, b), axis=axis[1])
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[2])
             a = np.moveaxis(a, -1, 0)
             b = np.moveaxis(b, -1, 0)

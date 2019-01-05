@@ -409,9 +409,12 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
         npy_intp *arr_shape;
 
         if (PyArray_NDIM(arrays[iarrays]) != ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                            "all the input arrays must have same "
-                            "number of dimensions");
+            PyErr_Format(PyExc_ValueError,
+                         "all the input arrays must have same number of "
+                         "dimensions, but the array at index %d has %d "
+                         "dimension(s) and the array at index %d has %d "
+                         "dimension(s)",
+                         0, ndim, iarrays, PyArray_NDIM(arrays[iarrays]));
             return NULL;
         }
         arr_shape = PyArray_SHAPE(arrays[iarrays]);
@@ -423,10 +426,12 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
             }
             /* Validate that the rest of the dimensions match */
             else if (shape[idim] != arr_shape[idim]) {
-                PyErr_SetString(PyExc_ValueError,
-                                "all the input array dimensions "
-                                "except for the concatenation axis "
-                                "must match exactly");
+                PyErr_Format(PyExc_ValueError,
+                             "all the input array dimensions for the "
+                             "concatenation axis must match exactly, but "
+                             "along dimension %d, the array at index %d has "
+                             "size %d and the array at index %d has size %d",
+                             idim, 0, shape[idim], iarrays, arr_shape[idim]);
                 return NULL;
             }
         }
