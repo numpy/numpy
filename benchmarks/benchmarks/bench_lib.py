@@ -54,3 +54,23 @@ class Pad(Benchmark):
 
     def time_pad(self, shape, pad_width, mode):
         np.pad(self.array, pad_width, mode)
+
+class Isin(Benchmark):
+    """Benchmarks for `numpy.isin`."""
+
+    param_names = ["size", "highest_element"]
+    params = [
+        [10, 100000, 3000000],
+        [10, 10000, int(1e8)]
+    ]
+
+    def setup(self, size, highest_element):
+        self.array = np.random.randint(
+                low=0, high=highest_element, size=size)
+        self.in_array = np.random.randint(
+                low=0, high=highest_element, size=size)
+
+    def time_isin(self, size, highest_element):
+        np.isin(self.array, self.in_array)
+
+
