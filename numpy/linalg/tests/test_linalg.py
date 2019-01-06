@@ -789,7 +789,7 @@ class PinvCases(LinalgSquareTestCase,
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
         dot = dot_generalized
-        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=4.9, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
 
