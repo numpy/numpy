@@ -1140,17 +1140,12 @@ def _median_nancheck(data, result, axis, out):
         n = n.filled(False)
     if result.ndim == 0:
         if n == True:
-            warnings.warn("Invalid value encountered in median",
-                          RuntimeWarning, stacklevel=3)
             if out is not None:
                 out[...] = data.dtype.type(np.nan)
                 result = out
             else:
                 result = data.dtype.type(np.nan)
     elif np.count_nonzero(n.ravel()) > 0:
-        warnings.warn("Invalid value encountered in median for" +
-                      " %d results" % np.count_nonzero(n.ravel()),
-                      RuntimeWarning, stacklevel=3)
         result[n] = np.nan
     return result
 

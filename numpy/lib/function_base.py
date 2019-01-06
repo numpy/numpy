@@ -3956,8 +3956,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             r = add(x1, x2)
 
     if np.any(n):
-        warnings.warn("Invalid value encountered in percentile",
-                      RuntimeWarning, stacklevel=3)
         if zerod:
             if ap.ndim == 1:
                 if out is not None:

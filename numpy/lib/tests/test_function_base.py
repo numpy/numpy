@@ -2391,11 +2391,8 @@ class TestPercentile(object):
         assert_equal(np.percentile(x, 100), 3.5)
         assert_equal(np.percentile(x, 50), 1.75)
         x[1] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(x, 0), np.nan)
-            assert_equal(np.percentile(x, 0, interpolation='nearest'), np.nan)
-            assert_(w[0].category is RuntimeWarning)
+        assert_equal(np.percentile(x, 0), np.nan)
+        assert_equal(np.percentile(x, 0, interpolation='nearest'), np.nan)
 
     def test_api(self):
         d = np.ones(5)
@@ -2733,85 +2730,63 @@ class TestPercentile(object):
     def test_nan_behavior(self):
         a = np.arange(24, dtype=float)
         a[2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, 0.3), np.nan)
-            assert_equal(np.percentile(a, 0.3, axis=0), np.nan)
-            assert_equal(np.percentile(a, [0.3, 0.6], axis=0),
-                         np.array([np.nan] * 2))
-            assert_(w[0].category is RuntimeWarning)
-            assert_(w[1].category is RuntimeWarning)
-            assert_(w[2].category is RuntimeWarning)
+        assert_equal(np.percentile(a, 0.3), np.nan)
+        assert_equal(np.percentile(a, 0.3, axis=0), np.nan)
+        assert_equal(np.percentile(a, [0.3, 0.6], axis=0),
+                     np.array([np.nan] * 2))
 
         a = np.arange(24, dtype=float).reshape(2, 3, 4)
         a[1, 2, 3] = np.nan
         a[1, 1, 2] = np.nan
 
         # no axis
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, 0.3), np.nan)
-            assert_equal(np.percentile(a, 0.3).ndim, 0)
-            assert_(w[0].category is RuntimeWarning)
+        assert_equal(np.percentile(a, 0.3), np.nan)
+        assert_equal(np.percentile(a, 0.3).ndim, 0)
 
         # axis0 zerod
         b = np.percentile(np.arange(24, dtype=float).reshape(2, 3, 4), 0.3, 0)
         b[2, 3] = np.nan
         b[1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, 0.3, 0), b)
+        assert_equal(np.percentile(a, 0.3, 0), b)
 
         # axis0 not zerod
         b = np.percentile(np.arange(24, dtype=float).reshape(2, 3, 4),
                           [0.3, 0.6], 0)
         b[:, 2, 3] = np.nan
         b[:, 1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, [0.3, 0.6], 0), b)
+        assert_equal(np.percentile(a, [0.3, 0.6], 0), b)
 
         # axis1 zerod
         b = np.percentile(np.arange(24, dtype=float).reshape(2, 3, 4), 0.3, 1)
         b[1, 3] = np.nan
         b[1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, 0.3, 1), b)
+        assert_equal(np.percentile(a, 0.3, 1), b)
         # axis1 not zerod
         b = np.percentile(
             np.arange(24, dtype=float).reshape(2, 3, 4), [0.3, 0.6], 1)
         b[:, 1, 3] = np.nan
         b[:, 1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, [0.3, 0.6], 1), b)
+        assert_equal(np.percentile(a, [0.3, 0.6], 1), b)
 
         # axis02 zerod
         b = np.percentile(
             np.arange(24, dtype=float).reshape(2, 3, 4), 0.3, (0, 2))
         b[1] = np.nan
         b[2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, 0.3, (0, 2)), b)
+        assert_equal(np.percentile(a, 0.3, (0, 2)), b)
         # axis02 not zerod
         b = np.percentile(np.arange(24, dtype=float).reshape(2, 3, 4),
                           [0.3, 0.6], (0, 2))
         b[:, 1] = np.nan
         b[:, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(a, [0.3, 0.6], (0, 2)), b)
+        assert_equal(np.percentile(a, [0.3, 0.6], (0, 2)), b)
         # axis02 not zerod with nearest interpolation
         b = np.percentile(np.arange(24, dtype=float).reshape(2, 3, 4),
                           [0.3, 0.6], (0, 2), interpolation='nearest')
         b[:, 1] = np.nan
         b[:, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.percentile(
-                a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
+        assert_equal(np.percentile(
+            a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
 
 
 class TestQuantile(object):
@@ -2858,10 +2833,7 @@ class TestMedian(object):
         # check array scalar result
         assert_equal(np.median(a).ndim, 0)
         a[1] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.median(a).ndim, 0)
-            assert_(w[0].category is RuntimeWarning)
+        assert_equal(np.median(a).ndim, 0)
 
     def test_axis_keyword(self):
         a3 = np.array([[2, 3],
@@ -2960,58 +2932,43 @@ class TestMedian(object):
     def test_nan_behavior(self):
         a = np.arange(24, dtype=float)
         a[2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.median(a), np.nan)
-            assert_equal(np.median(a, axis=0), np.nan)
-            assert_(w[0].category is RuntimeWarning)
-            assert_(w[1].category is RuntimeWarning)
+        assert_equal(np.median(a), np.nan)
+        assert_equal(np.median(a, axis=0), np.nan)
 
         a = np.arange(24, dtype=float).reshape(2, 3, 4)
         a[1, 2, 3] = np.nan
         a[1, 1, 2] = np.nan
 
         # no axis
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.median(a), np.nan)
-            assert_equal(np.median(a).ndim, 0)
-            assert_(w[0].category is RuntimeWarning)
+        assert_equal(np.median(a), np.nan)
+        assert_equal(np.median(a).ndim, 0)
 
         # axis0
         b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), 0)
         b[2, 3] = np.nan
         b[1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.median(a, 0), b)
-            assert_equal(len(w), 1)
+        assert_equal(np.median(a, 0), b)
 
         # axis1
         b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), 1)
         b[1, 3] = np.nan
         b[1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.median(a, 1), b)
-            assert_equal(len(w), 1)
+        assert_equal(np.median(a, 1), b)
 
         # axis02
         b = np.median(np.arange(24, dtype=float).reshape(2, 3, 4), (0, 2))
         b[1] = np.nan
         b[2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.median(a, (0, 2)), b)
-            assert_equal(len(w), 1)
+        assert_equal(np.median(a, (0, 2)), b)
 
     def test_empty(self):
-        # empty arrays
+        # mean(empty array) emits two warnings: empty slice and divide by 0
         a = np.array([], dtype=float)
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.median(a), np.nan)
             assert_(w[0].category is RuntimeWarning)
+            assert_equal(len(w), 2)
 
         # multiple dimensions
         a = np.array([], dtype=float, ndmin=3)
