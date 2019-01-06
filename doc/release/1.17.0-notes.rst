@@ -69,3 +69,10 @@ lengths has improved and is on par with complex-valued FFTs.
 
 Changes
 =======
+
+``median`` and ``percentile`` family of functions no longer warn about ``nan``
+------------------------------------------------------------------------------
+
+`numpy.median`, `numpy.percentile`, and `numpy.quantile` used to emit a
+``RuntimeWarning`` when encountering an `numpy.nan`. Since they return the
+``nan`` value, the warning is redundant and has been removed.
