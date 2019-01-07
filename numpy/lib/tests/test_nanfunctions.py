@@ -1,8 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import warnings
+import pytest
 
 import numpy as np
+from numpy.lib.nanfunctions import _nan_mask
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_no_warnings,
     assert_raises, assert_array_equal, suppress_warnings
@@ -925,3 +927,29 @@ class TestNanFunctions_Quantile(object):
         p = p.tolist()
         np.nanquantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
+
+@pytest.mark.parametrize("arr, expected", [
+    # array of floats with some nans
+    (np.array([np.nan, 5.0, np.nan, np.inf]),
+     np.array([False, True, False, True])),
+    # int64 array that can't possibly have nans
+    (np.array([1, 5, 7, 9], dtype=np.int64),
+     True),
+    # bool array that can't possibly have nans
+    (np.array([False, True, False, True]),
+     True),
+    # 2-D complex array with nans
+    (np.array([[np.nan, 5.0],
+               [np.nan, np.inf]], dtype=np.complex64),
+     np.array([[False, True],
+               [False, True]])),
+    ])
+def test__nan_mask(arr, expected):
+    for out in [None, np.empty(arr.shape, dtype=np.bool_)]:
+        actual = _nan_mask(arr, out=out)
+        assert_equal(actual, expected)
+        # the above won't distinguish between True proper
+        # and an array of True values; we want True proper
+        # for types that can't possibly contain NaN
+        if type(expected) is not np.ndarray:
+            assert actual is True
