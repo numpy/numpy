@@ -2192,7 +2192,11 @@ WARN_UNUSED_RESULT static int rfft_forward(rfft_plan plan, double c[], double fc
 static PyObject *
 execute_complex(PyObject *a1, int is_forward, double fct)
 {
-    PyArrayObject *data = (PyArrayObject *)PyArray_CopyFromObject(a1, NPY_CDOUBLE, 1, 0);
+    PyArrayObject *data = (PyArrayObject *)PyArray_FromAny(a1,
+            PyArray_DescrFromType(NPY_CDOUBLE), 1, 0,
+            NPY_ARRAY_ENSURECOPY | NPY_ARRAY_DEFAULT |
+            NPY_ARRAY_ENSUREARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
     if (!data) return NULL;
 
     int npts = PyArray_DIM(data, PyArray_NDIM(data) - 1);
@@ -2227,8 +2231,10 @@ execute_real_forward(PyObject *a1, double fct)
 {
     rfft_plan plan=NULL;
     int fail = 0;
-    PyArrayObject *data = (PyArrayObject *)PyArray_ContiguousFromObject(a1,
-            NPY_DOUBLE, 1, 0);
+    PyArrayObject *data = (PyArrayObject *)PyArray_FromAny(a1,
+            PyArray_DescrFromType(NPY_DOUBLE), 1, 0,
+            NPY_ARRAY_DEFAULT | NPY_ARRAY_ENSUREARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
     if (!data) return NULL;
 
     int ndim = PyArray_NDIM(data);
@@ -2281,8 +2287,10 @@ static PyObject *
 execute_real_backward(PyObject *a1, double fct)
 {
     rfft_plan plan=NULL;
-    PyArrayObject *data = (PyArrayObject *)PyArray_ContiguousFromObject(a1,
-            NPY_CDOUBLE, 1, 0);
+    PyArrayObject *data = (PyArrayObject *)PyArray_FromAny(a1,
+            PyArray_DescrFromType(NPY_CDOUBLE), 1, 0,
+            NPY_ARRAY_DEFAULT | NPY_ARRAY_ENSUREARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
     if (!data) return NULL;
     int npts = PyArray_DIM(data, PyArray_NDIM(data) - 1);
     PyArrayObject *ret = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(data),
