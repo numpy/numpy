@@ -9,7 +9,7 @@ by importing from the extension module.
 from . import _multiarray_umath
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (
-    _UFUNC_API, _add_newdoc_ufunc, _arg, _ones_like
+    _UFUNC_API, _add_newdoc_ufunc, _ones_like
     )
 
 __all__ = [
@@ -18,7 +18,7 @@ __all__ = [
     'FPE_DIVIDEBYZERO', 'FPE_INVALID', 'FPE_OVERFLOW', 'FPE_UNDERFLOW', 'NAN',
     'NINF', 'NZERO', 'PINF', 'PZERO', 'SHIFT_DIVIDEBYZERO', 'SHIFT_INVALID',
     'SHIFT_OVERFLOW', 'SHIFT_UNDERFLOW', 'UFUNC_BUFSIZE_DEFAULT',
-    'UFUNC_PYVALS_NAME', '_add_newdoc_ufunc', '_arg', 'absolute', 'add',
+    'UFUNC_PYVALS_NAME', '_add_newdoc_ufunc', 'absolute', 'add',
     'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2', 'arctanh',
     'bitwise_and', 'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj',
     'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide',
