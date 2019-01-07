@@ -1,3 +1,5 @@
+.. module:: numpy.polynomial.polynomial
+
 Polynomial Module (:mod:`numpy.polynomial.polynomial`)
 ======================================================
 

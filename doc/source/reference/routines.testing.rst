@@ -1,5 +1,7 @@
 .. _numpy-testing:
 
+.. module:: numpy.testing
+
 Test Support (:mod:`numpy.testing`)
 ===================================
 
