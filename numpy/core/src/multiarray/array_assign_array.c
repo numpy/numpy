@@ -24,7 +24,10 @@
 
 #include "array_assign.h"
 
-/* Check both uint and true alignment */
+/*
+ * Check that array data is both uint-aligned and true-aligned for all array
+ * elements, as required by the copy/casting code in lowlevel_strided_loops.c
+ */
 NPY_NO_EXPORT int
 copycast_isaligned(int ndim, npy_intp *shape,
         PyArray_Descr *dtype, char *data, npy_intp *strides)
@@ -40,6 +43,12 @@ copycast_isaligned(int ndim, npy_intp *shape,
         return 0;
     }
 
+    /*
+     * As an optimization, it is unnecessary to check the alignment to the
+     * smaller of (uint_aln, true_aln) if the data is aligned to the bigger of
+     * the two and the big is a multiple of the small aln. We check the bigger
+     * one first and only check the smaller if necessary.
+     */
     if (true_aln >= uint_aln) {
         big_aln = true_aln;
         small_aln = uint_aln;
