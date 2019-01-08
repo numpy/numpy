@@ -45,6 +45,12 @@ identity, it is necessary to also pass in an initial value (e.g.,
 ``nansum`` would be, ``np.sum(a, where=~np.isnan(a))``.
 
 
+``np.linalg.svd`` and ``np.linalg.pinv`` can be faster on hermitian inputs
+--------------------------------------------------------------------------
+These functions have learnt the ``hermitian`` argument, matching the one added
+to ``np.linalg.matrix_rank`` in 1.14.0.
+
+
 Improvements
 ============
 
