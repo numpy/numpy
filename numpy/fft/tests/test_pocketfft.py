@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+import pytest
 from numpy.random import random
 from numpy.testing import (
         assert_array_almost_equal, assert_array_equal, assert_raises,
@@ -156,13 +157,14 @@ class TestFFT1D(object):
                     assert_array_almost_equal(x_norm,
                                               np.linalg.norm(tmp))
 
-    def test_dtypes(self):
+    @pytest.mark.parametrize("dtype", [np.half, np.single, np.double,
+                                       np.longdouble])
+    def test_dtypes(self, dtype):
         # make sure that all input precisions are accepted and internally
         # converted to 64bit
-        for c in "fdg":
-            x = random(30).astype(np.dtype(c))
-            assert_array_almost_equal(np.fft.ifft(np.fft.fft(x)), x)
-            assert_array_almost_equal(np.fft.irfft(np.fft.rfft(x)), x)
+        x = random(30).astype(dtype)
+        assert_array_almost_equal(np.fft.ifft(np.fft.fft(x)), x)
+        assert_array_almost_equal(np.fft.irfft(np.fft.rfft(x)), x)
 
 class TestFFTThreadSafe(object):
     threads = 16
