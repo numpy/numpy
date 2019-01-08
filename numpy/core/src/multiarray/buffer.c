@@ -583,9 +583,11 @@ _buffer_info_new(PyObject *obj)
     err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
     Py_DECREF(descr);
     if (err != 0) {
+        free(info->shape);
         goto fail;
     }
     if (_append_char(&fmt, '\0') < 0) {
+        free(info->shape);
         goto fail;
     }
     info->format = fmt.s;
