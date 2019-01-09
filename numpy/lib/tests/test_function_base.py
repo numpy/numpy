@@ -1511,42 +1511,35 @@ class TestLeaks(object):
         def unbound(*args):
             return 0
 
-        def npy_bound(self, a):
-            return types.MethodType(np.frompyfunc(self.bound, 1, 1), a)
-
-        def npy_unbound(self, a):
-            return np.frompyfunc(self.unbound, 1, 1)
-
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-    @pytest.mark.parametrize('func, npy_func, incr', [
-            # Test with both an unbound method and a bound one
-            (A.bound, A.npy_bound, A.iters),
-            (A.unbound, A.npy_unbound, 0),
+    @pytest.mark.parametrize('name, incr', [
+            ('bound', A.iters),
+            ('unbound', 0),
             ])
-    def test_frompyfunc_leaks(self, func, npy_func, incr):
+    def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
         # class.attribute = np.frompyfunc(<method>) creates a
-        # reference cycle if <method> is a bound class method that requires a
-        # gc collection cycle to break (on CPython 3)
+        # reference cycle if <method> is a bound class method. It requires a
+        # gc collection cycle to break the cycle (on CPython 3)
         import gc
-
+        A_func = getattr(self.A, name)
         gc.disable()
         try:
-            refcount = sys.getrefcount(func)
+            refcount = sys.getrefcount(A_func)
             for i in range(self.A.iters):
                 a = self.A()
-                a.f = npy_func(a, a)
+                a.f = np.frompyfunc(getattr(a, name), 1, 1)
                 out = a.f(np.arange(10))
             a = None
             if PY2:
-                assert_equal(sys.getrefcount(func), refcount)
+                assert_equal(sys.getrefcount(A_func), refcount)
             else:
-                # func is part of a reference cycle
-                assert_equal(sys.getrefcount(func), refcount + incr)
+                # A.func is part of a reference cycle if incr is non-zero
+                assert_equal(sys.getrefcount(A_func), refcount + incr)
             for i in range(5):
                 gc.collect()
-            assert_equal(sys.getrefcount(func), refcount)
+            assert_equal(sys.getrefcount(A_func), refcount)
         finally:
             gc.enable()
 
