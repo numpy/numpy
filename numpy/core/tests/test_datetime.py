@@ -1758,7 +1758,7 @@ class TestDateTime(object):
     def test_timedelta_modulus_div_by_zero(self):
         with assert_warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
-            assert_equal(actual, np.timedelta64(0, 's'))
+            assert_equal(actual, np.timedelta64('NaT'))
 
     @pytest.mark.parametrize("val1, val2", [
         # cases where one operand is not
