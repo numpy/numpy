@@ -161,6 +161,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
 
     self->type_resolver = &object_ufunc_type_resolver;
     self->legacy_inner_loop_selector = &object_ufunc_loop_selector;
+    PyObject_GC_Track(self);
 
     return (PyObject *)self;
 }

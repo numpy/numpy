@@ -4928,12 +4928,15 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
         return NULL;
     }
 
-    ufunc = PyArray_malloc(sizeof(PyUFuncObject));
+    ufunc = PyObject_GC_New(PyUFuncObject, &PyUFunc_Type);
+    /*
+     * We use GC_New here for ufunc->obj, but do not use GC_Track since
+     * ufunc->obj is still NULL at the end of this function.
+     * See ufunc_frompyfunc where ufunc->obj is set and GC_Track is called.
+     */
     if (ufunc == NULL) {
         return NULL;
     }
-    memset(ufunc, 0, sizeof(PyUFuncObject));
-    PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
 
     ufunc->nin = nin;
     ufunc->nout = nout;
@@ -4941,13 +4944,30 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->identity = identity;
     if (ufunc->identity == PyUFunc_IdentityValue) {
         Py_INCREF(identity_value);
+        ufunc->identity_value = identity_value;
     }
-    ufunc->identity_value = identity_value;
+    else {
+        ufunc->identity_value = NULL;
+    }
 
     ufunc->functions = func;
     ufunc->data = data;
     ufunc->types = types;
     ufunc->ntypes = ntypes;
+    ufunc->core_signature = NULL;
+    ufunc->core_enabled = 0;
+    ufunc->obj = NULL;
+    ufunc->core_num_dims = NULL;
+    ufunc->core_num_dim_ix = 0;
+    ufunc->core_offsets = NULL;
+    ufunc->core_dim_ixs = NULL;
+    ufunc->core_dim_sizes = NULL;
+    ufunc->core_dim_flags = NULL;
+    ufunc->userloops = NULL;
+    ufunc->ptr = NULL;
+    ufunc->reserved2 = NULL;
+    ufunc->reserved1 = 0;
+    ufunc->iter_flags = 0;
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
@@ -5313,6 +5333,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 static void
 ufunc_dealloc(PyUFuncObject *ufunc)
 {
+    PyObject_GC_UnTrack((PyObject *)ufunc);
     PyArray_free(ufunc->core_num_dims);
     PyArray_free(ufunc->core_dim_ixs);
     PyArray_free(ufunc->core_dim_sizes);
@@ -5322,11 +5343,13 @@ ufunc_dealloc(PyUFuncObject *ufunc)
     PyArray_free(ufunc->ptr);
     PyArray_free(ufunc->op_flags);
     Py_XDECREF(ufunc->userloops);
-    Py_XDECREF(ufunc->obj);
     if (ufunc->identity == PyUFunc_IdentityValue) {
         Py_DECREF(ufunc->identity_value);
     }
-    PyArray_free(ufunc);
+    if (ufunc->obj != NULL) {
+        Py_DECREF(ufunc->obj);
+    }
+    PyObject_GC_Del(ufunc);
 }
 
 static PyObject *
@@ -5335,6 +5358,15 @@ ufunc_repr(PyUFuncObject *ufunc)
     return PyUString_FromFormat("<ufunc '%s'>", ufunc->name);
 }
 
+static int
+ufunc_traverse(PyUFuncObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->obj);
+    if (self->identity == PyUFunc_IdentityValue) {
+        Py_VISIT(self->identity_value);
+    }
+    return 0;
+}
 
 /******************************************************************************
  ***                          UFUNC METHODS                                 ***
@@ -6051,9 +6083,9 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */
     0,                                          /* tp_doc */
-    0,                                          /* tp_traverse */
+    (traverseproc)ufunc_traverse,               /* tp_traverse */
     0,                                          /* tp_clear */
     0,                                          /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */

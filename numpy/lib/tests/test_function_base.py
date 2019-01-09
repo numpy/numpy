@@ -4,6 +4,7 @@ import operator
 import warnings
 import sys
 import decimal
+import types
 import pytest
 
 import numpy as np
@@ -24,6 +25,7 @@ from numpy.lib import (
 
 from numpy.compat import long
 
+PY2 = sys.version_info[0] == 2
 
 def get_mat(n):
     data = np.arange(n)
@@ -353,9 +355,9 @@ class TestAverage(object):
         assert_equal(type(np.average(a, weights=w)), subclass)
 
     def test_upcasting(self):
-        types = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
+        typs = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
                  ('f4', 'f4', 'f4'), ('f4', 'f8', 'f8')]
-        for at, wt, rt in types:
+        for at, wt, rt in typs:
             a = np.array([[1,2],[3,4]], dtype=at)
             w = np.array([[1,2],[3,4]], dtype=wt)
             assert_equal(np.average(a, weights=w).dtype, np.dtype(rt))
@@ -1497,6 +1499,49 @@ class TestVectorize(object):
         with assert_raises_regex(ValueError, 'new output dimensions'):
             f(x)
 
+
+class TestLeaks(object):
+    class A(object):
+        iters = 20
+
+        def bound(self, *args):
+            return 0
+
+        @staticmethod
+        def unbound(*args):
+            return 0
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.parametrize('name, incr', [
+            ('bound', A.iters),
+            ('unbound', 0),
+            ])
+    def test_frompyfunc_leaks(self, name, incr):
+        # exposed in gh-11867 as np.vectorized, but the problem stems from
+        # frompyfunc.
+        # class.attribute = np.frompyfunc(<method>) creates a
+        # reference cycle if <method> is a bound class method. It requires a
+        # gc collection cycle to break the cycle (on CPython 3)
+        import gc
+        A_func = getattr(self.A, name)
+        gc.disable()
+        try:
+            refcount = sys.getrefcount(A_func)
+            for i in range(self.A.iters):
+                a = self.A()
+                a.f = np.frompyfunc(getattr(a, name), 1, 1)
+                out = a.f(np.arange(10))
+            a = None
+            if PY2:
+                assert_equal(sys.getrefcount(A_func), refcount)
+            else:
+                # A.func is part of a reference cycle if incr is non-zero
+                assert_equal(sys.getrefcount(A_func), refcount + incr)
+            for i in range(5):
+                gc.collect()
+            assert_equal(sys.getrefcount(A_func), refcount)
+        finally:
+            gc.enable()
 
 class TestDigitize(object):
 
