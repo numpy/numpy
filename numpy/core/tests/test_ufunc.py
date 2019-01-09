@@ -1908,3 +1908,9 @@ class TestUfunc(object):
     def test_no_doc_string(self):
         # gh-9337
         assert_('\n' not in umt.inner1d_no_doc.__doc__)
+
+    def test_invalid_args(self):
+        # gh-7961
+        exc = pytest.raises(TypeError, np.sqrt, None)
+        # minimally check the exception text
+        assert 'loop of ufunc does not support' in str(exc)
