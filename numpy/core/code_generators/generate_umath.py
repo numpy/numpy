@@ -802,8 +802,9 @@ defdict = {
 'divmod':
     Ufunc(2, 2, None,
           docstrings.get('numpy.core.umath.divmod'),
-          None,
+          'PyUFunc_DivmodTypeResolver',
           TD(intflt),
+          [TypeDescription('m', FullTypeDescr, 'mm', 'qm')],
           # TD(O, f='PyNumber_Divmod'),  # gh-9730
           ),
 'hypot':
