@@ -60,7 +60,7 @@ jobs:
   # two C compilers, but with homebrew looks like we're
   # now stuck getting the full gcc toolchain instead of
   # just pulling in gfortran
-  - script: brew install gcc
+  - script: HOMEBREW_NO_AUTO_UPDATE=1 brew install gcc
     displayName: 'make gfortran available on mac os vm'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
