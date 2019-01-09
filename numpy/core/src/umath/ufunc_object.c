@@ -4909,7 +4909,8 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     if (ufunc->identity == PyUFunc_IdentityValue) {
         Py_INCREF(identity_value);
         ufunc->identity_value = identity_value;
-    } else {
+    }
+    else {
         ufunc->identity_value = NULL;
     }
 
