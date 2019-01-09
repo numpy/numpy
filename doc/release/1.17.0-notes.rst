@@ -50,6 +50,11 @@ identity, it is necessary to also pass in an initial value (e.g.,
 These functions now accept a ``hermitian`` argument, matching the one added
 to ``np.linalg.matrix_rank`` in 1.14.0.
 
+divmod operation is now supported for two ``timedelta64`` operands
+------------------------------------------------------------------
+The divmod operator now handles two ``np.timedelta64`` operands, with
+type signature mm->qm.
+
 
 Improvements
 ============
@@ -91,3 +96,8 @@ Changes
 `numpy.median`, `numpy.percentile`, and `numpy.quantile` used to emit a
 ``RuntimeWarning`` when encountering an `numpy.nan`. Since they return the
 ``nan`` value, the warning is redundant and has been removed.
+
+``timedelta64 % 0`` behavior adjusted to return ``NaT``
+-------------------------------------------------------
+The modulus operation with two ``np.timedelta64`` operands now returns
+``NaT`` in the case of division by zero, rather than returning zero
