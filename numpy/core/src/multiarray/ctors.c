@@ -1410,6 +1410,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * dimensions, so the array is now 0d.
          */
         nd = 0;
+        Py_DECREF(descr);
         descr = (PyArray_Descr *)PyObject_CallFunctionObjArgs(
                 (PyObject *)&PyArrayDescr_Type, Py_TYPE(view->obj), NULL);
         if (descr == NULL) {
