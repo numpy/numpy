@@ -566,16 +566,36 @@ NPY_NO_EXPORT void
 PyUFunc_O_O_method(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     char *meth = (char *)func;
+    PyObject *tup = PyTuple_New(0);
+    if (tup == NULL) {
+        return;
+    }
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None, meth, NULL);
+        PyObject *ret, *func;
+        func = PyObject_GetAttrString(in1 ? in1 : Py_None, meth);
+        if (func == NULL || !PyCallable_Check(func)) {
+            PyObject *exc, *val, *tb;
+            PyTypeObject *type = in1 ? Py_TYPE(in1) : Py_TYPE(Py_None);
+            PyErr_Fetch(&exc, &val, &tb);
+            PyErr_Format(PyExc_TypeError,
+                         "loop of ufunc does not support argument %d of "
+                         "type %s which has no callable %s method",
+                         i, type->tp_name, meth);
+            npy_PyErr_ChainExceptionsCause(exc, val, tb);
+            Py_DECREF(tup);
+            return;
+        }
+        ret = PyObject_Call(func, tup, NULL);
         if (ret == NULL) {
+            Py_DECREF(tup);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
+    Py_DECREF(tup);
 }
 
 /*UFUNC_API*/
