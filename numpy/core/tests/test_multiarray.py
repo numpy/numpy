@@ -7211,6 +7211,7 @@ class TestConversion(object):
         except NameError:
             Error = RuntimeError  # python < 3.5
         assert_raises(Error, bool, self_containing)  # previously stack overflow
+        self_containing[0] = None  # resolve circular reference
 
     def test_to_int_scalar(self):
         # gh-9972 means that these aren't always the same
