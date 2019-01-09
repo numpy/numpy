@@ -1623,7 +1623,7 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp *dimensions, npy_intp *steps, voi
         else {
             if (in2 == 0) {
                 npy_set_floatstatus_divbyzero();
-                *((npy_timedelta *)op1) = 0;
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
             else {
                 /* handle mixed case the way Python does */
