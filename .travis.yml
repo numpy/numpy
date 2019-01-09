@@ -71,6 +71,11 @@ matrix:
     - python: 3.6
       env:
        - NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1
+    - os: linux-ppc64le
+      python: 3.6
+      env:
+       # for matrix annotation only
+       - PPC64_LE=1
 
 before_install:
   - ./tools/travis-before-install.sh
