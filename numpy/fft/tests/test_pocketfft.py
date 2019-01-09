@@ -176,7 +176,7 @@ class TestFFT1D(object):
         [np.fft.fft, np.fft.fft2, np.fft.fftn,
          np.fft.ifft, np.fft.ifft2, np.fft.ifftn])
 def test_fft_with_order(dtype, order, fft):
-    # Check that FFT/IFFT produces identical results for C, Fotran and
+    # Check that FFT/IFFT produces identical results for C, Fortran and
     # non contiguous arrays
     rng = np.random.RandomState(42)
     X = rng.rand(8, 7, 13).astype(dtype, copy=False)
