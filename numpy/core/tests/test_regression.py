@@ -46,7 +46,7 @@ class TestRegression(object):
             assert_array_equal(a, b)
 
     def test_typeNA(self):
-        # Issue gh-515 
+        # Issue gh-515
         with suppress_warnings() as sup:
             sup.filter(np.VisibleDeprecationWarning)
             assert_equal(np.typeNA[np.int64], 'Int64')
@@ -2415,3 +2415,11 @@ class TestRegression(object):
         # gh-11993
         arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
         assert_raises(TypeError, arr.astype, 'c8')
+
+    def test_eff1d_casting(self):
+        # gh-12711
+        x = np.array([1, 2, 4, 7, 0], dtype=np.int16)
+        res = np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
+        assert_equal(res, [-99,   1,   2,   3,  -7,  88,  99])
+        assert_raises(ValueError, np.ediff1d, x, to_begin=(1<<20))
+        assert_raises(ValueError, np.ediff1d, x, to_end=(1<<20))
