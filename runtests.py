@@ -116,6 +116,11 @@ def main(argv):
                               "--bench-compare=COMMIT to override HEAD with "
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
+    parser.add_argument("--valgrind", action="store_true",
+                        help=("Starts a new runtest.py process within valgrind. "
+                              "Should have py>=3.6 or a debug build with "
+                              "valgrind support. Will try to use "
+                              "https://github.com/seberg/pytest-valgrind"))
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
@@ -258,6 +263,10 @@ def main(argv):
                    commit_a, commit_b] + bench_args
             ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
+
+    if args.valgrind:
+        ret = run_again_inside_valgrind(sys.argv[:])
+        sys.exit(ret)
 
     test_dir = os.path.join(ROOT_DIR, 'build', 'test')
 
@@ -467,6 +476,70 @@ def lcov_generate():
         print("genhtml failed!")
     else:
         print("HTML output generated under build/lcov/")
+
+
+def run_again_inside_valgrind(args):
+    """Runs this file again inside valgrind with the `--valgrind` argument
+    removed. When available will add `pytest_valgrind` to the pytest command
+    to give a better output. Otherwise, a high verbosity of pytest should be
+    used to know at least which test is running.
+
+    When *not* running on a debug build, sets `PYTHONMALLOC=malloc`. For
+    debug builds, this may be necessary as well.
+
+    It will add `--show-leak-kinds=definite` to the valgrind command, currently
+    it is not further configurable. Also adds `--track-origins=yes` although
+    it is often not very useful. Possibly more leak kind showing makes sense
+    on debug builds of python. I have not tested this.
+
+    To get better summaries/leak granularity, install pytest-valgrind from:
+    https://github.com/seberg/pytest-valgrind
+    """
+    import sysconfig
+
+    if not sysconfig.get_config_var("WITH_VALGRIND"):
+        # If python was not configured with valgrind, make sure we use
+        # `PYTHONMALLOC=malloc` to get useful output.
+        os.environ['PYTHONMALLOC'] = "malloc"
+
+    # We call the script again with the valgrind argument removed.
+    args.insert(0, sys.executable)
+    args.remove("--valgrind")
+    if not "--" in args:
+        args.append("--")
+
+    # Valgrind can cause some errors during collections, so ignore those:
+    args.append("--continue-on-collection-errors")
+
+    commands = ["valgrind", "--show-leak-kinds=definite",
+                "--track-origins=yes"]
+    # Use pytest_valgrind module only if available:
+    try:
+        import pytest_valgrind
+
+        valgrind_log = os.path.join(ROOT_DIR, 'valgrind.log')
+
+        args.append("--valgrind")
+        args.append("--valgrind-log={}".format(valgrind_log))
+
+        commands.append("--log-file={}".format(valgrind_log))
+        commands.extend(args)
+
+        print("Running tests in valgrind, errors are only reported "
+              "for valgrind errors.\n"
+              "The full valgrind output with test "
+              "annotations will be written to `{}`.".format(valgrind_log))
+        ret = subprocess.call(commands)
+
+    except ImportError:
+        print("NOTE: pytest-valgrind is not available, to recieve "
+              "better summaries you can install it. Otherwise make sure to "
+              "increase verbosity to see which test is running.")
+
+        commands.extend(args)
+        ret = subprocess.call(commands)
+
+    sys.exit(ret)
 
 
 #
