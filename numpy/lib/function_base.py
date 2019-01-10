@@ -1767,7 +1767,7 @@ def disp(mesg, device=None, linefeed=True):
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
-_DIMENSION_NAME = r'\w+'
+_DIMENSION_NAME = r'\w+\?{,1}'
 _CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
 _ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
 _ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
@@ -1776,12 +1776,12 @@ _SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
 
 def _parse_gufunc_signature(signature):
     """
-    Parse string signatures for a generalized universal function.
+    Private function to parse string signatures for a np.vectorize.
 
     Arguments
     ---------
     signature : string
-        Generalized universal function signature, e.g., ``(m,n),(n,p)->(m,p)``
+        Generalized universal function signature, e.g., ``(m?,n),(n,p?)->(m?,p?)``
         for ``np.matmul``.
 
     Returns

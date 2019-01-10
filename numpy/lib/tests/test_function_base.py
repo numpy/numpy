@@ -1350,24 +1350,30 @@ class TestVectorize(object):
         x = np.arange(5)
         assert_array_equal(f(x), x)
 
-    def test_parse_gufunc_signature(self):
-        assert_equal(nfb._parse_gufunc_signature('(x)->()'), ([('x',)], [()]))
-        assert_equal(nfb._parse_gufunc_signature('(x,y)->()'),
-                     ([('x', 'y')], [()]))
-        assert_equal(nfb._parse_gufunc_signature('(x),(y)->()'),
-                     ([('x',), ('y',)], [()]))
-        assert_equal(nfb._parse_gufunc_signature('(x)->(y)'),
-                     ([('x',)], [('y',)]))
-        assert_equal(nfb._parse_gufunc_signature('(x)->(y),()'),
-                     ([('x',)], [('y',), ()]))
-        assert_equal(nfb._parse_gufunc_signature('(),(a,b,c),(d)->(d,e)'),
-                     ([(), ('a', 'b', 'c'), ('d',)], [('d', 'e')]))
-        with assert_raises(ValueError):
-            nfb._parse_gufunc_signature('(x)(y)->()')
-        with assert_raises(ValueError):
-            nfb._parse_gufunc_signature('(x),(y)->')
-        with assert_raises(ValueError):
-            nfb._parse_gufunc_signature('((x))->(x)')
+    @pytest.mark.parametrize('signature, expected', [
+        #   signature               input             output
+        ('(x)->()',               ([('x',)],         [()])),
+        ('(x,y)->()',             ([('x', 'y')],     [()])),
+        ('(x),(y)->()',           ([('x',), ('y',)], [()])),
+        ('(x)->(y)',              ([('x',)],         [('y',)])),
+        ('(x)->(y),()',           ([('x',)],         [('y',), ()])),
+        ('(),(a,b,c),(d)->(d,e)', ([(), ('a', 'b', 'c'), ('d',)], 
+                                                     [('d', 'e')])),
+        ('(n?,k),(k,m?)->(n?,m?)',([('n?', 'k'), ('k', 'm?')],
+                                                     [('n?', 'm?')])),
+        # the parser does not ignore whitespace
+        ('(x,   y ) -> (  x)',    None),
+        ('(x)(y)->()',            None),
+        ('(x),(y)->',             None),
+        ('((x))->(x)',            None),
+    ])
+    def test_parse_gufunc_signature(self, signature, expected):
+        if expected is None:
+            with assert_raises(ValueError):
+                nfb._parse_gufunc_signature(signature)
+        else:
+            result = nfb._parse_gufunc_signature(signature)
+            assert_equal(result, expected)
 
     def test_signature_simple(self):
         def addsubtract(a, b):
