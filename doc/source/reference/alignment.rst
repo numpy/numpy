@@ -97,7 +97,7 @@ Here is how the variables above are used:
 
 Note that the strided-copy and strided-cast code are deeply intertwined and so
 any arrays being processed by them must be both uint and true aligned, even
-though te copy-code only needs uint alignment and the cast code only true
+though the copy-code only needs uint alignment and the cast code only true
 alignment.  If there is ever a big rewrite of this code it would be good to
 allow them to use different alignments.
 

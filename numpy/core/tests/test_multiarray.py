@@ -8020,6 +8020,39 @@ class TestAlignment(object):
                         for shape in [n, (1, 2, 3, n)]:
                             self.check(shape, np.dtype(dtype), order, align)
 
+    def test_strided_loop_alignments(self):
+        # particularly test that complex64 and float128 use right alignment
+        # code-paths, since these are particularly problematic. It is useful to
+        # turn on USE_DEBUG for this test, so lowlevel-loop asserts are run.
+        for align in [1, 2, 4, 8, 12, 16, None]:
+            xf64 = _aligned_zeros(3, np.float64)
+
+            xc64 = _aligned_zeros(3, np.complex64, align=align)
+            xf128 = _aligned_zeros(3, np.longdouble, align=align)
+
+            # test casting, both to and from misaligned
+            with suppress_warnings() as sup:
+                sup.filter(np.ComplexWarning, "Casting complex values")
+                xc64.astype('f8')
+            xf64.astype(np.complex64)
+            test = xc64 + xf64
+
+            xf128.astype('f8')
+            xf64.astype(np.longdouble)
+            test = xf128 + xf64
+
+            test = xf128 + xc64
+
+            # test copy, both to and from misaligned
+            # contig copy
+            xf64[:] = xf64.copy()
+            xc64[:] = xc64.copy()
+            xf128[:] = xf128.copy()
+            # strided copy
+            xf64[::2] = xf64[::2].copy()
+            xc64[::2] = xc64[::2].copy()
+            xf128[::2] = xf128[::2].copy()
+
 def test_getfield():
     a = np.arange(32, dtype='uint16')
     if sys.byteorder == 'little':
