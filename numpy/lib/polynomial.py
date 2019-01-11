@@ -721,7 +721,15 @@ def polyval(p, x):
     poly1d([ 76.])
 
     """
-    p = NX.asarray(p)
+    if hasattr(p, 'mask'):
+        d = NX.asarray(p.data)
+        m = NX.asarray(p.mask)
+        for i in range(len(p)):
+            if m[i] == True:
+                d[i] = 0
+        p = NX.asarray(d)
+    else:
+        p = NX.asarray(p)
     if isinstance(x, poly1d):
         y = 0
     else:
