@@ -20,13 +20,6 @@ class Records(Benchmark):
             ]
         )
         self.buffer = self.l50.tostring() * self.fields_number
-        for file in ('test1.bin', 'test2.bin', 'test3.bin'):
-            with open(file, 'w+b') as f:
-                f.write(self.buffer)
-
-    def teardown(self):
-        for file in ('test1.bin', 'test2.bin', 'test3.bin'):
-            os.remove(file)
 
     def time_fromarrays_w_dtype(self):
         np.core.records.fromarrays(self.arrays, dtype=self.dtype_)
