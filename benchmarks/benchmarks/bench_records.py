@@ -41,12 +41,3 @@ class Records(Benchmark):
 
     def time_fromstring_formats_as_string(self):
         np.core.records.fromstring(self.buffer, formats=self.formats_str)
-
-    def time_fromfile_w_dtype(self):
-        np.core.records.fromfile('test1.bin', dtype=self.dtype_)
-
-    def time_fromfile_formats_as_list(self):
-        np.core.records.fromfile('test2.bin', formats=self.formats)
-
-    def time_fromfile_formats_as_string(self):
-        np.core.records.fromfile('test3.bin', formats=self.formats_str)
