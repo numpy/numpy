@@ -311,7 +311,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
          * previously lost up to 11 bits, we need to check these as well.
          * In all other cases, we can just add one.
          */
-        if (((f_sig&0x00003fffu) != 0x00001000u) || (f&0x008ffu)) {
+        if (((f_sig&0x00003fffu) != 0x00001000u) || (f&0x000007ffu)) {
             f_sig += 0x00001000u;
         }
 #else
@@ -435,7 +435,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
             d_sig += 0x0010000000000000ULL;
         }
 #else
-        d_sig += 0x0000e00000000000ULL;
+        d_sig += 0x0010000000000000ULL;
 #endif
         h_sig = (npy_uint16) (d_sig >> 53);
         /*
