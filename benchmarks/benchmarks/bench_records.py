@@ -5,7 +5,7 @@ from .common import Benchmark
 
 import numpy as np
 
-      
+
 class Records(Benchmark):
     def setup(self):
         self.l50 = np.arange(1000)
@@ -23,37 +23,37 @@ class Records(Benchmark):
         for file in ('test1.bin', 'test2.bin', 'test3.bin'):
             with open(file, 'w+b') as f:
                 f.write(self.buffer)
-        
+
     def teardown(self):
         for file in ('test1.bin', 'test2.bin', 'test3.bin'):
             os.remove(file)
-        
+
     def time_fromarrays_w_dtype(self):
         np.core.records.fromarrays(self.arrays, dtype=self.dtype_)
-        
+
     def time_fromarrays_wo_dtype(self):
         np.core.records.fromarrays(self.arrays)
-        
+
     def time_fromarrays_formats_as_list(self):
         np.core.records.fromarrays(self.arrays, formats=self.formats)
-        
+
     def time_fromarrays_formats_as_string(self):
         np.core.records.fromarrays(self.arrays, formats=self.formats_str)
-        
+
     def time_fromstring_w_dtype(self):
         np.core.records.fromstring(self.buffer, dtype=self.dtype_)
-        
+
     def time_fromstring_formats_as_list(self):
         np.core.records.fromstring(self.buffer, formats=self.formats)
-        
+
     def time_fromstring_formats_as_string(self):
         np.core.records.fromstring(self.buffer, formats=self.formats_str)
-           
+
     def time_fromfile_w_dtype(self):
         np.core.records.fromfile('test1.bin', dtype=self.dtype_)
-        
+
     def time_fromfile_formats_as_list(self):
         np.core.records.fromfile('test2.bin', formats=self.formats)
-        
+
     def time_fromfile_formats_as_string(self):
         np.core.records.fromfile('test3.bin', formats=self.formats_str)

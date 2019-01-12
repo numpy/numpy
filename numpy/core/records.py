@@ -767,7 +767,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     (0.5, 10, 'abcde')
     >>> r.shape
     (10,)
-    """  
+    """
 
     if (shape is None or shape == 0):
         shape = (-1,)
