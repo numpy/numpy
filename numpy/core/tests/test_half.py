@@ -72,9 +72,13 @@ class TestHalf(object):
     @pytest.mark.parametrize("offset", [None, "up", "down"])
     @pytest.mark.parametrize("shift", [None, "up", "down"])
     @pytest.mark.parametrize("float_t", [np.float32, np.float64])
-    def test_half_conversion_denormal_rounding(self, float_t, shift, offset):
+    def test_half_conversion_rounding(self, float_t, shift, offset):
         # Assumes that round to even is used during casting.
-        f16s_patterns = np.arange(0, 0x401, dtype=np.uint16)
+        max_pattern = np.float16(np.finfo(np.float16).max).view(np.uint16)
+
+        # Test all (positive) finite numbers, denormals are most interesting
+        # however:
+        f16s_patterns = np.arange(0, max_pattern+1, dtype=np.uint16)
         f16s_float = f16s_patterns.view(np.float16).astype(float_t)
 
         # Shift the values by half a bit up or a down (or do not shift),
