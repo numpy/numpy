@@ -71,7 +71,7 @@ class TestHalf(object):
 
     @pytest.mark.parametrize("offset", [None, "up", "down"])
     @pytest.mark.parametrize("shift", [None, "up", "down"])
-    @pytest.mark.parametrize("float_t", [np.float32,])
+    @pytest.mark.parametrize("float_t", [np.float32, np.float64])
     def test_half_conversion_denormal_rounding(self, float_t, shift, offset):
         # Assumes that round to even is used during casting.
         f16s_patterns = np.arange(0, 0x401, dtype=np.uint16)
@@ -120,6 +120,29 @@ class TestHalf(object):
             cmp_patterns.view(np.int16)[...] += shift_pattern
 
         assert_equal(res_patterns, cmp_patterns)
+
+    @pytest.mark.parametrize(["float_t", "uint_t", "bits"],
+                             [(np.float32, np.uint32, 23),
+                              (np.float64, np.uint64, 52)])
+    def test_half_conversion_denormal_round_even(self, float_t, uint_t, bits):
+        # Test specifically that all bits are considered when deciding
+        # whether round to even should occur (i.e. no bits are lost at the
+        # end. Compare also gh-12721. The most bits can get lost for the
+        # smallest denormal:
+        smallest_value = np.uint16(1).view(np.float16).astype(float_t)
+        assert smallest_value == 2**-24
+
+        # Will be rounded to zero based on round to even rule:
+        rounded_to_zero = smallest_value / float_t(2)
+        assert rounded_to_zero.astype(np.float16) == 0
+
+        # The significand will be all 0 for the float_t, test that we do not
+        # lose the lower ones of these:
+        for i in range(bits):
+            # slightly increasing the value should make it round up:
+            larger_pattern = rounded_to_zero.view(uint_t) | uint_t(1 << i)
+            larger_value = larger_pattern.view(float_t)
+            assert larger_value.astype(np.float16) == smallest_value
 
     def test_nans_infs(self):
         with np.errstate(all='ignore'):
