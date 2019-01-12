@@ -307,9 +307,11 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
         /*
          * If the last bit in the half significand is 0 (already even), and
          * the remaining bit pattern is 1000...0, then we do not add one
-         * to the bit after the half significand.  In all other cases, we do.
+         * to the bit after the half significand. However, since we may have
+         * previously lost up to 11 bits, we need to check these as well.
+         * In all other cases, we can just add one.
          */
-        if ((f_sig&0x00003fffu) != 0x00001000u) {
+        if (((f_sig&0x00003fffu) != 0x00001000u) || (f&0x008ffu)) {
             f_sig += 0x00001000u;
         }
 #else
@@ -416,7 +418,12 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
             npy_set_floatstatus_underflow();
         }
 #endif
-        d_sig >>= (1009 - d_exp);
+        /*
+         * Unlike floats, doubles has enough room to shift left to align
+         * significand. This changes the constant compared to normal branch.
+         */
+        assert(d_exp - 998 >= 0);
+        d_sig <<= (d_exp - 998);
         /* Handle rounding by adding 1 to the bit beyond half precision */
 #if NPY_HALF_ROUND_TIES_TO_EVEN
         /*
@@ -424,13 +431,13 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
          * the remaining bit pattern is 1000...0, then we do not add one
          * to the bit after the half significand.  In all other cases, we do.
          */
-        if ((d_sig&0x000007ffffffffffULL) != 0x0000020000000000ULL) {
-            d_sig += 0x0000020000000000ULL;
+        if ((d_sig&0x003fffffffffffffULL) != 0x0010000000000000ULL) {
+            d_sig += 0x0010000000000000ULL;
         }
 #else
-        d_sig += 0x0000020000000000ULL;
+        d_sig += 0x0000e00000000000ULL;
 #endif
-        h_sig = (npy_uint16) (d_sig >> 42);
+        h_sig = (npy_uint16) (d_sig >> 53);
         /*
          * If the rounding causes a bit to spill into h_exp, it will
          * increment h_exp from zero to one and h_sig will be zero.
