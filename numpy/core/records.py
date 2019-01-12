@@ -599,7 +599,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     arrayList = [sb.asarray(x) for x in arrayList]
 
-    if (shape is None or shape == 0):
+    if shape is None or shape == 0:
         shape = arrayList[0].shape
 
     if isinstance(shape, int):
