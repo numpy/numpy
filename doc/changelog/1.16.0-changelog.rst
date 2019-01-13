@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 111 people contributed to this release.  People with a "+" by their
+A total of 113 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * Alan Fontenot +
@@ -30,6 +30,7 @@ names contributed a patch for the first time.
 * Elena Mokeeva +
 * Elliott Sales de Andrade +
 * Emil Hessman +
+* Eric Larson
 * Eric Schles +
 * Eric Wieser
 * Giulio Benetti +
@@ -47,6 +48,7 @@ names contributed a patch for the first time.
 * Jeremy Manning +
 * Jeroen Demeyer
 * John Darbyshire +
+* John Kirkham
 * John Zwinck
 * Jonas Jensen +
 * Joscha Reimer +
@@ -114,13 +116,13 @@ names contributed a patch for the first time.
 * Yug Khanna +
 * Yuji Kanagawa +
 * Yukun Guo +
-* lerbuke +
 * @ankokumoyashi +
+* @lerbuke +
 
 Pull requests merged
 ====================
 
-A total of 477 pull requests were merged for this release.
+A total of 490 pull requests were merged for this release.
 
 * `#6256 <https://github.com/numpy/numpy/pull/6256>`__: NEP: Add proposal for oindex and vindex.
 * `#6377 <https://github.com/numpy/numpy/pull/6377>`__: BUG: define "uint-alignment", fixes complex64 alignment
@@ -599,4 +601,16 @@ A total of 477 pull requests were merged for this release.
 * `#12582 <https://github.com/numpy/numpy/pull/12582>`__: BUG: fix f2py pep338 execution method
 * `#12587 <https://github.com/numpy/numpy/pull/12587>`__: BUG: Make `arr.ctypes.data` hold a reference to the underlying...
 * `#12588 <https://github.com/numpy/numpy/pull/12588>`__: BUG: check for errors after PyArray_DESCR_REPLACE
-* `#12590 <https://github.com/numpy/numpy/pull/12590>`__: DOC, MAINT: Prepare for 1.16.0rc1 release
+* `#12590 <https://github.com/numpy/numpy/pull/12590>`__: DOC, MAINT: Prepare for 1.16.0rc1 release.
+* `#12603 <https://github.com/numpy/numpy/pull/12603>`__: DOC: Fix markup in 1.16.0 release notes.
+* `#12621 <https://github.com/numpy/numpy/pull/12621>`__: BUG: longdouble with elsize 12 is never uint alignable.
+* `#12622 <https://github.com/numpy/numpy/pull/12622>`__: BUG: Add missing free in ufunc dealloc
+* `#12623 <https://github.com/numpy/numpy/pull/12623>`__: MAINT: add test for 12-byte alignment
+* `#12655 <https://github.com/numpy/numpy/pull/12655>`__: BUG: fix uint alignment asserts in lowlevel loops
+* `#12656 <https://github.com/numpy/numpy/pull/12656>`__: BENCH: don't fail at import time with old Numpy
+* `#12657 <https://github.com/numpy/numpy/pull/12657>`__: DOC: update 2018 -> 2019
+* `#12705 <https://github.com/numpy/numpy/pull/12705>`__: ENH: Better links in documentation
+* `#12706 <https://github.com/numpy/numpy/pull/12706>`__: MAINT: Further fixups to uint alignment checks
+* `#12707 <https://github.com/numpy/numpy/pull/12707>`__: BUG: Add 'sparc' to platforms implementing 16 byte reals.
+* `#12708 <https://github.com/numpy/numpy/pull/12708>`__: TST: Fix endianness in unstuctured_to_structured test
+* `#12710 <https://github.com/numpy/numpy/pull/12710>`__: TST: pin Azure brew version for stability.
