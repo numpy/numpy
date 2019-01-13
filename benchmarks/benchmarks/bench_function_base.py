@@ -97,7 +97,7 @@ class Select(Benchmark):
 
 class Sort(Benchmark):
     params = [
-        ['quick', 'merge', 'heap', None],
+        ['quick', 'merge', 'heap'],
         ['float32', 'int32', 'uint32']
     ]
     param_names = ['kind', 'dtype']
