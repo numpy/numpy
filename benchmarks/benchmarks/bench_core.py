@@ -97,8 +97,8 @@ class Temporaries(Benchmark):
 
 
 class CorrConv(Benchmark):
-    params = [[50, 1000, 1e5],
-              [10, 100, 1000, 1e4],
+    params = [[50, 1000, int(1e5)],
+              [10, 100, 1000, int(1e4)],
               ['valid', 'same', 'full']]
     param_names = ['size1', 'size2', 'mode']
 
