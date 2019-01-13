@@ -81,7 +81,7 @@ Useful math constants
 ~~~~~~~~~~~~~~~~~~~~~
 
 The following math constants are available in npy_math.h. Single and extended
-precision are also available by adding the F and L suffixes respectively.
+precision are also available by adding the f and l suffixes respectively.
 
 .. c:var:: NPY_E
 
