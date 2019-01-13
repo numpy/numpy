@@ -167,10 +167,12 @@ class format_parser(object):
         if formats is None:
             raise ValueError("Need formats argument")
         if isinstance(formats, list):
-            if len(formats) < 2:
-                formats.append('')
-            formats = ','.join(formats)
-        dtype = sb.dtype(formats, aligned)
+            dtype = sb.dtype(
+                [('f{}'.format(i), format_) for i, format_ in enumerate(formats)],
+                aligned,
+            )
+        else:
+            dtype = sb.dtype(formats, aligned)
         fields = dtype.fields
         if fields is None:
             dtype = sb.dtype([('f1', dtype)], aligned)
@@ -611,7 +613,6 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
             if not isinstance(obj, ndarray):
                 raise ValueError("item in the array list must be an ndarray.")
             formats.append(obj.dtype.str)
-        formats = ','.join(formats)
 
     if dtype is not None:
         descr = sb.dtype(dtype)
