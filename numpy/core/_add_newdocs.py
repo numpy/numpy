@@ -4017,10 +4017,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """
     a.tolist()
 
-    Return the array as a (possibly nested) list.
+    Return the array as an ``a.ndim``-levels deep nested list of Python scalars.
 
     Return a copy of the array data as a (nested) Python list.
-    Data items are converted to the nearest compatible Python type.
+    Data items are converted to the nearest compatible builtin Python type, via
+    the `~numpy.ndarray.item` function.
+
+    If ``a.ndim`` is 0, then since the depth of the nested list is 0, it will
+    not be a list at all, but a simple Python scalar.
 
     Parameters
     ----------
@@ -4028,24 +4032,41 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Returns
     -------
-    y : list
+    y : object, or list of object, or list of list of object, or ...
         The possibly nested list of array elements.
 
     Notes
     -----
-    The array may be recreated, ``a = np.array(a.tolist())``.
+    The array may be recreated via ``a = np.array(a.tolist())``, although this
+    may sometimes lose precision.
 
     Examples
     --------
+    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``:
+
     >>> a = np.array([1, 2])
+    >>> list(a)
+    [1, 2]
     >>> a.tolist()
     [1, 2]
+
+    However, for a 2D array, ``tolist`` applies recursively:
+
     >>> a = np.array([[1, 2], [3, 4]])
     >>> list(a)
     [array([1, 2]), array([3, 4])]
     >>> a.tolist()
     [[1, 2], [3, 4]]
 
+    The base case for this recursion is a 0D array:
+
+    >>> a = np.array(1)
+    >>> list(a)
+    Traceback (most recent call last):
+      ...
+    TypeError: iteration over a 0-d array
+    >>> a.tolist()
+    1
     """))
 
 
