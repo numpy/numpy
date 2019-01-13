@@ -106,4 +106,4 @@ class Lstsq(Benchmark):
         self.b = get_indexes_rand()[:100].astype(np.float64)
 
     def time_numpy_linalg_lstsq_a__b_float64(self):
-        np.linalg.lstsq(self.a, self.b)
+        np.linalg.lstsq(self.a, self.b, rcond=-1)
