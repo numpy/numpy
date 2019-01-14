@@ -47,11 +47,9 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
     PyObject *out;
 
     /* If the requested dtype is flexible, adapt it */
-    if (dtype != NULL) {
-        dtype = PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), dtype);
-        if (dtype == NULL) {
-            return NULL;
-        }
+    dtype = PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), dtype);
+    if (dtype == NULL) {
+        return NULL;
     }
     out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
                                PyArray_NDIM(arr),
