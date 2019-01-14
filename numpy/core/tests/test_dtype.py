@@ -585,6 +585,36 @@ class TestStructuredObjectRefcounting:
         assert after_repeat - after == count * 2 * 10
 
 
+class TestStructuredDtypeSparseFields(object):
+    """Tests subarray fields which contain sparse dtypes so that
+    not all memory is used by the dtype work. Such dtype's should
+    leave the underlying memory unchanged.
+    """
+    dtype = np.dtype([('a', {'names':['aa', 'ab'], 'formats':['f', 'f'],
+                             'offsets':[0, 4]}, (2, 3))])
+    sparse_dtype = np.dtype([('a', {'names':['ab'], 'formats':['f'],
+                                    'offsets':[4]}, (2, 3))])
+
+    @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
+    @pytest.mark.valgrind_error(reason="reads from unitialized buffers.")
+    def test_sparse_field_assignment(self):
+        arr = np.zeros(3, self.dtype)
+        sparse_arr = arr.view(self.sparse_dtype)
+
+        sparse_arr[...] = np.finfo(np.float32).max
+        # dtype is reduced when accessing the field, so shape is (3, 2, 3):
+        assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
+
+    def test_sparse_field_assignment_fancy(self):
+        # Fancy assignment goes to the copyswap function for comlex types:
+        arr = np.zeros(3, self.dtype)
+        sparse_arr = arr.view(self.sparse_dtype)
+
+        sparse_arr[[0, 1, 2]] = np.finfo(np.float32).max
+        # dtype is reduced when accessing the field, so shape is (3, 2, 3):
+        assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
+
+
 class TestMonsterType(object):
     """Test deeply nested subtypes."""
 
