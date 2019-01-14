@@ -824,8 +824,8 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyArrayObject *ret;
 
         /* If the requested dtype is flexible, adapt it */
-        PyArray_AdaptFlexibleDType((PyObject *)self, PyArray_DESCR(self),
-                                                                    &dtype);
+        dtype = PyArray_AdaptFlexibleDType((PyObject *)self,
+                                           PyArray_DESCR(self), dtype);
         if (dtype == NULL) {
             return NULL;
         }
