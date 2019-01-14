@@ -1102,7 +1102,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             Py_INCREF(op_request_dtype);
             /* If the requested dtype is flexible, adapt it */
             op_request_dtype = PyArray_AdaptFlexibleDType((PyObject *)(*op), PyArray_DESCR(*op),
-                                        op_request_dtype);
+                                                          op_request_dtype);
             if (op_request_dtype == NULL) {
                 return 0;
             }
