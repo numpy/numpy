@@ -67,6 +67,7 @@ BASE_MODULE = "numpy"
 
 PUBLIC_SUBMODULES = [
     'core',
+    'doc.structured_arrays',
     'f2py',
     'linalg',
     'lib',
@@ -194,6 +195,9 @@ def get_all_dict(module):
             all_dict.remove(name)
         except ValueError:
             pass
+    if not all_dict:
+        # Must be a pure documentation module like doc.structured_arrays
+        all_dict.append('__doc__')
 
     # Modules are almost always private; real submodules need a separate
     # run of refguide_check.
@@ -309,7 +313,7 @@ def validate_rst_syntax(text, name, dots=True):
     ok_unknown_items = set([
         'mod', 'currentmodule', 'autosummary', 'data',
         'obj', 'versionadded', 'versionchanged', 'module', 'class',
-        'ref', 'func', 'toctree', 'moduleauthor',
+        'ref', 'func', 'toctree', 'moduleauthor', 'term', 'c:member',
         'sectionauthor', 'codeauthor', 'eq', 'doi', 'DOI', 'arXiv', 'arxiv'
     ])
 
