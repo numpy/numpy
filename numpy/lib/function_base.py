@@ -1150,7 +1150,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     """
     Calculate the n-th discrete difference along the given axis.
 
-    The first difference is given by ``out[n] = a[n+1] - a[n]`` along
+    The first difference is given by ``out[i] = a[i+1] - a[i]`` along
     the given axis, higher differences are calculated by using `diff`
     recursively.
 
