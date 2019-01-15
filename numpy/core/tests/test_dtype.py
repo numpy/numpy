@@ -4,10 +4,12 @@ import sys
 import operator
 import pytest
 import ctypes
+import gc
 
 import numpy as np
 from numpy.core._rational_tests import rational
-from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.testing import (
+    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
 from numpy.core.numeric import pickle
 
 def assert_dtype_equal(a, b):
@@ -444,6 +446,173 @@ class TestSubarray(object):
         t1 = np.dtype('1i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
+
+
+def iter_struct_object_dtypes():
+    """
+    Iterates over a few complex dtypes and object pattern which
+    fill the array with a given object (defaults to a singleton).
+
+    Yields
+    ------
+    dtype : dtype
+    pattern : tuple
+        Structured tuple for use with `np.array`.
+    count : int
+        Number of objects stored in the dtype.
+    singleton : object
+        A singleton object. The returned pattern is constructed so that
+        all objects inside the datatype are set to the singleton.
+    """
+    obj = object()
+
+    dt = np.dtype([('b', 'O', (2, 3))])
+    p = ([[obj] * 3] * 2,)
+    yield pytest.param(dt, p, 6, obj, id="<subarray>")
+
+    dt = np.dtype([('a', 'i4'), ('b', 'O', (2, 3))])
+    p = (0, [[obj] * 3] * 2)
+    yield pytest.param(dt, p, 6, obj, id="<subarray in field>")
+
+    dt = np.dtype([('a', 'i4'),
+                   ('b', [('ba', 'O'), ('bb', 'i1')], (2, 3))])
+    p = (0, [[(obj, 0)] * 3] * 2)
+    yield pytest.param(dt, p, 6, obj, id="<structured subarray 1>")
+
+    dt = np.dtype([('a', 'i4'),
+                   ('b', [('ba', 'O'), ('bb', 'O')], (2, 3))])
+    p = (0, [[(obj, obj)] * 3] * 2)
+    yield pytest.param(dt, p, 12, obj, id="<structured subarray 2>")
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+class TestStructuredObjectRefcounting:
+    """These tests cover various uses of complicated structured types which
+    include objects and thus require reference counting.
+    """
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    @pytest.mark.parametrize(["creation_func", "creation_obj"], [
+        pytest.param(np.empty, None,
+             # None is probably used for too many things
+             marks=pytest.mark.skip("unreliable due to python's behaviour")),
+        (np.ones, 1),
+        (np.zeros, 0)])
+    def test_structured_object_create_delete(self, dt, pat, count, singleton,
+                                             creation_func, creation_obj):
+        """Structured object reference counting in creation and deletion"""
+        # The test assumes that 0, 1, and None are singletons.
+        gc.collect()
+        before = sys.getrefcount(creation_obj)
+        arr = creation_func(3, dt)
+
+        now = sys.getrefcount(creation_obj)
+        assert now - before == count * 3
+        del arr
+        now = sys.getrefcount(creation_obj)
+        assert now == before
+
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    def test_structured_object_item_setting(self, dt, pat, count, singleton):
+        """Structured object reference counting for simple item setting"""
+        one = 1
+
+        gc.collect()
+        before = sys.getrefcount(singleton)
+        arr = np.array([pat] * 3, dt)
+        assert sys.getrefcount(singleton) - before == count * 3
+        # Fill with `1` and check that it was replaced correctly:
+        before2 = sys.getrefcount(one)
+        arr[...] = one
+        after2 = sys.getrefcount(one)
+        assert after2 - before2 == count * 3
+        del arr
+        gc.collect()
+        assert sys.getrefcount(one) == before2
+        assert sys.getrefcount(singleton) == before
+
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    @pytest.mark.parametrize(
+        ['shape', 'index', 'items_changed'],
+        [((3,), ([0, 2],), 2),
+         ((3, 2), ([0, 2], slice(None)), 4),
+         ((3, 2), ([0, 2], [1]), 2),
+         ((3,), ([True, False, True]), 2)])
+    def test_structured_object_indexing(self, shape, index, items_changed,
+                                        dt, pat, count, singleton):
+        """Structured object reference counting for advanced indexing."""
+        zero = 0
+        one = 1
+
+        arr = np.zeros(shape, dt)
+
+        gc.collect()
+        before_zero = sys.getrefcount(zero)
+        before_one = sys.getrefcount(one)
+        # Test item getting:
+        part = arr[index]
+        after_zero = sys.getrefcount(zero)
+        assert after_zero - before_zero == count * items_changed
+        del part
+        # Test item setting:
+        arr[index] = one
+        gc.collect()
+        after_zero = sys.getrefcount(zero)
+        after_one = sys.getrefcount(one)
+        assert before_zero - after_zero == count * items_changed
+        assert after_one - before_one == count * items_changed
+
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    def test_structured_object_take_and_repeat(self, dt, pat, count, singleton):
+        """Structured object reference counting for specialized functions.
+        The older functions such as take and repeat use different code paths
+        then item setting (when writing this).
+        """
+        indices = [0, 1]
+
+        arr = np.array([pat] * 3, dt)
+        gc.collect()
+        before = sys.getrefcount(singleton)
+        res = arr.take(indices)
+        after = sys.getrefcount(singleton)
+        assert after - before == count * 2
+        new = res.repeat(10)
+        gc.collect()
+        after_repeat = sys.getrefcount(singleton)
+        assert after_repeat - after == count * 2 * 10
+
+
+class TestStructuredDtypeSparseFields(object):
+    """Tests subarray fields which contain sparse dtypes so that
+    not all memory is used by the dtype work. Such dtype's should
+    leave the underlying memory unchanged.
+    """
+    dtype = np.dtype([('a', {'names':['aa', 'ab'], 'formats':['f', 'f'],
+                             'offsets':[0, 4]}, (2, 3))])
+    sparse_dtype = np.dtype([('a', {'names':['ab'], 'formats':['f'],
+                                    'offsets':[4]}, (2, 3))])
+
+    @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
+    @pytest.mark.valgrind_error(reason="reads from unitialized buffers.")
+    def test_sparse_field_assignment(self):
+        arr = np.zeros(3, self.dtype)
+        sparse_arr = arr.view(self.sparse_dtype)
+
+        sparse_arr[...] = np.finfo(np.float32).max
+        # dtype is reduced when accessing the field, so shape is (3, 2, 3):
+        assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
+
+    def test_sparse_field_assignment_fancy(self):
+        # Fancy assignment goes to the copyswap function for comlex types:
+        arr = np.zeros(3, self.dtype)
+        sparse_arr = arr.view(self.sparse_dtype)
+
+        sparse_arr[[0, 1, 2]] = np.finfo(np.float32).max
+        # dtype is reduced when accessing the field, so shape is (3, 2, 3):
+        assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
 
 
 class TestMonsterType(object):
