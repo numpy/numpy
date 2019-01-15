@@ -1904,10 +1904,10 @@ Item selection and manipulation
         all values are clipped to the region [0, len(*op*) ).
 
 
-.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis)
+.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*). Return an array with
-    the items of *self* sorted along *axis*.
+    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*). Return an array with
+    the items of *self* sorted along *axis*.Array is sorted according to *kind* which is an integer/enum pointing to the type of sorting algorithms used.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
 
