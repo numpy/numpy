@@ -301,14 +301,20 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
             npy_set_floatstatus_underflow();
         }
 #endif
+        /*
+         * Usually the significand is shifted by 13. For subnormals an
+         * additional shift needs to occur. This shift is one for the largest
+         * exponent giving a subnormal `f_exp = 0x38000000 >> 23 = 112`, which
+         * offsets the new first bit. At most the shift can be 1+10 bits.
+         */
         f_sig >>= (113 - f_exp);
         /* Handle rounding by adding 1 to the bit beyond half precision */
 #if NPY_HALF_ROUND_TIES_TO_EVEN
         /*
          * If the last bit in the half significand is 0 (already even), and
          * the remaining bit pattern is 1000...0, then we do not add one
-         * to the bit after the half significand. However, since we may have
-         * previously lost up to 11 bits, we need to check these as well.
+         * to the bit after the half significand. However, the (113 - f_exp)
+         * shift can lose up to 11 bits, so the || checks them in the original.
          * In all other cases, we can just add one.
          */
         if (((f_sig&0x00003fffu) != 0x00001000u) || (f&0x000007ffu)) {
@@ -419,8 +425,12 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
         }
 #endif
         /*
-         * Unlike floats, doubles has enough room to shift left to align
-         * significand. This changes the constant compared to normal branch.
+         * Unlike floats, doubles have enough room to shift left to align
+         * the subnormal significand leading to no loss of the last bits.
+         * The smallest possible exponent giving a subnormal is:
+         * `d_exp = 0x3e60000000000000 >> 52 = 998`. All larger subnormals are
+         * shifted with respect to it. This adds a shift of 10+1 bits the final
+         * right shift when comparing it to the one in the normal branch.
          */
         assert(d_exp - 998 >= 0);
         d_sig <<= (d_exp - 998);
