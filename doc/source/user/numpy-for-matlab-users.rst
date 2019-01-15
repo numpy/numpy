@@ -547,7 +547,7 @@ Linear Algebra Equivalents
      - eigenvalues and eigenvectors of ``a``
 
    * - ``[V,D]=eig(a,b)``
-     - ``V,D = np.linalg.eig(a,b)``
+     - ``D,V = scipy.linalg.eig(a,b)``
      - eigenvalues and eigenvectors of ``a``, ``b``
 
    * - ``[V,D]=eigs(a,k)``
