@@ -7,11 +7,11 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 
-from numpy.core import multiarray as mu
-from numpy.core import umath as um
-from numpy.core.numeric import asanyarray
-from numpy.core import numerictypes as nt
-from numpy._globals import _NoValue
+from . import multiarray as mu
+from . import umath as um
+from .numeric import asanyarray
+from . import numerictypes as nt
+from .._globals import _NoValue
 
 # save those O(100) nanoseconds!
 umr_maximum = um.maximum.reduce

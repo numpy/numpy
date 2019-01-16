@@ -52,6 +52,18 @@ del envkey
 del env_added
 del os
 
+# Test that multiarray is a pure python module wrapping _multiarray_umath,
+# and not the old c-extension module.
+if not getattr(multiarray, '_multiarray_umath', None):
+    msg = ("Something is wrong with the NumPy installation. "
+           "While importing 'multiarray' we detected an older version of "
+           "numpy. One method of fixing this is to repeatedly 'pip uninstall' "
+           "numpy until none is found, then reinstall this version. If you "
+           "know how to recreate this error, please file an issue at "
+           "https://github.com/numpy/numpy/issues and xref "
+           "https://github.com/numpy/numpy/issues/12736")
+    raise ImportError(msg)
+
 from . import umath
 from . import _internal  # for freeze programs
 from . import numerictypes as nt
