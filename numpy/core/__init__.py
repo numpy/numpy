@@ -53,6 +53,19 @@ del env_added
 del os
 
 from . import umath
+
+# Check that multiarray,umath are pure python modules wrapping
+# _multiarray_umath and not either of the old c-extension modules
+if not (hasattr(multiarray, '_multiarray_umath') and
+        hasattr(umath, '_multiarray_umath')):
+    import sys
+    path = sys.modules['numpy'].__path__
+    msg = ("Something is wrong with the numpy installation. "
+        "While importing we detected an older version of "
+        "numpy in {}. One method of fixing this is to repeatedly uninstall "
+        "numpy until none is found, then reinstall this version.")
+    raise ImportError(msg.format(path))
+
 from . import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
