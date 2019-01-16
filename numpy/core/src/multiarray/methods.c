@@ -1726,13 +1726,19 @@ static PyObject *
 array_reduce_ex_regular(PyArrayObject *self, int protocol)
 {
     PyObject *subclass_array_reduce = NULL;
+    PyObject *ret;
 
     /* We do not call array_reduce directly but instead lookup and call
      * the __reduce__ method to make sure that it's possible customize
      * pickling in sub-classes. */
     subclass_array_reduce = PyObject_GetAttrString((PyObject *)self,
                                                    "__reduce__");
-    return PyObject_CallObject(subclass_array_reduce, NULL);
+    if (subclass_array_reduce == NULL) {
+        return NULL;
+    }
+    ret = PyObject_CallObject(subclass_array_reduce, NULL);
+    Py_DECREF(subclass_array_reduce);
+    return ret;
 }
 
 static PyObject *
@@ -1791,8 +1797,13 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         order = 'C';
         picklebuf_args = Py_BuildValue("(O)", self);
     }
+    if (picklebuf_args == NULL) {
+        Py_DECREF(picklebuf_class);
+        return NULL;
+    }
 
     buffer = PyObject_CallObject(picklebuf_class, picklebuf_args);
+    Py_DECREF(picklebuf_class);
     Py_DECREF(picklebuf_args);
     if (buffer == NULL) {
         /* Some arrays may refuse to export a buffer, in which case
