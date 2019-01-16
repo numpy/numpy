@@ -545,6 +545,11 @@ class DataSource(object):
         is accessible if it exists in either location.
 
         """
+
+        # First test for local path
+        if os.path.exists(path):
+            return True
+
         # We import this here because importing urllib2 is slow and
         # a significant fraction of numpy's total import time.
         if sys.version_info[0] >= 3:
@@ -553,10 +558,6 @@ class DataSource(object):
         else:
             from urllib2 import urlopen
             from urllib2 import URLError
-
-        # Test local path
-        if os.path.exists(path):
-            return True
 
         # Test cached url
         upath = self.abspath(path)
