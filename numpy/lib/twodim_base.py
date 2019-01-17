@@ -644,7 +644,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
 
     Examples
     --------
-    >>> import matplotlib as mpl
+    >>> from matplotlib.image import NonUniformImage
     >>> import matplotlib.pyplot as plt
 
     Construct a 2-D histogram with variable bin width. First define the bin
@@ -679,7 +679,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
 
     >>> ax = fig.add_subplot(133, title='NonUniformImage: interpolated',
     ...         aspect='equal', xlim=xedges[[0, -1]], ylim=yedges[[0, -1]])
-    >>> im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
+    >>> im = NonUniformImage(ax, interpolation='bilinear')
     >>> xcenters = (xedges[:-1] + xedges[1:]) / 2
     >>> ycenters = (yedges[:-1] + yedges[1:]) / 2
     >>> im.set_data(xcenters, ycenters, H)
