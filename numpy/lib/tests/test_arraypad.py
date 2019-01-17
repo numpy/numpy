@@ -1184,19 +1184,13 @@ class TestUnicodeInput(object):
         assert_array_equal(a, b)
 
 
-class TestObjectInput(object):
-    def test_object_input(self):
-        # Regression test for issue gh-11395.
-        a = np.full((4, 3), None)
-        pad_amt = ((2, 3), (3, 2))
-        b = np.full((9, 8), None)
-        modes = ['edge',
-                 'symmetric',
-                 'reflect',
-                 'wrap',
-                 ]
-        for mode in modes:
-            assert_array_equal(pad(a, pad_amt, mode=mode), b)
+@pytest.mark.parametrize("mode", ["edge", "symmetric", "reflect", "wrap"])
+def test_object_input(mode):
+    # Regression test for issue gh-11395.
+    a = np.full((4, 3), fill_value=None)
+    pad_amt = ((2, 3), (3, 2))
+    b = np.full((9, 8), fill_value=None)
+    assert_array_equal(pad(a, pad_amt, mode=mode), b)
 
 
 class TestPadWidth(object):
