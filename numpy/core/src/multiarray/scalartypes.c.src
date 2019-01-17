@@ -2599,6 +2599,8 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
+    _dealloc_cached_buffer_info((PyObject *)v);
+
     if (v->flags & NPY_ARRAY_OWNDATA) {
         npy_free_cache(v->obval, Py_SIZE(v));
     }
