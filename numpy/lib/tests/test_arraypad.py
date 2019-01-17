@@ -1204,14 +1204,24 @@ class TestPadWidth(object):
         with pytest.raises(ValueError, match=match):
             np.pad(arr, pad_width, mode)
 
-    @pytest.mark.parametrize(
-        "pad_width", ["3", "word", None, object(), 3.4, ((2, 3, 4), (3, 2))])
+    @pytest.mark.parametrize("pad_width", [
+        "3",
+        "word",
+        None,
+        object(),
+        3.4,
+        ((2, 3, 4), (3, 2)),  # dtype=object (tuple)
+        complex(1, -1),
+        ((-2.1, 3), (3, 2)),
+    ])
     @pytest.mark.parametrize("mode", _all_modes.keys())
-    def test_bad_pad_with_type(self, pad_width, mode):
+    def test_bad_type(self, pad_width, mode):
         arr = np.arange(30).reshape((6, 5))
         match = "`pad_width` must be of integral type."
         with pytest.raises(TypeError, match=match):
             np.pad(arr, pad_width, mode)
+        with pytest.raises(TypeError, match=match):
+            pad(arr, np.array(pad_width), mode)
 
     def test_pad_width_as_ndarray(self):
         a = np.arange(12)
@@ -1255,26 +1265,3 @@ class TestValueError3(object):
     def test_mode_not_set(self):
         arr = np.arange(30).reshape(5, 6)
         assert_raises(TypeError, pad, arr, 4)
-
-
-class TestTypeError1(object):
-    def test_float(self):
-        arr = np.arange(30)
-        assert_raises(TypeError, pad, arr, ((-2.1, 3), (3, 2)))
-        assert_raises(TypeError, pad, arr, np.array(((-2.1, 3), (3, 2))))
-
-    def test_str(self):
-        arr = np.arange(30)
-        assert_raises(TypeError, pad, arr, 'foo')
-        assert_raises(TypeError, pad, arr, np.array('foo'))
-
-    def test_object(self):
-        class FooBar(object):
-            pass
-        arr = np.arange(30)
-        assert_raises(TypeError, pad, arr, FooBar())
-
-    def test_complex(self):
-        arr = np.arange(30)
-        assert_raises(TypeError, pad, arr, complex(1, -1))
-        assert_raises(TypeError, pad, arr, np.array(complex(1, -1)))
