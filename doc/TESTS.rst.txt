@@ -120,15 +120,6 @@ that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
 (``#``) if necessary.
 
-Sometimes it is convenient to run ``test_yyy.py`` by itself, so we add
-
-::
-
-  if __name__ == "__main__":
-      run_module_suite()
-
-at the bottom.
-
 Labeling tests 
 --------------
 
