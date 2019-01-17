@@ -116,6 +116,9 @@ def main(argv):
                               "--bench-compare=COMMIT to override HEAD with "
                               "COMMIT. Note that you need to commit your "
                               "changes first!"))
+    parser.add_argument("--capture", "-c", action="store", default=None,
+                        choices=["fd", "sys", "suppress"],
+                        help="Set capturing of stdout and stderr during tests.")
     parser.add_argument("args", metavar="ARGS", default=[], nargs=REMAINDER,
                         help="Arguments to pass to Nose, Python or shell")
     args = parser.parse_args(argv)
@@ -296,6 +299,7 @@ def main(argv):
                       doctests=args.doctests,
                       coverage=args.coverage,
                       durations=args.durations,
+                      capture=args.capture,
                       tests=tests)
     finally:
         os.chdir(cwd)

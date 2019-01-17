@@ -73,7 +73,8 @@ class PytestTester(object):
         self.module_name = module_name
 
     def __call__(self, label='fast', verbose=1, extra_argv=None,
-                 doctests=False, coverage=False, durations=-1, tests=None):
+                 doctests=False, coverage=False, durations=-1, capture=None,
+                 tests=None):
         """
         Run tests for module using pytest.
 
@@ -95,6 +96,10 @@ class PytestTester(object):
         durations : int, optional
             If < 0, do nothing, If 0, report time of all tests, if > 0,
             report the time of the slowest `timer` tests. Default is -1.
+        capture : {None, 'sys', 'fd', 'suppress'}, optional
+            Sets the stdout/stderr capturing level used by pytest,
+            according to https://docs.pytest.org/en/latest/capture.html#setting-capturing-methods-or-disabling-capturing
+            If `None`, use the default (usually `'fd'`).
         tests : test or list of tests
             Tests to be executed with pytest '--pyargs'
 
@@ -191,6 +196,11 @@ class PytestTester(object):
 
         if durations >= 0:
             pytest_args += ["--durations=%s" % durations]
+
+        if capture == 'suppress':
+            pytest_args += ['-s']
+        elif capture is not None:
+            pytest_args += ['--capture=%s' % capture]
 
         if tests is None:
             tests = [self.module_name]
