@@ -901,7 +901,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                 _all = None
 
             # import sub-packages
-            if import_modules and hasattr(item, '__path__'):
+            if import_modules and getattr(item, '__path__', None):
                 for pth in item.__path__:
                     for mod_path in os.listdir(pth):
                         this_py = os.path.join(pth, mod_path)
