@@ -818,6 +818,15 @@ class TestReflect(object):
         b = np.zeros((0, 5))
         assert_array_equal(a, b)
 
+    def test_padding_empty_dimension(self):
+        match = "There aren't any elements to reflect in axis 0"
+        with pytest.raises(ValueError, match=match):
+            pad([], 4, mode='reflect')
+        with pytest.raises(ValueError, match=match):
+            pad(np.ndarray(0), 4, mode='reflect')
+        with pytest.raises(ValueError, match=match):
+            pad(np.zeros((0, 3)), ((1,), (0,)), mode='reflect')
+
 
 class TestSymmetric(object):
     def test_check_simple(self):
@@ -1230,15 +1239,6 @@ class TestPadWidth(object):
         match = "`pad_width` must be of integral type."
         with pytest.raises(TypeError, match=match):
             np.pad(arr, pad_width, mode)
-
-
-class TestValueError1(object):
-
-    def test_check_empty_array(self):
-        assert_raises(ValueError, pad, [], 4, mode='reflect')
-        assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')
-        assert_raises(ValueError, pad, np.zeros((0, 3)), ((1,), (0,)),
-                      mode='reflect')
 
 
 @pytest.mark.parametrize("mode", _all_modes.keys())
