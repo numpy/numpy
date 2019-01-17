@@ -52,19 +52,72 @@ del envkey
 del env_added
 del os
 
+from . import umath
+
+############### HACK for broken installations #########################
+
 # Test that multiarray is a pure python module wrapping _multiarray_umath,
 # and not the old c-extension module.
+msg = ("Something is wrong with the NumPy installation. "
+       "While importing 'multiarray' we detected an older version of "
+       "numpy. One method of fixing this is to repeatedly 'pip uninstall' "
+       "numpy until none is found, then reinstall this version. If you "
+       "know how to recreate this error, please file an issue at "
+       "https://github.com/numpy/numpy/issues and xref "
+       "https://github.com/numpy/numpy/issues/12736")
 if not getattr(multiarray, '_multiarray_umath', None):
-    msg = ("Something is wrong with the NumPy installation. "
-           "While importing 'multiarray' we detected an older version of "
-           "numpy. One method of fixing this is to repeatedly 'pip uninstall' "
-           "numpy until none is found, then reinstall this version. If you "
-           "know how to recreate this error, please file an issue at "
-           "https://github.com/numpy/numpy/issues and xref "
-           "https://github.com/numpy/numpy/issues/12736")
+    # Old multiarray. Can we override it?
+    import sys, os.path as osp
+    def get_params():
+        for name in ('multiarray', 'umath'):
+            modname = "numpy.core.{}".format(name)
+            fname = osp.join(osp.dirname(__file__), '{}.py'.format(name))
+            # try py, pyc, pyo
+            for ext in ('', 'c', 'o'):
+                if osp.exists(fname + ext):
+                    fname += ext
+                    break
+            yield modname, fname, name
+
+    if sys.version_info >= (3,5):
+        import importlib.util
+        try:
+            for modname, fname, name in get_params():
+                spec = importlib.util.spec_from_file_location(modname, fname)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                sys.modules[modname] = mod
+                locals()[name] = mod
+        except Exception as e:
+            print(e)
+            raise ImportError(msg)
+        del importlib.util
+    elif sys.version_info[:2] == (2, 7):
+        import imp
+        try:
+            for modname, fname, name in get_params():
+                mod = imp.load_source(modname, fname)
+                sys.modules[modname] = mod
+                locals()[name] = mod
+        except Exception as e:
+            print(e)
+            raise ImportError(msg)
+        del imp
+    else:
+        raise ImportError(msg)
+    del sys, osp
+    import warnings
+    warnings.warn(msg, ImportWarning, stacklevel=1)
+    del warnings
+
+if not getattr(umath, '_multiarray_umath', None):
+    # The games in the previous block failed. Give up.
+    # The warning above may already have been emitted.
     raise ImportError(msg)
 
-from . import umath
+del msg
+############### end of HACK for broken installations #######################
+
 from . import _internal  # for freeze programs
 from . import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)

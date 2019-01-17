@@ -7938,3 +7938,49 @@ def test_getfield():
     pytest.raises(ValueError, a.getfield, 'uint8', -1)
     pytest.raises(ValueError, a.getfield, 'uint8', 16)
     pytest.raises(ValueError, a.getfield, 'uint64', 0)
+
+def test_multiarray_module():
+    # gh-12736
+    # numpy 1.16 replaced the multiarray and umath c-extension modules with
+    # a single _multiarray_umath one. For backward compatibility, it added a
+    # pure-python multiarray.py and umath.py shim so people can still do
+    # from numpy.core.multirarray import something-public-api
+    # It turns out pip can leave old pieces of previous versions of numpy
+    # around when installing a newer version. If the old c-extension modules
+    # are found, they will be given precedence to the new pure-python ones.
+    #
+    # This test copies a multiarray c-extension in parallel with the pure-
+    # python one, and starts another python interpreter to load multiarray.
+    # The expectation is that it will find the c-extension module, raise a
+    # warning, and use importlib trickery to replace the loaded module with
+    # the correct pure-python one. The test checks that a warning is raised,
+    # and that the overrid mechanism works (by finding the mean of an array).
+    import subprocess, shutil
+    core_dir = os.path.dirname(np.core.multiarray.__file__)
+    cextension = np.core._multiarray_umath.__file__
+    testfile = cextension.replace('_multiarray_umath', '_multiarray_module_test')
+    badfile = cextension.replace('_multiarray_umath', 'multiarray')
+    try:
+        shutil.copy(testfile, badfile)
+        p = subprocess.Popen([sys.executable, '-Walways::ImportWarning', '-c',
+                ('import numpy; print(numpy.core.multiarray); '
+                 'a = numpy.ones((10, 10), dtype=float); '
+                 'print(numpy.mean(a))')],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=os.environ.copy())
+        stdout, stderr = p.communicate()
+        # print(stdout.decode())
+        # print(stderr.decode())
+        # make sure numpy.core.multiarray is a py file (maybe pyc or pyo)
+        assert b'multiarray.py' in stdout
+        assert b'1.0' in stdout
+        # make sure we hit the hack in numpy/core/init
+        assert b'ImportWarning: Something is wrong' in stderr
+    finally:
+        if os.path.exists(badfile):
+            try:
+                # can this fail?
+                os.remove(badfile)
+            except:
+                print("Could not remove %s, remove it by hand" % badfile)
+                raise
