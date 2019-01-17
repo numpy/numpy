@@ -115,13 +115,18 @@ context is exited.
     array([[ 0,  2,  4],
            [ 6,  8, 10]])
 
+If you are writing code that needs to support older versions of numpy,
+note that prior to 1.15, :class:`nditer` was not a context manager and
+did not have a `close` method. Instead it relied on the destructor to
+initiate the writeback of the buffer.
+
 Using an External Loop
 ----------------------
 
 In all the examples so far, the elements of `a` are provided by the
 iterator one at a time, because all the looping logic is internal to the
-iterator. While this is simple and convenient, it is not very efficient. A
-better approach is to move the one-dimensional innermost loop into your
+iterator. While this is simple and convenient, it is not very efficient.
+A better approach is to move the one-dimensional innermost loop into your
 code, external to the iterator. This way, NumPy's vectorized operations
 can be used on larger chunks of the elements being visited.
 
@@ -156,18 +161,56 @@ element in a computation. For example, you may want to visit the
 elements of an array in memory order, but use a C-order, Fortran-order,
 or multidimensional index to look up values in a different array.
 
-The Python iterator protocol doesn't have a natural way to query these
-additional values from the iterator, so we introduce an alternate syntax
-for iterating with an :class:`nditer`. This syntax explicitly works
-with the iterator object itself, so its properties are readily accessible
-during iteration. With this looping construct, the current value is
-accessible by indexing into the iterator, and the index being tracked
-is the property `index` or `multi_index` depending on what was requested.
+The index is tracked by the iterator object itself, and accessible
+through the `index` or `multi_index` properties, depending on what was
+requested. The examples below show printouts demonstrating the
+progression of the index:
 
-The Python interactive interpreter unfortunately prints out the
-values of expressions inside the while loop during each iteration of the
-loop. We have modified the output in the examples using this looping
-construct in order to be more readable.
+.. admonition:: Example
+
+    >>> a = np.arange(6).reshape(2,3)
+    >>> it = np.nditer(a, flags=['f_index'])
+    >>> for x in it:
+    ...     print("%d <%d>" % (x, it.index), end=' ')
+    ...
+    0 <0> 1 <2> 2 <4> 3 <1> 4 <3> 5 <5>
+
+    >>> it = np.nditer(a, flags=['multi_index'])
+    >>> for x in it:
+    ...     print("%d <%s>" % (x, it.multi_index), end=' ')
+    ...
+    0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
+
+    >>> with np.nditer(a, flags=['multi_index'], op_flags=['writeonly']) as it:
+    ...     for x in it:
+    ...         x[...] = it.multi_index[1] - it.multi_index[0]
+    ...
+    >>> a
+    array([[ 0,  1,  2],
+           [-1,  0,  1]])
+
+Tracking an index or multi-index is incompatible with using an external
+loop, because it requires a different index value per element. If
+you try to combine these flags, the :class:`nditer` object will
+raise an exception.
+
+.. admonition:: Example
+
+    >>> a = np.zeros((2,3))
+    >>> it = np.nditer(a, flags=['c_index', 'external_loop'])
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: Iterator flag EXTERNAL_LOOP cannot be used if an index or multi-index is being tracked
+
+Alternative Looping and Element Access
+--------------------------------------
+
+To make its properties more readily accessible during iteration,
+:class:`nditer` has an alternative syntax for iterating, which works
+explicitly with the iterator object itself. With this looping construct,
+the current value is accessible by indexing into the iterator. Other
+properties, such as tracked indices remain as before. The examples below
+produce identical results to the ones in the previous section.
 
 .. admonition:: Example
 
@@ -186,28 +229,14 @@ construct in order to be more readable.
     ...
     0 <(0, 0)> 1 <(0, 1)> 2 <(0, 2)> 3 <(1, 0)> 4 <(1, 1)> 5 <(1, 2)>
 
-    >>> it = np.nditer(a, flags=['multi_index'], op_flags=['writeonly'])
-    >>> with it:
-    ....    while not it.finished:
+    >>> with np.nditer(a, flags=['multi_index'], op_flags=['writeonly']) as it:
+    ...     while not it.finished:
     ...         it[0] = it.multi_index[1] - it.multi_index[0]
     ...         it.iternext()
     ...
     >>> a
     array([[ 0,  1,  2],
            [-1,  0,  1]])
-
-Tracking an index or multi-index is incompatible with using an external
-loop, because it requires a different index value per element. If
-you try to combine these flags, the :class:`nditer` object will
-raise an exception
-
-.. admonition:: Example
-
-    >>> a = np.zeros((2,3))
-    >>> it = np.nditer(a, flags=['c_index', 'external_loop'])
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: Iterator flag EXTERNAL_LOOP cannot be used if an index or multi-index is being tracked
 
 Buffering the Array Elements
 ----------------------------
