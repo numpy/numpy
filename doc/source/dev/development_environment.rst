@@ -8,7 +8,9 @@ Recommended development setup
 
 Since NumPy contains parts written in C and Cython that need to be
 compiled before use, make sure you have the necessary compilers and Python
-development headers installed - see :ref:`building-from-source`.
+development headers installed - see :ref:`building-from-source`. Building
+NumPy as of version ``1.17`` requires a C99 compliant compiler. For
+some older compilers this may require ``export CFLAGS='-std=c99'``.
 
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
