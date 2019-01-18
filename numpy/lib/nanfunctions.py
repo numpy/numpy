@@ -64,7 +64,8 @@ def _nan_mask(a, out=None):
         return True
 
     y = np.isnan(a, out=out)
-    y = np.invert(y, out=y)
+    # asanyarray used below for 0D case
+    y = np.invert(y, out=np.asanyarray(y))
     return y
 
 def _replace_nan(a, val):
@@ -640,8 +641,15 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     nan
 
     """
-    a, mask = _replace_nan(a, 0)
-    return np.sum(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    try:
+        a = np.asanyarray(a)
+        return np.sum(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims,
+                      where=_nan_mask(a))
+    except TypeError:
+        # retain old mask handling for np.matrix,
+        # which does not support where kwarg
+        a, mask = _replace_nan(a, 0)
+        return np.sum(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
 
 
 def _nanprod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None):
