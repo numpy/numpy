@@ -315,26 +315,30 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     # as well as its length
     max_length = right_index - left_index
 
-    if length_pair[0] is not None and length_pair[0] < max_length:
-        left_length = length_pair[0]
-    else:
+    # Limit stat_lengths to max_length
+    left_length, right_length = length_pair
+    if left_length is None or max_length < left_length:
         left_length = max_length
+    if right_length is None or max_length < right_length:
+        right_length = max_length
+
+    # Calculate statistic for the left side
     left_slice = _slice_at_axis(
         slice(left_index, left_index + left_length), axis)
     left_chunk = padded[left_slice]
     left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
     _round_if_needed(left_stat, padded.dtype)
 
-    if length_pair[1] is not None and length_pair[1] < max_length:
-        right_length = length_pair[1]
-    else:
-        right_length = max_length
+    if left_length == right_length == max_length:
+        # return early as right_stat must be identical to left_stat
+        return left_stat, left_stat
+
+    # Calculate statistic for the right side
     right_slice = _slice_at_axis(
         slice(right_index - right_length, right_index), axis)
     right_chunk = padded[right_slice]
     right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
     _round_if_needed(right_stat, padded.dtype)
-
     return left_stat, right_stat
 
 
