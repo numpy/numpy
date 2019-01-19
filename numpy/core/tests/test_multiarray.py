@@ -3775,6 +3775,7 @@ class TestPickling(object):
                         a, pickle.loads(pickle.dumps(a, protocol=proto)),
                         err_msg="%r" % a)
             del a, DATA, carray
+            gc.collect()
             # check for reference leaks (gh-12793)
             for ref in refs:
                 assert ref() is None
