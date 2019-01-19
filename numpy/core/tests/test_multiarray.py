@@ -3769,10 +3769,15 @@ class TestPickling(object):
                                                    ('c', float)])
             ]
 
+            refs = [weakref.ref(a) for a in DATA]
             for a in DATA:
                 assert_equal(
                         a, pickle.loads(pickle.dumps(a, protocol=proto)),
                         err_msg="%r" % a)
+            del a, DATA, carray
+            # check for reference leaks (gh-12793)
+            for ref in refs:
+                assert ref() is None
 
     def _loads(self, obj):
         if sys.version_info[0] >= 3:
