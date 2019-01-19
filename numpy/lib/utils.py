@@ -122,11 +122,6 @@ def get_include():
     return d
 
 
-def _set_function_name(func, name):
-    func.__name__ = name
-    return func
-
-
 class _Deprecate:
     """
     Decorator class to deprecate old functions.
@@ -172,7 +167,7 @@ class _Deprecate:
             warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
 
-        newfunc = _set_function_name(newfunc, old_name)
+        newfunc.__name__ = old_name
         doc = func.__doc__
         if doc is None:
             doc = depdoc
@@ -200,6 +195,10 @@ class _Deprecate:
             pass
         else:
             newfunc.__dict__.update(d)
+        try:
+            newfunc.__module__ = func.__module__
+        except AttributeError:
+            pass
         return newfunc
 
 
