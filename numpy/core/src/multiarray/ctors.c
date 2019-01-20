@@ -2500,6 +2500,11 @@ PyArray_FromInterface(PyObject *origin)
             &PyArray_Type, dtype,
             n, dims, NULL, data,
             dataflags, NULL, base);
+    /*
+     * Ref to dtype was stolen by PyArray_NewFromDescrAndBase
+     * Prevent DECREFing dtype in fail codepath by setting to NULL
+     */
+    dtype = NULL;
     if (ret == NULL) {
         goto fail;
     }
