@@ -67,6 +67,9 @@ npy_casting_to_string(NPY_CASTING casting)
     }
 }
 
+/**
+ * Always returns -1 to indicate the exception was raised, for convenience
+ */
 static int
 raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
     PyObject *errmsg;
@@ -84,7 +87,9 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
     return -1;
 }
 
-/** Helper function to raise UFuncNoLoopError */
+/** Helper function to raise UFuncNoLoopError
+ * Always returns -1 to indicate the exception was raised, for convenience
+ */
 static int
 raise_no_loop_found_error(
         PyUFuncObject *ufunc, PyArray_Descr **dtypes, npy_intp n_dtypes)
@@ -157,7 +162,9 @@ raise_casting_error(
     return -1;
 }
 
-/** Helper function to raise UFuncInputCastingError */
+/** Helper function to raise UFuncInputCastingError
+ * Always returns -1 to indicate the exception was raised, for convenience
+ */
 static int
 raise_input_casting_error(
         PyUFuncObject *ufunc,
@@ -178,7 +185,9 @@ raise_input_casting_error(
 }
 
 
-/** Helper function to raise UFuncOutputCastingError */
+/** Helper function to raise UFuncOutputCastingError
+ * Always returns -1 to indicate the exception was raised, for convenience
+ */
 static int
 raise_output_casting_error(
         PyUFuncObject *ufunc,
