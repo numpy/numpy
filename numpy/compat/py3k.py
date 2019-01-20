@@ -235,7 +235,7 @@ else:
             else:
                 raise TypeError("expected str, bytes or os.PathLike object, "
                                 "not " + path_type.__name__)
-        if isinstance(path_repr, (str, bytes)):
+        if isinstance(path_repr, (unicode, bytes)):
             return path_repr
         else:
             raise TypeError("expected {}.__fspath__() to return str or bytes, "
