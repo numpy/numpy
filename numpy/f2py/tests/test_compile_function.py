@@ -106,3 +106,20 @@ def test_f2py_init_compile_bad_cmd():
         assert_equal(ret_val, 127)
     finally:
         sys.executable = temp
+
+
+@pytest.mark.parametrize('fsource',
+        ['program test_f2py\nend program test_f2py',
+         b'program test_f2py\nend program test_f2py',])
+def test_compile_from_strings(tmpdir, fsource):
+    # Make sure we can compile str and bytes gh-12796
+    cwd = os.getcwd()
+    try:
+        os.chdir(str(tmpdir))
+        ret_val = numpy.f2py.compile(
+                fsource,
+                modulename='test_compile_from_strings',
+                extension='.f90')
+        assert_equal(ret_val, 0)
+    finally:
+        os.chdir(cwd)
