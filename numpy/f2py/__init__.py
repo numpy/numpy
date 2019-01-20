@@ -28,12 +28,16 @@ def compile(source,
             extension='.f'
            ):
     """
-    Build extension module from processing source with f2py.
+    Build extension module from a Fortran 77 source string with f2py.
 
     Parameters
     ----------
-    source : str
+    source : str or bytes
         Fortran source of module / subroutine to compile
+
+        .. versionchanged:: 1.16.0
+           Accept str as well as bytes
+
     modulename : str, optional
         The name of the compiled python module
     extra_args : str or list, optional
@@ -55,6 +59,16 @@ def compile(source,
 
         .. versionadded:: 1.11.0
 
+    Returns
+    -------
+    result : int
+        0 on success
+
+    Examples
+    --------
+    .. include:: compile_session.dat
+        :literal:
+
     """
     import tempfile
     import shlex
@@ -67,9 +81,11 @@ def compile(source,
     else:
         fname = source_fn
 
+    if not isinstance(source, str):
+        source = str(source, 'utf-8')
     try:
         with open(fname, 'w') as f:
-            f.write(str(source))
+            f.write(source)
 
         args = ['-c', '-m', modulename, f.name]
 

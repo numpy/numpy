@@ -214,32 +214,7 @@ Python module ``numpy.f2py``
   The current Python interface to the ``f2py`` module is not mature and
   may change in the future.
 
-The following functions are provided by the ``numpy.f2py`` module:
 
-``run_main(<list>)``
-  Equivalent to running::
+.. automodule:: numpy.f2py
+    :members:
 
-    f2py <args>
-
-  where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
-  ``-h`` is used, this function returns a dictionary containing
-  information on generated modules and their dependencies on source
-  files.  For example, the command ``f2py -m scalar scalar.f`` can be
-  executed from Python as follows
-
-  .. include:: run_main_session.dat
-     :literal:
-
-  You cannot build extension modules with this function, that is,
-  using ``-c`` is not allowed. Use ``compile`` command instead, see
-  below.
-
-``compile(source, modulename='untitled', extra_args='', verbose=1, source_fn=None)``
-  Build extension module from Fortran 77 source string ``source``.
-  Return 0 if successful.
-  Note that this function actually calls ``f2py -c ..`` from shell to
-  ensure safety of the current Python process.
-  For example,
-
-  .. include:: compile_session.dat
-    :literal:

@@ -27,3 +27,17 @@ class TestIntentInOut(util.F2PyTest):
         x = np.arange(3, dtype=np.float32)
         self.module.foo(x)
         assert_equal(x, [3, 1, 2])
+
+@pytest.mark.parametrize('code', [
+        'program test_f2py\nend program test_f2py',
+        b'program test_f2py\nend program test_f2py',
+    ])
+def test_compile(tmpdir, code):
+    # Make sure we can compile str and bytes gh-12796
+    cwd = os.getcwd()
+    try:
+        os.chdir(str(tmpdir))
+        ret = np.f2py.compile(code, modulename='test1_f2py', extension='.f90')
+        assert_equal(ret, 0)
+    finally:
+        os.chdir(cwd)

@@ -396,8 +396,25 @@ def dict_append(d_out, d_in):
 
 
 def run_main(comline_list):
-    """Run f2py as if string.join(comline_list,' ') is used as a command line.
-    In case of using -h flag, return None.
+    """
+    Equivalent to running::
+
+        f2py <args>
+
+    where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
+    ``-h`` is used, this function returns a dictionary containing
+    information on generated modules and their dependencies on source
+    files.  For example, the command ``f2py -m scalar scalar.f`` can be
+    executed from Python as follows
+
+    You cannot build extension modules with this function, that is,
+    using ``-c`` is not allowed. Use ``compile`` command instead
+
+    Examples
+    --------
+    .. include:: run_main_session.dat
+        :literal:
+
     """
     crackfortran.reset_global_f2py_vars()
     f2pydir = os.path.dirname(os.path.abspath(cfuncs.__file__))
