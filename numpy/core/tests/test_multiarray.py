@@ -5920,7 +5920,7 @@ class TestMatmul(MatmulCommon):
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test out with not allowed type cast (safe casting)
-        msg = "Cannot cast ufunc matmul output"
+        msg = "Cannot cast ufunc .* output"
         out = np.zeros((5, 2), dtype=np.int32)
         assert_raises_regex(TypeError, msg, self.matmul, a, b, out=out)
 
