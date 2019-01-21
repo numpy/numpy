@@ -44,6 +44,14 @@ identity, it is necessary to also pass in an initial value (e.g.,
 ``initial=np.inf`` for ``np.min``).  For instance, the equivalent of
 ``nansum`` would be, ``np.sum(a, where=~np.isnan(a))``.
 
+Timsort is added to available sorting algorithms
+------------------------------------------------
+The ``kind`` keyword argument for ``sort`` and ``argsort`` now accepts ``'t'``
+or ``'timsort'`` for Timsort. Timsort features great performace
+on already or nearly sorted data and basically changes to Mergesort on random data.
+The algorithm is stable and requires O(n/2) additional space.
+For details of the algorithm, refer to
+`CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
 
 ``np.linalg.svd`` and ``np.linalg.pinv`` can be faster on hermitian inputs
 --------------------------------------------------------------------------
