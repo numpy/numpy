@@ -1161,6 +1161,53 @@ class TestDateTime(object):
         with assert_raises_regex(TypeError, "common metadata divisor"):
             val1 // val2
 
+    @pytest.mark.parametrize("op1, op2", [
+        # reuse the test cases from floordiv
+        (np.timedelta64(7, 's'),
+         np.timedelta64(4, 's')),
+        # m8 same units round down with negative
+        (np.timedelta64(7, 's'),
+         np.timedelta64(-4, 's')),
+        # m8 same units negative no round down
+        (np.timedelta64(8, 's'),
+         np.timedelta64(-4, 's')),
+        # m8 different units
+        (np.timedelta64(1, 'm'),
+         np.timedelta64(31, 's')),
+        # m8 generic units
+        (np.timedelta64(1890),
+         np.timedelta64(31)),
+        # Y // M works
+        (np.timedelta64(2, 'Y'),
+         np.timedelta64('13', 'M')),
+        # handle 1D arrays
+        (np.array([1, 2, 3], dtype='m8'),
+         np.array([2], dtype='m8')),
+        ])
+    def test_timedelta_divmod(self, op1, op2):
+        expected = (op1 // op2, op1 % op2)
+        assert_equal(divmod(op1, op2), expected)
+
+    @pytest.mark.parametrize("op1, op2", [
+        # reuse cases from floordiv
+        # div by 0
+        (np.timedelta64(10, 'us'),
+         np.timedelta64(0, 'us')),
+        # div with NaT
+        (np.timedelta64('NaT'),
+         np.timedelta64(50, 'us')),
+        # special case for int64 min
+        # in integer floor division
+        (np.timedelta64(np.iinfo(np.int64).min),
+         np.timedelta64(-1)),
+        ])
+    def test_timedelta_divmod_warnings(self, op1, op2):
+        with assert_warns(RuntimeWarning):
+            expected = (op1 // op2, op1 % op2)
+        with assert_warns(RuntimeWarning):
+            actual = divmod(op1, op2)
+        assert_equal(actual, expected)
+
     def test_datetime_divide(self):
         for dta, tda, tdb, tdc, tdd in \
                     [
@@ -1758,7 +1805,7 @@ class TestDateTime(object):
     def test_timedelta_modulus_div_by_zero(self):
         with assert_warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
-            assert_equal(actual, np.timedelta64(0, 's'))
+            assert_equal(actual, np.timedelta64('NaT'))
 
     @pytest.mark.parametrize("val1, val2", [
         # cases where one operand is not

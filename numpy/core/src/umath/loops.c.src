@@ -1623,7 +1623,7 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp *dimensions, npy_intp *steps, voi
         else {
             if (in2 == 0) {
                 npy_set_floatstatus_divbyzero();
-                *((npy_timedelta *)op1) = 0;
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
             else {
                 /* handle mixed case the way Python does */
@@ -1647,18 +1647,49 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp *dimensions, npy_intp *steps, 
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             npy_set_floatstatus_invalid();
-            *((npy_timedelta *)op1) = 0;
+            *((npy_int64 *)op1) = 0;
         }
         else if (in2 == 0) {
             npy_set_floatstatus_divbyzero();
-            *((npy_timedelta *)op1) = 0;
+            *((npy_int64 *)op1) = 0;
         }
         else {
             if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
-                *((npy_timedelta *)op1) = in1/in2 - 1;
+                *((npy_int64 *)op1) = in1/in2 - 1;
             }
             else {
-                *((npy_timedelta *)op1) = in1/in2;
+                *((npy_int64 *)op1) = in1/in2;
+            }
+        }
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_mm_qm_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            npy_set_floatstatus_invalid();
+            *((npy_int64 *)op1) = 0;
+            *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
+        }
+        else if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            *((npy_int64 *)op1) = 0;
+            *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
+        }
+        else {
+            const npy_int64 quo = in1 / in2;
+            const npy_timedelta rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((npy_int64 *)op1) = quo;
+                *((npy_timedelta *)op2) = rem;
+            }
+            else {
+                *((npy_int64 *)op1) = quo - 1;
+                *((npy_timedelta *)op2) = rem + in2;
             }
         }
     }
