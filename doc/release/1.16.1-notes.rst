@@ -35,6 +35,11 @@ C API changes
 New Features
 ============
 
+divmod operation is now supported for two ``timedelta64`` operands
+------------------------------------------------------------------
+The divmod operator now handles two ``np.timedelta64`` operands, with
+type signature ``mm->qm``.
+
 
 Improvements
 ============
@@ -58,3 +63,8 @@ tolerances.
 
 Changes
 =======
+
+``timedelta64 % 0`` behavior adjusted to return ``NaT``
+-------------------------------------------------------
+The modulus operation with two ``np.timedelta64`` operands now returns
+``NaT`` in the case of division by zero, rather than returning zero
