@@ -427,7 +427,7 @@ Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''
 
 Specifying config_fc options for libraries in setup.py script
-------------------------------------------------------------
+-------------------------------------------------------------
 
 It is possible to specify config_fc options in setup.py scripts.
 For example, using

@@ -5,14 +5,6 @@ Miscellaneous routines
 
 .. currentmodule:: numpy
 
-Buffer objects
---------------
-.. autosummary::
-   :toctree: generated/
-
-   getbuffer
-   newbuffer
-
 Performance tuning
 ------------------
 .. autosummary::

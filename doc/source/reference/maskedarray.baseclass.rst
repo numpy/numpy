@@ -184,10 +184,8 @@ Conversion
    :toctree: generated/
 
    MaskedArray.__float__
-   MaskedArray.__hex__
    MaskedArray.__int__
    MaskedArray.__long__
-   MaskedArray.__oct__
 
    MaskedArray.view
    MaskedArray.astype
@@ -311,7 +309,7 @@ Truth value of an array (:func:`bool()`):
 .. autosummary::
    :toctree: generated/
 
-   MaskedArray.__nonzero__
+   MaskedArray.__bool__
 
 
 Arithmetic:
@@ -328,7 +326,6 @@ Arithmetic:
    MaskedArray.__mul__
    MaskedArray.__rmul__
    MaskedArray.__div__
-   MaskedArray.__rdiv__
    MaskedArray.__truediv__
    MaskedArray.__rtruediv__
    MaskedArray.__floordiv__
