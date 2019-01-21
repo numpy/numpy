@@ -219,7 +219,7 @@ else:
         path representation is not str or bytes, TypeError is raised. If the
         provided path is not str, bytes, or os.PathLike, TypeError is raised.
         """
-        if isinstance(path, (str, bytes)):
+        if isinstance(path, (unicode, bytes)):
             return path
 
         # Work from the object's type to match method resolution of other magic
@@ -235,7 +235,7 @@ else:
             else:
                 raise TypeError("expected str, bytes or os.PathLike object, "
                                 "not " + path_type.__name__)
-        if isinstance(path_repr, (str, bytes)):
+        if isinstance(path_repr, (unicode, bytes)):
             return path_repr
         else:
             raise TypeError("expected {}.__fspath__() to return str or bytes, "
