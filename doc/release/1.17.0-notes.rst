@@ -6,6 +6,9 @@ NumPy 1.17.0 Release Notes
 Highlights
 ==========
 
+* Experimental support for overriding numpy functions is now always available,
+  see ``__array_function__`` below.
+
 * NumPy's FFT implementation has switched to pocketfft
 
 New functions
@@ -122,3 +125,12 @@ Changes
 -------------------------------------------------------
 The modulus operation with two ``np.timedelta64`` operands now returns
 ``NaT`` in the case of division by zero, rather than returning zero
+
+NumPy functions now always support overrides with ``__array_function__``
+------------------------------------------------------------------------
+NumPy now always checks the ``__array_function__`` method to implement overrides
+of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
+was available for testing with NumPy 1.16 if appropriate environment variables
+are set, but is now always enabled.
+
+.. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html

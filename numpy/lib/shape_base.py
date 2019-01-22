@@ -11,8 +11,7 @@ from numpy.core.fromnumeric import product, reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
-from numpy.core.shape_base import (
-    _arrays_for_stack_dispatcher, _warn_for_nonsequence)
+from numpy.core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib.index_tricks import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
@@ -630,7 +629,6 @@ def column_stack(tup):
            [3, 4]])
 
     """
-    _warn_for_nonsequence(tup)
     arrays = []
     for v in tup:
         arr = array(v, copy=False, subok=True)
@@ -695,7 +693,6 @@ def dstack(tup):
            [[3, 4]]])
 
     """
-    _warn_for_nonsequence(tup)
     return _nx.concatenate([atleast_3d(_m) for _m in tup], 2)
 
 

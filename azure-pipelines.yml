@@ -25,7 +25,6 @@ jobs:
            cp -r ./usr/local/lib/* /usr/lib && \
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
-           NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
            F77=gfortran-5 F90=gfortran-5 \
            CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'

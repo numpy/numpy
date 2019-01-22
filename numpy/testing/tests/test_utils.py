@@ -186,9 +186,8 @@ class TestArrayEqual(_GenericTest):
 
         a = np.array([1., 2.]).view(MyArray)
         b = np.array([2., 3.]).view(MyArray)
-        if np.core.overrides.ENABLE_ARRAY_FUNCTION:
-            with assert_raises(TypeError):
-                np.all(a)
+        with assert_raises(TypeError):
+            np.all(a)
         self._test_equal(a, a)
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
