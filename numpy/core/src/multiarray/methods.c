@@ -1729,7 +1729,7 @@ array_reduce_ex_regular(PyArrayObject *self, int protocol)
     PyObject *ret;
 
     /* We do not call array_reduce directly but instead lookup and call
-     * the __reduce__ method to make sure that it's possible customize
+     * the __reduce__ method to make sure that it's possible to customize
      * pickling in sub-classes. */
     subclass_array_reduce = PyObject_GetAttrString((PyObject *)self,
                                                    "__reduce__");
