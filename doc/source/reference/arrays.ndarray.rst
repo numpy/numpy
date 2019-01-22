@@ -595,8 +595,8 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__setitem__
    ndarray.__contains__
 
-Conversion; the operations :func:`complex()`, :func:`int()` and
-:func:`float()`.
+Conversion; the operations :func:`int()`, :func:`float()` and
+:func:`complex()`.
 . They work only on arrays that have one element in them
 and return the appropriate scalar.
 
