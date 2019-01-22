@@ -609,6 +609,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     'Sqrt'
         .. math:: n_h = \sqrt n
+
         The simplest and fastest estimator. Only takes into account the
         data size.
 
