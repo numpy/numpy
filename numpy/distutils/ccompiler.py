@@ -639,7 +639,7 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
             return version
 
     try:
-        output = subprocess.check_output(version_cmd)
+        output = subprocess.check_output(version_cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         output = exc.output
         status = exc.returncode
