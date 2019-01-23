@@ -2423,3 +2423,11 @@ class TestRegression(object):
         assert_equal(res, [-99,   1,   2,   3,  -7,  88,  99])
         assert_raises(ValueError, np.ediff1d, x, to_begin=(1<<20))
         assert_raises(ValueError, np.ediff1d, x, to_end=(1<<20))
+
+    def test_pickle_datetime64_array(self):
+        # gh-12745 (would fail with pickle5 installed)
+        d = np.datetime64('2015-07-04 12:59:59.50', 'ns')
+        arr = np.array([d])
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            dumped = pickle.dumps(arr, protocol=proto)
+            assert_equal(pickle.loads(dumped), arr)
