@@ -5,6 +5,7 @@ import sys
 import types
 import re
 import warnings
+import functools
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core.overrides import set_module
@@ -77,10 +78,7 @@ class _Deprecate(object):
         message = self.message
 
         if old_name is None:
-            try:
-                old_name = func.__name__
-            except AttributeError:
-                old_name = func.__name__
+            old_name = func.__name__
         if new_name is None:
             depdoc = "`%s` is deprecated!" % old_name
         else:
@@ -90,8 +88,8 @@ class _Deprecate(object):
         if message is not None:
             depdoc += "\n" + message
 
-        def newfunc(*args,**kwds):
-            """`arrayrange` is deprecated, use `arange` instead!"""
+        @functools.wraps(func)
+        def newfunc(*args, **kwds):
             warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
 
@@ -102,16 +100,7 @@ class _Deprecate(object):
         else:
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
-        try:
-            d = func.__dict__
-        except AttributeError:
-            pass
-        else:
-            newfunc.__dict__.update(d)
-        try:
-            newfunc.__module__ = func.__module__
-        except AttributeError:
-            pass
+
         return newfunc
 
 def deprecate(*args, **kwargs):
