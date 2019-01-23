@@ -26,10 +26,12 @@ subst = {
             a freshly-allocated array is returned. A tuple (possible only as a
             keyword argument) must have length equal to the number of outputs.
         where : array_like, optional
-            Broadcast over the input. If the value is True, output will be set
-            to the ufunc output; otherwise it is left unchanged. Note that if an
-            uninitialized return array is created via the default ``out=None``,
-            output where the values are False will remain uninitialized.
+            This condition is broadcast over the input. At locations where the
+            condition is True, the `out` array will be set to the ufunc result.
+            Elsewhere, the `out` array will retain its original value.
+            Note that if an uninitialized `out` array is created via the default
+            ``out=None``, locations within it where the condition is False will
+            remain uninitialized.
         **kwargs
             For other keyword-only arguments, see the
             :ref:`ufunc docs <ufuncs.kwargs>`.
