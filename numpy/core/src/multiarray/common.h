@@ -51,6 +51,8 @@ _array_find_python_scalar_type(PyObject *op);
 NPY_NO_EXPORT PyArray_Descr *
 _array_typedescr_fromstr(char *str);
 
+NPY_NO_EXPORT int DEPRECATE_silence_error(const char *msg);
+
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i);
 

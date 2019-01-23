@@ -38,12 +38,12 @@ array_function_dispatch = functools.partial(
 
 
 # functions that are now methods
-def _wrapit(obj, method, *args, **kwds):
+def _wrapit(obj, method, _internal_copy, *args, **kwds):
     try:
         wrap = obj.__array_wrap__
     except AttributeError:
         wrap = None
-    result = getattr(asarray(obj), method)(*args, **kwds)
+    result = getattr(array(obj, copy=_internal_copy), method)(*args, **kwds)
     if wrap:
         if not isinstance(result, mu.ndarray):
             result = asarray(result)
@@ -63,7 +63,15 @@ def _wrapfunc(obj, method, *args, **kwds):
     # of NumPy's. This situation has occurred in the case of
     # a downstream library like 'pandas'.
     except (AttributeError, TypeError):
-        return _wrapit(obj, method, *args, **kwds)
+        return _wrapit(obj, method, False, *args, **kwds)
+
+
+def _wrapfunc_copy(obj, method, _internal_copy, *args, **kwds):
+    # Same as _wrapfunc, but allows to pass copy argument to `np.array`.
+    try:
+        return getattr(obj, method)(*args, **kwds)
+    except (AttributeError, TypeError):
+        return _wrapit(obj, method, _internal_copy, *args, **kwds)
 
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
@@ -189,13 +197,14 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, newshape, order=None):
+
+def _reshape_dispatcher(a, newshape, order=None, copy=None):
     return (a,)
 
 
 # not deprecated --- copy if necessary, view otherwise
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, newshape, order='C'):
+def reshape(a, newshape, order='C', copy=np._NoValue):
     """
     Gives a new shape to an array without changing its data.
 
@@ -221,6 +230,14 @@ def reshape(a, newshape, order='C'):
         'A' means to read / write the elements in Fortran-like index
         order if `a` is Fortran *contiguous* in memory, C-like order
         otherwise.
+    copy : {True, False, np.never_copy}, optional
+        Whether or not a copy is forced. If ``False`` is given, a copy
+        will be made when necessary. ``np.never_copy`` will cause an
+        error to be raised if `a` cannot be reshaped without a copy.
+        If the input is not an array and copy is not ``np.never_copy``
+        an additional copy may be made to convert to an array.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -228,6 +245,8 @@ def reshape(a, newshape, order='C'):
         This will be a new view object if possible; otherwise, it will
         be a copy.  Note there is no guarantee of the *memory layout* (C- or
         Fortran- contiguous) of the returned array.
+        The `copy` argument can be used to enforce a copy or raise an error
+        when a `copy` would be made but is not desired.
 
     See Also
     --------
@@ -293,7 +312,16 @@ def reshape(a, newshape, order='C'):
            [3, 4],
            [5, 6]])
     """
-    return _wrapfunc(a, 'reshape', newshape, order=order)
+    # Since it is hard to tell if `np.array` had to copy, the copy is only
+    # forced during reshape (but no-copy forced also for `np.array`).
+    if copy is np._NoValue:
+        return _wrapfunc_copy(
+                    a, 'reshape', copy if copy is np.never_copy else False,
+                    newshape, order=order)
+    else:
+        return _wrapfunc_copy(
+                    a, 'reshape', copy if copy is np.never_copy else False,
+                    newshape, order=order, copy=copy)
 
 
 def _choose_dispatcher(a, choices, out=None, mode=None):
@@ -1385,7 +1413,7 @@ def squeeze(a, axis=None):
     try:
         squeeze = a.squeeze
     except AttributeError:
-        return _wrapit(a, 'squeeze')
+        return _wrapit(a, 'squeeze', False)
     if axis is None:
         return squeeze()
     else:

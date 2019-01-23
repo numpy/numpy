@@ -1545,6 +1545,26 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                         int *out_ndim, npy_intp *out_dims,
                         PyArrayObject **out_arr, PyObject *context)
 {
+    return PyArray_GetArrayParamsFromObject_int(
+        op, requested_dtype, writeable, 0,
+        out_dtype, out_ndim, out_dims, out_arr, context);
+}
+
+/*
+ * Same as PyArray_GetArrayParamsFromObject but accepts no_copy_allowed flag,
+ * note that the actual usage of `writeable` also ensures this part (but
+ * additional tests that the output array is actually `writeable`.
+ */
+NPY_NO_EXPORT int
+PyArray_GetArrayParamsFromObject_int(
+                        PyObject *op,
+                        PyArray_Descr *requested_dtype,
+                        npy_bool writeable,
+                        npy_bool no_copy_allowed,
+                        PyArray_Descr **out_dtype,
+                        int *out_ndim, npy_intp *out_dims,
+                        PyArrayObject **out_arr, PyObject *context)
+{
     PyObject *tmp;
 
     /* If op is an array */
@@ -1565,6 +1585,13 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                                 "cannot write to scalar");
             return -1;
         }
+        if (no_copy_allowed) {
+            PyErr_SetString(PyExc_ValueError,
+                "never-copy was requested during array creation, but "
+                "scalar cannot be viewed as arrays.");
+            return -1;
+        }
+
         *out_dtype = PyArray_DescrFromScalar(op);
         if (*out_dtype == NULL) {
             return -1;
@@ -1581,6 +1608,13 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
             PyErr_SetString(PyExc_RuntimeError,
                                 "cannot write to scalar");
             Py_DECREF(*out_dtype);
+            return -1;
+        }
+        if (no_copy_allowed) {
+            Py_DECREF(*out_dtype);
+            PyErr_SetString(PyExc_ValueError,
+                    "never-copy was requested during array creation, but "
+                    "scalar cannot be viewed as arrays.");
             return -1;
         }
         *out_ndim = 0;
@@ -1631,6 +1665,14 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         }
         *out_arr = (PyArrayObject *)tmp;
         return (*out_arr) == NULL ? -1 : 0;
+    }
+
+    if (no_copy_allowed) {
+        /* None of the following possibilities can provide no-copy sementics  */
+        PyErr_SetString(PyExc_ValueError,
+                "never-copy was requested during array creation, but object "
+                "cannot be directly interpreted as array.");
+        return -1;
     }
 
     /*
@@ -1803,9 +1845,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     npy_intp dims[NPY_MAXDIMS];
 
     /* Get either the array or its parameters if it isn't an array */
-    if (PyArray_GetArrayParamsFromObject(op, newtype,
-                        0, &dtype,
-                        &ndim, dims, &arr, context) < 0) {
+    if (PyArray_GetArrayParamsFromObject_int(
+                        op, newtype,
+                        0, (flags & NPY_ARRAY_ENSURENOCOPY) ? 1 : 0,
+                        &dtype, &ndim, dims, &arr, context) < 0) {
         Py_XDECREF(newtype);
         return NULL;
     }
@@ -1822,6 +1865,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
+        assert((flags & NPY_ARRAY_ENSURENOCOPY) == 0);
+
         if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
             Py_XDECREF(newtype);
@@ -1993,8 +2038,14 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         return NULL;
     }
     if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
-        !PyArray_ElementStrides(obj)) {
+                    !PyArray_ElementStrides(obj)) {
         PyObject *ret;
+        if (requires & NPY_ARRAY_ENSURENOCOPY) {
+            PyErr_SetString(PyExc_ValueError,
+                "array creation was requested with never-copy, but other "
+                "requirements cannot be fullfilled without a copy.");
+            return NULL;
+        }
         ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
         Py_DECREF(obj);
         obj = ret;
@@ -2102,6 +2153,13 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     if (copy) {
         NPY_ORDER order = NPY_KEEPORDER;
         int subok = 1;
+
+        if (flags & NPY_ARRAY_ENSURENOCOPY) {
+            PyErr_SetString(PyExc_ValueError,
+                    "no copy was allowed during array creation, but it "
+                    "cannot be guaranteed.");
+            return NULL;
+        }
 
         /* Set the order for the copy being made based on the flags */
         if (flags & NPY_ARRAY_F_CONTIGUOUS) {

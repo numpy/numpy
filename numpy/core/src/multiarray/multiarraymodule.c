@@ -1578,6 +1578,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyObject *op;
     PyArrayObject *oparr = NULL, *ret = NULL;
     npy_bool subok = NPY_FALSE;
+    int copyflag = NPY_ARRAY_ENSURECOPY;
     npy_bool copy = NPY_TRUE;
     int ndmin = 0, nd;
     PyArray_Descr *type = NULL;
@@ -1663,12 +1664,13 @@ full_path:
     if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
-                PyArray_BoolConverter, &copy,
+                PyArray_CopyConverter, &copyflag,
                 PyArray_OrderConverter, &order,
                 PyArray_BoolConverter, &subok,
                 &ndmin)) {
         goto clean_type;
     }
+    copy = copyflag & NPY_ARRAY_ENSURECOPY;
 
     if (ndmin > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
@@ -1678,43 +1680,45 @@ full_path:
     }
     /* fast exit if simple call */
     if ((subok && PyArray_Check(op)) ||
-        (!subok && PyArray_CheckExact(op))) {
+                (!subok && PyArray_CheckExact(op))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
+            /* No dtype given so no casting is necessary. So check order. */
             if (!copy && STRIDING_OK(oparr, order)) {
                 ret = oparr;
                 Py_INCREF(ret);
                 goto finish;
             }
-            else {
+            else if (!(copyflag & NPY_ARRAY_ENSURENOCOPY)) {
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 goto finish;
             }
         }
-        /* One more chance */
-        oldtype = PyArray_DESCR(oparr);
-        if (PyArray_EquivTypes(oldtype, type)) {
-            if (!copy && STRIDING_OK(oparr, order)) {
-                Py_INCREF(op);
-                ret = oparr;
-                goto finish;
-            }
-            else {
-                ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
-                if (oldtype == type || ret == NULL) {
+        else {
+            /* Repeat after checking that the dtype is equivalent. */
+            oldtype = PyArray_DESCR(oparr);
+            if (PyArray_EquivTypes(oldtype, type)) {
+                if (!copy && STRIDING_OK(oparr, order)) {
+                    Py_INCREF(op);
+                    ret = oparr;
                     goto finish;
                 }
-                Py_INCREF(oldtype);
-                Py_DECREF(PyArray_DESCR(ret));
-                ((PyArrayObject_fields *)ret)->descr = oldtype;
-                goto finish;
+                else if (!(copyflag & NPY_ARRAY_ENSURENOCOPY)) {
+                    ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
+                    if (oldtype == type || ret == NULL) {
+                        goto finish;
+                    }
+                    Py_INCREF(oldtype);
+                    Py_DECREF(PyArray_DESCR(ret));
+                    ((PyArrayObject_fields *)ret)->descr = oldtype;
+                    goto finish;
+                }
             }
         }
     }
 
-    if (copy) {
-        flags = NPY_ARRAY_ENSURECOPY;
-    }
+    flags = copyflag;
+
     if (order == NPY_CORDER) {
         flags |= NPY_ARRAY_C_CONTIGUOUS;
     }

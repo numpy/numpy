@@ -176,14 +176,16 @@ array_put(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *keywords[] = {"order", NULL};
+    static char *keywords[] = {"order", "copy", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
+    int copyflag = 0;
     NPY_ORDER order = NPY_CORDER;
     Py_ssize_t n = PyTuple_Size(args);
 
-    if (!NpyArg_ParseKeywords(kwds, "|O&", keywords,
-                PyArray_OrderConverter, &order)) {
+    if (!NpyArg_ParseKeywords(kwds, "|O&O&", keywords,
+                PyArray_OrderConverter, &order,
+                PyArray_CopyConverter, &copyflag)) {
         return NULL;
     }
 
@@ -205,7 +207,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
             goto fail;
         }
     }
-    ret = PyArray_Newshape(self, &newshape, order);
+    ret = PyArray_Newshape_int(self, &newshape, order, copyflag);
     npy_free_cache_dim_obj(newshape);
     return ret;
 
@@ -789,14 +791,15 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    int forcecopy = 1, subok = 1;
+    int forcecopy = NPY_ARRAY_ENSURECOPY;
+    int subok = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&ii:astype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:astype", kwlist,
                             PyArray_DescrConverter, &dtype,
                             PyArray_OrderConverter, &order,
                             PyArray_CastingConverter, &casting,
                             &subok,
-                            &forcecopy)) {
+                            PyArray_CopyConverter, &forcecopy)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -806,7 +809,8 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if (!forcecopy && (order == NPY_KEEPORDER ||
+    if (!(forcecopy & NPY_ARRAY_ENSURECOPY) &&
+                    (order == NPY_KEEPORDER ||
                        (order == NPY_ANYORDER &&
                             (PyArray_IS_C_CONTIGUOUS(self) ||
                             PyArray_IS_F_CONTIGUOUS(self))) ||
@@ -822,6 +826,14 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     else if (PyArray_CanCastArrayTo(self, dtype, casting)) {
         PyArrayObject *ret;
+
+        /* Only allow the copy cast if it was not inhibited. */
+        if (forcecopy & NPY_ARRAY_ENSURENOCOPY) {
+                PyErr_SetString(PyExc_ValueError,
+                    "cannot cast array without creating a copy, but "
+                    "never-copy was requested.");
+                return NULL;
+        }
 
         /* If the requested dtype is flexible, adapt it */
         dtype = PyArray_AdaptFlexibleDType((PyObject *)self,

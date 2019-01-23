@@ -28,4 +28,10 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
 NPY_NO_EXPORT PyObject *
 PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags);
 
+/* Used internally to allow passing copy information */
+PyObject *
+PyArray_Newshape_int(PyArrayObject *self, PyArray_Dims *newdims,
+                     NPY_ORDER order, int copyflag);
+
+
 #endif
