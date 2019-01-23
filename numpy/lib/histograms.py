@@ -461,7 +461,8 @@ def _histogram_bin_edges_dispatcher(a, bins=None, range=None, weights=None):
 @array_function_dispatch(_histogram_bin_edges_dispatcher)
 def histogram_bin_edges(a, bins=10, range=None, weights=None):
     r"""
-    Function to calculate only the edges of the bins used by the `histogram` function.
+    Function to calculate only the edges of the bins used by the `histogram`
+    function.
 
     Parameters
     ----------
@@ -608,6 +609,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     'Sqrt'
         .. math:: n_h = \sqrt n
+
         The simplest and fastest estimator. Only takes into account the
         data size.
 
