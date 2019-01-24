@@ -86,7 +86,6 @@ if not getattr(multiarray, '_multiarray_umath', None):
         except Exception as e:
             print(e)
             raise ImportError(msg)
-        del importlib.util
     elif sys.version_info[:2] == (2, 7):
         import imp
         try:
@@ -97,13 +96,11 @@ if not getattr(multiarray, '_multiarray_umath', None):
         except Exception as e:
             print(e)
             raise ImportError(msg)
-        del imp
     else:
         raise ImportError(msg)
     del sys, osp
     import warnings
     warnings.warn(msg, ImportWarning, stacklevel=1)
-    del warnings
 
 # when this HACK is removed, keep this line
 from . import umath
