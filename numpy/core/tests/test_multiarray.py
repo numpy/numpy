@@ -7960,6 +7960,8 @@ def test_multiarray_module():
     cextension = np.core._multiarray_umath.__file__
     testfile = cextension.replace('_multiarray_umath', '_multiarray_module_test')
     badfile = cextension.replace('_multiarray_umath', 'multiarray')
+    assert not os.path.exists(badfile), '%s exists, this numpy ' \
+                                    'installation is faulty' % badfile
     try:
         shutil.copy(testfile, badfile)
         p = subprocess.Popen([sys.executable, '-Walways::ImportWarning', '-c',

@@ -52,8 +52,6 @@ del envkey
 del env_added
 del os
 
-from . import umath
-
 ############### HACK for broken installations #########################
 
 # Test that multiarray is a pure python module wrapping _multiarray_umath,
@@ -109,6 +107,9 @@ if not getattr(multiarray, '_multiarray_umath', None):
     import warnings
     warnings.warn(msg, ImportWarning, stacklevel=1)
     del warnings
+
+# when this HACK is removed, keep this line
+from . import umath
 
 if not getattr(umath, '_multiarray_umath', None):
     # The games in the previous block failed. Give up.
