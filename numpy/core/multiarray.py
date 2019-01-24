@@ -40,6 +40,10 @@ __all__ = [
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
 
+# For backward compatibility, make sure pickle imports these functions from here
+_reconstruct.__module__ = 'numpy.core.multiarray'
+scalar.__module__ = 'numpy.core.multiarray'
+
 
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
