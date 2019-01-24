@@ -30,6 +30,13 @@ Expired deprecations
 Compatibility notes
 ===================
 
+float16 subnormal rounding
+--------------------------
+Casting from a different floating point precision to float16 used incorrect
+rounding in some edge cases. This means in rare cases, subnormal results will
+now be rounded up instead of down, changing the last bit (ULP) of the result.
+
+
 
 C API changes
 =============
