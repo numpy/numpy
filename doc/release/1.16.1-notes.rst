@@ -25,8 +25,13 @@ Future changes
 Compatibility notes
 ===================
 
-* The changed error message emited by array comparison testing functions
-  may affect doctests. See below for detail.
+* The changed error message emited by array comparison testing functions may
+  affect doctests. See below for detail.
+
+* Casting from double and single denormals to float16 has been corrected.  In
+  some rare cases, this may result in results being rounded up instead of down,
+  changing the last bit (ULP) of the result.
+
 
 C API changes
 =============
