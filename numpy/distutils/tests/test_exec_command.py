@@ -126,22 +126,24 @@ class TestExecCommand(object):
         assert_(o == '')
 
         if 'BBB' not in os.environ:
+            # make sure env will not be overwritten from kws
+            env = {'use_tee': kws.get('use_tee', 0)}
             os.environ['BBB'] = 'Hi'
-            s, o = exec_command.exec_command('echo "$BBB"', **kws)
+            s, o = exec_command.exec_command('echo "$BBB"', **env)
             assert_(s == 0)
             assert_(o == 'Hi')
 
-            s, o = exec_command.exec_command('echo "$BBB"', BBB='Hey', **kws)
+            s, o = exec_command.exec_command('echo "$BBB"', BBB='Hey', **env)
             assert_(s == 0)
             assert_(o == 'Hey')
 
-            s, o = exec_command.exec_command('echo "$BBB"', **kws)
+            s, o = exec_command.exec_command('echo "$BBB"', **env)
             assert_(s == 0)
             assert_(o == 'Hi')
 
             del os.environ['BBB']
 
-            s, o = exec_command.exec_command('echo "$BBB"', **kws)
+            s, o = exec_command.exec_command('echo "$BBB"', **env)
             assert_(s == 0)
             assert_(o == '')
 
@@ -205,11 +207,14 @@ class TestExecCommand(object):
     def test_basic(self):
         with redirect_stdout(StringIO()):
             with redirect_stderr(StringIO()):
+                # remove coverage env variables since they can sometimes print
+                # warnings
+                env = {k:v for k,v in os.environ.items() if not k.startswith('COV_')}
                 if os.name == "posix":
-                    self.check_posix(use_tee=0)
-                    self.check_posix(use_tee=1)
+                    self.check_posix(use_tee=0, **env)
+                    self.check_posix(use_tee=1, **env)
                 elif os.name == "nt":
-                    self.check_nt(use_tee=0)
-                    self.check_nt(use_tee=1)
-                self.check_execute_in(use_tee=0)
-                self.check_execute_in(use_tee=1)
+                    self.check_nt(use_tee=0, **env)
+                    self.check_nt(use_tee=1, **env)
+                self.check_execute_in(use_tee=0, **env)
+                self.check_execute_in(use_tee=1, **env)
