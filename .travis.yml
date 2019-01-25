@@ -2,6 +2,7 @@
 #   http://lint.travis-ci.org/
 language: python
 group: travis_latest
+dist: xenial
 # Run jobs on container-based infrastructure, can be overridden per job
 sudo: false
 
@@ -36,11 +37,9 @@ python:
 matrix:
   include:
     - python: 3.7
-      dist: xenial  # Required for Python 3.7
       sudo: true    # travis-ci/travis-ci#9069
       env: INSTALL_PICKLE5=1
     - python: 3.5
-      dist: xenial  # Required for python3.5-dbg
       sudo: true    # travis-ci/travis-ci#9069
       env: USE_DEBUG=1
       addons:
@@ -60,6 +59,7 @@ matrix:
        - PYTHONOPTIMIZE=2
        - USE_ASV=1
     - python: 3.5
+      dist: trusty # remove after April 2019
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
