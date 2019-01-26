@@ -188,12 +188,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 static PyObject *
 array_priority_get(PyArrayObject *self)
 {
-    if (PyArray_CheckExact(self)) {
-        return PyFloat_FromDouble(NPY_PRIORITY);
-    }
-    else {
-        return PyFloat_FromDouble(NPY_PRIORITY);
-    }
+    return PyFloat_FromDouble(NPY_PRIORITY);
 }
 
 static PyObject *
