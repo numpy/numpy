@@ -1540,7 +1540,6 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
             Py_DECREF(copied_array);
-            Py_DECREF(copy);
             return NULL;
         }
         deepcopy = PyObject_GetAttrString(copy, "deepcopy");
