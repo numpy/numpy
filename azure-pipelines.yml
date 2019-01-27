@@ -159,7 +159,7 @@ jobs:
       cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
     displayName: 'Download / Install OpenBLAS'
   - powershell: |
-      choco install -y mingw --forcex86 --force
+      choco install -y mingw --forcex86 --force --version=5.3.0
     displayName: 'Install 32-bit mingw for 32-bit builds'
     condition: eq(variables['BITS'], 32)
   - script: python -m pip install cython nose pytz pytest
