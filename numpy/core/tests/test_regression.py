@@ -2411,6 +2411,24 @@ class TestRegression(object):
             if HAS_REFCOUNT:
                 assert_(base <= sys.getrefcount(s))
 
+    @pytest.mark.parametrize('val', [
+        # arrays and scalars
+        np.ones((10, 10), dtype='int32'),
+        np.uint64(10),
+        ])
+    @pytest.mark.parametrize('protocol',
+        range(2, pickle.HIGHEST_PROTOCOL + 1)
+        )
+    def test_pickle_module(self, protocol, val):
+        # gh-12837
+        s = pickle.dumps(val, protocol)
+        assert b'_multiarray_umath' not in s
+        if protocol == 5 and len(val.shape) > 0:
+            # unpickling ndarray goes through _frombuffer for protocol 5
+            assert b'numpy.core.numeric' in s
+        else:
+            assert b'numpy.core.multiarray' in s
+
     def test_object_casting_errors(self):
         # gh-11993
         arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
