@@ -53,7 +53,6 @@ del env_added
 del os
 
 from . import umath
-from . import _internal  # for freeze programs
 from . import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
@@ -83,6 +82,11 @@ from .numeric import absolute as abs
 # do this after everything else, to minimize the chance of this misleadingly
 # appearing in an import-time traceback
 from . import _add_newdocs
+# add these for module-freeze analysis (like PyInstaller)
+from . import _dtype_ctypes
+from . import _internal
+from . import _dtype
+from . import _methods
 
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
