@@ -32,4 +32,4 @@ __all__ = [
     'nextafter', 'not_equal', 'pi', 'positive', 'power', 'rad2deg', 'radians',
     'reciprocal', 'remainder', 'right_shift', 'rint', 'seterrobj', 'sign',
     'signbit', 'sin', 'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan',
-    'tanh', 'true_divide', 'trunc']
+    'tanh', 'true_divide', 'trunc', 'sinc']

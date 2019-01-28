@@ -934,6 +934,12 @@ defdict = {
           TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
+'sinc' :
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.sinc'),
+          None,
+          TD(inexact, f='sinc', astype={'e':'f'}),
+          ),
 }
 
 if sys.version_info[0] >= 3:

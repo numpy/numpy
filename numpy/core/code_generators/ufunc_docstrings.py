@@ -3972,3 +3972,70 @@ add_newdoc('numpy.core.umath', 'lcm',
     array([ 0, 20, 20, 60, 20, 20])
 
     """)
+
+
+add_newdoc('numpy.core.umath', 'sinc',
+    """
+    Return the sinc function.
+
+    The sinc function is :math:`\\sin(\\pi x)/(\\pi x)`.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    $PARAMS
+
+    Returns
+    -------
+    out : ndarray or scalar
+        The sinc function at each element of `x`.
+        $OUT_SCALAR_1
+
+    Notes
+    -----
+    ``sinc(0)`` is the limit value 1.
+
+    The name sinc is short for "sine cardinal" or "sinus cardinalis".
+
+    The sinc function is used in various signal processing applications,
+    including in anti-aliasing, in the construction of a Lanczos resampling
+    filter, and in interpolation.
+
+    For bandlimited interpolation of discrete-time signals, the ideal
+    interpolation kernel is proportional to the sinc function.
+
+    References
+    ----------
+    .. [1] Weisstein, Eric W. "Sinc Function." From MathWorld--A Wolfram Web
+           Resource. http://mathworld.wolfram.com/SincFunction.html
+    .. [2] Wikipedia, "Sinc function",
+           https://en.wikipedia.org/wiki/Sinc_function
+
+    Examples
+    --------
+    It is zero at all nonzero integers.
+
+    >>> np.sinc([-2, -1, 0, 1, 2]))
+    array([0., 0., 1., 0., 0.])
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = np.linspace(-4, 4, 41)
+    >>> plt.plot(x, np.sinc(x))
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> plt.title("Sinc Function")
+    Text(0.5, 1.0, 'Sinc Function')
+    >>> plt.ylabel("Amplitude")
+    Text(0, 0.5, 'Amplitude')
+    >>> plt.xlabel("X")
+    Text(0.5, 0, 'X')
+    >>> plt.show()
+
+    It works in 2-D as well:
+
+    >>> x = np.linspace(-4, 4, 401)
+    >>> xx = np.outer(x, x)
+    >>> plt.imshow(np.sinc(xx))
+    <matplotlib.image.AxesImage object at 0x...>
+
+    """)

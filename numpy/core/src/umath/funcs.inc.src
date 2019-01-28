@@ -473,4 +473,51 @@ nc_tanh@c@(@ctype@ *x, @ctype@ *r)
     return;
 }
 
+static NPY_INLINE
+@ctype@
+cdiv@c@(@ctype@ a, @ctype@ b)
+{
+    @ftype@ ar, ai, br, bi, abs_br, abs_bi;
+    ar = npy_creal@c@(a);
+    ai = npy_cimag@c@(a);
+    br = npy_creal@c@(b);
+    bi = npy_cimag@c@(b);
+    abs_br = npy_fabs@c@(br);
+    abs_bi = npy_fabs@c@(bi);
+
+    if (abs_br >= abs_bi) {
+        if (abs_br == 0 && abs_bi == 0) {
+            /* divide by zeros should yield a complex inf or nan */
+            return npy_cpack@c@(ar/abs_br, ai/abs_bi);
+        }
+        else {
+            @ftype@ rat = bi/br;
+            @ftype@ scl = 1.0@c@/(br+bi*rat);
+            return npy_cpack@c@((ar + ai*rat)*scl, (ai - ar*rat)*scl);
+        }
+    }
+    else {
+        @ftype@ rat = br/bi;
+        @ftype@ scl = 1.0@c@/(bi + br*rat);
+        return npy_cpack@c@((ar*rat + ai)*scl, (ai*rat - ar)*scl);
+    }
+}
+
+static void
+nc_sinc@c@(@ctype@ *z, @ctype@ *out)
+{
+    @ctype@ zpi;
+    @ftype@ x, y;
+
+    x = z->real;
+    y = z->imag;
+    if (x == 0 && y == 0) {
+	*out = npy_cpack@c@(1, 0);
+	return;
+    }
+
+    zpi = npy_cpack@c@(NPY_PI@c@*x, NPY_PI@c@*y);
+    *out = cdiv@c@(npy_csin@c@(zpi), zpi);
+    return;
+}
 /**end repeat**/

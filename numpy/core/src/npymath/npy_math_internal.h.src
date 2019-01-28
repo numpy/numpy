@@ -557,6 +557,37 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
     }
 }
 
+NPY_INPLACE @type@
+npy_sinc@c@(@type@ x)
+{
+    @type@ r;
+
+    if (npy_isnan(x)) {
+	return (@type@) NPY_NAN;
+    }
+    else if (npy_isinf(x)) {
+	return 0;
+    }
+    else if (x == 0) {
+	return 1;
+    }
+
+    if (x < 0) {
+	x = -x;
+    }
+
+    r = npy_fmod@c@(x, 2);
+    if (r < 0.5@c@) {
+	return npy_sin@c@(NPY_PI@c@*r) / (NPY_PI@c@*x);
+    }
+    else if (r > 1.5@c@) {
+	return npy_sin@c@(NPY_PI@c@*(r - 2)) / (NPY_PI@c@*x);
+    }
+    else {
+	return npy_sin@c@(NPY_PI@c@*(1 - r)) / (NPY_PI@c@*x);
+    }
+}
+
 #define LOGE2    NPY_LOGE2@c@
 #define LOG2E    NPY_LOG2E@c@
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)

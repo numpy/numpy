@@ -21,7 +21,7 @@ from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
     i0, insert, interp, kaiser, meshgrid, msort, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
+    select, setxor1d, trapz, trim_zeros, unwrap, unique, vectorize
     )
 
 from numpy.compat import long
@@ -1743,23 +1743,6 @@ class TestTrapz(object):
 
         xm = np.ma.array(x, mask=mask)
         assert_almost_equal(trapz(y, xm), r)
-
-
-class TestSinc(object):
-
-    def test_simple(self):
-        assert_(sinc(0) == 1)
-        w = sinc(np.linspace(-1, 1, 100))
-        # check symmetry
-        assert_array_almost_equal(w, flipud(w), 7)
-
-    def test_array_like(self):
-        x = [0, 0.5]
-        y1 = sinc(np.array(x))
-        y2 = sinc(list(x))
-        y3 = sinc(tuple(x))
-        assert_array_equal(y1, y2)
-        assert_array_equal(y1, y3)
 
 
 class TestUnique(object):

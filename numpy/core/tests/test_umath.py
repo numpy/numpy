@@ -1330,6 +1330,29 @@ class TestHeavside(object):
         assert_equal(h, expected1.astype(np.float32))
 
 
+class TestSinc:
+
+    def test_special_cases(self):
+        assert_(ncu.sinc(0) == 1)
+        assert_(ncu.sinc(0 + 0j) == 1)
+        assert_(ncu.sinc(np.inf) == 0)
+        assert_(ncu.sinc(-np.inf) == 0)
+        assert_(np.isnan(ncu.sinc(np.nan)))
+        # Test a large zero
+        assert_(ncu.sinc(1e10) == 0)
+
+    def test_real(self):
+        x = np.linspace(-5, 5, 100)
+        assert_allclose(ncu.sinc(x), ncu.sin(np.pi*x)/(np.pi*x), atol=1e-16)
+
+    def test_complex(self):
+        x = np.linspace(-5, 5, 100)
+        y = np.linspace(-5, 5, 100)
+        x, y = np.meshgrid(x, y)
+        z = x + 1j*y
+        assert_allclose(ncu.sinc(z), ncu.sin(np.pi*z)/(np.pi*z))
+
+
 class TestSign(object):
     def test_sign(self):
         a = np.array([np.inf, -np.inf, np.nan, 0.0, 3.0, -3.0])
