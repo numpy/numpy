@@ -20,8 +20,8 @@ jobs:
            apt-get -y install gfortran-5 wget && \
            cd .. && \
            mkdir openblas && cd openblas && \
-           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.4-manylinux1_i686.tar.gz && \
-           tar zxvf openblas-v0.3.4-manylinux1_i686.tar.gz && \
+           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
+           tar zxvf openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
            cp -r ./usr/local/lib/* /usr/lib && \
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
