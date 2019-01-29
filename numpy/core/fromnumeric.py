@@ -1385,7 +1385,7 @@ def squeeze(a, axis=None):
     try:
         squeeze = a.squeeze
     except AttributeError:
-        return _wrapit(a, 'squeeze')
+        squeeze = lambda **kwargs: _wrapit(a, 'squeeze', **kwargs)
     if axis is None:
         return squeeze()
     else:
