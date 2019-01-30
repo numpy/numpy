@@ -86,7 +86,7 @@ class RoundtripTest(object):
             Arrays stored to file.
 
         """
-        save_kwds = kwargs.get('save_kwds', {})
+        save_kwds = kwargs.get('save_kwds', {"allow_pickle": True})
         load_kwds = kwargs.get('load_kwds', {})
         file_on_disk = kwargs.get('file_on_disk', False)
 

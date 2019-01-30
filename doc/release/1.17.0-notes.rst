@@ -33,6 +33,13 @@ The internal use of these functions has been refactored and there are better
 alternatives. Relace ``exec_command`` with `subprocess.Popen` and
 ``temp_file_name`` with `tempfile.mkstemp`.
 
+Pickling while saving will require explicit opt-in
+--------------------------------------------------
+The functions ``np.savez``, ``np.save``, ``np.save_compressed``, and ``np.lib.
+format.write_array`` all take an `allow_pickle` keyword which now defaults to
+`None` and issues a warning for code that depends on the previous
+`allow_pickle=True` default. The default behavior will switch to ``False`` in
+a future version.
 
 Future Changes
 ==============
@@ -76,7 +83,6 @@ non-functional. This code was removed. If needed, use
 --------------------------------------------------------------------------------
 If the out argument to these functions is provided and has memory overlap with
 the other arguments, it is now buffered to avoid order-dependent behavior.
-
 
 C API changes
 =============

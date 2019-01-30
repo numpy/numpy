@@ -484,7 +484,10 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
         Python installations, for example if the stored objects require libraries
         that are not available, and not all pickled data is compatible between
         Python 2 and Python 3).
-        Default: True
+        Default: None
+        In NumPy <= 1.16.1 the value defaulted to True. This default is being
+        deprecated during 1.17, with a value of None now triggering a warning,
+        and in 1.19 `allow_pickle` will default to False.
     fix_imports : bool, optional
         Only useful in forcing objects in object arrays on Python 3 to be
         pickled in a Python 2 compatible way. If `fix_imports` is True, pickle
@@ -538,7 +541,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
             fid.close()
 
 
-def _savez_dispatcher(file, *args, **kwds):
+def _savez_dispatcher(file, *args, allow_pickle=None, **kwds):
     for a in args:
         yield a
     for v in kwds.values():
@@ -546,7 +549,7 @@ def _savez_dispatcher(file, *args, **kwds):
 
 
 @array_function_dispatch(_savez_dispatcher)
-def savez(file, *args, **kwds):
+def savez(file, *args, allow_pickle=None, **kwds):
     """
     Save several arrays into a single file in uncompressed ``.npz`` format.
 
@@ -567,6 +570,19 @@ def savez(file, *args, **kwds):
         know the names of the arrays outside `savez`, the arrays will be saved
         with names "arr_0", "arr_1", and so on. These arguments can be any
         expression.
+    allow_pickle : bool, optional
+        Allow loading pickled object arrays stored in npy files. Reasons for
+        disallowing pickles include security, as loading pickled data can
+        execute arbitrary code. If pickles are disallowed, loading object
+        arrays will fail.
+        Default: None
+        Whether to allow writing pickled data. Default: None
+        In NumPy <= 1.16.1 the value defaulted to True. This default is being
+        deprecated during 1.17, with a value of None now triggering a warning,
+        and in 1.19 `allow_pickle` will default to False.
+
+        .. versionadded:: 1.17.0
+
     kwds : Keyword arguments, optional
         Arrays to save to the file. Arrays will be saved in the file with the
         keyword names.
@@ -622,10 +638,10 @@ def savez(file, *args, **kwds):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
-    _savez(file, args, kwds, False)
+    _savez(file, args, kwds, False, allow_pickle=allow_pickle)
 
 
-def _savez_compressed_dispatcher(file, *args, **kwds):
+def _savez_compressed_dispatcher(file, *args, allow_pickle=None, **kwds):
     for a in args:
         yield a
     for v in kwds.values():
@@ -633,7 +649,7 @@ def _savez_compressed_dispatcher(file, *args, **kwds):
 
 
 @array_function_dispatch(_savez_compressed_dispatcher)
-def savez_compressed(file, *args, **kwds):
+def savez_compressed(file, *args, allow_pickle=None, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
@@ -694,10 +710,10 @@ def savez_compressed(file, *args, **kwds):
     True
 
     """
-    _savez(file, args, kwds, True)
+    _savez(file, args, kwds, compress=True, allow_pickle=allow_pickle)
 
 
-def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
+def _savez(file, args, kwds, compress, allow_pickle=None, pickle_kwargs=None):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
