@@ -3,8 +3,6 @@
 language: python
 group: travis_latest
 dist: xenial
-# Run jobs on container-based infrastructure, can be overridden per job
-sudo: false
 
 # Travis whitelists the installable packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-whitelist
@@ -37,10 +35,8 @@ python:
 matrix:
   include:
     - python: 3.7
-      sudo: true    # travis-ci/travis-ci#9069
       env: INSTALL_PICKLE5=1
     - python: 3.5
-      sudo: true    # travis-ci/travis-ci#9069
       env: USE_DEBUG=1
       addons:
         apt:
