@@ -98,7 +98,7 @@ class TestRegression(object):
             f = BytesIO()
             pickle.dump(ca, f, protocol=proto)
             f.seek(0)
-            ca = np.load(f)
+            ca = np.load(f, allow_pickle=True)
             f.close()
 
     def test_noncontiguous_fill(self):

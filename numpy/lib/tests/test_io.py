@@ -87,7 +87,7 @@ class RoundtripTest(object):
 
         """
         save_kwds = kwargs.get('save_kwds', {})
-        load_kwds = kwargs.get('load_kwds', {})
+        load_kwds = kwargs.get('load_kwds', {"allow_pickle": True})
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:

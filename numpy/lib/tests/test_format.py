@@ -426,7 +426,7 @@ def roundtrip(arr):
     f = BytesIO()
     format.write_array(f, arr)
     f2 = BytesIO(f.getvalue())
-    arr2 = format.read_array(f2)
+    arr2 = format.read_array(f2, allow_pickle=True)
     return arr2
 
 
@@ -576,7 +576,7 @@ def test_pickle_python2_python3():
         path = os.path.join(data_dir, fname)
 
         for encoding in ['bytes', 'latin1']:
-            data_f = np.load(path, encoding=encoding)
+            data_f = np.load(path, allow_pickle=True, encoding=encoding)
             if fname.endswith('.npz'):
                 data = data_f['x']
                 data_f.close()
@@ -598,16 +598,19 @@ def test_pickle_python2_python3():
         if sys.version_info[0] >= 3:
             if fname.startswith('py2'):
                 if fname.endswith('.npz'):
-                    data = np.load(path)
+                    data = np.load(path, allow_pickle=True)
                     assert_raises(UnicodeError, data.__getitem__, 'x')
                     data.close()
-                    data = np.load(path, fix_imports=False, encoding='latin1')
+                    data = np.load(path, allow_pickle=True, fix_imports=False,
+                                   encoding='latin1')
                     assert_raises(ImportError, data.__getitem__, 'x')
                     data.close()
                 else:
-                    assert_raises(UnicodeError, np.load, path)
+                    assert_raises(UnicodeError, np.load, path,
+                                  allow_pickle=True)
                     assert_raises(ImportError, np.load, path,
-                                  encoding='latin1', fix_imports=False)
+                                  allow_pickle=True, fix_imports=False,
+                                  encoding='latin1')
 
 
 def test_pickle_disallow():
