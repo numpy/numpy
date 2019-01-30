@@ -895,13 +895,13 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     worst case O(n*log(n)).
 
     'stable' automatically choses the best stable sorting algorithm
-    for the data type being sorted. It is currently mapped to
-    merge sort.
+    for the data type being sorted. It is currently mapped to timsort.
 
     .. versionadded:: 1.17.0
     Timsort is added for better performance on already or nearly
     sorted data. On random data timsort is almost identical to
-    mergesort. For details of timsort, refer to
+    mergesort. It is now used for stable sort while quicksort is still the
+    default sort if none is chosen. For details of timsort, refer to
     `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
 
 
