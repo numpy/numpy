@@ -152,7 +152,15 @@ class TestNonarrayArgs(object):
 
     def test_squeeze(self):
         A = [[[1, 1, 1], [2, 2, 2], [3, 3, 3]]]
-        assert_(np.squeeze(A).shape == (3, 3))
+        assert_equal(np.squeeze(A).shape, (3, 3))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1))).shape, (3,))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1)), axis=0).shape, (3, 1))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1)), axis=-1).shape, (1, 3))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1)), axis=2).shape, (1, 3))
+        assert_equal(np.squeeze([np.zeros((3, 1))]).shape, (3,))
+        assert_equal(np.squeeze([np.zeros((3, 1))], axis=0).shape, (3, 1))
+        assert_equal(np.squeeze([np.zeros((3, 1))], axis=2).shape, (1, 3))
+        assert_equal(np.squeeze([np.zeros((3, 1))], axis=-1).shape, (1, 3))
 
     def test_std(self):
         A = [[1, 2, 3], [4, 5, 6]]
