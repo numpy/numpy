@@ -2130,7 +2130,7 @@ def _lstsq_dispatcher(a, b, rcond=None):
 
 @array_function_dispatch(_lstsq_dispatcher)
 def lstsq(a, b, rcond="warn"):
-    """
+    r"""
     Return the least-squares solution to a linear matrix equation.
 
     Solves the equation :math:`a x = b` by computing a vector `x` that
