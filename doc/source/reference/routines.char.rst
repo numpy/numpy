@@ -20,6 +20,7 @@ String operations
    center
    decode
    encode
+   expandtabs
    join
    ljust
    lower
@@ -63,9 +64,11 @@ String information
    :toctree: generated/
 
    count
+   endswith
    find
    index
    isalpha
+   isalnum
    isdecimal
    isdigit
    islower
@@ -76,6 +79,7 @@ String information
    rfind
    rindex
    startswith
+   str_len
 
 Convenience class
 -----------------
@@ -83,4 +87,6 @@ Convenience class
 .. autosummary::
    :toctree: generated/
 
+   array
+   asarray
    chararray
