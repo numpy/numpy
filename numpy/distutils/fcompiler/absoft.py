@@ -66,7 +66,7 @@ class AbsoftFCompiler(FCompiler):
 
     def library_dir_option(self, dir):
         if os.name=='nt':
-            return ['-link', '/PATH:"%s"' % (dir)]
+            return ['-link', '/PATH:%s' % (dir)]
         return "-L" + dir
 
     def library_option(self, lib):

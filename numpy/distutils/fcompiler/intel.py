@@ -23,7 +23,10 @@ class BaseIntelFCompiler(FCompiler):
                                            f + '.f', '-o', f + '.o']
 
     def runtime_library_dir_option(self, dir):
-        return '-Wl,-rpath="%s"' % dir
+        # TODO: could use -Xlinker here, if it's supported
+        assert "," not in dir
+
+        return '-Wl,-rpath=%s' % dir
 
 
 class IntelFCompiler(BaseIntelFCompiler):

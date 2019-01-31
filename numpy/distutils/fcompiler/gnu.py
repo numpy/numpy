@@ -269,8 +269,11 @@ class GnuFCompiler(FCompiler):
             # Linux/Solaris/Unix support RPATH, Windows and AIX do not
             raise NotImplementedError
 
+        # TODO: could use -Xlinker here, if it's supported
+        assert "," not in dir
+
         sep = ',' if sys.platform == 'darwin' else '='
-        return '-Wl,-rpath%s"%s"' % (sep, dir)
+        return '-Wl,-rpath%s%s' % (sep, dir)
 
 
 class Gnu95FCompiler(GnuFCompiler):
