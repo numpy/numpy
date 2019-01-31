@@ -828,7 +828,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'timsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -855,7 +855,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     The various sorting algorithms are characterized by their average speed,
     worst case performance, work space size, and whether they are stable. A
     stable sort keeps items with the same key in the same relative
-    order. The three available algorithms have the following
+    order. The four available algorithms have the following
     properties:
 
     =========== ======= ============= ============ ========
@@ -864,6 +864,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     'quicksort'    1     O(n^2)            0          no
     'mergesort'    2     O(n*log(n))      ~n/2        yes
     'heapsort'     3     O(n*log(n))       0          no
+    'timsort'      2     O(n*log(n))      ~n/2        yes
     =========== ======= ============= ============ ========
 
     All the sort algorithms make temporary copies of the data when
@@ -894,8 +895,15 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     worst case O(n*log(n)).
 
     'stable' automatically choses the best stable sorting algorithm
-    for the data type being sorted. It is currently mapped to
-    merge sort.
+    for the data type being sorted. It is currently mapped to timsort.
+
+    .. versionadded:: 1.17.0
+    Timsort is added for better performance on already or nearly
+    sorted data. On random data timsort is almost identical to
+    mergesort. It is now used for stable sort while quicksort is still the
+    default sort if none is chosen. For details of timsort, refer to
+    `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
+
 
     Examples
     --------
@@ -959,7 +967,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort.  The default is -1 (the last axis). If None,
         the flattened array is used.
-    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'timsort', 'stable'}, optional
         Sorting algorithm.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies

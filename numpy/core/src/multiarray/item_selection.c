@@ -1135,6 +1135,9 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 case NPY_MERGESORT:
                     sort = npy_mergesort;
                     break;
+                case NPY_TIMSORT:
+                    sort = npy_timsort;
+                    break;
             }
         }
         else {
@@ -1285,6 +1288,9 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                     break;
                 case NPY_MERGESORT:
                     argsort = npy_amergesort;
+                    break;
+                case NPY_TIMSORT:
+                    argsort = npy_atimsort;
                     break;
             }
         }
