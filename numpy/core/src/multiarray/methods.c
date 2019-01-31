@@ -2041,7 +2041,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
                                         PyArray_DESCR(self)->elsize,
                                         datastr, PyArray_DESCR(self)->elsize,
                                         numels, 1, self);
-                if (!PyArray_ISEXTENDED(self)) {
+                if (!(PyArray_ISEXTENDED(self) ||
+                      PyArray_DESCR(self)->metadata ||
+                      PyArray_DESCR(self)->c_metadata)) {
                     fa->descr = PyArray_DescrFromType(
                                     PyArray_DESCR(self)->type_num);
                 }
