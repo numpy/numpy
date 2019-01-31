@@ -29,7 +29,6 @@ else:
 
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
-from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import (DistutilsExecError, CompileError,
