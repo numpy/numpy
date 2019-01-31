@@ -164,6 +164,17 @@ _bits = {'32bit': 32, '64bit': 64}
 platform_bits = _bits[platform.architecture()[0]]
 
 
+def _c_string_literal(s):
+    """
+    Convert a python string into a literal suitable for inclusion into C code
+    """
+    # only these three characters are forbidden in C strings
+    s = s.replace('\\', r'\\')
+    s = s.replace('"',  r'\"')
+    s = s.replace('\n', r'\n')
+    return '"{}"'.format(s)
+
+
 def libpaths(paths, bits):
     """Return a list of library paths valid on 32 or 64 bit systems.
 
@@ -1497,7 +1508,7 @@ Make sure that -lgfortran is used for C++ extensions.
             atlas_version = os.environ.get('ATLAS_VERSION', None)
         if atlas_version:
             dict_append(info, define_macros=[(
-                'ATLAS_INFO', '"\\"%s\\""' % atlas_version)
+                'ATLAS_INFO', _c_string_literal(atlas_version))
             ])
         else:
             dict_append(info, define_macros=[('NO_ATLAS_INFO', -1)])
@@ -1518,7 +1529,7 @@ Make sure that -lgfortran is used for C++ extensions.
         dict_append(info, define_macros=[('NO_ATLAS_INFO', -2)])
     else:
         dict_append(info, define_macros=[(
-            'ATLAS_INFO', '"\\"%s\\""' % atlas_version)
+            'ATLAS_INFO', _c_string_literal(atlas_version))
         ])
     result = _cached_atlas_version[key] = atlas_version, info
     return result
@@ -2063,7 +2074,7 @@ class _numpy_info(system_info):
             if vrs is None:
                 continue
             macros = [(self.modulename.upper() + '_VERSION',
-                      '"\\"%s\\""' % (vrs)),
+                      _c_string_literal(vrs)),
                       (self.modulename.upper(), None)]
             break
         dict_append(info, define_macros=macros)
@@ -2268,7 +2279,7 @@ class _pkg_config_info(system_info):
         version = self.get_config_output(config_exe, self.version_flag)
         if version:
             macros.append((self.__class__.__name__.split('.')[-1].upper(),
-                           '"\\"%s\\""' % (version)))
+                           _c_string_literal(version)))
             if self.version_macro_name:
                 macros.append((self.version_macro_name + '_%s'
                                % (version.replace('.', '_')), None))
