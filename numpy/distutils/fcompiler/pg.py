@@ -57,7 +57,7 @@ class PGroupFCompiler(FCompiler):
             return ["-dynamic", '-undefined', 'dynamic_lookup']
 
     def runtime_library_dir_option(self, dir):
-        return '-R"%s"' % dir
+        return '-R%s' % dir
 
 
 if sys.version_info >= (3, 5):
