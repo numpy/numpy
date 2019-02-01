@@ -701,6 +701,7 @@ def configuration(parent_package='',top_path=None):
     npysort_sources = [join('src', 'common', 'npy_sort.h.src'),
                        join('src', 'npysort', 'quicksort.c.src'),
                        join('src', 'npysort', 'mergesort.c.src'),
+                       join('src', 'npysort', 'timsort.c.src'),
                        join('src', 'npysort', 'heapsort.c.src'),
                        join('src', 'common', 'npy_partition.h.src'),
                        join('src', 'npysort', 'selection.c.src'),
@@ -961,6 +962,14 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('_operand_flag_tests',
                     sources=[join('src', 'umath', '_operand_flag_tests.c.src')])
+
+    #######################################################################
+    #                        _multiarray_module_test module               #
+    #######################################################################
+
+    config.add_extension('_multiarray_module_test',
+                    sources=[join('src', 'multiarray',
+                                         '_multiarray_module_test.c')])
 
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')

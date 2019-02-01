@@ -8,7 +8,7 @@ trigger:
 jobs:
 - job: Linux_Python_36_32bit_full_with_asserts
   pool:
-    vmIMage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-16.04'
   steps:
   - script: |
            docker pull i386/ubuntu:bionic
@@ -41,7 +41,7 @@ jobs:
     # the docs even though i.e., numba uses another in their
     # azure config for mac os -- Microsoft has indicated
     # they will patch this issue
-    vmIMage: macOS-10.13
+    vmImage: macOS-10.13
   steps:
   # the @0 refers to the (major) version of the *task* on Microsoft's
   # end, not the order in the build matrix nor anything to do
@@ -93,7 +93,7 @@ jobs:
       testRunTitle: 'Publish test results for Python 3.6 64-bit full Mac OS'
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmImage: 'VS2017-Win2016'
   variables:
       # openblas URLs from numpy-wheels
       # appveyor / Windows config

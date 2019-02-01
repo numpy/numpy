@@ -2156,10 +2156,11 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
 
             icombinemap[idim] = -1;
             if (new_dims[i] != dim) {
+                char orig_label = labels[idim + label];
                 PyErr_Format(PyExc_ValueError,
                              "dimensions in operand %d for collapsing "
                              "index '%c' don't match (%d != %d)",
-                             iop, label, (int)new_dims[i], (int)dim);
+                             iop, orig_label, (int)new_dims[i], (int)dim);
                 return NULL;
             }
             new_strides[i] += stride;

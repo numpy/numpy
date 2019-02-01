@@ -3797,7 +3797,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
+    kind : {'quicksort', 'mergesort', 'heapsort', 'timsort', 'stable'}, optional
         Sorting algorithm. Default is 'quicksort'.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
