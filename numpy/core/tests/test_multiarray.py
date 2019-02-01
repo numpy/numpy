@@ -23,6 +23,8 @@ from contextlib import contextmanager
 
 from numpy.core.numeric import pickle
 
+if sys.version_info[:2] >= (3, 4):
+    import pathlib
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -4539,6 +4541,23 @@ class TestIO(object):
         self.x.tofile(self.filename)
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
+
+    def test_roundtrip_pathlib(self):
+        if sys.version_info[:2] >= (3, 4):
+            p = pathlib.Path(self.filename)
+            self.x.tofile(p)
+            y = np.fromfile(p, dtype=self.dtype)
+            assert_array_equal(y, self.x.flat)
+
+    def test_roundtrip_dump_pathlib(self):
+        if sys.version_info[:2] >= (3, 4):
+            p = pathlib.Path(self.filename)
+            self.x.dump(p)
+            if sys.version_info[:2] >= (3, 6):
+                y = np.load(p)
+            else:
+                y = np.load(str(p))
+            assert_array_equal(y, self.x)
 
     def test_roundtrip_binary_str(self):
         s = self.x.tobytes()

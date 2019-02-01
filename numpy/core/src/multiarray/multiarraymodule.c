@@ -2071,6 +2071,8 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_XDECREF(type);
         return NULL;
     }
+
+    file = NpyPath_PathlikeToFspath(file);
     if (PyString_Check(file) || PyUnicode_Check(file)) {
         file = npy_PyFile_OpenFile(file, "rb");
         if (file == NULL) {

@@ -577,6 +577,7 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    file = NpyPath_PathlikeToFspath(file);
     if (PyBytes_Check(file) || PyUnicode_Check(file)) {
         file = npy_PyFile_OpenFile(file, "wb");
         if (file == NULL) {
@@ -2110,6 +2111,8 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
     if (cpick == NULL) {
         return -1;
     }
+
+    file = NpyPath_PathlikeToFspath(file);
     if (PyBytes_Check(file) || PyUnicode_Check(file)) {
         file = npy_PyFile_OpenFile(file, "wb");
         if (file == NULL) {
