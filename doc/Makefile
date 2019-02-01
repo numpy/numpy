@@ -1,7 +1,10 @@
 # Makefile for Sphinx documentation
 #
 
-PYVER = 3
+# This needs to be major.minor, just "3" doesn't work - it will result in
+# issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
+# If you're using a different Python version, just change the number here.
+PYVER = 3.6
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
@@ -58,7 +61,7 @@ gitwash-update:
 #
 
 
-INSTALL_DIR = $(CURDIR)/build/inst-dist/
+INSTALL_DIR = $(CURDIR)/build/inst-dist
 INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
 UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 
