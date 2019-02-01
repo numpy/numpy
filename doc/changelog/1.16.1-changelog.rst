@@ -1,0 +1,62 @@
+
+Contributors
+============
+
+A total of 16 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Antoine Pitrou
+* Arcesio Castaneda Medina +
+* Charles Harris
+* Chris Markiewicz +
+* Christoph Gohlke
+* Christopher J. Markiewicz +
+* Daniel Hrisca +
+* EelcoPeacs +
+* Eric Wieser
+* Kevin Sheppard
+* Matti Picus
+* OBATA Akio +
+* Ralf Gommers
+* Sebastian Berg
+* Stephan Hoyer
+* Tyler Reddy
+
+Pull requests merged
+====================
+
+A total of 33 pull requests were merged for this release.
+
+* `#12754 <https://github.com/numpy/numpy/pull/12754>`__: BUG: Check paths are unicode, bytes or path-like
+* `#12767 <https://github.com/numpy/numpy/pull/12767>`__: ENH: add mm->q floordiv
+* `#12768 <https://github.com/numpy/numpy/pull/12768>`__: ENH: port np.core.overrides to C for speed
+* `#12769 <https://github.com/numpy/numpy/pull/12769>`__: ENH: Add np.ctypeslib.as_ctypes_type(dtype), improve `np.ctypeslib.as_ctypes`
+* `#12771 <https://github.com/numpy/numpy/pull/12771>`__: BUG: Ensure probabilities are not NaN in choice
+* `#12772 <https://github.com/numpy/numpy/pull/12772>`__: MAINT: add warning to numpy.distutils for LDFLAGS append behavior.
+* `#12773 <https://github.com/numpy/numpy/pull/12773>`__: ENH: add "max difference" messages to np.testing.assert_array_equal...
+* `#12774 <https://github.com/numpy/numpy/pull/12774>`__: BUG: Fix incorrect/missing reference cleanups found using valgrind
+* `#12776 <https://github.com/numpy/numpy/pull/12776>`__: BUG,TST: Remove the misguided `run_command` that wraps subprocess
+* `#12777 <https://github.com/numpy/numpy/pull/12777>`__: DOC, TST: Clean up matplotlib imports
+* `#12781 <https://github.com/numpy/numpy/pull/12781>`__: BUG: Fix reference counting for subarrays containing objects
+* `#12782 <https://github.com/numpy/numpy/pull/12782>`__: BUG: Ensure failing memory allocations are reported
+* `#12784 <https://github.com/numpy/numpy/pull/12784>`__: BUG: Fix leak of void scalar buffer info
+* `#12788 <https://github.com/numpy/numpy/pull/12788>`__: MAINT: Change the order of checking for local file.
+* `#12808 <https://github.com/numpy/numpy/pull/12808>`__: BUG: loosen kwargs requirements in ediff1d
+* `#12809 <https://github.com/numpy/numpy/pull/12809>`__: DOC: clarify the extend of __array_function__ support in NumPy...
+* `#12810 <https://github.com/numpy/numpy/pull/12810>`__: BUG: Check that dtype or formats arguments are not None.
+* `#12811 <https://github.com/numpy/numpy/pull/12811>`__: BUG: fix f2py problem to build wrappers using PGI's Fortran
+* `#12812 <https://github.com/numpy/numpy/pull/12812>`__: BUG: double decref of dtype in failure codepath. Test and fix
+* `#12813 <https://github.com/numpy/numpy/pull/12813>`__: BUG, DOC: test, fix that f2py.compile accepts str and bytes,...
+* `#12816 <https://github.com/numpy/numpy/pull/12816>`__: BUG: resolve writeback in arr_insert failure paths
+* `#12820 <https://github.com/numpy/numpy/pull/12820>`__: ENH: Add mm->qm divmod
+* `#12843 <https://github.com/numpy/numpy/pull/12843>`__: BUG: fix to check before apply `shlex.split`
+* `#12844 <https://github.com/numpy/numpy/pull/12844>`__: BUG: Fix SystemError when pickling datetime64 array with pickle5
+* `#12845 <https://github.com/numpy/numpy/pull/12845>`__: BUG: Fix rounding of denormals in double and float to half casts.
+* `#12868 <https://github.com/numpy/numpy/pull/12868>`__: TEST: pin mingw version
+* `#12869 <https://github.com/numpy/numpy/pull/12869>`__: BUG: ndarrays pickled by 1.16 cannot be loaded by 1.15.4 and...
+* `#12870 <https://github.com/numpy/numpy/pull/12870>`__: BUG: do not Py_DECREF NULL pointer
+* `#12890 <https://github.com/numpy/numpy/pull/12890>`__: ENH: add _dtype_ctype to namespace for freeze analysis
+* `#12891 <https://github.com/numpy/numpy/pull/12891>`__: BUG: fail if old multiarray module detected
+* `#12898 <https://github.com/numpy/numpy/pull/12898>`__: BUG: Do not double-quote arguments passed on to the linker
+* `#12899 <https://github.com/numpy/numpy/pull/12899>`__: BUG: Do not insert extra double quote into preprocessor macros
+* `#12902 <https://github.com/numpy/numpy/pull/12902>`__: DOC: Prepare for 1.16.1 release.
