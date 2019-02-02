@@ -290,6 +290,12 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
 
+    .. warning:: Loading files that contain object arrays uses the ``pickle``
+                 module, which is not secure against erroneous or maliciously
+                 constructed data. Consider passing ``allow_pickle=False`` to
+                 load data that is known not to contain object arrays for the
+                 safer handling of untrusted sources.
+
     Parameters
     ----------
     file : file-like object, string, or pathlib.Path
