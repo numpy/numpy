@@ -64,14 +64,14 @@
 #
 #   extra_compile_args
 #       Add additional arguments to the compilation of sources.
-#       Simple variable with no parsing done. 
+#       Split into arguments in a platform-appropriate way.
 #       Provide a single line with all complete flags.
 #           extra_compile_args = -g -ftree-vectorize
 #
 #   extra_link_args
 #       Add additional arguments when libraries/executables
 #       are linked.
-#       Simple variable with no parsing done. 
+#       Split into arguments in a platform-appropriate way.
 #       Provide a single line with all complete flags.
 #           extra_link_args = -lgfortran
 #

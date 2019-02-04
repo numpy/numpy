@@ -153,6 +153,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler
+from numpy.distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -619,8 +620,9 @@ class system_info(object):
         for key in ['extra_compile_args', 'extra_link_args']:
             # Get values
             opt = self.cp.get(self.section, key)
+            opt = _shell_utils.NativeParser.split(opt)
             if opt:
-                tmp = {key : [opt]}
+                tmp = {key: opt}
                 dict_append(info, **tmp)
         return info
 
