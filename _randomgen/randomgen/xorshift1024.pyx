@@ -325,17 +325,17 @@ cdef class Xorshift1024:
             return self._ctypes
 
         import ctypes
-        
+
         self._ctypes = interface(<uintptr_t>self.rng_state,
                          ctypes.c_void_p(<uintptr_t>self.rng_state),
-                         ctypes.cast(<uintptr_t>&xorshift1024_uint64, 
-                                     ctypes.CFUNCTYPE(ctypes.c_uint64, 
+                         ctypes.cast(<uintptr_t>&xorshift1024_uint64,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint64,
                                      ctypes.c_void_p)),
-                         ctypes.cast(<uintptr_t>&xorshift1024_uint32, 
-                                     ctypes.CFUNCTYPE(ctypes.c_uint32, 
+                         ctypes.cast(<uintptr_t>&xorshift1024_uint32,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint32,
                                      ctypes.c_void_p)),
-                         ctypes.cast(<uintptr_t>&xorshift1024_double, 
-                                     ctypes.CFUNCTYPE(ctypes.c_double, 
+                         ctypes.cast(<uintptr_t>&xorshift1024_double,
+                                     ctypes.CFUNCTYPE(ctypes.c_double,
                                      ctypes.c_void_p)),
                          ctypes.c_void_p(<uintptr_t>self._brng))
         return self.ctypes
@@ -360,7 +360,7 @@ cdef class Xorshift1024:
         if self._cffi is not None:
             return self._cffi
         try:
-            import cffi 
+            import cffi
         except ImportError:
             raise ImportError('cffi is cannot be imported.')
 

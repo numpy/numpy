@@ -1,7 +1,3 @@
-# Travis script that uses miniconda in place of the system installed python
-# versions.  Allows substantial flexability for choosing versions of
-# required packages and is simpler to use to test up-to-date scientific Python
-# stack
 group: edge
 dist: trusty
 sudo: required
@@ -11,6 +7,7 @@ env:
   global:
     # Doctr deploy key for bashtage/randomgen
     - secure: "czwFlflS1lcfbSQ9ktv+pLAPV9/6+wmwiMTyIYyv5xgQVWRL5NRebWH+ZhQ6s2T5x17wFMtlafcAvkdV0CHQZLru34V2UNldCapuEtQ8b32EDHBXHKbs45b7SSkLx4TFXdjiJurleY4ZIKle0gX6BW21zYBwaHJqbN6I8nRv9Rp47XEU1UV1Mdf/PhfTnxY31rFrPYL77xeWJzoFfT8zao39V4gQds+1Ag7FjdNVdSDVKwDduF4kS7tIbKqb4M+jsbc3PIKyP9nyQpEQF5ebJuG7mqXJhVJGEL83rBx8MLFPA/1X3cUzKacgKyp2+Wmlt0EVhwCa1aRf9cSK6I7TbMC7/eGtDnC2ToiRlFJurVRblaEmhzVQS1yQ4Dkooqsj9hNVl6nhu7JfR52GLogns33Ec/yYuRcWcULKSlR5Cerfef/5YijBEhlr9X76SJiOpjvS4lwWFYX+h8xzuVhRLGwIVB9oQNllxYItzcDSGmRx+EOMXWASHmoUDnBOZg4GMVukqOcF5l0ynoepiA1YHLdZlMy6SB3P7BZKF/aNCOn9nXw+N9X4U/yUpkM3Pb7HoGdNrC8RO4SwrNjGrarkdEB6e1lBReK/dqcylaF/mpK9VLpfQszDI8xnR4VCmlEM+le0xOsyHfeGciabdI4KH0i0SfYl4ls5XrN+CaqFWdo="
+    - PYPI=false
 
 cache:
   directories:
@@ -22,11 +19,14 @@ matrix:
     - os: linux
       env: [PYTHON=2.7, NUMPY=1.13, CYTHON=0.26]
     - os: linux
-      env: [PYTHON=3.5, NUMPY=1.13]
+      env: [PYTHON=2.7]
     - os: linux
-      env: [PYTHON=3.6, NUMPY=1.14, CYTHON=0.27]
+      env: [PYTHON=3.5, NUMPY=1.14]
     - os: linux
-      env: [PYTHON=3.6, NUMPY=1.15, CYTHON=0.28]
+      env: [PYTHON=3.6, NUMPY=1.15, CYTHON=0.27]
+    - os: linux
+      python: 3.6
+      env: [PYPI=true]
     - os: linux
       env: [PYTHON=3.7, DOCBUILD=true]
     - os: osx
@@ -36,23 +36,11 @@ matrix:
 
 before_install:
   - git fetch --tags
-  - if [[ ${TRAVIS_OS_NAME} == "osx" ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda3.sh; fi
-  - if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3.sh; fi
-  - chmod +x miniconda3.sh
-  - ./miniconda3.sh -b
-  - export PATH=${HOME}/miniconda3/bin:$PATH
-  - conda config --set always_yes true
-  - conda update --all --quiet
-  - PKGS="python=${PYTHON}"
-  - PKGS="${PKGS} numpy"; if [ ${NUMPY} ]; then PKGS="${PKGS}=${NUMPY}"; fi
-  - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
-  - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
-  - conda create -n randomgen-test ${PKGS} pytest setuptools nose --quiet
-  - source activate randomgen-test
+  - if [[ $PYPI = true ]]; then source ci/pypi-install.sh; else source ci/conda-install.sh; fi
   - pip install tempita coverage coveralls pytest-cov codecov -q
+  - pip list
   - export BUILD_DIR=${PWD}
   - if [[ ${DOCBUILD} == true ]]; then pip install sphinx sphinx_rtd_theme guzzle_sphinx_theme ipython doctr -q; fi
-  - if [[ ${DOCBUILD} == true ]]; then conda install numba pandas matplotlib --quiet; fi
   - gcc --version || true
   - clang --version || true
 
