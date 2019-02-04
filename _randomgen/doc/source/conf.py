@@ -206,3 +206,16 @@ intersphinx_mapping = {
 }
 
 autosummary_generate = True
+
+doctest_global_setup = """
+import numpy as np
+
+import randomgen
+
+import matplotlib.pyplot
+
+def show(*args, **kwargs):
+    return
+
+matplotlib.pyplot.show = show
+"""

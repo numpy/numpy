@@ -1,6 +1,6 @@
 Change Log
 ----------
-v1.15.2
+v1.16.0
 =======
 - Fixed a bug that affected :class:`~randomgen.dsfmt.DSFMT` when calling
   :func:`~randomgen.dsfmt.DSFMT.jump` or :func:`~randomgen.dsfmt.DSFMT.seed`
@@ -11,6 +11,7 @@ v1.15.2
   entropy initialization used too few bytes. This bug is unlikely to be
   encountered since this path is only encountered if the system random
   number generator fails.
+- Synchronized with upstream changes.
 
 v1.15.1
 =======

@@ -13,7 +13,8 @@ from randomgen.xoshiro512starstar import Xoshiro512StarStar
 
 __all__ = ['RandomGenerator', 'DSFMT', 'MT19937', 'PCG64', 'PCG32', 'Philox',
            'ThreeFry', 'ThreeFry32', 'Xoroshiro128', 'Xorshift1024',
-           'Xoshiro256StarStar', 'Xoshiro512StarStar']
+           'Xoshiro256StarStar', 'Xoshiro512StarStar',
+           'hypergeometric', 'multinomial', 'random_sample']
 
 from ._version import get_versions
 

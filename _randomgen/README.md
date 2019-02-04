@@ -10,6 +10,12 @@ NumPy RandomState evolution.
 This is a library and generic interface for alternative random 
 generators in Python and NumPy.
 
+## Python 2.7 Support
+
+Release 1.16.0 is the final version that supports Python 2.7. Any bugs
+in v1.16.0 will be patched until the end of 2019. All future releases
+are Python 3, with an initial minimum version of 3.5.
+
 ## Compatibility Warning
 
 `RandomGenerator` does not support Box-Muller normal variates and so it not

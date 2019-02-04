@@ -142,7 +142,7 @@ cdef class Xoroshiro128:
         self._ctypes = None
         self._cffi = None
         self._generator = None
-        
+
         cdef const char *name = "BasicRNG"
         self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
 
@@ -292,17 +292,17 @@ cdef class Xoroshiro128:
             return self._ctypes
 
         import ctypes
-        
+
         self._ctypes = interface(<uintptr_t>self.rng_state,
                          ctypes.c_void_p(<uintptr_t>self.rng_state),
-                         ctypes.cast(<uintptr_t>&xoroshiro128_uint64, 
-                                     ctypes.CFUNCTYPE(ctypes.c_uint64, 
+                         ctypes.cast(<uintptr_t>&xoroshiro128_uint64,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint64,
                                      ctypes.c_void_p)),
-                         ctypes.cast(<uintptr_t>&xoroshiro128_uint32, 
-                                     ctypes.CFUNCTYPE(ctypes.c_uint32, 
+                         ctypes.cast(<uintptr_t>&xoroshiro128_uint32,
+                                     ctypes.CFUNCTYPE(ctypes.c_uint32,
                                      ctypes.c_void_p)),
-                         ctypes.cast(<uintptr_t>&xoroshiro128_double, 
-                                     ctypes.CFUNCTYPE(ctypes.c_double, 
+                         ctypes.cast(<uintptr_t>&xoroshiro128_double,
+                                     ctypes.CFUNCTYPE(ctypes.c_double,
                                      ctypes.c_void_p)),
                          ctypes.c_void_p(<uintptr_t>self._brng))
         return self.ctypes
@@ -327,7 +327,7 @@ cdef class Xoroshiro128:
         if self._cffi is not None:
             return self._cffi
         try:
-            import cffi 
+            import cffi
         except ImportError:
             raise ImportError('cffi is cannot be imported.')
 
