@@ -1,5 +1,16 @@
 Change Log
 ----------
+v1.15.2
+=======
+- Fixed a bug that affected :class:`~randomgen.dsfmt.DSFMT` when calling
+  :func:`~randomgen.dsfmt.DSFMT.jump` or :func:`~randomgen.dsfmt.DSFMT.seed`
+  that failed to reset the buffer.  This resulted in upto 381 values from the
+  previous state being used before the buffer was refilled at the new state.
+- Fixed bugs in :class:`~randomgen.xoshiro512starstar.Xoshiro512StarStar`
+  and :class:`~randomgen.xorshift1024.Xorshift1024` where the fallback
+  entropy initialization used too few bytes. This bug is unlikely to be
+  encountered since this path is only encountered if the system random
+  number generator fails.
 
 v1.15.1
 =======

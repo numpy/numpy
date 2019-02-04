@@ -428,6 +428,12 @@ class TestDSFMT(Base):
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float32)
 
+    def test_buffer_reset(self):
+        rs = RandomGenerator(self.brng(*self.data1['seed']))
+        u = rs.random_sample(1)
+        rs.seed(*self.data1['seed'])
+        assert rs.state['buffer_loc'] == 382
+
 
 class TestThreeFry32(Base):
     @classmethod

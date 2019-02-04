@@ -201,9 +201,9 @@ cdef class Xoshiro512StarStar:
         ub =  2 ** 64
         if seed is None:
             try:
-                state = random_entropy(2 * 8)
+                state = random_entropy(16)
             except RuntimeError:
-                state = random_entropy(8, 'fallback')
+                state = random_entropy(16, 'fallback')
             state = state.view(np.uint64)
         else:
             state = seed_by_array(seed, 8)

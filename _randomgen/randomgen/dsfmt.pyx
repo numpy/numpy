@@ -79,8 +79,8 @@ cdef class DSFMT:
         Can be an integer in [0, 2**32-1], array of integers in
         [0, 2**32-1] or ``None`` (the default). If `seed` is ``None``,
         then ``DSFMT`` will try to read entropy from ``/dev/urandom``
-        (or the Windows analog) if available to produce a 64-bit
-        seed. If unavailable, a 64-bit hash of the time and process
+        (or the Windows analog) if available to produce a 32-bit
+        seed. If unavailable, a 32-bit hash of the time and process
         ID is used.
 
     Notes
@@ -114,7 +114,7 @@ cdef class DSFMT:
     The ``DSFMT`` state vector consists of a 384 element array of
     64-bit unsigned integers plus a single integer value between 0 and 382
     indicating  the current position within the main array. The implementation
-    used here augments this with a 384 element array of doubles which are used
+    used here augments this with a 382 element array of doubles which are used
     to efficiently access the random numbers produced by the dSFMT generator.
 
     ``DSFMT`` is seeded using either a single 32-bit unsigned integer
@@ -182,6 +182,10 @@ cdef class DSFMT:
         free(self.rng_state)
         free(self._brng)
 
+    cdef _reset_state_variables(self):
+        self.rng_state.buffer_loc = DSFMT_N64
+
+
     def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
         cdef Py_ssize_t i
         if method==u'uint64':
@@ -206,8 +210,8 @@ cdef class DSFMT:
             Can be an integer in [0, 2**32-1], array of integers in
             [0, 2**32-1] or ``None`` (the default). If `seed` is ``None``,
             then ``DSFMT`` will try to read entropy from ``/dev/urandom``
-            (or the Windows analog) if available to produce a 64-bit
-            seed. If unavailable, a 64-bit hash of the time and process
+            (or the Windows analog) if available to produce a 32-bit
+            seed. If unavailable, a 32-bit hash of the time and process
             ID is used.
 
         Raises
@@ -238,6 +242,8 @@ cdef class DSFMT:
             dsfmt_init_by_array(self.rng_state.state,
                                 <uint32_t *>obj.data,
                                 np.PyArray_DIM(obj, 0))
+        # Clear the buffer
+        self._reset_state_variables()
 
     def jump(self, np.npy_intp iter=1):
         """
@@ -258,6 +264,8 @@ cdef class DSFMT:
         cdef np.npy_intp i
         for i in range(iter):
             dsfmt_jump(self.rng_state)
+        # Clear the buffer
+        self._reset_state_variables()
         return self
 
     @property

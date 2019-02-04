@@ -234,7 +234,7 @@ cdef class Xorshift1024:
             try:
                 state = random_entropy(32)
             except RuntimeError:
-                state = random_entropy(4, 'fallback')
+                state = random_entropy(32, 'fallback')
             state = state.view(np.uint64)
         else:
             state = seed_by_array(seed, 16)
