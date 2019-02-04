@@ -55,7 +55,7 @@ cdef class MT19937:
         Random seed used to initialize the pseudo-random number generator.  Can
         be any integer between 0 and 2**32 - 1 inclusive, an array (or other
         sequence) of such integers, or ``None`` (the default).  If `seed` is
-        ``None``, then will attempt to read data from ``/dev/urandom`` 
+        ``None``, then will attempt to read data from ``/dev/urandom``
         (or the Windows analog) if available or seed from the clock otherwise.
 
     Notes
@@ -82,10 +82,10 @@ cdef class MT19937:
 
     **Compatibility Guarantee**
 
-    ``MT19937`` make a compatibility guarantee. A fixed seed and a fixed 
-    series of calls to ``MT19937`` methods will always produce the same 
-    results up to roundoff error except when the values were incorrect. 
-    Incorrect values will be fixed and the version in which the fix was 
+    ``MT19937`` make a compatibility guarantee. A fixed seed and a fixed
+    series of calls to ``MT19937`` methods will always produce the same
+    results up to roundoff error except when the values were incorrect.
+    Incorrect values will be fixed and the version in which the fix was
     made will be noted in the relevant docstring.
 
     **Parallel Features**
@@ -109,10 +109,10 @@ cdef class MT19937:
     ----------
     .. [1] Hiroshi Haramoto, Makoto Matsumoto, and Pierre L\'Ecuyer, "A Fast
         Jump Ahead Algorithm for Linear Recurrences in a Polynomial Space",
-        Sequences and Their Applications - SETA, 290--298, 2008.        
-    .. [2] Hiroshi Haramoto, Makoto Matsumoto, Takuji Nishimura, François 
+        Sequences and Their Applications - SETA, 290--298, 2008.
+    .. [2] Hiroshi Haramoto, Makoto Matsumoto, Takuji Nishimura, François
         Panneton, Pierre L\'Ecuyer, "Efficient Jump Ahead for F2-Linear
-        Random Number Generators", INFORMS JOURNAL ON COMPUTING, Vol. 20, 
+        Random Number Generators", INFORMS JOURNAL ON COMPUTING, Vol. 20,
         No. 3, Summer 2008, pp. 385-390.
 
     """
@@ -253,7 +253,7 @@ cdef class MT19937:
         self : DSFMT
             PRNG jumped iter times
         """
-        cdef np.npy_intp i 
+        cdef np.npy_intp i
         for i in range(iter):
             mt19937_jump(self.rng_state)
         return self

@@ -33,11 +33,11 @@ cdef class LegacyGenerator:
     ``LegacyGenerator`` exposes a number of methods for generating random
     numbers for a set of distributions where the method used to produce random
     samples has changed. Three core generators have changed: normal, exponential
-    and gamma. These have been replaced by faster Ziggurat-based methods in 
+    and gamma. These have been replaced by faster Ziggurat-based methods in
     ``RandomGenerator``. ``_LegacyGenerator`` retains the slower methods
     to produce samples from these distributions as well as from distributions
     that depend on these such as the Chi-square, power or Weibull.
-     
+
     **No Compatibility Guarantee**
 
     ``LegacyGenerator`` is evolving and so it isn't possible to provide a
@@ -71,7 +71,7 @@ cdef class LegacyGenerator:
     0.09290787674371767
     >>> lg.standard_exponential()
     1.6465621229906502
-    
+
     The equivalent commands from NumPy produce identical output.
 
     >>> from numpy.random import RandomState
@@ -98,7 +98,7 @@ cdef class LegacyGenerator:
         if not PyCapsule_IsValid(capsule, name):
             raise ValueError("Invalid brng. The brng must be instantized.")
         self._brng = <brng_t *> PyCapsule_GetPointer(capsule, name)
-        self._aug_state = <aug_brng_t *>malloc(sizeof(aug_brng_t)) 
+        self._aug_state = <aug_brng_t *>malloc(sizeof(aug_brng_t))
         self._aug_state.basicrng = self._brng
         self._reset_gauss()
         self.lock = Lock()
@@ -137,7 +137,7 @@ cdef class LegacyGenerator:
         Notes
         -----
         Arguments are directly passed to the basic RNG. This is a convenience
-        function. 
+        function.
 
         The best method to access seed is to directly use a basic RNG instance.
         This example demonstrates this best practice.
@@ -153,8 +153,8 @@ cdef class LegacyGenerator:
         >>> brng = MT19937(123456789)
         >>> lg = LegacyGenerator(brng)
         >>> brng.seed(987654321)
-        
-        These best practice examples are equivalent to 
+
+        These best practice examples are equivalent to
 
         >>> lg = LegacyGenerator(MT19937(123456789))
         >>> lg.seed(987654321)
@@ -191,7 +191,7 @@ cdef class LegacyGenerator:
         if isinstance(value, tuple):
             if value[0] != 'MT19937':
                 raise ValueError('tuple only supported for MT19937')
-            st = {'brng': value[0], 
+            st = {'brng': value[0],
                   'state': {'key': value[1], 'pos': value[2]}}
             if len(value) > 3:
                 st['has_gauss'] = value[3]
@@ -222,13 +222,13 @@ cdef class LegacyGenerator:
 
         Examples
         --------
-        >>> s = randomgen.standard_normal(8000)
+        >>> s = randomgen.generator.standard_normal(8000)
         >>> s
         array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311, #random
                -0.38672696, -0.4685006 ])                               #random
         >>> s.shape
         (8000,)
-        >>> s = randomgen.standard_normal(size=(3, 4, 2))
+        >>> s = randomgen.generator.standard_normal(size=(3, 4, 2))
         >>> s.shape
         (3, 4, 2)
 
@@ -236,7 +236,7 @@ cdef class LegacyGenerator:
         return cont(&legacy_gauss, self._aug_state, size, self.lock, 0,
                     None, None, CONS_NONE,
                     None, None, CONS_NONE,
-                    None, None, CONS_NONE, 
+                    None, None, CONS_NONE,
                     None)
 
     def standard_t(self, df, size=None):
@@ -303,7 +303,7 @@ cdef class LegacyGenerator:
         We have 10 degrees of freedom, so is the sample mean within 95% of the
         recommended value?
 
-        >>> s = randomgen.standard_t(10, size=100000)
+        >>> s = randomgen.generator.standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
@@ -398,7 +398,7 @@ cdef class LegacyGenerator:
         Draw samples from the distribution:
 
         >>> mu, sigma = 3., 1. # mean and standard deviation
-        >>> s = randomgen.lognormal(mu, sigma, 1000)
+        >>> s = randomgen.generator.lognormal(mu, sigma, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -422,7 +422,7 @@ cdef class LegacyGenerator:
         >>> # values, drawn from a normal distribution.
         >>> b = []
         >>> for i in range(1000):
-        ...    a = 10. + randomgen.random(100)
+        ...    a = 10. + randomgen.generator.randn(100)
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
@@ -502,7 +502,7 @@ cdef class LegacyGenerator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(randomgen.wald(3, 2, 100000), bins=200, density=True)
+        >>> h = plt.hist(randomgen.generator.wald(3, 2, 100000), bins=200, density=True)
         >>> plt.show()
 
         """
@@ -592,7 +592,7 @@ cdef class LegacyGenerator:
         Draw samples from the distribution:
 
         >>> a, m = 3., 2.  # shape and mode
-        >>> s = (randomgen.pareto(a, 1000) + 1) * m
+        >>> s = (randomgen.generator.pareto(a, 1000) + 1) * m
 
         Display the histogram of the samples, along with the probability
         density function:
@@ -685,7 +685,7 @@ cdef class LegacyGenerator:
         Draw samples from the distribution:
 
         >>> a = 5. # shape
-        >>> s = randomgen.weibull(a, 1000)
+        >>> s = randomgen.generator.weibull(a, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -695,7 +695,7 @@ cdef class LegacyGenerator:
         >>> def weib(x,n,a):
         ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
 
-        >>> count, bins, ignored = plt.hist(randomgen.weibull(5.,1000))
+        >>> count, bins, ignored = plt.hist(randomgen.generator.weibull(5.,1000))
         >>> x = np.arange(1,100.)/50.
         >>> scale = count.max()/weib(x, 1., 5.).max()
         >>> plt.plot(x, weib(x, 1., 5.)*scale)
@@ -765,10 +765,11 @@ cdef class LegacyGenerator:
         >>> dfnum = 3 # between group deg of freedom
         >>> dfden = 20 # within groups degrees of freedom
         >>> nonc = 3.0
-        >>> nc_vals = randomgen.noncentral_f(dfnum, dfden, nonc, 1000000)
+        >>> nc_vals = randomgen.generator.noncentral_f(dfnum, dfden, nonc, 1000000)
         >>> NF = np.histogram(nc_vals, bins=50, density=True)
-        >>> c_vals = randomgen.f(dfnum, dfden, 1000000)
+        >>> c_vals = randomgen.generator.f(dfnum, dfden, 1000000)
         >>> F = np.histogram(c_vals, bins=50, density=True)
+        >>> import matplotlib.pyplot as plt
         >>> plt.plot(F[1][1:], F[0])
         >>> plt.plot(NF[1][1:], NF[0])
         >>> plt.show()
@@ -838,7 +839,7 @@ cdef class LegacyGenerator:
 
         Examples
         --------
-        >>> randomgen.chisquare(2,4)
+        >>> randomgen.generator.chisquare(2,4)
         array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272])
 
         """
@@ -903,7 +904,7 @@ cdef class LegacyGenerator:
         Draw values from the distribution and plot the histogram
 
         >>> import matplotlib.pyplot as plt
-        >>> values = plt.hist(randomgen.noncentral_chisquare(3, 20, 100000),
+        >>> values = plt.hist(randomgen.generator.noncentral_chisquare(3, 20, 100000),
         ...                   bins=200, density=True)
         >>> plt.show()
 
@@ -911,9 +912,9 @@ cdef class LegacyGenerator:
         and compare to a chisquare.
 
         >>> plt.figure()
-        >>> values = plt.hist(randomgen.noncentral_chisquare(3, .0000001, 100000),
+        >>> values = plt.hist(randomgen.generator.noncentral_chisquare(3, .0000001, 100000),
         ...                   bins=np.arange(0., 25, .1), density=True)
-        >>> values2 = plt.hist(randomgen.chisquare(3, 100000),
+        >>> values2 = plt.hist(randomgen.generator.chisquare(3, 100000),
         ...                    bins=np.arange(0., 25, .1), density=True)
         >>> plt.plot(values[1][0:-1], values[0]-values2[0], 'ob')
         >>> plt.show()
@@ -922,7 +923,7 @@ cdef class LegacyGenerator:
         distribution.
 
         >>> plt.figure()
-        >>> values = plt.hist(randomgen.noncentral_chisquare(3, 20, 100000),
+        >>> values = plt.hist(randomgen.generator.noncentral_chisquare(3, 20, 100000),
         ...                   bins=200, density=True)
         >>> plt.show()
 
@@ -987,8 +988,9 @@ cdef class LegacyGenerator:
         --------
         Draw samples and plot the distribution:
 
-        >>> s = randomgen.standard_cauchy(1000000)
+        >>> s = randomgen.generator.standard_cauchy(1000000)
         >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
+        >>> import matplotlib.pyplot as plt
         >>> plt.hist(s, bins=100)
         >>> plt.show()
 
@@ -1052,7 +1054,7 @@ cdef class LegacyGenerator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 1. # mean and width
-        >>> s = randomgen.standard_gamma(shape, 1000000)
+        >>> s = randomgen.generator.standard_gamma(shape, 1000000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1130,7 +1132,7 @@ cdef class LegacyGenerator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 2. # mean and dispersion
-        >>> s = randomgen.gamma(shape, scale, 1000)
+        >>> s = randomgen.generator.gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1263,11 +1265,11 @@ cdef class LegacyGenerator:
 
         >>> dfnum = 1. # between group degrees of freedom
         >>> dfden = 48. # within groups degrees of freedom
-        >>> s = randomgen.f(dfnum, dfden, 1000)
+        >>> s = randomgen.generator.f(dfnum, dfden, 1000)
 
         The lower bound for the top 1% of the samples is :
 
-        >>> sort(s)[-10]
+        >>> np.sort(s)[-10]
         7.61988120985
 
         So there is about a 1% chance that the F statistic will exceed 7.62,
@@ -1349,7 +1351,7 @@ cdef class LegacyGenerator:
         Draw samples from the distribution:
 
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
-        >>> s = randomgen.normal(mu, sigma, 1000)
+        >>> s = randomgen.generator.normal(mu, sigma, 1000)
 
         Verify the mean and the variance:
 
@@ -1414,16 +1416,16 @@ cdef class LegacyGenerator:
         -----
         For random samples from :math:`N(\\mu, \\sigma^2)`, use:
 
-        ``sigma * randomgen.randn(...) + mu``
+        ``sigma * randomgen.generator.randn(...) + mu``
 
         Examples
         --------
-        >>> randomgen.randn()
+        >>> randomgen.generator.randn()
         2.1923875335537315 #random
 
         Two-by-four array of samples from N(3, 6.25):
 
-        >>> 2.5 * randomgen.randn(2, 4) + 3
+        >>> 2.5 * randomgen.generator.randn(2, 4) + 3
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],  #random
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]]) #random
 
@@ -1498,7 +1500,7 @@ cdef class LegacyGenerator:
         for each successive well, that is what is the probability of a
         single success after drilling 5 wells, after 6 wells, etc.?
 
-        >>> s = randomgen.negative_binomial(1, 0.1, 100000)
+        >>> s = randomgen.generator.negative_binomial(1, 0.1, 100000)
         >>> for i in range(1, 11):
         ...    probability = sum(s<i) / 100000.
         ...    print i, "wells drilled, probability of one success =", probability
@@ -1562,8 +1564,9 @@ cdef class LegacyGenerator:
         average length, but allowing some variation in the relative sizes of
         the pieces.
 
-        >>> s = randomgen.dirichlet((10, 5, 3), 20).transpose()
+        >>> s = randomgen.generator.dirichlet((10, 5, 3), 20).transpose()
 
+        >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
         >>> plt.barh(range(20), s[1], left=s[0], color='g')
         >>> plt.barh(range(20), s[2], left=s[0]+s[1], color='r')
@@ -1623,7 +1626,7 @@ cdef class LegacyGenerator:
             while i < totsize:
                 acc = 0.0
                 for j in range(k):
-                    val_data[i+j] = legacy_standard_gamma(self._aug_state, 
+                    val_data[i+j] = legacy_standard_gamma(self._aug_state,
                                                           alpha_data[j])
                     acc             = acc + val_data[i + j]
                 invacc  = 1/acc
@@ -1704,7 +1707,7 @@ cdef class LegacyGenerator:
         Diagonal covariance means that points are oriented along x or y-axis:
 
         >>> import matplotlib.pyplot as plt
-        >>> x, y = randomgen.multivariate_normal(mean, cov, 5000).T
+        >>> x, y = randomgen.generator.multivariate_normal(mean, cov, 5000).T
         >>> plt.plot(x, y, 'x')
         >>> plt.axis('equal')
         >>> plt.show()
@@ -1724,7 +1727,7 @@ cdef class LegacyGenerator:
         --------
         >>> mean = (1, 2)
         >>> cov = [[1, 0], [0, 1]]
-        >>> x = randomgen.multivariate_normal(mean, cov, (3, 3))
+        >>> x = randomgen.generator.multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
         (3, 3, 2)
 
@@ -1773,7 +1776,7 @@ cdef class LegacyGenerator:
         # matrices should be equal up to roundoff error if cov is
         # symmetric and the singular value of the corresponding row is
         # not zero. We continue to use the SVD rather than Cholesky in
-        # order to preserve current outputs. 
+        # order to preserve current outputs.
 
         (u, s, v) = svd(cov)
 
@@ -1823,12 +1826,12 @@ cdef class LegacyGenerator:
         --------
         Output a 3x8000 array:
 
-        >>> n = randomgen.standard_exponential((3, 8000))
+        >>> n = randomgen.generator.standard_exponential((3, 8000))
         """
         return cont(&legacy_standard_exponential, self._aug_state, size, self.lock, 0,
                     None, None, CONS_NONE,
                     None, None, CONS_NONE,
-                    None, None, CONS_NONE, 
+                    None, None, CONS_NONE,
                     None)
 
     def exponential(self, scale=1.0, size=None):
@@ -1940,7 +1943,7 @@ cdef class LegacyGenerator:
 
         >>> a = 5. # shape
         >>> samples = 1000
-        >>> s = randomgen.power(a, samples)
+        >>> s = randomgen.generator.power(a, samples)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1956,20 +1959,20 @@ cdef class LegacyGenerator:
         Compare the power function distribution to the inverse of the Pareto.
 
         >>> from scipy import stats
-        >>> rvs = randomgen.power(5, 1000000)
-        >>> rvsp = randomgen.pareto(5, 1000000)
+        >>> rvs = randomgen.generator.power(5, 1000000)
+        >>> rvsp = randomgen.generator.pareto(5, 1000000)
         >>> xx = np.linspace(0,1,100)
         >>> powpdf = stats.powerlaw.pdf(xx,5)
 
         >>> plt.figure()
         >>> plt.hist(rvs, bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
-        >>> plt.title('randomgen.power(5)')
+        >>> plt.title('randomgen.generator.power(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
-        >>> plt.title('inverse of 1 + randomgen.pareto(5)')
+        >>> plt.title('inverse of 1 + randomgen.generator.pareto(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)

@@ -254,7 +254,7 @@ cdef class PCG64:
             _seed = <np.ndarray>np.empty(2, np.uint64)
             _seed[0] = int(seed) // 2**64
             _seed[1] = int(seed) % 2**64
-        
+
         if not np.isscalar(inc):
             raise TypeError('inc must be a scalar integer between 0 and {ub}'.format(ub=ub))
         if inc < 0 or inc > ub or int(inc) != inc:
@@ -262,7 +262,7 @@ cdef class PCG64:
         _inc = <np.ndarray>np.empty(2, np.uint64)
         _inc[0] = int(inc) // 2**64
         _inc[1] = int(inc) % 2**64
-        
+
         pcg64_set_seed(self.rng_state, <uint64_t *>_seed.data, <uint64_t *>_inc.data)
         self._reset_state_variables()
 

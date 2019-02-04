@@ -52,7 +52,7 @@ def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
     x = Xoroshiro128()
     out = np.empty(n, dtype=np.uint32)
     capsule = x.capsule
-    
+
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
     rng = <brng_t *>PyCapsule_GetPointer(capsule, capsule_name)

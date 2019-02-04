@@ -607,6 +607,11 @@ class TestRandomDist(object):
                      (3, 0, 4))
         assert_raises(ValueError, mt19937.choice, [], 10)
 
+    def test_choice_nan_probabilities(self):
+        a = np.array([42, 1, 2])
+        p = [None, None, None]
+        assert_raises(ValueError, mt19937.choice, a, p=p)
+
     def test_bytes(self):
         mt19937.seed(self.seed)
         actual = mt19937.bytes(10)

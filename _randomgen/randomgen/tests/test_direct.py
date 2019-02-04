@@ -430,7 +430,8 @@ class TestDSFMT(Base):
 
     def test_buffer_reset(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        u = rs.random_sample(1)
+        rs.random_sample(1)
+        assert rs.state['buffer_loc'] != 382
         rs.seed(*self.data1['seed'])
         assert rs.state['buffer_loc'] == 382
 
