@@ -206,8 +206,8 @@ cdef class MT19937:
             Can be an integer in [0, 2**32-1], array of integers in
             [0, 2**32-1] or ``None`` (the default). If `seed` is ``None``,
             then ``MT19937`` will try to read entropy from ``/dev/urandom``
-            (or the Windows analog) if available to produce a 64-bit
-            seed. If unavailable, a 64-bit hash of the time and process
+            (or the Windows analog) if available to produce a 32-bit
+            seed. If unavailable, a 32-bit hash of the time and process
             ID is used.
 
         Raises

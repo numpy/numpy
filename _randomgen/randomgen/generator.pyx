@@ -385,9 +385,9 @@ cdef class RandomGenerator:
         Parameters
         ----------
         a : float or array_like of floats
-            Alpha, non-negative.
+            Alpha, positive (>0).
         b : float or array_like of floats
-            Beta, non-negative.
+            Beta, positive (>0).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2355,7 +2355,7 @@ cdef class RandomGenerator:
         Parameters
         ----------
         a : float or array_like of floats
-            Shape of the distribution. Should be greater than zero.
+            Shape parameter of the distribution.  Must be nonnegative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -4068,8 +4068,9 @@ cdef class RandomGenerator:
 
         Draw `size` samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
-        generalization of a Beta distribution. Dirichlet pdf is the conjugate
-        prior of a multinomial in Bayesian inference.
+        generalization of a Beta distribution. The Dirichlet distribution
+        is a conjugate prior of a multinomial distribution in Bayesian
+        inference.
 
         Parameters
         ----------
@@ -4086,15 +4087,30 @@ cdef class RandomGenerator:
         samples : ndarray,
             The drawn samples, of shape (size, alpha.ndim).
 
+        Raises
+        -------
+        ValueError
+            If any value in alpha is less than or equal to zero
+
         Notes
         -----
-        .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
+        The Dirichlet distribution is a distribution over vectors
+        :math:`x` that fulfil the conditions :math:`x_i>0` and
+        :math:`\\sum_{i=1}^k x_i = 1`.
 
-        Uses the following property for computation: for each dimension,
-        draw a random sample y_i from a standard gamma generator of shape
-        `alpha_i`, then
-        :math:`X = \\frac{1}{\\sum_{i=1}^k{y_i}} (y_1, \\ldots, y_n)` is
-        Dirichlet distributed.
+        The probability density function :math:`p` of a
+        Dirichlet-distributed random vector :math:`X` is
+        proportional to
+
+        .. math:: p(x) \\propto \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i},
+
+        where :math:`\\alpha` is a vector containing the positive
+        concentration parameters.
+
+        The method uses the following property for computation: let :math:`Y`
+        be a random vector which has components that follow a standard gamma
+        distribution, then :math:`X = \\frac{1}{\\sum_{i=1}^k{Y_i}} Y`
+        is Dirichlet-distributed
 
         References
         ----------

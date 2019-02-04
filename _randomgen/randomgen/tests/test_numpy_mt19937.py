@@ -1104,7 +1104,8 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_weibull_0(self):
-        assert_equal(mt19937.weibull(a=0), 0)
+        mt19937.seed(self.seed)
+        assert_equal(mt19937.weibull(a=0, size=12), np.zeros(12))
         assert_raises(ValueError, mt19937.weibull, a=-0.)
 
     def test_zipf(self):

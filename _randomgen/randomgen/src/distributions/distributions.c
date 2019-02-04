@@ -573,6 +573,9 @@ double random_pareto(brng_t *brng_state, double a) {
 }
 
 double random_weibull(brng_t *brng_state, double a) {
+  if (a == 0.0) {
+    return 0.0;
+  }
   return pow(standard_exponential_zig(brng_state), 1. / a);
 }
 

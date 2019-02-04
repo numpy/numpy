@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 from __future__ import absolute_import
 
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
