@@ -1755,6 +1755,21 @@ ufunc_loop_matches(PyUFuncObject *self,
             if (tmp == NULL) {
                 return -1;
             }
+            if (strcmp(self->name, "floor_divide") == 0 &&
+                PyArray_DESCR(op[0])->type_num == 7 &&
+                PyArray_DESCR(op[1])->type_num == 8) {
+                /*
+                 * This is an in-place floor division
+                 * operation for which we do not support
+                 * the casting via augmented operator
+                 * see gh-12927
+                 */
+                *out_no_castable_output = 1;
+                *out_err_src_typecode = tmp->type;
+                *out_err_dst_typecode = PyArray_DESCR(op[i])->type;
+                Py_DECREF(tmp);
+                return 0;
+            }
             if (!PyArray_CanCastTypeTo(tmp, PyArray_DESCR(op[i]),
                                                         output_casting)) {
                 if (!(*out_no_castable_output)) {

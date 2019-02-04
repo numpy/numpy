@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns
+    assert_warns, assert_raises_regex,
     )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -219,6 +219,17 @@ class TestModulus(object):
                         assert_(b < rem <= 0, msg)
                     else:
                         assert_(b > rem >= 0, msg)
+
+    def test_inplace_floordiv_handling(self):
+        # issue gh-12927
+        # this only applies to in-place floordiv //=
+        # we currently do not raise TypeError for //
+        # with these operand types
+        a = np.array([1], np.int64)
+        b = np.array([1], np.uint64)
+        pattern = 'could not be coerced to provided output parameter'
+        with assert_raises_regex(TypeError, pattern):
+            a //= b
 
     def test_float_modulus_exact(self):
         # test that float results are exact for small integers. This also
