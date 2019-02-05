@@ -5178,7 +5178,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 }
                 current = current->next;
             }
-            if (cmp == 0 && current->arg_dtypes == NULL) {
+            if (cmp == 0 && current != NULL && current->arg_dtypes == NULL) {
                 current->arg_dtypes = PyArray_malloc(ufunc->nargs *
                     sizeof(PyArray_Descr*));
                 if (arg_dtypes != NULL) {
