@@ -597,10 +597,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     array([1, 2, 3, 4])
     """
 
-    arrayList = [
-        x if isinstance(x, ndarray) else sb.asarray(x) 
-        for x in arrayList
-    ]
+    arrayList = [sb.asarray(x) for x in arrayList]
 
     if shape is None or shape == 0:
         shape = arrayList[0].shape
@@ -613,7 +610,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         # and determine the formats.
         formats = []
         for obj in arrayList:
-            formats.append(obj.dtype.str)
+            formats.append(obj.dtype)
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -769,7 +766,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> r.shape
     (10,)
     """
-    
+
     if dtype is None and formats is None:
         raise TypeError("fromfile() needs a 'dtype' or 'formats' argument")
 
