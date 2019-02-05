@@ -420,7 +420,7 @@ PyArray_GetStridedCopyFn(int aligned, npy_intp src_stride,
         /* contiguous dst */
         if (itemsize != 0 && dst_stride == itemsize) {
             /* contiguous src */
-            if (itemsize != 0 && src_stride == itemsize) {
+            if (src_stride == itemsize) {
                 return &_contig_to_contig;
             }
             /* general src */
@@ -592,7 +592,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
         /* contiguous dst */
         if (itemsize != 0 && dst_stride == itemsize) {
             /* contiguous src */
-            if (itemsize != 0 && src_stride == itemsize) {
+            if (src_stride == itemsize) {
                 switch (itemsize) {
 /**begin repeat1
  * #elsize = 2, 4, 8, 16#
