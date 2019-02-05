@@ -2116,6 +2116,9 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
     }
 
     file = NpyPath_PathlikeToFspath(file);
+    if (file == NULL) {
+        return -1;
+    }
     if (PyBytes_Check(file) || PyUnicode_Check(file)) {
         file = npy_PyFile_OpenFile(file, "wb");
         if (file == NULL) {

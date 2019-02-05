@@ -16,10 +16,14 @@ NpyPath_PathlikeToFspath(PyObject *file)
     static PyObject *os_fspath = NULL;
     npy_cache_import("numpy.compat", "os_PathLike", &os_PathLike);
     if (os_PathLike == NULL) {
-        return file;
+        return NULL;
     }
     npy_cache_import("numpy.compat", "os_fspath", &os_fspath);
-    if ((os_fspath == NULL) ||  (!PyObject_IsInstance(file, os_PathLike))) {
+    if (os_fspath == NULL) {
+        return NULL;
+    }
+
+    if (!PyObject_IsInstance(file, os_PathLike)) {
         return file;
     }
     return PyObject_CallFunctionObjArgs(os_fspath, file, NULL);

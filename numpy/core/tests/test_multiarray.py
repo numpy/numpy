@@ -23,8 +23,14 @@ from contextlib import contextmanager
 
 from numpy.core.numeric import pickle
 
-if sys.version_info[:2] >= (3, 4):
+try:
     import pathlib
+except ImportError:
+    try:
+        import pathlib2 as pathlib
+    except ImportError:
+        pathlib = None
+
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -4542,22 +4548,22 @@ class TestIO(object):
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
+    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
     def test_roundtrip_pathlib(self):
-        if sys.version_info[:2] >= (3, 4):
-            p = pathlib.Path(self.filename)
-            self.x.tofile(p)
-            y = np.fromfile(p, dtype=self.dtype)
-            assert_array_equal(y, self.x.flat)
+        p = pathlib.Path(self.filename)
+        self.x.tofile(p)
+        y = np.fromfile(p, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
 
+    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
     def test_roundtrip_dump_pathlib(self):
-        if sys.version_info[:2] >= (3, 4):
-            p = pathlib.Path(self.filename)
-            self.x.dump(p)
-            if sys.version_info[:2] >= (3, 6):
-                y = np.load(p)
-            else:
-                y = np.load(str(p))
-            assert_array_equal(y, self.x)
+        p = pathlib.Path(self.filename)
+        self.x.dump(p)
+        if sys.version_info[:2] >= (3, 6):
+            y = np.load(p)
+        else:
+            y = np.load(str(p))
+        assert_array_equal(y, self.x)
 
     def test_roundtrip_binary_str(self):
         s = self.x.tobytes()
