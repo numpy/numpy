@@ -3825,14 +3825,13 @@ cdef class RandomState:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` successes and `p` probability of success where `n` is an
-        integer > 0 and `p` is in the interval [0, 1].
+        parameters, `n` successes and `p` probability of success where `n`
+        is > 0 and `p` is in the interval [0, 1].
 
         Parameters
         ----------
-        n : int or array_like of ints
-            Parameter of the distribution, > 0. Floats are also accepted,
-            but they will be truncated to integers.
+        n : float or array_like of floats
+            Parameter of the distribution, > 0.
         p : float or array_like of floats
             Parameter of the distribution, >= 0 and <=1.
         size : int or tuple of ints, optional
@@ -3850,14 +3849,17 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the negative binomial distribution is
+        The probability mass function of the negative binomial distribution is
 
-        .. math:: P(N;n,p) = \\binom{N+n-1}{N}p^{n}(1-p)^{N},
+        .. math:: P(N;n,p) = \\frac{\Gamma(N+n)}{N!\Gamma(n)}p^{n}(1-p)^{N},
 
         where :math:`n` is the number of successes, :math:`p` is the
-        probability of success, and :math:`N+n` is the number of trials.
-        The negative binomial distribution gives the probability of N
-        failures given n successes, with a success on the last trial.
+        probability of success, :math:`N+n` is the number of trials, and
+        :math:`\Gamma` is the gamma function. When :math:`n` is an integer,
+        :math:`\\frac{\Gamma(N+n)}{N!\Gamma(n)} = \\binom{N+n-1}{N}`, which is
+        the more common form of this term in the the pmf. The negative
+        binomial distribution gives the probability of N failures given n
+        successes, with a success on the last trial.
 
         If one throws a die repeatedly until the third time a "1" appears,
         then the probability distribution of the number of non-"1"s that
