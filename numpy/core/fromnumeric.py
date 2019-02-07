@@ -979,10 +979,10 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     Returns
     -------
     index_array : ndarray, int
-        Array of indices that sort `a` along the specified axis.
+        Array of indices that sort `a` along the specified `axis`.
         If `a` is one-dimensional, ``a[index_array]`` yields a sorted `a`.
-        More generally, ``np.take_along_axis(a, index_array, axis=a)`` always
-        yields the sorted `a`, irrespective of dimensionality.
+        More generally, ``np.take_along_axis(a, index_array, axis=axis)``
+        always yields the sorted `a`, irrespective of dimensionality.
 
     See Also
     --------
@@ -1013,13 +1013,21 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     array([[0, 3],
            [2, 2]])
 
-    >>> np.argsort(x, axis=0)  # sorts along first axis (down)
+    >>> ind = np.argsort(x, axis=0)  # sorts along first axis (down)
+    >>> ind
     array([[0, 1],
            [1, 0]])
+    >>> np.take_along_axis(x, ind, axis=0)  # same as np.sort(x, axis=0)
+    array([[0, 2],
+           [2, 3]])
 
-    >>> np.argsort(x, axis=1)  # sorts along last axis (across)
+    >>> ind = np.argsort(x, axis=1)  # sorts along last axis (across)
+    >>> ind
     array([[0, 1],
            [0, 1]])
+    >>> np.take_along_axis(x, ind, axis=1)  # same as np.sort(x, axis=1)
+    array([[0, 3],
+           [2, 2]])
 
     Indices of the sorted elements of a N-dimensional array:
 
