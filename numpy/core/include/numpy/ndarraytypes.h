@@ -156,13 +156,20 @@ enum NPY_TYPECHAR {
         NPY_COMPLEXLTR = 'c'
 };
 
+/*
+ * Changing this may break Numpy API compatibility
+ * due to changing offsets in PyArray_ArrFuncs, so be
+ * careful. Here we have reused the mergesort slot for
+ * any kind of stable sort, the actual implementation will
+ * depend on the data type.
+ */
 typedef enum {
         NPY_QUICKSORT=0,
         NPY_HEAPSORT=1,
         NPY_MERGESORT=2,
-        NPY_TIMSORT=3,
+        NPY_STABLESORT=2,
 } NPY_SORTKIND;
-#define NPY_NSORTS (NPY_TIMSORT + 1)
+#define NPY_NSORTS (NPY_STABLESORT + 1)
 
 
 typedef enum {
