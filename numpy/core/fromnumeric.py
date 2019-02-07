@@ -828,8 +828,16 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort', 'timsort', 'stable'}, optional
-        Sorting algorithm. Default is 'quicksort'.
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
+        Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
+        and 'mergesort' use timsort under the covers and, in general, the
+        actual implementation will vary with datatype. The 'mergesort' option
+        is retained for backwards compatibility.
+
+        .. versionchanged:: 1.17.0.
+           The 'stable' option was added together with stable sorting
+           algorithms other than 'mergesort'.
+
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -855,17 +863,21 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     The various sorting algorithms are characterized by their average speed,
     worst case performance, work space size, and whether they are stable. A
     stable sort keeps items with the same key in the same relative
-    order. The four available algorithms have the following
+    order. The four algorithms implemented in NumPy have the following
     properties:
 
     =========== ======= ============= ============ ========
        kind      speed   worst case    work space   stable
     =========== ======= ============= ============ ========
     'quicksort'    1     O(n^2)            0          no
-    'mergesort'    2     O(n*log(n))      ~n/2        yes
     'heapsort'     3     O(n*log(n))       0          no
+    'mergesort'    2     O(n*log(n))      ~n/2        yes
     'timsort'      2     O(n*log(n))      ~n/2        yes
     =========== ======= ============= ============ ========
+
+    .. note:: The datatype determines which of 'mergesort' or 'timsort'
+       is actually used, even if 'mergesort' is specified. User selection
+       at a finer scale is not currently available.
 
     All the sort algorithms make temporary copies of the data when
     sorting along any but the last axis.  Consequently, sorting along
@@ -895,7 +907,10 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     worst case O(n*log(n)).
 
     'stable' automatically choses the best stable sorting algorithm
-    for the data type being sorted. It is currently mapped to timsort.
+    for the data type being sorted. It, along with 'mergesort' is
+    currently mapped to timsort. API forward compatibility currently limits the
+    ability to select the implementation and it is hardwired for the different
+    data types.
 
     .. versionadded:: 1.17.0
     Timsort is added for better performance on already or nearly
@@ -967,8 +982,16 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     axis : int or None, optional
         Axis along which to sort.  The default is -1 (the last axis). If None,
         the flattened array is used.
-    kind : {'quicksort', 'mergesort', 'heapsort', 'timsort', 'stable'}, optional
-        Sorting algorithm.
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
+        Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
+        and 'mergesort' use timsort under the covers and, in general, the
+        actual implementation will vary with datatype. The 'mergesort' option
+        is retained for backwards compatibility.
+
+        .. versionchanged:: 1.17.0.
+           The 'stable' option was added together with stable sorting
+           algorithms other than 'mergesort'.
+
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
