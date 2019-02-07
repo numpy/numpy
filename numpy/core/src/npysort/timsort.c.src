@@ -1313,6 +1313,12 @@ timsort_@suff@(void *start, npy_intp num, void *varr)
     npy_intp l, n, stack_ptr, minrun;
     run stack[TIMSORT_STACK_SIZE];
     buffer_@suff@ buffer;
+
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
     buffer.pw = NULL;
     buffer.size = 0;
     buffer.len = len;
@@ -1341,12 +1347,11 @@ timsort_@suff@(void *start, npy_intp num, void *varr)
     if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
 
     ret = 0;
-cleanup:
 
+cleanup:
     if (buffer.pw != NULL) {
         free(buffer.pw);
     }
-
     return ret;
 }
 
@@ -1696,6 +1701,12 @@ atimsort_@suff@(void *start, npy_intp *tosort, npy_intp num, void *varr)
     npy_intp l, n, stack_ptr, minrun;
     run stack[TIMSORT_STACK_SIZE];
     buffer_intp buffer;
+
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
     buffer.pw = NULL;
     buffer.size = 0;
     stack_ptr = 0;
@@ -1719,12 +1730,11 @@ atimsort_@suff@(void *start, npy_intp *tosort, npy_intp num, void *varr)
     if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
 
     ret = 0;
-cleanup:
 
+cleanup:
     if (buffer.pw != NULL) {
         free(buffer.pw);
     }
-
     return ret;
 }
 
@@ -2121,46 +2131,54 @@ npy_force_collapse(char *arr, run *stack, npy_intp *stack_ptr,
 int
 npy_timsort(void *start, npy_intp num, void *varr)
 {
-    size_t len = PyArray_ITEMSIZE(varr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(varr)->f->compare;
+    PyArrayObject *arr = varr;
+    size_t len = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[TIMSORT_STACK_SIZE];
     buffer_char buffer;
+
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
     buffer.pw = NULL;
     buffer.size = 0;
     buffer.len = len;
     stack_ptr = 0;
     minrun = compute_min_run_short(num);
+
     /* used for insertion sort and gallop key */
     ret = resize_buffer_char(&buffer, len);
 
     if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
 
     for (l = 0; l < num;) {
-        n = npy_count_run(start, l, num, minrun, buffer.pw, len, cmp, varr);
+        n = npy_count_run(start, l, num, minrun, buffer.pw, len, cmp, arr);
+
         /* both s and l are scaled by len */
         stack[stack_ptr].s = l;
         stack[stack_ptr].l = n;
         ++stack_ptr;
-        ret = npy_try_collapse(start, stack, &stack_ptr, &buffer, len, cmp, varr);
+        ret = npy_try_collapse(start, stack, &stack_ptr, &buffer, len, cmp, arr);
 
         if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
 
         l += n;
     }
 
-    ret = npy_force_collapse(start, stack, &stack_ptr, &buffer, len, cmp, varr);
+    ret = npy_force_collapse(start, stack, &stack_ptr, &buffer, len, cmp, arr);
 
     if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
 
     ret = 0;
-cleanup:
 
+cleanup:
     if (buffer.pw != NULL) {
         free(buffer.pw);
     }
-
     return ret;
 }
 
@@ -2509,25 +2527,32 @@ npy_aforce_collapse(char *arr, npy_intp *tosort, run *stack,
 int
 npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
 {
-    size_t len = PyArray_ITEMSIZE(varr);
-    PyArray_CompareFunc *cmp = PyArray_DESCR(varr)->f->compare;
+    PyArrayObject *arr = varr;
+    size_t len = PyArray_ITEMSIZE(arr);
+    PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[TIMSORT_STACK_SIZE];
     buffer_intp buffer;
+
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
     buffer.pw = NULL;
     buffer.size = 0;
     stack_ptr = 0;
     minrun = compute_min_run_short(num);
 
     for (l = 0; l < num;) {
-        n = npy_acount_run(start, tosort, l, num, minrun, len, cmp, varr);
+        n = npy_acount_run(start, tosort, l, num, minrun, len, cmp, arr);
         /* both s and l are scaled by len */
         stack[stack_ptr].s = l;
         stack[stack_ptr].l = n;
         ++stack_ptr;
         ret = npy_atry_collapse(start, tosort, stack, &stack_ptr, &buffer, len, cmp,
-                                varr);
+                                arr);
 
         if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
 
@@ -2535,16 +2560,15 @@ npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
     }
 
     ret = npy_aforce_collapse(start, tosort, stack, &stack_ptr, &buffer, len,
-                              cmp, varr);
+                              cmp, arr);
 
     if (NPY_UNLIKELY(ret < 0)) { goto cleanup; }
 
     ret = 0;
-cleanup:
 
+cleanup:
     if (buffer.pw != NULL) {
         free(buffer.pw);
     }
-
     return ret;
 }
