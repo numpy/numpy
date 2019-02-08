@@ -409,6 +409,7 @@ be performed.
 .. autosummary::
    :toctree: generated/
 
+   ndarray.max
    ndarray.argmax
    ndarray.min
    ndarray.argmin
