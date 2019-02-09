@@ -438,7 +438,6 @@ class TestRecord(object):
         assert_raises(ValueError, lambda: arr[['nofield']])
 
     def test_frommarrays_using_subarrays(self):
-        # https://github.com/numpy/numpy/issues/4806
         arrays = [
             np.arange(10),
             np.ones(10, dtype=[('a', '<u2'), ('b', '<f4')]),
