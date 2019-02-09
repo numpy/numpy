@@ -831,12 +831,11 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
         and 'mergesort' use timsort under the covers and, in general, the
-        actual implementation will vary with datatype. The 'mergesort' option
+        actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
 
-        .. versionchanged:: 1.17.0.
-           The 'stable' option was added together with stable sorting
-           algorithms other than 'mergesort'.
+        .. versionchanged:: 1.15.0.
+           The 'stable' option was added.
 
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
@@ -985,12 +984,12 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
         and 'mergesort' use timsort under the covers and, in general, the
-        actual implementation will vary with datatype. The 'mergesort' option
+        actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
 
-        .. versionchanged:: 1.17.0.
-           The 'stable' option was added together with stable sorting
-           algorithms other than 'mergesort'.
+        .. versionchanged:: 1.15.0.
+           The 'stable' option was added.
+
 
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
