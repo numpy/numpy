@@ -309,7 +309,7 @@ def _get_outer_edges(a, range):
         # handle empty arrays. Can't determine range, so use 0-1.
         first_edge, last_edge = 0, 1
     else:
-        first_edge, last_edge = a.min(), a.max()
+        first_edge, last_edge = np.nanmin(a), np.nanmax(a)
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
                 "autodetected range of [{}, {}] is not finite".format(first_edge, last_edge))
