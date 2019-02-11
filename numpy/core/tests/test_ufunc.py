@@ -1580,6 +1580,7 @@ class TestUfunc(object):
 
         result = struct_ufunc.add_triplet(a, b)
         assert_equal(result, np.array([(2, 4, 6)], dtype='u8,u8,u8'))
+        assert_raises(ValueError, struct_ufunc.register_fail)
 
     def test_custom_ufunc(self):
         a = np.array(
