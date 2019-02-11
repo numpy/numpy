@@ -5199,7 +5199,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 current->nargs = ufunc->nargs;
             }
             else {
-                PyErr_SetString(PyExc_ValueError,
+                PyErr_SetString(PyExc_RuntimeError,
                     "loop already registered");
                 result = -1;
             }
