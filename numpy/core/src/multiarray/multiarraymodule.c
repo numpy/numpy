@@ -2059,16 +2059,20 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
+    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", NULL};
     PyArray_Descr *type = NULL;
     int own;
-    npy_off_t orig_pos = 0;
+    npy_off_t orig_pos = 0, offset = 0;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "s:fromfile", kwlist,
-                &file, PyArray_DescrConverter, &type, &nin, &sep)) {
+                "O|O&" NPY_SSIZE_T_PYFMT "sl:fromfile", kwlist,
+                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset)) {
         Py_XDECREF(type);
+        return NULL;
+    }
+    if (offset != 0 && strcmp(sep, "") != 0) {
+        PyErr_SetString(PyExc_ValueError, "'offset' argument only permitted for binary files");
         return NULL;
     }
     if (PyString_Check(file) || PyUnicode_Check(file)) {
@@ -2084,6 +2088,11 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
+        Py_DECREF(file);
+        return NULL;
+    }
+    if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
+        PyErr_SetString(PyExc_IOError, "seeking file failed");
         Py_DECREF(file);
         return NULL;
     }
