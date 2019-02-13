@@ -3790,15 +3790,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     """
     a.sort(axis=-1, kind='quicksort', order=None)
 
-    Sort an array, in-place.
+    Sort an array in-place. Refer to `numpy.sort` for full documentation.
 
     Parameters
     ----------
     axis : int, optional
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort', 'timsort', 'stable'}, optional
-        Sorting algorithm. Default is 'quicksort'.
+    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
+        Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
+        and 'mergesort' use timsort under the covers and, in general, the
+        actual implementation will vary with datatype. The 'mergesort' option
+        is retained for backwards compatibility.
+
+        .. versionchanged:: 1.15.0.
+           The 'stable' option was added.
+
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -3816,7 +3823,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
 
     Notes
     -----
-    See ``sort`` for notes on the different sorting algorithms.
+    See `numpy.sort` for notes on the different sorting algorithms.
 
     Examples
     --------

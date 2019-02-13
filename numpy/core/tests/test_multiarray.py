@@ -1395,10 +1395,10 @@ class TestZeroSizeFlexible(object):
                 sort_func(zs, kind=kind, **kwargs)
 
     def test_sort(self):
-        self._test_sort_partition('sort', kinds='qhmt')
+        self._test_sort_partition('sort', kinds='qhs')
 
     def test_argsort(self):
-        self._test_sort_partition('argsort', kinds='qhmt')
+        self._test_sort_partition('argsort', kinds='qhs')
 
     def test_partition(self):
         self._test_sort_partition('partition', kinds=['introselect'], kth=2)
@@ -1450,7 +1450,7 @@ class TestZeroSizeFlexible(object):
 
 class TestMethods(object):
 
-    sort_kinds = [r'm', 'q', 'h', 't']
+    sort_kinds = ['quicksort', 'heapsort', 'stable']
 
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]

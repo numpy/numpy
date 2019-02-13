@@ -1132,10 +1132,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 case NPY_HEAPSORT:
                     sort = npy_heapsort;
                     break;
-                case NPY_MERGESORT:
-                    sort = npy_mergesort;
-                    break;
-                case NPY_TIMSORT:
+                case NPY_STABLESORT:
                     sort = npy_timsort;
                     break;
             }
@@ -1286,10 +1283,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 case NPY_HEAPSORT:
                     argsort = npy_aheapsort;
                     break;
-                case NPY_MERGESORT:
-                    argsort = npy_amergesort;
-                    break;
-                case NPY_TIMSORT:
+                case NPY_STABLESORT:
                     argsort = npy_atimsort;
                     break;
             }
@@ -1431,7 +1425,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 goto fail;
             }
         }
-        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_MERGESORT]
+        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_STABLESORT]
                 && !PyArray_DESCR(mps[i])->f->compare) {
             PyErr_Format(PyExc_TypeError,
                          "item %zd type does not have compare function", i);
@@ -1527,9 +1521,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 int rcode;
                 elsize = PyArray_DESCR(mps[j])->elsize;
                 astride = PyArray_STRIDES(mps[j])[axis];
-                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
                 if(argsort == NULL) {
-                    argsort = npy_amergesort;
+                    argsort = npy_atimsort;
                 }
                 _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize,
                                              its[j]->dataptr, astride, N, elsize);
@@ -1566,9 +1560,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             }
             for (j = 0; j < n; j++) {
                 int rcode;
-                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_STABLESORT];
                 if(argsort == NULL) {
-                    argsort = npy_amergesort;
+                    argsort = npy_atimsort;
                 }
                 rcode = argsort(its[j]->dataptr,
                         (npy_intp *)rit->dataptr, N, mps[j]);
