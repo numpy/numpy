@@ -149,6 +149,11 @@ Floating point scalars implement ``as_integer_ratio`` to match the builtin float
 This returns a (numerator, denominator) pair, which can be used to construct a
 `fractions.Fraction`.
 
+`numpy.packbits` and `numpy.unpackbits` accept an ``order`` keyword
+-------------------------------------------------------------------
+The ``order`` keyword defaults to ``big``, and will order the **bits**
+accordingly. For ``'big'`` 3 will become ``[0, 0, 0, 0, 0, 0, 1, 1]``, and
+``[1, 1, 0, 0, 0, 0, 0, 0]`` for ``little``
 
 Improvements
 ============

@@ -8,6 +8,7 @@ by importing from the extension module.
 
 import functools
 import warnings
+import sys
 
 from . import overrides
 from . import _multiarray_umath
@@ -1113,7 +1114,7 @@ def putmask(a, mask, values):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
-def packbits(a, axis=None):
+def packbits(a, axis=None, order='big'):
     """
     packbits(a, axis=None)
 
@@ -1129,6 +1130,11 @@ def packbits(a, axis=None):
     axis : int, optional
         The dimension over which bit-packing is done.
         ``None`` implies packing the flattened array.
+    order : 'big' or 'little', only the first letter is checked
+        The order of the returned bits. The default is the common standard
+        where 3 => [0, 0, 0, 0, 0, 1, 1]
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1164,7 +1170,7 @@ def packbits(a, axis=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
-def unpackbits(a, axis=None, count=None):
+def unpackbits(a, axis=None, count=None, order='big'):
     """
     unpackbits(a, axis=None, count=None)
 
@@ -1191,6 +1197,12 @@ def unpackbits(a, axis=None, count=None):
         default). Counts larger than the available number of bits will
         add zero padding to the output. Negative counts must not
         exceed the available number of bits.
+
+        .. versionadded:: 1.17.0
+
+    order : 'big' or 'little', only the first letter is checked
+        The order of the returned bits. The default is the common standard
+        where 3 => [0, 0, 0, 0, 0, 1, 1]
 
         .. versionadded:: 1.17.0
 

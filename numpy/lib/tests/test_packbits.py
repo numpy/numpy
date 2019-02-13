@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
-
+import pytest
 
 def test_packbits():
     # Copied from the docstring.
@@ -50,8 +50,8 @@ def test_packbits_empty_with_axis():
                 assert_equal(b.dtype, np.uint8)
                 assert_equal(b.shape, out_shape)
 
-
-def test_packbits_large():
+@pytest.mark.parametrize('order', ('l', 'b'))
+def test_packbits_large(order):
     # test data large enough for 16 byte vectorization
     a = np.array([1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0,
                   0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1,
@@ -71,7 +71,7 @@ def test_packbits_large():
     a = a.repeat(3)
     for dtype in '?bBhHiIlLqQ':
         arr = np.array(a, dtype=dtype)
-        b = np.packbits(arr, axis=None)
+        b = np.packbits(arr, axis=None, order=order)
         assert_equal(b.dtype, np.uint8)
         r = [252, 127, 192, 3, 254, 7, 252, 0, 7, 31, 240, 0, 28, 1, 255, 252,
              113, 248, 3, 255, 192, 28, 15, 192, 28, 126, 0, 224, 127, 255,
@@ -81,9 +81,10 @@ def test_packbits_large():
              255, 224, 1, 255, 252, 126, 63, 0, 1, 192, 252, 14, 63, 0, 15,
              199, 252, 113, 255, 3, 128, 56, 252, 14, 7, 0, 113, 255, 255, 142, 56, 227,
              129, 248, 227, 129, 199, 31, 128]
-        assert_array_equal(b, r)
+        if order == 'big':
+            assert_array_equal(b, r)
         # equal for size being multiple of 8
-        assert_array_equal(np.unpackbits(b)[:-4], a)
+        assert_array_equal(np.unpackbits(b, order=order)[:-4], a)
 
         # check last byte of different remainders (16 byte vectorization)
         b = [np.packbits(arr[:-i], axis=None)[-1] for i in range(1, 16)]
@@ -228,6 +229,20 @@ def test_unpackbits():
     assert_array_equal(b, np.array([[0, 0, 0, 0, 0, 0, 1, 0],
                                     [0, 0, 0, 0, 0, 1, 1, 1],
                                     [0, 0, 0, 1, 0, 1, 1, 1]]))
+
+def test_pack_unpack_order():
+    a = np.array([[2], [7], [23]], dtype=np.uint8)
+    b = np.unpackbits(a, axis=1)
+    assert_equal(b.dtype, np.uint8)
+    b_little = np.unpackbits(a, axis=1, order='little')
+    b_big = np.unpackbits(a, axis=1, order='big')
+    assert_array_equal(b, b_big)
+    assert_array_equal(a, np.packbits(b_little, axis=1, order='little'))
+    assert_array_equal(b[:,::-1], b_little)
+    assert_array_equal(a, np.packbits(b_big, axis=1, order='big'))
+    assert_raises(ValueError, np.unpackbits, a, order='r')
+    assert_raises(TypeError, np.unpackbits, a, order=10)
+    
 
 
 def test_unpackbits_empty():
