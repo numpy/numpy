@@ -1574,7 +1574,8 @@ cdef class RandomState:
         loc : float or array_like of floats
             Mean ("centre") of the distribution.
         scale : float or array_like of floats
-            Standard deviation (spread or "width") of the distribution.
+            Standard deviation (spread or "width") of the distribution. Must be
+            non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1746,7 +1747,8 @@ cdef class RandomState:
         Parameters
         ----------
         scale : float or array_like of floats
-            The scale parameter, :math:`\\beta = 1/\\lambda`.
+            The scale parameter, :math:`\\beta = 1/\\lambda`. Must be
+            non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1828,7 +1830,7 @@ cdef class RandomState:
         Parameters
         ----------
         shape : float or array_like of floats
-            Parameter, should be > 0.
+            Parameter, must be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1915,9 +1917,9 @@ cdef class RandomState:
         Parameters
         ----------
         shape : float or array_like of floats
-            The shape of the gamma distribution. Should be greater than zero.
+            The shape of the gamma distribution. Must be non-negative.
         scale : float or array_like of floats, optional
-            The scale of the gamma distribution. Should be greater than zero.
+            The scale of the gamma distribution. Must be non-negative.
             Default is equal to 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -2681,7 +2683,7 @@ cdef class RandomState:
         Parameters
         ----------
         a : float or array_like of floats
-            Shape of the distribution. Should be greater than zero.
+            Shape of the distribution. Must be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3002,7 +3004,8 @@ cdef class RandomState:
         loc : float or array_like of floats, optional
             The position, :math:`\\mu`, of the distribution peak. Default is 0.
         scale : float or array_like of floats, optional
-            :math:`\\lambda`, the exponential decay. Default is 1.
+            :math:`\\lambda`, the exponential decay. Default is 1. Must be non-
+            negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3098,7 +3101,8 @@ cdef class RandomState:
         loc : float or array_like of floats, optional
             The location of the mode of the distribution. Default is 0.
         scale : float or array_like of floats, optional
-            The scale parameter of the distribution. Default is 1.
+            The scale parameter of the distribution. Default is 1. Must be non-
+            negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3228,7 +3232,7 @@ cdef class RandomState:
         loc : float or array_like of floats, optional
             Parameter of the distribution. Default is 0.
         scale : float or array_like of floats, optional
-            Parameter of the distribution. Should be greater than zero.
+            Parameter of the distribution. Must be non-negative.
             Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -3444,7 +3448,7 @@ cdef class RandomState:
         Parameters
         ----------
         scale : float or array_like of floats, optional
-            Scale, also equals the mode. Should be >= 0. Default is 1.
+            Scale, also equals the mode. Must be non-negative. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
