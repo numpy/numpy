@@ -124,5 +124,5 @@ NumPy fully supports an object-oriented approach, starting, once
 again, with `ndarray`.  For example, `ndarray` is a class, possessing
 numerous methods and attributes.  Many of its methods mirror
 functions in the outer-most NumPy namespace, giving the programmer
-complete freedom to code in whichever paradigm she prefers and/or
+complete freedom to code in whichever paradigm he/she prefers and/or
 which seems most appropriate to the task at hand.
