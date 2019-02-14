@@ -470,6 +470,27 @@ class TestStatistic(object):
         with pytest.raises(ValueError, match=match):
             np.pad(arr, 2, mode, stat_length=stat_length)
 
+    def test_simple_stat_length(self):
+        a = np.arange(30)
+        a = np.reshape(a, (6, 5))
+        a = pad(a, ((2, 3), (3, 2)), mode='mean', stat_length=(3,))
+        b = np.array(
+            [[6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
+             [6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
+
+             [1, 1, 1, 0, 1, 2, 3, 4, 3, 3],
+             [6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
+             [11, 11, 11, 10, 11, 12, 13, 14, 13, 13],
+             [16, 16, 16, 15, 16, 17, 18, 19, 18, 18],
+             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23],
+             [26, 26, 26, 25, 26, 27, 28, 29, 28, 28],
+
+             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23],
+             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23],
+             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23]]
+            )
+        assert_array_equal(a, b)
+
 
 class TestConstant(object):
     def test_check_constant(self):
@@ -1061,29 +1082,6 @@ class TestWrap(object):
         a = np.ones((3, 5))
         b = np.pad(a, (0, 5), mode="wrap")
         assert_array_equal(a, b[:-5, :-5])
-
-
-class TestStatLen(object):
-    def test_check_simple(self):
-        a = np.arange(30)
-        a = np.reshape(a, (6, 5))
-        a = pad(a, ((2, 3), (3, 2)), mode='mean', stat_length=(3,))
-        b = np.array(
-            [[6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
-             [6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
-
-             [1, 1, 1, 0, 1, 2, 3, 4, 3, 3],
-             [6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
-             [11, 11, 11, 10, 11, 12, 13, 14, 13, 13],
-             [16, 16, 16, 15, 16, 17, 18, 19, 18, 18],
-             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23],
-             [26, 26, 26, 25, 26, 27, 28, 29, 28, 28],
-
-             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23],
-             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23],
-             [21, 21, 21, 20, 21, 22, 23, 24, 23, 23]]
-            )
-        assert_array_equal(a, b)
 
 
 class TestEdge(object):
