@@ -1141,9 +1141,12 @@ cdef class RandomState:
                 raise ValueError("'p' must be 1-dimensional")
             if p.size != pop_size:
                 raise ValueError("'a' and 'p' must have same size")
+            p_sum = kahan_sum(pix, d)
+            if np.isnan(p_sum):
+                raise ValueError("probabilities contain NaN")
             if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
-            if abs(kahan_sum(pix, d) - 1.) > atol:
+            if abs(p_sum - 1.) > atol:
                 raise ValueError("probabilities do not sum to 1")
 
         shape = size
@@ -2168,7 +2171,6 @@ cdef class RandomState:
         >>> NF = np.histogram(nc_vals, bins=50, density=True)
         >>> c_vals = np.random.f(dfnum, dfden, 1000000)
         >>> F = np.histogram(c_vals, bins=50, density=True)
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> plt.plot(F[1][1:], F[0])
         >>> plt.plot(NF[1][1:], NF[0])
@@ -2447,7 +2449,6 @@ cdef class RandomState:
         --------
         Draw samples and plot the distribution:
 
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> s = np.random.standard_cauchy(1000000)
         >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
@@ -3285,7 +3286,6 @@ cdef class RandomState:
 
         >>> loc, scale = 10, 1
         >>> s = np.random.logistic(loc, scale, 10000)
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, bins=50)
 
@@ -3487,7 +3487,6 @@ cdef class RandomState:
         --------
         Draw values from the distribution and plot the histogram
 
-        >>> import matplotlib
         >>> from matplotlib.pyplot import hist
         >>> values = hist(np.random.rayleigh(3, 100000), bins=200, density=True)
 
@@ -3826,14 +3825,13 @@ cdef class RandomState:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` successes and `p` probability of success where `n` is an
-        integer > 0 and `p` is in the interval [0, 1].
+        parameters, `n` successes and `p` probability of success where `n`
+        is > 0 and `p` is in the interval [0, 1].
 
         Parameters
         ----------
-        n : int or array_like of ints
-            Parameter of the distribution, > 0. Floats are also accepted,
-            but they will be truncated to integers.
+        n : float or array_like of floats
+            Parameter of the distribution, > 0.
         p : float or array_like of floats
             Parameter of the distribution, >= 0 and <=1.
         size : int or tuple of ints, optional
@@ -3851,14 +3849,17 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the negative binomial distribution is
+        The probability mass function of the negative binomial distribution is
 
-        .. math:: P(N;n,p) = \\binom{N+n-1}{N}p^{n}(1-p)^{N},
+        .. math:: P(N;n,p) = \\frac{\Gamma(N+n)}{N!\Gamma(n)}p^{n}(1-p)^{N},
 
         where :math:`n` is the number of successes, :math:`p` is the
-        probability of success, and :math:`N+n` is the number of trials.
-        The negative binomial distribution gives the probability of N
-        failures given n successes, with a success on the last trial.
+        probability of success, :math:`N+n` is the number of trials, and
+        :math:`\Gamma` is the gamma function. When :math:`n` is an integer,
+        :math:`\\frac{\Gamma(N+n)}{N!\Gamma(n)} = \\binom{N+n-1}{N}`, which is
+        the more common form of this term in the the pmf. The negative
+        binomial distribution gives the probability of N failures given n
+        successes, with a success on the last trial.
 
         If one throws a die repeatedly until the third time a "1" appears,
         then the probability distribution of the number of non-"1"s that
@@ -4243,7 +4244,6 @@ cdef class RandomState:
         >>> ngood, nbad, nsamp = 100, 2, 10
         # number of good, number of bad, and number of samples
         >>> s = np.random.hypergeometric(ngood, nbad, nsamp, 1000)
-        >>> import matplotlib
         >>> from matplotlib.pyplot import hist
         >>> hist(s)
         #   note that it is very unlikely to grab both bad items
@@ -4354,7 +4354,6 @@ cdef class RandomState:
 
         >>> a = .6
         >>> s = np.random.logseries(a, 10000)
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s)
 
@@ -4736,7 +4735,6 @@ cdef class RandomState:
 
         >>> s = np.random.dirichlet((10, 5, 3), 20).transpose()
 
-        >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
         >>> plt.barh(range(20), s[1], left=s[0], color='g')

@@ -226,14 +226,14 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     PyObject *obj;
     static PyObject *NoValue = NULL;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims",
-        "initial"};
+                             "initial", "where"};
 
     npy_cache_import("numpy", "_NoValue", &NoValue);
     if (NoValue == NULL) return -1;
 
-    if (nargs < 1 || nargs > 6) {
+    if (nargs < 1 || nargs > 7) {
         PyErr_Format(PyExc_TypeError,
-                     "ufunc.reduce() takes from 1 to 6 positional "
+                     "ufunc.reduce() takes from 1 to 7 positional "
                      "arguments but %"NPY_INTP_FMT" were given", nargs);
         return -1;
     }

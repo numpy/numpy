@@ -566,16 +566,36 @@ NPY_NO_EXPORT void
 PyUFunc_O_O_method(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     char *meth = (char *)func;
+    PyObject *tup = PyTuple_New(0);
+    if (tup == NULL) {
+        return;
+    }
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
-        PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None, meth, NULL);
+        PyObject *ret, *func;
+        func = PyObject_GetAttrString(in1 ? in1 : Py_None, meth);
+        if (func == NULL || !PyCallable_Check(func)) {
+            PyObject *exc, *val, *tb;
+            PyTypeObject *type = in1 ? Py_TYPE(in1) : Py_TYPE(Py_None);
+            PyErr_Fetch(&exc, &val, &tb);
+            PyErr_Format(PyExc_TypeError,
+                         "loop of ufunc does not support argument %d of "
+                         "type %s which has no callable %s method",
+                         i, type->tp_name, meth);
+            npy_PyErr_ChainExceptionsCause(exc, val, tb);
+            Py_DECREF(tup);
+            return;
+        }
+        ret = PyObject_Call(func, tup, NULL);
         if (ret == NULL) {
+            Py_DECREF(tup);
             return;
         }
         Py_XDECREF(*out);
         *out = ret;
     }
+    Py_DECREF(tup);
 }
 
 /*UFUNC_API*/
@@ -1603,7 +1623,7 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp *dimensions, npy_intp *steps, voi
         else {
             if (in2 == 0) {
                 npy_set_floatstatus_divbyzero();
-                *((npy_timedelta *)op1) = 0;
+                *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
             else {
                 /* handle mixed case the way Python does */
@@ -1614,6 +1634,62 @@ TIMEDELTA_mm_m_remainder(char **args, npy_intp *dimensions, npy_intp *steps, voi
                 else {
                     *((npy_timedelta *)op1) = rem + in2;
                 }
+            }
+        }
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_mm_q_floor_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            npy_set_floatstatus_invalid();
+            *((npy_int64 *)op1) = 0;
+        }
+        else if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            *((npy_int64 *)op1) = 0;
+        }
+        else {
+            if (((in1 > 0) != (in2 > 0)) && (in1 % in2 != 0)) {
+                *((npy_int64 *)op1) = in1/in2 - 1;
+            }
+            else {
+                *((npy_int64 *)op1) = in1/in2;
+            }
+        }
+    }
+}
+
+NPY_NO_EXPORT void
+TIMEDELTA_mm_qm_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_TWO_OUT {
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
+        if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
+            npy_set_floatstatus_invalid();
+            *((npy_int64 *)op1) = 0;
+            *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
+        }
+        else if (in2 == 0) {
+            npy_set_floatstatus_divbyzero();
+            *((npy_int64 *)op1) = 0;
+            *((npy_timedelta *)op2) = NPY_DATETIME_NAT;
+        }
+        else {
+            const npy_int64 quo = in1 / in2;
+            const npy_timedelta rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((npy_int64 *)op1) = quo;
+                *((npy_timedelta *)op2) = rem;
+            }
+            else {
+                *((npy_int64 *)op1) = quo - 1;
+                *((npy_timedelta *)op2) = rem + in2;
             }
         }
     }

@@ -1064,7 +1064,8 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-        if (PyArray_GetDTypeTransferFunction(IsUintAligned(self),
+        if (PyArray_GetDTypeTransferFunction(
+                        IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
@@ -1253,7 +1254,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         if (PyArray_GetDTypeTransferFunction(
-                        IsUintAligned(self) && IsUintAligned(v),
+                        IsUintAligned(self) && IsAligned(self) &&
+                        IsUintAligned(v) && IsAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,

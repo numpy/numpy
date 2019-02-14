@@ -8,10 +8,6 @@ from numpy.core._multiarray_umath import (
 from numpy.compat._inspect import getargspec
 
 
-ENABLE_ARRAY_FUNCTION = bool(
-    int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 0)))
-
-
 add_docstring(
     implement_array_function,
     """
@@ -141,16 +137,6 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     Function suitable for decorating the implementation of a NumPy function.
     """
 
-    if not ENABLE_ARRAY_FUNCTION:
-        # __array_function__ requires an explicit opt-in for now
-        def decorator(implementation):
-            if module is not None:
-                implementation.__module__ = module
-            if docs_from_dispatcher:
-                add_docstring(implementation, dispatcher.__doc__)
-            return implementation
-        return decorator
-
     def decorator(implementation):
         if verify:
             verify_matching_signatures(implementation, dispatcher)
@@ -166,10 +152,6 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
 
         if module is not None:
             public_api.__module__ = module
-
-        # TODO: remove this when we drop Python 2 support (functools.wraps
-        # adds __wrapped__ automatically in later versions)
-        public_api.__wrapped__ = implementation
 
         return public_api
 

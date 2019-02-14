@@ -54,7 +54,12 @@ else:
 
 
 def _aligned_zeros(shape, dtype=float, order="C", align=None):
-    """Allocate a new ndarray with aligned memory."""
+    """
+    Allocate a new ndarray with aligned memory.
+
+    The ndarray is guaranteed *not* aligned to twice the requested alignment.
+    Eg, if align=4, guarantees it is not aligned to 8. If align=None uses
+    dtype.alignment."""
     dtype = np.dtype(dtype)
     if dtype == np.dtype(object):
         # Can't do this, fall back to standard allocation (which
@@ -67,10 +72,15 @@ def _aligned_zeros(shape, dtype=float, order="C", align=None):
     if not hasattr(shape, '__len__'):
         shape = (shape,)
     size = functools.reduce(operator.mul, shape) * dtype.itemsize
-    buf = np.empty(size + align + 1, np.uint8)
-    offset = buf.__array_interface__['data'][0] % align
+    buf = np.empty(size + 2*align + 1, np.uint8)
+
+    ptr = buf.__array_interface__['data'][0]
+    offset = ptr % align
     if offset != 0:
         offset = align - offset
+    if (ptr % (2*align)) == 0:
+        offset += align
+
     # Note: slices producing 0-size arrays do not necessarily change
     # data pointer --- so we use and allocate size+1
     buf = buf[offset:offset+size+1][:-1]
@@ -1385,10 +1395,10 @@ class TestZeroSizeFlexible(object):
                 sort_func(zs, kind=kind, **kwargs)
 
     def test_sort(self):
-        self._test_sort_partition('sort', kinds='qhm')
+        self._test_sort_partition('sort', kinds='qhs')
 
     def test_argsort(self):
-        self._test_sort_partition('argsort', kinds='qhm')
+        self._test_sort_partition('argsort', kinds='qhs')
 
     def test_partition(self):
         self._test_sort_partition('partition', kinds=['introselect'], kth=2)
@@ -1439,6 +1449,9 @@ class TestZeroSizeFlexible(object):
 
 
 class TestMethods(object):
+
+    sort_kinds = ['quicksort', 'heapsort', 'stable']
+
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)
@@ -1599,7 +1612,7 @@ class TestMethods(object):
         # sort for small arrays.
         a = np.arange(101)
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "scalar sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
@@ -1612,7 +1625,7 @@ class TestMethods(object):
         # but the compare function differs.
         ai = a*1j + 1
         bi = b*1j + 1
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex sort, real part == 1, kind=%s" % kind
             c = ai.copy()
             c.sort(kind=kind)
@@ -1622,7 +1635,7 @@ class TestMethods(object):
             assert_equal(c, ai, msg)
         ai = a + 1j
         bi = b + 1j
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex sort, imag part == 1, kind=%s" % kind
             c = ai.copy()
             c.sort(kind=kind)
@@ -1644,7 +1657,7 @@ class TestMethods(object):
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)])
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "string sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
@@ -1657,7 +1670,7 @@ class TestMethods(object):
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "unicode sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
@@ -1747,7 +1760,7 @@ class TestMethods(object):
                 return True
 
         a = np.array([Boom()]*100, dtype=object)
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "bogus comparison object sort, kind=%s" % kind
             c.sort(kind=kind)
 
@@ -1767,7 +1780,7 @@ class TestMethods(object):
     def test_sort_raises(self):
         #gh-9404
         arr = np.array([0, datetime.now(), 1], dtype=object)
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             assert_raises(TypeError, arr.sort, kind=kind)
         #gh-3879
         class Raiser(object):
@@ -1776,7 +1789,7 @@ class TestMethods(object):
             __eq__ = __ne__ = __lt__ = __gt__ = __ge__ = __le__ = raises_anything
         arr = np.array([[Raiser(), n] for n in range(10)]).reshape(-1)
         np.random.shuffle(arr)
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             assert_raises(TypeError, arr.sort, kind=kind)
 
     def test_sort_degraded(self):
@@ -1864,7 +1877,7 @@ class TestMethods(object):
         # sort for small arrays.
         a = np.arange(101)
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "scalar argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), a, msg)
             assert_equal(b.copy().argsort(kind=kind), b, msg)
@@ -1873,13 +1886,13 @@ class TestMethods(object):
         # but the compare function differs.
         ai = a*1j + 1
         bi = b*1j + 1
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex argsort, kind=%s" % kind
             assert_equal(ai.copy().argsort(kind=kind), a, msg)
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
         ai = a + 1j
         bi = b + 1j
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex argsort, kind=%s" % kind
             assert_equal(ai.copy().argsort(kind=kind), a, msg)
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
@@ -1898,7 +1911,7 @@ class TestMethods(object):
         b = a[::-1].copy()
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "string argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -1909,7 +1922,7 @@ class TestMethods(object):
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "unicode argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -1920,7 +1933,7 @@ class TestMethods(object):
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "object argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -1931,7 +1944,7 @@ class TestMethods(object):
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "structured array argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -3124,8 +3137,8 @@ class TestMethods(object):
         assert_equal(ac, np.conjugate(a))
 
         a = np.array([1-1j, 1, 2.0, 'f'], object)
-        assert_raises(AttributeError, lambda: a.conj())
-        assert_raises(AttributeError, lambda: a.conjugate())
+        assert_raises(TypeError, lambda: a.conj())
+        assert_raises(TypeError, lambda: a.conjugate())
 
     def test__complex__(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
@@ -3759,10 +3772,16 @@ class TestPickling(object):
                                                    ('c', float)])
             ]
 
+            refs = [weakref.ref(a) for a in DATA]
             for a in DATA:
                 assert_equal(
                         a, pickle.loads(pickle.dumps(a, protocol=proto)),
                         err_msg="%r" % a)
+            del a, DATA, carray
+            gc.collect()
+            # check for reference leaks (gh-12793)
+            for ref in refs:
+                assert ref() is None
 
     def _loads(self, obj):
         if sys.version_info[0] >= 3:
@@ -5910,7 +5929,7 @@ class TestMatmul(MatmulCommon):
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test out with not allowed type cast (safe casting)
-        msg = "Cannot cast ufunc matmul output"
+        msg = "Cannot cast ufunc .* output"
         out = np.zeros((5, 2), dtype=np.int32)
         assert_raises_regex(TypeError, msg, self.matmul, a, b, out=out)
 
@@ -6999,12 +7018,11 @@ class TestArrayAttributeDeletion(object):
             assert_raises(AttributeError, delattr, a, s)
 
 
-def test_array_interface():
-    # Test scalar coercion within the array interface
+class TestArrayInterface():
     class Foo(object):
         def __init__(self, value):
             self.value = value
-            self.iface = {'typestr': '=f8'}
+            self.iface = {'typestr': 'f8'}
 
         def __float__(self):
             return float(self.value)
@@ -7013,22 +7031,39 @@ def test_array_interface():
         def __array_interface__(self):
             return self.iface
 
-    f = Foo(0.5)
-    assert_equal(np.array(f), 0.5)
-    assert_equal(np.array([f]), [0.5])
-    assert_equal(np.array([f, f]), [0.5, 0.5])
-    assert_equal(np.array(f).dtype, np.dtype('=f8'))
-    # Test various shape definitions
-    f.iface['shape'] = ()
-    assert_equal(np.array(f), 0.5)
-    f.iface['shape'] = None
-    assert_raises(TypeError, np.array, f)
-    f.iface['shape'] = (1, 1)
-    assert_equal(np.array(f), [[0.5]])
-    f.iface['shape'] = (2,)
-    assert_raises(ValueError, np.array, f)
 
-    # test scalar with no shape
+    f = Foo(0.5)
+
+    @pytest.mark.parametrize('val, iface, expected', [
+        (f, {}, 0.5),
+        ([f], {}, [0.5]),
+        ([f, f], {}, [0.5, 0.5]),
+        (f, {'shape': ()}, 0.5),
+        (f, {'shape': None}, TypeError),
+        (f, {'shape': (1, 1)}, [[0.5]]),
+        (f, {'shape': (2,)}, ValueError),
+        (f, {'strides': ()}, 0.5),
+        (f, {'strides': (2,)}, ValueError),
+        (f, {'strides': 16}, TypeError),
+        ])
+    def test_scalar_interface(self, val, iface, expected):
+        # Test scalar coercion within the array interface
+        self.f.iface = {'typestr': 'f8'}
+        self.f.iface.update(iface)
+        if HAS_REFCOUNT:
+            pre_cnt = sys.getrefcount(np.dtype('f8'))
+        if isinstance(expected, type):
+            assert_raises(expected, np.array, val)
+        else:
+            result = np.array(val)
+            assert_equal(np.array(val), expected)
+            assert result.dtype == 'f8'
+            del result
+        if HAS_REFCOUNT:
+            post_cnt = sys.getrefcount(np.dtype('f8'))
+            assert_equal(pre_cnt, post_cnt)
+
+def test_interface_no_shape():
     class ArrayLike(object):
         array = np.array(1)
         __array_interface__ = array.__array_interface__
@@ -7201,6 +7236,7 @@ class TestConversion(object):
         except NameError:
             Error = RuntimeError  # python < 3.5
         assert_raises(Error, bool, self_containing)  # previously stack overflow
+        self_containing[0] = None  # resolve circular reference
 
     def test_to_int_scalar(self):
         # gh-9972 means that these aren't always the same
@@ -7702,6 +7738,8 @@ class TestWritebackIfCopy(object):
         # uses arr_insert
         np.place(a, a>2, [44, 55])
         assert_equal(a, np.array([[0, 44], [1, 55], [2, 44]]))
+        # hit one of the failing paths
+        assert_raises(ValueError, np.place, a, a>20, [])
 
     def test_put_noncontiguous(self):
         a = np.arange(6).reshape(2,3).T # force non-c-contiguous
@@ -8009,6 +8047,39 @@ class TestAlignment(object):
                             continue
                         for shape in [n, (1, 2, 3, n)]:
                             self.check(shape, np.dtype(dtype), order, align)
+
+    def test_strided_loop_alignments(self):
+        # particularly test that complex64 and float128 use right alignment
+        # code-paths, since these are particularly problematic. It is useful to
+        # turn on USE_DEBUG for this test, so lowlevel-loop asserts are run.
+        for align in [1, 2, 4, 8, 12, 16, None]:
+            xf64 = _aligned_zeros(3, np.float64)
+
+            xc64 = _aligned_zeros(3, np.complex64, align=align)
+            xf128 = _aligned_zeros(3, np.longdouble, align=align)
+
+            # test casting, both to and from misaligned
+            with suppress_warnings() as sup:
+                sup.filter(np.ComplexWarning, "Casting complex values")
+                xc64.astype('f8')
+            xf64.astype(np.complex64)
+            test = xc64 + xf64
+
+            xf128.astype('f8')
+            xf64.astype(np.longdouble)
+            test = xf128 + xf64
+
+            test = xf128 + xc64
+
+            # test copy, both to and from misaligned
+            # contig copy
+            xf64[:] = xf64.copy()
+            xc64[:] = xc64.copy()
+            xf128[:] = xf128.copy()
+            # strided copy
+            xf64[::2] = xf64[::2].copy()
+            xc64[::2] = xc64[::2].copy()
+            xf128[::2] = xf128[::2].copy()
 
 def test_getfield():
     a = np.arange(32, dtype='uint16')

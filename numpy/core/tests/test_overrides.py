@@ -8,14 +8,9 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures, ENABLE_ARRAY_FUNCTION)
+    verify_matching_signatures)
 from numpy.core.numeric import pickle
 import pytest
-
-
-requires_array_function = pytest.mark.skipif(
-    not ENABLE_ARRAY_FUNCTION,
-    reason="__array_function__ dispatch not enabled.")
 
 
 def _return_not_implemented(self, *args, **kwargs):
@@ -35,7 +30,6 @@ def dispatched_two_arg(array1, array2):
     return 'original'
 
 
-@requires_array_function
 class TestGetImplementingArgs(object):
 
     def test_ndarray(self):
@@ -147,7 +141,6 @@ class TestGetImplementingArgs(object):
             _get_implementing_args(relevant_args)
 
 
-@requires_array_function
 class TestNDArrayArrayFunction(object):
 
     def test_method(self):
@@ -206,7 +199,6 @@ class TestNDArrayArrayFunction(object):
                                      args=(array,), kwargs={})
 
 
-@requires_array_function
 class TestArrayFunctionDispatch(object):
 
     def test_pickle(self):
@@ -246,7 +238,6 @@ class TestArrayFunctionDispatch(object):
             dispatched_one_arg(array)
 
 
-@requires_array_function
 class TestVerifyMatchingSignatures(object):
 
     def test_verify_matching_signatures(self):
@@ -299,7 +290,6 @@ def _new_duck_type_and_implements():
     return (MyArray, implements)
 
 
-@requires_array_function
 class TestArrayFunctionImplementation(object):
 
     def test_one_arg(self):
@@ -376,12 +366,10 @@ class TestNumPyFunctions(object):
         assert_equal(np.fft.fft.__module__, 'numpy.fft')
         assert_equal(np.linalg.solve.__module__, 'numpy.linalg')
 
-    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 3 only")
     def test_inspect_sum(self):
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
 
-    @requires_array_function
     def test_override_sum(self):
         MyArray, implements = _new_duck_type_and_implements()
 

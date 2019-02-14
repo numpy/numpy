@@ -13,8 +13,8 @@ datatypes organized as a sequence of named :term:`fields <field>`. For example,
  >>> x = np.array([('Rex', 9, 81.0), ('Fido', 3, 27.0)],
  ...              dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
  >>> x
- array([('Rex', 9, 81.0), ('Fido', 3, 27.0)],
-       dtype=[('name', 'S10'), ('age', '<i4'), ('weight', '<f4')])
+ array([('Rex', 9, 81.), ('Fido', 3, 27.)],
+       dtype=[('name', 'U10'), ('age', '<i4'), ('weight', '<f4')])
 
 Here ``x`` is a one-dimensional array of length two whose datatype is a
 structure with three fields: 1. A string of length 10 or less named 'name', 2.
@@ -32,8 +32,8 @@ with the field name::
  array([9, 3], dtype=int32)
  >>> x['age'] = 5
  >>> x
- array([('Rex', 5, 81.0), ('Fido', 5, 27.0)],
-       dtype=[('name', 'S10'), ('age', '<i4'), ('weight', '<f4')])
+ array([('Rex', 5, 81.), ('Fido', 5, 27.)],
+       dtype=[('name', 'U10'), ('age', '<i4'), ('weight', '<f4')])
 
 Structured datatypes are designed to be able to mimic 'structs' in the C
 language, and share a similar memory layout. They are meant for interfacing with
@@ -79,14 +79,14 @@ summary they are:
      convertible to a datatype, and ``shape`` is a tuple of integers specifying
      subarray shape.
 
-      >>> np.dtype([('x', 'f4'), ('y', np.float32), ('z', 'f4', (2,2))])
-      dtype=[('x', '<f4'), ('y', '<f4'), ('z', '<f4', (2, 2))])
+      >>> np.dtype([('x', 'f4'), ('y', np.float32), ('z', 'f4', (2, 2))])
+      dtype([('x', '<f4'), ('y', '<f4'), ('z', '<f4', (2, 2))])
 
      If ``fieldname`` is the empty string ``''``, the field will be given a
      default name of the form ``f#``, where ``#`` is the integer index of the
      field, counting from 0 from the left::
 
-      >>> np.dtype([('x', 'f4'),('', 'i4'),('z', 'i8')])
+      >>> np.dtype([('x', 'f4'), ('', 'i4'), ('z', 'i8')])
       dtype([('x', '<f4'), ('f1', '<i4'), ('z', '<i8')])
 
      The byte offsets of the fields within the structure and the total
@@ -100,10 +100,10 @@ summary they are:
      automatically, and the field names are given the default names ``f0``,
      ``f1``, etc. ::
 
-      >>> np.dtype('i8,f4,S3')
+      >>> np.dtype('i8, f4, S3')
       dtype([('f0', '<i8'), ('f1', '<f4'), ('f2', 'S3')])
-      >>> np.dtype('3int8, float32, (2,3)float64')
-      dtype([('f0', 'i1', 3), ('f1', '<f4'), ('f2', '<f8', (2, 3))])
+      >>> np.dtype('3int8, float32, (2, 3)float64')
+      dtype([('f0', 'i1', (3,)), ('f1', '<f4'), ('f2', '<f8', (2, 3))])
 
 3.   A dictionary of field parameter arrays
 
@@ -121,10 +121,10 @@ summary they are:
      enough to contain all the fields.
      ::
 
-      >>> np.dtype({'names': ['col1', 'col2'], 'formats': ['i4','f4']})
+      >>> np.dtype({'names': ['col1', 'col2'], 'formats': ['i4', 'f4']})
       dtype([('col1', '<i4'), ('col2', '<f4')])
       >>> np.dtype({'names': ['col1', 'col2'],
-      ...           'formats': ['i4','f4'],
+      ...           'formats': ['i4', 'f4'],
       ...           'offsets': [0, 4],
       ...           'itemsize': 12})
       dtype({'names':['col1','col2'], 'formats':['<i4','<f4'], 'offsets':[0,4], 'itemsize':12})
@@ -149,8 +149,8 @@ summary they are:
      because older numpy code may use it. The keys of the dictionary are the
      field names and the values are tuples specifying type and offset::
 
-      >>> np.dtype=({'col1': ('i1',0), 'col2': ('f4',1)})
-      dtype([(('col1'), 'i1'), (('col2'), '>f4')])
+      >>> np.dtype({'col1': ('i1', 0), 'col2': ('f4', 1)})
+      dtype([('col1', 'i1'), ('col2', '<f4')])
 
      This form is discouraged because Python dictionaries do not preserve order
      in Python versions before Python 3.6, and the order of the fields in a
@@ -202,7 +202,7 @@ are contiguous in memory. ::
  >>> def print_offsets(d):
  ...     print("offsets:", [d.fields[name][1] for name in d.names])
  ...     print("itemsize:", d.itemsize)
- >>> print_offsets(np.dtype('u1,u1,i4,u1,i8,u2'))
+ >>> print_offsets(np.dtype('u1, u1, i4, u1, i8, u2'))
  offsets: [0, 1, 2, 6, 7, 15]
  itemsize: 17
 
@@ -215,7 +215,7 @@ in bytes for simple datatypes, see :c:member:`PyArray_Descr.alignment`.  The
 structure will also have trailing padding added so that its itemsize is a
 multiple of the largest field's alignment. ::
 
- >>> print_offsets(np.dtype('u1,u1,i4,u1,i8,u2', align=True))
+ >>> print_offsets(np.dtype('u1, u1, i4, u1, i8, u2', align=True))
  offsets: [0, 1, 4, 8, 16, 24]
  itemsize: 32
 
@@ -255,6 +255,7 @@ string, which will be the field's title and field name respectively. For
 example::
 
  >>> np.dtype([(('my title', 'name'), 'f4')])
+ dtype([(('my title', 'name'), '<f4')])
 
 When using the first form of dictionary-based specification, the titles may be
 supplied as an extra ``'titles'`` key as described above. When using the second
@@ -263,6 +264,7 @@ providing a 3-element tuple ``(datatype, offset, title)`` instead of the usual
 2-element tuple::
 
  >>> np.dtype({'name': ('i4', 0, 'my title')})
+ dtype([(('my title', 'name'), '<i4')])
 
 The ``dtype.fields`` dictionary will contain :term:`titles` as keys, if any
 titles are used.  This means effectively that a field with a title will be
@@ -275,6 +277,8 @@ in::
 
  >>> for name in d.names:
  ...     print(d.fields[name][:2])
+ (dtype('int64'), 0)
+ (dtype('float32'), 8)
 
 Union types
 -----------
@@ -305,8 +309,8 @@ in the array, and not a list or array as these will trigger numpy's
 broadcasting rules. The tuple's elements are assigned to the successive fields
 of the array, from left to right::
 
- >>> x = np.array([(1,2,3),(4,5,6)], dtype='i8,f4,f8')
- >>> x[1] = (7,8,9)
+ >>> x = np.array([(1, 2, 3), (4, 5, 6)], dtype='i8, f4, f8')
+ >>> x[1] = (7, 8, 9)
  >>> x
  array([(1, 2., 3.), (7, 8., 9.)],
       dtype=[('f0', '<i8'), ('f1', '<f4'), ('f2', '<f8')])
@@ -318,14 +322,14 @@ A scalar assigned to a structured element will be assigned to all fields. This
 happens when a scalar is assigned to a structured array, or when an
 unstructured array is assigned to a structured array::
 
- >>> x = np.zeros(2, dtype='i8,f4,?,S1')
+ >>> x = np.zeros(2, dtype='i8, f4, ?, S1')
  >>> x[:] = 3
  >>> x
- array([(3, 3.0, True, b'3'), (3, 3.0, True, b'3')],
+ array([(3, 3., True, b'3'), (3, 3., True, b'3')],
        dtype=[('f0', '<i8'), ('f1', '<f4'), ('f2', '?'), ('f3', 'S1')])
  >>> x[:] = np.arange(2)
  >>> x
- array([(0, 0.0, False, b'0'), (1, 1.0, True, b'1')],
+ array([(0, 0., False, b'0'), (1, 1., True, b'1')],
        dtype=[('f0', '<i8'), ('f1', '<f4'), ('f2', '?'), ('f3', 'S1')])
 
 Structured arrays can also be assigned to unstructured arrays, but only if the
@@ -335,6 +339,8 @@ structured datatype has just a single field::
  >>> onefield = np.zeros(2, dtype=[('A', 'i4')])
  >>> nostruct = np.zeros(2, dtype='i4')
  >>> nostruct[:] = twofield
+ Traceback (most recent call last):
+    File "<stdin>", line 1, in <module>
  ValueError: Can't cast from structure to non-structure, except if the structure only has a single field.
  >>> nostruct[:] = onefield
  >>> nostruct
@@ -355,7 +361,7 @@ included in any of the fields are unaffected. ::
  >>> b = np.ones(3, dtype=[('x', 'f4'), ('y', 'S3'), ('z', 'O')])
  >>> b[:] = a
  >>> b
- array([(0.0, b'0.0', b''), (0.0, b'0.0', b''), (0.0, b'0.0', b'')],
+ array([(0., b'0.0', b''), (0., b'0.0', b''), (0., b'0.0', b'')],
        dtype=[('x', '<f4'), ('y', 'S3'), ('z', 'O')])
 
 
@@ -374,7 +380,7 @@ Accessing Individual Fields
 Individual fields of a structured array may be accessed and modified by indexing
 the array with the field name. ::
 
- >>> x = np.array([(1,2),(3,4)], dtype=[('foo', 'i8'), ('bar', 'f4')])
+ >>> x = np.array([(1, 2), (3, 4)], dtype=[('foo', 'i8'), ('bar', 'f4')])
  >>> x['foo']
  array([1, 3])
  >>> x['foo'] = 10
@@ -386,9 +392,9 @@ The resulting array is a view into the original array. It shares the same
 memory locations and writing to the view will modify the original array. ::
 
  >>> y = x['bar']
- >>> y[:] = 10
+ >>> y[:] = 11
  >>> x
- array([(10, 5.), (10, 5.)],
+ array([(10, 11.), (10, 11.)],
        dtype=[('foo', '<i8'), ('bar', '<f4')])
 
 This view has the same dtype and itemsize as the indexed field, so it is
@@ -400,7 +406,7 @@ typically a non-structured array, except in the case of nested structures.
 If the accessed field is a subarray, the dimensions of the subarray
 are appended to the shape of the result::
 
-   >>> x = np.zeros((2,2), dtype=[('a', np.int32), ('b', np.float64, (3,3))])
+   >>> x = np.zeros((2, 2), dtype=[('a', np.int32), ('b', np.float64, (3, 3))])
    >>> x['a'].shape
    (2, 2)
    >>> x['b'].shape
@@ -438,8 +444,9 @@ same offsets as in the original array, and unindexed fields are merely missing.
     code which depends on the data having a "packed" layout. For instance code
     such as::
 
-     >>> a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'i4'), ('c', 'f4')])
-     >>> a[['a','c']].view('i8')  # Fails in Numpy 1.16
+     >>> a[['a', 'c']].view('i8')  # Fails in Numpy 1.16
+     Traceback (most recent call last):
+        File "<stdin>", line 1, in <module>
      ValueError: When changing to a smaller dtype, its size must be a divisor of the size of original dtype
 
     will need to be changed. This code has raised a ``FutureWarning`` since
@@ -459,7 +466,8 @@ same offsets as in the original array, and unindexed fields are merely missing.
     used to reproduce the old behavior, as it will return a packed copy of the
     structured array. The code above, for example, can be replaced with:
 
-     >>> repack_fields(a[['a','c']]).view('i8')  # supported in 1.16
+     >>> from numpy.lib.recfunctions import repack_fields
+     >>> repack_fields(a[['a', 'c']]).view('i8')  # supported in 1.16
      array([0, 0, 0])
 
     Furthermore, numpy now provides a new function
@@ -470,12 +478,14 @@ same offsets as in the original array, and unindexed fields are merely missing.
     account padding, often avoids a copy, and also casts the datatypes
     as needed, unlike the view. Code such as:
 
-     >>> a = np.zeros(3, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
-     >>> a[['x', 'z']].view('f4')
+     >>> b = np.zeros(3, dtype=[('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
+     >>> b[['x', 'z']].view('f4')
+     array([0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32)
 
     can be made safer by replacing with:
 
-     >>> structured_to_unstructured(a[['x', 'z']])
+     >>> from numpy.lib.recfunctions import structured_to_unstructured
+     >>> structured_to_unstructured(b[['x', 'z']])
      array([0, 0, 0])
 
 
@@ -483,8 +493,8 @@ Assignment to an array with a multi-field index modifies the original array::
 
  >>> a[['a', 'c']] = (2, 3)
  >>> a
- array([(2, 0, 3.0), (2, 0, 3.0), (2, 0, 3.0)],
-       dtype=[('a', '<i8'), ('b', '<i4'), ('c', '<f8')])
+ array([(2, 0, 3.), (2, 0, 3.), (2, 0, 3.)],
+       dtype=[('a', '<i4'), ('b', '<i4'), ('c', '<f4')])
 
 This obeys the structured array assignment rules described above. For example,
 this means that one can swap the values of two fields using appropriate
@@ -498,19 +508,19 @@ Indexing with an Integer to get a Structured Scalar
 Indexing a single element of a structured array (with an integer index) returns
 a structured scalar::
 
- >>> x = np.array([(1, 2., 3.)], dtype='i,f,f')
+ >>> x = np.array([(1, 2., 3.)], dtype='i, f, f')
  >>> scalar = x[0]
  >>> scalar
  (1, 2., 3.)
  >>> type(scalar)
- numpy.void
+ <class 'numpy.void'>
 
 Unlike other numpy scalars, structured scalars are mutable and act like views
 into the original array, such that modifying the scalar will modify the
 original array. Structured scalars also support access and assignment by field
 name::
 
- >>> x = np.array([(1,2),(3,4)], dtype=[('foo', 'i8'), ('bar', 'f4')])
+ >>> x = np.array([(1, 2), (3, 4)], dtype=[('foo', 'i8'), ('bar', 'f4')])
  >>> s = x[0]
  >>> s['bar'] = 100
  >>> x
@@ -519,7 +529,7 @@ name::
 
 Similarly to tuples, structured scalars can also be indexed with an integer::
 
- >>> scalar = np.array([(1, 2., 3.)], dtype='i,f,f')[0]
+ >>> scalar = np.array([(1, 2., 3.)], dtype='i, f, f')[0]
  >>> scalar[0]
  1
  >>> scalar[1] = 4
@@ -530,7 +540,7 @@ numpy's integer types. Structured scalars may be converted to a tuple by
 calling :func:`ndarray.item`::
 
  >>> scalar.item(), type(scalar.item())
- ((1, 2.0, 3.0), tuple)
+ ((1, 4.0, 3.0), <class 'tuple'>)
 
 Viewing Structured Arrays Containing Objects
 --------------------------------------------
@@ -574,24 +584,24 @@ structured scalars obtained from the array.
 
 The simplest way to create a record array is with :func:`numpy.rec.array`::
 
- >>> recordarr = np.rec.array([(1,2.,'Hello'),(2,3.,"World")],
+ >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr.bar
  array([ 2.,  3.], dtype=float32)
  >>> recordarr[1:2]
- rec.array([(2, 3.0, 'World')],
+ rec.array([(2, 3., b'World')],
        dtype=[('foo', '<i4'), ('bar', '<f4'), ('baz', 'S10')])
  >>> recordarr[1:2].foo
  array([2], dtype=int32)
  >>> recordarr.foo[1:2]
  array([2], dtype=int32)
  >>> recordarr[1].baz
- 'World'
+ b'World'
 
 :func:`numpy.rec.array` can convert a wide variety of arguments into record
 arrays, including structured arrays::
 
- >>> arr = array([(1,2.,'Hello'),(2,3.,"World")],
+ >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...             dtype=[('foo', 'i4'), ('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr = np.rec.array(arr)
 
@@ -602,9 +612,9 @@ creating record arrays, see :ref:`record array creation routines
 A record array representation of a structured array can be obtained using the
 appropriate :ref:`view`::
 
- >>> arr = np.array([(1,2.,'Hello'),(2,3.,"World")],
+ >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'a10')])
- >>> recordarr = arr.view(dtype=dtype((np.record, arr.dtype)),
+ >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
  ...                      type=np.recarray)
 
 For convenience, viewing an ndarray as type :class:`np.recarray` will
@@ -624,12 +634,12 @@ recordarr was not a structured type::
 Record array fields accessed by index or by attribute are returned as a record
 array if the field has a structured type but as a plain ndarray otherwise. ::
 
- >>> recordarr = np.rec.array([('Hello', (1,2)),("World", (3,4))],
+ >>> recordarr = np.rec.array([('Hello', (1, 2)), ("World", (3, 4))],
  ...                 dtype=[('foo', 'S6'),('bar', [('A', int), ('B', int)])])
  >>> type(recordarr.foo)
- <type 'numpy.ndarray'>
+ <class 'numpy.ndarray'>
  >>> type(recordarr.bar)
- <class 'numpy.core.records.recarray'>
+ <class 'numpy.recarray'>
 
 Note that if a field has the same name as an ndarray attribute, the ndarray
 attribute takes precedence. Such fields will be inaccessible by attribute but

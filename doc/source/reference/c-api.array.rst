@@ -307,10 +307,10 @@ From scratch
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
         int nd, npy_intp* dims, PyArray_Descr* descr)
 
-    This function steals a reference to *descr* if it is not NULL.
+    This function steals a reference to *descr*.
 
-    Create a new array with the provided data-type descriptor, *descr*
-    , of the shape determined by *nd* and *dims*.
+    Create a new array with the provided data-type descriptor, *descr*,
+    of the shape determined by *nd* and *dims*.
 
 .. c:function:: PyArray_FILLWBYTE(PyObject* obj, int val)
 
@@ -1904,22 +1904,23 @@ Item selection and manipulation
         all values are clipped to the region [0, len(*op*) ).
 
 
-.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis)
+.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*). Return an array with
-    the items of *self* sorted along *axis*.
+    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
+    Return an array with the items of *self* sorted along *axis*. The array
+    is sorted using the algorithm denoted by *kind* , which is an integer/enum pointing
+    to the type of sorting algorithms used.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*). Return an array of
-    indices such that selection of these indices along the given
-    ``axis`` would return a sorted version of *self*. If *self*
-    ->descr is a data-type with fields defined, then
-    self->descr->names is used to determine the sort order. A
-    comparison where the first field is equal will use the second
-    field and so on. To alter the sort order of a structured array, create
-    a new data-type with a different order of names and construct a
-    view of the array with that new data-type.
+    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
+    Return an array of indices such that selection of these indices
+    along the given ``axis`` would return a sorted version of *self*. If *self* ->descr
+    is a data-type with fields defined, then self->descr->names is used
+    to determine the sort order. A comparison where the first field is equal
+    will use the second field and so on. To alter the sort order of a
+    structured array, create a new data-type with a different order of names
+    and construct a view of the array with that new data-type.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
@@ -2988,8 +2989,11 @@ to.
 .. c:function:: int PyArray_SortkindConverter(PyObject* obj, NPY_SORTKIND* sort)
 
     Convert Python strings into one of :c:data:`NPY_QUICKSORT` (starts
-    with 'q' or 'Q') , :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
-    or :c:data:`NPY_MERGESORT` (starts with 'm' or 'M').
+    with 'q' or 'Q'), :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
+    :c:data:`NPY_MERGESORT` (starts with 'm' or 'M') or :c:data:`NPY_STABLESORT`
+    (starts with 't' or 'T'). :c:data:`NPY_MERGESORT` and :c:data:`NPY_STABLESORT`
+    are aliased to each other for backwards compatibility and may refer to one
+    of several stable sorting algorithms depending on the data type.
 
 .. c:function:: int PyArray_SearchsideConverter( \
         PyObject* obj, NPY_SEARCHSIDE* side)
@@ -3533,11 +3537,15 @@ Enumerated Types
     A special variable-type which can take on the values :c:data:`NPY_{KIND}`
     where ``{KIND}`` is
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT**
+        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **STABLESORT**
 
     .. c:var:: NPY_NSORTS
 
-       Defined to be the number of sorts.
+       Defined to be the number of sorts. It is fixed at three by the need for
+       backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
+       :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
+       of several stable sorting algorithms depending on the data type.
+
 
 .. c:type:: NPY_SCALARKIND
 

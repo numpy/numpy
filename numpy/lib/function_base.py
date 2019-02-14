@@ -1150,7 +1150,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     """
     Calculate the n-th discrete difference along the given axis.
 
-    The first difference is given by ``out[n] = a[n+1] - a[n]`` along
+    The first difference is given by ``out[i] = a[i+1] - a[i]`` along
     the given axis, higher differences are calculated by using `diff`
     recursively.
 
@@ -2593,8 +2593,6 @@ def blackman(M):
 
     Examples
     --------
-    >>> import matplotlib
-    >>> matplotlib.use('agg')
     >>> import matplotlib.pyplot as plt
     >>> np.blackman(12)
     array([-1.38777878e-17,   3.26064346e-02,   1.59903635e-01, # may vary
@@ -2811,9 +2809,6 @@ def hanning(M):
 
     Plot the window and its frequency response:
 
-    >>> import matplotlib
-    >>> import matplotlib.pyplot
-    >>> matplotlib.pyplot.switch_backend('agg')
     >>> import matplotlib.pyplot as plt
     >>> from numpy.fft import fft, fftshift
     >>> window = np.hanning(51)
@@ -2914,9 +2909,6 @@ def hamming(M):
 
     Plot the window and the frequency response:
 
-    >>> import matplotlib
-    >>> import matplotlib.pyplot
-    >>> matplotlib.pyplot.switch_backend('agg')
     >>> import matplotlib.pyplot as plt
     >>> from numpy.fft import fft, fftshift
     >>> window = np.hamming(51)
@@ -3192,8 +3184,6 @@ def kaiser(M, beta):
 
     Examples
     --------
-    >>> import matplotlib
-    >>> matplotlib.use('agg')
     >>> import matplotlib.pyplot as plt
     >>> np.kaiser(12, 14)
      array([7.72686684e-06, 3.46009194e-03, 4.65200189e-02, # may vary
@@ -3288,7 +3278,6 @@ def sinc(x):
 
     Examples
     --------
-    >>> import matplotlib
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-4, 4, 41)
     >>> np.sinc(x)
@@ -3967,8 +3956,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             r = add(x1, x2)
 
     if np.any(n):
-        warnings.warn("Invalid value encountered in percentile",
-                      RuntimeWarning, stacklevel=3)
         if zerod:
             if ap.ndim == 1:
                 if out is not None:

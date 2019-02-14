@@ -47,11 +47,10 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
     PyObject *out;
 
     /* If the requested dtype is flexible, adapt it */
-    PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), &dtype);
+    dtype = PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), dtype);
     if (dtype == NULL) {
         return NULL;
     }
-
     out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
                                PyArray_NDIM(arr),
                                PyArray_DIMS(arr),
@@ -128,9 +127,9 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 }
 
 /*
- * This function calls Py_DECREF on flex_dtype, and replaces it with
- * a new dtype that has been adapted based on the values in data_dtype
- * and data_obj. If the flex_dtype is not flexible, it leaves it as is.
+ * This function returns a dtype based on flex_dtype and the values in
+ * data_dtype and data_obj. It also calls Py_DECREF on the flex_dtype. If the
+ * flex_dtype is not flexible, it returns it as-is.
  *
  * Usually, if data_obj is not an array, dtype should be the result
  * given by the PyArray_GetArrayParamsFromObject function.
@@ -138,40 +137,37 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
  * The data_obj may be NULL if just a dtype is known for the source.
  *
  * If *flex_dtype is NULL, returns immediately, without setting an
- * exception. This basically assumes an error was already set previously.
+ * exception, leaving any previous error handling intact.
  *
  * The current flexible dtypes include NPY_STRING, NPY_UNICODE, NPY_VOID,
  * and NPY_DATETIME with generic units.
  */
-NPY_NO_EXPORT void
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
-                            PyArray_Descr **flex_dtype)
+                            PyArray_Descr *flex_dtype)
 {
     PyArray_DatetimeMetaData *meta;
+    PyArray_Descr *retval = NULL;
     int flex_type_num;
 
-    if (*flex_dtype == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "NumPy AdaptFlexibleDType was called with NULL flex_dtype "
-                    "but no error set");
-        }
-        return;
+    if (flex_dtype == NULL) {
+        return retval;
     }
 
-    flex_type_num = (*flex_dtype)->type_num;
+    flex_type_num = flex_dtype->type_num;
 
     /* Flexible types with expandable size */
-    if (PyDataType_ISUNSIZED(*flex_dtype)) {
+    if (PyDataType_ISUNSIZED(flex_dtype)) {
         /* First replace the flex_dtype */
-        PyArray_DESCR_REPLACE(*flex_dtype);
-        if (*flex_dtype == NULL) {
-            return;
+        retval = PyArray_DescrNew(flex_dtype);
+        Py_DECREF(flex_dtype);
+        if (retval == NULL) {
+            return retval;
         }
 
         if (data_dtype->type_num == flex_type_num ||
                                     flex_type_num == NPY_VOID) {
-            (*flex_dtype)->elsize = data_dtype->elsize;
+            (retval)->elsize = data_dtype->elsize;
         }
         else if (flex_type_num == NPY_STRING || flex_type_num == NPY_UNICODE) {
             npy_intp size = 8;
@@ -199,7 +195,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     }
                     else if (data_dtype->elsize > 8 ||
                              data_dtype->elsize < 0) {
-                        /* 
+                        /*
                          * Element size should never be greater than 8 or
                          * less than 0 for integer type, but just in case...
                          */
@@ -237,9 +233,8 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                 PyObject *s = PyObject_Str(list);
                                 if (s == NULL) {
                                     Py_DECREF(list);
-                                    Py_DECREF(*flex_dtype);
-                                    *flex_dtype = NULL;
-                                    return;
+                                    Py_DECREF(retval);
+                                    return NULL;
                                 }
                                 else {
                                     size = PyObject_Length(s);
@@ -262,9 +257,16 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                             list = PyArray_ToList((PyArrayObject *)data_obj);
                             result = PyArray_GetArrayParamsFromObject(
                                     list,
-                                    *flex_dtype,
+                                    retval,
                                     0, &dtype,
                                     &ndim, dims, &arr, NULL);
+                            Py_DECREF(list);
+                            Py_XDECREF(arr);
+                            if (result < 0) {
+                                Py_XDECREF(dtype);
+                                Py_DECREF(retval);
+                                return NULL;
+                            }
                             if (result == 0 && dtype != NULL) {
                                 if (flex_type_num == NPY_UNICODE) {
                                     size = dtype->elsize / 4;
@@ -274,15 +276,12 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                 }
                             }
                             Py_XDECREF(dtype);
-                            Py_XDECREF(arr);
-                            Py_DECREF(list);
                         }
                         else if (PyArray_IsPythonScalar(data_obj)) {
                             PyObject *s = PyObject_Str(data_obj);
                             if (s == NULL) {
-                                Py_DECREF(*flex_dtype);
-                                *flex_dtype = NULL;
-                                return;
+                                Py_DECREF(retval);
+                                return NULL;
                             }
                             else {
                                 size = PyObject_Length(s);
@@ -301,9 +300,8 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                 case NPY_DATETIME:
                     meta = get_datetime_metadata_from_dtype(data_dtype);
                     if (meta == NULL) {
-                        Py_DECREF(*flex_dtype);
-                        *flex_dtype = NULL;
-                        return;
+                        Py_DECREF(retval);
+                        return NULL;
                     }
                     size = get_datetime_iso_8601_strlen(0, meta->base);
                     break;
@@ -313,10 +311,10 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
             }
 
             if (flex_type_num == NPY_STRING) {
-                (*flex_dtype)->elsize = size;
+                retval->elsize = size;
             }
             else if (flex_type_num == NPY_UNICODE) {
-                (*flex_dtype)->elsize = size * 4;
+                retval->elsize = size * 4;
             }
         }
         else {
@@ -326,18 +324,17 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
              */
             PyErr_SetString(PyExc_TypeError,
                     "don't know how to adapt flex dtype");
-            *flex_dtype = NULL;
-            return;
+            Py_DECREF(retval);
+            return NULL;
         }
     }
     /* Flexible type with generic time unit that adapts */
     else if (flex_type_num == NPY_DATETIME ||
                 flex_type_num == NPY_TIMEDELTA) {
-        meta = get_datetime_metadata_from_dtype(*flex_dtype);
+        meta = get_datetime_metadata_from_dtype(flex_dtype);
+        retval = flex_dtype;
         if (meta == NULL) {
-            Py_DECREF(*flex_dtype);
-            *flex_dtype = NULL;
-            return;
+            return NULL;
         }
 
         if (meta->base == NPY_FR_GENERIC) {
@@ -345,22 +342,24 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     data_dtype->type_num == NPY_TIMEDELTA) {
                 meta = get_datetime_metadata_from_dtype(data_dtype);
                 if (meta == NULL) {
-                    Py_DECREF(*flex_dtype);
-                    *flex_dtype = NULL;
-                    return;
+                    return NULL;
                 }
 
-                Py_DECREF(*flex_dtype);
-                *flex_dtype = create_datetime_dtype(flex_type_num, meta);
+                retval = create_datetime_dtype(flex_type_num, meta);
+                Py_DECREF(flex_dtype);
             }
             else if (data_obj != NULL) {
                 /* Detect the unit from the input's data */
-                Py_DECREF(*flex_dtype);
-                *flex_dtype = find_object_datetime_type(data_obj,
+                retval = find_object_datetime_type(data_obj,
                                                     flex_type_num);
+                Py_DECREF(flex_dtype);
             }
         }
     }
+    else {
+        retval = flex_dtype;
+    }
+    return retval;
 }
 
 /*
@@ -518,7 +517,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
          * stringified value of the object.
          */
         else if (to_type_num == NPY_STRING || to_type_num == NPY_UNICODE) {
-            /* 
+            /*
              * Boolean value cast to string type is 5 characters max
              * for string 'False'.
              */
@@ -531,7 +530,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
             if (PyDataType_ISUNSIZED(to)) {
                 ret = 1;
             }
-            /* 
+            /*
              * Need at least 5 characters to convert from boolean
              * to 'True' or 'False'.
              */
@@ -1166,7 +1165,11 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
                 PyDataType_MAKEUNSIZED(temp);
-                PyArray_AdaptFlexibleDType(NULL, type2, &temp);
+
+                temp = PyArray_AdaptFlexibleDType(NULL, type2, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }
@@ -1204,7 +1207,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
                 PyDataType_MAKEUNSIZED(temp);
-                PyArray_AdaptFlexibleDType(NULL, type2, &temp);
+                temp = PyArray_AdaptFlexibleDType(NULL, type2, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }
@@ -1252,7 +1258,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
                 PyDataType_MAKEUNSIZED(temp);
-                PyArray_AdaptFlexibleDType(NULL, type1, &temp);
+                temp = PyArray_AdaptFlexibleDType(NULL, type1, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }
@@ -1269,7 +1278,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
                 PyDataType_MAKEUNSIZED(temp);
-                PyArray_AdaptFlexibleDType(NULL, type1, &temp);
+                temp = PyArray_AdaptFlexibleDType(NULL, type1, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }

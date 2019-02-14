@@ -163,8 +163,6 @@ def fft(a, n=None, axis=-1, norm=None):
     in the real part and anti-symmetric in the imaginary part, as described in
     the `numpy.fft` documentation:
 
-    >>> import matplotlib
-    >>> matplotlib.use('Agg')
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(256)
     >>> sp = np.fft.fft(np.sin(t))
@@ -258,8 +256,6 @@ def ifft(a, n=None, axis=-1, norm=None):
 
     Create and plot a band-limited signal with random phases:
 
-    >>> import matplotlib
-    >>> matplotlib.use('agg')
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(400)
     >>> n = np.zeros((400,), dtype=complex)

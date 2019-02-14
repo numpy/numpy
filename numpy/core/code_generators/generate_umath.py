@@ -315,7 +315,7 @@ defdict = {
           TD(intfltcmplx),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
-           #TypeDescription('m', FullTypeDescr, 'mm', 'd'),
+           TypeDescription('m', FullTypeDescr, 'mm', 'q'),
           ],
           TD(O, f='PyNumber_FloorDivide'),
           ),
@@ -407,7 +407,7 @@ defdict = {
 'positive':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.positive'),
-          'PyUFunc_SimpleUnaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(ints+flts+timedeltaonly),
           TD(cmplx, f='pos'),
           TD(O, f='PyNumber_Positive'),
@@ -415,7 +415,7 @@ defdict = {
 'sign':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sign'),
-          'PyUFunc_SimpleUnaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(nobool_or_datetime),
           ),
 'greater':
@@ -491,28 +491,28 @@ defdict = {
 'maximum':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.maximum'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'minimum':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.minimum'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
 'fmax':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmin'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
@@ -802,8 +802,9 @@ defdict = {
 'divmod':
     Ufunc(2, 2, None,
           docstrings.get('numpy.core.umath.divmod'),
-          None,
+          'PyUFunc_DivmodTypeResolver',
           TD(intflt),
+          [TypeDescription('m', FullTypeDescr, 'mm', 'qm')],
           # TD(O, f='PyNumber_Divmod'),  # gh-9730
           ),
 'hypot':
@@ -894,21 +895,21 @@ defdict = {
 'gcd' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.gcd'),
-          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectGCD'),
           ),
 'lcm' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.lcm'),
-          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
           ),
 'matmul' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.matmul'),
-          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(notimes_or_obj),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),

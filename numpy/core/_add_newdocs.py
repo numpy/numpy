@@ -3178,7 +3178,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('itemset',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('max',
     """
-    a.max(axis=None, out=None, keepdims=False)
+    a.max(axis=None, out=None, keepdims=False, initial=<no value>, where=True)
 
     Return the maximum along a given axis.
 
@@ -3208,7 +3208,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('mean',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
     """
-    a.min(axis=None, out=None, keepdims=False)
+    a.min(axis=None, out=None, keepdims=False, initial=<no value>, where=True)
 
     Return the minimum along a given axis.
 
@@ -3361,7 +3361,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('nonzero',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('prod',
     """
-    a.prod(axis=None, dtype=None, out=None, keepdims=False)
+    a.prod(axis=None, dtype=None, out=None, keepdims=False, initial=1, where=True)
 
     Return the product of the array elements over the given axis
 
@@ -3790,7 +3790,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     """
     a.sort(axis=-1, kind='quicksort', order=None)
 
-    Sort an array, in-place.
+    Sort an array in-place. Refer to `numpy.sort` for full documentation.
 
     Parameters
     ----------
@@ -3798,7 +3798,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
         Axis along which to sort. Default is -1, which means sort along the
         last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-        Sorting algorithm. Default is 'quicksort'.
+        Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
+        and 'mergesort' use timsort under the covers and, in general, the
+        actual implementation will vary with datatype. The 'mergesort' option
+        is retained for backwards compatibility.
+
+        .. versionchanged:: 1.15.0.
+           The 'stable' option was added.
+
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -3816,7 +3823,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
 
     Notes
     -----
-    See ``sort`` for notes on the different sorting algorithms.
+    See `numpy.sort` for notes on the different sorting algorithms.
 
     Examples
     --------
@@ -3930,7 +3937,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('std',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('sum',
     """
-    a.sum(axis=None, dtype=None, out=None, keepdims=False)
+    a.sum(axis=None, dtype=None, out=None, keepdims=False, initial=0, where=True)
 
     Return the sum of the array elements over the given axis.
 
@@ -4017,10 +4024,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
     """
     a.tolist()
 
-    Return the array as a (possibly nested) list.
+    Return the array as an ``a.ndim``-levels deep nested list of Python scalars.
 
     Return a copy of the array data as a (nested) Python list.
-    Data items are converted to the nearest compatible Python type.
+    Data items are converted to the nearest compatible builtin Python type, via
+    the `~numpy.ndarray.item` function.
+
+    If ``a.ndim`` is 0, then since the depth of the nested list is 0, it will
+    not be a list at all, but a simple Python scalar.
 
     Parameters
     ----------
@@ -4028,24 +4039,41 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Returns
     -------
-    y : list
+    y : object, or list of object, or list of list of object, or ...
         The possibly nested list of array elements.
 
     Notes
     -----
-    The array may be recreated, ``a = np.array(a.tolist())``.
+    The array may be recreated via ``a = np.array(a.tolist())``, although this
+    may sometimes lose precision.
 
     Examples
     --------
+    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``:
+
     >>> a = np.array([1, 2])
+    >>> list(a)
+    [1, 2]
     >>> a.tolist()
     [1, 2]
+
+    However, for a 2D array, ``tolist`` applies recursively:
+
     >>> a = np.array([[1, 2], [3, 4]])
     >>> list(a)
     [array([1, 2]), array([3, 4])]
     >>> a.tolist()
     [[1, 2], [3, 4]]
 
+    The base case for this recursion is a 0D array:
+
+    >>> a = np.array(1)
+    >>> list(a)
+    Traceback (most recent call last):
+      ...
+    TypeError: iteration over a 0-d array
+    >>> a.tolist()
+    1
     """))
 
 
@@ -4876,7 +4904,7 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, keepdims=False, initial)
+    reduce(a, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
@@ -4941,6 +4969,14 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
         .. versionadded:: 1.15.0
 
+    where : array_like of bool, optional
+        A boolean array which is broadcasted to match the dimensions
+        of `a`, and selects elements to include in the reduction. Note
+        that for ufuncs like ``minimum`` that do not have an identity
+        defined, one has to pass in also ``initial``.
+
+        .. versionadded:: 1.17.0
+
     Returns
     -------
     r : ndarray
@@ -4972,19 +5008,24 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     array([[ 1,  5],
            [ 9, 13]])
 
-    You can use the ``initial`` keyword argument to initialize the reduction with a
-    different value.
+    You can use the ``initial`` keyword argument to initialize the reduction
+    with a different value, and ``where`` to select specific elements to include:
 
     >>> np.add.reduce([10], initial=5)
     15
     >>> np.add.reduce(np.ones((2, 2, 2)), axis=(0, 2), initial=10)
     array([14., 14.])
+    >>> a = np.array([10., np.nan, 10])
+    >>> np.add.reduce(a, where=~np.isnan(a))
+    20.0
 
     Allows reductions of empty arrays where they would normally fail, i.e.
     for ufuncs without an identity.
 
     >>> np.minimum.reduce([], initial=np.inf)
     inf
+    >>> np.minimum.reduce([[1., 2.], [3., 4.]], initial=10., where=[True, False])
+    array([ 1., 10.])
     >>> np.minimum.reduce([])
     Traceback (most recent call last):
         ...
@@ -6721,25 +6762,25 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
 add_newdoc('numpy.core.numerictypes', 'number',
     """
     Abstract base class of all numeric scalar types.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'integer',
     """
     Abstract base class of all integer scalar types.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'signedinteger',
     """
     Abstract base class of all signed integer scalar types.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'unsignedinteger',
     """
     Abstract base class of all unsigned integer scalar types.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'inexact',
@@ -6747,20 +6788,20 @@ add_newdoc('numpy.core.numerictypes', 'inexact',
     Abstract base class of all numeric scalar types with a (potentially)
     inexact representation of the values in its range, such as
     floating-point numbers.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'floating',
     """
     Abstract base class of all floating-point scalar types.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'complexfloating',
     """
     Abstract base class of all complex number scalar types that are made up of
     floating-point numbers.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'flexible',
@@ -6768,13 +6809,13 @@ add_newdoc('numpy.core.numerictypes', 'flexible',
     Abstract base class of all scalar types without predefined length.
     The actual size of these types depends on the specific `np.dtype`
     instantiation.
-    
+
     """)
 
 add_newdoc('numpy.core.numerictypes', 'character',
     """
     Abstract base class of all character string scalar types.
-    
+
     """)
 
 

@@ -14,8 +14,7 @@ Prerequisites
 
 Building NumPy requires the following software installed:
 
-1) For Python 2, Python__ 2.7.x or newer.
-   For Python 3, Python__ 3.4.x or newer.
+1) For Python 3, Python__ 3.5.x or newer.
 
    On Debian and derivative (Ubuntu): python python-dev
 
@@ -27,8 +26,8 @@ Building NumPy requires the following software installed:
 
    Python must also be compiled with the zlib module enabled.
 
-2) Cython >= 0.19 (for development versions of numpy, not for released
-                   versions)
+2) Cython >= 0.29.2 (for development versions of numpy, not for released
+                     versions)
 3) pytest__ (optional) 1.15 or later
 
    This is required for testing numpy, but not for using it.
@@ -61,8 +60,6 @@ To perform an inplace build that can be run from the source folder run::
 
     python setup.py build_ext --inplace -j 4
 
-Note that the ``python`` command here is the system default Python, generally
-python 2, the ``python3`` command may be needed to install on python 3.
 See `Requirements for Installing Packages <https://packaging.python.org/tutorials/installing-packages/>`_
 for more details.
 
@@ -79,8 +76,13 @@ skipped when running the test suite if no Fortran compiler is available.  For
 building Scipy a Fortran compiler is needed though, so we include some details
 on Fortran compilers in the rest of this section.
 
-On OS X and Linux, all common compilers will work.  Note that for Fortran,
-``gfortran`` is strongly preferred over ``g77``, but if you happen to have both
+On OS X and Linux, all common compilers will work.  Note that C99 support is
+required.  For compilers that don't support the C99 language standard by
+default (such as ``gcc`` versions < 5.0), it should be enabled.  For ``gcc``::
+
+    export CFLAGS='-std=c99'
+
+For Fortran, ``gfortran`` works, ``g77`` does not.  In case ``g77`` is
 installed then ``g77`` will be detected and used first.  To explicitly select
 ``gfortran`` in that case, do::
 

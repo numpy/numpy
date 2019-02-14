@@ -26,6 +26,7 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "descriptor.h"
+#include "array_assign.h"
 
 #include "shape.h"
 #include "lowlevel_strided_loops.h"
@@ -1126,7 +1127,7 @@ get_datetime_to_unicode_transfer_function(int aligned,
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
     str_dtype = PyArray_DescrFromType(NPY_STRING);
-    PyArray_AdaptFlexibleDType(NULL, dst_dtype, &str_dtype);
+    str_dtype = PyArray_AdaptFlexibleDType(NULL, dst_dtype, str_dtype);
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
@@ -1248,7 +1249,7 @@ get_unicode_to_datetime_transfer_function(int aligned,
 
     /* Get an ASCII string data type, adapted to match the UNICODE one */
     str_dtype = PyArray_DescrFromType(NPY_STRING);
-    PyArray_AdaptFlexibleDType(NULL, src_dtype, &str_dtype);
+    str_dtype = PyArray_AdaptFlexibleDType(NULL, src_dtype, str_dtype);
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
@@ -1571,12 +1572,30 @@ get_cast_transfer_function(int aligned,
                                 src_dtype,
                                 &tobuffer, &todata);
 
+        if (!PyDataType_REFCHK(dst_dtype)) {
+            /* Copying from buffer is a simple copy/swap operation */
+            PyArray_GetDTypeCopySwapFn(aligned,
+                                    dst_itemsize, dst_stride,
+                                    dst_dtype,
+                                    &frombuffer, &fromdata);
+        }
+        else {
+            /*
+             * Since the buffer is initialized to NULL, need to move the
+             * references in order to DECREF the existing data.
+             */
+             /* Object types cannot be byte swapped */
+            assert(PyDataType_ISNOTSWAPPED(dst_dtype));
+            /* The loop already needs the python api if this is reached */
+            assert(*out_needs_api);
 
-        /* Get the copy/swap operation to dst */
-        PyArray_GetDTypeCopySwapFn(aligned,
-                                dst_itemsize, dst_stride,
-                                dst_dtype,
-                                &frombuffer, &fromdata);
+            if (PyArray_GetDTypeTransferFunction(
+                    aligned, dst_itemsize, dst_stride,
+                    dst_dtype, dst_dtype, 1,
+                    &frombuffer, &fromdata, out_needs_api) != NPY_SUCCEED) {
+                return NPY_FAIL;
+            }
+        }
 
         if (frombuffer == NULL || tobuffer == NULL) {
             NPY_AUXDATA_FREE(castdata);
@@ -1999,6 +2018,7 @@ typedef struct {
     npy_intp run_count;
     _subarray_broadcast_offsetrun offsetruns;
 } _subarray_broadcast_data;
+
 
 /* transfer data free function */
 static void _subarray_broadcast_data_free(NpyAuxData *data)
@@ -3765,11 +3785,15 @@ PyArray_CastRawArrays(npy_intp count,
         return NPY_SUCCEED;
     }
 
-    /* Check data alignment */
-    aligned = (((npy_intp)src | src_stride) &
-                                (src_dtype->alignment - 1)) == 0 &&
-              (((npy_intp)dst | dst_stride) &
-                                (dst_dtype->alignment - 1)) == 0;
+    /* Check data alignment, both uint and true */
+    aligned = raw_array_is_aligned(1, &count, dst, &dst_stride,
+                                   npy_uint_alignment(dst_dtype->elsize)) &&
+              raw_array_is_aligned(1, &count, dst, &dst_stride,
+                                   dst_dtype->alignment) &&
+              raw_array_is_aligned(1, &count, src, &src_stride,
+                                   npy_uint_alignment(src_dtype->elsize)) &&
+              raw_array_is_aligned(1, &count, src, &src_stride,
+                                   src_dtype->alignment);
 
     /* Get the function to do the casting */
     if (PyArray_GetDTypeTransferFunction(aligned,

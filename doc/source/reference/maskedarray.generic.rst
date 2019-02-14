@@ -2,7 +2,7 @@
 
 .. _maskedarray.generic:
 
-
+.. module:: numpy.ma
 
 The :mod:`numpy.ma` module
 ==========================
