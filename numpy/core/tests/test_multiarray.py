@@ -4672,6 +4672,32 @@ class TestIO(object):
         assert_raises_regex(ValueError, "Cannot read into object array",
                             np.fromfile, self.filename, dtype=object)
 
+    def test_fromfile_offset(self):
+        f = open(self.filename, 'wb')
+        self.x.tofile(f)
+        f.close()
+
+        with open(self.filename, 'r+b') as f:
+            y = np.fromfile(f, dtype=self.dtype, offset=0)
+            assert_array_equal(y, self.x.flat)
+
+        with open(self.filename, 'r+b') as f:
+            offset_items = len(self.x.flat) // 2
+            offset_bytes = self.dtype.itemsize * offset_items
+            y = np.fromfile(f, dtype=self.dtype, offset=offset_bytes)
+            assert_array_equal(y, self.x.flat[offset_items:])
+        
+        f = open(self.filename, 'wb')
+        self.x.tofile(f, sep=",")
+        f.close()
+
+        with open(self.filename, 'r+b') as f:
+            assert_raises_regex(
+                    ValueError,
+                    "'offset' argument only permitted for binary files",
+                    np.fromfile, self.filename, dtype=self.dtype,
+                    sep=",", offset=1)
+
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)
