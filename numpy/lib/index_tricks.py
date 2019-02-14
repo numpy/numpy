@@ -271,7 +271,7 @@ class OGridClass(nd_grid):
     Returns
     -------
     mesh-grid
-        `ndarrays` with only one dimension :math:`\\neq 1`
+        `ndarrays` with only one dimension not equal to 1
 
     See Also
     --------
