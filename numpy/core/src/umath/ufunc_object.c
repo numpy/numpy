@@ -5110,11 +5110,14 @@ _loop1d_list_free(void *ptr)
  * instead of dtype type num values. This allows a 1-d loop to be registered
  * for a structured array dtype or a custom dtype. The ufunc is called
  * whenever any of it's input arguments match the user_dtype argument.
- * ufunc - ufunc object created from call to PyUFunc_FromFuncAndData
+ *
+ * ufunc      - ufunc object created from call to PyUFunc_FromFuncAndData
  * user_dtype - dtype that ufunc will be registered with
- * function - 1-d loop function pointer
+ * function   - 1-d loop function pointer
  * arg_dtypes - array of dtype objects describing the ufunc operands
- * data - arbitrary data pointer passed in to loop function
+ * data       - arbitrary data pointer passed in to loop function
+ *
+ * returns 0 on success, -1 for failure
  */
 /*UFUNC_API*/
 NPY_NO_EXPORT int
@@ -5178,7 +5181,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 }
                 current = current->next;
             }
-            if (cmp == 0 && current->arg_dtypes == NULL) {
+            if (cmp == 0 && current != NULL && current->arg_dtypes == NULL) {
                 current->arg_dtypes = PyArray_malloc(ufunc->nargs *
                     sizeof(PyArray_Descr*));
                 if (arg_dtypes != NULL) {
@@ -5196,6 +5199,8 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                 current->nargs = ufunc->nargs;
             }
             else {
+                PyErr_SetString(PyExc_RuntimeError,
+                    "loop already registered");
                 result = -1;
             }
         }
