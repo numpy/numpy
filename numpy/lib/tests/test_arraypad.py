@@ -7,7 +7,6 @@ import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose, assert_equal
-from numpy.lib import pad
 from numpy.lib.arraypad import _as_pairs
 
 
@@ -125,7 +124,7 @@ class TestConditionalShortcuts(object):
                  'wrap',
                  ]
         for mode in modes:
-            assert_array_equal(test, pad(test, pad_amt, mode=mode))
+            assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
 
     def test_shallow_statistic_range(self):
         test = np.arange(120).reshape(4, 5, 6)
@@ -136,8 +135,8 @@ class TestConditionalShortcuts(object):
                  'minimum',
                  ]
         for mode in modes:
-            assert_array_equal(pad(test, pad_amt, mode='edge'),
-                               pad(test, pad_amt, mode=mode, stat_length=1))
+            assert_array_equal(np.pad(test, pad_amt, mode='edge'),
+                               np.pad(test, pad_amt, mode=mode, stat_length=1))
 
     def test_clip_statistic_range(self):
         test = np.arange(30).reshape(5, 6)
@@ -148,14 +147,14 @@ class TestConditionalShortcuts(object):
                  'minimum',
                  ]
         for mode in modes:
-            assert_array_equal(pad(test, pad_amt, mode=mode),
-                               pad(test, pad_amt, mode=mode, stat_length=30))
+            assert_array_equal(np.pad(test, pad_amt, mode=mode),
+                               np.pad(test, pad_amt, mode=mode, stat_length=30))
 
 
 class TestStatistic(object):
     def test_check_mean_stat_length(self):
         a = np.arange(100).astype('f')
-        a = pad(a, ((25, 20), ), 'mean', stat_length=((2, 3), ))
+        a = np.pad(a, ((25, 20), ), 'mean', stat_length=((2, 3), ))
         b = np.array(
             [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
              0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
@@ -179,7 +178,7 @@ class TestStatistic(object):
 
     def test_check_maximum_1(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'maximum')
+        a = np.pad(a, (25, 20), 'maximum')
         b = np.array(
             [99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
              99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
@@ -203,7 +202,7 @@ class TestStatistic(object):
 
     def test_check_maximum_2(self):
         a = np.arange(100) + 1
-        a = pad(a, (25, 20), 'maximum')
+        a = np.pad(a, (25, 20), 'maximum')
         b = np.array(
             [100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
              100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
@@ -227,7 +226,7 @@ class TestStatistic(object):
 
     def test_check_maximum_stat_length(self):
         a = np.arange(100) + 1
-        a = pad(a, (25, 20), 'maximum', stat_length=10)
+        a = np.pad(a, (25, 20), 'maximum', stat_length=10)
         b = np.array(
             [10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
@@ -251,7 +250,7 @@ class TestStatistic(object):
 
     def test_check_minimum_1(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'minimum')
+        a = np.pad(a, (25, 20), 'minimum')
         b = np.array(
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
              0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -275,7 +274,7 @@ class TestStatistic(object):
 
     def test_check_minimum_2(self):
         a = np.arange(100) + 2
-        a = pad(a, (25, 20), 'minimum')
+        a = np.pad(a, (25, 20), 'minimum')
         b = np.array(
             [2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
              2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -299,7 +298,7 @@ class TestStatistic(object):
 
     def test_check_minimum_stat_length(self):
         a = np.arange(100) + 1
-        a = pad(a, (25, 20), 'minimum', stat_length=10)
+        a = np.pad(a, (25, 20), 'minimum', stat_length=10)
         b = np.array(
             [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
               1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -323,7 +322,7 @@ class TestStatistic(object):
 
     def test_check_median(self):
         a = np.arange(100).astype('f')
-        a = pad(a, (25, 20), 'median')
+        a = np.pad(a, (25, 20), 'median')
         b = np.array(
             [49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
              49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
@@ -347,7 +346,7 @@ class TestStatistic(object):
 
     def test_check_median_01(self):
         a = np.array([[3, 1, 4], [4, 5, 9], [9, 8, 2]])
-        a = pad(a, 1, 'median')
+        a = np.pad(a, 1, 'median')
         b = np.array(
             [[4, 4, 5, 4, 4],
 
@@ -361,7 +360,7 @@ class TestStatistic(object):
 
     def test_check_median_02(self):
         a = np.array([[3, 1, 4], [4, 5, 9], [9, 8, 2]])
-        a = pad(a.T, 1, 'median').T
+        a = np.pad(a.T, 1, 'median').T
         b = np.array(
             [[5, 4, 5, 4, 5],
 
@@ -377,7 +376,7 @@ class TestStatistic(object):
         a = np.arange(100).astype('f')
         a[1] = 2.
         a[97] = 96.
-        a = pad(a, (25, 20), 'median', stat_length=(3, 5))
+        a = np.pad(a, (25, 20), 'median', stat_length=(3, 5))
         b = np.array(
             [ 2.,  2.,  2.,  2.,  2.,  2.,  2.,  2.,  2.,  2.,
               2.,  2.,  2.,  2.,  2.,  2.,  2.,  2.,  2.,  2.,
@@ -401,7 +400,7 @@ class TestStatistic(object):
 
     def test_check_mean_shape_one(self):
         a = [[4, 5, 6]]
-        a = pad(a, (5, 7), 'mean', stat_length=2)
+        a = np.pad(a, (5, 7), 'mean', stat_length=2)
         b = np.array(
             [[4, 4, 4, 4, 4, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6],
              [4, 4, 4, 4, 4, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6],
@@ -423,7 +422,7 @@ class TestStatistic(object):
 
     def test_check_mean_2(self):
         a = np.arange(100).astype('f')
-        a = pad(a, (25, 20), 'mean')
+        a = np.pad(a, (25, 20), 'mean')
         b = np.array(
             [49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
              49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
@@ -472,7 +471,7 @@ class TestStatistic(object):
     def test_simple_stat_length(self):
         a = np.arange(30)
         a = np.reshape(a, (6, 5))
-        a = pad(a, ((2, 3), (3, 2)), mode='mean', stat_length=(3,))
+        a = np.pad(a, ((2, 3), (3, 2)), mode='mean', stat_length=(3,))
         b = np.array(
             [[6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
              [6, 6, 6, 5, 6, 7, 8, 9, 8, 8],
@@ -494,7 +493,7 @@ class TestStatistic(object):
 class TestConstant(object):
     def test_check_constant(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'constant', constant_values=(10, 20))
+        a = np.pad(a, (25, 20), 'constant', constant_values=(10, 20))
         b = np.array(
             [10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
              10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
@@ -518,7 +517,7 @@ class TestConstant(object):
 
     def test_check_constant_zeros(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'constant')
+        a = np.pad(a, (25, 20), 'constant')
         b = np.array(
             [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
               0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -544,7 +543,7 @@ class TestConstant(object):
         # If input array is int, but constant_values are float, the dtype of
         # the array to be padded is kept
         arr = np.arange(30).reshape(5, 6)
-        test = pad(arr, (1, 2), mode='constant',
+        test = np.pad(arr, (1, 2), mode='constant',
                    constant_values=1.1)
         expected = np.array(
             [[ 1,  1,  1,  1,  1,  1,  1,  1,  1],
@@ -565,7 +564,7 @@ class TestConstant(object):
         # the array to be padded is kept - here retaining the float constants
         arr = np.arange(30).reshape(5, 6)
         arr_float = arr.astype(np.float64)
-        test = pad(arr_float, ((1, 2), (1, 2)), mode='constant',
+        test = np.pad(arr_float, ((1, 2), (1, 2)), mode='constant',
                    constant_values=1.1)
         expected = np.array(
             [[  1.1,   1.1,   1.1,   1.1,   1.1,   1.1,   1.1,   1.1,   1.1],
@@ -583,7 +582,7 @@ class TestConstant(object):
 
     def test_check_constant_float3(self):
         a = np.arange(100, dtype=float)
-        a = pad(a, (25, 20), 'constant', constant_values=(-1.1, -1.2))
+        a = np.pad(a, (25, 20), 'constant', constant_values=(-1.1, -1.2))
         b = np.array(
             [-1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1,
              -1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1, -1.1,
@@ -607,7 +606,7 @@ class TestConstant(object):
 
     def test_check_constant_odd_pad_amount(self):
         arr = np.arange(30).reshape(5, 6)
-        test = pad(arr, ((1,), (2,)), mode='constant',
+        test = np.pad(arr, ((1,), (2,)), mode='constant',
                    constant_values=3)
         expected = np.array(
             [[ 3,  3,  3,  3,  3,  3,  3,  3,  3,  3],
@@ -668,7 +667,7 @@ class TestConstant(object):
 class TestLinearRamp(object):
     def test_check_simple(self):
         a = np.arange(100).astype('f')
-        a = pad(a, (25, 20), 'linear_ramp', end_values=(4, 5))
+        a = np.pad(a, (25, 20), 'linear_ramp', end_values=(4, 5))
         b = np.array(
             [4.00, 3.84, 3.68, 3.52, 3.36, 3.20, 3.04, 2.88, 2.72, 2.56,
              2.40, 2.24, 2.08, 1.92, 1.76, 1.60, 1.44, 1.28, 1.12, 0.96,
@@ -692,7 +691,7 @@ class TestLinearRamp(object):
 
     def test_check_2d(self):
         arr = np.arange(20).reshape(4, 5).astype(np.float64)
-        test = pad(arr, (2, 2), mode='linear_ramp', end_values=(0, 0))
+        test = np.pad(arr, (2, 2), mode='linear_ramp', end_values=(0, 0))
         expected = np.array(
             [[0.,   0.,   0.,   0.,   0.,   0.,   0.,    0.,   0.],
              [0.,   0.,   0.,  0.5,   1.,  1.5,   2.,    1.,   0.],
@@ -727,7 +726,7 @@ class TestLinearRamp(object):
 class TestReflect(object):
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'reflect')
+        a = np.pad(a, (25, 20), 'reflect')
         b = np.array(
             [25, 24, 23, 22, 21, 20, 19, 18, 17, 16,
              15, 14, 13, 12, 11, 10, 9, 8, 7, 6,
@@ -751,7 +750,7 @@ class TestReflect(object):
 
     def test_check_odd_method(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'reflect', reflect_type='odd')
+        a = np.pad(a, (25, 20), 'reflect', reflect_type='odd')
         b = np.array(
             [-25, -24, -23, -22, -21, -20, -19, -18, -17, -16,
              -15, -14, -13, -12, -11, -10, -9, -8, -7, -6,
@@ -775,7 +774,7 @@ class TestReflect(object):
 
     def test_check_large_pad(self):
         a = [[4, 5, 6], [6, 7, 8]]
-        a = pad(a, (5, 7), 'reflect')
+        a = np.pad(a, (5, 7), 'reflect')
         b = np.array(
             [[7, 6, 7, 8, 7, 6, 7, 8, 7, 6, 7, 8, 7, 6, 7],
              [5, 4, 5, 6, 5, 4, 5, 6, 5, 4, 5, 6, 5, 4, 5],
@@ -798,7 +797,7 @@ class TestReflect(object):
 
     def test_check_shape(self):
         a = [[4, 5, 6]]
-        a = pad(a, (5, 7), 'reflect')
+        a = np.pad(a, (5, 7), 'reflect')
         b = np.array(
             [[5, 4, 5, 6, 5, 4, 5, 6, 5, 4, 5, 6, 5, 4, 5],
              [5, 4, 5, 6, 5, 4, 5, 6, 5, 4, 5, 6, 5, 4, 5],
@@ -819,39 +818,39 @@ class TestReflect(object):
         assert_array_equal(a, b)
 
     def test_check_01(self):
-        a = pad([1, 2, 3], 2, 'reflect')
+        a = np.pad([1, 2, 3], 2, 'reflect')
         b = np.array([3, 2, 1, 2, 3, 2, 1])
         assert_array_equal(a, b)
 
     def test_check_02(self):
-        a = pad([1, 2, 3], 3, 'reflect')
+        a = np.pad([1, 2, 3], 3, 'reflect')
         b = np.array([2, 3, 2, 1, 2, 3, 2, 1, 2])
         assert_array_equal(a, b)
 
     def test_check_03(self):
-        a = pad([1, 2, 3], 4, 'reflect')
+        a = np.pad([1, 2, 3], 4, 'reflect')
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
         assert_array_equal(a, b)
 
     def test_check_padding_an_empty_array(self):
-        a = pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
+        a = np.pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
         b = np.zeros((0, 5))
         assert_array_equal(a, b)
 
     def test_padding_empty_dimension(self):
         match = "There aren't any elements to reflect in axis 0"
         with pytest.raises(ValueError, match=match):
-            pad([], 4, mode='reflect')
+            np.pad([], 4, mode='reflect')
         with pytest.raises(ValueError, match=match):
-            pad(np.ndarray(0), 4, mode='reflect')
+            np.pad(np.ndarray(0), 4, mode='reflect')
         with pytest.raises(ValueError, match=match):
-            pad(np.zeros((0, 3)), ((1,), (0,)), mode='reflect')
+            np.pad(np.zeros((0, 3)), ((1,), (0,)), mode='reflect')
 
 
 class TestSymmetric(object):
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'symmetric')
+        a = np.pad(a, (25, 20), 'symmetric')
         b = np.array(
             [24, 23, 22, 21, 20, 19, 18, 17, 16, 15,
              14, 13, 12, 11, 10, 9, 8, 7, 6, 5,
@@ -875,7 +874,7 @@ class TestSymmetric(object):
 
     def test_check_odd_method(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'symmetric', reflect_type='odd')
+        a = np.pad(a, (25, 20), 'symmetric', reflect_type='odd')
         b = np.array(
             [-24, -23, -22, -21, -20, -19, -18, -17, -16, -15,
              -14, -13, -12, -11, -10, -9, -8, -7, -6, -5,
@@ -899,7 +898,7 @@ class TestSymmetric(object):
 
     def test_check_large_pad(self):
         a = [[4, 5, 6], [6, 7, 8]]
-        a = pad(a, (5, 7), 'symmetric')
+        a = np.pad(a, (5, 7), 'symmetric')
         b = np.array(
             [[5, 6, 6, 5, 4, 4, 5, 6, 6, 5, 4, 4, 5, 6, 6],
              [5, 6, 6, 5, 4, 4, 5, 6, 6, 5, 4, 4, 5, 6, 6],
@@ -923,7 +922,7 @@ class TestSymmetric(object):
 
     def test_check_large_pad_odd(self):
         a = [[4, 5, 6], [6, 7, 8]]
-        a = pad(a, (5, 7), 'symmetric', reflect_type='odd')
+        a = np.pad(a, (5, 7), 'symmetric', reflect_type='odd')
         b = np.array(
             [[-3, -2, -2, -1,  0,  0,  1,  2,  2,  3,  4,  4,  5,  6,  6],
              [-3, -2, -2, -1,  0,  0,  1,  2,  2,  3,  4,  4,  5,  6,  6],
@@ -946,7 +945,7 @@ class TestSymmetric(object):
 
     def test_check_shape(self):
         a = [[4, 5, 6]]
-        a = pad(a, (5, 7), 'symmetric')
+        a = np.pad(a, (5, 7), 'symmetric')
         b = np.array(
             [[5, 6, 6, 5, 4, 4, 5, 6, 6, 5, 4, 4, 5, 6, 6],
              [5, 6, 6, 5, 4, 4, 5, 6, 6, 5, 4, 4, 5, 6, 6],
@@ -967,17 +966,17 @@ class TestSymmetric(object):
         assert_array_equal(a, b)
 
     def test_check_01(self):
-        a = pad([1, 2, 3], 2, 'symmetric')
+        a = np.pad([1, 2, 3], 2, 'symmetric')
         b = np.array([2, 1, 1, 2, 3, 3, 2])
         assert_array_equal(a, b)
 
     def test_check_02(self):
-        a = pad([1, 2, 3], 3, 'symmetric')
+        a = np.pad([1, 2, 3], 3, 'symmetric')
         b = np.array([3, 2, 1, 1, 2, 3, 3, 2, 1])
         assert_array_equal(a, b)
 
     def test_check_03(self):
-        a = pad([1, 2, 3], 6, 'symmetric')
+        a = np.pad([1, 2, 3], 6, 'symmetric')
         b = np.array([1, 2, 3, 3, 2, 1, 1, 2, 3, 3, 2, 1, 1, 2, 3])
         assert_array_equal(a, b)
 
@@ -985,7 +984,7 @@ class TestSymmetric(object):
 class TestWrap(object):
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad(a, (25, 20), 'wrap')
+        a = np.pad(a, (25, 20), 'wrap')
         b = np.array(
             [75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
              85, 86, 87, 88, 89, 90, 91, 92, 93, 94,
@@ -1010,7 +1009,7 @@ class TestWrap(object):
     def test_check_large_pad(self):
         a = np.arange(12)
         a = np.reshape(a, (3, 4))
-        a = pad(a, (10, 12), 'wrap')
+        a = np.pad(a, (10, 12), 'wrap')
         b = np.array(
             [[10, 11, 8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10, 11, 8, 9, 10,
               11, 8, 9, 10, 11, 8, 9, 10, 11],
@@ -1068,12 +1067,12 @@ class TestWrap(object):
         assert_array_equal(a, b)
 
     def test_check_01(self):
-        a = pad([1, 2, 3], 3, 'wrap')
+        a = np.pad([1, 2, 3], 3, 'wrap')
         b = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
         assert_array_equal(a, b)
 
     def test_check_02(self):
-        a = pad([1, 2, 3], 4, 'wrap')
+        a = np.pad([1, 2, 3], 4, 'wrap')
         b = np.array([3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
         assert_array_equal(a, b)
 
@@ -1087,7 +1086,7 @@ class TestEdge(object):
     def test_check_simple(self):
         a = np.arange(12)
         a = np.reshape(a, (4, 3))
-        a = pad(a, ((2, 3), (3, 2)), 'edge')
+        a = np.pad(a, ((2, 3), (3, 2)), 'edge')
         b = np.array(
             [[0, 0, 0, 0, 1, 2, 2, 2],
              [0, 0, 0, 0, 1, 2, 2, 2],
@@ -1107,18 +1106,18 @@ class TestEdge(object):
         # Check a pad_width of the form ((1, 2),).
         # Regression test for issue gh-7808.
         a = np.array([1, 2, 3])
-        padded = pad(a, ((1, 2),), 'edge')
+        padded = np.pad(a, ((1, 2),), 'edge')
         expected = np.array([1, 1, 2, 3, 3, 3])
         assert_array_equal(padded, expected)
 
         a = np.array([[1, 2, 3], [4, 5, 6]])
-        padded = pad(a, ((1, 2),), 'edge')
-        expected = pad(a, ((1, 2), (1, 2)), 'edge')
+        padded = np.pad(a, ((1, 2),), 'edge')
+        expected = np.pad(a, ((1, 2), (1, 2)), 'edge')
         assert_array_equal(padded, expected)
 
         a = np.arange(24).reshape(2, 3, 4)
-        padded = pad(a, ((1, 2),), 'edge')
-        expected = pad(a, ((1, 2), (1, 2), (1, 2)), 'edge')
+        padded = np.pad(a, ((1, 2),), 'edge')
+        expected = np.pad(a, ((1, 2), (1, 2), (1, 2)), 'edge')
         assert_array_equal(padded, expected)
 
 
@@ -1129,7 +1128,7 @@ def test_legacy_vector_functionality():
         return vector
 
     a = np.arange(6).reshape(2, 3)
-    a = pad(a, 2, _padwithtens)
+    a = np.pad(a, 2, _padwithtens)
     b = np.array(
         [[10, 10, 10, 10, 10, 10, 10],
          [10, 10, 10, 10, 10, 10, 10],
@@ -1155,7 +1154,7 @@ def test_object_input(mode):
     a = np.full((4, 3), fill_value=None)
     pad_amt = ((2, 3), (3, 2))
     b = np.full((9, 8), fill_value=None)
-    assert_array_equal(pad(a, pad_amt, mode=mode), b)
+    assert_array_equal(np.pad(a, pad_amt, mode=mode), b)
 
 
 class TestPadWidth(object):
@@ -1207,12 +1206,12 @@ class TestPadWidth(object):
         with pytest.raises(TypeError, match=match):
             np.pad(arr, pad_width, mode)
         with pytest.raises(TypeError, match=match):
-            pad(arr, np.array(pad_width), mode)
+            np.pad(arr, np.array(pad_width), mode)
 
     def test_pad_width_as_ndarray(self):
         a = np.arange(12)
         a = np.reshape(a, (4, 3))
-        a = pad(a, np.array(((2, 3), (3, 2))), 'edge')
+        a = np.pad(a, np.array(((2, 3), (3, 2))), 'edge')
         b = np.array(
             [[0,  0,  0,    0,  1,  2,    2,  2],
              [0,  0,  0,    0,  1,  2,    2,  2],
@@ -1232,7 +1231,7 @@ class TestPadWidth(object):
     @pytest.mark.parametrize("mode", _all_modes.keys())
     def test_zero_pad_width(self, pad_width, mode):
         arr = np.arange(30).reshape(6, 5)
-        assert_array_equal(arr, pad(arr, pad_width, mode=mode))
+        assert_array_equal(arr, np.pad(arr, pad_width, mode=mode))
 
 
 @pytest.mark.parametrize("mode", _all_modes.keys())
