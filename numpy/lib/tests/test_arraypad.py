@@ -1250,7 +1250,7 @@ def test_kwargs(mode):
 
 
 def test_missing_mode():
-    match = r"pad\(\) missing 1 required positional argument: 'mode'"
+    match = "missing 1 required positional argument: 'mode'"
     with pytest.raises(TypeError, match=match):
         np.pad(np.ones((5, 6)), 4)
 
