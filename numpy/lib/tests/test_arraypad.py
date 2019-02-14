@@ -1123,34 +1123,31 @@ class TestEdge(object):
         assert_array_equal(padded, expected)
 
 
-class TestLegacyVectorFunction(object):
-    def test_legacy_vector_functionality(self):
-        def _padwithtens(vector, pad_width, iaxis, kwargs):
-            vector[:pad_width[0]] = 10
-            vector[-pad_width[1]:] = 10
-            return vector
+def test_legacy_vector_functionality():
+    def _padwithtens(vector, pad_width, iaxis, kwargs):
+        vector[:pad_width[0]] = 10
+        vector[-pad_width[1]:] = 10
+        return vector
 
-        a = np.arange(6).reshape(2, 3)
-        a = pad(a, 2, _padwithtens)
-        b = np.array(
-            [[10, 10, 10, 10, 10, 10, 10],
-             [10, 10, 10, 10, 10, 10, 10],
+    a = np.arange(6).reshape(2, 3)
+    a = pad(a, 2, _padwithtens)
+    b = np.array(
+        [[10, 10, 10, 10, 10, 10, 10],
+         [10, 10, 10, 10, 10, 10, 10],
 
-             [10, 10,  0,  1,  2, 10, 10],
-             [10, 10,  3,  4,  5, 10, 10],
+         [10, 10,  0,  1,  2, 10, 10],
+         [10, 10,  3,  4,  5, 10, 10],
 
-             [10, 10, 10, 10, 10, 10, 10],
-             [10, 10, 10, 10, 10, 10, 10]]
-            )
-        assert_array_equal(a, b)
+         [10, 10, 10, 10, 10, 10, 10],
+         [10, 10, 10, 10, 10, 10, 10]]
+        )
+    assert_array_equal(a, b)
 
 
-class TestUnicodeInput(object):
-    def test_unicode_mode(self):
-        constant_mode = u'constant'
-        a = np.pad([1], 2, mode=constant_mode)
-        b = np.array([0, 0, 1, 0, 0])
-        assert_array_equal(a, b)
+def test_unicode_mode():
+    a = np.pad([1], 2, mode=u'constant')
+    b = np.array([0, 0, 1, 0, 0])
+    assert_array_equal(a, b)
 
 
 @pytest.mark.parametrize("mode", ["edge", "symmetric", "reflect", "wrap"])
@@ -1256,8 +1253,7 @@ def test_kwargs(mode):
             np.pad([1, 2, 3], 1, mode, **{key: value})
 
 
-class TestValueError3(object):
-
-    def test_mode_not_set(self):
-        arr = np.arange(30).reshape(5, 6)
-        assert_raises(TypeError, pad, arr, 4)
+def test_missing_mode():
+    match = r"pad\(\) missing 1 required positional argument: 'mode'"
+    with pytest.raises(TypeError, match=match):
+        np.pad(np.ones((5, 6)), 4)
