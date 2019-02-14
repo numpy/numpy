@@ -444,7 +444,7 @@ class TestStatistic(object):
         assert_array_equal(a, b)
 
     @pytest.mark.parametrize("mode", [
-        pytest.param("mean", marks=pytest.mark.xfail(reason="gh-11216")),
+        "mean",
         "median",
         "minimum",
         "maximum"
@@ -837,7 +837,8 @@ class TestReflect(object):
         assert_array_equal(a, b)
 
     def test_padding_empty_dimension(self):
-        match = "There aren't any elements to reflect in axis 0"
+        match = ("can't extend empty axis 0 using modes other than 'constant' "
+                 "or 'empty'")
         with pytest.raises(ValueError, match=match):
             np.pad([], 4, mode='reflect')
         with pytest.raises(ValueError, match=match):
@@ -1244,7 +1245,7 @@ def test_kwargs(mode):
     np.pad([1, 2, 3], 1, mode, **allowed)
     # Test if prohibited keyword arguments of other modes raise an error
     for key, value in not_allowed.items():
-        match = 'keyword not in allowed keywords'
+        match = "unsupported keyword arguments for mode '{}'".format(mode)
         with pytest.raises(ValueError, match=match):
             np.pad([1, 2, 3], 1, mode, **{key: value})
 
