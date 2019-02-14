@@ -6,8 +6,7 @@ from __future__ import division, absolute_import, print_function
 import pytest
 
 import numpy as np
-from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,
-                           assert_equal)
+from numpy.testing import assert_array_equal, assert_allclose, assert_equal
 from numpy.lib import pad
 from numpy.lib.arraypad import _as_pairs
 
@@ -1257,3 +1256,11 @@ def test_missing_mode():
     match = r"pad\(\) missing 1 required positional argument: 'mode'"
     with pytest.raises(TypeError, match=match):
         np.pad(np.ones((5, 6)), 4)
+
+
+@pytest.mark.parametrize("mode", _all_modes.keys())
+def test_non_contiguous_array(mode):
+    arr = np.arange(24).reshape(4, 6)[::2, ::2]
+    result = np.pad(arr, (2, 3), mode)
+    assert result.shape == (7, 8)
+    assert_equal(result[2:-3, 2:-3], arr)
