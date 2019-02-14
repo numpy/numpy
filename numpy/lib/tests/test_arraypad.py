@@ -25,7 +25,6 @@ _all_modes = {
 
 
 class TestAsPairs(object):
-
     def test_single_value(self):
         """Test casting for a single value."""
         expected = np.array([[3, 3]] * 10)
@@ -1158,7 +1157,6 @@ def test_object_input(mode):
 
 
 class TestPadWidth(object):
-
     @pytest.mark.parametrize("pad_width", [
         (4, 5, 6, 7),
         ((1,), (2,), (3,)),
