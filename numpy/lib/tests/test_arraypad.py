@@ -1125,14 +1125,6 @@ class TestEdge(object):
         assert_array_equal(padded, expected)
 
 
-class TestZeroPadWidth(object):
-    def test_zero_pad_width(self):
-        arr = np.arange(30)
-        arr = np.reshape(arr, (6, 5))
-        for pad_width in (0, (0, 0), ((0, 0), (0, 0))):
-            assert_array_equal(arr, pad(arr, pad_width, mode='constant'))
-
-
 class TestLegacyVectorFunction(object):
     def test_legacy_vector_functionality(self):
         def _padwithtens(vector, pad_width, iaxis, kwargs):
@@ -1241,6 +1233,12 @@ class TestPadWidth(object):
              [9,  9,  9,    9, 10, 11,   11, 11]]
             )
         assert_array_equal(a, b)
+
+    @pytest.mark.parametrize("pad_width", [0, (0, 0), ((0, 0), (0, 0))])
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_zero_pad_width(self, pad_width, mode):
+        arr = np.arange(30).reshape(6, 5)
+        assert_array_equal(arr, pad(arr, pad_width, mode=mode))
 
 
 @pytest.mark.parametrize("mode", _all_modes.keys())
