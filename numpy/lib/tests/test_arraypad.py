@@ -664,6 +664,11 @@ class TestConstant(object):
 
         assert_array_equal(arr, expected)
 
+    def test_pad_empty_dimension(self):
+        arr = np.zeros((3, 0, 2))
+        result = np.pad(arr, [(0,), (2,), (1,)], mode="constant")
+        assert result.shape == (3, 4, 4)
+
 
 class TestLinearRamp(object):
     def test_check_simple(self):
