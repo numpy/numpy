@@ -2,6 +2,7 @@
 
 """
 from __future__ import division, absolute_import, print_function
+from itertools import chain
 
 import pytest
 
@@ -1276,3 +1277,17 @@ def test_non_contiguous_array(mode):
     result = np.pad(arr, (2, 3), mode)
     assert result.shape == (7, 8)
     assert_equal(result[2:-3, 2:-3], arr)
+
+
+@pytest.mark.parametrize("dtype", chain(
+    # Skip "other" dtypes as they are not supported by all modes
+    np.sctypes["int"],
+    np.sctypes["uint"],
+    np.sctypes["float"],
+    np.sctypes["complex"]
+))
+@pytest.mark.parametrize("mode", _all_modes.keys())
+def test_dtype_persistence(dtype, mode):
+    arr = np.zeros((3, 2, 1), dtype=dtype)
+    result = np.pad(arr, 1, mode=mode)
+    assert result.dtype == dtype
