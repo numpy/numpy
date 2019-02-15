@@ -1083,6 +1083,19 @@ class TestWrap(object):
         b = np.pad(a, (0, 5), mode="wrap")
         assert_array_equal(a, b[:-5, :-5])
 
+    def test_repeated_wrapping(self):
+        """
+        Check wrapping on each side individually if the wrapped area is longer
+        than the original array.
+        """
+        a = np.arange(5)
+        b = np.pad(a, (12, 0), mode="wrap")
+        assert_array_equal(np.r_[a, a, a, a][3:], b)
+
+        a = np.arange(5)
+        b = np.pad(a, (0, 12), mode="wrap")
+        assert_array_equal(np.r_[a, a, a, a][:-3], b)
+
 
 class TestEdge(object):
     def test_check_simple(self):
