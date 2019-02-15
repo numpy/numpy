@@ -21,6 +21,7 @@ _all_modes = {
     'reflect': {'reflect_type': 'even'},
     'symmetric': {'reflect_type': 'even'},
     'wrap': {},
+    'empty': {}
 }
 
 
@@ -1119,6 +1120,19 @@ class TestEdge(object):
         padded = np.pad(a, ((1, 2),), 'edge')
         expected = np.pad(a, ((1, 2), (1, 2), (1, 2)), 'edge')
         assert_array_equal(padded, expected)
+
+
+class TestEmpty(object):
+    def test_simple(self):
+        arr = np.arange(24).reshape(4, 6)
+        result = np.pad(arr, [(2, 3), (3, 1)], mode="empty")
+        assert result.shape == (9, 10)
+        assert_equal(arr, result[2:-3, 3:-1])
+
+    def test_pad_empty_dimension(self):
+        arr = np.zeros((3, 0, 2))
+        result = np.pad(arr, [(0,), (2,), (1,)], mode="empty")
+        assert result.shape == (3, 4, 4)
 
 
 def test_legacy_vector_functionality():
