@@ -75,6 +75,11 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+``np.fromfile`` now takes an ``offset`` argument
+------------------------------------------------
+This function now takes an ``offset`` keyword argument for binary files,
+which specifics the offset (in bytes) from the file's current position.
+Defaults to 0.
 
 Improvements
 ============
