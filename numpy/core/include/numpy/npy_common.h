@@ -86,6 +86,13 @@
 #define NPY_UNLIKELY(x) (x)
 #endif
 
+
+#ifdef HAVE___BUILTIN_UNREACHABLE
+#define NPY_UNREACHABLE() __builtin_unreachable()
+#else
+#define NPY_UNREACHABLE()
+#endif
+
 #ifdef HAVE___BUILTIN_PREFETCH
 /* unlike _mm_prefetch also works on non-x86 */
 #define NPY_PREFETCH(x, rw, loc) __builtin_prefetch((x), (rw), (loc))

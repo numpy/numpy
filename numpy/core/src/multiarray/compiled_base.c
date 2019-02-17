@@ -471,6 +471,64 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
 
 #undef LIKELY_IN_CACHE_SIZE
 
+/**
+ * Special case for producing the correct result when the naive one is NaN.
+ *
+ * x0, x1: the x bounds of the segment to interpolate
+ * y0, y1: the y bounds of the segment to interpolate
+ *
+ * Assumes that:
+ *  - naive interpolation gives NaN
+ *  - `!(x0 >= x) && !(x >= x1)`, which implies x is finite and so irrelevant
+ */
+NPY_NO_EXPORT double
+_non_finite_interp(double x0, double x1, double y0, double y1) {
+    if (npy_isfinite(x0) && npy_isfinite(x1)) {
+        /** infinities of opposite sign, or any nans */
+        if (npy_isnan(y0 + y1)) {
+            return NPY_NAN;
+        }
+        else if (y0 == NPY_INFINITY || y1 == NPY_INFINITY) {
+            return NPY_INFINITY;
+        }
+        else if (y0 == -NPY_INFINITY || y1 == -NPY_INFINITY) {
+            return -NPY_INFINITY;
+        }
+        else if (npy_isfinite(y0) && npy_isfinite(y1)) {
+            // Can't do better than the naive result - perhaps it overflowed.
+            return NPY_NAN;
+        }
+        else {
+            assert(0);
+            NPY_UNREACHABLE(); // by inspection
+        }
+    }
+    else if (npy_isfinite(y0) && npy_isfinite(y1)) {
+        /** infinities of opposite sign, or any nans */
+        if (npy_isnan(x0 + x1)) {
+            return NPY_NAN;
+        }
+        /* assumption: x is finite, so pick the finite bound */
+        else if (x0 == -NPY_INFINITY) {
+            return y1;
+        }
+        else if (x1 == NPY_INFINITY) {
+            return y0;
+        }
+        else {
+            /* implies x0 == x1 == +-INF which is forbidden by the
+             * preconditions
+             */
+            assert(0);
+            return NPY_NAN;
+        }
+    }
+    else {
+        /* infinities in both axes => undefined slope */
+        return NPY_NAN;
+    }
+}
+
 NPY_NO_EXPORT PyObject *
 arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 {
@@ -606,6 +664,12 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 const npy_double slope = (slopes != NULL) ? slopes[j] :
                                          (dy[j+1] - dy[j]) / (dx[j+1] - dx[j]);
                 dres[i] = slope*(x_val - dx[j]) + dy[j];
+                /* Sometimes nan should be some other value */
+                if (npy_isnan(dres[i])) {
+                    dres[i] = _non_finite_interp(
+                        dx[j], dx[j+1], dy[j], dy[j+1]
+                    );
+                }
             }
         }
 
@@ -788,6 +852,18 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
                 dres[i].real = slope.real*(x_val - dx[j]) + dy[j].real;
                 dres[i].imag = slope.imag*(x_val - dx[j]) + dy[j].imag;
+
+                /* Sometimes nan should be some other value */
+                if (npy_isnan(dres[i].real)) {
+                    dres[i].real = _non_finite_interp(
+                        dx[j], dx[j+1], dy[j].real, dy[j+1].real
+                    );
+                }
+                if (npy_isnan(dres[i].imag)) {
+                    dres[i].imag = _non_finite_interp(
+                        dx[j], dx[j+1], dy[j].imag, dy[j+1].imag
+                    );
+                }
             }
         }
 

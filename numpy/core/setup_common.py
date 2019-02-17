@@ -133,6 +133,7 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap32", '5u'),
                        ("__builtin_bswap64", '5u'),
                        ("__builtin_expect", '5, 0'),
+                       ("__builtin_unreachable", ''),
                        ("__builtin_mul_overflow", '5, 5, (int*)5'),
                        # broken on OSX 10.11, make sure its not optimized away
                        ("volatile int r = __builtin_cpu_supports", '"sse"',
