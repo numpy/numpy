@@ -417,32 +417,31 @@ PyArray_GetStridedCopyFn(int aligned, npy_intp src_stride,
 #if !NPY_USE_UNALIGNED_ACCESS
     }
     else {
-        /* contiguous dst */
-        if (itemsize != 0 && dst_stride == itemsize) {
-            /* contiguous src */
-            if (src_stride == itemsize) {
-                return &_contig_to_contig;
-            }
-            /* general src */
-            else {
-                switch (itemsize) {
-                    case 1:
-                        return &_aligned_strided_to_contig_size1;
+        if (itemsize != 0) {
+            if (dst_stride == itemsize) {
+                /* contiguous dst */
+                if (src_stride == itemsize) {
+                    /* contiguous src, dst */
+                    return &_contig_to_contig;
+                }
+                else {
+                    /* general src */
+                    switch (itemsize) {
+                        case 1:
+                            return &_aligned_strided_to_contig_size1;
 /**begin repeat
  * #elsize = 2, 4, 8, 16#
  */
-                    case @elsize@:
-                        return &_strided_to_contig_size@elsize@;
+                        case @elsize@:
+                            return &_strided_to_contig_size@elsize@;
 /**end repeat**/
+                    }
                 }
-            }
 
-            return &_strided_to_strided;
-        }
-        /* general dst */
-        else {
-            /* contiguous src */
-            if (itemsize != 0 && src_stride == itemsize) {
+                return &_strided_to_strided;
+            }
+            else if (src_stride == itemsize) {
+                /* contiguous src, general dst */
                 switch (itemsize) {
                     case 1:
                         return &_aligned_contig_to_strided_size1;
@@ -456,18 +455,18 @@ PyArray_GetStridedCopyFn(int aligned, npy_intp src_stride,
 
                 return &_strided_to_strided;
             }
-            /* general src */
-            else {
-                switch (itemsize) {
-                    case 1:
-                        return &_aligned_strided_to_strided_size1;
+        }
+        else {
+            /* general src, dst */
+            switch (itemsize) {
+                case 1:
+                    return &_aligned_strided_to_strided_size1;
 /**begin repeat
  * #elsize = 2, 4, 8, 16#
  */
-                    case @elsize@:
-                        return &_strided_to_strided_size@elsize@;
+                case @elsize@:
+                    return &_strided_to_strided_size@elsize@;
 /**end repeat**/
-                }
             }
         }
     }
