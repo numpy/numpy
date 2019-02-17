@@ -33,6 +33,17 @@ def get_mat(n):
     return data
 
 
+def _make_complex(real, imag):
+    """
+    Like real + 1j * imag, but behaves as expected when imag contains non-finite
+    values
+    """
+    ret = np.zeros(np.broadcast(real, imag).shape, np.complex_)
+    ret.real = real
+    ret.imag = imag
+    return ret
+
+
 class TestRot90(object):
     def test_basic(self):
         assert_raises(ValueError, rot90, np.ones(4))
@@ -2354,13 +2365,71 @@ class TestInterp(object):
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
 
-    def test_non_finite_behavior(self):
+    def test_non_finite_behavior_exact_x(self):
         x = [1, 2, 2.5, 3, 4]
         xp = [1, 2, 3, 4]
         fp = [1, 2, np.inf, 4]
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.inf, np.inf, 4])
         fp = [1, 2, np.nan, 4]
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
+
+    @pytest.fixture(params=[
+        lambda x: np.float_(x),
+        lambda x: _make_complex(x, 0),
+        lambda x: _make_complex(0, x),
+        lambda x: _make_complex(x, np.multiply(x, -2))
+    ], ids=[
+        'real',
+        'complex-real',
+        'complex-imag',
+        'complex-both'
+    ])
+    def sc(self, request):
+        """ scale function used by the below tests """
+        return request.param
+
+    def test_non_finite_any_nan(self, sc):
+        """ test that nans are propagated """
+        assert_equal(np.interp(0.5, [np.nan,      1], sc([     0,     10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [     0, np.nan], sc([     0,     10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [     0,      1], sc([np.nan,     10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [     0,      1], sc([     0, np.nan])), sc(np.nan))
+
+    def test_non_finite_inf(self, sc):
+        """ Test that interp between opposite infs gives nan """
+        assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([      0,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0,       1], sc([-np.inf, +np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0,       1], sc([+np.inf, -np.inf])), sc(np.nan))
+
+        # unless the y values are equal
+        assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([     10,      10])), sc(10))
+
+    def test_non_finite_half_inf_xf(self, sc):
+        """ Test that interp where both axes have a bound at inf gives nan """
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([-np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([+np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, -np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, +np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([-np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([+np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, -np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, +np.inf])), sc(np.nan))
+
+    def test_non_finite_half_inf_x(self, sc):
+        """ Test interp where the x axis has a bound at inf """
+        assert_equal(np.interp(0.5, [-np.inf, -np.inf], sc([0, 10])), sc(10))
+        assert_equal(np.interp(0.5, [-np.inf, 1      ], sc([0, 10])), sc(10))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([0, 10])), sc(0))
+        assert_equal(np.interp(0.5, [+np.inf, +np.inf], sc([0, 10])), sc(0))
+
+    def test_non_finite_half_inf_f(self, sc):
+        """ Test interp where the f axis has a bound at inf """
+        assert_equal(np.interp(0.5, [0, 1], sc([      0, -np.inf])), sc(-np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([      0, +np.inf])), sc(+np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([-np.inf,      10])), sc(-np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([+np.inf,      10])), sc(+np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([-np.inf, -np.inf])), sc(-np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([+np.inf, +np.inf])), sc(+np.inf))
 
     def test_complex_interp(self):
         # test complex interpolation

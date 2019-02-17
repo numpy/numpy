@@ -603,9 +603,18 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 dres[i] = dy[j];
             }
             else {
-                const npy_double slope = (slopes != NULL) ? slopes[j] :
-                                         (dy[j+1] - dy[j]) / (dx[j+1] - dx[j]);
+                const npy_double slope =
+                        (slopes != NULL) ? slopes[j] :
+                        (dy[j+1] - dy[j]) / (dx[j+1] - dx[j]);
+
+                /* If we get nan in one direction, try the other */
                 dres[i] = slope*(x_val - dx[j]) + dy[j];
+                if (NPY_UNLIKELY(npy_isnan(dres[i]))) {
+                    dres[i] = slope*(x_val - dx[j+1]) + dy[j+1];
+                    if (NPY_UNLIKELY(npy_isnan(dres[i])) && dy[j] == dy[j+1]) {
+                        dres[i] = dy[j];
+                    }
+                }
             }
         }
 
@@ -786,8 +795,23 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                     slope.imag = (dy[j+1].imag - dy[j].imag) * inv_dx;
                 }
 
+                /* If we get nan in one direction, try the other */
                 dres[i].real = slope.real*(x_val - dx[j]) + dy[j].real;
+                if (NPY_UNLIKELY(npy_isnan(dres[i].real))) {
+                    dres[i].real = slope.real*(x_val - dx[j+1]) + dy[j+1].real;
+                    if (NPY_UNLIKELY(npy_isnan(dres[i].real)) &&
+                            dy[j].real == dy[j+1].real) {
+                        dres[i].real = dy[j].real;
+                    }
+                }
                 dres[i].imag = slope.imag*(x_val - dx[j]) + dy[j].imag;
+                if (NPY_UNLIKELY(npy_isnan(dres[i].imag))) {
+                    dres[i].imag = slope.imag*(x_val - dx[j+1]) + dy[j+1].imag;
+                    if (NPY_UNLIKELY(npy_isnan(dres[i].imag)) &&
+                            dy[j].imag == dy[j+1].imag) {
+                        dres[i].imag = dy[j].imag;
+                    }
+                }
             }
         }
 
